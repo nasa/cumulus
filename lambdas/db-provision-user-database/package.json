@@ -11,7 +11,7 @@
     "package": "npm run clean && npm run tsc && npm run webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "test:ci": "set -o pipefail && npm run test:coverage | tee ../../unit-logs/$(jq -r '.name' package.json).log && rm ../../unit-logs/$(jq -r '.name' package.json).log",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "python-lint": "true",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",

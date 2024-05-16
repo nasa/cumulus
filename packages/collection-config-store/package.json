@@ -20,7 +20,7 @@
   "scripts": {
     "build-docs": "../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs index.js > docs/API.md",
     "test": "../../node_modules/.bin/ava",
-    "test:ci": "set -o pipefail && npm run test:coverage | tee ../../unit-logs/$(jq -r '.name' package.json).log && rm ../../unit-logs/$(jq -r '.name' package.json).log",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },

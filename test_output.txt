@@ -1,0 +1,1111 @@
+
+> @cumulus/core@1.0.0 test:ci
+> mkdir -p unit-logs/@cumulus/ && lerna run --ignore @cumulus/cumulus-integration-tests --stream --concurrency 1 test:ci
+
+lerna notice cli v6.6.2
+lerna notice filter excluding "@cumulus/cumulus-integration-tests"
+lerna info filter [ '!@cumulus/cumulus-integration-tests' ]
+
+ >  Lerna (powered by Nx)   Running target test:ci for 54 projects:
+
+    - @cumulus/db-provision-user-database-lambda
+    - @cumulus/dla-migration-lambda
+    - @cumulus/migration-helper-async-operation
+    - @cumulus/sqs-message-remover-lambda
+    - @cumulus/api-client
+    - @cumulus/api
+    - @cumulus/async-operations
+    - @cumulus/aws-client
+    - @cumulus/checksum
+    - @cumulus/cmr-client
+    - @cumulus/cmrjs
+    - @cumulus/collection-config-store
+    - @cumulus/common
+    - @cumulus/db
+    - @cumulus/distribution-utils
+    - @cumulus/es-client
+    - @cumulus/ingest
+    - @cumulus/integration-tests
+    - @cumulus/launchpad-auth
+    - @cumulus/logger
+    - @cumulus/lzards-api-client
+    - @cumulus/message
+    - @cumulus/oauth-client
+    - @cumulus/object-store
+    - @cumulus/pvl
+    - @cumulus/s3-credentials-endpoint
+    - @cumulus/schemas
+    - @cumulus/sftp-client
+    - @cumulus/tea-map-cache
+    - @cumulus/tf-inventory
+    - @cumulus/ecs-async-operation
+    - @cumulus/unit-error-analysis
+    - @cumulus/add-missing-file-checksums
+    - @cumulus/discover-granules
+    - @cumulus/discover-pdrs
+    - @cumulus/files-to-granules
+    - @cumulus/hello-world
+    - @cumulus/hyrax-metadata-updates
+    - @cumulus/lzards-backup
+    - @cumulus/move-granules
+    - @cumulus/orca-copy-to-archive-adapter
+    - @cumulus/orca-recovery-adapter
+    - @cumulus/parse-pdr
+    - @cumulus/pdr-status-check
+    - @cumulus/post-to-cmr
+    - @cumulus/queue-granules
+    - @cumulus/queue-pdrs
+    - @cumulus/queue-workflow
+    - @cumulus/send-pan
+    - @cumulus/sf-sqs-report
+    - @cumulus/sync-granule
+    - @cumulus/update-cmr-access-constraints
+    - @cumulus/update-granules-cmr-metadata-file-links
+    - @cumulus/s3-replicator
+
+ 
+
+> @cumulus/logger:"test:ci"
+
+@cumulus/logger: > @cumulus/logger@18.2.0 test:ci
+@cumulus/logger: > ../../scripts/run_package_ci_unit.sh
+@cumulus/logger: > @cumulus/logger@18.2.0 test:coverage
+@cumulus/logger: > ../../node_modules/.bin/nyc npm test
+@cumulus/logger: > @cumulus/logger@18.2.0 test
+@cumulus/logger: > ../../node_modules/.bin/ava
+@cumulus/logger:   [32m✔[39m buildMessage [90m[2m›[22m[39m buildMessage() returns the correct message
+@cumulus/logger:   [32m✔[39m buildMessage [90m[2m›[22m[39m buildMessage() returns the correct level
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m sender defaults to "unknown"
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.info() accepts placeholder arguments
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.info() creates the expected log entry
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.info() logs executions if specified
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.info() logs granules if specified
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.info() logs parentArn if specified
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.info() logs stackName if specified
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.info() logs version if specified
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.info() logs asyncOperationId if specified
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.info() ignores unknown keys
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.error() creates the expected log entry
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.error() supports templates when an Error object is not passed
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.error() supports templates when an Error object is passed
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.error() logs info about an Error
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.error() can handle just an Error
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.debug() creates the expected log entry
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.warn() creates the expected log entry
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.fatal() creates the expected log entry
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.trace() creates the expected log entry
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.infoWithAdditionalKeys() logs the specified keys
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.infoWithAdditionalKeys() does not overwrite the standard keys
+@cumulus/logger:   [32m✔[39m index [90m[2m›[22m[39m Logger.info() allows an empty message to be logged
+@cumulus/logger:   [90m─[39m
+@cumulus/logger:   [32m24 tests passed[39m
+@cumulus/logger: ----------|---------|----------|---------|---------|-------------------
+@cumulus/logger: File      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+@cumulus/logger: ----------|---------|----------|---------|---------|-------------------
+@cumulus/logger: [32;1mAll files[0m | [32;1m    100[0m | [32;1m   90.47[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/logger: [32;1m index.ts[0m | [32;1m    100[0m | [32;1m   90.47[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m70,146           [0m 
+@cumulus/logger: ----------|---------|----------|---------|---------|-------------------
+
+> @cumulus/schemas:"test:ci"
+
+@cumulus/schemas: > @cumulus/schemas@18.2.0 test:ci
+@cumulus/schemas: > ../../scripts/run_package_ci_unit.sh
+@cumulus/schemas: > @cumulus/schemas@18.2.0 test:coverage
+@cumulus/schemas: > ../../node_modules/.bin/nyc npm test
+@cumulus/schemas: > @cumulus/schemas@18.2.0 test
+@cumulus/schemas: > ../../node_modules/.bin/ava
+@cumulus/schemas:   [32m✔[39m templateJsonSchema correctly updates schema template
+@cumulus/schemas:   [32m✔[39m templateJsonSchemaWithFiles correctly inserts file schema to template
+@cumulus/schemas:   [90m─[39m
+@cumulus/schemas:   [32m2 tests passed[39m
+@cumulus/schemas: ---------------------|---------|----------|---------|---------|-------------------
+@cumulus/schemas: File                 | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+@cumulus/schemas: ---------------------|---------|----------|---------|---------|-------------------
+@cumulus/schemas: [32;1mAll files           [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/schemas: [32;1m generate-schemas.ts[0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/schemas: ---------------------|---------|----------|---------|---------|-------------------
+
+> @cumulus/checksum:"test:ci"
+
+@cumulus/checksum: > @cumulus/checksum@18.2.0 test:ci
+@cumulus/checksum: > ../../scripts/run_package_ci_unit.sh
+@cumulus/checksum: > @cumulus/checksum@18.2.0 test:coverage
+@cumulus/checksum: > ../../node_modules/.bin/nyc npm test
+@cumulus/checksum: > @cumulus/checksum@18.2.0 test
+@cumulus/checksum: > ../../node_modules/.bin/ava
+@cumulus/checksum:   [32m✔[39m normalizeHashAlgorithm returns expected values
+@cumulus/checksum:   [32m✔[39m generateChecksumFromStream returns correct md5 for file stream
+@cumulus/checksum:   [32m✔[39m generateChecksumFromStream returns correct cksum for file stream
+@cumulus/checksum:   [90m─[39m
+@cumulus/checksum:   [32m3 tests passed[39m
+@cumulus/checksum: -------------|---------|----------|---------|---------|-------------------
+@cumulus/checksum: File         | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+@cumulus/checksum: -------------|---------|----------|---------|---------|-------------------
+@cumulus/checksum: [32;1mAll files   [0m | [32;1m  93.93[0m | [32;1m      80[0m | [32;1m  83.33[0m | [32;1m   93.1[0m | [31;1m                 [0m 
+@cumulus/checksum: [32;1m checksum.ts[0m | [32;1m    100[0m | [32;1m   88.88[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m34               [0m 
+@cumulus/checksum: [32;1m index.ts   [0m | [32;1m    100[0m | [32;1m     100[0m | [33;1m     50[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/checksum: [33;1m validate.ts[0m | [33;1m     50[0m | [31;1m       0[0m | [31;1m      0[0m | [33;1m     50[0m | [31;1m22-23            [0m 
+@cumulus/checksum: -------------|---------|----------|---------|---------|-------------------
+
+> @cumulus/aws-client:"test:ci"
+
+@cumulus/aws-client: > @cumulus/aws-client@18.2.0 test:ci
+@cumulus/aws-client: > ../../scripts/run_package_ci_unit.sh
+@cumulus/aws-client: > @cumulus/aws-client@18.2.0 test:coverage
+@cumulus/aws-client: > ../../node_modules/.bin/nyc npm test
+@cumulus/aws-client: > @cumulus/aws-client@18.2.0 test
+@cumulus/aws-client: > ../../node_modules/.bin/ava
+@cumulus/aws-client:   [32m✔[39m CloudFormationGateway [90m[2m›[22m[39m getStackStatus returns the correct stack status
+@cumulus/aws-client: {"level":"debug","message":"ThrottlingException when calling cloudformation.describeStacks(), will retry.","sender":"aws-client/CloudFormationGateway","timestamp":"2024-05-16T19:17:18.807Z"}
+@cumulus/aws-client:   [32m✔[39m SNS [90m[2m›[22m[39m createSnsTopic creates a topic and returns its ARN
+@cumulus/aws-client:   [32m✔[39m SQS [90m[2m›[22m[39m parseSQSMessageBody parses messages correctly
+@cumulus/aws-client:   [32m✔[39m SQS [90m[2m›[22m[39m getQueueNameFromUrl extracts queue name from a queue URL
+@cumulus/aws-client:   [32m✔[39m SQS [90m[2m›[22m[39m isSQSRecordLike filters correctly for sqs record shape
+@cumulus/aws-client:   [32m✔[39m KMS [90m[2m›[22m[39m decryptBase64String() throws an error if value is not encrypted [90m[2m(412ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m CloudFormation [90m[2m›[22m[39m describeCfStack() throws an exception for stack that does not exist [90m[2m(761ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m s3Join behaves as expected
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getFileBucketAndKey parses bucket and key
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getFileBucketAndKey throws UnparsableFileLocationError if location cannot be parsed
+@cumulus/aws-client:   [32m✔[39m CloudFormation [90m[2m›[22m[39m getCfStackParameterValues() returns empty object if no stack is found [90m[2m(811ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m SQS [90m[2m›[22m[39m sendSQSMessage logs errors [90m[2m(825ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m CloudFormationGateway [90m[2m›[22m[39m getStackStatus will retry if a throttling exception is encountered [90m[2m(1s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m KMS [90m[2m›[22m[39m decryptBase64String() properly decrypts a value [90m[2m(1.1s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m KMS [90m[2m›[22m[39m createKey() creates a key [90m[2m(1.1s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m KMS [90m[2m›[22m[39m encrypt() properly encrypts a value [90m[2m(1.2s)[22m[39m
+@cumulus/aws-client: {"level":"info","message":"Executing signGetObject with objectUrl: http://example.com, options: {}, queryParams: {}","sender":"@cumulus/aws-client/S3ObjectStore","timestamp":"2024-05-16T19:17:19.891Z"}
+@cumulus/aws-client:   [32m✔[39m S3ObjectStore [90m[2m›[22m[39m S3ObjectStore.signGetObject throws TypeError when URL is not valid
+@cumulus/aws-client: (node:62576) DeprecationWarning: {"level":"warn","message":"@cumulus/aws-client/S3.getS3Object is deprecated after version 2.0.1 and will be removed in a future release. Use @cumulus/aws-client/S3.getObject or @cumulus/aws-client/S3.waitForObject instead.","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:18.870Z"}
+@cumulus/aws-client: (Use `node --trace-deprecation ...` to show where the warning was created)
+@cumulus/aws-client: {"level":"info","message":"Executing signGetObject with objectUrl: s3://25e733436f/ab6d722b00, options: {}, queryParams: {}","sender":"@cumulus/aws-client/S3ObjectStore","timestamp":"2024-05-16T19:17:19.893Z"}
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m calculateObjectHash() calculates the correct hash [90m[2m(204ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m streamS3Upload() throws error if upload stream errors [90m[2m(205ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getS3Object() immediately throws an exception if the requested bucket does not exist [90m[2m(993ms)[22m[39m
+@cumulus/aws-client: {"level":"debug","message":"getS3Object('8b3f6d15d0', '7258c02d9b') failed with 5 retries left: The specified key does not exist.","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:20.840Z"}
+@cumulus/aws-client:   [32m✔[39m S3ObjectStore [90m[2m›[22m[39m S3ObjectStore.signGetObject throws NotFound when object is not found [90m[2m(955ms)[22m[39m
+@cumulus/aws-client: {"level":"debug","message":"getS3Object('8b3f6d15d0', 'asdf') failed with 0 retries left: The specified key does not exist.","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:20.865Z"}
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getS3Object() immediately throws an exception if the requested key does not exist [90m[2m(1.1s)[22m[39m
+@cumulus/aws-client: {"level":"debug","message":"getS3Object('8b3f6d15d0', 'does-not-exist') failed with 1 retries left: The specified key does not exist.","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:20.871Z"}
+@cumulus/aws-client: {"level":"info","message":"Executing signHeadObject with objectUrl: s3://25e733436f/2b57f261b0, options: {}, queryParams: {\"A-userid\":\"user\"}","sender":"@cumulus/aws-client/S3ObjectStore","timestamp":"2024-05-16T19:17:20.903Z"}
+@cumulus/aws-client:   [32m✔[39m S3ObjectStore [90m[2m›[22m[39m S3ObjectStore.signHeadObject() returns a signed url with params and expiration time [90m[2m(1s)[22m[39m
+@cumulus/aws-client: {"level":"debug","message":"Signed HeadObject request URL: http://127.0.0.1:4566/25e733436f/2b57f261b0?A-userid=user&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=my-access-key-id%2F20240516%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240516T191720Z&X-Amz-Expires=1000&X-Amz-Signature=703a51b0dcb600fc55247af961124c8f6d6b2333cb72f7dedba60dd1d3eb801c&X-Amz-SignedHeaders=host","sender":"@cumulus/aws-client/S3ObjectStore","timestamp":"2024-05-16T19:17:20.909Z"}
+@cumulus/aws-client: {"level":"info","message":"Executing signGetObject with objectUrl: s3://25e733436f/3d665d8127, options: {}, queryParams: {}","sender":"@cumulus/aws-client/S3ObjectStore","timestamp":"2024-05-16T19:17:20.921Z"}
+@cumulus/aws-client: {"level":"info","message":"Executing signHeadObject with objectUrl: s3://25e733436f/29e0bb62f8, options: {}, queryParams: undefined","sender":"@cumulus/aws-client/S3ObjectStore","timestamp":"2024-05-16T19:17:20.925Z"}
+@cumulus/aws-client:   [32m✔[39m S3ObjectStore [90m[2m›[22m[39m S3ObjectStore.signHeadObject() returns a signed url [90m[2m(1s)[22m[39m
+@cumulus/aws-client: {"level":"debug","message":"Signed HeadObject request URL: http://127.0.0.1:4566/25e733436f/29e0bb62f8?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=my-access-key-id%2F20240516%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240516T191720Z&X-Amz-Expires=3600&X-Amz-Signature=69ef9cffe8f05cdd73439d00c2c71e935fc007076daa7ad31e45b4d64fc08c88&X-Amz-SignedHeaders=host","sender":"@cumulus/aws-client/S3ObjectStore","timestamp":"2024-05-16T19:17:20.929Z"}
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m fileExists() correctly returns false for non-existent file [90m[2m(1.1s)[22m[39m
+@cumulus/aws-client: {"level":"info","message":"Executing signGetObject with objectUrl: s3://25e733436f/2e8c186799, options: {}, queryParams: {\"A-userid\":\"joe\"}","sender":"@cumulus/aws-client/S3ObjectStore","timestamp":"2024-05-16T19:17:20.945Z"}
+@cumulus/aws-client:   [32m✔[39m Kinesis [90m[2m›[22m[39m describeStream returns stream on retry [90m[2m(306ms)[22m[39m
+@cumulus/aws-client: {"level":"warn","message":"Queue 77cb60768e does not exist","sender":"@cumulus/aws-client/SQS","timestamp":"2024-05-16T19:17:21.211Z"}
+@cumulus/aws-client:   [32m✔[39m S3ListObjectsV2Queue [90m[2m›[22m[39m S3ListObjectsV2Queue.peek() returns the next object but does not remove it from the queue [90m[2m(1.4s)[22m[39m
+@cumulus/aws-client: {"level":"info","message":"{ loaded: 6, total: 6, part: 1, Key: 'f65ef', Bucket: '8b3f6d15d0' }","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:21.234Z"}
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m promiseS3Upload() works and returns expected parameters [90m[2m(1.4s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m client respects AWS_DEFAULT_REGION when creating service clients
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m client defaults region to us-east-1 if AWS_DEFAULT_REGION env var is an empty string
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m client respects AWS_REGION when creating service clients
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m client defaults region to us-east-1 if no env var is not set
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m client defaults region to us-east-1 if AWS_REGION env var is an empty string
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m client memoizes same service with no arguments correctly
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m client memoizes same service with same arguments correctly
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m client does not memoize same service with different versions
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m client does not memoize service with different arguments
+@cumulus/aws-client: {"level":"info","message":"{ loaded: 5, total: 5, part: 1, Key: 'cdc50', Bucket: '8b3f6d15d0' }","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:21.241Z"}
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m client does not memoize different services with same arguments
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m awsClient() respects configuration
+@cumulus/aws-client:   [32m✔[39m client [90m[2m›[22m[39m awsClient() respects override configuration
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 10,\n  total: 10,\n  part: 1,\n  Key: '0eea136e0b',\n  Bucket: '8b3f6d15d0'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:21.296Z"}
+@cumulus/aws-client: {"level":"debug","message":"Signed GetObject request URL: http://127.0.0.1:4566/25e733436f/3d665d8127?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=my-access-key-id%2F20240516%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240516T191721Z&X-Amz-Expires=3600&X-Amz-Signature=60ede4e2e4a2560add7fa797c9a56e95379c7de4bdcfdf7534bea82d1f445098&X-Amz-SignedHeaders=host&x-id=GetObject","sender":"@cumulus/aws-client/S3ObjectStore","timestamp":"2024-05-16T19:17:21.353Z"}
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m s3ObjectExists() returns false for non-existent file [90m[2m(1.6s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m DynamoDb [90m[2m›[22m[39m DynamoDb.get() throws general error from failure on client.get
+@cumulus/aws-client: {"level":"debug","message":"Signed GetObject request URL: http://127.0.0.1:4566/25e733436f/2e8c186799?A-userid=joe&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=my-access-key-id%2F20240516%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240516T191721Z&X-Amz-Expires=1000&X-Amz-Signature=81fd2ac97810108e4abd2d59cfcd1297e71954c8e0cc10056f7203f065b39e73&X-Amz-SignedHeaders=host&x-id=GetObject","sender":"@cumulus/aws-client/S3ObjectStore","timestamp":"2024-05-16T19:17:21.433Z"}
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m downloadS3File rejects promise if key not found [90m[2m(1.7s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getS3Object() returns an existing S3 object [90m[2m(1.8s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getObjectSize() returns the size of an object [90m[2m(1.8s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getTextObject() returns the contents of an S3 object [90m[2m(1.8s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getObjectReadStream() returns a readable stream for the requested object [90m[2m(1.8s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getJsonS3Object() returns the JSON-parsed contents of an S3 object [90m[2m(1.9s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m uploadS3FileStream() respects S3 configuration parameters [90m[2m(1.9s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m SQS [90m[2m›[22m[39m sqsQueueExists detects if the queue does not exist or is not accessible [90m[2m(2.8s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m Kinesis [90m[2m›[22m[39m describeStream returns the stream description [90m[2m(857ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m streamS3Upload() uploads contents of stream to S3 [90m[2m(2s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m Kinesis [90m[2m›[22m[39m describeStream throws error for non-existent stream if retries are disabled [90m[2m(970ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m createBucket() creates a bucket [90m[2m(2.3s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m CloudFormation [90m[2m›[22m[39m getCfStackParameterValues() returns requested stack parameters [90m[2m(3s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m putFile() uploads a file to S3 [90m[2m(2.3s)[22m[39m
+@cumulus/aws-client: {"level":"info","message":"Faking Lambda invocation for 4faf79edf5","sender":"aws-client/Lambda","timestamp":"2024-05-16T19:17:22.067Z"}
+@cumulus/aws-client:   [32m✔[39m S3ObjectStore [90m[2m›[22m[39m S3ObjectStore.signGetObject returns a signed url [90m[2m(2.1s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m s3ObjectExists() returns true for existing file [90m[2m(2.3s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m downloadS3File resolves filepath if key is found [90m[2m(2.3s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3ObjectStore [90m[2m›[22m[39m S3ObjectStore.signGetObject returns a signed url with params and expiration time [90m[2m(2.1s)[22m[39m
+@cumulus/aws-client: {"level":"debug","message":"getS3Object('8b3f6d15d0', '7258c02d9b') failed with 4 retries left: The specified key does not exist.","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:22.107Z"}
+@cumulus/aws-client: {"level":"debug","message":"getS3Object('8b3f6d15d0', 'does-not-exist') failed with 0 retries left: The specified key does not exist.","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:22.181Z"}
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getS3Object() throws an exception if the requested key does not exist [90m[2m(2.4s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m fileExists() correctly returns head object response for existing file [90m[2m(2.4s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m DynamoDbSearchQueue [90m[2m›[22m[39m DynamoDbSearchQueue.peek() returns the next item but does not remove it from the queue [90m[2m(984ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m CloudFormation [90m[2m›[22m[39m describeCfStackResources() returns resources for stack [90m[2m(3.4s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m s3() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m apigateway() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m cf() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m cloudwatchevents() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m dynamoDb() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m dynamodbDocClient() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m dynamodbstreams() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m ecs() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m ec2() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m es() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m kinesis() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m kms() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m lambda() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m secretsManager() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m sfn() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m sns() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m sqs() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m services [90m[2m›[22m[39m sts() service defaults to localstack in test mode
+@cumulus/aws-client:   [32m✔[39m Lambda [90m[2m›[22m[39m create, invoke and delete function [90m[2m(3.7s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m CloudFormation [90m[2m›[22m[39m getCfStackParameterValues() returns object excluding keys for missing parameters [90m[2m(3.5s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getExecutionHistory() retries if a ThrottlingException occurs [90m[2m(1s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getExecutionHistory() returns non-paginated list of events
+@cumulus/aws-client:   [32m✔[39m CloudFormation [90m[2m›[22m[39m describeCfStack() returns the stack information [90m[2m(3.6s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m validateS3ObjectChecksum throws InvalidChecksum error on bad checksum [90m[2m(2.8s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m validateS3ObjectChecksum returns true for good checksum [90m[2m(2.8s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m deleteS3Objects() deletes s3 objects [90m[2m(2.9s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3ListObjectsV2Queue [90m[2m›[22m[39m S3ListObjectsV2Queue.shift() returns the next object and removes it from the queue [90m[2m(275ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m DynamoDb [90m[2m›[22m[39m DynamoDb.scan() properly returns all paginated results [90m[2m(1.3s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m listS3ObjectsV2 handles non-truncated case [90m[2m(3s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m listS3ObjectsV2 handles truncated case [90m[2m(3.2s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m DynamoDb [90m[2m›[22m[39m DynamoDb.parallelScan() properly returns all results [90m[2m(645ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m DynamoDbSearchQueue [90m[2m›[22m[39m DynamoDbSearchQueue.shift() returns the next object and removes it from the queue [90m[2m(294ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getExecutionHistory() returns full, paginated list of events [90m[2m(1s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3ListObjectsV2Queue [90m[2m›[22m[39m S3ListObjectsV2Queue can handle paging [90m[2m(600ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getS3Object() will retry if the requested key does not exist [90m[2m(4.3s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m headObject() will retry if the requested key does not exist [90m[2m(4.4s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m DynamoDbSearchQueue [90m[2m›[22m[39m DynamoDbSearchQueue can handle paging [90m[2m(574ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m DynamoDb [90m[2m›[22m[39m DynamoDb.parallelScan() retries on DynamoDB scan failure [90m[2m(1s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m DynamoDb [90m[2m›[22m[39m DynamoDb.get() throws RecordDoesNotExist when item does not exist
+@cumulus/aws-client:   [32m✔[39m DynamoDb [90m[2m›[22m[39m DynamoDb.get() returns an existing item [90m[2m(112ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m describeExecution() retries if a ThrottlingException occurs [90m[2m(1s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m DynamoDbSearchQueue [90m[2m›[22m[39m DynamoDbSearchQueue returns results with searchType set to "query" [90m[2m(559ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m utils [90m[2m›[22m[39m better stack traces [90m[2m(112ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m listExecutions() retries if a ThrottlingException occurs [90m[2m(1s)[22m[39m
+@cumulus/aws-client: Are you using a Stream of unknown length as the Body of a PutObject request? Consider using Upload instead from @aws-sdk/lib-storage.
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getObject [90m[2m›[22m[39m getObject() returns a NoSuchBucket code if the bucket does not exist [90m[2m(227ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getObject [90m[2m›[22m[39m getObject() returns a NoSuchKey code if the object does not exist [90m[2m(355ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m getObject [90m[2m›[22m[39m getObject() returns an existing S3 object [90m[2m(383ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m describeStateMachine() retries if a ThrottlingException occurs [90m[2m(1s)[22m[39m
+@cumulus/aws-client: (node:62576) DeprecationWarning: {"level":"warn","message":"@cumulus/aws-client/S3.getS3Object is deprecated after version 2.0.1 and will be removed in a future release. Use @cumulus/aws-client/S3.getObject or @cumulus/aws-client/S3.waitForObject instead.","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:26.119Z"}
+@cumulus/aws-client: (Use `node --trace-deprecation ...` to show where the warning was created)
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m moveObject [90m[2m›[22m[39m moveObject() moves a 0 byte file [90m[2m(337ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m moveObject [90m[2m›[22m[39m moveObject() deletes the source file [90m[2m(465ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m moveObject [90m[2m›[22m[39m moveObject() copies the source file to the destination [90m[2m(527ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m parseS3Uri [90m[2m›[22m[39m parseS3Uri('s3://bucket/key/asdf') produces the expected output
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m parseS3Uri [90m[2m›[22m[39m parseS3Uri('s3://bucket/key') produces the expected output
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m parseS3Uri [90m[2m›[22m[39m parseS3Uri('s3://bucket/key/') produces the expected output
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m parseS3Uri [90m[2m›[22m[39m parseS3Uri('s3://bucket/') produces the expected output
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m parseS3Uri [90m[2m›[22m[39m parseS3Uri('s3://bucket') throws a TypeError
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m parseS3Uri [90m[2m›[22m[39m parseS3Uri('http://asdf') throws a TypeError
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m parseS3Uri [90m[2m›[22m[39m parseS3Uri('asdf') throws a TypeError
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 5,\n  total: 5,\n  part: 1,\n  Key: 'source-key-442995',\n  Bucket: 'source-bucket-a94020'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:27.074Z"}
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 10,\n  total: 10,\n  part: 1,\n  Key: 'source-key-1973c3',\n  Bucket: 'source-bucket-a94020'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:27.079Z"}
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 10,\n  total: 10,\n  part: 1,\n  Key: 'source-key-de5411',\n  Bucket: 'source-bucket-999628'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:27.437Z"}
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m multipartCopyObject [90m[2m›[22m[39m multipartCopyObject() copies content type [90m[2m(615ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m multipartCopyObject [90m[2m›[22m[39m multipartCopyObject() sets the object's ACL [90m[2m(619ms)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m multipartCopyObjectTagging [90m[2m›[22m[39m multipartCopyObject() copies tags if copyTags=true [90m[2m(429ms)[22m[39m
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 10,\n  total: 10,\n  part: 1,\n  Key: 'source-key-599148',\n  Bucket: 'source-bucket-999628'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:28.000Z"}
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 5242880,\n  total: 0,\n  part: 1,\n  Key: 'source-key-aa7277',\n  Bucket: 'source-bucket-a94020'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:28.046Z"}
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 5242880,\n  total: 0,\n  part: 1,\n  Key: 'source-key-8a7a43',\n  Bucket: 'source-bucket-a94020'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:28.083Z"}
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m multipartCopyObjectTagging [90m[2m›[22m[39m multipartCopyObject() does not copy tags if copyTags=false [90m[2m(319ms)[22m[39m
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 6291456,\n  total: 0,\n  part: 4,\n  Key: 'source-key-aa7277',\n  Bucket: 'source-bucket-a94020'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:28.127Z"}
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 6291456,\n  total: 0,\n  part: 4,\n  Key: 'source-key-8a7a43',\n  Bucket: 'source-bucket-a94020'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:28.155Z"}
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 10,\n  total: 10,\n  part: 1,\n  Key: 'source-key-87a31e',\n  Bucket: 'source-bucket-999628'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:28.161Z"}
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m multipartCopyObjectAbort [90m[2m›[22m[39m multipartCopyObject() aborts the upload if something fails
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m waitForObject [90m[2m›[22m[39m waitForObject() returns the requested object
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m waitForObject [90m[2m›[22m[39m waitForObject() does not retry if the requested bucket does not exist
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m waitForObject [90m[2m›[22m[39m waitForObject() retries if the requested object does not exist
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m waitForObject [90m[2m›[22m[39m waitForObject() retries if the wrong etag was returned
+@cumulus/aws-client:   [32m✔[39m lib [90m[2m›[22m[39m S3MultipartUploads [90m[2m›[22m[39m createMultipartChunks(0) returns the correct chunks
+@cumulus/aws-client:   [32m✔[39m lib [90m[2m›[22m[39m S3MultipartUploads [90m[2m›[22m[39m createMultipartChunks(9, 10) returns the correct chunks
+@cumulus/aws-client:   [32m✔[39m lib [90m[2m›[22m[39m S3MultipartUploads [90m[2m›[22m[39m createMultipartChunks(10, 10) returns the correct chunks
+@cumulus/aws-client:   [32m✔[39m lib [90m[2m›[22m[39m S3MultipartUploads [90m[2m›[22m[39m createMultipartChunks(11, 10) returns the correct chunks
+@cumulus/aws-client:   [32m✔[39m lib [90m[2m›[22m[39m S3MultipartUploads [90m[2m›[22m[39m createMultipartChunks(12, 10) returns the correct chunks
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m multipartCopyObjectTagging [90m[2m›[22m[39m multipartCopyObject() does not copy tags by default [90m[2m(121ms)[22m[39m
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 11534336,\n  total: 0,\n  part: 2,\n  Key: 'source-key-aa7277',\n  Bucket: 'source-bucket-a94020'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:28.266Z"}
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 11534336,\n  total: 0,\n  part: 2,\n  Key: 'source-key-8a7a43',\n  Bucket: 'source-bucket-a94020'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:28.312Z"}
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 16777216,\n  total: 0,\n  part: 3,\n  Key: 'source-key-aa7277',\n  Bucket: 'source-bucket-a94020'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:28.337Z"}
+@cumulus/aws-client: {"level":"info","message":"{\n  loaded: 16777216,\n  total: 0,\n  part: 3,\n  Key: 'source-key-8a7a43',\n  Bucket: 'source-bucket-a94020'\n}","sender":"aws-client/s3","timestamp":"2024-05-16T19:17:28.355Z"}
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getExecutionStatus() retries if a ThrottlingException occurs in describeExecution, getExecutionHistory and describeStateMachine [90m[2m(2s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m waitForObjectToExist [90m[2m›[22m[39m waitForObjectToExist() retries if the object does not exist
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getExecutionHistory() continues gracefully when sfn().getExecutionHistory returns null [90m[2m(1s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m doesExecutionExist() returns true if the Promise resolves
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m doesExecutionExist() returns false if the Promise rejects with an ExecutionDoesNotExist name
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m doesExecutionExist() throws any non-ExecutionDoesNotExist errors
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m multipartCopyObject [90m[2m›[22m[39m multipartCopyObject() fails when the chunkSize is smaller than the minimum allowed object size [90m[2m(2.5s)[22m[39m
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m executionExists returns false if the execution does not exist
+@cumulus/aws-client:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getExecutionStatus() throws exception if the execution does not exist
+@cumulus/aws-client:   [32m✔[39m S3 [90m[2m›[22m[39m multipartCopyObject [90m[2m›[22m[39m multipartCopyObject() copies a file between buckets [90m[2m(3.1s)[22m[39m
+@cumulus/aws-client:   [90m─[39m
+@cumulus/aws-client:   [32m147 tests passed[39m
+@cumulus/aws-client: ---------------------------|---------|----------|---------|---------|-------------------------------
+@cumulus/aws-client: File                       | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s             
+@cumulus/aws-client: ---------------------------|---------|----------|---------|---------|-------------------------------
+@cumulus/aws-client: [32;1mAll files                 [0m | [32;1m  80.63[0m | [33;1m   61.26[0m | [32;1m  80.11[0m | [33;1m  79.39[0m | [31;1m                             [0m 
+@cumulus/aws-client: [32;1m src                      [0m | [32;1m  80.16[0m | [33;1m   61.11[0m | [33;1m  79.41[0m | [33;1m  78.95[0m | [31;1m                             [0m 
+@cumulus/aws-client: [32;1m  CloudFormation.ts       [0m | [32;1m   90.9[0m | [33;1m    62.5[0m | [32;1m    100[0m | [32;1m  88.23[0m | [31;1m21,59                        [0m 
+@cumulus/aws-client: [32;1m  CloudFormationGateway.ts[0m | [32;1m   87.5[0m | [33;1m      50[0m | [32;1m    100[0m | [32;1m  86.66[0m | [31;1m28,34                        [0m 
+@cumulus/aws-client: [31;1m  CloudwatchEvents.ts     [0m | [31;1m      0[0m | [32;1m     100[0m | [31;1m      0[0m | [31;1m      0[0m | [31;1m6-43                         [0m 
+@cumulus/aws-client: [32;1m  DynamoDb.ts             [0m | [32;1m  88.33[0m | [33;1m   53.33[0m | [32;1m    100[0m | [32;1m  87.71[0m | [31;1m105-111,116,124              [0m 
+@cumulus/aws-client: [33;1m  DynamoDbSearchQueue.ts  [0m | [33;1m  78.57[0m | [33;1m   71.42[0m | [32;1m     80[0m | [33;1m     75[0m | [31;1m39-46                        [0m 
+@cumulus/aws-client: [32;1m  KMS.ts                  [0m | [32;1m   87.5[0m | [33;1m      60[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m30-45                        [0m 
+@cumulus/aws-client: [32;1m  Kinesis.ts              [0m | [32;1m   90.9[0m | [33;1m   66.66[0m | [32;1m    100[0m | [32;1m  88.88[0m | [31;1m27                           [0m 
+@cumulus/aws-client: [33;1m  Lambda.ts               [0m | [33;1m  63.15[0m | [33;1m   57.14[0m | [33;1m     50[0m | [33;1m  58.82[0m | [31;1m17,31-44                     [0m 
+@cumulus/aws-client: [32;1m  S3.ts                   [0m | [32;1m  82.45[0m | [33;1m    59.4[0m | [32;1m  83.75[0m | [32;1m  81.22[0m | [31;1m...-813,846,943,976,1010,1173[0m 
+@cumulus/aws-client: [32;1m  S3ListObjectsV2Queue.ts [0m | [32;1m    100[0m | [32;1m    87.5[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m51                           [0m 
+@cumulus/aws-client: [32;1m  S3ObjectStore.ts        [0m | [32;1m  97.72[0m | [32;1m      80[0m | [32;1m    100[0m | [32;1m  97.72[0m | [31;1m138                          [0m 
+@cumulus/aws-client: [33;1m  SNS.ts                  [0m | [33;1m  68.42[0m | [31;1m       0[0m | [31;1m     25[0m | [33;1m   64.7[0m | [31;1m28-41                        [0m 
+@cumulus/aws-client: [33;1m  SQS.ts                  [0m | [33;1m  61.62[0m | [31;1m   34.61[0m | [31;1m  41.17[0m | [33;1m  55.55[0m | [31;1m...30-147,170-175,186,199-200[0m 
+@cumulus/aws-client:   STS.ts                   |       0 |        0 |       0 |       0 | [31;1m                             [0m 
+@cumulus/aws-client: [31;1m  SecretsManager.ts       [0m | [31;1m      0[0m | [32;1m     100[0m | [31;1m      0[0m | [31;1m      0[0m | [31;1m5-9                          [0m 
+@cumulus/aws-client: [32;1m  StepFunctions.ts        [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                             [0m 
+@cumulus/aws-client: [32;1m  client.ts               [0m | [32;1m    100[0m | [32;1m    87.5[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m22                           [0m 
+@cumulus/aws-client: [31;1m  index.ts                [0m | [31;1m      0[0m | [32;1m     100[0m | [32;1m    100[0m | [31;1m      0[0m | [31;1m1-16                         [0m 
+@cumulus/aws-client: [32;1m  services.ts             [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                             [0m 
+@cumulus/aws-client: [33;1m  utils.ts                [0m | [33;1m  79.31[0m | [33;1m   71.42[0m | [32;1m   87.5[0m | [33;1m     75[0m | [31;1m10-18,42-44                  [0m 
+@cumulus/aws-client: [32;1m src/lib                  [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                             [0m 
+@cumulus/aws-client: [32;1m  S3MultipartUploads.ts   [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                             [0m 
+@cumulus/aws-client: ---------------------------|---------|----------|---------|---------|-------------------------------
+
+> @cumulus/common:"test:ci"
+
+@cumulus/common: > @cumulus/common@18.2.0 test:ci
+@cumulus/common: > ../../scripts/run_package_ci_unit.sh
+@cumulus/common: > @cumulus/common@18.2.0 test:coverage
+@cumulus/common: > ../../node_modules/.bin/nyc npm test
+@cumulus/common: > @cumulus/common@18.2.0 test
+@cumulus/common: > ../../node_modules/.bin/ava
+@cumulus/common:   [32m✔[39m execution-history [90m[2m›[22m[39m getStepExitedEvent returns undefined if task exited event cannot be found
+@cumulus/common:   [32m✔[39m execution-history [90m[2m›[22m[39m getStepExitedEvent returns correct task exited event
+@cumulus/common:   [32m✔[39m execution-history [90m[2m›[22m[39m getTaskExitedEventOutput returns correct output
+@cumulus/common:   [32m✔[39m env [90m[2m›[22m[39m getRequiredEnvVar returns an environment value if defined
+@cumulus/common:   [32m✔[39m env [90m[2m›[22m[39m getRequiredEnvVar throws error if not defined
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m bucket keys are found by bucketName
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m throws error if bucket missing from bucketsConfig
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m throws error if try to get type of non-existing bucket
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m bucket types are found by bucketName
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m bucket object are found by bucketName
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m checks a bucket existence in config
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m checks a bucket key's existence in config
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m bucketsOfType returns a list of buckets of desired type with string input
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m bucketsOfType returns protected and private buckets with array input
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m returns private buckets
+@cumulus/common:   [32m✔[39m BucketsConfig [90m[2m›[22m[39m returns internal buckets
+@cumulus/common:   [32m✔[39m URLUtils [90m[2m›[22m[39m buildURL() returns a correct S3 URL
+@cumulus/common:   [32m✔[39m URLUtils [90m[2m›[22m[39m buildURL() returns a correct http URL for port 80
+@cumulus/common:   [32m✔[39m URLUtils [90m[2m›[22m[39m buildURL() returns a correct http URL for a non-standard port
+@cumulus/common:   [32m✔[39m URLUtils [90m[2m›[22m[39m buildURL() returns a correct http URL for a port specified as a string
+@cumulus/common:   [32m✔[39m URLUtils [90m[2m›[22m[39m buildURL() returns the correct path with a single
+@cumulus/common:   [32m✔[39m URLUtils [90m[2m›[22m[39m buildURL() returns the correct path with multiple paths
+@cumulus/common:   [32m✔[39m URLUtils [90m[2m›[22m[39m buildURL() normalizes slashes in paths
+@cumulus/common: {"level":"error","message":"Could not parse 'message'","sender":"unknown","timestamp":"2024-05-16T19:17:34.325Z"}
+@cumulus/common:   [32m✔[39m sns-event [90m[2m›[22m[39m isSnsEvent returns false for non-SNS events
+@cumulus/common:   [32m✔[39m sns-event [90m[2m›[22m[39m getSnsEventMessageObject() returns default object
+@cumulus/common:   [32m✔[39m sns-event [90m[2m›[22m[39m getSnsEventMessageObject() returns correct object
+@cumulus/common:   [32m✔[39m sns-event [90m[2m›[22m[39m getSnsEventMessageObject() returns null for non-JSON string message
+@cumulus/common:   [32m✔[39m cloudwatch-event [90m[2m›[22m[39m isTerminalSfStatus returns true for terminal Step Function statuses
+@cumulus/common:   [32m✔[39m cloudwatch-event [90m[2m›[22m[39m isTerminalSfStatus returns false for non-terminal Step Function statuses
+@cumulus/common:   [32m✔[39m cloudwatch-event [90m[2m›[22m[39m isFailedSfStatus returns true for failed Step Function statuses
+@cumulus/common:   [32m✔[39m cloudwatch-event [90m[2m›[22m[39m isFailedSfStatus returns false for failed Step Function statuses
+@cumulus/common:   [32m✔[39m util [90m[2m›[22m[39m omitDeepBy returns new object when properties recursively removed based on predictate function
+@cumulus/common:   [32m✔[39m key-pair-provider [90m[2m›[22m[39m retrieveKey() correctly retrieves key from s3
+@cumulus/common:   [90m─[39m
+@cumulus/common:   [32m33 tests passed[39m
+@cumulus/common: ----------------------|---------|----------|---------|---------|----------------------------
+@cumulus/common: File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s          
+@cumulus/common: ----------------------|---------|----------|---------|---------|----------------------------
+@cumulus/common: [33;1mAll files            [0m | [33;1m  68.35[0m | [33;1m   52.63[0m | [33;1m  55.73[0m | [33;1m  66.96[0m | [31;1m                          [0m 
+@cumulus/common: [32;1m BucketsConfig.ts    [0m | [32;1m     84[0m | [32;1m     100[0m | [33;1m  73.33[0m | [32;1m     84[0m | [31;1m76,99-109                 [0m 
+@cumulus/common: [33;1m FileUtils.ts        [0m | [33;1m  77.77[0m | [32;1m     100[0m | [31;1m      0[0m | [33;1m  71.42[0m | [31;1m7,10                      [0m 
+@cumulus/common: [32;1m URLUtils.ts         [0m | [32;1m  89.47[0m | [32;1m   84.61[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m52-53                     [0m 
+@cumulus/common: [33;1m cloudwatch-event.ts [0m | [33;1m  52.17[0m | [31;1m       0[0m | [31;1m      0[0m | [31;1m   42.1[0m | [31;1m12,46,60,75-86            [0m 
+@cumulus/common: [32;1m env.ts              [0m | [32;1m    100[0m | [33;1m   66.66[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m5                         [0m 
+@cumulus/common: [32;1m execution-history.ts[0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                          [0m 
+@cumulus/common: [33;1m key-pair-provider.ts[0m | [33;1m  67.64[0m | [31;1m   45.83[0m | [33;1m  66.66[0m | [33;1m  65.57[0m | [31;1m17,21,62,89,93,101,126-168[0m 
+@cumulus/common: [31;1m kms.ts              [0m | [31;1m   23.8[0m | [31;1m       0[0m | [31;1m      0[0m | [31;1m   23.8[0m | [31;1m9-46                      [0m 
+@cumulus/common: [31;1m log.ts              [0m | [31;1m  48.14[0m | [31;1m       0[0m | [31;1m     20[0m | [33;1m  54.16[0m | [31;1m25,34,52,61,70,78,89-103  [0m 
+@cumulus/common: [32;1m sns-event.ts        [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                          [0m 
+@cumulus/common: [33;1m util.ts             [0m | [33;1m  72.22[0m | [33;1m      50[0m | [33;1m   62.5[0m | [33;1m  73.33[0m | [31;1m39-45,60,80               [0m 
+@cumulus/common: ----------------------|---------|----------|---------|---------|----------------------------
+
+> @cumulus/message:"test:ci"
+
+@cumulus/message: > @cumulus/message@18.2.0 test:ci
+@cumulus/message: > ../../scripts/run_package_ci_unit.sh
+@cumulus/message: > @cumulus/message@18.2.0 test:coverage
+@cumulus/message: > ../../node_modules/.bin/nyc npm test
+@cumulus/message: > @cumulus/message@18.2.0 test
+@cumulus/message: > ../../node_modules/.bin/ava
+@cumulus/message:   [32m✔[39m CumulusMessage [90m[2m›[22m[39m isCumulusMessageLike correctly filters for bare cumulus message shape
+@cumulus/message:   [32m✔[39m AsyncOperations [90m[2m›[22m[39m getMessageAsyncOperationId returns correct async operation ID
+@cumulus/message:   [32m✔[39m AsyncOperations [90m[2m›[22m[39m getMessageAsyncOperationId returns undefined if there is no async operation ID
+@cumulus/message:   [32m✔[39m Queue [90m[2m›[22m[39m getQueueUrl returns correct queue URL
+@cumulus/message:   [32m✔[39m Queue [90m[2m›[22m[39m getQueueUrl throws error if queue URL cannot be found
+@cumulus/message:   [32m✔[39m Queue [90m[2m›[22m[39m getMaximumExecutions returns correct value
+@cumulus/message:   [32m✔[39m Queue [90m[2m›[22m[39m getMaximumExecutions throws an error when queue cannot be found in message
+@cumulus/message:   [32m✔[39m Queue [90m[2m›[22m[39m hasQueueAndExecutionLimit returns true if queue name and execution limit exist in message
+@cumulus/message:   [32m✔[39m Queue [90m[2m›[22m[39m hasQueueAndExecutionLimit returns false if queue URL does not exist in message
+@cumulus/message:   [32m✔[39m Queue [90m[2m›[22m[39m hasQueueAndExecutionLimit returns false if execution limit does not exist in message
+@cumulus/message:   [32m✔[39m Collections [90m[2m›[22m[39m getCollectionIdFromMessage returns the correct collection ID
+@cumulus/message:   [32m✔[39m Collections [90m[2m›[22m[39m getCollectionIdFromMessage returns the correct collection ID with trailing underscores
+@cumulus/message:   [32m✔[39m Collections [90m[2m›[22m[39m getCollectionIdFromMessage returns undefined when meta.collection is not set
+@cumulus/message:   [32m✔[39m Collections [90m[2m›[22m[39m getCollectionNameAndVersionFromMessage returns correct info
+@cumulus/message:   [32m✔[39m Collections [90m[2m›[22m[39m getCollectionNameAndVersionFromMessage correctly returns undefined
+@cumulus/message:   [32m✔[39m Collections [90m[2m›[22m[39m constructCollectionId is inverted by deconstructCollectionId
+@cumulus/message:   [32m✔[39m Collections [90m[2m›[22m[39m deconstructCollectionId can decode a collection name that contains trailing underscores.
+@cumulus/message:   [32m✔[39m Collections [90m[2m›[22m[39m deconstructCollectionId throws error if collectionId is undefined
+@cumulus/message:   [32m✔[39m Collections [90m[2m›[22m[39m deconstructCollectionId throws error if collectionId is bad
+@cumulus/message:   [32m✔[39m Collections [90m[2m›[22m[39m deconstructCollectionId throw error if collectionId is not a string
+@cumulus/message:   [32m✔[39m Providers [90m[2m›[22m[39m getMessageProvider returns correct provider
+@cumulus/message:   [32m✔[39m Providers [90m[2m›[22m[39m getMessageProvider returns undefined if there is no provider in the message
+@cumulus/message:   [32m✔[39m Providers [90m[2m›[22m[39m getMessageProviderId returns correct provider ID
+@cumulus/message:   [32m✔[39m Providers [90m[2m›[22m[39m getMessageProviderId returns undefined if there is no provider ID
+@cumulus/message:   [32m✔[39m Providers [90m[2m›[22m[39m isMessageProvider correctly filters for messageProviders
+@cumulus/message:   [32m✔[39m Providers [90m[2m›[22m[39m isMessageWithProvider correctly filters for messgaeWithProvider
+@cumulus/message:   [32m✔[39m utils [90m[2m›[22m[39m parseExecption() returns an empty object if the exception is null or undefined
+@cumulus/message:   [32m✔[39m utils [90m[2m›[22m[39m parseException() returns the exception if it is an object
+@cumulus/message:   [32m✔[39m utils [90m[2m›[22m[39m parseException() returns an Unknown Error object if the exception is not an object
+@cumulus/message:   [32m✔[39m utils [90m[2m›[22m[39m isFileExtensionMatched() checks if the file key has the extension
+@cumulus/message:   [32m✔[39m utils [90m[2m›[22m[39m isFileExtensionMatched() checks if the file name has the extension
+@cumulus/message:   [32m✔[39m utils [90m[2m›[22m[39m isFileExtensionMatched() checks if the file filename has the extension
+@cumulus/message:   [32m✔[39m Build [90m[2m›[22m[39m buildCumulusMeta returns expected object
+@cumulus/message:   [32m✔[39m Build [90m[2m›[22m[39m buildQueueMessageFromTemplate does not overwrite contents from message template
+@cumulus/message:   [32m✔[39m Build [90m[2m›[22m[39m buildQueueMessageFromTemplate returns message with correct payload
+@cumulus/message:   [32m✔[39m Build [90m[2m›[22m[39m buildQueueMessageFromTemplate returns expected message with undefined collection/provider
+@cumulus/message:   [32m✔[39m Build [90m[2m›[22m[39m buildQueueMessageFromTemplate returns expected message with defined collection/provider
+@cumulus/message:   [32m✔[39m Build [90m[2m›[22m[39m buildQueueMessageFromTemplate returns expected message with custom cumulus_meta and meta
+@cumulus/message:   [32m✔[39m Build [90m[2m›[22m[39m buildQueueMessageFromTemplate uses executionNamePrefix
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getExecutionUrlFromArn returns correct URL when a region environment variable is specified
+@cumulus/message: {"level":"info","message":"No PDRs to process on the message","sender":"@cumulus/message/PDRs","timestamp":"2024-05-16T19:17:40.012Z"}
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdr returns correct PDR object
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdr returns undefined if there is no PDR
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m messageHasPdr correctly returns true if there is a PDR
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m messageHasPdr correct returns false if there is no PDR
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrPANSent returns correct value
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrPANSent returns false if there is no PANsent value
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrPANMessage returns correct value
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrPANMessage returns "N/A" if there is no PANMessage value
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrRunningExecutions returns correct number of executions
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrRunningExecutions returns 0 if there are no running executions
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrCompletedExecutions returns correct number of executions
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrCompletedExecutions returns 0 if there are no completed executions
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrFailedExecutions returns correct number of executions
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrFailedExecutions returns 0 if there are no failed executions
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getMessagePdrStats returns correct stats
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m getPdrPercentCompletion returns correct percentage
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m generatePdrApiRecordFromMessage() returns undefined if message.payload.pdr is not set
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m generatePdrApiRecordFromMessage() throws error if message.payload.pdr.name is not set
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m generatePdrApiRecordFromMessage() throws error if message.meta.status is not set
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m generatePdrApiRecordFromMessage() throws error if message.meta.collection is not set
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m generatePdrApiRecordFromMessage() throws error if message.meta.provider is not set
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m generatePdrApiRecordFromMessage() throws error if execution ARN cannot be determined
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m generatePdrApiRecordFromMessage() generates a completed PDR record
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m generatePdrApiRecordFromMessage() generates a failed PDR record
+@cumulus/message:   [32m✔[39m PDRs [90m[2m›[22m[39m generatePdrApiRecordFromMessage() sets PDR properties when included
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getMessageGranules returns granules from payload.granules
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getMessageGranules returns an empty array when granules are absent from message
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleStatus returns workflow status
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleStatus returns status from granule
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleQueryFields returns query fields, if any
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleQueryFields returns undefined
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m messageHasGranules returns undefined if message does not have granules
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m messageHasGranules returns granules object if message has granules
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleTimeToArchive() returns 0 if post_to_cmr_duration is missing from granule
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleTimeToArchive() returns correct duration
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleTimeToPreprocess() returns 0 if sync_granule_duration is missing from granule
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleTimeToPreprocess() returns correct duration
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleProductVolume() returns correct product volume
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleProductVolume() returns correct product volume for large file sizes
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleProcessingTimeInfo() converts input timestamps to standardized format
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleCmrTemporalInfo() converts input CMR timestamps to standardized format
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleCmrTemporalInfo() converts timestamps fetched from CMR to standardized format
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleCmrTemporalInfo() handles empty return from CMR
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m getGranuleCmrTemporalInfo() handles empty return from CMR and gets temporal info from granule object
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m generateGranuleApiRecord() builds granule record with correct processing and temporal info
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m generateGranuleApiRecord() builds successful granule record
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m generateGranuleApiRecord() honors granule.createdAt if it exists
+@cumulus/message:   [32m✔[39m Granules [90m[2m›[22m[39m generateGranuleApiRecord() builds a failed granule record
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getExecutionUrlFromArn returns correct URL when no region environment variable is specified
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageExecutionName throws error if cumulus_meta.execution_name is missing
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageStateMachineArn throws error if cumulus_meta.state_machine is missing
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageExecutionArn returns correct execution ARN for valid message
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageExecutionArn returns null for an invalid message
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getStateMachineArnFromExecutionArn returns correct state machine ARN
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getStateMachineArnFromExecutionArn returns null for no input
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageExecutionParentArn returns correct parent execution ARN
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageExecutionParentArn returns undefined if there is no parent execution ARN
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageCumulusVersion returns correct Cumulus version
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageCumulusVersion returns undefined if there is no cumulus version
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageExecutionOriginalPayload returns original payload when status is running
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageExecutionOriginalPayload returns undefined for non-running execution
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageExecutionFinalPayload returns final payload when status is not running
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m getMessageExecutionFinalPayload returns undefined for running execution
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m generateExecutionApiRecordFromMessage() returns the correct record from workflow message
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m generateExecutionApiRecordFromMessage() throws an exception if the execution ARN cannot be determined
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m generateExecutionApiRecordFromMessage() throws an exception if meta.status is not present
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m generateExecutionApiRecordFromMessage() returns a record with asyncOperationId when available
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m generateExecutionApiRecordFromMessage() returns a record with parentArn when available
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m generateExecutionApiRecordFromMessage() returns a record with tasks when available
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m generateExecutionApiRecordFromMessage() returns a record with type when available
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m generateExecutionApiRecordFromMessage() returns a record with correct payload for non-running messages
+@cumulus/message:   [32m✔[39m Executions [90m[2m›[22m[39m generateExecutionApiRecordFromMessage() returns a record with correct duration for non-running messages
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMetaStatus returns correct status
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMetaStatus returns undefined if there is no status
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMessageWorkflowTasks returns correct map of workflow tasks
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMessageWorkflowTasks returns undefined if there is no task information on the message
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMessageWorkflowStartTime returns correct value
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMessageWorkflowStartTime returns the workflow start time
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMessageWorkflowStartTime throws when a start time is not present in the message
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMessageWorkflowStopTime returns correct value
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMessageWorkflowStopTime returns undefined if there is no stop time
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMessageWorkflowName returns correct value
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getMessageWorkflowName returns undefined if there is no workflow name
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getWorkflowDuration returns correct duration
+@cumulus/message:   [32m✔[39m workflows [90m[2m›[22m[39m getWorkflowDuration 0 if no stop time is provided
+@cumulus/message: {"error":{"name":"Error","message":"No execution arn found","stack":["/Users/ecarton/cumulus/packages/message/src/StepFunctions.ts:45","};"," ^","","Error: No execution arn found","    at getFailedExecutionMessage (/Users/ecarton/cumulus/packages/message/src/StepFunctions.ts:45:3)","    at /Users/ecarton/cumulus/packages/message/tests/test-StepFunctions.js:70:30","    at Test.callFn (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:523:21)","    at Test.run (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:536:23)","    at Runner.runSingle (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:285:33)","    at Runner.runTest (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:367:30)","    at processTicksAndRejections (node:internal/process/task_queues:96:5)","    at async file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:503:24","    at async file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:503:24","    at async file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:503:24"]},"level":"error","message":"getFailedExecution failed to retrieve failure:","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.915Z"}
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getFailedExecutionMessage() returns the input message if there is an error fetching the output of the last failed step
+@cumulus/message: {"level":"warn","message":"No failed step events found in execution arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.918Z"}
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getFailedExecutionMessage() returns the input message when no ActivityFailed or LambdaFunctionFailed events are found in the execution history
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getFailedExecutionMessage() returns the input message with the details from the last failed lambda step event in the exception field if the failed step exited event cannot be found
+@cumulus/message: {"error":{"name":"Error","message":"TaskStateEntered Event Object did not have `stateEnteredEventDetails.name`","stack":["/Users/ecarton/cumulus/packages/message/src/StepFunctions.ts:13","import get from 'lodash/get';","                            ^","","Error: TaskStateEntered Event Object did not have `stateEnteredEventDetails.name`","    at getFailedStepName (/Users/ecarton/cumulus/packages/message/src/StepFunctions.ts:13:30)","    at getFailedExecutionMessage (/Users/ecarton/cumulus/packages/message/src/StepFunctions.ts:45:3)","    at processTicksAndRejections (node:internal/process/task_queues:96:5)","    at async /Users/ecarton/cumulus/packages/message/tests/test-StepFunctions.js:123:24"]},"level":"error","message":"TaskStateEntered Event Object did not have `stateEnteredEventDetails.name`","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.920Z"}
+@cumulus/message: {"level":"info","message":"Failed to determine a failed stepName from execution events.","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.918Z"}
+@cumulus/message: {"level":"info","message":"Could not retrieve output from last failed step in execution arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name, falling back to execution input","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.920Z"}
+@cumulus/message: {"level":"info","message":"Could not find TaskStateExited event after step ID 1 for execution arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.920Z"}
+@cumulus/message: {"error":{"name":"InvalidName","message":"UnknownError","stack":["InvalidName: UnknownError","    at de_InvalidNameRes (/Users/ecarton/cumulus/packages/aws-client/node_modules/@aws-sdk/client-sfn/dist-cjs/index.js:2164:21)","    at de_CommandError (/Users/ecarton/cumulus/packages/aws-client/node_modules/@aws-sdk/client-sfn/dist-cjs/index.js:1965:19)","    at processTicksAndRejections (node:internal/process/task_queues:96:5)","    at async /Users/ecarton/cumulus/packages/aws-client/node_modules/@smithy/middleware-serde/dist-cjs/index.js:35:20","    at async /Users/ecarton/cumulus/packages/aws-client/node_modules/@smithy/core/dist-cjs/index.js:165:18","    at async /Users/ecarton/cumulus/packages/aws-client/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38","    at async /Users/ecarton/cumulus/packages/aws-client/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22","    at <anonymous> (/Users/ecarton/cumulus/packages/aws-client/src/StepFunctions.ts:111:9)","    at async RetryOperation._fn (/Users/ecarton/cumulus/packages/aws-client/node_modules/p-retry/index.js:50:12)"]},"level":"error","message":"getFailedExecution failed to retrieve failure:","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.955Z"}
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getCumulusMessageFromExecutionEvent() returns the failed execution message for a failed event
+@cumulus/message: {"level":"error","message":"Falling back to storing wrapped message after encountering unwrap error SyntaxError: Unexpected token N in JSON at position 0\n    at JSON.parse (<anonymous>)\n    at parseSQSMessageBody (/Users/ecarton/cumulus/packages/aws-client/src/SQS.ts:164:8)\n    at unwrapDeadLetterCumulusMessage (/Users/ecarton/cumulus/packages/message/src/DeadLetterMessage.ts:5:31)\n    at /Users/ecarton/cumulus/packages/message/tests/test-DeadLetterMessage.js:108:21\n    at Test.callFn (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:523:21)\n    at Test.run (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:536:23)\n    at Runner.runSingle (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:285:33)\n    at Runner.runTest (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:367:30)\n    at processTicksAndRejections (node:internal/process/task_queues:96:5)\n    at async Promise.all (index 4) {\"Body\":\"Not a json object\"}","sender":"@cumulus/DeadLetterMessage","timestamp":"2024-05-16T19:17:40.956Z"}
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m pullStepFunctionEvent replaces message key specified by replace.TargetPath with S3 message object
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m pullStepFunctionEvent replaces entire message with S3 message object if replace.TargetPath is not specified
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m isDLQRecordLike correctly filters for DLQ record shaped objects
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m getDLAKey gets an appropriate DLA key, handling missing executionArn and time
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m getDLAKey keeps records unique even when identifiers are non-unique or missing
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m unwrapDeadLetterCumulusMessage returns wrapped message on error
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m unwrapDeadLetterCumulusMessage returns an non-unwrappable message
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m hoistCumulusMessageDetails returns input message intact
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m unwrapDeadLetterCumulusMessage unwraps an SQS message
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m unwrapDeadLetterCumulusMessage unwraps an AWS States message
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m unwrapDeadLetterCumulusMessage unwraps an AWS States message with only input
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m hoistCumulusMessageDetails returns details: collectionId, providerId, granules, time, error, status, executionArn, and stateMachineArn as found moved to top layer
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m hoistCumulusMessageDetails captures outermost error as "error"
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m unwrapDeadLetterCumulusMessage unwraps an AWS states message within an SQS record
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m hoistCumulusMessageDetails returns null for details: collectionId, providerId, granules, time, error, status, executionArn, and stateMachineArn when not found
+@cumulus/message:   [32m✔[39m DeadLetterMessage [90m[2m›[22m[39m hoistCumulusMessageDetails de-nests up to 3 degrees of sqsMessage nestedness with mixed "body" vs "Body
+@cumulus/message: {"level":"error","message":"Falling back to storing wrapped message after encountering unwrap error /Users/ecarton/cumulus/packages/message/src/DeadLetterMessage.ts:5\nimport { uuid } from 'uuidv4';\n                             ^\n\nTypeError: DeadLetter CumulusMessage in unrecognized format\n    at unwrapDeadLetterCumulusMessage (/Users/ecarton/cumulus/packages/message/src/DeadLetterMessage.ts:5:31)\n    at /Users/ecarton/cumulus/packages/message/tests/test-DeadLetterMessage.js:118:21\n    at Test.callFn (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:523:21)\n    at Test.run (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:536:23)\n    at Runner.runSingle (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:285:33)\n    at Runner.runTest (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:367:30)\n    at processTicksAndRejections (node:internal/process/task_queues:96:5)\n    at async Promise.all (index 5)\n    at async file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:532:21\n    at async Runner.start (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:540:15) {\"eventSource\":\"aws:something-strange\",\"contents\":\"{\\\"key\\\":\\\"value\\\"}\"}","sender":"@cumulus/DeadLetterMessage","timestamp":"2024-05-16T19:17:40.961Z"}
+@cumulus/message: {"level":"error","message":"could not parse details from DLQ message body { a: 'b' } expected EventBridgeEvent","sender":"@cumulus/DeadLetterMessage","timestamp":"2024-05-16T19:17:40.962Z"}
+@cumulus/message: {"error":{"name":"Error","message":"No execution arn found","stack":["/Users/ecarton/cumulus/packages/message/src/StepFunctions.ts:45","};"," ^","","Error: No execution arn found","    at getFailedExecutionMessage (/Users/ecarton/cumulus/packages/message/src/StepFunctions.ts:45:3)","    at getCumulusMessageFromExecutionEvent (/Users/ecarton/cumulus/packages/message/src/StepFunctions.ts:45:3)","    at hoistCumulusMessageDetails (/Users/ecarton/cumulus/packages/message/src/DeadLetterMessage.ts:15:55)","    at /Users/ecarton/cumulus/packages/message/tests/test-DeadLetterMessage.js:722:31","    at Array.map (<anonymous>)","    at /Users/ecarton/cumulus/packages/message/tests/test-DeadLetterMessage.js:722:14","    at Test.callFn (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:523:21)","    at Test.run (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:536:23)","    at Runner.runSingle (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:285:33)","    at Runner.runTest (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:367:30)"]},"level":"error","message":"getFailedExecution failed to retrieve failure:","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.967Z"}
+@cumulus/message: (node:62787) DeprecationWarning: uuidv4() is deprecated. Use v4() from the uuid module instead.
+@cumulus/message: (Use `node --trace-deprecation ...` to show where the warning was created)
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m pullStepFunctionEvent throws error if replace.TargetPath cannot be found in the source message
+@cumulus/message: {"level":"info","message":"Retrieving undefined output from {\"Bucket\":\"somebucket\",\"Key\":\"somekey\",\"TargetPath\":\"$\"}","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.990Z"}
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m StepFunctions.parseStepMessage returns correct output if input message refers to a remote S3 message object
+@cumulus/message: {"error":{"name":"Error","message":"TaskStateEntered Event Object did not have `stateEnteredEventDetails.name`","stack":["/Users/ecarton/cumulus/packages/message/src/StepFunctions.ts:13","import get from 'lodash/get';","                            ^","","Error: TaskStateEntered Event Object did not have `stateEnteredEventDetails.name`","    at getFailedStepName (/Users/ecarton/cumulus/packages/message/src/StepFunctions.ts:13:30)","    at /Users/ecarton/cumulus/packages/message/tests/test-StepFunctions.js:389:18","    at Test.callFn (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:523:21)","    at Test.run (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:536:23)","    at Runner.runSingle (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:285:33)","    at Runner.runTest (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:367:30)","    at processTicksAndRejections (node:internal/process/task_queues:96:5)","    at async Promise.all (index 5)","    at async file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:532:21","    at async Runner.start (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:540:15)"]},"level":"error","message":"TaskStateEntered Event Object did not have `stateEnteredEventDetails.name`","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.995Z"}
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getFailedStepName() returns the name of the most recent TaskStateEntered event prior to the Failed event. Ignoring any that TaskStateEntered that happen after the failed event.
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getFailedStepName() returns UnknownFailedStepName if no TaskStateEntered events exist before the failed id.
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m lastFailedEventStep() returns the event for a failed lambda.
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m lastFailedEventStep() returns the event for a failed Activity.
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m lastFailedEventStep() returns undefined if no failed lambda or activities are found.
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m pullStepFunctionEvent returns original message if message does not contain an event.replace key
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m StepFunctions.parseStepMessage parses message correctly
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getFailedExecutionMessage() returns the input message with the details from the last failed activity step event in the exception field if the failed step exited event cannot be found
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getCumulusMessageFromExecutionEvent() returns the event input for a RUNNING event
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getCumulusMessageFromExecutionEvent() returns the event output for a SUCCEEDED event
+@cumulus/message:   [32m✔[39m StepFunctions [90m[2m›[22m[39m getFailedExecutionMessage() returns the Cumulus message from the output of the last failed step with FailedExecutionStepName amended.
+@cumulus/message: {"level":"info","message":"Failed to determine a failed stepName from execution events.","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.993Z"}
+@cumulus/message: {"level":"info","message":"Could not retrieve output from last failed step in execution arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name, falling back to execution input","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.996Z"}
+@cumulus/message: {"level":"info","message":"Could not find TaskStateExited event after step ID 2 for execution arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:my-execution-name","sender":"@cumulus/message/StepFunctions","timestamp":"2024-05-16T19:17:40.996Z"}
+@cumulus/message:   [90m─[39m
+@cumulus/message:   [32m158 tests passed[39m
+@cumulus/message: ----------------------|---------|----------|---------|---------|-------------------
+@cumulus/message: File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+@cumulus/message: ----------------------|---------|----------|---------|---------|-------------------
+@cumulus/message: [32;1mAll files            [0m | [32;1m  96.54[0m | [32;1m   92.47[0m | [32;1m  97.67[0m | [32;1m  97.02[0m | [31;1m                 [0m 
+@cumulus/message: [32;1m AsyncOperations.ts  [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/message: [32;1m Build.ts            [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/message: [32;1m Collections.ts      [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/message: [32;1m CumulusMessage.ts   [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/message: [32;1m DeadLetterMessage.ts[0m | [32;1m  94.73[0m | [32;1m   95.74[0m | [32;1m   92.3[0m | [32;1m  94.18[0m | [31;1m138-139,194-196  [0m 
+@cumulus/message: [32;1m Executions.ts       [0m | [32;1m  95.71[0m | [32;1m   86.95[0m | [32;1m    100[0m | [32;1m  98.21[0m | [31;1m58               [0m 
+@cumulus/message: [32;1m Granules.ts         [0m | [32;1m  91.17[0m | [32;1m   82.92[0m | [32;1m    100[0m | [32;1m  94.44[0m | [31;1m262,267,270      [0m 
+@cumulus/message: [32;1m PDRs.ts             [0m | [32;1m  97.26[0m | [32;1m   96.77[0m | [32;1m   90.9[0m | [32;1m  96.77[0m | [31;1m104,229          [0m 
+@cumulus/message: [32;1m Providers.ts        [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/message: [32;1m Queue.ts            [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/message: [32;1m StepFunctions.ts    [0m | [32;1m  98.92[0m | [32;1m    93.1[0m | [32;1m    100[0m | [32;1m   98.8[0m | [31;1m78               [0m 
+@cumulus/message: [32;1m utils.ts            [0m | [32;1m    100[0m | [32;1m    87.5[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m13               [0m 
+@cumulus/message: [32;1m workflows.ts        [0m | [32;1m  95.45[0m | [33;1m      75[0m | [32;1m    100[0m | [32;1m  93.75[0m | [31;1m52               [0m 
+@cumulus/message: ----------------------|---------|----------|---------|---------|-------------------
+
+> @cumulus/launchpad-auth:"test:ci"
+
+@cumulus/launchpad-auth: > @cumulus/launchpad-auth@18.2.0 test:ci
+@cumulus/launchpad-auth: > ../../scripts/run_package_ci_unit.sh
+@cumulus/launchpad-auth: > @cumulus/launchpad-auth@18.2.0 test:coverage
+@cumulus/launchpad-auth: > ../../node_modules/.bin/nyc npm test
+@cumulus/launchpad-auth: > @cumulus/launchpad-auth@18.2.0 test
+@cumulus/launchpad-auth: > ../../node_modules/.bin/ava
+@cumulus/launchpad-auth: {"level":"debug","message":"LaunchpadToken.requestToken","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:45.767Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"Reading Key: pki_certificate bucket:852590ea53,stack:11db8d4ae7","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:45.776Z"}
+@cumulus/launchpad-auth:   [32m✔[39m LaunchpadToken.requestToken returns token
+@cumulus/launchpad-auth: {"level":"debug","message":"LaunchpadToken.validateToken","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:45.841Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"Reading Key: pki_certificate bucket:852590ea53,stack:11db8d4ae7","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:45.850Z"}
+@cumulus/launchpad-auth:   [32m✔[39m LaunchpadToken.valiateToken returns user info
+@cumulus/launchpad-auth: {"level":"debug","message":"getLaunchpadToken requesting launchpad token","sender":"@cumulus/launchpad-auth","timestamp":"2024-05-16T19:17:45.913Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"LaunchpadToken.requestToken","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:45.913Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"Reading Key: pki_certificate bucket:852590ea53,stack:11db8d4ae7","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:45.921Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"getLaunchpadToken requesting launchpad token","sender":"@cumulus/launchpad-auth","timestamp":"2024-05-16T19:17:46.057Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"LaunchpadToken.requestToken","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:46.057Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"Reading Key: pki_certificate bucket:852590ea53,stack:11db8d4ae7","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:46.065Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"getLaunchpadToken requesting launchpad token","sender":"@cumulus/launchpad-auth","timestamp":"2024-05-16T19:17:46.184Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"LaunchpadToken.requestToken","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:46.184Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"Reading Key: pki_certificate bucket:852590ea53,stack:11db8d4ae7","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:46.196Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"validateLaunchpadToken validating launchpad token","sender":"@cumulus/launchpad-auth","timestamp":"2024-05-16T19:17:46.270Z"}
+@cumulus/launchpad-auth:   [32m✔[39m getLaunchpadToken gets a new token when existing token is expired [90m[2m(366ms)[22m[39m
+@cumulus/launchpad-auth: {"level":"debug","message":"LaunchpadToken.validateToken","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:46.270Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"Reading Key: pki_certificate bucket:852590ea53,stack:11db8d4ae7","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:46.280Z"}
+@cumulus/launchpad-auth:   [32m✔[39m validateLaunchpadToken returns success status when user is in specified group
+@cumulus/launchpad-auth: {"level":"debug","message":"validateLaunchpadToken validating launchpad token","sender":"@cumulus/launchpad-auth","timestamp":"2024-05-16T19:17:46.333Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"LaunchpadToken.validateToken","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:46.333Z"}
+@cumulus/launchpad-auth: {"level":"debug","message":"Reading Key: pki_certificate bucket:852590ea53,stack:11db8d4ae7","sender":"@cumulus/launchpad-auth/LaunchpadToken","timestamp":"2024-05-16T19:17:46.341Z"}
+@cumulus/launchpad-auth:   [32m✔[39m validateLaunchpadToken returns failed status when user is not in specified group
+@cumulus/launchpad-auth:   [90m─[39m
+@cumulus/launchpad-auth:   [32m5 tests passed[39m
+@cumulus/launchpad-auth: -------------------|---------|----------|---------|---------|-------------------
+@cumulus/launchpad-auth: File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+@cumulus/launchpad-auth: -------------------|---------|----------|---------|---------|-------------------
+@cumulus/launchpad-auth: [32;1mAll files         [0m | [32;1m  96.66[0m | [33;1m   77.41[0m | [32;1m    100[0m | [32;1m  96.62[0m | [31;1m                 [0m 
+@cumulus/launchpad-auth: [32;1m LaunchpadToken.ts[0m | [32;1m  97.22[0m | [33;1m      60[0m | [32;1m    100[0m | [32;1m  97.22[0m | [31;1m72               [0m 
+@cumulus/launchpad-auth: [32;1m index.ts         [0m | [32;1m  97.91[0m | [32;1m   89.47[0m | [32;1m    100[0m | [32;1m  97.91[0m | [31;1m160              [0m 
+@cumulus/launchpad-auth: [32;1m utils.ts         [0m | [32;1m  83.33[0m | [33;1m      50[0m | [32;1m    100[0m | [32;1m     80[0m | [31;1m5                [0m 
+@cumulus/launchpad-auth: -------------------|---------|----------|---------|---------|-------------------
+
+> @cumulus/db:"test:ci"
+
+@cumulus/db: > @cumulus/db@18.2.0 test:ci
+@cumulus/db: > ../../scripts/run_package_ci_unit.sh
+@cumulus/db: > @cumulus/db@18.2.0 test:coverage
+@cumulus/db: > ../../node_modules/.bin/nyc npm test
+@cumulus/db: > @cumulus/db@18.2.0 test
+@cumulus/db: > ../../node_modules/.bin/ava
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m errors [90m[2m›[22m[39m isCollisionError returns true if error code maps to expected knex error.code
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m errors [90m[2m›[22m[39m isCollisionError returns false if error code does not map to expected knex error.code
+@cumulus/db:   [32m✔[39m providers [90m[2m›[22m[39m nullifyUndefinedProviderValues sets undefined provider values to "null"
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfigEnv returns the expected configuration from the passed in env object
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfigEnv returns the expected configuration from the passed in env object with undefined port
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m isKnexDebugEnabled() returns true if debugging is enabled
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m isKnexDebugEnabled() returns false if debugging is not enabled
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m canSafelyConvertBigInt() returns true if number is in safe range
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m canSafelyConvertBigInt() throws exception if number exceeds safe range
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m canSafelyConvertBigInt() throws exception for non-numeric string
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m convertIdColumnsToNumber() converts cumulus_id columns to number
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m convertIdColumnsToNumber() throws exception if the value of cumulus_id column exceeds safe range
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m convertIdColumnsToNumber() throws exception if the value of cumulus_id column is non-numeric string
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getSecretConnectionConfig returns a Knex.PgConnectionConfig object
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfig returns the expected configuration when using environment variables
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfig returns the expected configuration when using environment variables and setting DISABLE_PG_SSL to true
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfig returns the expected configuration when using environment variables and setting REJECT_UNAUTHORIZED to false
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getKnexConfig returns an expected default configuration object
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getKnexConfig sets idleTimeoutMillis when env is set
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getKnexConfig sets maxPool size when env is set
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getKnexConfig sets createTimeoutMillis when env is set
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfig returns the expected configuration when using Secrets Manager
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfig returns the expected configuration when using Secrets Manager with disableSSL set to true
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfig returns the expected configuration when using Secrets Manager with disableSSL set to true as string
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfig returns the expected configuration when using Secrets Manager with rejectUnauthorized set to false as string
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfig returns the expected configuration when using Secrets Manager with rejectUnauthorized set to false
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getConnectionConfig returns the expected configuration when using Secrets Manager with no port defined
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getSecretConnectionConfig throws an error on an undefined secret
+@cumulus/db:   [32m✔[39m config [90m[2m›[22m[39m getSecretConnectionConfig throws an error a secret that is missing required values
+@cumulus/db: {"level":"info","message":"Initializing connection pool...","sender":"@cumulus/db/connection","timestamp":"2024-05-16T19:17:55.851Z"}
+@cumulus/db:   [32m✔[39m connection [90m[2m›[22m[39m getKnexClient returns expected Knex object with manual db configuration options set
+@cumulus/db:   [32m✔[39m connection [90m[2m›[22m[39m getKnexClient returns expected Knex object with migration defined
+@cumulus/db:   [32m✔[39m connection [90m[2m›[22m[39m getKnexClient returns expected Knex object with optional config defined
+@cumulus/db:   [32m✔[39m connection [90m[2m›[22m[39m getKnexClient returns Knex object with a default migration set when env.migrations is not defined
+@cumulus/db: {"level":"info","message":"Initializing connection pool...","sender":"@cumulus/db/connection","timestamp":"2024-05-16T19:17:55.851Z"}
+@cumulus/db: {"level":"info","message":"Initializing connection pool...","sender":"@cumulus/db/connection","timestamp":"2024-05-16T19:17:55.852Z"}
+@cumulus/db:   [32m✔[39m connection [90m[2m›[22m[39m getKnexClient returns a working knex client that throws invalid query errors as expected
+@cumulus/db:   [32m✔[39m database [90m[2m›[22m[39m isRecordDefined correctly returns true
+@cumulus/db:   [32m✔[39m database [90m[2m›[22m[39m isRecordDefined correctly returns false
+@cumulus/db:   [32m✔[39m database [90m[2m›[22m[39m createRejectableTransaction throws on bad query/transaction rollback
+@cumulus/db:   [32m✔[39m database [90m[2m›[22m[39m createRejectableTransaction does not throw on good query
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/models/base","timestamp":"2024-05-16T19:17:56.470Z"}
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 1 failed.","sender":"@cumulus/db/models/base","timestamp":"2024-05-16T19:17:56.471Z"}
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/models/base","timestamp":"2024-05-16T19:17:57.472Z"}
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 2 failed.","sender":"@cumulus/db/models/base","timestamp":"2024-05-16T19:17:57.472Z"}
+@cumulus/db: [33m6[39m
+@cumulus/db:   [32m✔[39m connection [90m[2m›[22m[39m getKnexClient logs retry errors and throws expected knexTimeoutError [90m[2m(3s)[22m[39m
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/models/base","timestamp":"2024-05-16T19:17:59.473Z"}
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 3 failed.","sender":"@cumulus/db/models/base","timestamp":"2024-05-16T19:17:59.473Z"}
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/models/collection","timestamp":"2024-05-16T19:18:00.084Z"}
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 1 failed.","sender":"@cumulus/db/models/collection","timestamp":"2024-05-16T19:18:00.084Z"}
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m async-operation-model [90m[2m›[22m[39m AsyncOperationPgModel.upsert() creates new async operation [90m[2m(115ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m executionArnsFromGranuleIdsAndWorkflowNames() returns empty array if no records are found. [90m[2m(184ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m async-operation-model [90m[2m›[22m[39m AsyncOperationPgModel.update() updates async operation when output is undefined [90m[2m(119ms)[22m[39m
+@cumulus/db: {"error":{"name":"RecordDoesNotExist","message":"No executionArns found for granuleId:granuleId_40f30694f1 running workflow:granuleId_61ff486d5a","stack":["/Users/ecarton/cumulus/packages/db/src/lib/execution.ts:63","/**","^","","RecordDoesNotExist: No executionArns found for granuleId:granuleId_40f30694f1 running workflow:granuleId_61ff486d5a","    at newestExecutionArnFromGranuleIdWorkflowName (/Users/ecarton/cumulus/packages/db/src/lib/execution.ts:63:1)","    at processTicksAndRejections (node:internal/process/task_queues:96:5)"]},"level":"error","message":"No executionArns found for granuleId:granuleId_40f30694f1 running workflow:granuleId_61ff486d5a","sender":"@cumulus/db/lib/execution","timestamp":"2024-05-16T19:18:00.112Z"}
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m newGranuleAssociatedWithExecution() throws RecordDoesNotExist if no associated executionArn is found in the database. [90m[2m(189ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m async-operation-model [90m[2m›[22m[39m AsyncOperationPgModel.upsert() overwrites an async operation record [90m[2m(128ms)[22m[39m
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/retry","timestamp":"2024-05-16T19:18:00.138Z"}
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 1 failed.","sender":"@cumulus/db/retry","timestamp":"2024-05-16T19:18:00.138Z"}
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByApiPropertiesQuery returns correct granules by single collection ID
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByApiPropertiesQuery returns correct granules by multiple collection IDs
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m getApiExecutionCumulusIds() returns list of cumulus ids given a list of API executions [90m[2m(379ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByApiPropertiesQuery returns correct granules by single granule ID
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m executionArnsFromGranuleIdsAndWorkflowNames() returns arn by workflow and granuleId for a linked granule execution. [90m[2m(443ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m file [90m[2m›[22m[39m getFilesAndGranuleInfoQuery works with no granule columns specified
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByApiPropertiesQuery returns correct granules by multiple granule IDs
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m file [90m[2m›[22m[39m getFilesAndGranuleInfoQuery returns expected records [90m[2m(101ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m file [90m[2m›[22m[39m getFilesAndGranuleInfoQuery filters on GranuleIds [90m[2m(107ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m file [90m[2m›[22m[39m getFilesAndGranuleInfoQuery filters on collectionIds [90m[2m(112ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m file [90m[2m›[22m[39m getFilesAndGranuleInfoQuery filters on providers [90m[2m(120ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByApiPropertiesQuery returns correct granules by providers
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for a granule that has had the same workflow applied multiple times, with the most recent timestamp first. [90m[2m(548ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m getExecutionInfoByGranuleCumulusId() gets specified execution info [90m[2m(551ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m newGranuleAssociatedWithExecution() returns the most recent arn. [90m[2m(554ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m getWorkflowNameIntersectFromGranuleIds() returns sorts by timestamp for single granule [90m[2m(594ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByApiPropertiesQuery returns correct granules by status
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m getWorkflowNameIntersectFromGranuleIds() returns correct values for single granule [90m[2m(601ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m executionArnsFromGranuleIdsAndWorkflowNames() returns correct arn when a granule has multiple executions with different workflow names associated with it. [90m[2m(612ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m getExecutionInfoByGranuleCumulusId() gets all Executions related to a Granule with limit configuration [90m[2m(629ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m getExecutionInfoByGranuleCumulusId() gets all Executions related to a Granule [90m[2m(635ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByApiPropertiesQuery returns correct granules by updated_at from date
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m getApiGranuleExecutionCumulusIdsByExecution() returns granule cumulus ids associated with a given execution [90m[2m(658ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m getWorkflowNameIntersectFromGranuleIds() returns correct values [90m[2m(668ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an array of workflow names, sorted by timestamp. [90m[2m(672ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m getWorkflowNameIntersectFromGranuleIds() returns empty array if there is no intersect [90m[2m(671ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByApiPropertiesQuery returns correct granules by updated_at to date
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m execution [90m[2m›[22m[39m executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an array of granuleIds, sorted by timestamp. [90m[2m(682ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByApiPropertiesQuery returns correct granules by updated_at date range
+@cumulus/db: {"level":"warn","message":"@cumulus/db/getUniqueGranuleByGranuleId is deprecated after version RDS-Phase-3 and will be removed in a future release. Use @cumulus/db/getGranuleByUniqueColumns instead.","sender":"unknown","timestamp":"2024-05-16T19:18:00.733Z"}
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getUniqueGranuleByGranuleId() throws an error if no granules are found
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByGranuleId() returns empty list when called with a granuleId that does not exist [90m[2m(148ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m upsertGranuleWithExecutionJoinRecord() creates granule record with granule/execution join record [90m[2m(186ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m upsertGranuleWithExecutionJoinRecord() does not write anything if upserting granule/execution join record fails [90m[2m(204ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getUniqueGranuleByGranuleId() returns a single granule [90m[2m(201ms)[22m[39m
+@cumulus/db: {"level":"warn","message":"Granule ID 1 is not unique across collections, cannot make an update action based on granule Id alone","sender":"@cumulus/api/granules","timestamp":"2024-05-16T19:18:00.989Z"}
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getUniqueGranuleByGranuleId() throws an error if more than one granule is found [90m[2m(266ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m upsertGranuleWithExecutionJoinRecord() handles multiple executions for a granule [90m[2m(304ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert() affects no rows [90m[2m(302ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranuleByUniqueColumns() returns a single granule [90m[2m(300ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getGranulesByGranuleId() returns a list of records that match the given granuleId [90m[2m(298ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getApiGranuleExecutionCumulusIds() returns correct values [90m[2m(322ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m upsertGranuleWithExecutionJoinRecord() will allow a running status to replace a non-running status for different execution [90m[2m(334ms)[22m[39m
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/models/collection","timestamp":"2024-05-16T19:18:01.085Z"}
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 2 failed.","sender":"@cumulus/db/models/collection","timestamp":"2024-05-16T19:18:01.085Z"}
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m granule [90m[2m›[22m[39m getApiGranuleExecutionCumulusIds() only queries DB when collection is not in map [90m[2m(370ms)[22m[39m
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/retry","timestamp":"2024-05-16T19:18:01.139Z"}
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 2 failed.","sender":"@cumulus/db/retry","timestamp":"2024-05-16T19:18:01.139Z"}
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m collection-model [90m[2m›[22m[39m CollectionPgModel.upsert() creates new collection
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m collection-model [90m[2m›[22m[39m CollectionPgModel.upsert() overwrites a collection record
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.create() will not allow an execution with an original_payload that is an array to be written
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.create() will not allow an execution with an final_payload that is an array to be written
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.searchByCumulusIds() works with a transaction
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.searchByCumulusIds() supports pagination
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.upsert() creates new running execution if writeConstraints is set to true
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.upsert() creates new running execution if writeConstraints is set to false
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.upsert() creates new completed execution [90m[2m(109ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.searchByCumulusIds() supports sorting [90m[2m(107ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.searchByCumulusIds() returns correct values [90m[2m(121ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.upsert() updates all fields for a running execution if writeConstraints is set to false [90m[2m(126ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.upsert() updates only allowed fields for a running execution if writeConstraints is set to true and write conditions are met [90m[2m(127ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.upsert() updates a completed execution [90m[2m(128ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.upsert() will not allow a running execution to replace a completed execution if writeConstraints is set to true [90m[2m(129ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.upsert() will allow a running execution to replace a completed execution if writeConstraints is set to false [90m[2m(133ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m execution-model [90m[2m›[22m[39m ExecutionPgModel.delete() deletes execution and granule/execution join records [90m[2m(195ms)[22m[39m
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/models/collection","timestamp":"2024-05-16T19:18:03.086Z"}
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 3 failed.","sender":"@cumulus/db/models/collection","timestamp":"2024-05-16T19:18:03.087Z"}
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/retry","timestamp":"2024-05-16T19:18:03.139Z"}
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 3 failed.","sender":"@cumulus/db/retry","timestamp":"2024-05-16T19:18:03.140Z"}
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/models/base","timestamp":"2024-05-16T19:18:03.474Z"}
+@cumulus/db: Error: Connection terminated unexpectedly
+@cumulus/db:     at [90m/Users/ecarton/cumulus/packages/db/[39mtests/models/test-base-model.js:718:37
+@cumulus/db:     at Object.invoke (/Users/ecarton/cumulus/node_modules/[4msinon[24m/lib/sinon/behavior.js:163:32)
+@cumulus/db:     at functionStub (/Users/ecarton/cumulus/node_modules/[4msinon[24m/lib/sinon/stub.js:39:43)
+@cumulus/db:     at Function.invoke (/Users/ecarton/cumulus/node_modules/[4msinon[24m/lib/sinon/proxy-invoke.js:47:47)
+@cumulus/db:     at value (/Users/ecarton/cumulus/node_modules/[4msinon[24m/lib/sinon/proxy.js:216:26)
+@cumulus/db:     at BasePgModel.searchWithUpdatedAtRange [90m(/Users/ecarton/cumulus/packages/db/[39msrc/models/base.ts:9:47[90m)[39m
+@cumulus/db:     at [90m/Users/ecarton/cumulus/packages/db/[39mtests/models/test-base-model.js:726:17
+@cumulus/db:     at Test.callFn (file:///Users/ecarton/cumulus/node_modules/[4mava[24m/lib/test.js:523:21)
+@cumulus/db:     at Test.run (file:///Users/ecarton/cumulus/node_modules/[4mava[24m/lib/test.js:536:23)
+@cumulus/db:     at Runner.runSingle (file:///Users/ecarton/cumulus/node_modules/[4mava[24m/lib/runner.js:285:33) {
+@cumulus/db:   attemptNumber: [33m4[39m,
+@cumulus/db:   retriesLeft: [33m0[39m
+@cumulus/db: }
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.searchWithUpdatedAtRange() retries with connection terminated unexpectedly error [90m[2m(7s)[22m[39m
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 4 failed.","sender":"@cumulus/db/models/base","timestamp":"2024-05-16T19:18:03.474Z"}
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.paginateByCumulusId() returns paginatedValues
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.paginateByCumulusId() returns muliple value pages
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m getMaxId returns the next cumulus_id in sequence
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m getMaxId throws if knex call returns undefined
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.get() throws an error when a record is not found
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.getRecordCumulusId() throws RecordDoesNotExist error for missing record
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.exists() correctly returns false
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.search() returns an empty array if nothing found
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.create() creates record and returns cumulus_id by default [90m[2m(161ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.create() works with knex transaction [90m[2m(164ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.insert() creates records and returns cumulus_id by default [90m[2m(169ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.insert() creates records and returns specified fields [90m[2m(170ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.insert() creates records and returns bigint cumulus_id column as numbers [90m[2m(173ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.get() returns correct record [90m[2m(174ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.insert() works with transaction [90m[2m(177ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.get() returns bigint cumulus_id column as a number [90m[2m(181ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.get() works with knex transaction [90m[2m(184ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.getRecordCumulusId() returns correct value [90m[2m(186ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.get() throws exception if the value of bigint cumulus_id column exceeds safe range [90m[2m(195ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.getRecordCumulusId() works with knex transaction [90m[2m(197ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.getRecordsCumulusIds() returns correct values [90m[2m(197ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.exists() correctly returns true [90m[2m(200ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.getRecordsCumulusIds() works with knex transaction [90m[2m(205ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.exists() works with knex transaction [90m[2m(208ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.queryBuilderSearch returns an awaitable knex Builder object [90m[2m(225ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.search() returns an array of records [90m[2m(228ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.search() works with knex transaction [90m[2m(261ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.update() returns only specified fields if provided [90m[2m(267ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.searchWithUpdatedAtRange() returns an array of records if no date range specified [90m[2m(272ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records if a date range is specified [90m[2m(278ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records if only updatedAtTo is specified [90m[2m(280ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records if only updatedAtFrom is specified [90m[2m(280ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m deleteExcluding throws if missing explicit query params [90m[2m(283ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.delete() works with knex transaction [90m[2m(291ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.update() updates provided fields on a record [90m[2m(294ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.update() works with a knex transaction [90m[2m(295ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m deleteExcluding deletes records, filtering on excluded cumulus_ids [90m[2m(297ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.delete() correctly deletes records [90m[2m(308ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m base-model [90m[2m›[22m[39m BasePgModel.count() returns valid counts [90m[2m(322ms)[22m[39m
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m file-model [90m[2m›[22m[39m FilePgModel.upsert() creates a new file record
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m file-model [90m[2m›[22m[39m FilePgModel.upsert() overwrites a file record
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will not allow a running granule linked to a completed execution to overwrite and writeConstraints is set to true
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a running granule linked to a completed execution to overwrite and writeConstraints is set to false
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will not allow a running granule linked to a completed execution with default writeConstraints set
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() throws if a granule upsert is attempted for a running granule without created_at and writeConstraints is set to true
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() throws if a granule upsert is attempted for a queued granule without created_at and writeConstraints is set to true
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a running state granule referencing completed state execution to overwrite an existing completed state granule referencing a different completed state execution when writeConstraints is set to false
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will not allow a running state granule referencing completed state execution to overwrite an existing completed state granule referencing a different completed state execution when writeConstraints is set to true
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() throws an error for a granule with status of "completed" without createdAt set when write constraints are set to true
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.deleteExcluding throws Error
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/models/collection","timestamp":"2024-05-16T19:18:07.087Z"}
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m collection [90m[2m›[22m[39m getCollectionsByGranuleIds() retries on connection terminated unexpectedly error [90m[2m(7s)[22m[39m
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 4 failed.","sender":"@cumulus/db/models/collection","timestamp":"2024-05-16T19:18:07.087Z"}
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.get() throws error if params do not satisfy type PostgresGranuleUniqueColumns|{cumulus_id: number} [90m[2m(150ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.exists() throws error if params do not satisfy type PostgresGranuleUniqueColumns|{cumulus_id: number} [90m[2m(161ms)[22m[39m
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m collection [90m[2m›[22m[39m getCollectionsByGranuleIds() only returns unique collections
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m collection [90m[2m›[22m[39m getCollectionsByGranuleIds() returns collections for given granule IDs
+@cumulus/db: {"level":"error","message":"Error: Connection terminated unexpectedly. Retrying...","sender":"@cumulus/db/retry","timestamp":"2024-05-16T19:18:07.140Z"}
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m QuerySearchClient [90m[2m›[22m[39m QuerySearchClient.peek() retries if fetchRecords fails with connection terminated error [90m[2m(7s)[22m[39m
+@cumulus/db: {"level":"error","message":"Error Connection terminated unexpectedly. Attempt 4 failed.","sender":"@cumulus/db/retry","timestamp":"2024-05-16T19:18:07.140Z"}
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m QuerySearchClient [90m[2m›[22m[39m QuerySearchClient.peek() correctly returns undefined if next record does not exist in fetched results
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m QuerySearchClient [90m[2m›[22m[39m QuerySearchClient.shift() returns next record from current set of results correctly
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m QuerySearchClient [90m[2m›[22m[39m QuerySearchClient.peek() correctly returns the next record in the fetched results, if any
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m QuerySearchClient [90m[2m›[22m[39m QuerySearchClient.shift() returns next record if next record must be fetched
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m QuerySearchClient [90m[2m›[22m[39m QuerySearchClient.peek() correctly returns next record when more records must be fetched
+@cumulus/db:   [32m✔[39m lib [90m[2m›[22m[39m QuerySearchClient [90m[2m›[22m[39m QuerySearchClient pages through multiple sets of results
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() succeeds for a granule with status of "completed" without createdAt set when write constraints are set to false and sets a default value [90m[2m(250ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.exists() find granule for cumulusId <RecordSelect> [90m[2m(399ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.get() returns granule by granule_id and collection_cumulus_id <PostgresGranuleUniqueColumns> [90m[2m(400ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.exists() finds granule by granule_id and collection_cumulus_id <PostgresGranuleUniqueColumns> [90m[2m(406ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.get() returns granule for cumulusId <RecordSelect> [90m[2m(403ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() creates a new running granule if writeConstraints is set to true [90m[2m(396ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() creates a new running granule if writeConstraints is set to false [90m[2m(397ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() creates a new completed granule [90m[2m(399ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() succeeds without an execution for completed granule [90m[2m(426ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() succeeds without an execution for running granule [90m[2m(421ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() overwrites a completed granule if writeConstraints is set to true [90m[2m(655ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a completed status to replace a running status for same execution if writeConstraints is set to false [90m[2m(651ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() overwrites a completed granule if writeConstraints is set to false [90m[2m(661ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will not allow a running status to replace a completed status for same execution if writeConstraints is set to true [90m[2m(653ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a completed status to replace a running status for same execution if writeConstraints is set to true [90m[2m(661ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a running status to replace a completed status for same execution if writeConstraints is set to false [90m[2m(652ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will not allow a queued status to replace a completed status for same execution if writeConstraints is set to true [90m[2m(624ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a queued status to replace a completed status for same execution if writeConstraints is set to false [90m[2m(623ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will not allow a queued status to replace a running status for same execution if writeConstraints is set to true [90m[2m(628ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a queued status to replace a running status for same execution if writeConstraints is set to false [90m[2m(627ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a completed status to replace a queued status for the same execution if writeConstraints is set to false [90m[2m(624ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a completed status to replace a queued status for the same execution if writeConstraints is set to true [90m[2m(631ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a running granule status to replace a queued status for the same execution if writeConstraints is set to true [90m[2m(626ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a running granule status to replace a queued status for the same execution if writeConstraints is set to false [90m[2m(627ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will only overwrite allowed fields of a granule if update is to set status to running, and writeConstraints is set to true and write conditions are met [90m[2m(737ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() overwrites all fields of a granule if update is to set status to running, and writeConstraints is set to false [90m[2m(738ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will overwrite allowed fields of a running granule for a different execution if writeConstraints is set to true [90m[2m(738ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will overwrite allowed fields of a running granule for a different execution if writeConstraints is set to false [90m[2m(737ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a running status to replace a non-running status for different execution if writeConstraints is set to true [90m[2m(716ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a running status to replace a non-running status for different execution if writeConstraints is set to false [90m[2m(716ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a newer running status to replace an older non-running status for different execution if writeConstraints is set to true [90m[2m(716ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a newer running status to replace an older non-running status for different execution if writeConstraints is set to false [90m[2m(716ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow an older running status to replace a newer non-running status for different execution if writeConstraints is set to false [90m[2m(716ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will not allow an older running status to replace a newer non-running status for different execution if writeConstraints is set to true [90m[2m(714ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a queued status to replace a non-queued status for a different execution if writeConstraints is set to false [90m[2m(679ms)[22m[39m
+@cumulus/db: {"level":"info","message":"Converting JSON string \"Index from database complete\" to object to conform to PostgreSQL schema","sender":"@cumulus/db/translate/async-operations","timestamp":"2024-05-16T19:18:07.731Z"}
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a queued status to replace a non-queued status for a different execution if writeConstraints is set to true [90m[2m(680ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will not allow a final granule status from an older completed execution to overwrite the completed granule status from a newer execution if writeConstraints is set to true [90m[2m(670ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.upsert() will allow a final granule status from an older completed execution to overwrite the completed granule status from a newer execution if writeConstraints is set to false [90m[2m(674ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.delete() deletes granule and granule/execution join records [90m[2m(660ms)[22m[39m
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granule-model [90m[2m›[22m[39m GranulePgModel.delete() deletes granule and file records [90m[2m(662ms)[22m[39m
+@cumulus/db: {"error":{"name":"SyntaxError","message":"Unexpected token s in JSON at position 0","stack":["SyntaxError: Unexpected token s in JSON at position 0","    at JSON.parse (<anonymous>)","    at convertOutputToObject (/Users/ecarton/cumulus/packages/db/src/translate/async_operations.ts:1:1)","    at translateApiAsyncOperationToPostgresAsyncOperation (/Users/ecarton/cumulus/packages/db/src/translate/async_operations.ts:13:50)","    at /Users/ecarton/cumulus/packages/db/tests/translate/test-async-operations.js:98:29","    at Test.callFn (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:523:21)","    at Test.run (file:///Users/ecarton/cumulus/node_modules/ava/lib/test.js:536:23)","    at Runner.runSingle (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:285:33)","    at Runner.runTest (file:///Users/ecarton/cumulus/node_modules/ava/lib/runner.js:367:30)","    at processTicksAndRejections (node:internal/process/task_queues:96:5)","    at async Promise.all (index 3)"]},"level":"error","message":"Converting string to object to conform to PostgreSQL schema","sender":"@cumulus/db/translate/async-operations","timestamp":"2024-05-16T19:18:07.806Z"}
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m async-operations [90m[2m›[22m[39m translateApiAsyncOperationToPostgresAsyncOperation converts a camelCase record to snake_case
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m async-operations [90m[2m›[22m[39m translateApiAsyncOperationToPostgresAsyncOperation parses output from JSON stringified object to object
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m async-operations [90m[2m›[22m[39m translateApiAsyncOperationToPostgresAsyncOperation parses output from JSON stringified string to object
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m async-operations [90m[2m›[22m[39m translateApiAsyncOperationToPostgresAsyncOperation parses output from string to object
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m async-operations [90m[2m›[22m[39m translateApiAsyncOperationToPostgresAsyncOperation parses output from JSON stringified array to object
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m async-operations [90m[2m›[22m[39m translateApiAsyncOperationToPostgresAsyncOperation discards 'none' output
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m async-operations [90m[2m›[22m[39m translatePostgresAsyncOperationToApiAsyncOperation translates PostgreSQL record to async operation API record
+@cumulus/db: {"level":"info","message":"Converting JSON string [\"some-string\",\"other-string\"] to object to conform to PostgreSQL schema","sender":"@cumulus/db/translate/async-operations","timestamp":"2024-05-16T19:18:07.806Z"}
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m file [90m[2m›[22m[39m translatePgFileToApiFile converts Postgres file to API file
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m file [90m[2m›[22m[39m translateApiFiletoPostgresFile converts API file to Postgres
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m file [90m[2m›[22m[39m translateApiFiletoPostgresFile gets a bucket and key from filename
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m collections [90m[2m›[22m[39m translatePostgresCollectionToApiCollection converts Postgres collection to API
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m collections [90m[2m›[22m[39m translateApiCollectionToPostgresCollection converts API collection to Postgres
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granules-executions-model [90m[2m›[22m[39m GranulesExecutionsPgModel.exists() correctly returns false
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granules-executions-model [90m[2m›[22m[39m GranulesExecutionsPgModel.exists() correctly returns true
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granules-executions-model [90m[2m›[22m[39m GranulesExecutionsPgModel.create() creates a new granule/execution join record
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granules-executions-model [90m[2m›[22m[39m GranulesExecutionsPgModel.upsert() creates a new granule/execution join record
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granules-executions-model [90m[2m›[22m[39m GranulesExecutionsPgModel.upsert() overwrites a new granule/execution join record
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granules-executions-model [90m[2m›[22m[39m GranulesExecutionsPgModel.search() returns all granule/execution join records matching query
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granules-executions-model [90m[2m›[22m[39m GranulesExecutionsPgModel.searchByGranuleCumulusIds() works with a transaction
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granules-executions-model [90m[2m›[22m[39m GranulesExecutionsPgModel.searchByGranuleCumulusIds() returns correct values
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m granules-executions-model [90m[2m›[22m[39m GranulesExecutionsPgModel.delete() correctly deletes records
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m executions [90m[2m›[22m[39m translateApiExecutionToPostgresExecutionWithoutNilsRemoved converts API execution to Postgres, preserving null values
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m executions [90m[2m›[22m[39m translatePostgresExecutionToApiExecution with no FKs does not call external model ".get" methods
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m executions [90m[2m›[22m[39m translatePostgresExecutionToApiExecution translates a Postgres execution to an API record
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m executions [90m[2m›[22m[39m translateApiExecutionToPostgresExecutionWithoutNilsRemoved converts API execution to Postgres throws on inappropriate nullification of arn
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m executions [90m[2m›[22m[39m translateApiExecutionToPostgresExecutionWithoutNilsRemoved converts API execution to Postgres throws on inappropriate nullification of name
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m executions [90m[2m›[22m[39m translateApiExecutionToPostgresExecutionWithoutNilsRemoved converts API execution to Postgres throws on inappropriate nullification of status
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m executions [90m[2m›[22m[39m translateApiExecutionToPostgresExecution converts API execution to Postgres
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m pdr [90m[2m›[22m[39m translatePostgresPdrToApiPdr handles optional fields
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m pdr [90m[2m›[22m[39m translateApiPdrToPostgresPdr handles optional fields
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m pdr [90m[2m›[22m[39m translatePostgresPdrToApiPdr translates postgres PDR record to API PDR record
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m pdr [90m[2m›[22m[39m translateApiPdrToPostgresPdr converts API PDR to Postgres
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m rules [90m[2m›[22m[39m translatePostgresRuleToApiRule handles optional fields
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m rules [90m[2m›[22m[39m translateApiRuleToPostgresRule handles optional fields
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m rules [90m[2m›[22m[39m translateApiRuleToPostgresRuleRaw converts API rule to Postgres and keeps nil fields
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m rules [90m[2m›[22m[39m translatePostgresRuleToApiRule converts Postgres rule record to API rule
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m rules [90m[2m›[22m[39m translateApiRuleToPostgresRule converts API rule to Postgres
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m pdrs [90m[2m›[22m[39m translateApiPdrToPostgresPdr translates an API PDR to Postgres
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m pdr-model [90m[2m›[22m[39m PdrPgModel.upsert() overwrites record with same execution if progress is greater than current
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m pdr-model [90m[2m›[22m[39m PdrPgModel.upsert() does not update record with same execution if progress is less than current
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m pdr-model [90m[2m›[22m[39m PdrPgModel.upsert() does not update a "completed" record to "running" if execution is different and created_at is older
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m pdr-model [90m[2m›[22m[39m PdrPgModel.upsert() does not update a final (failed) record to a final state (completed) if execution is different but created_at is older
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m pdr-model [90m[2m›[22m[39m PdrPgModel.upsert() updates a "completed" record to "running" if execution is different and created_at is newer
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m pdr-model [90m[2m›[22m[39m PdrPgModel.upsert() does update a final (failed) record to a final state (completed) if execution is different but created_at is newer
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m provider-model [90m[2m›[22m[39m ProviderPgModel.upsert() creates new provider
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m provider-model [90m[2m›[22m[39m ProviderPgModel.upsert() creates provider with allowed_redirects
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m provider-model [90m[2m›[22m[39m ProviderPgModel.upsert() creates provider with max_download_time
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m provider-model [90m[2m›[22m[39m ProviderPgModel.upsert() overwrites a provider record
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m rule-model [90m[2m›[22m[39m RulePgModel.upsert() creates new rule
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m rule-model [90m[2m›[22m[39m RulePgModel.upsert() returns an array of an object with all fields of a record by default
+@cumulus/db:   [32m✔[39m models [90m[2m›[22m[39m rule-model [90m[2m›[22m[39m RulePgModel.upsert() overwrites a rule record
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m providers [90m[2m›[22m[39m encryptValueWithKMS throws if provder_kms_key_id does not exist
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m providers [90m[2m›[22m[39m encryptValueWithKMS encrypts the key
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m providers [90m[2m›[22m[39m translatePostgresProviderToApiProvider translates the expected API record
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m providers [90m[2m›[22m[39m translatePostgresProviderToApiProvider does not return encrypted key if username and password are not present
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m providers [90m[2m›[22m[39m translateApiProviderToPostgresProvider translates a Cumulus Provider object to a Postgres Provider object
+@cumulus/db: Constraint granules_collection_cumulus_id_granule_id_unique added to table granules
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translateApiGranuleToPostgresGranuleWithoutNilsRemoved throws on inappropriate nullification of collectionId
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translateApiGranuleToPostgresGranuleWithoutNilsRemoved throws on inappropriate nullification of granuleId
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translateApiGranuleToPostgresGranuleWithoutNilsRemoved throws on inappropriate nullification of status
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granule to Postgres, preserving null values
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granule to Postgres, with undefined values set
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translateApiGranuleToPostgresGranule converts API granule to Postgres, removing null values
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granule to Postgres
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translateApiGranuleToPostgresGranuleWithoutNilsRemoved does not remove null/undefined fields
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translateApiGranuleToPostgresGranule converts API granule to Postgres
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translateApiGranuleToPostgresGranule removes null/undefined fields
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translatePostgresGranuleToApiGranule throws an error if the Collection does not match
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translatePostgresGranuleToApiGranule does not require a PDR or Provider
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translatePostgresGranuleToApiGranule accepts an optional Collection
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translatePostgresGranuleResultToApiGranule converts DB result to API granule
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translatePostgresGranuleToApiGranule accepts an optional provider
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translatePostgresGranuleToApiGranule handles granule with no associated execution
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translatePostgresGranuleToApiGranule returns an empty array for its files property if there are no PostgreSQL files
+@cumulus/db:   [32m✔[39m translate [90m[2m›[22m[39m granules [90m[2m›[22m[39m translatePostgresGranuleToApiGranule converts Postgres granule to API granule
+@cumulus/db:   [90m─[39m
+@cumulus/db:   [32m280 tests passed[39m
+@cumulus/db: ---------------------------------------|---------|----------|---------|---------|-------------------
+@cumulus/db: File                                   | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+@cumulus/db: ---------------------------------------|---------|----------|---------|---------|-------------------
+@cumulus/db: [32;1mAll files                             [0m | [32;1m   92.5[0m | [33;1m   75.41[0m | [33;1m  77.51[0m | [32;1m  92.62[0m | [31;1m                 [0m 
+@cumulus/db: [32;1m src                                  [0m | [32;1m   95.5[0m | [32;1m    86.3[0m | [33;1m  66.66[0m | [32;1m  95.47[0m | [31;1m                 [0m 
+@cumulus/db: [32;1m  config.ts                           [0m | [32;1m  98.07[0m | [32;1m   92.98[0m | [32;1m    100[0m | [32;1m  97.72[0m | [31;1m45               [0m 
+@cumulus/db: [32;1m  connection.ts                       [0m | [32;1m  83.33[0m | [33;1m      75[0m | [31;1m  33.33[0m | [32;1m   82.6[0m | [31;1m71,75,79,83      [0m 
+@cumulus/db: [32;1m  database.ts                         [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  index.ts                            [0m | [32;1m    100[0m | [32;1m     100[0m | [33;1m  56.52[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [33;1m  provider.ts                         [0m | [33;1m     65[0m | [31;1m   33.33[0m | [33;1m  66.66[0m | [33;1m  68.75[0m | [31;1m49-54            [0m 
+@cumulus/db: [32;1m  tables.ts                           [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  test-utils.ts                       [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m src/lib                              [0m | [32;1m   90.3[0m | [33;1m   69.66[0m | [32;1m  88.09[0m | [32;1m  89.44[0m | [31;1m                 [0m 
+@cumulus/db: [32;1m  QuerySearchClient.ts                [0m | [32;1m    100[0m | [33;1m      75[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m49               [0m 
+@cumulus/db: [32;1m  collection.ts                       [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  errors.ts                           [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  execution.ts                        [0m | [32;1m  92.45[0m | [33;1m   78.57[0m | [32;1m   90.9[0m | [32;1m   91.3[0m | [31;1m78-95            [0m 
+@cumulus/db: [32;1m  file.ts                             [0m | [32;1m   92.3[0m | [32;1m   92.85[0m | [32;1m     80[0m | [32;1m  95.83[0m | [31;1m70               [0m 
+@cumulus/db: [32;1m  granule.ts                          [0m | [32;1m  87.09[0m | [33;1m   60.46[0m | [32;1m  85.71[0m | [32;1m  85.54[0m | [31;1m26-30,311-332    [0m 
+@cumulus/db: [32;1m  retry.ts                            [0m | [32;1m  92.85[0m | [33;1m      75[0m | [32;1m    100[0m | [32;1m   92.3[0m | [31;1m26               [0m 
+@cumulus/db: [33;1m  sort.ts                             [0m | [33;1m     75[0m | [33;1m      60[0m | [33;1m     50[0m | [33;1m  72.72[0m | [31;1m18-20            [0m 
+@cumulus/db: [32;1m  timestamp.ts                        [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m src/migrations                       [0m | [32;1m  89.79[0m | [31;1m   16.66[0m | [33;1m  60.65[0m | [32;1m  90.98[0m | [31;1m                 [0m 
+@cumulus/db: [32;1m  ...04958_create_collections_table.ts[0m | [32;1m  95.45[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m     95[0m | [31;1m63               [0m 
+@cumulus/db: [32;1m  ...4105016_create_providers_table.ts[0m | [32;1m  94.73[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  20201014105024_create_rules_table.ts[0m | [32;1m  95.65[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  ..._create_async_operations_table.ts[0m | [32;1m  93.33[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  ...105045_create_executions_table.ts[0m | [32;1m  95.83[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  20201014105054_create_pdrs_table.ts [0m | [32;1m  95.45[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  ...14105058_create_granules_table.ts[0m | [32;1m  96.55[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  20201014105102_create_files_table.ts[0m | [32;1m  94.73[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  ...eate_granules_executions_table.ts[0m | [32;1m   90.9[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [33;1m  ...provider_add_allowed_redirects.ts[0m | [33;1m  66.66[0m | [31;1m       0[0m | [33;1m     50[0m | [33;1m  57.14[0m | [31;1m11-13            [0m 
+@cumulus/db: [32;1m  ...perations_table_operation_type.ts[0m | [32;1m  88.88[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m  85.71[0m | [31;1m33               [0m 
+@cumulus/db: [32;1m  ...09133428_queued_granule_status.ts[0m | [32;1m  88.88[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m  85.71[0m | [31;1m28               [0m 
+@cumulus/db: [33;1m  20210914051414_add_type_to_files.ts [0m | [33;1m     75[0m | [32;1m     100[0m | [33;1m     50[0m | [33;1m  66.66[0m | [31;1m12-13            [0m 
+@cumulus/db: [32;1m  ...6172008_files_granule_id_index.ts[0m | [32;1m  83.33[0m | [32;1m     100[0m | [33;1m     50[0m | [33;1m     75[0m | [31;1m16               [0m 
+@cumulus/db: [32;1m  ..._remove_files_granule_id_index.ts[0m | [32;1m  83.33[0m | [32;1m     100[0m | [33;1m     50[0m | [33;1m     75[0m | [31;1m8                [0m 
+@cumulus/db: [32;1m  ...add-files-granules-index-rev-2.ts[0m | [32;1m  83.33[0m | [32;1m     100[0m | [33;1m     50[0m | [33;1m     75[0m | [31;1m8                [0m 
+@cumulus/db: [33;1m  ...dd_max_download_time_providers.ts[0m | [33;1m  66.66[0m | [31;1m       0[0m | [33;1m     50[0m | [33;1m  57.14[0m | [31;1m11-13            [0m 
+@cumulus/db: [32;1m  ...nule_execution_cumulus_id_type.ts[0m | [32;1m  92.85[0m | [32;1m     100[0m | [33;1m     50[0m | [32;1m  91.66[0m | [31;1m15               [0m 
+@cumulus/db: [33;1m  ...126135619_granules_add_indexes.ts[0m | [33;1m  72.72[0m | [32;1m     100[0m | [33;1m     50[0m | [33;1m  66.66[0m | [31;1m10-12            [0m 
+@cumulus/db: [33;1m  ...19_granules_update_constraints.ts[0m | [33;1m  78.57[0m | [33;1m      50[0m | [33;1m  66.66[0m | [33;1m     75[0m | [31;1m27,46-53         [0m 
+@cumulus/db: [32;1m  ...perations_table_operation_type.ts[0m | [32;1m  88.88[0m | [32;1m     100[0m | [33;1m  66.66[0m | [32;1m  85.71[0m | [31;1m34               [0m 
+@cumulus/db: [32;1m src/models                           [0m | [32;1m  91.44[0m | [32;1m   81.57[0m | [32;1m  95.23[0m | [32;1m  92.22[0m | [31;1m                 [0m 
+@cumulus/db: [32;1m  async_operation.ts                  [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  base.ts                             [0m | [32;1m     98[0m | [32;1m   84.61[0m | [32;1m    100[0m | [32;1m  97.95[0m | [31;1m215              [0m 
+@cumulus/db: [32;1m  collection.ts                       [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  execution.ts                        [0m | [32;1m    100[0m | [32;1m    92.3[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m74               [0m 
+@cumulus/db: [32;1m  file.ts                             [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [33;1m  granule.ts                          [0m | [33;1m     75[0m | [33;1m   75.75[0m | [33;1m     75[0m | [33;1m  77.77[0m | [31;1m209-227          [0m 
+@cumulus/db: [32;1m  granules-executions.ts              [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  pdr.ts                              [0m | [32;1m  91.66[0m | [33;1m      75[0m | [32;1m    100[0m | [32;1m  91.66[0m | [31;1m21               [0m 
+@cumulus/db: [32;1m  provider.ts                         [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m  rule.ts                             [0m | [32;1m    100[0m | [32;1m     100[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m                 [0m 
+@cumulus/db: [32;1m src/translate                        [0m | [32;1m  95.55[0m | [33;1m   73.14[0m | [32;1m    100[0m | [32;1m     95[0m | [31;1m                 [0m 
+@cumulus/db: [32;1m  async_operations.ts                 [0m | [32;1m  92.85[0m | [33;1m   72.22[0m | [32;1m    100[0m | [32;1m   92.3[0m | [31;1m48,51            [0m 
+@cumulus/db: [32;1m  collections.ts                      [0m | [32;1m  83.33[0m | [33;1m      50[0m | [32;1m    100[0m | [32;1m     80[0m | [31;1m57,60            [0m 
+@cumulus/db: [32;1m  executions.ts                       [0m | [32;1m  92.98[0m | [33;1m   58.97[0m | [32;1m    100[0m | [32;1m  92.59[0m | [31;1m49,166-169       [0m 
+@cumulus/db: [32;1m  file.ts                             [0m | [32;1m   90.9[0m | [33;1m      70[0m | [32;1m    100[0m | [32;1m   87.5[0m | [31;1m11,17            [0m 
+@cumulus/db: [32;1m  granules.ts                         [0m | [32;1m    100[0m | [32;1m      85[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m158-160,245-247  [0m 
+@cumulus/db: [32;1m  pdr.ts                              [0m | [32;1m    100[0m | [32;1m      80[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m26-27,73-74      [0m 
+@cumulus/db: [32;1m  providers.ts                        [0m | [32;1m    100[0m | [33;1m   64.28[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m49-61            [0m 
+@cumulus/db: [32;1m  rules.ts                            [0m | [32;1m    100[0m | [32;1m   82.14[0m | [32;1m    100[0m | [32;1m    100[0m | [33;1m36-61,99-100     [0m 
+@cumulus/db: ---------------------------------------|---------|----------|---------|---------|-------------------
+
+> @cumulus/api-client:"test:ci"
+
+@cumulus/api-client: > @cumulus/api-client@18.2.0 test:ci
+@cumulus/api-client: > ../../scripts/run_package_ci_unit.sh
+@cumulus/api-client: > @cumulus/api-client@18.2.0 test:coverage
+@cumulus/api-client: > ../../node_modules/.bin/nyc npm test
+@cumulus/api-client: > @cumulus/api-client@18.2.0 test
+@cumulus/api-client: > ../../node_modules/.bin/ava
