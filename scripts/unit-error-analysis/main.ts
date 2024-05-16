@@ -10,11 +10,14 @@ interface UnitErrorArgs {
 }
 const momentFormat = 'YYYY-mm-DDTHH.mm.ss';
 
+//expects key in format <branch>/YYYY-mm-DDTHH.MM.SS/<error>.log
+export const extractError = (key: string): string => key.split('/')?.pop()?.split('.')[0] || 'unknown';
+  
+
 export const extractDate = (key: string): string => {
+  //expects key in format <branch>/YYYY-mm-DDTHH.MM.SS/<error>.log
   const keySegments = key.split('/');
-  keySegments.pop();
-  const date = keySegments.pop();
-  const out = moment(date, momentFormat).format(momentFormat);
+  const out = moment(keySegments[keySegments.length - 2], momentFormat).format(momentFormat);
   return out;
 }
 
@@ -38,14 +41,11 @@ export const getErrorLogs = async (
 export const organizeByErrorType = (keys: Array<string>): {[key:string]: Array<string>} => {
   const mapping: {[key:string]: Array<string>} = {}
   keys.forEach((key) => {
-    const segments = key.split('/')
-    if(!segments) return;
-    const errorPoint = segments.pop()?.split('.')[0];
-    if(!errorPoint) return;
-    if(!(errorPoint in mapping)) {
-      mapping[errorPoint] = [];
+    const error = extractError(key);
+    if(!(error in mapping)) {
+      mapping[error] = [];
     }
-    mapping[errorPoint].push(key);
+    mapping[error].push(key);
   })
   Object.values(mapping).forEach((list) => list.sort());
   return mapping;
@@ -53,14 +53,10 @@ export const organizeByErrorType = (keys: Array<string>): {[key:string]: Array<s
 export const organizeByDate = (keys: Array<string>): Array<Array<string>> => {
   const sortedList: Array<Array<string>> = [];
   keys.forEach((key) => {
-    const segments = key.split('/')
-    if(!segments) return;
-    const errorPoint = segments.pop()?.split('.')[0];
-    if(!errorPoint) return;
-    const errorDate = segments.pop();
-    if(!errorDate) return;
+    const error = extractError(key);
+    const errorDate = extractDate(key);
     sortedList.push(
-      [errorDate, errorPoint]
+      [errorDate, error]
     );
   })
   sortedList.sort((a, b)=> a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0);
