@@ -18,6 +18,7 @@
     "generate-task-schemas": "npx generate-task-schemas . files",
     "clean": "rm -rf node_modules && rm -rf dist",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "set -o pipefail && npm run test:coverage | tee ../../unit-logs/$(jq -r '.name' package.json).log && rm ../../unit-logs/$(jq -r '.name' package.json).log",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py",
