@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Replace ElasticSearch Phase 1
 
+- **CUMULUS-3688**
+ - Updated `stats` api endpoint to query postgres instead of elasticsearch
 - **CUMULUS-3689**
  - Updated `stats/aggregate` api endpoint to query postgres instead of elasticsearch
  - Created a new StatsSearch class for querying postgres with the stats endpoint
