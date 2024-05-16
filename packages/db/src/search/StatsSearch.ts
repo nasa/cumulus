@@ -158,7 +158,7 @@ class StatsSearch extends BaseSearch {
       aggregateQuery.where(`${this.tableName}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
     }
     aggregateQuery.select(
-      knex.raw(`COUNT(CASE WHEN ${this.tableName}.error ->> 'Error' != '{}' THEN 1 END) AS count_errors`),
+      knex.raw(`COUNT(CASE WHEN ${this.tableName}.error ->> 'Error' is not null THEN 1 END) AS count_errors`),
       knex.raw(`COUNT(${this.tableName}.cumulus_id) AS count_granules`),
       knex.raw(`AVG(${this.tableName}.duration) AS avg_processing_time`),
       knex.raw(`COUNT(DISTINCT ${this.tableName}.collection_cumulus_id) AS count_collections`)
@@ -261,6 +261,9 @@ class StatsSearch extends BaseSearch {
     }
     if (this.queryStringParameters.timestamp__to) {
       searchQuery.where(`${this.tableName}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
+    }
+    if (this.queryStringParameters.field?.includes('error.Error')) {
+      searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is not null`);
     }
     const { term = {} } = this.dbQueryParameters;
     return super.buildTermQuery({

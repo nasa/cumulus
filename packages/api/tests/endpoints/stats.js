@@ -76,7 +76,7 @@ test.before(async (t) => {
   t.context.granulePgModel = new GranulePgModel();
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
-  const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, { Error: {} }];
+  const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
   const granules = [];
   const collections = [];
 

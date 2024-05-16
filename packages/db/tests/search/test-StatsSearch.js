@@ -39,7 +39,7 @@ test.before(async (t) => {
   t.context.ExecutionPgModel = new ExecutionPgModel();
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
-  const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, { Error: {} }];
+  const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
   const granules = [];
   const collections = [];
   const executions = [];
@@ -345,9 +345,8 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
     { key: 'CumulusMessageAdapterError', count: 20 },
     { key: 'IngestFailure', count: 20 },
     { key: 'UnknownError', count: 20 },
-    { key: '{}', count: 20 },
   ];
-  t.is(results.meta.count, 100);
+  t.is(results.meta.count, 80);
   t.deepEqual(results.count, expectedResponse1);
 
   queryStringParameters = {
@@ -361,11 +360,10 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   const expectedResponse2 = [
     { key: 'CmrFailure', count: 8 },
     { key: 'IngestFailure', count: 7 },
-    { key: '{}', count: 7 },
     { key: 'CumulusMessageAdapterError', count: 6 },
     { key: 'UnknownError', count: 6 },
   ];
-  t.is(results2.meta.count, 34);
+  t.is(results2.meta.count, 27);
   t.deepEqual(results2.count, expectedResponse2);
 
   queryStringParameters = {
