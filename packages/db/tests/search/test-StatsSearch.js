@@ -131,11 +131,14 @@ test('StatsSearch returns correct response for basic granules query', async (t) 
   };
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
   const results = await AggregateSearch.aggregate(knex);
-  t.is(results.count.find((item) => item.key === 'completed')?.count, 25);
-  t.is(results.count.find((item) => item.key === 'failed')?.count, 25);
-  t.is(results.count.find((item) => item.key === 'queued')?.count, 25);
-  t.is(results.count.find((item) => item.key === 'running')?.count, 25);
+  const expectedResponse = [
+    { key: 'completed', count: 25 },
+    { key: 'failed', count: 25 },
+    { key: 'queued', count: 25 },
+    { key: 'running', count: 25 },
+  ];
   t.is(results.meta.count, 100);
+  t.deepEqual(results.count, expectedResponse);
 });
 
 test('StatsSearch filters correctly by date', async (t) => {
@@ -148,11 +151,14 @@ test('StatsSearch filters correctly by date', async (t) => {
 
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
   const results = await AggregateSearch.aggregate(knex);
-  t.is(results.count.find((item) => item.key === 'completed').count, 9);
-  t.is(results.count.find((item) => item.key === 'failed')?.count, 8);
-  t.is(results.count.find((item) => item.key === 'queued')?.count, 8);
-  t.is(results.count.find((item) => item.key === 'running')?.count, 9);
+  const expectedResponse = [
+    { key: 'completed', count: 9 },
+    { key: 'running', count: 9 },
+    { key: 'failed', count: 8 },
+    { key: 'queued', count: 8 },
+  ];
   t.is(results.meta.count, 34);
+  t.deepEqual(results.count, expectedResponse);
 });
 
 test('StatsSearch filters executions correctly', async (t) => {
@@ -164,10 +170,13 @@ test('StatsSearch filters executions correctly', async (t) => {
 
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'execution');
   const results = await AggregateSearch.aggregate(knex);
-  t.is(results.count.find((item) => item.key === 'completed').count, 7);
-  t.is(results.count.find((item) => item.key === 'failed').count, 7);
-  t.is(results.count.find((item) => item.key === 'running').count, 6);
+  const expectedResponse1 = [
+    { key: 'completed', count: 7 },
+    { key: 'failed', count: 7 },
+    { key: 'running', count: 6 },
+  ];
   t.is(results.meta.count, 20);
+  t.deepEqual(results.count, expectedResponse1);
 
   queryStringParameters = {
     type: 'executions',
@@ -178,10 +187,13 @@ test('StatsSearch filters executions correctly', async (t) => {
 
   const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'execution');
   const results2 = await AggregateSearch2.aggregate(knex);
-  t.is(results2.count.find((item) => item.key === 'completed').count, 3);
-  t.is(results2.count.find((item) => item.key === 'failed').count, 3);
-  t.is(results2.count.find((item) => item.key === 'running').count, 3);
+  const expectedResponse2 = [
+    { key: 'completed', count: 3 },
+    { key: 'failed', count: 3 },
+    { key: 'running', count: 3 },
+  ];
   t.is(results2.meta.count, 9);
+  t.deepEqual(results2.count, expectedResponse2);
 
   queryStringParameters = {
     type: 'executions',
@@ -194,7 +206,8 @@ test('StatsSearch filters executions correctly', async (t) => {
 
   const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'execution');
   const results3 = await AggregateSearch3.aggregate(knex);
-  t.is(results3.count.find((item) => item.key === 'running').count, 1);
+  const expectedResponse3 = [{ key: 'running', count: 1 }];
+  t.deepEqual(results3.count, expectedResponse3);
   t.is(results3.meta.count, 1);
 });
 
@@ -207,10 +220,13 @@ test('StatsSearch filters PDRs correctly', async (t) => {
 
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'pdr');
   const results = await AggregateSearch.aggregate(knex);
-  t.is(results.count.find((item) => item.key === 'completed').count, 7);
-  t.is(results.count.find((item) => item.key === 'failed').count, 7);
-  t.is(results.count.find((item) => item.key === 'running').count, 6);
+  const expectedResponse = [
+    { key: 'completed', count: 7 },
+    { key: 'failed', count: 7 },
+    { key: 'running', count: 6 },
+  ];
   t.is(results.meta.count, 20);
+  t.deepEqual(results.count, expectedResponse);
 
   queryStringParameters = {
     type: 'pdrs',
@@ -221,9 +237,10 @@ test('StatsSearch filters PDRs correctly', async (t) => {
 
   const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'pdr');
   const results2 = await AggregateSearch2.aggregate(knex);
-  t.is(results2.count.find((item) => item.key === 'completed').count, 4);
-  t.is(results2.count.find((item) => item.key === 'failed').count, 2);
+  const expectedResponse2 = [{ key: 'completed', count: 4 }, { key: 'failed', count: 2 }];
   t.is(results2.meta.count, 6);
+  t.deepEqual(results2.count, expectedResponse2);
+
   queryStringParameters = {
     type: 'pdrs',
     field: 'status',
@@ -234,8 +251,9 @@ test('StatsSearch filters PDRs correctly', async (t) => {
 
   const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'pdr');
   const results3 = await AggregateSearch3.aggregate(knex);
-  t.is(results3.count.find((item) => item.key === 'failed').count, 2);
+  const expectedResponse3 = [{ key: 'failed', count: 2 }];
   t.is(results3.meta.count, 2);
+  t.deepEqual(results3.count, expectedResponse3);
 });
 
 test('StatsSearch returns correct response when queried by provider', async (t) => {
@@ -248,9 +266,9 @@ test('StatsSearch returns correct response when queried by provider', async (t) 
 
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
   const results = await AggregateSearch.aggregate(knex);
+  const expectedResponse = [{ key: 'completed', count: 5 }, { key: 'queued', count: 5 }];
   t.is(results.meta.count, 10);
-  t.is(results.count.find((item) => item.key === 'completed').count, 5);
-  t.is(results.count.find((item) => item.key === 'queued').count, 5);
+  t.deepEqual(results.count, expectedResponse);
 });
 
 test('StatsSearch returns correct response when queried by collection', async (t) => {
@@ -263,7 +281,9 @@ test('StatsSearch returns correct response when queried by collection', async (t
 
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
   const results = await AggregateSearch.aggregate(knex);
+  const expectedResponse = [{ key: 'queued', count: 5 }];
   t.is(results.meta.count, 5);
+  t.deepEqual(results.count, expectedResponse);
 });
 
 test('StatsSearch returns correct response when queried by collection and provider', async (t) => {
@@ -277,8 +297,9 @@ test('StatsSearch returns correct response when queried by collection and provid
 
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
   const results = await AggregateSearch.aggregate(knex);
+  const expectedResponse = [{ key: 'failed', count: 5 }];
   t.is(results.meta.count, 5);
-  t.is(results.count.find((item) => item.key === 'failed').count, 5);
+  t.deepEqual(results.count, expectedResponse);
 
   queryStringParameters = {
     type: 'granules',
@@ -291,8 +312,9 @@ test('StatsSearch returns correct response when queried by collection and provid
 
   const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'granule');
   const results2 = await AggregateSearch2.aggregate(knex);
+  const expectedResponse2 = [{ key: 'failed', count: 2 }];
   t.is(results2.meta.count, 2);
-  t.is(results2.count.find((item) => item.key === 'failed').count, 2);
+  t.deepEqual(results2.count, expectedResponse2);
   queryStringParameters = {
     type: 'granules',
     field: 'status',
@@ -305,8 +327,9 @@ test('StatsSearch returns correct response when queried by collection and provid
 
   const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'granule');
   const results3 = await AggregateSearch3.aggregate(knex);
+  const expectedResponse3 = [{ key: 'failed', count: 2 }];
   t.is(results3.meta.count, 2);
-  t.is(results3.count.find((item) => item.key === 'failed').count, 2);
+  t.deepEqual(results3.count, expectedResponse3);
 });
 
 test('StatsSearch returns correct response when queried by error', async (t) => {
@@ -317,11 +340,15 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   };
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
   const results = await AggregateSearch.aggregate(knex);
+  const expectedResponse1 = [
+    { key: 'CmrFailure', count: 20 },
+    { key: 'CumulusMessageAdapterError', count: 20 },
+    { key: 'IngestFailure', count: 20 },
+    { key: 'UnknownError', count: 20 },
+    { key: '{}', count: 20 },
+  ];
   t.is(results.meta.count, 100);
-  t.is(results.count.find((item) => item.key === 'CmrFailure').count, 20);
-  t.is(results.count.find((item) => item.key === 'UnknownError').count, 20);
-  t.is(results.count.find((item) => item.key === 'IngestFailure').count, 20);
-  t.is(results.count.find((item) => item.key === 'CumulusMessageAdapterError').count, 20);
+  t.deepEqual(results.count, expectedResponse1);
 
   queryStringParameters = {
     type: 'granules',
@@ -331,11 +358,15 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   };
   const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'granule');
   const results2 = await AggregateSearch2.aggregate(knex);
+  const expectedResponse2 = [
+    { key: 'CmrFailure', count: 8 },
+    { key: 'IngestFailure', count: 7 },
+    { key: '{}', count: 7 },
+    { key: 'CumulusMessageAdapterError', count: 6 },
+    { key: 'UnknownError', count: 6 },
+  ];
   t.is(results2.meta.count, 34);
-  t.is(results2.count.find((item) => item.key === 'CmrFailure').count, 8);
-  t.is(results2.count.find((item) => item.key === 'UnknownError').count, 6);
-  t.is(results2.count.find((item) => item.key === 'IngestFailure').count, 7);
-  t.is(results2.count.find((item) => item.key === 'CumulusMessageAdapterError').count, 6);
+  t.deepEqual(results2.count, expectedResponse2);
 
   queryStringParameters = {
     type: 'granules',
@@ -347,8 +378,9 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   };
   const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'granule');
   const results3 = await AggregateSearch3.aggregate(knex);
+  const expectedResponse3 = [{ key: 'CumulusMessageAdapterError', count: 2 }];
   t.is(results3.meta.count, 2);
-  t.is(results3.count.find((item) => item.key === 'CumulusMessageAdapterError').count, 2);
+  t.deepEqual(results3.count, expectedResponse3);
 });
 
 test('StatsSearch can query by infix and prefix when type is defined', async (t) => {
@@ -359,9 +391,9 @@ test('StatsSearch can query by infix and prefix when type is defined', async (t)
   };
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
   const results = await AggregateSearch.aggregate(knex);
+  const expectedResponse1 = [{ key: 'completed', count: 25 }, { key: 'queued', count: 25 }];
   t.is(results.meta.count, 50);
-  t.is(results.count.find((item) => item.key === 'completed').count, 25);
-  t.is(results.count.find((item) => item.key === 'queued').count, 25);
+  t.deepEqual(results.count, expectedResponse1);
 
   queryStringParameters = {
     type: 'granules',
@@ -369,9 +401,9 @@ test('StatsSearch can query by infix and prefix when type is defined', async (t)
   };
   const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'granule');
   const results2 = await AggregateSearch2.aggregate(knex);
+  const expectedResponse2 = [{ key: 'failed', count: 25 }, { key: 'running', count: 25 }];
   t.is(results2.meta.count, 50);
-  t.is(results2.count.find((item) => item.key === 'failed').count, 25);
-  t.is(results2.count.find((item) => item.key === 'running').count, 25);
+  t.deepEqual(results2.count, expectedResponse2);
 
   queryStringParameters = {
     type: 'collections',
@@ -380,7 +412,9 @@ test('StatsSearch can query by infix and prefix when type is defined', async (t)
   };
   const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'collection');
   const results3 = await AggregateSearch3.aggregate(knex);
+  const expectedResponse3 = [{ key: 'testCollection___8', count: 1 }];
   t.is(results3.meta.count, 1);
+  t.deepEqual(results3.count, expectedResponse3);
 });
 
 test('StatsSummary works', async (t) => {

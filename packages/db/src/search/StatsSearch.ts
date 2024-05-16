@@ -1,4 +1,3 @@
-import get from 'lodash/get';
 import omit from 'lodash/omit';
 import { Knex } from 'knex';
 import { getKnexClient } from '../connection';
@@ -49,7 +48,7 @@ type ApiAggregateResult = {
   count: AggregateRes[]
 };
 
-const infixMapping = {
+const infixMapping: { [key: string]: string } = {
   granules: 'granule_id',
   collections: 'name',
   providers: 'name',
@@ -153,16 +152,16 @@ class StatsSearch extends BaseSearch {
     const knex = sendKnex ?? await getKnexClient();
     const aggregateQuery:Knex.QueryBuilder = knex(this.tableName);
     if (this.queryStringParameters.timestamp__from) {
-      aggregateQuery.where(`${TableNames.granules}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from as string, 10)));
+      aggregateQuery.where(`${this.tableName}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from as string, 10)));
     }
     if (this.queryStringParameters.timestamp__to) {
-      aggregateQuery.where(`${TableNames.granules}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
+      aggregateQuery.where(`${this.tableName}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
     }
     aggregateQuery.select(
-      knex.raw(`COUNT(CASE WHEN ${TableNames.granules}.error ->> 'Error' != '{}' THEN 1 END) AS count_errors`),
-      knex.raw(`COUNT(${TableNames.granules}.cumulus_id) AS count_granules`),
-      knex.raw(`AVG(${TableNames.granules}.duration) AS avg_processing_time`),
-      knex.raw(`COUNT(DISTINCT ${TableNames.granules}.collection_cumulus_id) AS count_collections`)
+      knex.raw(`COUNT(CASE WHEN ${this.tableName}.error ->> 'Error' != '{}' THEN 1 END) AS count_errors`),
+      knex.raw(`COUNT(${this.tableName}.cumulus_id) AS count_granules`),
+      knex.raw(`AVG(${this.tableName}.duration) AS avg_processing_time`),
+      knex.raw(`COUNT(DISTINCT ${this.tableName}.collection_cumulus_id) AS count_collections`)
     );
     const aggregateQueryRes: TotalSummary[] = await aggregateQuery;
     return this.formatSummaryResult(aggregateQueryRes[0]);
@@ -229,12 +228,12 @@ class StatsSearch extends BaseSearch {
   }) {
     const { searchQuery, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters || this.dbQueryParameters;
-    const typeName = this.tableName ? get(infixMapping, this.tableName) : 'granuleId';
+    const fieldName = infixMapping[this.tableName];
     if (infix) {
-      searchQuery.whereLike(`${this.tableName}.${typeName}`, `%${infix}%`);
+      searchQuery.whereLike(`${this.tableName}.${fieldName}`, `%${infix}%`);
     }
     if (prefix) {
-      searchQuery.whereLike(`${this.tableName}.${typeName}`, `%${prefix}%`);
+      searchQuery.whereLike(`${this.tableName}.${fieldName}`, `%${prefix}%`);
     }
   }
 
