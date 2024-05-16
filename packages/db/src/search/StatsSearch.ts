@@ -1,6 +1,6 @@
 import get from 'lodash/get';
-import { Knex } from 'knex';
 import omit from 'lodash/omit';
+import { Knex } from 'knex';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
 import { DbQueryParameters, QueryEvent } from '../types/search';
@@ -67,9 +67,11 @@ class StatsSearch extends BaseSearch {
     super(event, type);
     this.tableName = typeToTable[this.type];
     this.queryStringParameters.field = this.queryStringParameters.field ?? 'status';
+    this.dbQueryParameters = omit(this.dbQueryParameters, ['limit', 'offset']);
   }
 
-  /** Formats the postgres records into an API stats/aggregate response
+  /**
+   * Formats the postgres records into an API stats/aggregate response
    *
    * @param {Record<string, Aggregate>} result - the postgres query results
    * @returns {ApiAggregateResult} the api object with the aggregate statistics
@@ -96,7 +98,8 @@ class StatsSearch extends BaseSearch {
     };
   }
 
-  /** Formats the postgres results into an API stats/summary response
+  /**
+   * Formats the postgres results into an API stats/summary response
    *
    * @param {TotalSummary} result - the knex summary query results
    * @returns {SummaryResult} the api object with the summary statistics
@@ -140,14 +143,15 @@ class StatsSearch extends BaseSearch {
     };
   }
 
-  /** Queries postgres for a summary of statistics around the granules in the system
+  /**
+   * Queries postgres for a summary of statistics around the granules in the system
    *
    * @param {Knex} sendKnex - the knex client to be used
    * @returns {Promise<SummaryResult>} the postgres aggregations based on query
    */
   public async summary(sendknex: Knex): Promise<SummaryResult> {
     const knex = sendknex ?? await getKnexClient();
-    const aggregateQuery:Knex.QueryBuilder = knex(`${TableNames.granules}`);
+    const aggregateQuery:Knex.QueryBuilder = knex(this.tableName);
     if (this.queryStringParameters.timestamp__from) {
       aggregateQuery.where(`${TableNames.granules}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from as string, 10)));
     }
@@ -164,9 +168,10 @@ class StatsSearch extends BaseSearch {
     return this.formatSummaryResult(aggregateQueryRes[0]);
   }
 
-  /** Performs joins on the provider and/or collection table if neccessary
+  /**
+   * Performs joins on the provider and/or collection table if neccessary
    *
-   * @param {Knex} knex - the knex client to be used
+   * @param {Knex.QueryBuilder} query - the knex query to be joined or not
    */
   private joinTables(query: Knex.QueryBuilder) {
     if (this.queryStringParameters.collectionId) {
@@ -178,7 +183,8 @@ class StatsSearch extends BaseSearch {
     }
   }
 
-  /** Aggregates the search query based on queryStringParameters
+  /**
+   * Aggregates the search query based on queryStringParameters
    *
    * @param {Knex.QueryBuilder} query - the knex query to be aggregated
    * @param {Knex} knex - the knex client to be used
@@ -264,11 +270,11 @@ class StatsSearch extends BaseSearch {
   /**
    * Executes the aggregate search query
    *
-   * @param {Knex} knex - the knex client to be used
+   * @param {Knex | undefined} testKnex - the knex client to be used
    * @param [params.dbQueryParameters] - the db query parameters
    * @returns {ApiAggregateResult} - the aggregate query results in api format
    */
-  async aggregate(testKnex: Knex | undefined) {
+  async aggregate(testKnex: Knex | undefined): Promise<ApiAggregateResult> {
     const knex = testKnex ?? await getKnexClient();
     const { searchQuery } = this.buildSearch(knex);
     try {

@@ -385,7 +385,7 @@ test('StatsSearch can query by infix and prefix when type is defined', async (t)
 
 test('StatsSummary works', async (t) => {
   const { knex } = t.context;
-  const StatsSummary = new StatsSearch({}, 'summary');
+  const StatsSummary = new StatsSearch({}, 'granule');
   const results = await StatsSummary.summary(knex);
   t.is(results.collections.value, 20);
   t.is(results.granules.value, 100);
@@ -395,7 +395,7 @@ test('StatsSummary works', async (t) => {
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
-  const StatsSummary2 = new StatsSearch({ queryStringParameters }, 'summary');
+  const StatsSummary2 = new StatsSearch({ queryStringParameters }, 'granule');
   const results2 = await StatsSummary2.summary(knex);
   t.is(results2.collections.value, 15);
   t.is(results2.granules.value, 25);
