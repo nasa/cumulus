@@ -15,9 +15,7 @@ type TotalSummary = {
 
 type Aggregate = {
   count: string,
-  status?: string,
-  error?: string,
-  name?: string,
+  aggregatedField: string,
 };
 
 type Summary = {
@@ -78,12 +76,11 @@ class StatsSearch extends BaseSearch {
   private formatAggregateResult(result: Record<string, Aggregate>): ApiAggregateResult {
     let totalCount = 0;
     const responses = [];
-    const localField = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
+    const localField = this.queryStringParameters.field ?? 'status';
     for (const row of Object.keys(result)) {
       responses.push(
         {
-          key: localField === 'status' ? `${result[row].status}` :
-            (localField?.includes('error.Error') ? `${result[row].error}` : `${result[row].name}`),
+          key: result[row].aggregatedField,
           count: Number.parseInt(result[row].count, 10),
         }
       );
@@ -172,44 +169,31 @@ class StatsSearch extends BaseSearch {
    * @param {Knex} knex - the knex client to be used
    * @returns {Knex.QueryBuilder} the knex query of a joined table or not based on queryStringParams
    */
-  private providerAndCollectionIdBuilder(knex: Knex): Knex.QueryBuilder {
-    let aggregateQuery;
-    const localField = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
-    if (localField?.includes('error.Error')) {
-      aggregateQuery = knex.select(knex.raw(`"count(${this.tableName}.cumulus_id), error ->> 'Error' as error"`)).from(this.tableName);
-    } else {
-      aggregateQuery = knex.select(`${this.tableName}.${localField}`).from(this.tableName);
-    }
+  private joinTables(query: Knex.QueryBuilder): Knex.QueryBuilder {
     if (this.queryStringParameters.collectionId) {
-      aggregateQuery.join(`${TableNames.collections}`, `${this.tableName}.collection_cumulus_id`, 'collections.cumulus_id');
+      query.join(`${TableNames.collections}`, `${this.tableName}.collection_cumulus_id`, 'collections.cumulus_id');
     }
 
     if (this.queryStringParameters.provider) {
-      aggregateQuery.join(`${TableNames.providers}`, `${this.tableName}.provider_cumulus_id`, 'providers.cumulus_id');
+      query.join(`${TableNames.providers}`, `${this.tableName}.provider_cumulus_id`, 'providers.cumulus_id');
     }
-    return aggregateQuery;
+    return query;
   }
 
   /** Aggregates the search query based on queryStringParameters
    *
    * @param {Knex.QueryBuilder} query - the knex query to be aggregated
    * @param {Knex} knex - the knex client to be used
-   * @returns {Knex.QueryBuilder} the query with its new Aggregatation
    */
-  private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex): Knex.QueryBuilder {
+  private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex) {
     const localField = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
     if (localField?.includes('error.Error')) {
-      query.select(knex.raw("error ->> 'Error' as error"))
-        .count(`${this.tableName}.cumulus_id as count`)
-        .groupByRaw(knex.raw("error ->> 'Error'"))
-        .orderBy('count', 'desc');
+      query.select(knex.raw("error ->> 'Error' as aggregatedField"));
     } else {
-      query.select(`${this.tableName}.${localField}`)
-        .count(`${this.tableName}.cumulus_id as count`)
-        .groupBy(`${this.tableName}.${localField}`)
-        .orderBy('count', 'desc');
+      query.select(`${this.tableName}.${localField} as aggregatedField`);
     }
-    return query;
+    query.modify((query) => this.joinTables(query));
+    query.count(`${this.tableName}.cumulus_id as count`).groupBy('aggregatedField').orderBy('count', 'desc');
   }
 
   /**
@@ -222,12 +206,7 @@ class StatsSearch extends BaseSearch {
     : {
       searchQuery: Knex.QueryBuilder,
     } {
-    let searchQuery:Knex.QueryBuilder;
-    if (this.queryStringParameters.provider || this.queryStringParameters.collectionId) {
-      searchQuery = this.providerAndCollectionIdBuilder(knex);
-    } else {
-      searchQuery = knex(`${this.tableName}`);
-    }
+    let searchQuery:Knex.QueryBuilder = knex(`${this.tableName}`);
     this.aggregateQueryField(searchQuery, knex);
     return { searchQuery };
   }

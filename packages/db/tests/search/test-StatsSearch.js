@@ -317,6 +317,7 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   };
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
   const results = await AggregateSearch.aggregate(knex);
+  console.log("RESULTS", results);
   t.is(results.meta.count, 100);
   t.is(results.count.find((item) => item.key === 'CmrFailure').count, 20);
   t.is(results.count.find((item) => item.key === 'UnknownError').count, 20);
