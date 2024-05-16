@@ -244,9 +244,9 @@ test('GET /stats/aggregate returns correct response', async (t) => {
 
   const expectedCount = [
     { key: 'completed', count: 25 },
-    { key: 'running', count: 25 },
-    { key: 'queued', count: 25 },
     { key: 'failed', count: 25 },
+    { key: 'queued', count: 25 },
+    { key: 'running', count: 25 },
   ];
   t.is(response.body.meta.count, 100);
   t.deepEqual(response.body.count, expectedCount);

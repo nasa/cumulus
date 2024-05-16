@@ -196,7 +196,7 @@ class StatsSearch extends BaseSearch {
       query.select(`${this.tableName}.${this.queryStringParameters.field} as aggregatedfield`);
     }
     query.modify((queryBuilder) => this.joinTables(queryBuilder));
-    query.count(`${this.tableName}.cumulus_id as count`).groupBy('aggregatedfield').orderBy('count', 'desc');
+    query.count(`${this.tableName}.cumulus_id as count`).groupBy('aggregatedfield').orderBy([{ column: 'count', order: 'desc' }, { column: 'aggregatedfield' }]);
   }
 
   /**
