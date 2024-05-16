@@ -195,8 +195,10 @@ class StatsSearch extends BaseSearch {
     } else {
       query.select(`${this.tableName}.${this.queryStringParameters.field} as aggregatedfield`);
     }
-    query.modify((queryBuilder) => this.joinTables(queryBuilder));
-    query.count(`${this.tableName}.cumulus_id as count`).groupBy('aggregatedfield').orderBy([{ column: 'count', order: 'desc' }, { column: 'aggregatedfield' }]);
+    query.modify((queryBuilder) => this.joinTables(queryBuilder))
+      .count(`${this.tableName}.cumulus_id as count`)
+      .groupBy('aggregatedfield')
+      .orderBy([{ column: 'count', order: 'desc' }, { column: 'aggregatedfield' }]);
   }
 
   /**
