@@ -202,7 +202,7 @@ class StatsSearch extends BaseSearch {
   /**
    * Builds basic query
    *
-   * @param knex - the knex client
+   * @param {Knex} knex - the knex client
    * @returns the search query
    */
   protected buildBasicQuery(knex: Knex)
@@ -219,6 +219,7 @@ class StatsSearch extends BaseSearch {
    *
    * @param params
    * @param {Knex.QueryBuilder} params.searchQuery - the search query
+   * @param [params.dbQueryParameters] - the db query parameters
    */
   protected buildInfixPrefixQuery(params: {
     searchQuery: Knex.QueryBuilder,
@@ -271,8 +272,7 @@ class StatsSearch extends BaseSearch {
    * Executes the aggregate search query
    *
    * @param {Knex | undefined} testKnex - the knex client to be used
-   * @param [params.dbQueryParameters] - the db query parameters
-   * @returns {ApiAggregateResult} - the aggregate query results in api format
+   * @returns {Promise<ApiAggregateResult>} - the aggregate query results in api format
    */
   async aggregate(testKnex: Knex | undefined): Promise<ApiAggregateResult> {
     const knex = testKnex ?? await getKnexClient();
