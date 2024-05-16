@@ -9,7 +9,7 @@ import { convertQueryStringToDbQueryParameters } from './queries';
 
 const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
 
-export type Meta = {
+type Meta = {
   name: string,
   stack?: string,
   table?: string,

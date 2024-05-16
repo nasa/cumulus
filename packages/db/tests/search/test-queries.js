@@ -12,6 +12,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     prefix: 'MO',
     published: 'true',
     status: 'completed',
+    
     'error.Error': 'CumulusMessageAdapterExecutionError',
     collectionId: 'MOD09GQ___006',
     nonExistingField: 'nonExistingFieldValue',
