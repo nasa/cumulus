@@ -107,10 +107,10 @@ class StatsSearch extends BaseSearch {
   private formatSummaryResult(result: TotalSummary): SummaryResult {
     const timestampTo = Number.parseInt(this.queryStringParameters.timestamp__to as string, 10);
     const timestampFrom = Number.parseInt(this.queryStringParameters.timestamp__from as string, 10);
-    const dateto = this.queryStringParameters.timestamp__to ?
-      new Date(timestampTo).toISOString() : new Date().toISOString();
-    const datefrom = this.queryStringParameters.timestamp__from ?
-      new Date(timestampFrom).toISOString() : '1970-01-01T12:00:00+00:00';
+    const dateto = this.queryStringParameters.timestamp__to
+      ? new Date(timestampTo).toISOString() : new Date().toISOString();
+    const datefrom = this.queryStringParameters.timestamp__from
+      ? new Date(timestampFrom).toISOString() : '1970-01-01T12:00:00+00:00';
     return {
       errors: {
         dateFrom: datefrom,
@@ -149,8 +149,8 @@ class StatsSearch extends BaseSearch {
    * @param {Knex} sendKnex - the knex client to be used
    * @returns {Promise<SummaryResult>} the postgres aggregations based on query
    */
-  public async summary(sendknex: Knex): Promise<SummaryResult> {
-    const knex = sendknex ?? await getKnexClient();
+  public async summary(sendKnex: Knex): Promise<SummaryResult> {
+    const knex = sendKnex ?? await getKnexClient();
     const aggregateQuery:Knex.QueryBuilder = knex(this.tableName);
     if (this.queryStringParameters.timestamp__from) {
       aggregateQuery.where(`${TableNames.granules}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from as string, 10)));
