@@ -122,6 +122,8 @@ modification.
     CommmonJS typescript/webpack clients.
 
 ### Changed
+- **CUMULUS-3720**
+  - add cicd unit test error logging to s3 for testing improvements
 - **CUMULUS-3951**
   - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
   - Update all integration/unit tests to use encrypted SNS topics
