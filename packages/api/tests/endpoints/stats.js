@@ -242,11 +242,14 @@ test('GET /stats/aggregate returns correct response', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
+  const expectedCount = [
+    { key: 'completed', count: 25 },
+    { key: 'running', count: 25 },
+    { key: 'queued', count: 25 },
+    { key: 'failed', count: 25 },
+  ];
   t.is(response.body.meta.count, 100);
-  t.is(response.body.count.find((item) => item.key === 'completed').count, 25);
-  t.is(response.body.count.find((item) => item.key === 'queued').count, 25);
-  t.is(response.body.count.find((item) => item.key === 'queued').count, 25);
-  t.is(response.body.count.find((item) => item.key === 'queued').count, 25);
+  t.deepEqual(response.body.count, expectedCount);
 });
 
 test('GET /stats/aggregate filters correctly by date', async (t) => {
@@ -255,9 +258,13 @@ test('GET /stats/aggregate filters correctly by date', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
+
+  const expectedCount = [
+    { key: 'failed', count: 16 },
+    { key: 'running', count: 9 },
+    { key: 'completed', count: 8 },
+    { key: 'queued', count: 8 },
+  ];
   t.is(response.body.meta.count, 41);
-  t.is(response.body.count.find((item) => item.key === 'completed').count, 8);
-  t.is(response.body.count.find((item) => item.key === 'queued').count, 8);
-  t.is(response.body.count.find((item) => item.key === 'queued').count, 8);
-  t.is(response.body.count.find((item) => item.key === 'queued').count, 8);
+  t.deepEqual(response.body.count, expectedCount);
 });
