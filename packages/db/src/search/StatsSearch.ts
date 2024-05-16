@@ -1,8 +1,9 @@
+import get from 'lodash/get';
 import { Knex } from 'knex';
 import omit from 'lodash/omit';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
-import { DbQueryParameters } from '../types/search';
+import { DbQueryParameters, QueryEvent } from '../types/search';
 import { BaseSearch, typeToTable } from './BaseSearch';
 
 type TotalSummary = {
@@ -50,18 +51,25 @@ type ApiAggregateResult = {
   count: AggregateRes[]
 };
 
-const infixMapping = new Map([
-  ['granules', 'granule_id'],
-  ['collections', 'name'],
-  ['providers', 'name'],
-  ['executions', 'arn'],
-  ['pdrs', 'name'],
-]);
+const infixMapping = {
+  granules: 'granule_id',
+  collections: 'name',
+  providers: 'name',
+  executions: 'arn',
+  pdrs: 'name',
+};
 
 /**
  * A class to query postgres for the STATS and STATS/AGGREGATE endpoints
  */
 class StatsSearch extends BaseSearch {
+  readonly tableName: string;
+
+  constructor(event: QueryEvent, type: string) {
+    super(event, type);
+    this.tableName = typeToTable[this.type];
+  }
+
   /** Formats the postgres records into an API stats/aggregate response
    *
    * @param {Record<string, Aggregate>} result - the postgres query results
@@ -70,11 +78,12 @@ class StatsSearch extends BaseSearch {
   private formatAggregateResult(result: Record<string, Aggregate>): ApiAggregateResult {
     let totalCount = 0;
     const responses = [];
+    const localField = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
     for (const row of Object.keys(result)) {
       responses.push(
         {
-          key: this.queryStringParameters.field === 'status' ? `${result[row].status}` :
-            (this.queryStringParameters.field?.includes('error.Error') ? `${result[row].error}` : `${result[row].name}`),
+          key: localField === 'status' ? `${result[row].status}` :
+            (localField?.includes('error.Error') ? `${result[row].error}` : `${result[row].name}`),
           count: Number.parseInt(result[row].count, 10),
         }
       );
@@ -84,7 +93,7 @@ class StatsSearch extends BaseSearch {
       meta: {
         name: 'cumulus-api',
         count: totalCount,
-        field: `${this.queryStringParameters.field}`,
+        field: `${localField}`,
       },
       count: responses,
     };
@@ -165,18 +174,18 @@ class StatsSearch extends BaseSearch {
    */
   private providerAndCollectionIdBuilder(knex: Knex): Knex.QueryBuilder {
     let aggregateQuery;
-    this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
-    if (this.queryStringParameters.field?.includes('error.Error')) {
-      aggregateQuery = knex.select(knex.raw(`"count(${typeToTable[this.type]}.cumulus_id), error ->> 'Error' as error"`)).from(typeToTable[this.type]);
+    const localField = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
+    if (localField?.includes('error.Error')) {
+      aggregateQuery = knex.select(knex.raw(`"count(${this.tableName}.cumulus_id), error ->> 'Error' as error"`)).from(this.tableName);
     } else {
-      aggregateQuery = knex.select(`${typeToTable[this.type]}.${this.queryStringParameters.field}`).from(typeToTable[this.type]);
+      aggregateQuery = knex.select(`${this.tableName}.${localField}`).from(this.tableName);
     }
     if (this.queryStringParameters.collectionId) {
-      aggregateQuery.join(`${TableNames.collections}`, `${typeToTable[this.type]}.collection_cumulus_id`, 'collections.cumulus_id');
+      aggregateQuery.join(`${TableNames.collections}`, `${this.tableName}.collection_cumulus_id`, 'collections.cumulus_id');
     }
 
     if (this.queryStringParameters.provider) {
-      aggregateQuery.join(`${TableNames.providers}`, `${typeToTable[this.type]}.provider_cumulus_id`, 'providers.cumulus_id');
+      aggregateQuery.join(`${TableNames.providers}`, `${this.tableName}.provider_cumulus_id`, 'providers.cumulus_id');
     }
     return aggregateQuery;
   }
@@ -188,16 +197,16 @@ class StatsSearch extends BaseSearch {
    * @returns {Knex.QueryBuilder} the query with its new Aggregatation
    */
   private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex): Knex.QueryBuilder {
-    this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
-    if (this.queryStringParameters.field?.includes('error.Error')) {
+    const localField = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
+    if (localField?.includes('error.Error')) {
       query.select(knex.raw("error ->> 'Error' as error"))
-        .count(`${typeToTable[this.type]}.cumulus_id as count`)
+        .count(`${this.tableName}.cumulus_id as count`)
         .groupByRaw(knex.raw("error ->> 'Error'"))
         .orderBy('count', 'desc');
     } else {
-      query.select(`${typeToTable[this.type]}.${this.queryStringParameters.field}`)
-        .count(`${typeToTable[this.type]}.cumulus_id as count`)
-        .groupBy(`${typeToTable[this.type]}.${this.queryStringParameters.field}`)
+      query.select(`${this.tableName}.${localField}`)
+        .count(`${this.tableName}.cumulus_id as count`)
+        .groupBy(`${this.tableName}.${localField}`)
         .orderBy('count', 'desc');
     }
     return query;
@@ -217,9 +226,9 @@ class StatsSearch extends BaseSearch {
     if (this.queryStringParameters.provider || this.queryStringParameters.collectionId) {
       searchQuery = this.providerAndCollectionIdBuilder(knex);
     } else {
-      searchQuery = knex(`${typeToTable[this.type]}`);
+      searchQuery = knex(`${this.tableName}`);
     }
-    searchQuery = this.aggregateQueryField(searchQuery, knex);
+    this.aggregateQueryField(searchQuery, knex);
     return { searchQuery };
   }
 
@@ -235,12 +244,12 @@ class StatsSearch extends BaseSearch {
   }) {
     const { searchQuery, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters || this.dbQueryParameters;
-    const fieldName = typeToTable[this.type] ? infixMapping.get(typeToTable[this.type]) : 'granuleId';
+    const typeName = this.tableName ? get(infixMapping, this.tableName) : 'granuleId';
     if (infix) {
-      searchQuery.whereLike(`${typeToTable[this.type]}.${fieldName}`, `%${infix}%`);
+      searchQuery.whereLike(`${this.tableName}.${typeName}`, `%${infix}%`);
     }
     if (prefix) {
-      searchQuery.whereLike(`${typeToTable[this.type]}.${fieldName}`, `%${prefix}%`);
+      searchQuery.whereLike(`${this.tableName}.${typeName}`, `%${prefix}%`);
     }
   }
 
@@ -264,10 +273,10 @@ class StatsSearch extends BaseSearch {
       searchQuery.where(`${TableNames.providers}.name`, '=', this.queryStringParameters.provider);
     }
     if (this.queryStringParameters.timestamp__from) {
-      searchQuery.where(`${typeToTable[this.type]}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from as string, 10)));
+      searchQuery.where(`${this.tableName}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from as string, 10)));
     }
     if (this.queryStringParameters.timestamp__to) {
-      searchQuery.where(`${typeToTable[this.type]}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
+      searchQuery.where(`${this.tableName}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
     }
     const { term = {} } = this.dbQueryParameters;
     return super.buildTermQuery({
