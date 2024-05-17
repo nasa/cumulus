@@ -15,13 +15,12 @@
     "node": ">=16.19.0"
   },
   "scripts": {
-    "generate-task-schemas": "npx generate-task-schemas . files",
     "clean": "rm -rf node_modules && rm -rf dist",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py",
+    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc"
   },
   "dependencies": {
