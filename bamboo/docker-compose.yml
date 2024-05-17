@@ -49,7 +49,6 @@ services:
     image: $CUMULUS_BASE_IMAGE
     volumes:
       - /tmp/cumulus_unit_test_data:/tmp/cumulus_unit_test_data
-      - $HOME/.aws/credentials:/home/app/.aws/credentials
     environment:
       - LOCALSTACK_HOST=127.0.0.1
       - LOCAL_ES_HOST=127.0.0.1
