@@ -101,12 +101,10 @@ class StatsSearch extends BaseSearch {
    * @returns {SummaryResult} the api object with the summary statistics
    */
   private formatSummaryResult(result: TotalSummary): SummaryResult {
-    const timestampTo = Number.parseInt(this.queryStringParameters.timestamp__to as string, 10);
-    const timestampFrom = Number.parseInt(this.queryStringParameters.timestamp__from as string, 10);
-    const dateto = this.queryStringParameters.timestamp__to
-      ? new Date(timestampTo).toISOString() : new Date().toISOString();
-    const datefrom = this.queryStringParameters.timestamp__from
-      ? new Date(timestampFrom).toISOString() : '1970-01-01T12:00:00+00:00';
+    const timestampTo = this.dbQueryParameters.range?.updated_at?.lte ?? new Date();
+    const timestampFrom = this.dbQueryParameters.range?.updated_at?.gte ?? new Date(0);
+    const dateto = (timestampTo as Date).toISOString();
+    const datefrom = (timestampFrom as Date).toISOString();
     return {
       errors: {
         dateFrom: datefrom,
@@ -147,13 +145,8 @@ class StatsSearch extends BaseSearch {
    */
   public async summary(sendKnex: Knex): Promise<SummaryResult> {
     const knex = sendKnex ?? await getKnexClient();
-    const aggregateQuery:Knex.QueryBuilder = knex(this.tableName);
-    if (this.queryStringParameters.timestamp__from) {
-      aggregateQuery.where(`${this.tableName}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from as string, 10)));
-    }
-    if (this.queryStringParameters.timestamp__to) {
-      aggregateQuery.where(`${this.tableName}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
-    }
+    const aggregateQuery: Knex.QueryBuilder = knex(this.tableName);
+    this.buildRangeQuery({ searchQuery: aggregateQuery });
     aggregateQuery.select(
       knex.raw(`COUNT(CASE WHEN ${this.tableName}.error ->> 'Error' is not null THEN 1 END) AS count_errors`),
       knex.raw(`COUNT(${this.tableName}.cumulus_id) AS count_granules`),
@@ -252,12 +245,6 @@ class StatsSearch extends BaseSearch {
     }
     if (this.queryStringParameters.provider) {
       searchQuery.where(`${TableNames.providers}.name`, '=', this.queryStringParameters.provider);
-    }
-    if (this.queryStringParameters.timestamp__from) {
-      searchQuery.where(`${this.tableName}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from as string, 10)));
-    }
-    if (this.queryStringParameters.timestamp__to) {
-      searchQuery.where(`${this.tableName}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
     }
     if (this.queryStringParameters.field?.includes('error.Error')) {
       searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is not null`);
