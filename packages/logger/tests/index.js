@@ -75,7 +75,6 @@ test('Logger.info() accepts placeholder arguments', (t) => {
 
 test('Logger.info() creates the expected log entry', (t) => {
   const { testConsole } = t.context;
-  t.true(false);
   const logger = new Logger({ console: testConsole, sender: 'my-sender' });
 
   logger.info('hello');
