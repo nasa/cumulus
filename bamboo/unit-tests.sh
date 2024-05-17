@@ -10,7 +10,9 @@ docker ps -a ## Show running containers for output logs
 docker exec -i ${container_id}-build_env-1 /bin/bash -c "cd $UNIT_TEST_BUILD_DIR && npm run db:local:reset"
 docker exec -i ${container_id}-build_env-1 \
   /bin/bash -c "cd $UNIT_TEST_BUILD_DIR && \
-  export AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id) && \
-  export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key) && \
-  export AWS_REGION=$(aws configure get region || echo $AWS_DEFAULT_REGION) && \
   ./scripts/run_ci_unit_coverage.sh"
+
+if [ -n "$(ls -A ./unit-logs/@cumulus 2>/dev/null)" ]
+then 
+    aws s3 sync unit-logs/@cumulus/ s3://unit-test-error-logs/$(git rev-parse --abbrev-ref HEAD)/$(date +%Y-%m-%dT%H.%M.%S)/
+fi
