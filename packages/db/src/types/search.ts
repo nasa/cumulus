@@ -1,4 +1,5 @@
 export type QueryStringParameters = {
+  field?: string,
   fields?: string,
   infix?: string,
   limit?: string,

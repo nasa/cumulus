@@ -18,7 +18,7 @@ type Meta = {
   count?: number,
 };
 
-const typeToTable: { [key: string]: string } = {
+export const typeToTable: { [key: string]: string } = {
   asyncOperation: TableNames.asyncOperations,
   collection: TableNames.collections,
   execution: TableNames.executions,
@@ -53,9 +53,9 @@ class BaseSearch {
    * @param knex - DB client
    * @returns queries for getting count and search result
    */
-  private _buildSearch(knex: Knex)
+  protected buildSearch(knex: Knex)
     : {
-      countQuery: Knex.QueryBuilder,
+      countQuery?: Knex.QueryBuilder,
       searchQuery: Knex.QueryBuilder,
     } {
     const { countQuery, searchQuery } = this.buildBasicQuery(knex);
@@ -67,7 +67,7 @@ class BaseSearch {
     if (limit) searchQuery.limit(limit);
     if (offset) searchQuery.offset(offset);
 
-    log.debug(`_buildSearch returns countQuery: ${countQuery.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
+    log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
 
@@ -91,7 +91,7 @@ class BaseSearch {
    * @throws - function is not implemented
    */
   protected buildBasicQuery(knex: Knex): {
-    countQuery: Knex.QueryBuilder,
+    countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
   } {
     log.debug(`buildBasicQuery is not implemented ${knex.constructor.name}`);
@@ -102,12 +102,12 @@ class BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
-   * @param params.countQuery - query builder for getting count
+   * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
-    countQuery: Knex.QueryBuilder,
+    countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
@@ -146,12 +146,12 @@ class BaseSearch {
    * Build queries for term fields
    *
    * @param params
-   * @param params.countQuery - query builder for getting count
+   * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildTermQuery(params: {
-    countQuery: Knex.QueryBuilder,
+    countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
@@ -183,7 +183,7 @@ class BaseSearch {
    */
   async query(testKnex: Knex | undefined) {
     const knex = testKnex ?? await getKnexClient();
-    const { countQuery, searchQuery } = this._buildSearch(knex);
+    const { countQuery, searchQuery } = this.buildSearch(knex);
     try {
       const countResult = await countQuery;
       const meta = this._metaTemplate();
