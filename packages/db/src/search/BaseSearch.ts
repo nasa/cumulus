@@ -33,12 +33,14 @@ const typeToTable: { [key: string]: string } = {
  */
 class BaseSearch {
   readonly type: string;
+  readonly tableName: string;
   readonly queryStringParameters: QueryStringParameters;
   // parsed from queryStringParameters for query build
   dbQueryParameters: DbQueryParameters = {};
 
   constructor(event: QueryEvent, type: string) {
     this.type = type;
+    this.tableName = typeToTable[this.type];
     this.queryStringParameters = event?.queryStringParameters ?? {};
     this.dbQueryParameters = convertQueryStringToDbQueryParameters(
       this.type, this.queryStringParameters
@@ -58,6 +60,7 @@ class BaseSearch {
     } {
     const { countQuery, searchQuery } = this.buildBasicQuery(knex);
     this.buildTermQuery({ countQuery, searchQuery });
+    this.buildRangeQuery({ countQuery, searchQuery });
     this.buildInfixPrefixQuery({ countQuery, searchQuery });
 
     const { limit, offset } = this.dbQueryParameters;
@@ -77,7 +80,7 @@ class BaseSearch {
     return {
       name: 'cumulus-api',
       stack: process.env.stackName,
-      table: this.type && typeToTable[this.type],
+      table: this.tableName,
     };
   }
 
@@ -113,6 +116,33 @@ class BaseSearch {
   }
 
   /**
+   * Build queries for range fields
+   *
+   * @param params
+   * @param params.countQuery - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildRangeQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { range = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(range).forEach(([name, rangeValues]) => {
+      if (rangeValues.gte) {
+        countQuery.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
+        searchQuery.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
+      }
+      if (rangeValues.lte) {
+        countQuery.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
+        searchQuery.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
+      }
+    });
+  }
+  /**
    * Build queries for term fields
    *
    * @param params
@@ -125,13 +155,12 @@ class BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const table = typeToTable[this.type];
     const { countQuery, searchQuery, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters || this.dbQueryParameters;
 
     Object.entries(term).forEach(([name, value]) => {
-      countQuery.where(`${table}.${name}`, value);
-      searchQuery.where(`${table}.${name}`, value);
+      countQuery.where(`${this.tableName}.${name}`, value);
+      searchQuery.where(`${this.tableName}.${name}`, value);
     });
   }
 

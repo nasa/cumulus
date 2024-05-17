@@ -14,7 +14,7 @@ import { TableNames } from '../tables';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
-export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
+interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   cumulus_id: number,
   updated_at: Date,
   collection_cumulus_id: number,
@@ -38,17 +38,15 @@ export class GranuleSearch extends BaseSearch {
 
   private searchCollection(): boolean {
     const term = this.dbQueryParameters.term;
-    return !!(term && (term.collectionName || term.collectionVersion));
+    return !!(term?.collectionName || term?.collectionVersion);
   }
 
   private searchPdr(): boolean {
-    const term = this.dbQueryParameters.term;
-    return !!(term && term.pdrName);
+    return !!this.dbQueryParameters.term?.pdrName;
   }
 
   private searchProvider(): boolean {
-    const term = this.dbQueryParameters.term;
-    return !!(term && term.providerName);
+    return !!this.dbQueryParameters.term?.providerName;
   }
 
   /**

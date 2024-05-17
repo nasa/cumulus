@@ -100,7 +100,7 @@ test.before(async (t) => {
   t.context.granuleSearchFields = {
     beginningDateTime: '2020-03-16T19:50:24.757Z',
     cmrLink: 'https://fakeLink',
-    duration: '6.8',
+    duration: 6.8,
     endingDateTime: '2020-03-17T10:00:00.000Z',
     lastUpdateDateTime: '2020-03-18T10:00:00.000Z',
     processingEndDateTime: '2020-03-16T10:00:00.000Z',
@@ -126,10 +126,9 @@ test.before(async (t) => {
         ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
       pdr_cumulus_id: !(num % 2) ? t.context.pdrCumulusId : undefined,
       provider_cumulus_id: !(num % 2) ? t.context.providerCumulusId : undefined,
-      beginning_date_time: !(num % 2)
-        ? new Date(t.context.granuleSearchFields.beginningDateTime) : undefined,
+      beginning_date_time: new Date(t.context.granuleSearchFields.beginningDateTime),
       cmr_link: !(num % 100) ? t.context.granuleSearchFields.cmrLink : undefined,
-      duration: !(num % 2) ? Number(t.context.granuleSearchFields.duration) : undefined,
+      duration: t.context.granuleSearchFields.duration + (num % 2),
       ending_date_time: !(num % 2)
         ? new Date(t.context.granuleSearchFields.endingDateTime) : new Date(),
       error: !(num % 2) ? JSON.stringify(error) : undefined,
@@ -142,7 +141,7 @@ test.before(async (t) => {
       time_to_process: !(num % 20)
         ? Number(t.context.granuleSearchFields.timeToPreprocess) : undefined,
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
-      updated_at: !(num % 2) ? new Date(t.context.granuleSearchFields.timestamp) : undefined,
+      updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
     }))
   );
 });
@@ -272,7 +271,7 @@ test('GranuleSearch supports term search for date field', async (t) => {
     beginningDateTime: t.context.granuleSearchFields.beginningDateTime,
     endingDateTime: t.context.granuleSearchFields.endingDateTime,
     lastUpdateDateTime: t.context.granuleSearchFields.lastUpdateDateTime,
-    updatedAt: t.context.granuleSearchFields.updatedAt,
+    updatedAt: `${t.context.granuleSearchFields.updatedAt}`,
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -328,7 +327,7 @@ test('GranuleSearch supports term search for timestamp', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    timestamp: t.context.granuleSearchFields.timestamp,
+    timestamp: `${t.context.granuleSearchFields.timestamp}`,
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -348,7 +347,42 @@ test('GranuleSearch supports term search for nested error.Error', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleSearch supports term search for multiple fields', async (t) => {
+test('GranuleSearch supports range search', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    beginningDateTime__from: '2020-03-16',
+    duration__from: `${t.context.granuleSearchFields.duration - 1}`,
+    duration__to: `${t.context.granuleSearchFields.duration + 1}`,
+    timestamp__from: `${t.context.granuleSearchFields.timestamp}`,
+    timestamp__to: `${t.context.granuleSearchFields.timestamp + 1600}`,
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 100);
+
+  queryStringParameters = {
+    limit: 200,
+    timestamp__from: t.context.granuleSearchFields.timestamp,
+    timestamp__to: t.context.granuleSearchFields.timestamp + 500,
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    limit: 200,
+    duration__from: `${t.context.granuleSearchFields.duration + 2}`,
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 0);
+  t.is(response.results?.length, 0);
+});
+
+test('GranuleSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -356,6 +390,8 @@ test('GranuleSearch supports term search for multiple fields', async (t) => {
     provider: t.context.provider.name,
     'error.Error': 'CumulusMessageAdapterExecutionError',
     status: 'failed',
+    timestamp__from: t.context.granuleSearchFields.timestamp,
+    timestamp__to: t.context.granuleSearchFields.timestamp + 500,
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -368,6 +404,7 @@ test('GranuleSearch non-existing fields are ignored', async (t) => {
   const queryStringParameters = {
     limit: 200,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
+    non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);

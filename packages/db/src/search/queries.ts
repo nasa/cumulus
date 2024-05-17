@@ -44,10 +44,12 @@ const convertRange = (
   const range = queryStringFields.reduce((acc: { [key: string]: RangeType }, queryField) => {
     const match = queryField.name.match(regexes.range);
     if (!match) return acc;
+
     const dbField = mapQueryStringFieldToDbField(type, { ...queryField, name: match[1] });
     if (!dbField) return acc;
     const dbFieldName = Object.keys(dbField)[0];
-    const rangeField: { [key: string]: RangeType } = { dbFieldName: acc[dbFieldName] || {} };
+
+    const rangeField: { [key: string]: RangeType } = { [dbFieldName]: acc[dbFieldName] || {} };
     if (match[2] === 'from') {
       rangeField[dbFieldName].gte = dbField[dbFieldName];
     }

@@ -28,7 +28,7 @@ export type DbQueryParameters = {
   offset?: number,
   page?: number,
   prefix?: string,
-  range?: { [key: string]: Range },
+  range?: { [key: string]: RangeType },
   term?: { [key: string]: QueriableType | undefined },
   terms?: { [key: string]: any },
 };
