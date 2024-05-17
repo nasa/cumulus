@@ -56,7 +56,4 @@ services:
       - CI_UID
       - DOCKER_TEST_RUN=true
       - bamboo_planKey
-      - AWS_ACCESS_KEY_ID=${SECRET_AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${SECRET_AWS_SECRET_ACCESS_KEY}
-      - AWS_DEFAULT_REGION=${SECRET_AWS_DEFAULT_REGION}
     command: tail -f /dev/null
