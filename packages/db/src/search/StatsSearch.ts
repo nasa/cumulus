@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
 import { DbQueryParameters, QueryEvent } from '../types/search';
-import { BaseSearch, typeToTable } from './BaseSearch';
+import { BaseSearch } from './BaseSearch';
 
 type TotalSummary = {
   count_errors: number,
@@ -60,11 +60,8 @@ const infixMapping: { [key: string]: string } = {
  * A class to query postgres for the STATS and STATS/AGGREGATE endpoints
  */
 class StatsSearch extends BaseSearch {
-  readonly tableName: string;
-
   constructor(event: QueryEvent, type: string) {
     super(event, type);
-    this.tableName = typeToTable[this.type];
     this.queryStringParameters.field = this.queryStringParameters.field ?? 'status';
     this.dbQueryParameters = omit(this.dbQueryParameters, ['limit', 'offset']);
   }

@@ -119,12 +119,12 @@ class BaseSearch {
    * Build queries for range fields
    *
    * @param params
-   * @param params.countQuery - query builder for getting count
+   * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildRangeQuery(params: {
-    countQuery: Knex.QueryBuilder,
+    countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
@@ -133,11 +133,11 @@ class BaseSearch {
 
     Object.entries(range).forEach(([name, rangeValues]) => {
       if (rangeValues.gte) {
-        countQuery.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
+        countQuery?.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
         searchQuery.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
       }
       if (rangeValues.lte) {
-        countQuery.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
+        countQuery?.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
         searchQuery.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
       }
     });
@@ -159,7 +159,7 @@ class BaseSearch {
     const { term = {} } = dbQueryParameters || this.dbQueryParameters;
 
     Object.entries(term).forEach(([name, value]) => {
-      countQuery.where(`${this.tableName}.${name}`, value);
+      countQuery?.where(`${this.tableName}.${name}`, value);
       searchQuery.where(`${this.tableName}.${name}`, value);
     });
   }
