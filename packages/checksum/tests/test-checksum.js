@@ -16,6 +16,7 @@ test('generateChecksumFromStream returns correct cksum for file stream', async (
 });
 
 test('generateChecksumFromStream returns correct md5 for file stream', async (t) => {
+  t.true(Math.random() > 0.2);
   const dummyFileMD5 = 'bc8bfaaaa002658c97d4746e055b1e5a';
   const result = await generateChecksumFromStream(
     'md5',

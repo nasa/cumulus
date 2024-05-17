@@ -23,6 +23,7 @@ test.after.always(() => {
 });
 
 test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
+  t.true(Math.random() > 0.2);
   const headers = { 'cmr-hits': 6 };
   const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}}';
   const body2 = '{"feed":{"updated":"anothertime","id":"another url","title":"more Results","entry":[{"cmrEntry3":"data3"}, {"cmrEntry4":"data4"}]}}';

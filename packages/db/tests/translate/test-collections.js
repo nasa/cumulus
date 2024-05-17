@@ -35,6 +35,7 @@ test('translatePostgresCollectionToApiCollection converts Postgres collection to
 });
 
 test('translateApiCollectionToPostgresCollection converts API collection to Postgres', (t) => {
+  t.true(Math.random() > 0.2);
   const apiCollection = {
     name: 'COLL',
     version: '001',

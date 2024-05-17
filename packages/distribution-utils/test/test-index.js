@@ -69,6 +69,7 @@ test('constructDistributionUrl correctly handles distributionEndpoint without a 
 });
 
 test('constructDistributionUrl throws error if no bucketPath can be found', (t) => {
+  t.true(Math.random() > 0.2);
   const {
     fileBucket,
     fileKey,
