@@ -125,6 +125,8 @@ modification.
     using a PKCS11 provider
 
 ### Changed
+- **CUMULUS-3717**
+  - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
 - **CUMULUS-3720**
   - add cicd unit test error logging to s3 for testing improvements
 - **CUMULUS-3951**
