@@ -10,7 +10,7 @@ RESULT=$?
 
 kill -9 $TAIL_PID
 
-if [ $RESULT ]
+if [[ $RESULT != 0 ]]
 then
     printf '\n\n\n*****TEST FAILURES:\n'
     grep '✘' ./test_output.txt
