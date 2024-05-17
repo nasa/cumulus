@@ -8,27 +8,27 @@ const {
 
 test('organizeByErrorType gets the expected results', (t) => {
   let keys = [
-    'a/2023.04.12T12.16.10/something.log',
-    'a/2023.04.12T12.14.10/something.log',
-    'a/2053.04.12T12.16.10/somethingElse.log',
+    'a/2023-04-12T12.16.10/something.log',
+    'a/2023-04-12T12.14.10/something.log',
+    'a/2053-04-12T12.16.10/somethingElse.log',
   ];
   let organized = organizeByErrorType(keys);
   t.deepEqual(
     organized,
     {
       something: [
-        'a/2023.04.12T12.14.10/something.log',
-        'a/2023.04.12T12.16.10/something.log',
+        'a/2023-04-12T12.14.10/something.log',
+        'a/2023-04-12T12.16.10/something.log',
       ],
       somethingElse: [
-        'a/2053.04.12T12.16.10/somethingElse.log',
+        'a/2053-04-12T12.16.10/somethingElse.log',
       ],
     }
   );
   keys = [
     'something.log',
     'a/something',
-    'a/2053.04.12T12.16.10/somethingElse.log',
+    'a/2053-04-12T12.16.10/somethingElse.log',
   ];
   organized = organizeByErrorType(keys);
   t.deepEqual(
@@ -39,7 +39,7 @@ test('organizeByErrorType gets the expected results', (t) => {
         'something.log',
       ],
       somethingElse: [
-        'a/2053.04.12T12.16.10/somethingElse.log',
+        'a/2053-04-12T12.16.10/somethingElse.log',
       ],
     }
   );
@@ -47,31 +47,31 @@ test('organizeByErrorType gets the expected results', (t) => {
 
 test('organizeByDate gets the expected results', (t) => {
   let keys = [
-    'a/2023.04.12T12.16.10/something.log',
-    'a/2023.04.12T12.14.10/something.log',
-    'a/2053.04.12T12.16.10/somethingElse.log',
+    'a/2023-04-12T12.16.10/something.log',
+    'a/2023-04-12T12.14.10/something.log',
+    'a/2053-04-12T12.16.10/somethingElse.log',
   ];
   let organized = organizeByDate(keys);
   t.deepEqual(
     organized,
     [
-      ['2023.04.12T12.14.10', 'something'],
-      ['2023.04.12T12.16.10', 'something'],
-      ['2053.04.12T12.16.10', 'somethingElse'],
+      ['2023-04-12T12.14.10', 'something'],
+      ['2023-04-12T12.16.10', 'something'],
+      ['2053-04-12T12.16.10', 'somethingElse'],
     ]
   );
   keys = [
     'a/b/something.log',
-    'a/2023.04.12T12.14.10/something.log',
-    'a/2053.04.12T12.16.10/somethingElse.log',
+    'a/2023-04-12T12.14.10/something.log',
+    'a/2053-04-12T12.16.10/somethingElse.log',
   ];
   organized = organizeByDate(keys);
   t.deepEqual(
     organized,
     [
-      ['2023.04.12T12.14.10', 'something'],
-      ['2053.04.12T12.16.10', 'somethingElse'],
-      ['b', 'something'],
+      ['2023-04-12T12.14.10', 'something'],
+      ['2053-04-12T12.16.10', 'somethingElse'],
+      ['Invalid date', 'something'], //handles bad input without crashing
     ]
   );
 });

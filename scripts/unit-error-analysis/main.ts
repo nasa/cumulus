@@ -7,7 +7,7 @@ interface UnitErrorArgs {
   date: string
   bucket: string
 }
-const momentFormat = 'YYYY-mm-DDTHH.mm.ss';
+const momentFormat = 'YYYY-MM-DDTHH.mm.ss';
 
 //expects key in format <branch>/YYYY-mm-DDTHH.MM.SS/<error>.log
 export const extractError = (key: string): string => key.split('/')?.pop()?.split('.')[0] || 'unknown';
