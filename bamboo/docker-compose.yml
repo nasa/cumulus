@@ -49,10 +49,14 @@ services:
     image: $CUMULUS_BASE_IMAGE
     volumes:
       - /tmp/cumulus_unit_test_data:/tmp/cumulus_unit_test_data
+      - $HOME/.aws/credentials:/home/app/.aws/credentials
     environment:
       - LOCALSTACK_HOST=127.0.0.1
       - LOCAL_ES_HOST=127.0.0.1
       - CI_UID
       - DOCKER_TEST_RUN=true
       - bamboo_planKey
+      - AWS_ACCESS_KEY_ID=${SECRET_AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${SECRET_AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${SECRET_AWS_DEFAULT_REGION}
     command: tail -f /dev/null
