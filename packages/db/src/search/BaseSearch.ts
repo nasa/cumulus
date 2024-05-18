@@ -155,12 +155,38 @@ class BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+    } = TableNames;
+
     const { countQuery, searchQuery, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(term).forEach(([name, value]) => {
-      countQuery?.where(`${this.tableName}.${name}`, value);
-      searchQuery.where(`${this.tableName}.${name}`, value);
+      switch (name) {
+        case 'collectionName':
+          countQuery?.where(`${collectionsTable}.name`, value);
+          searchQuery.where(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          countQuery?.where(`${collectionsTable}.version`, value);
+          searchQuery.where(`${collectionsTable}.version`, value);
+          break;
+        case 'providerName':
+          countQuery?.where(`${providersTable}.name`, value);
+          searchQuery.where(`${providersTable}.name`, value);
+          break;
+        case 'pdrName':
+          countQuery?.where(`${pdrsTable}.name`, value);
+          searchQuery.where(`${pdrsTable}.name`, value);
+          break;
+        default:
+          countQuery?.where(`${this.tableName}.${name}`, value);
+          searchQuery.where(`${this.tableName}.${name}`, value);
+          break;
+      }
     });
   }
 

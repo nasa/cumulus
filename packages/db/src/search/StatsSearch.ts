@@ -56,8 +56,6 @@ const infixMapping: { [key: string]: string } = {
   pdrs: 'name',
 };
 
-const foreignFields = ['collectionName', 'collectionVersion', 'providerName', 'pdrName'];
-
 /**
  * A class to query postgres for the STATS and STATS/AGGREGATE endpoints
  */
@@ -244,28 +242,13 @@ class StatsSearch extends BaseSearch {
     const { dbQueryParameters, searchQuery } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
-    Object.entries(term).forEach(([name, value]) => {
-      if (name === 'collectionName') {
-        searchQuery.where(`${TableNames.collections}.name`, value);
-      }
-      if (name === 'collectionVersion') {
-        searchQuery.where(`${TableNames.collections}.version`, value);
-      }
-      if (name === 'providerName') {
-        searchQuery.where(`${TableNames.providers}.name`, value);
-      }
-      if (name === 'pdrName') {
-        searchQuery.where(`${TableNames.pdrs}.name`, value);
-      }
-    });
-
     if (this.queryStringParameters.field?.includes('error.Error')) {
       searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is not null`);
     }
 
     return super.buildTermQuery({
       ...params,
-      dbQueryParameters: { term: omit(term, foreignFields, 'error.Error') },
+      dbQueryParameters: { term: omit(term, 'error.Error') },
     });
   }
 

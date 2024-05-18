@@ -26,8 +26,6 @@ interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   providerName?: string,
 }
 
-const foreignFields = ['collectionName', 'collectionVersion', 'providerName', 'pdrName'];
-
 /**
  * Class to build and execute db search query for granules
  */
@@ -61,40 +59,39 @@ export class GranuleSearch extends BaseSearch {
       searchQuery: Knex.QueryBuilder,
     } {
     const {
-      granules: granulesTable,
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
     } = TableNames;
-    const countQuery = knex(granulesTable)
-      .count(`${granulesTable}.cumulus_id`);
+    const countQuery = knex(this.tableName)
+      .count(`${this.tableName}.cumulus_id`);
 
-    const searchQuery = knex(granulesTable)
-      .select(`${granulesTable}.*`)
+    const searchQuery = knex(this.tableName)
+      .select(`${this.tableName}.*`)
       .select({
         providerName: `${providersTable}.name`,
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
         pdrName: `${pdrsTable}.name`,
       })
-      .innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+      .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
 
     if (this.searchCollection()) {
-      countQuery.innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+      countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
     if (this.searchProvider()) {
-      countQuery.innerJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-      searchQuery.innerJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+      countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+      searchQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
     } else {
-      searchQuery.leftJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+      searchQuery.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
     }
 
     if (this.searchPdr()) {
-      countQuery.innerJoin(pdrsTable, `${granulesTable}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-      searchQuery.innerJoin(pdrsTable, `${granulesTable}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+      countQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+      searchQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     } else {
-      searchQuery.leftJoin(pdrsTable, `${granulesTable}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+      searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
     return { countQuery, searchQuery };
   }
@@ -138,42 +135,19 @@ export class GranuleSearch extends BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const {
-      granules: granulesTable,
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-    } = TableNames;
-
     const { countQuery, searchQuery, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(term).forEach(([name, value]) => {
-      if (name === 'collectionName') {
-        countQuery.where(`${collectionsTable}.name`, value);
-        searchQuery.where(`${collectionsTable}.name`, value);
-      }
-      if (name === 'collectionVersion') {
-        countQuery.where(`${collectionsTable}.version`, value);
-        searchQuery.where(`${collectionsTable}.version`, value);
-      }
-      if (name === 'providerName') {
-        countQuery.where(`${providersTable}.name`, value);
-        searchQuery.where(`${providersTable}.name`, value);
-      }
-      if (name === 'pdrName') {
-        countQuery.where(`${pdrsTable}.name`, value);
-        searchQuery.where(`${pdrsTable}.name`, value);
-      }
       if (name === 'error.Error') {
-        countQuery.whereRaw(`${granulesTable}.error->>'Error' = '${value}'`);
-        searchQuery.whereRaw(`${granulesTable}.error->>'Error' = '${value}'`);
+        countQuery.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`);
+        searchQuery.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`);
       }
     });
 
     super.buildTermQuery({
       ...params,
-      dbQueryParameters: { term: omit(term, foreignFields, 'error.Error') },
+      dbQueryParameters: { term: omit(term, 'error.Error') },
     });
   }
 
