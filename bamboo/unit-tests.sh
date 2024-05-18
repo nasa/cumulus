@@ -11,7 +11,7 @@ docker exec -i ${container_id}-build_env-1 /bin/bash -c "cd $UNIT_TEST_BUILD_DIR
 docker exec -i ${container_id}-build_env-1 \
   /bin/bash -c "cd $UNIT_TEST_BUILD_DIR && \
   ./scripts/run_ci_unit_coverage.sh" \
-
+echo "what follows should be an ls of the unit-logs/cumulus directory"
 ls ./unit-logs/@cumulus/
 if [ -n "$(ls -A ./unit-logs/@cumulus 2>/dev/null)" ]
 then 
