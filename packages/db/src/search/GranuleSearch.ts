@@ -114,7 +114,7 @@ export class GranuleSearch extends BaseSearch {
   }) {
     const { granules: granulesTable } = TableNames;
     const { countQuery, searchQuery, dbQueryParameters } = params;
-    const { infix, prefix } = dbQueryParameters || this.dbQueryParameters;
+    const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
       countQuery.whereLike(`${granulesTable}.granule_id`, `%${infix}%`);
       searchQuery.whereLike(`${granulesTable}.granule_id`, `%${infix}%`);
@@ -146,7 +146,7 @@ export class GranuleSearch extends BaseSearch {
     } = TableNames;
 
     const { countQuery, searchQuery, dbQueryParameters } = params;
-    const { term = {} } = dbQueryParameters || this.dbQueryParameters;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(term).forEach(([name, value]) => {
       if (name === 'collectionName') {

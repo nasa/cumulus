@@ -138,6 +138,14 @@ const executionMapping : { [key: string]: Function } = {
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
   }),
+  // The following fields require querying other tables
+  collectionId: (value?: string) => {
+    const { name, version } = (value && deconstructCollectionId(value)) || {};
+    return {
+      collectionName: name,
+      collectionVersion: version,
+    };
+  },
 };
 
 const pdrMapping : { [key: string]: Function } = {
@@ -155,6 +163,17 @@ const pdrMapping : { [key: string]: Function } = {
   }),
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
+  }),
+  // The following fields require querying other tables
+  collectionId: (value?: string) => {
+    const { name, version } = (value && deconstructCollectionId(value)) || {};
+    return {
+      collectionName: name,
+      collectionVersion: version,
+    };
+  },
+  provider: (value?: string) => ({
+    providerName: value,
   }),
 };
 
@@ -188,6 +207,17 @@ const ruleMapping : { [key: string]: Function } = {
   }),
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
+  }),
+  // The following fields require querying other tables
+  collectionId: (value?: string) => {
+    const { name, version } = (value && deconstructCollectionId(value)) || {};
+    return {
+      collectionName: name,
+      collectionVersion: version,
+    };
+  },
+  provider: (value?: string) => ({
+    providerName: value,
   }),
 };
 

@@ -56,6 +56,8 @@ const infixMapping: { [key: string]: string } = {
   pdrs: 'name',
 };
 
+const foreignFields = ['collectionName', 'collectionVersion', 'providerName', 'pdrName'];
+
 /**
  * A class to query postgres for the STATS and STATS/AGGREGATE endpoints
  */
@@ -239,20 +241,31 @@ class StatsSearch extends BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { searchQuery } = params;
-    if (this.queryStringParameters.collectionId) {
-      searchQuery.where(`${TableNames.collections}.name`, '=', this.queryStringParameters.collectionId);
-    }
-    if (this.queryStringParameters.provider) {
-      searchQuery.where(`${TableNames.providers}.name`, '=', this.queryStringParameters.provider);
-    }
+    const { dbQueryParameters, searchQuery } = params;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(term).forEach(([name, value]) => {
+      if (name === 'collectionName') {
+        searchQuery.where(`${TableNames.collections}.name`, value);
+      }
+      if (name === 'collectionVersion') {
+        searchQuery.where(`${TableNames.collections}.version`, value);
+      }
+      if (name === 'providerName') {
+        searchQuery.where(`${TableNames.providers}.name`, value);
+      }
+      if (name === 'pdrName') {
+        searchQuery.where(`${TableNames.pdrs}.name`, value);
+      }
+    });
+
     if (this.queryStringParameters.field?.includes('error.Error')) {
       searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is not null`);
     }
-    const { term = {} } = this.dbQueryParameters;
+
     return super.buildTermQuery({
       ...params,
-      dbQueryParameters: { term: omit(term, ['collectionName', 'collectionVersion', 'pdrName', 'error.Error', 'providerName']) },
+      dbQueryParameters: { term: omit(term, foreignFields, 'error.Error') },
     });
   }
 

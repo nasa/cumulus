@@ -48,7 +48,8 @@ test.before(async (t) => {
 
   range(20).map((num) => (
     collections.push(fakeCollectionRecordFactory({
-      name: `testCollection___${num}`,
+      name: 'testCollection',
+      version: `${num}`,
       cumulus_id: num,
     }))
   ));
@@ -405,12 +406,13 @@ test('StatsSearch can query by infix and prefix when type is defined', async (t)
 
   queryStringParameters = {
     type: 'collections',
-    infix: 'testCollection___8',
+    infix: 'testCollection',
+    version: '8',
     field: 'name',
   };
   const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'collection');
   const results3 = await AggregateSearch3.aggregate(knex);
-  const expectedResponse3 = [{ key: 'testCollection___8', count: 1 }];
+  const expectedResponse3 = [{ key: 'testCollection', count: 1 }];
   t.is(results3.meta.count, 1);
   t.deepEqual(results3.count, expectedResponse3);
 });

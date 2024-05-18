@@ -156,7 +156,7 @@ class BaseSearch {
     dbQueryParameters?: DbQueryParameters,
   }) {
     const { countQuery, searchQuery, dbQueryParameters } = params;
-    const { term = {} } = dbQueryParameters || this.dbQueryParameters;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(term).forEach(([name, value]) => {
       countQuery?.where(`${this.tableName}.${name}`, value);
