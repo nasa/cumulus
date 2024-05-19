@@ -1,8 +1,6 @@
 #!/bin/bash
 set -ex
-export CUMULUS_UNIT_TEST_DATA=/tmp/cumulus_unit_test_data
 error_to_s3 () {
-  ls $CUMULUS_UNIT_TEST_DATA/unit-logs/@cumulus
   if [ -n "$(ls -A $CUMULUS_UNIT_TEST_DATA/unit-logs/@cumulus 2>/dev/null)" ]
   then
       aws s3 sync $CUMULUS_UNIT_TEST_DATA/unit-logs/@cumulus/ s3://unit-test-error-logs/$(git rev-parse --abbrev-ref HEAD)/$(date +%Y-%m-%dT%H.%M.%S)/;
