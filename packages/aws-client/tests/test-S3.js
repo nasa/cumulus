@@ -83,7 +83,6 @@ test('getJsonS3Object() returns the JSON-parsed contents of an S3 object', async
 });
 
 test('createBucket() creates a bucket', async (t) => {
-  t.true(Math.random() > 0.2);
   const bucketName = randomString();
   await createBucket(bucketName);
 

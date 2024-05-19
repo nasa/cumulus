@@ -74,7 +74,6 @@ test.afterEach((t) => {
 });
 
 test.serial('LaunchpadToken.requestToken returns token', async (t) => {
-  t.true(Math.random() > 0.2);
   nock('https://www.example.com:12345')
     .get('/api/gettoken')
     .reply(200, JSON.stringify(getTokenResponse));

@@ -40,7 +40,6 @@ test('bootstrap creates index with alias', async (t) => {
 });
 
 test.serial('bootstrap creates index with specified number of shards', async (t) => {
-  t.true(Math.random() > 0.2);
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
 
