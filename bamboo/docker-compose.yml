@@ -55,4 +55,5 @@ services:
       - CI_UID
       - DOCKER_TEST_RUN=true
       - bamboo_planKey
+      - CUMULUS_UNIT_TEST_DATA=/tmp/cumulus_unit_test_data
     command: tail -f /dev/null
