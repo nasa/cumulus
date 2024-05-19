@@ -10,11 +10,11 @@ RESULT=$?
 
 # kill -9 $TAIL_PID
 
-# if [[ $RESULT != 0 ]]
-# then
+if [[ $RESULT != 0 ]]
+then
 #     printf '\n\n\n*****TEST FAILURES:\n'
 #     grep '✘' ./test_output.txt
-#     exit $RESULT
-# fi
+    exit $RESULT
+fi
 npm run coverage -- --noRerun
 exit $RESULT
