@@ -34,19 +34,6 @@ export class GranuleSearch extends BaseSearch {
     super(event, 'granule');
   }
 
-  private searchCollection(): boolean {
-    const term = this.dbQueryParameters.term;
-    return !!(term?.collectionName || term?.collectionVersion);
-  }
-
-  private searchPdr(): boolean {
-    return !!this.dbQueryParameters.term?.pdrName;
-  }
-
-  private searchProvider(): boolean {
-    return !!this.dbQueryParameters.term?.providerName;
-  }
-
   /**
    * Build basic query
    *
@@ -109,16 +96,15 @@ export class GranuleSearch extends BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { granules: granulesTable } = TableNames;
     const { countQuery, searchQuery, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      countQuery.whereLike(`${granulesTable}.granule_id`, `%${infix}%`);
-      searchQuery.whereLike(`${granulesTable}.granule_id`, `%${infix}%`);
+      countQuery.whereLike(`${this.tableName}.granule_id`, `%${infix}%`);
+      searchQuery.whereLike(`${this.tableName}.granule_id`, `%${infix}%`);
     }
     if (prefix) {
-      countQuery.whereLike(`${granulesTable}.granule_id`, `${prefix}%`);
-      searchQuery.whereLike(`${granulesTable}.granule_id`, `${prefix}%`);
+      countQuery.whereLike(`${this.tableName}.granule_id`, `${prefix}%`);
+      searchQuery.whereLike(`${this.tableName}.granule_id`, `${prefix}%`);
     }
   }
 

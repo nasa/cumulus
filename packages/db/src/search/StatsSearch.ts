@@ -60,9 +60,12 @@ const infixMapping: { [key: string]: string } = {
  * A class to query postgres for the STATS and STATS/AGGREGATE endpoints
  */
 class StatsSearch extends BaseSearch {
+  readonly field: string;
+
   constructor(event: QueryEvent, type: string) {
-    super(event, type);
-    this.queryStringParameters.field = this.queryStringParameters.field ?? 'status';
+    const { field, ...queryStringParameters } = event.queryStringParameters || {};
+    super({ queryStringParameters }, type);
+    this.field = field ?? 'status';
     this.dbQueryParameters = omit(this.dbQueryParameters, ['limit', 'offset']);
   }
 
@@ -88,7 +91,7 @@ class StatsSearch extends BaseSearch {
       meta: {
         name: 'cumulus-api',
         count: totalCount,
-        field: `${this.queryStringParameters.field}`,
+        field: this.field,
       },
       count: responses,
     };
@@ -163,12 +166,21 @@ class StatsSearch extends BaseSearch {
    * @param {Knex.QueryBuilder} query - the knex query to be joined or not
    */
   private joinTables(query: Knex.QueryBuilder) {
-    if (this.queryStringParameters.collectionId) {
-      query.join(`${TableNames.collections}`, `${this.tableName}.collection_cumulus_id`, 'collections.cumulus_id');
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+    } = TableNames;
+    if (this.searchCollection()) {
+      query.join(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
-    if (this.queryStringParameters.provider) {
-      query.join(`${TableNames.providers}`, `${this.tableName}.provider_cumulus_id`, 'providers.cumulus_id');
+    if (this.searchProvider()) {
+      query.join(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    }
+
+    if (this.searchPdr()) {
+      query.join(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
   }
 
@@ -179,10 +191,10 @@ class StatsSearch extends BaseSearch {
    * @param {Knex} knex - the knex client to be used
    */
   private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex) {
-    if (this.queryStringParameters.field?.includes('error.Error')) {
+    if (this.field?.includes('error.Error')) {
       query.select(knex.raw("error ->> 'Error' as aggregatedfield"));
     } else {
-      query.select(`${this.tableName}.${this.queryStringParameters.field} as aggregatedfield`);
+      query.select(`${this.tableName}.${this.field} as aggregatedfield`);
     }
     query.modify((queryBuilder) => this.joinTables(queryBuilder))
       .count(`${this.tableName}.cumulus_id as count`)
@@ -200,7 +212,7 @@ class StatsSearch extends BaseSearch {
     : {
       searchQuery: Knex.QueryBuilder,
     } {
-    const searchQuery:Knex.QueryBuilder = knex(`${this.tableName}`);
+    const searchQuery:Knex.QueryBuilder = knex(this.tableName);
     this.aggregateQueryField(searchQuery, knex);
     return { searchQuery };
   }
@@ -242,7 +254,7 @@ class StatsSearch extends BaseSearch {
     const { dbQueryParameters, searchQuery } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
-    if (this.queryStringParameters.field?.includes('error.Error')) {
+    if (this.field?.includes('error.Error')) {
       searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is not null`);
     }
 

@@ -47,6 +47,19 @@ class BaseSearch {
     );
   }
 
+  protected searchCollection(): boolean {
+    const term = this.dbQueryParameters.term;
+    return !!(term?.collectionName || term?.collectionVersion);
+  }
+
+  protected searchPdr(): boolean {
+    return !!this.dbQueryParameters.term?.pdrName;
+  }
+
+  protected searchProvider(): boolean {
+    return !!this.dbQueryParameters.term?.providerName;
+  }
+
   /**
    * Build the search query
    *

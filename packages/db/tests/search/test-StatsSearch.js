@@ -127,10 +127,7 @@ test.after.always(async (t) => {
 
 test('StatsSearch returns correct response for basic granules query', async (t) => {
   const { knex } = t.context;
-  const queryStringParameters = {
-    type: 'granules',
-  };
-  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
+  const AggregateSearch = new StatsSearch({}, 'granule');
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse = [
     { key: 'completed', count: 25 },
@@ -145,7 +142,6 @@ test('StatsSearch returns correct response for basic granules query', async (t) 
 test('StatsSearch filters correctly by date', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    type: 'granules',
     timestamp__from: `${(new Date(2020, 1, 28)).getTime()}`,
     timestamp__to: `${(new Date(2022, 2, 30)).getTime()}`,
   };
@@ -165,7 +161,6 @@ test('StatsSearch filters correctly by date', async (t) => {
 test('StatsSearch filters executions correctly', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
-    type: 'executions',
     field: 'status',
   };
 
@@ -180,7 +175,6 @@ test('StatsSearch filters executions correctly', async (t) => {
   t.deepEqual(results.count, expectedResponse1);
 
   queryStringParameters = {
-    type: 'executions',
     field: 'status',
     timestamp__to: `${(new Date(2023, 11, 30)).getTime()}`,
     timestamp__from: `${(new Date(2021, 1, 28)).getTime()}`,
@@ -197,7 +191,6 @@ test('StatsSearch filters executions correctly', async (t) => {
   t.deepEqual(results2.count, expectedResponse2);
 
   queryStringParameters = {
-    type: 'executions',
     field: 'status',
     timestamp__to: `${(new Date(2023, 11, 30)).getTime()}`,
     timestamp__from: `${(new Date(2021, 1, 28)).getTime()}`,
@@ -215,7 +208,6 @@ test('StatsSearch filters executions correctly', async (t) => {
 test('StatsSearch filters PDRs correctly', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
-    type: 'pdrs',
     field: 'status',
   };
 
@@ -230,7 +222,6 @@ test('StatsSearch filters PDRs correctly', async (t) => {
   t.deepEqual(results.count, expectedResponse);
 
   queryStringParameters = {
-    type: 'pdrs',
     field: 'status',
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
@@ -243,7 +234,6 @@ test('StatsSearch filters PDRs correctly', async (t) => {
   t.deepEqual(results2.count, expectedResponse2);
 
   queryStringParameters = {
-    type: 'pdrs',
     field: 'status',
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
@@ -260,7 +250,6 @@ test('StatsSearch filters PDRs correctly', async (t) => {
 test('StatsSearch returns correct response when queried by provider', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    type: 'granules',
     field: 'status',
     provider: 'testProvider2',
   };
@@ -275,7 +264,6 @@ test('StatsSearch returns correct response when queried by provider', async (t) 
 test('StatsSearch returns correct response when queried by collection', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    type: 'granules',
     field: 'status',
     collectionId: 'testCollection___8',
   };
@@ -290,10 +278,9 @@ test('StatsSearch returns correct response when queried by collection', async (t
 test('StatsSearch returns correct response when queried by collection and provider', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
-    type: 'granules',
     field: 'status',
     collectionId: 'testCollection___1',
-    providerId: 'testProvider1',
+    provider: 'testProvider1',
   };
 
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
@@ -303,10 +290,9 @@ test('StatsSearch returns correct response when queried by collection and provid
   t.deepEqual(results.count, expectedResponse);
 
   queryStringParameters = {
-    type: 'granules',
     field: 'status',
     collectionId: 'testCollection___1',
-    providerId: 'testProvider1',
+    provider: 'testProvider1',
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
@@ -317,10 +303,9 @@ test('StatsSearch returns correct response when queried by collection and provid
   t.is(results2.meta.count, 2);
   t.deepEqual(results2.count, expectedResponse2);
   queryStringParameters = {
-    type: 'granules',
     field: 'status',
     collectionId: 'testCollection___1',
-    providerId: 'testProvider1',
+    provider: 'testProvider1',
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
     status: 'failed',
@@ -336,7 +321,6 @@ test('StatsSearch returns correct response when queried by collection and provid
 test('StatsSearch returns correct response when queried by error', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
-    type: 'granules',
     field: 'error.Error.keyword',
   };
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
@@ -351,7 +335,6 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   t.deepEqual(results.count, expectedResponse1);
 
   queryStringParameters = {
-    type: 'granules',
     field: 'error.Error.keyword',
     timestamp__to: `${(new Date(2021, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2020, 1, 28)).getTime()}`,
@@ -368,9 +351,8 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   t.deepEqual(results2.count, expectedResponse2);
 
   queryStringParameters = {
-    type: 'granules',
     collectionId: 'testCollection___1',
-    providerId: 'testProvider1',
+    provider: 'testProvider1',
     field: 'error.Error.keyword',
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
@@ -385,7 +367,6 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
 test('StatsSearch can query by infix and prefix when type is defined', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
-    type: 'granules',
     infix: 'testGra',
   };
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
@@ -395,7 +376,6 @@ test('StatsSearch can query by infix and prefix when type is defined', async (t)
   t.deepEqual(results.count, expectedResponse1);
 
   queryStringParameters = {
-    type: 'granules',
     prefix: 'query',
   };
   const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'granule');
@@ -405,7 +385,6 @@ test('StatsSearch can query by infix and prefix when type is defined', async (t)
   t.deepEqual(results2.count, expectedResponse2);
 
   queryStringParameters = {
-    type: 'collections',
     infix: 'testCollection',
     version: '8',
     field: 'name',
