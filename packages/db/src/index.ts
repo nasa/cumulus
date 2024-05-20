@@ -142,6 +142,9 @@ export {
 export {
   GranuleSearch,
 } from './search/GranuleSearch';
+export {
+  StatsSearch,
+} from './search/StatsSearch';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';
