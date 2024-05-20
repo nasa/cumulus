@@ -48,12 +48,12 @@ services:
   build_env:
     image: $CUMULUS_BASE_IMAGE
     volumes:
-      - $CUMULUS_UNIT_TEST_DATA:$CUMULUS_UNIT_TEST_DATA
+      - ${CUMULUS_UNIT_TEST_DATA-/tmp/cumulus_unit_test_data}:${CUMULUS_UNIT_TEST_DATA-/tmp/cumulus_unit_test_data}
     environment:
       - LOCALSTACK_HOST=127.0.0.1
       - LOCAL_ES_HOST=127.0.0.1
       - CI_UID
       - DOCKER_TEST_RUN=true
       - bamboo_planKey
-      - CUMULUS_UNIT_TEST_DATA=$CUMULUS_UNIT_TEST_DATA
+      - CUMULUS_UNIT_TEST_DATA=${CUMULUS_UNIT_TEST_DATA-/tmp/cumulus_unit_test_data}
     command: tail -f /dev/null
