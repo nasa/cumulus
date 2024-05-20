@@ -5,6 +5,7 @@ error_to_s3 () {
   then
       aws s3 sync $CUMULUS_UNIT_TEST_DATA/unit-logs/@cumulus/ s3://unit-test-error-logs/$(git rev-parse --abbrev-ref HEAD)/$(date +%Y-%m-%dT%H.%M.%S)/;
   fi
+  rm -rf $CUMULUS_UNIT_TEST_DATA/unit-logs/
   exit 1;
 }
 . ./bamboo/set-bamboo-env-variables.sh
