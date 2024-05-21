@@ -229,7 +229,7 @@ class HttpProviderClient {
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
-      await pipeline(
+      await promisify(pipeline)(
         got.stream(remoteUrl, this.gotOptions),
         fs.createWriteStream(localPath)
       );
@@ -320,7 +320,7 @@ class HttpProviderClient {
 
     const remoteUrl = buildURL(options);
     got.stream.options = options;
-    await promisify(pipeline)(
+    await pipeline(
       fs.createReadStream(localPath),
       got.stream.post(remoteUrl),
       new PassThrough()
