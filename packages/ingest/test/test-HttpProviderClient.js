@@ -5,7 +5,6 @@ const fs = require('fs');
 const nock = require('nock');
 const path = require('path');
 const test = require('ava');
-const { promisify } = require('util');
 const { tmpdir } = require('os');
 const { Readable } = require('stream');
 const errors = require('@cumulus/errors');
@@ -252,9 +251,10 @@ test.serial('download() downloads a file', async (t) => {
   const localPath = path.join(tmpdir(), randomString());
   try {
     await httpProviderClient.download({ remotePath: 'pdrs/PDN.ID1611071307.PDR', localPath });
-    t.is(await promisify(fs.access)(localPath), undefined);
+    await fs.promises.access(localPath);
+    t.pass();
   } finally {
-    await promisify(fs.unlink)(localPath);
+    await fs.promises.unlink(localPath);
   }
 });
 
