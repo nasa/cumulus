@@ -1,12 +1,20 @@
- #!/bin/bash
+#!/bin/bash
+export UNIT_TEST_BUILD_DIR=$(pwd);
 touch ./test_output.txt
 tail -f ./test_output.txt &
 TAIL_PID=$!
-npx lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 test:coverage > ./test_output.txt 2>&1
+
+npm run test:ci > ./test_output.txt
+
 RESULT=$?
-printf '\n\n\n*****TEST FAILURES:\n'
-grep '✖' ./test_output.txt
+
 kill -9 $TAIL_PID
-npx lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 coverage --noRerun > ./test_output.txt 2>&1
-RESULT=$?
+
+if [[ $RESULT != 0 ]]
+then
+    printf '\n\n\n*****TEST FAILURES:\n'
+    grep '✘' ./test_output.txt
+    exit $RESULT
+fi
+npm run coverage -- --noRerun
 exit $RESULT
