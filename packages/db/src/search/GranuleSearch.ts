@@ -193,29 +193,30 @@ export class GranuleSearch extends BaseSearch {
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildSortQuery(params: {
-    countQuery: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
     const { searchQuery } = params;
     const sortBy = this.queryStringParameters.sort_by;
+    const {
+      granules: granulesTable,
+    } = TableNames;
     const sortKey = this.queryStringParameters.sort_key;
     Object.keys(groupArray).forEach((key) => {
       searchQuery.groupBy(key);
     });
     if (sortBy) {
-      const order = this.queryStringParameters.order || 'desc'; // what to do if sort_key is error?, might need orderByRaw
-      searchQuery.orderBy(`granules.${sortBy}`, order).groupBy(`granules.${sortBy}`);
+      const order = this.queryStringParameters.order || 'desc';
+      searchQuery.orderBy(`${granulesTable}.${sortBy}`, order).groupBy(`${granulesTable}.${sortBy}`);
+    } else if (sortKey) {
+      // eslint-disable-next-line array-callback-return
+      sortKey.map((key) => {
+        const order = key.startsWith('-') ? 'desc' : 'asc';
+        const sortField = key.replace(/^[+-]/, '');
+        searchQuery.orderBy(`${granulesTable}.${sortField}`, order).groupBy(`${granulesTable}.${sortField}`);
+      });
     } else {
-      // eslint-disable-next-line no-lonely-if
-      if (sortKey) {
-        // eslint-disable-next-line array-callback-return
-        sortKey.map((key) => {
-          const order = key.startsWith('-') ? 'desc' : 'asc';
-          const sortField = key.replace(/^[+-]/, '');
-          searchQuery.orderBy(`granules.${sortField}`, order).groupBy(`granules.${sortField}`);
-        });
-      }
+      searchQuery.orderBy(`${granulesTable}.timestamp`, 'desc').groupBy(`${granulesTable}.timestamp`);
     }
   }
 

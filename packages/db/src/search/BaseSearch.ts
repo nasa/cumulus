@@ -59,7 +59,7 @@ class BaseSearch {
     const { countQuery, searchQuery } = this.buildBasicQuery(knex);
     this.buildTermQuery({ countQuery, searchQuery });
     this.buildInfixPrefixQuery({ countQuery, searchQuery });
-    this.buildSortQuery({ countQuery, searchQuery });
+    this.buildSortQuery({ searchQuery });
 
     const { limit, offset } = this.dbQueryParameters;
     if (limit) searchQuery.limit(limit);
@@ -145,12 +145,10 @@ class BaseSearch {
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildSortQuery(params: {
-    countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
     log.debug(`buildSortQuery is not implemented ${Object.keys(params)}`);
-    throw new Error('buildSortQuery is not implemented');
   }
 
   /**
