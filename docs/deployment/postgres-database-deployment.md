@@ -145,6 +145,7 @@ Fill in the appropriate values in `terraform.tfvars`. See the [rds-cluster-tf mo
 - `max_capacity` -- the max ACUs the cluster is allowed to use.    Carefully consider cost/performance concerns when setting this value.
 - `min_capacity` -- the minimum ACUs the cluster will scale to
 - `provision_user_database` -- Optional flag to allow module to provision a user database in addition to creating the cluster.   Described in the [next section](#provision-user-and-user-database).
+- `cluster_instance_count` -- Number of RDS instances in the custer. Defaults to 1.
 
 #### Provision User and User Database
 
@@ -227,6 +228,7 @@ Terraform will perform the following actions:
       + backup_retention_period         = 1
       + cluster_identifier              = "xxxxxxxxx"
       + cluster_identifier_prefix       = (known after apply)
+      + cluster_instance_count          = 1
       + cluster_members                 = (known after apply)
       + cluster_resource_id             = (known after apply)
       + copy_tags_to_snapshot           = false
