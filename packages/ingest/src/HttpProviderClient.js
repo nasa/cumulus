@@ -4,7 +4,7 @@ const fs = require('fs');
 const https = require('https');
 const isIp = require('is-ip');
 const { basename } = require('path');
-const { pipeline } = require('stream');
+const { pipeline } = require('stream/promises');
 const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const { CookieJar } = require('tough-cookie');
@@ -229,7 +229,7 @@ class HttpProviderClient {
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
-      await promisify(pipeline)(
+      await pipeline(
         got.stream(remoteUrl, this.gotOptions),
         fs.createWriteStream(localPath)
       );
