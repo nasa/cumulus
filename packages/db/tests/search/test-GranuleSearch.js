@@ -104,7 +104,7 @@ test.before(async (t) => {
     endingDateTime: '2020-03-17T10:00:00.000Z',
     lastUpdateDateTime: '2020-03-18T10:00:00.000Z',
     processingEndDateTime: '2020-03-16T10:00:00.000Z',
-    productVolume: '600',
+    productVolume: '6000',
     timeToArchive: '700.29',
     timeToPreprocess: '800.18',
     status: 'failed',
@@ -136,13 +136,15 @@ test.before(async (t) => {
       last_update_date_time: !(num % 2)
         ? t.context.granuleSearchFields.lastUpdateDateTime : undefined,
       published: !!(num % 2),
-      product_volume: !(num % 5) ? Number(t.context.granuleSearchFields.productVolume) : undefined,
+      product_volume: BigInt(Math.round(Number(t.context.granuleSearchFields.productVolume)
+         * (1 / (num + 1)))).toString(),
       time_to_archive: !(num % 10)
         ? Number(t.context.granuleSearchFields.timeToArchive) : undefined,
       time_to_process: !(num % 20)
         ? Number(t.context.granuleSearchFields.timeToPreprocess) : undefined,
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
       updated_at: !(num % 2) ? new Date(t.context.granuleSearchFields.timestamp) : undefined,
+      timestamp: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
     }))
   );
 });
@@ -289,8 +291,8 @@ test('GranuleSearch supports term search for number field', async (t) => {
   };
   let dbSearch = new GranuleSearch({ queryStringParameters });
   let response = await dbSearch.query(knex);
-  t.is(response.meta.count, 10);
-  t.is(response.results?.length, 5);
+  t.is(response.meta.count, 1);
+  t.is(response.results?.length, 1);
 
   queryStringParameters = {
     limit: 200,
@@ -386,4 +388,87 @@ test('GranuleSearch returns fields specified', async (t) => {
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 10);
   response.results.forEach((granule) => t.deepEqual(Object.keys(granule), fields.split(',')));
+});
+
+test('GranuleSearch supports sorting', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    sort_by: 'timestamp',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 100);
+  t.true(response.results[0].timestamp > response.results[1].timestamp);
+  t.true(response.results[98].timestamp > response.results[99].timestamp);
+
+  queryStringParameters = {
+    limit: 200,
+    sort_by: 'timestamp',
+    order: 'asc',
+  };
+  const dbSearch2 = new GranuleSearch({ queryStringParameters });
+  const response2 = await dbSearch2.query(knex);
+  t.is(response2.meta.count, 100);
+  t.is(response2.results?.length, 100);
+  t.true(response2.results[0].timestamp < response2.results[1].timestamp);
+  t.true(response2.results[98].timestamp < response2.results[99].timestamp);
+
+  queryStringParameters = {
+    limit: 200,
+    sort_key: ['-timestamp'],
+  };
+  const dbSearch3 = new GranuleSearch({ queryStringParameters });
+  const response3 = await dbSearch3.query(knex);
+  t.is(response3.meta.count, 100);
+  t.is(response3.results?.length, 100);
+  t.true(response3.results[0].timestamp > response3.results[1].timestamp);
+  t.true(response3.results[98].timestamp > response3.results[99].timestamp);
+
+  queryStringParameters = {
+    limit: 200,
+    sort_key: ['+product_volume'],
+  };
+  const dbSearch4 = new GranuleSearch({ queryStringParameters });
+  const response4 = await dbSearch4.query(knex);
+  t.is(response4.meta.count, 100);
+  t.is(response4.results?.length, 100);
+  t.true(Number(response4.results[0].productVolume) < Number(response4.results[1].productVolume));
+  t.true(Number(response4.results[98].productVolume) < Number(response4.results[99].productVolume));
+
+  queryStringParameters = {
+    limit: 200,
+    sort_key: ['-timestamp', '+product_volume'],
+  };
+  const dbSearch5 = new GranuleSearch({ queryStringParameters });
+  const response5 = await dbSearch5.query(knex);
+  t.is(response5.meta.count, 100);
+  t.is(response5.results?.length, 100);
+  t.true(response5.results[0].timestamp > response5.results[1].timestamp);
+  t.true(response5.results[98].timestamp > response5.results[99].timestamp);
+  t.true(Number(response5.results[1].productVolume) < Number(response5.results[99].productVolume));
+  t.true(Number(response5.results[0].productVolume) < Number(response5.results[10].productVolume));
+
+  queryStringParameters = {
+    limit: 200,
+    sort_key: ['-timestamp'],
+    sort_by: 'timestamp',
+    order: 'asc',
+  };
+  const dbSearch6 = new GranuleSearch({ queryStringParameters });
+  const response6 = await dbSearch6.query(knex);
+  t.is(response6.meta.count, 100);
+  t.is(response6.results?.length, 100);
+  t.true(response6.results[0].timestamp < response6.results[1].timestamp);
+  t.true(response6.results[98].timestamp < response6.results[99].timestamp);
+
+  queryStringParameters = {
+    limit: 200,
+    sort_by: 'error',
+  };
+  const dbSearch7 = new GranuleSearch({ queryStringParameters });
+  const response7 = await dbSearch7.query(knex);
+  t.is(response7.results.error, undefined);
+  t.is(response7.results[99].error.Error, 'CumulusMessageAdapterExecutionError');
 });

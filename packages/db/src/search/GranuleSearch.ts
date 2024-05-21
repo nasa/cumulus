@@ -28,6 +28,16 @@ export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
 
 const foreignFields = ['collectionName', 'collectionVersion', 'providerName', 'pdrName'];
 
+// this is needeed if joins are done otherwise an SQL error will be thrown:
+// column "providers.name" must appear in the GROUP BY clause or be used in an aggregate function
+const groupArray = {
+  providerName: 'providers.name',
+  collectionName: 'collections.name',
+  collectionVersion: 'collections.version',
+  pdrName: 'pdrs.name',
+  granuleId: 'granules.cumulus_id',
+};
+
 /**
  * Class to build and execute db search query for granules
  */
@@ -73,12 +83,7 @@ export class GranuleSearch extends BaseSearch {
 
     const searchQuery = knex(granulesTable)
       .select(`${granulesTable}.*`)
-      .select({
-        providerName: `${providersTable}.name`,
-        collectionName: `${collectionsTable}.name`,
-        collectionVersion: `${collectionsTable}.version`,
-        pdrName: `${pdrsTable}.name`,
-      })
+      .select(groupArray)
       .innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
 
     if (this.searchCollection()) {
@@ -177,6 +182,41 @@ export class GranuleSearch extends BaseSearch {
       ...params,
       dbQueryParameters: { term: omit(term, foreignFields, 'error.Error') },
     });
+  }
+
+  /**
+   * Build queries for sort keys and fields
+   *
+   * @param params
+   * @param params.countQuery - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildSortQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { searchQuery } = params;
+    const sortBy = this.queryStringParameters.sort_by;
+    const sortKey = this.queryStringParameters.sort_key;
+    Object.keys(groupArray).forEach((key) => {
+      searchQuery.groupBy(key);
+    });
+    if (sortBy) {
+      const order = this.queryStringParameters.order || 'desc'; // what to do if sort_key is error?, might need orderByRaw
+      searchQuery.orderBy(`granules.${sortBy}`, order).groupBy(`granules.${sortBy}`);
+    } else {
+      // eslint-disable-next-line no-lonely-if
+      if (sortKey) {
+        // eslint-disable-next-line array-callback-return
+        sortKey.map((key) => {
+          const order = key.startsWith('-') ? 'desc' : 'asc';
+          const sortField = key.replace(/^[+-]/, '');
+          searchQuery.orderBy(`granules.${sortField}`, order).groupBy(`granules.${sortField}`);
+        });
+      }
+    }
   }
 
   /**

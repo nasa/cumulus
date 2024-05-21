@@ -7,7 +7,7 @@ export type QueryStringParameters = {
   order?: string,
   prefix?: string,
   sort_by?: string,
-  sort_key?: string,
+  sort_key?: string[],
   [key: string]: string | string[] | undefined,
 };
 
