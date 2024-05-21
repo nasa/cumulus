@@ -230,7 +230,7 @@ class HttpProviderClient {
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
-      await promisify(pipeline)(
+      await pipeline(
         got.stream(remoteUrl, this.gotOptions),
         fs.createWriteStream(localPath)
       );
