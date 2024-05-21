@@ -26,10 +26,6 @@ export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   providerName?: string,
 }
 
-const foreignFields = ['collectionName', 'collectionVersion', 'providerName', 'pdrName'];
-
-// this is needeed if joins are done otherwise an SQL error will be thrown:
-// column "providers.name" must appear in the GROUP BY clause or be used in an aggregate function
 const groupArray = {
   providerName: 'providers.name',
   collectionName: 'collections.name',
@@ -180,7 +176,7 @@ export class GranuleSearch extends BaseSearch {
 
     super.buildTermQuery({
       ...params,
-      dbQueryParameters: { term: omit(term, foreignFields, 'error.Error') },
+      dbQueryParameters: { term: omit(term, Object.keys(groupArray), 'error.Error') },
     });
   }
 

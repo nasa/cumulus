@@ -140,7 +140,6 @@ class BaseSearch {
    * Build queries for sort keys and fields
    *
    * @param params
-   * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
