@@ -127,6 +127,8 @@ modification.
 ### Changed
 - **CUMULUS-3717**
   - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
+- **CUMULUS-3720**
+  - add cicd unit test error logging to s3 for testing improvements
 - **CUMULUS-3951**
   - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
   - Update all integration/unit tests to use encrypted SNS topics

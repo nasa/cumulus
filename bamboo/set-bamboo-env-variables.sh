@@ -199,5 +199,5 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
 else
   export UNIT_TEST_BUILD_DIR=/uncached/cumulus
 fi
-
+export CUMULUS_UNIT_TEST_DATA=/tmp/cumulus_unit_test_data
 export TS_BUILD_CACHE_FILE=ts-build-cache.tgz

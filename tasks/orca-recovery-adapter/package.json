@@ -21,6 +21,7 @@
     "generate-task-schemas": "npx generate-task-schemas . files",
     "package": "npm run generate-task-schemas && ./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
