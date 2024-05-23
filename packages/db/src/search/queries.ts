@@ -31,7 +31,7 @@ const regexes: { [key: string]: RegExp } = {
 };
 
 /**
- * Conert range query fields to db query parameters from api query string fields
+ * Convert range query fields to db query parameters from api query string fields
  *
  * @param type - query record type
  * @param queryStringFields - api query fields
@@ -45,10 +45,18 @@ const convertRange = (
     const match = queryField.name.match(regexes.range);
     if (!match) return acc;
 
+    // get corresponding db field name, e.g. timestamp => updated_at
     const dbField = mapQueryStringFieldToDbField(type, { ...queryField, name: match[1] });
     if (!dbField) return acc;
     const dbFieldName = Object.keys(dbField)[0];
 
+    // build a range field, e.g.
+    // { timestamp__from: '1712708508310', timestamp__to: '1712712108310' } =>
+    // { updated_at: {
+    //     gte: new Date(1712708508310),
+    //     lte: new Date(1712712108310),
+    //   },
+    // }
     const rangeField: { [key: string]: RangeType } = { [dbFieldName]: acc[dbFieldName] || {} };
     if (match[2] === 'from') {
       rangeField[dbFieldName].gte = dbField[dbFieldName];
@@ -63,7 +71,7 @@ const convertRange = (
 };
 
 /**
- * Conert term query fields to db query parameters from api query string fields
+ * Convert term query fields to db query parameters from api query string fields
  *
  * @param type - query record type
  * @param queryStringFields - api query fields
