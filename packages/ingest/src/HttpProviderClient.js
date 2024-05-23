@@ -8,7 +8,6 @@ const { pipeline } = require('stream/promises');
 const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const { CookieJar } = require('tough-cookie');
-const { promisify } = require('util');
 const { importGot } = require('@cumulus/common/importEsm');
 
 const {
@@ -118,9 +117,10 @@ class HttpProviderClient {
    * List all PDR files from a given endpoint
    *
    * @param {string} path - the remote path to list
+   * @param {testMocks} - Mocks for testing
    * @returns {Promise<Array>} a list of files
    */
-  async list(path) {
+  async list(path, testMocks = {}) {
     validateHost(this.host);
     await this.downloadTLSCertificate();
 
@@ -129,7 +129,7 @@ class HttpProviderClient {
     const matchLinksPattern = /<a href="([^>]*)">[^<]+<\/a>/gi;
     const matchLeadingSlashesPattern = /^\/+/;
 
-    const c = new Crawler(
+    const listCrawler = testMocks.crawler ? testMocks.crawler : new Crawler(
       buildURL({
         protocol: this.protocol,
         host: this.host,
@@ -139,20 +139,20 @@ class HttpProviderClient {
     );
 
     if (this.protocol === 'https' && this.certificate !== undefined) {
-      c.httpsAgent = new https.Agent({ ca: this.certificate });
+      listCrawler.httpsAgent = new https.Agent({ ca: this.certificate });
     }
     if (this.httpListTimeout) {
-      c.timeout = this.httpListTimeout * 1000;
+      listCrawler.timeout = this.httpListTimeout * 1000;
     }
-    c.interval = 0;
-    c.maxConcurrency = 10;
-    c.respectRobotsTxt = false;
-    c.userAgent = 'Cumulus';
-    c.maxDepth = 1;
+    listCrawler.interval = 0;
+    listCrawler.maxConcurrency = 10;
+    listCrawler.respectRobotsTxt = false;
+    listCrawler.userAgent = 'Cumulus';
+    listCrawler.maxDepth = 1;
     const files = [];
 
     return new Promise((resolve, reject) => {
-      c.on('fetchcomplete', (_, responseBuffer) => {
+      listCrawler.on('fetchcomplete', (_, responseBuffer) => {
         const lines = responseBuffer.toString().trim().split('\n');
         lines.forEach((line) => {
           const trimmedLine = line.trim();
@@ -173,10 +173,10 @@ class HttpProviderClient {
         return resolve(files);
       });
 
-      c.on('fetchtimeout', () =>
+      listCrawler.on('fetchtimeout', () =>
         reject(new errors.RemoteResourceError('Connection timed out')));
 
-      c.on('fetcherror', (queueItem, response) => {
+      listCrawler.on('fetcherror', (queueItem, response) => {
         let responseBody = '';
         response.on('data', (chunk) => {
           responseBody += chunk;
@@ -191,16 +191,16 @@ class HttpProviderClient {
         });
       });
 
-      c.on('fetchclienterror', (_, errorData) =>
+      listCrawler.on('fetchclienterror', (_, errorData) =>
         reject(new errors.RemoteResourceError(`Connection Error: ${JSON.stringify(errorData)}`)));
 
-      c.on('fetch404', (queueItem, _) => {
+      listCrawler.on('fetch404', (queueItem, _) => {
         const errorToThrow = new Error(`Received a 404 error from ${this.endpoint}. Check your endpoint!`);
         errorToThrow.details = queueItem;
         return reject(errorToThrow);
       });
 
-      c.start();
+      listCrawler.start();
     });
   }
 
@@ -229,7 +229,7 @@ class HttpProviderClient {
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
-      await promisify(pipeline)(
+      await pipeline(
         got.stream(remoteUrl, this.gotOptions),
         fs.createWriteStream(localPath)
       );
