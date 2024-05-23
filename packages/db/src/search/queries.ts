@@ -68,7 +68,8 @@ export const convertQueryStringToDbQueryParameters = (
   type: string,
   queryStringParameters: QueryStringParameters
 ): DbQueryParameters => {
-  const { limit, page, prefix, infix, fields } = queryStringParameters;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const { limit, page, prefix, infix, sort_by, sort_key, order, fields } = queryStringParameters;
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
@@ -77,6 +78,9 @@ export const convertQueryStringToDbQueryParameters = (
 
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
+  if (typeof sort_by === 'string') dbQueryParameters.sort_by = sort_by;
+  if (typeof order === 'string') dbQueryParameters.order = order;
+  if (Array.isArray(sort_key) && sort_key.every((obj) => typeof obj === 'string')) dbQueryParameters.sort_key = sort_key;
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
 
   // remove reserved words (that are not fields)

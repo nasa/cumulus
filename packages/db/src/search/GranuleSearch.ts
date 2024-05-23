@@ -11,6 +11,7 @@ import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresGranuleRecord } from '../types/granule';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
 import { TableNames } from '../tables';
+import { mapQueryStringFieldToDbField } from './field-mapping';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
@@ -192,27 +193,22 @@ export class GranuleSearch extends BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { searchQuery } = params;
-    const sortBy = this.queryStringParameters.sort_by;
-    const {
-      granules: granulesTable,
-    } = TableNames;
-    const sortKey = this.queryStringParameters.sort_key;
-    Object.keys(groupArray).forEach((key) => {
-      searchQuery.groupBy(key);
-    });
-    if (sortBy) {
-      const order = this.queryStringParameters.order || 'desc';
-      searchQuery.orderBy(`${granulesTable}.${sortBy}`, order).groupBy(`${granulesTable}.${sortBy}`);
-    } else if (sortKey) {
+    const { searchQuery, dbQueryParameters } = params;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const { sort_by, sort_key, order } = dbQueryParameters || this.dbQueryParameters;
+    if (sort_by) {
+      const sortOrder = order || 'desc';
+      const sortField = mapQueryStringFieldToDbField('granule', { name: sort_by });
+      const convertedField = Object.keys(sortField as Object)[0];
+      searchQuery.orderBy(`${convertedField}`, sortOrder);
+    } else if (sort_key) {
       // eslint-disable-next-line array-callback-return
-      sortKey.map((key) => {
-        const order = key.startsWith('-') ? 'desc' : 'asc';
-        const sortField = key.replace(/^[+-]/, '');
-        searchQuery.orderBy(`${granulesTable}.${sortField}`, order).groupBy(`${granulesTable}.${sortField}`);
+      sort_key.map((key) => {
+        const keyOrder = key.startsWith('-') ? 'desc' : 'asc';
+        const sortField = mapQueryStringFieldToDbField('granule', { name: key.replace(/^[+-]/, '') });
+        const convertedField = Object.keys(sortField as Object)[0];
+        searchQuery.orderBy(`${convertedField}`, keyOrder);
       });
-    } else {
-      searchQuery.orderBy(`${granulesTable}.timestamp`, 'desc').groupBy(`${granulesTable}.timestamp`);
     }
   }
 

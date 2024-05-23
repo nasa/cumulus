@@ -19,9 +19,12 @@ export type DbQueryParameters = {
   infix?: string,
   limit?: number,
   offset?: number,
+  order?: string,
   page?: number,
   prefix?: string,
   fields?: string[],
+  sort_by?: string,
+  sort_key?: string[],
   term?: { [key: string]: any },
   terms?: { [key: string]: any },
 };
