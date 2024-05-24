@@ -120,8 +120,15 @@ modification.
 - **CUMULUS-3433**
   - Added `importGot` helper method to import `got` as an ESM module in
     CommmonJS typescript/webpack clients.
+- **CUMULUS-3606**
+  - Updated  with additional documentation covering tunneling configuration
+    using a PKCS11 provider
 
 ### Changed
+- **CUMULUS-3717**
+  - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
+- **CUMULUS-3720**
+  - add cicd unit test error logging to s3 for testing improvements
 - **CUMULUS-3951**
   - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
   - Update all integration/unit tests to use encrypted SNS topics
@@ -199,6 +206,9 @@ modification.
 
 ### Fixed
 
+- **CUMULUS-3715**
+  - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
+    flags to knex custom code
 - **CUMULUS-3721**
   - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
 - **CUMULUS-3701**
@@ -223,7 +233,20 @@ modification.
   - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
     updating babel packages and .babelrc
 
-## [v18.2.0] 2023-02-02
+## [v18.2.1] 2024-05-08
+
+**Please note** changes in 18.2.1 may not yet be released in future versions, as this
+is a backport/patch release on the 18.2.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Fixed
+
+- **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
+- **CUMULUS-3701**
+  - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
+
+## [v18.2.0] 2024-02-02
 
 ### Migration Notes
 
@@ -7791,6 +7814,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 [unreleased]: https://github.com/nasa/cumulus/compare/v18.2.0...HEAD
+[v18.2.1]: https://github.com/nasa/cumulus/compare/v18.2.0...v18.2.1
 [v18.2.0]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.2.0
 [v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
