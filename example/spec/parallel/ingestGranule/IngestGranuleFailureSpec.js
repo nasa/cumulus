@@ -249,8 +249,6 @@ describe('The Ingest Granule failure workflow', () => {
       const errors = JSON.parse(granule.error.errors || []);
       expect(errors.length).toBeGreaterThanOrEqual(2);
       errors.forEach((error) => {
-        console.log('IngestGranuleFailure error.Error', error.Error);
-        console.log('IngestGranuleFailure error.Cause', error.Cause);
         const isSchemaValidationError = (error.Error === 'CumulusMessageAdapterExecutionError') &&
           error.Cause.includes('jsonschema.exceptions.ValidationError');
         const isPostgresWriteError = error.Error.includes('Failed writing files to PostgreSQL') &&
