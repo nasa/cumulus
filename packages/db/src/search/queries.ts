@@ -1,6 +1,6 @@
 import omit from 'lodash/omit';
 import Logger from '@cumulus/logger';
-import { DbQueryParameters, QueryStringParameters } from '../types/search';
+import { DbQueryParameters, QueryStringParameters, RangeType } from '../types/search';
 import { mapQueryStringFieldToDbField } from './field-mapping';
 
 const log = new Logger({ sender: '@cumulus/db/queries' });
@@ -31,7 +31,47 @@ const regexes: { [key: string]: RegExp } = {
 };
 
 /**
- * Conert term query fields to db query parameters from api query string fields
+ * Convert range query fields to db query parameters from api query string fields
+ *
+ * @param type - query record type
+ * @param queryStringFields - api query fields
+ * @returns range query parameter
+ */
+const convertRange = (
+  type: string,
+  queryStringFields: { name: string, value: string }[]
+): { range: { [key: string]: RangeType } } => {
+  const range = queryStringFields.reduce((acc: { [key: string]: RangeType }, queryField) => {
+    const match = queryField.name.match(regexes.range);
+    if (!match) return acc;
+
+    // get corresponding db field name, e.g. timestamp => updated_at
+    const dbField = mapQueryStringFieldToDbField(type, { ...queryField, name: match[1] });
+    if (!dbField) return acc;
+    const dbFieldName = Object.keys(dbField)[0];
+
+    // build a range field, e.g.
+    // { timestamp__from: '1712708508310', timestamp__to: '1712712108310' } =>
+    // { updated_at: {
+    //     gte: new Date(1712708508310),
+    //     lte: new Date(1712712108310),
+    //   },
+    // }
+    const rangeField: { [key: string]: RangeType } = { [dbFieldName]: acc[dbFieldName] || {} };
+    if (match[2] === 'from') {
+      rangeField[dbFieldName].gte = dbField[dbFieldName];
+    }
+    if (match[2] === 'to') {
+      rangeField[dbFieldName].lte = dbField[dbFieldName];
+    }
+    return { ...acc, ...rangeField };
+  }, {});
+
+  return { range };
+};
+
+/**
+ * Convert term query fields to db query parameters from api query string fields
  *
  * @param type - query record type
  * @param queryStringFields - api query fields
@@ -54,6 +94,7 @@ const convertTerm = (
  * for each type of query
  */
 const convert: { [key: string]: Function } = {
+  range: convertRange,
   term: convertTerm,
 };
 

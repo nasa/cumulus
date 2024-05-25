@@ -35,9 +35,7 @@ function getType(req) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function summary(req, res) {
-  const stats = new StatsSearch({
-    queryStringParameters: omit(req.query, 'type'),
-  }, 'granule');
+  const stats = new StatsSearch({ queryStringParameters: req.query }, 'granule');
   const r = await stats.summary();
   return res.send(r);
 }
