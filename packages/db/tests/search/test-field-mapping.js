@@ -132,6 +132,7 @@ test('mapQueryStringFieldToDbField correctly converts all execution api fields t
     execution: 'https://example.com',
     status: 'completed',
     updatedAt: 1591384094512,
+    collectionId: 'MOD09GQ___006',
   };
 
   const expectedDbParameters = {
@@ -140,6 +141,8 @@ test('mapQueryStringFieldToDbField correctly converts all execution api fields t
     url: 'https://example.com',
     status: 'completed',
     updated_at: new Date(1591384094512),
+    collectionName: 'MOD09GQ',
+    collectionVersion: '006',
   };
 
   const apiFieldsList = Object.entries(queryStringParameters)
@@ -157,6 +160,8 @@ test('mapQueryStringFieldToDbField correctly converts all pdr api fields to db f
     pdrName: 'fakePdrName',
     status: 'completed',
     updatedAt: 1591384094512,
+    collectionId: 'MOD09GQ___006',
+    provider: 's3_provider',
   };
 
   const expectedDbParameters = {
@@ -164,6 +169,9 @@ test('mapQueryStringFieldToDbField correctly converts all pdr api fields to db f
     name: 'fakePdrName',
     status: 'completed',
     updated_at: new Date(1591384094512),
+    collectionName: 'MOD09GQ',
+    collectionVersion: '006',
+    providerName: 's3_provider',
   };
 
   const apiFieldsList = Object.entries(queryStringParameters)
@@ -203,6 +211,8 @@ test('mapQueryStringFieldToDbField correctly converts all rule api fields to db 
     name: 'fakePdrName',
     state: 'DISABLED',
     updatedAt: 1591384094512,
+    collectionId: 'MOD09GQ___006',
+    provider: 's3_provider',
   };
 
   const expectedDbParameters = {
@@ -210,6 +220,9 @@ test('mapQueryStringFieldToDbField correctly converts all rule api fields to db 
     name: 'fakePdrName',
     enabled: false,
     updated_at: new Date(1591384094512),
+    collectionName: 'MOD09GQ',
+    collectionVersion: '006',
+    providerName: 's3_provider',
   };
 
   const apiFieldsList = Object.entries(queryStringParameters)
