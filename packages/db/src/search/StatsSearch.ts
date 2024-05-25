@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
 import { DbQueryParameters, QueryEvent } from '../types/search';
-import { BaseSearch, typeToTable } from './BaseSearch';
+import { BaseSearch } from './BaseSearch';
 
 type TotalSummary = {
   count_errors: number,
@@ -60,12 +60,12 @@ const infixMapping: { [key: string]: string } = {
  * A class to query postgres for the STATS and STATS/AGGREGATE endpoints
  */
 class StatsSearch extends BaseSearch {
-  readonly tableName: string;
+  readonly field: string;
 
   constructor(event: QueryEvent, type: string) {
-    super(event, type);
-    this.tableName = typeToTable[this.type];
-    this.queryStringParameters.field = this.queryStringParameters.field ?? 'status';
+    const { field, ...queryStringParameters } = event.queryStringParameters || {};
+    super({ queryStringParameters }, type);
+    this.field = field ?? 'status';
     this.dbQueryParameters = omit(this.dbQueryParameters, ['limit', 'offset']);
   }
 
@@ -91,7 +91,7 @@ class StatsSearch extends BaseSearch {
       meta: {
         name: 'cumulus-api',
         count: totalCount,
-        field: `${this.queryStringParameters.field}`,
+        field: this.field,
       },
       count: responses,
     };
@@ -104,12 +104,10 @@ class StatsSearch extends BaseSearch {
    * @returns {SummaryResult} the api object with the summary statistics
    */
   private formatSummaryResult(result: TotalSummary): SummaryResult {
-    const timestampTo = Number.parseInt(this.queryStringParameters.timestamp__to as string, 10);
-    const timestampFrom = Number.parseInt(this.queryStringParameters.timestamp__from as string, 10);
-    const dateto = this.queryStringParameters.timestamp__to
-      ? new Date(timestampTo).toISOString() : new Date().toISOString();
-    const datefrom = this.queryStringParameters.timestamp__from
-      ? new Date(timestampFrom).toISOString() : '1970-01-01T12:00:00+00:00';
+    const timestampTo = this.dbQueryParameters.range?.updated_at?.lte ?? new Date();
+    const timestampFrom = this.dbQueryParameters.range?.updated_at?.gte ?? new Date(0);
+    const dateto = (timestampTo as Date).toISOString();
+    const datefrom = (timestampFrom as Date).toISOString();
     return {
       errors: {
         dateFrom: datefrom,
@@ -150,13 +148,8 @@ class StatsSearch extends BaseSearch {
    */
   public async summary(sendKnex: Knex): Promise<SummaryResult> {
     const knex = sendKnex ?? await getKnexClient();
-    const aggregateQuery:Knex.QueryBuilder = knex(this.tableName);
-    if (this.queryStringParameters.timestamp__from) {
-      aggregateQuery.where(`${this.tableName}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from as string, 10)));
-    }
-    if (this.queryStringParameters.timestamp__to) {
-      aggregateQuery.where(`${this.tableName}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
-    }
+    const aggregateQuery: Knex.QueryBuilder = knex(this.tableName);
+    this.buildRangeQuery({ searchQuery: aggregateQuery });
     aggregateQuery.select(
       knex.raw(`COUNT(CASE WHEN ${this.tableName}.error ->> 'Error' is not null THEN 1 END) AS count_errors`),
       knex.raw(`COUNT(${this.tableName}.cumulus_id) AS count_granules`),
@@ -173,12 +166,21 @@ class StatsSearch extends BaseSearch {
    * @param {Knex.QueryBuilder} query - the knex query to be joined or not
    */
   private joinTables(query: Knex.QueryBuilder) {
-    if (this.queryStringParameters.collectionId) {
-      query.join(`${TableNames.collections}`, `${this.tableName}.collection_cumulus_id`, 'collections.cumulus_id');
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+    } = TableNames;
+    if (this.searchCollection()) {
+      query.join(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
-    if (this.queryStringParameters.provider) {
-      query.join(`${TableNames.providers}`, `${this.tableName}.provider_cumulus_id`, 'providers.cumulus_id');
+    if (this.searchProvider()) {
+      query.join(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    }
+
+    if (this.searchPdr()) {
+      query.join(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
   }
 
@@ -189,10 +191,10 @@ class StatsSearch extends BaseSearch {
    * @param {Knex} knex - the knex client to be used
    */
   private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex) {
-    if (this.queryStringParameters.field?.includes('error.Error')) {
+    if (this.field?.includes('error.Error')) {
       query.select(knex.raw("error ->> 'Error' as aggregatedfield"));
     } else {
-      query.select(`${this.tableName}.${this.queryStringParameters.field} as aggregatedfield`);
+      query.select(`${this.tableName}.${this.field} as aggregatedfield`);
     }
     query.modify((queryBuilder) => this.joinTables(queryBuilder))
       .count(`${this.tableName}.cumulus_id as count`)
@@ -210,7 +212,7 @@ class StatsSearch extends BaseSearch {
     : {
       searchQuery: Knex.QueryBuilder,
     } {
-    const searchQuery:Knex.QueryBuilder = knex(`${this.tableName}`);
+    const searchQuery:Knex.QueryBuilder = knex(this.tableName);
     this.aggregateQueryField(searchQuery, knex);
     return { searchQuery };
   }
@@ -249,26 +251,16 @@ class StatsSearch extends BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { searchQuery } = params;
-    if (this.queryStringParameters.collectionId) {
-      searchQuery.where(`${TableNames.collections}.name`, '=', this.queryStringParameters.collectionId);
-    }
-    if (this.queryStringParameters.provider) {
-      searchQuery.where(`${TableNames.providers}.name`, '=', this.queryStringParameters.provider);
-    }
-    if (this.queryStringParameters.timestamp__from) {
-      searchQuery.where(`${this.tableName}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from as string, 10)));
-    }
-    if (this.queryStringParameters.timestamp__to) {
-      searchQuery.where(`${this.tableName}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
-    }
-    if (this.queryStringParameters.field?.includes('error.Error')) {
+    const { dbQueryParameters, searchQuery } = params;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    if (this.field?.includes('error.Error')) {
       searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is not null`);
     }
-    const { term = {} } = this.dbQueryParameters;
+
     return super.buildTermQuery({
       ...params,
-      dbQueryParameters: { term: omit(term, ['collectionName', 'collectionVersion', 'pdrName', 'error.Error', 'providerName']) },
+      dbQueryParameters: { term: omit(term, 'error.Error') },
     });
   }
 

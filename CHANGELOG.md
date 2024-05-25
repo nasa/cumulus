@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
     support basic queries for granules
   - Updated granules List endpoint to query postgres for basic queries
+- **CUMULUS-3693**
+  - Added functionality to `@cumulus/db/src/search` to support range queries
 - **CUMULUS-3694**
   - Added functionality to `@cumulus/db/src/search` to support term queries
   - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
