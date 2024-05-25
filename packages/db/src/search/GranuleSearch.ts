@@ -151,20 +151,18 @@ export class GranuleSearch extends BaseSearch {
     dbQueryParameters?: DbQueryParameters,
   }) {
     const { searchQuery, dbQueryParameters } = params;
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const { sort_by, sort_key, order } = dbQueryParameters || this.dbQueryParameters;
-    if (sort_by) {
+    const { sortBy, sortKey, order } = dbQueryParameters || this.dbQueryParameters;
+    if (sortBy) {
       const sortOrder = order || 'desc';
-      const sortField = mapQueryStringFieldToDbField('granule', { name: sort_by });
+      const sortField = mapQueryStringFieldToDbField('granule', { name: sortBy });
       const convertedField = Object.keys(sortField as Object)[0];
       searchQuery.orderBy(`${convertedField}`, sortOrder);
-    } else if (sort_key) {
-      // eslint-disable-next-line array-callback-return
-      sort_key.map((key) => {
+    } else if (sortKey) {
+      sortKey.map((key) => {
         const keyOrder = key.startsWith('-') ? 'desc' : 'asc';
         const sortField = mapQueryStringFieldToDbField('granule', { name: key.replace(/^[+-]/, '') });
         const convertedField = Object.keys(sortField as Object)[0];
-        searchQuery.orderBy(`${convertedField}`, keyOrder);
+        return searchQuery.orderBy(`${convertedField}`, keyOrder);
       });
     }
   }

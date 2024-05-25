@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Replace ElasticSearch Phase 1
 
 - **CUMULUS-3695**
- - Updated `granule` list api endpoint to handle sort fields
+ - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
 - **CUMULUS-3688**
  - Updated `stats` api endpoint to query postgres instead of elasticsearch
 - **CUMULUS-3689**

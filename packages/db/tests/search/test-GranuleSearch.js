@@ -142,7 +142,7 @@ test.before(async (t) => {
       time_to_process: !(num % 20)
         ? Number(t.context.granuleSearchFields.timeToPreprocess) : undefined,
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
-      updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
+      updated_at: new Date(t.context.granuleSearchFields.updatedAt + (num % 2) * 1000),
     }))
   );
 });
@@ -436,8 +436,8 @@ test('GranuleSearch supports sorting', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
-  t.true(response.results[0].updatedAt > response.results[1].updatedAt);
-  t.true(response.results[98].updatedAt > response.results[99].updatedAt);
+  t.true(response.results[0].updatedAt > response.results[99].updatedAt);
+  t.true(response.results[1].updatedAt > response.results[50].updatedAt);
 
   queryStringParameters = {
     limit: 200,
@@ -448,8 +448,8 @@ test('GranuleSearch supports sorting', async (t) => {
   const response2 = await dbSearch2.query(knex);
   t.is(response2.meta.count, 100);
   t.is(response2.results?.length, 100);
-  t.true(response2.results[0].updatedAt < response2.results[1].updatedAt);
-  t.true(response2.results[98].updatedAt < response2.results[99].updatedAt);
+  t.true(response2.results[0].updatedAt < response2.results[99].updatedAt);
+  t.true(response2.results[1].updatedAt < response2.results[50].updatedAt);
 
   queryStringParameters = {
     limit: 200,
@@ -459,8 +459,8 @@ test('GranuleSearch supports sorting', async (t) => {
   const response3 = await dbSearch3.query(knex);
   t.is(response3.meta.count, 100);
   t.is(response3.results?.length, 100);
-  t.true(response3.results[0].updatedAt > response3.results[1].updatedAt);
-  t.true(response3.results[98].updatedAt > response3.results[99].timestamp);
+  t.true(response3.results[0].updatedAt > response3.results[99].updatedAt);
+  t.true(response3.results[1].updatedAt > response3.results[50].updatedAt);
 
   queryStringParameters = {
     limit: 200,
@@ -481,8 +481,8 @@ test('GranuleSearch supports sorting', async (t) => {
   const response5 = await dbSearch5.query(knex);
   t.is(response5.meta.count, 100);
   t.is(response5.results?.length, 100);
-  t.true(response5.results[0].updatedAt > response5.results[1].updatedAt);
-  t.true(response5.results[98].updatedAt > response5.results[99].updatedAt);
+  t.true(response5.results[0].updatedAt > response5.results[99].updatedAt);
+  t.true(response5.results[1].updatedAt > response5.results[50].updatedAt);
   t.true(Number(response5.results[1].productVolume) < Number(response5.results[99].productVolume));
   t.true(Number(response5.results[0].productVolume) < Number(response5.results[10].productVolume));
 
@@ -496,8 +496,8 @@ test('GranuleSearch supports sorting', async (t) => {
   const response6 = await dbSearch6.query(knex);
   t.is(response6.meta.count, 100);
   t.is(response6.results?.length, 100);
-  t.true(response6.results[0].updatedAt < response6.results[1].updatedAt);
-  t.true(response6.results[98].updatedAt < response6.results[99].updatedAt);
+  t.true(response6.results[0].updatedAt < response6.results[99].updatedAt);
+  t.true(response6.results[1].updatedAt < response6.results[50].updatedAt);
 
   queryStringParameters = {
     limit: 200,

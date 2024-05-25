@@ -119,9 +119,9 @@ export const convertQueryStringToDbQueryParameters = (
 
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
-  if (typeof sort_by === 'string') dbQueryParameters.sort_by = sort_by;
+  if (typeof sort_by === 'string') dbQueryParameters.sortBy = sort_by;
   if (typeof order === 'string') dbQueryParameters.order = order;
-  if (Array.isArray(sort_key) && sort_key.every((obj) => typeof obj === 'string')) dbQueryParameters.sort_key = sort_key;
+  if (Array.isArray(sort_key) && sort_key.every((obj) => typeof obj === 'string')) dbQueryParameters.sortKey = sort_key;
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
 
   // remove reserved words (that are not fields)
