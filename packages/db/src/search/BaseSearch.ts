@@ -217,7 +217,13 @@ class BaseSearch {
   }) {
     const { searchQuery, dbQueryParameters } = params;
     const { sort } = dbQueryParameters || this.dbQueryParameters;
-    sort?.forEach((key) => searchQuery.orderBy(key.name, key.order));
+    sort?.forEach((key) => {
+      if (key.name.startsWith('error')) {
+        searchQuery.orderByRaw(`${this.tableName}.error ->> 'Error' ${key.order}`);
+      } else {
+        searchQuery.orderBy(key.name, key.order);
+      }
+    });
   }
 
   /**

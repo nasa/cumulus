@@ -20,9 +20,6 @@ const granuleMapping: { [key: string]: Function } = {
   endingDateTime: (value?: string) => ({
     ending_date_time: value,
   }),
-  error: (value?: string) => ({
-    error: { value },
-  }),
   granuleId: (value?: string) => ({
     granule_id: value,
   }),
@@ -61,6 +58,9 @@ const granuleMapping: { [key: string]: Function } = {
   }),
   // nested error field
   'error.Error': (value?: string) => ({
+    'error.Error': value,
+  }),
+  'error.Error.keyword': (value?: string) => ({
     'error.Error': value,
   }),
   // The following fields require querying other tables
