@@ -30,39 +30,48 @@ function* createGranuleIdGenerator(total) {
   }
 }
 
-const ingestGranules = async (config) => {
+const addCollection = async (stackName, bucket, testSuffix) => {
+  const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
+  await addCollections(
+    stackName,
+    bucket,
+    collectionsDir,
+    testSuffix,
+    testId,
+    'replace'
+  );
+};
+const addProvider = async (stackName, bucket, testSuffix) => {
+  const providerId = `s3_provider${testSuffix}`;
+  const providerJson = JSON.parse(fs.readFileSync('data/providers/s3/s3_provider.json', 'utf8'));
+  const providerData = {
+    ...providerJson,
+    id: providerId,
+    host: bucket,
+  };
+  try {
+    await apiTestUtils.addProviderApi({
+      prefix: stackName,
+      provider: providerData,
+    });
+  } catch (error) {
+    if (error.statusCode === 409) {
+      return;
+    }
+    throw error;
+  }
+};
+const uploadDBGranules = async (config) => {
   process.env.dbMaxPool = config.batchSize || 10;
   const knex = await getKnexClient();
-  const providerJson = JSON.parse(fs.readFileSync('data/providers/s3/s3_provider.json', 'utf8'));
   const testSuffix = createTestSuffix(config.testId);
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const collectionId = constructCollectionId(collection.name, collection.version);
   const provider = { id: `s3_provider${testSuffix}` };
-  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
-  const providerData = {
-    ...providerJson,
-    id: provider.id,
-    host: config.bucket,
-  };
 
   const granulePgModel = new GranulePgModel();
   const totalGranules = 300000;
   const granuleIdGenerator = createGranuleIdGenerator(totalGranules);
-
-  await Promise.all([
-    addCollections(
-      config.stackName,
-      config.bucket,
-      collectionsDir,
-      testSuffix,
-      testId,
-      'error'
-    ),
-    apiTestUtils.addProviderApi({
-      prefix: config.stackName,
-      provider: providerData,
-    }),
-  ]);
 
   console.log(`Collection: ${JSON.stringify(collectionId)} created`);
   console.log(`Provider: ${JSON.stringify(provider)} created`);
@@ -76,14 +85,16 @@ const ingestGranules = async (config) => {
   let promises = [];
   let iter = 1;
   for (const id of granuleIdGenerator) {
+    const gran = fakeGranuleRecordFactory({
+      granule_id: id,
+      collection_cumulus_id: dbCollection.cumulus_id,
+      provider_cumulus_id: dbProvider.cumulus_id,
+      status: 'completed',
+    });
+    console.log(iter);
     const promise = upsertGranuleWithExecutionJoinRecord({
       knexTransaction: knex,
-      granule: fakeGranuleRecordFactory({
-        granule_id: id,
-        collection_cumulus_id: dbCollection.cumulus_id,
-        provider_cumulus_id: dbProvider.cumulus_id,
-        status: 'completed',
-      }),
+      granule: gran,
       granulePgModel,
       writeConstraints: false,
     });
@@ -98,12 +109,23 @@ const ingestGranules = async (config) => {
   }
 };
 
-ingestGranules({
-  testId: 'jktestrun18',
-  stackName: 'ecarton-ci-tf',
-  bucket: 'cumulus-test-sandbox-protected',
-  batchSize: 350,
-})
+const main = async () => {
+  const stackName = 'ecarton-ci-tf';
+  const internalBucket = 'cumulus-test-sandbox-protected';
+  const testId = '_test-abc';
+  await Promise.all([
+    addProvider(stackName, internalBucket, testId),
+    addCollection(stackName, internalBucket, testId),
+  ]);
+};
+// addProvider('ecarton-ci-tf', 'cumulus-test-sandbox-protected', '_test-abc');
+// uploadDBGranules({
+//   testId: 'abc',
+//   stackName: 'ecarton-ci-tf',
+//   bucket: 'cumulus-test-sandbox-protected',
+//   batchSize: 350,
+// })
+main()
   .then(() => {
     console.log('Ingest Complete');
     return true;
@@ -111,3 +133,13 @@ ingestGranules({
   .catch((err) => {
     console.error(err);
   });
+if (require.main === module) {
+    main(
+    ).then(
+      (ret) => ret
+    ).catch((error) => {
+      console.log(`failed: ${error}`);
+      throw error;
+    });
+  }
+  

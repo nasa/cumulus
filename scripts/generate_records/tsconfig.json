@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["./**/*.ts", "generate_db_records.js"],
+  "compilerOptions": { "outDir": "dist", "allowJs": true }
+}
