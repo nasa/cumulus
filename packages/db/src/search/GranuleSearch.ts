@@ -11,7 +11,6 @@ import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresGranuleRecord } from '../types/granule';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
 import { TableNames } from '../tables';
-import { mapQueryStringFieldToDbField } from './field-mapping';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
@@ -149,21 +148,9 @@ export class GranuleSearch extends BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { searchQuery, dbQueryParameters } = params;
-    const { sortBy, sortKey, order } = dbQueryParameters || this.dbQueryParameters;
-    if (sortBy) {
-      const sortOrder = order || 'desc';
-      const sortField = mapQueryStringFieldToDbField('granule', { name: sortBy });
-      const convertedField = Object.keys(sortField as Object)[0];
-      searchQuery.orderBy(`${convertedField}`, sortOrder);
-    } else if (sortKey) {
-      sortKey.map((key) => {
-        const keyOrder = key.startsWith('-') ? 'desc' : 'asc';
-        const sortField = mapQueryStringFieldToDbField('granule', { name: key.replace(/^[+-]/, '') });
-        const convertedField = Object.keys(sortField as Object)[0];
-        return searchQuery.orderBy(`${convertedField}`, keyOrder);
-      });
-    }
+    super.buildSortQuery({
+      ...params,
+    });
   }
 
   /**

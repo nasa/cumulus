@@ -215,7 +215,9 @@ class BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    log.debug(`buildSortQuery is not implemented ${Object.keys(params)}`);
+    const { searchQuery, dbQueryParameters } = params;
+    const { sort } = dbQueryParameters || this.dbQueryParameters;
+    sort?.forEach((key) => searchQuery.orderBy(key.name, key.order));
   }
 
   /**

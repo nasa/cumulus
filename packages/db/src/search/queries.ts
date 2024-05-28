@@ -1,6 +1,6 @@
 import omit from 'lodash/omit';
 import Logger from '@cumulus/logger';
-import { DbQueryParameters, QueryStringParameters, RangeType } from '../types/search';
+import { DbQueryParameters, QueryStringParameters, RangeType, SortType } from '../types/search';
 import { mapQueryStringFieldToDbField } from './field-mapping';
 
 const log = new Logger({ sender: '@cumulus/db/queries' });
@@ -90,6 +90,33 @@ const convertTerm = (
 };
 
 /**
+ * Convert sort query fields to db query parameters from api query string fields
+ *
+ * @param type - query record type
+ * @param queryStringFields - api query fields
+ * @returns sort query parameter
+ */
+const convertSort = (
+  type: string,
+  queryStringField: string | Array<string>,
+  orderString?: string
+): SortType[] => {
+  const sortArray: SortType[] = [];
+  if (typeof queryStringField === 'string') {
+    const order = orderString ?? 'desc';
+    const queryParam = mapQueryStringFieldToDbField(type, { name: queryStringField });
+    Object.keys(queryParam as Object).map((key) => sortArray.push({ name: key, order }));
+  } else if (Array.isArray(queryStringField)) {
+    queryStringField.map((item) => {
+      const order = item.startsWith('+') ? 'asc' : 'desc';
+      const queryParam = mapQueryStringFieldToDbField(type, { name: item.replace(/^[+-]/, '') });
+      return Object.keys(queryParam as Object).map((key) => sortArray.push({ name: key, order }));
+    });
+  }
+  return sortArray;
+};
+
+/**
  * functions for converting from api query string parameters to db query parameters
  * for each type of query
  */
@@ -109,8 +136,8 @@ export const convertQueryStringToDbQueryParameters = (
   type: string,
   queryStringParameters: QueryStringParameters
 ): DbQueryParameters => {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const { limit, page, prefix, infix, sort_by, sort_key, order, fields } = queryStringParameters;
+  const { limit, page, prefix, infix,
+    sort_by: sortBy, sort_key: sortKey, order, fields } = queryStringParameters;
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
@@ -119,10 +146,12 @@ export const convertQueryStringToDbQueryParameters = (
 
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
-  if (typeof sort_by === 'string') dbQueryParameters.sortBy = sort_by;
-  if (typeof order === 'string') dbQueryParameters.order = order;
-  if (Array.isArray(sort_key) && sort_key.every((obj) => typeof obj === 'string')) dbQueryParameters.sortKey = sort_key;
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
+  if (sortBy) {
+    dbQueryParameters.sort = convertSort(type, sortBy, order);
+  } else if (sortKey) {
+    dbQueryParameters.sort = convertSort(type, sortKey);
+  }
 
   // remove reserved words (that are not fields)
   const fieldParams = omit(queryStringParameters, reservedWords);

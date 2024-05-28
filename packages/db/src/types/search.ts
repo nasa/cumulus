@@ -22,16 +22,19 @@ export type RangeType = {
   lte?: Omit<QueriableType, 'boolean'>,
 };
 
+export type SortType = {
+  name: string,
+  order?: string,
+};
+
 export type DbQueryParameters = {
   fields?: string[],
   infix?: string,
   limit?: number,
   offset?: number,
-  order?: string,
   page?: number,
   prefix?: string,
-  sortBy?: string,
-  sortKey?: string[],
+  sort?: SortType[],
   range?: { [key: string]: RangeType },
   term?: { [key: string]: QueriableType | undefined },
   terms?: { [key: string]: any },
