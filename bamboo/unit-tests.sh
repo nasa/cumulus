@@ -3,7 +3,7 @@ set -ex
 error_to_s3 () {
   if [ -n "$(ls -A $CUMULUS_UNIT_TEST_DATA/unit-logs/@cumulus 2>/dev/null)" ]
   then
-      aws s3 sync $CUMULUS_UNIT_TEST_DATA/unit-logs/@cumulus/ s3://unit-test-error-logs/$(git rev-parse --abbrev-ref HEAD)/$(date +%Y-%m-%dT%H.%M.%S)/;
+      aws s3 sync $CUMULUS_UNIT_TEST_DATA/unit-logs/@cumulus/ s3://${NGAP_ENV}-unit-test-error-logs/$(git rev-parse --abbrev-ref HEAD)/$(date +%Y-%m-%dT%H.%M.%S)/;
       
       docker exec -i ${container_id}-build_env-1 /bin/bash -c "rm -rf $CUMULUS_UNIT_TEST_DATA/unit-logs/"
   fi
