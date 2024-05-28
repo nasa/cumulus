@@ -142,7 +142,7 @@ test.before(async (t) => {
       time_to_process: !(num % 20)
         ? Number(t.context.granuleSearchFields.timeToPreprocess) : undefined,
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
-      updated_at: new Date(t.context.granuleSearchFields.updatedAt + (num % 2) * 1000),
+      updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
     }))
   );
 });
@@ -436,8 +436,8 @@ test('GranuleSearch supports sorting', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
-  t.true(response.results[0].updatedAt > response.results[99].updatedAt);
-  t.true(response.results[1].updatedAt > response.results[50].updatedAt);
+  t.true(response.results[0].updatedAt < response.results[99].updatedAt);
+  t.true(response.results[1].updatedAt < response.results[50].updatedAt);
 
   queryStringParameters = {
     limit: 200,
@@ -498,17 +498,11 @@ test('GranuleSearch supports sorting', async (t) => {
   t.is(response6.results?.length, 100);
   t.true(response6.results[0].updatedAt < response6.results[99].updatedAt);
   t.true(response6.results[1].updatedAt < response6.results[50].updatedAt);
+});
 
-  queryStringParameters = {
-    limit: 200,
-    sort_by: 'error.Error',
-  };
-  const dbSearch7 = new GranuleSearch({ queryStringParameters });
-  const response7 = await dbSearch7.query(knex);
-  t.is(response7.results.error, undefined);
-  t.is(response7.results[99].error.Error, 'CumulusMessageAdapterExecutionError');
-
-  queryStringParameters = {
+test('GranuleSearch supports sorting by CollectionId', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
     limit: 200,
     sort_by: 'collectionId',
     order: 'asc',
@@ -530,6 +524,18 @@ test('GranuleSearch supports sorting', async (t) => {
   t.is(response9.results?.length, 100);
   t.true(response9.results[0].collectionId > response9.results[99].collectionId);
   t.true(response9.results[0].collectionId > response9.results[50].collectionId);
+});
+
+test('GranuleSearch supports sorting by Error', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    sort_by: 'error.Error',
+  };
+  const dbSearch7 = new GranuleSearch({ queryStringParameters });
+  const response7 = await dbSearch7.query(knex);
+  t.is(response7.results[0].error.Error, 'CumulusMessageAdapterExecutionError');
+  t.is(response7.results[99].error, undefined);
 
   queryStringParameters = {
     limit: 200,

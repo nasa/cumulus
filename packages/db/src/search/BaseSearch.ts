@@ -221,7 +221,7 @@ class BaseSearch {
       if (key.name.startsWith('error')) {
         searchQuery.orderByRaw(`${this.tableName}.error ->> 'Error' ${key.order}`);
       } else {
-        searchQuery.orderBy(key.name, key.order);
+        searchQuery.orderBy([{ column: key.name, order: key.order }]);
       }
     });
   }

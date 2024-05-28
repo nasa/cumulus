@@ -138,22 +138,6 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
-   * Build queries for sort keys and fields
-   *
-   * @param params
-   * @param params.searchQuery - query builder for search
-   * @param [params.dbQueryParameters] - db query parameters
-   */
-  protected buildSortQuery(params: {
-    searchQuery: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    super.buildSortQuery({
-      ...params,
-    });
-  }
-
-  /**
    * Translate postgres records to api records
    *
    * @param pgRecords - postgres records returned from query

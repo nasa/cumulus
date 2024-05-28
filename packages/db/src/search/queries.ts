@@ -98,17 +98,18 @@ const convertTerm = (
  */
 const convertSort = (
   type: string,
-  queryStringField: string | Array<string>,
-  orderString?: string
+  queryStringParameters: QueryStringParameters
 ): SortType[] => {
   const sortArray: SortType[] = [];
-  if (typeof queryStringField === 'string') {
-    const order = orderString ?? 'desc';
-    const queryParam = mapQueryStringFieldToDbField(type, { name: queryStringField });
+  const { sort_by: sortBy, sort_key: sortKey } = queryStringParameters;
+  let { order } = queryStringParameters;
+  if (sortBy) {
+    order = order ?? 'asc';
+    const queryParam = mapQueryStringFieldToDbField(type, { name: sortBy });
     Object.keys(queryParam as Object).map((key) => sortArray.push({ name: key, order }));
-  } else if (Array.isArray(queryStringField)) {
-    queryStringField.map((item) => {
-      const order = item.startsWith('+') ? 'asc' : 'desc';
+  } else if (sortKey) {
+    sortKey.map((item) => {
+      order = item.startsWith('-') ? 'desc' : 'asc';
       const queryParam = mapQueryStringFieldToDbField(type, { name: item.replace(/^[+-]/, '') });
       return Object.keys(queryParam as Object).map((key) => sortArray.push({ name: key, order }));
     });
@@ -136,8 +137,7 @@ export const convertQueryStringToDbQueryParameters = (
   type: string,
   queryStringParameters: QueryStringParameters
 ): DbQueryParameters => {
-  const { limit, page, prefix, infix,
-    sort_by: sortBy, sort_key: sortKey, order, fields } = queryStringParameters;
+  const { limit, page, prefix, infix, fields } = queryStringParameters;
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
@@ -147,11 +147,7 @@ export const convertQueryStringToDbQueryParameters = (
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
-  if (sortBy) {
-    dbQueryParameters.sort = convertSort(type, sortBy, order);
-  } else if (sortKey) {
-    dbQueryParameters.sort = convertSort(type, sortKey);
-  }
+  dbQueryParameters.sort = convertSort(type, queryStringParameters);
 
   // remove reserved words (that are not fields)
   const fieldParams = omit(queryStringParameters, reservedWords);
