@@ -1,6 +1,7 @@
 import minimist from 'minimist';
 import moment from 'moment';
 import { listS3ObjectsV2Batch } from '@cumulus/aws-client/S3';
+import { get } from 'lodash';
 
 interface UnitErrorArgs {
   prefix: string
@@ -88,11 +89,11 @@ export const processArgs = async (): Promise<UnitErrorArgs> => {
       },
     }
   );
-  const ngap_env = process.env.NGAP_ENV | 'SANDBOX';
+  const ngapEnv = get(process.env, 'NGAP_ENV', 'SANDBOX');
   return {
     prefix,
     date: moment(date).format('YYYY-MM-DD'),
-    bucket: bucket ? bucket : `${ngap_env}-unit-test-error-logs`,
+    bucket: bucket || `${ngapEnv}-unit-test-error-logs`,
   };
 };
 const main = async () => {
