@@ -23,7 +23,7 @@ export const extractDate = (key: string): string => {
 export const getErrorLogs = async (
   branch: string = 'master',
   date: string,
-  bucket: string = 'SANDBOX-unit-test-error-logs'
+  bucket: string = 'sandbox-unit-test-error-logs'
 ): Promise<Array<any>> => {
   const objects: Array<any> = [];
   for await (
@@ -89,7 +89,7 @@ export const processArgs = async (): Promise<UnitErrorArgs> => {
       },
     }
   );
-  const ngapEnv = get(process.env, 'NGAP_ENV', 'SANDBOX').toLowerCase();
+  const ngapEnv = get(process.env, 'NGAP_ENV', 'sandbox').toLowerCase();
   return {
     prefix,
     date: moment(date).format('YYYY-MM-DD'),

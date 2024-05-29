@@ -77,10 +77,10 @@ test('organizeByDate gets the expected results', (t) => {
 });
 
 test('getKeys pulls a complete set of valid s3 keys', async (t) => {
-  await createBucket('SANDBOX-unit-test-error-logs');
-  await putFile('SANDBOX-unit-test-error-logs', 'a/2023-04-12T12.14.10/something.log', './tests/testFiles/testFile.log');
-  await putFile('SANDBOX-unit-test-error-logs', 'a/2023-04-14T12.16.10/something.log', './tests/testFiles/testFile.log');
-  const keys = await getErrorLogs('a', '2023-04-12', 'SANDBOX-unit-test-error-logs');
+  await createBucket('sandbox-unit-test-error-logs');
+  await putFile('sandbox-unit-test-error-logs', 'a/2023-04-12T12.14.10/something.log', './tests/testFiles/testFile.log');
+  await putFile('sandbox-unit-test-error-logs', 'a/2023-04-14T12.16.10/something.log', './tests/testFiles/testFile.log');
+  const keys = await getErrorLogs('a', '2023-04-12', 'sandbox-unit-test-error-logs');
   t.deepEqual(
     keys,
     [
@@ -88,5 +88,5 @@ test('getKeys pulls a complete set of valid s3 keys', async (t) => {
       'a/2023-04-14T12.16.10/something.log',
     ]
   );
-  await deleteS3Buckets(['SANDBOX-unit-test-error-logs']);
+  await deleteS3Buckets(['sandbox-unit-test-error-logs']);
 });
