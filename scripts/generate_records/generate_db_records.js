@@ -12,8 +12,12 @@ const {
   GranulePgModel,
   CollectionPgModel,
   ProviderPgModel,
+  ExecutionPgModel,
+  FilePgModel,
   getKnexClient,
   fakeGranuleRecordFactory,
+  fakeFileRecordFactory,
+  fakeExecutionRecordFactory,
 } = require('@cumulus/db');
 
 const createTestSuffix = (prefix) => `_test-${prefix}`;
@@ -69,6 +73,51 @@ const addProvider = async (stackName, bucket, testSuffix) => {
   }
   return providerId;
 };
+
+const uploadGranule = async (
+  knex,
+  granuleId,
+  executionCumulusId,
+  collectionCumulusId,
+  providerCumulusId
+) => {
+  const granuleParams = {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
+    execution_cumulus_id: executionCumulusId,
+  };
+  const execution = fakeExecutionRecordFactory({
+    ...granuleParams,
+  });
+  const gran = fakeGranuleRecordFactory({
+    ...granuleParams,
+    status: 'completed',
+  });
+  const file = fakeFileRecordFactory({
+    ...granuleParams,
+  });
+
+  const granuleModel = new GranulePgModel();
+  const executionModel = new ExecutionPgModel();
+  const fileModel = new FilePgModel();
+  granuleModel.upsert({
+    knex,
+    gran,
+    executionCumulusId,
+  });
+  executionModel.upsert(knex, execution);
+  fileModel.upsert(knex, file);
+
+  // await upsertGranuleWithExecutionJoinRecord({
+  //   knexTransaction: knex,
+  //   granule: gran,
+  //   granulePgModel,
+  //   writeConstraints: false,
+  // });
+
+};
+
 const uploadDBGranules = async (providerId, testSuffix, batchSize, granuleCount) => {
   process.env.dbMaxPool = batchSize || 10;
   const knex = await getKnexClient();
@@ -91,19 +140,26 @@ const uploadDBGranules = async (providerId, testSuffix, batchSize, granuleCount)
   let promises = [];
   let iter = 1;
   for (const id of granuleIdGenerator) {
-    const gran = fakeGranuleRecordFactory({
-      granule_id: id,
-      collection_cumulus_id: dbCollection.cumulus_id,
-      provider_cumulus_id: dbProvider.cumulus_id,
-      status: 'completed',
-    });
+    // const gran = fakeGranuleRecordFactory({
+    //   granule_id: id,
+    //   collection_cumulus_id: dbCollection.cumulus_id,
+    //   provider_cumulus_id: dbProvider.cumulus_id,
+    //   status: 'completed',
+    // });
     // console.log(iter);
-    const promise = upsertGranuleWithExecutionJoinRecord({
-      knexTransaction: knex,
-      granule: gran,
+    const promise = uploadGranule(
+      knex,
       granulePgModel,
-      writeConstraints: false,
-    });
+      id,
+      dbCollection.cumulus_id,
+      dbProvider.cumulus_id
+    );
+    // const promise = upsertGranuleWithExecutionJoinRecord({
+    //   knexTransaction: knex,
+    //   granule: gran,
+    //   granulePgModel,
+    //   writeConstraints: false,
+    // });
     console.log(`Pushing granule ${iter} to be ingested`);
     iter += 1;
     promises.push(promise);
