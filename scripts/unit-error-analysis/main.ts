@@ -1,7 +1,7 @@
 import minimist from 'minimist';
 import moment from 'moment';
 import { listS3ObjectsV2Batch } from '@cumulus/aws-client/S3';
-import { get } from 'lodash';
+import get from 'lodash/get';
 
 interface UnitErrorArgs {
   prefix: string
