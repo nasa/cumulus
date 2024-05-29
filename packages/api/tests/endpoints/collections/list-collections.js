@@ -35,13 +35,6 @@ let jwtAuthToken;
 let accessTokenModel;
 
 test.before(async () => {
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch({
-    host: 'fakehost',
-    index: esIndex,
-    alias: esAlias,
-  });
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
@@ -51,7 +44,31 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-  esClient = await getEsClient('fakehost');
+
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
+
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
+
+  t.context.collectionPgModel = new CollectionPgModel();
+  const collections = [];
+
+  range(40).map((num) => (
+    collections.push(fakeCollectionRecordFactory({
+      name: num % 2 === 0 ? 'testCollection' : 'fakeCollection',
+      version: `${num}`,
+      cumulus_id: num,
+      updated_at: new Date(1579352700000 + (num % 2) * 1000),
+    }))
+  ));
+
+  await t.context.collectionPgModel.insert(
+    t.context.knex,
+    collections
+  );
 });
 
 test.beforeEach((t) => {
@@ -61,7 +78,10 @@ test.beforeEach((t) => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.client.indices.delete({ index: esIndex });
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
