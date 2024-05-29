@@ -16,6 +16,7 @@ const {
   isCollisionError,
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
+  CollectionSearch
 } = require('@cumulus/db');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { getEsClient, Search } = require('@cumulus/es-client/search');
@@ -44,13 +45,11 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  */
 async function list(req, res) {
   const { getMMT, includeStats, ...queryStringParameters } = req.query;
-  const collection = new Collection(
-    { queryStringParameters },
-    undefined,
-    process.env.ES_INDEX,
-    includeStats === 'true'
+  const collection = new CollectionSearch(
+    { queryStringParameters }
   );
   let result = await collection.query();
+  console.log("RES", result);
   if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
