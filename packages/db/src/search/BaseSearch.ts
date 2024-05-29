@@ -218,10 +218,10 @@ class BaseSearch {
     const { searchQuery, dbQueryParameters } = params;
     const { sort } = dbQueryParameters || this.dbQueryParameters;
     sort?.forEach((key) => {
-      if (key.name.startsWith('error')) {
+      if (key.column.startsWith('error')) {
         searchQuery.orderByRaw(`${this.tableName}.error ->> 'Error' ${key.order}`);
       } else {
-        searchQuery.orderBy([{ column: key.name, order: key.order }]);
+        searchQuery.orderBy([key]);
       }
     });
   }

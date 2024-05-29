@@ -23,7 +23,7 @@ export type RangeType = {
 };
 
 export type SortType = {
-  name: string,
+  column: string,
   order?: string,
 };
 
@@ -34,8 +34,8 @@ export type DbQueryParameters = {
   offset?: number,
   page?: number,
   prefix?: string,
-  sort?: SortType[],
   range?: { [key: string]: RangeType },
+  sort?: SortType[],
   term?: { [key: string]: QueriableType | undefined },
   terms?: { [key: string]: any },
 };

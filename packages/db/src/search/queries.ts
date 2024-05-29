@@ -106,12 +106,12 @@ const convertSort = (
   if (sortBy) {
     order = order ?? 'asc';
     const queryParam = mapQueryStringFieldToDbField(type, { name: sortBy });
-    Object.keys(queryParam as Object).map((key) => sortArray.push({ name: key, order }));
+    Object.keys(queryParam as Object).map((key) => sortArray.push({ column: key, order }));
   } else if (sortKey) {
     sortKey.map((item) => {
       order = item.startsWith('-') ? 'desc' : 'asc';
       const queryParam = mapQueryStringFieldToDbField(type, { name: item.replace(/^[+-]/, '') });
-      return Object.keys(queryParam as Object).map((key) => sortArray.push({ name: key, order }));
+      return Object.keys(queryParam as Object).map((key) => sortArray.push({ column: key, order }));
     });
   }
   return sortArray;

@@ -135,8 +135,8 @@ test.before(async (t) => {
       last_update_date_time: !(num % 2)
         ? t.context.granuleSearchFields.lastUpdateDateTime : undefined,
       published: !!(num % 2),
-      product_volume: BigInt(Math.round(Number(t.context.granuleSearchFields.productVolume)
-         * (1 / (num + 1)))).toString(),
+      product_volume: Math.round(Number(t.context.granuleSearchFields.productVolume)
+         * (1 / (num + 1))).toString(),
       time_to_archive: !(num % 10)
         ? Number(t.context.granuleSearchFields.timeToArchive) : undefined,
       time_to_process: !(num % 20)
