@@ -28,6 +28,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     offset: 40,
     page: 3,
     prefix: 'MO',
+    sort: [],
     range: {
       duration: {
         gte: queryStringParameters.duration__from,
