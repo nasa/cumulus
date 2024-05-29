@@ -89,7 +89,7 @@ export const processArgs = async (): Promise<UnitErrorArgs> => {
       },
     }
   );
-  const ngapEnv = get(process.env, 'NGAP_ENV', 'SANDBOX');
+  const ngapEnv = get(process.env, 'NGAP_ENV', 'SANDBOX').toLowerCase();
   return {
     prefix,
     date: moment(date).format('YYYY-MM-DD'),
