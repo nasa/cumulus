@@ -93,7 +93,7 @@ const convertTerm = (
  * Convert sort query fields to db query parameters from api query string fields
  *
  * @param type - query record type
- * @param queryStringFields - api query fields
+ * @param queryStringParameters - query string parameters
  * @returns sort query parameter
  */
 const convertSort = (
@@ -106,12 +106,12 @@ const convertSort = (
   if (sortBy) {
     order = order ?? 'asc';
     const queryParam = mapQueryStringFieldToDbField(type, { name: sortBy });
-    Object.keys(queryParam as Object).map((key) => sortArray.push({ column: key, order }));
+    Object.keys(queryParam ?? {}).map((key) => sortArray.push({ column: key, order }));
   } else if (sortKey) {
     sortKey.map((item) => {
       order = item.startsWith('-') ? 'desc' : 'asc';
       const queryParam = mapQueryStringFieldToDbField(type, { name: item.replace(/^[+-]/, '') });
-      return Object.keys(queryParam as Object).map((key) => sortArray.push({ column: key, order }));
+      return Object.keys(queryParam ?? {}).map((key) => sortArray.push({ column: key, order }));
     });
   }
   return sortArray;
