@@ -1,10 +1,11 @@
 import { Knex } from 'knex';
+import omit from 'lodash/omit';
 import Logger from '@cumulus/logger';
 
 import { BaseRecord } from '../types/base';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
-import { DbQueryParameters, QueryEvent, QueryStringParameters } from '../types/search';
+import { DbQueryParameters, QueriableType, QueryEvent, QueryStringParameters } from '../types/search';
 import { convertQueryStringToDbQueryParameters } from './queries';
 
 const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
@@ -155,6 +156,7 @@ class BaseSearch {
       }
     });
   }
+
   /**
    * Build queries for term fields
    *
@@ -198,6 +200,60 @@ class BaseSearch {
         default:
           countQuery?.where(`${this.tableName}.${name}`, value);
           searchQuery.where(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+
+  /**
+   * Build queries for terms fields
+   *
+   * @param params
+   * @param [params.countQuery] - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildTermsQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+    } = TableNames;
+
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    // collection name and version are searched in pair
+    if (terms.collectionName && terms.collectionVersion
+      && terms.collectionName.length > 0
+      && terms.collectionVersion.length > 0) {
+      const collectionPair: QueriableType[][] = [];
+      for (let i = 0; i < terms.collectionName.length; i += 1) {
+        const name = terms.collectionName.at(i);
+        const version = terms.collectionVersion.at(i);
+        if (name && version) collectionPair.push([name, version]);
+      }
+      countQuery?.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
+      searchQuery.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
+    }
+
+    Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
+      switch (name) {
+        case 'providerName':
+          countQuery?.whereIn(`${providersTable}.name`, value);
+          searchQuery.whereIn(`${providersTable}.name`, value);
+          break;
+        case 'pdrName':
+          countQuery?.whereIn(`${pdrsTable}.name`, value);
+          searchQuery.whereIn(`${pdrsTable}.name`, value);
+          break;
+        default:
+          countQuery?.whereIn(`${this.tableName}.${name}`, value);
+          searchQuery.whereIn(`${this.tableName}.${name}`, value);
           break;
       }
     });

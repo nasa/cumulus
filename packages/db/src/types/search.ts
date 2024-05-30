@@ -33,5 +33,5 @@ export type DbQueryParameters = {
   prefix?: string,
   range?: { [key: string]: RangeType },
   term?: { [key: string]: QueriableType | undefined },
-  terms?: { [key: string]: QueriableType | undefined },
+  terms?: { [key: string]: QueriableType[] },
 };
