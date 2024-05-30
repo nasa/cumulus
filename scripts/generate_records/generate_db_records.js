@@ -19,7 +19,7 @@ const {
   fakeFileRecordFactory,
   fakeExecutionRecordFactory,
 } = require('@cumulus/db');
-
+process.env.DISABLE_PG_SSL = true;
 const createTestSuffix = (prefix) => `_test-${prefix}`;
 const apiTestDir = '../packages/api/tests';
 const providersDir = `${apiTestDir}/data/providers/s3/`;
