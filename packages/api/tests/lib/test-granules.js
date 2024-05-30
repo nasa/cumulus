@@ -26,7 +26,7 @@ const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
 
-const { getGranulesForPayload, getGranuleIdsForPayload, translateGranule } = proxyquire(
+const { getGranulesForPayload, translateGranule } = proxyquire(
   '../../lib/granules',
   {
     '@cumulus/es-client/search': {
@@ -275,102 +275,6 @@ test('moveGranuleFilesAndUpdateDatastore throws if granulePgModel.getRecordCumul
       collectionPgModel,
       dbClient: {},
     })
-  );
-});
-
-test('getGranuleIdsForPayload returns unique granule IDs from payload', async (t) => {
-  const granuleId1 = randomId('granule');
-  const granuleId2 = randomId('granule');
-  const ids = [granuleId1, granuleId1, granuleId2];
-  const returnedIds = await getGranuleIdsForPayload({
-    ids,
-  });
-  t.deepEqual(returnedIds.sort(), [granuleId1, granuleId2].sort());
-});
-
-test.serial('getGranuleIdsForPayload returns unique granule IDs from query', async (t) => {
-  const granuleId1 = randomId('granule');
-  const granuleId2 = randomId('granule');
-  esSearchStub.resolves({
-    body: {
-      hits: {
-        hits: [
-          {
-            _source: {
-              granuleId: granuleId1,
-            },
-          },
-          {
-            _source: {
-              granuleId: granuleId1,
-            },
-          },
-          {
-            _source: {
-              granuleId: granuleId2,
-            },
-          },
-        ],
-        total: {
-          value: 3,
-        },
-      },
-    },
-  });
-  const returnedIds = await getGranuleIdsForPayload({
-    query: 'fake-query',
-    index: 'fake-index',
-  });
-  t.deepEqual(returnedIds.sort(), [granuleId1, granuleId2].sort());
-});
-
-test.serial('getGranuleIdsForPayload handles query paging', async (t) => {
-  const granuleId1 = randomId('granule');
-  const granuleId2 = randomId('granule');
-  const granuleId3 = randomId('granule');
-  esSearchStub.resolves({
-    body: {
-      hits: {
-        hits: [
-          {
-            _source: {
-              granuleId: granuleId1,
-            },
-          },
-          {
-            _source: {
-              granuleId: granuleId2,
-            },
-          },
-        ],
-        total: {
-          value: 3,
-        },
-      },
-    },
-  });
-  esScrollStub.resolves({
-    body: {
-      hits: {
-        hits: [
-          {
-            _source: {
-              granuleId: granuleId3,
-            },
-          },
-        ],
-        total: {
-          value: 3,
-        },
-      },
-    },
-  });
-  t.deepEqual(
-    await getGranuleIdsForPayload({
-      query: 'fake-query',
-      index: 'fake-index',
-    }),
-    [granuleId1, granuleId2, granuleId3]
   );
 });
 
