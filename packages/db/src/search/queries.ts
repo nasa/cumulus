@@ -1,6 +1,6 @@
 import omit from 'lodash/omit';
 import Logger from '@cumulus/logger';
-import { DbQueryParameters, QueryStringParameters, RangeType } from '../types/search';
+import { DbQueryParameters, QueriableType, QueryStringParameters, RangeType } from '../types/search';
 import { mapQueryStringFieldToDbField } from './field-mapping';
 
 const log = new Logger({ sender: '@cumulus/db/queries' });
@@ -28,6 +28,55 @@ const regexes: { [key: string]: RegExp } = {
   not: /^(.*)__not$/,
   exists: /^(.*)__exists$/,
   range: /^(.*)__(from|to)$/,
+};
+
+/**
+ * Convert 'exists' query fields to db query parameters from api query string fields
+ *
+ * @param type - query record type
+ * @param queryStringFields - api query fields
+ * @returns 'exists' query parameter
+ */
+const convertExists = (
+  type: string,
+  queryStringFields: { name: string, value: string }[]
+): { exists: { [key: string]: boolean } } => {
+  const exists = queryStringFields.reduce((acc, queryField) => {
+    const match = queryField.name.match(regexes.exists);
+    if (!match) return acc;
+
+    // get corresponding db field name, e.g. granuleId => granule_id
+    const dbField = mapQueryStringFieldToDbField(type, { name: match[1] });
+    if (!dbField) return acc;
+    const dbFieldName = Object.keys(dbField)[0];
+    dbField[dbFieldName] = (queryField.value === 'true');
+    return { ...acc, ...dbField };
+  }, {});
+
+  return { exists };
+};
+
+/**
+ * Convert 'not' query fields to db query parameters from api query string fields
+ *
+ * @param type - query record type
+ * @param queryStringFields - api query fields
+ * @returns 'not' query parameter
+ */
+const convertNotMatch = (
+  type: string,
+  queryStringFields: { name: string, value: string }[]
+): { not: { [key: string]: QueriableType } } => {
+  const not = queryStringFields.reduce((acc, queryField) => {
+    const match = queryField.name.match(regexes.not);
+    if (!match) return acc;
+
+    // get corresponding db field name, e.g. granuleId => granule_id
+    const queryParam = mapQueryStringFieldToDbField(type, { ...queryField, name: match[1] });
+    return { ...acc, ...queryParam };
+  }, {});
+
+  return { not };
 };
 
 /**
@@ -80,7 +129,7 @@ const convertRange = (
 const convertTerm = (
   type: string,
   queryStringFields: { name: string, value: string }[]
-): { term: { [key: string]: any } } => {
+): { term: { [key: string]: QueriableType } } => {
   const term = queryStringFields.reduce((acc, queryField) => {
     const queryParam = mapQueryStringFieldToDbField(type, queryField);
     return { ...acc, ...queryParam };
@@ -90,12 +139,56 @@ const convertTerm = (
 };
 
 /**
+ * Convert terms query fields to db query parameters from api query string fields
+ *
+ * @param type - query record type
+ * @param queryStringFields - api query fields
+ * @returns terms query parameter
+ */
+const convertTerms = (
+  type: string,
+  queryStringFields: { name: string, value: string }[]
+): { terms: { [key: string]: QueriableType[] } } => {
+  const terms = queryStringFields.reduce((acc: { [key: string]: QueriableType[] }, queryField) => {
+    const match = queryField.name.match(regexes.terms);
+    if (!match) return acc;
+
+    // build a terms field, e.g.
+    // { granuleId__in: 'granuleId1,granuleId2' } =>
+    // [[granule_id, granuleId], [granule_id, granuleId2]] =>
+    // { granule_id: [granuleId1, granuleId2] }
+    // this converts collectionId into name and version fields
+    const name = match[1];
+    const values = queryField.value.split(',');
+    const dbFieldValues = values
+      .map((value: string) => {
+        const dbField = mapQueryStringFieldToDbField(type, { name, value });
+        return Object.entries(dbField ?? {});
+      })
+      .filter(Boolean)
+      .flat();
+
+    if (dbFieldValues.length === 0) return acc;
+    dbFieldValues.forEach(([field, value]) => {
+      acc[field] = acc[field] ?? [];
+      acc[field].push(value);
+    });
+    return acc;
+  }, {});
+
+  return { terms };
+};
+
+/**
  * functions for converting from api query string parameters to db query parameters
  * for each type of query
  */
 const convert: { [key: string]: Function } = {
+  exists: convertExists,
+  not: convertNotMatch,
   range: convertRange,
   term: convertTerm,
+  terms: convertTerms,
 };
 
 /**
