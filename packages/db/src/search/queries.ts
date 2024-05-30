@@ -1,6 +1,6 @@
 import omit from 'lodash/omit';
 import Logger from '@cumulus/logger';
-import { DbQueryParameters, QueriableType, QueryStringParameters, RangeType } from '../types/search';
+import { DbQueryParameters, QueriableType, QueryStringParameters, RangeType, SortType } from '../types/search';
 import { mapQueryStringFieldToDbField } from './field-mapping';
 
 const log = new Logger({ sender: '@cumulus/db/queries' });
@@ -180,6 +180,34 @@ const convertTerms = (
 };
 
 /**
+ * Convert sort query fields to db query parameters from api query string fields
+ *
+ * @param type - query record type
+ * @param queryStringParameters - query string parameters
+ * @returns sort query parameter
+ */
+const convertSort = (
+  type: string,
+  queryStringParameters: QueryStringParameters
+): SortType[] => {
+  const sortArray: SortType[] = [];
+  const { sort_by: sortBy, sort_key: sortKey } = queryStringParameters;
+  let { order } = queryStringParameters;
+  if (sortBy) {
+    order = order ?? 'asc';
+    const queryParam = mapQueryStringFieldToDbField(type, { name: sortBy });
+    Object.keys(queryParam ?? {}).map((key) => sortArray.push({ column: key, order }));
+  } else if (sortKey) {
+    sortKey.map((item) => {
+      order = item.startsWith('-') ? 'desc' : 'asc';
+      const queryParam = mapQueryStringFieldToDbField(type, { name: item.replace(/^[+-]/, '') });
+      return Object.keys(queryParam ?? {}).map((key) => sortArray.push({ column: key, order }));
+    });
+  }
+  return sortArray;
+};
+
+/**
  * functions for converting from api query string parameters to db query parameters
  * for each type of query
  */
@@ -212,6 +240,7 @@ export const convertQueryStringToDbQueryParameters = (
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
+  dbQueryParameters.sort = convertSort(type, queryStringParameters);
 
   // remove reserved words (that are not fields)
   const fieldParams = omit(queryStringParameters, reservedWords);

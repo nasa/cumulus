@@ -11,6 +11,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     limit: 20,
     page: 3,
     prefix: 'MO',
+    sort_key: ['-productVolume', '+timestamp'],
     published: 'true',
     status: 'completed',
     timestamp__from: '1712708508310',
@@ -32,6 +33,14 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     offset: 40,
     page: 3,
     prefix: 'MO',
+    sort: [{
+      column: 'product_volume',
+      order: 'desc',
+    },
+    {
+      column: 'updated_at',
+      order: 'asc',
+    }],
     range: {
       duration: {
         gte: queryStringParameters.duration__from,
@@ -53,6 +62,28 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
       collectionName: ['MOD09GQ', 'MODIS'],
       collectionVersion: ['006', '007'],
     },
+  };
+
+  const dbQueryParams = convertQueryStringToDbQueryParameters('granule', queryStringParameters);
+  t.deepEqual(dbQueryParams, expectedDbQueryParameters);
+});
+
+test('convertQueryStringToDbQueryParameters correctly converts sortby error parameter to db query parameters', (t) => {
+  const queryStringParameters = {
+    sort_by: 'error.Error.keyword',
+    order: 'asc',
+  };
+
+  const expectedDbQueryParameters = {
+    limit: 10,
+    offset: 0,
+    page: 1,
+    sort: [
+      {
+        column: 'error.Error',
+        order: 'asc',
+      },
+    ],
   };
 
   const dbQueryParams = convertQueryStringToDbQueryParameters('granule', queryStringParameters);

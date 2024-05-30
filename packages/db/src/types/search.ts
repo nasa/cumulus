@@ -7,7 +7,7 @@ export type QueryStringParameters = {
   order?: string,
   prefix?: string,
   sort_by?: string,
-  sort_key?: string,
+  sort_key?: string[],
   [key: string]: string | string[] | undefined,
 };
 
@@ -22,6 +22,11 @@ export type RangeType = {
   lte?: Omit<QueriableType, 'boolean'>,
 };
 
+export type SortType = {
+  column: string,
+  order?: string,
+};
+
 export type DbQueryParameters = {
   fields?: string[],
   infix?: string,
@@ -32,6 +37,7 @@ export type DbQueryParameters = {
   page?: number,
   prefix?: string,
   range?: { [key: string]: RangeType },
+  sort?: SortType[],
   term?: { [key: string]: QueriableType | undefined },
   terms?: { [key: string]: QueriableType[] },
 };
