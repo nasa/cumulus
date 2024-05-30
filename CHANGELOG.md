@@ -227,6 +227,7 @@ modification.
     updates of sub-dependencies and maintain without refactoring errors in
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+  - Removed whitlisting of `hoek` module
 - **CUMULUS-3673**
   - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.
 - **Audit Issues**
