@@ -323,6 +323,17 @@ If this is a new minor version branch, then you will need to create a new Bamboo
 
 Bamboo will build and run lint and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
+:::caution important
+
+  If this is a backport release, the current documentation will be overwritten when the Bamboo job completes. To restore the current docs version you have two options:
+
+   1. Revert the commit associated with the backport on the `gh-pages` branch and push. The documentation build process will then update and reflect the correct current version of the docs.
+   2. run the `master` branch in Bamboo immediately after the backport release is published. Running `master` will restore the current doc versions but takes longer than option 1.
+
+  If the backport branch contains documentation changes, `master` should be run **after** merging the minor version release branch back into `master`. This will happen normally when a PR is submitted to merge the changes to `master` and CI successfully runs.
+
+:::
+
 ### 12. Create a new Cumulus release on github
 
 The CI release scripts will automatically create a GitHub release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
