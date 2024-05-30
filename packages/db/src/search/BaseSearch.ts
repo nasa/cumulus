@@ -75,6 +75,7 @@ class BaseSearch {
     this.buildTermQuery({ countQuery, searchQuery });
     this.buildRangeQuery({ countQuery, searchQuery });
     this.buildInfixPrefixQuery({ countQuery, searchQuery });
+    this.buildSortQuery({ searchQuery });
 
     const { limit, offset } = this.dbQueryParameters;
     if (limit) searchQuery.limit(limit);
@@ -199,6 +200,28 @@ class BaseSearch {
           countQuery?.where(`${this.tableName}.${name}`, value);
           searchQuery.where(`${this.tableName}.${name}`, value);
           break;
+      }
+    });
+  }
+
+  /**
+   * Build queries for sort keys and fields
+   *
+   * @param params
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildSortQuery(params: {
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { searchQuery, dbQueryParameters } = params;
+    const { sort } = dbQueryParameters || this.dbQueryParameters;
+    sort?.forEach((key) => {
+      if (key.column.startsWith('error')) {
+        searchQuery.orderByRaw(`${this.tableName}.error ->> 'Error' ${key.order}`);
+      } else {
+        searchQuery.orderBy([key]);
       }
     });
   }
