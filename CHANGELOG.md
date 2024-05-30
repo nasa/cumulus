@@ -125,6 +125,8 @@ modification.
     using a PKCS11 provider
 
 ### Changed
+- **CUMULUS-3746**
+  - cicd unit test error log changed to environment unique name
 - **CUMULUS-3717**
   - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
 - **CUMULUS-3720**
