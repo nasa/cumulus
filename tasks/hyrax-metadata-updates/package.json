@@ -32,7 +32,7 @@
     "files": [
       "tests/*.js"
     ],
-    "fail-fast": true,
+    "failFast": true,
     "serial": true,
     "verbose": true,
     "timeout": "15m"
@@ -46,7 +46,6 @@
     "@cumulus/common": "18.2.1",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
     "@cumulus/errors": "18.2.1",
-    "libxmljs": "^0.19.7",
     "lodash": "^4.17.21",
     "xml2js": "0.5.0"
   },
