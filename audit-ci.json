@@ -11,6 +11,7 @@
     },
     "cacheable-request",
     "http-cache-semantics",
-    "lodash.pick"
+    "lodash.pick",
+    "hoek"
   ]
 }
