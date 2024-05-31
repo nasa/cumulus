@@ -4,6 +4,7 @@
 
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
+
 import { sns } from './services';
 
 const log = new Logger({ sender: 'aws-client/sns' });
@@ -40,3 +41,20 @@ export const publishSnsMessage = async (
       ...retryOptions,
     }
   );
+
+/**
+ * Create an SNS topic with a given name.
+ *
+ * @param snsTopicName - Name of the SNS topic
+ * @returns - ARN of the created SNS topic
+ */
+export const createSnsTopic = async (
+  snsTopicName: string
+): Promise<{ TopicArn: string | undefined }> => {
+  const createTopicInput = {
+    Name: snsTopicName,
+    KmsMasterKeyId: 'alias/aws/sns',
+  };
+  const createTopicResponse = await sns().createTopic(createTopicInput);
+  return { TopicArn: createTopicResponse.TopicArn };
+};

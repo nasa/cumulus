@@ -22,6 +22,7 @@ const {
   sns,
   sqs,
 } = require('@cumulus/aws-client/services');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 
 const { bulkGranuleDelete } = require('../../lambdas/bulk-operation');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
@@ -51,7 +52,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 

@@ -8,6 +8,8 @@ const sortBy = require('lodash/sortBy');
 const omit = require('lodash/omit');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
+
 const { randomId } = require('@cumulus/common/test-utils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -221,7 +223,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
