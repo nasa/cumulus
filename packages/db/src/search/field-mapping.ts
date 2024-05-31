@@ -121,7 +121,7 @@ const collectionMapping : { [key: string]: Function } = {
     updated_at: value && new Date(Number(value)),
   }),
   reportToEms: (value?: string) => ({
-    report_to_ems: (value === 'false'),
+    report_to_ems: value ?? false,
   }),
   process: (value?: string) => ({
     process: value,

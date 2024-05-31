@@ -140,7 +140,7 @@ test('CollectionSearch supports term search', async (t) => {
 
   queryStringParameters = {
     limit: 200,
-    reportToEms: true,
+    reportToEms: false,
   };
   const dbSearch4 = new CollectionSearch({ queryStringParameters });
   const response4 = await dbSearch4.query(knex);
@@ -170,6 +170,7 @@ test('CollectionSearch supports search for multiple fields', async (t) => {
     name: 'testCollection___000',
     updatedAt: 1579352700000,
     process: 'ingest',
+    reportToEms: 'true',
   };
   const dbSearch = new CollectionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
