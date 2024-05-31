@@ -237,6 +237,13 @@ class BaseSearch {
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(term).forEach(([name, value]) => {
+      if (name === 'error.Error') {
+        countQuery?.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`);
+        searchQuery.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`);
+      }
+    });
+
+    Object.entries(omit(term, 'error.Error')).forEach(([name, value]) => {
       switch (name) {
         case 'collectionName':
           countQuery?.where(`${collectionsTable}.name`, value);
