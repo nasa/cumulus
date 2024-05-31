@@ -67,15 +67,15 @@ export class GranuleSearch extends BaseSearch {
     }
 
     if (this.searchProvider()) {
-      countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-      searchQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+      [countQuery, searchQuery]
+        .forEach((query) => query.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`));
     } else {
       searchQuery.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
     }
 
     if (this.searchPdr()) {
-      countQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-      searchQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+      [countQuery, searchQuery]
+        .forEach((query) => query.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`));
     } else {
       searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
@@ -98,12 +98,10 @@ export class GranuleSearch extends BaseSearch {
     const { countQuery, searchQuery, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      countQuery.whereLike(`${this.tableName}.granule_id`, `%${infix}%`);
-      searchQuery.whereLike(`${this.tableName}.granule_id`, `%${infix}%`);
+      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `%${infix}%`));
     }
     if (prefix) {
-      countQuery.whereLike(`${this.tableName}.granule_id`, `${prefix}%`);
-      searchQuery.whereLike(`${this.tableName}.granule_id`, `${prefix}%`);
+      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `${prefix}%`));
     }
   }
 

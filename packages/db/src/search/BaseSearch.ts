@@ -48,6 +48,11 @@ class BaseSearch {
     );
   }
 
+  /**
+   * check if joined collections table search is needed
+   *
+   * @returns whether collection search is needed
+   */
   protected searchCollection(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
     return !!(not?.collectionName
@@ -58,11 +63,21 @@ class BaseSearch {
       || terms?.collectionVersion);
   }
 
+  /**
+   * check if joined pdrs table search is needed
+   *
+   * @returns whether pdr search is needed
+   */
   protected searchPdr(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
     return !!(not?.pdrName || term?.pdrName || terms?.pdrName);
   }
 
+  /**
+   * check if joined providers table search is needed
+   *
+   * @returns whether provider search is needed
+   */
   protected searchProvider(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
     return !!(not?.providerName || term?.providerName || terms?.providerName);
@@ -162,25 +177,20 @@ class BaseSearch {
       switch (name) {
         case 'collectionName':
         case 'collectionVersion':
-          countQuery?.[queryMethod](`${this.tableName}.collecion_cumulus_id`);
-          searchQuery[queryMethod](`${this.tableName}.collecion_cumulus_id`);
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.collection_cumulus_id`));
           break;
         case 'providerName':
-          countQuery?.[queryMethod](`${this.tableName}.provider_cumulus_id`);
-          searchQuery[queryMethod](`${this.tableName}.provider_cumulus_id`);
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.provider_cumulus_id`));
           break;
         case 'pdrName':
-          countQuery?.[queryMethod](`${this.tableName}.pdr_cumulus_id`);
-          searchQuery[queryMethod](`${this.tableName}.pdr_cumulus_id`);
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.pdr_cumulus_id`));
           break;
         case 'error':
         case 'error.Error':
-          countQuery?.whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`);
-          searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`);
+          [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`));
           break;
         default:
-          countQuery?.[queryMethod](`${this.tableName}.${name}`);
-          searchQuery[queryMethod](`${this.tableName}.${name}`);
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.${name}`));
           break;
       }
     });
@@ -237,33 +247,25 @@ class BaseSearch {
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(term).forEach(([name, value]) => {
-      if (name === 'error.Error') {
-        countQuery?.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`);
-        searchQuery.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`);
-      }
-    });
-
-    Object.entries(omit(term, 'error.Error')).forEach(([name, value]) => {
       switch (name) {
         case 'collectionName':
-          countQuery?.where(`${collectionsTable}.name`, value);
-          searchQuery.where(`${collectionsTable}.name`, value);
+          [countQuery, searchQuery].forEach((query) => query?.where(`${collectionsTable}.name`, value));
           break;
         case 'collectionVersion':
-          countQuery?.where(`${collectionsTable}.version`, value);
-          searchQuery.where(`${collectionsTable}.version`, value);
+          [countQuery, searchQuery].forEach((query) => query?.where(`${collectionsTable}.version`, value));
           break;
         case 'providerName':
-          countQuery?.where(`${providersTable}.name`, value);
-          searchQuery.where(`${providersTable}.name`, value);
+          [countQuery, searchQuery].forEach((query) => query?.where(`${providersTable}.name`, value));
           break;
         case 'pdrName':
-          countQuery?.where(`${pdrsTable}.name`, value);
-          searchQuery.where(`${pdrsTable}.name`, value);
+          [countQuery, searchQuery].forEach((query) => query?.where(`${pdrsTable}.name`, value));
+          break;
+        case 'error.Error':
+          [countQuery, searchQuery]
+            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`));
           break;
         default:
-          countQuery?.where(`${this.tableName}.${name}`, value);
-          searchQuery.where(`${this.tableName}.${name}`, value);
+          [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, value));
           break;
       }
     });
@@ -301,23 +303,24 @@ class BaseSearch {
         const version = terms.collectionVersion[i];
         if (name && version) collectionPair.push([name, version]);
       }
-      countQuery?.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
-      searchQuery.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
+      [countQuery, searchQuery]
+        .forEach((query) => query?.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair));
     }
 
     Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
         case 'providerName':
-          countQuery?.whereIn(`${providersTable}.name`, value);
-          searchQuery.whereIn(`${providersTable}.name`, value);
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${providersTable}.name`, value));
           break;
         case 'pdrName':
-          countQuery?.whereIn(`${pdrsTable}.name`, value);
-          searchQuery.whereIn(`${pdrsTable}.name`, value);
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${pdrsTable}.name`, value));
+          break;
+        case 'error.Error':
+          [countQuery, searchQuery]
+            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' in ('${value.join('\',\'')}')`));
           break;
         default:
-          countQuery?.whereIn(`${this.tableName}.${name}`, value);
-          searchQuery.whereIn(`${this.tableName}.${name}`, value);
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${this.tableName}.${name}`, value));
           break;
       }
     });
@@ -347,28 +350,24 @@ class BaseSearch {
 
     // collection name and version are searched in pair
     if (term.collectionName && term.collectionVersion) {
-      countQuery?.whereNot({
+      [countQuery, searchQuery].forEach((query) => query?.whereNot({
         [`${collectionsTable}.name`]: term.collectionName,
         [`${collectionsTable}.version`]: term.collectionVersion,
-      });
-      searchQuery?.whereNot({
-        [`${collectionsTable}.name`]: term.collectionName,
-        [`${collectionsTable}.version`]: term.collectionVersion,
-      });
+      }));
     }
     Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
         case 'providerName':
-          countQuery?.whereNot(`${providersTable}.name`, value);
-          searchQuery.whereNot(`${providersTable}.name`, value);
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${providersTable}.name`, value));
           break;
         case 'pdrName':
-          countQuery?.whereNot(`${pdrsTable}.name`, value);
-          searchQuery.whereNot(`${pdrsTable}.name`, value);
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${pdrsTable}.name`, value));
+          break;
+        case 'error.Error':
+          [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' != '${value}'`));
           break;
         default:
-          countQuery?.whereNot(`${this.tableName}.${name}`, value);
-          searchQuery.whereNot(`${this.tableName}.${name}`, value);
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${this.tableName}.${name}`, value));
           break;
       }
     });

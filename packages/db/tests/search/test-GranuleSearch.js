@@ -102,6 +102,7 @@ test.before(async (t) => {
     cmrLink: 'https://fakeLink',
     duration: 6.8,
     endingDateTime: '2020-03-17T10:00:00.000Z',
+    'error.Error': 'CumulusMessageAdapterExecutionError',
     lastUpdateDateTime: '2020-03-18T10:00:00.000Z',
     processingEndDateTime: '2020-03-16T10:00:00.000Z',
     productVolume: '6000',
@@ -112,6 +113,8 @@ test.before(async (t) => {
     updatedAt: 1579352700000,
   };
 
+  t.context.granuleIds = range(100).map(generateGranuleId);
+
   const error = {
     Cause: 'cause string',
     Error: 'CumulusMessageAdapterExecutionError',
@@ -121,7 +124,7 @@ test.before(async (t) => {
   t.context.pgGranules = await t.context.granulePgModel.insert(
     knex,
     range(100).map((num) => fakeGranuleRecordFactory({
-      granule_id: generateGranuleId(num),
+      granule_id: t.context.granuleIds[num],
       collection_cumulus_id: (num % 2)
         ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
       pdr_cumulus_id: !(num % 2) ? t.context.pdrCumulusId : undefined,
@@ -387,17 +390,20 @@ test('GranuleSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    collectionId: t.context.collectionId2,
+    collectionId__in: [t.context.collectionId2, t.context.collectionId].join(','),
+    cmrLink__exists: 'false',
+    'error.Error': t.context.granuleSearchFields['error.Error'],
     provider: t.context.provider.name,
-    'error.Error': 'CumulusMessageAdapterExecutionError',
+    published__not: 'true',
     status: 'failed',
     timestamp__from: t.context.granuleSearchFields.timestamp,
     timestamp__to: t.context.granuleSearchFields.timestamp + 500,
+    sort_key: ['collectionId', '-timestamp'],
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 50);
-  t.is(response.results?.length, 50);
+  t.is(response.meta.count, 49);
+  t.is(response.results?.length, 49);
 });
 
 test('GranuleSearch non-existing fields are ignored', async (t) => {
@@ -548,6 +554,29 @@ test('GranuleSearch supports sorting by Error', async (t) => {
   t.is(response10.results[99].error, undefined);
 });
 
+test('GranuleSearch supports terms search', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    granuleId__in: [t.context.granuleIds[0], t.context.granuleIds[5]].join(','),
+    published__in: ['true', 'false'].join(','),
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 2);
+  t.is(response.results?.length, 2);
+
+  queryStringParameters = {
+    limit: 200,
+    granuleId__in: [t.context.granuleIds[0], t.context.granuleIds[5]].join(','),
+    published__in: 'true',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 1);
+  t.is(response.results?.length, 1);
+});
+
 test('GranuleSearch supports collectionId terms search', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
@@ -589,6 +618,50 @@ test('GranuleSearch supports pdrName terms search', async (t) => {
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports error.Error terms search', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    'error.Error__in': [t.context.granuleSearchFields['error.Error'], 'unknownerror'].join(','),
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    limit: 200,
+    'error.Error__in': 'unknownerror',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 0);
+  t.is(response.results?.length, 0);
+});
+
+test('GranuleSearch supports search which granule field does not match the given value', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    granuleId__not: t.context.granuleIds[0],
+    published__not: 'true',
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 49);
+  t.is(response.results?.length, 49);
+
+  queryStringParameters = {
+    limit: 200,
+    granuleId__not: t.context.granuleIds[0],
+    published__not: 'false',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
@@ -640,6 +713,122 @@ test('GranuleSearch supports search which pdrName does not match the given value
   queryStringParameters = {
     limit: 200,
     pdrName__not: 'pdrnotexist',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports search which error.Error does not match the given value', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    'error.Error__not': t.context.granuleSearchFields['error.Error'],
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 0);
+  t.is(response.results?.length, 0);
+
+  queryStringParameters = {
+    limit: 200,
+    'error.Error__not': 'unknownerror',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports search which checks existence of granule field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    cmrLink__exists: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 1);
+  t.is(response.results?.length, 1);
+});
+
+test('GranuleSearch supports search which checks existence of collectionId', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    collectionId__exists: 'true',
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 100);
+  queryStringParameters = {
+    limit: 200,
+    collectionId__exists: 'false',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 0);
+  t.is(response.results?.length, 0);
+});
+
+test('GranuleSearch supports search which checks existence of provider', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    provider__exists: 'true',
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    limit: 200,
+    provider__exists: 'false',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports search which checks existence of pdrName', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    pdrName__exists: 'true',
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    limit: 200,
+    pdrName__exists: 'false',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports search which checks existence of error', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    error__exists: 'true',
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    limit: 200,
+    error__exists: 'false',
   };
   dbSearch = new GranuleSearch({ queryStringParameters });
   response = await dbSearch.query(knex);

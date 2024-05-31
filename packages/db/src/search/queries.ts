@@ -48,8 +48,7 @@ const convertExists = (
     // get corresponding db field name, e.g. granuleId => granule_id
     const dbField = mapQueryStringFieldToDbField(type, { name: match[1] });
     if (!dbField) return acc;
-    const dbFieldName = Object.keys(dbField)[0];
-    dbField[dbFieldName] = (queryField.value === 'true');
+    Object.keys(dbField).forEach((key) => { dbField[key] = (queryField.value === 'true'); });
     return { ...acc, ...dbField };
   }, {});
 
