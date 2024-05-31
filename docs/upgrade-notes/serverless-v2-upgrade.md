@@ -24,4 +24,4 @@ terraform apply -var-file=terraform.tfvars (or custom .tfvars filename)
 
 ### Option 2: Blue/Green Cutover (complex process, less downtime)
 
-AWS instructions for setting up a blue/green deployment: https://aws.amazon.com/blogs/database/upgrade-from-amazon-aurora-serverless-v1-to-v2-with-minimal-downtime/
+Please see [AWS instructions](https://aws.amazon.com/blogs/database/upgrade-from-amazon-aurora-serverless-v1-to-v2-with-minimal-downtime/) for setting up a blue/green deployment.
