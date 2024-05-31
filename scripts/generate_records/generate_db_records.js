@@ -1,6 +1,7 @@
 /* eslint-disable node/no-unpublished-require */
 /* eslint-disable node/no-extraneous-require */
-// const { constructCollectionId } = require('@cumulus/message/Collections');
+/* eslint-disable no-await-in-loop */
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs-extra');
 const {
@@ -13,6 +14,7 @@ const {
   CollectionPgModel,
   ProviderPgModel,
   ExecutionPgModel,
+  GranulesExecutionsPgModel,
   FilePgModel,
   getKnexClient,
   fakeGranuleRecordFactory,
@@ -28,23 +30,27 @@ const collectionsDir = 'resources/collections/';
 const createTimestampedTestId = (stackName, testName) =>
   `${stackName}-${testName}-${Date.now()}`;
 
-function* createGranuleIdGenerator(total) {
-  for (let i = 0; i < total; i += 1) {
-    yield `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+function* yieldCollectionNames(total, humanReadable) {
+  for (let i = 1; i < total + 1; i += 1) {
+    const name = humanReadable ? 'MOD09GQ' : cryptoRandomString({ length: 7 }).toUpperCase();
+    const version = i.toString().padStart(3, '0');
+    yield { name, version };
   }
 }
 
-const addCollection = async (stackName, bucket, testSuffix) => {
+const addCollection = async (stackName, bucket, collection) => {
+  const collectionId = constructCollectionId(collection.name, collection.version);
   const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
   try {
     await addCollections(
       stackName,
       bucket,
       collectionsDir,
-      testSuffix,
+      collectionId,
       testId,
       'replace'
     );
+    console.log('added collection', collectionId);
   } catch (error) {
     if (error.statusCode === 409) {
       return;
@@ -52,8 +58,8 @@ const addCollection = async (stackName, bucket, testSuffix) => {
     throw error;
   }
 };
-const addProvider = async (stackName, bucket, testSuffix) => {
-  const providerId = `s3_provider${testSuffix}`;
+const addProvider = async (stackName, bucket) => {
+  const providerId = 's3_provider_test';
   const providerJson = JSON.parse(fs.readFileSync('resources/s3_provider.json', 'utf8'));
   const providerData = {
     ...providerJson,
@@ -74,62 +80,92 @@ const addProvider = async (stackName, bucket, testSuffix) => {
   return providerId;
 };
 
-const uploadGranule = async (
-  knex,
-  granuleId,
-  executionCumulusId,
-  collectionCumulusId,
-  providerCumulusId
-) => {
-  const granuleParams = {
-    granule_id: granuleId,
-    collection_cumulus_id: collectionCumulusId,
-    provider_cumulus_id: providerCumulusId,
-    execution_cumulus_id: executionCumulusId,
-  };
-  const execution = fakeExecutionRecordFactory({
-    ...granuleParams,
-  });
-  const gran = fakeGranuleRecordFactory({
-    ...granuleParams,
-    status: 'completed',
-  });
-  const file = fakeFileRecordFactory({
-    ...granuleParams,
-  });
-
-  const granuleModel = new GranulePgModel();
-  const executionModel = new ExecutionPgModel();
+const uploadFiles = async (knex, granuleCumulusId, fileCount) => {
+  const files = [];
   const fileModel = new FilePgModel();
-  granuleModel.upsert({
-    knex,
-    gran,
-    executionCumulusId,
-  });
-  executionModel.upsert(knex, execution);
-  fileModel.upsert(knex, file);
+  for (let i = 0; i < fileCount; i += 1) {
+    const file = fakeFileRecordFactory({
+      granule_cumulus_id: granuleCumulusId,
+    });
+    const [fileOutput] = await fileModel.upsert(knex, file);
+    files.push(fileOutput);
+  }
+  return files;
+};
+const uploadExecutions = async (knex, collectionCumulusId, executionCount) => {
+  const executions = [];
+  const executionModel = new ExecutionPgModel();
+  for (let i = 0; i < executionCount; i += 1) {
+    const execution = fakeExecutionRecordFactory({ collection_cumulus_id: collectionCumulusId });
+    const [executionOutput] = await executionModel.upsert(knex, execution);
+    executions.push(executionOutput);
+  }
+  return executions;
+};
+const uploadGranules = async (
+  knex,
+  collectionCumulusId,
+  providerCumulusId,
+  granuleCount,
+  filesPerGranule
+) => {
+  const granules = [];
+  const granuleModel = new GranulePgModel();
+  for (let i = 0; i < granuleCount; i += 1) {
+    const granule = fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+      provider_cumulus_id: providerCumulusId,
+      status: 'completed',
+    });
+    const [granuleOutput] = await granuleModel.upsert({
+      knexOrTrx: knex,
+      granule,
+    });
+    uploadFiles(knex, granuleOutput.cumulus_id, filesPerGranule);
+    granules.push(granuleOutput);
+  }
 
-  // await upsertGranuleWithExecutionJoinRecord({
-  //   knexTransaction: knex,
-  //   granule: gran,
-  //   granulePgModel,
-  //   writeConstraints: false,
-  // });
-
+  return granules;
 };
 
-const uploadDBGranules = async (providerId, testSuffix, batchSize, granuleCount) => {
+const uploadGranuleExecutions = async (knex, granules, executions) => {
+  const GEmodel = new GranulesExecutionsPgModel();
+  await Promise.all(granules.map(
+    async (granule) => await Promise.all(executions.map(async (execution) => {
+      await GEmodel.upsert(
+        knex,
+        { granule_cumulus_id: granule.cumulus_id, execution_cumulus_id: execution.cumulus_id }
+      );
+    }))
+  ));
+};
+
+const uploadDataBunch = async (
+  knex,
+  collectionCumulusId,
+  providerCumulusId,
+  granuleCount,
+  executionCount,
+  filesPerGranule
+) => {
+  const granules = await uploadGranules(
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    granuleCount,
+    filesPerGranule
+  );
+  const executions = await uploadExecutions(
+    knex,
+    collectionCumulusId,
+    executionCount
+  );
+  await uploadGranuleExecutions(knex, granules, executions);
+};
+
+const uploadDBGranules = async (providerId, collection, batchSize, granuleCount) => {
   process.env.dbMaxPool = batchSize || 10;
   const knex = await getKnexClient();
-  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-  // const collectionId = constructCollectionId(collection.name, collection.version);
-  // const provider = { id: `s3_provider${testSuffix}` };
-
-  const granulePgModel = new GranulePgModel();
-  const granuleIdGenerator = createGranuleIdGenerator(granuleCount);
-
-  // console.log(`Collection: ${JSON.stringify(collectionId)} created`);
-  // console.log(`Provider: ${JSON.stringify(providerId)} created`);
 
   const collectionPgModel = new CollectionPgModel();
   const providerPgModel = new ProviderPgModel();
@@ -138,46 +174,34 @@ const uploadDBGranules = async (providerId, testSuffix, batchSize, granuleCount)
   const dbProvider = await providerPgModel.get(knex, { name: providerId });
 
   let promises = [];
-  let iter = 1;
-  for (const id of granuleIdGenerator) {
-    // const gran = fakeGranuleRecordFactory({
-    //   granule_id: id,
-    //   collection_cumulus_id: dbCollection.cumulus_id,
-    //   provider_cumulus_id: dbProvider.cumulus_id,
-    //   status: 'completed',
-    // });
-    // console.log(iter);
-    const promise = uploadGranule(
+  for (let iter = 1; iter < granuleCount; iter += 10) {
+    const promise = uploadDataBunch(
       knex,
-      granulePgModel,
-      id,
       dbCollection.cumulus_id,
-      dbProvider.cumulus_id
+      dbProvider.cumulus_id,
+      2,
+      1,
+      2
     );
-    // const promise = upsertGranuleWithExecutionJoinRecord({
-    //   knexTransaction: knex,
-    //   granule: gran,
-    //   granulePgModel,
-    //   writeConstraints: false,
-    // });
-    console.log(`Pushing granule ${iter} to be ingested`);
-    iter += 1;
+
     promises.push(promise);
     if (promises.length > batchSize) {
-      // eslint-disable-next-line no-await-in-loop
       await promises[0];
       promises = promises.slice(1);
     }
   }
 };
-
+const createCollection = async (stackName, internalBucket, providerId, collection) => {
+  await addCollection(stackName, internalBucket, collection);
+  // await uploadDBGranules(providerId, collection, 10, 20);
+};
 const main = async () => {
   const stackName = 'ecarton-ci-tf';
   const internalBucket = 'cumulus-test-sandbox-protected';
-  const testId = '_test-abc';
-  const providerId = await addProvider(stackName, internalBucket, testId);
-  await addCollection(stackName, internalBucket, testId);
-  uploadDBGranules(providerId, testId, 10, 100);
+  const providerId = await addProvider(stackName, internalBucket, 'a');
+  for (const collection of yieldCollectionNames(5, false)) {
+    await createCollection(stackName, internalBucket, providerId, collection);
+  }
 };
 // addProvider('ecarton-ci-tf', 'cumulus-test-sandbox-protected', '_test-abc');
 // uploadDBGranules({
