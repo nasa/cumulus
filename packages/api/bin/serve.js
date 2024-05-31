@@ -1,7 +1,7 @@
 'use strict';
 
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
-const { s3, sns } = require('@cumulus/aws-client/services');
+const { s3 } = require('@cumulus/aws-client/services');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
 const {

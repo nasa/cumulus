@@ -2181,10 +2181,10 @@ test.serial('Updating the queue for an SQS rule succeeds and allows 0 retries an
 test.serial('Updating an SNS rule updates the event source mapping', async (t) => {
   const snsTopicArn = randomString();
   const newSnsTopicArn = randomString();
-  
+
   const { TopicArn } = await createSnsTopic(snsTopicArn);
   const { TopicArn: TopicArn2 } = await createSnsTopic(newSnsTopicArn);
-  
+
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       addPermission: () => ({
@@ -2248,7 +2248,7 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
 test.serial('Updating an SNS rule to "disabled" removes the event source mapping ARN', async (t) => {
   const snsTopicArn = randomString();
   const { TopicArn } = await createSnsTopic(snsTopicArn);
-  
+
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       addPermission: () => ({
