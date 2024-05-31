@@ -49,16 +49,23 @@ class BaseSearch {
   }
 
   protected searchCollection(): boolean {
-    const term = this.dbQueryParameters.term;
-    return !!(term?.collectionName || term?.collectionVersion);
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.collectionName
+      || not?.collectionVersion
+      || term?.collectionName
+      || term?.collectionVersion
+      || terms?.collectionName
+      || terms?.collectionVersion);
   }
 
   protected searchPdr(): boolean {
-    return !!this.dbQueryParameters.term?.pdrName;
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.pdrName || term?.pdrName || terms?.pdrName);
   }
 
   protected searchProvider(): boolean {
-    return !!this.dbQueryParameters.term?.providerName;
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.providerName || term?.providerName || terms?.providerName);
   }
 
   /**
@@ -74,7 +81,10 @@ class BaseSearch {
     } {
     const { countQuery, searchQuery } = this.buildBasicQuery(knex);
     this.buildTermQuery({ countQuery, searchQuery });
+    this.buildTermsQuery({ countQuery, searchQuery });
+    this.buildNotMatchQuery({ countQuery, searchQuery });
     this.buildRangeQuery({ countQuery, searchQuery });
+    this.buildExistsQuery({ countQuery, searchQuery });
     this.buildInfixPrefixQuery({ countQuery, searchQuery });
     this.buildSortQuery({ searchQuery });
 
@@ -128,6 +138,52 @@ class BaseSearch {
   }) {
     log.debug(`buildInfixPrefixQuery is not implemented ${Object.keys(params)}`);
     throw new Error('buildInfixPrefixQuery is not implemented');
+  }
+
+  /**
+   * Build queries for checking if field 'exists'
+   *
+   * @param params
+   * @param [params.countQuery] - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildExistsQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { exists = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(exists).forEach(([name, value]) => {
+      const queryMethod = value ? 'whereNotNull' : 'whereNull';
+      const checkNull = value ? 'not null' : 'null';
+      switch (name) {
+        case 'collectionName':
+        case 'collectionVersion':
+          countQuery?.[queryMethod](`${this.tableName}.collecion_cumulus_id`);
+          searchQuery[queryMethod](`${this.tableName}.collecion_cumulus_id`);
+          break;
+        case 'providerName':
+          countQuery?.[queryMethod](`${this.tableName}.provider_cumulus_id`);
+          searchQuery[queryMethod](`${this.tableName}.provider_cumulus_id`);
+          break;
+        case 'pdrName':
+          countQuery?.[queryMethod](`${this.tableName}.pdr_cumulus_id`);
+          searchQuery[queryMethod](`${this.tableName}.pdr_cumulus_id`);
+          break;
+        case 'error':
+        case 'error.Error':
+          countQuery?.whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`);
+          searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`);
+          break;
+        default:
+          countQuery?.[queryMethod](`${this.tableName}.${name}`);
+          searchQuery[queryMethod](`${this.tableName}.${name}`);
+          break;
+      }
+    });
   }
 
   /**
@@ -234,8 +290,8 @@ class BaseSearch {
       && terms.collectionVersion.length > 0) {
       const collectionPair: QueriableType[][] = [];
       for (let i = 0; i < terms.collectionName.length; i += 1) {
-        const name = terms.collectionName.at(i);
-        const version = terms.collectionVersion.at(i);
+        const name = terms.collectionName[i];
+        const version = terms.collectionVersion[i];
         if (name && version) collectionPair.push([name, version]);
       }
       countQuery?.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
@@ -256,10 +312,61 @@ class BaseSearch {
           countQuery?.whereIn(`${this.tableName}.${name}`, value);
           searchQuery.whereIn(`${this.tableName}.${name}`, value);
           break;
-        }
+      }
     });
   }
-  
+
+  /**
+   * Build queries for checking if field doesn't match the given value
+   *
+   * @param params
+   * @param [params.countQuery] - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildNotMatchQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+    } = TableNames;
+
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    // collection name and version are searched in pair
+    if (term.collectionName && term.collectionVersion) {
+      countQuery?.whereNot({
+        [`${collectionsTable}.name`]: term.collectionName,
+        [`${collectionsTable}.version`]: term.collectionVersion,
+      });
+      searchQuery?.whereNot({
+        [`${collectionsTable}.name`]: term.collectionName,
+        [`${collectionsTable}.version`]: term.collectionVersion,
+      });
+    }
+    Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
+      switch (name) {
+        case 'providerName':
+          countQuery?.whereNot(`${providersTable}.name`, value);
+          searchQuery.whereNot(`${providersTable}.name`, value);
+          break;
+        case 'pdrName':
+          countQuery?.whereNot(`${pdrsTable}.name`, value);
+          searchQuery.whereNot(`${pdrsTable}.name`, value);
+          break;
+        default:
+          countQuery?.whereNot(`${this.tableName}.${name}`, value);
+          searchQuery.whereNot(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+
   /**
    * Build queries for sort keys and fields
    *

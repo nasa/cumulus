@@ -32,7 +32,7 @@ export type DbQueryParameters = {
   infix?: string,
   limit?: number,
   exists?: { [key: string]: boolean },
-  not?: QueriableType,
+  not?: { [key: string]: QueriableType | undefined },
   offset?: number,
   page?: number,
   prefix?: string,

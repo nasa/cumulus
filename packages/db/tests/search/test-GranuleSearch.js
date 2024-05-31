@@ -547,3 +547,102 @@ test('GranuleSearch supports sorting by Error', async (t) => {
   t.is(response10.results[0].error.Error, 'CumulusMessageAdapterExecutionError');
   t.is(response10.results[99].error, undefined);
 });
+
+test('GranuleSearch supports collectionId terms search', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    collectionId__in: [t.context.collectionId2, constructCollectionId('fakecollectionterms', 'v1')].join(','),
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    limit: 200,
+    collectionId__in: [t.context.collectionId, t.context.collectionId2].join(','),
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 100);
+});
+
+test('GranuleSearch supports provider terms search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    provider__in: [t.context.provider.name, 'fakeproviderterms'].join(','),
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports pdrName terms search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    pdrName__in: [t.context.pdr.name, 'fakepdrterms'].join(','),
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports search which collectionId does not match the given value', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    collectionId__not: t.context.collectionId2,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports search which provider does not match the given value', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    provider__not: t.context.provider.name,
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 0);
+  t.is(response.results?.length, 0);
+
+  queryStringParameters = {
+    limit: 200,
+    provider__not: 'providernotexist',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports search which pdrName does not match the given value', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    pdrName__not: t.context.pdr.name,
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 0);
+  t.is(response.results?.length, 0);
+
+  queryStringParameters = {
+    limit: 200,
+    pdrName__not: 'pdrnotexist',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});

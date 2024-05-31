@@ -27,9 +27,15 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
   };
 
   const expectedDbQueryParameters = {
+    exists: {
+      error: true,
+    },
     fields: ['granuleId', 'collectionId', 'status', 'updatedAt'],
     infix: 'A1657416',
     limit: 20,
+    not: {
+      granule_id: 'notMatchingGranuleId',
+    },
     offset: 40,
     page: 3,
     prefix: 'MO',
