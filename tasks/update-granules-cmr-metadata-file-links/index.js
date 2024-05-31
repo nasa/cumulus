@@ -3,6 +3,8 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
+const { getObjectSize } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
@@ -56,6 +58,22 @@ async function updateEachCmrFileAccessURLs(
   }));
 }
 
+async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
+  for (const cmrFileObject of cmrFiles) {
+    let cmrFile = await granulesByGranuleId[cmrFileObject.granuleId].files.find(isCMRFile);
+
+    if (cmrFile) {
+      delete cmrFile.checksum;
+      delete cmrFile.checksumType
+    }
+
+    const bucket = cmrFileObject.bucket;
+    const key = cmrFileObject.key;
+
+    cmrFile.size = await getObjectSize({ s3: s3(), bucket, key });
+  }
+}
+
 async function updateGranulesCmrMetadataFileLinks(event) {
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
@@ -78,6 +96,8 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     bucketTypes,
     distributionBucketMap
   );
+
+  await updateCmrFileInfo(cmrFiles, granulesByGranuleId);
 
   // Map etag info from granules' CMR files
   const updatedCmrETags = mapFileEtags(updatedCmrFiles);
