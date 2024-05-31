@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Replace ElasticSearch Phase 1
 
+- **CUMULUS-3695**
+ - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
 - **CUMULUS-3688**
  - Updated `stats` api endpoint to query postgres instead of elasticsearch
 - **CUMULUS-3689**
@@ -143,6 +145,9 @@ modification.
     using a PKCS11 provider
 
 ### Changed
+
+- **CUMULUS-3735**
+  - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
 - **CUMULUS-3717**
   - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
 - **CUMULUS-3720**
