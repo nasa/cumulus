@@ -1,7 +1,5 @@
-/* eslint-disable node/no-unpublished-require */
 /* eslint-disable node/no-extraneous-require */
 /* eslint-disable no-await-in-loop */
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs-extra');
 const {
@@ -9,7 +7,6 @@ const {
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const {
-  upsertGranuleWithExecutionJoinRecord,
   GranulePgModel,
   CollectionPgModel,
   ProviderPgModel,
@@ -22,35 +19,38 @@ const {
   fakeExecutionRecordFactory,
 } = require('@cumulus/db');
 process.env.DISABLE_PG_SSL = true;
-const createTestSuffix = (prefix) => `_test-${prefix}`;
-const apiTestDir = '../packages/api/tests';
-const providersDir = `${apiTestDir}/data/providers/s3/`;
 const collectionsDir = 'resources/collections/';
 
 const createTimestampedTestId = (stackName, testName) =>
   `${stackName}-${testName}-${Date.now()}`;
 
-function* yieldCollectionNames(total, humanReadable) {
-  for (let i = 1; i < total + 1; i += 1) {
-    const name = humanReadable ? 'MOD09GQ' : cryptoRandomString({ length: 7 }).toUpperCase();
-    const version = i.toString().padStart(3, '0');
-    yield { name, version };
+function* yieldCollectionDetails(total, repeatable) {
+  for (let i = 0; i < total; i += 1) {
+    let suffix;
+    if (repeatable) {
+      suffix = `__test${i.toString().padStart(2, '0')}`;
+    } else {
+      suffix = `_${cryptoRandomString({ length: 5 }).toUpperCase()}`;
+    }
+    yield {
+      name: `MOD09GQ${suffix}`,
+      version: '006',
+      suffix,
+    };
   }
 }
 
-const addCollection = async (stackName, bucket, collection) => {
-  const collectionId = constructCollectionId(collection.name, collection.version);
+const addCollection = async (stackName, bucket, collectionSuffix) => {
   const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
   try {
     await addCollections(
       stackName,
       bucket,
       collectionsDir,
-      collectionId,
+      collectionSuffix,
       testId,
       'replace'
     );
-    console.log('added collection', collectionId);
   } catch (error) {
     if (error.statusCode === 409) {
       return;
@@ -170,11 +170,15 @@ const uploadDBGranules = async (providerId, collection, batchSize, granuleCount)
   const collectionPgModel = new CollectionPgModel();
   const providerPgModel = new ProviderPgModel();
 
-  const dbCollection = await collectionPgModel.get(knex, { ...collection });
+  const dbCollection = await collectionPgModel.get(
+    knex,
+    { name: collection.name, version: collection.version }
+  );
   const dbProvider = await providerPgModel.get(knex, { name: providerId });
 
   let promises = [];
   for (let iter = 1; iter < granuleCount; iter += 10) {
+    console.log(`uploading granule ${iter} for collection ${collection.name}`);
     const promise = uploadDataBunch(
       knex,
       dbCollection.cumulus_id,
@@ -192,32 +196,18 @@ const uploadDBGranules = async (providerId, collection, batchSize, granuleCount)
   }
 };
 const createCollection = async (stackName, internalBucket, providerId, collection) => {
-  await addCollection(stackName, internalBucket, collection);
-  // await uploadDBGranules(providerId, collection, 10, 20);
+  await addCollection(stackName, internalBucket, collection.suffix);
+  await uploadDBGranules(providerId, collection, 10, 20);
 };
 const main = async () => {
   const stackName = 'ecarton-ci-tf';
   const internalBucket = 'cumulus-test-sandbox-protected';
   const providerId = await addProvider(stackName, internalBucket, 'a');
-  for (const collection of yieldCollectionNames(5, false)) {
+  for (const collection of yieldCollectionDetails(5, true)) {
     await createCollection(stackName, internalBucket, providerId, collection);
   }
 };
-// addProvider('ecarton-ci-tf', 'cumulus-test-sandbox-protected', '_test-abc');
-// uploadDBGranules({
-//   testId: 'abc',
-//   stackName: 'ecarton-ci-tf',
-//   bucket: 'cumulus-test-sandbox-protected',
-//   batchSize: 350,
-// })
-// main()
-//   .then(() => {
-//     console.log('Ingest Complete');
-//     return true;
-//   })
-//   .catch((err) => {
-//     console.error(err);
-//   });
+
 if (require.main === module) {
   main(
   ).then(
