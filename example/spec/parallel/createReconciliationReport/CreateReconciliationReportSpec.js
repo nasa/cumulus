@@ -38,7 +38,7 @@ const {
   updateGranule,
 } = require('@cumulus/api-client/granules');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   waitForApiStatus,
@@ -158,7 +158,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     {
       prefix,
       granuleId: inputPayload.granules[0].granuleId,
-      collectionId: encodedConstructCollectionId(newCollection.name, newCollection.version),
+      collectionId: constructCollectionId(newCollection.name, newCollection.version),
     },
     'completed'
   );
@@ -172,7 +172,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
 
   await getGranuleWithStatus({ prefix,
     granuleId,
-    collectionId: encodedConstructCollectionId(newCollection.name, newCollection.version),
+    collectionId: constructCollectionId(newCollection.name, newCollection.version),
     status: 'completed' });
   return newCollection;
 };
@@ -207,7 +207,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     {
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
-      collectionId: encodedConstructCollectionId(collection.name, collection.version),
+      collectionId: constructCollectionId(collection.name, collection.version),
     },
     'completed'
   );
@@ -273,7 +273,7 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
     const collsResp = await getCollections({ prefix: stackName,
       query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
     const results = get(JSON.parse(collsResp.body), 'results', []);
-    const ids = results.map((c) => encodedConstructCollectionId(c.name, c.version));
+    const ids = results.map((c) => constructCollectionId(c.name, c.version));
     return isEqual(ids.sort(), collectionIds.sort());
   },
   {
@@ -326,7 +326,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
   beforeAll(async () => {
     try {
-      collectionId = encodedConstructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
 
       config = await loadConfig();
 
@@ -384,7 +384,7 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log('XXXXX Waiting for collections in list');
       const collectionIds = [
         collectionId,
-        encodedConstructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
+        constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
       ];
 
       await waitForCollectionRecordsInList(config.stackName, collectionIds, { timestamp__from: ingestTime });
@@ -444,9 +444,9 @@ describe('When there are granule differences and granule reconciliation is run',
         prefix: config.stackName,
         request: {
           collectionId: [
-            encodedConstructCollectionId(collection.name, collection.version),
-            encodedConstructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
-            encodedConstructCollectionId(onlyCMRCollection.name, onlyCMRCollection.version),
+            constructCollectionId(collection.name, collection.version),
+            constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
+            constructCollectionId(onlyCMRCollection.name, onlyCMRCollection.version),
           ],
           reportType: 'Granule Not Found',
         },
@@ -511,7 +511,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
     it('generates a filtered report showing requested collections that are in Cumulus but not in CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
-      const extraCollection = encodedConstructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
+      const extraCollection = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
       expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
       expect(report.collectionsInCumulusCmr.onlyInCumulus).not.toContain(collectionId);
       expect(report.collectionsInCumulusCmr.onlyInCumulus.length).toBe(1);
@@ -802,7 +802,7 @@ describe('When there are granule differences and granule reconciliation is run',
         expect(reportArray.some((record) => record.includes(testStr))).toBe(true);
       });
 
-      const omittedCollectionId = encodedConstructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
+      const omittedCollectionId = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
       expect(reportArray.some((record) => record.includes(omittedCollectionId))).toBe(false);
     });
 
@@ -960,7 +960,7 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   afterAll(async () => {
-    const activeCollectionId = encodedConstructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
+    const activeCollectionId = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
 
     console.log(`update database state back for  ${publishedGranuleId}, ${activeCollectionId}`);
     await updateGranule({
