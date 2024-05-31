@@ -125,6 +125,9 @@ modification.
     using a PKCS11 provider
 
 ### Changed
+
+- **CUMULUS-3735**
+  - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
 - **CUMULUS-3746**
   - cicd unit test error log changed to environment unique name
 - **CUMULUS-3717**
