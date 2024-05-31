@@ -7,7 +7,7 @@ import { PostgresCollectionRecord } from '../types/collection';
 import { translatePostgresCollectionToApiCollection } from '../translate/collections';
 import { BaseRecord } from '../types/base';
 
-const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
+const log = new Logger({ sender: '@cumulus/db/CollectionSearch' });
 
 interface ApiCollectionRecord extends BaseRecord, PostgresCollectionRecord {
   createdAt?: number,

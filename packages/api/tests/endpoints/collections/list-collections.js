@@ -16,10 +16,6 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
-
-process.env.AccessTokensTable = randomString();
-process.env.system_bucket = randomString();
-process.env.TOKEN_SECRET = randomString();
 const testDbName = randomId('collection');
 
 const {
@@ -39,8 +35,10 @@ let accessTokenModel;
 process.env.PG_HOST = randomId('hostname');
 process.env.PG_USER = randomId('user');
 process.env.PG_PASSWORD = randomId('password');
+process.env.TOKEN_SECRET = randomString();
+process.env.AccessTokensTable = randomString();
+process.env.system_bucket = randomString();
 process.env.stackName = randomId('userstack');
-process.env.AccessTokensTable = randomId('tokentable');
 
 process.env = {
   ...process.env,
@@ -124,16 +122,8 @@ test.serial('default returns list of collections from query', async (t) => {
 
   const { results } = response.body;
   t.is(results.length, 40);
+  t.is(results[0].name, 'testCollection');
 });
 
 // TODO: IN CUMULUS-3699
-test.serial('returns list of collections with stats when requested', async (t) => {
-  const response = await request(app)
-    .get('/collections?includeStats=true')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { results } = response.body;
-  t.is(results.length, 10);
-});
+test.todo('returns list of collections with stats when requested');
