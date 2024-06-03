@@ -559,7 +559,7 @@ test('GranuleSearch supports terms search', async (t) => {
   let queryStringParameters = {
     limit: 200,
     granuleId__in: [t.context.granuleIds[0], t.context.granuleIds[5]].join(','),
-    published__in: ['true', 'false'].join(','),
+    published__in: 'true,false',
   };
   let dbSearch = new GranuleSearch({ queryStringParameters });
   let response = await dbSearch.query(knex);

@@ -154,7 +154,7 @@ const convertTerms = (
 
     // build a terms field, e.g.
     // { granuleId__in: 'granuleId1,granuleId2' } =>
-    // [[granule_id, granuleId], [granule_id, granuleId2]] =>
+    // [[granule_id, granuleId1], [granule_id, granuleId2]] =>
     // { granule_id: [granuleId1, granuleId2] }
     // this converts collectionId into name and version fields
     const name = match[1];
