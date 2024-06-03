@@ -20,12 +20,22 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     collectionId: 'MOD09GQ___006',
     nonExistingField: 'nonExistingFieldValue',
     nonExistingField__from: 'nonExistingFieldValue',
+    granuleId__in: 'granuleId1,granuleId2',
+    collectionId__in: 'MOD09GQ___006,MODIS___007',
+    granuleId__not: 'notMatchingGranuleId',
+    error__exists: 'true',
   };
 
   const expectedDbQueryParameters = {
+    exists: {
+      error: true,
+    },
     fields: ['granuleId', 'collectionId', 'status', 'updatedAt'],
     infix: 'A1657416',
     limit: 20,
+    not: {
+      granule_id: 'notMatchingGranuleId',
+    },
     offset: 40,
     page: 3,
     prefix: 'MO',
@@ -52,6 +62,11 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
       published: true,
       status: 'completed',
       'error.Error': 'CumulusMessageAdapterExecutionError',
+    },
+    terms: {
+      granule_id: ['granuleId1', 'granuleId2'],
+      collectionName: ['MOD09GQ', 'MODIS'],
+      collectionVersion: ['006', '007'],
     },
   };
 

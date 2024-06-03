@@ -1,5 +1,4 @@
 import { Knex } from 'knex';
-import omit from 'lodash/omit';
 import pick from 'lodash/pick';
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
@@ -99,42 +98,11 @@ export class GranuleSearch extends BaseSearch {
     const { countQuery, searchQuery, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      countQuery.whereLike(`${this.tableName}.granule_id`, `%${infix}%`);
-      searchQuery.whereLike(`${this.tableName}.granule_id`, `%${infix}%`);
+      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `%${infix}%`));
     }
     if (prefix) {
-      countQuery.whereLike(`${this.tableName}.granule_id`, `${prefix}%`);
-      searchQuery.whereLike(`${this.tableName}.granule_id`, `${prefix}%`);
+      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `${prefix}%`));
     }
-  }
-
-  /**
-   * Build queries for term fields
-   *
-   * @param params
-   * @param params.countQuery - query builder for getting count
-   * @param params.searchQuery - query builder for search
-   * @param [params.dbQueryParameters] - db query parameters
-   */
-  protected buildTermQuery(params: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
-    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-
-    Object.entries(term).forEach(([name, value]) => {
-      if (name === 'error.Error') {
-        countQuery.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`);
-        searchQuery.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`);
-      }
-    });
-
-    super.buildTermQuery({
-      ...params,
-      dbQueryParameters: { term: omit(term, 'error.Error') },
-    });
   }
 
   /**

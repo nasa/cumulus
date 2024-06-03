@@ -15,7 +15,7 @@ export type QueryEvent = {
   queryStringParameters?: QueryStringParameters,
 };
 
-type QueriableType = boolean | Date | number | string;
+export type QueriableType = boolean | Date | number | string;
 
 export type RangeType = {
   gte?: Omit<QueriableType, 'boolean'>,
@@ -31,11 +31,13 @@ export type DbQueryParameters = {
   fields?: string[],
   infix?: string,
   limit?: number,
+  exists?: { [key: string]: boolean },
+  not?: { [key: string]: QueriableType | undefined },
   offset?: number,
   page?: number,
   prefix?: string,
   range?: { [key: string]: RangeType },
   sort?: SortType[],
   term?: { [key: string]: QueriableType | undefined },
-  terms?: { [key: string]: any },
+  terms?: { [key: string]: QueriableType[] },
 };
