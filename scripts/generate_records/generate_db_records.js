@@ -121,8 +121,8 @@ const uploadGranules = async (
       knexOrTrx: knex,
       granule,
     });
-    uploadFiles(knex, granuleOutput.cumulus_id, filesPerGranule);
     granules.push(granuleOutput);
+    uploadFiles(knex, granuleOutput.cumulus_id, filesPerGranule);
   }
 
   return granules;
@@ -145,8 +145,8 @@ const uploadDataBunch = async (
   collectionCumulusId,
   providerCumulusId,
   granuleCount,
-  executionCount,
-  filesPerGranule
+  filesPerGranule,
+  executionCount
 ) => {
   const granules = await uploadGranules(
     knex,
@@ -163,7 +163,15 @@ const uploadDataBunch = async (
   await uploadGranuleExecutions(knex, granules, executions);
 };
 
-const uploadDBGranules = async (providerId, collection, batchSize, granuleCount) => {
+const uploadDBGranules = async (
+  providerId,
+  collection,
+  granuleCount,
+  granulesPerBatch,
+  filesPerGranule,
+  executionsPerBatch
+) => {
+  const batchSize = 50;
   process.env.dbMaxPool = batchSize || 10;
   const knex = await getKnexClient();
 
@@ -177,15 +185,15 @@ const uploadDBGranules = async (providerId, collection, batchSize, granuleCount)
   const dbProvider = await providerPgModel.get(knex, { name: providerId });
 
   let promises = [];
-  for (let iter = 1; iter < granuleCount; iter += 10) {
-    console.log(`uploading granule ${iter} for collection ${collection.name}`);
+  for (let iter = 0; iter < granuleCount; iter += granulesPerBatch) {
+    console.log(iter);
     const promise = uploadDataBunch(
       knex,
       dbCollection.cumulus_id,
       dbProvider.cumulus_id,
-      2,
-      1,
-      2
+      granulesPerBatch,
+      filesPerGranule,
+      executionsPerBatch
     );
 
     promises.push(promise);
@@ -197,13 +205,13 @@ const uploadDBGranules = async (providerId, collection, batchSize, granuleCount)
 };
 const createCollection = async (stackName, internalBucket, providerId, collection) => {
   await addCollection(stackName, internalBucket, collection.suffix);
-  await uploadDBGranules(providerId, collection, 10, 20);
+  await uploadDBGranules(providerId, collection, 1000, 5, 6, 2);
 };
 const main = async () => {
   const stackName = 'ecarton-ci-tf';
   const internalBucket = 'cumulus-test-sandbox-protected';
   const providerId = await addProvider(stackName, internalBucket, 'a');
-  for (const collection of yieldCollectionDetails(5, true)) {
+  for (const collection of yieldCollectionDetails(1, true)) {
     await createCollection(stackName, internalBucket, providerId, collection);
   }
 };
