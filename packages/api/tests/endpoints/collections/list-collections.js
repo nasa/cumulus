@@ -124,7 +124,6 @@ test.serial('default returns list of collections from query', async (t) => {
 
   const { results } = response.body;
   t.is(results.length, 10);
-  t.is(results.length, 10);
 });
 
 test.serial('returns list of collections with stats when requested', async (t) => {
@@ -135,6 +134,5 @@ test.serial('returns list of collections with stats when requested', async (t) =
     .expect(200);
 
   const { results } = response.body;
-  t.is(results.length, 10);
   t.is(results.length, 10);
 });
