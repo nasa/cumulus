@@ -2,51 +2,46 @@
 
 const test = require('ava');
 const request = require('supertest');
-const range = require('lodash/range');
+const sinon = require('sinon');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { randomId } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const EsCollection = require('@cumulus/es-client/collections');
+const { getEsClient } = require('@cumulus/es-client/search');
 
 const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
+  fakeCollectionFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
-const testDbName = randomId('collection');
 
-const {
-  destroyLocalTestDb,
-  generateLocalTestDb,
-  CollectionPgModel,
-  fakeCollectionRecordFactory,
-  migrationDir,
-  localStackConnectionEnv,
-} = require('../../../../db/dist');
+process.env.AccessTokensTable = randomString();
+process.env.stackName = randomString();
+process.env.system_bucket = randomString();
+process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
+
+const esIndex = randomString();
+let esClient;
+
 let jwtAuthToken;
 let accessTokenModel;
 
-process.env.PG_HOST = randomId('hostname');
-process.env.PG_USER = randomId('user');
-process.env.PG_PASSWORD = randomId('password');
-process.env.TOKEN_SECRET = randomString();
-process.env.AccessTokensTable = randomString();
-process.env.system_bucket = randomString();
-process.env.stackName = randomId('userstack');
-
-process.env = {
-  ...process.env,
-  ...localStackConnectionEnv,
-  PG_DATABASE: testDbName,
-};
-
-test.before(async (t) => {
+test.before(async () => {
+  const esAlias = randomString();
+  process.env.ES_INDEX = esAlias;
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
@@ -56,40 +51,17 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-
-  const { knexAdmin, knex } = await generateLocalTestDb(
-    testDbName,
-    migrationDir
-  );
-
-  t.context.knexAdmin = knexAdmin;
-  t.context.knex = knex;
-
-  t.context.collectionPgModel = new CollectionPgModel();
-  const collections = [];
-
-  range(40).map((num) => (
-    collections.push(fakeCollectionRecordFactory({
-      name: num % 2 === 0 ? 'testCollection' : 'fakeCollection',
-      version: `${num}`,
-      cumulus_id: num,
-      updated_at: new Date(1579352700000 + (num % 2) * 1000),
-    }))
-  ));
-
-  await t.context.collectionPgModel.insert(
-    t.context.knex,
-    collections
-  );
+  esClient = await getEsClient('fakehost');
 });
 
-test.after.always(async (t) => {
+test.beforeEach((t) => {
+  t.context.testCollection = fakeCollectionFactory();
+});
+
+test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await destroyLocalTestDb({
-    ...t.context,
-    testDbName,
-  });
+  await esClient.client.indices.delete({ index: esIndex });
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -114,16 +86,34 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
 test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
 test.serial('default returns list of collections from query', async (t) => {
+  const stub = sinon.stub(EsCollection.prototype, 'query').returns({ results: [t.context.testCollection] });
+  const spy = sinon.stub(EsCollection.prototype, 'addStatsToCollectionResults');
+
   const response = await request(app)
-    .get('/collections?limit=40')
+    .get('/collections')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const { results } = response.body;
-  t.is(results.length, 40);
-  t.is(results[0].name, 'testCollection');
+  t.is(results.length, 1);
+  t.is(results[0].name, t.context.testCollection.name);
+  t.true(spy.notCalled);
+  stub.restore();
+  spy.restore();
 });
 
-// TODO: IN CUMULUS-3699
-test.todo('returns list of collections with stats when requested');
+test.serial('returns list of collections with stats when requested', async (t) => {
+  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
+
+  const response = await request(app)
+    .get('/collections?includeStats=true')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+  t.is(results.length, 1);
+  t.is(results[0].name, t.context.testCollection.name);
+  stub.restore();
+});

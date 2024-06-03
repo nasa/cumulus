@@ -79,7 +79,7 @@ test.serial('API request with a valid Launchpad token stores the access token', 
       .get('/collections')
       .set('Accept', 'application/json')
       .set('Authorization', 'Bearer ValidAccessToken1')
-      .expect(400);
+      .expect(200);
     const record = await accessTokenModel.get({ accessToken: 'ValidAccessToken1' });
     t.is(record.accessToken, 'ValidAccessToken1');
   } finally {
@@ -120,7 +120,7 @@ test.serial('API request with a stored non-expired Launchpad token record return
       .get('/collections')
       .set('Accept', 'application/json')
       .set('Authorization', 'Bearer ValidAccessToken2')
-      .expect(400);
+      .expect(200);
 
     const accessToken = await accessTokenModel.get({ accessToken: 'ValidAccessToken2' });
     t.is(accessToken.accessToken, 'ValidAccessToken2');
@@ -132,7 +132,7 @@ test.serial('API request with a stored non-expired Launchpad token record return
       .get('/collections')
       .set('Accept', 'application/json')
       .set('Authorization', 'Bearer ValidAccessToken2')
-      .expect(400);
+      .expect(200);
 
     const accessToken1 = await accessTokenModel.get({ accessToken: 'ValidAccessToken2' });
     t.is(accessToken1.accessToken, 'ValidAccessToken2');

@@ -3,26 +3,10 @@ import Logger from '@cumulus/logger';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
-import { PostgresCollectionRecord } from '../types/collection';
 import { translatePostgresCollectionToApiCollection } from '../translate/collections';
-import { BaseRecord } from '../types/base';
+import { PostgresCollectionRecord } from '../types/collection';
 
 const log = new Logger({ sender: '@cumulus/db/CollectionSearch' });
-
-interface ApiCollectionRecord extends BaseRecord, PostgresCollectionRecord {
-  createdAt?: number,
-  updatedAt?: number,
-  name: string,
-  version: string,
-  process?: string,
-  duplicateHandling?: string,
-  granuleId?: string,
-  granuleIdExtraction?: string,
-  files: string,
-  reportToEms?: string,
-  sampleFileName?: string,
-  stats?: object,
-}
 
 /**
  * Class to build and execute db search query for collection
@@ -82,11 +66,10 @@ export class CollectionSearch extends BaseSearch {
    * @param pgRecords - postgres records returned from query
    * @returns translated api records
    */
-  protected translatePostgresRecordsToApiRecords(pgRecords: ApiCollectionRecord[])
+  protected translatePostgresRecordsToApiRecords(pgRecords: PostgresCollectionRecord[])
     : Partial<CollectionRecord[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
-    const apiRecords = pgRecords.map((item: ApiCollectionRecord) =>
-      translatePostgresCollectionToApiCollection(item));
+    const apiRecords = pgRecords.map((item) => translatePostgresCollectionToApiCollection(item));
     return apiRecords;
   }
 }
