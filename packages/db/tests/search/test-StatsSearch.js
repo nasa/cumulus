@@ -35,8 +35,8 @@ test.before(async (t) => {
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.granulePgModel = new GranulePgModel();
   t.context.providerPgModel = new ProviderPgModel();
-  t.context.PdrPgModel = new PdrPgModel();
-  t.context.ExecutionPgModel = new ExecutionPgModel();
+  t.context.pdrPgModel = new PdrPgModel();
+  t.context.executionPgModel = new ExecutionPgModel();
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
   const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
@@ -107,12 +107,12 @@ test.before(async (t) => {
     granules
   );
 
-  await t.context.ExecutionPgModel.insert(
+  await t.context.executionPgModel.insert(
     t.context.knex,
     executions
   );
 
-  await t.context.PdrPgModel.insert(
+  await t.context.pdrPgModel.insert(
     t.context.knex,
     pdrs
   );
