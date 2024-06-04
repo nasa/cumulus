@@ -1,6 +1,7 @@
 /* eslint-disable node/no-extraneous-require */
 /* eslint-disable no-await-in-loop */
 const pMap = require('p-map');
+const minimist = require('minimist');
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs-extra');
 const {
@@ -19,13 +20,14 @@ const {
   fakeFileRecordFactory,
   fakeExecutionRecordFactory,
 } = require('@cumulus/db');
+const { randomInt } = require('crypto');
 process.env.DISABLE_PG_SSL = true;
 const collectionsDir = 'resources/collections/';
 
 const createTimestampedTestId = (stackName, testName) =>
   `${stackName}-${testName}-${Date.now()}`;
 
-function* yieldCollectionDetails(total, repeatable=true) {
+function* yieldCollectionDetails(total, repeatable = true) {
   for (let i = 0; i < total; i += 1) {
     let suffix;
     if (repeatable) {
@@ -171,13 +173,14 @@ const uploadDataBunch = async ({
 const uploadDBGranules = async (
   providerId,
   collection,
-  granuleCount,
-  granulesPerBatch,
-  filesPerGranule,
+  granules,
+  files,
   executionsPerBatch,
-  parallelism
+  granulesPerBatch,
+  concurrency,
+  variance
 ) => {
-  process.env.dbMaxPool = parallelism || 10;
+  process.env.dbMaxPool = concurrency;
   const knex = await getKnexClient();
 
   const collectionPgModel = new CollectionPgModel();
@@ -188,38 +191,105 @@ const uploadDBGranules = async (
     { name: collection.name, version: collection.version }
   );
   const dbProvider = await providerPgModel.get(knex, { name: providerId });
-  const arg = {
-    knex,
-    collectionCumulusId: dbCollection.cumulus_id,
-    providerCumulusId: dbProvider.cumulus_id,
-    granuleCount: granulesPerBatch,
-    filesPerGranule,
-    executionCount: executionsPerBatch,
-  };
+  const collectionCumulusId = dbCollection.cumulus_id;
+  const providerCumulusId = dbProvider.cumulus_id;
 
   const fakeIterable = {};
   fakeIterable[Symbol.iterator] = function* fakeYielder() {
-    for (let i = 0; i < granuleCount / granulesPerBatch; i += 1) {
-      console.log(i * granulesPerBatch);
-      yield arg;
+    let batchGranules = 1;
+    for (let i = 0; i < granules; i += batchGranules) {
+      console.log(i);
+      batchGranules = granulesPerBatch + (variance ? randomInt(6) : 0);
+      console.log('>>', batchGranules);
+      const batchExecutions = executionsPerBatch + (variance ? randomInt(5) : 0);
+      yield {
+        knex,
+        collectionCumulusId,
+        providerCumulusId,
+        files,
+        batchGranules,
+        batchExecutions,
+      };
     }
   };
   await pMap(
     fakeIterable,
     uploadDataBunch,
-    { concurrency: parallelism }
+    { concurrency }
   );
 };
-const createCollection = async (stackName, internalBucket, providerId, collection) => {
-  await addCollection(stackName, internalBucket, collection.suffix);
-  await uploadDBGranules(providerId, collection, 10000, 5, 6, 2);
+
+const parseArgs = () => {
+  const {
+    granules,
+    files,
+    executionsPerBatch,
+    granulesPerBatch,
+    collections,
+    variance,
+    concurrency,
+  } = minimist(
+    process.argv,
+    {
+      string: [
+        'collections',
+        'files',
+        'granules',
+        'executionsPerBatch',
+        'granulesPerBatch',
+        'concurrency',
+      ],
+      boolean: [
+        'variance',
+      ],
+      default: {
+        collections: 1,
+        files: 1,
+        granules: 10000,
+        executionsPerBatch: 1,
+        granulesPerBatch: 1,
+        variance: true,
+        concurrency: 1,
+      },
+    }
+  );
+  return {
+    granules: Number.parseInt(granules, 10),
+    files: Number.parseInt(files, 10),
+    granulesPerBatch: Number.parseInt(granulesPerBatch, 10),
+    executionsPerBatch: Number.parseInt(executionsPerBatch, 10),
+    collections: Number.parseInt(collections, 10),
+    concurrency: Number.parseInt(concurrency, 10),
+    variance,
+  };
 };
+
 const main = async () => {
+  const {
+    granules,
+    files,
+    executionsPerBatch,
+    granulesPerBatch,
+    collections,
+    variance,
+    concurrency,
+  } = parseArgs();
+
   const stackName = 'ecarton-ci-tf';
   const internalBucket = 'cumulus-test-sandbox-protected';
   const providerId = await addProvider(stackName, internalBucket, 'a');
-  for (const collection of yieldCollectionDetails(1, true)) {
-    await createCollection(stackName, internalBucket, providerId, collection);
+  for (const collection of yieldCollectionDetails(collections, true)) {
+    await addCollection(stackName, internalBucket, collection.suffix);
+    await uploadDBGranules(
+      providerId,
+      collection,
+      granules,
+      files,
+      executionsPerBatch,
+      granulesPerBatch,
+      concurrency,
+      variance
+    );
   }
 };
 
