@@ -131,7 +131,6 @@ const uploadGranules = async (
 
 const uploadGranuleExecutions = async (knex, granules, executions) => {
   const GEmodel = new GranulesExecutionsPgModel();
-  // this is not done as promise.all to avoid parallelization: handled at higher scope
   for (let i = 0; i < granules.length; i += 1) {
     for (let j = 0; j < executions.length; j += 1) {
       await GEmodel.upsert(
@@ -143,35 +142,28 @@ const uploadGranuleExecutions = async (knex, granules, executions) => {
       );
     }
   }
-  // await Promise.all(granules.map(
-  //   async (granule) => await Promise.all(executions.map(async (execution) => {
-  //     await GEmodel.upsert(
-  //       knex,
-  //       { granule_cumulus_id: granule.cumulus_id, execution_cumulus_id: execution.cumulus_id }
-  //     );
-  //   }))
-  // ));
+
 };
 
 const uploadDataBunch = async ({
   knex,
   collectionCumulusId,
   providerCumulusId,
-  granuleCount,
-  filesPerGranule,
-  executionCount,
+  files,
+  batchGranules,
+  batchExecutions,
 }) => {
   const granules = await uploadGranules(
     knex,
     collectionCumulusId,
     providerCumulusId,
-    granuleCount,
-    filesPerGranule
+    batchGranules,
+    files
   );
   const executions = await uploadExecutions(
     knex,
     collectionCumulusId,
-    executionCount
+    batchExecutions
   );
   await uploadGranuleExecutions(knex, granules, executions);
 };
