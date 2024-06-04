@@ -8,6 +8,7 @@ const {
   addCollections,
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
+const { getRequiredEnvVar } = require('@cumulus/common/env');
 const {
   GranulePgModel,
   CollectionPgModel,
@@ -274,8 +275,8 @@ const main = async () => {
     concurrency,
   } = parseArgs();
 
-  const stackName = 'ecarton-ci-tf';
-  const internalBucket = 'cumulus-test-sandbox-protected';
+  const stackName = getRequiredEnvVar('DEPLOYMENT');
+  const internalBucket = getRequiredEnvVar('FAKE_PROVIDER_CONFIG_BUCKET');
   const providerId = await addProvider(stackName, internalBucket, 'a');
   for (const collection of yieldCollectionDetails(collections, true)) {
     await addCollection(stackName, internalBucket, collection.suffix);
