@@ -70,8 +70,10 @@ export class ExecutionSearch extends BaseSearch {
     : Partial<ApiExecutionRecord[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
     const results: ApiExecutionRecord[] = [];
-    // its only getting the first record for some reason, need to check why
-    pgRecords.map(async (item) => results.push(await translatePostgresExecutionToApiExecution(item, knex)))
+    pgRecords.map(async (item) => {
+        const result = await translatePostgresExecutionToApiExecution(item, knex);
+        results.push(result);
+    })
     return results;
   }
 }

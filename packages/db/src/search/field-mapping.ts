@@ -23,6 +23,9 @@ const granuleMapping: { [key: string]: Function } = {
   granuleId: (value?: string) => ({
     granule_id: value,
   }),
+  id: (value?: string) => ({
+    cumulus_id: value,
+  }),
   lastUpdateDateTime: (value?: string) => ({
     last_update_date_time: value,
   }),
@@ -108,6 +111,9 @@ const collectionMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
+  id: (value?: string) => ({
+    cumulus_id: value,
+  }),
   name: (value?: string) => ({
     name: value,
   }),
@@ -129,8 +135,21 @@ const executionMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
+  // nested error field
+  'error.Error': (value?: string) => ({
+    'error.Error': value,
+  }),
+  'error.Error.keyword': (value?: string) => ({
+    'error.Error': value,
+  }),
   execution: (value?: string) => ({
     url: value,
+  }),
+  id: (value?: string) => ({
+    cumulus_id: value,
+  }),
+  workflowName: (value?: string) => ({
+    workflow_name: value,
   }),
   status: (value?: string) => ({
     status: value,
@@ -140,6 +159,9 @@ const executionMapping : { [key: string]: Function } = {
   }),
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
+  }),
+  duration: (value?: string) => ({
+    duration: value && Number(value),
   }),
   // The following fields require querying other tables
   collectionId: (value?: string) => {
@@ -154,6 +176,9 @@ const executionMapping : { [key: string]: Function } = {
 const pdrMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
+  }),
+  id: (value?: string) => ({
+    cumulus_id: value,
   }),
   pdrName: (value?: string) => ({
     name: value,
@@ -185,7 +210,7 @@ const providerMapping : { [key: string]: Function } = {
     created_at: value && new Date(Number(value)),
   }),
   id: (value?: string) => ({
-    name: value,
+    cumulus_id: value,
   }),
   timestamp: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
@@ -198,6 +223,9 @@ const providerMapping : { [key: string]: Function } = {
 const ruleMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
+  }),
+  id: (value?: string) => ({
+    cumulus_id: value,
   }),
   name: (value?: string) => ({
     name: value,
