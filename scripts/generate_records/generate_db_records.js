@@ -145,7 +145,6 @@ const uploadGranuleExecutions = async (knex, granules, executions) => {
       );
     }
   }
-
 };
 
 const uploadDataBunch = async ({
