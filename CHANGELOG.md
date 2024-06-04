@@ -120,8 +120,18 @@ modification.
 - **CUMULUS-3433**
   - Added `importGot` helper method to import `got` as an ESM module in
     CommmonJS typescript/webpack clients.
+- **CUMULUS-3606**
+  - Updated  with additional documentation covering tunneling configuration
+    using a PKCS11 provider
 
 ### Changed
+
+- **CUMULUS-3735**
+  - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
+- **CUMULUS-3717**
+  - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
+- **CUMULUS-3720**
+  - add cicd unit test error logging to s3 for testing improvements
 - **CUMULUS-3951**
   - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
   - Update all integration/unit tests to use encrypted SNS topics
@@ -199,6 +209,9 @@ modification.
 
 ### Fixed
 
+- **CUMULUS-3715**
+  - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
+    flags to knex custom code
 - **CUMULUS-3721**
   - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
 - **CUMULUS-3701**

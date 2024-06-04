@@ -24,6 +24,7 @@
     "clean": "rm -rf dist",
     "package": "npm run build && npm run build-lambda-zips",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"

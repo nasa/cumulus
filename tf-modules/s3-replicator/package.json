@@ -9,6 +9,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },

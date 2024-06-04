@@ -18,6 +18,7 @@
   "scripts": {
     "test:coverage": "../../../../node_modules/.bin/nyc npm test",
     "test": "../../../../node_modules/.bin/ava",
+    "test:ci": "../../../../scripts/run_package_ci_unit.sh",
     "coverage": "python ../../../../scripts/coverage_handler/coverage.py"
   },
   "dependencies": {
