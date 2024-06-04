@@ -392,6 +392,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3562**
   - updated crypto-js to 4.2.0
   - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
+- **CUMULUS-XXXX**
+  - Updated update-granules-cmr-metadata-file-links task to update the file size of the update metadata file and remove the invalidated checksum associated with this file.
 
 ## [v18.1.0] 2023-10-25
 
