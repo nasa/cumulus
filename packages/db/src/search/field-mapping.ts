@@ -123,6 +123,12 @@ const collectionMapping : { [key: string]: Function } = {
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
   }),
+  reportToEms: (value?: string) => ({
+    report_to_ems: value ?? false,
+  }),
+  process: (value?: string) => ({
+    process: value,
+  }),
 };
 
 const executionMapping : { [key: string]: Function } = {
