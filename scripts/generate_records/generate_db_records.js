@@ -200,7 +200,6 @@ const uploadDBGranules = async (
     for (let i = 0; i < granules; i += batchGranules) {
       console.log(i);
       batchGranules = granulesPerBatch + (variance ? randomInt(6) : 0);
-      console.log('>>', batchGranules);
       const batchExecutions = executionsPerBatch + (variance ? randomInt(5) : 0);
       yield {
         knex,
