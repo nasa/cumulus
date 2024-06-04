@@ -26,6 +26,7 @@
     "@cumulus/message": "18.2.0",
     "@cumulus/db": "18.2.0",
     "@types/minimist": "^1.2.5",
+    "p-map": "^4.0.0",
     "minimist": "^1.2.8",
     "tsc": "^2.0.4"
   }

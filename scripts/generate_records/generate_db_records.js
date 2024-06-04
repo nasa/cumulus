@@ -1,5 +1,6 @@
 /* eslint-disable node/no-extraneous-require */
 /* eslint-disable no-await-in-loop */
+const pMap = require('p-map');
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs-extra');
 const {
@@ -24,11 +25,11 @@ const collectionsDir = 'resources/collections/';
 const createTimestampedTestId = (stackName, testName) =>
   `${stackName}-${testName}-${Date.now()}`;
 
-function* yieldCollectionDetails(total, repeatable) {
+function* yieldCollectionDetails(total, repeatable=true) {
   for (let i = 0; i < total; i += 1) {
     let suffix;
     if (repeatable) {
-      suffix = `__test${i.toString().padStart(2, '0')}`;
+      suffix = `_test_generator${i.toString().padStart(2, '0')}`;
     } else {
       suffix = `_${cryptoRandomString({ length: 5 }).toUpperCase()}`;
     }
@@ -39,9 +40,9 @@ function* yieldCollectionDetails(total, repeatable) {
     };
   }
 }
-
 const addCollection = async (stackName, bucket, collectionSuffix) => {
   const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
+  console.log('pushing up collection with suffix', collectionSuffix);
   try {
     await addCollections(
       stackName,
@@ -130,24 +131,36 @@ const uploadGranules = async (
 
 const uploadGranuleExecutions = async (knex, granules, executions) => {
   const GEmodel = new GranulesExecutionsPgModel();
-  await Promise.all(granules.map(
-    async (granule) => await Promise.all(executions.map(async (execution) => {
+  // this is not done as promise.all to avoid parallelization: handled at higher scope
+  for (let i = 0; i < granules.length; i += 1) {
+    for (let j = 0; j < executions.length; j += 1) {
       await GEmodel.upsert(
         knex,
-        { granule_cumulus_id: granule.cumulus_id, execution_cumulus_id: execution.cumulus_id }
+        {
+          granule_cumulus_id: granules[i].cumulus_id,
+          execution_cumulus_id: executions[j].cumulus_id,
+        }
       );
-    }))
-  ));
+    }
+  }
+  // await Promise.all(granules.map(
+  //   async (granule) => await Promise.all(executions.map(async (execution) => {
+  //     await GEmodel.upsert(
+  //       knex,
+  //       { granule_cumulus_id: granule.cumulus_id, execution_cumulus_id: execution.cumulus_id }
+  //     );
+  //   }))
+  // ));
 };
 
-const uploadDataBunch = async (
+const uploadDataBunch = async ({
   knex,
   collectionCumulusId,
   providerCumulusId,
   granuleCount,
   filesPerGranule,
-  executionCount
-) => {
+  executionCount,
+}) => {
   const granules = await uploadGranules(
     knex,
     collectionCumulusId,
@@ -169,10 +182,10 @@ const uploadDBGranules = async (
   granuleCount,
   granulesPerBatch,
   filesPerGranule,
-  executionsPerBatch
+  executionsPerBatch,
+  parallelism
 ) => {
-  const batchSize = 50;
-  process.env.dbMaxPool = batchSize || 10;
+  process.env.dbMaxPool = parallelism || 10;
   const knex = await getKnexClient();
 
   const collectionPgModel = new CollectionPgModel();
@@ -183,29 +196,31 @@ const uploadDBGranules = async (
     { name: collection.name, version: collection.version }
   );
   const dbProvider = await providerPgModel.get(knex, { name: providerId });
+  const arg = {
+    knex,
+    collectionCumulusId: dbCollection.cumulus_id,
+    providerCumulusId: dbProvider.cumulus_id,
+    granuleCount: granulesPerBatch,
+    filesPerGranule,
+    executionCount: executionsPerBatch,
+  };
 
-  let promises = [];
-  for (let iter = 0; iter < granuleCount; iter += granulesPerBatch) {
-    console.log(iter);
-    const promise = uploadDataBunch(
-      knex,
-      dbCollection.cumulus_id,
-      dbProvider.cumulus_id,
-      granulesPerBatch,
-      filesPerGranule,
-      executionsPerBatch
-    );
-
-    promises.push(promise);
-    if (promises.length > batchSize) {
-      await promises[0];
-      promises = promises.slice(1);
+  const fakeIterable = {};
+  fakeIterable[Symbol.iterator] = function* fakeYielder() {
+    for (let i = 0; i < granuleCount / granulesPerBatch; i += 1) {
+      console.log(i * granulesPerBatch);
+      yield arg;
     }
-  }
+  };
+  await pMap(
+    fakeIterable,
+    uploadDataBunch,
+    { concurrency: parallelism }
+  );
 };
 const createCollection = async (stackName, internalBucket, providerId, collection) => {
   await addCollection(stackName, internalBucket, collection.suffix);
-  await uploadDBGranules(providerId, collection, 1000, 5, 6, 2);
+  await uploadDBGranules(providerId, collection, 10000, 5, 6, 2);
 };
 const main = async () => {
   const stackName = 'ecarton-ci-tf';
