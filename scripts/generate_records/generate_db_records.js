@@ -276,7 +276,7 @@ const main = async () => {
   } = parseArgs();
 
   const stackName = getRequiredEnvVar('DEPLOYMENT');
-  const internalBucket = getRequiredEnvVar('FAKE_PROVIDER_CONFIG_BUCKET');
+  const internalBucket = getRequiredEnvVar('INTERNAL_BUCKET');
   const providerId = await addProvider(stackName, internalBucket, 'a');
   for (const collection of yieldCollectionDetails(collections, true)) {
     await addCollection(stackName, internalBucket, collection.suffix);
