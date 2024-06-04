@@ -1,10 +1,11 @@
 import { Knex } from 'knex';
+import omit from 'lodash/omit';
 import Logger from '@cumulus/logger';
 
 import { BaseRecord } from '../types/base';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
-import { DbQueryParameters, QueryEvent, QueryStringParameters } from '../types/search';
+import { DbQueryParameters, QueriableType, QueryEvent, QueryStringParameters } from '../types/search';
 import { convertQueryStringToDbQueryParameters } from './queries';
 
 const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
@@ -47,17 +48,39 @@ class BaseSearch {
     );
   }
 
+  /**
+   * check if joined collections table search is needed
+   *
+   * @returns whether collection search is needed
+   */
   protected searchCollection(): boolean {
-    const term = this.dbQueryParameters.term;
-    return !!(term?.collectionName || term?.collectionVersion);
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.collectionName
+      || not?.collectionVersion
+      || term?.collectionName
+      || term?.collectionVersion
+      || terms?.collectionName
+      || terms?.collectionVersion);
   }
 
+  /**
+   * check if joined pdrs table search is needed
+   *
+   * @returns whether pdr search is needed
+   */
   protected searchPdr(): boolean {
-    return !!this.dbQueryParameters.term?.pdrName;
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.pdrName || term?.pdrName || terms?.pdrName);
   }
 
+  /**
+   * check if joined providers table search is needed
+   *
+   * @returns whether provider search is needed
+   */
   protected searchProvider(): boolean {
-    return !!this.dbQueryParameters.term?.providerName;
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.providerName || term?.providerName || terms?.providerName);
   }
 
   /**
@@ -73,7 +96,10 @@ class BaseSearch {
     } {
     const { countQuery, searchQuery } = this.buildBasicQuery(knex);
     this.buildTermQuery({ countQuery, searchQuery });
+    this.buildTermsQuery({ countQuery, searchQuery });
+    this.buildNotMatchQuery({ countQuery, searchQuery });
     this.buildRangeQuery({ countQuery, searchQuery });
+    this.buildExistsQuery({ countQuery, searchQuery });
     this.buildInfixPrefixQuery({ countQuery, searchQuery });
     this.buildSortQuery({ searchQuery });
 
@@ -130,6 +156,47 @@ class BaseSearch {
   }
 
   /**
+   * Build queries for checking if field 'exists'
+   *
+   * @param params
+   * @param [params.countQuery] - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildExistsQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { exists = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(exists).forEach(([name, value]) => {
+      const queryMethod = value ? 'whereNotNull' : 'whereNull';
+      const checkNull = value ? 'not null' : 'null';
+      switch (name) {
+        case 'collectionName':
+        case 'collectionVersion':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.collection_cumulus_id`));
+          break;
+        case 'providerName':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.provider_cumulus_id`));
+          break;
+        case 'pdrName':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.pdr_cumulus_id`));
+          break;
+        case 'error':
+        case 'error.Error':
+          [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`));
+          break;
+        default:
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.${name}`));
+          break;
+      }
+    });
+  }
+
+  /**
    * Build queries for range fields
    *
    * @param params
@@ -156,6 +223,7 @@ class BaseSearch {
       }
     });
   }
+
   /**
    * Build queries for term fields
    *
@@ -181,24 +249,125 @@ class BaseSearch {
     Object.entries(term).forEach(([name, value]) => {
       switch (name) {
         case 'collectionName':
-          countQuery?.where(`${collectionsTable}.name`, value);
-          searchQuery.where(`${collectionsTable}.name`, value);
+          [countQuery, searchQuery].forEach((query) => query?.where(`${collectionsTable}.name`, value));
           break;
         case 'collectionVersion':
-          countQuery?.where(`${collectionsTable}.version`, value);
-          searchQuery.where(`${collectionsTable}.version`, value);
+          [countQuery, searchQuery].forEach((query) => query?.where(`${collectionsTable}.version`, value));
           break;
         case 'providerName':
-          countQuery?.where(`${providersTable}.name`, value);
-          searchQuery.where(`${providersTable}.name`, value);
+          [countQuery, searchQuery].forEach((query) => query?.where(`${providersTable}.name`, value));
           break;
         case 'pdrName':
-          countQuery?.where(`${pdrsTable}.name`, value);
-          searchQuery.where(`${pdrsTable}.name`, value);
+          [countQuery, searchQuery].forEach((query) => query?.where(`${pdrsTable}.name`, value));
+          break;
+        case 'error.Error':
+          [countQuery, searchQuery]
+            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`));
           break;
         default:
-          countQuery?.where(`${this.tableName}.${name}`, value);
-          searchQuery.where(`${this.tableName}.${name}`, value);
+          [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, value));
+          break;
+      }
+    });
+  }
+
+  /**
+   * Build queries for terms fields
+   *
+   * @param params
+   * @param [params.countQuery] - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildTermsQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+    } = TableNames;
+
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    // collection name and version are searched in pair
+    if (terms.collectionName && terms.collectionVersion
+      && terms.collectionName.length > 0
+      && terms.collectionVersion.length > 0) {
+      const collectionPair: QueriableType[][] = [];
+      for (let i = 0; i < terms.collectionName.length; i += 1) {
+        const name = terms.collectionName[i];
+        const version = terms.collectionVersion[i];
+        if (name && version) collectionPair.push([name, version]);
+      }
+      [countQuery, searchQuery]
+        .forEach((query) => query?.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair));
+    }
+
+    Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
+      switch (name) {
+        case 'providerName':
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${providersTable}.name`, value));
+          break;
+        case 'pdrName':
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${pdrsTable}.name`, value));
+          break;
+        case 'error.Error':
+          [countQuery, searchQuery]
+            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' in ('${value.join('\',\'')}')`));
+          break;
+        default:
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${this.tableName}.${name}`, value));
+          break;
+      }
+    });
+  }
+
+  /**
+   * Build queries for checking if field doesn't match the given value
+   *
+   * @param params
+   * @param [params.countQuery] - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildNotMatchQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+    } = TableNames;
+
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    // collection name and version are searched in pair
+    if (term.collectionName && term.collectionVersion) {
+      [countQuery, searchQuery].forEach((query) => query?.whereNot({
+        [`${collectionsTable}.name`]: term.collectionName,
+        [`${collectionsTable}.version`]: term.collectionVersion,
+      }));
+    }
+    Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
+      switch (name) {
+        case 'providerName':
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${providersTable}.name`, value));
+          break;
+        case 'pdrName':
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${pdrsTable}.name`, value));
+          break;
+        case 'error.Error':
+          [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' != '${value}'`));
+          break;
+        default:
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${this.tableName}.${name}`, value));
           break;
       }
     });

@@ -56,6 +56,9 @@ const granuleMapping: { [key: string]: Function } = {
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
   }),
+  error: (value?: string) => ({
+    error: value,
+  }),
   // nested error field
   'error.Error': (value?: string) => ({
     'error.Error': value,
