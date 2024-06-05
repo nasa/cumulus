@@ -7,6 +7,7 @@ const fs = require('fs-extra');
 const {
   addCollections,
 } = require('@cumulus/integration-tests');
+const Logger = require('@cumulus/logger');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 const {
@@ -22,6 +23,11 @@ const {
   fakeExecutionRecordFactory,
 } = require('@cumulus/db');
 const { randomInt } = require('crypto');
+
+const log = new Logger({
+  sender: '@cumulus/generate_records',
+});
+
 process.env.DISABLE_PG_SSL = true;
 const collectionsDir = 'resources/collections/';
 
@@ -45,7 +51,7 @@ function* yieldCollectionDetails(total, repeatable = true) {
 }
 const addCollection = async (stackName, bucket, collectionSuffix) => {
   const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
-  console.log('pushing up collection with suffix', collectionSuffix);
+  log.info('pushing up collection with suffix', collectionSuffix);
   try {
     await addCollections(
       stackName,
@@ -90,7 +96,11 @@ const uploadFiles = async (knex, granuleCumulusId, fileCount, models) => {
     const file = fakeFileRecordFactory({
       granule_cumulus_id: granuleCumulusId,
     });
-    await fileModel.upsert(knex, file);
+    try {
+      await fileModel.upsert(knex, file);
+    } catch (error) {
+      log.error(`failed up upload file: ${error}`);
+    }
   }
 };
 const uploadExecutions = async (knex, collectionCumulusId, executionCount, models) => {
@@ -98,8 +108,12 @@ const uploadExecutions = async (knex, collectionCumulusId, executionCount, model
   const executionModel = models.executionModel;
   for (let i = 0; i < executionCount; i += 1) {
     const execution = fakeExecutionRecordFactory({ collection_cumulus_id: collectionCumulusId });
-    const [executionOutput] = await executionModel.upsert(knex, execution);
-    executions.push(executionOutput);
+    try {
+      const [executionOutput] = await executionModel.upsert(knex, execution);
+      executions.push(executionOutput);
+    } catch (error) {
+      log.error(`failed up upload execution: ${error}`);
+    }
   }
   return executions;
 };
@@ -119,14 +133,17 @@ const uploadGranules = async (
       provider_cumulus_id: providerCumulusId,
       status: 'completed',
     });
-    const [granuleOutput] = await granuleModel.upsert({
-      knexOrTrx: knex,
-      granule,
-    });
-    granules.push(granuleOutput);
-    uploadFiles(knex, granuleOutput.cumulus_id, filesPerGranule, models);
+    try {
+      const [granuleOutput] = await granuleModel.upsert({
+        knexOrTrx: knex,
+        granule,
+      });
+      granules.push(granuleOutput);
+      uploadFiles(knex, granuleOutput.cumulus_id, filesPerGranule, models);
+    } catch (error) {
+      log.error(`failed up upload granule: ${error}`);
+    }
   }
-
   return granules;
 };
 
@@ -134,13 +151,17 @@ const uploadGranuleExecutions = async (knex, granules, executions, models) => {
   const GEmodel = models.geModel;
   for (let i = 0; i < granules.length; i += 1) {
     for (let j = 0; j < executions.length; j += 1) {
-      await GEmodel.upsert(
-        knex,
-        {
-          granule_cumulus_id: granules[i].cumulus_id,
-          execution_cumulus_id: executions[j].cumulus_id,
-        }
-      );
+      try {
+        await GEmodel.upsert(
+          knex,
+          {
+            granule_cumulus_id: granules[i].cumulus_id,
+            execution_cumulus_id: executions[j].cumulus_id,
+          }
+        );
+      } catch (error) {
+        log.error(`failed up upload granuleExecution: ${error}`);
+      }
     }
   }
 };
