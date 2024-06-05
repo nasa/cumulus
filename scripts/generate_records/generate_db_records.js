@@ -239,7 +239,7 @@ const parseExecutionsGranulesBatch = (executionsPerGranule) => {
 
 const parseArgs = () => {
   const {
-    granules,
+    granulesK,
     files,
     executionsPerGranule,
     collections,
@@ -251,7 +251,7 @@ const parseArgs = () => {
       string: [
         'collections',
         'files',
-        'granules_k',
+        'granulesK',
         'executionsPerGranule',
         'concurrency',
       ],
@@ -260,7 +260,8 @@ const parseArgs = () => {
       ],
       alias: {
         num_collections: 'collections',
-        granules: 'granules_k',
+        granules: 'granulesK',
+        granules_k: 'granulesK',
         executions_to_granule: 'executionsPerGranule',
         executions_per_granule: 'executionsPerGranule',
         files_per_gran: 'files',
@@ -268,7 +269,7 @@ const parseArgs = () => {
       default: {
         collections: 1,
         files: 1,
-        granules: 10000,
+        granulesK: 10,
         executionsPerGranule: '2:2',
         variance: true,
         concurrency: 1,
@@ -280,7 +281,7 @@ const parseArgs = () => {
     executionsPerBatch,
   } = parseExecutionsGranulesBatch(executionsPerGranule);
   return {
-    granules: Number.parseInt(granules, 10),
+    granules: Number.parseInt(granulesK, 10) * 1000,
     files: Number.parseInt(files, 10),
     granulesPerBatch: Number.parseInt(granulesPerBatch, 10),
     executionsPerBatch: Number.parseInt(executionsPerBatch, 10),
