@@ -44,12 +44,21 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  // eslint-disable-next-line no-unused-vars
   const { getMMT, includeStats, ...queryStringParameters } = req.query;
-  const collection = new CollectionSearch(
-    { queryStringParameters }
-  );
-  let result = await collection.query();
+  let dbSearch;
+  if (includeStats === 'true') {
+    dbSearch = new Collection(
+      { queryStringParameters },
+      undefined,
+      process.env.ES_INDEX,
+      includeStats === 'true'
+    );
+  } else {
+    dbSearch = new CollectionSearch(
+      { queryStringParameters }
+    );
+  }
+  let result = await dbSearch.query();
   if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
