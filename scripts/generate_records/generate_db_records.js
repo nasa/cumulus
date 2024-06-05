@@ -322,7 +322,7 @@ const main = async () => {
     variance,
     concurrency,
   } = parseArgs();
-  log.info(`running with args: ${{
+  console.log(`running with args: ${{
     granules,
     files,
     executionsPerBatch,
