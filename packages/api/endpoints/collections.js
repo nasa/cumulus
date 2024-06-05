@@ -44,6 +44,7 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
+  log.trace(`list query ${JSON.stringify(req.query)}`);
   const { getMMT, includeStats, ...queryStringParameters } = req.query;
   let dbSearch;
   if (includeStats === 'true') {
