@@ -148,7 +148,7 @@ test('ExecutionSearch supports term search for date field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
-    updatedAt: 1633406400000,
+    updatedAt: '1633406400000',
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -203,7 +203,7 @@ test('ExecutionSearch supports term search for timestamp', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
-    timestamp: 1550725200000,
+    timestamp: '1550725200000',
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -237,8 +237,8 @@ test('ExecutionSearch supports range search', async (t) => {
 
   queryStringParameters = {
     limit: 200,
-    timestamp__from: 1550725200000,
-    timestamp__to: 1800725210000,
+    timestamp__from: '1550725200000',
+    timestamp__to: '1800725210000',
   };
   dbSearch = new ExecutionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
