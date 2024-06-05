@@ -71,9 +71,9 @@ export class ExecutionSearch extends BaseSearch {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
     const results: ApiExecutionRecord[] = [];
     pgRecords.map(async (item) => {
-        const result = await translatePostgresExecutionToApiExecution(item, knex);
-        results.push(result);
-    })
+      const result = await translatePostgresExecutionToApiExecution(item, knex);
+      results.push(result);
+    });
     return results;
   }
 }

@@ -401,7 +401,7 @@ class BaseSearch {
    * @param pgRecords - postgres records returned from query
    * @throws - function is not implemented
    */
-   protected translatePostgresRecordsToApiRecords(pgRecords: BaseRecord[], knex: Knex | undefined) {
+  protected translatePostgresRecordsToApiRecords(pgRecords: BaseRecord[], knex: Knex | undefined) {
     log.error(`translatePostgresRecordsToApiRecords is not implemented ${pgRecords[0]}, for client ${knex}`);
     throw new Error('translatePostgresRecordsToApiRecords is not implemented');
   }

@@ -30,9 +30,11 @@ test.before(async (t) => {
   const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
 
   // Create a PG Collection
-  t.context.testPgCollection = fakeCollectionRecordFactory();
-  const collectionPgModel = new CollectionPgModel();
-  const [pgCollection] = await collectionPgModel.create(
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.testPgCollection = fakeCollectionRecordFactory(
+    { cumulus_id: 1 }
+  );
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
     t.context.testPgCollection
   );
@@ -44,12 +46,12 @@ test.before(async (t) => {
   range(50).map((num) => (
     executions.push(fakeExecutionRecordFactory({
       //collection_cumulus_id: t.context.collectionCumulusId,
-      // this is giving knex/db problems, when collectionId is included
+      //this is causing issues collection_cumulus_id
       status: statuses[(num % 3) + 1],
       error: errors[num % 5],
       created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
       updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
-      cumulus_id: num,
+      cumulus_id: (num + 1),
       workflow_name: `testWorkflow__${num}`,
       arn: num % 2 === 0 ? `testArn__${num}` : `fakeArn__${num}`,
       url: `https://fake-execution${num}.com/`,
@@ -60,6 +62,8 @@ test.before(async (t) => {
         final: `payload__${num}`,
       } : undefined,
       duration: t.context.duration * ((num % 2) + 1),
+      //apparently both duration and colleciton_cumulus_id
+      //when defined together cause issues
     }))
   ));
 
@@ -171,7 +175,7 @@ test('ExecutionSearch supports term search for number field', async (t) => {
   response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
-  t.is(response.results[0]?.name, 'fakeArn__1');
+  t.is(response.results[0]?.name, 'testArn__0');
 });
 
 test('ExecutionSearch supports term search for string field', async (t) => {
@@ -267,10 +271,10 @@ test('ExecutionSearch non-existing fields are ignored', async (t) => {
 test('ExecutionSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    id: 10,
-    workflow_name: 'testWorkflow__10',
-    arn: 'testArn__10',
-    url: 'https://fake-execution10.com/',
+    id: 12,
+    workflow_name: 'testWorkflow__11',
+    arn: 'fakeArn__11',
+    url: 'https://fake-execution11.com/',
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -352,7 +356,7 @@ test('ExecutionSearch supports terms search', async (t) => {
   queryStringParameters = {
     limit: 50,
     workflowName__in: ['testWorkflow__1', 'testWorkflow__2'].join(','),
-    status__in: 'running'
+    status__in: 'running',
   };
   dbSearch = new ExecutionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
@@ -395,12 +399,12 @@ test('ExecutionSearch supports search which checks existence of execution field'
 
 test('ExecutionSearch supports search which granule field does not match the given value', async (t) => {
   const { knex } = t.context;
-  let queryStringParameters = {
+  const queryStringParameters = {
     limit: 50,
     status__not: 'completed',
   };
-  let dbSearch = new ExecutionSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
   t.is(response.meta.count, 33);
   t.is(response.results?.length, 33);
 });
