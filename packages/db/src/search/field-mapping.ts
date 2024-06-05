@@ -129,6 +129,12 @@ const collectionMapping : { [key: string]: Function } = {
   process: (value?: string) => ({
     process: value,
   }),
+  sampleFileName: (value?: string) => ({
+    sample_file_name: value,
+  }),
+  urlPath: (value?: string) => ({
+    url_path: value,
+  }),
 };
 
 const executionMapping : { [key: string]: Function } = {

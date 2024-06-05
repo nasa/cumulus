@@ -34,6 +34,7 @@ test.before(async (t) => {
       updated_at: new Date(1579352700000 + (num % 2) * 1000),
       process: num % 2 === 0 ? 'ingest' : 'publish',
       report_to_ems: num % 2 === 0,
+      url_path: num % 2 === 0 ? 'https://fakepath.com' : undefined,
     }))
   ));
 
@@ -213,4 +214,60 @@ test('CollectionSearch supports sorting', async (t) => {
   t.is(response3.results?.length, 100);
   t.true(response3.results[0].version < response3.results[99].version);
   t.true(response3.results[49].version < response3.results[50].version);
+});
+
+test('CollectionSearch supports terms search', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    process__in: ['ingest', 'archive'].join(','),
+  };
+  let dbSearch = new CollectionSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    limit: 200,
+    process__in: ['ingest', 'archive'].join(','),
+    name__in: ['testCollection___000', 'fakeCollection___001'].join(','),
+  };
+  dbSearch = new CollectionSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 1);
+  t.is(response.results?.length, 1);
+});
+
+test('CollectionSearch supports search which granule field does not match the given value', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    process__not: 'publish',
+  };
+  let dbSearch = new CollectionSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    limit: 200,
+    process__not: 'publish',
+    name__not: 'testCollection___000',
+  };
+  dbSearch = new CollectionSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 49);
+  t.is(response.results?.length, 49);
+});
+
+test('CollectionSearch supports search which checks existence of granule field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    urlPath__exists: 'true',
+  };
+  const dbSearch = new CollectionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
 });
