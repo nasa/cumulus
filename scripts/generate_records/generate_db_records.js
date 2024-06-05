@@ -218,12 +218,23 @@ const uploadDBGranules = async (
   );
 };
 
+const parseExecutionsGranulesBatch = (executionsPerGranule) => {
+  // expect to come in format 'x:y'
+  try {
+    const split = executionsPerGranule.split(':');
+    const executionsPerBatch = Number.parseInt(split[0], 10);
+    const granulesPerBatch = Number.parseInt(split[1], 10);
+    return { executionsPerBatch, granulesPerBatch };
+  } catch (error) {
+    throw new Error(`cannot parse ${executionsPerGranule}, expected format <executions>:<granules> ratio \n${error}`);
+  }
+};
+
 const parseArgs = () => {
   const {
     granules,
     files,
-    executionsPerBatch,
-    granulesPerBatch,
+    executionsPerGranule,
     collections,
     variance,
     concurrency,
@@ -233,25 +244,34 @@ const parseArgs = () => {
       string: [
         'collections',
         'files',
-        'granules',
-        'executionsPerBatch',
-        'granulesPerBatch',
+        'granules_k',
+        'executionsPerGranule',
         'concurrency',
       ],
       boolean: [
         'variance',
       ],
+      alias: {
+        num_collections: 'collections',
+        granules: 'granules_k',
+        executions_to_granule: 'executionsPerGranule',
+        executions_per_granule: 'executionsPerGranule',
+        files_per_gran: 'files',
+      },
       default: {
         collections: 1,
         files: 1,
         granules: 10000,
-        executionsPerBatch: 1,
-        granulesPerBatch: 1,
+        executionsPerGranule: '2:2',
         variance: true,
         concurrency: 1,
       },
     }
   );
+  const {
+    granulesPerBatch,
+    executionsPerBatch,
+  } = parseExecutionsGranulesBatch(executionsPerGranule);
   return {
     granules: Number.parseInt(granules, 10),
     files: Number.parseInt(files, 10),
