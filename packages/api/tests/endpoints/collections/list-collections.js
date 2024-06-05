@@ -145,7 +145,7 @@ test.serial('default returns list of collections from query', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  t.is(results.length, 1);
+  t.is(results.length, 10);
   t.is(results[0].name, t.context.collections[0].name);
 });
 
