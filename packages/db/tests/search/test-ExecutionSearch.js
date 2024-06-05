@@ -28,7 +28,6 @@ test.before(async (t) => {
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
   const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
-  // const collections = [];
 
   // Create a PG Collection
   t.context.testPgCollection = fakeCollectionRecordFactory();
@@ -44,7 +43,8 @@ test.before(async (t) => {
   t.context.executionPgModel = new ExecutionPgModel();
   range(50).map((num) => (
     executions.push(fakeExecutionRecordFactory({
-      //collection_cumulus_id: t.context.collectionCumulusId, -- need to look at this, causing errors
+      //collection_cumulus_id: t.context.collectionCumulusId,
+      // this is giving knex/db problems, when collectionId is included
       status: statuses[(num % 3) + 1],
       error: errors[num % 5],
       created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
@@ -56,9 +56,9 @@ test.before(async (t) => {
       original_payload: {
         orginal: `payload__${num}`,
       },
-      final_payload: {
+      final_payload: num % 2 === 0 ? {
         final: `payload__${num}`,
-      },
+      } : undefined,
       duration: t.context.duration * ((num % 2) + 1),
     }))
   ));
@@ -152,7 +152,7 @@ test('ExecutionSearch supports term search for date field', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-test('GranuleSearch supports term search for number field', async (t) => {
+test('ExecutionSearch supports term search for number field', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 50,
@@ -174,7 +174,7 @@ test('GranuleSearch supports term search for number field', async (t) => {
   t.is(response.results[0]?.name, 'fakeArn__1');
 });
 
-test('GranuleSearch supports term search for string field', async (t) => {
+test('ExecutionSearch supports term search for string field', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 50,
@@ -195,7 +195,7 @@ test('GranuleSearch supports term search for string field', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-test('GranuleSearch supports term search for timestamp', async (t) => {
+test('ExecutionSearch supports term search for timestamp', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
@@ -207,7 +207,7 @@ test('GranuleSearch supports term search for timestamp', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-test('GranuleSearch supports term search for nested error.Error', async (t) => {
+test('ExecutionSearch supports term search for nested error.Error', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -219,7 +219,7 @@ test('GranuleSearch supports term search for nested error.Error', async (t) => {
   t.is(response.results?.length, 10);
 });
 
-test('GranuleSearch supports range search', async (t) => {
+test('ExecutionSearch supports range search', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 50,
@@ -251,7 +251,7 @@ test('GranuleSearch supports range search', async (t) => {
   t.is(response.results?.length, 25);
 });
 
-test('GranuleSearch non-existing fields are ignored', async (t) => {
+test('ExecutionSearch non-existing fields are ignored', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -264,7 +264,7 @@ test('GranuleSearch non-existing fields are ignored', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleSearch supports search for multiple fields', async (t) => {
+test('ExecutionSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     id: 10,
@@ -278,7 +278,7 @@ test('GranuleSearch supports search for multiple fields', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-test('GranuleSearch supports sorting', async (t) => {
+test('ExecutionSearch supports sorting', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 50,
@@ -315,7 +315,7 @@ test('GranuleSearch supports sorting', async (t) => {
   t.true(response3.results[1].updatedAt > response3.results[25].updatedAt);
 });
 
-test('GranuleSearch supports sorting by Error', async (t) => {
+test('ExecutionSearch supports sorting by Error', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 50,
@@ -337,93 +337,70 @@ test('GranuleSearch supports sorting by Error', async (t) => {
   t.is(response10.results[49].error.Error, 'CmrFailure');
 });
 
-/*
-test('GranuleSearch supports terms search', async (t) => {
+test('ExecutionSearch supports terms search', async (t) => {
   const { knex } = t.context;
+
   let queryStringParameters = {
-    limit: 200,
-    granuleId__in: [t.context.granuleIds[0], t.context.granuleIds[5]].join(','),
-    published__in: 'true,false',
+    limit: 50,
+    workflowName__in: ['testWorkflow__1', 'testWorkflow__2'].join(','),
   };
-  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let dbSearch = new ExecutionSearch({ queryStringParameters });
   let response = await dbSearch.query(knex);
   t.is(response.meta.count, 2);
   t.is(response.results?.length, 2);
 
   queryStringParameters = {
-    limit: 200,
-    granuleId__in: [t.context.granuleIds[0], t.context.granuleIds[5]].join(','),
-    published__in: 'true',
+    limit: 50,
+    workflowName__in: ['testWorkflow__1', 'testWorkflow__2'].join(','),
+    status__in: 'running'
   };
-  dbSearch = new GranuleSearch({ queryStringParameters });
+  dbSearch = new ExecutionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test('GranuleSearch supports collectionId terms search', async (t) => {
+test('ExecutionSearch supports error.Error terms search', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
-    limit: 200,
-    collectionId__in: [t.context.collectionId2, constructCollectionId('fakecollectionterms', 'v1')].join(','),
+    limit: 50,
+    'error.Error__in': ['CumulusMessageAdapterError', 'UnknownError'].join(','),
   };
-  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let dbSearch = new ExecutionSearch({ queryStringParameters });
   let response = await dbSearch.query(knex);
-  t.is(response.meta.count, 50);
-  t.is(response.results?.length, 50);
+  t.is(response.meta.count, 20);
+  t.is(response.results?.length, 20);
 
   queryStringParameters = {
-    limit: 200,
-    collectionId__in: [t.context.collectionId, t.context.collectionId2].join(','),
-  };
-  dbSearch = new GranuleSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
-  t.is(response.meta.count, 100);
-  t.is(response.results?.length, 100);
-});
-
-test('GranuleSearch supports error.Error terms search', async (t) => {
-  const { knex } = t.context;
-  let queryStringParameters = {
-    limit: 200,
-    'error.Error__in': [t.context.granuleSearchFields['error.Error'], 'unknownerror'].join(','),
-  };
-  let dbSearch = new GranuleSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
-  t.is(response.meta.count, 50);
-  t.is(response.results?.length, 50);
-
-  queryStringParameters = {
-    limit: 200,
+    limit: 50,
     'error.Error__in': 'unknownerror',
   };
-  dbSearch = new GranuleSearch({ queryStringParameters });
+  dbSearch = new ExecutionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
   t.is(response.meta.count, 0);
   t.is(response.results?.length, 0);
 });
 
-test('GranuleSearch supports search which checks existence of granule field', async (t) => {
+test('ExecutionSearch supports search which checks existence of execution field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    limit: 200,
-    cmrLink__exists: 'true',
+    limit: 50,
+    finalPayload__exists: 'true',
   };
-  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
 });
 
-test('GranuleSearch supports search which granule field does not match the given value', async (t) => {
+test('ExecutionSearch supports search which granule field does not match the given value', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
-    limit: 200,
-    granuleId__not: t.context.granuleIds[0],
-    published__not: 'true',
+    limit: 50,
+    status__not: 'completed',
   };
-  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let dbSearch = new ExecutionSearch({ queryStringParameters });
   let response = await dbSearch.query(knex);
-  t.is(response.meta.count, 49);
-  t.is(response.results?.length, 49);
-*/
+  t.is(response.meta.count, 33);
+  t.is(response.results?.length, 33);
+});

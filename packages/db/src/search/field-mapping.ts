@@ -141,6 +141,10 @@ const executionMapping : { [key: string]: Function } = {
   duration: (value?: string) => ({
     duration: value && Number(value),
   }),
+  //need to take another look at this and originalPayload
+  finalPayload: (value?: string) => ({
+    final_payload: value,
+  }),
   // nested error field
   'error.Error': (value?: string) => ({
     'error.Error': value,
@@ -153,6 +157,9 @@ const executionMapping : { [key: string]: Function } = {
   }),
   id: (value?: string) => ({
     cumulus_id: value,
+  }),
+  originalPayload: (value?: string) => ({
+    original_payload: value,
   }),
   workflowName: (value?: string) => ({
     workflow_name: value,
