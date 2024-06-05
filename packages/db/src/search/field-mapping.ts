@@ -157,6 +157,9 @@ const executionMapping : { [key: string]: Function } = {
   workflowName: (value?: string) => ({
     workflow_name: value,
   }),
+  url: (value?: string) => ({
+    url: value,
+  }),
   status: (value?: string) => ({
     status: value,
   }),
