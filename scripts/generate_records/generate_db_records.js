@@ -84,21 +84,18 @@ const addProvider = async (stackName, bucket) => {
   return providerId;
 };
 
-const uploadFiles = async (knex, granuleCumulusId, fileCount) => {
-  const files = [];
-  const fileModel = new FilePgModel();
+const uploadFiles = async (knex, granuleCumulusId, fileCount, models) => {
+  const fileModel = models.fileModel;
   for (let i = 0; i < fileCount; i += 1) {
     const file = fakeFileRecordFactory({
       granule_cumulus_id: granuleCumulusId,
     });
-    const [fileOutput] = await fileModel.upsert(knex, file);
-    files.push(fileOutput);
+    await fileModel.upsert(knex, file);
   }
-  return files;
 };
-const uploadExecutions = async (knex, collectionCumulusId, executionCount) => {
+const uploadExecutions = async (knex, collectionCumulusId, executionCount, models) => {
   const executions = [];
-  const executionModel = new ExecutionPgModel();
+  const executionModel = models.executionModel;
   for (let i = 0; i < executionCount; i += 1) {
     const execution = fakeExecutionRecordFactory({ collection_cumulus_id: collectionCumulusId });
     const [executionOutput] = await executionModel.upsert(knex, execution);
@@ -111,10 +108,11 @@ const uploadGranules = async (
   collectionCumulusId,
   providerCumulusId,
   granuleCount,
-  filesPerGranule
+  filesPerGranule,
+  models
 ) => {
   const granules = [];
-  const granuleModel = new GranulePgModel();
+  const granuleModel = models.granuleModel;
   for (let i = 0; i < granuleCount; i += 1) {
     const granule = fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
@@ -126,14 +124,14 @@ const uploadGranules = async (
       granule,
     });
     granules.push(granuleOutput);
-    uploadFiles(knex, granuleOutput.cumulus_id, filesPerGranule);
+    uploadFiles(knex, granuleOutput.cumulus_id, filesPerGranule, models);
   }
 
   return granules;
 };
 
-const uploadGranuleExecutions = async (knex, granules, executions) => {
-  const GEmodel = new GranulesExecutionsPgModel();
+const uploadGranuleExecutions = async (knex, granules, executions, models) => {
+  const GEmodel = models.geModel;
   for (let i = 0; i < granules.length; i += 1) {
     for (let j = 0; j < executions.length; j += 1) {
       await GEmodel.upsert(
@@ -154,20 +152,23 @@ const uploadDataBunch = async ({
   files,
   batchGranules,
   batchExecutions,
+  models,
 }) => {
   const granules = await uploadGranules(
     knex,
     collectionCumulusId,
     providerCumulusId,
     batchGranules,
-    files
+    files,
+    models
   );
   const executions = await uploadExecutions(
     knex,
     collectionCumulusId,
-    batchExecutions
+    batchExecutions,
+    models
   );
-  await uploadGranuleExecutions(knex, granules, executions);
+  await uploadGranuleExecutions(knex, granules, executions, models);
 };
 
 const uploadDBGranules = async (
@@ -193,7 +194,12 @@ const uploadDBGranules = async (
   const dbProvider = await providerPgModel.get(knex, { name: providerId });
   const collectionCumulusId = dbCollection.cumulus_id;
   const providerCumulusId = dbProvider.cumulus_id;
-
+  const models = {
+    geModel: new GranulesExecutionsPgModel(),
+    executionModel: new ExecutionPgModel(),
+    granuleModel: new GranulePgModel(),
+    fileModel: new FilePgModel(),
+  };
   const fakeIterable = {};
   fakeIterable[Symbol.iterator] = function* fakeYielder() {
     let batchGranules = 1;
@@ -208,6 +214,7 @@ const uploadDBGranules = async (
         files,
         batchGranules,
         batchExecutions,
+        models,
       };
     }
   };
