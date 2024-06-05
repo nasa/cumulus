@@ -322,15 +322,7 @@ const main = async () => {
     variance,
     concurrency,
   } = parseArgs();
-  console.log(`running with args: ${{
-    granules,
-    files,
-    executionsPerBatch,
-    granulesPerBatch,
-    collections,
-    variance,
-    concurrency,
-  }}`);
+
   const stackName = getRequiredEnvVar('DEPLOYMENT');
   const internalBucket = getRequiredEnvVar('INTERNAL_BUCKET');
   const providerId = await addProvider(stackName, internalBucket, 'a');
