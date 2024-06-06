@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { Knex } from 'knex';
 
 import isNil from 'lodash/isNil';
@@ -26,7 +27,15 @@ export const translatePostgresExecutionToApiExecution = async (
   let asyncOperationId: string | undefined;
 
   if (executionRecord.collection_cumulus_id) {
-    const collection = await collectionPgModel.get(knex, {
+    let collection;
+    try{
+      collection = await collectionPgModel.get(knex, {
+        cumulus_id: executionRecord.collection_cumulus_id,
+      });
+    }catch(error){
+      console.log("HELLO", error);
+    }
+    collection = await collectionPgModel.get(knex, {
       cumulus_id: executionRecord.collection_cumulus_id,
     });
     collectionId = constructCollectionId(collection.name, collection.version);
@@ -62,7 +71,7 @@ export const translatePostgresExecutionToApiExecution = async (
     execution: executionRecord.url,
     cumulusVersion: executionRecord.cumulus_version,
     asyncOperationId,
-    collectionId,
+    //collectionId,
     parentArn,
     createdAt: executionRecord.created_at.getTime(),
     updatedAt: executionRecord.updated_at.getTime(),

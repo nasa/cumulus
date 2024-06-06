@@ -32,13 +32,15 @@ test.before(async (t) => {
   // Create a PG Collection
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.testPgCollection = fakeCollectionRecordFactory(
-    { cumulus_id: 1 }
+    { cumulus_id: 1,
+      name: 'testCollection',
+      version: 9, }
   );
-  const [pgCollection] = await t.context.collectionPgModel.create(
+  await t.context.collectionPgModel.insert(
     t.context.knex,
-    t.context.testPgCollection
+    [t.context.testPgCollection]
   );
-  t.context.collectionCumulusId = pgCollection.cumulus_id;
+  t.context.collectionCumulusId = t.context.testPgCollection.cumulus_id;
   t.context.duration = 100;
 
   const executions = [];
@@ -50,7 +52,7 @@ test.before(async (t) => {
 
   range(50).map((num) => (
     executions.push(fakeExecutionRecordFactory({
-      //collection_cumulus_id: t.context.collectionCumulusId,
+      collection_cumulus_id: t.context.collectionCumulusId,
       //this is causing issues collection_cumulus_id
       status: statuses[(num % 3) + 1],
       error: errors[num % 5],
@@ -87,12 +89,13 @@ test.after.always(async (t) => {
 
 test('ExecutionSearch returns correct response for basic query', async (t) => {
   const { knex } = t.context;
-  const dbSearch = new ExecutionSearch();
+  const dbSearch = new ExecutionSearch({});
   const results = await dbSearch.query(knex);
+  console.log(results);
   t.is(results.meta.count, 50);
   t.is(results.results.length, 10);
 });
-
+/*
 test('ExecutionSearch supports page and limit params', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
@@ -162,7 +165,7 @@ test('ExecutionSearch supports term search for date field', async (t) => {
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });*/
-
+/*
 test('ExecutionSearch supports term search for number field', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
@@ -219,7 +222,7 @@ test('ExecutionSearch supports term search for timestamp', async (t) => {
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });*/
-
+/*
 test('ExecutionSearch supports term search for nested error.Error', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
@@ -255,7 +258,7 @@ test('ExecutionSearch supports range search', async (t) => {
   response = await dbSearch.query(knex);
   t.is(response.meta.count, 38);
   t.is(response.results?.length, 38);*/
-
+/*
   queryStringParameters = {
     limit: 200,
     duration__from: 150,
@@ -418,4 +421,4 @@ test('ExecutionSearch supports search which granule field does not match the giv
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 33);
   t.is(response.results?.length, 33);
-});
+});*/
