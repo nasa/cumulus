@@ -109,12 +109,13 @@ export {
 } from './lib/collection';
 
 export {
+  batchDeleteExecutionFromDatabaseByCumulusCollectionId,
   executionArnsFromGranuleIdsAndWorkflowNames,
-  newestExecutionArnFromGranuleIdWorkflowName,
-  getWorkflowNameIntersectFromGranuleIds,
   getApiExecutionCumulusIds,
   getApiGranuleExecutionCumulusIdsByExecution,
   getExecutionInfoByGranuleCumulusId,
+  getWorkflowNameIntersectFromGranuleIds,
+  newestExecutionArnFromGranuleIdWorkflowName,
 } from './lib/execution';
 
 export {

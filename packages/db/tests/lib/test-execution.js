@@ -2,30 +2,30 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
-const testDbName = `execution_${cryptoRandomString({ length: 10 })}`;
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
 const randomGranuleId = () => `granuleId_${cryptoRandomString({ length: 10 })}`;
 const randomWorkflow = () => `workflow_${cryptoRandomString({ length: 10 })}`;
 
 const {
-  destroyLocalTestDb,
-  generateLocalTestDb,
-  GranulePgModel,
-  GranulesExecutionsPgModel,
+  batchDeleteExecutionFromDatabaseByCumulusCollectionId,
   CollectionPgModel,
-  fakeCollectionRecordFactory,
+  createRejectableTransaction,
+  destroyLocalTestDb,
+  executionArnsFromGranuleIdsAndWorkflowNames,
   ExecutionPgModel,
+  fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
-  executionArnsFromGranuleIdsAndWorkflowNames,
-  newestExecutionArnFromGranuleIdWorkflowName,
-  getWorkflowNameIntersectFromGranuleIds,
-  upsertGranuleWithExecutionJoinRecord,
-  getExecutionInfoByGranuleCumulusId,
-  migrationDir,
-  createRejectableTransaction,
+  generateLocalTestDb,
   getApiExecutionCumulusIds,
   getApiGranuleExecutionCumulusIdsByExecution,
+  getExecutionInfoByGranuleCumulusId,
+  getWorkflowNameIntersectFromGranuleIds,
+  GranulePgModel,
+  GranulesExecutionsPgModel,
+  migrationDir,
+  newestExecutionArnFromGranuleIdWorkflowName,
+  upsertGranuleWithExecutionJoinRecord,
 } = require('../../dist');
 
 /**
@@ -83,9 +83,25 @@ const newGranuleAssociatedWithExecution = async (
   return { executionCumulusId, granuleCumulusId };
 };
 
-test.before(async (t) => {
+const batchCreateExecutions = async (knex, cumulusCollectionId, length = 100) => {
+  const executionPgModel = new ExecutionPgModel();
+  const promiseArray = Array.from(
+    { length },
+    () => executionPgModel.create(
+      knex,
+      fakeExecutionRecordFactory({
+        timestamp: new Date(Date.now()),
+        collection_cumulus_id: cumulusCollectionId,
+      })
+    )
+  );
+  return await Promise.all(promiseArray);
+};
+
+test.beforeEach(async (t) => {
+  t.context.testDbName = `execution_${cryptoRandomString({ length: 10 })}`;
   const { knexAdmin, knex } = await generateLocalTestDb(
-    testDbName,
+    t.context.testDbName,
     migrationDir
   );
   t.context.knexAdmin = knexAdmin;
@@ -107,11 +123,8 @@ test.before(async (t) => {
   t.context.executionPgModel = new ExecutionPgModel();
 });
 
-test.after.always(async (t) => {
-  await destroyLocalTestDb({
-    ...t.context,
-    testDbName,
-  });
+test.afterEach.always(async (t) => {
+  await destroyLocalTestDb(t.context);
 });
 
 test('getExecutionInfoByGranuleCumulusId() gets all Executions related to a Granule', async (t) => {
@@ -945,4 +958,85 @@ test('getApiGranuleExecutionCumulusIdsByExecution() returns granule cumulus ids 
     executionRecords);
 
   t.deepEqual(actualGranuleCumulusIds, expectedGranuleCumulusIds);
+});
+
+test('batchDeleteExecutionFromDatabaseByCumulusCollectionId deletes expected batch of records', async (t) => {
+  const { knex } = t.context;
+
+  const collectionPgModel = new CollectionPgModel();
+  const baseCollection = fakeCollectionRecordFactory();
+  const toDeleteCollection = fakeCollectionRecordFactory();
+  const toDeleteCollectionPgRecord = await collectionPgModel.create(
+    knex,
+    toDeleteCollection
+  );
+  const baseCollectionPgRecord = await collectionPgModel.create(
+    knex,
+    baseCollection
+  );
+
+  const origExecutions = await knex('executions').select();
+  t.is(origExecutions.length, 0);
+
+  const deleteExecutions = await batchCreateExecutions(
+    knex,
+    toDeleteCollectionPgRecord[0].cumulus_id
+  );
+  const baseExecutions = await batchCreateExecutions(
+    knex,
+    baseCollectionPgRecord[0].cumulus_id
+  );
+
+  const result = await batchDeleteExecutionFromDatabaseByCumulusCollectionId(
+    knex,
+    toDeleteCollectionPgRecord[0].cumulus_id,
+    5
+  );
+  const executions = await knex('executions').select();
+  t.is(result, 5);
+  t.is(executions.length, baseExecutions.length + deleteExecutions.length - 5);
+});
+
+test('batchDeleteExecutionFromDatabaseByCumulusCollectionId deletes executions when batch size is larger than total', async (t) => {
+  const { knex } = t.context;
+
+  const collectionPgModel = new CollectionPgModel();
+  const baseCollection = fakeCollectionRecordFactory();
+  const toDeleteCollection = fakeCollectionRecordFactory();
+  const toDeleteCollectionPgRecord = await collectionPgModel.create(
+    knex,
+    toDeleteCollection
+  );
+  const baseCollectionPgRecord = await collectionPgModel.create(
+    knex,
+    baseCollection
+  );
+
+  const origExecutions = await knex('executions').select();
+  t.is(origExecutions.length, 0);
+
+  await batchCreateExecutions(
+    knex,
+    toDeleteCollectionPgRecord[0].cumulus_id
+  );
+  const baseExecutions = await batchCreateExecutions(
+    knex,
+    baseCollectionPgRecord[0].cumulus_id
+  );
+
+  const result = await batchDeleteExecutionFromDatabaseByCumulusCollectionId(
+    knex,
+    toDeleteCollectionPgRecord[0].cumulus_id,
+    1003
+  );
+  const executions = await knex('executions').select();
+  t.is(result, 100);
+  t.is(executions.length, baseExecutions.length);
+});
+
+test('batchDeleteExecutionFromDatabaseByCumulusCollectionId handles undefined value correctly', async (t) => {
+  const { knex } = t.context;
+  await t.throwsAsync(
+    batchDeleteExecutionFromDatabaseByCumulusCollectionId(knex, undefined, 1003)
+  );
 });

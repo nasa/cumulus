@@ -240,3 +240,23 @@ export const getApiGranuleExecutionCumulusIdsByExecution = async (
 
   return granuleCumulusIds;
 };
+
+// TODO make sure API logic handles *null* case
+export const batchDeleteExecutionFromDatabaseByCumulusCollectionId = async (
+  knex: Knex | Knex.Transaction,
+  collectionCumulusId: number | null,
+  batchSize: number = 1
+) => {
+  try {
+    return await knex('executions')
+      .whereIn('cumulus_id',
+        knex.select('cumulus_id')
+          .from('executions')
+          .where('collection_cumulus_id', collectionCumulusId)
+          .limit(batchSize))
+      .where('collection_cumulus_id', collectionCumulusId)
+      .delete();
+  } catch (error) {
+    throw new Error(`Failed to delete from database: ${error.message}`);
+  }
+};
