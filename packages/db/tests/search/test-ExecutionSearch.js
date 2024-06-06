@@ -43,6 +43,11 @@ test.before(async (t) => {
 
   const executions = [];
   t.context.executionPgModel = new ExecutionPgModel();
+
+  t.context.testTimeStamp1 = '1633406400000';
+  t.context.testTimeStamp2 = '1550725200000';
+  t.context.testTimeStamp3 = '1800725210000';
+
   range(50).map((num) => (
     executions.push(fakeExecutionRecordFactory({
       //collection_cumulus_id: t.context.collectionCumulusId,
@@ -148,7 +153,7 @@ test('ExecutionSearch supports term search for date field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
-    updatedAt: '1633406400000',
+    updatedAt: `${t.context.testTimeStamp1}`,
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -203,7 +208,7 @@ test('ExecutionSearch supports term search for timestamp', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
-    timestamp: '1550725200000',
+    timestamp: `${t.context.testTimeStamp2}`,
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -237,8 +242,8 @@ test('ExecutionSearch supports range search', async (t) => {
 
   queryStringParameters = {
     limit: 200,
-    timestamp__from: '1550725200000',
-    timestamp__to: '1800725210000',
+    timestamp__from: `${t.context.testTimeStamp2}`,
+    timestamp__to: `${t.context.testTimeStamp3}`,
   };
   dbSearch = new ExecutionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
