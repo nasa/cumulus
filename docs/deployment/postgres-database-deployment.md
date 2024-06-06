@@ -404,6 +404,8 @@ Replace HOST value and PORT value with the values retrieved from Secrets Manager
 
 The LocalForward number 9202 can be any unused LocalForward number in your SSH config:
 
+##### Using SSH keypair authentication
+
 ```shell
 Host ssm-proxy
   Hostname 127.0.0.1
@@ -411,6 +413,17 @@ Host ssm-proxy
   LocalForward 9202 [HOST value]:[PORT value]
   IdentityFile ~/.ssh/id_rsa
   Port 6868
+```
+
+##### Using PKCS11Provider
+
+```shell
+Host ssm-proxy
+  Hostname 127.0.0.1
+  User ec2-user
+  LocalForward 9202 [HOST value]:[PORT value]
+  Port 6868
+  PKCS11Provider /usr/lib/ssh-keychain.dylib
 ```
 
 #### Create a Local Port Forward
