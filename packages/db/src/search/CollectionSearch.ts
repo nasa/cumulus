@@ -9,6 +9,11 @@ import { PostgresCollectionRecord } from '../types/collection';
 const log = new Logger({ sender: '@cumulus/db/CollectionSearch' });
 
 /**
+ * There is no need to declare an ApiCollectionRecord type since
+ * CollectionRecord contains all the same fields from the api
+ */
+
+/**
  * Class to build and execute db search query for collection
  */
 export class CollectionSearch extends BaseSearch {

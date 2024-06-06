@@ -89,9 +89,9 @@ test('CollectionSearch returns correct response for basic query', async (t) => {
   t.is(results.results.length, 10);
 });
 
-test('CollectionSearch supports infix and prefix search', async (t) => {
+test('CollectionSearch supports infix search', async (t) => {
   const { knex } = t.context;
-  let queryStringParameters = {
+  const queryStringParameters = {
     limit: 20,
     infix: 'test',
   };
@@ -99,8 +99,11 @@ test('CollectionSearch supports infix and prefix search', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 20);
+});
 
-  queryStringParameters = {
+test('CollectionSearch supports prefix search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
     limit: 20,
     prefix: 'fake',
   };
@@ -110,9 +113,9 @@ test('CollectionSearch supports infix and prefix search', async (t) => {
   t.is(response2.results?.length, 20);
 });
 
-test('CollectionSearch supports term search', async (t) => {
+test('CollectionSearch supports term search for number field', async (t) => {
   const { knex } = t.context;
-  let queryStringParameters = {
+  const queryStringParameters = {
     limit: 200,
     version: 2,
   };
@@ -120,8 +123,11 @@ test('CollectionSearch supports term search', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
+});
 
-  queryStringParameters = {
+test('CollectionSearch supports term search for string field', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
     limit: 200,
     name: 'fakeCollection___0071',
   };
@@ -138,8 +144,11 @@ test('CollectionSearch supports term search', async (t) => {
   const response3 = await dbSearch3.query(knex);
   t.is(response3.meta.count, 50);
   t.is(response3.results?.length, 50);
+});
 
-  queryStringParameters = {
+test('CollectionSearch supports term search for boolean field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
     limit: 200,
     reportToEms: false,
   };
