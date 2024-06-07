@@ -275,11 +275,14 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
     console.log('CHECK HERE FOR ERRORS 1');
     const collsResp = await getCollections({ prefix: stackName,
       query: { name__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
+    console.log('COLLSRESP', collsResp);
     console.log('CHECK HERE FOR ERRORS 2');
     const results = get(JSON.parse(collsResp.body), 'results', []);
     console.log('CHECK HERE FOR ERRORS 3');
+    console.log('RESULTS', results);
     const ids = results.map((c) => constructCollectionId(c.name, c.version));
     console.log('CHECK HERE FOR ERRORS 4');
+    console.log('IDS', ids);
     return isEqual(ids.sort(), collectionIds.sort());
   },
   {
