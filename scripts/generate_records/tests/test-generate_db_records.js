@@ -22,7 +22,7 @@ const {
   uploadGranules,
   uploadFiles,
   uploadGranuleExecutions,
-  getDetailGenerator,
+  ParameterGenerator,
 } = require('../generate_db_records');
 
 
@@ -224,20 +224,20 @@ test('uploadGranuleExecutions() uploads GranuleExecutions', async (t) => {
 
 test.only('getDetailGenerator() yields a generator that plays well with pMap', async (t) => {
   let iterated = 0;
-  const iterableGenerator = getDetailGenerator(
+  const iterableGenerator = new ParameterGenerator(
     {},
     5,
     0, 0, 0, 0, 0, {}, false
   );
   console.log('got iterableGenerator')
-//   await pMap(
-//     iterableGenerator,
-//     (data) => {
-//       console.log('iterated:', data);
-//       iterated += 1;
-//     },
-//     { concurrency: 1 }
-//   );
-//   t.is(iterated, 5);
+  await pMap(
+    iterableGenerator,
+    (data) => {
+      console.log('iterated:', data);
+      iterated += 1;
+    },
+    { concurrency: 1 }
+  );
+  t.is(iterated, 5);
 t.pass()
 });
