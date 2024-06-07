@@ -128,9 +128,16 @@ const addProvider = async (stackName, bucket) => {
  * @param {number} granuleCumulusId
  * @param {number} fileCount
  * @param {ModelSet} models - set of PGmodels including fileModel
+ * @param {boolean} swallowErrors
  * @returns {Promise<number>}
  */
-const uploadFiles = async (knex, granuleCumulusId, fileCount, models) => {
+const uploadFiles = async (
+  knex,
+  granuleCumulusId,
+  fileCount,
+  models,
+  swallowErrors = false
+) => {
   const fileModel = models.fileModel;
   let uploaded = 0;
   for (let i = 0; i < fileCount; i += 1) {
@@ -141,6 +148,7 @@ const uploadFiles = async (knex, granuleCumulusId, fileCount, models) => {
       await fileModel.upsert(knex, file);
       uploaded += 1;
     } catch (error) {
+      if (!swallowErrors) throw error;
       log.error(`failed up upload file: ${error}`);
     }
   }
@@ -153,9 +161,16 @@ const uploadFiles = async (knex, granuleCumulusId, fileCount, models) => {
  * @param {number} collectionCumulusId
  * @param {number} executionCount
  * @param {ModelSet} models - set of PGmodels including executionModel
+ * @param {boolean} swallowErrors
  * @returns {Promise<Array<number>>} - cumulusId for each successfully uploaded execution
  */
-const uploadExecutions = async (knex, collectionCumulusId, executionCount, models) => {
+const uploadExecutions = async (
+  knex,
+  collectionCumulusId,
+  executionCount,
+  models,
+  swallowErrors = false
+) => {
   const executionCumulusIds = [];
   const executionModel = models.executionModel;
   for (let i = 0; i < executionCount; i += 1) {
@@ -164,6 +179,7 @@ const uploadExecutions = async (knex, collectionCumulusId, executionCount, model
       const [executionOutput] = await executionModel.upsert(knex, execution);
       executionCumulusIds.push(executionOutput.cumulus_id);
     } catch (error) {
+      if (!swallowErrors) throw error;
       log.error(`failed up upload execution: ${error}`);
     }
   }
@@ -179,6 +195,7 @@ const uploadExecutions = async (knex, collectionCumulusId, executionCount, model
  * @param {number} granuleCount
  * @param {number} filesPerGranule
  * @param {ModelSet} models - set of PGmodels including granuleModel
+ * @param {boolean} swallowErrors
  * @returns {Promise<Array<number>>} - cumulusId for each successfully uploaded granule
  */
 const uploadGranules = async (
@@ -187,7 +204,8 @@ const uploadGranules = async (
   providerCumulusId,
   granuleCount,
   filesPerGranule,
-  models
+  models,
+  swallowErrors = false
 ) => {
   const granuleCumulusIds = [];
   const granuleModel = models.granuleModel;
@@ -204,8 +222,9 @@ const uploadGranules = async (
         writeConstraints: true,
       });
       granuleCumulusIds.push(granuleOutput.cumulus_id);
-      uploadFiles(knex, granuleOutput.cumulus_id, filesPerGranule, models);
+      await uploadFiles(knex, granuleOutput.cumulus_id, filesPerGranule, models, swallowErrors);
     } catch (error) {
+      if (!swallowErrors) throw error;
       log.error(`failed up upload granule: ${error}`);
     }
   }
@@ -220,9 +239,16 @@ const uploadGranules = async (
  * @param {Array<number>} granuleCumulusIds
  * @param {Array<number>} executionCumulusIds
  * @param {ModelSet} models - set of PGmodels including geModel
+ * @param {boolean} swallowErrors
  * @returns {Promise<number>} - number of granuleExecutions uploaded
  */
-const uploadGranuleExecutions = async (knex, granuleCumulusIds, executionCumulusIds, models) => {
+const uploadGranuleExecutions = async (
+  knex,
+  granuleCumulusIds,
+  executionCumulusIds,
+  models,
+  swallowErrors = false
+) => {
   const GEmodel = models.geModel;
   let uploaded = 0;
   for (let i = 0; i < granuleCumulusIds.length; i += 1) {
@@ -237,6 +263,7 @@ const uploadGranuleExecutions = async (knex, granuleCumulusIds, executionCumulus
         );
         uploaded += 1;
       } catch (error) {
+        if (!swallowErrors) throw error;
         log.error(`failed up upload granuleExecution: ${error}`);
       }
     }
@@ -256,6 +283,7 @@ const uploadGranuleExecutions = async (knex, granuleCumulusIds, executionCumulus
  *   granulesPerBatch: number,
  *   executionsPerBatch: number,
  *   models: ModelSet,
+ *   swallowErrors: boolean,
  * }} BatchParams
  *
  * @param {BatchParams} params
@@ -269,22 +297,106 @@ const uploadDataBatch = async ({
   granulesPerBatch,
   executionsPerBatch,
   models,
+  swallowErrors,
 }) => {
+  console.log('running batch with', {
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    filesPerGranule,
+    granulesPerBatch,
+    executionsPerBatch,
+    models,
+    swallowErrors,
+  });
   const granuleCumulusIds = await uploadGranules(
     knex,
     collectionCumulusId,
     providerCumulusId,
     granulesPerBatch,
     filesPerGranule,
-    models
+    models,
+    swallowErrors
   );
   const executionCumulusIds = await uploadExecutions(
     knex,
     collectionCumulusId,
     executionsPerBatch,
-    models
+    models,
+    swallowErrors
   );
-  await uploadGranuleExecutions(knex, granuleCumulusIds, executionCumulusIds, models);
+  await uploadGranuleExecutions(
+    knex,
+    granuleCumulusIds,
+    executionCumulusIds,
+    models,
+    swallowErrors
+  );
+};
+
+/**
+ * create a generator Object that pretends to be an Iterable
+ * this is to allow pmap to use this data without holding the entire (potentially very large)
+ * set of batch params for more than the currently running threads
+ *
+ * @param {object} knex
+ * @param {number} granules
+ * @param {number} collectionCumulusId
+ * @param {number} providerCumulusId
+ * @param {number} filesPerGranule
+ * @param {number} granulesPerBatch
+ * @param {number} executionsPerBatch
+ * @param {ModelSet} models
+ * @param {boolean} variance
+ * @returns {Iterable<BatchParams>}
+ */
+
+const getDetailGenerator = (
+  knex,
+  granules,
+  collectionCumulusId,
+  providerCumulusId,
+  filesPerGranule,
+  granulesPerBatch,
+  executionsPerBatch,
+  models,
+  variance
+) => {
+  console.log({
+    knex,
+    granules,
+    collectionCumulusId,
+    providerCumulusId,
+    filesPerGranule,
+    granulesPerBatch,
+    executionsPerBatch,
+    models,
+    variance
+  })
+  function* detailGenerator() {
+    let _granulesPerBatch = 1;
+    for (let i = 0; i < granules; i += _granulesPerBatch) {
+      console.log('in here', i);
+      _granulesPerBatch = granulesPerBatch + (variance ? randomInt(6) : 0);
+      const _executionsPerBatch = executionsPerBatch + (variance ? randomInt(5) : 0);
+      yield {
+        knex,
+        collectionCumulusId,
+        providerCumulusId,
+        filesPerGranule,
+        granulesPerBatch: _granulesPerBatch,
+        executionsPerBatch: _executionsPerBatch,
+        models,
+        swallowErrors: true,
+      };
+    }
+  }
+  const detailGeneratorPretendingToBeIterable = {};
+  detailGeneratorPretendingToBeIterable[Symbol.iterator] = detailGenerator;
+  for (const a of detailGenerator()) {
+    console.log(a)
+  }
+  return /** @type {Iterable<BatchParams>} */(detailGeneratorPretendingToBeIterable);
 };
 
 /**
@@ -331,27 +443,19 @@ const uploadDBGranules = async (
     granuleModel: new GranulePgModel(),
     fileModel: new FilePgModel(),
   };
-  const fakeIterable = {};
-  fakeIterable[Symbol.iterator] = function* detailGenerator() {
-    let batchGranules = 1;
-    for (let i = 0; i < granules; i += batchGranules) {
-      console.log(i);
-      batchGranules = granulesPerBatch + (variance ? randomInt(6) : 0);
-      const batchExecutions = executionsPerBatch + (variance ? randomInt(5) : 0);
-      yield {
-        knex,
-        collectionCumulusId,
-        providerCumulusId,
-        filesPerGranule,
-        batchGranules,
-        batchExecutions,
-        models,
-      };
-    }
-  };
-
+  const iterableDetailGenerator = getDetailGenerator(
+    knex,
+    granules,
+    collectionCumulusId,
+    providerCumulusId,
+    filesPerGranule,
+    granulesPerBatch,
+    executionsPerBatch,
+    models,
+    variance
+  );
   await pMap(
-    /** @type {Iterable<BatchParams>} */(fakeIterable),
+    iterableDetailGenerator,
     uploadDataBatch,
     { concurrency }
   );
@@ -466,4 +570,8 @@ module.exports = {
   yieldCollectionDetails,
   addCollection,
   uploadExecutions,
+  uploadGranules,
+  uploadFiles,
+  uploadGranuleExecutions,
+  getDetailGenerator,
 };
