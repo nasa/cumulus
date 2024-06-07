@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { Knex } from 'knex';
 
 import isNil from 'lodash/isNil';
@@ -14,6 +13,40 @@ import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { ExecutionPgModel } from '../models/execution';
 import { CollectionPgModel } from '../models/collection';
 import { AsyncOperationPgModel } from '../models/async_operation';
+import { PostgresCollectionRecord } from '../types/collection';
+
+export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
+  executionRecord,
+  collectionPgRecord,
+}:{
+  executionRecord: PostgresExecutionRecord,
+  collectionPgRecord: Pick<PostgresCollectionRecord, 'cumulus_id' | 'name' | 'version'>,
+}): ApiExecutionRecord => {
+  const postfix = executionRecord.arn.split(':').pop();
+  if (!postfix) {
+    throw new Error(`Execution ARN record ${executionRecord.arn} has an invalid postfix and API cannot generate the required 'name' field`);
+  }
+
+  return {
+    name: postfix,
+    status: executionRecord.status ?? 'unknown',
+    arn: executionRecord.arn,
+    duration: executionRecord.duration ?? 0,
+    error: executionRecord.error ?? {},
+    tasks: executionRecord.tasks ?? {},
+    originalPayload: executionRecord.original_payload ?? {},
+    finalPayload: executionRecord.final_payload ?? {},
+    type: executionRecord.workflow_name ?? '',
+    execution: executionRecord.url ?? '',
+    cumulusVersion: executionRecord.cumulus_version ?? '',
+    //asyncOperationId,
+    collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
+    //parentArn,
+    createdAt: Number(executionRecord.created_at),
+    updatedAt: Number(executionRecord.updated_at),
+    timestamp: Number(executionRecord.timestamp),
+  };
+};
 
 export const translatePostgresExecutionToApiExecution = async (
   executionRecord: PostgresExecutionRecord,
@@ -27,15 +60,7 @@ export const translatePostgresExecutionToApiExecution = async (
   let asyncOperationId: string | undefined;
 
   if (executionRecord.collection_cumulus_id) {
-    let collection;
-    try{
-      collection = await collectionPgModel.get(knex, {
-        cumulus_id: executionRecord.collection_cumulus_id,
-      });
-    }catch(error){
-      console.log("HELLO", error);
-    }
-    collection = await collectionPgModel.get(knex, {
+    const collection = await collectionPgModel.get(knex, {
       cumulus_id: executionRecord.collection_cumulus_id,
     });
     collectionId = constructCollectionId(collection.name, collection.version);
@@ -71,7 +96,7 @@ export const translatePostgresExecutionToApiExecution = async (
     execution: executionRecord.url,
     cumulusVersion: executionRecord.cumulus_version,
     asyncOperationId,
-    //collectionId,
+    collectionId,
     parentArn,
     createdAt: executionRecord.created_at.getTime(),
     updatedAt: executionRecord.updated_at.getTime(),

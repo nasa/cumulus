@@ -3,6 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { ExecutionSearch } = require('../../dist/search/ExecutionSearch');
 
 const {
@@ -32,15 +33,28 @@ test.before(async (t) => {
   // Create a PG Collection
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.testPgCollection = fakeCollectionRecordFactory(
-    { cumulus_id: 1,
+    { cumulus_id: 0,
       name: 'testCollection',
-      version: 9, }
+      version: 8 }
+  );
+  t.context.testPgCollection2 = fakeCollectionRecordFactory(
+    { cumulus_id: 1,
+      name: 'fakeCollection',
+      version: 2 }
   );
   await t.context.collectionPgModel.insert(
     t.context.knex,
-    [t.context.testPgCollection]
+    [t.context.testPgCollection, t.context.testPgCollection2]
   );
-  t.context.collectionCumulusId = t.context.testPgCollection.cumulus_id;
+
+  t.context.CumulusId1 = t.context.testPgCollection.cumulus_id;
+  t.context.CumulusId2 = t.context.testPgCollection2.cumulus_id;
+
+  t.context.collectionId1 = constructCollectionId(
+    t.context.testPgCollection.name,
+    t.context.testPgCollection.version
+  );
+
   t.context.duration = 100;
 
   const executions = [];
@@ -52,13 +66,12 @@ test.before(async (t) => {
 
   range(50).map((num) => (
     executions.push(fakeExecutionRecordFactory({
-      collection_cumulus_id: t.context.collectionCumulusId,
-      //this is causing issues collection_cumulus_id
+      collection_cumulus_id: num % 2 === 0 ? t.context.CumulusId1 : t.context.CumulusId2,
       status: statuses[(num % 3) + 1],
       error: errors[num % 5],
       created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
       updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
-      cumulus_id: (num + 1),
+      cumulus_id: (num + 2),
       workflow_name: `testWorkflow__${num}`,
       arn: num % 2 === 0 ? `testArn__${num}` : `fakeArn__${num}`,
       url: `https://fake-execution${num}.com/`,
@@ -69,8 +82,6 @@ test.before(async (t) => {
         final: `payload__${num}`,
       } : undefined,
       duration: t.context.duration * ((num % 2) + 1),
-      //apparently both duration and colleciton_cumulus_id
-      //when defined together cause issues
     }))
   ));
 
@@ -91,11 +102,10 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
   const { knex } = t.context;
   const dbSearch = new ExecutionSearch({});
   const results = await dbSearch.query(knex);
-  console.log(results);
   t.is(results.meta.count, 50);
   t.is(results.results.length, 10);
 });
-/*
+
 test('ExecutionSearch supports page and limit params', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
@@ -150,10 +160,18 @@ test('ExecutionSearch supports prefix search', async (t) => {
   t.is(response.results?.length, 25);
 });
 
-test.todo('ExecutionSearch supports collectionId term search');
+test('ExecutionSearch supports collectionId term search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 50,
+    collectionId: t.context.collectionId1,
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
+});
 
-/* temporarily commenting out,
-failing in CI but not in local
 test('ExecutionSearch supports term search for date field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
@@ -164,8 +182,8 @@ test('ExecutionSearch supports term search for date field', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
-});*/
-/*
+});
+
 test('ExecutionSearch supports term search for number field', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
@@ -179,7 +197,7 @@ test('ExecutionSearch supports term search for number field', async (t) => {
 
   queryStringParameters = {
     limit: 50,
-    id: 1,
+    id: 2,
   };
   dbSearch = new ExecutionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
@@ -209,8 +227,6 @@ test('ExecutionSearch supports term search for string field', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-/* temporarily commenting out,
-failing in CI but not in local
 test('ExecutionSearch supports term search for timestamp', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
@@ -221,8 +237,8 @@ test('ExecutionSearch supports term search for timestamp', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
-});*/
-/*
+});
+
 test('ExecutionSearch supports term search for nested error.Error', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
@@ -247,8 +263,6 @@ test('ExecutionSearch supports range search', async (t) => {
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 
-  /* temporarily commenting out,
-  failing in CI but not in local
   queryStringParameters = {
     limit: 200,
     timestamp__from: `${t.context.testTimeStamp2}`,
@@ -257,8 +271,8 @@ test('ExecutionSearch supports range search', async (t) => {
   dbSearch = new ExecutionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
   t.is(response.meta.count, 38);
-  t.is(response.results?.length, 38);*/
-/*
+  t.is(response.results?.length, 38);
+
   queryStringParameters = {
     limit: 200,
     duration__from: 150,
@@ -285,7 +299,7 @@ test('ExecutionSearch non-existing fields are ignored', async (t) => {
 test('ExecutionSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    id: 12,
+    id: 13,
     workflow_name: 'testWorkflow__11',
     arn: 'fakeArn__11',
     url: 'https://fake-execution11.com/',
@@ -421,4 +435,4 @@ test('ExecutionSearch supports search which granule field does not match the giv
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 33);
   t.is(response.results?.length, 33);
-});*/
+});
