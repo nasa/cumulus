@@ -272,10 +272,14 @@ async function updateGranuleFile(prefix, granule, regex, replacement) {
 const waitForCollectionRecordsInList = async (stackName, collectionIds, additionalQueryParams = {}) => await pWaitFor(
   async () => {
     // Verify the collection is returned when listing collections
+    console.log('CHECK HERE FOR ERRORS 1');
     const collsResp = await getCollections({ prefix: stackName,
-      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
+      query: { name__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
+    console.log('CHECK HERE FOR ERRORS 2');
     const results = get(JSON.parse(collsResp.body), 'results', []);
+    console.log('CHECK HERE FOR ERRORS 3');
     const ids = results.map((c) => constructCollectionId(c.name, c.version));
+    console.log('CHECK HERE FOR ERRORS 4');
     return isEqual(ids.sort(), collectionIds.sort());
   },
   {
