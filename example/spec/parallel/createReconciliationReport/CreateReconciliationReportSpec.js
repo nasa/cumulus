@@ -273,6 +273,8 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
   async () => {
     // Verify the collection is returned when listing collections
     console.log('CHECK HERE FOR ERRORS 1');
+    console.log('COLLECTIONIDS', collectionIds);
+    console.log('ADDITIONAL PARAMS', additionalQueryParams);
     const collsResp = await getCollections({ prefix: stackName,
       query: { name__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
     console.log('COLLSRESP', collsResp);
@@ -283,6 +285,7 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
     const ids = results.map((c) => constructCollectionId(c.name, c.version));
     console.log('CHECK HERE FOR ERRORS 4');
     console.log('IDS', ids);
+    console.log('ISEQUAL', isEqual(ids.sort(), collectionIds.sort()));
     return isEqual(ids.sort(), collectionIds.sort());
   },
   {
@@ -395,8 +398,9 @@ describe('When there are granule differences and granule reconciliation is run',
         collectionId,
         constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
       ];
-
+      console.log('WAIT FOR COLLECTION RECORD IN LIST BEFORE');
       await waitForCollectionRecordsInList(config.stackName, collectionIds, { timestamp__from: ingestTime });
+      console.log('WAIT FOR COLLECTION RECORD IN LIST AFTER');
 
       // update one of the granule files in database so that that file won't match with CMR
       console.log('XXXXX Waiting for getGranule()');

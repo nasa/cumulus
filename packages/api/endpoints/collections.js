@@ -55,11 +55,13 @@ async function list(req, res) {
       includeStats === 'true'
     );
   } else {
+    console.log('COLLECTIONSEARCH QSP', queryStringParameters);
     dbSearch = new CollectionSearch(
       { queryStringParameters }
     );
   }
   let result = await dbSearch.query();
+  console.log('COLLECTIONSEARCH RESULT', result);
   if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
