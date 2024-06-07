@@ -132,6 +132,9 @@ const collectionMapping : { [key: string]: Function } = {
 };
 
 const executionMapping : { [key: string]: Function } = {
+  asyncOperationId: (value?: string) => ({
+    async_operation_cumulus_id: value,
+  }),
   arn: (value?: string) => ({
     arn: value,
   }),
@@ -160,6 +163,9 @@ const executionMapping : { [key: string]: Function } = {
   }),
   originalPayload: (value?: string) => ({
     original_payload: value,
+  }),
+  parentCumulusId: (value?: string) => ({
+    parent_cumulus_id: value,
   }),
   workflowName: (value?: string) => ({
     workflow_name: value,

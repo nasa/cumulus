@@ -9,7 +9,7 @@ import Logger from '@cumulus/logger';
 import { removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
 import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
-import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
+import { PostgresExecution, PostgresExecutionRecord, PostgresSearchExecutionRecord } from '../types/execution';
 import { ExecutionPgModel } from '../models/execution';
 import { CollectionPgModel } from '../models/collection';
 import { AsyncOperationPgModel } from '../models/async_operation';
@@ -19,7 +19,7 @@ export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
   executionRecord,
   collectionPgRecord,
 }:{
-  executionRecord: PostgresExecutionRecord,
+  executionRecord: PostgresSearchExecutionRecord,
   collectionPgRecord: Pick<PostgresCollectionRecord, 'cumulus_id' | 'name' | 'version'>,
 }): ApiExecutionRecord => {
   const postfix = executionRecord.arn.split(':').pop();
@@ -39,7 +39,7 @@ export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
     type: executionRecord.workflow_name ?? '',
     execution: executionRecord.url ?? '',
     cumulusVersion: executionRecord.cumulus_version ?? '',
-    //asyncOperationId,
+    asyncOperationId: executionRecord.asyncOperationId ?? '',
     collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
     //parentArn,
     createdAt: Number(executionRecord.created_at),

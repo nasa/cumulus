@@ -16,6 +16,7 @@ interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
   async_operation_cumulus_id: number,
   collection_cumulus_id: number,
   parent_cumulus_id: number,
+  parentArn?: string,
   url: string,
   status: ExecutionRecordStatus,
   tasks: Object,
@@ -40,6 +41,15 @@ export class ExecutionSearch extends BaseSearch {
   }
 
   /**
+   * check if joined async_ops table search is needed
+   *
+   * @returns whether collection search is needed
+   */
+  protected searchAsync(): boolean {
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.asyncOperationId || term?.asyncOperationId || terms?.asyncOperationId);
+  }
+  /**
    * Build basic query
    *
    * @param knex - DB client
@@ -52,6 +62,7 @@ export class ExecutionSearch extends BaseSearch {
     } {
     const {
       collections: collectionsTable,
+      asyncOperations: asyncOperationsTable,
     } = TableNames;
     const countQuery = knex(this.tableName)
       .count(`${this.tableName}.cumulus_id`);
@@ -61,11 +72,17 @@ export class ExecutionSearch extends BaseSearch {
       .select({
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
+        asyncOperationId: `${asyncOperationsTable}.id`,
       })
       .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
 
+    searchQuery.join(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    }
+    if (this.searchAsync()) {
+      countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operations_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
     }
     return { countQuery, searchQuery };
   }
