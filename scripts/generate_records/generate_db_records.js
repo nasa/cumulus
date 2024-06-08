@@ -441,6 +441,12 @@ const uploadDBGranules = async (
   );
 };
 
+/**
+ * Parse executions per batch and granules per batch based on a given ratio
+ *
+ * @param {string} executionsPerGranule - executionsPerGranule in <executions>:<granules>
+ * @returns {{executionsPerBatch: number, granulesPerBatch: number}}
+ */
 const parseExecutionsGranulesBatch = (executionsPerGranule) => {
   // expect to come in format 'x:y'
   try {
@@ -456,6 +462,19 @@ const parseExecutionsGranulesBatch = (executionsPerGranule) => {
   }
 };
 
+/**
+ * parse command line args for run parameters
+ *
+ * @returns {{
+ *   granules: number,
+ *   files: number,
+ *   granulesPerBatch: number
+ *   executionsPerBatch: number
+ *   collections: number
+ *   concurrency: number
+ *   variance: boolean
+ * }}
+ */
 const parseArgs = () => {
   const {
     granulesK,
