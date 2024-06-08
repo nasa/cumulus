@@ -299,16 +299,6 @@ const uploadDataBatch = async ({
   models,
   swallowErrors,
 }) => {
-  console.log('running batch with', {
-    knex,
-    collectionCumulusId,
-    providerCumulusId,
-    filesPerGranule,
-    granulesPerBatch,
-    executionsPerBatch,
-    models,
-    swallowErrors,
-  });
   const granuleCumulusIds = await uploadGranules(
     knex,
     collectionCumulusId,
@@ -334,116 +324,61 @@ const uploadDataBatch = async ({
   );
 };
 
-class ParameterGenerator {
-  constructor(
-    knex,
-    granules,
-    collectionCumulusId,
-    providerCumulusId,
-    filesPerGranule,
-    granulesPerBatch,
-    executionsPerBatch,
-    models,
-    variance
-  ) {
-    this.knex = knex;
-    this.granules = granules;
-    this.collectionCumulusId = collectionCumulusId;
-    this.providerCumulusId = providerCumulusId;
-    this.filesPerGranule = filesPerGranule;
-    this.granulesPerBatch = granulesPerBatch;
-    this.executionsPerBatch = executionsPerBatch;
-    this.models = models;
-    this.variance = variance;
-    for(const a of this){
-      console.log(a);
-    }
-  }
-
-  *[Symbol.iterator]() {
-    let _granulesPerBatch = 1;
-    for (let i = 0; i < this.granules; i += _granulesPerBatch) {
-      console.log('in here', i);
-      _granulesPerBatch = this.granulesPerBatch + (this.variance ? randomInt(6) : 0);
-      const _executionsPerBatch = this.executionsPerBatch + (this.variance ? randomInt(5) : 0);
-      yield {
-        knex: this.knex,
-        collectionCumulusId: this.collectionCumulusId,
-        providerCumulusId: this.providerCumulusId,
-        filesPerGranule: this.filesPerGranule,
-        granulesPerBatch: _granulesPerBatch,
-        executionsPerBatch: _executionsPerBatch,
-        models: this.models,
-        swallowErrors: true,
-      };
-    }
-  }
-}
-
 /**
  * create a generator Object that pretends to be an Iterable
  * this is to allow pmap to use this data without holding the entire (potentially very large)
  * set of batch params for more than the currently running threads
  *
- * @param {object} knex
- * @param {number} granules
- * @param {number} collectionCumulusId
- * @param {number} providerCumulusId
- * @param {number} filesPerGranule
- * @param {number} granulesPerBatch
- * @param {number} executionsPerBatch
- * @param {ModelSet} models
- * @param {boolean} variance
+ * @param {object} params
+ * @param {object} params.knex
+ * @param {number} params.granules
+ * @param {number} params.collectionCumulusId
+ * @param {number} params.providerCumulusId
+ * @param {number} params.filesPerGranule
+ * @param {number} params.granulesPerBatch
+ * @param {number} params.executionsPerBatch
+ * @param {ModelSet} params.models
+ * @param {boolean} params.variance
  * @returns {Iterable<BatchParams>}
  */
 
-// const getDetailGenerator = (
-//   knex,
-//   granules,
-//   collectionCumulusId,
-//   providerCumulusId,
-//   filesPerGranule,
-//   granulesPerBatch,
-//   executionsPerBatch,
-//   models,
-//   variance
-// ) => {
-//   console.log({
-//     knex,
-//     granules,
-//     collectionCumulusId,
-//     providerCumulusId,
-//     filesPerGranule,
-//     granulesPerBatch,
-//     executionsPerBatch,
-//     models,
-//     variance
-//   })
-//   function* detailGenerator() {
-//     let _granulesPerBatch = 1;
-//     for (let i = 0; i < granules; i += _granulesPerBatch) {
-//       console.log('in here', i);
-//       _granulesPerBatch = granulesPerBatch + (variance ? randomInt(6) : 0);
-//       const _executionsPerBatch = executionsPerBatch + (variance ? randomInt(5) : 0);
-//       yield {
-//         knex,
-//         collectionCumulusId,
-//         providerCumulusId,
-//         filesPerGranule,
-//         granulesPerBatch: _granulesPerBatch,
-//         executionsPerBatch: _executionsPerBatch,
-//         models,
-//         swallowErrors: true,
-//       };
-//     }
-//   }
-//   const detailGeneratorPretendingToBeIterable = {};
-//   detailGeneratorPretendingToBeIterable[Symbol.iterator] = detailGenerator;
-//   for (const a of detailGenerator()) {
-//     console.log(a)
-//   }
-//   return /** @type {Iterable<BatchParams>} */(detailGeneratorPretendingToBeIterable);
-// };
+const getDetailGenerator = ({
+  knex,
+  granules,
+  collectionCumulusId,
+  providerCumulusId,
+  filesPerGranule,
+  granulesPerBatch,
+  executionsPerBatch,
+  models,
+  variance,
+}) => {
+  if (granulesPerBatch < 1) {
+    throw new Error('granulesPerBatch must be set to >=1');
+  }
+  function* detailGenerator() {
+    let _granulesPerBatch = 1;
+    for (let i = 0; i < granules; i += _granulesPerBatch) {
+      console.log(i);
+      _granulesPerBatch = granulesPerBatch + (variance ? randomInt(6) : 0);
+      const _executionsPerBatch = executionsPerBatch + (variance ? randomInt(5) : 0);
+      yield {
+        knex,
+        collectionCumulusId,
+        providerCumulusId,
+        filesPerGranule,
+        granulesPerBatch: _granulesPerBatch,
+        executionsPerBatch: _executionsPerBatch,
+        models,
+        swallowErrors: true,
+      };
+    }
+  }
+  const detailGeneratorPretendingToBeIterable = {};
+  detailGeneratorPretendingToBeIterable[Symbol.iterator] = detailGenerator;
+
+  return /** @type {Iterable<BatchParams>} */(detailGeneratorPretendingToBeIterable);
+};
 
 /**
  * upload a batch of granules and executions
@@ -461,6 +396,7 @@ class ParameterGenerator {
  */
 
 const uploadDBGranules = async (
+  knex,
   providerId,
   collection,
   granules,
@@ -471,11 +407,9 @@ const uploadDBGranules = async (
   variance
 ) => {
   process.env.dbMaxPool = concurrency.toString();
-  const knex = await getKnexClient();
 
   const collectionPgModel = new CollectionPgModel();
   const providerPgModel = new ProviderPgModel();
-
   const dbCollection = await collectionPgModel.get(
     knex,
     { name: collection.name, version: collection.version }
@@ -489,7 +423,7 @@ const uploadDBGranules = async (
     granuleModel: new GranulePgModel(),
     fileModel: new FilePgModel(),
   };
-  const iterableDetailGenerator = new ParameterGenerator(
+  const iterableDetailGenerator = getDetailGenerator({
     knex,
     granules,
     collectionCumulusId,
@@ -498,8 +432,8 @@ const uploadDBGranules = async (
     granulesPerBatch,
     executionsPerBatch,
     models,
-    variance
-  );
+    variance,
+  });
   await pMap(
     iterableDetailGenerator,
     uploadDataBatch,
@@ -511,6 +445,9 @@ const parseExecutionsGranulesBatch = (executionsPerGranule) => {
   // expect to come in format 'x:y'
   try {
     const split = executionsPerGranule.split(':');
+    if (split.length < 2) {
+      throw new Error(`only 1 value could be split from ${executionsPerGranule}`);
+    }
     const executionsPerBatch = Number.parseInt(split[0], 10);
     const granulesPerBatch = Number.parseInt(split[1], 10);
     return { executionsPerBatch, granulesPerBatch };
@@ -545,6 +482,7 @@ const parseArgs = () => {
         granules: 'granulesK',
         granules_k: 'granulesK',
         executions_to_granule: 'executionsPerGranule',
+        executions_to_granules: 'executionsPerGranule',
         executions_per_granule: 'executionsPerGranule',
         files_per_gran: 'files',
       },
@@ -583,13 +521,14 @@ const main = async () => {
     variance,
     concurrency,
   } = parseArgs();
-
+  const knex = await getKnexClient();
   const stackName = getRequiredEnvVar('DEPLOYMENT');
   const internalBucket = getRequiredEnvVar('INTERNAL_BUCKET');
   const providerId = await addProvider(stackName, internalBucket);
   for (const collection of yieldCollectionDetails(collections, true)) {
     await addCollection(stackName, internalBucket, collection.suffix);
     await uploadDBGranules(
+      knex,
       providerId,
       collection,
       granules,
@@ -619,5 +558,7 @@ module.exports = {
   uploadGranules,
   uploadFiles,
   uploadGranuleExecutions,
-  ParameterGenerator,
+  getDetailGenerator,
+  parseArgs,
+  uploadDBGranules,
 };

@@ -1,11 +1,9 @@
 const test = require('ava');
+const clone = require('lodash/clone');
 const pMap = require('p-map');
-const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { createBucket } = require('@cumulus/aws-client/S3');
 const {
   CollectionPgModel,
   ProviderPgModel,
-  getKnexClient,
   ExecutionPgModel,
   fakeCollectionRecordFactory,
   fakeProviderRecordFactory,
@@ -16,15 +14,17 @@ const {
   FilePgModel,
   GranulesExecutionsPgModel,
 } = require('@cumulus/db');
+const { randomId } = require('@cumulus/common/test-utils');
 const {
   yieldCollectionDetails,
   uploadExecutions,
   uploadGranules,
   uploadFiles,
   uploadGranuleExecutions,
-  ParameterGenerator,
+  getDetailGenerator,
+  parseArgs,
+  uploadDBGranules,
 } = require('../generate_db_records');
-
 
 test('yieldCollectionDetails() gives repeatable and non-repeatable collections with valid name, version and suffix', (t) => {
   const numberOfCollections = 120;
@@ -78,15 +78,6 @@ test.after.always(async (t) => {
     tesetDbName: t.context.testDbName,
   });
 });
-// test('addCollection()', (t) => {
-//   // i'm not sure how to test this without significant rearrange
-//   t.pass();
-// });
-
-// test('adProvider()', (t) => {
-//   // i'm not sure how to test this without significant rearrange
-//   t.pass();
-// });
 
 test('uploadExecutions() uploads executions', async (t) => {
   const collectionModel = new CollectionPgModel();
@@ -104,6 +95,9 @@ test('uploadExecutions() uploads executions', async (t) => {
     }
   );
   t.is(executions.length, 3);
+  await Promise.all(executions.map(async (execution) => {
+    await executionModel.exists(t.context.knex, { cumulus_id: execution });
+  }));
 });
 
 test('uploadGranules() uploads granules', async (t) => {
@@ -129,8 +123,10 @@ test('uploadGranules() uploads granules', async (t) => {
       granuleModel,
     }
   );
-  t.is(granules.length, 15)
-
+  t.is(granules.length, 15);
+  await Promise.all(granules.map(async (granule) => {
+    await granuleModel.exists(t.context.knex, { cumulus_id: granule });
+  }));
   granules = await uploadGranules(
     t.context.knex,
     dbCollection.cumulus_id,
@@ -143,6 +139,9 @@ test('uploadGranules() uploads granules', async (t) => {
     }
   );
   t.is(granules.length, 5);
+  await Promise.all(granules.map(async (granule) => {
+    await granuleModel.exists(t.context.knex, { cumulus_id: granule });
+  }));
 });
 
 test('uploadFiles() uploadsFiles', async (t) => {
@@ -222,22 +221,180 @@ test('uploadGranuleExecutions() uploads GranuleExecutions', async (t) => {
   t.is(geUploads, 15 * 12);
 });
 
-test.only('getDetailGenerator() yields a generator that plays well with pMap', async (t) => {
+test('getDetailGenerator() yields a generator that plays well with pMap', async (t) => {
   let iterated = 0;
-  const iterableGenerator = new ParameterGenerator(
-    {},
-    5,
-    0, 0, 0, 0, 0, {}, false
-  );
-  console.log('got iterableGenerator')
+  const iterableGenerator = getDetailGenerator({
+    knex: {},
+    granules: 5,
+    collectionCumulusId: 0,
+    providerCumulusId: 0,
+    filesPerGranule: 0,
+    granulesPerBatch: 1,
+    executionsPerBatch: 0,
+    models: {},
+    variance: false,
+  });
   await pMap(
     iterableGenerator,
-    (data) => {
-      console.log('iterated:', data);
+    () => {
       iterated += 1;
     },
     { concurrency: 1 }
   );
   t.is(iterated, 5);
-t.pass()
+});
+const setArgs = (args) => {
+  process.argv = process.argv.slice(0, 2).concat(args);
+};
+test.serial('parseArgs() parses out arguments when given reasonable args', (t) => {
+  const argv = clone(process.argv);
+
+  setArgs([]);
+  let args = parseArgs();
+  const defaultArgs = {
+    granules: 10000,
+    files: 1,
+    collections: 1,
+    executionsPerBatch: 2,
+    granulesPerBatch: 2,
+    variance: false,
+    concurrency: 1,
+  };
+  t.deepEqual(args, defaultArgs);
+
+  setArgs([
+    '--collections=3',
+    '--files=4',
+    '--concurrency', '5',
+    '--executionsPerGranule=3:5',
+    '--variance=true',
+    '--granules=112',
+  ]);
+  args = parseArgs();
+  t.deepEqual(args, {
+    granules: 112000,
+    files: 4,
+    concurrency: 5,
+    executionsPerBatch: 3,
+    granulesPerBatch: 5,
+    variance: true,
+    collections: 3,
+  });
+
+  setArgs([
+    '--concurrency=12',
+  ]);
+  args = parseArgs();
+  t.deepEqual(args, {
+    ...defaultArgs,
+    concurrency: 12,
+  });
+
+  setArgs([
+    '--files_per_gran=12',
+  ]);
+  args = parseArgs();
+  t.deepEqual(args, {
+    ...defaultArgs,
+    files: 12,
+  });
+
+  setArgs([
+    '--num_collections=3',
+  ]);
+  args = parseArgs();
+  t.deepEqual(args, {
+    ...defaultArgs,
+    collections: 3,
+  });
+
+  setArgs([
+    '--granulesK=15',
+  ]);
+  args = parseArgs();
+  t.deepEqual(args, {
+    ...defaultArgs,
+    granules: 15000,
+  });
+
+  setArgs([
+    '--granules_k=15',
+  ]);
+  args = parseArgs();
+  t.deepEqual(args, {
+    ...defaultArgs,
+    granules: 15000,
+  });
+
+  setArgs([
+    '--executions_to_granule=4:5',
+  ]);
+  args = parseArgs();
+  t.deepEqual(args, {
+    ...defaultArgs,
+    executionsPerBatch: 4,
+    granulesPerBatch: 5,
+  });
+
+  setArgs([
+    '--executions_per_granule=6:5',
+  ]);
+  args = parseArgs();
+  t.deepEqual(args, {
+    ...defaultArgs,
+    executionsPerBatch: 6,
+    granulesPerBatch: 5,
+  });
+
+  setArgs([
+    '--executions_to_granules=12:5',
+  ]);
+  args = parseArgs();
+  t.deepEqual(args, {
+    ...defaultArgs,
+    executionsPerBatch: 12,
+    granulesPerBatch: 5,
+  });
+
+  process.argv = argv;
+});
+
+test.serial("parseArgs() fails when executionsPerGranule doesn't follow a:b format", (t) => {
+  const argv = clone(process.argv);
+  setArgs([
+    '--executionsPerGranule=35',
+  ]);
+  t.throws(
+    parseArgs,
+    { message: 'cannot parse 35, expected format <executions>:<granules> ratio \nError: only 1 value could be split from 35' }
+  );
+  process.argv = argv;
+});
+
+test('uploadDBGranules() uploads a pile of entries', async (t) => {
+  const providerPgModel = new ProviderPgModel();
+  const collectionPgModel = new CollectionPgModel();
+
+  const collectionRecord = fakeCollectionRecordFactory({
+    name: 'MOD09GQ_abc',
+    version: '007',
+  });
+  const providerRecord = fakeProviderRecordFactory();
+  await providerPgModel.create(t.context.knex, providerRecord);
+  await collectionPgModel.create(
+    t.context.knex,
+    collectionRecord
+  );
+  await uploadDBGranules(
+    t.context.knex,
+    providerRecord.name,
+    collectionRecord,
+    100,
+    2,
+    3,
+    2,
+    2,
+    1
+  );
+  t.pass();
 });
