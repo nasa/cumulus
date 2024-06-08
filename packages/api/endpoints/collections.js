@@ -47,6 +47,7 @@ async function list(req, res) {
   log.trace(`list query ${JSON.stringify(req.query)}`);
   const { getMMT, includeStats, ...queryStringParameters } = req.query;
   let dbSearch;
+  console.log('LIST QSP', queryStringParameters, includeStats);
   if (includeStats === 'true') {
     dbSearch = new Collection(
       { queryStringParameters },
