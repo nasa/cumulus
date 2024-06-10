@@ -16,9 +16,10 @@ const {
   GranulePgModel,
   GranulesExecutionsPgModel,
   translateApiGranuleToPostgresGranule,
+  translatePostgresExecutionToApiExecution,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const { indexGranule } = require('@cumulus/es-client/indexer');
+const { indexGranule, indexExecution } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
@@ -35,6 +36,7 @@ const {
 const {
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
+const { flattenDiagnosticMessageText } = require('typescript');
 
 const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/meta.xml'), 'utf-8');
 
@@ -215,6 +217,62 @@ async function createGranuleAndFiles({
   };
 }
 
+async function createExecutionRecords({
+  knex,
+  count,
+  esClient,
+  addGranules = flattenDiagnosticMessageText,
+  collectionId,
+}) {
+  const executionPgModel = new ExecutionPgModel();
+  const collectionPgModel = new CollectionPgModel();
+
+  // TODO: use common method
+  const pgCollection = fakeCollectionRecordFactory({
+    name: collectionId.split('___')[0],
+    version: collectionId.split('___')[1],
+  });
+
+  const pgCollectionRecord = await collectionPgModel.create(knex, pgCollection);
+
+  const executionCreationPromises = Array.from({ length: count }, () => {
+    const executionArn = randomId('executionArn');
+    return executionPgModel.create(knex, {
+      url: `https://example.com/${executionArn}`,
+      arn: executionArn,
+      status: 'completed',
+      collection_cumulus_id: pgCollectionRecord[0].cumulus_id,
+    });
+  });
+  const pgExecutions = await Promise.all(executionCreationPromises);
+
+  const executionRecords = await Promise.all(
+    pgExecutions.map((execution) =>
+      translatePostgresExecutionToApiExecution(execution[0], knex))
+  );
+
+  await Promise.all(
+    executionRecords.map((record) =>
+      indexExecution(esClient, record, process.env.ES_INDEX))
+  );
+
+  if (addGranules === true) {
+    const testGranuleObject = await createGranuleAndFiles({
+      collectionCumulusId: pgCollectionRecord.cumulus_id,
+      executionCumulusId: pgExecutions[0][0].cumulus_id,
+      collectionId,
+      dbClient: knex,
+      esClient,
+    });
+    const granulesExecutionsModel = new GranulesExecutionsPgModel();
+    await Promise.all(pgExecutions.map((execution) => granulesExecutionsModel.create(knex, {
+      granule_cumulus_id: testGranuleObject.newPgGranule.cumulus_id,
+      execution_cumulus_id: execution.cumulus_id,
+    })));
+  }
+  return executionRecords;
+}
+
 /**
  * Helper for creating array of granule IDs of variable length
  *
@@ -236,5 +294,6 @@ const generateListOfGranules = (count = 5000) => {
 
 module.exports = {
   createGranuleAndFiles,
+  createExecutionRecords,
   generateListOfGranules,
 };

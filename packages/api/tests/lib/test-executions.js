@@ -1,7 +1,23 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const { chooseTargetExecution } = require('../../lib/executions');
+const {
+  localStackConnectionEnv,
+  destroyLocalTestDb,
+  generateLocalTestDb,
+  migrationDir,
+} = require('@cumulus/db');
+
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
+
+
+const { createExecutionRecords } = require('../helpers/create-test-data');
+
+const { chooseTargetExecution, batchDeleteExecutionFromDatastore } = require('../../lib/executions');
 
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
 const randomGranuleId = () => `granuleId_${cryptoRandomString({ length: 10 })}`;
@@ -11,6 +27,55 @@ process.env.PG_HOST = `hostname_${cryptoRandomString({ length: 10 })}`;
 process.env.PG_USER = `user_${cryptoRandomString({ length: 10 })}`;
 process.env.PG_PASSWORD = `password_${cryptoRandomString({ length: 10 })}`;
 process.env.PG_DATABASE = `password_${cryptoRandomString({ length: 10 })}`;
+
+test.beforeEach(async (t) => {
+  try {
+    const testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
+    process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
+    const { esIndex, esClient } = await createTestIndex();
+    const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+    const collectionId = `${cryptoRandomString({ length: 5 })}___${cryptoRandomString({ length: 5 })}`;
+    t.context = {
+      ...t.context,
+      collectionId,
+      esClient,
+      esIndex,
+      knex,
+      knexAdmin,
+      testDbName,
+    };
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+});
+
+test.afterEach.always(async (t) => {
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName: t.context.testDbName,
+  });
+  await cleanupTestIndex(t.context);
+});
+
+// TODO: Add to test helpers/common/?
+
+const searchAllExecutionsForCollection = async (collectionId, esIndex) => {
+  const searchClient = new Search(
+    {
+      queryStringParameters: {
+        collectionId,
+      },
+    },
+    'execution',
+    esIndex
+  );
+  await searchClient.initializeEsClient();
+  const response = await searchClient.query();
+  return response;
+};
+
 
 test('chooseTargetExecution() returns executionArn if provided.', async (t) => {
   const executionArn = randomArn();
@@ -65,4 +130,36 @@ test('chooseTargetExecution() throws exactly any error raised in the database fu
       message: anError.message,
     }
   );
+});
+
+test('batchDeleteExecutionFromDatastore() deletes executions from the database.', async (t) => {
+  const collectionId = t.context.collectionId;
+  const executionCount = 57;
+  await createExecutionRecords({
+    knex: t.context.knex,
+    count: executionCount,
+    esClient: t.context.esClient,
+    collectionId,
+  });
+
+  const setupExecutions = await searchAllExecutionsForCollection(
+    collectionId,
+    t.context.esIndex
+  );
+  const setupRdsExecutions = await t.context.knex('executions').select();
+
+  t.is(setupRdsExecutions.length, executionCount);
+  t.is(setupExecutions.meta.count, executionCount);
+
+  await batchDeleteExecutionFromDatastore({
+    collectionId,
+    batchSize: 7,
+  });
+  const postDeleteEsExecutions = await searchAllExecutionsForCollection(
+    collectionId,
+    t.context.esIndex
+  );
+  const postDeleteRdsExecutions = await t.context.knex('executions').select();
+  t.is(postDeleteEsExecutions.meta.count, 0);
+  t.is(postDeleteRdsExecutions.length, 0);
 });
