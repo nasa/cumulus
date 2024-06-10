@@ -192,7 +192,7 @@ test('ExecutionSearch supports asyncOperationId term search', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
-    asyncOperationId: 140,
+    asyncOperationId: t.context.testAsyncOperation.id,
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);

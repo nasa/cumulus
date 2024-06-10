@@ -12,6 +12,7 @@ const {
   ExecutionPgModel,
   translatePostgresExecutionToApiExecution,
   createRejectableTransaction,
+  ExecutionSearch,
 } = require('@cumulus/db');
 const { deleteExecution } = require('@cumulus/es-client/indexer');
 const { getEsClient, Search } = require('@cumulus/es-client/search');
@@ -125,11 +126,8 @@ async function update(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'execution',
-    process.env.ES_INDEX
-  );
+  log.trace(`list query ${JSON.stringify(req.query)}`);
+  const search = new ExecutionSearch({ queryStringParameters: req.query });
   const response = await search.query();
   return res.send(response);
 }

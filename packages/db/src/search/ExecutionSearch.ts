@@ -14,6 +14,7 @@ interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
   cumulus_id: number,
   arn: string,
   async_operation_cumulus_id: number,
+  asyncOperationId: string,
   collection_cumulus_id: number,
   parent_cumulus_id: number,
   parentArn?: string,
@@ -47,7 +48,8 @@ export class ExecutionSearch extends BaseSearch {
    */
   protected searchAsync(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
-    return !!(not?.asyncOperationId || term?.asyncOperationId || terms?.asyncOperationId);
+    return !!(not?.asyncOperationId ||
+       term?.asyncOperationId || terms?.asyncOperationId);
   }
   /**
    * Build basic query
@@ -64,8 +66,6 @@ export class ExecutionSearch extends BaseSearch {
       collections: collectionsTable,
       asyncOperations: asyncOperationsTable,
     } = TableNames;
-    const countQuery = knex(this.tableName)
-      .count(`${this.tableName}.cumulus_id`);
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)
@@ -73,16 +73,23 @@ export class ExecutionSearch extends BaseSearch {
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
         asyncOperationId: `${asyncOperationsTable}.id`,
-      })
-      .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+      });
 
-    searchQuery.join(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+    const countQuery = knex(this.tableName)
+      .count(`${this.tableName}.cumulus_id`);
 
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+      searchQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    } else {
+      searchQuery.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
+
     if (this.searchAsync()) {
-      countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operations_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+      countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+      searchQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+    } else {
+      searchQuery.leftJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
     }
     return { countQuery, searchQuery };
   }

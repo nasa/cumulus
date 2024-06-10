@@ -133,6 +133,9 @@ const collectionMapping : { [key: string]: Function } = {
 
 const executionMapping : { [key: string]: Function } = {
   asyncOperationId: (value?: string) => ({
+    asyncOperationId: value,
+  }),
+  asyncOperationCumulusId: (value?: string) => ({
     async_operation_cumulus_id: value,
   }),
   arn: (value?: string) => ({

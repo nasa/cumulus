@@ -76,6 +76,9 @@ process.env.AccessTokensTable = randomId('token');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('secret');
+process.env.PG_HOST = randomId('hostname');
+process.env.PG_USER = randomId('user');
+process.env.PG_PASSWORD = randomId('password');
 
 test.before(async (t) => {
   process.env = {
@@ -149,7 +152,7 @@ test.before(async (t) => {
   );
 
   t.context.fakePGExecutions = await Promise.all(fakeExecutions.map(async (execution) => {
-    const omitExecution = omit(execution, ['asyncOperationId', 'parentArn']);
+    const omitExecution = omit(execution, ['parentArn']);
     const executionPgRecord = await translateApiExecutionToPostgresExecution(
       omitExecution,
       t.context.knex
@@ -336,11 +339,10 @@ test.serial('GET executions returns list of executions by default', async (t) =>
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
   const { meta, results } = response.body;
   t.is(results.length, 3);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'execution');
+  t.is(meta.table, 'executions');
   t.is(meta.count, 3);
   const arns = fakeExecutions.map((i) => i.arn);
   results.forEach((r) => {
@@ -351,7 +353,7 @@ test.serial('GET executions returns list of executions by default', async (t) =>
 test.serial('executions can be filtered by workflow', async (t) => {
   const response = await request(app)
     .get('/executions')
-    .query({ type: 'workflow2' })
+    .query({ workflowName: 'workflow2' })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -359,14 +361,15 @@ test.serial('executions can be filtered by workflow', async (t) => {
   const { meta, results } = response.body;
   t.is(results.length, 1);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'execution');
+  t.is(meta.table, 'executions');
   t.is(meta.count, 1);
   t.is(fakeExecutions[1].arn, results[0].arn);
 });
 
 test.serial('GET executions with asyncOperationId filter returns the correct executions', async (t) => {
   const response = await request(app)
-    .get(`/executions?asyncOperationId=${t.context.asyncOperationId}`)
+    .get('/executions')
+    .query({ asyncOperationId: t.context.asyncOperationId })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
