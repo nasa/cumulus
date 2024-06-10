@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-/*
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
@@ -108,7 +106,7 @@ const ingestAndPublishGranuleExecutionArns = [];
  * @param {string} sourceBucket - testing source bucket
  * @returns {Promise<Object>}  The collection created
  */
-/*
+
 const createActiveCollection = async (prefix, sourceBucket) => {
   // The S3 path where granules will be ingested from
   const sourcePath = `${prefix}/tmp/${randomId('test-')}`;
@@ -276,7 +274,7 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
   async () => {
     // Verify the collection is returned when listing collections
     const collsResp = await getCollections({ prefix: stackName,
-      query: { name__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
+      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, includeStats: true, limit: 30 } });
     const results = get(JSON.parse(collsResp.body), 'results', []);
     const ids = results.map((c) => constructCollectionId(c.name, c.version));
     return isEqual(ids.sort(), collectionIds.sort());
@@ -993,4 +991,4 @@ describe('When there are granule differences and granule reconciliation is run',
     });
     await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix);
   });
-});*/
+});
