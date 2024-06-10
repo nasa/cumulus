@@ -351,7 +351,7 @@ const getDetailGenerator = ({
     for (let i = 0; i < granules; i += _granulesPerBatch) {
       console.log(i);
       _granulesPerBatch = granulesPerBatch + (variance ? randomInt(6) : 0);
-      const _executionsPerBatch = executionsPerBatch + (variance ? randomInt(5) : 0);
+      const _executionsPerBatch = executionsPerBatch + (variance ? randomInt(6) : 0);
       yield {
         knex,
         collectionCumulusId,

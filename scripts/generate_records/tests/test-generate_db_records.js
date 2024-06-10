@@ -250,9 +250,6 @@ const setArgs = (args) => {
 };
 test.serial('parseArgs() parses out arguments when given reasonable args', (t) => {
   const argv = clone(process.argv);
-  const env = clone(process.env);
-  process.env.DEPLOYMENT = 'test';
-  process.env.INTERNAL_BUCKET = 'test';
   setArgs([]);
   let args = parseArgs();
   const defaultArgs = {
@@ -263,8 +260,6 @@ test.serial('parseArgs() parses out arguments when given reasonable args', (t) =
     granulesPerBatch: 2,
     variance: false,
     concurrency: 1,
-    deployment: 'test',
-    internalBucket: 'test',
   };
   t.deepEqual(args, defaultArgs);
 
@@ -285,8 +280,6 @@ test.serial('parseArgs() parses out arguments when given reasonable args', (t) =
     granulesPerBatch: 5,
     variance: true,
     collections: 3,
-    deployment: 'test',
-    internalBucket: 'test',
   });
 
   setArgs([
@@ -365,7 +358,6 @@ test.serial('parseArgs() parses out arguments when given reasonable args', (t) =
   });
 
   process.argv = argv;
-  process.env = env;
 });
 
 test.serial("parseArgs() fails when executionsPerGranule doesn't follow a:b format", (t) => {
