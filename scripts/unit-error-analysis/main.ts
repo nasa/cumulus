@@ -1,6 +1,7 @@
 import minimist from 'minimist';
 import moment from 'moment';
 import { listS3ObjectsV2Batch } from '@cumulus/aws-client/S3';
+import get from 'lodash/get';
 
 interface UnitErrorArgs {
   prefix: string
@@ -22,7 +23,7 @@ export const extractDate = (key: string): string => {
 export const getErrorLogs = async (
   branch: string = 'master',
   date: string,
-  bucket: string = 'unit-test-error-logs'
+  bucket: string = 'sandbox-unit-test-error-logs'
 ): Promise<Array<any>> => {
   const objects: Array<any> = [];
   for await (
@@ -84,14 +85,15 @@ export const processArgs = async (): Promise<UnitErrorArgs> => {
       default: {
         prefix: 'master',
         date: undefined,
-        bucket: 'unit-test-error-logs',
+        bucket: undefined,
       },
     }
   );
+  const ngapEnv = get(process.env, 'NGAP_ENV', 'sandbox').toLowerCase();
   return {
     prefix,
     date: moment(date).format('YYYY-MM-DD'),
-    bucket,
+    bucket: bucket || `${ngapEnv}-unit-test-error-logs`,
   };
 };
 const main = async () => {
