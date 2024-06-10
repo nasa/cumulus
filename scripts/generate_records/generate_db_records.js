@@ -134,6 +134,7 @@ const addProvider = async (stackName, bucket) => {
 const uploadFiles = async (
   knex,
   granuleCumulusId,
+  granuleGranuleId,
   fileCount,
   models,
   swallowErrors = false
@@ -142,6 +143,8 @@ const uploadFiles = async (
   let uploaded = 0;
   for (let i = 0; i < fileCount; i += 1) {
     const file = /** @type {PostgresFile} */(fakeFileRecordFactory({
+      bucket: `${i}`,
+      key: `${granuleGranuleId}${i}`,
       granule_cumulus_id: granuleCumulusId,
     }));
     try {
@@ -222,7 +225,14 @@ const uploadGranules = async (
         writeConstraints: true,
       });
       granuleCumulusIds.push(granuleOutput.cumulus_id);
-      await uploadFiles(knex, granuleOutput.cumulus_id, filesPerGranule, models, swallowErrors);
+      await uploadFiles(
+        knex,
+        granuleOutput.cumulus_id,
+        granuleOutput.granule_id,
+        filesPerGranule,
+        models,
+        swallowErrors
+      );
     } catch (error) {
       if (!swallowErrors) throw error;
       log.error(`failed up upload granule: ${error}`);
