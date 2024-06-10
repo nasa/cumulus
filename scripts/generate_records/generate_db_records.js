@@ -10,7 +10,6 @@ const {
 } = require('@cumulus/integration-tests');
 const Logger = require('@cumulus/logger');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
-const { getRequiredEnvVar } = require('@cumulus/common/env');
 const {
   GranulePgModel,
   CollectionPgModel,
@@ -24,6 +23,7 @@ const {
   fakeExecutionRecordFactory,
 } = require('@cumulus/db');
 const { randomInt } = require('crypto');
+const { MissingRequiredEnvVarError } = require('@cumulus/errors');
 
 const log = new Logger({
   sender: '@cumulus/generate_records',
@@ -484,6 +484,8 @@ const parseExecutionsGranulesBatch = (executionsPerGranule) => {
  *   collections: number
  *   concurrency: number
  *   variance: boolean
+ *   deployment: string
+ *   internalBucket: string
  * }}
  */
 const parseArgs = () => {
@@ -494,6 +496,8 @@ const parseArgs = () => {
     collections,
     variance,
     concurrency,
+    deployment,
+    internalBucket,
   } = minimist(
     process.argv,
     {
@@ -503,6 +507,8 @@ const parseArgs = () => {
         'granulesK',
         'executionsPerGranule',
         'concurrency',
+        'deployment',
+        'internalBucket',
       ],
       boolean: [
         'variance',
@@ -514,15 +520,18 @@ const parseArgs = () => {
         executions_to_granule: 'executionsPerGranule',
         executions_to_granules: 'executionsPerGranule',
         executions_per_granule: 'executionsPerGranule',
+        internal_bucket: 'internal_bucket',
         files_per_gran: 'files',
       },
       default: {
-        collections: 1,
-        files: 1,
-        granulesK: 10,
-        executionsPerGranule: '2:2',
-        variance: false,
-        concurrency: 1,
+        collections: process.env.COLLECTIONS || 1,
+        files: process.env.FILES || 1,
+        granulesK: process.env.GRANULES_K || 10,
+        executionsPerGranule: process.env.EXECUTIONS_PER_GRANULE || '2:2',
+        variance: process.env.VARIANCE || false,
+        concurrency: process.env.CONCURRENCY || 1,
+        deployment: process.env.DEPLOYMENT,
+        internalBucket: process.env.INTERNAL_BUCKET,
       },
     }
   );
@@ -530,6 +539,14 @@ const parseArgs = () => {
     granulesPerBatch,
     executionsPerBatch,
   } = parseExecutionsGranulesBatch(executionsPerGranule);
+
+  if (deployment === undefined) {
+    throw new MissingRequiredEnvVarError('The DEPLOYMENT environment variable must be set, or the --deployment argument set');
+  }
+  if (internalBucket === undefined) {
+    throw new MissingRequiredEnvVarError('The INTERNAL_BUCKET environment variable must be set, or the --internalBucket argument set');
+  }
+
   return {
     granules: Number.parseInt(granulesK, 10) * 1000,
     files: Number.parseInt(files, 10),
@@ -538,9 +555,15 @@ const parseArgs = () => {
     collections: Number.parseInt(collections, 10),
     concurrency: Number.parseInt(concurrency, 10),
     variance,
+    deployment,
+    internalBucket,
   };
 };
 
+/**
+ * handle command line arguments and environment variables
+ * run the data upload based on configured parameters
+ */
 const main = async () => {
   const {
     granules,
@@ -550,11 +573,11 @@ const main = async () => {
     collections,
     variance,
     concurrency,
+    internalBucket,
+    deployment,
   } = parseArgs();
   const knex = await getKnexClient();
-  const stackName = getRequiredEnvVar('DEPLOYMENT');
-  const internalBucket = getRequiredEnvVar('INTERNAL_BUCKET');
-  const providerId = await addProvider(stackName, internalBucket);
+  const providerId = await addProvider(deployment, internalBucket);
   for (const collection of yieldCollectionDetails(collections, true)) {
     await addCollection(stackName, internalBucket, collection.suffix);
     await uploadDBGranules(
