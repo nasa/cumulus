@@ -25,7 +25,6 @@ const {
   parseArgs,
   uploadDBGranules,
 } = require('../generate_db_records');
-const { postRecoverCumulusMessages } = require('../../../packages/api/endpoints/dead-letter-archive');
 
 test('yieldCollectionDetails() gives repeatable and non-repeatable collections with valid name, version and suffix', (t) => {
   const numberOfCollections = 120;
