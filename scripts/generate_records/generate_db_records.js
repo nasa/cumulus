@@ -126,6 +126,7 @@ const addProvider = async (stackName, bucket) => {
  *
  * @param {object} knex
  * @param {number} granuleCumulusId
+ * @param {string} granuleGranuleId
  * @param {number} fileCount
  * @param {ModelSet} models - set of PGmodels including fileModel
  * @param {boolean} swallowErrors
