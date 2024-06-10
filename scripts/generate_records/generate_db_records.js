@@ -6,7 +6,6 @@ const minimist = require('minimist');
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs-extra');
 const Logger = require('@cumulus/logger');
-const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const {
   GranulePgModel,
   CollectionPgModel,
@@ -18,9 +17,9 @@ const {
   fakeGranuleRecordFactory,
   fakeFileRecordFactory,
   fakeExecutionRecordFactory,
+  translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
 const { randomInt } = require('crypto');
-const { MissingRequiredEnvVarError } = require('@cumulus/errors');
 const { translateApiCollectionToPostgresCollection } = require('@cumulus/db');
 
 const log = new Logger({
@@ -70,53 +69,35 @@ function* yieldCollectionDetails(total, repeatable = true) {
  * @returns {Promise<void>}
  */
 const addCollection = async (knex, collectionSuffix, files) => {
-  try {
-    const collectionJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/collections/s3_MOD09GQ_006.json`, 'utf8'));
-    collectionJson.name = `${collectionJson.name}_${collectionSuffix}`;
-    collectionJson.files = (new Array(files)).map((i) => ({
-      bucket: `${i}`,
-      regex: `^.*${i}$`,
-      sampleFileName: `538.${i}`,
-    }));
-    const collectionModel = new CollectionPgModel();
-    await collectionModel.upsert(
-      knex,
-      translateApiCollectionToPostgresCollection(collectionJson)
-    );
-  } catch (error) {
-    if (error.statusCode === 409) {
-      return;
-    }
-    throw error;
-  }
+  const collectionJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/collections/s3_MOD09GQ_006.json`, 'utf8'));
+  collectionJson.name = `${collectionJson.name}_${collectionSuffix}`;
+  collectionJson.files = (new Array(files)).map((i) => ({
+    bucket: `${i}`,
+    regex: `^.*${i}$`,
+    sampleFileName: `538.${i}`,
+  }));
+  const collectionModel = new CollectionPgModel();
+  await collectionModel.upsert(
+    knex,
+    translateApiCollectionToPostgresCollection(collectionJson)
+  );
 };
 
 /**
  * add provider through providerPgModel call
  *
- * @param {string} stackName
- * @param {string} bucket
+ * @param {object} knex
  * @returns {Promise<string>}
  */
-const addProvider = async (stackName, bucket) => {
-  const providerId = 's3_provider_test';
+const addProvider = async (knex) => {
   const providerJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/s3_provider.json`, 'utf8'));
-  const providerData = {
-    ...providerJson,
-    id: providerId,
-    host: bucket,
-  };
-  try {
-    await apiTestUtils.addProviderApi({
-      prefix: stackName,
-      provider: providerData,
-    });
-  } catch (error) {
-    if (error.statusCode === 409) {
-      return providerId;
-    }
-    throw error;
-  }
+  const providerModel = new ProviderPgModel();
+  const a = await providerModel.upsert(
+    knex,
+    await translateApiProviderToPostgresProvider(providerJson)
+  );
+  console.log(a);
+  const [{ name: providerId }] = a;
   return providerId;
 };
 /**
@@ -482,8 +463,6 @@ const parseExecutionsGranulesBatch = (executionsPerGranule) => {
  *   collections: number
  *   concurrency: number
  *   variance: boolean
- *   deployment: string
- *   internalBucket: string
  * }}
  */
 const parseArgs = () => {
@@ -494,8 +473,6 @@ const parseArgs = () => {
     collections,
     variance,
     concurrency,
-    deployment,
-    internalBucket,
   } = minimist(
     process.argv,
     {
@@ -505,8 +482,6 @@ const parseArgs = () => {
         'granulesK',
         'executionsPerGranule',
         'concurrency',
-        'deployment',
-        'internalBucket',
       ],
       boolean: [
         'variance',
@@ -518,7 +493,6 @@ const parseArgs = () => {
         executions_to_granule: 'executionsPerGranule',
         executions_to_granules: 'executionsPerGranule',
         executions_per_granule: 'executionsPerGranule',
-        internal_bucket: 'internal_bucket',
         files_per_gran: 'files',
       },
       default: {
@@ -528,8 +502,6 @@ const parseArgs = () => {
         executionsPerGranule: process.env.EXECUTIONS_PER_GRANULE || '2:2',
         variance: process.env.VARIANCE || false,
         concurrency: process.env.CONCURRENCY || 1,
-        deployment: process.env.DEPLOYMENT,
-        internalBucket: process.env.INTERNAL_BUCKET,
       },
     }
   );
@@ -537,13 +509,6 @@ const parseArgs = () => {
     granulesPerBatch,
     executionsPerBatch,
   } = parseExecutionsGranulesBatch(executionsPerGranule);
-
-  if (deployment === undefined) {
-    throw new MissingRequiredEnvVarError('The DEPLOYMENT environment variable must be set, or the --deployment argument set');
-  }
-  if (internalBucket === undefined) {
-    throw new MissingRequiredEnvVarError('The INTERNAL_BUCKET environment variable must be set, or the --internalBucket argument set');
-  }
 
   return {
     granules: Number.parseInt(granulesK, 10) * 1000,
@@ -553,8 +518,6 @@ const parseArgs = () => {
     collections: Number.parseInt(collections, 10),
     concurrency: Number.parseInt(concurrency, 10),
     variance,
-    deployment,
-    internalBucket,
   };
 };
 
@@ -571,11 +534,9 @@ const main = async () => {
     collections,
     variance,
     concurrency,
-    internalBucket,
-    deployment,
   } = parseArgs();
   const knex = await getKnexClient();
-  const providerId = await addProvider(deployment, internalBucket);
+  const providerId = await addProvider(knex);
   for (const collection of yieldCollectionDetails(collections, true)) {
     await addCollection(knex, collection.suffix, files);
     await uploadDBGranules(
