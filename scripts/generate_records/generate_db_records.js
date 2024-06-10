@@ -5,9 +5,6 @@ const pMap = require('p-map');
 const minimist = require('minimist');
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs-extra');
-const {
-  addCollections,
-} = require('@cumulus/integration-tests');
 const Logger = require('@cumulus/logger');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const {
@@ -24,6 +21,7 @@ const {
 } = require('@cumulus/db');
 const { randomInt } = require('crypto');
 const { MissingRequiredEnvVarError } = require('@cumulus/errors');
+const { translateApiCollectionToPostgresCollection } = require('@cumulus/db');
 
 const log = new Logger({
   sender: '@cumulus/generate_records',
@@ -47,9 +45,6 @@ const log = new Logger({
 
 process.env.DISABLE_PG_SSL = 'true';
 
-const createTimestampedTestId = (stackName, testName) =>
-  `${stackName}-${testName}-${Date.now()}`;
-
 function* yieldCollectionDetails(total, repeatable = true) {
   for (let i = 0; i < total; i += 1) {
     let suffix;
@@ -67,23 +62,26 @@ function* yieldCollectionDetails(total, repeatable = true) {
 }
 
 /**
- * add collection through cumulus-api call
+ * add collection collectionPgModel call
  *
- * @param {string} stackName
- * @param {string} bucket
+ * @param {any} knex
  * @param {string} collectionSuffix - append to collection name for uniqueness
+ * @param {number} files - number of files per granule
  * @returns {Promise<void>}
  */
-const addCollection = async (stackName, bucket, collectionSuffix) => {
-  const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
+const addCollection = async (knex, collectionSuffix, files) => {
   try {
-    await addCollections(
-      stackName,
-      bucket,
-      `${__dirname}/resources/collections/`,
-      collectionSuffix,
-      testId,
-      'replace'
+    const collectionJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/collections/s3_MOD09GQ_006.json`, 'utf8'));
+    collectionJson.name = `${collectionJson.name}_${collectionSuffix}`;
+    collectionJson.files = (new Array(files)).map((i) => ({
+      bucket: `${i}`,
+      regex: `^.*${i}$`,
+      sampleFileName: `538.${i}`,
+    }));
+    const collectionModel = new CollectionPgModel();
+    await collectionModel.upsert(
+      knex,
+      translateApiCollectionToPostgresCollection(collectionJson)
     );
   } catch (error) {
     if (error.statusCode === 409) {
@@ -94,7 +92,7 @@ const addCollection = async (stackName, bucket, collectionSuffix) => {
 };
 
 /**
- * add provider through cumulus-api call
+ * add provider through providerPgModel call
  *
  * @param {string} stackName
  * @param {string} bucket
@@ -579,7 +577,7 @@ const main = async () => {
   const knex = await getKnexClient();
   const providerId = await addProvider(deployment, internalBucket);
   for (const collection of yieldCollectionDetails(collections, true)) {
-    await addCollection(stackName, internalBucket, collection.suffix);
+    await addCollection(knex, collection.suffix, files);
     await uploadDBGranules(
       knex,
       providerId,
