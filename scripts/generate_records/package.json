@@ -27,6 +27,7 @@
     "@cumulus/db": "18.2.0",
     "@cumulus/integration-tests": "18.2.0",
     "@cumulus/logger": "18.2.0",
+    "@cumulus/errors": "18.2.0",
     "@types/minimist": "^1.2.5",
     "crypto-js": "^4.2.0",
     "crypto-random-string": "^3.2.0",
