@@ -17,6 +17,7 @@ interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
   asyncOperationId: string,
   collection_cumulus_id: number,
   parent_cumulus_id: number,
+  cumulus_version?: string,
   parentArn?: string,
   url: string,
   status: ExecutionRecordStatus,
