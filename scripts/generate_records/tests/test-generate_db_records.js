@@ -15,6 +15,7 @@ const {
   GranulesExecutionsPgModel,
 } = require('@cumulus/db');
 const { randomId } = require('@cumulus/common/test-utils');
+const { randomInt } = require('crypto');
 const {
   yieldCollectionDetails,
   uploadExecutions,
@@ -24,23 +25,32 @@ const {
   getDetailGenerator,
   parseArgs,
   uploadDBGranules,
+  addCollection,
+  addProvider,
 } = require('../generate_db_records');
 
 test('yieldCollectionDetails() gives repeatable and non-repeatable collections with valid name, version and suffix', (t) => {
   const numberOfCollections = 120;
   const repeatableCollections = [];
   for (const collection of yieldCollectionDetails(numberOfCollections, true)) {
+    t.is(collection.version, '006');
+    t.true(collection.name.startsWith('MOD09GQ_test'));
+    for (let i = 0; i < repeatableCollections.length; i += 1) {
+      t.false(collection.name === repeatableCollections[i].name);
+    }
     repeatableCollections.push(collection);
   }
   t.is(repeatableCollections.length, numberOfCollections);
   for (let i = 0; i < repeatableCollections.length; i += 1) {
-    t.is(repeatableCollections[i].version, '006');
-    t.true(repeatableCollections[i].name.startsWith('MOD09GQ_test'));
     t.true(repeatableCollections[i].name.endsWith(`${i}`));
-    t.true(repeatableCollections[i].name.endsWith(repeatableCollections[i].suffix));
   }
   const nonRepeatableCollections = [];
   for (const collection of yieldCollectionDetails(numberOfCollections, false)) {
+    t.is(collection.version, '006');
+    t.true(collection.name.startsWith('MOD09GQ_'));
+    for (let i = 0; i < nonRepeatableCollections.length; i += 1) {
+      t.false(collection.name === nonRepeatableCollections[i].name);
+    }
     nonRepeatableCollections.push(collection);
   }
 
@@ -48,7 +58,6 @@ test('yieldCollectionDetails() gives repeatable and non-repeatable collections w
   for (let i = 0; i < nonRepeatableCollections.length; i += 1) {
     t.is(repeatableCollections[i].version, '006');
     t.true(nonRepeatableCollections[i].name.startsWith('MOD09GQ_'));
-    t.true(nonRepeatableCollections[i].name.endsWith(nonRepeatableCollections[i].suffix));
   }
 });
 test.before(async (t) => {
@@ -223,6 +232,20 @@ test('uploadGranuleExecutions() uploads GranuleExecutions', async (t) => {
 });
 
 test('getDetailGenerator() yields a generator that plays well with pMap', async (t) => {
+  t.throws(
+    () => getDetailGenerator({
+      knex: t.context.knex,
+      granules: 0,
+      collectionCumulusId: 0,
+      providerCumulusId: 0,
+      filesPerGranule: 0,
+      granulesPerBatch: 0,
+      models: {},
+      variance: false,
+    }),
+    { message: 'granulesPerBatch must be set to >=1' }
+  );
+
   let iterated = 0;
   const iterableGenerator = getDetailGenerator({
     knex: {},
@@ -398,3 +421,26 @@ test('uploadDBGranules() uploads a pile of entries', async (t) => {
   );
   t.pass();
 });
+
+test('addCollection() adds collections', async (t) => {
+  for (const collection of yieldCollectionDetails(10, true)) {
+    const numberOfFiles = randomInt(5);
+    // eslint-disable-next-line no-await-in-loop
+    const pgCollection = await addCollection(t.context.knex, collection.name, numberOfFiles);
+    t.is(pgCollection.files.length, numberOfFiles);
+    t.is(pgCollection.name, collection.name);
+  }
+  for (const collection of yieldCollectionDetails(10, false)) {
+    const numberOfFiles = randomInt(5);
+    // eslint-disable-next-line no-await-in-loop
+    const pgCollection = await addCollection(t.context.knex, collection.name, numberOfFiles);
+    t.is(pgCollection.files.length, numberOfFiles);
+    t.is(pgCollection.name, collection.name);
+  }
+});
+
+test('addProvider() add a provider', async (t) => {
+  await addProvider(t.context.knex);
+  t.pass();
+});
+

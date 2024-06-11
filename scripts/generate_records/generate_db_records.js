@@ -29,6 +29,7 @@ const log = new Logger({
 /**
  * @typedef {import('@cumulus/db').PostgresFile} PostgresFile
  * @typedef {import('@cumulus/db').PostgresGranule} PostgresGranule
+ * @typedef {import('@cumulus/db').PostgresCollection} PostgresCollection
  * @typedef {import('knex').Knex} Knex
  * @typedef {{
  *   geModel: GranulesExecutionsPgModel,
@@ -71,7 +72,7 @@ function* yieldCollectionDetails(total, repeatable = true) {
  * @param {Knex} knex
  * @param {string} collectionName
  * @param {number} files - number of files per granule
- * @returns {Promise<void>}
+ * @returns {Promise<PostgresCollection>}
  */
 const addCollection = async (knex, collectionName, files) => {
   const collectionJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/collections/s3_MOD09GQ_006.json`, 'utf8'));
@@ -86,6 +87,7 @@ const addCollection = async (knex, collectionName, files) => {
     knex,
     translateApiCollectionToPostgresCollection(collectionJson)
   );
+  return collectionJson;
 };
 
 /**
@@ -572,6 +574,7 @@ if (require.main === module) {
 
 module.exports = {
   yieldCollectionDetails,
+  addProvider,
   addCollection,
   uploadExecutions,
   uploadGranules,
