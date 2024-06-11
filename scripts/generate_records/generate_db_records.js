@@ -29,6 +29,7 @@ const log = new Logger({
 /**
  * @typedef {import('@cumulus/db').PostgresFile} PostgresFile
  * @typedef {import('@cumulus/db').PostgresGranule} PostgresGranule
+ * @typedef {import('knex').Knex} Knex
  * @typedef {{
  *   geModel: GranulesExecutionsPgModel,
  *   executionModel: ExecutionPgModel,
@@ -38,12 +39,17 @@ const log = new Logger({
  * @typedef {{
  *   name: string,
  *   version: string,
- *   suffix: string,
  * }} CollectionDetails
  */
 
 process.env.DISABLE_PG_SSL = 'true';
-
+/**
+ * yield series of collection details
+ *
+ * @param {number} total - number of collections
+ * @param {boolean} repeatable - use consistent names versus pseudorandom
+ * @yields {CollectionDetails}
+ */
 function* yieldCollectionDetails(total, repeatable = true) {
   for (let i = 0; i < total; i += 1) {
     let suffix;
@@ -55,7 +61,6 @@ function* yieldCollectionDetails(total, repeatable = true) {
     yield {
       name: `MOD09GQ${suffix}`,
       version: '006',
-      suffix,
     };
   }
 }
@@ -63,14 +68,14 @@ function* yieldCollectionDetails(total, repeatable = true) {
 /**
  * add collection collectionPgModel call
  *
- * @param {any} knex
- * @param {string} collectionSuffix - append to collection name for uniqueness
+ * @param {Knex} knex
+ * @param {string} collectionName
  * @param {number} files - number of files per granule
  * @returns {Promise<void>}
  */
-const addCollection = async (knex, collectionSuffix, files) => {
+const addCollection = async (knex, collectionName, files) => {
   const collectionJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/collections/s3_MOD09GQ_006.json`, 'utf8'));
-  collectionJson.name = `${collectionJson.name}${collectionSuffix}`;
+  collectionJson.name = collectionName;
   collectionJson.files = (new Array(files)).map((i) => ({
     bucket: `${i}`,
     regex: `^.*${i}$`,
@@ -86,7 +91,7 @@ const addCollection = async (knex, collectionSuffix, files) => {
 /**
  * add provider through providerPgModel call
  *
- * @param {object} knex
+ * @param {Knex} knex
  * @returns {Promise<string>}
  */
 const addProvider = async (knex) => {
@@ -102,7 +107,7 @@ const addProvider = async (knex) => {
 /**
  * upload files corresponding to granule with granuleCumulusId
  *
- * @param {object} knex
+ * @param {Knex} knex
  * @param {number} granuleCumulusId
  * @param {string} granuleGranuleId
  * @param {number} fileCount
@@ -139,7 +144,7 @@ const uploadFiles = async (
 /**
  * upload executions corresponding to collection with collectionCumulusId
  *
- * @param {object} knex
+ * @param {Knex} knex
  * @param {number} collectionCumulusId
  * @param {number} executionCount
  * @param {ModelSet} models - set of PGmodels including executionModel
@@ -171,7 +176,7 @@ const uploadExecutions = async (
 /**
  * upload granules corresponding to collection with collectionCumulusId
  *
- * @param {object} knex
+ * @param {Knex} knex
  * @param {number} collectionCumulusId
  * @param {number} providerCumulusId
  * @param {number} granuleCount
@@ -224,7 +229,7 @@ const uploadGranules = async (
  * upload granuleExecutions corresponding to each pair
  * within list of granuleCumulusIds and executionCumulusIds
  *
- * @param {object} knex
+ * @param {Knex} knex
  * @param {Array<number>} granuleCumulusIds
  * @param {Array<number>} executionCumulusIds
  * @param {ModelSet} models - set of PGmodels including geModel
@@ -373,7 +378,7 @@ const getDetailGenerator = ({
  * upload a batch of granules and executions
  * along with files per granule and granuleExecutions
  *
- * @param {object} knex
+ * @param {Knex} knex
  * @param {string} providerId
  * @param {CollectionDetails} collection
  * @param {number} granules
@@ -538,7 +543,7 @@ const main = async () => {
   const knex = await getKnexClient();
   const providerId = await addProvider(knex);
   for (const collection of yieldCollectionDetails(collections, true)) {
-    await addCollection(knex, collection.suffix, files);
+    await addCollection(knex, collection.name, files);
     await uploadDBGranules(
       knex,
       providerId,

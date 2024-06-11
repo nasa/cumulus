@@ -15,21 +15,21 @@ export default class GranulesExecutionsPgModel {
   }
 
   async create(
-    knexTransaction: Knex.Transaction,
+    knexTransaction: Knex | Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
     return await knexTransaction(this.tableName).insert(item);
   }
 
   async exists(
-    knexTransaction: Knex.Transaction,
+    knexTransaction: Knex | Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
     return isRecordDefined(await knexTransaction(this.tableName).where(item).first());
   }
 
   async upsert(
-    knexTransaction: Knex.Transaction,
+    knexTransaction: Knex | Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
     return await knexTransaction(this.tableName)

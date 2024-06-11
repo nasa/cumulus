@@ -37,6 +37,7 @@
     "tsc": "^2.0.4"
   },
   "devDependencies": {
-    "@cumulus/api-client": "18.2.0"
+    "@cumulus/api-client": "18.2.0",
+    "knex": "2.4.1"
   }
 }
