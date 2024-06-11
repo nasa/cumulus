@@ -443,4 +443,3 @@ test('addProvider() add a provider', async (t) => {
   await addProvider(t.context.knex);
   t.pass();
 });
-
