@@ -96,7 +96,6 @@ const addProvider = async (knex) => {
     knex,
     await translateApiProviderToPostgresProvider(providerJson)
   );
-  console.log(a);
   const [{ name: providerId }] = a;
   return providerId;
 };
