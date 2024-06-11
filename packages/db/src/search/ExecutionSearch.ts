@@ -69,7 +69,7 @@ export class ExecutionSearch extends BaseSearch {
     } = TableNames;
 
     const searchQuery = knex(`${this.tableName} as executions`)
-      .join(`${this.tableName} as executions2`, 'executions.parent_cumulus_id', 'executions2.cumulus_id')
+      .leftJoin(`${this.tableName} as executions2`, 'executions.parent_cumulus_id', 'executions2.cumulus_id')
       .select('executions2.arn as parent_arn')
       .select('executions.*')
       .select({

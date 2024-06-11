@@ -96,7 +96,7 @@ test.before(async (t) => {
       duration: t.context.duration * ((num % 2) + 1),
       async_operation_cumulus_id: num % 2 === 0 ? t.context.testAsyncOperation.cumulus_id
         : t.context.testAsyncOperation2.cumulus_id,
-      parent_cumulus_id: num > 0 ? num - 1 : 0,
+      parent_cumulus_id: num > 25 ? num % 25 : null,
       cumulus_id: num,
     }))
   ));
