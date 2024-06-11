@@ -70,7 +70,7 @@ function* yieldCollectionDetails(total, repeatable = true) {
  */
 const addCollection = async (knex, collectionSuffix, files) => {
   const collectionJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/collections/s3_MOD09GQ_006.json`, 'utf8'));
-  collectionJson.name = `${collectionJson.name}_${collectionSuffix}`;
+  collectionJson.name = `${collectionJson.name}${collectionSuffix}`;
   collectionJson.files = (new Array(files)).map((i) => ({
     bucket: `${i}`,
     regex: `^.*${i}$`,
@@ -374,6 +374,7 @@ const getDetailGenerator = ({
  * upload a batch of granules and executions
  * along with files per granule and granuleExecutions
  *
+ * @param {object} knex
  * @param {string} providerId
  * @param {CollectionDetails} collection
  * @param {number} granules
@@ -396,8 +397,6 @@ const uploadDBGranules = async (
   concurrency,
   variance
 ) => {
-  process.env.dbMaxPool = concurrency.toString();
-
   const collectionPgModel = new CollectionPgModel();
   const providerPgModel = new ProviderPgModel();
   const dbCollection = await collectionPgModel.get(
@@ -535,6 +534,8 @@ const main = async () => {
     variance,
     concurrency,
   } = parseArgs();
+
+  process.env.dbMaxPool = concurrency.toString();
   const knex = await getKnexClient();
   const providerId = await addProvider(knex);
   for (const collection of yieldCollectionDetails(collections, true)) {
