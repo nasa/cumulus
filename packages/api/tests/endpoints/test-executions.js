@@ -1304,7 +1304,7 @@ test.serial('POST /executions creates an execution that is searchable', async (t
   const { meta, results } = response.body;
   t.is(results.length, 1);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'execution');
+  t.is(meta.table, 'executions');
   t.is(meta.count, 1);
   t.is(results[0].arn, newExecution.arn);
 });
