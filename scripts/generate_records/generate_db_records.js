@@ -270,7 +270,7 @@ const uploadGranuleExecutions = async (
  * along with files per granule and granuleExecutions
  *
  * @typedef {{
- *   knex: object,
+ *   knex: Knex,
  *   collectionCumulusId: number,
  *   providerCumulusId: number,
  *   filesPerGranule: number
@@ -324,7 +324,7 @@ const uploadDataBatch = async ({
  * set of batch params for more than the currently running threads
  *
  * @param {object} params
- * @param {object} params.knex
+ * @param {Knex} params.knex
  * @param {number} params.granules
  * @param {number} params.collectionCumulusId
  * @param {number} params.providerCumulusId
@@ -350,10 +350,12 @@ const getDetailGenerator = ({
   if (granulesPerBatch < 1) {
     throw new Error('granulesPerBatch must be set to >=1');
   }
+  /**
+   * @yields {BatchParams}
+   */
   function* detailGenerator() {
     let _granulesPerBatch = 1;
     for (let i = 0; i < granules; i += _granulesPerBatch) {
-      console.log(i);
       _granulesPerBatch = granulesPerBatch + (variance ? randomInt(6) : 0);
       const _executionsPerBatch = executionsPerBatch + (variance ? randomInt(6) : 0);
       yield {
