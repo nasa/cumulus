@@ -126,6 +126,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
 - **CUMULUS-3735**
   - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
+- **CUMULUS-3746**
+  - cicd unit test error log changed to environment unique name
 - **CUMULUS-3717**
   - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
 - **CUMULUS-3720**
