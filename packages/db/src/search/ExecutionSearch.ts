@@ -68,29 +68,32 @@ export class ExecutionSearch extends BaseSearch {
       asyncOperations: asyncOperationsTable,
     } = TableNames;
 
-    const searchQuery = knex(this.tableName)
-      .select(`${this.tableName}.*`)
+    const searchQuery = knex(`${this.tableName} as executions`)
+      .join(`${this.tableName} as executions2`, 'executions.parent_cumulus_id', 'executions2.cumulus_id')
+      .select('executions2.arn as parent_arn')
+      .select('executions.*')
       .select({
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
         asyncOperationId: `${asyncOperationsTable}.id`,
+        parentArn: 'executions2.arn',
       });
 
     const countQuery = knex(this.tableName)
       .count(`${this.tableName}.cumulus_id`);
 
     if (this.searchCollection()) {
-      countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-      searchQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+      countQuery.innerJoin(collectionsTable, 'executions.collection_cumulus_id', `${collectionsTable}.cumulus_id`);
+      searchQuery.innerJoin(collectionsTable, 'executions.collection_cumulus_id', `${collectionsTable}.cumulus_id`);
     } else {
-      searchQuery.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+      searchQuery.leftJoin(collectionsTable, 'executions.collection_cumulus_id', `${collectionsTable}.cumulus_id`);
     }
 
     if (this.searchAsync()) {
-      countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
-      searchQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+      countQuery.innerJoin(asyncOperationsTable, 'executions.async_operation_cumulus_id', `${asyncOperationsTable}.cumulus_id`);
+      searchQuery.innerJoin(asyncOperationsTable, 'executions.async_operation_cumulus_id', `${asyncOperationsTable}.cumulus_id`);
     } else {
-      searchQuery.leftJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+      searchQuery.leftJoin(asyncOperationsTable, 'executions.async_operation_cumulus_id', `${asyncOperationsTable}.cumulus_id`);
     }
     return { countQuery, searchQuery };
   }

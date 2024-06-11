@@ -41,7 +41,7 @@ export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
     cumulusVersion: executionRecord.cumulus_version ?? '',
     asyncOperationId: executionRecord.asyncOperationId ?? '',
     collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
-    //parentArn,
+    parentArn: executionRecord.parentArn ?? '',
     createdAt: Number(executionRecord.created_at),
     updatedAt: Number(executionRecord.updated_at),
     timestamp: Number(executionRecord.timestamp),

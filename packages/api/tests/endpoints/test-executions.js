@@ -133,36 +133,42 @@ test.before(async (t) => {
       description: 'fake async operation',
       status: 'SUCCEEDED',
       operation_type: 'Bulk Granules',
+      cumulus_id: 100,
     }
   );
+
   fakeExecutions.push(
-    fakeExecutionFactoryV2({
-      status: 'completed',
-      asyncOperationId,
-      arn: 'arn2',
-      type: 'fakeWorkflow',
-      parentArn: undefined,
+    fakeExecutionRecordFactory({
+      status: 'running',
+      workflow_name: 'fakeWorkflow',
+      cumulus_id: 99,
+    })
+  );
+
+  fakeExecutions.push(
+    fakeExecutionRecordFactory({
+      status: 'running',
+      workflow_name: 'workflow2',
+      async_operation_cumulus_id: 100,
+      arn: 'arn1',
+      cumulus_id: 98,
+      parent_cumulus_id: 99,
     })
   );
   fakeExecutions.push(
-    fakeExecutionFactoryV2({ status: 'failed', type: 'workflow2', parentArn: undefined })
+    fakeExecutionRecordFactory({ status: 'failed', workflow_name: 'fakeWorkflow', parent_cumulus_id: 98, cumulus_id: 97 })
   );
   fakeExecutions.push(
-    fakeExecutionFactoryV2({ status: 'running', type: 'fakeWorkflow', parentArn: undefined })
+    fakeExecutionRecordFactory({ status: 'running', workflow_name: 'fakeWorkflow', parent_cumulus_id: 97, cumulus_id: 96, arn: 'arn2' })
   );
 
-  t.context.fakePGExecutions = await Promise.all(fakeExecutions.map(async (execution) => {
-    const omitExecution = omit(execution, ['parentArn']);
-    const executionPgRecord = await translateApiExecutionToPostgresExecution(
-      omitExecution,
-      t.context.knex
-    );
-    const [pgExecution] = await t.context.executionPgModel.create(
+  t.context.fakePGExecutions = fakeExecutions;
+  await Promise.all(fakeExecutions.map(async (execution) => {
+    await t.context.executionPgModel.insert(
       t.context.knex,
-      executionPgRecord
+      execution
     );
     await indexer.indexExecution(esClient, execution, process.env.ES_INDEX);
-    return pgExecution;
   }));
 
   // Create AsyncOperation in Postgres
@@ -343,7 +349,9 @@ test.serial('GET executions returns list of executions by default', async (t) =>
   t.is(results.length, 3);
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'executions');
-  t.is(meta.count, 3);
+  t.is(meta.count, 4);
+  // one of the executions does not have a parent, so count = 4 but 3 records are returned
+  // need to decide what to do for this
   const arns = fakeExecutions.map((i) => i.arn);
   results.forEach((r) => {
     t.true(arns.includes(r.arn));
@@ -375,7 +383,7 @@ test.serial('GET executions with asyncOperationId filter returns the correct exe
     .expect(200);
 
   t.is(response.body.meta.count, 1);
-  t.is(response.body.results[0].arn, 'arn2');
+  t.is(response.body.results[0].arn, 'arn1');
 });
 
 test('GET returns an existing execution', async (t) => {

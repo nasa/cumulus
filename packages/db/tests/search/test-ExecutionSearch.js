@@ -84,7 +84,6 @@ test.before(async (t) => {
       error: errors[num % 5],
       created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
       updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
-      cumulus_id: (num + 2),
       workflow_name: `testWorkflow__${num}`,
       arn: num % 2 === 0 ? `testArn__${num}:testExecutionName` : `fakeArn__${num}:fakeExecutionName`,
       url: `https://fake-execution${num}.com/`,
@@ -97,7 +96,8 @@ test.before(async (t) => {
       duration: t.context.duration * ((num % 2) + 1),
       async_operation_cumulus_id: num % 2 === 0 ? t.context.testAsyncOperation.cumulus_id
         : t.context.testAsyncOperation2.cumulus_id,
-      parent_cumulus_id: num > 2 ? num - 1 : undefined,
+      parent_cumulus_id: num > 0 ? num - 1 : 0,
+      cumulus_id: num,
     }))
   ));
 
@@ -200,19 +200,6 @@ test('ExecutionSearch supports asyncOperationId term search', async (t) => {
   t.is(response.results?.length, 25);
 });
 
-/* failing in CI/ passing locally
-test('ExecutionSearch supports term search for date field', async (t) => {
-  const { knex } = t.context;
-  const queryStringParameters = {
-    limit: 50,
-    updatedAt: `${t.context.testTimeStamp1}`,
-  };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
-});*/
-
 test('ExecutionSearch supports term search for number field', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
@@ -255,19 +242,6 @@ test('ExecutionSearch supports term search for string field', async (t) => {
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
-
-/* failing in CI/ passing locally
-test('ExecutionSearch supports term search for timestamp', async (t) => {
-  const { knex } = t.context;
-  const queryStringParameters = {
-    limit: 50,
-    timestamp: `${t.context.testTimeStamp2}`,
-  };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
-});*/
 
 test('ExecutionSearch supports term search for nested error.Error', async (t) => {
   const { knex } = t.context;
@@ -331,9 +305,9 @@ test('ExecutionSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     id: 13,
-    workflow_name: 'testWorkflow__11',
-    arn: 'fakeArn__11:fakeExecutionName',
-    url: 'https://fake-execution11.com/',
+    workflow_name: 'testWorkflow__13',
+    arn: 'fakeArn__13:fakeExecutionName',
+    url: 'https://fake-execution13.com/',
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -467,3 +441,29 @@ test('ExecutionSearch supports search which execution field does not match the g
   t.is(response.meta.count, 33);
   t.is(response.results?.length, 33);
 });
+
+/* failing in CI/ passing locally
+test('ExecutionSearch supports term search for timestamp', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 50,
+    timestamp: `${t.context.testTimeStamp2}`,
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 1);
+  t.is(response.results?.length, 1);
+});
+
+/* failing in CI/ passing locally
+test('ExecutionSearch supports term search for date field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 50,
+    updatedAt: `${t.context.testTimeStamp1}`,
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 1);
+  t.is(response.results?.length, 1);
+});*/
