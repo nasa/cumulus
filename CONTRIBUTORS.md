@@ -35,6 +35,7 @@
 * Nate Pauzenga
 * Pat Cappelaere
 * Patrick Quinn
+* Paul Pilone
 * Phil Osip
 * Sara Chaparro Diaz
 * Sean Quinlan

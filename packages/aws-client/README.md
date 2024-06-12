@@ -840,6 +840,11 @@ Move an S3 object to another location in S3
 <a name="module_SNS"></a>
 
 ## SNS
+
+* [SNS](#module_SNS)
+    * [~publishSnsMessage(snsTopicArn, message, retryOptions)](#module_SNS..publishSnsMessage) ⇒ <code>Promise.&lt;undefined&gt;</code>
+    * [~createSnsTopic(snsTopicName)](#module_SNS..createSnsTopic) ⇒
+
 <a name="module_SNS..publishSnsMessage"></a>
 
 ### SNS~publishSnsMessage(snsTopicArn, message, retryOptions) ⇒ <code>Promise.&lt;undefined&gt;</code>
@@ -853,6 +858,18 @@ errors, to allow more specific handling by the caller.
 | snsTopicArn | <code>string</code> | SNS topic ARN |
 | message | <code>Object</code> | Message object |
 | retryOptions | <code>Object</code> | options to control retry behavior when publishing a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions |
+
+<a name="module_SNS..createSnsTopic"></a>
+
+### SNS~createSnsTopic(snsTopicName) ⇒
+Create an SNS topic with a given name.
+
+**Kind**: inner method of [<code>SNS</code>](#module_SNS)  
+**Returns**: - ARN of the created SNS topic  
+
+| Param | Description |
+| --- | --- |
+| snsTopicName | Name of the SNS topic |
 
 <a name="module_SQS"></a>
 
