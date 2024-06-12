@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
-import { ApiExecutionRecord, ExecutionRecordStatus } from '@cumulus/types/api/executions';
+import { ApiExecutionRecord } from '@cumulus/types/api/executions';
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { translatePostgresExecutionToApiExecutionWithoutDbQuery } from '../translate/executions';
@@ -11,25 +11,6 @@ import { BaseRecord } from '../types/base';
 const log = new Logger({ sender: '@cumulus/db/ExecutionSearch' });
 
 interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
-  cumulus_id: number,
-  arn: string,
-  async_operation_cumulus_id: number,
-  asyncOperationId: string,
-  collection_cumulus_id: number,
-  parent_cumulus_id: number,
-  cumulus_version?: string,
-  parentArn?: string,
-  url: string,
-  status: ExecutionRecordStatus,
-  tasks: Object,
-  error: Object,
-  workflow_name: string,
-  duration: number,
-  original_payload: Object,
-  final_payload: Object,
-  timestamp?: Date,
-  created_at: Date,
-  updated_at: Date,
   collectionName?: string,
   collectionVersion?: string,
 }
@@ -68,32 +49,31 @@ export class ExecutionSearch extends BaseSearch {
       asyncOperations: asyncOperationsTable,
     } = TableNames;
 
-    const searchQuery = knex(`${this.tableName} as executions`)
-      .leftJoin(`${this.tableName} as executions2`, 'executions.parent_cumulus_id', 'executions2.cumulus_id')
-      .select('executions2.arn as parent_arn')
-      .select('executions.*')
+    const searchQuery = knex(`${this.tableName} as ${this.tableName}`)
+      .leftJoin(`${this.tableName} as ${this.tableName}-parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}-parent.cumulus_id`)
+      .select(`${this.tableName}.*`)
       .select({
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
         asyncOperationId: `${asyncOperationsTable}.id`,
-        parentArn: 'executions2.arn',
+        parentArn: `${this.tableName}-parent.arn`,
       });
 
     const countQuery = knex(this.tableName)
       .count(`${this.tableName}.cumulus_id`);
 
     if (this.searchCollection()) {
-      countQuery.innerJoin(collectionsTable, 'executions.collection_cumulus_id', `${collectionsTable}.cumulus_id`);
-      searchQuery.innerJoin(collectionsTable, 'executions.collection_cumulus_id', `${collectionsTable}.cumulus_id`);
+      countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+      searchQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     } else {
-      searchQuery.leftJoin(collectionsTable, 'executions.collection_cumulus_id', `${collectionsTable}.cumulus_id`);
+      searchQuery.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
     if (this.searchAsync()) {
-      countQuery.innerJoin(asyncOperationsTable, 'executions.async_operation_cumulus_id', `${asyncOperationsTable}.cumulus_id`);
-      searchQuery.innerJoin(asyncOperationsTable, 'executions.async_operation_cumulus_id', `${asyncOperationsTable}.cumulus_id`);
+      countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+      searchQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
     } else {
-      searchQuery.leftJoin(asyncOperationsTable, 'executions.async_operation_cumulus_id', `${asyncOperationsTable}.cumulus_id`);
+      searchQuery.leftJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
     }
     return { countQuery, searchQuery };
   }
@@ -135,7 +115,6 @@ export class ExecutionSearch extends BaseSearch {
     const results: ApiExecutionRecord[] = [];
     pgRecords.map((executionRecord) => {
       const collectionPgRecord = {
-        cumulus_id: executionRecord.collection_cumulus_id,
         name: executionRecord.collectionName ?? '',
         version: executionRecord.collectionVersion ?? '',
       };

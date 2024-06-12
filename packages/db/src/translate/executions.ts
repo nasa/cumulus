@@ -20,7 +20,7 @@ export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
   collectionPgRecord,
 }:{
   executionRecord: PostgresSearchExecutionRecord,
-  collectionPgRecord: Pick<PostgresCollectionRecord, 'cumulus_id' | 'name' | 'version'>,
+  collectionPgRecord: Pick<PostgresCollectionRecord, 'name' | 'version'>,
 }): ApiExecutionRecord => {
   const postfix = executionRecord.arn.split(':').pop();
   if (!postfix) {
