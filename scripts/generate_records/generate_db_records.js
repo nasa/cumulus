@@ -377,10 +377,10 @@ const getDetailGenerator = ({
     }
     bar.stop();
   }
-  const detailGeneratorPretendingToBeIterable = {};
-  detailGeneratorPretendingToBeIterable[Symbol.iterator] = detailGenerator;
+  const clujedIterable = {};
+  clujedIterable[Symbol.iterator] = detailGenerator;
 
-  return /** @type {Iterable<BatchParams>} */(detailGeneratorPretendingToBeIterable);
+  return /** @type {Iterable<BatchParams>} */(clujedIterable);
 };
 
 /**
