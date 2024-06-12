@@ -211,7 +211,7 @@ test('CollectionSearch returns fields specified', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 10);
-  response.results.forEach((granule) => t.deepEqual(Object.keys(granule), fields.split(',')));
+  response.results.forEach((collection) => t.deepEqual(Object.keys(collection), fields.split(',')));
 });
 
 test('CollectionSearch supports sorting', async (t) => {
