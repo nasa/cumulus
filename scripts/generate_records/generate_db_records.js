@@ -6,6 +6,7 @@ const minimist = require('minimist');
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs-extra');
 const Logger = require('@cumulus/logger');
+const cliProgress = require('cli-progress')
 const {
   GranulePgModel,
   CollectionPgModel,
@@ -356,10 +357,13 @@ const getDetailGenerator = ({
    * @yields {BatchParams}
    */
   function* detailGenerator() {
+    const bar = new cliProgress.SingleBar({etaBuffer: granules / 10}, cliProgress.Presets.shades_classic)
+    bar.start(granules, 0)
     let _granulesPerBatch = 1;
     for (let i = 0; i < granules; i += _granulesPerBatch) {
       _granulesPerBatch = granulesPerBatch + (variance ? randomInt(6) : 0);
       const _executionsPerBatch = executionsPerBatch + (variance ? randomInt(6) : 0);
+      bar.update(i);
       yield {
         knex,
         collectionCumulusId,
@@ -371,6 +375,7 @@ const getDetailGenerator = ({
         swallowErrors: true,
       };
     }
+    bar.stop();
   }
   const detailGeneratorPretendingToBeIterable = {};
   detailGeneratorPretendingToBeIterable[Symbol.iterator] = detailGenerator;
