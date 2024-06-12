@@ -56,12 +56,10 @@ export class CollectionSearch extends BaseSearch {
     const { countQuery, searchQuery, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      countQuery.whereLike(`${this.tableName}.name`, `%${infix}%`);
-      searchQuery.whereLike(`${this.tableName}.name`, `%${infix}%`);
+      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
     }
     if (prefix) {
-      countQuery.whereLike(`${this.tableName}.name`, `${prefix}%`);
-      searchQuery.whereLike(`${this.tableName}.name`, `${prefix}%`);
+      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${prefix}%`));
     }
   }
 
