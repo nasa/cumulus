@@ -201,6 +201,19 @@ test('CollectionSearch non-existing fields are ignored', async (t) => {
   t.is(response.results?.length, 100);
 });
 
+test('CollectionSearch returns fields specified', async (t) => {
+  const { knex } = t.context;
+  const fields = 'name,version,reportToEms,process';
+  const queryStringParameters = {
+    fields,
+  };
+  const dbSearch = new CollectionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 10);
+  response.results.forEach((granule) => t.deepEqual(Object.keys(granule), fields.split(',')));
+});
+
 test('CollectionSearch supports sorting', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {

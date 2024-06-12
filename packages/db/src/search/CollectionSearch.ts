@@ -1,4 +1,6 @@
 import { Knex } from 'knex';
+import pick from 'lodash/pick';
+
 import Logger from '@cumulus/logger';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import { BaseSearch } from './BaseSearch';
@@ -70,9 +72,15 @@ export class CollectionSearch extends BaseSearch {
    * @returns translated api records
    */
   protected translatePostgresRecordsToApiRecords(pgRecords: PostgresCollectionRecord[])
-    : Partial<CollectionRecord[]> {
+    : Partial<CollectionRecord>[] {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
-    const apiRecords = pgRecords.map((item) => translatePostgresCollectionToApiCollection(item));
+    const apiRecords = pgRecords.map((item) => {
+      const apiRecord = translatePostgresCollectionToApiCollection(item);
+
+      return this.dbQueryParameters.fields
+        ? pick(apiRecord, this.dbQueryParameters.fields)
+        : apiRecord;
+    });
     return apiRecords;
   }
 }
