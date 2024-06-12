@@ -7,7 +7,7 @@
   "granuleId": "^(.*?)(?<!\\.[0-9])?$",
   "granuleIdExtraction": "^(.*?)(?:[0-9]+)?$",
   "reportToEms": false,
-  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+  "sampleFileName": "538.0",
   "meta": {
     "granuleRecoveryWorkflow": "OrcaRecoveryAdapterWorkflow",
     "orca": {
