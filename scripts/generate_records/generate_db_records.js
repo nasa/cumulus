@@ -100,11 +100,10 @@ const addCollection = async (knex, collectionName, files) => {
 const addProvider = async (knex) => {
   const providerJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/s3_provider.json`, 'utf8'));
   const providerModel = new ProviderPgModel();
-  const a = await providerModel.upsert(
+  const [{ name: providerId }] = await providerModel.upsert(
     knex,
     await translateApiProviderToPostgresProvider(providerJson)
   );
-  const [{ name: providerId }] = a;
   return providerId;
 };
 /**
