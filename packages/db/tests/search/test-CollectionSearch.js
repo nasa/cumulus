@@ -51,6 +51,14 @@ test.after.always(async (t) => {
   });
 });
 
+test('CollectionSearch returns 10 collections by default', async (t) => {
+  const { knex } = t.context;
+  const AggregateSearch = new CollectionSearch();
+  const results = await AggregateSearch.query(knex);
+  t.is(results.meta.count, 100);
+  t.is(results.results.length, 10);
+});
+
 test('CollectionSearch supports page and limit params', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
@@ -81,14 +89,6 @@ test('CollectionSearch supports page and limit params', async (t) => {
   t.is(response.results?.length, 0);
 });
 
-test('CollectionSearch returns correct response for basic query', async (t) => {
-  const { knex } = t.context;
-  const AggregateSearch = new CollectionSearch();
-  const results = await AggregateSearch.query(knex);
-  t.is(results.meta.count, 100);
-  t.is(results.results.length, 10);
-});
-
 test('CollectionSearch supports infix search', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
@@ -111,6 +111,30 @@ test('CollectionSearch supports prefix search', async (t) => {
   const response2 = await dbSearch2.query(knex);
   t.is(response2.meta.count, 50);
   t.is(response2.results?.length, 20);
+});
+
+test('CollectionSearch supports term search for boolean field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    reportToEms: false,
+  };
+  const dbSearch4 = new CollectionSearch({ queryStringParameters });
+  const response4 = await dbSearch4.query(knex);
+  t.is(response4.meta.count, 50);
+  t.is(response4.results?.length, 50);
+});
+
+test('CollectionSearch supports term search for date field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    updatedAt: 1579352701000,
+  };
+  const dbSearch = new CollectionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
 });
 
 test('CollectionSearch supports term search for number field', async (t) => {
@@ -146,30 +170,6 @@ test('CollectionSearch supports term search for string field', async (t) => {
   t.is(response3.results?.length, 50);
 });
 
-test('CollectionSearch supports term search for boolean field', async (t) => {
-  const { knex } = t.context;
-  const queryStringParameters = {
-    limit: 200,
-    reportToEms: false,
-  };
-  const dbSearch4 = new CollectionSearch({ queryStringParameters });
-  const response4 = await dbSearch4.query(knex);
-  t.is(response4.meta.count, 50);
-  t.is(response4.results?.length, 50);
-});
-
-test('CollectionSearch supports term search for date field', async (t) => {
-  const { knex } = t.context;
-  const queryStringParameters = {
-    limit: 200,
-    updatedAt: 1579352701000,
-  };
-  const dbSearch = new CollectionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 50);
-  t.is(response.results?.length, 50);
-});
-
 // TODO in CUMULUS-3639
 test.todo('CollectionSearch supports range search');
 
@@ -186,6 +186,19 @@ test('CollectionSearch supports search for multiple fields', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
+});
+
+test('CollectionSearch non-existing fields are ignored', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
+    non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
+  };
+  const dbSearch = new CollectionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 100);
 });
 
 test('CollectionSearch supports sorting', async (t) => {
@@ -247,7 +260,7 @@ test('CollectionSearch supports terms search', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-test('CollectionSearch supports search which granule field does not match the given value', async (t) => {
+test('CollectionSearch supports search when collection field does not match the given value', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -269,7 +282,7 @@ test('CollectionSearch supports search which granule field does not match the gi
   t.is(response.results?.length, 49);
 });
 
-test('CollectionSearch supports search which checks existence of granule field', async (t) => {
+test('CollectionSearch supports search which checks existence of collection field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
