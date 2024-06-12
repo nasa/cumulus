@@ -8,7 +8,7 @@ This can be installed with npm install in this directory (or will be installed a
 generate_db_records.js is tested to run with both node v16.19.0 and v20.12.2
 
 ## Configuration
-the script can be configured either through command line arguments of environment variables (or both), preferring command line arguments if both are supplied
+the script can be configured either through command line arguments or environment variables (or both), preferring command line arguments if both are supplied
 
 | Argument    | Environment | Default | Description | 
 | --- | :----: | :----: | ---: |
