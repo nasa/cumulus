@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `volume_type` option to `elasticsearch_config` in the
     `data-persistance` module to allow configuration of the EBS volume type for
     Elasticsarch; default remains `gp2`.
+- **CUMULUS-3424**
+  - Exposed auto_pause and seconds_until_auto_pause parameters in scaling_configuration
 
 ### Fixed
 
@@ -130,13 +132,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 - **CUMULUS-3606**
   - Updated  with additional documentation covering tunneling configuration
     using a PKCS11 provider
-<<<<<<< HEAD
-=======
-- **CUMULUS-3700**
-  - Added `volume_type` option to `elasticsearch_config` in the
-    `data-persistance` module to allow configuration of the EBS volume type for
-    Elasticsarch; default remains `gp2`.
->>>>>>> 6304521a35 (Modify CHANGLOG from user PR #3628)
 
 ### Changed
 
