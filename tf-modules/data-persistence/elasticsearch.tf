@@ -19,7 +19,7 @@ resource "aws_elasticsearch_domain" "es" {
 
   ebs_options {
     ebs_enabled = true
-    volume_type = var.elasticsearch_config.volume_type
+    volume_type = "gp2"
     volume_size = var.elasticsearch_config.volume_size
   }
 
@@ -94,7 +94,7 @@ resource "aws_elasticsearch_domain" "es_vpc" {
 
   ebs_options {
     ebs_enabled = true
-    volume_type = var.elasticsearch_config.volume_type
+    volume_type = "gp2"
     volume_size = var.elasticsearch_config.volume_size
   }
 
