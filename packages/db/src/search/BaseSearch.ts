@@ -412,7 +412,7 @@ class BaseSearch {
    * @param testKnex - knex for testing
    * @returns search result
    */
-  async query(testKnex: Knex | undefined) {
+  async query(testKnex?: Knex) {
     const knex = testKnex ?? await getKnexClient();
     const { countQuery, searchQuery } = this.buildSearch(knex);
     try {
