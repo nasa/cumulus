@@ -31,11 +31,6 @@ Typically, there are two TypeScript interfaces describing each Cumulus data type
 - `PostgresProvider`: Describes the data structure ready for insertion into the Cumulus Postgres database
 - `PostgresProviderRecord`: Describes the data structure after retrieval from the Cumulus database. This data type usually includes extra required properties (such as the auto-incremented primary key field), since those properties will exist once a record has been created.
 
-### BigInt cumulus_id columns
-
-For the BigInt columns, knex returns postgres as "string" type. In order to use cumulus_id as a number, knex hook
-postProcessResponse is configured to convert the return string from columns ending with "cumulus_id" to number.
-
 ## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management
