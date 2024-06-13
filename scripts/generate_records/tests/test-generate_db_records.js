@@ -4,29 +4,18 @@ const pMap = require('p-map');
 const {
   CollectionPgModel,
   ProviderPgModel,
-  ExecutionPgModel,
   fakeCollectionRecordFactory,
   fakeProviderRecordFactory,
   migrationDir,
   generateLocalTestDb,
   destroyLocalTestDb,
-  GranulePgModel,
-  FilePgModel,
-  GranulesExecutionsPgModel,
 } = require('@cumulus/db');
 const { randomId } = require('@cumulus/common/test-utils');
-const { randomInt } = require('crypto');
 const {
   yieldCollectionDetails,
-  uploadExecutions,
-  uploadGranules,
-  uploadFiles,
-  uploadGranuleExecutions,
   getDetailGenerator,
   parseArgs,
   uploadDBGranules,
-  addCollection,
-  addProvider,
 } = require('../generate_db_records');
 
 test('yieldCollectionDetails() gives repeatable and non-repeatable collections with valid name, version and suffix', (t) => {
@@ -86,149 +75,6 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     tesetDbName: t.context.testDbName,
   });
-});
-
-test('uploadExecutions() uploads executions', async (t) => {
-  const collectionModel = new CollectionPgModel();
-  const executionModel = new ExecutionPgModel();
-  const dbCollection = await collectionModel.get(
-    t.context.knex,
-    { name: 'MOD09GQ_abc', version: '006' }
-  );
-  const executions = await uploadExecutions(
-    t.context.knex,
-    dbCollection.cumulus_id,
-    3,
-    {
-      executionModel,
-    }
-  );
-  t.is(executions.length, 3);
-  await Promise.all(executions.map(async (execution) => {
-    await executionModel.exists(t.context.knex, { cumulus_id: execution });
-  }));
-});
-
-test('uploadGranules() uploads granules', async (t) => {
-  const collectionModel = new CollectionPgModel();
-  const providerModel = new ProviderPgModel();
-  const granuleModel = new GranulePgModel();
-  const fileModel = new FilePgModel();
-  const dbCollection = await collectionModel.get(
-    t.context.knex,
-    { name: 'MOD09GQ_abc', version: '006' }
-  );
-  const dbProvider = await providerModel.get(
-    t.context.knex,
-    { name: 'provider_test' }
-  );
-  let granules = await uploadGranules(
-    t.context.knex,
-    dbCollection.cumulus_id,
-    dbProvider.cumulus_id,
-    15,
-    0,
-    {
-      granuleModel,
-    }
-  );
-  t.is(granules.length, 15);
-  await Promise.all(granules.map(async (granule) => {
-    await granuleModel.exists(t.context.knex, { cumulus_id: granule });
-  }));
-  granules = await uploadGranules(
-    t.context.knex,
-    dbCollection.cumulus_id,
-    dbProvider.cumulus_id,
-    5,
-    5,
-    {
-      granuleModel,
-      fileModel,
-    }
-  );
-  t.is(granules.length, 5);
-  await Promise.all(granules.map(async (granule) => {
-    await granuleModel.exists(t.context.knex, { cumulus_id: granule });
-  }));
-});
-
-test('uploadFiles() uploadsFiles', async (t) => {
-  const collectionModel = new CollectionPgModel();
-  const providerModel = new ProviderPgModel();
-  const granuleModel = new GranulePgModel();
-  const fileModel = new FilePgModel();
-  const dbCollection = await collectionModel.get(
-    t.context.knex,
-    { name: 'MOD09GQ_abc', version: '006' }
-  );
-  const dbProvider = await providerModel.get(
-    t.context.knex,
-    { name: 'provider_test' }
-  );
-  const [granuleCumulusId] = await uploadGranules(
-    t.context.knex,
-    dbCollection.cumulus_id,
-    dbProvider.cumulus_id,
-    1,
-    0,
-    {
-      granuleModel,
-    }
-  );
-  const filesUploaded = await uploadFiles(
-    t.context.knex,
-    granuleCumulusId,
-    'abc',
-    12,
-    {
-      fileModel,
-    }
-  );
-  t.is(filesUploaded, 12);
-});
-
-test('uploadGranuleExecutions() uploads GranuleExecutions', async (t) => {
-  const collectionModel = new CollectionPgModel();
-  const providerModel = new ProviderPgModel();
-  const granuleModel = new GranulePgModel();
-  const executionModel = new ExecutionPgModel();
-  const geModel = new GranulesExecutionsPgModel();
-  const dbCollection = await collectionModel.get(
-    t.context.knex,
-    { name: 'MOD09GQ_abc', version: '006' }
-  );
-  const dbProvider = await providerModel.get(
-    t.context.knex,
-    { name: 'provider_test' }
-  );
-  const granuleCumulusIds = await uploadGranules(
-    t.context.knex,
-    dbCollection.cumulus_id,
-    dbProvider.cumulus_id,
-    12,
-    0,
-    {
-      granuleModel,
-    }
-  );
-  const executionCumulusIds = await uploadExecutions(
-    t.context.knex,
-    dbCollection.cumulus_id,
-    15,
-    {
-      executionModel,
-    }
-  );
-  const geUploads = await uploadGranuleExecutions(
-    t.context.knex,
-    granuleCumulusIds,
-    executionCumulusIds,
-    {
-      geModel,
-    }
-  );
-  t.is(geUploads, 15 * 12);
 });
 
 test('getDetailGenerator() yields a generator that plays well with pMap', async (t) => {
@@ -419,27 +265,5 @@ test('uploadDBGranules() uploads a pile of entries', async (t) => {
     2,
     1
   );
-  t.pass();
-});
-
-test('addCollection() adds collections', async (t) => {
-  for (const collection of yieldCollectionDetails(10, true)) {
-    const numberOfFiles = randomInt(5);
-    // eslint-disable-next-line no-await-in-loop
-    const pgCollection = await addCollection(t.context.knex, collection.name, numberOfFiles);
-    t.is(pgCollection.files.length, numberOfFiles);
-    t.is(pgCollection.name, collection.name);
-  }
-  for (const collection of yieldCollectionDetails(10, false)) {
-    const numberOfFiles = randomInt(5);
-    // eslint-disable-next-line no-await-in-loop
-    const pgCollection = await addCollection(t.context.knex, collection.name, numberOfFiles);
-    t.is(pgCollection.files.length, numberOfFiles);
-    t.is(pgCollection.name, collection.name);
-  }
-});
-
-test('addProvider() add a provider', async (t) => {
-  await addProvider(t.context.knex);
   t.pass();
 });

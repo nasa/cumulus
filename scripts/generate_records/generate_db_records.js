@@ -4,9 +4,9 @@
 const pMap = require('p-map');
 const minimist = require('minimist');
 const cryptoRandomString = require('crypto-random-string');
-const fs = require('fs-extra');
-const Logger = require('@cumulus/logger');
 const cliProgress = require('cli-progress');
+
+const { randomInt } = require('crypto');
 const {
   GranulePgModel,
   CollectionPgModel,
@@ -15,17 +15,15 @@ const {
   GranulesExecutionsPgModel,
   FilePgModel,
   getKnexClient,
-  fakeGranuleRecordFactory,
-  fakeFileRecordFactory,
-  fakeExecutionRecordFactory,
-  translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
-const { randomInt } = require('crypto');
-const { translateApiCollectionToPostgresCollection } = require('@cumulus/db');
-
-const log = new Logger({
-  sender: '@cumulus/generate_records',
-});
+const {
+  loadCollection,
+  loadExecutions,
+  loadProvider,
+  loadFiles,
+  loadGranulesExecutions,
+  loadGranules,
+} = require('./db_record_loaders');
 
 /**
  * @typedef {import('@cumulus/db').PostgresFile} PostgresFile
@@ -68,206 +66,6 @@ function* yieldCollectionDetails(total, repeatable = true) {
 }
 
 /**
- * add collection collectionPgModel call
- *
- * @param {Knex} knex
- * @param {string} collectionName
- * @param {number} files - number of files per granule
- * @returns {Promise<PostgresCollection>}
- */
-const addCollection = async (knex, collectionName, files) => {
-  const collectionJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/collections/s3_MOD09GQ_006.json`, 'utf8'));
-  collectionJson.name = collectionName;
-  collectionJson.files = (new Array(files)).map((i) => ({
-    bucket: `${i}`,
-    regex: `^.*${i}$`,
-    sampleFileName: `538.${i}`,
-  }));
-  const collectionModel = new CollectionPgModel();
-  await collectionModel.upsert(
-    knex,
-    translateApiCollectionToPostgresCollection(collectionJson)
-  );
-  return collectionJson;
-};
-
-/**
- * add provider through providerPgModel call
- *
- * @param {Knex} knex
- * @returns {Promise<string>}
- */
-const addProvider = async (knex) => {
-  const providerJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/s3_provider.json`, 'utf8'));
-  const providerModel = new ProviderPgModel();
-  const [{ name: providerId }] = await providerModel.upsert(
-    knex,
-    await translateApiProviderToPostgresProvider(providerJson)
-  );
-  return providerId;
-};
-/**
- * upload files corresponding to granule with granuleCumulusId
- *
- * @param {Knex} knex
- * @param {number} granuleCumulusId
- * @param {string} granuleGranuleId
- * @param {number} fileCount
- * @param {ModelSet} models - set of PGmodels including fileModel
- * @param {boolean} swallowErrors
- * @returns {Promise<number>}
- */
-const uploadFiles = async (
-  knex,
-  granuleCumulusId,
-  granuleGranuleId,
-  fileCount,
-  models,
-  swallowErrors = false
-) => {
-  const fileModel = models.fileModel;
-  let uploaded = 0;
-  for (let i = 0; i < fileCount; i += 1) {
-    const file = /** @type {PostgresFile} */(fakeFileRecordFactory({
-      bucket: `${i}`,
-      key: `${granuleGranuleId}${i}`,
-      granule_cumulus_id: granuleCumulusId,
-    }));
-    try {
-      await fileModel.upsert(knex, file);
-      uploaded += 1;
-    } catch (error) {
-      if (!swallowErrors) throw error;
-      log.error(`failed up upload file: ${error}`);
-    }
-  }
-  return uploaded;
-};
-/**
- * upload executions corresponding to collection with collectionCumulusId
- *
- * @param {Knex} knex
- * @param {number} collectionCumulusId
- * @param {number} executionCount
- * @param {ModelSet} models - set of PGmodels including executionModel
- * @param {boolean} swallowErrors
- * @returns {Promise<Array<number>>} - cumulusId for each successfully uploaded execution
- */
-const uploadExecutions = async (
-  knex,
-  collectionCumulusId,
-  executionCount,
-  models,
-  swallowErrors = false
-) => {
-  const executionCumulusIds = [];
-  const executionModel = models.executionModel;
-  for (let i = 0; i < executionCount; i += 1) {
-    const execution = fakeExecutionRecordFactory({ collection_cumulus_id: collectionCumulusId });
-    try {
-      const [executionOutput] = await executionModel.upsert(knex, execution);
-      executionCumulusIds.push(executionOutput.cumulus_id);
-    } catch (error) {
-      if (!swallowErrors) throw error;
-      log.error(`failed up upload execution: ${error}`);
-    }
-  }
-  return executionCumulusIds;
-};
-
-/**
- * upload granules corresponding to collection with collectionCumulusId
- *
- * @param {Knex} knex
- * @param {number} collectionCumulusId
- * @param {number} providerCumulusId
- * @param {number} granuleCount
- * @param {number} filesPerGranule
- * @param {ModelSet} models - set of PGmodels including granuleModel
- * @param {boolean} swallowErrors
- * @returns {Promise<Array<number>>} - cumulusId for each successfully uploaded granule
- */
-const uploadGranules = async (
-  knex,
-  collectionCumulusId,
-  providerCumulusId,
-  granuleCount,
-  filesPerGranule,
-  models,
-  swallowErrors = false
-) => {
-  const granuleCumulusIds = [];
-  const granuleModel = models.granuleModel;
-  for (let i = 0; i < granuleCount; i += 1) {
-    const granule = /** @type {PostgresGranule} */(fakeGranuleRecordFactory({
-      collection_cumulus_id: collectionCumulusId,
-      provider_cumulus_id: providerCumulusId,
-      status: 'completed',
-    }));
-    try {
-      const [granuleOutput] = await granuleModel.upsert({
-        knexOrTrx: knex,
-        granule,
-        writeConstraints: true,
-      });
-      granuleCumulusIds.push(granuleOutput.cumulus_id);
-      await uploadFiles(
-        knex,
-        granuleOutput.cumulus_id,
-        granuleOutput.granule_id,
-        filesPerGranule,
-        models,
-        swallowErrors
-      );
-    } catch (error) {
-      if (!swallowErrors) throw error;
-      log.error(`failed up upload granule: ${error}`);
-    }
-  }
-  return granuleCumulusIds;
-};
-
-/**
- * upload granuleExecutions corresponding to each pair
- * within list of granuleCumulusIds and executionCumulusIds
- *
- * @param {Knex} knex
- * @param {Array<number>} granuleCumulusIds
- * @param {Array<number>} executionCumulusIds
- * @param {ModelSet} models - set of PGmodels including geModel
- * @param {boolean} swallowErrors
- * @returns {Promise<number>} - number of granuleExecutions uploaded
- */
-const uploadGranuleExecutions = async (
-  knex,
-  granuleCumulusIds,
-  executionCumulusIds,
-  models,
-  swallowErrors = false
-) => {
-  const GEmodel = models.geModel;
-  let uploaded = 0;
-  for (let i = 0; i < granuleCumulusIds.length; i += 1) {
-    for (let j = 0; j < executionCumulusIds.length; j += 1) {
-      try {
-        await GEmodel.upsert(
-          knex,
-          {
-            granule_cumulus_id: granuleCumulusIds[i],
-            execution_cumulus_id: executionCumulusIds[j],
-          }
-        );
-        uploaded += 1;
-      } catch (error) {
-        if (!swallowErrors) throw error;
-        log.error(`failed up upload granuleExecution: ${error}`);
-      }
-    }
-  }
-  return uploaded;
-};
-
-/**
  * upload a batch of granules and executions
  * along with files per granule and granuleExecutions
  *
@@ -295,27 +93,29 @@ const uploadDataBatch = async ({
   models,
   swallowErrors,
 }) => {
-  const granuleCumulusIds = await uploadGranules(
+  const granuleCumulusIds = await loadGranules(
     knex,
     collectionCumulusId,
     providerCumulusId,
     granulesPerBatch,
-    filesPerGranule,
-    models,
+    models.granuleModel,
     swallowErrors
   );
-  const executionCumulusIds = await uploadExecutions(
+  for (const granuleCumulusId of granuleCumulusIds) {
+    await loadFiles(knex, granuleCumulusId, filesPerGranule, models.fileModel, swallowErrors);
+  }
+  const executionCumulusIds = await loadExecutions(
     knex,
     collectionCumulusId,
     executionsPerBatch,
-    models,
+    models.executionModel,
     swallowErrors
   );
-  await uploadGranuleExecutions(
+  await loadGranulesExecutions(
     knex,
     granuleCumulusIds,
     executionCumulusIds,
-    models,
+    models.geModel,
     swallowErrors
   );
 };
@@ -551,9 +351,9 @@ const main = async () => {
 
   process.env.dbMaxPool = concurrency.toString();
   const knex = await getKnexClient();
-  const providerId = await addProvider(knex);
+  const providerId = await loadProvider(knex);
   for (const collection of yieldCollectionDetails(collections, true)) {
-    await addCollection(knex, collection.name, files);
+    await loadCollection(knex, collection.name, files);
     await uploadDBGranules(
       knex,
       providerId,
@@ -580,12 +380,6 @@ if (require.main === module) {
 
 module.exports = {
   yieldCollectionDetails,
-  addProvider,
-  addCollection,
-  uploadExecutions,
-  uploadGranules,
-  uploadFiles,
-  uploadGranuleExecutions,
   getDetailGenerator,
   parseArgs,
   uploadDBGranules,
