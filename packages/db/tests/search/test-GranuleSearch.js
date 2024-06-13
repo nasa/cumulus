@@ -643,7 +643,7 @@ test('GranuleSearch supports error.Error terms search', async (t) => {
   t.is(response.results?.length, 0);
 });
 
-test('GranuleSearch supports search which granule field does not match the given value', async (t) => {
+test('GranuleSearch supports search when granule field does not match the given value', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 200,

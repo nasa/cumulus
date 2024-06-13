@@ -7,8 +7,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Replace ElasticSearch Phase 1
+
 - **CUMULUS-3695**
  - Updated `execution` list api endpoint and added `ExecutionSearch` class to query postgres
+- **CUMULUS-3641**
+ - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
 - **CUMULUS-3695**
  - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
 - **CUMULUS-3688**
