@@ -127,6 +127,8 @@ modification.
   - Added `volume_type` option to `elasticsearch_config` in the
     `data-persistance` module to allow configuration of the EBS volume type for
     Elasticsarch; default remains `gp2`.
+- **CUMULUS-3424**
+  - Exposed auto_pause and seconds_until_auto_pause parameters in scaling_configuration
 
 ### Changed
 
