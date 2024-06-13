@@ -116,6 +116,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 - **CUMULUS-3606**
   - Updated  with additional documentation covering tunneling configuration
     using a PKCS11 provider
+- **CUMULUS-3424**
+  - Exposed auto_pause and seconds_until_auto_pause parameters in scaling_configuration
 
 ### Changed
 
