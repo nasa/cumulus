@@ -9,6 +9,10 @@ const {
   migrationDir,
   generateLocalTestDb,
   destroyLocalTestDb,
+  GranulePgModel,
+  ExecutionPgModel,
+  GranulesExecutionsPgModel,
+  FilePgModel,
 } = require('@cumulus/db');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
@@ -16,6 +20,7 @@ const {
   getDetailGenerator,
   parseArgs,
   uploadDBGranules,
+  uploadDataBatch,
 } = require('../generate_db_records');
 
 test('yieldCollectionDetails() gives repeatable and non-repeatable collections with valid name, version and suffix', (t) => {
@@ -77,7 +82,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('getDetailGenerator() yields a generator that plays well with pMap', async (t) => {
+test.serial('getDetailGenerator() yields a generator that plays well with pMap', async (t) => {
   t.throws(
     () => getDetailGenerator({
       knex: t.context.knex,
@@ -240,7 +245,7 @@ test.serial("parseArgs() fails when executionsPerGranule doesn't follow a:b form
   process.argv = argv;
 });
 
-test('uploadDBGranules() uploads a pile of entries', async (t) => {
+test.serial('uploadDataBatch() uploads a batch of entries verified tobe in the database', async (t) => {
   const providerPgModel = new ProviderPgModel();
   const collectionPgModel = new CollectionPgModel();
 
@@ -249,8 +254,66 @@ test('uploadDBGranules() uploads a pile of entries', async (t) => {
     version: '007',
   });
   const providerRecord = fakeProviderRecordFactory();
-  await providerPgModel.create(t.context.knex, providerRecord);
-  await collectionPgModel.create(
+  const [{ cumulus_id: providerCumulusId }] = await providerPgModel.upsert(
+    t.context.knex,
+    providerRecord
+  );
+  const [{ cumulus_id: collectionCumulusId }] = await collectionPgModel.upsert(
+    t.context.knex,
+    collectionRecord
+  );
+  const granuleModel = new GranulePgModel();
+  const executionModel = new ExecutionPgModel();
+  const geModel = new GranulesExecutionsPgModel();
+  const fileModel = new FilePgModel();
+  const cumulusIds = await uploadDataBatch({
+    knex: t.context.knex,
+    collectionCumulusId,
+    providerCumulusId,
+    granulesPerBatch: 12,
+    executionsPerBatch: 3,
+    filesPerGranule: 5,
+    swallowErrors: false,
+    models: {
+      granuleModel,
+      executionModel,
+      geModel,
+      fileModel,
+    },
+  });
+  await Promise.all(cumulusIds.granuleCumulusIds.map(async (granule) => {
+    t.true(await granuleModel.exists(t.context.knex, { cumulus_id: granule }));
+  }));
+  await Promise.all(cumulusIds.executionCumulusIds.map(async (execution) => {
+    t.true(await executionModel.exists(t.context.knex, { cumulus_id: execution }));
+  }));
+  await Promise.all(cumulusIds.fileCumulusIds.map(async (file) => {
+    t.true(await fileModel.exists(t.context.knex, { cumulus_id: file }));
+  }));
+  await Promise.all(cumulusIds.granuleCumulusIds.map(async (granule) => {
+    await Promise.all(cumulusIds.executionCumulusIds.map(async (execution) => {
+      t.true(await geModel.exists(
+        t.context.knex,
+        {
+          granule_cumulus_id: granule,
+          execution_cumulus_id: execution,
+        }
+      ));
+    }));
+  }));
+});
+
+test.serial('uploadDBGranules() uploads a pile of entries', async (t) => {
+  const providerPgModel = new ProviderPgModel();
+  const collectionPgModel = new CollectionPgModel();
+
+  const collectionRecord = fakeCollectionRecordFactory({
+    name: 'MOD09GQ_abc',
+    version: '007',
+  });
+  const providerRecord = fakeProviderRecordFactory();
+  await providerPgModel.upsert(t.context.knex, providerRecord);
+  await collectionPgModel.upsert(
     t.context.knex,
     collectionRecord
   );

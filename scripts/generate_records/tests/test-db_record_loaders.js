@@ -1,6 +1,4 @@
 const test = require('ava');
-const clone = require('lodash/clone');
-const pMap = require('p-map');
 const {
   CollectionPgModel,
   ProviderPgModel,
@@ -18,9 +16,6 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { randomInt } = require('crypto');
 const {
   yieldCollectionDetails,
-  getDetailGenerator,
-  parseArgs,
-  uploadDBGranules,
 } = require('../generate_db_records');
 const {
   loadCollection,
@@ -29,6 +24,7 @@ const {
   loadGranules,
   loadExecutions,
   loadFiles,
+  loadRule,
 } = require('../db_record_loaders');
 test.before(async (t) => {
   t.context.testDbName = randomId('generate_records');
@@ -98,7 +94,7 @@ test('loadGranules() uploads granules', async (t) => {
   );
   t.is(granules.length, 15);
   await Promise.all(granules.map(async (granule) => {
-    await granuleModel.exists(t.context.knex, { cumulus_id: granule });
+    t.true(await granuleModel.exists(t.context.knex, { cumulus_id: granule }));
   }));
   granules = await loadGranules(
     t.context.knex,
@@ -109,7 +105,7 @@ test('loadGranules() uploads granules', async (t) => {
   );
   t.is(granules.length, 5);
   await Promise.all(granules.map(async (granule) => {
-    await granuleModel.exists(t.context.knex, { cumulus_id: granule });
+    t.true(await granuleModel.exists(t.context.knex, { cumulus_id: granule }));
   }));
 });
 
@@ -139,7 +135,9 @@ test('loadFiles() uploadsFiles', async (t) => {
     12,
     fileModel
   );
-  t.is(filesUploaded, 12);
+  await Promise.all(filesUploaded.map(async (file) => {
+    t.true(await fileModel.exists(t.context.knex, { cumulus_id: file }));
+  }));
 });
 
 test('loadGranulesExecutions() uploads GranulesExecutions', async (t) => {
@@ -175,7 +173,9 @@ test('loadGranulesExecutions() uploads GranulesExecutions', async (t) => {
     executionCumulusIds,
     geModel
   );
-  t.is(geUploads, 15 * 12);
+  await Promise.all(geUploads.map(async (granuleExecution) => {
+    t.true(await geModel.exists(t.context.knex, granuleExecution));
+  }));
 });
 
 test('loadCollection() adds collections', async (t) => {
@@ -197,5 +197,11 @@ test('loadCollection() adds collections', async (t) => {
 
 test('loadProvider() adds a provider', async (t) => {
   await loadProvider(t.context.knex);
+  t.pass();
+});
+
+test('loadRule() adds a rule and accepts undefined collection/provider ids', async (t) => {
+  await loadRule(t.context.knex);
+  await loadRule(t.context.knex, 1, 2);
   t.pass();
 });

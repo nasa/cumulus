@@ -81,7 +81,11 @@ function* yieldCollectionDetails(total, repeatable = true) {
  * }} BatchParams
  *
  * @param {BatchParams} params
- * @returns {Promise<void>}
+ * @returns {Promise<{
+ *   granuleCumulusIds: Array<number>
+ *   fileCumulusIds: Array<number>
+ *   executionCumulusIds: Array<number>
+ * }>}
  */
 const uploadDataBatch = async ({
   knex,
@@ -101,8 +105,11 @@ const uploadDataBatch = async ({
     models.granuleModel,
     swallowErrors
   );
+  const fileCumulusIds = [];
   for (const granuleCumulusId of granuleCumulusIds) {
-    await loadFiles(knex, granuleCumulusId, filesPerGranule, models.fileModel, swallowErrors);
+    fileCumulusIds.push(
+      await loadFiles(knex, granuleCumulusId, filesPerGranule, models.fileModel, swallowErrors)
+    );
   }
   const executionCumulusIds = await loadExecutions(
     knex,
@@ -118,6 +125,11 @@ const uploadDataBatch = async ({
     models.geModel,
     swallowErrors
   );
+  return {
+    granuleCumulusIds,
+    fileCumulusIds: fileCumulusIds.flat(),
+    executionCumulusIds,
+  };
 };
 
 /**
@@ -239,7 +251,9 @@ const uploadDBGranules = async (
   });
   await pMap(
     iterableDetailGenerator,
-    uploadDataBatch,
+    (params) => {
+      uploadDataBatch(params);
+    },
     { concurrency }
   );
 };
@@ -382,5 +396,6 @@ module.exports = {
   yieldCollectionDetails,
   getDetailGenerator,
   parseArgs,
+  uploadDataBatch,
   uploadDBGranules,
 };
