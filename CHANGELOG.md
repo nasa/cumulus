@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v18.3.0] 2024-06-14
+
 ### Migration Notes
 
 #### CUMULUS-3433 Update to node.js v20
@@ -7812,7 +7814,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.2.2...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.3.0...HEAD
+[v18.3.0]: https://github.com/nasa/cumulus/compare/v18.2.2...v18.3.0
 [v18.2.2]: https://github.com/nasa/cumulus/compare/v18.2.1...v18.2.2
 [v18.2.1]: https://github.com/nasa/cumulus/compare/v18.2.0...v18.2.1
 [v18.2.0]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.2.0
