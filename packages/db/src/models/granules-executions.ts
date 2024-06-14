@@ -38,7 +38,25 @@ export default class GranulesExecutionsPgModel {
       .merge()
       .returning('*');
   }
-
+  /**
+   * Creates multiple granuleExecutions in Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {PostgresGranuleExecution[]} items - Records to insert into the DB
+   * @param {string | Array<string>} returningFields - A string or array of strings
+   *   of columns to return. Defaults to 'cumulus_id'.
+   * @returns {Promise<PostgresGranuleExecution[]>} Returns an array of objects
+   *   from the specified column(s) from returningFields.
+   */
+  async insert(
+    knexOrTransaction: Knex | Knex.Transaction,
+    items: PostgresGranuleExecution[],
+    returningFields: string | string[] = '*'
+  ): Promise<unknown[] | Object[]> {
+    return await knexOrTransaction(this.tableName)
+      .insert(items)
+      .returning(returningFields);
+  }
   /**
    * Get execution_cumulus_id column values from the granule_cumulus_id
    *
