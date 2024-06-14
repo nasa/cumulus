@@ -189,9 +189,10 @@ const getBatchParamGenerator = ({
     if (variance) {
       //asking for variance adds some noise to batch executions vs granules
       let _granulesPerBatch = 1;
+      let _executionsPerBatch;
       for (let i = 0; i < numberOfGranules; i += _granulesPerBatch) {
         _granulesPerBatch = granulesPerBatch + randomInt(6);
-        const _executionsPerBatch = executionsPerBatch + randomInt(6);
+        _executionsPerBatch = executionsPerBatch + randomInt(6);
         bar.update(i);
         // this passes out an object each time pMap (or another iteration) asks for the next index
         // without holding onto it in memory
