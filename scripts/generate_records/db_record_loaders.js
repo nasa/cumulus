@@ -17,6 +17,7 @@ const {
   translateApiCollectionToPostgresCollection,
   RulePgModel,
 } = require('@cumulus/db');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const log = new Logger({
   sender: '@cumulus/generate_records',
@@ -134,6 +135,7 @@ const loadGranules = async (
   const granuleCumulusIds = [];
   for (let i = 0; i < granuleCount; i += 1) {
     const granule = /** @type {PostgresGranule} */(fakeGranuleRecordFactory({
+      granule_id: randomString(6);
       collection_cumulus_id: collectionCumulusId,
       provider_cumulus_id: providerCumulusId,
       status: 'completed',
@@ -177,6 +179,7 @@ const loadFiles = async (
     const file = /** @type {PostgresFile} */(fakeFileRecordFactory({
       bucket: `${i}`,
       granule_cumulus_id: granuleCumulusId,
+      key: randomString(8),
     }));
     try {
       const [uploadedFile] = await model.upsert(knex, file);

@@ -276,7 +276,6 @@ test('uploadDataBatch() uploads a batch of entries verified to be in the databas
 });
 
 test('uploadDBGranules() uploads a pile of entries', async (t) => {
-
   const providerPgModel = new ProviderPgModel();
   const collectionPgModel = new CollectionPgModel();
 
