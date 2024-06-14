@@ -9,7 +9,9 @@ const {
   destroyLocalTestDb,
   generateLocalTestDb,
   CollectionPgModel,
+  GranulePgModel,
   fakeCollectionRecordFactory,
+  fakeGranuleRecordFactory,
   migrationDir,
 } = require('../../dist');
 
@@ -38,9 +40,25 @@ test.before(async (t) => {
     }))
   ));
 
+  t.context.granulePgModel = new GranulePgModel();
+  const granules = [];
+  const statuses = ['queued', 'failed', 'completed', 'running'];
+
+  range(500).map((num) => (
+    granules.push(fakeGranuleRecordFactory({
+      collection_cumulus_id: num % 100,
+      status: statuses[Math.floor(Math.random() * 4)],
+    }))
+  ));
+
   await t.context.collectionPgModel.insert(
     t.context.knex,
     collections
+  );
+
+  await t.context.granulePgModel.insert(
+    t.context.knex,
+    granules
   );
 });
 
@@ -305,4 +323,26 @@ test('CollectionSearch supports search which checks existence of collection fiel
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
+});
+
+test('CollectionSearch supports includeStats', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    includeStats: true,
+  };
+  const dbSearch = new CollectionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 100);
+  t.is(typeof response.results[0].stats.failed, 'number');
+  t.is(typeof response.results[0].stats.completed, 'number');
+  t.is(typeof response.results[0].stats.running, 'number');
+  t.is(typeof response.results[0].stats.queued, 'number');
+  t.is(typeof response.results[0].stats.total, 'number');
+  t.is(response.results[0].stats.failed >= 0, true);
+  t.is(response.results[0].stats.completed >= 0, true);
+  t.is(response.results[0].stats.running >= 0, true);
+  t.is(response.results[0].stats.queued >= 0, true);
+  t.is(response.results[0].stats.total > 0, true);
 });

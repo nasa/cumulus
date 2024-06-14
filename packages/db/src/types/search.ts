@@ -8,7 +8,7 @@ export type QueryStringParameters = {
   prefix?: string,
   sort_by?: string,
   sort_key?: string[],
-  [key: string]: string | string[] | undefined,
+  [key: string]: string | string[] | boolean | undefined,
 };
 
 export type QueryEvent = {

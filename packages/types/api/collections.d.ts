@@ -30,7 +30,8 @@ export interface PartialCollectionRecord {
   url_path?: string,
   version?: string,
   createdAt?: number,
-  updatedAt?: number
+  updatedAt?: number,
+  stats?: object,
 }
 
 export interface NewCollectionRecord extends PartialCollectionRecord {
