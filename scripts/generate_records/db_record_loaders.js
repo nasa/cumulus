@@ -135,7 +135,7 @@ const loadGranules = async (
   const granuleCumulusIds = [];
   for (let i = 0; i < granuleCount; i += 1) {
     const granule = /** @type {PostgresGranule} */(fakeGranuleRecordFactory({
-      granule_id: randomString(6);
+      granule_id: randomString(6),
       collection_cumulus_id: collectionCumulusId,
       provider_cumulus_id: providerCumulusId,
       status: 'completed',
