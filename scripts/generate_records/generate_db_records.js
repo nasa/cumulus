@@ -161,29 +161,22 @@ const getBatchParamGenerator = ({
       swallowErrors,
     };
 
-    if (variance) {
-      //asking for variance adds some noise to batch executions vs granules
-      let _granulesPerBatch = 1;
-      let _executionsPerBatch;
-      for (let i = 0; i < numberOfGranules; i += _granulesPerBatch) {
+    //asking for variance adds some noise to batch executions vs granules
+    let _granulesPerBatch = 1;
+    let _executionsPerBatch;
+    for (let i = 0; i < numberOfGranules; i += _granulesPerBatch) {
+      bar.update(i);
+      if (variance) {
         _granulesPerBatch = granulesPerBatch + randomInt(6);
         _executionsPerBatch = executionsPerBatch + randomInt(6);
-        bar.update(i);
-        // this passes out an object each time pMap (or another iteration) asks for the next index
-        // without holding onto it in memory
-        yield {
-          ...standardParams,
-          granulesPerBatch: _granulesPerBatch,
-          executionsPerBatch: _executionsPerBatch,
-        };
       }
-    } else {
-      for (let i = 0; i < numberOfGranules; i += granulesPerBatch) {
-        bar.update(i);
-        // this passes out an object each time pMap (or another iteration) asks for the next index
-        // without holding onto it in memory
-        yield standardParams;
-      }
+      // this passes out an object each time pMap (or another iteration) asks for the next index
+      // without holding onto it in memory
+      yield {
+        ...standardParams,
+        granulesPerBatch: _granulesPerBatch,
+        executionsPerBatch: _executionsPerBatch,
+      };
     }
 
     bar.stop();
