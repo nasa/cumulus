@@ -1,10 +1,6 @@
 const test = require('ava');
 const {
-  CollectionPgModel,
-  ProviderPgModel,
   ExecutionPgModel,
-  fakeCollectionRecordFactory,
-  fakeProviderRecordFactory,
   migrationDir,
   generateLocalTestDb,
   destroyLocalTestDb,
