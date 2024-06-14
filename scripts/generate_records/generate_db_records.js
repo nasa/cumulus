@@ -139,7 +139,7 @@ const uploadDataBatch = async ({
  *
  * @param {object} params
  * @param {Knex} params.knex
- * @param {number} params.granules
+ * @param {number} params.numberOfGranules
  * @param {number} params.collectionCumulusId
  * @param {number} params.providerCumulusId
  * @param {number} params.filesPerGranule
@@ -147,12 +147,13 @@ const uploadDataBatch = async ({
  * @param {number} params.executionsPerBatch
  * @param {ModelSet} params.models
  * @param {boolean} params.variance
+ * @param {boolean} params.swallowErrors
  * @returns {Iterable<BatchParams>}
  */
 
 const getDetailGenerator = ({
   knex,
-  granules,
+  numberOfGranules,
   collectionCumulusId,
   providerCumulusId,
   filesPerGranule,
@@ -160,6 +161,7 @@ const getDetailGenerator = ({
   executionsPerBatch,
   models,
   variance,
+  swallowErrors = false,
 }) => {
   if (granulesPerBatch < 1) {
     throw new Error('granulesPerBatch must be set to >=1');
@@ -169,14 +171,16 @@ const getDetailGenerator = ({
    */
   function* detailGenerator() {
     const bar = new cliProgress.SingleBar(
-      { etaBuffer: granules / 10 }
+      { etaBuffer: numberOfGranules / 10 }
     );
-    bar.start(granules, 0);
+    bar.start(numberOfGranules, 0);
     let _granulesPerBatch = 1;
-    for (let i = 0; i < granules; i += _granulesPerBatch) {
+    for (let i = 0; i < numberOfGranules; i += _granulesPerBatch) {
       _granulesPerBatch = granulesPerBatch + (variance ? randomInt(6) : 0);
       const _executionsPerBatch = executionsPerBatch + (variance ? randomInt(6) : 0);
       bar.update(i);
+
+      // this yields one object each time this object is iterated...
       yield {
         knex,
         collectionCumulusId,
@@ -185,12 +189,13 @@ const getDetailGenerator = ({
         granulesPerBatch: _granulesPerBatch,
         executionsPerBatch: _executionsPerBatch,
         models,
-        swallowErrors: true,
+        swallowErrors,
       };
     }
     bar.stop();
   }
   const clujedIterable = {};
+  // this sets this objects iteration behavior to be detailGenerator
   clujedIterable[Symbol.iterator] = detailGenerator;
 
   return /** @type {Iterable<BatchParams>} */(clujedIterable);
@@ -203,7 +208,7 @@ const getDetailGenerator = ({
  * @param {Knex} knex
  * @param {string} providerId
  * @param {CollectionDetails} collection
- * @param {number} granules
+ * @param {number} numberOfGranules
  * @param {number} filesPerGranule
  * @param {number} granulesPerBatch
  * @param {number} executionsPerBatch
@@ -216,12 +221,13 @@ const uploadDBGranules = async (
   knex,
   providerId,
   collection,
-  granules,
+  numberOfGranules,
   filesPerGranule,
   granulesPerBatch,
   executionsPerBatch,
   concurrency,
-  variance
+  variance,
+  swallowErrors
 ) => {
   const collectionPgModel = new CollectionPgModel();
   const providerPgModel = new ProviderPgModel();
@@ -240,7 +246,7 @@ const uploadDBGranules = async (
   };
   const iterableDetailGenerator = getDetailGenerator({
     knex,
-    granules,
+    numberOfGranules,
     collectionCumulusId,
     providerCumulusId,
     filesPerGranule,
@@ -248,6 +254,7 @@ const uploadDBGranules = async (
     executionsPerBatch,
     models,
     variance,
+    swallowErrors
   });
   await pMap(
     iterableDetailGenerator,
@@ -290,6 +297,7 @@ const parseExecutionsGranulesBatch = (executionsPerGranule) => {
  *   collections: number
  *   concurrency: number
  *   variance: boolean
+ *   swallowErrors: boolean
  * }}
  */
 const parseArgs = () => {
@@ -300,6 +308,7 @@ const parseArgs = () => {
     collections,
     variance,
     concurrency,
+    swallowErrors,
   } = minimist(
     process.argv,
     {
@@ -311,16 +320,17 @@ const parseArgs = () => {
         'concurrency',
       ],
       boolean: [
+        'swallowErrors',
         'variance',
       ],
       alias: {
-        num_collections: 'collections',
-        granules: 'granulesK',
-        granules_k: 'granulesK',
-        executions_to_granule: 'executionsPerGranule',
-        executions_to_granules: 'executionsPerGranule',
-        executions_per_granule: 'executionsPerGranule',
-        files_per_gran: 'files',
+        g: 'granulesK',
+        f: 'files',
+        c: 'collections',
+        e: 'executionsPerGranule',
+        C: 'concurrency',
+        v: 'variance',
+        s: 'swallowErrors',
       },
       default: {
         collections: process.env.COLLECTIONS || 1,
@@ -329,6 +339,7 @@ const parseArgs = () => {
         executionsPerGranule: process.env.EXECUTIONS_PER_GRANULE || '2:2',
         variance: process.env.VARIANCE || false,
         concurrency: process.env.CONCURRENCY || 1,
+        swallowErrors: process.env.SWALLOW_ERRORS || true,
       },
     }
   );
@@ -336,7 +347,12 @@ const parseArgs = () => {
     granulesPerBatch,
     executionsPerBatch,
   } = parseExecutionsGranulesBatch(executionsPerGranule);
-
+  if (granulesPerBatch < 1) {
+    throw new Error(`granules per batch must be > 0, got ${granulesPerBatch} from ${executionsPerGranule}`);
+  }
+  if (concurrency < 1) {
+    throw new Error(`concurrency must be > 0, got ${concurrency}`);
+  }
   return {
     granules: Number.parseInt(granulesK, 10) * 1000,
     files: Number.parseInt(files, 10),
@@ -345,6 +361,7 @@ const parseArgs = () => {
     collections: Number.parseInt(collections, 10),
     concurrency: Number.parseInt(concurrency, 10),
     variance,
+    swallowErrors,
   };
 };
 
@@ -361,8 +378,8 @@ const main = async () => {
     collections,
     variance,
     concurrency,
+    swallowErrors,
   } = parseArgs();
-
   process.env.dbMaxPool = concurrency.toString();
   const knex = await getKnexClient();
   const providerId = await loadProvider(knex);
@@ -377,7 +394,8 @@ const main = async () => {
       granulesPerBatch,
       executionsPerBatch,
       concurrency,
-      variance
+      variance,
+      swallowErrors
     );
   }
 };

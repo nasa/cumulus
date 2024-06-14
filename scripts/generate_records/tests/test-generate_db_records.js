@@ -82,7 +82,7 @@ test.after.always(async (t) => {
   });
 });
 
-test.serial('getDetailGenerator() yields a generator that plays well with pMap', async (t) => {
+test('getDetailGenerator() yields a generator that plays well with pMap', async (t) => {
   t.throws(
     () => getDetailGenerator({
       knex: t.context.knex,
@@ -100,7 +100,7 @@ test.serial('getDetailGenerator() yields a generator that plays well with pMap',
   let iterated = 0;
   const iterableGenerator = getDetailGenerator({
     knex: {},
-    granules: 5,
+    numberOfGranules: 5,
     collectionCumulusId: 0,
     providerCumulusId: 0,
     filesPerGranule: 0,
@@ -133,6 +133,7 @@ test.serial('parseArgs() parses out arguments when given reasonable args', (t) =
     granulesPerBatch: 2,
     variance: false,
     concurrency: 1,
+    swallowErrors: true,
   };
   t.deepEqual(args, defaultArgs);
 
@@ -142,7 +143,8 @@ test.serial('parseArgs() parses out arguments when given reasonable args', (t) =
     '--concurrency', '5',
     '--executionsPerGranule=3:5',
     '--variance=true',
-    '--granules=112',
+    '--granulesK=112',
+    '--swallowErrors', 'false',
   ]);
   args = parseArgs();
   t.deepEqual(args, {
@@ -153,6 +155,7 @@ test.serial('parseArgs() parses out arguments when given reasonable args', (t) =
     granulesPerBatch: 5,
     variance: true,
     collections: 3,
+    swallowErrors: false,
   });
 
   setArgs([
@@ -165,16 +168,16 @@ test.serial('parseArgs() parses out arguments when given reasonable args', (t) =
   });
 
   setArgs([
-    '--files_per_gran=12',
+    '-C=12',
   ]);
   args = parseArgs();
   t.deepEqual(args, {
     ...defaultArgs,
-    files: 12,
+    concurrency: 12,
   });
 
   setArgs([
-    '--num_collections=3',
+    '-c=3',
   ]);
   args = parseArgs();
   t.deepEqual(args, {
@@ -183,7 +186,7 @@ test.serial('parseArgs() parses out arguments when given reasonable args', (t) =
   });
 
   setArgs([
-    '--granulesK=15',
+    '-g=15',
   ]);
   args = parseArgs();
   t.deepEqual(args, {
@@ -192,26 +195,7 @@ test.serial('parseArgs() parses out arguments when given reasonable args', (t) =
   });
 
   setArgs([
-    '--granules_k=15',
-  ]);
-  args = parseArgs();
-  t.deepEqual(args, {
-    ...defaultArgs,
-    granules: 15000,
-  });
-
-  setArgs([
-    '--executions_to_granule=4:5',
-  ]);
-  args = parseArgs();
-  t.deepEqual(args, {
-    ...defaultArgs,
-    executionsPerBatch: 4,
-    granulesPerBatch: 5,
-  });
-
-  setArgs([
-    '--executions_per_granule=6:5',
+    '-e=6:5',
   ]);
   args = parseArgs();
   t.deepEqual(args, {
@@ -219,20 +203,8 @@ test.serial('parseArgs() parses out arguments when given reasonable args', (t) =
     executionsPerBatch: 6,
     granulesPerBatch: 5,
   });
-
-  setArgs([
-    '--executions_to_granules=12:5',
-  ]);
-  args = parseArgs();
-  t.deepEqual(args, {
-    ...defaultArgs,
-    executionsPerBatch: 12,
-    granulesPerBatch: 5,
-  });
-
   process.argv = argv;
 });
-
 test.serial("parseArgs() fails when executionsPerGranule doesn't follow a:b format", (t) => {
   const argv = clone(process.argv);
   setArgs([
@@ -245,7 +217,7 @@ test.serial("parseArgs() fails when executionsPerGranule doesn't follow a:b form
   process.argv = argv;
 });
 
-test.serial('uploadDataBatch() uploads a batch of entries verified tobe in the database', async (t) => {
+test('uploadDataBatch() uploads a batch of entries verified tobe in the database', async (t) => {
   const providerPgModel = new ProviderPgModel();
   const collectionPgModel = new CollectionPgModel();
 
@@ -303,7 +275,7 @@ test.serial('uploadDataBatch() uploads a batch of entries verified tobe in the d
   }));
 });
 
-test.serial('uploadDBGranules() uploads a pile of entries', async (t) => {
+test('uploadDBGranules() uploads a pile of entries', async (t) => {
   const providerPgModel = new ProviderPgModel();
   const collectionPgModel = new CollectionPgModel();
 

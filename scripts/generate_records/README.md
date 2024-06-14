@@ -12,11 +12,12 @@ the script can be configured either through command line arguments or environmen
 
 | Argument    | Environment | Default | Description | 
 | --- | :----: | :----: | ---: |
-| --collections <br> --num_collections | COLLECTIONS | 1 | number of collections. number of granules will be <br> for *each* collection, not divided among them |
-| --granules_k <br> granules| GRANULES_K | 10 | number of granules, in thousands |
-| --executionsPerGranule <br> --executions_to_granule <br> --executions_to_granules <br> --executions_per_granule | EXECUTIONS_PER_GRANULE | 2:2 | number of executions *x* per <br> batch of granules *g* in format 'x:g' <br> \<executionsPerBatch>:\<granulesPerBatch> |
-| --files <br> --files_per_gran | FILES | 1 | number of files per granule |
-| --concurrency | CONCURRENCY | 1 | how many threads of parallelization |
-| --variance | VARIANCE |  false | randomize executions and granules per batch, <br> adding up to 6 granules and or executions to a given batch |
+| --collections <br>-c | COLLECTIONS | 1 | number of collections. number of granules will be <br> for *each* collection, not divided among them |
+| --granules_k <br> -g| GRANULES_K | 10 | number of granules, in thousands |
+| --executionsPerGranule <br> -e | EXECUTIONS_PER_GRANULE | 2:2 | number of executions *x* per <br> batch of granules *g* in format 'x:g' <br> \<executionsPerBatch>:\<granulesPerBatch> |
+| --files <br> -f | FILES | 1 | number of files per granule |
+| --concurrency <br> -C | CONCURRENCY | 1 | how many threads of parallelization |
+| --variance <br> -v| VARIANCE |  false | randomize executions and granules per batch, <br> adding up to 6 granules and or executions to a given batch |
+| --swallowErrors <br> -s|SWALLOW_ERRORS| true | swallow and move on from data data upload errors |
 
 concurrency should usually be >100, 
