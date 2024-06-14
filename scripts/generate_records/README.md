@@ -16,8 +16,7 @@ the script can be configured either through command line arguments or environmen
 | --granules_k <br> -g| GRANULES_K | 10 | number of granules, in thousands |
 | --executionsPerGranule <br> -e | EXECUTIONS_PER_GRANULE | 2:2 | number of executions *x* per <br> batch of granules *g* in format 'x:g' <br> \<executionsPerBatch>:\<granulesPerBatch> |
 | --files <br> -f | FILES | 1 | number of files per granule |
-| --concurrency <br> -C | CONCURRENCY | 1 | how many threads of parallelization |
+| --concurrency <br> -C | CONCURRENCY | 1 | how many threads of parallelization <br> concurrency should usually be >100 |
 | --variance <br> -v| VARIANCE |  false | randomize executions and granules per batch, <br> adding up to 6 granules and or executions to a given batch |
 | --swallowErrors <br> -s|SWALLOW_ERRORS| true | swallow and move on from data data upload errors |
 
-concurrency should usually be >100, 
