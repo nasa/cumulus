@@ -39,7 +39,7 @@ const createFakeGranule = async (dbClient) => {
   // bigint for granule cumulus_id is treated as a string,
   // not number, by knex
   // see https://github.com/knex/knex/issues/387
-  return granuleCumulusId;
+  return Number.parseInt(granuleCumulusId, 10);
 };
 
 test.before(async (t) => {

@@ -28,7 +28,6 @@ test.before(async (t) => {
 
   await t.context.knex.schema.createTable(t.context.tableName, (table) => {
     table.increments('cumulus_id').primary();
-    table.bigInteger('test_cumulus_id');
     table.text('info');
     table.timestamps(false, true);
   });
@@ -57,7 +56,6 @@ test('BasePgModel.create() creates record and returns cumulus_id by default', as
       ...defaultDates,
       cumulus_id: queryResult[0].cumulus_id,
       info,
-      test_cumulus_id: null,
     }
   );
 });
@@ -76,7 +74,6 @@ test('BasePgModel.create() works with knex transaction', async (t) => {
       ...defaultDates,
       cumulus_id: queryResult[0].cumulus_id,
       info,
-      test_cumulus_id: null,
     }
   );
 });
@@ -98,13 +95,11 @@ test('BasePgModel.insert() creates records and returns cumulus_id by default', a
       ...defaultDates,
       cumulus_id: queryResult[0].cumulus_id,
       info,
-      test_cumulus_id: null,
     },
     {
       ...defaultDates,
       cumulus_id: queryResult[1].cumulus_id,
       info: info2,
-      test_cumulus_id: null,
     }], ['cumulus_id'])
   );
 });
@@ -130,33 +125,6 @@ test('BasePgModel.insert() creates records and returns specified fields', async 
   );
 });
 
-test('BasePgModel.insert() creates records and returns bigint cumulus_id column as numbers', async (t) => {
-  const { knex, basePgModel, tableName } = t.context;
-  const info = cryptoRandomString({ length: 5 });
-  const info2 = cryptoRandomString({ length: 5 });
-  const bigIntString = (Number.MAX_SAFE_INTEGER - 1).toString();
-  const bigIntString2 = (Number.MAX_SAFE_INTEGER - 10).toString();
-
-  const insertedRecords = await basePgModel.insert(
-    knex,
-    [
-      { ...defaultDates, info, test_cumulus_id: bigIntString },
-      { ...defaultDates, info: info2, test_cumulus_id: bigIntString2 },
-    ],
-    '*'
-  );
-
-  const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
-  t.deepEqual(
-    sortBy(records, ['info']),
-    sortBy(insertedRecords, ['info'])
-  );
-  t.deepEqual(
-    records.map((record) => record.test_cumulus_id).sort(),
-    [Number(bigIntString), Number(bigIntString2)].sort()
-  );
-});
-
 test('BasePgModel.insert() works with transaction', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
@@ -177,13 +145,11 @@ test('BasePgModel.insert() works with transaction', async (t) => {
       ...defaultDates,
       cumulus_id: queryResult[0].cumulus_id,
       info,
-      test_cumulus_id: null,
     },
     {
       ...defaultDates,
       cumulus_id: queryResult[1].cumulus_id,
       info: info2,
-      test_cumulus_id: null,
     }], ['cumulus_id'])
   );
 });
@@ -207,31 +173,6 @@ test('BasePgModel.get() works with knex transaction', async (t) => {
     {
       ...defaultDates,
       info,
-    }
-  );
-});
-
-test('BasePgModel.get() returns bigint cumulus_id column as a number', async (t) => {
-  const { knex, basePgModel, tableName } = t.context;
-  const info = cryptoRandomString({ length: 5 });
-  const bigIntString = Number.MAX_SAFE_INTEGER.toString();
-  await knex(tableName).insert({ ...defaultDates, info, test_cumulus_id: bigIntString });
-  t.like(
-    await basePgModel.get(knex, { info }),
-    { ...defaultDates, info, test_cumulus_id: Number(bigIntString) }
-  );
-});
-
-test('BasePgModel.get() throws exception if the value of bigint cumulus_id column exceeds safe range', async (t) => {
-  const { knex, basePgModel, tableName } = t.context;
-  const info = cryptoRandomString({ length: 5 });
-  const bigIntString = (BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1)).toString();
-  await knex(tableName).insert({ ...defaultDates, info, test_cumulus_id: bigIntString });
-  await t.throwsAsync(
-    createRejectableTransaction(knex, (trx) => basePgModel.get(trx, { info })),
-    {
-      instanceOf: Error,
-      message: `Failed to convert to number: ${bigIntString} exceeds max safe integer ${Number.MAX_SAFE_INTEGER}`,
     }
   );
 });
@@ -503,7 +444,6 @@ test('BasePgModel.update() updates provided fields on a record', async (t) => {
       ...defaultDates,
       cumulus_id: initialRecord.cumulus_id,
       info: newInfo,
-      test_cumulus_id: null,
     }
   );
 });
@@ -560,7 +500,6 @@ test('BasePgModel.update() works with a knex transaction', async (t) => {
       ...defaultDates,
       cumulus_id: initialRecord.cumulus_id,
       info: newInfo,
-      test_cumulus_id: null,
     }
   );
 });

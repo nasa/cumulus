@@ -24,12 +24,6 @@ The following applies only to users with a custom value configured for
   Users making use of a custom image configuration should note the base image
   for Core async operations must support node v20.x.
 
-#### CUMULUS-3449 Please follow instructions before upgrading Cumulus
-
-- The updates in CUMULUS-3449 requires manual update to postgres database in
-  production environment. Please follow [Update Cumulus_id Type and
-  Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
-
 #### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
 
 Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
@@ -96,13 +90,6 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 - **CUMULUS-2897**
   - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
     from the `@cumulus/aws-client` package.
-- **CUMULUS-3449**
-  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
-    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
-    and pdrs.execution_cumulus_id
-  - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
-  - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
-    to granules table
 
 ### Added
 
@@ -186,9 +173,6 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
-- **CUMULUS-3449**
-  - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
-    from columns ending with "cumulus_id" to number.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3610**
@@ -196,6 +180,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 - **CUMULUS-3617**
   - Added lambdas to migrate DLA messages to `YYYY-MM-DD` subfolder
   - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
+- **CUMULUS-2891**
+  - Updated ECS code to aws sdk v3
 
 ### Fixed
 
@@ -295,8 +281,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
-- **CUMULUS-2891**
-  - Updated ECS code to aws sdk v3
 - **CUMULUS-2895**
   - Updated KMS code to aws sdk v3
 - **CUMULUS-2888**
