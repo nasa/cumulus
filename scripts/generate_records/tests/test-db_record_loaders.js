@@ -129,7 +129,22 @@ test('loadGranulesExecutions() uploads GranulesExecutions', async (t) => {
     t.true(await geModel.exists(t.context.knex, granuleExecution));
   }));
 });
+test('loadCollection() adds collections', async (t) => {
+  //this test is largely redundant to all the above tests that demand this works to function
+  for (const collectionNumber of new Array(12)) {
+    const numberOfFiles = randomInt(5);
+    // eslint-disable-next-line no-await-in-loop
+    await loadCollection(t.context.knex, numberOfFiles, collectionNumber);
+  }
+  await loadCollection(t.context.knex, 12);
+  t.pass();
+});
 
+test('loadProvider() adds a provider', async (t) => {
+  //this test is largely redundant to all the above tests that demand this works to function
+  await loadProvider(t.context.knex);
+  t.pass();
+});
 test('loadRule() adds a rule and accepts undefined collection/provider ids', async (t) => {
   await loadRule(
     t.context.knex,
