@@ -16,6 +16,7 @@ const {
 } = require('@cumulus/db');
 const { randomString } = require('@cumulus/common/test-utils');
 const { range } = require('lodash');
+const { randomInt } = require('crypto');
 const log = new Logger({
   sender: '@cumulus/generate_records',
 });
@@ -29,6 +30,7 @@ const log = new Logger({
  * @typedef {import('@cumulus/db').GranulePgModel} GranulePgModel
  * @typedef {import('@cumulus/db').FilePgModel} FilePgModel
  * @typedef {import('@cumulus/db').PostgresGranuleExecution} PostgresGranuleExecution
+ * @typedef {import('@cumulus/db/dist/types/granule').GranuleStatus} GranuleStatus
  * @typedef {import('knex').Knex} Knex
  * @typedef {{
 *   geModel: GranulesExecutionsPgModel,
@@ -145,7 +147,7 @@ const loadGranules = async (
       granule_id: randomString(7),
       collection_cumulus_id: collectionCumulusId,
       provider_cumulus_id: providerCumulusId,
-      status: 'completed',
+      status: /** @type {GranuleStatus} */(['completed', 'failed', 'running', 'queued'][randomInt(4)]),
     })
   ));
   try {
