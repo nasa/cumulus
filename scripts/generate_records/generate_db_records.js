@@ -1,16 +1,12 @@
 // @ts-check
-/* eslint-disable node/no-extraneous-require */
 /* eslint-disable no-await-in-loop */
 const pMap = require('p-map');
 const minimist = require('minimist');
-const cryptoRandomString = require('crypto-random-string');
 const cliProgress = require('cli-progress');
 
 const { randomInt } = require('crypto');
 const {
   GranulePgModel,
-  CollectionPgModel,
-  ProviderPgModel,
   ExecutionPgModel,
   GranulesExecutionsPgModel,
   FilePgModel,
@@ -43,27 +39,6 @@ const {
  */
 
 process.env.DISABLE_PG_SSL = 'true';
-/**
- * yield series of collection details
- *
- * @param {number} total - number of collections
- * @param {boolean} repeatable - use consistent names versus pseudorandom
- * @yields {CollectionDetails}
- */
-function* yieldCollectionDetails(total, repeatable = true) {
-  for (let i = 0; i < total; i += 1) {
-    let suffix;
-    if (repeatable) {
-      suffix = `_test_${i.toString().padStart(3, '0')}`;
-    } else {
-      suffix = `_${cryptoRandomString({ length: 5 }).toUpperCase()}`;
-    }
-    yield {
-      name: `MOD09GQ${suffix}`,
-      version: '006',
-    };
-  }
-}
 
 /**
  * upload a batch of granules and executions
@@ -225,8 +200,7 @@ const getBatchParamGenerator = ({
  * along with files per granule and granuleExecutions
  *
  * @param {Knex} knex
- * @param {string} providerId
- * @param {CollectionDetails} collection
+ * @param {number} collectionNumber
  * @param {number} numberOfGranules
  * @param {number} filesPerGranule
  * @param {number} granulesPerBatch
@@ -239,8 +213,7 @@ const getBatchParamGenerator = ({
 
 const uploadDBGranules = async (
   knex,
-  providerId,
-  collection,
+  collectionNumber,
   numberOfGranules,
   filesPerGranule,
   granulesPerBatch,
@@ -249,15 +222,9 @@ const uploadDBGranules = async (
   variance = false,
   swallowErrors = false
 ) => {
-  const collectionPgModel = new CollectionPgModel();
-  const providerPgModel = new ProviderPgModel();
-  const dbCollection = await collectionPgModel.get(
-    knex,
-    { name: collection.name, version: collection.version }
-  );
-  const dbProvider = await providerPgModel.get(knex, { name: providerId });
-  const collectionCumulusId = dbCollection.cumulus_id;
-  const providerCumulusId = dbProvider.cumulus_id;
+  const collectionCumulusId = await loadCollection(knex, filesPerGranule, collectionNumber);
+  const providerCumulusId = await loadProvider(knex);
+
   const models = {
     geModel: new GranulesExecutionsPgModel(),
     executionModel: new ExecutionPgModel(),
@@ -403,13 +370,10 @@ const main = async () => {
   } = parseArgs();
   process.env.dbMaxPool = concurrency.toString();
   const knex = await getKnexClient();
-  const providerId = await loadProvider(knex);
-  for (const collection of yieldCollectionDetails(collections, true)) {
-    await loadCollection(knex, collection.name, files);
+  for (let collectionNumber = 0; collectionNumber < collections; collectionNumber += 1) {
     await uploadDBGranules(
       knex,
-      providerId,
-      collection,
+      collectionNumber,
       granules,
       files,
       granulesPerBatch,
@@ -432,7 +396,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  yieldCollectionDetails,
   getBatchParamGenerator,
   parseArgs,
   uploadDataBatch,

@@ -16,44 +16,12 @@ const {
 } = require('@cumulus/db');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
-  yieldCollectionDetails,
   getBatchParamGenerator,
   parseArgs,
   uploadDBGranules,
   uploadDataBatch,
 } = require('../generate_db_records');
 
-test('yieldCollectionDetails() gives repeatable and non-repeatable collections with valid name, version and suffix', (t) => {
-  const numberOfCollections = 120;
-  const repeatableCollections = [];
-  for (const collection of yieldCollectionDetails(numberOfCollections, true)) {
-    t.is(collection.version, '006');
-    t.true(collection.name.startsWith('MOD09GQ_test'));
-    for (let i = 0; i < repeatableCollections.length; i += 1) {
-      t.false(collection.name === repeatableCollections[i].name);
-    }
-    repeatableCollections.push(collection);
-  }
-  t.is(repeatableCollections.length, numberOfCollections);
-  for (let i = 0; i < repeatableCollections.length; i += 1) {
-    t.true(repeatableCollections[i].name.endsWith(`${i}`));
-  }
-  const nonRepeatableCollections = [];
-  for (const collection of yieldCollectionDetails(numberOfCollections, false)) {
-    t.is(collection.version, '006');
-    t.true(collection.name.startsWith('MOD09GQ_'));
-    for (let i = 0; i < nonRepeatableCollections.length; i += 1) {
-      t.false(collection.name === nonRepeatableCollections[i].name);
-    }
-    nonRepeatableCollections.push(collection);
-  }
-
-  t.is(nonRepeatableCollections.length, numberOfCollections);
-  for (let i = 0; i < nonRepeatableCollections.length; i += 1) {
-    t.is(repeatableCollections[i].version, '006');
-    t.true(nonRepeatableCollections[i].name.startsWith('MOD09GQ_'));
-  }
-});
 test.before(async (t) => {
   t.context.testDbName = randomId('generate_records');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);

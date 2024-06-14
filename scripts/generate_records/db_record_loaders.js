@@ -1,9 +1,6 @@
 // @ts-check
 
-/* eslint-disable node/no-extraneous-require */
 /* eslint-disable no-await-in-loop */
-
-const fs = require('fs-extra');
 
 const Logger = require('@cumulus/logger');
 const {
@@ -13,9 +10,9 @@ const {
   fakeFileRecordFactory,
   fakeExecutionRecordFactory,
   fakeRuleRecordFactory,
-  translateApiProviderToPostgresProvider,
-  translateApiCollectionToPostgresCollection,
   RulePgModel,
+  fakeCollectionRecordFactory,
+  fakeProviderRecordFactory,
 } = require('@cumulus/db');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -196,14 +193,14 @@ const loadFiles = async (
  * add provider through providerPgModel call
  *
  * @param {Knex} knex
- * @returns {Promise<string>}
+ * @returns {Promise<number>}
  */
 const loadProvider = async (knex) => {
-  const providerJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/s3_provider.json`, 'utf8'));
+  const providerJson = fakeProviderRecordFactory({});
   const providerModel = new ProviderPgModel();
-  const [{ name: providerId }] = await providerModel.upsert(
+  const [{ cumulus_id: providerId }] = await providerModel.upsert(
     knex,
-    await translateApiProviderToPostgresProvider(providerJson)
+    providerJson
   );
   return providerId;
 };
@@ -212,24 +209,27 @@ const loadProvider = async (knex) => {
  * add collection collectionPgModel call
  *
  * @param {Knex} knex
- * @param {string} collectionName
  * @param {number} files - number of files per granule
- * @returns {Promise<PostgresCollection>}
+ * @param {number | null} collectionNumber
+ * @returns {Promise<number>}
  */
-const loadCollection = async (knex, collectionName, files) => {
-  const collectionJson = JSON.parse(fs.readFileSync(`${__dirname}/resources/collections/s3_MOD09GQ_006.json`, 'utf8'));
-  collectionJson.name = collectionName;
-  collectionJson.files = (new Array(files)).map((i) => ({
-    bucket: `${i}`,
-    regex: `^.*${i}$`,
-    sampleFileName: `538.${i}`,
-  }));
+const loadCollection = async (knex, files, collectionNumber = null) => {
+  const collectionJson = fakeCollectionRecordFactory({
+    files: JSON.stringify((new Array(files)).map((i) => ({
+      bucket: `${i}`,
+      regex: `^.*${i}$`,
+      sampleFileName: `538.${i}`,
+    }))),
+  });
+  if (collectionNumber !== null) {
+    collectionJson.name = `DUMMY_${collectionNumber.toString().padStart(3, '0')}`;
+  }
   const collectionModel = new CollectionPgModel();
-  await collectionModel.upsert(
+  const [{ cumulus_id: cumulusId }] = await collectionModel.upsert(
     knex,
-    translateApiCollectionToPostgresCollection(collectionJson)
+    collectionJson
   );
-  return collectionJson;
+  return cumulusId;
 };
 
 /**
