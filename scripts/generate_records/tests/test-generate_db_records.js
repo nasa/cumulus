@@ -17,7 +17,7 @@ const {
 const { randomId } = require('@cumulus/common/test-utils');
 const {
   yieldCollectionDetails,
-  getDetailGenerator,
+  getBatchParamGenerator,
   parseArgs,
   uploadDBGranules,
   uploadDataBatch,
@@ -82,9 +82,9 @@ test.after.always(async (t) => {
   });
 });
 
-test('getDetailGenerator() yields a generator that plays well with pMap', async (t) => {
+test('getBatchParamGenerator() yields a generator that plays well with pMap', async (t) => {
   t.throws(
-    () => getDetailGenerator({
+    () => getBatchParamGenerator({
       knex: t.context.knex,
       granules: 0,
       collectionCumulusId: 0,
@@ -98,7 +98,7 @@ test('getDetailGenerator() yields a generator that plays well with pMap', async 
   );
 
   let iterated = 0;
-  const iterableGenerator = getDetailGenerator({
+  const iterableGenerator = getBatchParamGenerator({
     knex: {},
     numberOfGranules: 5,
     collectionCumulusId: 0,
@@ -217,7 +217,7 @@ test.serial("parseArgs() fails when executionsPerGranule doesn't follow a:b form
   process.argv = argv;
 });
 
-test('uploadDataBatch() uploads a batch of entries verified tobe in the database', async (t) => {
+test('uploadDataBatch() uploads a batch of entries verified to be in the database', async (t) => {
   const providerPgModel = new ProviderPgModel();
   const collectionPgModel = new CollectionPgModel();
 
@@ -276,6 +276,7 @@ test('uploadDataBatch() uploads a batch of entries verified tobe in the database
 });
 
 test('uploadDBGranules() uploads a pile of entries', async (t) => {
+
   const providerPgModel = new ProviderPgModel();
   const collectionPgModel = new CollectionPgModel();
 
@@ -289,6 +290,8 @@ test('uploadDBGranules() uploads a pile of entries', async (t) => {
     t.context.knex,
     collectionRecord
   );
+  // this just asks if there's been an error. this relies on tests within test uploadDataBatch
+  // because passing out batch returns to this level would be tantamount to a memory leak
   await uploadDBGranules(
     t.context.knex,
     providerRecord.name,
@@ -299,6 +302,18 @@ test('uploadDBGranules() uploads a pile of entries', async (t) => {
     2,
     2,
     1
+  );
+  await uploadDBGranules(
+    t.context.knex,
+    providerRecord.name,
+    collectionRecord,
+    100,
+    2,
+    3,
+    2,
+    2,
+    1,
+    true
   );
   t.pass();
 });

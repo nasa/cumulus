@@ -151,7 +151,7 @@ const uploadDataBatch = async ({
  * @returns {Iterable<BatchParams>}
  */
 
-const getDetailGenerator = ({
+const getBatchParamGenerator = ({
   knex,
   numberOfGranules,
   collectionCumulusId,
@@ -169,34 +169,52 @@ const getDetailGenerator = ({
   /**
    * @yields {BatchParams}
    */
-  function* detailGenerator() {
+  function* batchParamGenerator() {
     const bar = new cliProgress.SingleBar(
       { etaBuffer: numberOfGranules / 10 }
     );
     bar.start(numberOfGranules, 0);
-    let _granulesPerBatch = 1;
-    for (let i = 0; i < numberOfGranules; i += _granulesPerBatch) {
-      _granulesPerBatch = granulesPerBatch + (variance ? randomInt(6) : 0);
-      const _executionsPerBatch = executionsPerBatch + (variance ? randomInt(6) : 0);
-      bar.update(i);
 
-      // this yields one object each time this object is iterated...
-      yield {
-        knex,
-        collectionCumulusId,
-        providerCumulusId,
-        filesPerGranule,
-        granulesPerBatch: _granulesPerBatch,
-        executionsPerBatch: _executionsPerBatch,
-        models,
-        swallowErrors,
-      };
+    const standardParams = {
+      knex,
+      collectionCumulusId,
+      providerCumulusId,
+      filesPerGranule,
+      granulesPerBatch,
+      executionsPerBatch,
+      models,
+      swallowErrors,
+    };
+
+    if (variance) {
+      //asking for variance adds some noise to batch executions vs granules
+      let _granulesPerBatch = 1;
+      for (let i = 0; i < numberOfGranules; i += _granulesPerBatch) {
+        _granulesPerBatch = granulesPerBatch + randomInt(6);
+        const _executionsPerBatch = executionsPerBatch + randomInt(6);
+        bar.update(i);
+        // this passes out an object each time pMap (or another iteration) asks for the next index
+        // without holding onto it in memory
+        yield {
+          ...standardParams,
+          granulesPerBatch: _granulesPerBatch,
+          executionsPerBatch: _executionsPerBatch,
+        };
+      }
+    } else {
+      for (let i = 0; i < numberOfGranules; i += granulesPerBatch) {
+        bar.update(i);
+        // this passes out an object each time pMap (or another iteration) asks for the next index
+        // without holding onto it in memory
+        yield standardParams;
+      }
     }
+
     bar.stop();
   }
   const clujedIterable = {};
-  // this sets this objects iteration behavior to be detailGenerator
-  clujedIterable[Symbol.iterator] = detailGenerator;
+  // this sets this objects iteration behavior to be batchParamGenerator
+  clujedIterable[Symbol.iterator] = batchParamGenerator;
 
   return /** @type {Iterable<BatchParams>} */(clujedIterable);
 };
@@ -214,6 +232,7 @@ const getDetailGenerator = ({
  * @param {number} executionsPerBatch
  * @param {number} concurrency
  * @param {boolean} variance
+ * @param {boolean} swallowErrors
  * @returns {Promise<void>}
  */
 
@@ -226,8 +245,8 @@ const uploadDBGranules = async (
   granulesPerBatch,
   executionsPerBatch,
   concurrency,
-  variance,
-  swallowErrors
+  variance = false,
+  swallowErrors = false
 ) => {
   const collectionPgModel = new CollectionPgModel();
   const providerPgModel = new ProviderPgModel();
@@ -244,7 +263,7 @@ const uploadDBGranules = async (
     granuleModel: new GranulePgModel(),
     fileModel: new FilePgModel(),
   };
-  const iterableDetailGenerator = getDetailGenerator({
+  const iterableParamGenerator = getBatchParamGenerator({
     knex,
     numberOfGranules,
     collectionCumulusId,
@@ -254,12 +273,13 @@ const uploadDBGranules = async (
     executionsPerBatch,
     models,
     variance,
-    swallowErrors
+    swallowErrors,
   });
   await pMap(
-    iterableDetailGenerator,
-    (params) => {
-      uploadDataBatch(params);
+    iterableParamGenerator,
+    // this lambda function swallows uploadDataBatch's return to prevent ballooning memory use
+    async (params) => {
+      await uploadDataBatch(params);
     },
     { concurrency }
   );
@@ -412,7 +432,7 @@ if (require.main === module) {
 
 module.exports = {
   yieldCollectionDetails,
-  getDetailGenerator,
+  getBatchParamGenerator,
   parseArgs,
   uploadDataBatch,
   uploadDBGranules,
