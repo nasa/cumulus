@@ -15,7 +15,7 @@ const {
   fakeProviderRecordFactory,
 } = require('@cumulus/db');
 const { randomString } = require('@cumulus/common/test-utils');
-const { range } = require('lodash');
+const range = require('lodash/range');
 const { randomInt } = require('crypto');
 const log = new Logger({
   sender: '@cumulus/generate_records',
