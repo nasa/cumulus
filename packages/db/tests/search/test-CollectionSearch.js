@@ -44,10 +44,10 @@ test.before(async (t) => {
   const granules = [];
   const statuses = ['queued', 'failed', 'completed', 'running'];
 
-  range(500).map((num) => (
+  range(999).map((num) => (
     granules.push(fakeGranuleRecordFactory({
       collection_cumulus_id: num % 100,
-      status: statuses[Math.floor(Math.random() * 4)],
+      status: statuses[num % 4],
     }))
   ));
 
