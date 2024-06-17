@@ -79,7 +79,19 @@ test('getBatchParamGenerator() yields a generator that plays well with pMap', as
   });
   await pMap(
     iterableGenerator,
-    () => {
+    (params) => {
+      t.deepEqual(
+        params,
+        {
+          knex: {},
+          collectionCumulusId: 0,
+          providerCumulusId: 0,
+          filesPerGranule: 0,
+          granulesPerBatch: 1,
+          executionsPerBatch: 0,
+          models: {},
+        }
+      )
       iterated += 1;
     },
     { concurrency: 1 }
