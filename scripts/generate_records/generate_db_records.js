@@ -162,7 +162,7 @@ const getBatchParamGenerator = ({
     };
 
     //asking for variance adds some noise to batch executions vs granules
-    let _granulesPerBatch = 1;
+    let _granulesPerBatch = granulesPerBatch;
     let _executionsPerBatch;
     for (let i = 0; i < numberOfGranules; i += _granulesPerBatch) {
       bar.update(i);
