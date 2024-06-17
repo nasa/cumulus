@@ -30,8 +30,8 @@ test.before(async (t) => {
   const collections = [];
   range(100).map((num) => (
     collections.push(fakeCollectionRecordFactory({
-      name: num % 2 === 0 ? `testCollection___00${num}` : `fakeCollection___00${num}`,
-      version: `${num}`,
+      name: num % 2 === 0 ? 'testCollection' : 'fakeCollection',
+      version: num,
       cumulus_id: num,
       updated_at: new Date(1579352700000 + (num % 2) * 1000),
       process: num % 2 === 0 ? 'ingest' : 'publish',
@@ -171,7 +171,7 @@ test('CollectionSearch supports term search for string field', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 200,
-    name: 'fakeCollection___0071',
+    _id: 'fakeCollection___71',
   };
   const dbSearch2 = new CollectionSearch({ queryStringParameters });
   const response2 = await dbSearch2.query(knex);
@@ -195,7 +195,8 @@ test('CollectionSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    name: 'testCollection___000',
+    name: 'testCollection',
+    version: 0,
     updatedAt: 1579352700000,
     process: 'ingest',
     reportToEms: 'true',
@@ -283,7 +284,7 @@ test('CollectionSearch supports terms search', async (t) => {
   queryStringParameters = {
     limit: 200,
     process__in: ['ingest', 'archive'].join(','),
-    name__in: ['testCollection___000', 'fakeCollection___001'].join(','),
+    _id__in: ['testCollection___0', 'fakeCollection___1'].join(','),
   };
   dbSearch = new CollectionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
@@ -305,7 +306,7 @@ test('CollectionSearch supports search when collection field does not match the 
   queryStringParameters = {
     limit: 200,
     process__not: 'publish',
-    name__not: 'testCollection___000',
+    version__not: 18,
   };
   dbSearch = new CollectionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
