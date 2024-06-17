@@ -1,8 +1,5 @@
 // @ts-check
 
-/* eslint-disable no-await-in-loop */
-
-const Logger = require('@cumulus/logger');
 const {
   CollectionPgModel,
   ProviderPgModel,
@@ -17,9 +14,6 @@ const {
 const { randomString } = require('@cumulus/common/test-utils');
 const range = require('lodash/range');
 const { randomInt } = require('crypto');
-const log = new Logger({
-  sender: '@cumulus/generate_records',
-});
 
 /**
  * @typedef {import('@cumulus/db').PostgresFile} PostgresFile
@@ -50,15 +44,13 @@ const log = new Logger({
  * @param {number} collectionCumulusId
  * @param {number} executionCount
  * @param {ExecutionPgModel} model
- * @param {boolean} swallowErrors
  * @returns {Promise<Array<number>>} - cumulusId for each successfully uploaded execution
  */
 const loadExecutions = async (
   knex,
   collectionCumulusId,
   executionCount,
-  model,
-  swallowErrors = false
+  model
 ) => {
   if (executionCount === 0) {
     return [];
@@ -67,13 +59,8 @@ const loadExecutions = async (
   const executions = range(executionCount).map(() => fakeExecutionRecordFactory(
     { collection_cumulus_id: collectionCumulusId }
   ));
-  try {
-    executionOutputs = await model.insert(knex, executions);
-  } catch (error) {
-    console.log(swallowErrors);
-    if (!swallowErrors) throw error;
-    log.error(`failed up upload execution: ${error}`);
-  }
+  executionOutputs = await model.insert(knex, executions);
+
   return executionOutputs.map((executionOutput) => executionOutput.cumulus_id);
 };
 
@@ -85,20 +72,17 @@ const loadExecutions = async (
  * @param {Array<number>} granuleCumulusIds
  * @param {Array<number>} executionCumulusIds
  * @param {GranulesExecutionsPgModel} model
- * @param {boolean} swallowErrors
  * @returns {Promise<Array<PostgresGranuleExecution>>} - granuleExecutions
  */
 const loadGranulesExecutions = async (
   knex,
   granuleCumulusIds,
   executionCumulusIds,
-  model,
-  swallowErrors = false
+  model
 ) => {
   if (granuleCumulusIds.length === 0 || executionCumulusIds.length === 0) {
     return [];
   }
-  let uploadedGEs = [];
   const granulesExecutions = granuleCumulusIds.map((granuleCumulusId) => (
     executionCumulusIds.map((executionCumulusId) => (
       {
@@ -108,15 +92,7 @@ const loadGranulesExecutions = async (
     ))
   )).flat();
 
-  try {
-    uploadedGEs = await model.insert(knex, granulesExecutions);
-  } catch (error) {
-    console.log(swallowErrors);
-    if (!swallowErrors) throw error;
-    log.error(`failed up upload granuleExecution: ${error}`);
-  }
-
-  return uploadedGEs;
+  return await model.insert(knex, granulesExecutions);
 };
 
 /**
@@ -127,7 +103,6 @@ const loadGranulesExecutions = async (
  * @param {number} providerCumulusId
  * @param {number} granuleCount
  * @param {GranulePgModel} model
- * @param {boolean} swallowErrors
  * @returns {Promise<Array<number>>} - cumulusId for each successfully uploaded granule
  */
 const loadGranules = async (
@@ -135,8 +110,7 @@ const loadGranules = async (
   collectionCumulusId,
   providerCumulusId,
   granuleCount,
-  model,
-  swallowErrors = false
+  model
 ) => {
   if (granuleCount === 0) {
     return [];
@@ -150,12 +124,8 @@ const loadGranules = async (
       status: /** @type {GranuleStatus} */(['completed', 'failed', 'running', 'queued'][randomInt(4)]),
     })
   ));
-  try {
-    granuleOutputs = await model.insert(knex, granules);
-  } catch (error) {
-    if (!swallowErrors) throw error;
-    log.error(`failed up upload granule: ${error}`);
-  }
+  granuleOutputs = await model.insert(knex, granules);
+
   return granuleOutputs.map((g) => g.cumulus_id);
 };
 
@@ -166,15 +136,13 @@ const loadGranules = async (
  * @param {number} granuleCumulusId
  * @param {number} fileCount
  * @param {FilePgModel} model
- * @param {boolean} swallowErrors
  * @returns {Promise<Array<number>>}
  */
 const loadFiles = async (
   knex,
   granuleCumulusId,
   fileCount,
-  model,
-  swallowErrors = false
+  model
 ) => {
   if (fileCount === 0) {
     return [];
@@ -185,14 +153,8 @@ const loadFiles = async (
     key: randomString(8),
   })));
   let uploadedFiles = [];
-  try {
-    uploadedFiles = await model.insert(knex, files);
-  } catch (error) {
-    if (!swallowErrors) {
-      throw error;
-    }
-    log.error(`failed to upload granule: ${error}`);
-  }
+  uploadedFiles = await model.insert(knex, files);
+
   return uploadedFiles.map((uploadedFile) => uploadedFile.cumulus_id);
 };
 

@@ -52,7 +52,6 @@ process.env.DISABLE_PG_SSL = 'true';
  *   granulesPerBatch: number,
  *   executionsPerBatch: number,
  *   models: ModelSet,
- *   swallowErrors: boolean,
  * }} BatchParams
  *
  * @param {BatchParams} params
@@ -70,35 +69,31 @@ const uploadDataBatch = async ({
   granulesPerBatch,
   executionsPerBatch,
   models,
-  swallowErrors,
 }) => {
   const granuleCumulusIds = await loadGranules(
     knex,
     collectionCumulusId,
     providerCumulusId,
     granulesPerBatch,
-    models.granuleModel,
-    swallowErrors
+    models.granuleModel
   );
   const fileCumulusIds = [];
   for (const granuleCumulusId of granuleCumulusIds) {
     fileCumulusIds.push(
-      await loadFiles(knex, granuleCumulusId, filesPerGranule, models.fileModel, swallowErrors)
+      await loadFiles(knex, granuleCumulusId, filesPerGranule, models.fileModel)
     );
   }
   const executionCumulusIds = await loadExecutions(
     knex,
     collectionCumulusId,
     executionsPerBatch,
-    models.executionModel,
-    swallowErrors
+    models.executionModel
   );
   await loadGranulesExecutions(
     knex,
     granuleCumulusIds,
     executionCumulusIds,
-    models.geModel,
-    swallowErrors
+    models.geModel
   );
   return {
     granuleCumulusIds,
@@ -122,7 +117,6 @@ const uploadDataBatch = async ({
  * @param {number} params.executionsPerBatch
  * @param {ModelSet} params.models
  * @param {boolean} params.variance
- * @param {boolean} params.swallowErrors
  * @returns {Iterable<BatchParams>}
  */
 
@@ -136,7 +130,6 @@ const getBatchParamGenerator = ({
   executionsPerBatch,
   models,
   variance,
-  swallowErrors = false,
 }) => {
   if (granulesPerBatch < 1) {
     throw new Error('granulesPerBatch must be set to >=1');
@@ -158,12 +151,11 @@ const getBatchParamGenerator = ({
       granulesPerBatch,
       executionsPerBatch,
       models,
-      swallowErrors,
     };
 
     //asking for variance adds some noise to batch executions vs granules
     let _granulesPerBatch = granulesPerBatch;
-    let _executionsPerBatch;
+    let _executionsPerBatch = executionsPerBatch;
     for (let i = 0; i < numberOfGranules; i += _granulesPerBatch) {
       bar.update(i);
       if (variance) {
@@ -234,7 +226,6 @@ const uploadDBGranules = async (
     executionsPerBatch,
     models,
     variance,
-    swallowErrors,
   });
   await pMap(
     iterableParamGenerator,
@@ -242,7 +233,7 @@ const uploadDBGranules = async (
     async (params) => {
       await uploadDataBatch(params);
     },
-    { concurrency }
+    { concurrency, stopOnError: !swallowErrors }
   );
 };
 
