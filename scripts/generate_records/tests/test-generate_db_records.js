@@ -91,7 +91,7 @@ test('getBatchParamGenerator() yields a generator that plays well with pMap', as
           executionsPerBatch: 0,
           models: {},
         }
-      )
+      );
       iterated += 1;
     },
     { concurrency: 1 }
