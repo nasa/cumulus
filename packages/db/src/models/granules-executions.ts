@@ -116,6 +116,24 @@ export default class GranulesExecutionsPgModel {
     return knexTransaction<PostgresGranuleExecution>(this.tableName)
       .where(query);
   }
+  async count(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: ([string, string, string] | [Partial<PostgresGranuleExecution>])[]
+  ) {
+    const query = knexOrTransaction(this.tableName)
+      .where((builder) => {
+        params.forEach((param) => {
+          if (param.length === 3) {
+            builder.where(...param);
+          }
+          if (param.length === 1) {
+            builder.where(param[0]);
+          }
+        });
+      })
+      .count();
+    return await query;
+  }
 }
 
 export { GranulesExecutionsPgModel };

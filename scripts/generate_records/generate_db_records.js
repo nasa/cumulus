@@ -384,4 +384,5 @@ module.exports = {
   parseArgs,
   uploadDataBatch,
   uploadDBGranules,
+  main,
 };
