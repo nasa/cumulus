@@ -52,7 +52,7 @@ export default class GranulesExecutionsPgModel {
     knexOrTransaction: Knex | Knex.Transaction,
     items: PostgresGranuleExecution[],
     returningFields: string | string[] = '*'
-  ): Promise<unknown[] | Object[]> {
+  ): Promise<PostgresGranuleExecution[]> {
     return await knexOrTransaction(this.tableName)
       .insert(items)
       .returning(returningFields);
