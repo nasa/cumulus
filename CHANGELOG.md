@@ -216,6 +216,10 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     credentialing timeout in long-running ECS jobs.
 - **CUMULUS-3323**
   - Minor edits to errant integration test titles (dyanmo->postgres)
+- **AWS-SDK v3 Exclusion (v18.3.0 fix)***
+  - Excludes aws-sdk v3 from packages to reduce overall package size. With the requirement of Node v20
+    packaging the aws-sdk v3 with our code is no longer necessary and prevented some packages from being
+    published to npm.
 
 ## [v18.2.2] 2024-06-4
 
