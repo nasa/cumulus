@@ -69,7 +69,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('CollectionSearch returns 10 collections by default', async (t) => {
+test.serial('CollectionSearch returns 10 collections by default', async (t) => {
   const { knex } = t.context;
   const AggregateSearch = new CollectionSearch();
   const results = await AggregateSearch.query(knex);
@@ -77,7 +77,7 @@ test('CollectionSearch returns 10 collections by default', async (t) => {
   t.is(results.results.length, 10);
 });
 
-test('CollectionSearch supports page and limit params', async (t) => {
+test.serial('CollectionSearch supports page and limit params', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 20,
@@ -107,7 +107,7 @@ test('CollectionSearch supports page and limit params', async (t) => {
   t.is(response.results?.length, 0);
 });
 
-test('CollectionSearch supports infix search', async (t) => {
+test.serial('CollectionSearch supports infix search', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 20,
@@ -119,7 +119,7 @@ test('CollectionSearch supports infix search', async (t) => {
   t.is(response.results?.length, 20);
 });
 
-test('CollectionSearch supports prefix search', async (t) => {
+test.serial('CollectionSearch supports prefix search', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 20,
@@ -131,7 +131,7 @@ test('CollectionSearch supports prefix search', async (t) => {
   t.is(response2.results?.length, 20);
 });
 
-test('CollectionSearch supports term search for boolean field', async (t) => {
+test.serial('CollectionSearch supports term search for boolean field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -143,7 +143,7 @@ test('CollectionSearch supports term search for boolean field', async (t) => {
   t.is(response4.results?.length, 50);
 });
 
-test('CollectionSearch supports term search for date field', async (t) => {
+test.serial('CollectionSearch supports term search for date field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -155,7 +155,7 @@ test('CollectionSearch supports term search for date field', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('CollectionSearch supports term search for number field', async (t) => {
+test.serial('CollectionSearch supports term search for number field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -167,7 +167,7 @@ test('CollectionSearch supports term search for number field', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-test('CollectionSearch supports term search for string field', async (t) => {
+test.serial('CollectionSearch supports term search for string field', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -191,7 +191,7 @@ test('CollectionSearch supports term search for string field', async (t) => {
 // TODO in CUMULUS-3639
 test.todo('CollectionSearch supports range search');
 
-test('CollectionSearch supports search for multiple fields', async (t) => {
+test.serial('CollectionSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -207,7 +207,7 @@ test('CollectionSearch supports search for multiple fields', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-test('CollectionSearch non-existing fields are ignored', async (t) => {
+test.serial('CollectionSearch non-existing fields are ignored', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -220,7 +220,7 @@ test('CollectionSearch non-existing fields are ignored', async (t) => {
   t.is(response.results?.length, 100);
 });
 
-test('CollectionSearch returns fields specified', async (t) => {
+test.serial('CollectionSearch returns fields specified', async (t) => {
   const { knex } = t.context;
   const fields = 'name,version,reportToEms,process';
   const queryStringParameters = {
@@ -233,7 +233,7 @@ test('CollectionSearch returns fields specified', async (t) => {
   response.results.forEach((collection) => t.deepEqual(Object.keys(collection), fields.split(',')));
 });
 
-test('CollectionSearch supports sorting', async (t) => {
+test.serial('CollectionSearch supports sorting', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -270,7 +270,7 @@ test('CollectionSearch supports sorting', async (t) => {
   t.true(response3.results[49].version < response3.results[50].version);
 });
 
-test('CollectionSearch supports terms search', async (t) => {
+test.serial('CollectionSearch supports terms search', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -292,7 +292,7 @@ test('CollectionSearch supports terms search', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-test('CollectionSearch supports search when collection field does not match the given value', async (t) => {
+test.serial('CollectionSearch supports search when collection field does not match the given value', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -314,7 +314,7 @@ test('CollectionSearch supports search when collection field does not match the 
   t.is(response.results?.length, 49);
 });
 
-test('CollectionSearch supports search which checks existence of collection field', async (t) => {
+test.serial('CollectionSearch supports search which checks existence of collection field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -326,14 +326,14 @@ test('CollectionSearch supports search which checks existence of collection fiel
   t.is(response.results?.length, 50);
 });
 
-test('CollectionSearch supports includeStats', async (t) => {
+test.serial('CollectionSearch supports includeStats', async (t) => {
   const { knex } = t.context;
-  const queryStringParameters = {
+  let queryStringParameters = {
     limit: 200,
-    includeStats: true,
+    includeStats: 'true',
   };
-  const dbSearch = new CollectionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  let dbSearch = new CollectionSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
   t.is(typeof response.results[0].stats.failed, 'number');
@@ -346,4 +346,28 @@ test('CollectionSearch supports includeStats', async (t) => {
   t.is(response.results[0].stats.running >= 0, true);
   t.is(response.results[0].stats.queued >= 0, true);
   t.is(response.results[0].stats.total > 0, true);
+
+  const noGranulesCollection = fakeCollectionRecordFactory({
+    name: 'noGranulesCollection',
+    version: 0,
+    cumulus_id: 1000,
+  });
+
+  await t.context.collectionPgModel.insert(
+    t.context.knex,
+    noGranulesCollection
+  );
+
+  queryStringParameters = {
+    limit: 200,
+    name: 'noGranulesCollection',
+    includeStats: 'true',
+  };
+  dbSearch = new CollectionSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.results[0].stats.failed === 0, true);
+  t.is(response.results[0].stats.completed === 0, true);
+  t.is(response.results[0].stats.running === 0, true);
+  t.is(response.results[0].stats.queued === 0, true);
+  t.is(response.results[0].stats.total === 0, true);
 });

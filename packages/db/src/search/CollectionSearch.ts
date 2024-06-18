@@ -25,18 +25,11 @@ interface QueryCollectionRecord extends BaseRecord, PostgresCollectionRecord {
  * Class to build and execute db search query for collection
  */
 export class CollectionSearch extends BaseSearch {
+  readonly includeStats: boolean | undefined;
+
   constructor(event: QueryEvent) {
     super(event, 'collection');
-  }
-
-  /**
-   * check if joined granules table search is needed
-   *
-   * @returns whether includeStats is needed
-   */
-  protected searchIncludeStats(): boolean {
-    const includeStats = this.queryStringParameters?.includeStats;
-    return includeStats === 'true' || includeStats === true;
+    this.includeStats = (this.queryStringParameters?.includeStats === 'true');
   }
 
   /**
@@ -50,18 +43,16 @@ export class CollectionSearch extends BaseSearch {
       countQuery: Knex.QueryBuilder,
       searchQuery: Knex.QueryBuilder,
     } {
-    const {
-      granules: granulesTable,
-    } = TableNames;
+    const granulesTable = TableNames.granules;
     const countQuery = knex(this.tableName)
       .count(`${this.tableName}.cumulus_id`);
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`);
 
-    if (this.searchIncludeStats()) {
-      searchQuery.join(`${granulesTable}`, `${this.tableName}.cumulus_id`, `${granulesTable}.collection_cumulus_id`)
-        .select(`${this.tableName}.*`, knex.raw(`ARRAY_AGG(${granulesTable}.status) AS statuses`)).groupBy(`${this.tableName}.cumulus_id`);
+    if (this.includeStats) {
+      searchQuery.leftJoin(`${granulesTable}`, `${this.tableName}.cumulus_id`, `${granulesTable}.collection_cumulus_id`)
+        .select(knex.raw(`ARRAY_AGG(${granulesTable}.status) AS statuses`)).groupBy(`${this.tableName}.cumulus_id`);
     }
     return { countQuery, searchQuery };
   }
@@ -100,7 +91,7 @@ export class CollectionSearch extends BaseSearch {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
     const apiRecords = pgRecords.map((item) => {
       const apiRecord = translatePostgresCollectionToApiCollection(item);
-      if (this.searchIncludeStats()) {
+      if (this.includeStats) {
         const Statuses: IncludeStats = { failed: 0, queued: 0, running: 0, completed: 0, total: 0 };
         item.statuses?.forEach((key) => {
           if (key in Statuses) {

@@ -47,8 +47,7 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  */
 async function list(req, res) {
   log.trace(`list query ${JSON.stringify(req.query)}`);
-  const { getMMT, includeStats, ...queryStringParameters } = req.query;
-  queryStringParameters.includeStats = includeStats || false;
+  const { getMMT, ...queryStringParameters } = req.query;
   const dbSearch = new CollectionSearch(
     { queryStringParameters }
   );
