@@ -28,7 +28,7 @@ test.afterEach.always(async (t) => {
   });
 });
 
-test('main() uploads the expected number of entries to the database without variance', async (t) => {
+test.serial('main() uploads the expected number of entries to the database without variance', async (t) => {
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);
@@ -59,7 +59,7 @@ test('main() uploads the expected number of entries to the database without vari
   process.env = env;
 });
 
-test('main() uploads at least the expected number of entries to the database with variance', async (t) => {
+test.serial('main() uploads at least the expected number of entries to the database with variance', async (t) => {
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);
