@@ -47,7 +47,7 @@ test.before(async (t) => {
   range(999).map((num) => (
     granules.push(fakeGranuleRecordFactory({
       collection_cumulus_id: num % 100,
-      status: statuses[num % 4],
+      status: statuses[Math.floor(Math.random() * 4)],
     }))
   ));
 
@@ -348,7 +348,7 @@ test.serial('CollectionSearch supports includeStats', async (t) => {
   t.is(response.results[0].stats.total > 0, true);
 
   const noGranulesCollection = fakeCollectionRecordFactory({
-    name: 'noGranulesCollection',
+    name: 'ACollectionWithoutGranules',
     version: 0,
     cumulus_id: 1000,
   });
@@ -360,14 +360,13 @@ test.serial('CollectionSearch supports includeStats', async (t) => {
 
   queryStringParameters = {
     limit: 200,
-    name: 'noGranulesCollection',
     includeStats: 'true',
   };
   dbSearch = new CollectionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
-  t.is(response.results[0].stats.failed === 0, true);
-  t.is(response.results[0].stats.completed === 0, true);
-  t.is(response.results[0].stats.running === 0, true);
-  t.is(response.results[0].stats.queued === 0, true);
-  t.is(response.results[0].stats.total === 0, true);
+  t.is(response.results[100].stats.failed === 0, true);
+  t.is(response.results[100].stats.completed === 0, true);
+  t.is(response.results[100].stats.running === 0, true);
+  t.is(response.results[100].stats.queued === 0, true);
+  t.is(response.results[100].stats.total === 0, true);
 });
