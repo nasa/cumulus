@@ -98,7 +98,7 @@ class BaseSearch {
     this.buildTermQuery({ countQuery, searchQuery });
     this.buildTermsQuery({ countQuery, searchQuery });
     this.buildNotMatchQuery({ countQuery, searchQuery });
-    this.buildRangeQuery({ countQuery, searchQuery });
+    this.buildRangeQuery({ knex, countQuery, searchQuery });
     this.buildExistsQuery({ countQuery, searchQuery });
     this.buildInfixPrefixQuery({ countQuery, searchQuery });
     this.buildSortQuery({ searchQuery });
@@ -200,11 +200,13 @@ class BaseSearch {
    * Build queries for range fields
    *
    * @param params
+   * @param params.knex - db client
    * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildRangeQuery(params: {
+    knex?: Knex,
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,

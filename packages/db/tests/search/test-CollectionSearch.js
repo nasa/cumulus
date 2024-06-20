@@ -9,7 +9,9 @@ const {
   destroyLocalTestDb,
   generateLocalTestDb,
   CollectionPgModel,
+  GranulePgModel,
   fakeCollectionRecordFactory,
+  fakeGranuleRecordFactory,
   migrationDir,
 } = require('../../dist');
 
@@ -28,7 +30,7 @@ test.before(async (t) => {
   const collections = [];
   range(100).map((num) => (
     collections.push(fakeCollectionRecordFactory({
-      name: num % 2 === 0 ? `testCollection___00${num}` : `fakeCollection___00${num}`,
+      name: num % 2 === 0 ? 'testCollection' : 'fakeCollection',
       version: `${num}`,
       cumulus_id: num,
       updated_at: new Date(1579352700000 + (num % 2) * 1000),
@@ -38,9 +40,27 @@ test.before(async (t) => {
     }))
   ));
 
+  t.context.granulePgModel = new GranulePgModel();
+  const granules = [];
+  const statuses = ['queued', 'failed', 'completed', 'running'];
+
+  t.context.granuleSearchTmestamp = 1579352700000;
+
+  range(999).map((num) => (
+    granules.push(fakeGranuleRecordFactory({
+      collection_cumulus_id: num % 100,
+      status: statuses[num % 4],
+      updated_at: new Date(t.context.granuleSearchTmestamp + (num % 2) * 1000),
+    }))
+  ));
   await t.context.collectionPgModel.insert(
     t.context.knex,
     collections
+  );
+
+  await t.context.granulePgModel.insert(
+    t.context.knex,
+    granules
   );
 });
 
@@ -305,4 +325,20 @@ test('CollectionSearch supports search which checks existence of collection fiel
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
+});
+
+test.serial.only('CollectionSearch supports search which requests active collection list', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: '200',
+    active: 'true',
+    timestamp__from: `${t.context.granuleSearchTmestamp + 1}`,
+    timestamp__to: `${t.context.granuleSearchTmestamp + 1000}`,
+  };
+  const dbSearch = new CollectionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 100);
+
+  // check the right collection is returned
 });

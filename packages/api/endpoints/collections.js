@@ -78,15 +78,9 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function activeList(req, res) {
-  const { getMMT, includeStats, ...queryStringParameters } = req.query;
-
-  const collection = new Collection(
-    { queryStringParameters },
-    undefined,
-    process.env.ES_INDEX,
-    includeStats === 'true'
-  );
-  let result = await collection.queryCollectionsWithActiveGranules();
+  const { getMMT, ...queryStringParameters } = req.query;
+  const dbSearch = new CollectionSearch({ active: 'true', ...queryStringParameters });
+  let result = await dbSearch.query();
   if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
