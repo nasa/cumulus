@@ -90,7 +90,6 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
     try {
       indexResponse = await actualEsClient.client.index(params);
     } catch (error) {
-
       // Todo - assuming error.meta.body.message here.     Need to validate these exist
       // In cases where parallel writes overrun ES, this error case doesn't work
       if (error.name === 'ResponseError' && error.meta.body.message.includes('The security token included in the request is expired')) {
@@ -521,29 +520,6 @@ async function upsertPdr({
   });
 }
 
-async function deleteRecordsByQuery({
-  esClient,
-  index = defaultIndexAlias,
-  query,
-  type,
-}) {
-  try {
-    const response = await esClient.client.deleteByQuery({
-      index,
-      type,
-      body: {
-        query,
-      },
-      refresh: inTestMode(),
-    });
-    console.log(`Deleted ${response.body.deleted} records.`);
-    return response;
-  } catch (error) {
-    console.error('Error deleting records:', error);
-    throw error;
-  }
-}
-
 /**
  * delete a record from Elasticsearch
  *
@@ -831,7 +807,6 @@ module.exports = {
   deleteProvider,
   deleteReconciliationReport,
   deleteRecord,
-  deleteRecordsByQuery,
   deleteRule,
   executionInvalidNullFields,
   granuleInvalidNullFields,
