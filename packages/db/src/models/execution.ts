@@ -1,11 +1,13 @@
 import { Knex } from 'knex';
 
+import Logger from '@cumulus/logger';
+
 import { BasePgModel } from './base';
 import { TableNames } from '../tables';
 
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { getSortFields } from '../lib/sort';
-
+import { RetryOnDbConnectionTerminateError } from '../lib/retry';
 class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionRecord> {
   constructor() {
     super({
@@ -80,6 +82,32 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
         }
       });
     return executions;
+  }
+
+  /**
+   * Fetches multiple items from Postgres that contain a payload before a date
+   * this is included unused as a part of PR to ask, does this belong here?
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {Date} date
+   * @param {numbers} limit
+   * @returns {Promise<PostgresCollectionRecord[]>} List of returned records
+   */
+  async searchExecutionPayloadsBeforeDate(
+    knexOrTransaction: Knex | Knex.Transaction,
+    date: Date,
+    limit: number = 10000
+  ): Promise<PostgresExecutionRecord[]> {
+    const log = new Logger({ sender: '@cumulus/db/models/execution' });
+    const query: Promise<Array<PostgresExecutionRecord>> = knexOrTransaction(this.tableName)
+      .where('updated_at', '<=', date)
+      .where((builder) => {
+        builder.whereNotNull('final_payload')
+          .orWhereNotNull('original_payload');
+      })
+      .limit(limit);
+    const records = await RetryOnDbConnectionTerminateError(query, {}, log);
+    return records;
   }
 }
 
