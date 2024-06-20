@@ -3,7 +3,11 @@
 const { ExecutionPgModel, getKnexClient } = require('@cumulus/db');
 // const { RetryOnDbConnectionTerminateError } = require('@cumulus/db/retry');
 const pLimit = require('p-limit');
-const moment = require('moment')
+const moment = require('moment');
+const Logger = require('../../logger/dist');
+const log = new Logger({
+  sender: '@cumulus/api/lambdas/cleanExecutions',
+})
 
 /**
  * @typedef {import('@cumulus/db').PostgresExecutionRecord} PostgresExecutionRecord
@@ -28,7 +32,6 @@ const getExpirationDates = (
   runComplete,
   runNonComplete
 ) => {
-  // const msPerDay = 1000 * 3600 * 24;
   const completeExpiration = moment().subtract(completeTimeoutDays, 'days').toDate();
   const nonCompleteExpiration = moment().subtract(nonCompleteTimeoutDays, 'days').toDate();
   let laterExpiration;
@@ -97,6 +100,9 @@ const cleanupExpiredExecutionPayloads = async (
     laterExpiration,
     updateLimit
   );
+  if (executionRecords.length == updateLimit) {
+    log.warn(`running cleanup for ${updateLimit} out of maximum ${updateLimit} executions. more processing likely needed`);
+  }
   const concurrencyLimit = process.env.CONCURRENCY || 10;
   const limit = pLimit(concurrencyLimit);
   const updatePromises = executionRecords.map((entry) => limit(() => {
@@ -104,10 +110,11 @@ const cleanupExpiredExecutionPayloads = async (
       original_payload: null,
       final_payload: null
     };
-    if (runComplete && entry.status === 'complete' && entry.updated_at <= completeExpiration) {
+    if (runComplete && entry.status === 'completed' && entry.updated_at <= completeExpiration) {
       return executionModel.update(knex, { cumulus_id: entry.cumulus_id }, wipedPayloads);
     }
     if (runNonComplete && !(entry.status === 'completed') && entry.updated_at <= nonCompleteExpiration) {
+      
       return executionModel.update(knex, { cumulus_id: entry.cumulus_id }, wipedPayloads);
     }
     return Promise.resolve();
@@ -118,19 +125,25 @@ const cleanupExpiredExecutionPayloads = async (
 async function cleanExecutionPayloads() {
   let completeDisable = process.env.completeExecutionPayloadTimeoutDisable || 'false';
   let nonCompleteDisable = process.env.nonCompleteExecutionPayloadTimeoutDisable || 'false';
-
+  
   completeDisable = JSON.parse(completeDisable);
-  nonCompleteDisable = JSON.parse(nonCompleteDisable);
+  if (completeDisable) {
+    log.info('skipping complete execution cleanup');
+  }
 
+  nonCompleteDisable = JSON.parse(nonCompleteDisable);
+  if (nonCompleteDisable) {
+    log.info('skipping nonComplete execution cleanup')
+  }
   if (completeDisable && nonCompleteDisable) {
     return [];
   }
 
-  const nonCompleteTimeout = Number.parseInt(process.env.nonCompleteExecutionPayloadTimeout, 10);
+  const nonCompleteTimeout = Number.parseInt(process.env.nonCompleteExecutionPayloadTimeout || '10', 10);
   if (!Number.isInteger(nonCompleteTimeout)) {
     throw new TypeError(`Invalid number of days specified in configuration for nonCompleteExecutionPayloadTimeout: ${nonCompleteTimeout}`);
   }
-  const completeTimeout = Number.parseInt(process.env.completeExecutionPayloadTimeout, 10);
+  const completeTimeout = Number.parseInt(process.env.completeExecutionPayloadTimeout || '10', 10);
   if (!Number.isInteger(nonCompleteTimeout)) {
     throw new TypeError(`Invalid number of days specified in configuration for completeExecutionPayloadTimeout: ${completeTimeout}`);
   }
@@ -152,4 +165,14 @@ module.exports = {
   getExpirationDates,
   cleanupExpiredExecutionPayloads,
   getExpirablePayloadRecords
+}
+
+if (require.main === module) {
+  handler(
+  ).then(
+    (ret) => ret
+  ).catch((error) => {
+    console.log(`failed: ${error}`);
+    throw error;
+  });
 }

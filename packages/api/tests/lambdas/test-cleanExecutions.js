@@ -235,7 +235,7 @@ test.serial('handler() clears payloads on expected executions', async (t) => {
   process.env = env;
 });
 
-test.only('cleanupExpiredExecutionPayloads() iterates through batches', async (t) => {
+test.serial('cleanupExpiredExecutionPayloads() iterates through batches', async (t) => {
 
   const env = clone(process.env);
   process.env = localStackConnectionEnv;
@@ -325,18 +325,22 @@ test.serial('handler() iterates through batch', async (t) => {
     fakeExecutionRecordFactory({
       updated_at: moment().subtract(5, 'days').toDate(),
       final_payload: '{"a": "b"}',
+      status: 'completed'
     }),
     fakeExecutionRecordFactory({
       updated_at: moment().subtract(5, 'days').toDate(),
       final_payload: '{"a": "b"}',
+      status: 'completed'
     }),
     fakeExecutionRecordFactory({
       updated_at: moment().subtract(5, 'days').toDate(),
       final_payload: '{"a": "b"}',
+      status: 'completed'
     }),
     fakeExecutionRecordFactory({
       updated_at: moment().subtract(5, 'days').toDate(),
       final_payload: '{"a": "b"}',
+      status: 'completed'
     }),
     fakeExecutionRecordFactory({
       updated_at: moment().subtract(5, 'days').toDate(),
@@ -363,7 +367,6 @@ test.serial('handler() iterates through batch', async (t) => {
   const inserted = await model.insert(t.context.knex, executions, 'cumulus_id');
   process.env.completeExecutionPayloadTimeoutDisable = 'true';
   process.env.nonCompleteExecutionPayloadTimeout = 4;
-  process.env.UPDATE_LIMIT = 2
   await handler();
 
   let massagedExecutions = await Promise.all(inserted.map(async (execution) => await model.get(t.context.knex, execution)));
@@ -373,62 +376,17 @@ test.serial('handler() iterates through batch', async (t) => {
       cleanedUp += 1;
     }
   });
-  t.is(cleanedUp, 2)
+  t.is(cleanedUp, 5)
+  process.env.completeExecutionPayloadTimeoutDisable = 'false';
+  process.env.nonCompleteExecutionPayloadTimeoutDisable = 'true';
+
+  process.env.completeExecutionPayloadTimeout = 4;
   await handler();
   massagedExecutions = await Promise.all(inserted.map(async (execution) => await model.get(t.context.knex, execution)));
-  cleanedUp = 0;
   massagedExecutions.forEach((massagedExecution) => {
-    if (!(massagedExecution.original_payload || massagedExecution.final_payload)) {
-      cleanedUp += 1;
+    if (massagedExecution.original_payload || massagedExecution.final_payload) {
+      t.fail();
     }
   });
-  t.is(cleanedUp, 4)
-  await handler();
-  massagedExecutions = await Promise.all(inserted.map(async (execution) => await model.get(t.context.knex, execution)));
-  cleanedUp = 0;
-  massagedExecutions.forEach((massagedExecution) => {
-    if (!(massagedExecution.original_payload || massagedExecution.final_payload)) {
-      cleanedUp += 1;
-    }
-  });
-  t.is(cleanedUp, 6)
   process.env = env;
 });
-// test.serial('Function is called with correct timeout values', async (t) => {
-//   process.env.completeExecutionPayloadTimeout = 100;
-//   process.env.nonCompleteExecutionPayloadTimeout = 50;
-//   await cleanExecutionPayloads(executionModel);
-//   t.truthy(removeRecordsStub.calledWith(100, 50, false, false));
-// });
-
-// test.serial('Function returns empty array if passed in values are disabled', async (t) => {
-//   process.env.completeExecutionPayloadTimeout = 100;
-//   process.env.nonCompleteExecutionPayloadTimeout = 50;
-//   process.env.completeExecutionPayloadTimeoutDisable = true;
-//   process.env.nonCompleteExecutionPayloadTimeoutDisable = true;
-//   const actual = await cleanExecutionPayloads(executionModel);
-//   const expected = [];
-//   t.deepEqual(actual, expected);
-// });
-
-// test.serial('Function throws error if passed invalid complete timeout', async (t) => {
-//   process.env.nonCompleteExecutionPayloadTimeout = 100;
-//   process.env.completeExecutionPayloadTimeout = 'notaninteger';
-//   let actual;
-//   await cleanExecutionPayloads(executionModel).catch((error) => {
-//     actual = error.message;
-//   });
-//   const expected = 'Invalid number of days specified in configuration for completeExecutionPayloadTimeout: notaninteger';
-//   t.is(actual, expected);
-// });
-
-// test.serial('Function throws error if passed invalid non-complete timeout', async (t) => {
-//   process.env.nonCompleteExecutionPayloadTimeout = 'notaninteger';
-//   process.env.completeExecutionPayloadTimeout = 100;
-//   let actual;
-//   await cleanExecutionPayloads(executionModel).catch((error) => {
-//     actual = error.message;
-//   });
-//   const expected = 'Invalid number of days specified in configuration for nonCompleteExecutionPayloadTimeout: notaninteger';
-//   t.is(actual, expected);
-// });
