@@ -90,7 +90,7 @@ async function describeGranuleExecution(executionArn, stepFunctionUtils = StepFu
 }
 
 /**
- * Retrieves the Cumulus ID of a collection from the database.
+ * Retrieves the Cumulus ID of a collection from the Postgres database.
  *
  * @param {Knex | KnexTransaction} knex - The Knex client object for interacting with the database.
  * @param {string} apiCollection - The collection object from the API.

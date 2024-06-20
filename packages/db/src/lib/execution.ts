@@ -256,7 +256,6 @@ export const updateExecutionParentsToNullByCollectionId = async (
 };
 
 // TODO make sure API logic handles *null* case
-// TODO parameterize!
 export const batchDeleteExecutionFromDatabaseByCumulusCollectionId = async (
   params: {
     knex: Knex | Knex.Transaction,
