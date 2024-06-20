@@ -200,7 +200,7 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction -
  *  DB client or transaction
- * @param {Array<Object>} executions - array of executions
+ * @param {Array<Object>} executions - array ocollectionCumulusIdf executions
  * @param {Object} [executionPgModel] - Execution PG model class instance
  * @returns {Promise<number[]>}
  */
@@ -241,12 +241,30 @@ export const getApiGranuleExecutionCumulusIdsByExecution = async (
   return granuleCumulusIds;
 };
 
-// TODO make sure API logic handles *null* case
-export const batchDeleteExecutionFromDatabaseByCumulusCollectionId = async (
+// TODO Remove this if not needed
+export const updateExecutionParentsToNullByCollectionId = async (
   knex: Knex | Knex.Transaction,
-  collectionCumulusId: number | null,
-  batchSize: number = 1
+  collectionCumulusId: number | null
 ) => {
+  try {
+    return await knex('executions')
+      .where('collection_cumulus_id', collectionCumulusId)
+      .update({ parent_cumulus_id: null });
+  } catch (error) {
+    throw new Error(`Failed to update database: ${error.message}`);
+  }
+};
+
+// TODO make sure API logic handles *null* case
+// TODO parameterize!
+export const batchDeleteExecutionFromDatabaseByCumulusCollectionId = async (
+  params: {
+    knex: Knex | Knex.Transaction,
+    collectionCumulusId: number,
+    batchSize: number,
+  }
+) => {
+  const { knex, collectionCumulusId, batchSize = 1 } = params;
   try {
     return await knex('executions')
       .whereIn('cumulus_id',
@@ -254,7 +272,6 @@ export const batchDeleteExecutionFromDatabaseByCumulusCollectionId = async (
           .from('executions')
           .where('collection_cumulus_id', collectionCumulusId)
           .limit(batchSize))
-      .where('collection_cumulus_id', collectionCumulusId)
       .delete();
   } catch (error) {
     throw new Error(`Failed to delete from database: ${error.message}`);

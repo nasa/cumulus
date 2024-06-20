@@ -36,7 +36,6 @@ const {
 const {
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
-const { flattenDiagnosticMessageText } = require('typescript');
 
 const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/meta.xml'), 'utf-8');
 
@@ -221,8 +220,9 @@ async function createExecutionRecords({
   knex,
   count,
   esClient,
-  addGranules = flattenDiagnosticMessageText,
+  addGranules = false,
   collectionId,
+  addParentExecutions = false,
 }) {
   const executionPgModel = new ExecutionPgModel();
   const collectionPgModel = new CollectionPgModel();
@@ -245,6 +245,30 @@ async function createExecutionRecords({
     });
   });
   const pgExecutions = await Promise.all(executionCreationPromises);
+
+  // Add parent execution, tie all prior executions to it
+  if (addParentExecutions === true) {
+    const parentExecutionArn = randomId('parentExecutionArn');
+    const parentExecutionRecord = await executionPgModel.create(knex, {
+      url: `https://example.com/${parentExecutionArn}`,
+      arn: parentExecutionArn,
+      status: 'completed',
+      collection_cumulus_id: pgCollectionRecord[0].cumulus_id,
+    });
+
+    await Promise.all(
+      pgExecutions.map((execution) =>
+        executionPgModel.upsert(
+          knex,
+          {
+            ...execution[0],
+            parent_cumulus_id: parentExecutionRecord[0].cumulus_id,
+          },
+          false
+        ))
+    );
+    pgExecutions.push(parentExecutionRecord);
+  }
 
   const executionRecords = await Promise.all(
     pgExecutions.map((execution) =>

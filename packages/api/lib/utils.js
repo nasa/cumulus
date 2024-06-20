@@ -122,6 +122,23 @@ function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
   return match;
 }
 
+/**
+ * Sets environment variables for the operation with overrides from a lambda event
+ * Used in bulk operation lambdas for EC2/Fargate execution
+ *
+ * @param {Object} event - The event object.
+ * @param {Object.<string, string>} event.envVars - The environment variables to set.
+ * If not provided, defaults to an empty object.
+ */
+const setEnvVarsForOperation = (event) => {
+  const envVars = get(event, 'envVars', {});
+  Object.keys(envVars).forEach((envVarKey) => {
+    if (!process.env[envVarKey]) {
+      process.env[envVarKey] = envVars[envVarKey];
+    }
+  });
+};
+
 const validateCollectionCoreConfig = (collection) => {
   // Test that granuleIdExtraction regex matches against sampleFileName
   const match = checkRegex(collection.granuleIdExtraction, collection.sampleFileName, 'granuleIdExtraction');
@@ -172,5 +189,6 @@ module.exports = {
   filenamify,
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
+  setEnvVarsForOperation,
   validateCollection,
 };

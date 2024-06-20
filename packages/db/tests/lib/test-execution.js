@@ -987,11 +987,11 @@ test('batchDeleteExecutionFromDatabaseByCumulusCollectionId deletes expected bat
     baseCollectionPgRecord[0].cumulus_id
   );
 
-  const result = await batchDeleteExecutionFromDatabaseByCumulusCollectionId(
+  const result = await batchDeleteExecutionFromDatabaseByCumulusCollectionId({
     knex,
-    toDeleteCollectionPgRecord[0].cumulus_id,
-    5
-  );
+    collectionCumulusId: toDeleteCollectionPgRecord[0].cumulus_id,
+    batchSize: 5,
+  });
   const executions = await knex('executions').select();
   t.is(result, 5);
   t.is(executions.length, baseExecutions.length + deleteExecutions.length - 5);
@@ -1024,11 +1024,11 @@ test('batchDeleteExecutionFromDatabaseByCumulusCollectionId deletes executions w
     baseCollectionPgRecord[0].cumulus_id
   );
 
-  const result = await batchDeleteExecutionFromDatabaseByCumulusCollectionId(
+  const result = await batchDeleteExecutionFromDatabaseByCumulusCollectionId({
     knex,
-    toDeleteCollectionPgRecord[0].cumulus_id,
-    1003
-  );
+    collectionCumulusId: toDeleteCollectionPgRecord[0].cumulus_id,
+    batchSize: 1003,
+  });
   const executions = await knex('executions').select();
   t.is(result, 100);
   t.is(executions.length, baseExecutions.length);

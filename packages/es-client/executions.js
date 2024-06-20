@@ -3,7 +3,7 @@
 //TODO update logging
 const Logger = require('@cumulus/logger');
 
-const { getEsClient } = require('./search');
+const { getEsClient, defaultIndexAlias } = require('./search');
 
 const log = new Logger({ sender: '@cumulus/es-client/executions' });
 
@@ -22,7 +22,7 @@ const _fetchEsRecordIds = async (esClient, index, collectionId, batchSize) => {
     const response = await esClient.client.search({
       index,
       type: 'execution',
-      scroll: process.env.ES_SCROLL_TIME || '5m', // make this configurable (deploy time?)
+      scroll: process.env.ES_SCROLL_TIME || '5m',
       body: {
         query: {
           match: {
@@ -36,6 +36,7 @@ const _fetchEsRecordIds = async (esClient, index, collectionId, batchSize) => {
     return response.body.hits.hits.map((hit) => hit._id);
   } catch (error) {
     // TODO: Use Core Logger Method
+    log.error(`Failed to get recordIds ${JSON.stringify(error)}`);
     throw new Error(`Failed to fetch record IDs from Elasticsearch index ${index}: ${error.message}`);
   }
 };
@@ -44,13 +45,13 @@ const _fetchEsRecordIds = async (esClient, index, collectionId, batchSize) => {
  * Deletes executions in batches by collection ID.
  *
  * @param {Object} params - The parameters for the function.
- * @param {string} params.index - The index to delete from.
+ * @param {string} [params.index] - The index to delete from.
  * @param {string} params.collectionId - The ID of the collection.
  * @param {number} params.batchSize - The size of the batches to delete.
  * @returns {Promise<void>} A promise that resolves when the deletions are complete.
  */
 const batchDeleteExecutionsByCollection = async ({
-  index,
+  index = defaultIndexAlias,
   collectionId,
   batchSize,
 }) => {
@@ -85,12 +86,12 @@ const batchDeleteExecutionsByCollection = async ({
           )}`);
         }
       }
-      console.log(
+      log.info(
         `Successfully deleted ${recordIds.length} execution records from ${index} for collection ${collectionId}`
       );
       if (failures > 0) {
         // TODO - handle this better?
-        console.log(`${failures} errors encountered during deletion - please check logs for details`);
+        log.info(`${failures} errors encountered during deletion - please check logs for details`);
       }
     }
   } catch (error) {

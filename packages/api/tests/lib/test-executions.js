@@ -14,7 +14,6 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 
-
 const { createExecutionRecords } = require('../helpers/create-test-data');
 
 const { chooseTargetExecution, batchDeleteExecutionFromDatastore } = require('../../lib/executions');
@@ -60,7 +59,6 @@ test.afterEach.always(async (t) => {
 });
 
 // TODO: Add to test helpers/common/?
-
 const searchAllExecutionsForCollection = async (collectionId, esIndex) => {
   const searchClient = new Search(
     {
@@ -75,7 +73,6 @@ const searchAllExecutionsForCollection = async (collectionId, esIndex) => {
   const response = await searchClient.query();
   return response;
 };
-
 
 test('chooseTargetExecution() returns executionArn if provided.', async (t) => {
   const executionArn = randomArn();
@@ -132,7 +129,7 @@ test('chooseTargetExecution() throws exactly any error raised in the database fu
   );
 });
 
-test('batchDeleteExecutionFromDatastore() deletes executions from the database.', async (t) => {
+test.serial('batchDeleteExecutionFromDatastore() deletes executions from the database.', async (t) => {
   const collectionId = t.context.collectionId;
   const executionCount = 57;
   await createExecutionRecords({
@@ -140,6 +137,7 @@ test('batchDeleteExecutionFromDatastore() deletes executions from the database.'
     count: executionCount,
     esClient: t.context.esClient,
     collectionId,
+    addParentExecutions: true,
   });
 
   const setupExecutions = await searchAllExecutionsForCollection(
@@ -148,8 +146,8 @@ test('batchDeleteExecutionFromDatastore() deletes executions from the database.'
   );
   const setupRdsExecutions = await t.context.knex('executions').select();
 
-  t.is(setupRdsExecutions.length, executionCount);
-  t.is(setupExecutions.meta.count, executionCount);
+  t.is(setupRdsExecutions.length, executionCount + 1);
+  t.is(setupExecutions.meta.count, executionCount + 1);
 
   await batchDeleteExecutionFromDatastore({
     collectionId,

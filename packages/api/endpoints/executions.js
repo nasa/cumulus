@@ -5,7 +5,6 @@
 const router = require('express-promise-router')();
 const { v4: uuidv4 } = require('uuid');
 
-const startAsyncOperation = require('../lib/startAsyncOperation');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const {
@@ -22,6 +21,7 @@ const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { deleteExecution } = require('@cumulus/es-client/indexer');
 const { getEsClient, Search } = require('@cumulus/es-client/search');
 
+const startAsyncOperation = require('../lib/startAsyncOperation');
 const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
 const { writeExecutionRecordFromApi } = require('../lib/writeRecords/write-execution');
@@ -280,8 +280,8 @@ async function bulkDeleteExecutionsByCollection(req, res) {
 
   // TODO: Verify RDS collection exists using collectionId DONE
   // TODO: Abstract this as granule endpoint uses same thing, more or less
-  if (!payload.collectionId) {
-    res.boom.badRequest('Granule update must include a valid CollectionId');
+  if (!collectionId) {
+    res.boom.badRequest('Execution update must include a valid CollectionId');
   }
   try {
     const knex = await getKnexClient();
