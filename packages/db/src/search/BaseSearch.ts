@@ -399,6 +399,7 @@ class BaseSearch {
    * Translate postgres records to api records
    *
    * @param pgRecords - postgres records returned from query
+   * @param [knex] - knex client for additional queries if neccessary
    * @throws - function is not implemented
    */
   protected translatePostgresRecordsToApiRecords(pgRecords: BaseRecord[], knex?: Knex) {
