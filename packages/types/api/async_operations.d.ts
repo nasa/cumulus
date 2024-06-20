@@ -5,6 +5,7 @@ export type AsyncOperationStatus =
   | 'TASK_FAILED';
 
 export type AsyncOperationType =
+  | 'Bulk Execution Delete'
   | 'Bulk Granule Delete'
   | 'Bulk Granule Reingest'
   | 'Bulk Granules'
