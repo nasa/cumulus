@@ -105,7 +105,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     to granules table
 
 ### Added
-
+- **CUMULUS-3742**
+  - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
