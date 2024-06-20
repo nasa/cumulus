@@ -83,7 +83,7 @@ export class CollectionSearch extends BaseSearch {
   }
 
   /**
-   * Executes stats query to get granules' status aggregation if includeStats is true
+   * Executes stats query to get granules' status aggregation
    *
    * @param ids - array of cumulusIds of the collections
    * @param knex - knex for the stats query
@@ -126,34 +126,28 @@ export class CollectionSearch extends BaseSearch {
   protected async translatePostgresRecordsToApiRecords(pgRecords: PostgresCollectionRecord[],
     knex: Knex): Promise<Partial<CollectionRecordApi>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    let statsRecords: StatsRecords;
+    const cumulusIds = pgRecords.map((record) => record.cumulus_id);
     if (this.includeStats) {
-      const cumulusIds = pgRecords.map((record) => record.cumulus_id);
-      const statsRecords = await this.retrieveGranuleStats(cumulusIds, knex);
-      const apiRecords = pgRecords.map((record) => {
-        const apiRecord: CollectionRecordApi = translatePostgresCollectionToApiCollection(record);
-        const apiRecordFinal = this.dbQueryParameters.fields
-          ? pick(apiRecord, this.dbQueryParameters.fields)
-          : apiRecord;
-
-        if (statsRecords) {
-          apiRecordFinal.stats = statsRecords[record.cumulus_id] ? statsRecords[record.cumulus_id] :
-            {
-              queued: 0,
-              completed: 0,
-              failed: 0,
-              running: 0,
-              total: 0,
-            };
-        }
-        return apiRecordFinal;
-      });
-      return apiRecords;
+      statsRecords = await this.retrieveGranuleStats(cumulusIds, knex);
     }
+
     const apiRecords = pgRecords.map((record) => {
       const apiRecord: CollectionRecordApi = translatePostgresCollectionToApiCollection(record);
       const apiRecordFinal = this.dbQueryParameters.fields
         ? pick(apiRecord, this.dbQueryParameters.fields)
         : apiRecord;
+
+      if (statsRecords) {
+        apiRecordFinal.stats = statsRecords[record.cumulus_id] ? statsRecords[record.cumulus_id] :
+          {
+            queued: 0,
+            completed: 0,
+            failed: 0,
+            running: 0,
+            total: 0,
+          };
+      }
       return apiRecordFinal;
     });
     return apiRecords;
