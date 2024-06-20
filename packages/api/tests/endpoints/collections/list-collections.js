@@ -89,7 +89,7 @@ test.before(async (t) => {
 
   range(100).map((num) => (
     granules.push(fakeGranuleRecordFactory({
-      collection_cumulus_id: collections[num % 10].cumulus_id,
+      collection_cumulus_id: collections[num % 9].cumulus_id,
       status: statuses[num % 4],
     }))
   ));
@@ -160,12 +160,14 @@ test.serial('returns list of collections with stats when requested', async (t) =
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const expectedStats1 = { failed: 0, queued: 5, running: 0, completed: 5, total: 10 };
-  const expectedStats2 = { failed: 5, queued: 0, running: 5, completed: 0, total: 10 };
+  const expectedStats1 = { queued: 3, completed: 3, failed: 3, running: 3, total: 12 };
+  const expectedStats2 = { queued: 2, completed: 3, failed: 3, running: 3, total: 11 };
+  const expectedStats3 = { queued: 0, completed: 0, failed: 0, running: 0, total: 0 };
 
   const { results } = response.body;
   t.is(results.length, 10);
   t.is(results[0].name, t.context.collections[0].name);
   t.deepEqual(results[0].stats, expectedStats1);
   t.deepEqual(results[1].stats, expectedStats2);
+  t.deepEqual(results[9].stats, expectedStats3);
 });

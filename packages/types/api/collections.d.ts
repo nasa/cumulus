@@ -31,7 +31,6 @@ export interface PartialCollectionRecord {
   version?: string,
   createdAt?: number,
   updatedAt?: number,
-  stats?: object,
 }
 
 export interface NewCollectionRecord extends PartialCollectionRecord {
