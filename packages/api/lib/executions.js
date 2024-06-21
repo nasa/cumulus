@@ -168,7 +168,7 @@ const _deleteRdsExecutionsFromDatabase = async ({
  * @param {string} event.batchSize - The size of the batches to delete.
  * @returns {Promise<void>}
  */
-const batchDeleteExecutionFromDatastore = async (event) => {
+const batchDeleteExecutionsFromDatastore = async (event) => {
   const knex = await getKnexClient();
 
   const collectionId = event.collectionId;
@@ -183,6 +183,8 @@ const batchDeleteExecutionFromDatastore = async (event) => {
     collectionId,
     batchSize,
   });
+
+  log.info('Elasticsearch deletion complete');
 
   // Delete RDS execution records
   log.info(
@@ -201,12 +203,10 @@ const batchDeleteExecutionFromDatastore = async (event) => {
     });
   } while (executionResults > 0);
   log.info(`Execution deletion complete for collection ${collectionId}`);
-
-  // TODO dump summary somewhere?
 };
 
 module.exports = {
-  batchDeleteExecutionFromDatastore,
+  batchDeleteExecutionsFromDatastore,
   chooseTargetExecution,
   describeGranuleExecution,
 };

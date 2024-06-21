@@ -16,7 +16,7 @@ const {
 
 const { createExecutionRecords } = require('../helpers/create-test-data');
 
-const { chooseTargetExecution, batchDeleteExecutionFromDatastore } = require('../../lib/executions');
+const { chooseTargetExecution, batchDeleteExecutionsFromDatastore } = require('../../lib/executions');
 
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
 const randomGranuleId = () => `granuleId_${cryptoRandomString({ length: 10 })}`;
@@ -129,7 +129,7 @@ test('chooseTargetExecution() throws exactly any error raised in the database fu
   );
 });
 
-test.serial('batchDeleteExecutionFromDatastore() deletes executions from the database.', async (t) => {
+test.serial('batchDeleteExecutionsFromDatastore() deletes executions from the database.', async (t) => {
   const collectionId = t.context.collectionId;
   const executionCount = 57;
   await createExecutionRecords({
@@ -149,7 +149,7 @@ test.serial('batchDeleteExecutionFromDatastore() deletes executions from the dat
   t.is(setupRdsExecutions.length, executionCount + 1);
   t.is(setupExecutions.meta.count, executionCount + 1);
 
-  await batchDeleteExecutionFromDatastore({
+  await batchDeleteExecutionsFromDatastore({
     collectionId,
     batchSize: 7,
   });

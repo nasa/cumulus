@@ -355,7 +355,6 @@ async function bulkDeleteExecutionsByCollection(req, res) {
 
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
-// TODO: Add validation routine/error handler
 router.post(
   '/bulk-delete-by-collection/',
   bulkDeleteExecutionsByCollection,

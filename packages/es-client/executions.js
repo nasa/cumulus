@@ -78,7 +78,6 @@ const batchDeleteExecutionsByCollection = async ({
         }));
         // eslint-disable-next-line no-await-in-loop
         const response = await esClient.client.bulk({ body, refresh: 'true' });
-        // TODO - error check response
         if (response.body.errors) {
           failures += 1;
           log.error(`Bulk deletion encountered errors: ${JSON.stringify(
@@ -90,7 +89,6 @@ const batchDeleteExecutionsByCollection = async ({
         `Successfully deleted ${recordIds.length} execution records from ${index} for collection ${collectionId}`
       );
       if (failures > 0) {
-        // TODO - handle this better?
         log.info(`${failures} errors encountered during deletion - please check logs for details`);
       }
     }
