@@ -4,6 +4,8 @@
 
 const router = require('express-promise-router')();
 const { v4: uuidv4 } = require('uuid');
+const { z } = require('zod');
+const isError = require('lodash/isError');
 
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
@@ -21,13 +23,24 @@ const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { deleteExecution } = require('@cumulus/es-client/indexer');
 const { getEsClient, Search } = require('@cumulus/es-client/search');
 
+const { zodParser } = require('../src/zod-utils');
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const startAsyncOperation = require('../lib/startAsyncOperation');
 const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
+const { returnCustomValidationErrors } = require('../lib/endpoints');
 const { writeExecutionRecordFromApi } = require('../lib/writeRecords/write-execution');
 const { validateGranuleExecutionRequest, getFunctionNameFromRequestContext } = require('../lib/request');
 
 const log = new Logger({ sender: '@cumulus/api/executions' });
+
+const BulkExecutionDeletePayloadSchema = z.object({
+  batchSize: z.number().int().positive().optional(),
+  knexDebug: z.boolean().optional(),
+  collectionId: z.string(),
+}).catchall(z.unknown());
+
+const parseBulkDeletePayload = zodParser('Bulk Execution Delete Payload', BulkExecutionDeletePayloadSchema);
 
 /**
  * create an execution
@@ -267,23 +280,32 @@ async function workflowsByGranules(req, res) {
   return res.send(workflowNames);
 }
 
+/**
+ * Deletes execution records in bulk for a specific collection.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} req.body - The request body.
+ * @param {number|string} [req.body.batchSize=5000] - The number of records to delete in each batch.
+ * @param {string} req.body.collectionId - The CollectionID to delete execution records for.
+ * @param {string} [req.body.knexDebug=false] - Boolean to enabled Knex Debugging for the request
+ * @param {Object} req.params - The request parameters.
+ * @param {Object} res - The response object.
+ */
 async function bulkDeleteExecutionsByCollection(req, res) {
-  // TODO: add zod parser for bulk delete payload
-  const payload = req.body;
-
-  // TODO: Type this properly
-  // Payload is  {batchsize: number/string } only
+  const payload = parseBulkDeletePayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
+  }
 
   const batchSize = payload.batchSize || 5000;
-  const collectionId = req.params.collectionId;
+  const collectionId = req.body.collectionId;
   const collectionPgModel = new CollectionPgModel();
 
-  // TODO: Verify RDS collection exists using collectionId DONE
-  // TODO: Abstract this as granule endpoint uses same thing, more or less
   if (!collectionId) {
     res.boom.badRequest('Execution update must include a valid CollectionId');
   }
   try {
+    log.info(`Collection ID Is ${collectionId}`);
     const knex = await getKnexClient();
     await collectionPgModel.get(
       knex,
@@ -298,7 +320,7 @@ async function bulkDeleteExecutionsByCollection(req, res) {
         `collectionId ${collectionId} is invalid`
       );
     } else {
-      throw error;
+      res.boom.badRequest(error.message);
     }
   }
 
@@ -334,7 +356,11 @@ async function bulkDeleteExecutionsByCollection(req, res) {
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
 // TODO: Add validation routine/error handler
-router.post('/bulk-delete-by-collection/:collectionId', bulkDeleteExecutionsByCollection);
+router.post(
+  '/bulk-delete-by-collection/',
+  bulkDeleteExecutionsByCollection,
+  asyncOperationEndpointErrorHandler
+);
 router.post('/', create);
 router.put('/:arn', update);
 router.get('/:arn', get);
