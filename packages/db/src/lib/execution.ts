@@ -241,20 +241,6 @@ export const getApiGranuleExecutionCumulusIdsByExecution = async (
   return granuleCumulusIds;
 };
 
-// TODO Remove this if not needed
-export const updateExecutionParentsToNullByCollectionId = async (
-  knex: Knex | Knex.Transaction,
-  collectionCumulusId: number | null
-) => {
-  try {
-    return await knex('executions')
-      .where('collection_cumulus_id', collectionCumulusId)
-      .update({ parent_cumulus_id: null });
-  } catch (error) {
-    throw new Error(`Failed to update database: ${error.message}`);
-  }
-};
-
 // TODO make sure API logic handles *null* case
 export const batchDeleteExecutionFromDatabaseByCumulusCollectionId = async (
   params: {

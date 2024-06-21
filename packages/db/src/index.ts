@@ -116,7 +116,6 @@ export {
   getExecutionInfoByGranuleCumulusId,
   getWorkflowNameIntersectFromGranuleIds,
   newestExecutionArnFromGranuleIdWorkflowName,
-  updateExecutionParentsToNullByCollectionId,
 } from './lib/execution';
 
 export {
