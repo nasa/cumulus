@@ -47,20 +47,10 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  */
 async function list(req, res) {
   log.trace(`list query ${JSON.stringify(req.query)}`);
-  const { getMMT, includeStats, ...queryStringParameters } = req.query;
-  let dbSearch;
-  if (includeStats === 'true') {
-    dbSearch = new Collection(
-      { queryStringParameters },
-      undefined,
-      process.env.ES_INDEX,
-      includeStats === 'true'
-    );
-  } else {
-    dbSearch = new CollectionSearch(
-      { queryStringParameters }
-    );
-  }
+  const { getMMT, ...queryStringParameters } = req.query;
+  const dbSearch = new CollectionSearch(
+    { queryStringParameters }
+  );
   let result = await dbSearch.query();
   if (getMMT === 'true') {
     result = await insertMMTLinks(result);

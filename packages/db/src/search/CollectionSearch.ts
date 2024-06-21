@@ -9,23 +9,38 @@ import { TableNames } from '../tables';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { translatePostgresCollectionToApiCollection } from '../translate/collections';
 import { PostgresCollectionRecord } from '../types/collection';
+import { TableNames } from '../tables';
 
 const log = new Logger({ sender: '@cumulus/db/CollectionSearch' });
 
-/**
- * There is no need to declare an ApiCollectionRecord type since
- * CollectionRecord contains all the same fields from the api
- */
+type Statuses = {
+  queued: number,
+  completed: number,
+  failed: number,
+  running: number,
+  total: number,
+};
+
+type StatsRecords = {
+  [key: number]: Statuses,
+};
+
+interface CollectionRecordApi extends CollectionRecord {
+  stats?: Statuses,
+}
 
 /**
- * Class to build and execute db search query for collection
+ * Class to build and execute db search query for collections
  */
 export class CollectionSearch extends BaseSearch {
   readonly active: boolean;
+  readonly includeStats: boolean;
+
   constructor(event: QueryEvent) {
-    const { active, ...queryStringParameters } = event.queryStringParameters || {};
+    const { active, includeStats, ...queryStringParameters } = event.queryStringParameters || {};
     super({ queryStringParameters }, 'collection');
     this.active = (active === 'true');
+    this.includeStats = (includeStats === 'true');
   }
 
   /**
@@ -44,6 +59,7 @@ export class CollectionSearch extends BaseSearch {
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`);
+
     return { countQuery, searchQuery };
   }
 
@@ -106,23 +122,75 @@ export class CollectionSearch extends BaseSearch {
     if (Object.keys(range).length > 0) {
       [countQuery, searchQuery].forEach((query) => query.whereExists(subQuery));
     }
+   }
+
+  /**
+   * Executes stats query to get granules' status aggregation
+   *
+   * @param ids - array of cumulusIds of the collections
+   * @param knex - knex for the stats query
+   * @returns the collection's granules status' aggregation
+   */
+  private async retrieveGranuleStats(collectionCumulusIds: number[], knex: Knex)
+    : Promise<StatsRecords> {
+    const granulesTable = TableNames.granules;
+    const statsQuery = knex(granulesTable)
+      .select(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
+      .count(`${granulesTable}.status`)
+      .groupBy(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
+      .whereIn(`${granulesTable}.collection_cumulus_id`, collectionCumulusIds);
+    const results = await statsQuery;
+    const reduced = results.reduce((acc, record) => {
+      const cumulusId = Number(record.collection_cumulus_id);
+      if (!acc[cumulusId]) {
+        acc[cumulusId] = {
+          queued: 0,
+          completed: 0,
+          failed: 0,
+          running: 0,
+          total: 0,
+        };
+      }
+      acc[cumulusId][record.status as keyof Statuses] += Number(record.count);
+      acc[cumulusId]['total'] += Number(record.count);
+      return acc;
+    }, {} as StatsRecords);
+    return reduced;
   }
 
   /**
    * Translate postgres records to api records
    *
-   * @param pgRecords - postgres records returned from query
+   * @param pgRecords - postgres Collection records returned from query
+   * @param knex - knex for the stats query if incldueStats is true
    * @returns translated api records
    */
-  protected translatePostgresRecordsToApiRecords(pgRecords: PostgresCollectionRecord[])
-    : Partial<CollectionRecord>[] {
+  protected async translatePostgresRecordsToApiRecords(pgRecords: PostgresCollectionRecord[],
+    knex: Knex): Promise<Partial<CollectionRecordApi>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
-    const apiRecords = pgRecords.map((item) => {
-      const apiRecord = translatePostgresCollectionToApiCollection(item);
+    let statsRecords: StatsRecords;
+    const cumulusIds = pgRecords.map((record) => record.cumulus_id);
+    if (this.includeStats) {
+      statsRecords = await this.retrieveGranuleStats(cumulusIds, knex);
+    }
 
-      return this.dbQueryParameters.fields
+    const apiRecords = pgRecords.map((record) => {
+      const apiRecord: CollectionRecordApi = translatePostgresCollectionToApiCollection(record);
+      const apiRecordFinal = this.dbQueryParameters.fields
         ? pick(apiRecord, this.dbQueryParameters.fields)
         : apiRecord;
+
+      if (statsRecords) {
+        apiRecordFinal.stats = statsRecords[record.cumulus_id] ? statsRecords[record.cumulus_id] :
+          {
+            queued: 0,
+            completed: 0,
+            failed: 0,
+            running: 0,
+            total: 0,
+          };
+      }
+      return apiRecordFinal;
     });
     return apiRecords;
   }
