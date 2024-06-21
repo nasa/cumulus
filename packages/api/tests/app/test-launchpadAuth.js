@@ -10,7 +10,7 @@ const { createBucket, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const EsCollection = require('@cumulus/es-client/collections');
+const { CollectionSearch } = require('@cumulus/db');
 const models = require('../../models');
 const { createJwtToken } = require('../../lib/token');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
@@ -72,7 +72,7 @@ test.after.always(async () => {
 
 test.serial('API request with a valid Launchpad token stores the access token', async (t) => {
   const stub = sinon.stub(launchpad, 'validateLaunchpadToken').returns(validateTokenResponse);
-  const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
+  const collectionStub = sinon.stub(CollectionSearch.prototype, 'query').returns([]);
 
   try {
     await request(app)
@@ -113,7 +113,7 @@ test.serial('API request with an invalid Launchpad token returns a 403 unauthori
 
 test.serial('API request with a stored non-expired Launchpad token record returns a successful response', async (t) => {
   let stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves(validateTokenResponse);
-  const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
+  const collectionStub = sinon.stub(CollectionSearch.prototype, 'query').returns([]);
 
   try {
     await request(app)
@@ -143,7 +143,7 @@ test.serial('API request with a stored non-expired Launchpad token record return
 });
 
 test.serial('API request with an expired Launchpad token returns a 401 response', async (t) => {
-  const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
+  const collectionStub = sinon.stub(CollectionSearch.prototype, 'query').returns([]);
 
   try {
     await accessTokenModel.create({

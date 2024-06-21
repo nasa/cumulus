@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
@@ -16,6 +18,7 @@ const {
   isCollisionError,
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
+  CollectionSearch,
 } = require('@cumulus/db');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { getEsClient, Search } = require('@cumulus/es-client/search');
@@ -43,14 +46,12 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const { getMMT, includeStats, ...queryStringParameters } = req.query;
-  const collection = new Collection(
-    { queryStringParameters },
-    undefined,
-    process.env.ES_INDEX,
-    includeStats === 'true'
+  log.trace(`list query ${JSON.stringify(req.query)}`);
+  const { getMMT, ...queryStringParameters } = req.query;
+  const dbSearch = new CollectionSearch(
+    { queryStringParameters }
   );
-  let result = await collection.query();
+  let result = await dbSearch.query();
   if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }

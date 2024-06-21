@@ -234,6 +234,7 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
       'beginningDateTime',
       'endingDateTime',
       'error',
+      'execution', // TODO remove after CUMULUS-3698
       'files', // TODO -2714 this should be removed
       'lastUpdateDateTime',
       'productionDateTime',
