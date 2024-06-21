@@ -37,6 +37,8 @@ const {
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
 
+const { deconstructCollectionId } = require('../../lib/utils');
+
 const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/meta.xml'), 'utf-8');
 
 /**
@@ -227,10 +229,10 @@ async function createExecutionRecords({
   const executionPgModel = new ExecutionPgModel();
   const collectionPgModel = new CollectionPgModel();
 
-  // TODO: use common method
+  const { name, version } = deconstructCollectionId(collectionId);
   const pgCollection = fakeCollectionRecordFactory({
-    name: collectionId.split('___')[0],
-    version: collectionId.split('___')[1],
+    name,
+    version,
   });
 
   const pgCollectionRecord = await collectionPgModel.create(knex, pgCollection);
