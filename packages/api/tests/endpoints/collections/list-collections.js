@@ -2,16 +2,12 @@
 
 const test = require('ava');
 const request = require('supertest');
-const sinon = require('sinon');
 const range = require('lodash/range');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const EsCollection = require('@cumulus/es-client/collections');
-const { getEsClient } = require('@cumulus/es-client/search');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const models = require('../../../models');
@@ -28,7 +24,9 @@ const {
   destroyLocalTestDb,
   generateLocalTestDb,
   CollectionPgModel,
+  GranulePgModel,
   fakeCollectionRecordFactory,
+  fakeGranuleRecordFactory,
   migrationDir,
   localStackConnectionEnv,
 } = require('../../../../db/dist');
@@ -45,9 +43,6 @@ process.env.system_bucket = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-const esIndex = randomString();
-let esClient;
-
 let jwtAuthToken;
 let accessTokenModel;
 
@@ -58,13 +53,6 @@ process.env = {
 };
 
 test.before(async (t) => {
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch({
-    host: 'fakehost',
-    index: esIndex,
-    alias: esAlias,
-  });
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
@@ -74,7 +62,7 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-  esClient = await getEsClient('fakehost');
+
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
     migrationDir
@@ -86,7 +74,7 @@ test.before(async (t) => {
   t.context.collectionPgModel = new CollectionPgModel();
   const collections = [];
 
-  range(40).map((num) => (
+  range(10).map((num) => (
     collections.push(fakeCollectionRecordFactory({
       name: num % 2 === 0 ? `testCollection__${num}` : `fakeCollection__${num}`,
       version: `${num}`,
@@ -95,10 +83,27 @@ test.before(async (t) => {
     }))
   ));
 
+  t.context.granulePgModel = new GranulePgModel();
+  const granules = [];
+  const statuses = ['queued', 'failed', 'completed', 'running'];
+
+  range(100).map((num) => (
+    granules.push(fakeGranuleRecordFactory({
+      collection_cumulus_id: collections[num % 9].cumulus_id,
+      status: statuses[num % 4],
+    }))
+  ));
+
   t.context.collections = collections;
   await t.context.collectionPgModel.insert(
     t.context.knex,
     collections
+  );
+
+  t.context.granules = granules;
+  await t.context.granulePgModel.insert(
+    t.context.knex,
+    granules
   );
 });
 
@@ -109,7 +114,6 @@ test.beforeEach((t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.client.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
     ...t.context,
     testDbName,
@@ -150,16 +154,20 @@ test.serial('default returns list of collections from query', async (t) => {
 });
 
 test.serial('returns list of collections with stats when requested', async (t) => {
-  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
-
   const response = await request(app)
     .get('/collections?includeStats=true')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
+  const expectedStats1 = { queued: 3, completed: 3, failed: 3, running: 3, total: 12 };
+  const expectedStats2 = { queued: 2, completed: 3, failed: 3, running: 3, total: 11 };
+  const expectedStats3 = { queued: 0, completed: 0, failed: 0, running: 0, total: 0 };
+
   const { results } = response.body;
-  t.is(results.length, 1);
-  t.is(results[0].name, t.context.testCollection.name);
-  stub.restore();
+  t.is(results.length, 10);
+  t.is(results[0].name, t.context.collections[0].name);
+  t.deepEqual(results[0].stats, expectedStats1);
+  t.deepEqual(results[1].stats, expectedStats2);
+  t.deepEqual(results[9].stats, expectedStats3);
 });
