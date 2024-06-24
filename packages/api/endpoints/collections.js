@@ -26,7 +26,6 @@ const {
   indexCollection,
   deleteCollection,
 } = require('@cumulus/es-client/indexer');
-const Collection = require('@cumulus/es-client/collections');
 const {
   publishCollectionCreateSnsMessage,
   publishCollectionDeleteSnsMessage,
@@ -46,7 +45,7 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  log.trace(`list query ${JSON.stringify(req.query)}`);
+  log.debug(`list query ${JSON.stringify(req.query)}`);
   const { getMMT, ...queryStringParameters } = req.query;
   const dbSearch = new CollectionSearch(
     { queryStringParameters }
