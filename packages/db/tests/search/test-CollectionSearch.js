@@ -9,7 +9,9 @@ const {
   destroyLocalTestDb,
   generateLocalTestDb,
   CollectionPgModel,
+  GranulePgModel,
   fakeCollectionRecordFactory,
+  fakeGranuleRecordFactory,
   migrationDir,
 } = require('../../dist');
 
@@ -28,8 +30,8 @@ test.before(async (t) => {
   const collections = [];
   range(100).map((num) => (
     collections.push(fakeCollectionRecordFactory({
-      name: num % 2 === 0 ? `testCollection___00${num}` : `fakeCollection___00${num}`,
-      version: `${num}`,
+      name: num % 2 === 0 ? 'testCollection' : 'fakeCollection',
+      version: num,
       cumulus_id: num,
       updated_at: new Date(1579352700000 + (num % 2) * 1000),
       process: num % 2 === 0 ? 'ingest' : 'publish',
@@ -38,9 +40,26 @@ test.before(async (t) => {
     }))
   ));
 
+  t.context.granulePgModel = new GranulePgModel();
+  const granules = [];
+  const statuses = ['queued', 'failed', 'completed', 'running'];
+
+  range(1000).map((num) => (
+    granules.push(fakeGranuleRecordFactory({
+      collection_cumulus_id: num % 99,
+      cumulus_id: 100 + num,
+      status: statuses[num % 4],
+    }))
+  ));
+
   await t.context.collectionPgModel.insert(
     t.context.knex,
     collections
+  );
+
+  await t.context.granulePgModel.insert(
+    t.context.knex,
+    granules
   );
 });
 
@@ -53,8 +72,8 @@ test.after.always(async (t) => {
 
 test('CollectionSearch returns 10 collections by default', async (t) => {
   const { knex } = t.context;
-  const AggregateSearch = new CollectionSearch();
-  const results = await AggregateSearch.query(knex);
+  const dbSearch = new CollectionSearch({});
+  const results = await dbSearch.query(knex);
   t.is(results.meta.count, 100);
   t.is(results.results.length, 10);
 });
@@ -117,7 +136,7 @@ test('CollectionSearch supports term search for boolean field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    reportToEms: false,
+    reportToEms: 'false',
   };
   const dbSearch4 = new CollectionSearch({ queryStringParameters });
   const response4 = await dbSearch4.query(knex);
@@ -129,7 +148,7 @@ test('CollectionSearch supports term search for date field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    updatedAt: 1579352701000,
+    updatedAt: '1579352701000',
   };
   const dbSearch = new CollectionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -141,7 +160,7 @@ test('CollectionSearch supports term search for number field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    version: 2,
+    version: '2',
   };
   const dbSearch = new CollectionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -153,7 +172,7 @@ test('CollectionSearch supports term search for string field', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 200,
-    name: 'fakeCollection___0071',
+    _id: 'fakeCollection___71',
   };
   const dbSearch2 = new CollectionSearch({ queryStringParameters });
   const response2 = await dbSearch2.query(knex);
@@ -177,8 +196,9 @@ test('CollectionSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    name: 'testCollection___000',
-    updatedAt: 1579352700000,
+    name: 'testCollection',
+    version: '0',
+    updatedAt: '1579352700000',
     process: 'ingest',
     reportToEms: 'true',
   };
@@ -265,7 +285,7 @@ test('CollectionSearch supports terms search', async (t) => {
   queryStringParameters = {
     limit: 200,
     process__in: ['ingest', 'archive'].join(','),
-    name__in: ['testCollection___000', 'fakeCollection___001'].join(','),
+    _id__in: ['testCollection___0', 'fakeCollection___1'].join(','),
   };
   dbSearch = new CollectionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
@@ -287,7 +307,7 @@ test('CollectionSearch supports search when collection field does not match the 
   queryStringParameters = {
     limit: 200,
     process__not: 'publish',
-    name__not: 'testCollection___000',
+    version__not: 18,
   };
   dbSearch = new CollectionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
@@ -305,4 +325,21 @@ test('CollectionSearch supports search which checks existence of collection fiel
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
+});
+
+test('CollectionSearch supports includeStats', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    includeStats: 'true',
+  };
+  const dbSearch = new CollectionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+
+  const expectedStats1 = { queued: 3, completed: 3, failed: 2, running: 3, total: 11 };
+  const expectedStats2 = { queued: 0, completed: 0, failed: 0, running: 0, total: 0 };
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 100);
+  t.deepEqual(response.results[0].stats, expectedStats1);
+  t.deepEqual(response.results[99].stats, expectedStats2);
 });

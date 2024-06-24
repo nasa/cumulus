@@ -64,7 +64,9 @@ export {
   PostgresFile,
   PostgresFileRecord,
 } from './types/file';
-
+export {
+  PostgresGranuleExecution,
+} from './types/granule-execution';
 export {
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
