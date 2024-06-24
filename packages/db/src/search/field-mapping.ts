@@ -123,6 +123,13 @@ const collectionMapping : { [key: string]: Function } = {
   version: (value?: string) => ({
     version: value,
   }),
+  _id: (value?: string) => {
+    const { name, version } = (value && deconstructCollectionId(value)) || {};
+    return {
+      collectionName: name,
+      collectionVersion: version,
+    };
+  },
   timestamp: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
   }),

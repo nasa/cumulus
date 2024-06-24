@@ -7,7 +7,8 @@ TAIL_PID=$!
 npm run test:ci > ./test_output.txt
 
 RESULT=$?
-
+# make sure tail has gotten everything out
+sleep 2
 kill -9 $TAIL_PID
 
 if [[ $RESULT != 0 ]]
