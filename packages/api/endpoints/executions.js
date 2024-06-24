@@ -182,6 +182,8 @@ async function get(req, res) {
 /**
  * Delete an execution
  *
+ * Does *not* publish execution deletion event to SNS topic
+ *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
@@ -283,6 +285,8 @@ async function workflowsByGranules(req, res) {
 
 /**
  * Deletes execution records in bulk for a specific collection.
+ *
+ * Does *not* publish execution deletion event to SNS topic
  *
  * @param {Object} req - The request object.
  * @param {Object} req.params - The request parameters.
