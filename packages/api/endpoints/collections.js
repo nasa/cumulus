@@ -68,7 +68,7 @@ async function list(req, res) {
  */
 async function activeList(req, res) {
   const { getMMT, ...queryStringParameters } = req.query;
-  const dbSearch = new CollectionSearch({ active: 'true', ...queryStringParameters });
+  const dbSearch = new CollectionSearch({ queryStringParameters: { active: 'true', ...queryStringParameters } });
   let result = await dbSearch.query();
   if (getMMT === 'true') {
     result = await insertMMTLinks(result);
