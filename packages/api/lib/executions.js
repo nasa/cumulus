@@ -178,7 +178,7 @@ const batchDeleteExecutionsFromDatastore = async (event) => {
 
   // Delete ES execution records
   log.info(
-    `Starting deletion of executions records from Elasticsearch for collection ${collectionId}`
+    `Starting deletion of executions records from Elasticsearch for collection ${collectionId}, batch size ${event.esBatchSize}`
   );
   await batchDeleteExecutionsByCollection({
     index: process.env.ES_INDEX || defaultIndexAlias,
@@ -190,7 +190,7 @@ const batchDeleteExecutionsFromDatastore = async (event) => {
 
   // Delete RDS execution records
   log.info(
-    `Starting deletion of executions records from RDS for collection ${collectionId}z`
+    `Starting deletion of executions records from RDS for collection ${collectionId}, batch size ${event.dbBatchSize}`
   );
   const collectionCumulusId = await _getCollectionCumulusId(knex, collectionId);
   let executionResults = 0;
