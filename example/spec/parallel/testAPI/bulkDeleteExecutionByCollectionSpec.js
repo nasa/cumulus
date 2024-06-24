@@ -1,5 +1,6 @@
-const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
+const pRetry = require('p-retry');
 
+const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
 const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const {
   bulkDeleteByCollection,
@@ -67,7 +68,7 @@ describe('POST /executions/bulk-delete-by-collection', () => {
             prefix,
             body: {
               collectionId,
-              arn: randomId('arn'),
+              arn: `${testSuffix}-${randomId('arn')}`,
               status: 'completed',
               name: randomId('name'),
             },
@@ -75,13 +76,19 @@ describe('POST /executions/bulk-delete-by-collection', () => {
         )
       );
 
-      originalExecutions = await getExecutions({
-        prefix,
-        query: {
-          fields: ['arn'],
-          collectionId,
-        },
-      });
+      await pRetry(async () => {
+        originalExecutions = await getExecutions({
+          prefix,
+          query: {
+            fields: ['arn'],
+            collectionId,
+          },
+        });
+
+        if (JSON.parse(originalExecutions.body).results.length !== 10) {
+          throw new Error('Setup conditions not met, expected 10 executions');
+        }
+      }, { retries: 5, minTimeout: 2000, maxTimeout: 2000 });
 
       bulkDeleteByCollectionResponse = await bulkDeleteByCollection({
         prefix,
