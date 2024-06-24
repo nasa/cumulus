@@ -414,10 +414,11 @@ class BaseSearch {
    * Translate postgres records to api records
    *
    * @param pgRecords - postgres records returned from query
+   * @param [knex] - knex client for additional queries if neccessary
    * @throws - function is not implemented
    */
-  protected translatePostgresRecordsToApiRecords(pgRecords: BaseRecord[]) {
-    log.error(`translatePostgresRecordsToApiRecords is not implemented ${pgRecords[0]}`);
+  protected translatePostgresRecordsToApiRecords(pgRecords: BaseRecord[], knex?: Knex) {
+    log.error(`translatePostgresRecordsToApiRecords is not implemented ${pgRecords[0]} with client ${knex}`);
     throw new Error('translatePostgresRecordsToApiRecords is not implemented');
   }
 
@@ -438,7 +439,7 @@ class BaseSearch {
       meta.count = Number(countResult[0]?.count ?? 0);
 
       const pgRecords = await searchQuery;
-      const apiRecords = this.translatePostgresRecordsToApiRecords(pgRecords);
+      const apiRecords = await this.translatePostgresRecordsToApiRecords(pgRecords, knex);
 
       return {
         meta,
