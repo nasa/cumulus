@@ -33,10 +33,8 @@ test.beforeEach(async (t) => {
     process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
     const { esIndex, esClient } = await createTestIndex();
     const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
-    const collectionId = `${cryptoRandomString({ length: 5 })}___${cryptoRandomString({ length: 5 })}`;
     t.context = {
       ...t.context,
-      collectionId,
       esClient,
       esIndex,
       knex,
@@ -58,7 +56,6 @@ test.afterEach.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-// TODO: Add to test helpers/common/?
 const searchAllExecutionsForCollection = async (collectionId, esIndex) => {
   const searchClient = new Search(
     {
@@ -129,10 +126,13 @@ test('chooseTargetExecution() throws exactly any error raised in the database fu
   );
 });
 
-test.serial('batchDeleteExecutionsFromDatastore() deletes executions from the database.', async (t) => {
-  const collectionId = t.context.collectionId;
+test.serial('batchDeleteExecutionsFromDatastore() deletes expected executions from the database.', async (t) => {
+  const collectionId = 'originalCollection___001';
   const executionCount = 57;
-  await createExecutionRecords({
+  const otherCollectionId = 'otherCollectionId___001';
+  const otherExecutionCount = 10;
+
+  const { pgCollectionRecord } = await createExecutionRecords({
     knex: t.context.knex,
     count: executionCount,
     esClient: t.context.esClient,
@@ -140,14 +140,29 @@ test.serial('batchDeleteExecutionsFromDatastore() deletes executions from the da
     addParentExecutions: true,
   });
 
+  const otherCollectionRecords = await createExecutionRecords({
+    knex: t.context.knex,
+    count: otherExecutionCount,
+    esClient: t.context.esClient,
+    collectionId: otherCollectionId,
+    addParentExecutions: true,
+  });
+
   const setupExecutions = await searchAllExecutionsForCollection(
     collectionId,
     t.context.esIndex
   );
+
+  const otherCollectionEsExecutions = await searchAllExecutionsForCollection(
+    otherCollectionId,
+    t.context.esIndex
+  );
+
   const setupRdsExecutions = await t.context.knex('executions').select();
 
-  t.is(setupRdsExecutions.length, executionCount + 1);
-  t.is(setupExecutions.meta.count, executionCount + 1);
+  t.is(setupRdsExecutions.length, executionCount + otherExecutionCount + 2);
+  t.is(setupExecutions.meta.count + otherCollectionEsExecutions.meta.count,
+    executionCount + otherExecutionCount + 2);
 
   await batchDeleteExecutionsFromDatastore({
     collectionId,
@@ -157,7 +172,16 @@ test.serial('batchDeleteExecutionsFromDatastore() deletes executions from the da
     collectionId,
     t.context.esIndex
   );
-  const postDeleteRdsExecutions = await t.context.knex('executions').select();
-  t.is(postDeleteEsExecutions.meta.count, 0);
+  const postDeleteRdsExecutions = await t.context.knex('executions').where('collection_cumulus_id', pgCollectionRecord[0].cumulus_id);
   t.is(postDeleteRdsExecutions.length, 0);
+  t.is(postDeleteEsExecutions.meta.count, 0);
+
+  // Validate original executions exist
+  const otherEsExecutions = await searchAllExecutionsForCollection(
+    otherCollectionId,
+    t.context.esIndex
+  );
+  const otherRdsExecutions = await t.context.knex('executions').where('collection_cumulus_id', otherCollectionRecords.pgCollectionRecord[0].cumulus_id);
+  t.is(otherEsExecutions.meta.count, otherExecutionCount + 1);
+  t.is(otherRdsExecutions.length, otherExecutionCount + 1);
 });
