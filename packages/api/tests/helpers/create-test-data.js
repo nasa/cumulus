@@ -296,7 +296,7 @@ async function createExecutionRecords({
       execution_cumulus_id: execution.cumulus_id,
     })));
   }
-  return executionRecords;
+  return { executionRecords, pgCollectionRecord };
 }
 
 /**
