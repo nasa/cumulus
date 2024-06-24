@@ -35,7 +35,8 @@ const { validateGranuleExecutionRequest, getFunctionNameFromRequestContext } = r
 const log = new Logger({ sender: '@cumulus/api/executions' });
 
 const BulkExecutionDeletePayloadSchema = z.object({
-  batchSize: z.number().int().positive().optional(),
+  esBatchSize: z.number().int().positive().optional(),
+  dbBatchSize: z.number().int().positive().optional(),
   knexDebug: z.boolean().optional(),
   collectionId: z.string(),
 }).catchall(z.unknown());
@@ -297,7 +298,8 @@ async function bulkDeleteExecutionsByCollection(req, res) {
     return returnCustomValidationErrors(res, payload);
   }
 
-  const batchSize = payload.batchSize || 5000;
+  const esBatchSize = payload.esBatchSize || 10000;
+  const dbBatchSize = payload.dbBatchSize || 10000;
   const collectionId = req.body.collectionId;
   const collectionPgModel = new CollectionPgModel();
 
@@ -334,7 +336,7 @@ async function bulkDeleteExecutionsByCollection(req, res) {
     operationType: 'Bulk Execution Delete',
     payload: {
       type: 'BULK_EXECUTION_DELETE',
-      payload: { ...payload, batchSize, collectionId },
+      payload: { ...payload, esBatchSize, dbBatchSize, collectionId },
       envVars: {
         ES_HOST: process.env.ES_HOST,
         KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
