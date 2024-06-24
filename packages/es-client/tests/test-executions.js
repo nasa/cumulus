@@ -141,7 +141,6 @@ test('batchDeleteExecutionsByCollection handles 0 record deletion request',
     const executionRecordCount = 10;
     await addExecutionRecords(t, notDeletedCollectionId, executionRecordCount);
 
-    // TODO fix these names
     const searchResponse = await searchAllExecutionsForCollection(
       collectionId,
       esIndex
