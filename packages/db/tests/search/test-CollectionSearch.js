@@ -28,12 +28,14 @@ test.before(async (t) => {
 
   t.context.collectionPgModel = new CollectionPgModel();
   const collections = [];
+  t.context.collectionSearchTmestamp = 1579352700000;
+
   range(100).map((num) => (
     collections.push(fakeCollectionRecordFactory({
       name: num % 2 === 0 ? 'testCollection' : 'fakeCollection',
       version: num,
       cumulus_id: num,
-      updated_at: new Date(1579352700000 + (num % 2) * 1000),
+      updated_at: new Date(t.context.collectionSearchTmestamp + (num % 2)),
       process: num % 2 === 0 ? 'ingest' : 'publish',
       report_to_ems: num % 2 === 0,
       url_path: num % 2 === 0 ? 'https://fakepath.com' : undefined,
@@ -43,15 +45,20 @@ test.before(async (t) => {
   t.context.granulePgModel = new GranulePgModel();
   const granules = [];
   const statuses = ['queued', 'failed', 'completed', 'running'];
-
-  t.context.granuleSearchTmestamp = 1579352700000;
+  t.context.granuleSearchTmestamp = 1688888800000;
 
   range(1000).map((num) => (
     granules.push(fakeGranuleRecordFactory({
+      // collection with cumulus_id 0-9 each has 11 granules,
+      // collection 10-98 has 10 granules, and collection 99 has 0 granule
       collection_cumulus_id: num % 99,
       cumulus_id: 100 + num,
       status: statuses[num % 4],
-      updated_at: new Date(t.context.granuleSearchTmestamp + (num % 2) * 1000),
+      // granule with collection_cumulus_id n has timestamp granuleSearchTmestamp + n,
+      // except granule 98 (with collection 98 ) which has timestamp granuleSearchTmestamp - 1
+      updated_at: num === 98
+        ? new Date(t.context.granuleSearchTmestamp - 1)
+        : new Date(t.context.granuleSearchTmestamp + (num % 99)),
     }))
   ));
 
@@ -151,7 +158,7 @@ test('CollectionSearch supports term search for date field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    updatedAt: '1579352701000',
+    updatedAt: `${t.context.collectionSearchTmestamp + 1}`,
   };
   const dbSearch = new CollectionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -192,8 +199,27 @@ test('CollectionSearch supports term search for string field', async (t) => {
   t.is(response3.results?.length, 50);
 });
 
-// TODO in CUMULUS-3639
-test.todo('CollectionSearch supports range search');
+test('CollectionSearch supports range search', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    timestamp__from: `${t.context.collectionSearchTmestamp + 1}`,
+    timestamp__to: `${t.context.collectionSearchTmestamp + 2}`,
+  };
+  let dbSearch = new CollectionSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    ...queryStringParameters,
+    active: 'true',
+  };
+  dbSearch = new CollectionSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 0);
+  t.is(response.results?.length, 0);
+});
 
 test('CollectionSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
@@ -201,7 +227,7 @@ test('CollectionSearch supports search for multiple fields', async (t) => {
     limit: 200,
     name: 'testCollection',
     version: '0',
-    updatedAt: '1579352700000',
+    updatedAt: `${t.context.collectionSearchTmestamp}`,
     process: 'ingest',
     reportToEms: 'true',
   };
@@ -330,21 +356,6 @@ test('CollectionSearch supports search which checks existence of collection fiel
   t.is(response.results?.length, 50);
 });
 
-test.serial.only('CollectionSearch supports search which requests active collection list', async (t) => {
-  const { knex } = t.context;
-  const queryStringParameters = {
-    limit: '200',
-    active: 'true',
-    timestamp__from: `${t.context.granuleSearchTmestamp + 1}`,
-    timestamp__to: `${t.context.granuleSearchTmestamp + 1000}`,
-  };
-  const dbSearch = new CollectionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 100);
-  t.is(response.results?.length, 100);
-  // check the right collection is returned
-});
-
 test('CollectionSearch supports includeStats', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
@@ -354,10 +365,57 @@ test('CollectionSearch supports includeStats', async (t) => {
   const dbSearch = new CollectionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
 
-  const expectedStats1 = { queued: 3, completed: 3, failed: 2, running: 3, total: 11 };
-  const expectedStats2 = { queued: 0, completed: 0, failed: 0, running: 0, total: 0 };
+  const expectedStats0 = { queued: 3, completed: 3, failed: 2, running: 3, total: 11 };
+  const expectedStats98 = { queued: 2, completed: 3, failed: 3, running: 2, total: 10 };
+  const expectedStats99 = { queued: 0, completed: 0, failed: 0, running: 0, total: 0 };
+
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
-  t.deepEqual(response.results[0].stats, expectedStats1);
-  t.deepEqual(response.results[99].stats, expectedStats2);
+  t.deepEqual(response.results[0].stats, expectedStats0);
+  t.deepEqual(response.results[98].stats, expectedStats98);
+  t.deepEqual(response.results[99].stats, expectedStats99);
+});
+
+test('CollectionSearch supports search for active collections', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: '200',
+    active: 'true',
+    includeStats: 'true',
+  };
+  const dbSearch = new CollectionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+
+  const expectedStats0 = { queued: 3, completed: 3, failed: 2, running: 3, total: 11 };
+  const expectedStats10 = { queued: 2, completed: 3, failed: 3, running: 2, total: 10 };
+  const expectedStats98 = { queued: 2, completed: 3, failed: 3, running: 2, total: 10 };
+  t.is(response.meta.count, 99);
+  t.is(response.results?.length, 99);
+  t.deepEqual(response.results[0].stats, expectedStats0);
+  t.deepEqual(response.results[10].stats, expectedStats10);
+  t.deepEqual(response.results[98].stats, expectedStats98);
+});
+
+test('CollectionSearch support search for active collections and stats with granules updated in the given time frame', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: '200',
+    active: 'true',
+    includeStats: 'true',
+    timestamp__from: `${t.context.granuleSearchTmestamp + 10}`,
+    timestamp__to: `${t.context.granuleSearchTmestamp + 98}`,
+    sort_by: 'version',
+  };
+  const dbSearch = new CollectionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+
+  const expectedStats10 = { queued: 2, completed: 3, failed: 3, running: 2, total: 10 };
+  // collection with cumulus_id 98 has 9 granules in the time frame
+  const expectedStats98 = { queued: 2, completed: 2, failed: 3, running: 2, total: 9 };
+
+  // collections with cumulus_id 0-9 are filtered out
+  t.is(response.meta.count, 89);
+  t.is(response.results?.length, 89);
+  t.deepEqual(response.results[0].stats, expectedStats10);
+  t.deepEqual(response.results[88].stats, expectedStats98);
 });

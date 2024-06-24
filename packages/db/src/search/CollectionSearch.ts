@@ -3,9 +3,7 @@ import pick from 'lodash/pick';
 
 import Logger from '@cumulus/logger';
 import { CollectionRecord } from '@cumulus/types/api/collections';
-import { GranuleStatus } from '@cumulus/types/api/granules';
 import { BaseSearch } from './BaseSearch';
-import { TableNames } from '../tables';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { translatePostgresCollectionToApiCollection } from '../translate/collections';
 import { PostgresCollectionRecord } from '../types/collection';
@@ -101,14 +99,17 @@ export class CollectionSearch extends BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    if (!this.active) super.buildRangeQuery(params);
+    if (!this.active) {
+      super.buildRangeQuery(params);
+      return;
+    }
 
     const granulesTable = TableNames.granules;
     const { knex, countQuery, searchQuery, dbQueryParameters } = params;
     const { range = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     const subQuery = knex.select(1).from(granulesTable)
-      .join(`${this.tableName}`, `${granulesTable}.collection_cumulus_id`, `${this.tableName}.cumulus_id`);
+      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`));
 
     Object.entries(range).forEach(([name, rangeValues]) => {
       if (rangeValues.gte) {
@@ -119,15 +120,13 @@ export class CollectionSearch extends BaseSearch {
       }
     });
 
-    if (Object.keys(range).length > 0) {
-      [countQuery, searchQuery].forEach((query) => query.whereExists(subQuery));
-    }
-   }
+    [countQuery, searchQuery].forEach((query) => query.whereExists(subQuery));
+  }
 
   /**
    * Executes stats query to get granules' status aggregation
    *
-   * @param ids - array of cumulusIds of the collections
+   * @param collectionCumulusIds - array of cumulusIds of the collections
    * @param knex - knex for the stats query
    * @returns the collection's granules status' aggregation
    */
@@ -139,6 +138,18 @@ export class CollectionSearch extends BaseSearch {
       .count(`${granulesTable}.status`)
       .groupBy(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
       .whereIn(`${granulesTable}.collection_cumulus_id`, collectionCumulusIds);
+
+    if (this.active) {
+      Object.entries(this.dbQueryParameters?.range ?? {}).forEach(([name, rangeValues]) => {
+        if (rangeValues.gte) {
+          statsQuery.where(`${granulesTable}.${name}`, '>=', rangeValues.gte);
+        }
+        if (rangeValues.lte) {
+          statsQuery.where(`${granulesTable}.${name}`, '<=', rangeValues.lte);
+        }
+      });
+    }
+    log.debug(`retrieveGranuleStats statsQuery: ${statsQuery?.toSQL().sql}`);
     const results = await statsQuery;
     const reduced = results.reduce((acc, record) => {
       const cumulusId = Number(record.collection_cumulus_id);
@@ -181,8 +192,8 @@ export class CollectionSearch extends BaseSearch {
         : apiRecord;
 
       if (statsRecords) {
-        apiRecordFinal.stats = statsRecords[record.cumulus_id] ? statsRecords[record.cumulus_id] :
-          {
+        apiRecordFinal.stats = statsRecords[record.cumulus_id] ? statsRecords[record.cumulus_id]
+          : {
             queued: 0,
             completed: 0,
             failed: 0,
