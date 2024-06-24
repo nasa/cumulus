@@ -8,6 +8,7 @@ const sortBy = require('lodash/sortBy');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
+const sinon = require('sinon');
 
 const {
   createBucket,
@@ -63,7 +64,7 @@ process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
-const { del } = require('../../endpoints/executions');
+const { del, bulkDeleteExecutionsByCollection } = require('../../endpoints/executions');
 const { app } = require('../../app');
 const { buildFakeExpressResponse } = require('./utils');
 
@@ -1723,4 +1724,45 @@ test.serial('PUT /executions publishes message to SNS topic', async (t) => {
     ...translatedExecution,
     updatedAt: executionRecord.updatedAt,
   });
+});
+
+test.serial('bulkDeleteExecutionsByCollection calls invokeStartAsyncOperationLambda with expected object', async (t) => {
+  const invokeStartAsyncOperationLambda = sinon.stub();
+  process.env.EcsCluster = 'testCluster';
+  process.env.BulkOperationLambda = 'testBulkOperationLambda';
+  const req = {
+    testObject: { invokeStartAsyncOperationLambda },
+    body: {
+      collectionId: 'testCollectionId',
+      esBatchSize: 50000,
+      dbBatchSize: 60000,
+    },
+  };
+  const res = {
+    status: sinon.stub().returnsThis(),
+    send: sinon.stub(),
+    boom: {
+      badRequest: sinon.stub(),
+    },
+  };
+
+  const envVars = {
+    ES_HOST: process.env.ES_HOST,
+    KNEX_DEBUG: 'false',
+    stackName: process.env.stackName,
+    system_bucket: process.env.system_bucket,
+  };
+
+  await bulkDeleteExecutionsByCollection(req, res);
+
+  t.true(invokeStartAsyncOperationLambda.calledOnce);
+  const callArgs = invokeStartAsyncOperationLambda.getCall(0).args[0];
+  t.is(callArgs.asyncOperationId.length, 36);
+  t.is(callArgs.cluster, process.env.EcsCluster);
+  t.is(callArgs.lambdaName, process.env.BulkOperationLambda);
+  t.is(callArgs.description, 'Bulk Execution Deletion by CollectionId');
+  t.is(callArgs.operationType, 'Bulk Execution Delete');
+  t.is(callArgs.payload.type, 'BULK_EXECUTION_DELETE');
+  t.deepEqual(callArgs.payload.envVars, envVars);
+  t.deepEqual(callArgs.payload.payload, req.body);
 });

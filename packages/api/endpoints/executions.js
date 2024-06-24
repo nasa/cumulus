@@ -285,14 +285,20 @@ async function workflowsByGranules(req, res) {
  * Deletes execution records in bulk for a specific collection.
  *
  * @param {Object} req - The request object.
+ * @param {Object} req.params - The request parameters.
  * @param {Object} req.body - The request body.
  * @param {number|string} [req.body.batchSize=5000] - The number of records to delete in each batch.
  * @param {string} req.body.collectionId - The CollectionID to delete execution records for.
  * @param {string} [req.body.knexDebug=false] - Boolean to enabled Knex Debugging for the request
- * @param {Object} req.params - The request parameters.
+ * @param {Object} [req.testObject] - Object to allow for dependency injection in tests
+ * @Param {Function} [req.testObject.invokeStartAsyncOperationLambda] - Function to invoke
+ * the startAsyncOperation Lambda
  * @param {Object} res - The response object.
  */
 async function bulkDeleteExecutionsByCollection(req, res) {
+  const invokeStartAsyncOperationLambda =
+    req.testObject.invokeStartAsyncOperationLambda ||
+    startAsyncOperation.invokeStartAsyncOperationLambda;
   const payload = parseBulkDeletePayload(req.body);
   if (isError(payload)) {
     return returnCustomValidationErrors(res, payload);
@@ -349,7 +355,7 @@ async function bulkDeleteExecutionsByCollection(req, res) {
   log.debug(
     `About to invoke lambda to start async operation ${asyncOperationId}`
   );
-  await startAsyncOperation.invokeStartAsyncOperationLambda(
+  await invokeStartAsyncOperationLambda(
     asyncOperationEvent
   );
   return res.status(202).send({ id: asyncOperationId });
@@ -371,4 +377,5 @@ router.delete('/:arn', del);
 module.exports = {
   del,
   router,
+  bulkDeleteExecutionsByCollection,
 };
