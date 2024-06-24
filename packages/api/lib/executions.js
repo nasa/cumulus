@@ -94,7 +94,7 @@ async function describeGranuleExecution(executionArn, stepFunctionUtils = StepFu
  *
  * @param {Knex | KnexTransaction} knex - The Knex client object for interacting with the database.
  * @param {string} apiCollection - The collection object from the API.
- * @returns {Promise<number>} A promise that resolves to the Cumulus ID of the collection.
+ * @returns {Promise<number>} A promise that resolves to the cumulus_id of the collection.
  * @throws {Error} Throws an error if the collection could not be found in the database.
  */
 const _getCollectionCumulusId = async (knex, apiCollection) => {
