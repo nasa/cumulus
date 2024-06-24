@@ -4,9 +4,7 @@ const EventEmitter = require('events');
 const fs = require('fs');
 const nock = require('nock');
 const path = require('path');
-const rewire = require('rewire');
 const test = require('ava');
-const { promisify } = require('util');
 const { tmpdir } = require('os');
 const { Readable } = require('stream');
 const errors = require('@cumulus/errors');
@@ -18,7 +16,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
-const HttpProviderClient = rewire('../HttpProviderClient');
+const HttpProviderClient = require('../HttpProviderClient');
 
 const testListWith = (discoverer, event, ...args) => {
   class Crawler extends EventEmitter {
@@ -26,10 +24,9 @@ const testListWith = (discoverer, event, ...args) => {
       this.emit(event, ...args);
     }
   }
+  const crawler = new Crawler();
 
-  return HttpProviderClient.__with__({
-    Crawler,
-  })(() => discoverer.list(''));
+  return discoverer.list('', { crawler });
 };
 
 test.before((t) => {
@@ -163,13 +160,9 @@ test.serial('list() strips path from file names', async (t) => {
       this.emit('fetchcomplete', {}, Buffer.from(responseBody));
     }
   }
-
-  const actualFiles = await HttpProviderClient.__with__({
-    Crawler,
-  })(() => t.context.httpProviderClient.list('/path/to/file/'));
-
+  const crawler = new Crawler();
+  const actualFiles = await t.context.httpProviderClient.list('/path/to/file/', { crawler });
   const expectedFiles = [{ name: 'test.txt', path: '/path/to/file/' }];
-
   t.deepEqual(actualFiles, expectedFiles);
 });
 
@@ -258,9 +251,10 @@ test.serial('download() downloads a file', async (t) => {
   const localPath = path.join(tmpdir(), randomString());
   try {
     await httpProviderClient.download({ remotePath: 'pdrs/PDN.ID1611071307.PDR', localPath });
-    t.is(await promisify(fs.access)(localPath), undefined);
+    await fs.promises.access(localPath);
+    t.pass();
   } finally {
-    await promisify(fs.unlink)(localPath);
+    await fs.promises.unlink(localPath);
   }
 });
 
