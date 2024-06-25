@@ -178,7 +178,6 @@ const cleanupExpiredESExecutionPayloads = async (
     type: 'execution',
     size: updateLimit,
     body,
-    refresh: true,
   });
 };
 
@@ -228,11 +227,12 @@ const cleanupExpiredPGExecutionPayloads = async (
     original_payload: null,
     final_payload: null,
   };
+
   const updatePromises = executionRecords.map((entry) => limit(() => {
     if (runComplete && entry.status === 'completed' && entry.updated_at <= completeExpiration) {
       return executionModel.update(knex, { cumulus_id: entry.cumulus_id }, wipedPayloads);
     }
-    if (runNonComplete && !(entry.status === 'completed') && entry.updated_at <= nonCompleteExpiration) {
+    if (runNonComplete && entry.status !== 'completed' && entry.updated_at <= nonCompleteExpiration) {
       return executionModel.update(knex, { cumulus_id: entry.cumulus_id }, wipedPayloads);
     }
     return Promise.resolve([]);
@@ -256,16 +256,19 @@ async function cleanExecutionPayloads() {
     log.info('skipping nonComplete execution cleanup');
   }
   if (completeDisable && nonCompleteDisable) {
-    return;
+    throw new Error('complete and nonComplete configured to be skipped, nothing to do');
   }
 
-  const nonCompleteTimeout = Number.parseInt(process.env.nonCompleteExecutionPayloadTimeout || '10', 10);
+  const _nonCompleteTimeout = process.env.nonCompleteExecutionPayloadTimeout || '10';
+  const nonCompleteTimeout = Number.parseInt(_nonCompleteTimeout, 10);
   if (!Number.isInteger(nonCompleteTimeout)) {
-    throw new TypeError(`Invalid number of days specified in configuration for nonCompleteExecutionPayloadTimeout: ${nonCompleteTimeout}`);
+    throw new TypeError(`Invalid number of days specified in configuration for nonCompleteExecutionPayloadTimeout: ${_nonCompleteTimeout}`);
   }
-  const completeTimeout = Number.parseInt(process.env.completeExecutionPayloadTimeout || '10', 10);
-  if (!Number.isInteger(nonCompleteTimeout)) {
-    throw new TypeError(`Invalid number of days specified in configuration for completeExecutionPayloadTimeout: ${completeTimeout}`);
+
+  const _completeTimeout = process.env.completeExecutionPayloadTimeout || '10';
+  const completeTimeout = Number.parseInt(_completeTimeout, 10);
+  if (!Number.isInteger(completeTimeout)) {
+    throw new TypeError(`Invalid number of days specified in configuration for completeExecutionPayloadTimeout: ${_completeTimeout}`);
   }
 
   const esIndex = process.env.ES_INDEX || 'cumulus';
