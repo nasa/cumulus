@@ -241,7 +241,6 @@ export const getApiGranuleExecutionCumulusIdsByExecution = async (
   return granuleCumulusIds;
 };
 
-// TODO make sure API logic handles *null* case
 export const batchDeleteExecutionFromDatabaseByCumulusCollectionId = async (
   params: {
     knex: Knex | Knex.Transaction,
