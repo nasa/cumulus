@@ -70,7 +70,6 @@ test('batchDeleteExecutionsByCollection deletes execution records',
     await addExecutionRecords(t, collectionId, deleteableRecordCount);
     await addExecutionRecords(t, notDeletedCollectionId, executionRecordCount);
 
-    // TODO fix these names
     const searchResponse = await searchAllExecutionsForCollection(
       collectionId,
       esIndex
@@ -109,7 +108,6 @@ test('batchDeleteExecutionsByCollection handles batch size larger than record co
     await addExecutionRecords(t, collectionId, deleteableRecordCount);
     await addExecutionRecords(t, notDeletedCollectionId, executionRecordCount);
 
-    // TODO fix these names
     const searchResponse = await searchAllExecutionsForCollection(
       collectionId,
       esIndex
