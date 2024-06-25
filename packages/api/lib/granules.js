@@ -296,42 +296,6 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
 }
 
 /**
- * Return a unique list of granule IDs based on the provided list or the response from the
- * query to ES using the provided query and index.
- *
- * @param {Object} payload
- * @param {Object} [payload.query] - Optional parameter of query to send to ES
- * @param {string} [payload.index] - Optional parameter of ES index to query.
- * Must exist if payload.query exists.
- * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
- * @returns {Promise<Array<string>>}
- */
-async function getGranuleIdsForPayload(payload) {
-  const { ids, index, query } = payload;
-  const granuleIds = ids || [];
-
-  // query ElasticSearch if needed
-  if (granuleIds.length === 0 && payload.query) {
-    log.info(
-      'No granule ids detected. Searching for granules in Elasticsearch.'
-    );
-
-    const granules = await granuleEsQuery({
-      index,
-      query,
-      source: ['granuleId'],
-    });
-
-    granules.map((granule) => granuleIds.push(granule.granuleId));
-  }
-
-  // Remove duplicate Granule IDs
-  // TODO: could we get unique IDs from the query directly?
-  const uniqueGranuleIds = [...new Set(granuleIds)];
-  return uniqueGranuleIds;
-}
-
-/**
  * Return a unique list of granules based on the provided list or the response from the
  * query to ES using the provided query and index.
  *
@@ -371,7 +335,6 @@ async function getGranulesForPayload(payload) {
 module.exports = {
   getExecutionProcessingTimeInfo,
   getFilesExistingAtLocation,
-  getGranuleIdsForPayload,
   getGranulesForPayload,
   moveGranule,
   granuleEsQuery,
