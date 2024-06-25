@@ -1,18 +1,20 @@
 //@ts-check
-
+/* eslint-disable no-await-in-loop */
+/* eslint-disable node/no-extraneous-require */
 const cliProgress = require('cli-progress');
+const { ExecutionPgModel, getKnexClient } = require('@cumulus/db');
+const pMap = require('p-map');
+const { randomInt } = require('crypto');
+const minimist = require('minimist');
+const moment = require('moment');
+const range = require('lodash/range');
 const {
   loadExecutions,
   loadCollection,
 } = require('./db_record_loaders');
-const { ExecutionPgModel, getKnexClient } = require('@cumulus/db');
-const pMap = require('p-map');
-const { randomInt } = require('crypto');
-const moment = require('moment');
-
 process.env.DISABLE_PG_SSL = 'true';
 /**
- * 
+ *
  * @typedef {import('knex').Knex} Knex
  * @typedef {{
  *   knex: Knex,
@@ -20,13 +22,12 @@ process.env.DISABLE_PG_SSL = 'true';
  *   executionsPerBatch: number,
  *   model: ExecutionPgModel,
  * }} BatchParams
- * 
  */
 
 /**
- * 
+ *
  * @param {BatchParams} params
- * @returns {Promise<void>} 
+ * @returns {Promise<void>}
  */
 const uploadExecutionsBatch = async (
   {
@@ -43,11 +44,12 @@ const uploadExecutionsBatch = async (
     model,
     {
       updated_at: moment().subtract(randomInt(20), 'days').toDate(),
-      original_payload: Math.random() < 0.2 ? {'a': 'b'} : null,
-      final_payload: Math.random() < 0.2 ? {'a': 'b'} : null
+      original_payload: Math.random() < 0.4 ? { a: 'b' } : null,
+      final_payload: Math.random() < 0.4 ? { a: 'b' } : null,
     }
-  )
-}
+  );
+};
+
 /**
  * create a generator Object that pretends to be an Iterable
  * this is to allow pmap to use this data without holding the entire (potentially very large)
@@ -106,30 +108,99 @@ const getBatchParamGenerator = ({
   return /** @type {Iterable<BatchParams>} */(clujedIterable);
 };
 
+/**
+ * parse command line args for run parameters
+ *
+ * @returns {{
+*   executions: number
+*   executionsPerBatch: number
+*   collections: number
+*   concurrency: number
+*   swallowErrors: boolean
+* }}
+*/
+const parseArgs = () => {
+  const {
+    collections,
+    executionsK,
+    concurrency,
+    swallowErrors,
+  } = minimist(
+    process.argv,
+    {
+      string: [
+        'collections',
+        'executionsK',
+        'concurrency',
+      ],
+      boolean: [
+        'swallowErrors',
+      ],
+      alias: {
+        e: 'executionsK',
+        c: 'collections',
+        C: 'concurrency',
+        s: 'swallowErrors',
+      },
+      default: {
+        collections: process.env.COLLECTIONS || 1,
+        executions: process.env.EXECUTIONS || 10,
+        concurrency: process.env.CONCURRENCY || 1,
+        swallowErrors: process.env.SWALLOW_ERRORS || true,
+      },
+    }
+  );
+  if (executionsK < 1) {
+    throw new Error(`executionsK must be > 0, got ${executionsK}`);
+  }
+  if (collections < 1) {
+    throw new Error(`collections must be > 0, got ${collections}`);
+  }
+  if (concurrency < 1) {
+    throw new Error(`collections must be > 0, got ${concurrency}`);
+  }
+  const executions = Number.parseInt(executionsK, 10) * 1000;
+  const executionsPerBatch = Math.min(1000, executions / concurrency);
+  return {
+    executionsPerBatch,
+    executions,
+    collections: Number.parseInt(collections, 10),
+    concurrency: Number.parseInt(concurrency, 10),
+    swallowErrors,
+  };
+};
+
 const main = async () => {
+  const {
+    executionsPerBatch,
+    executions,
+    collections,
+    concurrency,
+    swallowErrors,
+  } = parseArgs();
   const knex = await getKnexClient();
   console.log(knex);
-  const collectionCumulusId = await loadCollection(knex, 0, 0);
-  console.log('loaded collection', collectionCumulusId)
-  const model = new ExecutionPgModel();
+  for (const i of range(collections)) {
+    const collectionCumulusId = await loadCollection(knex, 0, i);
+    const model = new ExecutionPgModel();
 
-  process.env.dbMaxPool = '1000';
-  const iterableParamGenerator = getBatchParamGenerator({
-    knex,
-    collectionCumulusId,
-    numberOfExecutions: 500000,
-    executionsPerBatch: 100,
-    model
-  })
-  await pMap(
-    iterableParamGenerator,
-    async (params) => {
-      await uploadExecutionsBatch(params)
-    },
-    { concurrency: 100, stopOnError: false }
-  )
-}
-
+    process.env.dbMaxPool = String(concurrency);
+    const iterableParamGenerator = getBatchParamGenerator({
+      knex,
+      collectionCumulusId,
+      numberOfExecutions: executions,
+      executionsPerBatch: executionsPerBatch,
+      model,
+    });
+    await pMap(
+      iterableParamGenerator,
+      async (params) => {
+        await uploadExecutionsBatch(params);
+      },
+      { concurrency: concurrency, stopOnError: !swallowErrors }
+    );
+  }
+};
 
 if (require.main === module) {
   main(

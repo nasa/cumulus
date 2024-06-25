@@ -25,6 +25,7 @@ const { randomInt } = require('crypto');
  * @typedef {import('@cumulus/db').FilePgModel} FilePgModel
  * @typedef {import('@cumulus/db').PostgresGranuleExecution} PostgresGranuleExecution
  * @typedef {import('@cumulus/db/dist/types/granule').GranuleStatus} GranuleStatus
+ * @typedef {import('@cumulus/db').PostgresExecution} PostgresExecution
  * @typedef {import('knex').Knex} Knex
  * @typedef {{
 *   geModel: GranulesExecutionsPgModel,
@@ -44,20 +45,25 @@ const { randomInt } = require('crypto');
  * @param {number} collectionCumulusId
  * @param {number} executionCount
  * @param {ExecutionPgModel} model
+ * @param {Partial<PostgresExecution>} params
  * @returns {Promise<Array<number>>} - cumulusId for each successfully uploaded execution
  */
 const loadExecutions = async (
   knex,
   collectionCumulusId,
   executionCount,
-  model
+  model,
+  params = {}
 ) => {
   if (executionCount === 0) {
     return [];
   }
   let executionOutputs = [];
   const executions = range(executionCount).map(() => fakeExecutionRecordFactory(
-    { collection_cumulus_id: collectionCumulusId }
+    {
+      collection_cumulus_id: collectionCumulusId,
+      ...params,
+    }
   ));
   executionOutputs = await model.insert(knex, executions);
 
@@ -103,6 +109,7 @@ const loadGranulesExecutions = async (
  * @param {number} providerCumulusId
  * @param {number} granuleCount
  * @param {GranulePgModel} model
+ * @param {Partial<PostgresGranule>} params
  * @returns {Promise<Array<number>>} - cumulusId for each successfully uploaded granule
  */
 const loadGranules = async (
@@ -110,7 +117,8 @@ const loadGranules = async (
   collectionCumulusId,
   providerCumulusId,
   granuleCount,
-  model
+  model,
+  params = {}
 ) => {
   if (granuleCount === 0) {
     return [];
@@ -122,6 +130,7 @@ const loadGranules = async (
       collection_cumulus_id: collectionCumulusId,
       provider_cumulus_id: providerCumulusId,
       status: /** @type {GranuleStatus} */(['completed', 'failed', 'running', 'queued'][randomInt(4)]),
+      ...params,
     })
   ));
   granuleOutputs = await model.insert(knex, granules);
@@ -136,13 +145,15 @@ const loadGranules = async (
  * @param {number} granuleCumulusId
  * @param {number} fileCount
  * @param {FilePgModel} model
+ * @param {Partial<PostgresFile>} params
  * @returns {Promise<Array<number>>}
  */
 const loadFiles = async (
   knex,
   granuleCumulusId,
   fileCount,
-  model
+  model,
+  params = {}
 ) => {
   if (fileCount === 0) {
     return [];
@@ -151,6 +162,7 @@ const loadFiles = async (
     bucket: `${i}`,
     granule_cumulus_id: granuleCumulusId,
     key: randomString(8),
+    ...params,
   })));
   let uploadedFiles = [];
   uploadedFiles = await model.insert(knex, files);
