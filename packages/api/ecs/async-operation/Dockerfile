@@ -17,3 +17,5 @@ RUN cp -a /var/runtime/node_modules/. /home/task/node_modules/
 COPY index.js /home/task/
 
 CMD [ "node", "--harmony", "index.js" ]
+
+ENTRYPOINT [ ]
