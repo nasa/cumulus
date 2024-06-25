@@ -34,8 +34,6 @@ describe('POST /executions/bulk-delete-by-collection', () => {
   let id;
   let collection;
 
-  // Create Random Collection via api-client publish methods
-
   beforeAll(async () => {
     config = await loadConfig();
     prefix = config.stackName;
@@ -60,7 +58,7 @@ describe('POST /executions/bulk-delete-by-collection', () => {
           duplicateHandling: 'error',
         }
       );
-      // Create 10 executions
+
       await Promise.all(
         Array.from(
           { length: 10 },
@@ -143,7 +141,6 @@ describe('POST /executions/bulk-delete-by-collection', () => {
     it('runs an ECS task', async () => {
       expect(beforeAllSucceeded).toBeTrue();
 
-      // Verify that the task ARN exists in that cluster
       const describeTasksResponse = await ecs().describeTasks({
         cluster: clusterArn,
         tasks: [taskArn],
