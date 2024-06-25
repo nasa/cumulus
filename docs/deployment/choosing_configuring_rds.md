@@ -12,9 +12,9 @@ core deployment code expects this database to be provided by the [AWS RDS](https
 
 RDS databases are broadly divided into two types:
 
-- **Provisioned**: Databases with a fixed capacity in terms of CPU and memory capacity. You can find
-a list of the available database instance sizes in [this AWS documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.html).
-- **Serverless**: Databases that can scale their CPU and memory capacity up and down in response to database load. [Amazon Aurora](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html) is the service which provides serverless RDS databases.
+- **Provisioned**: Databases with a fixed capacity in terms of CPU and memory capacity. e.g. Memory optimized, Burstable, and Optimized Reads. You can find
+a complete list of the available database instance class types in [this AWS documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.html).
+- **Serverless v2**: Databases that can scale their CPU and memory capacity up and down in response to database load. [Amazon Aurora](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html) is the service which provides serverless RDS databases.
 
 ## Provisioned vs. Serverless
 
@@ -40,6 +40,12 @@ to suddenly ingesting quite a lot then a serverless database may be a better cho
 will be able to handle the spikes in your database load.
 
 ## General Configuration Guidelines
+
+### Aurora Serverless V2 Capacity Range
+
+Serverless V2 allows users to configure the minumum and maximum number of ACUs the custer should use.
+
+[The Aurora Serverless V2 Docs](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2-administration.html#aurora-serverless-v2-setting-acus) provide guidance for determining your capacity requirements and modifying the capacity range of your RDS cluster.
 
 ### Cumulus Core Login Configuration
 
@@ -77,39 +83,10 @@ Current security policy/best practices require use of a SSL enabled configuratio
 
 Cumulus can accommodate a self-signed/unrecognized cert by setting `rejectUnauthorized` as `false` in the connection secret.  This will result Core allowing use of certs without a valid CA.
 
-## Recommended Scaling Configuration for Aurora Serverless
-
-If you are going to use an Aurora Serverless RDS database, we recommend the following scaling recommendations:
-
-- Set the autoscaling timeout to 1 minute (currently the lowest allowed value)
-- Set the database to force capacity change if the autoscaling timeout is reached
-
-The reason for these recommendations requires an understanding of Aurora Serverless scaling.
-Aurora Serverless scaling works as described in [the Amazon Aurora documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.how-it-works.html):
-
-> When it does need to perform a scaling operation, Aurora Serverless v1 first tries to identify a scaling point, a moment when no queries are being processed.
-
-However, during periods of heavy ingest, Cumulus will be continuously writing granules and other
-records to the database, so a "scaling point" will never be reached. This is where the
-"autoscaling timeout" setting becomes important. The "autoscaling timeout" is the amount of time
-that Aurora will wait to find a "scaling point" before giving up.
-
-So with the above recommended settings, we are telling Aurora to only wait for a "scaling point"
-for 1 minute and that if a "scaling point" cannot be found in that time, then we should
-**force the database to scale anyway**. These settings effectively make the Aurora Serverless database scale as quickly as possible in response to increased database load.
-
-With forced scaling on databases, there is a consequence that some running queries or transactions
-may be dropped. However, Cumulus write operations are written with automatic retry logic, so any
-write operations that failed due to database scaling should be retried successfully.
-
 ### Cumulus Serverless RDS Cluster Module
 
 Cumulus provides a Terraform module that will deploy an Aurora Serverless RDS cluster. If you are
-using this module to create your RDS cluster, you can configure the autoscaling timeout action,
-the cluster minimum and maximum capacity, and more as seen in the [supported variables for the module](https://github.com/nasa/cumulus/blob/6f104a89457be453809825ac2b4ac46985239365/tf-modules/cumulus-rds-tf/variables.tf).
-
-Unfortunately, Terraform currently doesn't allow specifying the autoscaling timeout itself, so
-that value will have to be manually configured in the AWS console or CLI.
+using this module to create your RDS cluster, you can configure the cluster minimum and maximum capacity, and more as seen in the [supported variables for the module](https://github.com/nasa/cumulus/blob/6f104a89457be453809825ac2b4ac46985239365/tf-modules/cumulus-rds-tf/variables.tf).
 
 ## Optional: Manage RDS Database with pgAdmin
 

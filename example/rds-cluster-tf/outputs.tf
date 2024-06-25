@@ -6,6 +6,10 @@ output "rds_endpoint" {
   value = module.rds_cluster.rds_endpoint
 }
 
+output "rds_reader_endpoint" {
+  value = module.rds_cluster.rds_reader_endpoint
+}
+
 output "admin_db_login_secret_arn" {
   value = module.rds_cluster.admin_db_login_secret_arn
 }
