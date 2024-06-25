@@ -227,7 +227,6 @@ const patchGranule = async (req, res) => {
   let apiGranule = req.body || {};
   let pgCollection;
 
-  // Todo abstract this check
   if (!apiGranule.collectionId) {
     res.boom.badRequest('Granule update must include a valid CollectionId');
   }

@@ -1,6 +1,5 @@
 //@ts-check
 
-//TODO update logging
 const Logger = require('@cumulus/logger');
 
 const { getEsClient, defaultIndexAlias } = require('./search');
@@ -35,7 +34,6 @@ const _fetchEsRecordIds = async (esClient, index, collectionId, batchSize) => {
     });
     return response.body.hits.hits.map((hit) => hit._id);
   } catch (error) {
-    // TODO: Use Core Logger Method
     log.error(`Failed to get recordIds ${JSON.stringify(error)}`);
     throw new Error(`Failed to fetch record IDs from Elasticsearch index ${index}: ${error.message}`);
   }
@@ -55,10 +53,8 @@ const batchDeleteExecutionsByCollection = async ({
   collectionId,
   batchSize,
 }) => {
-  // TODO - Should we return the number of records deleted
   try {
     const esClient = await getEsClient();
-    // TODO make this error better
     if (!esClient.client) {
       throw new Error('ES client not initialized!');
     }
