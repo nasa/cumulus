@@ -14,6 +14,7 @@ const {
   migrationDir,
   localStackConnectionEnv,
 } = require('@cumulus/db');
+const { sleep } = require('@cumulus/common');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
 const { handler, getExpirationDates } = require('../../lambdas/cleanExecutions');
 
@@ -77,7 +78,7 @@ const pgPayloadsEmpty = (entry) => !entry.final_payload && !entry.orginal_payloa
 
 const esPayloadsEmpty = (entry) => !entry.finalPayload && !entry.orginalPayload;
 
-test('handler() handles complete expiration', async (t) => {
+test.serial('handler() handles complete expiration', async (t) => {
   const env = clone(process.env);
   process.env = localStackConnectionEnv;
   process.env.PG_DATABASE = t.context.testDbName;
@@ -96,6 +97,7 @@ test('handler() handles complete expiration', async (t) => {
   process.env.completeExecutionPayloadTimeout = expirationDays;
 
   await handler();
+  await sleep(5000);
   const model = new ExecutionPgModel();
   let massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
@@ -134,6 +136,7 @@ test('handler() handles complete expiration', async (t) => {
   process.env.completeExecutionPayloadTimeout = expirationDays;
 
   await handler();
+  await sleep(5000);
   massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
       async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
@@ -163,7 +166,7 @@ test('handler() handles complete expiration', async (t) => {
   process.env = env;
 });
 
-test('handler() handles nonComplete expiration', async (t) => {
+test.serial('handler() handles nonComplete expiration', async (t) => {
   const env = clone(process.env);
   process.env = localStackConnectionEnv;
   process.env.PG_DATABASE = t.context.testDbName;
@@ -181,6 +184,7 @@ test('handler() handles nonComplete expiration', async (t) => {
   process.env.nonCompleteExecutionPayloadTimeoutDisable = 'false';
   process.env.nonCompleteExecutionPayloadTimeout = expirationDays;
   await handler();
+  await sleep(5000);
   const model = new ExecutionPgModel();
   let massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
@@ -219,6 +223,7 @@ test('handler() handles nonComplete expiration', async (t) => {
   process.env.nonCompleteExecutionPayloadTimeout = expirationDays;
 
   await handler();
+  await sleep(5000);
   massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
       async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
@@ -247,7 +252,7 @@ test('handler() handles nonComplete expiration', async (t) => {
   process.env = env;
 });
 
-test('handler() handles both expirations', async (t) => {
+test.serial('handler() handles both expirations', async (t) => {
   const env = clone(process.env);
   process.env = localStackConnectionEnv;
   process.env.PG_DATABASE = t.context.testDbName;
@@ -270,6 +275,7 @@ test('handler() handles both expirations', async (t) => {
   process.env.nonCompleteExecutionPayloadTimeout = nonCompleteExpirationDays;
 
   await handler();
+  await sleep(5000);
   const model = new ExecutionPgModel();
   let massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
@@ -320,6 +326,7 @@ test('handler() handles both expirations', async (t) => {
   process.env.nonCompleteExecutionPayloadTimeout = nonCompleteExpirationDays;
 
   await handler();
+  await sleep(5000);
   massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
       async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
@@ -350,5 +357,121 @@ test('handler() handles both expirations', async (t) => {
       t.false(esPayloadsEmpty(massagedExecution));
     }
   });
+  process.env = env;
+});
+
+test.serial('handler() throws errors when misconfigured', async (t) => {
+  const env = clone(process.env);
+  process.env.completeExecutionPayloadTimeoutDisable = 'true';
+  process.env.nonCompleteExecutionPayloadTimeoutDisable = 'true';
+
+  await t.throwsAsync(handler(), {
+    message: 'complete and nonComplete configured to be skipped, nothing to do',
+  });
+
+  process.env.completeExecutionPayloadTimeoutDisable = 'false';
+  process.env.nonCompleteExecutionPayloadTimeoutDisable = 'true';
+  process.env.nonCompleteExecutionPayloadTimeout = 'frogs';
+  await t.throwsAsync(handler(), {
+    message: 'Invalid number of days specified in configuration for nonCompleteExecutionPayloadTimeout: frogs',
+  });
+  process.env.nonCompleteExecutionPayloadTimeout = '3';
+
+  process.env.completeExecutionPayloadTimeout = 'three';
+  await t.throwsAsync(handler(), {
+    message: 'Invalid number of days specified in configuration for completeExecutionPayloadTimeout: three',
+  });
+  process.env = env;
+});
+
+test.serial('handler() iterates through data in batches when updateLimit is set low', async (t) => {
+  const env = clone(process.env);
+
+  process.env = localStackConnectionEnv;
+  process.env.PG_DATABASE = t.context.testDbName;
+  process.env.ES_INDEX = t.context.esIndex;
+
+  process.env.completeExecutionPayloadTimeoutDisable = 'false';
+  process.env.nonCompleteExecutionPayloadTimeoutDisable = 'false';
+  process.env.nonCompleteExecutionPayloadTimeout = 2;
+  process.env.completeExecutionPayloadTimeout = 2;
+
+  process.env.UPDATE_LIMIT = 2;
+
+  await handler();
+  await sleep(5000);
+  const model = new ExecutionPgModel();
+  let massagedPgExecutions = await Promise.all(
+    t.context.execution_cumulus_ids.map(
+      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
+    )
+  );
+  let pgCleanedCount = 0;
+  massagedPgExecutions.forEach((massagedExecution) => {
+    if (pgPayloadsEmpty(massagedExecution)) pgCleanedCount += 1;
+  });
+  t.is(pgCleanedCount, 2);
+  let massagedEsExecutions = await t.context.searchClient.query({
+    index: t.context.esIndex,
+    type: 'execution',
+    body: {},
+    size: 30,
+  });
+  let esCleanedCount = 0;
+  massagedEsExecutions.results.forEach((massagedExecution) => {
+    if (esPayloadsEmpty(massagedExecution)) esCleanedCount += 1;
+  });
+  t.is(esCleanedCount, 2);
+
+  await handler();
+  await sleep(5000);
+  massagedPgExecutions = await Promise.all(
+    t.context.execution_cumulus_ids.map(
+      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
+    )
+  );
+  pgCleanedCount = 0;
+  massagedPgExecutions.forEach((massagedExecution) => {
+    if (pgPayloadsEmpty(massagedExecution)) pgCleanedCount += 1;
+  });
+  t.is(pgCleanedCount, 4);
+  massagedEsExecutions = await t.context.searchClient.query({
+    index: t.context.esIndex,
+    type: 'execution',
+    body: {},
+    size: 30,
+  });
+  esCleanedCount = 0;
+  massagedEsExecutions.results.forEach((massagedExecution) => {
+    if (esPayloadsEmpty(massagedExecution)) esCleanedCount += 1;
+  });
+  t.is(esCleanedCount, 4);
+
+  process.env.UPDATE_LIMIT = 12;
+
+  await handler();
+  await sleep(5000);
+  massagedPgExecutions = await Promise.all(
+    t.context.execution_cumulus_ids.map(
+      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
+    )
+  );
+  pgCleanedCount = 0;
+  massagedPgExecutions.forEach((massagedExecution) => {
+    if (pgPayloadsEmpty(massagedExecution)) pgCleanedCount += 1;
+  });
+  t.is(pgCleanedCount, 16);
+  massagedEsExecutions = await t.context.searchClient.query({
+    index: t.context.esIndex,
+    type: 'execution',
+    body: {},
+    size: 30,
+  });
+  esCleanedCount = 0;
+  massagedEsExecutions.results.forEach((massagedExecution) => {
+    if (esPayloadsEmpty(massagedExecution)) esCleanedCount += 1;
+  });
+  t.is(esCleanedCount, 16);
+
   process.env = env;
 });
