@@ -161,7 +161,7 @@ const parseArgs = () => {
     throw new Error(`collections must be > 0, got ${concurrency}`);
   }
   const executions = Number.parseInt(executionsK, 10) * 1000;
-  const executionsPerBatch = Math.min(1000, executions / concurrency);
+  const executionsPerBatch = Math.min(50, executions / concurrency);
   return {
     executionsPerBatch,
     executions,
@@ -179,12 +179,12 @@ const main = async () => {
     concurrency,
     swallowErrors,
   } = parseArgs();
+  process.env.dbMaxPool = String(concurrency);
   const knex = await getKnexClient();
   for (const i of range(collections)) {
     const collectionCumulusId = await loadCollection(knex, 0, i);
     const model = new ExecutionPgModel();
 
-    process.env.dbMaxPool = String(concurrency);
     const iterableParamGenerator = getBatchParamGenerator({
       knex,
       collectionCumulusId,
