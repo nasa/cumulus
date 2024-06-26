@@ -192,15 +192,19 @@ const loadProvider = async (knex) => {
  * @param {Knex} knex
  * @param {number} files - number of files per granule
  * @param {number | null} collectionNumber
+ * @param {Partial<PostgresCollection>} params
  * @returns {Promise<number>}
  */
-const loadCollection = async (knex, files, collectionNumber = null) => {
+const loadCollection = async (knex, files, collectionNumber = null, params = {}) => {
   const collectionJson = fakeCollectionRecordFactory({
-    files: JSON.stringify((new Array(files)).map((i) => ({
-      bucket: `${i}`,
-      regex: `^.*${i}$`,
-      sampleFileName: `538.${i}`,
-    }))),
+    files: JSON.stringify((range(files)).map((i) => {
+      return {
+        bucket: `${i}`,
+        regex: `^.*${i}$`,
+        sampleFileName: `538.${i}`,
+      }
+    })),
+    ...params
   });
   if (collectionNumber !== null) {
     collectionJson.name = `DUMMY_${collectionNumber.toString().padStart(3, '0')}`;
