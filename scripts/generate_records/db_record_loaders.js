@@ -26,6 +26,8 @@ const { randomInt } = require('crypto');
  * @typedef {import('@cumulus/db').PostgresGranuleExecution} PostgresGranuleExecution
  * @typedef {import('@cumulus/db/dist/types/granule').GranuleStatus} GranuleStatus
  * @typedef {import('@cumulus/db').PostgresExecution} PostgresExecution
+ * @typedef {import('@cumulus/db').PostgresRule} PostgresRule
+ * @typedef {import('@cumulus/db').PostgresProvider} PostgresProvider
  * @typedef {import('knex').Knex} Knex
  * @typedef {{
 *   geModel: GranulesExecutionsPgModel,
@@ -174,10 +176,11 @@ const loadFiles = async (
  * add provider through providerPgModel call
  *
  * @param {Knex} knex
+ * @param {Partial<PostgresProvider>} params
  * @returns {Promise<number>}
  */
-const loadProvider = async (knex) => {
-  const providerJson = fakeProviderRecordFactory({});
+const loadProvider = async (knex, params = {}) => {
+  const providerJson = fakeProviderRecordFactory(params);
   const providerModel = new ProviderPgModel();
   const [{ cumulus_id: providerId }] = await providerModel.upsert(
     knex,
@@ -223,21 +226,25 @@ const loadCollection = async (knex, files, collectionNumber = null, params = {})
  * @param {Knex} knex
  * @param {number | undefined} collectionCumulusId
  * @param {number | undefined} providerCumulusId
- * @returns {Promise<void>}
+ * @param {Partial<PostgresRule>} params
+ * @returns {Promise<number>}
  */
 const loadRule = async (
   knex,
   collectionCumulusId,
-  providerCumulusId
+  providerCumulusId,
+  params
 ) => {
   const ruleModel = new RulePgModel();
   const rule = fakeRuleRecordFactory(
     {
       collection_cumulus_id: collectionCumulusId,
       provider_cumulus_id: providerCumulusId,
-    }
+      ...params
+    },
   );
-  await ruleModel.upsert(knex, rule);
+  const [{ cumulus_id }] = await ruleModel.upsert(knex, rule);
+  return cumulus_id;
 };
 
 module.exports = {
