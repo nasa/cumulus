@@ -7,7 +7,7 @@ const { getEsClient, defaultIndexAlias } = require('./search');
 const log = new Logger({ sender: '@cumulus/es-client/executions' });
 
 /**
- * Generates a list of execution record IDs from an Elasticsearch Index
+ * Generates a list of execution record IDs from an Elasticsearch Index based on a collection ID
  *
  * @param {Object} esClient - The Elasticsearch client object.
  * @param {string} index - The name of the Elasticsearch index.
