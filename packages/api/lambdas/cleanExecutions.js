@@ -40,8 +40,9 @@ const getExpirationDates = (
   runComplete,
   runNonComplete
 ) => {
-  const completeExpiration = moment().subtract(completeTimeoutDays, 'days').toDate();
-  const nonCompleteExpiration = moment().subtract(nonCompleteTimeoutDays, 'days').toDate();
+  const now = moment();
+  const completeExpiration = now.subtract(completeTimeoutDays, 'days').toDate();
+  const nonCompleteExpiration = now.subtract(nonCompleteTimeoutDays, 'days').toDate();
   let laterExpiration;
   let earlierExpiration;
   if (runComplete && runNonComplete) {
@@ -144,7 +145,7 @@ const cleanupExpiredESExecutionPayloads = async (
   const removePayloadScript = "ctx._source.remove('finalPayload'); ctx._source.remove('originalPayload')";
   const mustNot = [];
   let script = { inline: removePayloadScript };
-  if (runComplete && runNonComplete) {
+  if (runComplete && runNonComplete && (completeTimeoutDays !== nonCompleteTimeoutDays)) {
     const removeForCompleteBoolean = `ctx._source.updatedAt < ${completeExpiration}L && ctx._source.status == 'completed'`;
     const removeForNonCompleteBoolean = `ctx._source.updatedAt < ${nonCompleteExpiration}L && ctx._source.status != 'completed'`;
     // a way to perform only integer comparison whenever possible
