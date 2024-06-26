@@ -12,8 +12,8 @@ const {
 } = require('@cumulus/db');
 const clone = require('lodash/clone');
 const { randomId } = require('@cumulus/common/test-utils');
-const generate_db_records = require('../generate_db_records');
-const generate_db_executions = require('../generate_db_executions');
+const generateDbRecords = require('../generate_db_records');
+const generateDbExecutions = require('../generate_db_executions');
 test.beforeEach(async (t) => {
   t.context.testDbName = randomId('generate_records');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
@@ -42,7 +42,7 @@ test.serial('generate_db_records.main() uploads the expected number of entries t
     '--executionsPerGranule=4:5',
     '--collections=2',
   ]);
-  await generate_db_records.main();
+  await generateDbRecords.main();
   const [{ count: collectionCount }] = await new CollectionPgModel().count(t.context.knex, []);
   t.is(Number(collectionCount), 2);
   const [{ count: granuleCount }] = await new GranulePgModel().count(t.context.knex, []);
@@ -74,7 +74,7 @@ test.serial('generate_db_records.main() uploads at least the expected number of 
     '--collections=2',
     '--variance',
   ]);
-  await generate_db_records.main();
+  await generateDbRecords.main();
   const [{ count: collectionCount }] = await new CollectionPgModel().count(t.context.knex, []);
   t.is(Number(collectionCount), 2);
   const [{ count: granuleCount }] = await new GranulePgModel().count(t.context.knex, []);
@@ -92,7 +92,6 @@ test.serial('generate_db_records.main() uploads at least the expected number of 
   process.env = env;
 });
 
-
 test.only('generate_db_executions.main() uploads at least the expected number of executions', async (t) => {
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
@@ -104,13 +103,12 @@ test.only('generate_db_executions.main() uploads at least the expected number of
     '--executionsK=1',
     '--collections=2',
   ]);
-  await generate_db_executions.main();
+  await generateDbExecutions.main();
   const [{ count: collectionCount }] = await new CollectionPgModel().count(t.context.knex, []);
   t.is(Number(collectionCount), 2);
 
   const [{ count: executionCount }] = await new ExecutionPgModel().count(t.context.knex, []);
   t.is(Number(executionCount), 2000);
-
 
   process.argv = argv;
   process.env = env;

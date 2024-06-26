@@ -200,14 +200,14 @@ const loadProvider = async (knex, params = {}) => {
  */
 const loadCollection = async (knex, files, collectionNumber = null, params = {}) => {
   const collectionJson = fakeCollectionRecordFactory({
-    files: JSON.stringify((range(files)).map((i) => {
-      return {
+    files: JSON.stringify((range(files)).map((i) => (
+      {
         bucket: `${i}`,
         regex: `^.*${i}$`,
         sampleFileName: `538.${i}`,
       }
-    })),
-    ...params
+    ))),
+    ...params,
   });
   if (collectionNumber !== null) {
     collectionJson.name = `DUMMY_${collectionNumber.toString().padStart(3, '0')}`;
@@ -240,11 +240,11 @@ const loadRule = async (
     {
       collection_cumulus_id: collectionCumulusId,
       provider_cumulus_id: providerCumulusId,
-      ...params
-    },
+      ...params,
+    }
   );
-  const [{ cumulus_id }] = await ruleModel.upsert(knex, rule);
-  return cumulus_id;
+  const [{ cumulusId }] = await ruleModel.upsert(knex, rule);
+  return cumulusId;
 };
 
 module.exports = {

@@ -55,8 +55,8 @@ test('loadExecutions() uploads executions', async (t) => {
     t.context.collectionCumulusId,
     2,
     executionModel,
-    { original_payload: { a: 'b' }, final_payload: { c: 'd' } },
-  )
+    { original_payload: { a: 'b' }, final_payload: { c: 'd' } }
+  );
   await Promise.all(paramedExecutions.map(async (execution) => {
     const exec = await executionModel.get(t.context.knex, { cumulus_id: execution });
     t.deepEqual(exec.final_payload, { c: 'd' });
@@ -160,7 +160,7 @@ test.only('loadCollection() adds collections', async (t) => {
   const collectionModel = new CollectionPgModel();
   const randomizedCollectionId = await loadCollection(t.context.knex, 12);
   t.true((await collectionModel.exists(t.context.knex, { cumulus_id: randomizedCollectionId })));
-  
+
   const parameterizedCollectionId = await loadCollection(t.context.knex, 12, 1, { duplicate_handling: 'replace' });
 
   t.is((await collectionModel.get(t.context.knex, { cumulus_id: parameterizedCollectionId })).duplicate_handling, 'replace');
@@ -171,9 +171,9 @@ test('loadProvider() adds a provider', async (t) => {
   const providerId = await loadProvider(t.context.knex, { name: 'abcd' });
 
   const providerModel = new ProviderPgModel();
-  t.is((await providerModel.get(t.context.knex, { cumulus_id: providerId })).name, 'abcd')
-
+  t.is((await providerModel.get(t.context.knex, { cumulus_id: providerId })).name, 'abcd');
 });
+
 test('loadRule() adds a rule and accepts undefined collection/provider ids', async (t) => {
   await loadRule(
     t.context.knex,
