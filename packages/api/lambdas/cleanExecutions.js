@@ -144,7 +144,7 @@ const cleanupExpiredESExecutionPayloads = async (
   const removePayloadScript = "ctx._source.remove('finalPayload'); ctx._source.remove('originalPayload')";
   const mustNot = [];
   let script = { inline: removePayloadScript };
-  if (runComplete && runNonComplete) {
+  if (runComplete && runNonComplete && (completeTimeoutDays !== nonCompleteTimeoutDays)) {
     const removeForCompleteBoolean = `ctx._source.updatedAt < ${completeExpiration}L && ctx._source.status == 'completed'`;
     const removeForNonCompleteBoolean = `ctx._source.updatedAt < ${nonCompleteExpiration}L && ctx._source.status != 'completed'`;
     // a way to perform only integer comparison whenever possible
