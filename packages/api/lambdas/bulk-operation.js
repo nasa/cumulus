@@ -293,9 +293,6 @@ async function handler(event) {
     return await bulkGranuleDelete(event.payload);
   }
   if (event.type === 'BULK_GRANULE_REINGEST') {
-    if (!event.reingestHandler) {
-      throw new TypeError('reingestHandler is required for BULK_GRANULE_REINGEST');
-    }
     return await bulkGranuleReingest(event.payload, event.reingestHandler);
   }
   if (event.type === 'BULK_EXECUTION_DELETE') {
