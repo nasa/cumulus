@@ -1,5 +1,5 @@
 ---
-id: upgrade_execution_table_CUMULUS-3320
+id: upgrade_execution_table_CUMULUS_3320
 title: Upgrade execution table to CUMULUS-3320
 hide_title: false
 ---
