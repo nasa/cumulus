@@ -144,12 +144,13 @@ const parseArgs = () => {
       },
       default: {
         collections: process.env.COLLECTIONS || 1,
-        executions: process.env.EXECUTIONS || 10,
+        executionsK: process.env.EXECUTIONS || 10,
         concurrency: process.env.CONCURRENCY || 1,
         swallowErrors: process.env.SWALLOW_ERRORS || true,
       },
     }
   );
+
   if (executionsK < 1) {
     throw new Error(`executionsK must be > 0, got ${executionsK}`);
   }
@@ -210,3 +211,8 @@ if (require.main === module) {
     throw error;
   });
 }
+
+module.exports = {
+  main,
+};
+

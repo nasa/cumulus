@@ -12,7 +12,8 @@ const {
 } = require('@cumulus/db');
 const clone = require('lodash/clone');
 const { randomId } = require('@cumulus/common/test-utils');
-const { main } = require('../generate_db_records');
+const generate_db_records = require('../generate_db_records');
+const generate_db_executions = require('../generate_db_executions');
 test.beforeEach(async (t) => {
   t.context.testDbName = randomId('generate_records');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
@@ -28,7 +29,7 @@ test.afterEach.always(async (t) => {
   });
 });
 
-test.serial('main() uploads the expected number of entries to the database without variance', async (t) => {
+test.serial('generate_db_records.main() uploads the expected number of entries to the database without variance', async (t) => {
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);
@@ -41,7 +42,7 @@ test.serial('main() uploads the expected number of entries to the database witho
     '--executionsPerGranule=4:5',
     '--collections=2',
   ]);
-  await main();
+  await generate_db_records.main();
   const [{ count: collectionCount }] = await new CollectionPgModel().count(t.context.knex, []);
   t.is(Number(collectionCount), 2);
   const [{ count: granuleCount }] = await new GranulePgModel().count(t.context.knex, []);
@@ -59,7 +60,7 @@ test.serial('main() uploads the expected number of entries to the database witho
   process.env = env;
 });
 
-test.serial('main() uploads at least the expected number of entries to the database with variance', async (t) => {
+test.serial('generate_db_records.main() uploads at least the expected number of entries to the database with variance', async (t) => {
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);
@@ -73,7 +74,7 @@ test.serial('main() uploads at least the expected number of entries to the datab
     '--collections=2',
     '--variance',
   ]);
-  await main();
+  await generate_db_records.main();
   const [{ count: collectionCount }] = await new CollectionPgModel().count(t.context.knex, []);
   t.is(Number(collectionCount), 2);
   const [{ count: granuleCount }] = await new GranulePgModel().count(t.context.knex, []);
@@ -86,6 +87,30 @@ test.serial('main() uploads at least the expected number of entries to the datab
     count: granuleExecutionCount,
   }] = await new GranulesExecutionsPgModel().count(t.context.knex, []);
   t.true(Number(granuleExecutionCount) >= 8000);
+
+  process.argv = argv;
+  process.env = env;
+});
+
+
+test.only('generate_db_executions.main() uploads at least the expected number of executions', async (t) => {
+  t.timeout(100 * 1000);
+  const argv = clone(process.argv);
+  const env = clone(process.env);
+  process.env = localStackConnectionEnv;
+  process.env.PG_DATABASE = t.context.testDbName;
+  process.argv = process.argv.slice(0, 2).concat([
+    '--concurrency=200',
+    '--executionsK=1',
+    '--collections=2',
+  ]);
+  await generate_db_executions.main();
+  const [{ count: collectionCount }] = await new CollectionPgModel().count(t.context.knex, []);
+  t.is(Number(collectionCount), 2);
+
+  const [{ count: executionCount }] = await new ExecutionPgModel().count(t.context.knex, []);
+  t.is(Number(executionCount), 2000);
+
 
   process.argv = argv;
   process.env = env;
