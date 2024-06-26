@@ -179,7 +179,6 @@ const main = async () => {
     swallowErrors,
   } = parseArgs();
   const knex = await getKnexClient();
-  console.log(knex);
   for (const i of range(collections)) {
     const collectionCumulusId = await loadCollection(knex, 0, i);
     const model = new ExecutionPgModel();
