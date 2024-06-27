@@ -1,10 +1,7 @@
 /* eslint-disable no-await-in-loop */
 const test = require('ava');
-const rewire = require('rewire');
 const moment = require('moment');
 const clone = require('lodash/clone');
-const sinon = require('sinon');
-const esSearch = rewire('@cumulus/es-client/search');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
   translatePostgresExecutionToApiExecution,
@@ -15,19 +12,10 @@ const {
   migrationDir,
   localStackConnectionEnv,
 } = require('@cumulus/db');
-const { sleep } = require('@cumulus/common');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
 const { handler, getExpirationDates } = require('../../lambdas/cleanExecutions');
 
-const { getEsClient } = esSearch;
-const awsCredentialsMock = () => () => Promise.resolve({
-  accessKeyId: 'testAccessKeyId',
-  secretAccessKey: 'testsecretAccessKey',
-});
-esSearch.__set__('fromNodeProviderChain', awsCredentialsMock);
-sinon.stub(esSearch, 'getEsClient').returns(getEsClient());
 test.beforeEach(async (t) => {
-  process.env.LOCAL_ES_HOST='localhost'
   t.context.testDbName = randomId('cleanExecutions');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
 
