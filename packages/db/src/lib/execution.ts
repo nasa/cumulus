@@ -240,3 +240,24 @@ export const getApiGranuleExecutionCumulusIdsByExecution = async (
 
   return granuleCumulusIds;
 };
+
+export const batchDeleteExecutionFromDatabaseByCumulusCollectionId = async (
+  params: {
+    knex: Knex | Knex.Transaction,
+    collectionCumulusId: number,
+    batchSize: number,
+  }
+) => {
+  const { knex, collectionCumulusId, batchSize = 1 } = params;
+  try {
+    return await knex('executions')
+      .whereIn('cumulus_id',
+        knex.select('cumulus_id')
+          .from('executions')
+          .where('collection_cumulus_id', collectionCumulusId)
+          .limit(batchSize))
+      .delete();
+  } catch (error) {
+    throw new Error(`Failed to delete from database: ${error.message}`);
+  }
+};
