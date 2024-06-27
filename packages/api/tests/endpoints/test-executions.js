@@ -1733,7 +1733,7 @@ test.serial('bulkDeleteExecutionsByCollection calls invokeStartAsyncOperationLam
   const req = {
     testObject: { invokeStartAsyncOperationLambda },
     body: {
-      collectionId: 'testCollectionId',
+      collectionId: 'FOOBAR___006',
       esBatchSize: 50000,
       dbBatchSize: 60000,
     },
@@ -1773,7 +1773,7 @@ test.serial('bulkDeleteExecutionsByCollection calls invokeStartAsyncOperationLam
   const req = {
     testObject: { invokeStartAsyncOperationLambda },
     body: {
-      collectionId: 'testCollectionId',
+      collectionId: 'FOOBAR___006',
       esBatchSize: '50000',
       dbBatchSize: '60000',
     },
