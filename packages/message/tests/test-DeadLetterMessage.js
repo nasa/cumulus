@@ -173,7 +173,7 @@ test('hoistCumulusMessageDetails returns details: collectionId, providerId, gran
   );
 });
 
-test('hoistCumulusMessageDetails returns unknown for details: collectionId, providerId, granules, time, error, status, executionArn, and stateMachineArn when not found', async (t) => {
+test('hoistCumulusMessageDetails returns null for details: collectionId, providerId, granules, time, error, status, executionArn, and stateMachineArn when not found', async (t) => {
   const messages = [
     {
       mangled: {
@@ -726,35 +726,63 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
   });
 });
 
-test('hoistCumulusMessageDetails handles up to 3 degrees of sqsMessage nestedness', async (t) => {
+test('hoistCumulusMessageDetails de-nests up to 3 degrees of sqsMessage nestedness with mixed "body" vs "Body', async (t) => {
+  const innerBody = {
+    time: 'atime',
+    detail: {
+      status: 'SUCCEEDED',
+      output: JSON.stringify({
+        meta: {
+          collection: { name: 'aName', version: '12' },
+          provider: {
+            id: 'abcd',
+            protocol: 'cheesy',
+            host: 'excellent',
+          },
+        },
+        payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+      }),
+      executionArn: 'execArn',
+      stateMachineArn: 'SMArn',
+    },
+  };
   let message = {
     messageId: 'a',
     eventSource: 'aws:sqs',
-    body: JSON.stringify({
+    body: JSON.stringify(innerBody),
+    error: 'anError',
+  };
+  t.deepEqual(
+    await hoistCumulusMessageDetails(message),
+    {
+      messageId: 'a',
+      eventSource: 'aws:sqs',
+      body: JSON.stringify(innerBody),
+      error: 'anError',
+      providerId: 'abcd',
+      collectionId: 'aName___12',
+      granules: ['a', 'b'],
+      executionArn: 'execArn',
+      stateMachineArn: 'SMArn',
+      status: 'SUCCEEDED',
       time: 'atime',
-      detail: {
-        status: 'SUCCEEDED',
-        output: JSON.stringify({
-          meta: {
-            collection: { name: 'aName', version: '12' },
-            provider: {
-              id: 'abcd',
-              protocol: 'cheesy',
-              host: 'excellent',
-            },
-          },
-          payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-        }),
-        executionArn: 'execArn',
-        stateMachineArn: 'SMArn',
-      },
+    }
+  );
+  message = {
+    messageId: 'a',
+    eventSource: 'aws:sqs',
+    body: JSON.stringify({
+      body: JSON.stringify(innerBody),
     }),
     error: 'anError',
   };
   t.deepEqual(
     await hoistCumulusMessageDetails(message),
     {
-      ...message,
+      messageId: 'a',
+      eventSource: 'aws:sqs',
+      body: JSON.stringify(innerBody),
+      error: 'anError',
       providerId: 'abcd',
       collectionId: 'aName___12',
       granules: ['a', 'b'],
@@ -769,23 +797,7 @@ test('hoistCumulusMessageDetails handles up to 3 degrees of sqsMessage nestednes
     eventSource: 'aws:sqs',
     body: JSON.stringify({
       body: JSON.stringify({
-        time: 'atime',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: {
-              collection: { name: 'aName', version: '12' },
-              provider: {
-                id: 'abcd',
-                protocol: 'cheesy',
-                host: 'excellent',
-              },
-            },
-            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
+        Body: JSON.stringify(innerBody),
       }),
     }),
     error: 'anError',
@@ -793,48 +805,10 @@ test('hoistCumulusMessageDetails handles up to 3 degrees of sqsMessage nestednes
   t.deepEqual(
     await hoistCumulusMessageDetails(message),
     {
-      ...message,
-      providerId: 'abcd',
-      collectionId: 'aName___12',
-      granules: ['a', 'b'],
-      executionArn: 'execArn',
-      stateMachineArn: 'SMArn',
-      status: 'SUCCEEDED',
-      time: 'atime',
-    }
-  );
-  message = {
-    messageId: 'a',
-    eventSource: 'aws:sqs',
-    body: JSON.stringify({
-      body: JSON.stringify({
-        Body: JSON.stringify({
-          time: 'atime',
-          detail: {
-            status: 'SUCCEEDED',
-            output: JSON.stringify({
-              meta: {
-                collection: { name: 'aName', version: '12' },
-                provider: {
-                  id: 'abcd',
-                  protocol: 'cheesy',
-                  host: 'excellent',
-                },
-              },
-              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-            }),
-            executionArn: 'execArn',
-            stateMachineArn: 'SMArn',
-          },
-        }),
-      }),
-    }),
-    error: 'anError',
-  };
-  t.deepEqual(
-    await hoistCumulusMessageDetails(message),
-    {
-      ...message,
+      messageId: 'a',
+      eventSource: 'aws:sqs',
+      body: JSON.stringify(innerBody),
+      error: 'anError',
       providerId: 'abcd',
       collectionId: 'aName___12',
       granules: ['a', 'b'],
@@ -847,29 +821,30 @@ test('hoistCumulusMessageDetails handles up to 3 degrees of sqsMessage nestednes
 });
 
 test('hoistCumulusMessageDetails captures outermost error as "error"', async (t) => {
+  const innerBody = {
+    time: 'atime',
+    detail: {
+      status: 'SUCCEEDED',
+      output: JSON.stringify({
+        meta: {
+          collection: { name: 'aName', version: '12' },
+          provider: {
+            id: 'abcd',
+            protocol: 'cheesy',
+            host: 'excellent',
+          },
+        },
+        payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+      }),
+      executionArn: 'execArn',
+      stateMachineArn: 'SMArn',
+    },
+  };
   const message = {
     messageId: 'a',
     eventSource: 'aws:sqs',
     body: JSON.stringify({
-      body: JSON.stringify({
-        time: 'atime',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: {
-              collection: { name: 'aName', version: '12' },
-              provider: {
-                id: 'abcd',
-                protocol: 'cheesy',
-                host: 'excellent',
-              },
-            },
-            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
-      }),
+      body: JSON.stringify(innerBody),
       error: 'aDifferentError',
     }),
     error: 'anError',
@@ -877,7 +852,10 @@ test('hoistCumulusMessageDetails captures outermost error as "error"', async (t)
   t.deepEqual(
     await hoistCumulusMessageDetails(message),
     {
-      ...message,
+      messageId: 'a',
+      eventSource: 'aws:sqs',
+      body: JSON.stringify(innerBody),
+      error: 'anError',
       providerId: 'abcd',
       collectionId: 'aName___12',
       granules: ['a', 'b'],

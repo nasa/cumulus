@@ -13,7 +13,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "clean": "rm -rf dist",
@@ -21,6 +21,7 @@
     "webpack": "../../node_modules/.bin/webpack",
     "package": "npm run prepare && npm run webpack && (cd dist && node ../../../bin/zip.js lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "npm run clean && mkdir dist && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"

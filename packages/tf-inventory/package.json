@@ -4,13 +4,14 @@
   "description": "Package to help keep track of what resources are managed by Terraform in the AWS account",
   "main": "index.js",
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "bin": {
     "tf-inventory": "./bin/cli.js"
   },
   "scripts": {
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },

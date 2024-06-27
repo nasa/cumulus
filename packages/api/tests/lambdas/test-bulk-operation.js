@@ -6,11 +6,11 @@ const omit = require('lodash/omit');
 
 const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
-  CreateTopicCommand,
   SubscribeCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
 
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   CollectionPgModel,
@@ -49,15 +49,17 @@ const esSearchStub = sandbox.stub();
 const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
-class FakeSearch {
-  static es() {
-    return new FakeEsClient();
-  }
-}
+
 const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
   '../lib/granules': proxyquire('../../lib/granules', {
     '@cumulus/es-client/search': {
-      Search: FakeSearch,
+      getEsClient: () => Promise.resolve({
+        initializeEsClient: () => Promise.resolve(),
+        client: {
+          search: esSearchStub,
+          scroll: esScrollStub,
+        },
+      }),
     },
   }),
 });
@@ -214,7 +216,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 

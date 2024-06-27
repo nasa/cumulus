@@ -275,7 +275,9 @@ test('post() does not write to PostgreSQL if writing to Elasticsearch fails', as
     output: JSON.stringify({ age: 59 }),
   });
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const expressRequest = {

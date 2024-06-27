@@ -33,9 +33,10 @@ class ESSearchAfter extends Search {
    * @returns {Promise<Object>} Object containing query meta and results
    */
   async query() {
-    if (!this.client) {
-      this.client = await super.constructor.es();
+    if (!this._esClient) {
+      await this.initializeEsClient();
     }
+
     const searchParams = this._buildSearch();
     const response = await this.client.search(searchParams);
 

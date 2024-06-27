@@ -21,7 +21,7 @@ const {
   getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 const {
   getKnexClient,
   AsyncOperationPgModel,
@@ -222,7 +222,7 @@ const updateAsyncOperation = async (params) => {
     status,
     output,
     envOverride = {},
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     asyncOperationPgModel = new AsyncOperationPgModel(),
   } = params;
 

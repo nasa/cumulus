@@ -8,6 +8,8 @@ const sortBy = require('lodash/sortBy');
 const omit = require('lodash/omit');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
+
 const { randomId } = require('@cumulus/common/test-utils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -36,7 +38,6 @@ const {
 } = require('@cumulus/db');
 const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
-  CreateTopicCommand,
   SubscribeCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
@@ -223,7 +224,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -1967,10 +1968,13 @@ test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/E
   } = t.context;
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('Granules ES error');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => {
+        throw new Error('Granules ES error');
+      },
+      delete: () => Promise.resolve(),
     },
-    delete: () => Promise.resolve(),
   };
 
   const [error] = await t.throwsAsync(writeGranulesFromMessage({
@@ -4909,10 +4913,13 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL granule if
   } = t.context;
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('Elasticsearch failure');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => {
+        throw new Error('Elasticsearch failure');
+      },
+      delete: () => Promise.resolve(),
     },
-    delete: () => Promise.resolve(),
   };
 
   await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
@@ -5022,8 +5029,11 @@ test.serial('updateGranuleStatusToFailed() updates granule status in the databas
     granulePgModel,
   } = t.context;
   const fakeEsClient = {
-    update: () => Promise.resolve(),
-    delete: () => Promise.resolve(),
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
+    },
   };
   granule.status = 'running';
   const snsEventType = 'Update';

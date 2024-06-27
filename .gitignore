@@ -48,3 +48,5 @@ website/i18n/en.json
 yarn-error.log
 yarn.lock
 *.tsbuildinfo
+unit-logs/
+test_output.txt

@@ -3,7 +3,7 @@
   "version": "18.2.0",
   "description": "A Lambda function used for provisioning user databases",
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "private": true,
   "scripts": {
@@ -11,6 +11,7 @@
     "package": "npm run clean && npm run tsc && npm run webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "python-lint": "true",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",

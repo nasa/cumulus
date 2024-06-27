@@ -4,7 +4,7 @@
   "description": "A Lambda function used for DLA migrations",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "main": "./dist/lambda/index.js",
   "types": "./dist/lambda/index.d.ts",
@@ -16,6 +16,7 @@
     "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
     "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
     "test": "../../node_modules/.bin/ava --timeout=5m",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",

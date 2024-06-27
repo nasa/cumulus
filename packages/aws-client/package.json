@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "files": [
     "*.js",
@@ -28,6 +28,7 @@
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.hbs *.js > README.md",
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -71,7 +72,6 @@
     "@cumulus/errors": "18.2.0",
     "@cumulus/logger": "18.2.0",
     "@cumulus/types": "18.2.0",
-    "aws-sdk": "^2.1492.0",
     "jsonpath-plus": "^1.1.0",
     "lodash": "~4.17.21",
     "mem": "^8.0.2",

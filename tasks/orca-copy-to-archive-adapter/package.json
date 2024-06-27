@@ -14,13 +14,14 @@
     "directory": "orca-copy-to-archive-adapter"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "clean": "rm -rf dist",
     "generate-task-schemas": "npx generate-task-schemas . files",
     "package": "npm run generate-task-schemas && ./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -41,7 +42,7 @@
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",
     "@cumulus/common": "18.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/logger": "18.2.0",
     "lodash": "^4.17.15"
   },

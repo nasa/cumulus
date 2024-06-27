@@ -18,6 +18,7 @@
   "scripts": {
     "test:coverage": "../../../../node_modules/.bin/nyc npm test",
     "test": "../../../../node_modules/.bin/ava",
+    "test:ci": "../../../../scripts/run_package_ci_unit.sh",
     "coverage": "python ../../../../scripts/coverage_handler/coverage.py"
   },
   "dependencies": {
@@ -32,7 +33,7 @@
     "p-retry": "^2.0.0"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "private": true
 }

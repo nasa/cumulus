@@ -3,10 +3,10 @@ const cryptoRandomString = require('crypto-random-string');
 
 const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
-  CreateTopicCommand,
   SubscribeCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 
 const { recordNotFoundString } = require('@cumulus/es-client/search');
 
@@ -103,7 +103,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -366,12 +366,15 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
   });
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('ES delete failed');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      delete: () => {
+        throw new Error('ES delete failed');
+      },
+      index: (record) => Promise.resolve({
+        body: record,
+      }),
     },
-    index: (record) => Promise.resolve({
-      body: record,
-    }),
   };
 
   await t.throwsAsync(
@@ -471,7 +474,7 @@ test.serial(
       process.env.ES_INDEX
     );
 
-    await t.context.esClient.index({
+    await t.context.esClient.client.index({
       index: t.context.esIndex,
       type: 'granule',
       id: newGranule.granuleId,
