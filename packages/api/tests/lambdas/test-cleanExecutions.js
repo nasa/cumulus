@@ -13,8 +13,8 @@ const {
   localStackConnectionEnv,
 } = require('@cumulus/db');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
+const { sleep } = require('@cumulus/common');
 const { handler, getExpirationDates } = require('../../lambdas/cleanExecutions');
-
 test.beforeEach(async (t) => {
   t.context.testDbName = randomId('cleanExecutions');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
@@ -25,7 +25,6 @@ test.beforeEach(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
   t.context.searchClient = searchClient;
-
   const records = [];
   for (let i = 0; i < 10; i += 1) {
     records.push(fakeExecutionRecordFactory({
