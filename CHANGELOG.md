@@ -105,6 +105,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     to granules table
 
 ### Added
+- **CUMULUS-3385**
+  - added upload_db_executions to dump large scale postgres executions
 - **CUMULUS-3742**
   - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3614**
