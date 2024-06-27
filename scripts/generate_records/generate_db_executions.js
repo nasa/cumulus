@@ -144,7 +144,7 @@ const parseArgs = () => {
       },
       default: {
         collections: process.env.COLLECTIONS || 1,
-        executionsK: process.env.EXECUTIONS || 10,
+        executionsK: process.env.EXECUTIONS_K || 10,
         concurrency: process.env.CONCURRENCY || 1,
         swallowErrors: process.env.SWALLOW_ERRORS || true,
       },
