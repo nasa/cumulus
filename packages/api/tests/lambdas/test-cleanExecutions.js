@@ -21,7 +21,12 @@ const { handler, getExpirationDates } = require('../../lambdas/cleanExecutions')
 
 
 const { getEsClient } = esSearch;
-const stub = sinon.stub(esSearch, 'getEsClient').returns(getEsClient());
+const awsCredentialsMock = () => () => Promise.resolve({
+  accessKeyId: 'testAccessKeyId',
+  secretAccessKey: 'testsecretAccessKey',
+});
+esSearch.__set__('fromNodeProviderChain', awsCredentialsMock);
+sinon.stub(esSearch, 'getEsClient').returns(getEsClient());
 test.beforeEach(async (t) => {
   t.context.testDbName = randomId('cleanExecutions');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
@@ -32,12 +37,9 @@ test.beforeEach(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
   t.context.searchClient = searchClient;
-  const awsCredentialsMock = () => () => Promise.resolve({
-    accessKeyId: 'testAccessKeyId',
-    secretAccessKey: 'testsecretAccessKey',
-  });
+  
 
-  esSearch.__set__('fromNodeProviderChain', awsCredentialsMock);
+  
 
   const records = [];
   for (let i = 0; i < 10; i += 1) {
