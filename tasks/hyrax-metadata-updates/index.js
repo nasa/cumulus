@@ -209,12 +209,20 @@ function addHyraxUrlToUmmG(metadata, hyraxUrl) {
   if (metadataCopy.RelatedUrls === undefined) {
     metadataCopy.RelatedUrls = [];
   }
+
   const url = {
     URL: hyraxUrl,
     Type: 'USE SERVICE API',
     Subtype: 'OPENDAP DATA',
     Description: 'OPeNDAP request URL',
   };
+
+  for (const relatedUrl of metadataCopy.RelatedUrls) {
+    if (isEqual(relatedUrl, url)) {
+      return JSON.stringify(metadataCopy, undefined, 2);
+    }
+  }
+
   metadataCopy.RelatedUrls.push(url);
 
   return JSON.stringify(metadataCopy, undefined, 2);
@@ -245,6 +253,13 @@ function addHyraxUrlToEcho10(metadata, hyraxUrl) {
     Description: 'OPeNDAP request URL',
     Type: 'GET DATA : OPENDAP DATA',
   };
+
+  for (const resourceUrl of resourceUrls) {
+    if (isEqual(resourceUrl, url)) {
+      return generateEcho10XMLString(metadata.Granule);
+    }
+  }
+
   resourceUrls.push(url);
 
   metadataCopy.Granule.OnlineResources = {
