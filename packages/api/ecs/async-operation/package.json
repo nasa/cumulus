@@ -22,10 +22,10 @@
     "coverage": "python ../../../../scripts/coverage_handler/coverage.py"
   },
   "dependencies": {
-    "@cumulus/aws-client": "18.2.0",
-    "@cumulus/db": "18.2.0",
-    "@cumulus/es-client": "18.2.0",
-    "@cumulus/logger": "18.2.0",
+    "@cumulus/aws-client": "18.3.0",
+    "@cumulus/db": "18.3.0",
+    "@cumulus/es-client": "18.3.0",
+    "@cumulus/logger": "18.3.0",
     "@aws-sdk/client-lambda": "^3.529.1",
     "crypto-random-string": "^3.2.0",
     "got": "^11.8.5",
