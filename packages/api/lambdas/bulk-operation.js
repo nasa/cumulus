@@ -1,6 +1,5 @@
 //@ts-check
 
-const get = require('lodash/get');
 const pMap = require('p-map');
 
 const Logger = require('@cumulus/logger');
@@ -21,6 +20,7 @@ const { updateGranuleStatusToQueued } = require('../lib/writeRecords/write-granu
 const { getGranulesForPayload } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { batchDeleteExecutions } = require('../lib/executions');
+const { setEnvVarsForOperation } = require('../lib/utils');
 
 const log = new Logger({ sender: '@cumulus/bulk-operation' });
 
@@ -256,15 +256,6 @@ async function bulkGranuleReingest(
       stopOnError: false,
     }
   );
-}
-
-function setEnvVarsForOperation(event) {
-  const envVars = get(event, 'envVars', {});
-  Object.keys(envVars).forEach((envVarKey) => {
-    if (!process.env[envVarKey]) {
-      process.env[envVarKey] = envVars[envVarKey];
-    }
-  });
 }
 
 /**

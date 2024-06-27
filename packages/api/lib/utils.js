@@ -126,9 +126,9 @@ function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
  * Sets environment variables for the operation with overrides from a lambda event
  * Used in bulk operation lambdas for EC2/Fargate execution
  *
- * @param {Object} event - The event object.
  * @param {Object.<string, string>} event.envVars - The environment variables to set.
  * If not provided, defaults to an empty object.
+ * @param {...any} event
  */
 const setEnvVarsForOperation = (event) => {
   const envVars = get(event, 'envVars', {});
