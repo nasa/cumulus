@@ -3,6 +3,7 @@ const test = require('ava');
 const rewire = require('rewire');
 const moment = require('moment');
 const clone = require('lodash/clone');
+const sinon = require('sinon');
 const esSearch = rewire('@cumulus/es-client/search');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
@@ -18,6 +19,9 @@ const { sleep } = require('@cumulus/common');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
 const { handler, getExpirationDates } = require('../../lambdas/cleanExecutions');
 
+
+const { getEsClient } = esSearch;
+const stub = sinon.stub(esSearch, 'getEsClient').returns(getEsClient());
 test.beforeEach(async (t) => {
   t.context.testDbName = randomId('cleanExecutions');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
