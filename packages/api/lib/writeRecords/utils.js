@@ -1,3 +1,4 @@
+//@ts-check
 const isEmpty = require('lodash/isEmpty');
 const isNil = require('lodash/isNil');
 const semver = require('semver');
@@ -20,6 +21,10 @@ const {
 const {
   getMessageProviderId,
 } = require('@cumulus/message/Providers');
+
+/**
+* @typedef {import('@cumulus/db').PostgresCollectionRecord} PostgresCollectionRecord
+**/
 
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/utils' });
 
@@ -92,6 +97,22 @@ const getParentExecutionCumulusId = async (
   }
 };
 
+/**
+ * Retrieves the Cumulus ID for a given collection name and version.
+ *
+ * @param {Partial<PostgresCollectionRecord>} collectionNameVersion - The name and version of
+ * the collection, formatted as 'name__version'.
+ * @param {Object} knex - An instance of a Knex database client.
+ * @param {CollectionPgModel} [collectionPgModel=new CollectionPgModel()] - An instance of the
+ *  CollectionPgModel class.
+ * @returns {Promise<number|undefined>} - A promise that resolves to the Cumulus ID
+ * of the collection, or undefined if the collection name/version
+ *  is not provided or if the lookup fails.
+ *
+ * @async
+ * @throws {Error} Throws an error if there is a problem with the database lookup
+ * that is not a failed lookup.
+ */
 const getCollectionCumulusId = async (
   collectionNameVersion,
   knex,
