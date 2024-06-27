@@ -19,7 +19,6 @@ const { sleep } = require('@cumulus/common');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
 const { handler, getExpirationDates } = require('../../lambdas/cleanExecutions');
 
-
 const { getEsClient } = esSearch;
 const awsCredentialsMock = () => () => Promise.resolve({
   accessKeyId: 'testAccessKeyId',
@@ -28,6 +27,7 @@ const awsCredentialsMock = () => () => Promise.resolve({
 esSearch.__set__('fromNodeProviderChain', awsCredentialsMock);
 sinon.stub(esSearch, 'getEsClient').returns(getEsClient());
 test.beforeEach(async (t) => {
+  process.env.LOCAL_ES_HOST='localhost'
   t.context.testDbName = randomId('cleanExecutions');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
 
@@ -37,9 +37,6 @@ test.beforeEach(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
   t.context.searchClient = searchClient;
-  
-
-  
 
   const records = [];
   for (let i = 0; i < 10; i += 1) {
