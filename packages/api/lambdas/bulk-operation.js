@@ -20,7 +20,7 @@ const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { updateGranuleStatusToQueued } = require('../lib/writeRecords/write-granules');
 const { getGranulesForPayload } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
-const { batchDeleteExecutionsFromDatastore } = require('../lib/executions');
+const { batchDeleteExecutions } = require('../lib/executions');
 
 const log = new Logger({ sender: '@cumulus/bulk-operation' });
 
@@ -296,7 +296,7 @@ async function handler(event) {
     return await bulkGranuleReingest(event.payload, event.reingestHandler);
   }
   if (event.type === 'BULK_EXECUTION_DELETE') {
-    return await batchDeleteExecutionsFromDatastore(event.payload);
+    return await batchDeleteExecutions(event.payload);
   }
   // throw an appropriate error here
   throw new TypeError(`Type ${event.type} could not be matched, no operation attempted.`);

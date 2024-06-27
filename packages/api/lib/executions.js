@@ -169,7 +169,7 @@ const _deleteRdsExecutionsFromDatabase = async ({
  * @param {string} event.dbBatchSize - the batch size to delete from the database
  * @returns {Promise<void>}
  */
-const batchDeleteExecutionsFromDatastore = async (event) => {
+const batchDeleteExecutions = async (event) => {
   const knex = await getKnexClient();
 
   const collectionId = event.collectionId;
@@ -208,7 +208,7 @@ const batchDeleteExecutionsFromDatastore = async (event) => {
 };
 
 module.exports = {
-  batchDeleteExecutionsFromDatastore,
+  batchDeleteExecutions,
   chooseTargetExecution,
   describeGranuleExecution,
 };
