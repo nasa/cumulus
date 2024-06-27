@@ -102,7 +102,7 @@ async function describeGranuleExecution(executionArn, stepFunctionUtils = StepFu
  * @returns {Promise<number>} A promise that resolves to the number of records deleted.
  * @throws {Error} Throws an error if deletion fails.
  */
-const _deleteRdsExecutionsFromDatabase = async ({
+const _deleteRdsExecutions = async ({
   knex,
   collectionCumulusId,
   batchSize,
@@ -174,7 +174,7 @@ const batchDeleteExecutions = async (event) => {
   // Delete executions from the database in batches
   do {
     // eslint-disable-next-line no-await-in-loop
-    executionResults = await _deleteRdsExecutionsFromDatabase({
+    executionResults = await _deleteRdsExecutions({
       knex,
       collectionCumulusId,
       batchSize: dbBatchSize,
