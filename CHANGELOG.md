@@ -105,6 +105,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     to granules table
 
 ### Added
+- **CUMULUS-3385**
+  - added generate_db_executions to dump large scale postgres executions
 - **CUMULUS-3742**
   - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3614**
@@ -119,7 +121,9 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     using a PKCS11 provider
 
 ### Changed
-
+- **CUMULUS-3385**
+  - updated cleanExecutions lambda to clean up postgres execution payloads
+  - updated cleanExecutions lambda with configurable limit to control for large size
 - **CUMULUS-3735**
   - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
 - **CUMULUS-3746**
@@ -199,7 +203,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
   - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
 
 ### Fixed
-
+- **CUMULUS-3385**
+  - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
