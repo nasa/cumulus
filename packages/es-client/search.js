@@ -18,7 +18,6 @@ const Logger = require('@cumulus/logger');
 const createEsAmazonConnection = require('./esAmazonConnection');
 const queries = require('./queries');
 const aggs = require('./aggregations');
-const { sleep } = require('@cumulus/common');
 
 const logDetails = {
   file: 'lib/es/search.js',
@@ -125,7 +124,6 @@ const esMetricsConfig = () => {
 const esConfig = async (host, metrics = false) => {
   let config;
   let credentials;
-  console.log('testMode?: ', inTestMode(), process.env.LOCAL_ES_HOST);
   if (inTestMode() || 'LOCAL_ES_HOST' in process.env) {
     config = esTestConfig();
   } else if (metrics) {
