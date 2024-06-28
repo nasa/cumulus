@@ -126,7 +126,6 @@ const esConfig = async (host, metrics = false) => {
   let config;
   let credentials;
   console.log('testMode?: ', inTestMode(), process.env.LOCAL_ES_HOST);
-  await sleep(2000);
   if (inTestMode() || 'LOCAL_ES_HOST' in process.env) {
     config = esTestConfig();
   } else if (metrics) {
