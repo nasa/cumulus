@@ -93,7 +93,7 @@ const getExpirablePayloadRecords = async (
 );
 
 /**
- * Clean up Elasticsearch executions that have expired
+ * Clean up PG and ES executions that have expired
  *
  * @param {number} completeTimeoutDays - Maximum number of days a completed
  *   record may have payload entries
@@ -103,102 +103,15 @@ const getExpirablePayloadRecords = async (
  *   payloads
  * @param {boolean} runNonComplete - Enable removal of execution payloads for
  *   statuses other than 'completed'
- * @param {string} index - Elasticsearch index to cleanup
+ * @param {string | null} esIndex - optional ES index in which to clean up payloads.
  * @returns {Promise<void>}
 */
-const cleanupExpiredESExecutionPayloads = async (
+const cleanupExpiredExecutionPayloads = async (
   completeTimeoutDays,
   nonCompleteTimeoutDays,
   runComplete,
   runNonComplete,
-  index
-) => {
-  const updateLimit = process.env.UPDATE_LIMIT || 10000;
-  const {
-    laterExpiration: _laterExpiration,
-    completeExpiration: _completeExpiration,
-    nonCompleteExpiration: _nonCompleteExpiration,
-    earlierExpiration: _earlierExpiration,
-  } = getExpirationDates(
-    completeTimeoutDays,
-    nonCompleteTimeoutDays,
-    runComplete,
-    runNonComplete
-  );
-  const laterExpiration = _laterExpiration.getTime();
-  const completeExpiration = _completeExpiration.getTime();
-  const nonCompleteExpiration = _nonCompleteExpiration.getTime();
-  const earlierExpiration = _earlierExpiration.getTime();
-
-  const must = [
-    { range: { updatedAt: { lte: laterExpiration } } },
-    {
-      bool: {
-        should: [
-          { exists: { field: 'finalPayload' } },
-          { exists: { field: 'originalPayload' } },
-        ],
-      },
-    },
-  ];
-  const removePayloadScript = "ctx._source.remove('finalPayload'); ctx._source.remove('originalPayload')";
-  const mustNot = [];
-  let script = { inline: removePayloadScript };
-  if (runComplete && runNonComplete && (completeTimeoutDays !== nonCompleteTimeoutDays)) {
-    const removeForCompleteBoolean = `ctx._source.updatedAt < ${completeExpiration}L && ctx._source.status == 'completed'`;
-    const removeForNonCompleteBoolean = `ctx._source.updatedAt < ${nonCompleteExpiration}L && ctx._source.status != 'completed'`;
-    // a way to perform only integer comparison whenever possible
-    // and do relatively slow string comparison only when necessary
-    const removeForEitherBoolean = `ctx._source.updatedAt < ${earlierExpiration}L`;
-    const removeForLaterBoolean = (
-      completeExpiration === laterExpiration
-        ? removeForCompleteBoolean
-        : removeForNonCompleteBoolean
-    );
-    script = {
-      inline: `if ((${removeForEitherBoolean}) || (${removeForLaterBoolean})) { ${removePayloadScript} }`,
-    };
-  } else if (runNonComplete && !runComplete) {
-    mustNot.push({ term: { status: 'completed' } });
-  } else if (runComplete && !runNonComplete) {
-    must.push({ term: { status: 'completed' } });
-  }
-  const body = {
-    query: {
-      bool: {
-        must,
-        mustNot,
-      },
-    },
-    script: script,
-  };
-  const esClient = await getEsClient();
-  await esClient._client.updateByQuery({
-    index,
-    type: 'execution',
-    size: updateLimit,
-    body,
-  });
-};
-
-/**
- * Clean up PG executions that have expired
- *
- * @param {number} completeTimeoutDays - Maximum number of days a completed
- *   record may have payload entries
- * @param {number} nonCompleteTimeoutDays - Maximum number of days a non-completed
- *   record may have payload entries
- * @param {boolean} runComplete - Enable removal of completed execution
- *   payloads
- * @param {boolean} runNonComplete - Enable removal of execution payloads for
- *   statuses other than 'completed'
- * @returns {Promise<void>}
-*/
-const cleanupExpiredPGExecutionPayloads = async (
-  completeTimeoutDays,
-  nonCompleteTimeoutDays,
-  runComplete,
-  runNonComplete
+  esIndex
 ) => {
   const {
     laterExpiration,
@@ -210,6 +123,8 @@ const cleanupExpiredPGExecutionPayloads = async (
     runComplete,
     runNonComplete
   );
+  const esClient = esIndex ? await getEsClient() : null;
+
   const knex = await getKnexClient();
   const updateLimit = Number(process.env.UPDATE_LIMIT || 10000);
   const executionModel = new ExecutionPgModel();
@@ -227,13 +142,23 @@ const cleanupExpiredPGExecutionPayloads = async (
     original_payload: null,
     final_payload: null,
   };
-
+  const wipePayloads = async (cumulusId) => {
+    await esClient?._client?.update(
+      {
+        index: esIndex,
+        id: cumulusId,
+        type: 'execution',
+        body: { script: { inline: "ctx._source.remove('finalPayload'); ctx._source.remove('originalPayload')" } },
+      }
+    );
+    return executionModel.update(knex, { cumulus_id: cumulusId }, wipedPayloads);
+  };
   const updatePromises = executionRecords.map((entry) => limit(() => {
     if (runComplete && entry.status === 'completed' && entry.updated_at <= completeExpiration) {
-      return executionModel.update(knex, { cumulus_id: entry.cumulus_id }, wipedPayloads);
+      return wipePayloads(entry.cumulus_id);
     }
     if (runNonComplete && entry.status !== 'completed' && entry.updated_at <= nonCompleteExpiration) {
-      return executionModel.update(knex, { cumulus_id: entry.cumulus_id }, wipedPayloads);
+      return wipePayloads(entry.cumulus_id);
     }
     return Promise.resolve([]);
   }));
@@ -272,21 +197,13 @@ async function cleanExecutionPayloads() {
   }
 
   const esIndex = process.env.ES_INDEX || 'cumulus';
-  await Promise.all([
-    cleanupExpiredPGExecutionPayloads(
-      completeTimeout,
-      nonCompleteTimeout,
-      !completeDisable,
-      !nonCompleteDisable
-    ),
-    cleanupExpiredESExecutionPayloads(
-      completeTimeout,
-      nonCompleteTimeout,
-      !completeDisable,
-      !nonCompleteDisable,
-      esIndex
-    ),
-  ]);
+  await cleanupExpiredExecutionPayloads(
+    completeTimeout,
+    nonCompleteTimeout,
+    !completeDisable,
+    !nonCompleteDisable,
+    esIndex
+  );
 }
 
 async function handler(_event) {
@@ -296,7 +213,6 @@ module.exports = {
   handler,
   cleanExecutionPayloads,
   getExpirationDates,
-  cleanupExpiredPGExecutionPayloads,
-  cleanupExpiredESExecutionPayloads,
+  cleanupExpiredExecutionPayloads,
   getExpirablePayloadRecords,
 };
