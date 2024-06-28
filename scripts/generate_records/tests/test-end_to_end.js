@@ -92,7 +92,7 @@ test.serial('generate_db_records.main() uploads at least the expected number of 
   process.env = env;
 });
 
-test.only('generate_db_executions.main() uploads at least the expected number of executions', async (t) => {
+test.serial('generate_db_executions.main() uploads at least the expected number of executions', async (t) => {
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);

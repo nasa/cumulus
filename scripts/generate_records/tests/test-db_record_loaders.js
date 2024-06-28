@@ -150,7 +150,7 @@ test('loadGranulesExecutions() uploads GranulesExecutions', async (t) => {
     t.true(await geModel.exists(t.context.knex, granuleExecution));
   }));
 });
-test.only('loadCollection() adds collections', async (t) => {
+test('loadCollection() adds collections', async (t) => {
   //this test is largely redundant to all the above tests that demand this works to function
   for (const collectionNumber of new Array(12)) {
     const numberOfFiles = randomInt(5);
