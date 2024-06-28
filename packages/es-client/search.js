@@ -18,7 +18,6 @@ const Logger = require('@cumulus/logger');
 const createEsAmazonConnection = require('./esAmazonConnection');
 const queries = require('./queries');
 const aggs = require('./aggregations');
-const { sleep } = require('@cumulus/common');
 
 const logDetails = {
   file: 'lib/es/search.js',

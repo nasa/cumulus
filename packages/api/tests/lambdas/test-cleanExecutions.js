@@ -73,6 +73,7 @@ test.serial('handler() handles complete expiration', async (t) => {
   process.env = localStackConnectionEnv;
   process.env.PG_DATABASE = t.context.testDbName;
   process.env.ES_INDEX = t.context.esIndex;
+  process.env.LOCAL_ES_HOST = 'localhost';
   let expirationDays = 4;
   let {
     completeExpiration: expirationDate,
@@ -247,6 +248,7 @@ test.serial('handler() handles both expirations', async (t) => {
   process.env = localStackConnectionEnv;
   process.env.PG_DATABASE = t.context.testDbName;
   process.env.ES_INDEX = t.context.esIndex;
+  process.env.LOCAL_ES_HOST = 'localhost';
   let completeExpirationDays = 9;
   let nonCompleteExpirationDays = 9;
   let {
@@ -380,6 +382,7 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
   process.env = localStackConnectionEnv;
   process.env.PG_DATABASE = t.context.testDbName;
   process.env.ES_INDEX = t.context.esIndex;
+  process.env.LOCAL_ES_HOST = 'localhost';
 
   process.env.completeExecutionPayloadTimeoutDisable = 'false';
   process.env.nonCompleteExecutionPayloadTimeoutDisable = 'false';

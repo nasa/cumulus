@@ -1,9 +1,7 @@
 /* eslint-disable no-await-in-loop */
 const test = require('ava');
-const rewire = require('rewire');
 const moment = require('moment');
 
-const esSearch = rewire('@cumulus/es-client/search');
 const { fakeExecutionRecordFactory, translatePostgresExecutionToApiExecution } = require('@cumulus/db');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
 
@@ -15,12 +13,7 @@ test.beforeEach(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
   t.context.searchClient = searchClient;
-  const awsCredentialsMock = () => () => Promise.resolve({
-    accessKeyId: 'testAccessKeyId',
-    secretAccessKey: 'testsecretAccessKey',
-  });
 
-  esSearch.__set__('fromNodeProviderChain', awsCredentialsMock);
   const records = [];
   for (let i = 0; i < 20; i += 2) {
     records.push(await translatePostgresExecutionToApiExecution(fakeExecutionRecordFactory({
