@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Replace ElasticSearch Phase 1
+
 - **CUMULUS-3639**
  - Updated `/collections/active` endpoint to query postgres
 - **CUMULUS-3699**

@@ -67,6 +67,7 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function activeList(req, res) {
+  log.debug(`activeList query ${JSON.stringify(req.query)}`);
   const { getMMT, ...queryStringParameters } = req.query;
   const dbSearch = new CollectionSearch({ queryStringParameters: { active: 'true', ...queryStringParameters } });
   let result = await dbSearch.query();
