@@ -22,7 +22,7 @@ This index is required to support effective deletion of records given query anal
 
 ### Procedure
 
-Users may opt to either:
+Users may opt to either automatically migrate the database, or manually create the index:
 
 #### Utilize the normal cumulus deployment
 
@@ -34,17 +34,27 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_parent_cumulus_id_index ON ex
 
 #### Manually create the index
 
-The required index can be created while the database is in use prior to installing the upgrade containing CUMULUS-3320 by running the following query:
+##### Create index with ingest halted:
+
+The recommended approach to create the index is to halt ingest activity that requires write access to the execution table, then run the query to create the index.  This will result in a much faster index operation than attempting to create the index concurrently, however the table will be locked until the index is complete.
+
+For reference, in testing, using a 4ACU Aurora Serverless V1 cluster on a table with 15 million rows this migration took roughly 2 minutes to complete.
+
+To do this, use the following query:
+
+```sql
+CREATE INDEX executions_parent_cumulus_id_index ON executions(parent_cumulus_id)'
+```
+
+##### Create index concurrently/with ongoing:
+
+The required index can also be created while the database is in use prior to installing the upgrade containing CUMULUS-3320 by running the following query:
 
 ```sql
 CREATE INDEX CONCURRENTLY executions_parent_cumulus_id_index ON executions(parent_cumulus_id)'
 ```
 
-Alternately if the table is not in use, you can opt to create the index non-concurrently.   This will result in a much faster index, however the table will be locked until the index is complete.  To do this, use the following query:
-
-```sql
-CREATE INDEX executions_parent_cumulus_id_index ON executions(parent_cumulus_id)'
-```
+Please note this may take *significantly* longer than creating the index non-concurrently, especially if the table is under heavy use.
 
 #### Indexing Failure
 
@@ -54,6 +64,7 @@ If the concurrent index query fails for any reason, you may have an `invalid` in
 DROP INDEX CONCURRENTLY executions_parent_cumulus_id_index
 ```
 
+The index operation can then be re-attempted.
 
 ## Adding the `executions_collection_cumulus_id_index` index
 
@@ -63,7 +74,7 @@ This index is required to support effective execution searches by `cumulus_colle
 
 ### Procedure
 
-Users may opt to either:
+Users may opt to either automatically migrate the database, or manually create the index:
 
 #### Utilize the normal cumulus deployment
 
@@ -75,17 +86,25 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_collection_cumulus_id_index O
 
 #### Manually create the index
 
-The required index can be created while the database is in use prior to installing the upgrade containing CUMULUS-3320 by running the following query:
+##### Create index with ingest halted:
+
+The recommended approach to create the index is to halt ingest activity that requires write access to the execution table, then run the query to create the index.  This will result in a much faster index operation than attempting to create the index concurrently, however the table will be locked until the index is complete.
+
+For reference, in testing, using a 4ACU Aurora Serverless V1 cluster on a table with 15 million rows this migration took roughly 3 minutes to complete.
+
+To do this, use the following query:
+
+```sql
+CREATE INDEX executions_collection_cumulus_id_index ON executions(collection_cumulus_id)
+```
+
+The required index can also be created while the database is in use prior to installing the upgrade containing CUMULUS-3320 by running the following query:
 
 ```sql
 CREATE INDEX CONCURRENTLY executions_collection_cumulus_id_index ON executions(collection_cumulus_id)
 ```
 
-Alternately if the table is not in use, you can opt to create the index non-concurrently.   This will result in a much faster index, however the table will be locked until the index is complete.  To do this, use the following query:
-
-```sql
-CREATE INDEX executions_collection_cumulus_id_index ON executions(collection_cumulus_id)
-```
+Please note this may take *significantly* longer than creating the index non-concurrently, especially if the table is under heavy use.
 
 #### Indexing Failure
 
@@ -94,6 +113,8 @@ If the concurrent index query fails for any reason, you may have an `invalid` in
 ```sql
 DROP INDEX CONCURRENTLY executions_collection_cumulus_id_index
 ```
+
+The index operation can then be re-attempted.
 
 ## Updating the `executions_parent_cumulus_id_foreign` constraint
 
@@ -141,6 +162,8 @@ This query can be run at any time following the above step and will not lock the
 ```sql
 ALTER TABLE executions VALIDATE CONSTRAINT executions_parent_cumulus_id_foreign
 ```
+
+For reference, in a table of roughly 18 million records without active ingest running on a Serverless V1 cluster set at 4ACUs, this validation took roughly 2 minutes in repeated testing, however running the validation during simulated active heavy writes it took significantly longer at around 20 minutes.
 
 # Verify the constraint/indexes exist on the table
 
@@ -198,7 +221,6 @@ Referenced by:
 Check that the `executions_parent_cumulus_id_foreign` constraint is present with 'ON DELETE SET_NULL' and does not have 'NOT VALID' appended to the end
 
 Check that the two added indexes `executions_parent_cumulus_id_index` and `executions_collection_cumulus_id_index` exist and do not show as `INVALID`.
-
 
 ## Standard Postgres queries
 
