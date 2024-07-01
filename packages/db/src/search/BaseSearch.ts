@@ -419,13 +419,12 @@ class BaseSearch {
     const knex = testKnex ?? await getKnexClient();
     const { countQuery, searchQuery } = this.buildSearch(knex);
     try {
-      const countResult = await countQuery;
+      const [countResult, pgRecords] = await Promise.all([countQuery, searchQuery]);
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;
       meta.page = this.dbQueryParameters.page;
       meta.count = Number(countResult[0]?.count ?? 0);
 
-      const pgRecords = await searchQuery;
       const apiRecords = await this.translatePostgresRecordsToApiRecords(pgRecords, knex);
 
       return {

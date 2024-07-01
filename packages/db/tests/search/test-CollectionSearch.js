@@ -348,7 +348,7 @@ test('CollectionSearch supports search which checks existence of collection fiel
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    urlPath__exists: 'true',
+    url_path__exists: 'true',
   };
   const dbSearch = new CollectionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
