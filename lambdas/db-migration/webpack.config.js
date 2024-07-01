@@ -80,5 +80,8 @@ module.exports = {
   node: {
     __dirname: false
   },
-  target: 'node'
+  target: 'node',
+  externals: [
+    /@aws-sdk\//
+  ]
 };

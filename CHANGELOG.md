@@ -62,6 +62,11 @@ output or status of your request. If you want to directly observe the progress
 of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
+#### CUMULUS-3779 async_operations Docker image version upgrade
+  
+The `async_operations` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users will need to bump
+the version tag of `async_operations` to at least 52 if using the Docker image.
+
 ### Breaking Changes
 
 - **CUMULUS-3618**
@@ -103,6 +108,9 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
   - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
+- **CUMULUS-3779**
+  - Updates async_operations Docker image to Node v20 and bumps its cumulus dependencies to v18.3.0 to
+    support `aws-sdk` v3 changes.
 
 ### Added
 - **CUMULUS-3742**
@@ -216,6 +224,10 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     credentialing timeout in long-running ECS jobs.
 - **CUMULUS-3323**
   - Minor edits to errant integration test titles (dyanmo->postgres)
+- **AWS-SDK v3 Exclusion (v18.3.0 fix)***
+  - Excludes aws-sdk v3 from packages to reduce overall package size. With the requirement of Node v20
+    packaging the aws-sdk v3 with our code is no longer necessary and prevented some packages from being
+    published to npm.
 
 ## [v18.2.2] 2024-06-4
 
