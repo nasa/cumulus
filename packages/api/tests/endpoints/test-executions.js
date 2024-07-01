@@ -410,12 +410,6 @@ test('GET returns an existing execution', async (t) => {
     t.context.knex,
     executionRecord
   );
-  t.teardown(async () => {
-    await t.context.executionPgModel.delete(t.context.knex, executionRecord);
-    await t.context.executionPgModel.delete(t.context.knex, parentExecutionRecord);
-    await collectionPgModel.delete(t.context.knex, collectionRecord);
-    await asyncOperationsPgModel.delete(t.context.knex, asyncRecord);
-  });
 
   const response = await request(app)
     .get(`/executions/${executionRecord.arn}`)
