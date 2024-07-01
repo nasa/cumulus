@@ -3,6 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
+const omit = require('lodash/omit');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { ExecutionSearch } = require('../../dist/search/ExecutionSearch');
 
@@ -54,7 +55,6 @@ test.before(async (t) => {
 
   t.context.asyncOperationsPgModel = new AsyncOperationPgModel();
   t.context.testAsyncOperation = fakeAsyncOperationRecordFactory({ cumulus_id: 140 });
-
   t.context.asyncCumulusId1 = t.context.testAsyncOperation.cumulus_id;
 
   await t.context.asyncOperationsPgModel.insert(
@@ -112,6 +112,35 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
   const results = await dbSearch.query(knex);
   t.is(results.meta.count, 50);
   t.is(results.results.length, 10);
+  const expectedResponse1 = {
+    name: 'testExecutionName',
+    status: 'failed',
+    arn: 'testArn__0:testExecutionName',
+    error: { Error: 'UnknownError' },
+    originalPayload: { orginal: 'payload__0' },
+    finalPayload: { final: 'payload__0' },
+    type: 'testWorkflow__0',
+    execution: 'https://fake-execution0.com/',
+    asyncOperationId: t.context.testAsyncOperation.id,
+    collectionId: 'testCollection___8',
+    createdAt: 1514696400000,
+    updatedAt: 1514782800000,
+  };
+
+  const expectedResponse10 = {
+    name: 'fakeExecutionName',
+    status: 'failed',
+    arn: 'fakeArn__9:fakeExecutionName',
+    duration: 200,
+    error: {},
+    originalPayload: { orginal: 'payload__9' },
+    type: 'testWorkflow__9',
+    execution: 'https://fake-execution9.com/',
+    createdAt: 1633752000000,
+    updatedAt: 1633838400000,
+  };
+  t.deepEqual(omit(results.results[0], ['timestamp']), expectedResponse1);
+  t.deepEqual(omit(results.results[9], ['timestamp']), expectedResponse10);
 });
 
 test('ExecutionSearch supports page and limit params', async (t) => {

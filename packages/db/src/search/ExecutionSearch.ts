@@ -88,7 +88,7 @@ export class ExecutionSearch extends BaseSearch {
     }
 
     if (this.searchParent()) {
-      searchQuery.leftJoin(`${this.tableName} as ${this.tableName}-parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}-parent.cumulus_id`);
+      searchQuery.leftJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
     }
     return { countQuery, searchQuery };
   }
