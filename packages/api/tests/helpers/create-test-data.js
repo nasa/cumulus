@@ -55,7 +55,6 @@ async function createGranuleAndFiles({
   executionCumulusId,
   collectionId,
   dbClient,
-  esClient,
   granuleParams = { published: false },
 }) {
   const s3Buckets = {
@@ -198,18 +197,9 @@ async function createGranuleAndFiles({
     granulePgRecord: pgGranule,
   });
 
-  await indexGranule(esClient, apiGranule, process.env.ES_INDEX);
-
-  const esGranulesClient = new Search(
-    {},
-    'granule',
-    process.env.ES_INDEX
-  );
-
   return {
     newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: pgGranule.cumulus_id }),
     apiGranule,
-    esRecord: await esGranulesClient.get(newGranule.granuleId),
     files: files,
     s3Buckets: s3Buckets,
   };

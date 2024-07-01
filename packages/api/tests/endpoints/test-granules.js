@@ -203,12 +203,6 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-
-  t.context.esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX);
-
   // Create collections in Postgres
   // we need this because a granule has a foreign key referring to collections
   t.context.collectionName = 'fakeCollection';
@@ -340,18 +334,6 @@ test.beforeEach(async (t) => {
       }))
   );
   t.context.insertedPgGranules = t.context.fakePGGranuleRecords.flat();
-  const insertedApiGranuleTranslations = await Promise.all(
-    t.context.insertedPgGranules.map((granule) =>
-      translatePostgresGranuleToApiGranule({
-        knexOrTransaction: t.context.knex,
-        granulePgRecord: granule,
-      }))
-  );
-  // index PG Granules into ES
-  await Promise.all(
-    insertedApiGranuleTranslations.map((granule) =>
-      indexer.indexGranule(t.context.esClient, granule, t.context.esIndex))
-  );
 
   const topicName = randomString();
   const { TopicArn } = await createSnsTopic(topicName);
@@ -401,7 +383,6 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
-  await cleanupTestIndex(t.context);
 });
 
 // TODO postgres query doesn't return searchContext
@@ -921,7 +902,6 @@ test.serial('PATCH applies an in-place workflow to an existing granule', async (
 test.serial('PATCH removes a granule from CMR', async (t) => {
   const { s3Buckets, newPgGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    esClient: t.context.esClient,
     collectionId: t.context.collectionId,
     granuleParams: { published: true },
   });
@@ -1003,8 +983,8 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
     .delete(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404);
-  t.true(response.body.message.includes('No record found'));
+    .expect(400);
+  t.true(response.body.message.includes(`Granule ${granuleId} does not exist or was already deleted`));
 });
 
 test.serial('DELETE returns 404 if collection does not exist', async (t) => {
@@ -1026,7 +1006,6 @@ test.serial('DELETE does not require a collectionId', async (t) => {
   const { s3Buckets, apiGranule, newPgGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     granuleParams: { published: false },
-    esClient: t.context.esClient,
   });
 
   const response = await request(app)
@@ -1060,155 +1039,10 @@ test.serial('DELETE does not require a collectionId', async (t) => {
   t.teardown(() => deleteS3Buckets([s3Buckets.protected.name, s3Buckets.public.name]));
 });
 
-test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully',
-  async (t) => {
-    const { collectionPgModel, esGranulesClient, knex } = t.context;
-    const testPgCollection = fakeCollectionRecordFactory({
-      name: randomString(),
-      version: '005',
-    });
-    const newCollectionId = constructCollectionId(testPgCollection.name, testPgCollection.version);
-
-    await collectionPgModel.create(knex, testPgCollection);
-    const newGranule = fakeGranuleFactoryV2({
-      granuleId: randomId(),
-      status: 'failed',
-      collectionId: newCollectionId,
-      published: false,
-      files: [],
-    });
-    const newPgGranule = await translateApiGranuleToPostgresGranule({
-      dynamoRecord: newGranule,
-      knexOrTransaction: knex,
-    });
-    const [createdPgGranule] = await granulePgModel.create(knex, newPgGranule);
-
-    t.true(
-      await granulePgModel.exists(knex, {
-        granule_id: createdPgGranule.granule_id,
-        collection_cumulus_id: createdPgGranule.collection_cumulus_id,
-      })
-    );
-    t.false(await esGranulesClient.exists(newGranule.granuleId));
-
-    const response = await request(app)
-      .delete(`/granules/${newCollectionId}/${newGranule.granuleId}`)
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .expect(200);
-
-    t.is(response.status, 200);
-    const responseBody = response.body;
-    t.like(responseBody, {
-      detail: 'Record deleted',
-      collection: newCollectionId,
-      deletedGranuleId: newGranule.granuleId,
-    });
-    t.truthy(responseBody.deletionTime);
-    t.is(responseBody.deletedFiles.length, newGranule.files.length);
-
-    t.false(
-      await granulePgModel.exists(knex, {
-        granule_id: createdPgGranule.granule_id,
-        collection_cumulus_id: createdPgGranule.collection_cumulus_id,
-      })
-    );
-  });
-
-test.serial('DELETE deletes a granule that exists in Elasticsearch but not PostgreSQL successfully', async (t) => {
-  const { collectionPgModel, esClient, esIndex, esGranulesClient, knex } = t.context;
-  const testPgCollection = fakeCollectionRecordFactory({
-    name: randomString(),
-    version: '005',
-  });
-  const newCollectionId = constructCollectionId(testPgCollection.name, testPgCollection.version);
-
-  const [pgCollection] = await collectionPgModel.create(knex, testPgCollection);
-  const newGranule = fakeGranuleFactoryV2({
-    granuleId: randomId(),
-    status: 'failed',
-    collectionId: newCollectionId,
-    published: false,
-    files: [],
-  });
-
-  await indexer.indexGranule(esClient, newGranule, esIndex);
-
-  t.false(
-    await granulePgModel.exists(knex, {
-      granule_id: newGranule.granuleId,
-      collection_cumulus_id: pgCollection.cumulus_id,
-    })
-  );
-  t.true(await esGranulesClient.exists(newGranule.granuleId));
-
-  const response = await request(app)
-    .delete(`/granules/${newCollectionId}/${newGranule.granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  t.is(response.status, 200);
-  const responseBody = response.body;
-  t.like(responseBody, {
-    detail: 'Record deleted',
-    collection: newCollectionId,
-    deletedGranuleId: newGranule.granuleId,
-  });
-  t.truthy(responseBody.deletionTime);
-  t.is(responseBody.deletedFiles.length, newGranule.files.length);
-
-  t.false(await esGranulesClient.exists(newGranule.granuleId));
-});
-
-test.serial('DELETE fails to delete a granule that has multiple entries in Elasticsearch, but no records in PostgreSQL', async (t) => {
-  const { knex } = t.context;
-  const testPgCollection = fakeCollectionRecordFactory({
-    name: randomString(),
-    version: '005',
-  });
-
-  const newCollectionId = constructCollectionId(testPgCollection.name, testPgCollection.version);
-
-  const collectionPgModel = new CollectionPgModel();
-  const [pgCollection] = await collectionPgModel.create(knex, testPgCollection);
-  const newGranule = fakeGranuleFactoryV2({
-    granuleId: randomId(),
-    status: 'failed',
-    collectionId: newCollectionId,
-    published: false,
-    files: [],
-  });
-
-  t.false(
-    await granulePgModel.exists(knex, {
-      granule_id: newGranule.granuleId,
-      collection_cumulus_id: pgCollection.cumulus_id,
-    })
-  );
-
-  const expressRequest = {
-    params: {
-      granuleId: newGranule.granuleId,
-      collectionId: newCollectionId,
-    },
-    testContext: {
-      esGranulesClient: {
-        get: () => ({ detail: multipleRecordFoundString }),
-      },
-    },
-  };
-  const response = buildFakeExpressResponse();
-
-  await del(expressRequest, response);
-  t.true(response.boom.notFound.called);
-});
-
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const { s3Buckets, apiGranule, newPgGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     granuleParams: { published: true },
-    esClient: t.context.esClient,
   });
 
   const granuleId = apiGranule.granuleId;
@@ -1246,7 +1080,6 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
   const { s3Buckets, apiGranule, newPgGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     granuleParams: { published: false },
-    esClient: t.context.esClient,
   });
 
   const granuleId = apiGranule.granuleId;
@@ -1290,7 +1123,6 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
   const { s3Buckets, apiGranule, newPgGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     granuleParams: { published: true },
-    esClient: t.context.esClient,
   });
 
   sinon.stub(GranulePgModel.prototype, 'get').throws(new Error('Error message'));
@@ -1330,7 +1162,6 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   const { s3Buckets, apiGranule, newPgGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     granuleParams: { published: false },
-    esClient: t.context.esClient,
   });
 
   const timeOfResponse = Date.now();
@@ -1386,8 +1217,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
-
-  const { esGranulesClient } = t.context;
 
   await runTestUsingBuckets([secondBucket, thirdBucket], async () => {
     // Generate Granule/Files, S3 objects and database entries
@@ -1473,16 +1302,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         bucket: destination.bucket,
       });
     }
-
-    // check the ES index is updated
-    const esRecord = await esGranulesClient.get(newGranule.granuleId);
-    t.is(esRecord.files.length, 3);
-    esRecord.files.forEach((esFileRecord) => {
-      const pgMatchingFileRecord = pgFiles.find(
-        (pgFile) => pgFile.key.match(esFileRecord.key) && pgFile.bucket.match(esFileRecord.bucket)
-      );
-      t.deepEqual(translatePostgresFileToApiFile(pgMatchingFileRecord), esFileRecord);
-    });
   });
 });
 
@@ -1936,13 +1755,10 @@ test.serial('create (POST) creates new granule without an execution in PostgreSQ
     granule_id: newGranule.granuleId,
     collection_cumulus_id: t.context.collectionCumulusId,
   });
-  const fetchedESRecord = await t.context.esGranulesClient.get(newGranule.granuleId);
-
   t.deepEqual(JSON.parse(response.text), {
     message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${t.context.collectionId}`,
   });
   t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
-  t.is(fetchedESRecord.granuleId, newGranule.granuleId);
 });
 
 test.serial('create (POST) creates new granule with associated execution in PostgreSQL and Elasticsearch', async (t) => {
@@ -1962,12 +1778,10 @@ test.serial('create (POST) creates new granule with associated execution in Post
     granule_id: newGranule.granuleId,
     collection_cumulus_id: t.context.collectionCumulusId,
   });
-  const fetchedESRecord = await t.context.esGranulesClient.get(newGranule.granuleId);
   t.deepEqual(JSON.parse(response.text), {
     message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${newGranule.collectionId}`,
   });
   t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
-  t.is(fetchedESRecord.granuleId, newGranule.granuleId);
 });
 
 test.serial('create (POST) publishes an SNS message upon successful granule creation', async (t) => {
@@ -2126,7 +1940,6 @@ test.serial('create (POST) throws conflict error if a granule with same granuleI
 
 test.serial('PATCH updates an existing granule in all data stores', async (t) => {
   const {
-    esClient,
     executionUrl,
     knex,
     testExecutionCumulusId,
@@ -2135,9 +1948,8 @@ test.serial('PATCH updates an existing granule in all data stores', async (t) =>
   const oldQueryFields = {
     foo: Math.random(),
   };
-  const { newPgGranule, esRecord } = await createGranuleAndFiles({
+  const { newPgGranule } = await createGranuleAndFiles({
     dbClient: knex,
-    esClient,
     executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
@@ -2146,15 +1958,9 @@ test.serial('PATCH updates an existing granule in all data stores', async (t) =>
       queryFields: oldQueryFields,
     },
   });
-  const newApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: newPgGranule,
-    knexOrTransaction: knex,
-  });
 
   t.is(newPgGranule.status, 'running');
   t.deepEqual(newPgGranule.query_fields, oldQueryFields);
-  t.is(esRecord.status, 'running');
-  t.deepEqual(esRecord.queryFields, oldQueryFields);
 
   const newQueryFields = {
     foo: randomString(),
@@ -2577,22 +2383,10 @@ test.serial('PATCH creates a granule if one does not already exist in all data s
     collection_cumulus_id: t.context.collectionCumulusId,
   });
 
-  const actualApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: actualPgGranule,
-    knexOrTransaction: knex,
-  });
-
   t.deepEqual(removeNilProperties(actualPgGranule), {
     ...fakePgGranule,
     timestamp: actualPgGranule.timestamp,
     cumulus_id: actualPgGranule.cumulus_id,
-  });
-
-  const esRecord = await t.context.esGranulesClient.get(fakeGranule.granuleId);
-  t.deepEqual(esRecord, {
-    ...fakeGranule,
-    timestamp: actualApiGranule.timestamp,
-    _id: esRecord._id,
   });
 });
 
