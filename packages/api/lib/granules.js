@@ -23,8 +23,6 @@ const {
   getKnexClient,
   GranulePgModel,
 } = require('@cumulus/db');
-const indexer = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
@@ -81,7 +79,6 @@ const getExecutionProcessingTimeInfo = ({
  * @param {Object} params.granulePgModel                 - parameter override, used for unit testing
  * @param {Object} params.collectionPgModel              - parameter override, used for unit testing
  * @param {Object} params.filesPgModel                   - parameter override, used for unit testing
- * @param {Object} params.esClient                       - parameter override, used for unit testing
  * @param {Object} params.dbClient                       - parameter override, used for unit testing
  * @returns {Promise<Object>} - Object containing an 'updated'
  *  files object with current file key values and an error object containing a set of
@@ -95,7 +92,6 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
     collectionPgModel = new CollectionPgModel(),
     filesPgModel = new FilePgModel(),
     dbClient = await getKnexClient(),
-    esClient = await getEsClient(),
   } = params;
 
   const { name, version } = deconstructCollectionId(apiGranule.collectionId);
@@ -132,16 +128,6 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
   });
 
   const moveResults = await Promise.allSettled(moveFilePromises);
-
-  await indexer.upsertGranule({
-    esClient,
-    updates: {
-      ...apiGranule,
-      files: updatedFiles,
-    },
-    index: process.env.ES_INDEX,
-  });
-
   const filteredResults = moveResults.filter((r) => r.status === 'rejected');
   const moveGranuleErrors = filteredResults.map((error) => error.reason);
 
@@ -247,55 +233,6 @@ function getTotalHits(bodyHits) {
 }
 
 /**
- * Returns an array of granules from ElasticSearch query
- *
- * @param {Object} payload
- * @param {string} [payload.index] - ES index to query
- * @param {string} [payload.query] - ES query
- * @param {Object} [payload.source] - List of IDs to operate on
- * @param {Object} [payload.testBodyHits] - Optional body.hits for testing.
- *  Some ES such as Cloud Metrics returns `hits.total.value` rather than `hits.total`
- * @returns {Promise<Array<Object>>}
- */
-async function granuleEsQuery({ index, query, source, testBodyHits }) {
-  const granules = [];
-  const responseQueue = [];
-
-  const esClient = await getEsClient(undefined, true);
-  const searchResponse = await esClient.client.search({
-    index,
-    scroll: '30s',
-    size: SCROLL_SIZE,
-    _source: source,
-    body: query,
-  });
-
-  responseQueue.push(searchResponse);
-
-  while (responseQueue.length) {
-    const { body } = responseQueue.shift();
-    const bodyHits = testBodyHits || body.hits;
-
-    bodyHits.hits.forEach((hit) => {
-      granules.push(hit._source);
-    });
-
-    const totalHits = getTotalHits(bodyHits);
-
-    if (totalHits !== granules.length) {
-      responseQueue.push(
-        // eslint-disable-next-line no-await-in-loop
-        await esClient.client.scroll({
-          scrollId: body._scroll_id,
-          scroll: '30s',
-        })
-      );
-    }
-  }
-  return granules;
-}
-
-/**
  * Return a unique list of granules based on the provided list or the response from the
  * query to ES using the provided query and index.
  *
@@ -307,24 +244,12 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
  * @returns {Promise<Array<ApiGranule>>}
  */
 async function getGranulesForPayload(payload) {
-  const { granules, index, query } = payload;
+  const { granules } = payload;
   const queryGranules = granules || [];
 
   // query ElasticSearch if needed
-  if (queryGranules.length === 0 && query) {
-    log.info('No granules detected. Searching for granules in ElasticSearch.');
-
-    const esGranules = await granuleEsQuery({
-      index,
-      query,
-      source: ['granuleId', 'collectionId'],
-    });
-
-    esGranules.map((granule) =>
-      queryGranules.push({
-        granuleId: granule.granuleId,
-        collectionId: granule.collectionId,
-      }));
+  if (queryGranules.length === 0) {
+    log.info('No granules detected');
   }
   // Remove duplicate Granule IDs
   // TODO: could we get unique IDs from the query directly?
@@ -337,7 +262,6 @@ module.exports = {
   getFilesExistingAtLocation,
   getGranulesForPayload,
   moveGranule,
-  granuleEsQuery,
   moveGranuleFilesAndUpdateDatastore,
   translateGranule,
 };
