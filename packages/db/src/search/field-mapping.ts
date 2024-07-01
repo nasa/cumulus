@@ -23,9 +23,6 @@ const granuleMapping: { [key: string]: Function } = {
   granuleId: (value?: string) => ({
     granule_id: value,
   }),
-  id: (value?: string) => ({
-    cumulus_id: value,
-  }),
   lastUpdateDateTime: (value?: string) => ({
     last_update_date_time: value,
   }),
@@ -114,9 +111,6 @@ const collectionMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
-  id: (value?: string) => ({
-    cumulus_id: value,
-  }),
   name: (value?: string) => ({
     name: value,
   }),
@@ -186,6 +180,9 @@ const executionMapping : { [key: string]: Function } = {
   asyncOperationId: (value?: string) => ({
     asyncOperationId: value,
   }),
+  parentArn: (value?: string) => ({
+    parentArn: value,
+  }),
   collectionId: (value?: string) => {
     const { name, version } = (value && deconstructCollectionId(value)) || {};
     return {
@@ -198,9 +195,6 @@ const executionMapping : { [key: string]: Function } = {
 const pdrMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
-  }),
-  id: (value?: string) => ({
-    cumulus_id: value,
   }),
   pdrName: (value?: string) => ({
     name: value,
@@ -248,9 +242,6 @@ const ruleMapping : { [key: string]: Function } = {
   }),
   name: (value?: string) => ({
     name: value,
-  }),
-  id: (value?: string) => ({
-    cumulus_id: value,
   }),
   state: (value?: string) => ({
     enabled: (value === 'ENABLED'),

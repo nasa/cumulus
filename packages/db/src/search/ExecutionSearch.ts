@@ -34,6 +34,18 @@ export class ExecutionSearch extends BaseSearch {
     return !!(not?.asyncOperationId ||
        term?.asyncOperationId || terms?.asyncOperationId);
   }
+
+  /**
+   * check if joined async_ops table search is needed
+   *
+   * @returns whether collection search is needed
+   */
+  protected searchParent(): boolean {
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.parentArn ||
+      term?.parentArn || terms?.parentArn);
+  }
+
   /**
    * Build basic query
    *
@@ -51,13 +63,11 @@ export class ExecutionSearch extends BaseSearch {
     } = TableNames;
 
     const searchQuery = knex(`${this.tableName} as ${this.tableName}`)
-      .leftJoin(`${this.tableName} as ${this.tableName}-parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}-parent.cumulus_id`)
       .select(`${this.tableName}.*`)
       .select({
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
         asyncOperationId: `${asyncOperationsTable}.id`,
-        parentArn: `${this.tableName}-parent.arn`,
       });
 
     const countQuery = knex(this.tableName)
@@ -75,6 +85,10 @@ export class ExecutionSearch extends BaseSearch {
       searchQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
     } else {
       searchQuery.leftJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+    }
+
+    if (this.searchParent()) {
+      searchQuery.leftJoin(`${this.tableName} as ${this.tableName}-parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}-parent.cumulus_id`);
     }
     return { countQuery, searchQuery };
   }
