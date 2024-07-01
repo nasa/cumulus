@@ -9,75 +9,18 @@ import Logger from '@cumulus/logger';
 import { removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
 import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
-import { PostgresExecution, PostgresExecutionRecord, PostgresSearchExecutionRecord } from '../types/execution';
+import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { ExecutionPgModel } from '../models/execution';
 import { CollectionPgModel } from '../models/collection';
 import { AsyncOperationPgModel } from '../models/async_operation';
-import { PostgresCollectionRecord } from '../types/collection';
 
 export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
   executionRecord,
-  collectionPgRecord,
+  collectionId,
 }:{
-  executionRecord: PostgresSearchExecutionRecord,
-  collectionPgRecord: Pick<PostgresCollectionRecord, 'name' | 'version'>,
-}): ApiExecutionRecord => {
-  const postfix = executionRecord.arn.split(':').pop();
-  if (!postfix) {
-    throw new Error(`Execution ARN record ${executionRecord.arn} has an invalid postfix and API cannot generate the required 'name' field`);
-  }
-
-  return {
-    name: postfix,
-    status: executionRecord.status ?? 'unknown',
-    arn: executionRecord.arn,
-    duration: executionRecord.duration ?? 0,
-    error: executionRecord.error ?? {},
-    tasks: executionRecord.tasks ?? {},
-    originalPayload: executionRecord.original_payload ?? {},
-    finalPayload: executionRecord.final_payload ?? {},
-    type: executionRecord.workflow_name ?? '',
-    execution: executionRecord.url ?? '',
-    cumulusVersion: executionRecord.cumulus_version ?? '',
-    asyncOperationId: executionRecord.asyncOperationId ?? '',
-    collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
-    parentArn: executionRecord.parentArn ?? '',
-    createdAt: Number(executionRecord.created_at),
-    updatedAt: Number(executionRecord.updated_at),
-    timestamp: Number(executionRecord.timestamp),
-  };
-};
-
-export const translatePostgresExecutionToApiExecution = async (
   executionRecord: PostgresExecutionRecord,
-  knex: Knex,
-  collectionPgModel = new CollectionPgModel(),
-  asyncOperationPgModel = new AsyncOperationPgModel(),
-  executionPgModel = new ExecutionPgModel()
-): Promise<ApiExecutionRecord> => {
-  let parentArn: string | undefined;
-  let collectionId: string | undefined;
-  let asyncOperationId: string | undefined;
-
-  if (executionRecord.collection_cumulus_id) {
-    const collection = await collectionPgModel.get(knex, {
-      cumulus_id: executionRecord.collection_cumulus_id,
-    });
-    collectionId = constructCollectionId(collection.name, collection.version);
-  }
-  if (executionRecord.async_operation_cumulus_id) {
-    const asyncOperation = await asyncOperationPgModel.get(knex, {
-      cumulus_id: executionRecord.async_operation_cumulus_id,
-    });
-    asyncOperationId = asyncOperation.id;
-  }
-  if (executionRecord.parent_cumulus_id) {
-    const parentExecution = await executionPgModel.get(knex, {
-      cumulus_id: executionRecord.parent_cumulus_id,
-    });
-    parentArn = parentExecution.arn;
-  }
-
+  collectionId: string | undefined,
+}): ApiExecutionRecord => {
   const postfix = executionRecord.arn.split(':').pop();
   if (!postfix) {
     throw new Error(`Execution ARN record ${executionRecord.arn} has an invalid postfix and API cannot generate the required 'name' field`);
@@ -95,14 +38,45 @@ export const translatePostgresExecutionToApiExecution = async (
     type: executionRecord.workflow_name,
     execution: executionRecord.url,
     cumulusVersion: executionRecord.cumulus_version,
-    asyncOperationId,
+    asyncOperationId: executionRecord.asyncOperationId ?? '',
     collectionId,
-    parentArn,
+    parentArn: executionRecord.parentArn ?? '',
     createdAt: executionRecord.created_at.getTime(),
     updatedAt: executionRecord.updated_at.getTime(),
     timestamp: executionRecord.timestamp?.getTime(),
   };
   return <ApiExecutionRecord>removeNilProperties(translatedRecord);
+};
+
+export const translatePostgresExecutionToApiExecution = async (
+  executionRecord: PostgresExecutionRecord,
+  knex: Knex,
+  collectionPgModel = new CollectionPgModel(),
+  asyncOperationPgModel = new AsyncOperationPgModel(),
+  executionPgModel = new ExecutionPgModel()
+): Promise<ApiExecutionRecord> => {
+  let collectionId: string | undefined = undefined;
+
+  if (executionRecord.collection_cumulus_id) {
+    const collection = await collectionPgModel.get(knex, {
+      cumulus_id: executionRecord.collection_cumulus_id,
+    });
+    collectionId = constructCollectionId(collection.name, collection.version);
+  }
+  if (executionRecord.async_operation_cumulus_id) {
+    const asyncOperation = await asyncOperationPgModel.get(knex, {
+      cumulus_id: executionRecord.async_operation_cumulus_id,
+    });
+    executionRecord.asyncOperationId = asyncOperation.id;
+  }
+  if (executionRecord.parent_cumulus_id) {
+    const parentExecution = await executionPgModel.get(knex, {
+      cumulus_id: executionRecord.parent_cumulus_id,
+    });
+    executionRecord.parentArn = parentExecution.arn;
+  }
+
+  return translatePostgresExecutionToApiExecutionWithoutDbQuery({executionRecord, collectionId});
 };
 
 /**

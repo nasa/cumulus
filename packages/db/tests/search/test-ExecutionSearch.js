@@ -93,7 +93,7 @@ test.before(async (t) => {
       final_payload: num % 2 === 0 ? {
         final: `payload__${num}`,
       } : undefined,
-      duration: t.context.duration * ((num % 2) + 1),
+      duration: num > 0 ? t.context.duration * ((num % 2) + 1) : undefined,
       async_operation_cumulus_id: num % 2 === 0 ? t.context.testAsyncOperation.cumulus_id
         : t.context.testAsyncOperation2.cumulus_id,
       parent_cumulus_id: num > 25 ? num % 25 : null,
@@ -208,18 +208,8 @@ test('ExecutionSearch supports term search for number field', async (t) => {
   };
   let dbSearch = new ExecutionSearch({ queryStringParameters });
   let response = await dbSearch.query(knex);
-  t.is(response.meta.count, 25);
-  t.is(response.results?.length, 25);
-
-  queryStringParameters = {
-    limit: 50,
-    id: 2,
-  };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
-  t.is(response.results[0]?.name, 'testExecutionName');
+  t.is(response.meta.count, 24);
+  t.is(response.results?.length, 24);
 });
 
 test('ExecutionSearch supports term search for string field', async (t) => {
@@ -235,7 +225,7 @@ test('ExecutionSearch supports term search for string field', async (t) => {
 
   queryStringParameters = {
     limit: 50,
-    workflowName: 'testWorkflow__5',
+    type: 'testWorkflow__5',
   };
   dbSearch = new ExecutionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
@@ -264,8 +254,8 @@ test('ExecutionSearch supports range search', async (t) => {
   };
   let dbSearch = new ExecutionSearch({ queryStringParameters });
   let response = await dbSearch.query(knex);
-  t.is(response.meta.count, 25);
-  t.is(response.results?.length, 25);
+  t.is(response.meta.count, 24);
+  t.is(response.results?.length, 24);
 
   /* failing in CI/ passing locally
   queryStringParameters = {
@@ -379,7 +369,7 @@ test('ExecutionSearch supports terms search', async (t) => {
 
   let queryStringParameters = {
     limit: 50,
-    workflowName__in: ['testWorkflow__1', 'testWorkflow__2'].join(','),
+    type__in: ['testWorkflow__1', 'testWorkflow__2'].join(','),
   };
   let dbSearch = new ExecutionSearch({ queryStringParameters });
   let response = await dbSearch.query(knex);
@@ -388,7 +378,7 @@ test('ExecutionSearch supports terms search', async (t) => {
 
   queryStringParameters = {
     limit: 50,
-    workflowName__in: ['testWorkflow__1', 'testWorkflow__2'].join(','),
+    type__in: ['testWorkflow__1', 'testWorkflow__2'].join(','),
     status__in: 'running',
   };
   dbSearch = new ExecutionSearch({ queryStringParameters });
@@ -422,12 +412,12 @@ test('ExecutionSearch supports search which checks existence of execution field'
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
-    finalPayload__exists: 'true',
+    duration__exists: 'true',
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 25);
-  t.is(response.results?.length, 25);
+  t.is(response.meta.count, 49);
+  t.is(response.results?.length, 49);
 });
 
 test('ExecutionSearch supports search which execution field does not match the given value', async (t) => {

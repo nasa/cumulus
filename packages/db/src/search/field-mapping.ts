@@ -151,12 +151,6 @@ const collectionMapping : { [key: string]: Function } = {
 };
 
 const executionMapping : { [key: string]: Function } = {
-  asyncOperationId: (value?: string) => ({
-    asyncOperationId: value,
-  }),
-  asyncOperationCumulusId: (value?: string) => ({
-    async_operation_cumulus_id: value,
-  }),
   arn: (value?: string) => ({
     arn: value,
   }),
@@ -165,10 +159,6 @@ const executionMapping : { [key: string]: Function } = {
   }),
   duration: (value?: string) => ({
     duration: value && Number(value),
-  }),
-  //need to take another look at this and originalPayload
-  finalPayload: (value?: string) => ({
-    final_payload: value,
   }),
   // nested error field
   'error.Error': (value?: string) => ({
@@ -180,20 +170,8 @@ const executionMapping : { [key: string]: Function } = {
   execution: (value?: string) => ({
     url: value,
   }),
-  id: (value?: string) => ({
-    cumulus_id: value,
-  }),
-  originalPayload: (value?: string) => ({
-    original_payload: value,
-  }),
-  parentCumulusId: (value?: string) => ({
-    parent_cumulus_id: value,
-  }),
-  workflowName: (value?: string) => ({
+  type: (value?: string) => ({
     workflow_name: value,
-  }),
-  url: (value?: string) => ({
-    url: value,
   }),
   status: (value?: string) => ({
     status: value,
@@ -205,6 +183,9 @@ const executionMapping : { [key: string]: Function } = {
     updated_at: value && new Date(Number(value)),
   }),
   // The following fields require querying other tables
+  asyncOperationId: (value?: string) => ({
+    asyncOperationId: value,
+  }),
   collectionId: (value?: string) => {
     const { name, version } = (value && deconstructCollectionId(value)) || {};
     return {

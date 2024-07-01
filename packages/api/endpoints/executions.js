@@ -126,7 +126,7 @@ async function update(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  log.trace(`list query ${JSON.stringify(req.query)}`);
+  log.debug(`list query ${JSON.stringify(req.query)}`);
   const search = new ExecutionSearch({ queryStringParameters: req.query });
   const response = await search.query();
   return res.send(response);

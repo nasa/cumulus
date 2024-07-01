@@ -7,6 +7,7 @@ import { translatePostgresExecutionToApiExecutionWithoutDbQuery } from '../trans
 import { PostgresExecutionRecord } from '../types/execution';
 import { TableNames } from '../tables';
 import { BaseRecord } from '../types/base';
+import { constructCollectionId } from '@cumulus/message/Collections';
 
 const log = new Logger({ sender: '@cumulus/db/ExecutionSearch' });
 
@@ -114,13 +115,12 @@ export class ExecutionSearch extends BaseSearch {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
     const results: ApiExecutionRecord[] = [];
     pgRecords.map((executionRecord) => {
-      const collectionPgRecord = {
-        name: executionRecord.collectionName ?? '',
-        version: executionRecord.collectionVersion ?? '',
-      };
+      const collectionName = executionRecord.collectionName;
+      const collectionVersion = executionRecord.collectionVersion;
+      const collectionId =  collectionName && collectionVersion ? constructCollectionId(collectionName, collectionVersion) : undefined;
       const result = translatePostgresExecutionToApiExecutionWithoutDbQuery({
         executionRecord,
-        collectionPgRecord,
+        collectionId,
       });
       return results.push(result);
     });

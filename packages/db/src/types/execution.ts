@@ -20,28 +20,9 @@ export interface PostgresExecution {
 }
 
 export interface PostgresExecutionRecord extends PostgresExecution {
+  asyncOperationId?: string;
+  parentArn?: string;
   created_at: Date,
   cumulus_id: number,
   updated_at: Date,
-}
-
-export interface PostgresSearchExecutionRecord extends PostgresExecution {
-  arn: string,
-  async_operation_cumulus_id?: number | null,
-  collection_cumulus_id?: number | null,
-  created_at?: Date | null,
-  cumulus_version?: string | null,
-  duration?: number | null,
-  error?: object | null,
-  final_payload?: object | null,
-  original_payload?: object | null,
-  parent_cumulus_id?: number | null,
-  parentArn?: string | null,
-  status?: ExecutionRecordStatus,
-  tasks?: object | null,
-  timestamp?: Date | null,
-  updated_at?: Date | null,
-  url?: string | null,
-  workflow_name?: string | null,
-  asyncOperationId?: string | null,
 }
