@@ -448,14 +448,14 @@ test('GranuleSearch supports sorting', async (t) => {
   queryStringParameters = {
     limit: 200,
     sort_by: 'timestamp',
-    order: 'asc',
+    order: 'desc',
   };
   const dbSearch2 = new GranuleSearch({ queryStringParameters });
   const response2 = await dbSearch2.query(knex);
   t.is(response2.meta.count, 100);
   t.is(response2.results?.length, 100);
-  t.true(response2.results[0].updatedAt < response2.results[99].updatedAt);
-  t.true(response2.results[1].updatedAt < response2.results[50].updatedAt);
+  t.true(response2.results[0].updatedAt > response2.results[99].updatedAt);
+  t.true(response2.results[1].updatedAt > response2.results[50].updatedAt);
 
   queryStringParameters = {
     limit: 200,

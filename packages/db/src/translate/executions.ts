@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import { Knex } from 'knex';
 
 import isNil from 'lodash/isNil';
@@ -14,36 +15,13 @@ import { ExecutionPgModel } from '../models/execution';
 import { CollectionPgModel } from '../models/collection';
 import { AsyncOperationPgModel } from '../models/async_operation';
 
-export const translatePostgresExecutionToApiExecution = async (
+export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
+  executionRecord,
+  collectionId,
+}:{
   executionRecord: PostgresExecutionRecord,
-  knex: Knex,
-  collectionPgModel = new CollectionPgModel(),
-  asyncOperationPgModel = new AsyncOperationPgModel(),
-  executionPgModel = new ExecutionPgModel()
-): Promise<ApiExecutionRecord> => {
-  let parentArn: string | undefined;
-  let collectionId: string | undefined;
-  let asyncOperationId: string | undefined;
-
-  if (executionRecord.collection_cumulus_id) {
-    const collection = await collectionPgModel.get(knex, {
-      cumulus_id: executionRecord.collection_cumulus_id,
-    });
-    collectionId = constructCollectionId(collection.name, collection.version);
-  }
-  if (executionRecord.async_operation_cumulus_id) {
-    const asyncOperation = await asyncOperationPgModel.get(knex, {
-      cumulus_id: executionRecord.async_operation_cumulus_id,
-    });
-    asyncOperationId = asyncOperation.id;
-  }
-  if (executionRecord.parent_cumulus_id) {
-    const parentExecution = await executionPgModel.get(knex, {
-      cumulus_id: executionRecord.parent_cumulus_id,
-    });
-    parentArn = parentExecution.arn;
-  }
-
+  collectionId: string | undefined,
+}): ApiExecutionRecord => {
   const postfix = executionRecord.arn.split(':').pop();
   if (!postfix) {
     throw new Error(`Execution ARN record ${executionRecord.arn} has an invalid postfix and API cannot generate the required 'name' field`);
@@ -61,14 +39,45 @@ export const translatePostgresExecutionToApiExecution = async (
     type: executionRecord.workflow_name,
     execution: executionRecord.url,
     cumulusVersion: executionRecord.cumulus_version,
-    asyncOperationId,
+    asyncOperationId: executionRecord.asyncOperationId,
     collectionId,
-    parentArn,
+    parentArn: executionRecord.parentArn,
     createdAt: executionRecord.created_at.getTime(),
     updatedAt: executionRecord.updated_at.getTime(),
     timestamp: executionRecord.timestamp?.getTime(),
   };
   return <ApiExecutionRecord>removeNilProperties(translatedRecord);
+};
+
+export const translatePostgresExecutionToApiExecution = async (
+  executionRecord: PostgresExecutionRecord,
+  knex: Knex,
+  collectionPgModel = new CollectionPgModel(),
+  asyncOperationPgModel = new AsyncOperationPgModel(),
+  executionPgModel = new ExecutionPgModel()
+): Promise<ApiExecutionRecord> => {
+  let collectionId: string | undefined;
+
+  if (executionRecord.collection_cumulus_id) {
+    const collection = await collectionPgModel.get(knex, {
+      cumulus_id: executionRecord.collection_cumulus_id,
+    });
+    collectionId = constructCollectionId(collection.name, collection.version);
+  }
+  if (executionRecord.async_operation_cumulus_id) {
+    const asyncOperation = await asyncOperationPgModel.get(knex, {
+      cumulus_id: executionRecord.async_operation_cumulus_id,
+    });
+    executionRecord.asyncOperationId = asyncOperation.id;
+  }
+  if (executionRecord.parent_cumulus_id) {
+    const parentExecution = await executionPgModel.get(knex, {
+      cumulus_id: executionRecord.parent_cumulus_id,
+    });
+    executionRecord.parentArn = parentExecution.arn;
+  }
+
+  return translatePostgresExecutionToApiExecutionWithoutDbQuery({ executionRecord, collectionId });
 };
 
 /**

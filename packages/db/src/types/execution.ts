@@ -20,6 +20,8 @@ export interface PostgresExecution {
 }
 
 export interface PostgresExecutionRecord extends PostgresExecution {
+  asyncOperationId?: string;
+  parentArn?: string;
   created_at: Date,
   cumulus_id: number,
   updated_at: Date,

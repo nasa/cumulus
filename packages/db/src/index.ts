@@ -142,6 +142,9 @@ export {
   BaseSearch,
 } from './search/BaseSearch';
 export {
+  ExecutionSearch,
+} from './search/ExecutionSearch';
+export {
   GranuleSearch,
 } from './search/GranuleSearch';
 export {
