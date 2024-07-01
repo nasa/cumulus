@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import { Knex } from 'knex';
 
 import isNil from 'lodash/isNil';
@@ -55,7 +56,7 @@ export const translatePostgresExecutionToApiExecution = async (
   asyncOperationPgModel = new AsyncOperationPgModel(),
   executionPgModel = new ExecutionPgModel()
 ): Promise<ApiExecutionRecord> => {
-  let collectionId: string | undefined = undefined;
+  let collectionId: string | undefined;
 
   if (executionRecord.collection_cumulus_id) {
     const collection = await collectionPgModel.get(knex, {
@@ -76,7 +77,7 @@ export const translatePostgresExecutionToApiExecution = async (
     executionRecord.parentArn = parentExecution.arn;
   }
 
-  return translatePostgresExecutionToApiExecutionWithoutDbQuery({executionRecord, collectionId});
+  return translatePostgresExecutionToApiExecutionWithoutDbQuery({ executionRecord, collectionId });
 };
 
 /**

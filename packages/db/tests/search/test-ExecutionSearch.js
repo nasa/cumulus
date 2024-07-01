@@ -202,12 +202,12 @@ test('ExecutionSearch supports asyncOperationId term search', async (t) => {
 
 test('ExecutionSearch supports term search for number field', async (t) => {
   const { knex } = t.context;
-  let queryStringParameters = {
+  const queryStringParameters = {
     limit: 50,
     duration: 100,
   };
-  let dbSearch = new ExecutionSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
   t.is(response.meta.count, 24);
   t.is(response.results?.length, 24);
 });
@@ -257,7 +257,6 @@ test('ExecutionSearch supports range search', async (t) => {
   t.is(response.meta.count, 24);
   t.is(response.results?.length, 24);
 
-  /* failing in CI/ passing locally
   queryStringParameters = {
     limit: 200,
     timestamp__from: `${t.context.testTimeStamp2}`,
@@ -266,7 +265,7 @@ test('ExecutionSearch supports range search', async (t) => {
   dbSearch = new ExecutionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
   t.is(response.meta.count, 38);
-  t.is(response.results?.length, 38);*/
+  t.is(response.results?.length, 38);
 
   queryStringParameters = {
     limit: 200,
@@ -432,7 +431,6 @@ test('ExecutionSearch supports search which execution field does not match the g
   t.is(response.results?.length, 33);
 });
 
-/* failing in CI/ passing locally
 test('ExecutionSearch supports term search for timestamp', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
@@ -445,7 +443,6 @@ test('ExecutionSearch supports term search for timestamp', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-/* failing in CI/ passing locally
 test('ExecutionSearch supports term search for date field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
@@ -456,4 +453,4 @@ test('ExecutionSearch supports term search for date field', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
-});*/
+});

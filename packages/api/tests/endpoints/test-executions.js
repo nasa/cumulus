@@ -349,7 +349,7 @@ test.serial('GET executions returns list of executions by default', async (t) =>
 test.serial('executions can be filtered by workflow', async (t) => {
   const response = await request(app)
     .get('/executions')
-    .query({ workflowName: 'workflow2' })
+    .query({ type: 'workflow2' })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
