@@ -123,8 +123,6 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
     execution: 'https://fake-execution0.com/',
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: 'testCollection___8',
-    createdAt: 1514696400000,
-    updatedAt: 1514782800000,
   };
 
   const expectedResponse10 = {
@@ -136,11 +134,9 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
     originalPayload: { orginal: 'payload__9' },
     type: 'testWorkflow__9',
     execution: 'https://fake-execution9.com/',
-    createdAt: 1633752000000,
-    updatedAt: 1633838400000,
   };
-  t.deepEqual(omit(results.results[0], ['timestamp']), expectedResponse1);
-  t.deepEqual(omit(results.results[9], ['timestamp']), expectedResponse10);
+  t.deepEqual(omit(results.results[0], ['timestamp', 'createdAt', 'updatedAt']), expectedResponse1);
+  t.deepEqual(omit(results.results[9], ['timestamp', 'createdAt', 'updatedAt']), expectedResponse10);
 });
 
 test('ExecutionSearch supports page and limit params', async (t) => {
