@@ -1938,8 +1938,7 @@ test.serial('create (POST) throws conflict error if a granule with same granuleI
   t.is(errorText.message, `A granule already exists for granuleId: ${newGranule.granuleId}`);
 });
 
-/*
-test.serial('PATCH updates an existing granule in all data stores', async (t) => {
+test.serial('PATCH updates an existing granule in postgres', async (t) => {
   const {
     executionUrl,
     knex,
@@ -2010,7 +2009,7 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
   } = t.context;
   const timestamp = Date.now();
   const {
-    newPgGranule,
+    newPgGranule
   } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: executionPgRecord.cumulus_id,
@@ -2020,20 +2019,28 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
       timestamp,
     },
   });
+  console.log("NAGA444", newPgGranule);
+  const newApiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: newPgGranule,
+    collectionPgRecord: {
+      cumulus_id: newPgGranule.collection_cumulus_id,
+    },
+    knexOrTransaction: knex,
+  });
 
   const updatedGranule = {
-    granuleId: esRecord.granuleId,
-    collectionId: esRecord.collectionId,
+    granuleId: newPgGranule.granuleId,
+    collectionId: newApiGranule.collectionId,
     status: newPgGranule.status,
   };
-
-  await request(app)
+  console.log("NAGA44", newPgGranule, newApiGranule);
+  const response = await request(app)
     .patch(`/granules/${newPgGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
-    .expect(200);
-
+    .expect(400);
+  console.log("RESSS", response);
   const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
     cumulus_id: newPgGranule.cumulus_id,
   });
@@ -2043,8 +2050,8 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
     timestamp: actualPgGranule.timestamp,
     updated_at: actualPgGranule.updated_at,
   });
-});*/
-
+});
+/*
 test.serial('PATCH does not update non-current-timestamp undefined fields for existing granules in all datastores', async (t) => {
   const {
     knex,

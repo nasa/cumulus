@@ -35,6 +35,7 @@ const startAsyncOperation = require('../lib/startAsyncOperation');
 const {
   createGranuleFromApi,
   updateGranuleStatusToQueued,
+  updateGranuleFromApi,
   writeGranuleRecordAndPublishSns,
 } = require('../lib/writeRecords/write-granules');
 const {
@@ -199,11 +200,12 @@ const create = async (req, res) => {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
-const patchGranule = async (req, res) => {
+ const patchGranule = async (req, res) => {
   const {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
+    updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
   let apiGranule = req.body || {};
   let pgCollection;
@@ -267,6 +269,7 @@ const patchGranule = async (req, res) => {
     if (isNewRecord) {
       apiGranule = _setNewGranuleDefaults(apiGranule, isNewRecord);
     }
+    await updateGranuleFromApiMethod(apiGranule, knex);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
@@ -483,7 +486,7 @@ async function patchByGranuleId(req, res) {
     granulePgModel = new GranulePgModel(),
     knex = await getKnexClient(),
   } = req.testContext || {};
-
+  console.log("HELLLLLLLLOOOOO NAGA2");
   const body = req.body;
   const action = body.action;
 
