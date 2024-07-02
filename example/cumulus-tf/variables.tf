@@ -362,7 +362,7 @@ variable "cumulus_process_activity_version" {
 variable "ecs_task_image_version" {
   description = "docker image version to use for Cumulus hello world task"
     type = string
-    default = "2.1.0-alpha"
+    default = "2.1.0"
 }
 
 variable "cumulus_test_ingest_image_version" {
