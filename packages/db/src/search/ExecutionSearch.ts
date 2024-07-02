@@ -14,6 +14,8 @@ const log = new Logger({ sender: '@cumulus/db/ExecutionSearch' });
 interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
   collectionName?: string,
   collectionVersion?: string,
+  asyncOperationId?: string;
+  parentArn?: string;
 }
 
 /**
@@ -30,9 +32,9 @@ export class ExecutionSearch extends BaseSearch {
    * @returns whether collection search is needed
    */
   protected searchAsync(): boolean {
-    const { not, term, terms } = this.dbQueryParameters;
-    return !!(not?.asyncOperationId ||
-       term?.asyncOperationId || terms?.asyncOperationId);
+    const { not, term, terms, includeFullRecord } = this.dbQueryParameters;
+    return includeFullRecord || (!!(not?.asyncOperationId ||
+       term?.asyncOperationId || terms?.asyncOperationId));
   }
 
   /**
@@ -41,9 +43,9 @@ export class ExecutionSearch extends BaseSearch {
    * @returns whether collection search is needed
    */
   protected searchParent(): boolean {
-    const { not, term, terms } = this.dbQueryParameters;
-    return !!(not?.parentArn ||
-      term?.parentArn || terms?.parentArn);
+    const { not, term, terms, includeFullRecord } = this.dbQueryParameters;
+    return includeFullRecord || (!!(not?.parentArn ||
+      term?.parentArn || terms?.parentArn));
   }
 
   /**
@@ -60,6 +62,7 @@ export class ExecutionSearch extends BaseSearch {
     const {
       collections: collectionsTable,
       asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
     } = TableNames;
 
     const searchQuery = knex(`${this.tableName} as ${this.tableName}`)
@@ -68,6 +71,7 @@ export class ExecutionSearch extends BaseSearch {
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
         asyncOperationId: `${asyncOperationsTable}.id`,
+        parentArn: `${executionsTable}_parent.arn`,
       });
 
     const countQuery = knex(this.tableName)
@@ -88,6 +92,9 @@ export class ExecutionSearch extends BaseSearch {
     }
 
     if (this.searchParent()) {
+      countQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
+      searchQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
+    } else {
       searchQuery.leftJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
     }
     return { countQuery, searchQuery };
@@ -129,12 +136,14 @@ export class ExecutionSearch extends BaseSearch {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
     const results: ApiExecutionRecord[] = [];
     pgRecords.map((executionRecord) => {
-      const name = executionRecord.collectionName;
-      const version = executionRecord.collectionVersion;
-      const collectionId = name && version ? constructCollectionId(name, version) : undefined;
+      const { collectionName, collectionVersion, asyncOperationId, parentArn } = executionRecord;
+      const collectionId = collectionName && collectionVersion ?
+        constructCollectionId(collectionName, collectionVersion) : undefined;
       const result = translatePostgresExecutionToApiExecutionWithoutDbQuery({
         executionRecord,
         collectionId,
+        asyncOperationId,
+        parentArn,
       });
       return results.push(result);
     });

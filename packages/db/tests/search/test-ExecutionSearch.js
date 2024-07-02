@@ -123,6 +123,8 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
     execution: 'https://fake-execution0.com/',
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: 'testCollection___8',
+    createdAt: 1514696400000,
+    updatedAt: 1514782800000,
   };
 
   const expectedResponse10 = {
@@ -134,9 +136,11 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
     originalPayload: { orginal: 'payload__9' },
     type: 'testWorkflow__9',
     execution: 'https://fake-execution9.com/',
+    createdAt: 1633752000000,
+    updatedAt: 1633838400000,
   };
-  t.deepEqual(omit(results.results[0], ['timestamp', 'createdAt', 'updatedAt']), expectedResponse1);
-  t.deepEqual(omit(results.results[9], ['timestamp', 'createdAt', 'updatedAt']), expectedResponse10);
+  t.deepEqual(omit(results.results[0], ['timestamp']), expectedResponse1);
+  t.deepEqual(omit(results.results[9], ['timestamp']), expectedResponse10);
 });
 
 test('ExecutionSearch supports page and limit params', async (t) => {
@@ -393,6 +397,35 @@ test('ExecutionSearch supports terms search', async (t) => {
   t.is(response.results?.length, 1);
 });
 
+test('ExecutionSearch supports parentArn term search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    parentArn: 'fakeArn__21:fakeExecutionName',
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  const expectedResponse = {
+    name: 'testExecutionName',
+    status: 'completed',
+    arn: 'testArn__46:testExecutionName',
+    duration: 100,
+    error: { Error: 'CumulusMessageAdapterError' },
+    originalPayload: { orginal: 'payload__46' },
+    finalPayload: { final: 'payload__46' },
+    type: 'testWorkflow__46',
+    execution: 'https://fake-execution46.com/',
+    asyncOperationId: t.context.testAsyncOperation.id,
+    collectionId: 'testCollection___8',
+    parentArn: 'fakeArn__21:fakeExecutionName',
+    createdAt: 1668574800000,
+    updatedAt: 1668747600000,
+  };
+
+  t.is(response.meta.count, 1);
+  t.is(response.results?.length, 1);
+  t.deepEqual(omit(response.results[0], ['timestamp']), expectedResponse);
+});
+
 test('ExecutionSearch supports error.Error terms search', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
@@ -438,27 +471,14 @@ test('ExecutionSearch supports search which execution field does not match the g
   t.is(response.results?.length, 33);
 });
 
-test('ExecutionSearch supports parentArn term search', async (t) => {
-  const { knex } = t.context;
-  const queryStringParameters = {
-    limit: 50,
-    parentArn: 'fakeArn__21:fakeExecutionName',
-  };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
-});
-
-/* failing on CI but passing locally, temporarily commenting out
 test('ExecutionSearch supports term search for timestamp', async (t) => {
   const { knex } = t.context;
-  const queryStringParameters = {
+  let queryStringParameters = {
     limit: 50,
     timestamp: `${t.context.testTimeStamp2}`,
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  let dbSearch = new ExecutionSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
   queryStringParameters = {
@@ -482,4 +502,4 @@ test('ExecutionSearch supports term search for date field', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
-});*/
+});

@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import { Knex } from 'knex';
 
 import isNil from 'lodash/isNil';
@@ -18,9 +17,13 @@ import { AsyncOperationPgModel } from '../models/async_operation';
 export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
   executionRecord,
   collectionId,
+  asyncOperationId,
+  parentArn,
 }:{
   executionRecord: PostgresExecutionRecord,
   collectionId: string | undefined,
+  asyncOperationId: string | undefined,
+  parentArn: string | undefined,
 }): ApiExecutionRecord => {
   const postfix = executionRecord.arn.split(':').pop();
   if (!postfix) {
@@ -39,9 +42,9 @@ export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
     type: executionRecord.workflow_name,
     execution: executionRecord.url,
     cumulusVersion: executionRecord.cumulus_version,
-    asyncOperationId: executionRecord.asyncOperationId,
+    asyncOperationId,
     collectionId,
-    parentArn: executionRecord.parentArn,
+    parentArn,
     createdAt: executionRecord.created_at.getTime(),
     updatedAt: executionRecord.updated_at.getTime(),
     timestamp: executionRecord.timestamp?.getTime(),
@@ -57,6 +60,8 @@ export const translatePostgresExecutionToApiExecution = async (
   executionPgModel = new ExecutionPgModel()
 ): Promise<ApiExecutionRecord> => {
   let collectionId: string | undefined;
+  let asyncOperationId: string | undefined;
+  let parentArn: string | undefined;
 
   if (executionRecord.collection_cumulus_id) {
     const collection = await collectionPgModel.get(knex, {
@@ -68,16 +73,21 @@ export const translatePostgresExecutionToApiExecution = async (
     const asyncOperation = await asyncOperationPgModel.get(knex, {
       cumulus_id: executionRecord.async_operation_cumulus_id,
     });
-    executionRecord.asyncOperationId = asyncOperation.id;
+    asyncOperationId = asyncOperation.id;
   }
   if (executionRecord.parent_cumulus_id) {
     const parentExecution = await executionPgModel.get(knex, {
       cumulus_id: executionRecord.parent_cumulus_id,
     });
-    executionRecord.parentArn = parentExecution.arn;
+    parentArn = parentExecution.arn;
   }
 
-  return translatePostgresExecutionToApiExecutionWithoutDbQuery({ executionRecord, collectionId });
+  return translatePostgresExecutionToApiExecutionWithoutDbQuery({
+    executionRecord,
+    collectionId,
+    asyncOperationId,
+    parentArn,
+  });
 };
 
 /**
