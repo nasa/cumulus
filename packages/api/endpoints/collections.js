@@ -26,7 +26,6 @@ const {
   indexCollection,
   deleteCollection,
 } = require('@cumulus/es-client/indexer');
-const Collection = require('@cumulus/es-client/collections');
 const {
   publishCollectionCreateSnsMessage,
   publishCollectionDeleteSnsMessage,
@@ -46,7 +45,7 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  log.trace(`list query ${JSON.stringify(req.query)}`);
+  log.debug(`list query ${JSON.stringify(req.query)}`);
   const { getMMT, ...queryStringParameters } = req.query;
   const dbSearch = new CollectionSearch(
     { queryStringParameters }
@@ -68,15 +67,10 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function activeList(req, res) {
-  const { getMMT, includeStats, ...queryStringParameters } = req.query;
-
-  const collection = new Collection(
-    { queryStringParameters },
-    undefined,
-    process.env.ES_INDEX,
-    includeStats === 'true'
-  );
-  let result = await collection.queryCollectionsWithActiveGranules();
+  log.debug(`activeList query ${JSON.stringify(req.query)}`);
+  const { getMMT, ...queryStringParameters } = req.query;
+  const dbSearch = new CollectionSearch({ queryStringParameters: { active: 'true', ...queryStringParameters } });
+  let result = await dbSearch.query();
   if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }

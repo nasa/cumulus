@@ -23,6 +23,9 @@ const granuleMapping: { [key: string]: Function } = {
   granuleId: (value?: string) => ({
     granule_id: value,
   }),
+  _id: (value?: string) => ({
+    granule_id: value,
+  }),
   lastUpdateDateTime: (value?: string) => ({
     last_update_date_time: value,
   }),
@@ -82,7 +85,6 @@ const granuleMapping: { [key: string]: Function } = {
   }),
 };
 
-// TODO add and verify all queryable fields for the following record types
 const asyncOperationMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
@@ -124,6 +126,15 @@ const collectionMapping : { [key: string]: Function } = {
       collectionVersion: version,
     };
   },
+  duplicateHandling: (value?: string) => ({
+    duplicate_handling: value,
+  }),
+  granuleId: (value?: string) => ({
+    granule_id_validation_regex: value,
+  }),
+  granuleIdExtraction: (value?: string) => ({
+    granule_id_extraction_regex: value,
+  }),
   timestamp: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
   }),
@@ -139,11 +150,12 @@ const collectionMapping : { [key: string]: Function } = {
   sampleFileName: (value?: string) => ({
     sample_file_name: value,
   }),
-  urlPath: (value?: string) => ({
+  url_path: (value?: string) => ({
     url_path: value,
   }),
 };
 
+// TODO add and verify all queryable fields for the following record types
 const executionMapping : { [key: string]: Function } = {
   arn: (value?: string) => ({
     arn: value,
