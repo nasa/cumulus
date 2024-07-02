@@ -119,6 +119,7 @@ export class CollectionSearch extends BaseSearch {
         subQuery.where(`${granulesTable}.${name}`, '<=', rangeValues.lte);
       }
     });
+    subQuery.limit(1);
 
     [countQuery, searchQuery].forEach((query) => query.whereExists(subQuery));
   }
