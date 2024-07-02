@@ -18,7 +18,7 @@ The following procedures detail how this upgrade may be performed:
 
 ### Reasoning
 
-This index is required to support effective deletion of records given query analysis implies the same table foreign-key constraint results in table scan to enforce the constraint for each deletion.
+This index is required to support effective deletion of records. Our query analysis implies the same table foreign-key constraint results in a slow table scan to enforce the constraint for each deletion.
 
 ### Procedure
 
