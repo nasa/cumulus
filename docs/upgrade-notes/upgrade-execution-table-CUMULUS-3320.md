@@ -98,7 +98,7 @@ To do this, use the following query:
 CREATE INDEX executions_collection_cumulus_id_index ON executions(collection_cumulus_id)
 ```
 
-The required index can also be created while the database is in use prior to installing the upgrade containing CUMULUS-3320 by running the following query:
+The required index can also be created while the database is in use *prior to installing the upgrade containing CUMULUS-3320* by running the following query:
 
 ```sql
 CREATE INDEX CONCURRENTLY executions_collection_cumulus_id_index ON executions(collection_cumulus_id)
