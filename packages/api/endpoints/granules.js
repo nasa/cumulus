@@ -101,7 +101,7 @@ function _createNewGranuleDateValue() {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  log.trace(`list query ${JSON.stringify(req.query)}`);
+  log.debug(`list query ${JSON.stringify(req.query)}`);
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
 
   const dbSearch = new GranuleSearch({ queryStringParameters });

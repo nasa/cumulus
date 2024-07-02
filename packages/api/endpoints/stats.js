@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
