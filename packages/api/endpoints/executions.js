@@ -322,7 +322,7 @@ async function workflowsByGranules(req, res) {
  */
 async function bulkDeleteExecutionsByCollection(req, res) {
   const invokeStartAsyncOperationLambda =
-    req.testObject.invokeStartAsyncOperationLambda ||
+    req?.testObject?.invokeStartAsyncOperationLambda ||
     startAsyncOperation.invokeStartAsyncOperationLambda;
   const payload = parseBulkDeletePayload(req.body);
   if (isError(payload)) {
