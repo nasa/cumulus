@@ -38,8 +38,8 @@ locals {
   elasticsearch_security_group_id = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_security_group_id", "")
   protected_bucket_names          = [for k, v in var.buckets : v.name if v.type == "protected"]
   public_bucket_names             = [for k, v in var.buckets : v.name if v.type == "public"]
-  rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
-  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
+  rds_security_group              = var.rds_security_group
+  rds_credentials_secret_arn      = var.rds_admin_access_secret_arn
 
   vpc_id     = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
   subnet_ids = length(var.lambda_subnet_ids) > 0 ? var.lambda_subnet_ids : data.aws_subnets.subnet_ids[0].ids
