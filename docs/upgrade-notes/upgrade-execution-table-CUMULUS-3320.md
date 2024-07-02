@@ -48,7 +48,7 @@ CREATE INDEX executions_parent_cumulus_id_index ON executions(parent_cumulus_id)
 
 ##### Create index concurrently/with ongoing:
 
-The required index can also be created while the database is in use prior to installing the upgrade containing CUMULUS-3320 by running the following query:
+The required index can also be created while the database is in use *prior to installing the upgrade containing CUMULUS-3320* by running the following query:
 
 ```sql
 CREATE INDEX CONCURRENTLY executions_parent_cumulus_id_index ON executions(parent_cumulus_id)'
