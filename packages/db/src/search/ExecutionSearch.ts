@@ -32,8 +32,8 @@ export class ExecutionSearch extends BaseSearch {
    * @returns whether collection search is needed
    */
   protected searchAsync(): boolean {
-    const { not, term, terms, includeFullRecord } = this.dbQueryParameters;
-    return includeFullRecord || (!!(not?.asyncOperationId ||
+    const { not, term, terms } = this.dbQueryParameters;
+    return (!!(not?.asyncOperationId ||
        term?.asyncOperationId || terms?.asyncOperationId));
   }
 
@@ -43,8 +43,8 @@ export class ExecutionSearch extends BaseSearch {
    * @returns whether collection search is needed
    */
   protected searchParent(): boolean {
-    const { not, term, terms, includeFullRecord } = this.dbQueryParameters;
-    return includeFullRecord || (!!(not?.parentArn ||
+    const { not, term, terms } = this.dbQueryParameters;
+    return (!!(not?.parentArn ||
       term?.parentArn || terms?.parentArn));
   }
 

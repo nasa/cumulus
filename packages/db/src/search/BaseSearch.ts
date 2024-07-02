@@ -54,8 +54,8 @@ class BaseSearch {
    * @returns whether collection search is needed
    */
   protected searchCollection(): boolean {
-    const { not, term, terms, includeFullRecord } = this.dbQueryParameters;
-    return includeFullRecord || !!(not?.collectionName
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.collectionName
       || not?.collectionVersion
       || term?.collectionName
       || term?.collectionVersion
@@ -69,8 +69,8 @@ class BaseSearch {
    * @returns whether pdr search is needed
    */
   protected searchPdr(): boolean {
-    const { not, term, terms, includeFullRecord } = this.dbQueryParameters;
-    return includeFullRecord || !!(not?.pdrName || term?.pdrName || terms?.pdrName);
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.pdrName || term?.pdrName || terms?.pdrName);
   }
 
   /**
@@ -79,8 +79,8 @@ class BaseSearch {
    * @returns whether provider search is needed
    */
   protected searchProvider(): boolean {
-    const { not, term, terms, includeFullRecord } = this.dbQueryParameters;
-    return includeFullRecord || !!(not?.providerName || term?.providerName || terms?.providerName);
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.providerName || term?.providerName || terms?.providerName);
   }
 
   /**
