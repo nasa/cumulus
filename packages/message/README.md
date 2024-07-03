@@ -47,21 +47,9 @@ the collectionId used in elasticsearch indexing</p>
 <dt><a href="#exp_module_Collections--getCollectionIdFromMessage">getCollectionIdFromMessage(message)</a> ⇒ <code>string</code> | <code>undefined</code> ⏏</dt>
 <dd><p>Get collection ID from execution message.</p>
 </dd>
-<dt><a href="#isCumulusMessageLike">isCumulusMessageLike()</a></dt>
-<dd><p>Bare check for CumulusMessage Shape</p>
-</dd>
-<dt><a href="#isDLQRecordLike">isDLQRecordLike()</a></dt>
-<dd><p>Bare check for SQS message Shape</p>
-</dd>
-<dt><a href="#unwrapDeadLetterCumulusMessage">unwrapDeadLetterCumulusMessage()</a></dt>
+<dt><a href="#unwrapDeadLetterCumulusMessage">unwrapDeadLetterCumulusMessage(messageBody)</a> ⇒ <code>Object</code></dt>
 <dd><p>Unwrap dead letter Cumulus message, which may be wrapped in a
 States cloudwatch event, which is wrapped in an SQS message.</p>
-</dd>
-<dt><a href="#extractSQSMetadata">extractSQSMetadata(message)</a> ⇒</dt>
-<dd><p>peel out metadata from an SQS(/DLQ)record</p>
-</dd>
-<dt><a href="#hoistCumulusMessageDetails">hoistCumulusMessageDetails()</a></dt>
-<dd><p>Reformat object with key attributes at top level.</p>
 </dd>
 <dt><a href="#exp_module_PDRs--getMessagePdr">getMessagePdr(message)</a> ⇒ <code>undefined</code> | <code>Object</code> ⏏</dt>
 <dd><p>Get the PDR object from a workflow message, if any.</p>
@@ -102,11 +90,11 @@ States cloudwatch event, which is wrapped in an SQS message.</p>
 <dt><a href="#exp_module_Providers--getMessageProviderId">getMessageProviderId(message)</a> ⇒ <code>undefined</code> | <code>string</code> ⏏</dt>
 <dd><p>Get the provider ID from a workflow message, if any.</p>
 </dd>
-<dt><a href="#exp_module_StepFunctions--pullStepFunctionEvent">pullStepFunctionEvent(event)</a> ⇒ <code>Promise.&lt;object&gt;</code> ⏏</dt>
+<dt><a href="#exp_module_StepFunctions--pullStepFunctionEvent">pullStepFunctionEvent(event)</a> ⇒ <code>Promise.&lt;Object&gt;</code> ⏏</dt>
 <dd><p>Given a Step Function event, replace specified key in event with contents
 of S3 remote message</p>
 </dd>
-<dt><a href="#exp_module_StepFunctions--parseStepMessage">parseStepMessage(stepMessage, stepName)</a> ⇒ <code>Promise.&lt;object&gt;</code> ⏏</dt>
+<dt><a href="#exp_module_StepFunctions--parseStepMessage">parseStepMessage(stepMessage, stepName)</a> ⇒ <code>Promise.&lt;Object&gt;</code> ⏏</dt>
 <dd><p>Parse step message with CMA keys and replace specified key in event with contents
 of S3 remote message</p>
 </dd>
@@ -115,7 +103,7 @@ of S3 remote message</p>
 the failed task Id.  HistoryEvent ids are numbered sequentially, starting at
 one.</p>
 </dd>
-<dt><a href="#lastFailedEventStep">lastFailedEventStep(events)</a> ⇒ <code>Array.&lt;HistoryEvent&gt;</code> | <code>undefined</code></dt>
+<dt><a href="#lastFailedEventStep">lastFailedEventStep(events)</a> ⇒ <code>HistoryEventList</code> | <code>undefined</code></dt>
 <dd><p>Finds all failed execution events and returns the last one in the list.</p>
 </dd>
 <dt><a href="#getFailedExecutionMessage">getFailedExecutionMessage(inputCumulusMessage, getExecutionHistoryFunction)</a> ⇒ <code>Object</code></dt>
@@ -498,43 +486,19 @@ Determine if there is a queue and queue execution limit in the message.
 | --- | --- | --- |
 | message | <code>MessageWithQueueInfo</code> | A workflow message object |
 
-<a name="isCumulusMessageLike"></a>
-
-### isCumulusMessageLike()
-Bare check for CumulusMessage Shape
-
-**Kind**: global function  
-<a name="isDLQRecordLike"></a>
-
-### isDLQRecordLike()
-Bare check for SQS message Shape
-
-**Kind**: global function  
 <a name="unwrapDeadLetterCumulusMessage"></a>
 
-### unwrapDeadLetterCumulusMessage()
+### unwrapDeadLetterCumulusMessage(messageBody) ⇒ <code>Object</code>
 Unwrap dead letter Cumulus message, which may be wrapped in a
 States cloudwatch event, which is wrapped in an SQS message.
 
 **Kind**: global function  
-<a name="extractSQSMetadata"></a>
+**Returns**: <code>Object</code> - the cumulus message or nearest available object  
 
-### extractSQSMetadata(message) ⇒
-peel out metadata from an SQS(/DLQ)record
+| Param | Type | Description |
+| --- | --- | --- |
+| messageBody | <code>Object</code> | received SQS message |
 
-**Kind**: global function  
-**Returns**: the given message without its body  
-
-| Param | Description |
-| --- | --- |
-| message | DLQ or SQS message |
-
-<a name="hoistCumulusMessageDetails"></a>
-
-### hoistCumulusMessageDetails()
-Reformat object with key attributes at top level.
-
-**Kind**: global function  
 <a name="getFailedStepName"></a>
 
 ### getFailedStepName(events, failedStepEvent) ⇒ <code>string</code>
@@ -548,21 +512,20 @@ one.
 | Param | Type | Description |
 | --- | --- | --- |
 | events | <code>Array.&lt;HistoryEvent&gt;</code> | Step Function events array |
-| failedStepEvent | <code>failedStepEvent</code> | Step Function's failed event. |
-| failedStepEvent.id |  | number (long), Step Functions failed event id. |
+| failedStepEvent | <code>HistoryEvent</code> | Step Function's failed event. |
 
 <a name="lastFailedEventStep"></a>
 
-### lastFailedEventStep(events) ⇒ <code>Array.&lt;HistoryEvent&gt;</code> \| <code>undefined</code>
+### lastFailedEventStep(events) ⇒ <code>HistoryEventList</code> \| <code>undefined</code>
 Finds all failed execution events and returns the last one in the list.
 
 **Kind**: global function  
-**Returns**: <code>Array.&lt;HistoryEvent&gt;</code> \| <code>undefined</code> - - the last lambda or activity that failed in the
+**Returns**: <code>HistoryEventList</code> \| <code>undefined</code> - - the last lambda or activity that failed in the
 event array, or an empty array.  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| events | <code>Array.&lt;HistoryEvent&gt;</code> | array of AWS Stepfunction execution HistoryEvents |
+| events | <code>Array.&lt;HistoryEventList&gt;</code> | array of AWS Stepfunction execution HistoryEvents |
 
 <a name="getFailedExecutionMessage"></a>
 

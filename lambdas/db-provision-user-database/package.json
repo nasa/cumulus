@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/db-provision-user-database-lambda",
-  "version": "18.3.0",
+  "version": "18.2.0",
   "description": "A Lambda function used for provisioning user databases",
   "engines": {
     "node": ">=20.12.2"
@@ -29,8 +29,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.447.0",
-    "@cumulus/common": "18.3.0",
-    "@cumulus/db": "18.3.0",
+    "@cumulus/common": "18.2.0",
+    "@cumulus/db": "18.2.0",
     "knex": "2.4.1",
     "pg": "~8.10"
   },
