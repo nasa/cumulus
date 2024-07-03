@@ -98,7 +98,7 @@ class BaseSearch {
     this.buildTermQuery({ countQuery, searchQuery });
     this.buildTermsQuery({ countQuery, searchQuery });
     this.buildNotMatchQuery({ countQuery, searchQuery });
-    this.buildRangeQuery({ countQuery, searchQuery });
+    this.buildRangeQuery({ knex, countQuery, searchQuery });
     this.buildExistsQuery({ countQuery, searchQuery });
     this.buildInfixPrefixQuery({ countQuery, searchQuery });
     this.buildSortQuery({ searchQuery });
@@ -206,11 +206,13 @@ class BaseSearch {
    * Build queries for range fields
    *
    * @param params
+   * @param params.knex - db client
    * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildRangeQuery(params: {
+    knex?: Knex,
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -447,13 +449,12 @@ class BaseSearch {
     const knex = testKnex ?? await getKnexClient();
     const { countQuery, searchQuery } = this.buildSearch(knex);
     try {
-      const countResult = await countQuery;
+      const [countResult, pgRecords] = await Promise.all([countQuery, searchQuery]);
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;
       meta.page = this.dbQueryParameters.page;
       meta.count = Number(countResult[0]?.count ?? 0);
 
-      const pgRecords = await searchQuery;
       const apiRecords = await this.translatePostgresRecordsToApiRecords(pgRecords, knex);
 
       return {
