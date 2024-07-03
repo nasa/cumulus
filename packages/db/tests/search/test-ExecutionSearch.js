@@ -301,6 +301,19 @@ test('ExecutionSearch non-existing fields are ignored', async (t) => {
   t.is(response.results?.length, 50);
 });
 
+test('ExecutionSearch returns fields specified', async (t) => {
+  const { knex } = t.context;
+  const fields = 'status,arn,type,error';
+  const queryStringParameters = {
+    fields,
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 10);
+  response.results.forEach((execution) => t.deepEqual(Object.keys(execution), fields.split(',')));
+});
+
 test('ExecutionSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {

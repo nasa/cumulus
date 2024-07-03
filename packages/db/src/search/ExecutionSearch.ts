@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
+import pick from 'lodash/pick';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { ApiExecutionRecord } from '@cumulus/types/api/executions';
 import { BaseSearch } from './BaseSearch';
@@ -12,6 +13,7 @@ import { BaseRecord } from '../types/base';
 const log = new Logger({ sender: '@cumulus/db/ExecutionSearch' });
 
 interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
+  arn: string,
   collectionName?: string,
   collectionVersion?: string,
   asyncOperationId?: string;
@@ -71,8 +73,11 @@ export class ExecutionSearch extends BaseSearch {
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
         asyncOperationId: `${asyncOperationsTable}.id`,
-        parentArn: `${executionsTable}_parent.arn`,
       });
+
+    if (this.searchParent() || this.dbQueryParameters.includeFullRecord) {
+      searchQuery.select({ parentArn: `${executionsTable}_parent.arn` });
+    }
 
     const countQuery = knex(this.tableName)
       .count(`${this.tableName}.cumulus_id`);
@@ -94,7 +99,7 @@ export class ExecutionSearch extends BaseSearch {
     if (this.searchParent()) {
       countQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
       searchQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
-    } else {
+    } else if (this.dbQueryParameters.includeFullRecord) {
       searchQuery.leftJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
     }
     return { countQuery, searchQuery };
@@ -132,21 +137,22 @@ export class ExecutionSearch extends BaseSearch {
    * @returns translated api records
    */
   protected translatePostgresRecordsToApiRecords(pgRecords: ExecutionRecord[])
-    : Partial<ApiExecutionRecord[]> {
+    : Partial<ApiExecutionRecord>[] {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
-    const results: ApiExecutionRecord[] = [];
-    pgRecords.map((executionRecord) => {
+    const apiRecords = pgRecords.map((executionRecord: ExecutionRecord) => {
       const { collectionName, collectionVersion, asyncOperationId, parentArn } = executionRecord;
       const collectionId = collectionName && collectionVersion ?
         constructCollectionId(collectionName, collectionVersion) : undefined;
-      const result = translatePostgresExecutionToApiExecutionWithoutDbQuery({
+      const apiRecord = translatePostgresExecutionToApiExecutionWithoutDbQuery({
         executionRecord,
         collectionId,
         asyncOperationId,
         parentArn,
       });
-      return results.push(result);
+      return this.dbQueryParameters.fields
+        ? pick(apiRecord, this.dbQueryParameters.fields)
+        : apiRecord;
     });
-    return results;
+    return apiRecords;
   }
 }
