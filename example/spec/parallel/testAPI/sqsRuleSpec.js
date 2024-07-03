@@ -95,6 +95,12 @@ async function cleanUp() {
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
   const collection = collectionResult[0];
 
+  await Promise.all(inputPayload.granules.map(
+    (granule) => deleteGranule({ prefix: config.stackName,
+      granuleId: granule.granuleId,
+      collectionId: constructCollectionId(collection.name, collection.version) })
+  ));
+
   await apiTestUtils.deletePdr({
     prefix: config.stackName,
     pdr: pdrFilename,
@@ -119,12 +125,6 @@ async function cleanUp() {
       console.error(`Error processing execution with ARN ${execution.arn}:`, error);
     }
   }));
-
-  await Promise.all(inputPayload.granules.map(
-    (granule) => deleteGranule({ prefix: config.stackName,
-      granuleId: granule.granuleId,
-      collectionId: constructCollectionId(collection.name, collection.version) })
-  ));
 
   await Promise.all([
     deleteS3Object(config.bucket, key),
