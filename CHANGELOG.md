@@ -4,9 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
-
-## [v18.3.0] 2024-06-14
+## [Unreleased]
 
 ### Migration Notes
 
@@ -58,6 +56,11 @@ output or status of your request. If you want to directly observe the progress
 of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
+#### CUMULUS-3779 async_operations Docker image version upgrade
+  
+The `async_operations` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users will need to bump
+the version tag of `async_operations` to at least 52 if using the Docker image.
+
 ### Breaking Changes
 
 - **CUMULUS-3618**
@@ -92,6 +95,9 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 - **CUMULUS-2897**
   - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
     from the `@cumulus/aws-client` package.
+- **CUMULUS-3779**
+  - Updates async_operations Docker image to Node v20 and bumps its cumulus dependencies to v18.3.0 to
+    support `aws-sdk` v3 changes.
 
 ### Added
 
@@ -203,6 +209,10 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     credentialing timeout in long-running ECS jobs.
 - **CUMULUS-3323**
   - Minor edits to errant integration test titles (dyanmo->postgres)
+- **AWS-SDK v3 Exclusion (v18.3.0 fix)***
+  - Excludes aws-sdk v3 from packages to reduce overall package size. With the requirement of Node v20
+    packaging the aws-sdk v3 with our code is no longer necessary and prevented some packages from being
+    published to npm.
 
 ## [v18.2.2] 2024-06-4
 
@@ -7814,8 +7824,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.3.0...HEAD
-[v18.3.0]: https://github.com/nasa/cumulus/compare/v18.2.2...v18.3.0
+[Unreleased]: https://github.com/nasa/cumulus/compare/v18.2.2...HEAD
 [v18.2.2]: https://github.com/nasa/cumulus/compare/v18.2.1...v18.2.2
 [v18.2.1]: https://github.com/nasa/cumulus/compare/v18.2.0...v18.2.1
 [v18.2.0]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.2.0
