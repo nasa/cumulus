@@ -102,13 +102,17 @@ async function cleanUp() {
       collectionId: constructCollectionId(collection.name, collection.version),
     },
   })).body).results;
-  await Promise.all(executions.map(
-    (execution) => waitForCompletedExecution(execution.arn)
-      .then(pRetry(
+  await Promise.all(executions.map(async (execution) => {
+    try {
+      await waitForCompletedExecution(execution.arn);
+      await pRetry(
         () => deleteExecution({ prefix: config.stackName, executionArn: execution.arn }),
         { retries: 5 }
-      ))
-  ));
+      );
+    } catch (error) {
+      console.error(`Error processing execution with ARN ${execution.arn}:`, error);
+    }
+  }));
 
   await Promise.all(inputPayload.granules.map(
     (granule) => deleteGranule({ prefix: config.stackName,
