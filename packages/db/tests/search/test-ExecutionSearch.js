@@ -3,7 +3,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
-const omit = require('lodash/omit');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { ExecutionSearch } = require('../../dist/search/ExecutionSearch');
 
@@ -46,16 +45,16 @@ test.before(async (t) => {
     t.context.testPgCollection
   );
 
-  t.context.CumulusId1 = t.context.testPgCollection.cumulus_id;
+  t.context.collectionCumulusId = t.context.testPgCollection.cumulus_id;
 
-  t.context.collectionId1 = constructCollectionId(
+  t.context.collectionId = constructCollectionId(
     t.context.testPgCollection.name,
     t.context.testPgCollection.version
   );
 
   t.context.asyncOperationsPgModel = new AsyncOperationPgModel();
   t.context.testAsyncOperation = fakeAsyncOperationRecordFactory({ cumulus_id: 140 });
-  t.context.asyncCumulusId1 = t.context.testAsyncOperation.cumulus_id;
+  t.context.asyncCumulusId = t.context.testAsyncOperation.cumulus_id;
 
   await t.context.asyncOperationsPgModel.insert(
     t.context.knex,
@@ -67,16 +66,13 @@ test.before(async (t) => {
   const executions = [];
   t.context.executionPgModel = new ExecutionPgModel();
 
-  t.context.testTimeStamp1 = '1633406400000';
-  t.context.testTimeStamp2 = '1550725200000';
-  t.context.testTimeStamp3 = '1800725210000';
   range(50).map((num) => (
     executions.push(fakeExecutionRecordFactory({
-      collection_cumulus_id: num % 2 === 0 ? t.context.CumulusId1 : undefined,
+      collection_cumulus_id: num % 2 === 0 ? t.context.collectionCumulusId : undefined,
       status: statuses[(num % 3) + 1],
       error: errors[num % 5],
-      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
-      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
+      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))),
+      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
       workflow_name: `testWorkflow__${num}`,
       arn: num % 2 === 0 ? `testArn__${num}:testExecutionName` : `fakeArn__${num}:fakeExecutionName`,
       url: `https://fake-execution${num}.com/`,
@@ -87,10 +83,11 @@ test.before(async (t) => {
         final: `payload__${num}`,
       } : undefined,
       duration: num > 0 ? t.context.duration * ((num % 2) + 1) : undefined,
-      async_operation_cumulus_id: num % 2 === 0 ? t.context.testAsyncOperation.cumulus_id
+      async_operation_cumulus_id: num % 2 === 0 ? t.context.asyncCumulusId
         : undefined,
       parent_cumulus_id: num > 25 ? num % 25 : undefined,
       cumulus_id: num,
+      timestamp: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
     }))
   ));
   await t.context.executionPgModel.insert(
@@ -123,8 +120,9 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
     execution: 'https://fake-execution0.com/',
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: 'testCollection___8',
-    createdAt: 1514696400000,
-    updatedAt: 1514782800000,
+    createdAt: new Date(2017, 11, 31).getTime(),
+    updatedAt: new Date(2018, 0, 1).getTime(),
+    timestamp: new Date(2018, 0, 1).getTime(),
   };
 
   const expectedResponse10 = {
@@ -136,11 +134,12 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
     originalPayload: { orginal: 'payload__9' },
     type: 'testWorkflow__9',
     execution: 'https://fake-execution9.com/',
-    createdAt: 1633752000000,
-    updatedAt: 1633838400000,
+    createdAt: new Date(2021, 9, 9).getTime(),
+    updatedAt: new Date(2021, 9, 10).getTime(),
+    timestamp: new Date(2021, 9, 10).getTime(),
   };
-  t.deepEqual(omit(results.results[0], ['timestamp']), expectedResponse1);
-  t.deepEqual(omit(results.results[9], ['timestamp']), expectedResponse10);
+  t.deepEqual(results.results[0], expectedResponse1);
+  t.deepEqual(results.results[9], expectedResponse10);
 });
 
 test('ExecutionSearch supports page and limit params', async (t) => {
@@ -201,7 +200,7 @@ test('ExecutionSearch supports collectionId term search', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
-    collectionId: t.context.collectionId1,
+    collectionId: t.context.collectionId,
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -412,11 +411,11 @@ test('ExecutionSearch supports terms search', async (t) => {
 
 test('ExecutionSearch supports parentArn term search', async (t) => {
   const { knex } = t.context;
-  const queryStringParameters = {
+  let queryStringParameters = {
     parentArn: 'fakeArn__21:fakeExecutionName',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  let dbSearch = new ExecutionSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
   const expectedResponse = {
     name: 'testExecutionName',
     status: 'completed',
@@ -430,13 +429,38 @@ test('ExecutionSearch supports parentArn term search', async (t) => {
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: 'testCollection___8',
     parentArn: 'fakeArn__21:fakeExecutionName',
-    createdAt: 1668574800000,
-    updatedAt: 1668747600000,
+    createdAt: new Date(2022, 10, 16).getTime(),
+    updatedAt: new Date(2022, 10, 18).getTime(),
+    timestamp: new Date(2022, 10, 18).getTime(),
   };
 
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
-  t.deepEqual(omit(response.results[0], ['timestamp']), expectedResponse);
+  t.deepEqual(response.results[0], expectedResponse);
+  queryStringParameters = {
+    limit: 50,
+    parentArn__exists: 'true',
+  };
+  dbSearch = new ExecutionSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 24);
+  t.is(response.results?.length, 24);
+  queryStringParameters = {
+    limit: 50,
+    parentArn__in: ['fakeArn__21:fakeExecutionName', 'testArn__22:testExecutionName'].join(','),
+  };
+  dbSearch = new ExecutionSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 2);
+  t.is(response.results?.length, 2);
+  queryStringParameters = {
+    limit: 50,
+    parentArn__not: 'testArn__2:testExecutionName',
+  };
+  dbSearch = new ExecutionSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 23);
+  t.is(response.results?.length, 23);
 });
 
 test('ExecutionSearch supports error.Error terms search', async (t) => {
@@ -488,7 +512,7 @@ test('ExecutionSearch supports term search for timestamp', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 50,
-    timestamp: `${t.context.testTimeStamp2}`,
+    timestamp: `${(new Date(2023, 11, 7)).getTime()}`,
   };
   let dbSearch = new ExecutionSearch({ queryStringParameters });
   let response = await dbSearch.query(knex);
@@ -496,23 +520,38 @@ test('ExecutionSearch supports term search for timestamp', async (t) => {
   t.is(response.results?.length, 1);
   queryStringParameters = {
     limit: 200,
-    timestamp__from: `${t.context.testTimeStamp2}`,
-    timestamp__to: `${t.context.testTimeStamp3}`,
+    timestamp__from: `${(new Date(2019, 2, 21)).getTime()}`,
+    timestamp__to: `${(new Date(2027, 1, 23)).getTime()}`,
   };
   dbSearch = new ExecutionSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
-  t.is(response.meta.count, 38);
-  t.is(response.results?.length, 38);
+  t.is(response.meta.count, 36);
+  t.is(response.results?.length, 36);
 });
 
 test('ExecutionSearch supports term search for date field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
-    updatedAt: `${t.context.testTimeStamp1}`,
+    updatedAt: `${new Date(2018, 0, 20).getTime()}`,
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
+});
+
+test('ExecutionSearch includeFullRecord', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 50,
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+  t.true('parentArn' in response.results[40]);
+  t.true('collectionId' in response.results[40]);
+  t.true('asyncOperationId' in response.results[40]);
 });

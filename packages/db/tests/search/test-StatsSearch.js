@@ -66,8 +66,8 @@ test.before(async (t) => {
       collection_cumulus_id: num % 20,
       granule_id: num % 2 === 0 ? `testGranule${num}` : `query__Granule${num}`,
       status: statuses[num % 4],
-      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
-      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
+      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))),
+      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
       error: errors[num % 5],
       duration: num + (num / 10),
       provider_cumulus_id: num % 10,
@@ -79,16 +79,16 @@ test.before(async (t) => {
       collection_cumulus_id: num,
       status: statuses[(num % 3) + 1],
       provider_cumulus_id: num % 10,
-      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
-      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
+      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))),
+      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
     // eslint-disable-next-line no-sequences
     })),
     executions.push(fakeExecutionRecordFactory({
       collection_cumulus_id: num,
       status: statuses[(num % 3) + 1],
       error: errors[num % 5],
-      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
-      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
+      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))),
+      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
     }))
   ));
 
