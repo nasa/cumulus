@@ -54,7 +54,6 @@ test.beforeEach((t) => {
 
 test('sender defaults to "unknown"', (t) => {
   const { testConsole } = t.context;
-
   const logger = new Logger({ console: testConsole });
 
   logger.info('hello');
@@ -76,7 +75,6 @@ test('Logger.info() accepts placeholder arguments', (t) => {
 
 test('Logger.info() creates the expected log entry', (t) => {
   const { testConsole } = t.context;
-
   const logger = new Logger({ console: testConsole, sender: 'my-sender' });
 
   logger.info('hello');

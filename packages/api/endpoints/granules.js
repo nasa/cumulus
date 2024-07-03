@@ -12,6 +12,7 @@ const { v4: uuidv4 } = require('uuid');
 const Logger = require('@cumulus/logger');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { GranuleSearch } = require('@cumulus/db');
 
 const {
   CollectionPgModel,
@@ -31,7 +32,6 @@ const {
   recordNotFoundString,
   multipleRecordFoundString,
 } = require('@cumulus/es-client/search');
-const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
@@ -101,19 +101,12 @@ function _createNewGranuleDateValue() {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
+  log.debug(`list query ${JSON.stringify(req.query)}`);
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
 
-  let es;
-  if (queryStringParameters.searchContext) {
-    es = new ESSearchAfter(
-      { queryStringParameters },
-      'granule',
-      process.env.ES_INDEX
-    );
-  } else {
-    es = new Search({ queryStringParameters }, 'granule', process.env.ES_INDEX);
-  }
-  const result = await es.query();
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const result = await dbSearch.query();
+
   if (getRecoveryStatus === 'true') {
     return res.send(await addOrcaRecoveryStatus(result));
   }

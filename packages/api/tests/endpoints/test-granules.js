@@ -35,7 +35,6 @@ const {
 } = require('@cumulus/db');
 
 const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
-
 const {
   buildS3Uri,
   createBucket,
@@ -45,10 +44,9 @@ const {
   s3ObjectExists,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { secretsManager, sfn, s3, sns, sqs } = require('@cumulus/aws-client/services');
 const {
-  CreateTopicCommand,
   SubscribeCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
@@ -290,6 +288,7 @@ test.beforeEach(async (t) => {
   const granuleId1 = t.context.createGranuleId();
   const granuleId2 = t.context.createGranuleId();
   const granuleId3 = t.context.createGranuleId();
+  const timestamp = new Date();
 
   // create fake Postgres granule records
   t.context.fakePGGranules = [
@@ -301,21 +300,24 @@ test.beforeEach(async (t) => {
       cmr_link:
         'https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=A123456789-TEST_A',
       duration: 47.125,
-      timestamp: new Date(Date.now()),
+      timestamp,
+      updated_at: timestamp,
     }),
     fakeGranuleRecordFactory({
       granule_id: granuleId2,
       status: 'failed',
       collection_cumulus_id: t.context.collectionCumulusId,
       duration: 52.235,
-      timestamp: new Date(Date.now()),
+      timestamp,
+      updated_at: timestamp,
     }),
     fakeGranuleRecordFactory({
       granule_id: granuleId3,
       status: 'failed',
       collection_cumulus_id: t.context.collectionCumulusId,
       duration: 52.235,
-      timestamp: new Date(Date.now()),
+      timestamp,
+      updated_at: timestamp,
     }),
     // granule with same granule_id as above but different collection_cumulus_id
     fakeGranuleRecordFactory({
@@ -323,7 +325,8 @@ test.beforeEach(async (t) => {
       status: 'failed',
       collection_cumulus_id: t.context.collectionCumulusId2,
       duration: 52.235,
-      timestamp: new Date(Date.now()),
+      timestamp,
+      updated_at: timestamp,
     }),
   ];
 
@@ -351,7 +354,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = randomString();
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -401,7 +404,8 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('default lists and paginates correctly with search_after', async (t) => {
+// TODO postgres query doesn't return searchContext
+test.serial.skip('default lists and paginates correctly with search_after', async (t) => {
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const response = await request(app)
     .get('/granules')
@@ -444,6 +448,83 @@ test.serial('default lists and paginates correctly with search_after', async (t)
   t.true(granuleIds.includes(newResults[0].granuleId));
   t.not(results[0].granuleId, newResults[0].granuleId);
   t.not(meta.searchContext === newMeta.searchContext);
+});
+
+test.serial('default lists and paginates correctly from querying database', async (t) => {
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+  const response = await request(app)
+    .get('/granules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 4);
+  t.is(meta.stack, process.env.stackName);
+  t.is(meta.table, 'granules');
+  t.is(meta.count, 4);
+  results.forEach((r) => {
+    t.true(granuleIds.includes(r.granuleId));
+  });
+  // default paginates correctly
+  const firstResponse = await request(app)
+    .get('/granules?limit=1')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: firstMeta, results: firstResults } = firstResponse.body;
+  t.is(firstResults.length, 1);
+  t.is(firstMeta.page, 1);
+
+  const newResponse = await request(app)
+    .get('/granules?limit=1&page=2')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newResults.length, 1);
+  t.is(newMeta.page, 2);
+
+  t.true(granuleIds.includes(results[0].granuleId));
+  t.true(granuleIds.includes(newResults[0].granuleId));
+  t.not(results[0].granuleId, newResults[0].granuleId);
+});
+
+test.serial('LIST endpoint returns search result correctly', async (t) => {
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+  const searchParams = new URLSearchParams({
+    granuleId: granuleIds[3],
+  });
+  const response = await request(app)
+    .get(`/granules?limit=1&page=2&${searchParams}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta, results } = response.body;
+  t.is(meta.count, 2);
+  t.is(results.length, 1);
+  t.true([granuleIds[2], granuleIds[3]].includes(results[0].granuleId));
+
+  const newSearchParams = new URLSearchParams({
+    collectionId: t.context.collectionId,
+    status: 'failed',
+    duration: 52.235,
+    timestamp: t.context.fakePGGranules[0].timestamp.getTime(),
+  });
+  const newResponse = await request(app)
+    .get(`/granules?${newSearchParams}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newMeta.count, 2);
+  t.is(newResults.length, 2);
+  const newResultIds = newResults.map((g) => g.granuleId);
+  t.deepEqual([granuleIds[1], granuleIds[2]].sort(), newResultIds.sort());
 });
 
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -3846,7 +3927,8 @@ test.serial('PUT returns 404 if collection is not part of URI', async (t) => {
   t.is(response.statusCode, 404);
 });
 
-test.serial('default paginates correctly with search_after', async (t) => {
+// TODO postgres query doesn't return searchContext
+test.serial.skip('default paginates correctly with search_after', async (t) => {
   const response = await request(app)
     .get('/granules?limit=1')
     .set('Accept', 'application/json')

@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Replace ElasticSearch Phase 1
+
+- **CUMULUS-3639**
+ - Updated `/collections/active` endpoint to query postgres
+- **CUMULUS-3699**
+ - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
+- **CUMULUS-3641**
+ - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
+- **CUMULUS-3695**
+ - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
+- **CUMULUS-3688**
+ - Updated `stats` api endpoint to query postgres instead of elasticsearch
+- **CUMULUS-3689**
+ - Updated `stats/aggregate` api endpoint to query postgres instead of elasticsearch
+ - Created a new StatsSearch class for querying postgres with the stats endpoint
+- **CUMULUS-3692**
+  - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
+    support basic queries for granules
+  - Updated granules List endpoint to query postgres for basic queries
+- **CUMULUS-3693**
+  - Added functionality to `@cumulus/db/src/search` to support range queries
+- **CUMULUS-3694**
+  - Added functionality to `@cumulus/db/src/search` to support term queries
+  - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
+  - Updated granules List endpoint to search postgres
+- **CUMULUS-3696**
+  - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
+
 ### Migration Notes
 
 #### CUMULUS-3433 Update to node.js v20
@@ -24,7 +52,7 @@ The following applies only to users with a custom value configured for
   Users making use of a custom image configuration should note the base image
   for Core async operations must support node v20.x.
 
-#### CUMULUS-3449 Please follow instructions before upgrading Cumulus.
+#### CUMULUS-3449 Please follow instructions before upgrading Cumulus
 
 - The updates in CUMULUS-3449 requires manual update to postgres database in
   production environment. Please follow [Update Cumulus_id Type and
@@ -105,7 +133,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     to granules table
 
 ### Added
-
+- **CUMULUS-3742**
+  - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
@@ -113,8 +142,20 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 - **CUMULUS-3433**
   - Added `importGot` helper method to import `got` as an ESM module in
     CommmonJS typescript/webpack clients.
+- **CUMULUS-3606**
+  - Updated  with additional documentation covering tunneling configuration
+    using a PKCS11 provider
 
 ### Changed
+
+- **CUMULUS-3735**
+  - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
+- **CUMULUS-3746**
+  - cicd unit test error log changed to environment unique name
+- **CUMULUS-3717**
+  - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
+- **CUMULUS-3720**
+  - add cicd unit test error logging to s3 for testing improvements
 - **CUMULUS-3433**
   - Updated all node.js lambda dependencies to node 20.x/20.12.2
   - Modified `@cumulus/ingest` unit test HTTPs server to accept localhost POST
@@ -179,8 +220,6 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     from columns ending with "cumulus_id" to number.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
-- **CUMULUS-3527**
-  - Added suppport for additional kex algorithms in the sftp-client.
 - **CUMULUS-3610**
   - Updated `aws-client`'s ES client to use AWS SDK v3.
 - **CUMULUS-3617**
@@ -189,6 +228,13 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Fixed
 
+- **CUMULUS-3715**
+  - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
+    flags to knex custom code
+- **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
+- **CUMULUS-3701**
+  - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
 - **CUMULUS-3618**
   - Fixed `@cumulus/es-client` credentialing issue in instance where
     lambda/Fargate task runtime would exceed the timeout for the es-client. Added retry/credential
@@ -198,18 +244,55 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     credentialing timeout in long-running ECS jobs.
 - **CUMULUS-3323**
   - Minor edits to errant integration test titles (dyanmo->postgres)
+
+## [v18.2.2] 2024-06-4
+
+### Migration Notes
+
+#### CUMULUS-3591 - SNS topics set to use encrypted storage
+
+As part of the requirements for this ticket Cumulus Core created SNS topics are
+being updated to use server-side encryption with an AWS managed key.    No user
+action is required, this note is being added to increase visibility re: this
+modification.
+
+### Changed
+
+- **CUMULUS-3591**
+  - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
+  - Update all integration/unit tests to use encrypted SNS topics
+
+### Fixed
+
+- **CUMULUS-3547**
+  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
+- **CUMULUS-3527**
+  - Added suppport for additional kex algorithms in the sftp-client.
 - **CUMULUS-3587**
   - Ported https://github.com/scottcorgan/express-boom into API/lib to allow
     updates of sub-dependencies and maintain without refactoring errors in
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
 - **CUMULUS-3673**
-  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.  
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.
 - **Audit Issues**
   - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
     updating babel packages and .babelrc
 
-## [v18.2.0] 2023-02-02
+## [v18.2.1] 2024-05-08
+
+**Please note** changes in 18.2.1 may not yet be released in future versions, as this
+is a backport/patch release on the 18.2.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Fixed
+
+- **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
+- **CUMULUS-3701**
+  - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
+
+## [v18.2.0] 2024-02-02
 
 ### Migration Notes
 
@@ -282,8 +365,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - stubbed cmr interfaces in integration tests allow integration tests to pass
   - needed while cmr is failing to continue needed releases and progress
   - this change should be reverted ASAP when cmr is working as needed again
-- **CUMULUS-3547**
-  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
 
 ### Fixed
 
@@ -7776,7 +7857,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.2.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.2.2...HEAD
+[v18.2.2]: https://github.com/nasa/cumulus/compare/v18.2.1...v18.2.2
+[v18.2.1]: https://github.com/nasa/cumulus/compare/v18.2.0...v18.2.1
 [v18.2.0]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.2.0
 [v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
