@@ -200,7 +200,7 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction -
  *  DB client or transaction
- * @param {Array<Object>} executions - array ocollectionCumulusIdf executions
+ * @param {Array<Object>} executions - array of executions
  * @param {Object} [executionPgModel] - Execution PG model class instance
  * @returns {Promise<number[]>}
  */

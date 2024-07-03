@@ -1,6 +1,5 @@
 //@ts-check
 
-const get = require('lodash/get');
 const pMap = require('p-map');
 
 const Logger = require('@cumulus/logger');
@@ -20,7 +19,8 @@ const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { updateGranuleStatusToQueued } = require('../lib/writeRecords/write-granules');
 const { getGranulesForPayload } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
-const { batchDeleteExecutionsFromDatastore } = require('../lib/executions');
+const { batchDeleteExecutions } = require('../lib/executions');
+const { setEnvVarsForOperation } = require('../lib/utils');
 
 const log = new Logger({ sender: '@cumulus/bulk-operation' });
 
@@ -258,15 +258,6 @@ async function bulkGranuleReingest(
   );
 }
 
-function setEnvVarsForOperation(event) {
-  const envVars = get(event, 'envVars', {});
-  Object.keys(envVars).forEach((envVarKey) => {
-    if (!process.env[envVarKey]) {
-      process.env[envVarKey] = envVars[envVarKey];
-    }
-  });
-}
-
 /**
  * Handles various bulk operations based on the event type.
  *
@@ -293,13 +284,10 @@ async function handler(event) {
     return await bulkGranuleDelete(event.payload);
   }
   if (event.type === 'BULK_GRANULE_REINGEST') {
-    if (!event.reingestHandler) {
-      throw new TypeError('reingestHandler is required for BULK_GRANULE_REINGEST');
-    }
     return await bulkGranuleReingest(event.payload, event.reingestHandler);
   }
   if (event.type === 'BULK_EXECUTION_DELETE') {
-    return await batchDeleteExecutionsFromDatastore(event.payload);
+    return await batchDeleteExecutions(event.payload);
   }
   // throw an appropriate error here
   throw new TypeError(`Type ${event.type} could not be matched, no operation attempted.`);

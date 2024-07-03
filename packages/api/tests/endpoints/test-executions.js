@@ -1733,7 +1733,7 @@ test.serial('bulkDeleteExecutionsByCollection calls invokeStartAsyncOperationLam
   const req = {
     testObject: { invokeStartAsyncOperationLambda },
     body: {
-      collectionId: 'testCollectionId',
+      collectionId: 'FOOBAR___006',
       esBatchSize: 50000,
       dbBatchSize: 60000,
     },
@@ -1746,23 +1746,62 @@ test.serial('bulkDeleteExecutionsByCollection calls invokeStartAsyncOperationLam
     },
   };
 
-  const envVars = {
-    ES_HOST: process.env.ES_HOST,
-    KNEX_DEBUG: 'false',
-    stackName: process.env.stackName,
-    system_bucket: process.env.system_bucket,
+  await bulkDeleteExecutionsByCollection(req, res);
+
+  t.true(invokeStartAsyncOperationLambda.calledOnce);
+  const callArgs = invokeStartAsyncOperationLambda.getCall(0).args[0];
+  const expected = {
+    ...callArgs,
+    cluster: process.env.EcsCluster,
+    payload: {
+      envVars: callArgs.payload.envVars,
+      type: 'BULK_EXECUTION_DELETE',
+      payload: {
+        collectionId: req.body.collectionId,
+        esBatchSize: req.body.esBatchSize,
+        dbBatchSize: req.body.dbBatchSize,
+      },
+    },
+  };
+  t.deepEqual(callArgs, expected);
+});
+
+test.serial('bulkDeleteExecutionsByCollection calls invokeStartAsyncOperationLambda with expected object given batch size params are optionally using strings', async (t) => {
+  const invokeStartAsyncOperationLambda = sinon.stub();
+  process.env.EcsCluster = 'testCluster';
+  process.env.BulkOperationLambda = 'testBulkOperationLambda';
+  const req = {
+    testObject: { invokeStartAsyncOperationLambda },
+    body: {
+      collectionId: 'FOOBAR___006',
+      esBatchSize: '50000',
+      dbBatchSize: '60000',
+    },
+  };
+  const res = {
+    status: sinon.stub().returnsThis(),
+    send: sinon.stub(),
+    boom: {
+      badRequest: sinon.stub(),
+    },
   };
 
   await bulkDeleteExecutionsByCollection(req, res);
 
   t.true(invokeStartAsyncOperationLambda.calledOnce);
   const callArgs = invokeStartAsyncOperationLambda.getCall(0).args[0];
-  t.is(callArgs.asyncOperationId.length, 36);
-  t.is(callArgs.cluster, process.env.EcsCluster);
-  t.is(callArgs.lambdaName, process.env.BulkOperationLambda);
-  t.is(callArgs.description, 'Bulk Execution Deletion by CollectionId');
-  t.is(callArgs.operationType, 'Bulk Execution Delete');
-  t.is(callArgs.payload.type, 'BULK_EXECUTION_DELETE');
-  t.deepEqual(callArgs.payload.envVars, envVars);
-  t.deepEqual(callArgs.payload.payload, req.body);
+  const expected = {
+    ...callArgs,
+    cluster: process.env.EcsCluster,
+    payload: {
+      envVars: callArgs.payload.envVars,
+      type: 'BULK_EXECUTION_DELETE',
+      payload: {
+        collectionId: req.body.collectionId,
+        esBatchSize: Number(req.body.esBatchSize),
+        dbBatchSize: Number(req.body.dbBatchSize),
+      },
+    },
+  };
+  t.deepEqual(callArgs, expected);
 });

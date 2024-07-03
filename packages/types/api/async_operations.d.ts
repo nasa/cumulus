@@ -17,12 +17,12 @@ export type AsyncOperationType =
   | 'SQS Replay';
 
 export interface ApiAsyncOperation {
-  id: string;
-  description: string;
-  operationType: AsyncOperationType;
-  status: AsyncOperationStatus;
-  taskArn?: string;
-  output?: string;
-  createdAt?: number;
-  updatedAt?: number;
+  id: string,
+  description: string,
+  operationType: AsyncOperationType,
+  status: AsyncOperationStatus,
+  taskArn?: string,
+  output?: string,
+  createdAt?: number,
+  updatedAt?: number,
 }

@@ -35,8 +35,26 @@ const { validateGranuleExecutionRequest, getFunctionNameFromRequestContext } = r
 const log = new Logger({ sender: '@cumulus/api/executions' });
 
 const BulkExecutionDeletePayloadSchema = z.object({
-  esBatchSize: z.number().int().positive().optional(),
-  dbBatchSize: z.number().int().positive().optional(),
+  esBatchSize: z.union([
+    z.string().transform((val) => {
+      const num = Number(val);
+      if (Number.isNaN(num)) {
+        throw new TypeError('Invalid number');
+      }
+      return num;
+    }),
+    z.number(),
+  ]).pipe(z.number().int().positive().optional()),
+  dbBatchSize: z.union([
+    z.string().transform((val) => {
+      const num = Number(val);
+      if (Number.isNaN(num)) {
+        throw new TypeError('Invalid number');
+      }
+      return num;
+    }),
+    z.number(),
+  ]).pipe(z.number().int().positive().optional()),
   knexDebug: z.boolean().optional(),
   collectionId: z.string(),
 }).catchall(z.unknown());
@@ -291,7 +309,10 @@ async function workflowsByGranules(req, res) {
  * @param {Object} req - The request object.
  * @param {Object} req.params - The request parameters.
  * @param {Object} req.body - The request body.
- * @param {number|string} [req.body.batchSize=5000] - The number of records to delete in each batch.
+ * @param {number|string} [req.body.esBatchSize=10000] - The number of records to delete
+ * in each batch
+ * @param {number|string} [req.body.dbBatchSize=10000] - The number of records to delete
+ * in each batch.
  * @param {string} req.body.collectionId - The CollectionID to delete execution records for.
  * @param {string} [req.body.knexDebug=false] - Boolean to enabled Knex Debugging for the request
  * @param {Object} [req.testObject] - Object to allow for dependency injection in tests
@@ -301,7 +322,7 @@ async function workflowsByGranules(req, res) {
  */
 async function bulkDeleteExecutionsByCollection(req, res) {
   const invokeStartAsyncOperationLambda =
-    req.testObject.invokeStartAsyncOperationLambda ||
+    req?.testObject?.invokeStartAsyncOperationLambda ||
     startAsyncOperation.invokeStartAsyncOperationLambda;
   const payload = parseBulkDeletePayload(req.body);
   if (isError(payload)) {

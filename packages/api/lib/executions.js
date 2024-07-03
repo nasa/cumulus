@@ -4,7 +4,7 @@ const pRetry = require('p-retry');
 
 const isNumber = require('lodash/isNumber');
 
-const { newestExecutionArnFromGranuleIdWorkflowName, CollectionPgModel } = require('@cumulus/db');
+const { newestExecutionArnFromGranuleIdWorkflowName } = require('@cumulus/db');
 const {
   getKnexClient,
   batchDeleteExecutionFromDatabaseByCumulusCollectionId,
@@ -12,13 +12,14 @@ const {
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { batchDeleteExecutionsByCollection } = require('@cumulus/es-client/executions');
 const { defaultIndexAlias } = require('@cumulus/es-client/search');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: '@cumulus/api/lib/executions' });
+
+const { getCollectionCumulusId } = require('./writeRecords/utils');
 
 /**
 * @typedef { typeof StepFunctions } StepFunctions
@@ -90,37 +91,6 @@ async function describeGranuleExecution(executionArn, stepFunctionUtils = StepFu
 }
 
 /**
- * Retrieves the Cumulus ID of a collection from the Postgres database.
- *
- * @param {Knex | KnexTransaction} knex - The Knex client object for interacting with the database.
- * @param {string} apiCollection - The collection object from the API.
- * @returns {Promise<number>} A promise that resolves to the cumulus_id of the collection.
- * @throws {Error} Throws an error if the collection could not be found in the database.
- */
-const _getCollectionCumulusId = async (knex, apiCollection) => {
-  const collectionId = deconstructCollectionId(apiCollection);
-  const collectionPgModel = new CollectionPgModel();
-
-  log.info(`Querying name: ${collectionId.name}, version: ${collectionId.version}`);
-  try {
-    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(knex, {
-      name: collectionId.name,
-      version: collectionId.version,
-    });
-    if (!isNumber(collectionCumulusId)) {
-      throw new Error(`Internal Error: Collection ID ${collectionCumulusId} is not a number`);
-    }
-    log.info(`Collection ID: ${JSON.stringify(collectionCumulusId)}`);
-    return collectionCumulusId;
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      log.error(`Collection ${collectionId.name} version ${collectionId.version} not found in database`);
-    }
-    throw error;
-  }
-};
-
-/**
  * Deletes execution records from the RDS database using
  * batchDeleteExecutionFromDatabaseByCumulusCollectionId.
  *
@@ -132,7 +102,7 @@ const _getCollectionCumulusId = async (knex, apiCollection) => {
  * @returns {Promise<number>} A promise that resolves to the number of records deleted.
  * @throws {Error} Throws an error if deletion fails.
  */
-const _deleteRdsExecutionsFromDatabase = async ({
+const _deleteRdsExecutions = async ({
   knex,
   collectionCumulusId,
   batchSize,
@@ -169,7 +139,7 @@ const _deleteRdsExecutionsFromDatabase = async ({
  * @param {string} event.dbBatchSize - the batch size to delete from the database
  * @returns {Promise<void>}
  */
-const batchDeleteExecutionsFromDatastore = async (event) => {
+const batchDeleteExecutions = async (event) => {
   const knex = await getKnexClient();
 
   const collectionId = event.collectionId;
@@ -192,13 +162,19 @@ const batchDeleteExecutionsFromDatastore = async (event) => {
   log.info(
     `Starting deletion of executions records from RDS for collection ${collectionId}, batch size ${event.dbBatchSize}`
   );
-  const collectionCumulusId = await _getCollectionCumulusId(knex, collectionId);
+  const collectionCumulusId = await getCollectionCumulusId(
+    deconstructCollectionId(collectionId),
+    knex
+  );
+  if (!isNumber(collectionCumulusId)) {
+    throw new Error(`Internal Error: Collection ID ${collectionCumulusId} is not a number`);
+  }
   let executionResults = 0;
 
   // Delete executions from the database in batches
   do {
     // eslint-disable-next-line no-await-in-loop
-    executionResults = await _deleteRdsExecutionsFromDatabase({
+    executionResults = await _deleteRdsExecutions({
       knex,
       collectionCumulusId,
       batchSize: dbBatchSize,
@@ -208,7 +184,7 @@ const batchDeleteExecutionsFromDatastore = async (event) => {
 };
 
 module.exports = {
-  batchDeleteExecutionsFromDatastore,
+  batchDeleteExecutions,
   chooseTargetExecution,
   describeGranuleExecution,
 };
