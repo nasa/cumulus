@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
+const pRetry = require('p-retry');
 
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
@@ -103,7 +104,10 @@ async function cleanUp() {
   })).body).results;
   await Promise.all(executions.map(
     (execution) => waitForCompletedExecution(execution.arn)
-      .then(deleteExecution({ prefix: config.stackName, executionArn: execution.arn }))
+      .then(pRetry(
+        () => deleteExecution({ prefix: config.stackName, executionArn: execution.arn }),
+        { retries: 5 }
+      ))
   ));
 
   await Promise.all(inputPayload.granules.map(
