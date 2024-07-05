@@ -4,7 +4,7 @@ set -ex
 . ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
-. ./bamboo/abort-if-skip-integration-tests.sh
+# . ./bamboo/abort-if-skip-integration-tests.sh
 
 if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   ## If this flag is set, we want to use the output of the 'publish' stage
