@@ -149,9 +149,8 @@ test.before(async (t) => {
   );
 
   t.context.fakePGExecutions = await Promise.all(fakeExecutions.map(async (execution) => {
-    const omitExecution = omit(execution, ['asyncOperationId', 'parentArn']);
     const executionPgRecord = await translateApiExecutionToPostgresExecution(
-      omitExecution,
+      execution,
       t.context.knex
     );
     const [pgExecution] = await t.context.executionPgModel.create(
@@ -336,11 +335,10 @@ test.serial('GET executions returns list of executions by default', async (t) =>
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
   const { meta, results } = response.body;
   t.is(results.length, 3);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'execution');
+  t.is(meta.table, 'executions');
   t.is(meta.count, 3);
   const arns = fakeExecutions.map((i) => i.arn);
   results.forEach((r) => {
@@ -359,14 +357,15 @@ test.serial('executions can be filtered by workflow', async (t) => {
   const { meta, results } = response.body;
   t.is(results.length, 1);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'execution');
+  t.is(meta.table, 'executions');
   t.is(meta.count, 1);
   t.is(fakeExecutions[1].arn, results[0].arn);
 });
 
 test.serial('GET executions with asyncOperationId filter returns the correct executions', async (t) => {
   const response = await request(app)
-    .get(`/executions?asyncOperationId=${t.context.asyncOperationId}`)
+    .get('/executions')
+    .query({ asyncOperationId: t.context.asyncOperationId })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -411,12 +410,6 @@ test('GET returns an existing execution', async (t) => {
     t.context.knex,
     executionRecord
   );
-  t.teardown(async () => {
-    await t.context.executionPgModel.delete(t.context.knex, executionRecord);
-    await t.context.executionPgModel.delete(t.context.knex, parentExecutionRecord);
-    await collectionPgModel.delete(t.context.knex, collectionRecord);
-    await asyncOperationsPgModel.delete(t.context.knex, asyncRecord);
-  });
 
   const response = await request(app)
     .get(`/executions/${executionRecord.arn}`)
@@ -1305,7 +1298,7 @@ test.serial('POST /executions creates an execution that is searchable', async (t
   const { meta, results } = response.body;
   t.is(results.length, 1);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'execution');
+  t.is(meta.table, 'executions');
   t.is(meta.count, 1);
   t.is(results[0].arn, newExecution.arn);
 });

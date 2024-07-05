@@ -163,8 +163,21 @@ const executionMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
+  duration: (value?: string) => ({
+    duration: value && Number(value),
+  }),
+  // nested error field
+  'error.Error': (value?: string) => ({
+    'error.Error': value,
+  }),
+  'error.Error.keyword': (value?: string) => ({
+    'error.Error': value,
+  }),
   execution: (value?: string) => ({
     url: value,
+  }),
+  type: (value?: string) => ({
+    workflow_name: value,
   }),
   status: (value?: string) => ({
     status: value,
@@ -176,6 +189,12 @@ const executionMapping : { [key: string]: Function } = {
     updated_at: value && new Date(Number(value)),
   }),
   // The following fields require querying other tables
+  asyncOperationId: (value?: string) => ({
+    asyncOperationId: value,
+  }),
+  parentArn: (value?: string) => ({
+    parentArn: value,
+  }),
   collectionId: (value?: string) => {
     const { name, version } = (value && deconstructCollectionId(value)) || {};
     return {

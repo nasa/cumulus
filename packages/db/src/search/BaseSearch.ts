@@ -185,9 +185,15 @@ class BaseSearch {
         case 'pdrName':
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.pdr_cumulus_id`));
           break;
+        case 'asyncOperationId':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.async_operation_cumulus_id`));
+          break;
         case 'error':
         case 'error.Error':
           [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`));
+          break;
+        case 'parentArn':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.parent_cumulus_id`));
           break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.${name}`));
@@ -243,6 +249,8 @@ class BaseSearch {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
     } = TableNames;
 
     const { countQuery, searchQuery, dbQueryParameters } = params;
@@ -265,6 +273,12 @@ class BaseSearch {
         case 'error.Error':
           [countQuery, searchQuery]
             .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`));
+          break;
+        case 'asyncOperationId':
+          [countQuery, searchQuery].forEach((query) => query?.where(`${asyncOperationsTable}.id`, value));
+          break;
+        case 'parentArn':
+          [countQuery, searchQuery].forEach((query) => query?.where(`${executionsTable}_parent.arn`, value));
           break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, value));
@@ -290,6 +304,8 @@ class BaseSearch {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
     } = TableNames;
 
     const { countQuery, searchQuery, dbQueryParameters } = params;
@@ -321,6 +337,12 @@ class BaseSearch {
           [countQuery, searchQuery]
             .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' in ('${value.join('\',\'')}')`));
           break;
+        case 'asyncOperationId':
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${asyncOperationsTable}.id`, value));
+          break;
+        case 'parentArn':
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${executionsTable}_parent.arn`, value));
+          break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${this.tableName}.${name}`, value));
           break;
@@ -345,6 +367,8 @@ class BaseSearch {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
     } = TableNames;
 
     const { countQuery, searchQuery, dbQueryParameters } = params;
@@ -364,6 +388,12 @@ class BaseSearch {
           break;
         case 'pdrName':
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${pdrsTable}.name`, value));
+          break;
+        case 'asyncOperationId':
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${asyncOperationsTable}.id`, value));
+          break;
+        case 'parentArn':
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${executionsTable}_parent.arn`, value));
           break;
         case 'error.Error':
           [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' != '${value}'`));
