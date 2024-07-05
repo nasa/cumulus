@@ -43,8 +43,6 @@ NODE_ENV=test
 <dd></dd>
 <dt><a href="#module_SQS">SQS</a></dt>
 <dd></dd>
-<dt><a href="#module_STS">STS</a></dt>
-<dd></dd>
 <dt><a href="#module_SecretsManager">SecretsManager</a></dt>
 <dd></dd>
 <dt><a href="#module_StepFunctions">StepFunctions</a></dt>
@@ -955,9 +953,6 @@ Test if an SQS queue exists
 | --- | --- | --- |
 | queueUrl | <code>Object</code> | queue url |
 
-<a name="module_STS"></a>
-
-## STS
 <a name="module_SecretsManager"></a>
 
 ## SecretsManager
