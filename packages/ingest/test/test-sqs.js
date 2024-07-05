@@ -37,7 +37,7 @@ async function createSqsQueues(
     },
   };
 
-  const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms).promise();
+  const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms);
   return { queueName, queueUrl };
 }
 
@@ -100,7 +100,7 @@ test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async 
 
   const sqsMessage = await awsServices.sqs().sendMessage({
     QueueUrl: queues.queueUrl, MessageBody: JSON.stringify(message),
-  }).promise();
+  });
   const messageId = sqsMessage.MessageId;
   const key = getS3KeyForArchivedMessage(process.env.stackName, messageId, queues.queueName);
 
@@ -132,7 +132,7 @@ test.serial('deleteArchivedMessageFromS3 does delete archived message if queueNa
 
   const sqsMessage = await awsServices.sqs().sendMessage({
     QueueUrl: queues.queueUrl, MessageBody: JSON.stringify(message),
-  }).promise();
+  });
   const messageId = sqsMessage.MessageId;
   const key = getS3KeyForArchivedMessage(process.env.stackName, messageId, queues.queueName);
   const queueUrl = '';

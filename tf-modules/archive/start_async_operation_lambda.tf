@@ -5,8 +5,8 @@ resource "aws_lambda_function" "start_async_operation" {
   handler          = "index.handler"
   role             = aws_iam_role.start_async_operation.arn
   runtime          = "nodejs16.x"
-  timeout          = 300
-  memory_size      = 960
+  timeout          = lookup(var.lambda_timeouts, "StartAsyncOperation", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "StartAsyncOperation", 960)
   environment {
     variables = {
       acquireTimeoutMillis         = var.rds_connection_timing_configuration.acquireTimeoutMillis
@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "start_async_operation" {
     actions = [
       "lambda:GetFunctionConfiguration",
     ]
-    resources = ["arn:aws:lambda:*"]
+    resources = ["*"]
   }
 
 statement {

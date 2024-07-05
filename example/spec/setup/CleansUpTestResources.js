@@ -23,13 +23,13 @@ describe('Cleans up Test Resources', () => {
   it('cleans up the scheduled rules', async () => {
     const response = await cloudwatchevents().listRules({
       NamePrefix: `${testConfig.stackName}-custom`,
-    }).promise();
+    });
     await Promise.all(response.Rules.map(
       async (rule) => {
         const targetsResponse = await cloudwatchevents().listTargetsByRule({
           Rule: rule.Name,
           EventBusName: rule.EventBusName,
-        }).promise();
+        });
         const targetIds = targetsResponse.Targets.map(
           (target) => target.Id
         );
@@ -37,11 +37,11 @@ describe('Cleans up Test Resources', () => {
           Ids: targetIds,
           Rule: rule.Name,
           EventBusName: rule.EventBusName,
-        }).promise();
+        });
         await cloudwatchevents().deleteRule({
           Name: rule.Name,
           EventBusName: rule.EventBusName,
-        }).promise();
+        });
       }
     ));
   });

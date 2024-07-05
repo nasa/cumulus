@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cumulus-test-cleanup",
-  "version": "16.1.4",
+  "version": "18.2.2",
   "description": "Nightly cron job for cleaning up integration test artifacts",
   "main": "index.js",
   "engines": {
@@ -15,9 +15,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.58.0",
-    "@aws-sdk/signature-v4-crt": "^3.58.0",
-    "aws-sdk": "2.1490.0",
+    "@aws-sdk/client-kinesis": "^3.447.0",
+    "@aws-sdk/client-s3": "^3.447.0",
+    "@aws-sdk/signature-v4-crt": "^3.447.0",
+    "aws-sdk": "^2.1492.0",
     "moment": "2.29.4"
   },
   "private": true

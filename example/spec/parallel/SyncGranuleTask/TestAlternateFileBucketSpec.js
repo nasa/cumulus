@@ -50,9 +50,9 @@ describe('The SyncGranule task with a granule file using an alternate bucket', (
       const FunctionName = `${prefix}-SyncGranule`;
       const functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
-      }).promise();
+      });
 
-      const Payload = JSON.stringify({
+      const Payload = new TextEncoder().encode(JSON.stringify({
         cma: {
           ReplaceConfig: {
             Path: '$.payload',
@@ -112,10 +112,10 @@ describe('The SyncGranule task with a granule file using an alternate bucket', (
             },
           },
         },
-      });
+      }));
 
       syncGranuleOutput = await pTimeout(
-        lambda().invoke({ FunctionName, Payload }).promise(),
+        lambda().invoke({ FunctionName, Payload }),
         (functionConfig.Timeout + 10) * 1000
       );
     } catch (error) {
@@ -130,13 +130,13 @@ describe('The SyncGranule task with a granule file using an alternate bucket', (
     else {
       expect(syncGranuleOutput.FunctionError).toBe(undefined);
 
-      const parsedPayload = JSON.parse(syncGranuleOutput.Payload);
+      const parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(syncGranuleOutput.Payload));
       expect(parsedPayload.exception).toBe('None');
     }
   });
 
   afterAll(async () => {
-    const parsedPayload = JSON.parse(syncGranuleOutput.Payload);
+    const parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(syncGranuleOutput.Payload));
     const fullTaskOutput = await pullStepFunctionEvent(parsedPayload);
 
     const file = fullTaskOutput.payload.granules[0].files[0];

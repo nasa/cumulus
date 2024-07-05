@@ -221,8 +221,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
 
 const createCmrClient = async (config) => {
   const lambdaFunction = `${config.stackName}-CreateReconciliationReport`;
-  const lambdaConfig = await lambda().getFunctionConfiguration({ FunctionName: lambdaFunction })
-    .promise();
+  const lambdaConfig = await lambda().getFunctionConfiguration({ FunctionName: lambdaFunction });
   Object.entries(lambdaConfig.Environment.Variables).forEach(([key, value]) => {
     process.env[key] = value;
   });

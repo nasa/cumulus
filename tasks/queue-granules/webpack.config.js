@@ -1,43 +1,17 @@
 const path = require('path');
-// path to module root
-const root = path.resolve(__dirname);
 
 module.exports = {
-  mode: process.env.PRODUCTION ? 'production' : 'development',
-  entry: './index.js',
+  mode: 'production',
+  entry: './dist/src/index.js',
   output: {
     chunkFormat: false,
     libraryTarget: 'commonjs2',
-    filename: 'index.js',
-    path: path.resolve(__dirname, 'dist'),
-    devtoolModuleFilenameTemplate: (info) => {
-      const relativePath = path.relative(root, info.absoluteResourcePath)
-      return `webpack://${relativePath}`;
-    }
+    path: path.resolve(__dirname, 'dist', 'webpack'),
+    filename: 'index.js'
   },
-  externals: [
-    'aws-sdk',
-    'electron',
-    {'formidable': 'url'}
-  ],
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              cacheDirectory: true
-            },
-          },
-        ],
-      },
-    ],
-  },
-  devtool: 'inline-source-map',
+  externals: ['aws-sdk'],
   target: 'node',
+  devtool: 'eval-cheap-module-source-map',
   optimization: {
     nodeEnv: false
   }

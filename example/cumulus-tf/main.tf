@@ -2,11 +2,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.14.1"
+      version = "~> 5.0"
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 2.1"
+      version = "~> 3.1.0"
     }
   }
 }
@@ -42,7 +42,7 @@ locals {
   rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
 
   vpc_id     = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
-  subnet_ids = length(var.lambda_subnet_ids) > 0 ? var.lambda_subnet_ids : data.aws_subnet_ids.subnet_ids[0].ids
+  subnet_ids = length(var.lambda_subnet_ids) > 0 ? var.lambda_subnet_ids : data.aws_subnets.subnet_ids[0].ids
 }
 
 data "aws_caller_identity" "current" {}
@@ -86,7 +86,10 @@ module "cumulus" {
   }]
 
   vpc_id            = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
-  lambda_subnet_ids = local.subnet_ids
+
+  lambda_subnet_ids   = local.subnet_ids
+  lambda_timeouts     = var.lambda_timeouts
+  lambda_memory_sizes = var.lambda_memory_sizes
 
   rds_security_group                     = local.rds_security_group
   rds_user_access_secret_arn             = local.rds_credentials_secret_arn
@@ -139,9 +142,10 @@ module "cumulus" {
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
 
-  orca_api_uri = module.orca[0].orca_api_deployment_invoke_url
-  orca_lambda_copy_to_archive_arn = module.orca[0].orca_lambda_copy_to_archive_arn
-  orca_sfn_recovery_workflow_arn  = module.orca[0].orca_sfn_recovery_workflow_arn
+  orca_api_uri = module.orca.orca_api_deployment_invoke_url
+
+  orca_lambda_copy_to_archive_arn = module.orca.orca_lambda_copy_to_archive_arn
+  orca_sfn_recovery_workflow_arn = module.orca.orca_sfn_recovery_workflow_arn
 
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service
@@ -164,6 +168,8 @@ module "cumulus" {
   default_log_retention_days = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 
+  report_sns_topic_subscriber_arns = var.report_sns_topic_subscriber_arns
+
   # Archive API settings
   token_secret = var.token_secret
   archive_api_users = [
@@ -179,8 +185,10 @@ module "cumulus" {
     "mobrien84",
     "nnageswa",
     "npauzenga",
-    "vnguyen"
+    "vnguyen",
+    "rkwarten"
   ]
+
   archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway

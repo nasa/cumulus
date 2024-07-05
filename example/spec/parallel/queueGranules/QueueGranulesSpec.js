@@ -91,7 +91,7 @@ describe('The Queue Granules workflow', () => {
     });
 
     const QueueName = randomString();
-    const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+    const { QueueUrl } = await sqs().createQueue({ QueueName });
     queueUrl = QueueUrl;
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -125,7 +125,7 @@ describe('The Queue Granules workflow', () => {
     // clean up stack state added by test
     await sqs().deleteQueue({
       QueueUrl: queueUrl,
-    }).promise();
+    });
     await Promise.all(
       inputPayload.granules.map(async (granule) => {
         await waitForGranuleAndDelete(

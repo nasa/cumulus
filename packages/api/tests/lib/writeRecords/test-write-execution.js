@@ -18,6 +18,7 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { sns, sqs } = require('@cumulus/aws-client/services');
 const { generateExecutionApiRecordFromMessage } = require('@cumulus/message/Executions');
 
@@ -53,29 +54,26 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.execution_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
   const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+  });
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 
   const stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${stateMachineName}`;
@@ -118,8 +116,8 @@ test.beforeEach(async (t) => {
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
-  await sqs().deleteQueue({ QueueUrl }).promise();
-  await sns().deleteTopic({ TopicArn }).promise();
+  await sqs().deleteQueue({ QueueUrl });
+  await sns().deleteTopic({ TopicArn });
 });
 
 test.after.always(async (t) => {
@@ -683,7 +681,7 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
 
   await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
 
   t.is(Messages.length, 1);
 
@@ -715,7 +713,7 @@ test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message
     knex,
   });
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
 
   t.is(Messages.length, 1);
 

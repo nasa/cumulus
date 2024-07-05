@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cumulus-integration-tests",
-  "version": "16.1.4",
+  "version": "18.2.2",
   "description": "Cumulus Integration Test Deployment",
   "private": true,
   "main": "index.js",
@@ -34,7 +34,7 @@
   "babel": {
     "presets": [
       [
-        "env",
+        "@babel/preset-env",
         {
           "targets": {
             "node": "16.19.0"
@@ -44,32 +44,32 @@
     ]
   },
   "dependencies": {
-    "@cumulus/api": "16.1.4",
-    "@cumulus/api-client": "16.1.4",
-    "@cumulus/async-operations": "16.1.4",
-    "@cumulus/aws-client": "16.1.4",
-    "@cumulus/checksum": "16.1.4",
-    "@cumulus/cmr-client": "16.1.4",
-    "@cumulus/cmrjs": "16.1.4",
-    "@cumulus/common": "16.1.4",
-    "@cumulus/discover-granules": "16.1.4",
-    "@cumulus/discover-pdrs": "16.1.4",
-    "@cumulus/files-to-granules": "16.1.4",
-    "@cumulus/hello-world": "16.1.4",
-    "@cumulus/ingest": "16.1.4",
-    "@cumulus/integration-tests": "16.1.4",
-    "@cumulus/message": "16.1.4",
-    "@cumulus/move-granules": "16.1.4",
-    "@cumulus/parse-pdr": "16.1.4",
-    "@cumulus/pdr-status-check": "16.1.4",
-    "@cumulus/post-to-cmr": "16.1.4",
-    "@cumulus/queue-granules": "16.1.4",
-    "@cumulus/queue-pdrs": "16.1.4",
-    "@cumulus/sf-sqs-report": "16.1.4",
-    "@cumulus/sync-granule": "16.1.4",
-    "@cumulus/test-processing": "16.1.4"
+    "@cumulus/api": "18.2.2",
+    "@cumulus/api-client": "18.2.2",
+    "@cumulus/async-operations": "18.2.2",
+    "@cumulus/aws-client": "18.2.2",
+    "@cumulus/checksum": "18.2.2",
+    "@cumulus/cmr-client": "18.2.2",
+    "@cumulus/cmrjs": "18.2.2",
+    "@cumulus/common": "18.2.2",
+    "@cumulus/discover-granules": "18.2.2",
+    "@cumulus/discover-pdrs": "18.2.2",
+    "@cumulus/files-to-granules": "18.2.2",
+    "@cumulus/hello-world": "18.2.2",
+    "@cumulus/ingest": "18.2.2",
+    "@cumulus/integration-tests": "18.2.2",
+    "@cumulus/message": "18.2.2",
+    "@cumulus/move-granules": "18.2.2",
+    "@cumulus/parse-pdr": "18.2.2",
+    "@cumulus/pdr-status-check": "18.2.2",
+    "@cumulus/post-to-cmr": "18.2.2",
+    "@cumulus/queue-granules": "18.2.2",
+    "@cumulus/queue-pdrs": "18.2.2",
+    "@cumulus/sf-sqs-report": "18.2.2",
+    "@cumulus/sync-granule": "18.2.2",
+    "@cumulus/test-processing": "18.2.2"
   },
   "devDependencies": {
-    "@cumulus/test-data": "16.1.4"
+    "@cumulus/test-data": "18.2.2"
   }
 }

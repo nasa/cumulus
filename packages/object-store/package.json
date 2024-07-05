@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/object-store",
-  "version": "16.1.4",
+  "version": "18.2.2",
   "description": "Utilities for managing object stores",
   "keywords": [
     "GIBS",
@@ -40,6 +40,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "16.1.4"
+    "@cumulus/aws-client": "18.2.2"
   }
 }

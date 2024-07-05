@@ -147,6 +147,8 @@ resource "aws_lambda_function" "ftpPopulateTestLambda" {
   handler          = "index.handler"
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "nodejs16.x"
+  timeout          = 150
+  memory_size      = 512
 
   environment {
     variables = {

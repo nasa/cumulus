@@ -37,15 +37,15 @@ export async function invokeApi(
   return await pRetry(
     async () => {
       const apiOutput = await lambda().invoke({
-        Payload: JSON.stringify(payload),
+        Payload: new TextEncoder().encode(JSON.stringify(payload)),
         FunctionName: `${prefix}-PrivateApiLambda`,
-      }).promise();
+      });
 
       if (!apiOutput.Payload) {
         throw new Error('No payload received from lambda invocation');
       }
 
-      const parsedPayload = JSON.parse(apiOutput.Payload.toString());
+      const parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(apiOutput.Payload));
 
       if (parsedPayload?.errorMessage?.includes('Task timed out')) {
         throw new CumulusApiClientError(

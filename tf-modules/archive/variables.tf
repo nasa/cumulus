@@ -210,6 +210,18 @@ variable "es_request_concurrency" {
   description = "Maximum number of concurrent requests to send to Elasticsearch. Used in index-from-database operation"
 }
 
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for lambdas"
+  type = map(number)
+  default = {}
+}
+
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for lambdas"
+  type = map(number)
+  default = {}
+}
+
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = []
@@ -375,4 +387,9 @@ variable "default_log_retention_days" {
   type = number
   default = 30
   description = "default value that user chooses for their log retention periods"
+}
+variable "report_sns_topic_subscriber_arns" {
+  type = list
+  default = null
+  description = "Account ARNs to supply to report SNS topics policy with subscribe action"
 }

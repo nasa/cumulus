@@ -35,7 +35,6 @@ const {
 } = require('@cumulus/db');
 
 const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
-
 const {
   buildS3Uri,
   createBucket,
@@ -45,7 +44,7 @@ const {
   s3ObjectExists,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { secretsManager, sfn, s3, sns, sqs } = require('@cumulus/aws-client/services');
 const { CMR } = require('@cumulus/cmr-client');
 const { metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
@@ -348,17 +347,17 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
   const QueueName = randomString();
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns()
@@ -366,21 +365,15 @@ test.beforeEach(async (t) => {
       TopicArn,
       Protocol: 'sqs',
       Endpoint: QueueArn,
-    })
-    .promise();
+    });
 
-  await sns()
-    .confirmSubscription({
-      TopicArn,
-      Token: SubscriptionArn,
-    })
-    .promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 });
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
-  await sqs().deleteQueue({ QueueUrl }).promise();
-  await sns().deleteTopic({ TopicArn }).promise();
+  await sqs().deleteQueue({ QueueUrl });
+  await sns().deleteTopic({ TopicArn });
 });
 
 test.after.always(async (t) => {
@@ -1297,8 +1290,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
     .receiveMessage({
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
+    });
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
@@ -1913,8 +1905,7 @@ test.serial('create (POST) publishes an SNS message upon successful granule crea
     .receiveMessage({
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
+    });
   t.is(Messages.length, 1);
 });
 
@@ -2714,8 +2705,7 @@ test.serial('PATCH publishes an SNS message after a successful granule update', 
     .receiveMessage({
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
+    });
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
@@ -2886,9 +2876,9 @@ test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to 
     .receiveMessage({
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
-  t.is(Messages, undefined);
+    });
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if writing to Elasticsearch fails', async (t) => {
@@ -2947,9 +2937,9 @@ test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if wr
     .receiveMessage({
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
-  t.is(Messages, undefined);
+    });
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('PATCH adds granule if it does not exist and returns a 201 status', async (t) => {
@@ -3876,7 +3866,7 @@ test.serial('default paginates correctly with search_after', async (t) => {
   t.is(newResults.length, 1);
   t.is(newMeta.page, 2);
   t.truthy(newMeta.searchContext);
-
+  console.log(`default paginates granuleIds: ${JSON.stringify(granuleIds)}, results: ${results[0].granuleId}, ${newResults[0].granuleId}`);
   t.true(granuleIds.includes(results[0].granuleId));
   t.true(granuleIds.includes(newResults[0].granuleId));
   t.not(results[0].granuleId, newResults[0].granuleId);

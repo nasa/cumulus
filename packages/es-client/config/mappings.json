@@ -517,7 +517,7 @@
           }
         }
       },
-      "meta": {
+      "rule": {
         "properties": {
           "type": {
             "type": "string"
@@ -526,6 +526,14 @@
             "type": "string"
           }
         }
+      },
+      "meta": {
+        "type": "object",
+        "dynamic": false
+      },
+      "payload": {
+        "type": "object",
+        "dynamic": false
       },
       "state": {
         "type": "text",

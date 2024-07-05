@@ -1,7 +1,6 @@
 'use strict';
 
 const got = require('got');
-const flatten = require('lodash/flatten');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
 const set = require('lodash/set');
@@ -488,7 +487,7 @@ function constructOnlineAccessUrl({
 }
 
 /**
- * Construct a list of online access urls.
+ * Construct a list of online access urls grouped by link type.
  *
  * @param {Object} params - input parameters
  * @param {Array<Object>} params.files - array of file objects
@@ -499,7 +498,7 @@ function constructOnlineAccessUrl({
  *                                                               for all distribution bucketss
  * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
  * @returns {Promise<[{URL: string, URLDescription: string}]>} an array of
- *    online access url objects
+ *    online access url objects grouped by link type.
  */
 function constructOnlineAccessUrls({
   files,
@@ -513,8 +512,7 @@ function constructOnlineAccessUrls({
     throw new Error(`cmrGranuleUrlType is ${cmrGranuleUrlType}, but no distribution endpoint is configured.`);
   }
 
-  const urlListCalls = files.map((file) => {
-    const urls = [];
+  const [distributionUrls, s3Urls] = files.reduce(([distributionAcc, s3Acc], file) => {
     if (['both', 'distribution'].includes(cmrGranuleUrlType)) {
       const url = constructOnlineAccessUrl({
         file,
@@ -524,7 +522,7 @@ function constructOnlineAccessUrls({
         distributionBucketMap,
         useDirectS3Type,
       });
-      urls.push(url);
+      distributionAcc.push(url);
     }
     if (['both', 's3'].includes(cmrGranuleUrlType)) {
       const url = constructOnlineAccessUrl({
@@ -535,11 +533,11 @@ function constructOnlineAccessUrls({
         distributionBucketMap,
         useDirectS3Type,
       });
-      urls.push(url);
+      s3Acc.push(url);
     }
-    return urls;
-  });
-  const urlList = flatten(urlListCalls);
+    return [distributionAcc, s3Acc];
+  }, [[], []]);
+  const urlList = distributionUrls.concat(s3Urls);
   return urlList.filter((urlObj) => urlObj);
 }
 

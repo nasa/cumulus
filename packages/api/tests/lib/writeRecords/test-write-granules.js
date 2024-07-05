@@ -8,6 +8,8 @@ const sortBy = require('lodash/sortBy');
 const omit = require('lodash/omit');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
+
 const { randomId } = require('@cumulus/common/test-utils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -221,29 +223,26 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
   const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+  });
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 
   t.context.stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${t.context.stateMachineName}`;
@@ -332,8 +331,8 @@ test.beforeEach(async (t) => {
 test.afterEach.always(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
 
-  await sqs().deleteQueue({ QueueUrl }).promise();
-  await sns().deleteTopic({ TopicArn }).promise();
+  await sqs().deleteQueue({ QueueUrl });
+  await sns().deleteTopic({ TopicArn });
 
   await t.context.knex(TableNames.files).del();
   await t.context.knex(TableNames.granulesExecutions).del();
@@ -603,7 +602,7 @@ test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/Elas
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
   t.is(Messages.length, 1);
 });
 
@@ -1951,8 +1950,9 @@ test.serial('writeGranulesFromMessage() does not write to PostgreSQL/Elasticsear
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
-  t.is(Messages, undefined);
+  });
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/Elasticsearch/SNS if Elasticsearch write fails', async (t) => {
@@ -1995,8 +1995,9 @@ test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/E
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
-  t.is(Messages, undefined);
+  });
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('writeGranulesFromMessage() writes a granule and marks as failed if any file writes fail', async (t) => {
@@ -2112,7 +2113,7 @@ test.serial('_writeGranules attempts to mark granule as failed if a SchemaValida
     testOverrides: { stepFunctionUtils },
   }));
 
-  t.true(error.message.includes('The record has validation errors:'));
+  t.true(error.cause.message.includes('The record has validation errors:'));
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
@@ -2425,8 +2426,9 @@ test.serial('writeGranulesFromMessage() does not write a granule to Postgres or 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
-  t.is(Messages, undefined);
+  });
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('writeGranulesFromMessage() does not persist file records to Postgres if the workflow status is "running"', async (t) => {
@@ -4449,12 +4451,13 @@ test.serial('writeGranuleFromApi() saves file records to Postgres if Postgres wr
   );
 });
 
-test.serial('writeGranuleFromApi() writes all valid files if any non-valid file fails', async (t) => {
+test.serial('writeGranuleFromApi() sets granule to fail, writes all valid files and throws if any non-valid file fails', async (t) => {
   const {
+    collectionCumulusId,
     esClient,
     filePgModel,
-    granulePgModel,
     granule,
+    granulePgModel,
     knex,
   } = t.context;
 
@@ -4470,10 +4473,15 @@ test.serial('writeGranuleFromApi() writes all valid files if any non-valid file 
   }
   const validFileCount = allfiles.length - invalidFiles.length;
 
-  await writeGranuleFromApi({ ...granule, files: allfiles }, knex, esClient, 'Create');
+  await t.throwsAsync(writeGranuleFromApi({ ...granule, files: allfiles }, knex, esClient, 'Create'));
 
   t.false(await filePgModel.exists(knex, { key: invalidFiles[0].key }));
   t.false(await filePgModel.exists(knex, { key: invalidFiles[1].key }));
+
+  const pgGranule = await t.context.granulePgModel.get(
+    knex, { granule_id: granule.granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.is(pgGranule.status, 'failed');
 
   const granuleCumulusId = await granulePgModel.getRecordCumulusId(
     knex,
@@ -4483,13 +4491,13 @@ test.serial('writeGranuleFromApi() writes all valid files if any non-valid file 
   t.is(fileRecords.length, validFileCount);
 });
 
-test.serial('writeGranuleFromApi() stores error on granule if any file fails', async (t) => {
+test.serial('writeGranuleFromApi() sets granule to failed with expected error and throws if any file fails', async (t) => {
   const {
     collectionCumulusId,
     esClient,
     granule,
-    knex,
     granuleId,
+    knex,
   } = t.context;
 
   const invalidFiles = [
@@ -4505,18 +4513,19 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
     files.push(fakeFileFactory());
   }
 
-  await writeGranuleFromApi(
+  await t.throwsAsync(writeGranuleFromApi(
     { ...granule, status: 'completed', files },
     knex,
     esClient,
     'Create'
-  );
+  ));
 
   const pgGranule = await t.context.granulePgModel.get(
     knex, { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
   const pgGranuleError = JSON.parse(pgGranule.error.errors);
   t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
+  t.is(pgGranule.status, 'failed');
   t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
@@ -4788,7 +4797,7 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL/
     QueueUrl,
     MaxNumberOfMessages: 2,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
   const snsMessageBody = JSON.parse(Messages[1].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
@@ -4994,7 +5003,7 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
     knexOrTransaction: knex,
   });
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
   t.is(Messages.length, 1);
 
   const snsMessageBody = JSON.parse(Messages[0].Body);

@@ -2,7 +2,6 @@
 
 'use strict';
 
-const AWS = require('aws-sdk');
 const got = require('got');
 const pRetry = require('p-retry');
 const util = require('util');
@@ -13,7 +12,7 @@ const url = require('url');
 const Logger = require('@cumulus/logger');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
-const { s3 } = require('@cumulus/aws-client/services');
+const { lambda, s3 } = require('@cumulus/aws-client/services');
 const {
   deleteS3Object,
   getObject,
@@ -101,9 +100,8 @@ async function fetchAndDeletePayload(payloadUrl) {
  */
 async function getLambdaInfo(FunctionName) {
   logger.debug(`Retrieving lambda info for ${FunctionName}.`);
-  const lambda = new AWS.Lambda();
 
-  const getFunctionResponse = await lambda.getFunction({
+  const getFunctionResponse = await lambda().getFunction({
     FunctionName,
   }).promise();
 

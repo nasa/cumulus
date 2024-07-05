@@ -395,6 +395,7 @@ test.beforeEach(async (t) => {
     t.context.execution
   );
   t.context.executionCumulusId = pgExecution.cumulus_id;
+  t.context.sandbox = sinon.createSandbox();
 });
 
 test.afterEach.always(async (t) => {
@@ -2047,9 +2048,9 @@ test.serial('A valid ORCA Backup reconciliation report is generated', async (t) 
   };
 
   await indexer.indexGranule(esClient, matchingCumulusGran, esAlias);
-
   const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
   searchOrcaStub.resolves({ anotherPage: false, granules: [matchingOrcaGran] });
+  t.teardown(() => searchOrcaStub.restore());
 
   const event = {
     systemBucket: t.context.systemBucket,

@@ -54,6 +54,8 @@ module "archive" {
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
+  lambda_timeouts       = var.lambda_timeouts
+  lambda_memory_sizes   = var.lambda_memory_sizes
 
   orca_api_uri       = var.orca_api_uri
 
@@ -108,4 +110,6 @@ module "archive" {
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
 
   tags = var.tags
+
+  report_sns_topic_subscriber_arns = var.report_sns_topic_subscriber_arns
 }

@@ -39,7 +39,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
       FunctionName = `${prefix}-LzardsBackup`;
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
-      }).promise();
+      });
       granuleId = `FakeGranule_${randomString()}`;
       provider = `FakeProvider_${randomString()}`;
 
@@ -63,7 +63,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
         }
       );
 
-      const Payload = JSON.stringify({
+      const Payload = new TextEncoder().encode(JSON.stringify({
         cma: {
           ReplaceConfig: {
             Path: '$.payload',
@@ -124,10 +124,10 @@ describe('The Lzards Backup Task with distribution URL', () => {
             },
           },
         },
-      });
+      }));
 
       lzardsBackupOutput = await pTimeout(
-        lambda().invoke({ FunctionName, Payload }).promise(),
+        lambda().invoke({ FunctionName, Payload }),
         (functionConfig.Timeout + 10) * 1000
       );
     } catch (error) {
@@ -145,7 +145,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
   });
 
   it('has the expected backup information', () => {
-    const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
+    const backupStatus = JSON.parse(new TextDecoder('utf-8').decode(lzardsBackupOutput.Payload)).meta.backupStatus;
     expect(backupStatus[0].status).toBe('COMPLETED');
     expect(backupStatus[0].statusCode).toBe(201);
     expect(backupStatus[0].granuleId).toBe(granuleId);

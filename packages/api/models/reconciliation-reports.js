@@ -1,7 +1,7 @@
 'use strict';
 
 const Manager = require('./base');
-const { reconciliationReport } = require('./schemas');
+const { reconciliationReport } = require('../lib/schemas');
 
 class ReconciliationReport extends Manager {
   constructor() {

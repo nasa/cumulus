@@ -26,16 +26,6 @@
           "Next": "WorkflowFailed",
           "ResultPath": "$.exception"
         }
-      ],
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
       ]
     },
     "WorkflowSucceeded": {

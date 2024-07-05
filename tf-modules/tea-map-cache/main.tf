@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0,!= 3.14.0"
+      version = "~> 5.0"
     }
   }
 }
@@ -28,8 +28,8 @@ resource "aws_lambda_function" "tea_cache" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  memory_size      = 256
-  timeout          = 120
+  memory_size      = lookup(var.lambda_memory_sizes, "TeaCache", 512)
+  timeout          = lookup(var.lambda_timeouts, "TeaCache", 120)
   environment {
     variables = {
       TEA_API = var.tea_api_url

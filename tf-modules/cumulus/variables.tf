@@ -107,14 +107,14 @@ variable "elasticsearch_security_group_id" {
 }
 
 variable "lambda_memory_sizes" {
-  description = "Configurable map of memory sizes for ingest task lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
-  type = map(string)
+  description = "Configurable map of memory sizes for lambdas"
+  type = map(number)
   default = {}
 }
 
 variable "lambda_timeouts" {
-  description = "Configurable map of timeouts for ingest task lambdas in the form <lambda_identifier>_timeout: <timeout>"
-  type = map(string)
+  description = "Configurable map of timeouts for lambdas"
+  type = map(number)
   default = {}
 }
 
@@ -621,4 +621,9 @@ variable "default_log_retention_days" {
   type = number
   description = "default value that user chooses for their log retention periods"
   default = 30
+}
+variable "report_sns_topic_subscriber_arns" {
+  type = list
+  default = null
+  description = "Account ARNs to supply to report SNS topics policy with subscribe action"
 }

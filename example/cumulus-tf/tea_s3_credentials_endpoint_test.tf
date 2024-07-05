@@ -27,6 +27,7 @@ module "tea_s3_credentials_endpoint_test" {
   urs_url                                        = "https://uat.urs.earthdata.nasa.gov" 
   cmr_acl_based_credentials                      = true 
   vpc_id                                         = local.vpc_id
-
+  lambda_memory_sizes                            = var.lambda_memory_sizes
+  lambda_timeouts                                = var.lambda_timeouts 
   tags = local.tags
 }

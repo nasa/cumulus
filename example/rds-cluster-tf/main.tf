@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.14.1"
+      version = "~> 5.0"
     }
   }
 }
@@ -25,6 +25,8 @@ module "rds_cluster" {
   cluster_identifier         = var.cluster_identifier
   tags                       = var.tags
   snapshot_identifier        = var.snapshot_identifier
+  lambda_timeouts            = var.lambda_timeouts
+  lambda_memory_sizes        = var.lambda_memory_sizes
   enable_upgrade             = var.enable_upgrade
   parameter_group_family     = var.parameter_group_family
   parameter_group_family_v13 = var.parameter_group_family_v13

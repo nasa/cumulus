@@ -81,7 +81,6 @@ describe('Ingesting from PDR', () => {
       pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
       provider = { id: `s3_provider${testSuffix}` };
       testDataFolder = createTestDataPath(testId);
-
       const ftpProvider = await buildFtpProvider(`${randomString(4)}-${testSuffix}`);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, config.pdrNodeNameProviderBucket);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, ftpProvider.host);
@@ -112,18 +111,20 @@ describe('Ingesting from PDR', () => {
       try {
         testData = await lambda().invoke({
           FunctionName: functionName,
-          Payload: JSON.stringify({
+          Payload: new TextEncoder().encode(JSON.stringify({
             prefix: config.stackName,
-          }),
-        }).promise();
+          })),
+        });
       } catch (error) {
         console.log(error);
       }
 
-      const { newGranuleId, filePaths } = JSON.parse(testData.Payload);
+      const { newGranuleId, filePaths } = JSON.parse(new TextDecoder('utf-8').decode(testData.Payload));
+
       if (!newGranuleId || !filePaths) {
         throw new Error('FTP Server setup failed', testData);
       }
+
       testFilePaths = filePaths;
       await updateAndUploadTestDataToBucket(
         config.bucket,
@@ -190,12 +191,12 @@ describe('Ingesting from PDR', () => {
     // TODO Inovke cleanup lambda
     const deletionRequest = await lambda().invoke({
       FunctionName: functionName,
-      Payload: JSON.stringify({
+      Payload: new TextEncoder().encode(JSON.stringify({
         prefix: config.stackName,
         command: 'delete',
         filePaths: testFilePaths,
-      }),
-    }).promise();
+      })),
+    });
     if (deletionRequest.StatusCode !== 200) {
       throw new Error(deletionRequest);
     }

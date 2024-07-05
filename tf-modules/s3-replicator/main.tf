@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0,!= 3.14.0"
+      version = "~> 5.0"
     }
     archive = {
       source = "hashicorp/archive"
@@ -38,7 +38,8 @@ resource "aws_lambda_function" "s3_replicator" {
   role          = aws_iam_role.replicator_lambda_role.arn
   handler       = "index.handler"
   runtime       = "nodejs16.x"
-  timeout       = 300
+  timeout       = lookup(var.lambda_timeouts, "s3-replicator", 300)
+  memory_size   = lookup(var.lambda_memory_sizes, "s3-replicator", 512)
 
   source_code_hash = data.archive_file.replicator_package.output_base64sha256
 
