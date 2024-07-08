@@ -13,7 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `data-persistance` module to allow configuration of the EBS volume type for
     Elasticsarch; default remains `gp2`.
 - **CUMULUS-3424**
-  - Exposed auto_pause and seconds_until_auto_pause parameters in scaling_configuration
+  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
+    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Fixed
 
@@ -130,8 +131,7 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
   - Added `importGot` helper method to import `got` as an ESM module in
     CommmonJS typescript/webpack clients.
 - **CUMULUS-3606**
-  - Updated  with additional documentation covering tunneling configuration
-    using a PKCS11 provider
+  - Updated with additional documentation covering tunneling configuration
 
 ### Changed
 
