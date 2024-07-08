@@ -6,15 +6,368 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Migration Notes
+
+#### CUMULUS-3320 Update executions table
+
+The work for CUMULUS-3320 required index updates as well as a modification of a
+table constraint.   To install the update containing these changes you should:
+
+- Pre-generate the indexes on the execution table.  This can be done via manual
+  procedure prior to upgrading without downtime, or done more quickly before or
+  during upgrade with downtime.
+- Update the `executions_parent_cumulus_id_foreign` constraint.   This will
+  require downtime as updating the constraint requires a table write lock, and
+  the update may take some time.
+
+Deployments with low volume databases and low activity and/or test/development
+environments should be able to install these updates via the normal automatic
+Cumulus deployment process.
+
+Please *carefully* review the migration process documentation (link goes here).    Failure to
+make these updates properly will likely result in deployment failure and/or
+degraded execution table operations.
+
+#### CUMULUS-3433 Update to node.js v20
+
+The following applies only to users with a custom value configured for
+`async_operation_image`:
+
+- As part of the node v20 update process, a new version (49) of the Core
+  async-operation container was published - [cumuluss/async
+  operation](https://hub.docker.com/layers/cumuluss/async-operation)  The
+  default value for `async_operation_image` has been updated in the `cumulus`
+  module, however if you are using an internal image repository such as ECR,
+  please make sure to update your deployment configuration with the newly
+  provided image.
+
+  Users making use of a custom image configuration should note the base image
+  for Core async operations must support node v20.x.
+
+#### CUMULUS-3449 Please follow instructions before upgrading Cumulus
+
+- The updates in CUMULUS-3449 requires manual update to postgres database in
+  production environment. Please follow [Update Cumulus_id Type and
+  Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
+
+#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
+
+Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
+
+- `YYYY-MM-DD` subfolders to organize by date
+- new top level fields for simplified search and analysis
+- captured error message
+
+To invoke the Lambda and start the DLA migration, you can use the AWS Console or CLI:
+
+```bash
+aws lambda invoke --function-name $PREFIX-migrationHelperAsyncOperation \
+  --payload $(echo '{"operationType": "DLA Migration"}' | base64) $OUTFILE
+```
+
+- `PREFIX` is your Cumulus deployment prefix.
+- `OUTFILE` (**optional**) is the filepath where the Lambda output will be saved.
+
+The Lambda will trigger an Async Operation and return an `id` such as:
+
+```json
+{"id":"41c9fbbf-a031-4dd8-91cc-8ec2d8b5e31a","description":"Migrate Dead Letter Archive Messages",
+"operationType":"DLA Migration","status":"RUNNING",
+"taskArn":"arn:aws:ecs:us-east-1:AWSID:task/$PREFIX-CumulusECSCluster/123456789"}
+```
+
+which you can then query the Async Operations [API
+Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the
+output or status of your request. If you want to directly observe the progress
+of the migration as it runs, you can view the CloudWatch logs for your async
+operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
+
+#### CUMULUS-3779 async_operations Docker image version upgrade
+  
+The `async_operations` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users will need to bump
+the version tag of `async_operations` to at least 52 if using the Docker image.
+
+### Breaking Changes
+
+- **CUMULUS-3618**
+  - Modified @cumulus/es-client/search.BaseSearch:
+    - Removed static class method `es` in favor of new class for managing
+       elasticsearch clients `EsClient` which allows for credential
+       refresh/reset.  Updated api/es-client code to
+       utilize new pattern.    Users making use of @cumulus/es-client should
+       update their code to make use of the new EsClient create/initialize pattern.
+    - Added helper method getEsClient to encapsulate logic to create/initialize
+      a new EsClient.
+
+- **CUMULUS-2889**
+  - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
+    client from the `@cumulus/aws-client` package.
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+- **CUMULUS-3323**
+  - Updated `@cumulus/db` to by default set the `ssl` option for knex, and
+    reject non-SSL connections via use of the `rejectUnauthorized` configuration
+    flag.   This causes all Cumulus database connections to require SSL (CA or
+    self-signed) and reject connectivity if the database does not provide SSL.
+    Users using serverless v1/`cumulus-rds-tf` should not be impacted by this
+    change as certs are provided by default.   Users using databases that do not
+    provide SSL should update their database secret with the optional value
+    `disableSSL` set to `true`
+  - Updated `cumulus-rds-tf` to set `rds.force_ssl` to `1`, forcing SSL enabled
+    connections in the `db_parameters` configuration.   Users of this module
+    defining their own `db_parameters` should make this configuration change to allow only SSL
+    connections to the RDS datastore.
+- **CUMULUS-2897**
+  - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
+    from the `@cumulus/aws-client` package.
+- **CUMULUS-3449**
+  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
+    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
+    and pdrs.execution_cumulus_id
+  - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
+  - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
+    to granules table
+- **CUMULUS-3779**
+  - Updates async_operations Docker image to Node v20 and bumps its cumulus dependencies to v18.3.0 to
+    support `aws-sdk` v3 changes.
+
+### Added
+- **CUMULUS-3320**
+  - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
+    bulk deletion of executions from elasticsearch by collectionId
+  - Added `Bulk Execution Delete` migration type to async operations types
+- **CUMULUS-3742**
+  - Script for dumping data into postgres database for testing and replicating issues
+- **CUMULUS-3614**
+  - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
+- **CUMULUS-3616**
+  - Added user guide on querying dead-letter-archive messages using AWS Athena.
+- **CUMULUS-3433**
+  - Added `importGot` helper method to import `got` as an ESM module in
+    CommmonJS typescript/webpack clients.
+- **CUMULUS-3606**
+  - Updated  with additional documentation covering tunneling configuration
+    using a PKCS11 provider
+
+### Changed
+- **CUMULUS-3320**
+  - Updated executions table (please see Migration section and Upgrade
+    Instructions for more information) to:
+    - Add index on `collection_cumulus_id`
+    - Add index on `parent_cumulus_id`
+    - Update `executions_parent_cumulus_id_foreign` constraint to add `ON DELETE
+      SET NULL`.  This change will cause deletions in the execution table to
+      allow deletion of parent executions, when this occurs the child will have
+      it's parent reference set to NULL as part of the deletion operations.
+- **CUMULUS-3735**
+  - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
+- **CUMULUS-3746**
+  - cicd unit test error log changed to environment unique name
+- **CUMULUS-3717**
+  - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
+- **CUMULUS-3720**
+  - add cicd unit test error logging to s3 for testing improvements
+- **CUMULUS-3433**
+  - Updated all node.js lambda dependencies to node 20.x/20.12.2
+  - Modified `@cumulus/ingest` unit test HTTPs server to accept localhost POST
+    requests, and removed nock dependency from tests involving `fs.Readstream`
+    and `got` due to a likely incompatibility with changes in node v18, `got`,
+    fs.Readstream and nock when used in combination in units
+    (https://github.com/sindresorhus/got/issues/2341)
+  - Updated `got` dependency in `@cumulus/ingest` to use `@cumulus/common`
+    dynamic import helper / `got` > v10 in CommonJS.
+  - Updated all Core lambdas to use [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js) v2.2.0
+- **CUMULUS-3629**
+  - dla guarantees de-nested SQS message bodies, preferring outermost metadata as found.
+  - dla uses execution Name as filename and ensures no ':' or '/' characters in name
+- **CUMULUS-3570**
+  - Updated Kinesis docs to support latest AWS UI and recommend server-side encryption.
+- **CUMULUS-3519**
+  - Updates SQS and SNS code to AWS SDK V3 Syntax
+- **CUMULUS-3609**
+  - Adds dla-migration lambda to async-operations to be used for updating existing DLA records
+  - Moved hoistCumulusMessageDetails function from write-db-dlq-records-to-s3 lambda to @cumulus/message/DeadLetterMessage
+- **CUMULUS-3613**
+  - Updated writeDbRecordsDLQtoS3 lambda to write messages to `YYYY-MM-DD` subfolder of S3 dead letter archive.
+- **CUMULUS-3518**
+  - Update existing usage of `@cumulus/aws-client` lambda service to use AWS SDK v3 `send` syntax
+  - Update Discover Granules lambda default memory to 1024 MB
+- **CUMULUS-3600**
+  - Update docs to clarify CloudFront HTTPS DIT requirements.
+- **CUMULUS-2892**
+  - Updates `aws-client`'s EC2 client to use AWS SDK v3.
+- **CUMULUS-2896**
+  - Updated Secrets Manager code to AWS SDK v3.
+- **CUMULUS-2901**
+  - Updated STS code to AWS SDK v3.
+- **CUMULUS-2898**
+  - Update Step Functions code to AWS SDK v3
+- **CUMULUS-2902**
+  - Removes `aws-sdk` from `es-client` package by replacing credential fetching with
+  the `@aws-sdk/credential-providers` AWS SDK v3 package.
+  - Removes `aws-sdk` from all cumulus packages and replaces usages with AWS SDK v3 clients.
+- **CUMULUS-3456**
+  - Added stateMachineArn, executionArn, collectionId, providerId, granules, status, time, and error fields to Dead Letter Archive message
+  - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
+- **CUMULUS-3323**
+  - Added `disableSSL` as a valid database secret key - setting this in your database credentials will
+    disable SSL for all Core database connection attempts.
+  - Added `rejectUnauthorized` as a valid database secret key - setting
+    this to `false` in your database credentials will allow self-signed certs/certs with an unrecognized authority.
+  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
+    to 1.   This setting for the Aurora Serverless v1 database disallows non-SSL
+    connections to the database, and is intended to help enforce security
+    compliance rules.  This update can be opted-out by supplying a non-default
+    `db_parameters` set in the terraform configuration.
+- **CUMULUS-3425**
+  - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
+    terraform configuration value or utilize `lzardsProvider` as part of the task
+    workflow configuration
+  - Minor refactor of `@cumulus/lzards-api-client` to:
+    - Use proper ECMAScript import for `@cumulus/launchpad-auth`
+    - Update incorrect docstring
+- **CUMULUS-3449**
+  - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
+    from columns ending with "cumulus_id" to number.
+- **CUMULUS-3497**
+  - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
+- **CUMULUS-3610**
+  - Updated `aws-client`'s ES client to use AWS SDK v3.
+- **CUMULUS-3617**
+  - Added lambdas to migrate DLA messages to `YYYY-MM-DD` subfolder
+  - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
+
+### Fixed
+
+- **CUMULUS-3320**
+  - Execution database deletions by `cumulus_id` should have greatly improved
+    performance as a table scan will no longer be required for each record
+    deletion to validate parent-child relationships
+- **CUMULUS-3715**
+  - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
+    flags to knex custom code
+- **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
+- **CUMULUS-3701**
+  - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
+- **CUMULUS-3618**
+  - Fixed `@cumulus/es-client` credentialing issue in instance where
+    lambda/Fargate task runtime would exceed the timeout for the es-client. Added retry/credential
+    refresh behavior to `@cumulus/es-client/indexer.genericRecordUpdate` to ensure record indexing
+    does not fail in those instances.
+  - Updated `index-from-database` lambda to utilize updated es-client to prevent
+    credentialing timeout in long-running ECS jobs.
+- **CUMULUS-3323**
+  - Minor edits to errant integration test titles (dyanmo->postgres)
+- **AWS-SDK v3 Exclusion (v18.3.0 fix)***
+  - Excludes aws-sdk v3 from packages to reduce overall package size. With the requirement of Node v20
+    packaging the aws-sdk v3 with our code is no longer necessary and prevented some packages from being
+    published to npm.
+
+## [v18.2.2] 2024-06-4
+
+### Migration Notes
+
+#### CUMULUS-3591 - SNS topics set to use encrypted storage
+
+As part of the requirements for this ticket Cumulus Core created SNS topics are
+being updated to use server-side encryption with an AWS managed key.    No user
+action is required, this note is being added to increase visibility re: this
+modification.
+
 ### Changed
 
-- *CUMULUS-2899**
+- **CUMULUS-3591**
+  - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
+  - Update all integration/unit tests to use encrypted SNS topics
+
+### Fixed
+
+- **CUMULUS-3547**
+  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
+- **CUMULUS-3527**
+  - Added suppport for additional kex algorithms in the sftp-client.
+- **CUMULUS-3587**
+  - Ported https://github.com/scottcorgan/express-boom into API/lib to allow
+    updates of sub-dependencies and maintain without refactoring errors in
+    API/etc wholesale
+  - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+- **CUMULUS-3673**
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.
+- **Audit Issues**
+  - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
+    updating babel packages and .babelrc
+
+## [v18.2.1] 2024-05-08
+
+**Please note** changes in 18.2.1 may not yet be released in future versions, as this
+is a backport/patch release on the 18.2.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Fixed
+
+- **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
+- **CUMULUS-3701**
+  - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
+
+## [v18.2.0] 2024-02-02
+
+### Migration Notes
+
+From this release forward, Cumulus Core will be tested against PostgreSQL v13. Users
+should migrate their datastores to Aurora PostgreSQL 13.9+ compatible data
+stores as soon as possible after upgrading to this release.
+
+#### Database Upgrade
+
+Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
+upgrade
+instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
+
+### Breaking Changes
+
+- **CUMULUS-2889**
+  - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
+    client from the `@cumulus/aws-client` package.
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+
+### Changed
+
+- **CUMULUS-3492**
+  - add teclark to select-stack.js
+- **CUMULUS-3444**
+  - Update `cumulus-rds-tf` module to take additional parameters in support of
+    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details
+- **CUMULUS-3564**
+  - Update webpack configuration to explicitly disable chunking
+- **CUMULUS-2891**
+  - Updated ECS code to aws sdk v3
+- **CUMULUS-2895**
+  - Updated KMS code to aws sdk v3
+- **CUMULUS-2888**
+  - Update CloudWatch Events code to AWS SDK v3
+- **CUMULUS-2893**
+  - Updated Kinesis code to AWS SDK v3
+- **CUMULUS-3555**
+  - Revert 3540, un-stubbing cmr facing tests
+  - Raise memory_size of ftpPopulateTestLambda to 512MB
+- **CUMULUS-2887**
+  - Updated CloudFormation code to aws sdk v3
+- **CUMULUS-2899**
   - Updated SNS code to aws sdk v3
-- **CUMULUS_3499
+- **CUMULUS_3499**
   - Update AWS-SDK dependency pin to "2.1490" to prevent SQS issue.  Dependency
     pin expected to be changed with the resolution to CUMULUS-2900
 - **CUMULUS-2894**
   - Update Lambda code to AWS SDK v3
+- **CUMULUS-3432**
+  - Update `cumulus-rds-tf` `engine_version` to `13.9`
+  - Update `cumulus-rds-tf` `parameter_group_family` to `aurora-postgresql13`
+  - Update development/local stack postgres image version to postgres:13.9-alpine
 - **CUMULUS-2900**
   - Update SQS code to AWS SDK v3
 - **CUMULUS-3352**
@@ -23,8 +376,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     2.1.1-aplha.2-SNAPSHOT
   - Update example deployment to deploy cnmToGranule lambda
     version 1.7.0-alpha.2-SNAPSHOT
+- **CUMULUS-3501**
+  - Updated CreateReconciliationReport lambda to save report record to Elasticsearch.
+  - Created docker image cumuluss/async-operation:48 from v16.1.2, and used it as default async_operation_image.
 - **CUMULUS-3502**
   - Upgraded localstack to v3.0.0 to support recent aws-sdk releases and update unit tests.
+- **CUMULUS-3540**
+  - stubbed cmr interfaces in integration tests allow integration tests to pass
+  - needed while cmr is failing to continue needed releases and progress
+  - this change should be reverted ASAP when cmr is working as needed again
 
 ### Fixed
 
@@ -35,10 +395,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3467**
   - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
 - **CUMULUS-3474**
-  - Fixed overriden changes to `rules.buildPayload' to restore changes from ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
+  - Fixed overridden changes to `rules.buildPayload' to restore changes from ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
     account for AWS character limits.
 - **CUMULUS-3479**
   - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lambda_memory_sizes`
+- **CUMULUS-3510**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.  This fix from CUMULUS-2863 was not in release 16 and later.
+- **CUMULUS-3562**
+  - updated crypto-js to 4.2.0
+  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
 
 ## [v18.1.0] 2023-10-25
 
@@ -70,8 +436,10 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 Users/clients that do not make use of these endpoints will not be impacted.
 
 ### Breaking Changes
+
 - **CUMULUS-3427**
   - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
+
 ### Notable Changes
 
 - **CUMULUS-3095**
@@ -183,9 +551,38 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed @cumulus/api/models/schema and changed all references to
     @cumulus/api/lib/schema in docs and related models
   - Removed @cumulus/api/models/errors.js
-  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
+  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result  in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
   - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
   - Updated thrown error to include information related to automatic failure behavior in addition to the stack trace.
+
+## [v16.1.3] 2024-1-15
+
+**Please note** changes in 16.1.3 may not yet be released in future versions, as this
+is a backport/patch release on the 16.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Changed
+
+- **CUMULUS_3499
+  - Update AWS-SDK dependency pin to "2.1490" to prevent SQS issue.  Dependency
+    pin expected to be changed with the resolution to CUMULUS-2900
+
+### Fixed
+
+- **CUMULUS-3474**
+  - Fixed overriden changes to `rules.buildPayload' to restore changes from
+    ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
+    account for AWS character limits.
+- **CUMULUS-3501**
+  - Updated CreateReconciliationReport lambda to save report record to Elasticsearch.
+  - Created docker image cumuluss/async-operation:48 from v16.1.2, and used it as default async_operation_image.
+- **CUMULUS-3510**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.  This fix from CUMULUS-2863 was not in release 16 and later.
+- **CUMULUS-3540**
+  - stubbed cmr interfaces in integration tests allow integration tests to pass
+  - needed while cmr is failing to continue needed releases and progress
+  - this change should be reverted ASAP when cmr is working as needed again
 
 ## [v16.1.2] 2023-11-01
 
@@ -7480,10 +7877,14 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.2.2...HEAD
+[v18.2.2]: https://github.com/nasa/cumulus/compare/v18.2.1...v18.2.2
+[v18.2.1]: https://github.com/nasa/cumulus/compare/v18.2.0...v18.2.1
+[v18.2.0]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.2.0
 [v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
-[v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.2...v17.0.0
+[v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.3...v17.0.0
+[v16.1.3]: https://github.com/nasa/cumulus/compare/v16.1.2...v16.1.3
 [v16.1.2]: https://github.com/nasa/cumulus/compare/v16.1.1...v16.1.2
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0

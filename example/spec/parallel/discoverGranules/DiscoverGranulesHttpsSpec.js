@@ -6,7 +6,7 @@ const {
   cleanupCollections,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../../helpers/Providers');
@@ -72,7 +72,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
-          encodedConstructCollectionId(collection.name, collection.version),
+          constructCollectionId(collection.name, collection.version),
           'completed'
         );
       }
@@ -121,7 +121,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
   });
 
   describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
-    it('the execution record is added to DynamoDB', async () => {
+    it('the execution record is added to the PostgreSQL database', async () => {
       const record = await waitForApiStatus(
         getExecution,
         {

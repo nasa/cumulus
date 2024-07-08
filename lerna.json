@@ -1,6 +1,6 @@
 {
   "lerna": "3.20.2",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "packages": [
     "example",
     "example/lambdas/*",
@@ -10,7 +10,9 @@
     "packages/api/ecs/async-operation",
     "tasks/*",
     "tf-modules/*",
-    "tf-modules/internal/*"
+    "tf-modules/internal/*",
+    "scripts/unit-error-analysis/*",
+    "scripts/*"
   ],
   "command": {
     "bootstrap": {

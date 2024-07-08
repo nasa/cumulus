@@ -333,7 +333,7 @@ test('upsertExecution handles version conflict on parallel updates', async (t) =
   ]);
 
   // Manually refresh index
-  await esClient.indices.refresh({
+  await esClient.client.indices.refresh({
     index: esIndex,
   });
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);

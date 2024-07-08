@@ -31,7 +31,7 @@ const { getExecution, deleteExecution } = require('@cumulus/api-client/execution
 const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   waitForApiRecord,
@@ -109,7 +109,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
     await deleteGranule({ prefix: testConfig.stackName,
       granuleId,
-      collectionId: encodedConstructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
+      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
@@ -370,7 +370,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           {
             prefix: testConfig.stackName,
             granuleId,
-            collectionId: encodedConstructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+            collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
           },
           {
             status: 'completed',
@@ -389,7 +389,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'`);
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
         const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-        const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
+        const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(new TextDecoder().decode(r.Data)));
         const responseRecord = parsedRecords.find((r) => r.identifier === recordIdentifier);
         expect(responseRecord.identifier).toEqual(recordIdentifier);
         expect(responseRecord.response.status).toEqual('SUCCESS');
@@ -464,7 +464,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
             {
               prefix: testConfig.stackName,
               granuleId,
-              collectionId: encodedConstructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+              collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
             },
             {
               status: 'failed',
@@ -493,7 +493,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
         const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
         if (newResponseStreamRecords.length > 0) {
-          const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
+          const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(new TextDecoder().decode(r.Data)));
           const responseRecord = parsedRecords.pop();
           expect(responseRecord.response.status).toEqual('FAILURE');
           expect(responseRecord.identifier).toBe(badRecord.identifier);

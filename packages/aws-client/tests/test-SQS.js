@@ -11,6 +11,7 @@ const {
   parseSQSMessageBody,
   sqsQueueExists,
   sendSQSMessage,
+  isSQSRecordLike,
 } = require('../SQS');
 
 const randomString = () => cryptoRandomString({ length: 10 });
@@ -88,4 +89,14 @@ test('sendSQSMessage logs errors', async (t) => {
 
   t.is(testConsole.stderrLogEntries.length, 1);
   t.regex(testConsole.stderrLogEntries[0].message, /The specified queue does not exist/);
+});
+
+test('isSQSRecordLike filters correctly for sqs record shape', (t) => {
+  t.false(isSQSRecordLike('aaa')); // must be an object
+  t.false(isSQSRecordLike({ a: 'b' })); // object must contain a body
+  t.true(isSQSRecordLike({ body: 'a' }));
+  t.true(isSQSRecordLike({ Body: 'a' })); // must accept body or Body
+  /* this is a bare check for body in object.
+  body *should* be a string form json object,
+  but strictly checking is not compatible with the current use-case*/
 });

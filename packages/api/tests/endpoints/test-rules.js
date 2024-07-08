@@ -7,7 +7,14 @@ const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const test = require('ava');
 const sinon = require('sinon');
+const {
+  CreateFunctionCommand,
+  AddPermissionCommand,
+  RemovePermissionCommand,
+} = require('@aws-sdk/client-lambda');
+const { mockClient } = require('aws-sdk-client-mock');
 
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const workflows = require('@cumulus/common/workflows');
 const {
@@ -35,6 +42,11 @@ const S3 = require('@cumulus/aws-client/S3');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+
+const {
+  ListSubscriptionsByTopicCommand,
+  UnsubscribeCommand,
+} = require('@aws-sdk/client-sns');
 
 const { buildFakeExpressResponse } = require('./utils');
 const {
@@ -87,7 +99,7 @@ test.before(async (t) => {
 
   await Promise.all(
     ['messageConsumer', 'KinesisInboundEventLogger'].map(async (name) => {
-      const lambdaCreated = await awsServices.lambda().createFunction({
+      const lambdaCreated = await awsServices.lambda().send(new CreateFunctionCommand({
         Code: {
           ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
         },
@@ -95,7 +107,7 @@ test.before(async (t) => {
         Role: `arn:aws:iam::123456789012:role/${randomId('role')}`,
         Handler: 'index.handler',
         Runtime: 'nodejs16.x',
-      });
+      }));
       process.env[name] = lambdaCreated.FunctionName;
     })
   );
@@ -525,6 +537,248 @@ test('POST creates a rule in all data stores', async (t) => {
   t.like(esRecord, translatedPgRecord);
 });
 
+test.serial('post() creates SNS rule with same trigger information in PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const topic1 = await createSnsTopic(randomId('topic1_'));
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+    workflow,
+  });
+
+  const expressRequest = {
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.truthy(pgRule.arn);
+  t.truthy(esRule.rule.arn);
+
+  t.like(
+    esRule,
+    {
+      rule: {
+        type: 'sns',
+        value: topic1.TopicArn,
+        arn: pgRule.arn,
+      },
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sns',
+    arn: esRule.rule.arn,
+    value: topic1.TopicArn,
+  });
+});
+
+test.serial('post() creates the same Kinesis rule with trigger information in PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const kinesisArn1 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1_')}`;
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: kinesisArn1,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+    workflow,
+  });
+
+  const expressRequest = {
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.truthy(esRule.rule.arn);
+  t.truthy(esRule.rule.logEventArn);
+  t.truthy(pgRule.arn);
+  t.truthy(pgRule.log_event_arn);
+  t.like(
+    esRule,
+    {
+      ...rule,
+      rule: {
+        type: 'kinesis',
+        value: kinesisArn1,
+      },
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'kinesis',
+    value: kinesisArn1,
+  });
+});
+
+test.serial('post() creates the SQS rule with trigger information in PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const queue1 = randomId('queue');
+  const { queueUrl: queueUrl1 } = await createSqsQueues(queue1);
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sqs',
+      value: queueUrl1,
+    },
+    workflow,
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expectedMeta = {
+    visibilityTimeout: 300,
+    retries: 3,
+  };
+
+  const expressRequest = {
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.like(
+    esRule,
+    {
+      rule: {
+        type: 'sqs',
+        value: queueUrl1,
+      },
+      meta: expectedMeta,
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sqs',
+    value: queueUrl1,
+    meta: expectedMeta,
+  });
+});
+
+test.serial('post() creates the SQS rule with the meta provided in PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const queue1 = randomId('queue');
+  const { queueUrl: queueUrl1 } = await createSqsQueues(queue1);
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sqs',
+      value: queueUrl1,
+    },
+    workflow,
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    meta: {
+      retries: 0,
+      visibilityTimeout: 0,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expectedMeta = {
+    visibilityTimeout: 0,
+    retries: 0,
+  };
+
+  const expressRequest = {
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.like(
+    esRule,
+    {
+      rule: {
+        type: 'sqs',
+        value: queueUrl1,
+      },
+      meta: expectedMeta,
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sqs',
+    value: queueUrl1,
+    meta: expectedMeta,
+  });
+});
+
 test('POST creates a rule in PG with correct timestamps', async (t) => {
   const { newRule } = t.context;
 
@@ -743,7 +997,9 @@ test.serial('post() does not write to PostgreSQL if writing to Elasticsearch fai
   const { newRule, testKnex } = t.context;
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const expressRequest = {
@@ -950,32 +1206,28 @@ test.serial('PATCH nullifies expected fields for existing rule in all datastores
 });
 
 test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => (
-        Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        })
-      ),
-      unsubscribe: () => (
-        Promise.resolve()
-      ),
-    });
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
+  const snsMock = mockClient(awsServices.sns());
+
+  snsMock
+    .onAnyCommand()
+    .rejects()
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        Endpoint: process.env.messageConsumer,
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(UnsubscribeCommand)
+    .resolves({});
+
+  const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
+  mockLambdaClient.on(AddPermissionCommand).resolves();
+  mockLambdaClient.on(RemovePermissionCommand).resolves();
+
   t.teardown(() => {
-    snsStub.restore();
-    lambdaStub.restore();
+    snsMock.restore();
+    mockLambdaClient.restore();
   });
 
   const {
@@ -1260,7 +1512,9 @@ test('PATCH does not write to PostgreSQL if writing to Elasticsearch fails', asy
   );
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const updatedRule = {
@@ -1306,8 +1560,8 @@ test.serial('PATCH creates the same updated SNS rule in PostgreSQL/Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
-  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') });
+  const topic1 = await createSnsTopic(randomId('topic1_'));
+  const topic2 = await createSnsTopic(randomId('topic2_'));
 
   const {
     originalPgRecord,
@@ -1570,8 +1824,8 @@ test.serial('PATCH keeps initial trigger information if writing to PostgreSQL fa
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
-  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') });
+  const topic1 = await createSnsTopic(randomId('topic1_'));
+  const topic2 = await createSnsTopic(randomId('topic2_'));
 
   const {
     originalPgRecord,
@@ -1661,8 +1915,8 @@ test.serial('PATCH keeps initial trigger information if writing to Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
-  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') });
+  const topic1 = await createSnsTopic(randomId('topic1_'));
+  const topic2 = await createSnsTopic(randomId('topic2_'));
 
   const {
     originalPgRecord,
@@ -1702,8 +1956,10 @@ test.serial('PATCH keeps initial trigger information if writing to Elasticsearch
     body: updateRule,
     testContext: {
       esClient: {
-        index: () => {
-          throw new Error('ES fail');
+        client: {
+          index: () => {
+            throw new Error('ES fail');
+          },
         },
       },
     },
@@ -1930,34 +2186,28 @@ test.serial('PUT removes existing fields if not specified or set to null', async
 });
 
 test.serial('PUT sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => (
-        Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        })
-      ),
-      unsubscribe: () => (
-        Promise.resolve()
-      ),
-    });
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
-  t.teardown(() => {
-    snsStub.restore();
-    lambdaStub.restore();
-  });
+  const snsMock = mockClient(awsServices.sns());
 
+  snsMock
+    .onAnyCommand()
+    .rejects()
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        Endpoint: process.env.messageConsumer,
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(UnsubscribeCommand)
+    .resolves({});
+  const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
+  mockLambdaClient.on(AddPermissionCommand).resolves();
+  mockLambdaClient.on(RemovePermissionCommand).resolves();
+
+  t.teardown(() => {
+    snsMock.restore();
+    mockLambdaClient.restore();
+  });
   const {
     esRulesClient,
     rulePgModel,
@@ -2217,7 +2467,9 @@ test('PUT does not write to PostgreSQL if writing to Elasticsearch fails', async
   );
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const updatedRule = {
@@ -2263,8 +2515,8 @@ test.serial('PUT creates the same updated SNS rule in PostgreSQL/Elasticsearch',
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
-  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') });
+  const topic1 = await createSnsTopic(randomId('topic1_'));
+  const topic2 = await createSnsTopic(randomId('topic2_'));
 
   const {
     originalApiRule,
@@ -2527,8 +2779,8 @@ test.serial('PUT keeps initial trigger information if writing to PostgreSQL fail
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
-  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') });
+  const topic1 = await createSnsTopic(randomId('topic1_'));
+  const topic2 = await createSnsTopic(randomId('topic2_'));
 
   const {
     originalApiRule,
@@ -2619,8 +2871,8 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
-  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') });
+  const topic1 = await createSnsTopic(randomId('topic1_'));
+  const topic2 = await createSnsTopic(randomId('topic2_'));
 
   const {
     originalApiRule,
@@ -2661,8 +2913,10 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
     body: updateRule,
     testContext: {
       esClient: {
-        index: () => {
-          throw new Error('ES fail');
+        client: {
+          index: () => {
+            throw new Error('ES fail');
+          },
         },
       },
     },
@@ -2933,9 +3187,12 @@ test('del() does not remove from PostgreSQL if removing from Elasticsearch fails
   );
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('something bad');
+    client: {
+      delete: () => {
+        throw new Error('something bad');
+      },
     },
+    initializeEsClient: () => Promise.resolve(),
   };
 
   const expressRequest = {

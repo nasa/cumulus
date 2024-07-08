@@ -24,7 +24,7 @@ const {
   GranulePgModel,
 } = require('@cumulus/db');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
@@ -95,7 +95,7 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
     collectionPgModel = new CollectionPgModel(),
     filesPgModel = new FilePgModel(),
     dbClient = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = params;
 
   const { name, version } = deconstructCollectionId(apiGranule.collectionId);
@@ -261,8 +261,8 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
   const granules = [];
   const responseQueue = [];
 
-  const client = await Search.es(undefined, true);
-  const searchResponse = await client.search({
+  const esClient = await getEsClient(undefined, true);
+  const searchResponse = await esClient.client.search({
     index,
     scroll: '30s',
     size: SCROLL_SIZE,
@@ -285,7 +285,7 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
     if (totalHits !== granules.length) {
       responseQueue.push(
         // eslint-disable-next-line no-await-in-loop
-        await client.scroll({
+        await esClient.client.scroll({
           scrollId: body._scroll_id,
           scroll: '30s',
         })
@@ -293,42 +293,6 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
     }
   }
   return granules;
-}
-
-/**
- * Return a unique list of granule IDs based on the provided list or the response from the
- * query to ES using the provided query and index.
- *
- * @param {Object} payload
- * @param {Object} [payload.query] - Optional parameter of query to send to ES
- * @param {string} [payload.index] - Optional parameter of ES index to query.
- * Must exist if payload.query exists.
- * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
- * @returns {Promise<Array<string>>}
- */
-async function getGranuleIdsForPayload(payload) {
-  const { ids, index, query } = payload;
-  const granuleIds = ids || [];
-
-  // query ElasticSearch if needed
-  if (granuleIds.length === 0 && payload.query) {
-    log.info(
-      'No granule ids detected. Searching for granules in Elasticsearch.'
-    );
-
-    const granules = await granuleEsQuery({
-      index,
-      query,
-      source: ['granuleId'],
-    });
-
-    granules.map((granule) => granuleIds.push(granule.granuleId));
-  }
-
-  // Remove duplicate Granule IDs
-  // TODO: could we get unique IDs from the query directly?
-  const uniqueGranuleIds = [...new Set(granuleIds)];
-  return uniqueGranuleIds;
 }
 
 /**
@@ -371,7 +335,6 @@ async function getGranulesForPayload(payload) {
 module.exports = {
   getExecutionProcessingTimeInfo,
   getFilesExistingAtLocation,
-  getGranuleIdsForPayload,
   getGranulesForPayload,
   moveGranule,
   granuleEsQuery,

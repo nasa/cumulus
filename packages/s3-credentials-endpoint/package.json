@@ -1,35 +1,36 @@
 {
   "name": "@cumulus/s3-credentials-endpoint",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "description": "An API Gateway Lambda to return AWS credentials for fetching objects from S3",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "build": "../../node_modules/.bin/webpack && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
     "clean": "rm -rf dist",
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "dependencies": {
-    "@cumulus/api": "18.1.0",
-    "@cumulus/aws-client": "18.1.0",
-    "@cumulus/cmrjs": "18.1.0",
-    "@cumulus/errors": "18.1.0",
-    "@cumulus/logger": "18.1.0",
-    "@cumulus/oauth-client": "18.1.0",
+    "@cumulus/api": "18.2.0",
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/cmrjs": "18.2.0",
+    "@cumulus/errors": "18.2.0",
+    "@cumulus/logger": "18.2.0",
+    "@cumulus/oauth-client": "18.2.0",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.4",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
     "got": "^11.8.5",
     "hsts": "^2.2.0",

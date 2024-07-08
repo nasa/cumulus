@@ -71,6 +71,7 @@ module.exports = {
     }),
   ],
   output: {
+    chunkFormat: false,
     libraryTarget: 'commonjs2',
     filename: '[name]/index.js',
     devtoolModuleFilenameTemplate: (info) => {
@@ -79,7 +80,7 @@ module.exports = {
     }
   },
   externals: [
-    'aws-sdk',
+    /@aws-sdk\//,
     'electron',
     { formidable: 'url' },
     { fsevents: "require('fsevents')" }

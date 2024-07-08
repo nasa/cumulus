@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/lzards-backup",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "description": "Run LZARDS backup",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -12,7 +12,7 @@
     "directory": "tasks/lzards-backup"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "main": "dist/index.js",
   "directories": {
@@ -23,6 +23,7 @@
     "generate-task-schemas": "npx generate-task-schemas . files",
     "package": "npm run generate-task-schemas && ./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -40,23 +41,24 @@
       "rewritePaths": {
         "tests/": "dist/tests/"
       }
-    }
+    },
+    "failFast": true
   },
   "dependencies": {
-    "@cumulus/api-client": "18.1.0",
-    "@cumulus/aws-client": "18.1.0",
-    "@cumulus/common": "18.1.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/db": "18.1.0",
-    "@cumulus/distribution-utils": "18.1.0",
-    "@cumulus/launchpad-auth": "18.1.0",
-    "@cumulus/logger": "18.1.0",
-    "@cumulus/lzards-api-client": "18.1.0",
-    "@cumulus/message": "18.1.0",
+    "@cumulus/api-client": "18.2.0",
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/common": "18.2.0",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
+    "@cumulus/db": "18.2.0",
+    "@cumulus/distribution-utils": "18.2.0",
+    "@cumulus/launchpad-auth": "18.2.0",
+    "@cumulus/logger": "18.2.0",
+    "@cumulus/lzards-api-client": "18.2.0",
+    "@cumulus/message": "18.2.0",
     "got": "^11.8.5"
   },
   "devDependencies": {
-    "@cumulus/schemas": "18.1.0",
-    "@cumulus/types": "18.1.0"
+    "@cumulus/schemas": "18.2.0",
+    "@cumulus/types": "18.2.0"
   }
 }

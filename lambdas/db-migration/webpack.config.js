@@ -33,6 +33,7 @@ module.exports = {
   mode: 'development',
   entry: './dist/lambda/index.js',
   output: {
+    chunkFormat: false,
     library: {
       type: 'commonjs2'
     },
@@ -79,5 +80,8 @@ module.exports = {
   node: {
     __dirname: false
   },
-  target: 'node'
+  target: 'node',
+  externals: [
+    /@aws-sdk\//
+  ]
 };

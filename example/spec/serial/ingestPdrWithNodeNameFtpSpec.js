@@ -5,6 +5,10 @@
  * granule's provider using NODE_NAME with a provider that utilizes login credentials
  */
 
+const {
+  InvokeCommand,
+} = require('@aws-sdk/client-lambda');
+
 const S3 = require('@cumulus/aws-client/S3');
 const { s3, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -23,8 +27,8 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildFtpProvider } = require('../helpers/Providers');
-const { encodedConstructCollectionId } = require('../helpers/Collections');
 const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const {
   createTestDataPath,
@@ -81,7 +85,6 @@ describe('Ingesting from PDR', () => {
       pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
       provider = { id: `s3_provider${testSuffix}` };
       testDataFolder = createTestDataPath(testId);
-
       const ftpProvider = await buildFtpProvider(`${randomString(4)}-${testSuffix}`);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, config.pdrNodeNameProviderBucket);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, ftpProvider.host);
@@ -110,20 +113,22 @@ describe('Ingesting from PDR', () => {
 
       let testData;
       try {
-        testData = await lambda().invoke({
+        testData = await lambda().send(new InvokeCommand({
           FunctionName: functionName,
           Payload: new TextEncoder().encode(JSON.stringify({
             prefix: config.stackName,
           })),
-        });
+        }));
       } catch (error) {
         console.log(error);
       }
 
       const { newGranuleId, filePaths } = JSON.parse(new TextDecoder('utf-8').decode(testData.Payload));
+
       if (!newGranuleId || !filePaths) {
         throw new Error('FTP Server setup failed', testData);
       }
+
       testFilePaths = filePaths;
       await updateAndUploadTestDataToBucket(
         config.bucket,
@@ -188,14 +193,14 @@ describe('Ingesting from PDR', () => {
       providerId: nodeNameProviderId,
     }).catch(console.error);
     // TODO Inovke cleanup lambda
-    const deletionRequest = await lambda().invoke({
+    const deletionRequest = await lambda().send(new InvokeCommand({
       FunctionName: functionName,
       Payload: new TextEncoder().encode(JSON.stringify({
         prefix: config.stackName,
         command: 'delete',
         filePaths: testFilePaths,
       })),
-    });
+    }));
     if (deletionRequest.StatusCode !== 200) {
       throw new Error(deletionRequest);
     }
@@ -351,7 +356,7 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map(async (g) => {
-              const newCollectionId = encodedConstructCollectionId(addedCollection.name, addedCollection.version);
+              const newCollectionId = constructCollectionId(addedCollection.name, addedCollection.version);
               await waitForApiStatus(
                 getGranule,
                 {

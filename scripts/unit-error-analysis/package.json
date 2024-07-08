@@ -1,0 +1,35 @@
+{
+  "name": "@cumulus/unit-error-analysis",
+  "version": "18.2.0",
+  "author": "Cumulus Authors",
+  "description": "compile errors",
+  "license": "Apache-2.0",
+  "private": true,
+  "homepage": "https://github.com/nasa/cumulus/tree/master/scripts/unit-error-analysis#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "scripts/unit-error-analysis"
+  },
+  "engines": {
+    "node": ">=16.19.0"
+  },
+  "scripts": {
+    "clean": "rm -rf node_modules && rm -rf dist",
+    "test": "../../node_modules/.bin/ava",
+    "build": "rm -rf dist && mkdir dist && npm run prepare",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py",
+    "prepare": "npm run tsc",
+    "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
+  },
+  "dependencies": {
+    "@cumulus/aws-client": "18.2.0",
+    "@types/minimist": "^1.2.5",
+    "minimist": "^1.2.8",
+    "moment": "^2.30.1",
+    "tsc": "^2.0.4"
+  }
+}

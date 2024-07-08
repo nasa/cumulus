@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -16,7 +16,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "generate-task-schemas": "npx generate-task-schemas . files",
@@ -24,6 +24,7 @@
     "build": "rm -rf dist && mkdir dist && npm run generate-task-schemas && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
     "package": "npm run build && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js schemas)",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
@@ -35,22 +36,23 @@
     "files": [
       "!tests/fixtures/**/*"
     ],
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "dependencies": {
-    "@cumulus/aws-client": "18.1.0",
-    "@cumulus/collection-config-store": "18.1.0",
-    "@cumulus/common": "18.1.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/errors": "18.1.0",
-    "@cumulus/ingest": "18.1.0",
-    "@cumulus/message": "18.1.0",
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/collection-config-store": "18.2.0",
+    "@cumulus/common": "18.2.0",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
+    "@cumulus/errors": "18.2.0",
+    "@cumulus/ingest": "18.2.0",
+    "@cumulus/message": "18.2.0",
     "lodash": "^4.17.21",
     "p-map": "^2.1.0",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
-    "@cumulus/schemas": "18.1.0",
-    "@cumulus/test-data": "18.1.0"
+    "@cumulus/schemas": "18.2.0",
+    "@cumulus/test-data": "18.2.0"
   }
 }

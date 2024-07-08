@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "description": "Example task",
   "main": "index.js",
   "directories": {
@@ -13,20 +13,22 @@
     "directory": "tasks/hello-world"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
     "clean": "rm -rf dist",
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "serial": true,
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "publishConfig": {
     "access": "public"
@@ -34,8 +36,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.1.0",
-    "@cumulus/common": "18.1.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5"
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/common": "18.2.0",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0"
   }
 }

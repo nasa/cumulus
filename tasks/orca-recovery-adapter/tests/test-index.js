@@ -87,14 +87,12 @@ const {
 } = proxyquire('../dist/src', {
   '@cumulus/aws-client/services': {
     sfn: () => ({
-      startExecution: ({ stateMachineArn }) => ({
-        promise: () => {
-          if (stateMachineArn.startsWith(fakeInvalidSfnArn)) {
-            throw new Error('sfn execution error');
-          }
-          return Promise.resolve(fakeStartExecutionResponse);
-        },
-      }),
+      startExecution: ({ stateMachineArn }) => {
+        if (stateMachineArn.startsWith(fakeInvalidSfnArn)) {
+          throw new Error('sfn execution error');
+        }
+        return Promise.resolve(fakeStartExecutionResponse);
+      },
     }),
   },
   '@cumulus/aws-client/StepFunctions': {

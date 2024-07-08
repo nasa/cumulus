@@ -1,13 +1,12 @@
 'use strict';
 
 const uuidv4 = require('uuid/v4');
+const moment = require('moment');
 const test = require('ava');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-
 const {
-  determineExecutionName,
   handler,
 } = require('../../lambdas/write-db-dlq-records-to-s3.js');
 
@@ -29,53 +28,72 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   const message1 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      cumulus_meta: {
-        execution_name: message1Name,
-      },
+      detail: { executionArn: message1Name },
+      time: '2024-03-11T18:58:27Z',
     }),
   };
   const message2Name = randomString(12);
   const message2 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      cumulus_meta: {
-        execution_name: message2Name,
-      },
+      detail: { executionArn: message2Name },
+      time: '2024-03-12T18:58:27Z',
+    }),
+  };
+  const message3Name = randomString(12);
+  const message3 = {
+    messageId: uuidv4(),
+    body: JSON.stringify({
+      detail: { executionArn: message3Name },
+      time: '2024-03-13T18:58:27Z',
+    }),
+  };
+  const message4Name = randomString(12);
+  const message4 = {
+    messageId: uuidv4(),
+    body: JSON.stringify({
+      detail: { executionArn: message4Name },
     }),
   };
 
   const recordsFixture = {
-    Records: [message1, message2],
+    Records: [message1, message2, message3, message4],
   };
 
   await handler(recordsFixture);
-
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${message1Name}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024-03-11/${message1Name}`,
   })).length, 1);
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${message2Name}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024-03-12/${message2Name}`,
+  })).length, 1);
+  t.is((await S3.listS3ObjectsV2({
+    Bucket: t.context.bucket,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024-03-13/${message3Name}`,
+  })).length, 1);
+  t.is((await S3.listS3ObjectsV2({
+    Bucket: t.context.bucket,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${moment.utc().format('YYYY-MM-DD')}/${message4Name}`,
   })).length, 1);
 });
 
 test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execution', async (t) => {
   const messageName = randomString(12);
+  const time = '2024-03-11T18:58:27Z';
   const message1 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      cumulus_meta: {
-        execution_name: messageName,
-      },
+      detail: { executionArn: messageName },
+      time,
     }),
   };
   const message2 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      cumulus_meta: {
-        execution_name: messageName,
-      },
+      detail: { executionArn: messageName },
+      time,
     }),
   };
 
@@ -87,7 +105,7 @@ test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execut
 
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${messageName}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024-03-11/${messageName}`,
   })).length, 2);
 });
 
@@ -105,18 +123,4 @@ test.serial('write-db-dlq-records-to-s3 throws error if system bucket is not def
     handler({}),
     { message: 'System bucket env var is required.' }
   );
-});
-
-test('determineExecutionName returns execution name if it exists in cumulus_meta', (t) => {
-  const executionName = 'someExecutionName';
-  t.is(determineExecutionName({
-    cumulus_meta: {
-      execution_name: executionName,
-    },
-  }),
-  executionName);
-});
-
-test('determineExecutionName returns "unknown" if getExecutionName throws error', (t) => {
-  t.is(determineExecutionName({}), 'unknown');
 });

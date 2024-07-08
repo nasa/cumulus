@@ -4,11 +4,13 @@ const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
 
+const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
-  sns,
-  sqs,
-} = require('@cumulus/aws-client/services');
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   CollectionPgModel,
@@ -47,15 +49,17 @@ const esSearchStub = sandbox.stub();
 const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
-class FakeSearch {
-  static es() {
-    return new FakeEsClient();
-  }
-}
+
 const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
   '../lib/granules': proxyquire('../../lib/granules', {
     '@cumulus/es-client/search': {
-      Search: FakeSearch,
+      getEsClient: () => Promise.resolve({
+        initializeEsClient: () => Promise.resolve(),
+        client: {
+          search: esSearchStub,
+          scroll: esScrollStub,
+        },
+      }),
     },
   }),
 });
@@ -200,19 +204,19 @@ test.before(async (t) => {
   await awsServices.secretsManager().createSecret({
     Name: envVars.cmr_password_secret_name,
     SecretString: randomString(),
-  }).promise();
+  });
 
   // Store the launchpad passphrase
   process.env.launchpad_passphrase_secret_name = randomString();
   await awsServices.secretsManager().createSecret({
     Name: envVars.launchpad_passphrase_secret_name,
     SecretString: randomString(),
-  }).promise();
+  });
 });
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -225,11 +229,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 });
@@ -237,7 +241,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
-  await sns().deleteTopic({ TopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn }));
   sandbox.resetHistory();
 });
 
@@ -245,11 +249,11 @@ test.after.always(async (t) => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: envVars.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
   await awsServices.secretsManager().deleteSecret({
     SecretId: envVars.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
 
   await destroyLocalTestDb({
     knex: t.context.knex,

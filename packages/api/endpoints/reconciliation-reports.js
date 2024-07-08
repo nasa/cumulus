@@ -17,7 +17,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, getEsClient } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 
 const models = require('../models');
@@ -127,7 +127,7 @@ async function deleteReport(req, res) {
   await reconciliationReportModel.delete({ name });
 
   if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
+    const esClient = await getEsClient(process.env.ES_HOST);
     await indexer.deleteRecord({
       esClient,
       id: name,

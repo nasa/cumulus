@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const log = require('@cumulus/common/log');
 const { IndexExistsError } = require('@cumulus/errors');
-const { defaultIndexAlias, Search } = require('@cumulus/es-client/search');
+const { defaultIndexAlias, getEsClient } = require('@cumulus/es-client/search');
 const { createIndex } = require('@cumulus/es-client/indexer');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -21,35 +21,6 @@ function timestampedIndexName() {
 
 function createEsSnapshot(req, res) {
   return res.boom.badRequest('Functionality not yet implemented');
-
-  // *** Currently blocked on NGAP ****
-  // const esClient = await Search.es();
-
-  //let repository = null;
-
-  // try {
-  //   const repository = await esClient.snapshot.getRepository({ repository: snapshotRepoName });
-  // }
-  // catch (err) {
-  //   // Handle repository missing exceptions
-  //   if (!err.message.includes('[repository_missing_exception]')) {
-  //     throw err;
-  //   }
-
-  // TO DO: when permission boundaries are updated
-  // repository = await esClient.snapshot.createRepository({
-  //   repository: snapshotRepoName,
-  //   verify: false,
-  //   body: {
-  //     type: 's3',
-  //     settings: {
-  //       bucket: 'lf-internal',
-  //       region: 'us-east-1',
-  //       role_arn: process.env.ROLE_ARN
-  //     }
-  //   }
-  // });
-  // }
 }
 
 async function reindex(req, res) {
@@ -57,10 +28,10 @@ async function reindex(req, res) {
   let destIndex = req.body.destIndex;
   const aliasName = req.body.aliasName || defaultIndexAlias;
 
-  const esClient = await Search.es();
+  const esClient = await getEsClient();
 
   if (!sourceIndex) {
-    const alias = await esClient.indices.getAlias({
+    const alias = await esClient.client.indices.getAlias({
       name: aliasName,
     }).then((response) => response.body);
 
@@ -74,7 +45,7 @@ async function reindex(req, res) {
 
     sourceIndex = indices[0];
   } else {
-    const sourceExists = await esClient.indices.exists({ index: sourceIndex })
+    const sourceExists = await esClient.client.indices.exists({ index: sourceIndex })
       .then((response) => response.body);
 
     if (!sourceExists) {
@@ -90,7 +61,7 @@ async function reindex(req, res) {
     return res.boom.badRequest(`source index(${sourceIndex}) and destination index(${destIndex}) must be different.`);
   }
 
-  const destExists = await esClient.indices.exists({ index: destIndex })
+  const destExists = await esClient.client.indices.exists({ index: destIndex })
     .then((response) => response.body);
 
   if (!destExists) {
@@ -103,7 +74,7 @@ async function reindex(req, res) {
   }
 
   // reindex
-  esClient.reindex({
+  esClient.client.reindex({
     body: {
       source: { index: sourceIndex },
       dest: { index: destIndex },
@@ -116,14 +87,14 @@ async function reindex(req, res) {
 }
 
 async function reindexStatus(req, res) {
-  const esClient = await Search.es();
+  const esClient = await getEsClient();
 
-  const reindexTaskStatus = await esClient.tasks.list({ actions: ['*reindex'] })
+  const reindexTaskStatus = await esClient.client.tasks.list({ actions: ['*reindex'] })
     .then((response) => response.body);
 
-  await esClient.indices.refresh();
+  await esClient.client.indices.refresh();
 
-  const indexStatus = await esClient.indices.stats({
+  const indexStatus = await esClient.client.indices.stats({
     metric: 'docs',
   }).then((response) => response.body);
 
@@ -141,7 +112,7 @@ async function changeIndex(req, res) {
   const currentIndex = req.body.currentIndex;
   const newIndex = req.body.newIndex;
 
-  const esClient = await Search.es();
+  const esClient = await getEsClient();
 
   if (!currentIndex || !newIndex) {
     return res.boom.badRequest('Please explicity specify a current and new index.');
@@ -151,14 +122,14 @@ async function changeIndex(req, res) {
     return res.boom.badRequest('The current index cannot be the same as the new index.');
   }
 
-  const currentExists = await esClient.indices.exists({ index: currentIndex })
+  const currentExists = await esClient.client.indices.exists({ index: currentIndex })
     .then((response) => response.body);
 
   if (!currentExists) {
     return res.boom.badRequest(`Current index ${currentIndex} does not exist.`);
   }
 
-  const destExists = await esClient.indices.exists({ index: newIndex })
+  const destExists = await esClient.client.indices.exists({ index: newIndex })
     .then((response) => response.body);
 
   if (!destExists) {
@@ -171,7 +142,7 @@ async function changeIndex(req, res) {
   }
 
   try {
-    await esClient.indices.updateAliases({
+    await esClient.client.indices.updateAliases({
       body: {
         actions: [
           { remove: { index: currentIndex, alias: aliasName } },
@@ -190,7 +161,7 @@ async function changeIndex(req, res) {
   let message = `Change index success - alias ${aliasName} now pointing to ${newIndex}`;
 
   if (deleteSource) {
-    await esClient.indices.delete({ index: currentIndex });
+    await esClient.client.indices.delete({ index: currentIndex });
     log.info(`Deleted index ${currentIndex}`);
     message = `${message} and index ${currentIndex} deleted`;
   }
@@ -199,13 +170,13 @@ async function changeIndex(req, res) {
 }
 
 async function indicesStatus(req, res) {
-  const esClient = await Search.es();
+  const esClient = await getEsClient();
 
-  return res.send(await esClient.cat.indices({}));
+  return res.send(await esClient.client.cat.indices({}));
 }
 
 async function indexFromDatabase(req, res) {
-  const esClient = await Search.es();
+  const esClient = await getEsClient();
   const indexName = req.body.indexName || timestampedIndexName();
   const { postgresResultPageSize, postgresConnectionPoolSize, esRequestConcurrency } = req.body;
 
@@ -237,10 +208,10 @@ async function indexFromDatabase(req, res) {
 }
 
 async function getCurrentIndex(req, res) {
-  const esClient = await Search.es();
+  const esClient = await getEsClient();
   const alias = req.params.alias || defaultIndexAlias;
 
-  const aliasIndices = await esClient.indices.getAlias({ name: alias })
+  const aliasIndices = await esClient.client.indices.getAlias({ name: alias })
     .then((response) => response.body);
 
   return res.send(Object.keys(aliasIndices));

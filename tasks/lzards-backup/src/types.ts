@@ -1,3 +1,5 @@
+import { AssumeRoleResponse } from '@cumulus/aws-client/STS';
+
 export interface HandlerInput {
   granules: MessageGranule[],
   [key: string]: unknown
@@ -7,6 +9,7 @@ export interface HandlerConfig {
   urlType: 's3' | 'cloudfront',
   cloudfrontEndpoint?: string,
   failTaskWhenFileBackupFail?: boolean,
+  lzardsProvider?: string,
 }
 
 export interface HandlerEvent {
@@ -58,4 +61,9 @@ export interface GetCollectionFunctionParams {
     name: string,
     version: string,
   },
+}
+
+export interface BackupConfig extends HandlerConfig{
+  roleCreds: AssumeRoleResponse,
+  authToken: string,
 }

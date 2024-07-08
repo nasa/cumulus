@@ -340,7 +340,10 @@ test('post() does not write to PostgreSQL if writing to Elasticsearch fails', as
   const provider = fakeProviderFactory();
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const expressRequest = {

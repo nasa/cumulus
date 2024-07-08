@@ -49,13 +49,10 @@ test.serial('error thrown when limit exceeded', async (t) => {
 
   const sfn = awsServices.sfn();
   try {
-    sfn.describeExecution = () => ({
-      promise: () => Promise.resolve({
-        status: 'RUNNING',
-        executionArn: 'arn:123',
-      }),
+    sfn.describeExecution = () => Promise.resolve({
+      status: 'RUNNING',
+      executionArn: 'arn:123',
     });
-
     await checkPdrStatuses(event);
     t.fail();
   } catch (error) {
@@ -91,19 +88,17 @@ test.serial('returns the correct results in the nominal case', async (t) => {
 
   let output;
   try {
-    sfn.describeExecution = ({ executionArn }) => ({
-      promise: () => {
-        if (!executionStatuses[executionArn]) {
-          const error = new Error(`Execution does not exist: ${executionArn}`);
-          error.code = 'ExecutionDoesNotExist';
-          return Promise.reject(error);
-        }
-        return Promise.resolve({
-          executionArn,
-          status: executionStatuses[executionArn],
-        });
-      },
-    });
+    sfn.describeExecution = ({ executionArn }) => {
+      if (!executionStatuses[executionArn]) {
+        const error = new Error(`Execution does not exist: ${executionArn}`);
+        error.code = 'ExecutionDoesNotExist';
+        return Promise.reject(error);
+      }
+      return Promise.resolve({
+        executionArn,
+        status: executionStatuses[executionArn],
+      });
+    };
 
     output = await checkPdrStatuses(event);
   } finally {

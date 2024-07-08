@@ -9,14 +9,13 @@ test.before(async (t) => {
   t.context.knex = await getKnexClient({ env: localStackConnectionEnv });
 
   t.context.secretsManager = {
-    getSecretValue: () => ({
-      promise: () => Promise.resolve({
-        SecretString: JSON.stringify({
-          host: localStackConnectionEnv.PG_HOST,
-          username: localStackConnectionEnv.PG_USER,
-          password: localStackConnectionEnv.PG_PASSWORD,
-          database: localStackConnectionEnv.PG_DATABASE,
-        }),
+    getSecretValue: () => Promise.resolve({
+      SecretString: JSON.stringify({
+        host: localStackConnectionEnv.PG_HOST,
+        username: localStackConnectionEnv.PG_USER,
+        password: localStackConnectionEnv.PG_PASSWORD,
+        database: localStackConnectionEnv.PG_DATABASE,
+        disableSSL: 'true',
       }),
     }),
     putSecretValue: () => ({

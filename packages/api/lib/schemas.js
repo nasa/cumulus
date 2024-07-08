@@ -42,7 +42,14 @@ module.exports.asyncOperation = {
   title: 'AsyncOperation Object',
   description: 'Cumulus API AsyncOperation Table schema',
   type: 'object',
-  required: ['createdAt', 'id', 'status', 'updatedAt', 'description', 'operationType'],
+  required: [
+    'createdAt',
+    'id',
+    'status',
+    'updatedAt',
+    'description',
+    'operationType',
+  ],
   additionalProperties: false,
   properties: {
     createdAt: { type: 'integer' },
@@ -50,7 +57,19 @@ module.exports.asyncOperation = {
     description: { type: 'string' },
     operationType: {
       type: 'string',
-      enum: ['Data Migration', 'Dead-Letter Processing', 'Migration Count Report', 'ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Bulk Granule Reingest', 'Kinesis Replay', 'Reconciliation Report', 'SQS Replay'],
+      enum: [
+        'Bulk Granule Delete',
+        'Bulk Granule Reingest',
+        'Bulk Granules',
+        'Bulk Execution Delete',
+        'Data Migration',
+        'Dead-Letter Processing',
+        'DLA Migration',
+        'ES Index',
+        'Kinesis Replay',
+        'Reconciliation Report',
+        'SQS Replay',
+      ],
     },
     output: {
       description: 'The result of the operation, stored as JSON',

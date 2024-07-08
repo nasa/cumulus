@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/oauth-client",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "description": "A generic auth client",
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/oauth-client#readme",
   "repository": {
@@ -14,7 +14,7 @@
     "Cumulus"
   ],
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "publishConfig": {
     "access": "public"
@@ -29,6 +29,7 @@
     "clean": "rm -rf dist",
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.md.hbs dist/*.js > README.md",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
@@ -39,7 +40,8 @@
     "files": [
       "tests/*"
     ],
-    "verbose": true
+    "verbose": true,
+    "failFast": true
   },
   "dependencies": {
     "got": "^11.8.5"

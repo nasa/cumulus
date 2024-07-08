@@ -43,7 +43,7 @@ test.before(async () => {
   await secretsManager().createSecret({
     Name: process.env.launchpad_passphrase_secret_name,
     SecretString: randomId('launchpad-passphrase'),
-  }).promise();
+  });
 
   await createBucket(process.env.system_bucket);
   await putJsonS3Object(
@@ -67,7 +67,7 @@ test.after.always(async () => {
   await secretsManager().deleteSecret({
     SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
 });
 
 test.serial('API request with a valid Launchpad token stores the access token', async (t) => {

@@ -1,5 +1,6 @@
 'use strict';
 
+const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
 const get = require('lodash/get');
 const pAll = require('p-all');
 
@@ -26,7 +27,7 @@ const {
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   createTimestampedTestId,
   createTestSuffix,
@@ -158,14 +159,14 @@ describe('POST /granules/bulkDelete', () => {
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix,
           granuleId,
-          collectionId: encodedConstructCollectionId(collection.name, collection.version),
+          collectionId: constructCollectionId(collection.name, collection.version),
           status: 'completed' });
         timestampBeforeCall = Date.now();
         postBulkDeleteResponse = await granules.bulkDeleteGranules(
           {
             prefix,
             body: {
-              granules: [{ granuleId, collectionId: encodedConstructCollectionId(collection.name, collection.version) }],
+              granules: [{ granuleId, collectionId: constructCollectionId(collection.name, collection.version) }],
               // required to force removal of granules from CMR before deletion
               forceRemoveFromCmr: true,
             },
@@ -254,7 +255,7 @@ describe('POST /granules/bulkDelete', () => {
       const describeTasksResponse = await ecs().describeTasks({
         cluster: clusterArn,
         tasks: [taskArn],
-      }).promise();
+      });
 
       expect(describeTasksResponse.tasks.length).toEqual(1);
     });
@@ -262,13 +263,10 @@ describe('POST /granules/bulkDelete', () => {
     it('eventually generates the correct output', async () => {
       expect(beforeAllSucceeded).toBeTrue();
 
-      await ecs().waitFor(
-        'tasksStopped',
-        {
-          cluster: clusterArn,
-          tasks: [taskArn],
-        }
-      ).promise();
+      await waitUntilTasksStopped(
+        { client: ecs(), maxWaitTime: 600, maxDelay: 1, minDelay: 1 },
+        { cluster: clusterArn, tasks: [taskArn] }
+      );
 
       const asyncOperation = await getAsyncOperation({
         prefix,

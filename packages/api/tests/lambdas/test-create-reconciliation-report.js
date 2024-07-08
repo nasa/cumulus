@@ -42,7 +42,7 @@ const {
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, getEsClient } = require('@cumulus/es-client/search');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
 const {
@@ -346,7 +346,7 @@ test.before(async (t) => {
   await awsServices.secretsManager().createSecret({
     Name: process.env.cmr_password_secret_name,
     SecretString: randomId('cmr-password'),
-  }).promise();
+  });
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
@@ -382,7 +382,12 @@ test.beforeEach(async (t) => {
     index: esIndex,
     alias: esAlias,
   });
-  esClient = await Search.es();
+  esClient = await getEsClient();
+  t.context.esReportClient = new Search(
+    {},
+    'reconciliationReport',
+    process.env.ES_INDEX
+  );
 
   t.context.execution = fakeExecutionRecordFactory();
   const [pgExecution] = await t.context.executionPgModel.create(
@@ -405,14 +410,14 @@ test.afterEach.always(async (t) => {
     { cumulus_id: t.context.executionCumulusId }
   );
   CMR.prototype.searchConcept.restore();
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
 });
 
 test.after.always(async (t) => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
   delete process.env.cmr_password_secret_name;
   await destroyLocalTestDb({
     knex: t.context.knex,
@@ -442,6 +447,7 @@ test.serial('Generates valid reconciliation report for no buckets', async (t) =>
   const reportRecord = await handler(event, {});
 
   t.is(reportRecord.status, 'Generated');
+  t.is(reportRecord.type, 'Inventory');
 
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
@@ -456,6 +462,9 @@ test.serial('Generates valid reconciliation report for no buckets', async (t) =>
   t.true(createStartTime <= createEndTime);
   t.is(report.reportStartTime, (new Date(startTimestamp)).toISOString());
   t.is(report.reportEndTime, (new Date(endTimestamp)).toISOString());
+
+  const esRecord = await t.context.esReportClient.get(reportRecord.name);
+  t.like(esRecord, reportRecord);
 });
 
 test.serial('Generates valid GNF reconciliation report when everything is in sync', async (t) => {
@@ -528,6 +537,7 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
 
   const reportRecord = await handler(event);
   t.is(reportRecord.status, 'Generated');
+  t.is(reportRecord.type, event.reportType);
 
   const report = await fetchCompletedReport(reportRecord);
   const filesInCumulus = report.filesInCumulus;
@@ -551,6 +561,9 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
   t.true(createStartTime <= createEndTime);
+
+  const esRecord = await t.context.esReportClient.get(reportRecord.name);
+  t.like(esRecord, reportRecord);
 });
 
 test.serial('Generates a valid Inventory reconciliation report when everything is in sync', async (t) => {
@@ -1854,10 +1867,17 @@ test.serial('When report creation fails, reconciliation report status is set to 
   };
 
   await t.throwsAsync(handler(event));
+  const reportRecord = await new models.ReconciliationReport().get({ name: reportName });
+  t.is(reportRecord.status, 'Failed');
+  t.is(reportRecord.type, 'Inventory');
+
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
   t.is(report.status, 'Failed');
   t.truthy(report.error);
+
+  const esRecord = await t.context.esReportClient.get(reportRecord.name);
+  t.like(esRecord, reportRecord);
 });
 
 test.serial('A valid internal reconciliation report is generated when ES and DB are in sync', async (t) => {
@@ -1928,6 +1948,9 @@ test.serial('A valid internal reconciliation report is generated when ES and DB 
   t.is(report.granules.onlyInEs.length, 0);
   t.is(report.granules.onlyInDb.length, 0);
   t.is(report.granules.withConflicts.length, 0);
+
+  const esRecord = await t.context.esReportClient.get(reportRecord.name);
+  t.like(esRecord, reportRecord);
 });
 
 test.serial('Creates a valid Granule Inventory report', async (t) => {
@@ -1981,6 +2004,9 @@ test.serial('Creates a valid Granule Inventory report', async (t) => {
   const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published","provider"';
   t.is(reportHeader, header);
   t.is(reportRows.length, 10);
+
+  const esRecord = await t.context.esReportClient.get(reportRecord.name);
+  t.like(esRecord, reportRecord);
 });
 
 test.serial('A valid ORCA Backup reconciliation report is generated', async (t) => {
@@ -2057,6 +2083,9 @@ test.serial('A valid ORCA Backup reconciliation report is generated', async (t) 
   t.is(report.granules.onlyInCumulus.length, 0);
   t.is(report.granules.onlyInOrca.length, 0);
   t.is(report.granules.withConflicts.length, 0);
+
+  const esRecord = await t.context.esReportClient.get(reportRecord.name);
+  t.like(esRecord, reportRecord);
 });
 
 test.serial('Internal Reconciliation report JSON is formatted', async (t) => {
@@ -2185,8 +2214,15 @@ test.serial('When there is an error for an ORCA backup report, it throws', async
     { message: 'ORCA error' }
   );
 
+  const reportRecord = await new models.ReconciliationReport().get({ name: reportName });
+  t.is(reportRecord.status, 'Failed');
+  t.is(reportRecord.type, event.reportType);
+
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
   t.is(report.status, 'Failed');
-  t.is(report.reportType, 'ORCA Backup');
+  t.is(report.reportType, event.reportType);
+
+  const esRecord = await t.context.esReportClient.get(reportRecord.name);
+  t.like(esRecord, reportRecord);
 });

@@ -55,7 +55,7 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
 const { getPdr } = require('@cumulus/api-client/pdrs');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
@@ -141,7 +141,7 @@ describe('The S3 Ingest Granules workflow', () => {
       testDataFolder = createTestDataPath(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-      collectionId = encodedConstructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
       provider = { id: `s3_provider${testSuffix}` };
 
       process.env.system_bucket = config.bucket;
@@ -237,7 +237,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
       setDistributionApiEnvVars();
-      collectionId = encodedConstructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
 
       console.log('Start SuccessExecution');
       workflowExecutionArn = await buildAndStartWorkflow(
@@ -309,7 +309,7 @@ describe('The S3 Ingest Granules workflow', () => {
     failOnSetupError([beforeAllError]);
   });
 
-  it('triggers a running execution record being added to DynamoDB', async () => {
+  it('triggers a running execution record being added to the PostgreSQL database', async () => {
     failOnSetupError([beforeAllError]);
     const record = await waitForApiStatus(
       getExecution,
@@ -334,7 +334,7 @@ describe('The S3 Ingest Granules workflow', () => {
     })).toBeResolved();
   });
 
-  it('triggers a running PDR record being added to DynamoDB', async () => {
+  it('triggers a running PDR record being added to the PostgreSQL database', async () => {
     failOnSetupError([beforeAllError]);
 
     const record = await waitForApiStatus(
@@ -443,7 +443,7 @@ describe('The S3 Ingest Granules workflow', () => {
     it('adds LZARDS backup output', () => {
       const dataType = lambdaOutput.meta.input_granules[0].dataType;
       const version = lambdaOutput.meta.input_granules[0].version;
-      const expectedCollectionId = encodedConstructCollectionId(dataType, version);
+      const expectedCollectionId = constructCollectionId(dataType, version);
       expect(true, lambdaOutput.meta.backupStatus.every((file) => file.status === 'COMPLETED'));
       expect(lambdaOutput.meta.backupStatus[0].provider).toBe(provider.id);
       expect(lambdaOutput.meta.backupStatus[0].createdAt).toBe(lambdaOutput.meta.input_granules[0].createdAt);
@@ -754,7 +754,7 @@ describe('The S3 Ingest Granules workflow', () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
     });
 
-    it('triggers the granule record being added to DynamoDB', async () => {
+    it('triggers the granule record being added to the PostgreSQL database', async () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
       const record = await waitForApiStatus(
         getGranule,
@@ -769,7 +769,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(record.execution).toEqual(getExecutionUrl(workflowExecutionArn));
     });
 
-    it('triggers the successful execution record being added to DynamoDB', async () => {
+    it('triggers the successful execution record being added to the PostgreSQL database', async () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
       const record = await waitForApiStatus(
         getExecution,
@@ -782,7 +782,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(record.status).toEqual('completed');
     });
 
-    it('triggers the failed execution record being added to DynamoDB', async () => {
+    it('triggers the failed execution record being added to the PostgreSQL database', async () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
       const record = await waitForApiStatus(
         getExecution,

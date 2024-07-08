@@ -12,7 +12,7 @@ const { sqs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getGranule } = require('@cumulus/api-client/granules');
 
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
@@ -131,7 +131,7 @@ describe('The Queue Granules workflow', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
-          encodedConstructCollectionId(collection.name, collection.version),
+          constructCollectionId(collection.name, collection.version),
           'queued'
         );
       })
@@ -172,7 +172,7 @@ describe('The Queue Granules workflow', () => {
             {
               prefix: config.stackName,
               granuleId: granule.granuleId,
-              collectionId: encodedConstructCollectionId(collection.name, collection.version),
+              collectionId: constructCollectionId(collection.name, collection.version),
             },
             'queued'
           );
@@ -191,7 +191,7 @@ describe('The Queue Granules workflow', () => {
   });
 
   describe('the reporting lambda has received the CloudWatch step function event and', () => {
-    it('the execution record is added to DynamoDB', async () => {
+    it('the execution record is added to the PostgreSQL database', async () => {
       const record = await waitForApiStatus(
         getExecution,
         { prefix: config.stackName, arn: workflowExecution.executionArn },

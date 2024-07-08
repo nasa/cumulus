@@ -1,7 +1,8 @@
+//@ts-check
+
 'use strict';
 
 const get = require('lodash/get');
-
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const Logger = require('@cumulus/logger');
@@ -21,6 +22,7 @@ const {
   getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
+const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 
 const {
   getCollectionCumulusId,
@@ -120,7 +122,17 @@ const writeRecords = async ({
     testOverrides,
   });
 };
+/**
+ * @typedef {import('aws-lambda').SQSRecord} SQSRecord
+ * @typedef {{Records: Array<SQSRecord>, env: {[key: string]: any}, [key: string]: any}} LambdaEvent
+ */
 
+/**
+ * Lambda handler for StepFunction Events that writes records or records errors to the DLQ
+ *
+ * @param {LambdaEvent} event - Input payload
+ * @returns {Promise<{batchItemFailures: Array<{itemIdentifier: string}>}>}
+ */
 const handler = async (event) => {
   const knex = await getKnexClient({
     env: {
@@ -134,9 +146,14 @@ const handler = async (event) => {
 
   await Promise.all(sqsMessages.map(async (message) => {
     let cumulusMessage;
+
     const executionEvent = parseSQSMessageBody(message);
     try {
-      cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+      if (isEventBridgeEvent(executionEvent)) {
+        cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+      } else {
+        throw new TypeError('SQSMessage body not in expected EventBridgeEvent format');
+      }
     } catch (error) {
       log.error(`Writing message failed on getting message from execution event: ${JSON.stringify(message)}`, error);
       return batchItemFailures.push({ itemIdentifier: message.messageId });
@@ -145,7 +162,17 @@ const handler = async (event) => {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
       log.error(`Writing message failed: ${JSON.stringify(message)}`, error);
-      return sendSQSMessage(process.env.DeadLetterQueue, message);
+      if (!process.env.DeadLetterQueue) {
+        log.error('DeadLetterQueue not configured');
+        return undefined;
+      }
+      return sendSQSMessage(
+        process.env.DeadLetterQueue,
+        {
+          ...message,
+          error: error.toString(),
+        }
+      );
     }
   }));
 

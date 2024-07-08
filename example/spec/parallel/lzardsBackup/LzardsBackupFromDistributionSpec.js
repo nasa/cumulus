@@ -4,13 +4,17 @@ const get = require('lodash/get');
 const pAll = require('p-all');
 const path = require('path');
 const pTimeout = require('p-timeout');
+const {
+  GetFunctionConfigurationCommand,
+  InvokeCommand,
+} = require('@aws-sdk/client-lambda');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { lambda } = require('@cumulus/aws-client/services');
 const { putFile } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -37,9 +41,9 @@ describe('The Lzards Backup Task with distribution URL', () => {
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
-      functionConfig = await lambda().getFunctionConfiguration({
+      functionConfig = await lambda().send(new GetFunctionConfigurationCommand({
         FunctionName,
-      });
+      }));
       granuleId = `FakeGranule_${randomString()}`;
       provider = `FakeProvider_${randomString()}`;
 
@@ -127,7 +131,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
       }));
 
       lzardsBackupOutput = await pTimeout(
-        lambda().invoke({ FunctionName, Payload }),
+        lambda().send(new InvokeCommand({ FunctionName, Payload })),
         (functionConfig.Timeout + 10) * 1000
       );
     } catch (error) {
@@ -151,7 +155,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
     expect(backupStatus[0].granuleId).toBe(granuleId);
     expect(backupStatus[0].provider).toBe(provider);
     expect(backupStatus[0].createdAt).toBe(now);
-    expect(backupStatus[0].collectionId).toBe(encodedConstructCollectionId(collection.name, collection.version));
+    expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
   });
 
   afterAll(async () => {

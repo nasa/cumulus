@@ -1,13 +1,14 @@
 {
   "name": "@cumulus/cmrjs",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "description": "A node SDK for CMR",
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -17,7 +18,8 @@
   },
   "ava": {
     "serial": true,
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "keywords": [
     "CUMULUS"
@@ -34,13 +36,13 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.1.0",
-    "@cumulus/cmr-client": "18.1.0",
-    "@cumulus/common": "18.1.0",
-    "@cumulus/distribution-utils": "18.1.0",
-    "@cumulus/errors": "18.1.0",
-    "@cumulus/launchpad-auth": "18.1.0",
-    "@cumulus/logger": "18.1.0",
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/cmr-client": "18.2.0",
+    "@cumulus/common": "18.2.0",
+    "@cumulus/distribution-utils": "18.2.0",
+    "@cumulus/errors": "18.2.0",
+    "@cumulus/launchpad-auth": "18.2.0",
+    "@cumulus/logger": "18.2.0",
     "got": "^11.8.1",
     "js2xmlparser": "^4.0.0",
     "lodash": "^4.17.21",

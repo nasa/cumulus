@@ -1,13 +1,13 @@
 {
   "name": "@cumulus/collection-config-store",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "description": "Utility for persisting collection configuration to S3 and retrieving it",
   "keywords": [
     "CUMULUS",
     "NASA"
   ],
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "publishConfig": {
     "access": "public"
@@ -20,6 +20,7 @@
   "scripts": {
     "build-docs": "../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs index.js > docs/API.md",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
@@ -28,13 +29,14 @@
       "tests/**"
     ],
     "verbose": true,
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.1.0",
-    "@cumulus/common": "18.1.0",
-    "@cumulus/message": "18.1.0"
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/common": "18.2.0",
+    "@cumulus/message": "18.2.0"
   }
 }

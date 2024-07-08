@@ -1,14 +1,14 @@
 {
   "name": "@cumulus/api",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",
-    "build": "../../node_modules/.bin/webpack",
+    "build": "node --max-old-space-size=4096 ../../node_modules/.bin/webpack",
     "clean": "git clean -d -x -e node_modules -f",
     "link-api-bin": "sh ./bin/link-api-bin.sh",
     "package": "npm run prepare && npm run build && npm run link-api-bin && npm run build-lambda-zips",
@@ -23,6 +23,7 @@
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
@@ -36,9 +37,9 @@
       "!tests/endpoints/granules/helpers.js",
       "!tests/helpers/**/*.js"
     ],
-    "fail-fast": true,
     "verbose": true,
-    "timeout": "20m"
+    "timeout": "20m",
+    "failFast": true
   },
   "publishConfig": {
     "access": "public"
@@ -49,30 +50,33 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "18.1.0",
-    "@cumulus/async-operations": "18.1.0",
-    "@cumulus/aws-client": "18.1.0",
-    "@cumulus/cmr-client": "18.1.0",
-    "@cumulus/cmrjs": "18.1.0",
-    "@cumulus/collection-config-store": "18.1.0",
-    "@cumulus/common": "18.1.0",
-    "@cumulus/db": "18.1.0",
-    "@cumulus/distribution-utils": "18.1.0",
-    "@cumulus/errors": "18.1.0",
-    "@cumulus/es-client": "18.1.0",
-    "@cumulus/ingest": "18.1.0",
-    "@cumulus/launchpad-auth": "18.1.0",
-    "@cumulus/logger": "18.1.0",
-    "@cumulus/message": "18.1.0",
-    "@cumulus/oauth-client": "18.1.0",
-    "@cumulus/object-store": "18.1.0",
-    "@cumulus/pvl": "18.1.0",
-    "@cumulus/sftp-client": "18.1.0",
-    "@cumulus/types": "18.1.0",
+    "@aws-sdk/client-lambda": "^3.529.1",
+    "@aws-sdk/client-sns": "^3.447.0",
+    "@aws-sdk/client-sqs": "^3.447.0",
+    "@cumulus/api-client": "18.2.0",
+    "@cumulus/async-operations": "18.2.0",
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/cmr-client": "18.2.0",
+    "@cumulus/cmrjs": "18.2.0",
+    "@cumulus/collection-config-store": "18.2.0",
+    "@cumulus/common": "18.2.0",
+    "@cumulus/db": "18.2.0",
+    "@cumulus/distribution-utils": "18.2.0",
+    "@cumulus/errors": "18.2.0",
+    "@cumulus/es-client": "18.2.0",
+    "@cumulus/ingest": "18.2.0",
+    "@cumulus/launchpad-auth": "18.2.0",
+    "@cumulus/logger": "18.2.0",
+    "@cumulus/message": "18.2.0",
+    "@cumulus/oauth-client": "18.2.0",
+    "@cumulus/object-store": "18.2.0",
+    "@cumulus/pvl": "18.2.0",
+    "@cumulus/sftp-client": "18.2.0",
+    "@cumulus/types": "18.2.0",
+    "@hapi/boom": "^10.0.0",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
-    "aws-sdk": "^2.1492.0",
     "aws-serverless-express": "^3.3.5",
     "body-parser": "^1.18.3",
     "commander": "^2.15.0",
@@ -80,9 +84,8 @@
     "cors": "^2.8.5",
     "deepdash": "^5.3.9",
     "dynamodb-data-types": "^3.0.0",
-    "express": "^4.16.4",
-    "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
+    "express": "^4.16.4",
     "googleapis": "^49.0.0",
     "got": "^11.8.5",
     "hsts": "^2.1.0",
@@ -120,6 +123,7 @@
     }
   },
   "devDependencies": {
-    "@cumulus/test-data": "18.1.0"
+    "@cumulus/test-data": "18.2.0",
+    "aws-sdk-client-mock": "^3.0.1"
   }
 }

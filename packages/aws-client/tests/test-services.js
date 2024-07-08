@@ -1,12 +1,21 @@
 const test = require('ava');
 
-const AWS = require('aws-sdk');
 const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
+const { CloudWatchEvents } = require('@aws-sdk/client-cloudwatch-events');
+const { CloudFormation } = require('@aws-sdk/client-cloudformation');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
-const { S3 } = require('@aws-sdk/client-s3');
+const { ECS } = require('@aws-sdk/client-ecs');
+const { EC2 } = require('@aws-sdk/client-ec2');
+const { ElasticsearchService } = require('@aws-sdk/client-elasticsearch-service');
+const { Kinesis } = require('@aws-sdk/client-kinesis');
 const { Lambda } = require('@aws-sdk/client-lambda');
+const { S3 } = require('@aws-sdk/client-s3');
+const { SecretsManager } = require('@aws-sdk/client-secrets-manager');
+const { KMS } = require('@aws-sdk/client-kms');
+const { SFN } = require('@aws-sdk/client-sfn');
 const { SNS } = require('@aws-sdk/client-sns');
 const { SQS } = require('@aws-sdk/client-sqs');
+const { STS } = require('@aws-sdk/client-sts');
 
 const services = require('../services');
 const { localStackAwsClientOptions } = require('../test-utils');
@@ -29,56 +38,49 @@ test('apigateway() service defaults to localstack in test mode', async (t) => {
   t.is(apiGatewayServiceConfig.protocol, endpointConfig.protocol);
 });
 
-test('cf() service defaults to localstack in test mode', (t) => {
+test('cf() service defaults to localstack in test mode', async (t) => {
   const cf = services.cf();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.CloudFormation);
+  } = localStackAwsClientOptions(CloudFormation);
   t.deepEqual(
-    cf.config.credentials,
+    await cf.config.credentials(),
     credentials
   );
-  t.is(cf.config.endpoint, endpoint);
+
+  const cloudFormationEndpoint = await cf.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    cloudFormationEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
-test('cloudwatchevents() service defaults to localstack in test mode', (t) => {
+test('cloudwatchevents() service defaults to localstack in test mode', async (t) => {
   const cloudwatchevents = services.cloudwatchevents();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.CloudWatchEvents);
-  t.deepEqual(
-    cloudwatchevents.config.credentials,
-    credentials
-  );
-  t.is(cloudwatchevents.config.endpoint, endpoint);
-});
+  } = localStackAwsClientOptions(CloudWatchEvents);
 
-test('cloudwatchlogs() service defaults to localstack in test mode', (t) => {
-  const cloudwatchlogs = services.cloudwatchlogs();
-  const {
-    credentials,
-    endpoint,
-  } = localStackAwsClientOptions(AWS.CloudWatchLogs);
   t.deepEqual(
-    cloudwatchlogs.config.credentials,
+    await cloudwatchevents.config.credentials(),
     credentials
   );
-  t.is(cloudwatchlogs.config.endpoint, endpoint);
-});
 
-test('cloudwatch() service defaults to localstack in test mode', (t) => {
-  const cloudwatch = services.cloudwatch();
-  const {
-    credentials,
-    endpoint,
-  } = localStackAwsClientOptions(AWS.CloudWatch);
-  t.deepEqual(
-    cloudwatch.config.credentials,
-    credentials
+  const serviceConfigEndpoint = await cloudwatchevents.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
   );
-  t.is(cloudwatch.config.endpoint, endpoint);
 });
 
 test('dynamoDb() service defaults to localstack in test mode', async (t) => {
@@ -144,69 +146,110 @@ test('dynamodbstreams() service defaults to localstack in test mode', async (t) 
   );
 });
 
-test('ecs() service defaults to localstack in test mode', (t) => {
+test('ecs() service defaults to localstack in test mode', async (t) => {
   const ecs = services.ecs();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.ECS);
+  } = localStackAwsClientOptions(ECS);
   t.deepEqual(
-    ecs.config.credentials,
+    await ecs.config.credentials(),
     credentials
   );
-  t.is(ecs.config.endpoint, endpoint);
+  const ecsEndpoint = await ecs.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    ecsEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
-test('ec2() service defaults to localstack in test mode', (t) => {
+test('ec2() service defaults to localstack in test mode', async (t) => {
   const ec2 = services.ec2();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.EC2);
+  } = localStackAwsClientOptions(EC2);
   t.deepEqual(
-    ec2.config.credentials,
+    await ec2.config.credentials(),
     credentials
   );
-  t.is(ec2.config.endpoint, endpoint);
+  const ec2Endpoint = await ec2.config.endpoint();
+  const localStackEndpoint = new URL(endpoint);
+  t.like(
+    ec2Endpoint,
+    {
+      hostname: localStackEndpoint.hostname,
+      port: Number.parseInt(localStackEndpoint.port, 10),
+    }
+  );
 });
 
-test('es() service defaults to localstack in test mode', (t) => {
+test('es() service defaults to localstack in test mode', async (t) => {
   const es = services.es();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.ES);
+  } = localStackAwsClientOptions(ElasticsearchService);
   t.deepEqual(
-    es.config.credentials,
+    await es.config.credentials(),
     credentials
   );
-  t.is(es.config.endpoint, endpoint);
+  const esEndpoint = await es.config.endpoint();
+  const localSatckEndpoint = new URL(endpoint);
+  t.like(
+    esEndpoint,
+    {
+      hostname: localSatckEndpoint.hostname,
+      port: Number.parseInt(localSatckEndpoint.port, 10),
+    }
+  );
 });
 
-test('kinesis() service defaults to localstack in test mode', (t) => {
+test('kinesis() service defaults to localstack in test mode', async (t) => {
   const kinesis = services.kinesis();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.Kinesis);
+  } = localStackAwsClientOptions(Kinesis);
   t.deepEqual(
-    kinesis.config.credentials,
+    await kinesis.config.credentials(),
     credentials
   );
-  t.is(kinesis.config.endpoint, endpoint);
+  const serviceConfigEndpoint = await kinesis.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
 });
 
-test('kms() service defaults to localstack in test mode', (t) => {
+test('kms() service defaults to localstack in test mode', async (t) => {
   const kms = services.kms();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.KMS);
+  } = localStackAwsClientOptions(KMS);
   t.deepEqual(
-    kms.config.credentials,
+    await kms.config.credentials(),
     credentials
   );
-  t.is(kms.config.endpoint, endpoint);
+
+  const kmsEndpoint = await kms.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    kmsEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
 test('lambda() service defaults to localstack in test mode', async (t) => {
@@ -251,30 +294,47 @@ test('s3() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-test('secretsManager() service defaults to localstack in test mode', (t) => {
+test('secretsManager() service defaults to localstack in test mode', async (t) => {
   const secretsManager = services.secretsManager();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.SecretsManager);
+  } = localStackAwsClientOptions(SecretsManager);
   t.deepEqual(
-    secretsManager.config.credentials,
+    await secretsManager.config.credentials(),
     credentials
   );
-  t.is(secretsManager.config.endpoint, endpoint);
+  const serviceConfigEndpoint = await secretsManager.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
 });
 
-test('sfn() service defaults to localstack in test mode', (t) => {
+test('sfn() service defaults to localstack in test mode', async (t) => {
   const sfn = services.sfn();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.StepFunctions);
+  } = localStackAwsClientOptions(SFN);
   t.deepEqual(
-    sfn.config.credentials,
+    await sfn.config.credentials(),
     credentials
   );
-  t.is(sfn.config.endpoint, endpoint);
+
+  const sfnEndpoint = await sfn.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    sfnEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
 test('sns() service defaults to localstack in test mode', async (t) => {
@@ -320,28 +380,23 @@ test('sqs() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-test('sts() service defaults to localstack in test mode', (t) => {
+test('sts() service defaults to localstack in test mode', async (t) => {
   const sts = services.sts();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.STS);
+  } = localStackAwsClientOptions(STS);
   t.deepEqual(
-    sts.config.credentials,
+    await sts.config.credentials(),
     credentials
   );
-  t.is(sts.config.endpoint, endpoint);
-});
-
-test('systemsManager() service defaults to localstack in test mode', (t) => {
-  const systemsManager = services.systemsManager();
-  const {
-    credentials,
-    endpoint,
-  } = localStackAwsClientOptions(AWS.SSM);
-  t.deepEqual(
-    systemsManager.config.credentials,
-    credentials
+  const serviceConfigEndpoint = await sts.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
   );
-  t.is(systemsManager.config.endpoint, endpoint);
 });

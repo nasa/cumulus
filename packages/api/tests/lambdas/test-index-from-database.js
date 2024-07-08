@@ -13,7 +13,7 @@ const {
 const { randomString } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { EsClient, Search } = require('@cumulus/es-client/search');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
@@ -130,12 +130,13 @@ test.beforeEach(async (t) => {
     alias: t.context.esAlias,
   });
 
-  t.context.esClient = await Search.es('fakehost');
+  t.context.esClient = new EsClient('fakehost');
+  await t.context.esClient.initializeEsClient();
 });
 
 test.afterEach.always(async (t) => {
   const { esClient, esIndex, testDbName } = t.context;
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
@@ -441,7 +442,7 @@ test.serial('failure in indexing record of specific type should not prevent inde
     ));
     await Promise.all(searchResults.results.map(
       (result) =>
-        esClient.delete({
+        esClient.client.delete({
           index: esAlias,
           type: 'granule',
           id: result.granuleId,
@@ -524,7 +525,7 @@ test.serial(
       );
       await Promise.all(
         searchResults.results.map((result) =>
-          esClient.delete({
+          esClient.client.delete({
             index: esAlias,
             type: 'provider',
             id: result.id,

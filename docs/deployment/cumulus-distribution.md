@@ -43,14 +43,14 @@ Although you might have to wait a bit for your Cognito user credentials, the rem
 
 Your Cumulus Distribution URL is used by Cumulus to generate download URLs as part of the granule metadata generated and published to the CMR. For example, a granule download URL will be of the form `<distribution url>/<protected bucket>/<key>` (or `<distribution url>/path/to/file`, if using a custom bucket map, as explained further below).
 
-By default, the value of your distribution URL is the URL of your private Cumulus Distribution API Gateway (the API Gateway named `<prefix>-distribution`, once you deploy the Cumulus Distribution module). Therefore, by default, the generated download URLs are private, and thus inaccessible directly, but there are 2 ways to address this issue (both of which are detailed below): (a) use tunneling (typically in development) or (b) put a CloudFront URL in front of your API Gateway (typically in production, and perhaps UAT and/or SIT).
+By default, the value of your distribution URL is the URL of your private Cumulus Distribution API Gateway (the API Gateway named `<prefix>-distribution`, once you deploy the Cumulus Distribution module). Therefore, by default, the generated download URLs are private, and thus inaccessible directly, but there are 2 ways to address this issue (both of which are detailed below): (a) use tunneling (only in development) or (b) put an HTTPS CloudFront URL in front of your API Gateway (required in production, UAT, and SIT).
 
 In either case, you must first know the default URL (i.e., the URL for the private Cumulus Distribution API Gateway). In order to obtain this default URL, you must first deploy your `cumulus-tf` module with the new Cumulus Distribution module, and once your initial deployment is complete, one of the Terraform outputs will be `cumulus_distribution_api_uri`, which is the URL for the private API Gateway.
 
 You may override this default URL by adding a `cumulus_distribution_url` variable to your `cumulus-tf/terraform.tfvars` file and setting it to one of the following values (both are explained below):
 
-1. The default URL, but with a port added to it, in order to allow you to configure tunneling (typically only in development)
-2. A CloudFront URL placed in front of your Cumulus Distribution API Gateway (typically only for Production, but perhaps also for a UAT or SIT environment)
+1. The default URL, but with a port added to it, in order to allow you to configure tunneling (only in development)
+2. An HTTPS CloudFront URL placed in front of your Cumulus Distribution API Gateway (required in production environments)
 
 The following subsections explain these approaches in turn.
 
@@ -58,7 +58,7 @@ The following subsections explain these approaches in turn.
 
 Since your Cumulus Distribution API Gateway URL is private, the only way you can use it to confirm that your integration with Cognito is working is by using tunneling (again, generally for development). Here is an outline of the required steps with details provided further below:
 
-1. Create/import a key pair into your AWS EC2 service (if you haven't already done so)
+1. Create/import a key pair into your AWS EC2 service (if you haven't already done so), or setup auth using a PKCS11Provider
 2. Add a reference to the name of the key pair to your Terraform variables (we'll set the `key_name` Terraform variable)
 3. Choose an open local port on your machine (we'll use 9000 in the following example)
 4. Add a reference to the value of your `cumulus_distribution_api_uri` (mentioned earlier), including your chosen port (we'll set the `cumulus_distribution_url` Terraform variable)
@@ -67,6 +67,12 @@ Since your Cumulus Distribution API Gateway URL is private, the only way you can
 7. Add a redirect URI to Cognito via the Cognito API
 8. Install the Session Manager Plugin for the AWS CLI (if you haven't already done so; assuming you have already installed the AWS CLI)
 9. Add a sample file to S3 to test downloading via Cognito
+
+### Setting up SSH Keypair
+
+:::note
+Setting up a keypair is optional if your organization is making use of alternative authentication mechanisms built into the AMI
+:::
 
 To create or import an existing key pair, you can use the AWS CLI (see AWS [ec2 import-key-pair](https://docs.aws.amazon.com/cli/latest/reference/ec2/import-key-pair.html)), or the AWS Console (see [Amazon EC2 key pairs and Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)).
 
@@ -149,8 +155,16 @@ Waiting for connections...
 
 In another terminal window, open a tunnel with port forwarding using your chosen port from above (e.g., 9000):
 
+#### Using SSH keypair authentication
+
 ```bash
 ssh -4 -p 6000 -N -L <port>:<api-gateway-host>:443 ec2-user@127.0.0.1
+```
+
+##### Using PKCS11Provider
+
+```bash
+ssh -4 -I /usr/lib/ssh-keychain.dylib -p 6000 -N -L <port>:<api-gateway-host>:443 <userid>@127.0.0.1
 ```
 
 where:
@@ -172,7 +186,7 @@ While this is a relatively lengthy process, things are much easier when using Cl
 
 ### Using a CloudFront URL as Your Distribution URL
 
-In Production (OPS), and perhaps in other environments, such as UAT and SIT, you'll need to provide a publicly accessible URL for users to use for downloading (distributing) granule files.
+In Production (OPS), and in other environments, such as UAT and SIT, you'll need to provide a publicly accessible URL for users to use for downloading (distributing) granule files.
 
 This is generally done by placing a CloudFront URL in front of your private Cumulus Distribution API Gateway. In order to create such a CloudFront URL, contact the person who helped you obtain your Cognito credentials, and request a CloudFront URL with the following details:
 

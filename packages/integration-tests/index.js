@@ -97,9 +97,9 @@ async function waitForAsyncOperationStatus({
  * @returns {string|undefined} - the cluster ARN or undefined if not found
  */
 async function getClusterArn(stackName) {
-  const { clusterArns } = await ecs().listClusters().promise();
+  const { clusterArns } = await ecs().listClusters();
 
-  const matchingArns = clusterArns.filter((arn) => arn.includes(`${stackName}-CumulusECSCluster`));
+  const matchingArns = clusterArns.filter((arn) => arn.endsWith(`cluster/${stackName}-CumulusECSCluster`));
 
   if (matchingArns.length !== 1) {
     throw new Error(`Expected to find 1 cluster but found: ${matchingArns}`);
@@ -596,7 +596,7 @@ async function deleteRuleResources(rule) {
     ).catch(
       (error) => {
         console.log(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
-        if (error.code !== 'ResourceNotFoundException') throw error;
+        if (error.name !== 'ResourceNotFoundException') throw error;
       }
     )
   );

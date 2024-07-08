@@ -119,7 +119,7 @@ test('upsertGranuleWithExecutionJoinRecord() creates granule record with granule
       { granule_cumulus_id: granuleCumulusId }
     ),
     [{
-      granule_cumulus_id: Number(granuleCumulusId),
+      granule_cumulus_id: granuleCumulusId,
       execution_cumulus_id: executionCumulusId,
     }]
   );
@@ -183,7 +183,7 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
       { granule_cumulus_id: granuleCumulusId }
     ),
     [executionCumulusId, secondExecutionCumulusId].map((executionId) => ({
-      granule_cumulus_id: Number(granuleCumulusId),
+      granule_cumulus_id: granuleCumulusId,
       execution_cumulus_id: executionId,
     }))
   );
@@ -296,7 +296,7 @@ test('upsertGranuleWithExecutionJoinRecord() will allow a running status to repl
       { granule_cumulus_id: granuleCumulusId }
     ), 'execution_cumulus_id'),
     orderBy([executionCumulusId, secondExecutionCumulusId].map((executionId) => ({
-      granule_cumulus_id: Number(granuleCumulusId),
+      granule_cumulus_id: granuleCumulusId,
       execution_cumulus_id: executionId,
     })), 'execution_cumulus_id')
   );
@@ -352,7 +352,7 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
       { granule_cumulus_id: granuleCumulusId }
     ),
     [{
-      granule_cumulus_id: Number(granuleCumulusId),
+      granule_cumulus_id: granuleCumulusId,
       execution_cumulus_id: completedExecutionCumulusId,
     }]
   );

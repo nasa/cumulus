@@ -6,8 +6,8 @@ const granulesApi = require('../granules');
 
 test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
-  t.context.granuleId = 'granule-1';
-  t.context.collectionId = 'fakeName___fakeVersion';
+  t.context.granuleId = randomId('gran/a-b-c-123');
+  t.context.collectionId = `fakeName___${randomId('col/e-f-g-456')}`;
   t.context.status = 'queued';
 });
 
@@ -17,7 +17,7 @@ test('getGranule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${encodeURIComponent(t.context.granuleId)}`,
     },
     expectedStatusCodes: undefined,
   };
@@ -44,7 +44,7 @@ test('getGranule calls the callback with the expected status codes', async (t) =
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${encodeURIComponent(t.context.granuleId)}`,
     },
     expectedStatusCodes: [404, 200],
   };
@@ -74,8 +74,8 @@ test('getGranule calls the callback with the expected object when there is query
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
       queryStringParameters: query,
+      path: `/granules/${encodeURIComponent(t.context.collectionId)}/${encodeURIComponent(t.context.granuleId)}`,
     },
     expectedStatusCodes: undefined,
   };
@@ -106,7 +106,7 @@ test('getGranule accepts an optional collectionId', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      path: `/granules/${encodeURIComponent(t.context.collectionId)}/${encodeURIComponent(t.context.granuleId)}`,
     },
   };
 
@@ -131,7 +131,7 @@ test('getGranule accepts an optional collectionId', async (t) => {
 
 test('waitForGranules calls getGranules with the expected payload', async (t) => {
   const callback = ({ prefix, payload }) => {
-    t.true(payload.path.endsWith(t.context.granuleId));
+    t.true(payload.path.endsWith(encodeURIComponent(t.context.granuleId)));
     t.is(prefix, t.context.testPrefix);
 
     return Promise.resolve({ statusCode: 200 });
@@ -209,7 +209,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${encodeURIComponent(t.context.granuleId)}`,
       headers: {
         'Content-Type': 'application/json',
         'Cumulus-API-Version': '2',
@@ -239,7 +239,7 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${encodeURIComponent(t.context.granuleId)}`,
       headers: {
         'Content-Type': 'application/json',
         'Cumulus-API-Version': '2',
@@ -273,7 +273,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
         'Content-Type': 'application/json',
         'Cumulus-API-Version': '2',
       },
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${encodeURIComponent(t.context.granuleId)}`,
       body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
     },
   };
@@ -298,7 +298,7 @@ test('deleteGranule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${encodeURIComponent(t.context.granuleId)}`,
     },
   };
 
@@ -325,7 +325,7 @@ test('moveGranule calls the callback with the expected object', async (t) => {
         'Content-Type': 'application/json',
         'Cumulus-API-Version': '2',
       },
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${encodeURIComponent(t.context.granuleId)}`,
       body: JSON.stringify({ action: 'move', destinations }),
     },
   };
@@ -395,7 +395,7 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
   const callback = ({ payload }) => {
     if (
       payload.httpMethod === 'PATCH'
-      && payload.path === `/granules/${t.context.granuleId}`
+      && payload.path === `/granules/${encodeURIComponent(t.context.granuleId)}`
       && payload.body.includes('removeFromCmr')
     ) {
       removeFromCmrCalled = true;
@@ -403,7 +403,7 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
 
     if (
       payload.httpMethod === 'DELETE'
-      && payload.path === `/granules/${t.context.granuleId}`
+      && payload.path === `/granules/${encodeURIComponent(t.context.granuleId)}`
     ) {
       deleteGranuleCalled = true;
     }
@@ -455,7 +455,7 @@ test('replaceGranule calls the callback with the expected object', async (t) => 
     payload: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      path: `/granules/${encodeURIComponent(t.context.collectionId)}/${encodeURIComponent(t.context.granuleId)}`,
       headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
       body: JSON.stringify(body),
     },
@@ -484,7 +484,7 @@ test('updateGranule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      path: `/granules/${encodeURIComponent(t.context.collectionId)}/${encodeURIComponent(t.context.granuleId)}`,
       headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
       body: JSON.stringify(body),
     },
@@ -515,7 +515,7 @@ test('associateExecutionWithGranule calls the callback with the expected object'
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}/executions`,
+      path: `/granules/${encodeURIComponent(t.context.granuleId)}/executions`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },

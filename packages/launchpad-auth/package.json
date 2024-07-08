@@ -1,13 +1,13 @@
 {
   "name": "@cumulus/launchpad-auth",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "description": "Utilities for authentication with Launchpad",
   "keywords": [
     "CUMULUS",
     "NASA"
   ],
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "publishConfig": {
     "access": "public"
@@ -21,6 +21,7 @@
     "build-docs": "../../node_modules/.bin/jsdoc2md --heading-depth 3 --template templates/README.md.hbs index.js LaunchpadToken.js > README.md",
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -33,13 +34,14 @@
       "tests/**"
     ],
     "verbose": true,
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.1.0",
-    "@cumulus/logger": "18.1.0",
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/logger": "18.2.0",
     "got": "^11.8.5",
     "lodash": "^4.17.21",
     "uuid": "^3.2.1"

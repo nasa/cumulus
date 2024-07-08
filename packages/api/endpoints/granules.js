@@ -27,6 +27,7 @@ const {
 } = require('@cumulus/db');
 const {
   Search,
+  getEsClient,
   recordNotFoundString,
   multipleRecordFoundString,
 } = require('@cumulus/es-client/search');
@@ -48,6 +49,7 @@ const {
   requireApiVersion,
 } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
+const { returnCustomValidationErrors } = require('../lib/endpoints');
 const { moveGranule, getFilesExistingAtLocation } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
@@ -65,7 +67,7 @@ const schemas = require('../lib/schemas.js');
 /**
  * @typedef {import('express').Request} Request
  * @typedef {import('express').Response} Response
- * @typedef {import('@cumulus/zod-utils').BetterZodError} BetterZodError
+ * @typedef {import('../src/zod-utils').BetterZodError} BetterZodError
  */
 
 const log = new Logger({ sender: '@cumulus/api/granules' });
@@ -162,7 +164,7 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
 const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     createGranuleFromApiMethod = createGranuleFromApi,
   } = req.testContext || {};
 
@@ -219,7 +221,7 @@ const patchGranule = async (req, res) => {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
   let apiGranule = req.body || {};
@@ -601,7 +603,7 @@ const associateExecution = async (req, res) => {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   let pgGranule;
@@ -689,7 +691,7 @@ const associateExecution = async (req, res) => {
 async function delByGranuleId(req, res) {
   const {
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX),
   } = req.testContext || {};
 
@@ -747,7 +749,7 @@ async function del(req, res) {
     knex = await getKnexClient(),
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX),
   } = req.testContext || {};
 
@@ -962,18 +964,6 @@ const BulkDeletePayloadSchema = z.object({
   knexDebug: z.boolean().optional(),
 }).catchall(z.unknown());
 
-/**
-* @param {Response} res - express response object
-* @param {BetterZodError} zodError
-* @returns {Express.BoomError} the promise of express response object
-*/
-function _returnCustomValidationErrors(res, zodError) {
-  if (zodError.errors.filter((error) => error.match('forceRemoveFromCmr')).length > 0) {
-    return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
-  }
-  return res.boom.badRequest('invalid payload', zodError);
-}
-
 const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloadSchema);
 
 /**
@@ -986,7 +976,7 @@ const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloa
 async function bulkDelete(req, res) {
   const payload = parseBulkDeletePayload(req.body);
   if (isError(payload)) {
-    return _returnCustomValidationErrors(res, payload);
+    return returnCustomValidationErrors(res, payload);
   }
 
   const concurrency = payload.concurrency || 10;

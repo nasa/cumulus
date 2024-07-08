@@ -6,7 +6,7 @@ const pLimit = require('p-limit');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const log = require('@cumulus/common/log');
 
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 const {
   CollectionPgModel,
   ExecutionPgModel,
@@ -159,6 +159,7 @@ async function indexModel({
       let translationResult;
       try {
         translationResult = await translationFunction(pageResult);
+        await esClient.refreshClient();
         return await indexFn(esClient, translationResult, esIndex);
       } catch (error) {
         log.error(
@@ -202,7 +203,7 @@ async function indexFromDatabase(event) {
     postgresResultPageSize,
     postgresConnectionPoolSize,
   } = event;
-  const esClient = await Search.es(esHost);
+  const esClient = await getEsClient(esHost);
   const knex = event.knex || (await getKnexClient({
     env: {
       dbMaxPool: Number.parseInt(postgresConnectionPoolSize, 10) || 10,
@@ -213,7 +214,7 @@ async function indexFromDatabase(event) {
   const pageSize = Number.parseInt(postgresResultPageSize, 10) || 1000;
   const esRequestConcurrency = getEsRequestConcurrency(event);
   log.info(
-    `Tuning configuration: esRequestConcurrency: ${esRequestConcurrency}, postgresResultPageSize: ${pageSize}, postgresConnectionPoolSize: ${postgresConnectionPoolSize} `
+    `Tuning configuration: esRequestConcurrency: ${esRequestConcurrency}, postgresResultPageSize: ${pageSize}, postgresConnectionPoolSize: ${postgresConnectionPoolSize}`
   );
 
   const limitEsRequests = pLimit(esRequestConcurrency);

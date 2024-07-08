@@ -35,11 +35,7 @@ NODE_ENV=test
 <dd></dd>
 <dt><a href="#module_DynamoDb">DynamoDb</a></dt>
 <dd></dd>
-<dt><a href="#module_KMS">KMS</a></dt>
-<dd></dd>
 <dt><a href="#module_Kinesis">Kinesis</a></dt>
-<dd></dd>
-<dt><a href="#module_Lambda">Lambda</a></dt>
 <dd></dd>
 <dt><a href="#module_S3">S3</a></dt>
 <dd></dd>
@@ -66,6 +62,22 @@ them all into memory at once.  Handles paging of listS3ObjectsV2 requests.</p>
 </dd>
 <dt><a href="#S3ObjectStore">S3ObjectStore</a></dt>
 <dd><p>Class to use when interacting with S3</p>
+</dd>
+</dl>
+
+## Functions
+
+<dl>
+<dt><a href="#createKey">createKey(params)</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
+<dd><p>Create a KMS key</p>
+<p>See <a href="https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/KMS.html#createKey-property">https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/KMS.html#createKey-property</a>
+for allowed params and return value.</p>
+</dd>
+<dt><a href="#encrypt">encrypt(KeyId, Plaintext)</a> ⇒ <code>Promise.&lt;string&gt;</code></dt>
+<dd><p>Encrypt a string using KMS</p>
+</dd>
+<dt><a href="#decryptBase64String">decryptBase64String(ciphertext)</a> ⇒ <code>string</code></dt>
+<dd><p>Decrypt a KMS-encrypted string, Base 64 encoded</p>
 </dd>
 </dl>
 
@@ -228,54 +240,6 @@ See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/late
 | [params.dynamoDbClient] | <code>DynamoDBDocument</code> | Instance of Dynamo DB document client |
 | [params.retryOptions] | <code>pRetry.Options</code> | Retry options for scan operations |
 
-<a name="module_KMS"></a>
-
-## KMS
-
-* [KMS](#module_KMS)
-    * [~createKey(params)](#module_KMS..createKey) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [~encrypt(KeyId, Plaintext)](#module_KMS..encrypt) ⇒ <code>Promise.&lt;string&gt;</code>
-    * [~decryptBase64String(ciphertext)](#module_KMS..decryptBase64String) ⇒ <code>string</code>
-
-<a name="module_KMS..createKey"></a>
-
-### KMS~createKey(params) ⇒ <code>Promise.&lt;Object&gt;</code>
-Create a KMS key
-
-See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/KMS.html#createKey-property
-for allowed params and return value.
-
-**Kind**: inner method of [<code>KMS</code>](#module_KMS)  
-
-| Param | Type |
-| --- | --- |
-| params | <code>Object</code> | 
-
-<a name="module_KMS..encrypt"></a>
-
-### KMS~encrypt(KeyId, Plaintext) ⇒ <code>Promise.&lt;string&gt;</code>
-Encrypt a string using KMS
-
-**Kind**: inner method of [<code>KMS</code>](#module_KMS)  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the Base 64 encoding of the encrypted value  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| KeyId | <code>string</code> | the KMS key to use for encryption |
-| Plaintext | <code>string</code> | the string to be encrypted |
-
-<a name="module_KMS..decryptBase64String"></a>
-
-### KMS~decryptBase64String(ciphertext) ⇒ <code>string</code>
-Decrypt a KMS-encrypted string, Base 64 encoded
-
-**Kind**: inner method of [<code>KMS</code>](#module_KMS)  
-**Returns**: <code>string</code> - the plaintext  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| ciphertext | <code>string</code> | a KMS-encrypted value, Base 64 encoded |
-
 <a name="module_Kinesis"></a>
 
 ## Kinesis
@@ -292,22 +256,6 @@ Describe a Kinesis stream.
 | params | <code>Object</code> |  |
 | params.StreamName | <code>string</code> | A Kinesis stream name |
 | retryOptions | <code>Object</code> | Options passed to p-retry module |
-
-<a name="module_Lambda"></a>
-
-## Lambda
-<a name="module_Lambda.invoke"></a>
-
-### Lambda.invoke(name, payload, type) ⇒ <code>Promise.&lt;InvokeCommandOutput&gt;</code>
-Invoke a Lambda function
-
-**Kind**: static method of [<code>Lambda</code>](#module_Lambda)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| name | <code>string</code> |  | Lambda function name |
-| payload | <code>any</code> |  | the payload to the Lambda function |
-| type | <code>string</code> | <code>&quot;Event&quot;</code> | the invocation type |
 
 <a name="module_S3"></a>
 
@@ -892,6 +840,11 @@ Move an S3 object to another location in S3
 <a name="module_SNS"></a>
 
 ## SNS
+
+* [SNS](#module_SNS)
+    * [~publishSnsMessage(snsTopicArn, message, retryOptions)](#module_SNS..publishSnsMessage) ⇒ <code>Promise.&lt;undefined&gt;</code>
+    * [~createSnsTopic(snsTopicName)](#module_SNS..createSnsTopic) ⇒
+
 <a name="module_SNS..publishSnsMessage"></a>
 
 ### SNS~publishSnsMessage(snsTopicArn, message, retryOptions) ⇒ <code>Promise.&lt;undefined&gt;</code>
@@ -906,45 +859,30 @@ errors, to allow more specific handling by the caller.
 | message | <code>Object</code> | Message object |
 | retryOptions | <code>Object</code> | options to control retry behavior when publishing a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions |
 
+<a name="module_SNS..createSnsTopic"></a>
+
+### SNS~createSnsTopic(snsTopicName) ⇒
+Create an SNS topic with a given name.
+
+**Kind**: inner method of [<code>SNS</code>](#module_SNS)  
+**Returns**: - ARN of the created SNS topic  
+
+| Param | Description |
+| --- | --- |
+| snsTopicName | Name of the SNS topic |
+
 <a name="module_SQS"></a>
 
 ## SQS
 
 * [SQS](#module_SQS)
     * _static_
-        * [.sendSQSMessage](#module_SQS.sendSQSMessage) ⇒ <code>Promise</code>
-        * [.deleteSQSMessage](#module_SQS.deleteSQSMessage) ⇒ <code>Promise</code>
         * [.createQueue(QueueName)](#module_SQS.createQueue) ⇒ <code>Promise.&lt;string&gt;</code>
     * _inner_
+        * [~sendSQSMessage(queueUrl, message, [logOverride])](#module_SQS..sendSQSMessage) ⇒ <code>Promise</code>
         * [~receiveSQSMessages(queueUrl, options)](#module_SQS..receiveSQSMessages) ⇒ <code>Promise.&lt;Array&gt;</code>
+        * [~deleteSQSMessage(queueUrl, receiptHandle)](#module_SQS..deleteSQSMessage) ⇒ <code>Promise</code>
         * [~sqsQueueExists(queueUrl)](#module_SQS..sqsQueueExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
-
-<a name="module_SQS.sendSQSMessage"></a>
-
-### SQS.sendSQSMessage ⇒ <code>Promise</code>
-Send a message to AWS SQS
-
-**Kind**: static property of [<code>SQS</code>](#module_SQS)  
-**Returns**: <code>Promise</code> - resolves when the messsage has been sent  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| queueUrl | <code>string</code> | url of the SQS queue |
-| message | <code>string</code> \| <code>Object</code> | either string or object message. If an   object it will be serialized into a JSON string. |
-| [logOverride] | <code>Logger</code> | optional Logger passed in for testing |
-
-<a name="module_SQS.deleteSQSMessage"></a>
-
-### SQS.deleteSQSMessage ⇒ <code>Promise</code>
-Delete a given SQS message from a given queue.
-
-**Kind**: static property of [<code>SQS</code>](#module_SQS)  
-**Returns**: <code>Promise</code> - an AWS SQS response  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| queueUrl | <code>string</code> | url of the SQS queue |
-| receiptHandle | <code>integer</code> | the unique identifier of the sQS message |
 
 <a name="module_SQS.createQueue"></a>
 
@@ -957,6 +895,20 @@ Create an SQS Queue.  Properly handles localstack queue URLs
 | Param | Type | Description |
 | --- | --- | --- |
 | QueueName | <code>string</code> | queue name |
+
+<a name="module_SQS..sendSQSMessage"></a>
+
+### SQS~sendSQSMessage(queueUrl, message, [logOverride]) ⇒ <code>Promise</code>
+Send a message to AWS SQS
+
+**Kind**: inner method of [<code>SQS</code>](#module_SQS)  
+**Returns**: <code>Promise</code> - resolves when the messsage has been sent  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| queueUrl | <code>string</code> | url of the SQS queue |
+| message | <code>string</code> \| <code>Object</code> | either string or object message. If an   object it will be serialized into a JSON string. |
+| [logOverride] | <code>Logger</code> | optional Logger passed in for testing |
 
 <a name="module_SQS..receiveSQSMessages"></a>
 
@@ -974,6 +926,19 @@ can be set and the timeout is also adjustable.
 | [options.numOfMessages] | <code>integer</code> | <code>1</code> | number of messages to read from the queue |
 | [options.visibilityTimeout] | <code>integer</code> | <code>30</code> | number of seconds a message is invisible   after read |
 | [options.waitTimeSeconds] | <code>integer</code> | <code>0</code> | number of seconds to poll SQS queue (long polling) |
+
+<a name="module_SQS..deleteSQSMessage"></a>
+
+### SQS~deleteSQSMessage(queueUrl, receiptHandle) ⇒ <code>Promise</code>
+Delete a given SQS message from a given queue.
+
+**Kind**: inner method of [<code>SQS</code>](#module_SQS)  
+**Returns**: <code>Promise</code> - an AWS SQS response  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| queueUrl | <code>string</code> | url of the SQS queue |
+| receiptHandle | <code>integer</code> | the unique identifier of the sQS message |
 
 <a name="module_SQS..sqsQueueExists"></a>
 
@@ -1207,6 +1172,45 @@ store URL
 | [options] | <code>string</code> | options to pass to S3.getObject |
 | [queryParams] | <code>string</code> | a mapping of parameter key/values to put in the URL |
 | presignOptions | <code>RequestPresigningArguments</code> | presignOptions |
+
+<a name="createKey"></a>
+
+## createKey(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Create a KMS key
+
+See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/KMS.html#createKey-property
+for allowed params and return value.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| params | <code>Object</code> | 
+
+<a name="encrypt"></a>
+
+## encrypt(KeyId, Plaintext) ⇒ <code>Promise.&lt;string&gt;</code>
+Encrypt a string using KMS
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;string&gt;</code> - the Base 64 encoding of the encrypted value  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| KeyId | <code>string</code> | the KMS key to use for encryption |
+| Plaintext | <code>string</code> | the string to be encrypted |
+
+<a name="decryptBase64String"></a>
+
+## decryptBase64String(ciphertext) ⇒ <code>string</code>
+Decrypt a KMS-encrypted string, Base 64 encoded
+
+**Kind**: global function  
+**Returns**: <code>string</code> - the plaintext  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| ciphertext | <code>string</code> | a KMS-encrypted value, Base 64 encoded |
 
 
 ## About Cumulus

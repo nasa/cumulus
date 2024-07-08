@@ -1,10 +1,12 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
+const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
-  sns,
-  sqs,
-} = require('@cumulus/aws-client/services');
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 
 const { recordNotFoundString } = require('@cumulus/es-client/search');
 
@@ -101,7 +103,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -114,11 +116,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 });
@@ -126,7 +128,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
-  await sns().deleteTopic({ TopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn }));
 });
 
 test.after.always(async (t) => {
@@ -364,12 +366,15 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
   });
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('ES delete failed');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      delete: () => {
+        throw new Error('ES delete failed');
+      },
+      index: (record) => Promise.resolve({
+        body: record,
+      }),
     },
-    index: (record) => Promise.resolve({
-      body: record,
-    }),
   };
 
   await t.throwsAsync(
@@ -469,7 +474,7 @@ test.serial(
       process.env.ES_INDEX
     );
 
-    await t.context.esClient.index({
+    await t.context.esClient.client.index({
       index: t.context.esIndex,
       type: 'granule',
       id: newGranule.granuleId,

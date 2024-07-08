@@ -1,4 +1,5 @@
-import AWS from 'aws-sdk';
+import { SecretsManager } from '@aws-sdk/client-secrets-manager';
+import { services } from '@cumulus/aws-client';
 import { knex, Knex } from 'knex';
 import Logger from '@cumulus/logger';
 
@@ -38,15 +39,17 @@ const log = new Logger({ sender: '@cumulus/db/connection' });
  *   acquireConnectionTimeout connection timeout
  * @param {string} [params.env.migrationDir] - Directory to look in for
  *   migrations
+ * @param {SecretsManager} [params.secretsManager] - An instance of an AWS secrets manager client
+ * @param {Logger} [params.knexLogger] - a logger instance
  * @returns {Promise<Knex>} a Knex configuration object that has returned at least one query
  */
 export const getKnexClient = async ({
   env = process.env,
-  secretsManager = new AWS.SecretsManager(),
+  secretsManager = services.secretsManager(),
   knexLogger = log,
 }: {
   env?: NodeJS.ProcessEnv,
-  secretsManager?: AWS.SecretsManager,
+  secretsManager?: SecretsManager,
   knexLogger?: Logger
 } = {}): Promise<Knex> => {
   if (isKnexDebugEnabled(env)) {

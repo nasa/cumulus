@@ -19,7 +19,7 @@ const {
   createProvider,
   deleteProvider,
 } = require('@cumulus/api-client/providers');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   uploadS3GranuleDataForDiscovery,
 } = require('../../helpers/discoverUtils');
@@ -115,7 +115,7 @@ describe('The DiscoverGranules workflow', () => {
     await waitForGranuleAndDelete(
       stackName,
       expectedGranuleId,
-      encodedConstructCollectionId(collection.name, collection.version),
+      constructCollectionId(collection.name, collection.version),
       'completed'
     );
 

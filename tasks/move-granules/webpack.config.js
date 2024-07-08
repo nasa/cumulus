@@ -6,6 +6,7 @@ module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './index.js',
   output: {
+    chunkFormat: false,
     libraryTarget: 'commonjs2',
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
@@ -15,7 +16,7 @@ module.exports = {
     }
   },
   externals: [
-    'aws-sdk',
+    /@aws-sdk\//,
     'electron',
     {'formidable': 'url'},
     // See https://github.com/knex/knex/issues/1128 re: webpack configuration

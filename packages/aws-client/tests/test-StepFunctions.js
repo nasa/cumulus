@@ -7,31 +7,16 @@ const awsServices = require('../services');
 const { throttleOnce } = require('../test-utils');
 const StepFunctions = require('../StepFunctions');
 
-const runWithStubbedAndThrottledSfnOperation = async (operation, response, fn) => {
-  const operationBefore = awsServices.sfn()[operation];
-  try {
-    const promise = throttleOnce(() => Promise.resolve(response));
-
-    awsServices.sfn()[operation] = () => ({ promise });
-
-    return await fn();
-  } finally {
-    awsServices.sfn()[operation] = operationBefore;
-  }
-};
-
 test.serial('getExecutionHistory() retries if a ThrottlingException occurs', async (t) => {
   const expectedResponse = { events: [{ test: 'test1' }] };
   const promise = throttleOnce(() => Promise.resolve(expectedResponse));
   const promiseSpy = sinon.spy();
   const stub = sinon.stub(awsServices, 'sfn')
     .returns({
-      getExecutionHistory: () => ({
-        promise: () => {
-          promiseSpy();
-          return promise();
-        },
-      }),
+      getExecutionHistory: () => {
+        promiseSpy();
+        return promise();
+      },
     });
 
   try {
@@ -51,9 +36,8 @@ test.serial('getExecutionHistory() returns non-paginated list of events', async 
   };
   const stub = sinon.stub(awsServices, 'sfn')
     .returns({
-      getExecutionHistory: () => ({
-        promise: () => Promise.resolve(firstResponse),
-      }),
+      getExecutionHistory: () =>
+        Promise.resolve(firstResponse),
     });
 
   try {
@@ -90,19 +74,17 @@ test.serial('getExecutionHistory() returns full, paginated list of events', asyn
   const firstResponsePromise = throttleOnce(() => Promise.resolve(firstResponse));
   const stub = sinon.stub(awsServices, 'sfn')
     .returns({
-      getExecutionHistory: (params) => ({
-        promise: () => {
-          if (!params || !params.nextToken) {
-            return firstResponsePromise();
-          }
+      getExecutionHistory: (params) => {
+        if (!params || !params.nextToken) {
+          return firstResponsePromise();
+        }
 
-          if (params.nextToken === firstToken) {
-            return Promise.resolve(secondResponse);
-          }
+        if (params.nextToken === firstToken) {
+          return Promise.resolve(secondResponse);
+        }
 
-          return Promise.resolve(thirdResponse);
-        },
-      }),
+        return Promise.resolve(thirdResponse);
+      },
     });
 
   try {
@@ -117,39 +99,81 @@ test.serial('getExecutionHistory() returns full, paginated list of events', asyn
   }
 });
 
-test.serial('describeExecution() retries if a ThrottlingException occurs',
-  (t) => runWithStubbedAndThrottledSfnOperation(
-    'describeExecution',
-    5,
-    async () => t.is(await StepFunctions.describeExecution(), 5)
-  ));
+test.serial('describeExecution() retries if a ThrottlingException occurs', async (t) => {
+  const expectedResponse = { events: [{ test: 'test1' }] };
+  const promise = throttleOnce(() => Promise.resolve(expectedResponse));
+  const promiseSpy = sinon.spy();
+  const stub = sinon.stub(awsServices, 'sfn')
+    .returns({
+      describeExecution: () => {
+        promiseSpy();
+        return promise();
+      },
+    });
 
-test.serial('listExecutions() retries if a ThrottlingException occurs',
-  (t) => runWithStubbedAndThrottledSfnOperation(
-    'listExecutions',
-    5,
-    async () => t.is(await StepFunctions.listExecutions(), 5)
-  ));
+  try {
+    const response = await StepFunctions.describeExecution();
+    t.deepEqual(response, expectedResponse);
+    t.is(promiseSpy.callCount, 2);
+  } finally {
+    stub.restore();
+  }
+});
 
-test.serial('describeStateMachine() retries if a ThrottlingException occurs',
-  (t) => runWithStubbedAndThrottledSfnOperation(
-    'describeStateMachine',
-    5,
-    async () => t.is(await StepFunctions.describeStateMachine(), 5)
-  ));
+test.serial('listExecutions() retries if a ThrottlingException occurs', async (t) => {
+  const expectedResponse = { events: [{ test: 'test1' }] };
+  const promise = throttleOnce(() => Promise.resolve(expectedResponse));
+  const promiseSpy = sinon.spy();
+  const stub = sinon.stub(awsServices, 'sfn')
+    .returns({
+      listExecutions: () => {
+        promiseSpy();
+        return promise();
+      },
+    });
 
-test('doesExecutionExist returns true if the Promise resolves', async (t) => {
+  try {
+    const response = await StepFunctions.listExecutions();
+    t.deepEqual(response, expectedResponse);
+    t.is(promiseSpy.callCount, 2);
+  } finally {
+    stub.restore();
+  }
+});
+
+test.serial('describeStateMachine() retries if a ThrottlingException occurs', async (t) => {
+  const expectedResponse = { events: [{ test: 'test1' }] };
+  const promise = throttleOnce(() => Promise.resolve(expectedResponse));
+  const promiseSpy = sinon.spy();
+  const stub = sinon.stub(awsServices, 'sfn')
+    .returns({
+      describeStateMachine: () => {
+        promiseSpy();
+        return promise();
+      },
+    });
+
+  try {
+    const response = await StepFunctions.describeStateMachine();
+    t.deepEqual(response, expectedResponse);
+    t.is(promiseSpy.callCount, 2);
+  } finally {
+    stub.restore();
+  }
+});
+
+test('doesExecutionExist() returns true if the Promise resolves', async (t) => {
   t.true(await StepFunctions.doesExecutionExist(Promise.resolve()));
 });
 
-test('doesExecutionExist returns false if the Promise rejects with an ExecutionDoesNotExist code', async (t) => {
+test('doesExecutionExist() returns false if the Promise rejects with an ExecutionDoesNotExist name', async (t) => {
   const err = new Error();
-  err.code = 'ExecutionDoesNotExist';
+  err.name = 'ExecutionDoesNotExist';
 
   t.false(await StepFunctions.doesExecutionExist(Promise.reject(err)));
 });
 
-test('doesExecutionExist throws any non-ExecutionDoesNotExist errors', async (t) => {
+test('doesExecutionExist() throws any non-ExecutionDoesNotExist errors', async (t) => {
   const err = new Error();
 
   try {
@@ -163,4 +187,73 @@ test('doesExecutionExist throws any non-ExecutionDoesNotExist errors', async (t)
 test('executionExists returns false if the execution does not exist', async (t) => {
   const executionArn = 'arn:aws:states:us-east-1:123456789012:execution:MyStackIngestAndPublishGranuleStateMachine:c154d37a-98e5-4ca9-9653-35f4ae9b59d3';
   t.false(await StepFunctions.executionExists(executionArn));
+});
+
+test('getExecutionStatus() throws exception if the execution does not exist', async (t) => {
+  const executionArn = 'arn:aws:states:us-east-1:123456789012:execution:MyStackIngestAndPublishGranuleStateMachine:c154d37a-98e5-4ca9-9653-35f4ae9b59d3';
+
+  try {
+    await StepFunctions.getExecutionStatus(executionArn);
+    t.fail();
+  } catch (error) {
+    t.pass();
+  }
+});
+
+test.serial('getExecutionStatus() retries if a ThrottlingException occurs in describeExecution, getExecutionHistory and describeStateMachine', async (t) => {
+  const expectedResponse = { events: [{ test: 'test1' }] };
+  const promise1 = throttleOnce(() => Promise.resolve(expectedResponse));
+  const promise2 = throttleOnce(() => Promise.resolve(expectedResponse));
+  const promise3 = throttleOnce(() => Promise.resolve(expectedResponse));
+  const promiseSpy = sinon.spy();
+  const stub = sinon.stub(awsServices, 'sfn')
+    .returns({
+      describeExecution: () => {
+        promiseSpy();
+        return promise1();
+      },
+      getExecutionHistory: () => {
+        promiseSpy();
+        return promise2();
+      },
+      describeStateMachine: () => {
+        promiseSpy();
+        return promise3();
+      },
+    });
+
+  try {
+    const fullExpectedResponse = {
+      execution: expectedResponse,
+      executionHistory: expectedResponse,
+      stateMachine: expectedResponse,
+    };
+
+    const response = await StepFunctions.getExecutionStatus();
+    t.deepEqual(response, fullExpectedResponse);
+    t.is(promiseSpy.callCount, 6);
+  } finally {
+    stub.restore();
+  }
+});
+
+test.serial('getExecutionHistory() continues gracefully when sfn().getExecutionHistory returns null', async (t) => {
+  const expectedResponse = { events: null };
+  const promise = throttleOnce(() => Promise.resolve(expectedResponse));
+  const promiseSpy = sinon.spy();
+  const stub = sinon.stub(awsServices, 'sfn')
+    .returns({
+      getExecutionHistory: () => {
+        promiseSpy();
+        return promise();
+      },
+    });
+
+  try {
+    const response = await StepFunctions.getExecutionHistory();
+    t.deepEqual(response, expectedResponse);
+    t.is(promiseSpy.callCount, 2);
+  } finally {
+    stub.restore();
+  }
 });

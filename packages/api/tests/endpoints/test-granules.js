@@ -35,7 +35,6 @@ const {
 } = require('@cumulus/db');
 
 const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
-
 const {
   buildS3Uri,
   createBucket,
@@ -45,8 +44,12 @@ const {
   s3ObjectExists,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { secretsManager, sfn, s3, sns, sqs } = require('@cumulus/aws-client/services');
+const {
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 const { CMR } = require('@cumulus/cmr-client');
 const { metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const indexer = require('@cumulus/es-client/indexer');
@@ -184,8 +187,7 @@ test.before(async (t) => {
     .createSecret({
       Name: process.env.cmr_password_secret_name,
       SecretString: randomString(),
-    })
-    .promise();
+    });
 
   // Store the Launchpad passphrase
   process.env.launchpad_passphrase_secret_name = randomString();
@@ -193,8 +195,7 @@ test.before(async (t) => {
     .createSecret({
       Name: process.env.launchpad_passphrase_secret_name,
       SecretString: randomString(),
-    })
-    .promise();
+    });
 
   // Generate a local test postGres database
 
@@ -348,7 +349,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -361,12 +362,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns()
-    .subscribe({
-      TopicArn,
-      Protocol: 'sqs',
-      Endpoint: QueueArn,
-    });
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 });
@@ -374,7 +374,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
-  await sns().deleteTopic({ TopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn }));
 });
 
 test.after.always(async (t) => {
@@ -384,14 +384,12 @@ test.after.always(async (t) => {
     .deleteSecret({
       SecretId: process.env.cmr_password_secret_name,
       ForceDeleteWithoutRecovery: true,
-    })
-    .promise();
+    });
   await secretsManager()
     .deleteSecret({
       SecretId: process.env.launchpad_passphrase_secret_name,
       ForceDeleteWithoutRecovery: true,
-    })
-    .promise();
+    });
 
   await destroyLocalTestDb({
     knex: t.context.knex,
@@ -697,9 +695,9 @@ test.serial('PATCH does not require a collectionId.', async (t) => {
   const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
 
-  const stub = sinon.stub(sfn(), 'describeExecution').returns({
-    promise: () => Promise.resolve(fakeDescribeExecutionResult),
-  });
+  const stub = sinon
+    .stub(sfn(), 'describeExecution')
+    .returns(Promise.resolve(fakeDescribeExecutionResult));
   t.teardown(() => stub.restore());
   const response = await request(app)
     .patch(`/granules/${t.context.fakePGGranules[0].granule_id}`)
@@ -759,9 +757,9 @@ test.serial('PATCH reingests a granule', async (t) => {
   const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
 
-  const stub = sinon.stub(sfn(), 'describeExecution').returns({
-    promise: () => Promise.resolve(fakeDescribeExecutionResult),
-  });
+  const stub = sinon.stub(sfn(), 'describeExecution').returns(
+    Promise.resolve(fakeDescribeExecutionResult)
+  );
   t.teardown(() => stub.restore());
   const response = await request(app)
     .patch(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
@@ -809,9 +807,9 @@ test.serial('PATCH applies an in-place workflow to an existing granule', async (
     }),
   };
 
-  const stub = sinon.stub(sfn(), 'describeExecution').returns({
-    promise: () => Promise.resolve(fakeDescribeExecutionResult),
-  });
+  const stub = sinon
+    .stub(sfn(), 'describeExecution')
+    .returns(Promise.resolve(fakeDescribeExecutionResult));
   t.teardown(() => stub.restore());
 
   const response = await request(app)
@@ -2896,10 +2894,13 @@ test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if wr
   });
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('something bad');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => {
+        throw new Error('something bad');
+      },
+      delete: () => Promise.resolve(),
     },
-    delete: () => Promise.resolve(),
   };
   const apiGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: newPgGranule,

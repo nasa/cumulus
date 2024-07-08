@@ -1,6 +1,15 @@
 'use strict';
 
 const pRetry = require('p-retry');
+const {
+  AddPermissionCommand,
+  DeleteEventSourceMappingCommand,
+  GetFunctionCommand,
+  InvokeCommand,
+  RemovePermissionCommand,
+  CreateEventSourceMappingCommand,
+} = require('@aws-sdk/client-lambda');
+
 const { sleep } = require('@cumulus/common');
 const {
   lambda,
@@ -76,11 +85,11 @@ const createCloudwatchRuleWithTarget = async ({
         ],
       },
     }),
-  }).promise();
-
-  const { Configuration } = await lambda().getFunction({
-    FunctionName: functionName,
   });
+
+  const { Configuration } = await lambda().send(new GetFunctionCommand({
+    FunctionName: functionName,
+  }));
 
   await cloudwatchevents().putTargets({
     Rule: ruleName,
@@ -88,15 +97,15 @@ const createCloudwatchRuleWithTarget = async ({
       Id: ruleTargetId,
       Arn: Configuration.FunctionArn,
     }],
-  }).promise();
+  });
 
-  return lambda().addPermission({
+  return lambda().send(new AddPermissionCommand({
     Action: 'lambda:InvokeFunction',
     FunctionName: functionName,
     Principal: 'events.amazonaws.com',
     StatementId: rulePermissionId,
     SourceArn: RuleArn,
-  });
+  }));
 };
 
 const deleteCloudwatchRuleWithTargets = async ({
@@ -110,16 +119,16 @@ const deleteCloudwatchRuleWithTargets = async ({
       ruleTargetId,
     ],
     Rule: ruleName,
-  }).promise();
+  });
 
-  await lambda().removePermission({
+  await lambda().send(new RemovePermissionCommand({
     FunctionName: functionName,
     StatementId: rulePermissionId,
-  });
+  }));
 
   return cloudwatchevents().deleteRule({
     Name: ruleName,
-  }).promise();
+  });
 };
 
 describe('the sf-starter lambda function', () => {
@@ -152,7 +161,7 @@ describe('the sf-starter lambda function', () => {
       definition: JSON.stringify(passSfDef),
       roleArn: passSfRoleArn,
     };
-    const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
+    const { stateMachineArn } = await sfn().createStateMachine(passSfParams);
     passSfArn = stateMachineArn;
 
     const waitPassSfName = timestampedName('waitPassTestSf');
@@ -177,13 +186,13 @@ describe('the sf-starter lambda function', () => {
       definition: JSON.stringify(waitPassSfDef),
       roleArn: passSfRoleArn,
     };
-    const response = await sfn().createStateMachine(waitPassSfParams).promise();
+    const response = await sfn().createStateMachine(waitPassSfParams);
     waitPassSfArn = response.stateMachineArn;
   });
 
   afterAll(async () => {
-    await sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise();
-    await sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise();
+    await sfn().deleteStateMachine({ stateMachineArn: passSfArn });
+    await sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn });
   });
 
   describe('when linked to a queue', () => {
@@ -238,11 +247,11 @@ describe('the sf-starter lambda function', () => {
       let mappingUUID;
 
       beforeAll(async () => {
-        const { UUID } = await lambda().createEventSourceMapping({
+        const { UUID } = await lambda().send(new CreateEventSourceMappingCommand({
           EventSourceArn: queueArn,
           FunctionName: sfStarterName,
           Enabled: true,
-        });
+        }));
         mappingUUID = UUID;
       });
 
@@ -250,9 +259,9 @@ describe('the sf-starter lambda function', () => {
         await pRetry(
           async () => {
             try {
-              await lambda().deleteEventSourceMapping({
+              await lambda().send(new DeleteEventSourceMappingCommand({
                 UUID: mappingUUID,
-              });
+              }));
             } catch (error) {
               console.log(`Caught error while deleting eventSourceMapping ${error.code}, ${error.name}, ${error.message}`);
               if (error.name === 'ResourceInUseException') {
@@ -350,14 +359,14 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('consumes the right amount of messages', async () => {
-      const { Payload } = await lambda().invoke({
+      const { Payload } = await lambda().send(new InvokeCommand({
         FunctionName: `${config.stackName}-sqs2sfThrottle`,
         InvocationType: 'RequestResponse',
         Payload: new TextEncoder().encode(JSON.stringify({
           queueUrl: maxQueueUrl,
           messageLimit: totalNumMessages,
         })),
-      });
+      }));
 
       messagesConsumed = Number.parseInt(Payload, 10);
       if (Number.isNaN(messagesConsumed)) {

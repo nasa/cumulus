@@ -8,12 +8,17 @@ const sortBy = require('lodash/sortBy');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
+const sinon = require('sinon');
 
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { sns, sqs } = require('@cumulus/aws-client/services');
+const {
+  SubscribeCommand,
+} = require('@aws-sdk/client-sns');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   AsyncOperationPgModel,
@@ -59,7 +64,7 @@ process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
-const { del } = require('../../endpoints/executions');
+const { del, bulkDeleteExecutionsByCollection } = require('../../endpoints/executions');
 const { app } = require('../../app');
 const { buildFakeExpressResponse } = require('./utils');
 
@@ -202,7 +207,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.execution_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -215,11 +220,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 
@@ -561,8 +566,11 @@ test.serial('del() does not remove from PostgreSQL if removing from Elasticsearc
   t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('something bad');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      delete: () => {
+        throw new Error('something bad');
+      },
     },
   };
 
@@ -1716,4 +1724,84 @@ test.serial('PUT /executions publishes message to SNS topic', async (t) => {
     ...translatedExecution,
     updatedAt: executionRecord.updatedAt,
   });
+});
+
+test.serial('bulkDeleteExecutionsByCollection calls invokeStartAsyncOperationLambda with expected object', async (t) => {
+  const invokeStartAsyncOperationLambda = sinon.stub();
+  process.env.EcsCluster = 'testCluster';
+  process.env.BulkOperationLambda = 'testBulkOperationLambda';
+  const req = {
+    testObject: { invokeStartAsyncOperationLambda },
+    body: {
+      collectionId: 'FOOBAR___006',
+      esBatchSize: 50000,
+      dbBatchSize: 60000,
+    },
+  };
+  const res = {
+    status: sinon.stub().returnsThis(),
+    send: sinon.stub(),
+    boom: {
+      badRequest: sinon.stub(),
+    },
+  };
+
+  await bulkDeleteExecutionsByCollection(req, res);
+
+  t.true(invokeStartAsyncOperationLambda.calledOnce);
+  const callArgs = invokeStartAsyncOperationLambda.getCall(0).args[0];
+  const expected = {
+    ...callArgs,
+    cluster: process.env.EcsCluster,
+    payload: {
+      envVars: callArgs.payload.envVars,
+      type: 'BULK_EXECUTION_DELETE',
+      payload: {
+        collectionId: req.body.collectionId,
+        esBatchSize: req.body.esBatchSize,
+        dbBatchSize: req.body.dbBatchSize,
+      },
+    },
+  };
+  t.deepEqual(callArgs, expected);
+});
+
+test.serial('bulkDeleteExecutionsByCollection calls invokeStartAsyncOperationLambda with expected object given batch size params are optionally using strings', async (t) => {
+  const invokeStartAsyncOperationLambda = sinon.stub();
+  process.env.EcsCluster = 'testCluster';
+  process.env.BulkOperationLambda = 'testBulkOperationLambda';
+  const req = {
+    testObject: { invokeStartAsyncOperationLambda },
+    body: {
+      collectionId: 'FOOBAR___006',
+      esBatchSize: '50000',
+      dbBatchSize: '60000',
+    },
+  };
+  const res = {
+    status: sinon.stub().returnsThis(),
+    send: sinon.stub(),
+    boom: {
+      badRequest: sinon.stub(),
+    },
+  };
+
+  await bulkDeleteExecutionsByCollection(req, res);
+
+  t.true(invokeStartAsyncOperationLambda.calledOnce);
+  const callArgs = invokeStartAsyncOperationLambda.getCall(0).args[0];
+  const expected = {
+    ...callArgs,
+    cluster: process.env.EcsCluster,
+    payload: {
+      envVars: callArgs.payload.envVars,
+      type: 'BULK_EXECUTION_DELETE',
+      payload: {
+        collectionId: req.body.collectionId,
+        esBatchSize: Number(req.body.esBatchSize),
+        dbBatchSize: Number(req.body.dbBatchSize),
+      },
+    },
+  };
+  t.deepEqual(callArgs, expected);
 });

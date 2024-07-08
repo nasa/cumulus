@@ -88,13 +88,25 @@ variable "vpc_id" {
 variable "engine_version" {
   description = "Postgres engine version for serverless cluster"
   type        = string
-  default     = "11.13"
+  default     = "13.12"
 }
 
 variable "parameter_group_family" {
   description = "Database family to use for creating database parameter group"
   type = string
   default = "aurora-postgresql11"
+}
+
+variable "parameter_group_family_v13" {
+  description = "Database family to use for creating database parameter group under postgres 13 upgrade conditions"
+  type = string
+  default = "aurora-postgresql13"
+}
+
+variable "enable_upgrade" {
+  description = "Flag to enable use of updated parameter group for postgres v13"
+  type = bool
+  default = true
 }
 
 variable "max_capacity" {
@@ -155,6 +167,11 @@ variable "db_parameters" {
     {
       name  = "shared_preload_libraries"
       value = "pg_stat_statements,auto_explain"
+      apply_method = "pending-reboot"
+    },
+    {
+      name         = "rds.force_ssl"
+      value        = 1
       apply_method = "pending-reboot"
     }
   ]

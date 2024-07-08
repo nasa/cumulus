@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/schemas",
-  "version": "18.1.0",
+  "version": "18.2.0",
   "description": "Helpers for managing Cumulus task schemas",
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/schemas",
   "repository": {
@@ -8,7 +8,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,6 +20,7 @@
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -34,7 +35,8 @@
       "tests/**"
     ],
     "verbose": true,
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "publishConfig": {
     "access": "public"
