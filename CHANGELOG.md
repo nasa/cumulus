@@ -125,6 +125,7 @@ modification.
     using a PKCS11 provider
 
 ### Changed
+
 - **CUMULUS-3717**
   - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
 - **CUMULUS-3720**
@@ -206,6 +207,9 @@ modification.
 
 ### Fixed
 
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
