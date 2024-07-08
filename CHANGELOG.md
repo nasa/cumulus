@@ -27,6 +27,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3385**
   - updated cleanExecutions lambda to clean up postgres execution payloads
   - updated cleanExecutions lambda with configurable limit to control for large size
+- **NDCUM-1051**
+  - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
+  - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
 
 ### Fixed
 
