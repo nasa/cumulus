@@ -4,7 +4,7 @@ title: Upgrade execution table to CUMULUS-3320
 hide_title: false
 ---
 
-# Background
+## Background
 
 As part of the performance/feature evaluation work in completing the update requested as part of CUMULUS-3320, several updates were required to make `executions` table deletes/reads more performant.
 
@@ -34,7 +34,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_parent_cumulus_id_index ON ex
 
 #### Manually create the index
 
-##### Create index with ingest halted:
+##### Create index (executions_parent_cumulus_id_index) with ingest halted
 
 The recommended approach to create the index is to halt ingest activity that requires write access to the execution table, then run the query to create the index.  This will result in a much faster index operation than attempting to create the index concurrently, however the table will be locked until the index is complete.
 
@@ -46,7 +46,7 @@ To do this, use the following query:
 CREATE INDEX executions_parent_cumulus_id_index ON executions(parent_cumulus_id)'
 ```
 
-##### Create index concurrently/with ongoing:
+##### Create index concurrently/with ongoing ingest
 
 The required index can also be created while the database is in use *prior to installing the upgrade containing CUMULUS-3320* by running the following query:
 
@@ -86,7 +86,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_collection_cumulus_id_index O
 
 #### Manually create the index
 
-##### Create index with ingest halted:
+##### Create index with ingest halted
 
 The recommended approach to create the index is to halt ingest activity that requires write access to the execution table, then run the query to create the index.  This will result in a much faster index operation than attempting to create the index concurrently, however the table will be locked until the index is complete.
 
@@ -118,7 +118,7 @@ The index operation can then be re-attempted.
 
 ## Updating the `executions_parent_cumulus_id_foreign` constraint
 
-### *Notes*:
+### *Notes*
 
 - This update may require ingest downtime as updates to the table require some time.   See instructions below.
 - This update should be performed after adding the `executions_parent_cumulus_id_foreign` constraint
@@ -165,11 +165,11 @@ ALTER TABLE executions VALIDATE CONSTRAINT executions_parent_cumulus_id_foreign
 
 For reference, in a table of roughly 18 million records without active ingest running on a Serverless V1 cluster set at 4ACUs, this validation took roughly 2 minutes in repeated testing, however running the validation during simulated active heavy writes it took significantly longer at around 20 minutes.
 
-# Verify the constraint/indexes exist on the table
+## Verify the constraint/indexes exist on the table
 
 To validate the upgrades have completed, use one of the following options:
 
-## PSQL terminal
+### PSQL terminal
 
 If you're using a PSQL connection to the DB, you can get a full output of table structures and constraints using `\d`:
 
@@ -180,6 +180,7 @@ If you're using a PSQL connection to the DB, you can get a full output of table 
 resulting in:
 
 example
+
 ```text
 some_db=> \d executions
                                                    Table "public.executions"
@@ -222,9 +223,9 @@ Check that the `executions_parent_cumulus_id_foreign` constraint is present with
 
 Check that the two added indexes `executions_parent_cumulus_id_index` and `executions_collection_cumulus_id_index` exist and do not show as `INVALID`.
 
-## Standard Postgres queries
+### Standard Postgres queries
 
-### Verify executions_parent_cumulus_id_foreign
+#### Verify executions_parent_cumulus_id_foreign
 
 Run the following query:
 
@@ -252,8 +253,7 @@ You should get a result like:
 
 Check that the `executions_parent_cumulus_id_foreign` constraint is present with 'ON DELETE SET_NULL' and does not have 'NOT VALID' appended to the end
 
-
-### Verify indexes were created
+#### Verify indexes were created
 
 Run the following query:
 
@@ -281,4 +281,3 @@ You should see a result like:
 ```
 
 Check that the two added indexes `executions_parent_cumulus_id_index` and `executions_collection_cumulus_id_index` exist and do not show as `INVALID`.
-
