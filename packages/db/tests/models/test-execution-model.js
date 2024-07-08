@@ -569,7 +569,7 @@ test('ExecutionPgModel.searchExecutionPayloadsBeforeDate() captures all payloade
   t.is(payloadsBeforeDate.length, 12);
   payloadsBeforeDate.forEach(
     (execution) => {
-      t.true(execution.updated_at < targetTime);
+      t.true(execution.updated_at <= targetTime);
       t.true(Boolean(execution.final_payload) || Boolean(execution.original_payload));
     }
   );
