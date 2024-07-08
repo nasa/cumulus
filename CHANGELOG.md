@@ -84,7 +84,7 @@ of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 #### CUMULUS-3779 async_operations Docker image version upgrade
-  
+
 The `async_operations` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users will need to bump
 the version tag of `async_operations` to at least 52 if using the Docker image.
 
@@ -134,6 +134,7 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
     support `aws-sdk` v3 changes.
 
 ### Added
+
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
@@ -152,6 +153,10 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
     using a PKCS11 provider
 
 ### Changed
+
+- **NDCUM-1051**
+  - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
+  - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
 - **CUMULUS-3320**
   - Updated executions table (please see Migration section and Upgrade
     Instructions for more information) to:
