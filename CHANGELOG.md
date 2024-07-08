@@ -210,6 +210,9 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 
 ### Fixed
 
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
