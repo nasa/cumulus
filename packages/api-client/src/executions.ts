@@ -250,3 +250,36 @@ export const workflowsByGranules = async (params: {
     expectedStatusCodes: 202,
   });
 };
+
+/**
+ *
+ * POST /executions/workflows-by-granules
+ * @param {Object} params             - params
+ * @param {Object} params.body       - body to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const bulkDeleteByCollection = async (params: {
+  prefix: string,
+  payload: object,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, payload, callback = invokeApi } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/executions/bulk-delete-by-collection/',
+      body: JSON.stringify(payload),
+    },
+    expectedStatusCodes: 202,
+  });
+};
