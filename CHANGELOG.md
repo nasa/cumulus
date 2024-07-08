@@ -128,7 +128,8 @@ modification.
     `data-persistance` module to allow configuration of the EBS volume type for
     Elasticsarch; default remains `gp2`.
 - **CUMULUS-3424**
-  - Exposed auto_pause and seconds_until_auto_pause parameters in scaling_configuration
+  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
+    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Changed
 
