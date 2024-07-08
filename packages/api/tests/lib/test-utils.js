@@ -3,7 +3,44 @@
 const test = require('ava');
 const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
-const { validateCollection } = require('../../lib/utils');
+const { validateCollection, setEnvVarsForOperation } = require('../../lib/utils');
+
+test.afterEach(() => {
+  delete process.env.TEST_VAR;
+});
+
+test.serial('setEnvVarsForOperation should set environment variables from event', (t) => {
+  const event = {
+    envVars: {
+      TEST_VAR: 'test value',
+    },
+  };
+
+  setEnvVarsForOperation(event);
+
+  t.is(process.env.TEST_VAR, 'test value');
+});
+
+test.serial('setEnvVarsForOperation should not overwrite existing environment variables', (t) => {
+  process.env.TEST_VAR = 'existing value';
+  const event = {
+    envVars: {
+      TEST_VAR: 'new value',
+    },
+  };
+
+  setEnvVarsForOperation(event);
+
+  t.is(process.env.TEST_VAR, 'existing value');
+});
+
+test.serial('setEnvVarsForOperation should do nothing if no envVars are provided', (t) => {
+  const event = {};
+
+  setEnvVarsForOperation(event);
+
+  t.is(process.env.TEST_VAR, undefined);
+});
 
 test('checkRegex() throws InvalidRegexError for invalid granuleIdExtraction', (t) => {
   const inputCollection = fakeCollectionFactory({ granuleIdExtraction: '*' });
