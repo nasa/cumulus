@@ -24,7 +24,8 @@ Deployments with low volume databases and low activity and/or test/development
 environments should be able to install these updates via the normal automatic
 Cumulus deployment process.
 
-Please *carefully* review the migration process documentation (link goes here).    Failure to
+
+Please *carefully* review the migration [process documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade_execution_table_CUMULUS_3320).    Failure to
 make these updates properly will likely result in deployment failure and/or
 degraded execution table operations.
 
