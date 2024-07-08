@@ -3,7 +3,7 @@ export class CumulusApiClientError extends Error {
   public apiMessage: string | undefined;
 
   constructor(message: string, statusCode: number, apiMessage: string | undefined) {
-    super("CumulusApiClientError: " + message);
+    super(message);
     Object.setPrototypeOf(this, new.target.prototype);
     this.statusCode = statusCode;
     this.apiMessage = apiMessage;
