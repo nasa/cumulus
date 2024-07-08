@@ -58,8 +58,13 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 #### CUMULUS-3779 async_operations Docker image version upgrade
   
-The `async_operations` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users will need to bump
-the version tag of `async_operations` to at least 52 if using the Docker image.
+The `async-operation` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
+to update to at least [async-operations:52](https://hub.docker.com/layers/cumuluss/async-operation/52/images/sha256-78c05f9809c29707f9da87c0fc380d39a71379669cbebd227378c8481eb11c3a?context=explore).
+
+#### CUMULUS-3776 cumulus-ecs-task Docker image version upgrade
+
+The `cumulus-ecs-task` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
+to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cumuluss/cumulus-ecs-task/2.1.0/images/sha256-17bebae3e55171c96272eeb533293b98e573be11dd5371310156b7c2564e691a?context=explore).
 
 ### Breaking Changes
 
@@ -179,8 +184,6 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
     terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
   - Minor refactor of `@cumulus/lzards-api-client` to:
-    - Use proper ECMAScript import for `@cumulus/launchpad-auth`
-    - Update incorrect docstring
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
 - **CUMULUS-3497**
