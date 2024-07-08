@@ -72,27 +72,6 @@ const getExpirationDates = (
 };
 
 /**
- * Pull candidate executions for cleanup from PG
- * @param {Knex} knex
- * @param {Date} expiration - the later expiration to ensure all candidates are gotten
- * @param {number} limit
- * @returns {Promise<Array<PostgresExecutionRecord>>}
- */
-const getExpirablePayloadRecords = async (
-  knex,
-  expiration,
-  limit
-) => (
-  await knex(new ExecutionPgModel().tableName)
-    .where('updated_at', '<=', expiration)
-    .where((builder) => {
-      builder.whereNotNull('final_payload')
-        .orWhereNotNull('original_payload');
-    })
-    .limit(limit)
-);
-
-/**
  * Clean up PG and ES executions that have expired
  *
  * @param {number} completeTimeoutDays - Maximum number of days a completed
@@ -128,7 +107,7 @@ const cleanupExpiredExecutionPayloads = async (
   const knex = await getKnexClient();
   const updateLimit = Number(process.env.UPDATE_LIMIT || 10000);
   const executionModel = new ExecutionPgModel();
-  const executionRecords = await getExpirablePayloadRecords(
+  const executionRecords = await executionModel.searchExecutionPayloadsBeforeDate(
     knex,
     laterExpiration,
     updateLimit
@@ -214,5 +193,4 @@ module.exports = {
   cleanExecutionPayloads,
   getExpirationDates,
   cleanupExpiredExecutionPayloads,
-  getExpirablePayloadRecords,
 };

@@ -86,7 +86,6 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
 
   /**
    * Fetches multiple items from Postgres that contain a payload before a date
-   * this is included unused as a part of PR to ask, does this belong here?
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {Date} date

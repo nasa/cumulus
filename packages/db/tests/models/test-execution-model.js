@@ -1,4 +1,5 @@
 const test = require('ava');
+const moment = require('moment');
 const cryptoRandomString = require('crypto-random-string');
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -434,4 +435,142 @@ test('ExecutionPgModel.searchByCumulusIds() supports sorting', async (t) => {
     t.is(results[3].status, 'failed');
     t.is(results[4].status, 'completed');
   });
+});
+
+test.only('ExecutionPgModel.searchExecutionPayloadsBeforeDate() captures all payloaded executions before a date', async (t) => {
+  const executionRecords = [
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(3, 'days').toDate(),
+      final_payload: null,
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(3, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(3, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(3, 'days').toDate(),
+      final_payload: null,
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(4, 'days').toDate(),
+      final_payload: null,
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(4, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(4, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(4, 'days').toDate(),
+      final_payload: null,
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(5, 'days').toDate(),
+      final_payload: null,
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(5, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(5, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(5, 'days').toDate(),
+      final_payload: null,
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(6, 'days').toDate(),
+      final_payload: null,
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(6, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(6, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(6, 'days').toDate(),
+      final_payload: null,
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(7, 'days').toDate(),
+      final_payload: null,
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(7, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(7, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(7, 'days').toDate(),
+      final_payload: null,
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(8, 'days').toDate(),
+      final_payload: null,
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(8, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: { a: 'b' },
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(8, 'days').toDate(),
+      final_payload: { a: 'b' },
+      original_payload: null,
+    }),
+    fakeExecutionRecordFactory({
+      updated_at: moment().subtract(8, 'days').toDate(),
+      final_payload: null,
+      original_payload: { a: 'b' },
+    }),
+  ];
+  const targetTime = moment().subtract(5, 'days').toDate();
+  const model = new ExecutionPgModel();
+  await model.insert(t.context.knex, executionRecords);
+  const payloadsBeforeDate = await model.searchExecutionPayloadsBeforeDate(
+    t.context.knex, targetTime
+  );
+  t.is(payloadsBeforeDate.length, 12);
+  payloadsBeforeDate.forEach(
+    (execution) => {
+      t.true(execution.updated_at < targetTime);
+      t.true(Boolean(execution.final_payload) || Boolean(execution.original_payload));
+    }
+  );
 });
