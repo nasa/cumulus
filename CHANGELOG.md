@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
+#### CUMULUS-3320 Update executions table
+
+The work for CUMULUS-3320 required index updates as well as a modification of a
+table constraint.   To install the update containing these changes you should:
+
+- Pre-generate the indexes on the execution table.  This can be done via manual
+  procedure prior to upgrading without downtime, or done more quickly before or
+  during upgrade with downtime.
+- Update the `executions_parent_cumulus_id_foreign` constraint.   This will
+  require downtime as updating the constraint requires a table write lock, and
+  the update may take some time.
+
+Deployments with low volume databases and low activity and/or test/development
+environments should be able to install these updates via the normal automatic
+Cumulus deployment process.
+
+Please *carefully* review the migration process documentation (link goes here).    Failure to
+make these updates properly will likely result in deployment failure and/or
+degraded execution table operations.
+
 #### CUMULUS-3433 Update to node.js v20
 
 The following applies only to users with a custom value configured for
@@ -113,6 +133,10 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
     support `aws-sdk` v3 changes.
 
 ### Added
+- **CUMULUS-3320**
+  - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
+    bulk deletion of executions from elasticsearch by collectionId
+  - Added `Bulk Execution Delete` migration type to async operations types
 - **CUMULUS-3742**
   - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3614**
@@ -133,6 +157,15 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
     connections to the database, and is intended to be a temporary solution
     until Cumulus has been updated to import the RDS rds-ca-rsa2048-g1 CA bundles in Lambda environments.
     See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
+- **CUMULUS-3320**
+  - Updated executions table (please see Migration section and Upgrade
+    Instructions for more information) to:
+    - Add index on `collection_cumulus_id`
+    - Add index on `parent_cumulus_id`
+    - Update `executions_parent_cumulus_id_foreign` constraint to add `ON DELETE
+      SET NULL`.  This change will cause deletions in the execution table to
+      allow deletion of parent executions, when this occurs the child will have
+      it's parent reference set to NULL as part of the deletion operations.
 - **CUMULUS-3735**
   - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
 - **CUMULUS-3746**
@@ -213,6 +246,10 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
 
 ### Fixed
 
+- **CUMULUS-3320**
+  - Execution database deletions by `cumulus_id` should have greatly improved
+    performance as a table scan will no longer be required for each record
+    deletion to validate parent-child relationships
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
