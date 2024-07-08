@@ -124,7 +124,9 @@ modification.
   - Updated  with additional documentation covering tunneling configuration
     using a PKCS11 provider
 - **CUMULUS-3700**
-  - Added option to configure EBS volume type for Elasticsearch; default remains `gp2`.
+  - Added `volume_type` option to `elasticsearch_config` in the
+    `data-persistance` module to allow configuration of the EBS volume type for
+    Elasticsarch; default remains `gp2`.
 
 ### Changed
 
