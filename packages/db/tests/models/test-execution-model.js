@@ -437,7 +437,7 @@ test('ExecutionPgModel.searchByCumulusIds() supports sorting', async (t) => {
   });
 });
 
-test.only('ExecutionPgModel.searchExecutionPayloadsBeforeDate() captures all payloaded executions before a date', async (t) => {
+test('ExecutionPgModel.searchExecutionPayloadsBeforeDate() captures all payloaded executions before a date', async (t) => {
   const executionRecords = [
     fakeExecutionRecordFactory({
       updated_at: moment().subtract(3, 'days').toDate(),
