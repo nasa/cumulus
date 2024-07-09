@@ -45,7 +45,7 @@
     "@cumulus/common": "18.2.0",
     "@cumulus/errors": "18.2.0",
     "@cumulus/logger": "18.2.0",
-    "@cumulus/types": "18.2.0",
+    "@cumulus/types": "18.3.0",
     "jsonpath-plus": "^3.0.0",
     "lodash": "^4.17.21",
     "uuidv4": "^6.2.13"
