@@ -8,6 +8,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
+#### CUMULUS-3320 Update executions table
+
+The work for CUMULUS-3320 required index updates as well as a modification of a
+table constraint.   To install the update containing these changes you should:
+
+- Pre-generate the indexes on the execution table.  This can be done via manual
+  procedure prior to upgrading without downtime, or done more quickly before or
+  during upgrade with downtime.
+- Update the `executions_parent_cumulus_id_foreign` constraint.   This will
+  require downtime as updating the constraint requires a table write lock, and
+  the update may take some time.
+
+Deployments with low volume databases and low activity and/or test/development
+environments should be able to install these updates via the normal automatic
+Cumulus deployment process.
+
+
+Please *carefully* review the migration [process documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade_execution_table_CUMULUS_3320).    Failure to
+make these updates properly will likely result in deployment failure and/or
+degraded execution table operations.
+
 #### CUMULUS-3433 Update to node.js v20
 
 The following applies only to users with a custom value configured for
@@ -24,7 +45,7 @@ The following applies only to users with a custom value configured for
   Users making use of a custom image configuration should note the base image
   for Core async operations must support node v20.x.
 
-#### CUMULUS-3449 Please follow instructions before upgrading Cumulus.
+#### CUMULUS-3449 Please follow instructions before upgrading Cumulus
 
 - The updates in CUMULUS-3449 requires manual update to postgres database in
   production environment. Please follow [Update Cumulus_id Type and
@@ -62,12 +83,10 @@ output or status of your request. If you want to directly observe the progress
 of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
-#### CUMULUS-3951 - SNS topics set to use encrypted storage
-
-As part of the requirements for this ticket Cumulus Core created SNS topics are
-being updated to use server-side encryption with an AWS managed key.    No user
-action is required, this note is being added to increase visibility re: this
-modification.
+#### CUMULUS-3779 async_operations Docker image version upgrade
+  
+The `async_operations` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users will need to bump
+the version tag of `async_operations` to at least 52 if using the Docker image.
 
 ### Breaking Changes
 
@@ -110,9 +129,17 @@ modification.
   - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
+- **CUMULUS-3779**
+  - Updates async_operations Docker image to Node v20 and bumps its cumulus dependencies to v18.3.0 to
+    support `aws-sdk` v3 changes.
 
 ### Added
-
+- **CUMULUS-3320**
+  - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
+    bulk deletion of executions from elasticsearch by collectionId
+  - Added `Bulk Execution Delete` migration type to async operations types
+- **CUMULUS-3742**
+  - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
@@ -132,14 +159,23 @@ modification.
     `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Changed
-
+- **CUMULUS-3320**
+  - Updated executions table (please see Migration section and Upgrade
+    Instructions for more information) to:
+    - Add index on `collection_cumulus_id`
+    - Add index on `parent_cumulus_id`
+    - Update `executions_parent_cumulus_id_foreign` constraint to add `ON DELETE
+      SET NULL`.  This change will cause deletions in the execution table to
+      allow deletion of parent executions, when this occurs the child will have
+      it's parent reference set to NULL as part of the deletion operations.
+- **CUMULUS-3735**
+  - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
+- **CUMULUS-3746**
+  - cicd unit test error log changed to environment unique name
 - **CUMULUS-3717**
   - Update `@cumulus/ingest/HttpProviderClient` to use direct injection test mocks, and remove rewire from unit tests
 - **CUMULUS-3720**
   - add cicd unit test error logging to s3 for testing improvements
-- **CUMULUS-3951**
-  - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
-  - Update all integration/unit tests to use encrypted SNS topics
 - **CUMULUS-3433**
   - Updated all node.js lambda dependencies to node 20.x/20.12.2
   - Modified `@cumulus/ingest` unit test HTTPs server to accept localhost POST
@@ -204,8 +240,6 @@ modification.
     from columns ending with "cumulus_id" to number.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
-- **CUMULUS-3527**
-  - Added suppport for additional kex algorithms in the sftp-client.
 - **CUMULUS-3610**
   - Updated `aws-client`'s ES client to use AWS SDK v3.
 - **CUMULUS-3617**
@@ -217,6 +251,10 @@ modification.
 - **CUMULUS-3785**
   - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
   - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
+- **CUMULUS-3320**
+  - Execution database deletions by `cumulus_id` should have greatly improved
+    performance as a table scan will no longer be required for each record
+    deletion to validate parent-child relationships
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
@@ -233,6 +271,34 @@ modification.
     credentialing timeout in long-running ECS jobs.
 - **CUMULUS-3323**
   - Minor edits to errant integration test titles (dyanmo->postgres)
+- **AWS-SDK v3 Exclusion (v18.3.0 fix)***
+  - Excludes aws-sdk v3 from packages to reduce overall package size. With the requirement of Node v20
+    packaging the aws-sdk v3 with our code is no longer necessary and prevented some packages from being
+    published to npm.
+
+## [v18.2.2] 2024-06-4
+
+### Migration Notes
+
+#### CUMULUS-3591 - SNS topics set to use encrypted storage
+
+As part of the requirements for this ticket Cumulus Core created SNS topics are
+being updated to use server-side encryption with an AWS managed key.    No user
+action is required, this note is being added to increase visibility re: this
+modification.
+
+### Changed
+
+- **CUMULUS-3591**
+  - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
+  - Update all integration/unit tests to use encrypted SNS topics
+
+### Fixed
+
+- **CUMULUS-3547**
+  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
+- **CUMULUS-3527**
+  - Added suppport for additional kex algorithms in the sftp-client.
 - **CUMULUS-3587**
   - Ported https://github.com/scottcorgan/express-boom into API/lib to allow
     updates of sub-dependencies and maintain without refactoring errors in
@@ -330,8 +396,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - stubbed cmr interfaces in integration tests allow integration tests to pass
   - needed while cmr is failing to continue needed releases and progress
   - this change should be reverted ASAP when cmr is working as needed again
-- **CUMULUS-3547**
-  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
 
 ### Fixed
 
@@ -7824,7 +7888,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.2.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.2.2...HEAD
+[v18.2.2]: https://github.com/nasa/cumulus/compare/v18.2.1...v18.2.2
 [v18.2.1]: https://github.com/nasa/cumulus/compare/v18.2.0...v18.2.1
 [v18.2.0]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.2.0
 [v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0

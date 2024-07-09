@@ -73,7 +73,7 @@ export const fakeCollectionRecordFactory = (
   params: Partial<PostgresCollection>
 ): PostgresCollection => ({
   name: cryptoRandomString({ length: 5 }),
-  version: '0.0.0',
+  version: '001',
   sample_file_name: 'file.txt',
   granule_id_extraction_regex: 'fake-regex',
   granule_id_validation_regex: 'fake-regex',
