@@ -240,7 +240,7 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
   - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
 
 ### Fixed
-- **CUMULUS-3738**
+- **CUMULUS-3787**
   - Fixed developer-side bug causing some ts error sto be swallowed in CI
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
