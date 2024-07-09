@@ -23,7 +23,7 @@ export interface SyncToS3Response {
 export interface ListItem {
   name: string,
   path: string,
-  type: string,
+  type: number,
   size: number,
   time: number
 }

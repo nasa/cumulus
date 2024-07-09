@@ -2,7 +2,7 @@ import path from 'path';
 import * as log from '@cumulus/common/log';
 
 export interface RecursionFile {
-  type: string,
+  type: number,
   name: string
 }
 
