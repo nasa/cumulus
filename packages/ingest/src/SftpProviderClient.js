@@ -9,16 +9,16 @@ const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
 const { SftpClient } = require('@cumulus/sftp-client');
 const isNil = require('lodash/isNil');
+const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { recursion } = require('./recursion');
 const { decrypt } = require('./util');
-const { getRequiredEnvVar } = require('@cumulus/common/env');
 
 /**
  * @typedef {import('./recursion').RecursionFile} RecursionFile
  */
 class SftpProviderClient {
   /**
-   * 
+   *
    * @param {Object} providerConfig
    * @param {string} providerConfig.username
    * @param {string} providerConfig.password
@@ -116,8 +116,7 @@ class SftpProviderClient {
 
   /** @private
    * @returns {SftpClient}
-   * 
-   */ 
+   */
   getSftpClient() {
     if (!this.connected || !this.privateSftpClient) {
       throw new Error('Client not connected');

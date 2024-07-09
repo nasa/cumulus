@@ -14,7 +14,7 @@ export const inTestMode = (env: NodeJS.ProcessEnv = process.env): boolean =>
 
 /**
  * Helper function to throw error for unit test exports
- * 
+ *
  * @throws {Error}
  */
 export const throwTestError = () => {
