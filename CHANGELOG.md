@@ -24,12 +24,6 @@ The following applies only to users with a custom value configured for
   Users making use of a custom image configuration should note the base image
   for Core async operations must support node v20.x.
 
-#### CUMULUS-3449 Please follow instructions before upgrading Cumulus
-
-- The updates in CUMULUS-3449 requires manual update to postgres database in
-  production environment. Please follow [Update Cumulus_id Type and
-  Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
-
 #### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
 
 Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
@@ -61,6 +55,16 @@ Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the
 output or status of your request. If you want to directly observe the progress
 of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
+
+#### CUMULUS-3779 async_operations Docker image version upgrade
+  
+The `async-operation` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
+to update to at least [async-operations:52](https://hub.docker.com/layers/cumuluss/async-operation/52/images/sha256-78c05f9809c29707f9da87c0fc380d39a71379669cbebd227378c8481eb11c3a?context=explore).
+
+#### CUMULUS-3776 cumulus-ecs-task Docker image version upgrade
+
+The `cumulus-ecs-task` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
+to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cumuluss/cumulus-ecs-task/2.1.0/images/sha256-17bebae3e55171c96272eeb533293b98e573be11dd5371310156b7c2564e691a?context=explore).
 
 ### Breaking Changes
 
@@ -96,13 +100,9 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 - **CUMULUS-2897**
   - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
     from the `@cumulus/aws-client` package.
-- **CUMULUS-3449**
-  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
-    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
-    and pdrs.execution_cumulus_id
-  - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
-  - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
-    to granules table
+- **CUMULUS-3779**
+  - Updates async_operations Docker image to Node v20 and bumps its cumulus dependencies to v18.3.0 to
+    support `aws-sdk` v3 changes.
 
 ### Added
 
@@ -186,9 +186,6 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
-- **CUMULUS-3449**
-  - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
-    from columns ending with "cumulus_id" to number.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3610**
@@ -196,6 +193,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 - **CUMULUS-3617**
   - Added lambdas to migrate DLA messages to `YYYY-MM-DD` subfolder
   - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
+- **CUMULUS-2891**
+  - Updated ECS code to aws sdk v3
 
 ### Fixed
 
@@ -215,6 +214,10 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     credentialing timeout in long-running ECS jobs.
 - **CUMULUS-3323**
   - Minor edits to errant integration test titles (dyanmo->postgres)
+- **AWS-SDK v3 Exclusion (v18.3.0 fix)***
+  - Excludes aws-sdk v3 from packages to reduce overall package size. With the requirement of Node v20
+    packaging the aws-sdk v3 with our code is no longer necessary and prevented some packages from being
+    published to npm.
 
 ## [v18.2.2] 2024-06-4
 
@@ -295,8 +298,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
-- **CUMULUS-2891**
-  - Updated ECS code to aws sdk v3
 - **CUMULUS-2895**
   - Updated KMS code to aws sdk v3
 - **CUMULUS-2888**

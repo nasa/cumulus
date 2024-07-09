@@ -936,9 +936,9 @@ test('getApiGranuleExecutionCumulusIdsByExecution() returns granule cumulus ids 
   const granuleCumulusId3 = granule3.cumulus_id;
 
   const expectedGranuleCumulusIds = [
-    granuleCumulusId1,
-    granuleCumulusId2,
-    granuleCumulusId3,
+    Number(granuleCumulusId1),
+    Number(granuleCumulusId2),
+    Number(granuleCumulusId3),
   ];
 
   const actualGranuleCumulusIds = await getApiGranuleExecutionCumulusIdsByExecution(knex,
