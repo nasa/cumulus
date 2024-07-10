@@ -14,7 +14,7 @@ const {
 } = require('@cumulus/db');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
 const { sleep } = require('@cumulus/common');
-const { handler, getExpirationDates } = require('../../lambdas/cleanExecutions');
+const { handler, getExpirationDate } = require('../../lambdas/cleanExecutions');
 test.beforeEach(async (t) => {
   t.context.testDbName = randomId('cleanExecutions');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
@@ -31,7 +31,7 @@ test.beforeEach(async (t) => {
       updated_at: moment().subtract(i, 'days').toDate(),
       final_payload: '{"a": "b"}',
       original_payload: '{"b": "c"}',
-      status: 'completed',
+      status: 'running',
     }));
     records.push(fakeExecutionRecordFactory({
       updated_at: moment().subtract(i, 'days').toDate(),
@@ -68,24 +68,17 @@ const pgPayloadsEmpty = (entry) => !entry.final_payload && !entry.orginal_payloa
 
 const esPayloadsEmpty = (entry) => !entry.finalPayload && !entry.orginalPayload;
 
-test.serial('handler() handles complete expiration', async (t) => {
+test.serial('handler() handles running expiration', async (t) => {
   const env = clone(process.env);
   process.env = localStackConnectionEnv;
   process.env.PG_DATABASE = t.context.testDbName;
   process.env.ES_INDEX = t.context.esIndex;
   process.env.LOCAL_ES_HOST = 'localhost';
   let expirationDays = 4;
-  let {
-    completeExpiration: expirationDate,
-  } = getExpirationDates(
-    expirationDays,
-    0,
-    true,
-    false
-  );
-  process.env.completeExecutionPayloadTimeoutDisable = 'false';
-  process.env.nonCompleteExecutionPayloadTimeoutDisable = 'true';
-  process.env.completeExecutionPayloadTimeout = expirationDays;
+  let expirationDate = getExpirationDate(expirationDays);
+  process.env.cleanupNonRunning = 'false';
+  process.env.cleanupRunning = 'true';
+  process.env.payloadTimeout = expirationDays;
 
   await handler();
   await sleep(5000);
@@ -95,9 +88,8 @@ test.serial('handler() handles complete expiration', async (t) => {
       async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
     )
   );
-
   massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at < expirationDate && massagedExecution.status === 'completed') {
+    if (massagedExecution.updated_at <= expirationDate && massagedExecution.status === 'running') {
       t.true(pgPayloadsEmpty(massagedExecution));
     } else {
       t.false(pgPayloadsEmpty(massagedExecution));
@@ -110,7 +102,7 @@ test.serial('handler() handles complete expiration', async (t) => {
     size: 30,
   });
   massagedEsExecutions.results.forEach((massagedExecution) => {
-    if (massagedExecution.updatedAt < expirationDate && massagedExecution.status === 'completed') {
+    if (massagedExecution.updatedAt <= expirationDate && massagedExecution.status === 'running') {
       t.true(esPayloadsEmpty(massagedExecution));
     } else {
       t.false(esPayloadsEmpty(massagedExecution));
@@ -118,13 +110,8 @@ test.serial('handler() handles complete expiration', async (t) => {
   });
 
   expirationDays = 2;
-  expirationDate = getExpirationDates(
-    expirationDays,
-    0,
-    true,
-    false
-  ).completeExpiration;
-  process.env.completeExecutionPayloadTimeout = expirationDays;
+  expirationDate = getExpirationDate(expirationDays);
+  process.env.payloadTimeout = expirationDays;
 
   await handler();
   await sleep(5000);
@@ -133,9 +120,8 @@ test.serial('handler() handles complete expiration', async (t) => {
       async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
     )
   );
-
   massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at < expirationDate && massagedExecution.status === 'completed') {
+    if (massagedExecution.updated_at <= expirationDate && massagedExecution.status === 'running') {
       t.true(pgPayloadsEmpty(massagedExecution));
     } else {
       t.false(pgPayloadsEmpty(massagedExecution));
@@ -148,7 +134,7 @@ test.serial('handler() handles complete expiration', async (t) => {
     size: 30,
   });
   massagedEsExecutions.results.forEach((massagedExecution) => {
-    if (massagedExecution.updatedAt < expirationDate.getTime() && massagedExecution.status === 'completed') {
+    if (massagedExecution.updatedAt <= expirationDate.getTime() && massagedExecution.status === 'running') {
       t.true(esPayloadsEmpty(massagedExecution));
     } else {
       t.false(esPayloadsEmpty(massagedExecution));
@@ -157,23 +143,16 @@ test.serial('handler() handles complete expiration', async (t) => {
   process.env = env;
 });
 
-test.serial('handler() handles nonComplete expiration', async (t) => {
+test.serial('handler() handles non running expiration', async (t) => {
   const env = clone(process.env);
   process.env = localStackConnectionEnv;
   process.env.PG_DATABASE = t.context.testDbName;
   process.env.ES_INDEX = t.context.esIndex;
   let expirationDays = 5;
-  let {
-    nonCompleteExpiration: expirationDate,
-  } = getExpirationDates(
-    expirationDays,
-    expirationDays,
-    false,
-    true
-  );
-  process.env.completeExecutionPayloadTimeoutDisable = 'true';
-  process.env.nonCompleteExecutionPayloadTimeoutDisable = 'false';
-  process.env.nonCompleteExecutionPayloadTimeout = expirationDays;
+  let expirationDate = getExpirationDate(expirationDays);
+  process.env.cleanupNonRunning = 'true';
+  process.env.cleanupRunning = 'false';
+  process.env.payloadTimeout = expirationDays;
   await handler();
   await sleep(5000);
   const model = new ExecutionPgModel();
@@ -183,7 +162,7 @@ test.serial('handler() handles nonComplete expiration', async (t) => {
     )
   );
   massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at < expirationDate && massagedExecution.status !== 'completed') {
+    if (massagedExecution.updated_at <= expirationDate && massagedExecution.status !== 'running') {
       t.true(pgPayloadsEmpty(massagedExecution));
     } else {
       t.false(pgPayloadsEmpty(massagedExecution));
@@ -197,7 +176,7 @@ test.serial('handler() handles nonComplete expiration', async (t) => {
   });
 
   massagedEsExecutions.results.forEach((massagedExecution) => {
-    if (massagedExecution.updatedAt < expirationDate && massagedExecution.status !== 'completed') {
+    if (massagedExecution.updatedAt <= expirationDate && massagedExecution.status !== 'running') {
       t.true(esPayloadsEmpty(massagedExecution));
     } else {
       t.false(esPayloadsEmpty(massagedExecution));
@@ -205,13 +184,8 @@ test.serial('handler() handles nonComplete expiration', async (t) => {
   });
 
   expirationDays = 3;
-  expirationDate = getExpirationDates(
-    expirationDays,
-    expirationDays,
-    false,
-    true
-  ).nonCompleteExpiration;
-  process.env.nonCompleteExecutionPayloadTimeout = expirationDays;
+  expirationDate = getExpirationDate(expirationDays);
+  process.env.payloadTimeout = expirationDays;
 
   await handler();
   await sleep(5000);
@@ -221,7 +195,7 @@ test.serial('handler() handles nonComplete expiration', async (t) => {
     )
   );
   massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at < expirationDate && massagedExecution.status !== 'completed') {
+    if (massagedExecution.updated_at <= expirationDate && massagedExecution.status !== 'running') {
       t.true(pgPayloadsEmpty(massagedExecution));
     } else {
       t.false(pgPayloadsEmpty(massagedExecution));
@@ -234,7 +208,7 @@ test.serial('handler() handles nonComplete expiration', async (t) => {
     size: 30,
   });
   massagedEsExecutions.results.forEach((massagedExecution) => {
-    if (massagedExecution.updatedAt < expirationDate.getTime() && massagedExecution.status !== 'completed') {
+    if (massagedExecution.updatedAt <= expirationDate.getTime() && massagedExecution.status !== 'running') {
       t.true(esPayloadsEmpty(massagedExecution));
     } else {
       t.false(esPayloadsEmpty(massagedExecution));
@@ -249,22 +223,12 @@ test.serial('handler() handles both expirations', async (t) => {
   process.env.PG_DATABASE = t.context.testDbName;
   process.env.ES_INDEX = t.context.esIndex;
   process.env.LOCAL_ES_HOST = 'localhost';
-  let completeExpirationDays = 9;
-  let nonCompleteExpirationDays = 9;
-  let {
-    completeExpiration,
-    nonCompleteExpiration,
-  } = getExpirationDates(
-    completeExpirationDays,
-    nonCompleteExpirationDays,
-    true,
-    true
-  );
+  let payloadTimeout = 9;
+  let payloadExpiration = getExpirationDate(payloadTimeout);
 
-  process.env.completeExecutionPayloadTimeoutDisable = 'false';
-  process.env.nonCompleteExecutionPayloadTimeoutDisable = 'false';
-  process.env.completeExecutionPayloadTimeout = completeExpirationDays;
-  process.env.nonCompleteExecutionPayloadTimeout = nonCompleteExpirationDays;
+  process.env.cleanupRunning = 'true';
+  process.env.cleanupNonRunning = 'true';
+  process.env.payloadTimeout = payloadTimeout;
 
   await handler();
   await sleep(5000);
@@ -276,9 +240,7 @@ test.serial('handler() handles both expirations', async (t) => {
   );
 
   massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at < nonCompleteExpiration && massagedExecution.status !== 'completed') {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else if (massagedExecution.updated_at < completeExpiration && massagedExecution.status === 'completed') {
+    if (massagedExecution.updated_at <= payloadExpiration) {
       t.true(pgPayloadsEmpty(massagedExecution));
     } else {
       t.false(pgPayloadsEmpty(massagedExecution));
@@ -291,31 +253,16 @@ test.serial('handler() handles both expirations', async (t) => {
     size: 30,
   });
   massagedEsExecutions.results.forEach((massagedExecution) => {
-    if (massagedExecution.updatedAt < nonCompleteExpiration.getTime() && massagedExecution.status !== 'completed') {
-      t.true(esPayloadsEmpty(massagedExecution));
-    } else if (massagedExecution.updatedAt < completeExpiration.getTime() && massagedExecution.status === 'completed') {
+    if (massagedExecution.updatedAt <= payloadExpiration.getTime()) {
       t.true(esPayloadsEmpty(massagedExecution));
     } else {
       t.false(esPayloadsEmpty(massagedExecution));
     }
   });
-  completeExpirationDays = 8;
-  nonCompleteExpirationDays = 7;
+  payloadTimeout = 8;
 
-  nonCompleteExpiration = getExpirationDates(
-    completeExpirationDays,
-    nonCompleteExpirationDays,
-    true,
-    true
-  ).nonCompleteExpiration;
-  completeExpiration = getExpirationDates(
-    completeExpirationDays,
-    nonCompleteExpirationDays,
-    true,
-    true
-  ).completeExpiration;
-  process.env.completeExecutionPayloadTimeout = completeExpirationDays;
-  process.env.nonCompleteExecutionPayloadTimeout = nonCompleteExpirationDays;
+  payloadExpiration = getExpirationDate(payloadTimeout);
+  process.env.payloadTimeout = payloadTimeout;
 
   await handler();
   await sleep(5000);
@@ -326,9 +273,7 @@ test.serial('handler() handles both expirations', async (t) => {
   );
 
   massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at < nonCompleteExpiration && massagedExecution.status !== 'completed') {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else if (massagedExecution.updated_at < completeExpiration && massagedExecution.status === 'completed') {
+    if (massagedExecution.updated_at <= payloadExpiration) {
       t.true(pgPayloadsEmpty(massagedExecution));
     } else {
       t.false(pgPayloadsEmpty(massagedExecution));
@@ -341,9 +286,7 @@ test.serial('handler() handles both expirations', async (t) => {
     size: 30,
   });
   massagedEsExecutions.results.forEach((massagedExecution) => {
-    if (massagedExecution.updatedAt < nonCompleteExpiration.getTime() && massagedExecution.status !== 'completed') {
-      t.true(esPayloadsEmpty(massagedExecution));
-    } else if (massagedExecution.updatedAt < completeExpiration.getTime() && massagedExecution.status === 'completed') {
+    if (massagedExecution.updatedAt <= payloadExpiration.getTime()) {
       t.true(esPayloadsEmpty(massagedExecution));
     } else {
       t.false(esPayloadsEmpty(massagedExecution));
@@ -354,24 +297,18 @@ test.serial('handler() handles both expirations', async (t) => {
 
 test.serial('handler() throws errors when misconfigured', async (t) => {
   const env = clone(process.env);
-  process.env.completeExecutionPayloadTimeoutDisable = 'true';
-  process.env.nonCompleteExecutionPayloadTimeoutDisable = 'true';
+  process.env.cleanupRunning = 'false';
+  process.env.cleanupNonRunning = 'false';
 
   await t.throwsAsync(handler(), {
-    message: 'complete and nonComplete configured to be skipped, nothing to do',
+    message: 'running and non-running executions configured to be skipped, nothing to do',
   });
 
-  process.env.completeExecutionPayloadTimeoutDisable = 'false';
-  process.env.nonCompleteExecutionPayloadTimeoutDisable = 'true';
-  process.env.nonCompleteExecutionPayloadTimeout = 'frogs';
+  process.env.cleanupRunning = 'false';
+  process.env.cleanupNonRunning = 'true';
+  process.env.payloadTimeout = 'frogs';
   await t.throwsAsync(handler(), {
-    message: 'Invalid number of days specified in configuration for nonCompleteExecutionPayloadTimeout: frogs',
-  });
-  process.env.nonCompleteExecutionPayloadTimeout = '3';
-
-  process.env.completeExecutionPayloadTimeout = 'three';
-  await t.throwsAsync(handler(), {
-    message: 'Invalid number of days specified in configuration for completeExecutionPayloadTimeout: three',
+    message: 'Invalid number of days specified in configuration for payloadTimeout: frogs',
   });
   process.env = env;
 });
@@ -384,10 +321,9 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
   process.env.ES_INDEX = t.context.esIndex;
   process.env.LOCAL_ES_HOST = 'localhost';
 
-  process.env.completeExecutionPayloadTimeoutDisable = 'false';
-  process.env.nonCompleteExecutionPayloadTimeoutDisable = 'false';
-  process.env.nonCompleteExecutionPayloadTimeout = 2;
-  process.env.completeExecutionPayloadTimeout = 2;
+  process.env.cleanupRunning = 'true';
+  process.env.cleanupNonRunning = 'true';
+  process.env.payloadTimeout = 2;
 
   process.env.UPDATE_LIMIT = 2;
 

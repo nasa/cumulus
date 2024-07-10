@@ -46,11 +46,10 @@ test.afterEach.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test('cleanupExpiredEsExecutionPayloads() for just complete removes expired complete executions', async (t) => {
-  let completeTimeoutDays = 6;
+test('cleanupExpiredEsExecutionPayloads() for just running removes expired running executions', async (t) => {
+  let timeoutDays = 6;
   await cleanupExpiredESExecutionPayloads(
-    completeTimeoutDays,
-    0,
+    timeoutDays,
     true,
     false,
     t.context.esIndex
@@ -58,7 +57,7 @@ test('cleanupExpiredEsExecutionPayloads() for just complete removes expired comp
   // await es refresh
   await sleep(5000);
 
-  let expiration = moment().subtract(completeTimeoutDays, 'days').toDate().getTime();
+  let expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
   let relevantExecutions = await t.context.searchClient.query(
     {
       index: t.context.esIndex,
@@ -75,7 +74,7 @@ test('cleanupExpiredEsExecutionPayloads() for just complete removes expired comp
     }
   );
   for (const execution of relevantExecutions.results) {
-    if (execution.status === 'completed') {
+    if (execution.status === 'running') {
       t.true(execution.finalPayload === undefined);
       t.true(execution.originalPayload === undefined);
     } else {
@@ -103,17 +102,16 @@ test('cleanupExpiredEsExecutionPayloads() for just complete removes expired comp
     t.false(execution.originalPayload === undefined);
   }
 
-  completeTimeoutDays = 2;
+  timeoutDays = 2;
   await cleanupExpiredESExecutionPayloads(
-    completeTimeoutDays,
-    0,
+    timeoutDays,
     true,
     false,
     t.context.esIndex
   );
   await sleep(5000);
 
-  expiration = moment().subtract(completeTimeoutDays, 'days').toDate().getTime();
+  expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
   relevantExecutions = await t.context.searchClient.query(
     {
       index: t.context.esIndex,
@@ -130,7 +128,7 @@ test('cleanupExpiredEsExecutionPayloads() for just complete removes expired comp
     }
   );
   for (const execution of relevantExecutions.results) {
-    if (execution.status === 'completed') {
+    if (execution.status === 'running') {
       t.true(execution.finalPayload === undefined);
       t.true(execution.originalPayload === undefined);
     } else {
@@ -159,18 +157,17 @@ test('cleanupExpiredEsExecutionPayloads() for just complete removes expired comp
   }
 });
 
-test('cleanupExpiredEsExecutionPayloads() for just nonComplete removes expired non complete executions', async (t) => {
-  let nonCompleteTimeoutDays = 6;
+test('cleanupExpiredEsExecutionPayloads() for just nonRunning removes expired non running executions', async (t) => {
+  let timeoutDays = 6;
   await cleanupExpiredESExecutionPayloads(
-    0,
-    nonCompleteTimeoutDays,
+    timeoutDays,
     false,
     true,
     t.context.esIndex
   );
   await sleep(5000);
 
-  let expiration = moment().subtract(nonCompleteTimeoutDays, 'days').toDate().getTime();
+  let expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
 
   let relevantExecutions = await t.context.searchClient.query(
     {
@@ -188,7 +185,7 @@ test('cleanupExpiredEsExecutionPayloads() for just nonComplete removes expired n
     }
   );
   for (const execution of relevantExecutions.results) {
-    if (execution.status !== 'completed') {
+    if (execution.status !== 'running') {
       t.true(execution.finalPayload === undefined);
       t.true(execution.originalPayload === undefined);
     } else {
@@ -216,17 +213,16 @@ test('cleanupExpiredEsExecutionPayloads() for just nonComplete removes expired n
     t.false(execution.originalPayload === undefined);
   }
 
-  nonCompleteTimeoutDays = 2;
+  timeoutDays = 2;
   await cleanupExpiredESExecutionPayloads(
-    0,
-    nonCompleteTimeoutDays,
+    timeoutDays,
     false,
     true,
     t.context.esIndex
   );
   await sleep(5000);
 
-  expiration = moment().subtract(nonCompleteTimeoutDays, 'days').toDate().getTime();
+  expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
   relevantExecutions = await t.context.searchClient.query(
     {
       index: t.context.esIndex,
@@ -243,7 +239,7 @@ test('cleanupExpiredEsExecutionPayloads() for just nonComplete removes expired n
     }
   );
   for (const execution of relevantExecutions.results) {
-    if (execution.status !== 'completed') {
+    if (execution.status !== 'running') {
       t.true(execution.finalPayload === undefined);
       t.true(execution.originalPayload === undefined);
     } else {
@@ -272,22 +268,19 @@ test('cleanupExpiredEsExecutionPayloads() for just nonComplete removes expired n
   }
 });
 
-test('cleanupExpiredEsExecutionPayloads() for complete and nonComplete executions', async (t) => {
-  const nonCompleteTimeoutDays = 6;
-  const completeTimeoutDays = 4;
+test('cleanupExpiredEsExecutionPayloads() for running and nonRunning executions', async (t) => {
+  const timeoutDays = 5;
   await cleanupExpiredESExecutionPayloads(
-    completeTimeoutDays,
-    nonCompleteTimeoutDays,
+    timeoutDays,
     true,
     true,
     t.context.esIndex
   );
   await sleep(5000);
 
-  const nonCompleteExpiration = moment().subtract(nonCompleteTimeoutDays, 'days').toDate().getTime();
-  const completeExpiration = moment().subtract(completeTimeoutDays, 'days').toDate().getTime();
+  const expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
 
-  const completeRelevant = await t.context.searchClient.query(
+  const relevant = await t.context.searchClient.query(
     {
       index: t.context.esIndex,
       type: 'execution',
@@ -295,20 +288,18 @@ test('cleanupExpiredEsExecutionPayloads() for complete and nonComplete execution
         query: {
           range: {
             updatedAt: {
-              lte: completeExpiration,
+              lte: expiration,
             },
           },
         },
       },
     }
   );
-  for (const execution of completeRelevant.results) {
-    if (execution.status === 'completed') {
-      t.true(execution.finalPayload === undefined);
-      t.true(execution.originalPayload === undefined);
-    }
+  for (const execution of relevant.results) {
+    t.true(execution.finalPayload === undefined);
+    t.true(execution.originalPayload === undefined);
   }
-  const completeIrrelevantExecutions = await t.context.searchClient.query(
+  const irrelevantExecutions = await t.context.searchClient.query(
     {
       index: t.context.esIndex,
       type: 'execution',
@@ -316,59 +307,15 @@ test('cleanupExpiredEsExecutionPayloads() for complete and nonComplete execution
         query: {
           range: {
             updatedAt: {
-              gt: completeExpiration,
+              gt: expiration,
             },
           },
         },
       },
     }
   );
-  for (const execution of completeIrrelevantExecutions.results) {
-    if (execution.status === 'completed') {
-      t.false(execution.finalPayload === undefined);
-      t.false(execution.originalPayload === undefined);
-    }
-  }
-  const nonCompleteRelevant = await t.context.searchClient.query(
-    {
-      index: t.context.esIndex,
-      type: 'execution',
-      body: {
-        query: {
-          range: {
-            updatedAt: {
-              lte: nonCompleteExpiration,
-            },
-          },
-        },
-      },
-    }
-  );
-  for (const execution of nonCompleteRelevant.results) {
-    if (execution.status !== 'completed') {
-      t.true(execution.finalPayload === undefined);
-      t.true(execution.originalPayload === undefined);
-    }
-  }
-  const nonCompleteIrrelevantExecutions = await t.context.searchClient.query(
-    {
-      index: t.context.esIndex,
-      type: 'execution',
-      body: {
-        query: {
-          range: {
-            updatedAt: {
-              gt: nonCompleteExpiration,
-            },
-          },
-        },
-      },
-    }
-  );
-  for (const execution of nonCompleteIrrelevantExecutions.results) {
-    if (execution.status !== 'completed') {
-      t.false(execution.finalPayload === undefined);
-      t.false(execution.originalPayload === undefined);
-    }
+  for (const execution of irrelevantExecutions.results) {
+    t.false(execution.finalPayload === undefined);
+    t.false(execution.originalPayload === undefined);
   }
 });
