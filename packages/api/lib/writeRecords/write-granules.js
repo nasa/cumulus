@@ -26,12 +26,6 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
 } = require('@cumulus/db');
-const {
-  upsertGranule,
-} = require('@cumulus/es-client/indexer');
-const {
-  getEsClient,
-} = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 const {
   deconstructCollectionId,
@@ -85,7 +79,6 @@ const {
 const {
   getExecutionCumulusId,
   isStatusFinalState,
-  isStatusActiveState,
 } = require('./utils');
 
 /**
@@ -101,7 +94,6 @@ const {
 * @typedef { import('@cumulus/db').GranulePgModel } GranulePgModel
 * @typedef { import('@cumulus/db').FilePgModel } FilePgModel
 */
-
 const { recordIsValid } = require('../schema');
 const granuleSchema = require('../schemas').granule;
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
@@ -308,15 +300,12 @@ const _publishPostgresGranuleUpdateToSns = async ({
 const _updateGranule = async ({
   apiGranule,
   postgresGranule,
-  apiFieldUpdates,
   pgFieldUpdates,
-  apiFieldsToDelete,
   granulePgModel,
   knex,
   snsEventType = 'Update',
 }) => {
   const granuleId = apiGranule.granuleId;
-  const esGranule = omit(apiGranule, apiFieldsToDelete);
 
   let updatedPgGranule;
   await createRejectableTransaction(knex, async (trx) => {
@@ -514,7 +503,6 @@ const _writeGranuleRecords = async (params) => {
     granulePgModel,
     writeConstraints = true,
   } = params;
-  let pgGranule;
   /**
    * @type { { status: string, pgGranule: PostgresGranuleRecord } | undefined }
    */
@@ -532,10 +520,6 @@ const _writeGranuleRecords = async (params) => {
         granulePgModel,
         writeConstraints,
       });
-      if (writePgGranuleResult.status === 'dropped') {
-        return;
-      }
-      pgGranule = writePgGranuleResult.pgGranule;
     });
     if (writePgGranuleResult === undefined) {
       // unlikely to happen but want a unique message that we can find and diagnose
@@ -840,7 +824,6 @@ const writeGranuleFromApi = async (
       dynamoRecord: apiGranuleRecord,
       knexOrTransaction: knex,
     });
-
     await _writeGranule({
       apiGranuleRecord,
       executionCumulusId,
@@ -862,7 +845,7 @@ const createGranuleFromApi = async (granule, knex) => {
   await writeGranuleFromApi(granule, knex, 'Create');
 };
 
-const updateGranuleFromApi = async (granule, knex, ) => {
+const updateGranuleFromApi = async (granule, knex) => {
   await writeGranuleFromApi(granule, knex, 'Update');
 };
 

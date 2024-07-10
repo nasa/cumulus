@@ -223,15 +223,6 @@ async function moveGranule(apiGranule, destinations, distEndpoint) {
   }
 }
 
-const SCROLL_SIZE = 500; // default size in Kibana
-
-function getTotalHits(bodyHits) {
-  if (bodyHits.total.value === 0) {
-    return 0;
-  }
-  return bodyHits.total.value || bodyHits.total;
-}
-
 /**
  * Return a unique list of granules based on the provided list or the response from the
  * query to ES using the provided query and index.
@@ -241,9 +232,9 @@ function getTotalHits(bodyHits) {
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
- * @returns {Promise<Array<ApiGranule>>}
+ * @returns {Array<ApiGranule>}
  */
-async function getGranulesForPayload(payload) {
+function getGranulesForPayload(payload) {
   const { granules } = payload;
   const queryGranules = granules || [];
 

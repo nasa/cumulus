@@ -18,8 +18,6 @@ const {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const { indexGranule } = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // Postgres mock data factories

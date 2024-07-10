@@ -180,7 +180,7 @@ const create = async (req, res) => {
   try {
     await createGranuleFromApiMethod(
       _setNewGranuleDefaults(granule, true),
-      knex,
+      knex
     );
   } catch (error) {
     log.error('Could not write granule', error);
@@ -200,7 +200,7 @@ const create = async (req, res) => {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
- const patchGranule = async (req, res) => {
+const patchGranule = async (req, res) => {
   const {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
@@ -486,7 +486,6 @@ async function patchByGranuleId(req, res) {
     granulePgModel = new GranulePgModel(),
     knex = await getKnexClient(),
   } = req.testContext || {};
-  console.log("HELLLLLLLLOOOOO NAGA2");
   const body = req.body;
   const action = body.action;
 
@@ -630,8 +629,17 @@ const associateExecution = async (req, res) => {
     updated_at: new Date(),
   };
 
+  const apiGranuleRecord = {
+    ...(await translatePostgresGranuleToApiGranule({
+      knexOrTransaction: knex,
+      granulePgRecord: updatedPgGranule,
+    })),
+    execution: pgExecution.url,
+  };
+
   try {
     await writeGranuleRecordAndPublishSns({
+      apiGranuleRecord,
       executionCumulusId: pgExecution.cumulus_id,
       granulePgModel,
       postgresGranuleRecord: updatedPgGranule,
@@ -668,8 +676,7 @@ async function delByGranuleId(req, res) {
   const granuleId = req.params.granuleId;
   log.info(`granules.del ${granuleId}`);
 
-  let pgGranule;
-  pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
+  const pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
 
   const deletionDetails = await deleteGranuleAndFiles({
     knex,
@@ -718,7 +725,7 @@ async function del(req, res) {
         return res.boom.notFound(
           `No collection found for granuleId ${granuleId} with collectionId ${collectionId}`
         );
-    }
+      }
     } else {
       throw error;
     }
