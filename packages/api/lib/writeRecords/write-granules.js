@@ -26,12 +26,6 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
 } = require('@cumulus/db');
-const {
-  upsertGranule,
-} = require('@cumulus/es-client/indexer');
-const {
-  getEsClient,
-} = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 const {
   deconstructCollectionId,
@@ -85,7 +79,6 @@ const {
 const {
   getExecutionCumulusId,
   isStatusFinalState,
-  isStatusActiveState,
 } = require('./utils');
 
 /**
@@ -101,7 +94,6 @@ const {
 * @typedef { import('@cumulus/db').GranulePgModel } GranulePgModel
 * @typedef { import('@cumulus/db').FilePgModel } FilePgModel
 */
-
 const { recordIsValid } = require('../schema');
 const granuleSchema = require('../schemas').granule;
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
@@ -303,22 +295,17 @@ const _publishPostgresGranuleUpdateToSns = async ({
  * @param {Object}  params.granulePgModel        - @cumulus/db compatible granule module instance
  * @param {Knex}    params.knex                  - Knex object
  * @param {string}  params.snsEventType          - SNS Event Type, defaults to 'Update'
- * @param {Object}  params.esClient              - Elasticsearch client
  * returns {Promise}
  */
 const _updateGranule = async ({
   apiGranule,
   postgresGranule,
-  apiFieldUpdates,
   pgFieldUpdates,
-  apiFieldsToDelete,
   granulePgModel,
   knex,
   snsEventType = 'Update',
-  esClient,
 }) => {
   const granuleId = apiGranule.granuleId;
-  const esGranule = omit(apiGranule, apiFieldsToDelete);
 
   let updatedPgGranule;
   await createRejectableTransaction(knex, async (trx) => {
@@ -329,20 +316,6 @@ const _updateGranule = async ({
       ['*']
     );
     log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
-    try {
-      await upsertGranule({
-        esClient,
-        updates: {
-          ...esGranule,
-          ...apiFieldUpdates,
-        },
-        index: process.env.ES_INDEX,
-      });
-      log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
-    } catch (writeError) {
-      log.error(`Write to Elasticsearch failed for ${granuleId}`, writeError);
-      throw writeError;
-    }
   });
 
   log.info(
@@ -376,7 +349,6 @@ const updateGranuleStatusToFailed = async (params) => {
     error = {},
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
-    esClient = await getEsClient(),
   } = params;
   const status = 'failed';
   const { granuleId, collectionId } = granule;
@@ -403,7 +375,6 @@ const updateGranuleStatusToFailed = async (params) => {
       granulePgModel,
       knex,
       snsEventType: 'Update',
-      esClient,
     });
     log.debug(`Updated granule status to failed, granuleId: ${granule.granuleId}, PostgreSQL cumulus_id: ${pgGranule.cumulus_id}`);
   } catch (thrownError) {
@@ -511,7 +482,6 @@ const _writeGranuleFilesAndThrowIfExpectedWriteError = async ({
  *                                                               to the database
  * @param {ApiGranuleRecord}  params.apiGranuleRecord - Api Granule object to write to the database
  * @param {Knex}              params.knex - Knex object
- * @param {Esclient}          params.esClient - Elasticsearch client
  * @param {number}            params.executionCumulusId - Execution ID the granule was written from
  * @param {boolean}           params.writeConstraints - Boolean flag to set if createdAt/execution
  *                                                      write constraints should restrict write
@@ -529,12 +499,10 @@ const _writeGranuleRecords = async (params) => {
     postgresGranuleRecord,
     apiGranuleRecord,
     knex,
-    esClient = await getEsClient(),
     executionCumulusId,
     granulePgModel,
     writeConstraints = true,
   } = params;
-  let pgGranule;
   /**
    * @type { { status: string, pgGranule: PostgresGranuleRecord } | undefined }
    */
@@ -552,42 +520,6 @@ const _writeGranuleRecords = async (params) => {
         granulePgModel,
         writeConstraints,
       });
-      if (writePgGranuleResult.status === 'dropped') {
-        return;
-      }
-      pgGranule = writePgGranuleResult.pgGranule;
-
-      if (writeConstraints && isStatusActiveState(pgGranule.status)) {
-        // pgGranule was updated, but with writeConstraints conditions and the granule status is
-        // 'queued' or 'running', so only some values were updated. we need to ensure the correct
-        // values are propagated to ES.
-        // The only values allowed to be updated in the PG granule write under these conditions are
-        // currently status, timestamp, updated_at, and created_at, and the associated execution
-        // as part of the write chain
-        const limitedUpdateApiGranuleRecord = await translatePostgresGranuleToApiGranule({
-          granulePgRecord: pgGranule,
-          knexOrTransaction: trx,
-        });
-        await upsertGranule({
-          esClient,
-          updates: limitedUpdateApiGranuleRecord,
-          index: process.env.ES_INDEX,
-        }, writeConstraints);
-      } else {
-        // Future: refactor to cover the entire object?
-        // Ensure PG default createdAt value is propagated to ES
-        // in the case where _writeGranule is called without createdAt set
-        if (!apiGranuleRecord.createdAt) {
-          apiGranuleRecord.createdAt = pgGranule.created_at.getTime();
-        }
-
-        // TODO: refactor to not need apiGranuleRecord, only need files and a few other fields
-        await upsertGranule({
-          esClient,
-          updates: apiGranuleRecord,
-          index: process.env.ES_INDEX,
-        }, writeConstraints);
-      }
     });
     if (writePgGranuleResult === undefined) {
       // unlikely to happen but want a unique message that we can find and diagnose
@@ -653,7 +585,6 @@ const _writeGranuleRecords = async (params) => {
  * @param {PostgresGranuleRecord} params.postgresGranuleRecord - PostgreSQL granule record to write
  *                                                               to the database
  * @param {ApiGranuleRecord}  params.apiGranuleRecord - Api Granule object to write to the database
- * @param {Esclient}          params.esClient - Elasticsearch client
  * @param {number}            params.executionCumulusId - Execution ID the granule was written from
  * @param {GranulePgModel}    params.granulePgModel - @cumulus/db compatible granule module instance
  * @returns {Promise<void>}
@@ -661,7 +592,6 @@ const _writeGranuleRecords = async (params) => {
 const _writeGranule = async ({
   postgresGranuleRecord,
   apiGranuleRecord,
-  esClient,
   executionCumulusId,
   granulePgModel,
   knex,
@@ -672,7 +602,6 @@ const _writeGranule = async ({
   const { status } = apiGranuleRecord;
   const writePgGranuleResult = await _writeGranuleRecords({
     apiGranuleRecord,
-    esClient,
     executionCumulusId,
     granulePgModel,
     knex,
@@ -712,7 +641,6 @@ const _writeGranule = async ({
 * @param {Object}          params
 * @param {Object}          params.apiGranuleRecord - Api Granule object to write to the database
 * @param {number}          params.executionCumulusId - Execution ID the granule was written from
-* @param {Object}          params.esClient - Elasticsearch client
 * @param {Object}          params.granulePgModel - @cumulus/db compatible granule module instance
 * @param {Knex}            params.knex - Knex object
 * @param {Object}          params.postgresGranuleRecord - PostgreSQL granule record to write
@@ -723,7 +651,6 @@ const _writeGranule = async ({
 const writeGranuleRecordAndPublishSns = async ({
   postgresGranuleRecord,
   apiGranuleRecord,
-  esClient,
   executionCumulusId,
   granulePgModel,
   knex,
@@ -731,7 +658,6 @@ const writeGranuleRecordAndPublishSns = async ({
 }) => {
   const writePgGranuleResult = await _writeGranuleRecords({
     apiGranuleRecord: omit(apiGranuleRecord, 'files'),
-    esClient,
     executionCumulusId,
     granulePgModel,
     knex,
@@ -784,7 +710,6 @@ const writeGranuleRecordAndPublishSns = async ({
  * @param {Object} [granule.queryFields] - query fields
  * @param {Object} [granule.granulePgModel] - only for testing.
  * @param {Knex} knex - knex Client
- * @param {Object} esClient - Elasticsearch client
  * @param {string} snsEventType - SNS Event Type
  * @returns {Promise}
  */
@@ -817,7 +742,6 @@ const writeGranuleFromApi = async (
     granulePgModel = new GranulePgModel(),
   },
   knex,
-  esClient,
   snsEventType
 ) => {
   try {
@@ -900,10 +824,8 @@ const writeGranuleFromApi = async (
       dynamoRecord: apiGranuleRecord,
       knexOrTransaction: knex,
     });
-
     await _writeGranule({
       apiGranuleRecord,
-      esClient,
       executionCumulusId,
       granulePgModel,
       knex,
@@ -919,12 +841,12 @@ const writeGranuleFromApi = async (
   }
 };
 
-const createGranuleFromApi = async (granule, knex, esClient) => {
-  await writeGranuleFromApi(granule, knex, esClient, 'Create');
+const createGranuleFromApi = async (granule, knex) => {
+  await writeGranuleFromApi(granule, knex, 'Create');
 };
 
-const updateGranuleFromApi = async (granule, knex, esClient) => {
-  await writeGranuleFromApi(granule, knex, esClient, 'Update');
+const updateGranuleFromApi = async (granule, knex) => {
+  await writeGranuleFromApi(granule, knex, 'Update');
 };
 
 /**
@@ -937,7 +859,6 @@ const updateGranuleFromApi = async (granule, knex, esClient) => {
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database
- * @param {Object}  params.esClient - Elasticsearch client
  * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
  *  results from Promise.allSettled for all granules
@@ -948,7 +869,6 @@ const writeGranulesFromMessage = async ({
   executionCumulusId,
   knex,
   granulePgModel = new GranulePgModel(),
-  esClient,
   testOverrides = {}, // Used only for test mocks
 }) => {
   if (!messageHasGranules(cumulusMessage)) {
@@ -1069,7 +989,6 @@ const writeGranulesFromMessage = async ({
 
       return _writeGranule({
         apiGranuleRecord,
-        esClient,
         executionCumulusId,
         granulePgModel,
         knex,
@@ -1104,7 +1023,6 @@ const updateGranuleStatusToQueued = async (params) => {
     knex,
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
-    esClient = await getEsClient(),
   } = params;
   const status = 'queued';
   const { granuleId, collectionId } = apiGranule;
@@ -1132,7 +1050,6 @@ const updateGranuleStatusToQueued = async (params) => {
       granulePgModel,
       knex,
       snsEventType: 'Update',
-      esClient,
     });
 
     log.debug(`Updated granule status to queued, PostgreSQL cumulus_id: ${pgGranule.cumulus_id}`);
