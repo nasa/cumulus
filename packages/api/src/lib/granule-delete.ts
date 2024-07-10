@@ -16,9 +16,6 @@ import {
 import { DeletePublishedGranule } from '@cumulus/errors';
 import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
 import Logger from '@cumulus/logger';
-
-const { deleteGranule } = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
 const { publishGranuleDeleteSnsMessage } = require('../../lib/publishSnsMessageUtils');
 const FileUtils = require('../../lib/FileUtils');
 
@@ -55,7 +52,6 @@ const deleteS3Files = async (
  * @param {FilePgModel} params.filePgModel - File Postgres model
  * @param {GranulePgModel} params.granulePgModel - Granule Postgres model
  * @param {CollectionPgModel} params.collectionPgModel - Collection Postgres model
- * @param {Object} params.esClient - Elasticsearch client
  * @returns {Object} - Granule Deletion details
  */
 const deleteGranuleAndFiles = async (params: {
@@ -65,9 +61,6 @@ const deleteGranuleAndFiles = async (params: {
   filePgModel: FilePgModel,
   granulePgModel: GranulePgModel,
   collectionPgModel: CollectionPgModel,
-  esClient: {
-    delete(...args: any): any | any[];
-  },
   collectionCumulusId?: number,
 }) => {
   const {
@@ -77,7 +70,6 @@ const deleteGranuleAndFiles = async (params: {
     filePgModel = new FilePgModel(),
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
-    esClient = await getEsClient(),
   } = params;
 
   // Most of the calls using this method aren't typescripted
@@ -87,13 +79,6 @@ const deleteGranuleAndFiles = async (params: {
   }
   if (!pgGranule && apiGranule) {
     logger.info('deleteGranuleAndFiles called without pgGranule, removing ES record only');
-    await deleteGranule({
-      esClient,
-      granuleId: apiGranule.granuleId,
-      collectionId: apiGranule.collectionId,
-      index: process.env.ES_INDEX,
-      ignore: [404],
-    });
     logger.debug(`Successfully deleted granule ${apiGranule.granuleId} from ES datastore`);
     await deleteS3Files(apiGranule.files);
     logger.debug(`Successfully removed S3 files ${JSON.stringify(apiGranule.files)}`);
@@ -127,13 +112,6 @@ const deleteGranuleAndFiles = async (params: {
     await createRejectableTransaction(knex, async (trx) => {
       await granulePgModel.delete(trx, {
         cumulus_id: pgGranule.cumulus_id,
-      });
-      await deleteGranule({
-        esClient,
-        granuleId: granuleToPublishToSns.granuleId,
-        collectionId: granuleToPublishToSns.collectionId,
-        index: process.env.ES_INDEX,
-        ignore: [404],
       });
     });
     await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
