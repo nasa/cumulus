@@ -6,8 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [v18.3.1] 2024-07-08
-
 ### Migration Notes
 
 #### CUMULUS-3320 Update executions table
@@ -26,10 +24,52 @@ Deployments with low volume databases and low activity and/or test/development
 environments should be able to install these updates via the normal automatic
 Cumulus deployment process.
 
-
 Please *carefully* review the migration [process documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade_execution_table_CUMULUS_3320).    Failure to
 make these updates properly will likely result in deployment failure and/or
 degraded execution table operations.
+
+#### CUMULUS-3449 Please follow instructions before upgrading Cumulus
+
+- The updates in CUMULUS-3449 requires manual update to postgres database in
+  production environment. Please follow [Update Cumulus_id Type and
+  Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
+
+### Breaking Changes
+
+### Added
+
+- **CUMULUS-3320**
+  - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
+    bulk deletion of executions from elasticsearch by collectionId
+  - Added `Bulk Execution Delete` migration type to async operations types
+- **CUMULUS-3742**
+  - Script for dumping data into postgres database for testing and replicating issues
+
+### Changed
+
+- **CUMULUS-3320**
+  - Updated executions table (please see Migration section and Upgrade
+    Instructions for more information) to:
+    - Add index on `collection_cumulus_id`
+    - Add index on `parent_cumulus_id`
+    - Update `executions_parent_cumulus_id_foreign` constraint to add `ON DELETE
+      SET NULL`.  This change will cause deletions in the execution table to
+      allow deletion of parent executions, when this occurs the child will have
+      it's parent reference set to NULL as part of the deletion operations.
+- **CUMULUS-3449**
+  - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
+    from columns ending with "cumulus_id" to number.
+
+### Fixed
+
+- **CUMULUS-3320**
+  - Execution database deletions by `cumulus_id` should have greatly improved
+    performance as a table scan will no longer be required for each record
+    deletion to validate parent-child relationships
+
+## [v18.3.1] 2024-07-08
+
+### Migration Notes
 
 #### CUMULUS-3433 Update to node.js v20
 
@@ -46,12 +86,6 @@ The following applies only to users with a custom value configured for
 
   Users making use of a custom image configuration should note the base image
   for Core async operations must support node v20.x.
-
-#### CUMULUS-3449 Please follow instructions before upgrading Cumulus
-
-- The updates in CUMULUS-3449 requires manual update to postgres database in
-  production environment. Please follow [Update Cumulus_id Type and
-  Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
 
 #### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
 
@@ -142,12 +176,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 
 ### Added
 
-- **CUMULUS-3320**
-  - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
-    bulk deletion of executions from elasticsearch by collectionId
-  - Added `Bulk Execution Delete` migration type to async operations types
-- **CUMULUS-3742**
-  - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
@@ -161,15 +189,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 
 ### Changed
 
-- **CUMULUS-3320**
-  - Updated executions table (please see Migration section and Upgrade
-    Instructions for more information) to:
-    - Add index on `collection_cumulus_id`
-    - Add index on `parent_cumulus_id`
-    - Update `executions_parent_cumulus_id_foreign` constraint to add `ON DELETE
-      SET NULL`.  This change will cause deletions in the execution table to
-      allow deletion of parent executions, when this occurs the child will have
-      it's parent reference set to NULL as part of the deletion operations.
 - **CUMULUS-3735**
   - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
 - **CUMULUS-3746**
@@ -237,9 +256,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
-- **CUMULUS-3449**
-  - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
-    from columns ending with "cumulus_id" to number.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3610**
@@ -252,10 +268,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 
 ### Fixed
 
-- **CUMULUS-3320**
-  - Execution database deletions by `cumulus_id` should have greatly improved
-    performance as a table scan will no longer be required for each record
-    deletion to validate parent-child relationships
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
