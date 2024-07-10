@@ -24,7 +24,8 @@ Deployments with low volume databases and low activity and/or test/development
 environments should be able to install these updates via the normal automatic
 Cumulus deployment process.
 
-Please *carefully* review the migration process documentation (link goes here).    Failure to
+
+Please *carefully* review the migration [process documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade_execution_table_CUMULUS_3320).    Failure to
 make these updates properly will likely result in deployment failure and/or
 degraded execution table operations.
 
@@ -246,6 +247,8 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
 ### Fixed
 - **CUMULUS-3385**
   - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
+- **CUMULUS-3787**
+  - Fixed developer-side bug causing some ts errors to be swallowed in CI
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
