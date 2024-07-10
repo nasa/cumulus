@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Replace ElasticSearch Phase 1
+- **CUMULUS-3640**
+ - Removed elasticsearch from granules endpoint
 - **CUMULUS-3699**
  - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 - **CUMULUS-3641**
