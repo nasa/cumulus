@@ -95,16 +95,27 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
   async searchExecutionPayloadsBeforeDate(
     knexOrTransaction: Knex | Knex.Transaction,
     date: Date,
-    limit: number = 10000
+    params: {
+      limit?: number,
+      offset?: number,
+      minimumDate?: Date,
+    } = {}
   ): Promise<PostgresExecutionRecord[]> {
     const log = new Logger({ sender: '@cumulus/db/models/execution' });
+    const { limit, offset, minimumDate } = params || {};
     const query: Promise<Array<PostgresExecutionRecord>> = knexOrTransaction(this.tableName)
-      .where('updated_at', '<=', date)
       .where((builder) => {
         builder.whereNotNull('final_payload')
           .orWhereNotNull('original_payload');
+      }).modify((queryBuilder) => {
+        if (limit) queryBuilder.limit(limit);
+        if (offset) queryBuilder.offset(offset);
+        if (minimumDate) {
+          queryBuilder.whereBetween('updated_at', [minimumDate, date])
+        } else {
+          queryBuilder.where('updated_at', '<=', date)
+        }
       })
-      .limit(limit);
     const records = await RetryOnDbConnectionTerminateError(query, {}, log);
     return records;
   }
