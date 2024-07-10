@@ -1,13 +1,10 @@
 import { Knex } from 'knex';
 
-import Logger from '@cumulus/logger';
-
 import { BasePgModel } from './base';
 import { TableNames } from '../tables';
 
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { getSortFields } from '../lib/sort';
-import { RetryOnDbConnectionTerminateError } from '../lib/retry';
 class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionRecord> {
   constructor() {
     super({

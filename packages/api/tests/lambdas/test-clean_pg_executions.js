@@ -84,7 +84,6 @@ test.serial('cleanupExpiredPGExecutionPayloads() cleans up expired running paylo
   process.env = env;
 });
 
-
 test.serial('cleanupExpiredPGExecutionPayloads() cleans up expired non running payloads', async (t) => {
   const env = clone(process.env);
   process.env = localStackConnectionEnv;
@@ -132,7 +131,6 @@ test.serial('cleanupExpiredPGExecutionPayloads() cleans up expired non running p
   });
   process.env = env;
 });
-
 
 test.serial('cleanupExpiredPGExecutionPayloads() cleans up expired payloads', async (t) => {
   const env = clone(process.env);

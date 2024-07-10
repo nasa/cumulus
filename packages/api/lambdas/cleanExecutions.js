@@ -4,7 +4,6 @@
 
 const { ExecutionPgModel, getKnexClient } = require('@cumulus/db');
 const { getEsClient } = require('@cumulus/es-client/search');
-const pLimit = require('p-limit');
 const moment = require('moment');
 const Logger = require('@cumulus/logger');
 const log = new Logger({
@@ -60,14 +59,14 @@ const cleanupExpiredESExecutionPayloads = async (
   ];
   const mustNot = [];
 
-  if(cleanupRunning && !cleanupNonRunning) {
+  if (cleanupRunning && !cleanupNonRunning) {
     must.push({ term: { status: 'running' } });
-  } else if ( !cleanupRunning && cleanupNonRunning) {
-    mustNot.push({ term: { status: 'running' } })
+  } else if (!cleanupRunning && cleanupNonRunning) {
+    mustNot.push({ term: { status: 'running' } });
   }
   const removePayloadScript = "ctx._source.remove('finalPayload'); ctx._source.remove('originalPayload')";
-  
-  let script = { inline: removePayloadScript };
+
+  const script = { inline: removePayloadScript };
   const body = {
     query: {
       bool: {
@@ -100,7 +99,7 @@ const cleanupExpiredESExecutionPayloads = async (
 const cleanupExpiredPGExecutionPayloads = async (
   payloadTimeout,
   cleanupRunning,
-  cleanupNonRunning,
+  cleanupNonRunning
 ) => {
   const expiration = getExpirationDate(payloadTimeout);
   const knex = await getKnexClient();
@@ -123,22 +122,14 @@ const cleanupExpiredPGExecutionPayloads = async (
     })
     .modify((queryBuilder) => {
       if (cleanupOnlyRunning) queryBuilder.where('status', '=', 'running');
-      else if(cleanupOnlyNonRunning) queryBuilder.where('status', '!=', 'running');
+      else if (cleanupOnlyNonRunning) queryBuilder.where('status', '!=', 'running');
     })
-    .limit(updateLimit)
+    .limit(updateLimit);
 
   // this is done as a search:update because postgres doesn't support limited updates
-
-  const concurrencyLimit = Number(process.env.CONCURRENCY || 100);
-  const limit = pLimit(concurrencyLimit);
   await knex(executionModel.tableName)
     .whereIn('cumulus_id', executionIds.map((execution) => execution.cumulus_id))
-    .update(wipedPayloads)
-  // const updatePromises = executionIds.map((executionId) => limit(() => {
-  //   return executionModel.update(knex, executionId, wipedPayloads)
-  // }));
-  // await Promise.all(updatePromises);
-  
+    .update(wipedPayloads);
 };
 
 /**
