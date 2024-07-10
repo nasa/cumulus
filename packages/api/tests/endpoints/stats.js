@@ -91,8 +91,8 @@ test.before(async (t) => {
     granules.push(fakeGranuleRecordFactory({
       collection_cumulus_id: num % 20,
       status: statuses[num % 4],
-      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
-      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
+      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))),
+      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
       error: errors[num % 5],
       duration: num + (num / 10),
     }))

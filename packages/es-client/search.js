@@ -204,7 +204,7 @@ class EsClient {
   /**
    * Initializes a new instance of the `EsClient` class.
    *
-   * @param {string} host - The host URL for the Elasticsearch instance.
+   * @param {string} [host] - The host URL for the Elasticsearch instance.
    * @param {boolean} [metrics=false] - A flag indicating whether metrics are enabled.
    */
   constructor(host, metrics = false) {
@@ -441,8 +441,8 @@ class Search extends BaseSearch {}
 /**
  * Initializes and returns an instance of an `EsClient` Class
  *
- * @param {string} host - The host URL for the Elasticsearch instance.
- * @param {boolean} metrics - A flag indicating whether metrics are enabled.
+ * @param {string} [host] - The host URL for the Elasticsearch instance.
+ * @param {boolean} [metrics] - A flag indicating whether metrics are enabled.
  * @returns {Promise<EsClient>} A promise that resolves to an instance of `EsClient`.
  */
 const getEsClient = async (host, metrics) => {

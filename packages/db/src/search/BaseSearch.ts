@@ -98,7 +98,7 @@ class BaseSearch {
     this.buildTermQuery({ countQuery, searchQuery });
     this.buildTermsQuery({ countQuery, searchQuery });
     this.buildNotMatchQuery({ countQuery, searchQuery });
-    this.buildRangeQuery({ countQuery, searchQuery });
+    this.buildRangeQuery({ knex, countQuery, searchQuery });
     this.buildExistsQuery({ countQuery, searchQuery });
     this.buildInfixPrefixQuery({ countQuery, searchQuery });
     this.buildSortQuery({ searchQuery });
@@ -185,9 +185,15 @@ class BaseSearch {
         case 'pdrName':
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.pdr_cumulus_id`));
           break;
+        case 'asyncOperationId':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.async_operation_cumulus_id`));
+          break;
         case 'error':
         case 'error.Error':
           [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`));
+          break;
+        case 'parentArn':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.parent_cumulus_id`));
           break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.${name}`));
@@ -200,11 +206,13 @@ class BaseSearch {
    * Build queries for range fields
    *
    * @param params
+   * @param params.knex - db client
    * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildRangeQuery(params: {
+    knex?: Knex,
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -241,6 +249,8 @@ class BaseSearch {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
     } = TableNames;
 
     const { countQuery, searchQuery, dbQueryParameters } = params;
@@ -263,6 +273,12 @@ class BaseSearch {
         case 'error.Error':
           [countQuery, searchQuery]
             .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`));
+          break;
+        case 'asyncOperationId':
+          [countQuery, searchQuery].forEach((query) => query?.where(`${asyncOperationsTable}.id`, value));
+          break;
+        case 'parentArn':
+          [countQuery, searchQuery].forEach((query) => query?.where(`${executionsTable}_parent.arn`, value));
           break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, value));
@@ -288,6 +304,8 @@ class BaseSearch {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
     } = TableNames;
 
     const { countQuery, searchQuery, dbQueryParameters } = params;
@@ -319,6 +337,12 @@ class BaseSearch {
           [countQuery, searchQuery]
             .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' in ('${value.join('\',\'')}')`));
           break;
+        case 'asyncOperationId':
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${asyncOperationsTable}.id`, value));
+          break;
+        case 'parentArn':
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${executionsTable}_parent.arn`, value));
+          break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${this.tableName}.${name}`, value));
           break;
@@ -343,6 +367,8 @@ class BaseSearch {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
     } = TableNames;
 
     const { countQuery, searchQuery, dbQueryParameters } = params;
@@ -362,6 +388,12 @@ class BaseSearch {
           break;
         case 'pdrName':
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${pdrsTable}.name`, value));
+          break;
+        case 'asyncOperationId':
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${asyncOperationsTable}.id`, value));
+          break;
+        case 'parentArn':
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${executionsTable}_parent.arn`, value));
           break;
         case 'error.Error':
           [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' != '${value}'`));
@@ -417,13 +449,12 @@ class BaseSearch {
     const knex = testKnex ?? await getKnexClient();
     const { countQuery, searchQuery } = this.buildSearch(knex);
     try {
-      const countResult = await countQuery;
+      const [countResult, pgRecords] = await Promise.all([countQuery, searchQuery]);
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;
       meta.page = this.dbQueryParameters.page;
       meta.count = Number(countResult[0]?.count ?? 0);
 
-      const pgRecords = await searchQuery;
       const apiRecords = await this.translatePostgresRecordsToApiRecords(pgRecords, knex);
 
       return {

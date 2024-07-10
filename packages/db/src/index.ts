@@ -111,12 +111,13 @@ export {
 } from './lib/collection';
 
 export {
+  batchDeleteExecutionFromDatabaseByCumulusCollectionId,
   executionArnsFromGranuleIdsAndWorkflowNames,
-  newestExecutionArnFromGranuleIdWorkflowName,
-  getWorkflowNameIntersectFromGranuleIds,
   getApiExecutionCumulusIds,
   getApiGranuleExecutionCumulusIdsByExecution,
   getExecutionInfoByGranuleCumulusId,
+  getWorkflowNameIntersectFromGranuleIds,
+  newestExecutionArnFromGranuleIdWorkflowName,
 } from './lib/execution';
 
 export {
@@ -141,6 +142,9 @@ export {
 export {
   BaseSearch,
 } from './search/BaseSearch';
+export {
+  ExecutionSearch,
+} from './search/ExecutionSearch';
 export {
   GranuleSearch,
 } from './search/GranuleSearch';
