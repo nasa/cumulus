@@ -42,6 +42,7 @@
 * Seth Vincent
 * Slav Korolev
 * Snyk bot
+* Tim Clark
 * Tobias Nießen
 * Vanh Khuyen Nguyen
 * Vanh Nguyen
