@@ -62,6 +62,8 @@ degraded execution table operations.
 
 ### Fixed
 
+- **CUMULUS-3787**
+  - Fixed developer-side bug causing some ts error sto be swallowed in CI
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
