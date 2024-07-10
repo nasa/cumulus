@@ -86,9 +86,14 @@ of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 #### CUMULUS-3779 async_operations Docker image version upgrade
-  
-The `async_operations` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users will need to bump
-the version tag of `async_operations` to at least 52 if using the Docker image.
+
+The `async-operation` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
+to update to at least [async-operations:52](https://hub.docker.com/layers/cumuluss/async-operation/52/images/sha256-78c05f9809c29707f9da87c0fc380d39a71379669cbebd227378c8481eb11c3a?context=explore).
+
+#### CUMULUS-3776 cumulus-ecs-task Docker image version upgrade
+
+The `cumulus-ecs-task` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
+to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cumuluss/cumulus-ecs-task/2.1.0/images/sha256-17bebae3e55171c96272eeb533293b98e573be11dd5371310156b7c2564e691a?context=explore).
 
 ### Breaking Changes
 
@@ -136,6 +141,7 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
     support `aws-sdk` v3 changes.
 
 ### Added
+
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
@@ -154,6 +160,7 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
     using a PKCS11 provider
 
 ### Changed
+
 - **CUMULUS-3320**
   - Updated executions table (please see Migration section and Upgrade
     Instructions for more information) to:
@@ -240,6 +247,8 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
 - **CUMULUS-3617**
   - Added lambdas to migrate DLA messages to `YYYY-MM-DD` subfolder
   - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
+- **CUMULUS-2891**
+  - Updated ECS code to aws sdk v3
 
 ### Fixed
 
@@ -347,8 +356,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
-- **CUMULUS-2891**
-  - Updated ECS code to aws sdk v3
 - **CUMULUS-2895**
   - Updated KMS code to aws sdk v3
 - **CUMULUS-2888**
