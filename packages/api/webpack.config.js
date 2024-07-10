@@ -80,6 +80,7 @@ module.exports = {
     }
   },
   externals: [
+    /@aws-sdk\//,
     'electron',
     { formidable: 'url' },
     { fsevents: "require('fsevents')" }

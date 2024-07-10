@@ -43,6 +43,7 @@ const {
   requireApiVersion,
 } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
+const { returnCustomValidationErrors } = require('../lib/endpoints');
 const { moveGranule, getFilesExistingAtLocation } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
@@ -60,7 +61,7 @@ const schemas = require('../lib/schemas.js');
 /**
  * @typedef {import('express').Request} Request
  * @typedef {import('express').Response} Response
- * @typedef {import('@cumulus/zod-utils').BetterZodError} BetterZodError
+ * @typedef {import('../src/zod-utils').BetterZodError} BetterZodError
  */
 
 const log = new Logger({ sender: '@cumulus/api/granules' });
@@ -95,7 +96,7 @@ function _createNewGranuleDateValue() {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  log.trace(`list query ${JSON.stringify(req.query)}`);
+  log.debug(`list query ${JSON.stringify(req.query)}`);
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
 
   const dbSearch = new GranuleSearch({ queryStringParameters });
@@ -893,18 +894,6 @@ const BulkDeletePayloadSchema = z.object({
   knexDebug: z.boolean().optional(),
 }).catchall(z.unknown());
 
-/**
-* @param {Response} res - express response object
-* @param {BetterZodError} zodError
-* @returns {Express.BoomError} the promise of express response object
-*/
-function _returnCustomValidationErrors(res, zodError) {
-  if (zodError.errors.filter((error) => error.match('forceRemoveFromCmr')).length > 0) {
-    return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
-  }
-  return res.boom.badRequest('invalid payload', zodError);
-}
-
 const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloadSchema);
 
 /**
@@ -917,7 +906,7 @@ const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloa
 async function bulkDelete(req, res) {
   const payload = parseBulkDeletePayload(req.body);
   if (isError(payload)) {
-    return _returnCustomValidationErrors(res, payload);
+    return returnCustomValidationErrors(res, payload);
   }
 
   const concurrency = payload.concurrency || 10;

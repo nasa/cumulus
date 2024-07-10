@@ -24,6 +24,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     collectionId__in: 'MOD09GQ___006,MODIS___007',
     granuleId__not: 'notMatchingGranuleId',
     error__exists: 'true',
+    includeFullRecord: 'true',
   };
 
   const expectedDbQueryParameters = {
@@ -32,6 +33,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     },
     fields: ['granuleId', 'collectionId', 'status', 'updatedAt'],
     infix: 'A1657416',
+    includeFullRecord: true,
     limit: 20,
     not: {
       granule_id: 'notMatchingGranuleId',
@@ -84,6 +86,7 @@ test('convertQueryStringToDbQueryParameters correctly converts sortby error para
     limit: 10,
     offset: 0,
     page: 1,
+    includeFullRecord: false,
     sort: [
       {
         column: 'error.Error',

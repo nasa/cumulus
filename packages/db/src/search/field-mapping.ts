@@ -23,6 +23,9 @@ const granuleMapping: { [key: string]: Function } = {
   granuleId: (value?: string) => ({
     granule_id: value,
   }),
+  _id: (value?: string) => ({
+    granule_id: value,
+  }),
   lastUpdateDateTime: (value?: string) => ({
     last_update_date_time: value,
   }),
@@ -82,7 +85,6 @@ const granuleMapping: { [key: string]: Function } = {
   }),
 };
 
-// TODO add and verify all queryable fields for the following record types
 const asyncOperationMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
@@ -124,6 +126,15 @@ const collectionMapping : { [key: string]: Function } = {
       collectionVersion: version,
     };
   },
+  duplicateHandling: (value?: string) => ({
+    duplicate_handling: value,
+  }),
+  granuleId: (value?: string) => ({
+    granule_id_validation_regex: value,
+  }),
+  granuleIdExtraction: (value?: string) => ({
+    granule_id_extraction_regex: value,
+  }),
   timestamp: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
   }),
@@ -139,11 +150,12 @@ const collectionMapping : { [key: string]: Function } = {
   sampleFileName: (value?: string) => ({
     sample_file_name: value,
   }),
-  urlPath: (value?: string) => ({
+  url_path: (value?: string) => ({
     url_path: value,
   }),
 };
 
+// TODO add and verify all queryable fields for the following record types
 const executionMapping : { [key: string]: Function } = {
   arn: (value?: string) => ({
     arn: value,
@@ -151,8 +163,21 @@ const executionMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
+  duration: (value?: string) => ({
+    duration: value && Number(value),
+  }),
+  // nested error field
+  'error.Error': (value?: string) => ({
+    'error.Error': value,
+  }),
+  'error.Error.keyword': (value?: string) => ({
+    'error.Error': value,
+  }),
   execution: (value?: string) => ({
     url: value,
+  }),
+  type: (value?: string) => ({
+    workflow_name: value,
   }),
   status: (value?: string) => ({
     status: value,
@@ -164,6 +189,12 @@ const executionMapping : { [key: string]: Function } = {
     updated_at: value && new Date(Number(value)),
   }),
   // The following fields require querying other tables
+  asyncOperationId: (value?: string) => ({
+    asyncOperationId: value,
+  }),
+  parentArn: (value?: string) => ({
+    parentArn: value,
+  }),
   collectionId: (value?: string) => {
     const { name, version } = (value && deconstructCollectionId(value)) || {};
     return {
