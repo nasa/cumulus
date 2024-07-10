@@ -1,4 +1,5 @@
-const get = require('lodash/get');
+//@ts-check
+
 const pMap = require('p-map');
 
 const Logger = require('@cumulus/logger');
@@ -18,8 +19,15 @@ const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { updateGranuleStatusToQueued } = require('../lib/writeRecords/write-granules');
 const { getGranulesForPayload } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
+const { batchDeleteExecutions } = require('../lib/executions');
+const { setEnvVarsForOperation } = require('../lib/utils');
 
 const log = new Logger({ sender: '@cumulus/bulk-operation' });
+
+/**
+ *
+ * @typedef {import('../lib/ingest').reingestGranule } reingestGranule
+ */
 
 async function applyWorkflowToGranules({
   granules,
@@ -250,15 +258,22 @@ async function bulkGranuleReingest(
   );
 }
 
-function setEnvVarsForOperation(event) {
-  const envVars = get(event, 'envVars', {});
-  Object.keys(envVars).forEach((envVarKey) => {
-    if (!process.env[envVarKey]) {
-      process.env[envVarKey] = envVars[envVarKey];
-    }
-  });
-}
-
+/**
+ * Handles various bulk operations based on the event type.
+ *
+ * @param {Object} event - The event object.
+ * @param {string} event.type - The type of the bulk operation. This can be one of the following:
+ * 'BULK_GRANULE', 'BULK_GRANULE_DELETE', 'BULK_GRANULE_REINGEST', 'BULK_EXECUTION_DELETE'.
+ * @param {Object} event.payload - The payload for the bulk operation. The structure of this object
+ * depends on the type of the bulk operation.
+ * @param {Function} [event.applyWorkflowHandler] - The handler function for applying workflow.
+ * This is required if the type is 'BULK_GRANULE'.
+ * @param {reingestGranule} [event.reingestHandler] - The handler function for reingesting granules.
+ * This is required if the type is 'BULK_GRANULE_REINGEST'.
+ * @returns {Promise} A promise that resolves when the bulk operation is complete.
+ * @throws {TypeError} Throws a TypeError if the event type does not
+ * match any of the known bulk operation types.
+ */
 async function handler(event) {
   setEnvVarsForOperation(event);
   log.info(`bulkOperation asyncOperationId ${process.env.asyncOperationId} event type ${event.type}, payload: ${JSON.stringify(event.payload)}`);
@@ -270,6 +285,9 @@ async function handler(event) {
   }
   if (event.type === 'BULK_GRANULE_REINGEST') {
     return await bulkGranuleReingest(event.payload, event.reingestHandler);
+  }
+  if (event.type === 'BULK_EXECUTION_DELETE') {
+    return await batchDeleteExecutions(event.payload);
   }
   // throw an appropriate error here
   throw new TypeError(`Type ${event.type} could not be matched, no operation attempted.`);

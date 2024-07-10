@@ -106,7 +106,7 @@ test('mapQueryStringFieldToDbField correctly converts all collection api fields 
     createdAt: '1591312763823',
     name: 'MOD11A1',
     reportToEms: 'true',
-    urlPath: 'http://fakepath.com',
+    url_path: 'http://fakepath.com',
     sampleFileName: 'hello.txt',
     version: '006',
     updatedAt: 1591384094512,

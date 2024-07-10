@@ -35,8 +35,8 @@ export const constructCollectionId = (name: string, version: string) =>
  * Returns the name and version of a collection based on
  * the collectionId used in elasticsearch indexing
  *
- * @param {string} collectionId - collectionId used in elasticsearch index
- * @returns {Object} name and version as object
+ * @param collectionId - collectionId used in elasticsearch index
+ * @returns - name and version as object
  *
  * @alias module:Collections
  */
