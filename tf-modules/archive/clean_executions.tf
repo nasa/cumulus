@@ -21,13 +21,17 @@ source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/clea
   }
   environment {
     variables = {
-      stackName       = var.prefix
+      stackName             = var.prefix
 
-      cleanupRunning = var.complete_execution_payload_timeout_disable
-      cleanupNonRunning        = var.complete_execution_payload_timeout
+      cleanupRunning        = var.cleanup_running
+      cleanupNonRunning     = var.cleanup_non_running
 
-      payloadTimeout = var.non_complete_execution_payload_timeout_disable
-      nonCompleteExecutionPayloadTimeout        = var.non_complete_execution_payload_timeout
+      payloadTimeout        = var.payload_timeout
+      
+      ES_INDEX              = var.es_index
+      UPDATE_LIMIT          = var.update_limit
+      CONCURRENCY           = var.concurrency
+
     }
   }
 
