@@ -144,10 +144,10 @@ async function cleanExecutionPayloads() {
   const cleanupPostgres = JSON.parse(process.env.cleanupPostgres || 'true')
   const cleanupES = JSON.parse(process.env.cleanupES || 'true')
   if (cleanupPostgres) {
-    log.info('cleaning up running Postgres');
+    log.info('cleaning up Postgres');
   }
   if (cleanupES) {
-    log.info('cleaning up running Elasticsearch');
+    log.info('cleaning up Elasticsearch');
   }
   if (cleanupRunning) {
     log.info('cleaning up running executions');
