@@ -141,15 +141,25 @@ async function cleanExecutionPayloads() {
   const cleanupNonRunning = JSON.parse(process.env.cleanupNonRunning || 'true');
   const cleanupRunning = JSON.parse(process.env.cleanupRunning || 'false');
 
+  const cleanupPostgres = JSON.parse(process.env.cleanupPostgres || 'true')
+  const cleanupES = JSON.parse(process.env.cleanupES || 'true')
+  if (cleanupPostgres) {
+    log.info('cleaning up running Postgres');
+  }
+  if (cleanupES) {
+    log.info('cleaning up running Elasticsearch');
+  }
   if (cleanupRunning) {
     log.info('cleaning up running executions');
   }
   if (cleanupNonRunning) {
     log.info('cleaning up non-running executions');
   }
-
   if (!cleanupRunning && !cleanupNonRunning) {
     throw new Error('running and non-running executions configured to be skipped, nothing to do');
+  }
+  if (!cleanupES && !cleanupPostgres) {
+    throw new Error('elasticsearch and postgres executions configured to be skipped, nothing to do');
   }
 
   const _payloadTimeout = process.env.payloadTimeout || '10';
@@ -158,24 +168,40 @@ async function cleanExecutionPayloads() {
     throw new TypeError(`Invalid number of days specified in configuration for payloadTimeout: ${_payloadTimeout}`);
   }
   const esIndex = process.env.ES_INDEX || 'cumulus';
-  await Promise.all([
-    cleanupExpiredESExecutionPayloads(
+  const promises = []
+  if (cleanupES) {
+    promises.push(cleanupExpiredESExecutionPayloads(
       payloadTimeout,
       cleanupRunning,
       cleanupNonRunning,
       esIndex
-    ),
-    cleanupExpiredPGExecutionPayloads(
+    ));
+  }
+  if (cleanupPostgres) {
+    promises.push(cleanupExpiredPGExecutionPayloads(
       payloadTimeout,
       cleanupRunning,
       cleanupNonRunning
-    ),
-  ]);
+    ));
+  }
+  await Promise.all(promises)
 }
 
 async function handler(_event) {
   return await cleanExecutionPayloads();
 }
+
+if (require.main === module) {
+  handler(
+  ).then(
+    (ret) => ret
+  ).catch((error) => {
+    console.log(`failed: ${error}`);
+    throw error;
+  });
+}
+
+
 module.exports = {
   handler,
   cleanExecutionPayloads,
