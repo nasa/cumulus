@@ -31,11 +31,11 @@ const {
 } = require('@cumulus/aws-client/S3');
 
 // Dynamo mock data factories
+const { indexExecution } = require('@cumulus/es-client/indexer');
 const {
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
 
-const { indexExecution } = require('@cumulus/es-client/indexer');
 const { deconstructCollectionId } = require('../../lib/utils');
 
 const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/meta.xml'), 'utf-8');
