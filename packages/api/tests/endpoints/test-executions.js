@@ -38,12 +38,6 @@ const {
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
-const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { AccessToken } = require('../../models');
 // Dynamo mock data factories
@@ -112,15 +106,6 @@ test.before(async (t) => {
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.granulePgModel = new GranulePgModel();
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esExecutionsClient = new Search(
-    {},
-    'execution',
-    process.env.ES_INDEX
-  );
-
   // create fake execution records
   const asyncOperationId = uuidv4();
   t.context.asyncOperationId = asyncOperationId;
@@ -158,7 +143,6 @@ test.before(async (t) => {
       t.context.knex,
       executionPgRecord
     );
-    await indexer.indexExecution(esClient, execution, process.env.ES_INDEX);
     return pgExecution;
   }));
 
@@ -228,8 +212,6 @@ test.beforeEach(async (t) => {
   t.context.SubscriptionArn = SubscriptionArn;
 
   const {
-    esClient,
-    esIndex,
     executionPgModel,
     granulePgModel,
     knex,
@@ -245,7 +227,6 @@ test.beforeEach(async (t) => {
 
   // create fake Postgres granule records
   t.context.fakePGGranules = await Promise.all(t.context.fakeGranules.map(async (fakeGranule) => {
-    await indexer.indexGranule(esClient, fakeGranule, esIndex);
     const granulePgRecord = await translateApiGranuleToPostgresGranule({
       dynamoRecord: fakeGranule,
       knexOrTransaction: t.context.knex,
@@ -291,7 +272,6 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
-  await cleanupTestIndex(t.context);
 });
 
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -691,14 +671,12 @@ test('DELETE successfully deletes if a PostgreSQL execution exists but not Elast
 });
 
 test('DELETE successfully deletes if an Elasticsearch execution exists but not PostgreSQL', async (t) => {
-  const { knex, esClient, executionPgModel } = t.context;
+  const { knex, executionPgModel } = t.context;
 
   const newExecution = fakeExecutionFactoryV2({
     status: 'completed',
     name: 'test_execution',
   });
-
-  await indexer.indexExecution(esClient, newExecution, process.env.ES_INDEX);
 
   t.false(await executionPgModel.exists(knex, { arn: newExecution.arn }));
   t.true(
