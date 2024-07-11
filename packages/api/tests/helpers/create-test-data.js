@@ -19,6 +19,7 @@ const {
   translatePostgresExecutionToApiExecution,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
+const { indexExecution } = require('@cumulus/es-client/indexer');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // Postgres mock data factories
@@ -31,7 +32,6 @@ const {
 } = require('@cumulus/aws-client/S3');
 
 // Dynamo mock data factories
-const { indexExecution } = require('@cumulus/es-client/indexer');
 const {
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
