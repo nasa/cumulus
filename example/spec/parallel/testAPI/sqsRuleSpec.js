@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
+const pRetry = require('p-retry');
 
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
@@ -93,18 +94,6 @@ async function cleanUp() {
   const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
   const collection = collectionResult[0];
-  // Delete successful execution and 2 failed executions
-  const executions = JSON.parse((await getExecutions({
-    prefix: config.stackName,
-    query: {
-      fields: ['arn'],
-      collectionId: constructCollectionId(collection.name, collection.version),
-    },
-  })).body).results;
-  await Promise.all(executions.map(
-    (execution) => waitForCompletedExecution(execution.arn)
-      .then(deleteExecution({ prefix: config.stackName, executionArn: execution.arn }))
-  ));
 
   await Promise.all(inputPayload.granules.map(
     (granule) => deleteGranule({ prefix: config.stackName,
@@ -116,6 +105,26 @@ async function cleanUp() {
     prefix: config.stackName,
     pdr: pdrFilename,
   });
+
+  // Delete successful execution and 2 failed executions
+  const executions = JSON.parse((await getExecutions({
+    prefix: config.stackName,
+    query: {
+      fields: ['arn'],
+      collectionId: constructCollectionId(collection.name, collection.version),
+    },
+  })).body).results;
+  await Promise.all(executions.map(async (execution) => {
+    try {
+      await waitForCompletedExecution(execution.arn);
+      await pRetry(
+        () => deleteExecution({ prefix: config.stackName, executionArn: execution.arn }),
+        { retries: 5 }
+      );
+    } catch (error) {
+      console.error(`Error processing execution with ARN ${execution.arn}:`, error);
+    }
+  }));
 
   await Promise.all([
     deleteS3Object(config.bucket, key),

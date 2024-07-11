@@ -243,3 +243,35 @@ test('workflowsByGranules calls the callback with the expected object and return
     callback,
   }));
 });
+
+test('bulkDeleteByCollection calls the callback with the expected object and returns the parsed response', async (t) => {
+  const payload = {
+    collectionId: randomId('collectionId'),
+    esBatchSize: 100,
+    dbBatchSize: 200,
+  };
+
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/executions/bulk-delete-by-collection/',
+      body: JSON.stringify(payload),
+    },
+    expectedStatusCodes: 202,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+
+  await t.notThrowsAsync(executionsApi.bulkDeleteByCollection({
+    prefix: t.context.testPrefix,
+    payload,
+    callback,
+  }));
+});
