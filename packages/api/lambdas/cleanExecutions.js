@@ -6,6 +6,7 @@ const { ExecutionPgModel, getKnexClient } = require('@cumulus/db');
 const { getEsClient } = require('@cumulus/es-client/search');
 const moment = require('moment');
 const Logger = require('@cumulus/logger');
+const { sleep } = require('@cumulus/common');
 const log = new Logger({
   sender: '@cumulus/api/lambdas/cleanExecutions',
 });
@@ -78,11 +79,22 @@ const cleanupExpiredESExecutionPayloads = async (
   };
   const esClient = await getEsClient();
   await esClient._client.updateByQuery({
+  const updateTask = await esClient._client.updateByQuery({
     index,
     type: 'execution',
     size: updateLimit,
     body,
+    conflicts: 'proceed',
+    wait_for_completion: false,
   });
+  let taskStatus;
+  do {
+    taskStatus = await esClient._client?.tasks.get({
+      task_id: updateTask.body.task
+    })
+    sleep(10000);
+  } while(taskStatus?.body.completed === false);
+  log.info(`es request completed with status ${JSON.stringify(taskStatus?.body.task.status)}`);
 };
 
 /**
