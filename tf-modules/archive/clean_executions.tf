@@ -23,10 +23,12 @@ source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/clea
     variables = {
       stackName             = var.prefix
 
-      cleanupRunning        = var.cleanup_running
-      cleanupNonRunning     = var.cleanup_non_running
+      CLEANUP_RUNNING        = var.cleanup_running
+      CLEANUP_NON_RUNNING     = var.cleanup_non_running
+      CLEANUP_ES             = var.cleanup_es
+      CLEANUP_POSTGRES       = var.cleanup_postgres
 
-      payloadTimeout        = var.payload_timeout
+      PAYLOAD_TIMEOUT        = var.payload_timeout
       
       ES_INDEX              = var.es_index
       UPDATE_LIMIT          = var.update_limit
