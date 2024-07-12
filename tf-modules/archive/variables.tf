@@ -346,16 +346,28 @@ variable "cleanup_running" {
   description = "Boolean flag that when set to true will enable 'running' execution cleanup"
 }
 
-variable "payload_timeout" {
-  type    = number
-  default = 10
-  description = "Number of days to retain execution payload records in the database"
-}
-
 variable "cleanup_non_running" {
   type    = bool
   default = true
   description = "Boolean flag that when set to true will enable 'running' execution cleanup"
+}
+
+variable "cleanup_es" {
+  type    = bool
+  default = true
+  description = "Boolean flag that when set to true will enable elasticsearch execution cleanup"
+}
+
+variable "cleanup_postgres" {
+  type    = bool
+  default = false
+  description = "Boolean flag that when set to true will enable postgres execution cleanup"
+}
+
+variable "payload_timeout" {
+  type    = number
+  default = 10
+  description = "Number of days to retain execution payload records in the database"
 }
 
 variable "es_index" {

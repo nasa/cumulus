@@ -45,7 +45,6 @@ const cleanupExpiredESExecutionPayloads = async (
   updateLimit,
   index
 ) => {
-  const updateLimit = process.env.UPDATE_LIMIT || 10000;
   const _expiration = getExpirationDate(payloadTimeout);
   const expiration = _expiration.getTime();
 
@@ -177,13 +176,13 @@ const parseEnvironment = () => {
 
   const updateLimit = Number(process.env.UPDATE_LIMIT || 10000);
   return {
-    updateLimit,
     cleanupRunning,
     cleanupNonRunning,
     cleanupPostgres,
     cleanupES,
     payloadTimeout,
     esIndex,
+    updateLimit,
   };
 };
 

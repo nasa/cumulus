@@ -32,8 +32,6 @@ source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/clea
       
       ES_INDEX              = var.es_index
       UPDATE_LIMIT          = var.update_limit
-      CONCURRENCY           = var.concurrency
-
     }
   }
 
