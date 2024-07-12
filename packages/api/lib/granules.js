@@ -23,7 +23,6 @@ const {
   getKnexClient,
   GranulePgModel,
 } = require('@cumulus/db');
-const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
