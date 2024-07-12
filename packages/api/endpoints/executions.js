@@ -255,7 +255,7 @@ async function del(req, res) {
 async function searchByGranules(req, res) {
   const payload = req.body;
   const knex = await getKnexClient();
-  const granules = getGranulesForPayload(payload);
+  const granules = await getGranulesForPayload(payload, knex);
   const { page = 1, limit = 1, ...sortParams } = req.query;
 
   const offset = page < 1 ? 0 : (page - 1) * limit;

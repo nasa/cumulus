@@ -4,14 +4,10 @@ const proxyquire = require('proxyquire');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { Search, getEsClient } = require('@cumulus/es-client/search');
-const indexer = require('@cumulus/es-client/indexer');
 
 const {
   getExecutionProcessingTimeInfo,
   moveGranuleFilesAndUpdateDatastore,
-  granuleEsQuery,
 } = require('../../lib/granules');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
@@ -442,63 +438,3 @@ test('translateGranule() will translate an old-style granule file and numeric pr
   });
   t.is(translatedGranule.productVolume, oldProductVolume.toString());
 });
-
-test.serial(
-  'granuleEsQuery returns if the query has a bad timestamp and responseQueue.body.hits.total.value is 0',
-  async (t) => {
-    const esAlias = randomId('esAlias');
-    const esIndex = randomId('esindex');
-    process.env.ES_INDEX = esAlias;
-    const esClient = await getEsClient();
-
-    await bootstrapElasticSearch({
-      host: 'fakeHost',
-      index: esIndex,
-      alias: esAlias,
-    });
-    const granuleId = randomId();
-
-    const fakeGranule = fakeGranuleFactoryV2({ granuleId });
-    await indexer.indexGranule(esClient, fakeGranule, esIndex);
-    const esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX);
-
-    const query = {
-      query: {
-        bool: {
-          must: [],
-          filter: [
-            {
-              range: {
-                '@timestamp': {
-                  gte: '2022-11-07T23:59:00.220Z',
-                  lte: '2022-11-08T19:51:36.220Z',
-                  format: 'strict_date_optional_time',
-                },
-              },
-            },
-          ],
-          should: [],
-          must_not: [],
-        },
-      },
-    };
-    t.like(await esGranulesClient.get(granuleId), fakeGranule);
-    const testBodyHits = {
-      total: {
-        value: 0,
-        relation: 'eq',
-      },
-      max_score: null,
-      hits: [],
-    };
-
-    t.truthy(
-      await granuleEsQuery({
-        index: esIndex,
-        query,
-        source: ['granuleId'],
-        testBodyHits,
-      })
-    );
-  }
-);
