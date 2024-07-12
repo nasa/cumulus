@@ -23,6 +23,7 @@ const {
   getKnexClient,
   GranulePgModel,
 } = require('@cumulus/db');
+const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
@@ -223,6 +224,64 @@ async function moveGranule(apiGranule, destinations, distEndpoint) {
   }
 }
 
+const SCROLL_SIZE = 500; // default size in Kibana
+
+function getTotalHits(bodyHits) {
+  if (bodyHits.total.value === 0) {
+    return 0;
+  }
+  return bodyHits.total.value || bodyHits.total;
+}
+
+/**
+ * Returns an array of granules from ElasticSearch query
+ *
+ * @param {Object} payload
+ * @param {string} [payload.index] - ES index to query
+ * @param {string} [payload.query] - ES query
+ * @param {Object} [payload.source] - List of IDs to operate on
+ * @param {Object} [payload.testBodyHits] - Optional body.hits for testing.
+ *  Some ES such as Cloud Metrics returns `hits.total.value` rather than `hits.total`
+ * @returns {Promise<Array<Object>>}
+ */
+async function granuleEsQuery({ index, query, source, testBodyHits }) {
+  const granules = [];
+  const responseQueue = [];
+
+  const esClient = await getEsClient(undefined, true);
+  const searchResponse = await esClient.client.search({
+    index,
+    scroll: '30s',
+    size: SCROLL_SIZE,
+    _source: source,
+    body: query,
+  });
+
+  responseQueue.push(searchResponse);
+
+  while (responseQueue.length) {
+    const { body } = responseQueue.shift();
+    const bodyHits = testBodyHits || body.hits;
+
+    bodyHits.hits.forEach((hit) => {
+      granules.push(hit._source);
+    });
+
+    const totalHits = getTotalHits(bodyHits);
+
+    if (totalHits !== granules.length) {
+      responseQueue.push(
+        // eslint-disable-next-line no-await-in-loop
+        await esClient.client.scroll({
+          scrollId: body._scroll_id,
+          scroll: '30s',
+        })
+      );
+    }
+  }
+  return granules;
+}
+
 /**
  * Return a unique list of granules based on the provided list or the response from the
  * query to ES using the provided query and index.
@@ -253,6 +312,7 @@ module.exports = {
   getFilesExistingAtLocation,
   getGranulesForPayload,
   moveGranule,
+  granuleEsQuery,
   moveGranuleFilesAndUpdateDatastore,
   translateGranule,
 };
