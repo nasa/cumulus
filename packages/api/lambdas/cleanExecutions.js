@@ -88,6 +88,9 @@ const cleanupExpiredESExecutionPayloads = async (
     wait_for_completion: false,
   });
   let taskStatus;
+  // this async and poll method allows us to avoid http timeouts
+  // and persist in case of lambda timeout
+  log.info(`launched async ES task id ${updateTask.body.task}`)
   do {
     taskStatus = await esClient._client?.tasks.get({
       task_id: updateTask.body.task
