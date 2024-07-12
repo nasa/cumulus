@@ -234,7 +234,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint) {
  * Must exist if payload.query exists.
  * @returns {Array<ApiGranule>}
  */
-function getGranulesForPayload(payload) {
+const getGranulesForPayload = (payload) => {
   const { granules } = payload;
   const queryGranules = granules || [];
 
@@ -246,7 +246,7 @@ function getGranulesForPayload(payload) {
   // TODO: could we get unique IDs from the query directly?
   const uniqueGranules = uniqWith(queryGranules, isEqual);
   return uniqueGranules;
-}
+};
 
 module.exports = {
   getExecutionProcessingTimeInfo,
