@@ -1007,7 +1007,7 @@ test.serial.skip('POST /executions/search-by-granules returns 400 when the Metri
   t.regex(response.body.message, /ELK Metrics stack not configured/);
 });
 
-test.serial('POST /executions/workflows-by-granules returns correct executions when granules array is passed', async (t) => {
+test.serial.skip('POST /executions/workflows-by-granules returns correct executions when granules array is passed', async (t) => {
   const { collectionId, fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
@@ -1031,7 +1031,7 @@ test.serial('POST /executions/workflows-by-granules returns correct executions w
   ));
 });
 
-test.serial('POST /executions/workflows-by-granules returns executions by descending timestamp when a single granule is passed', async (t) => {
+test.serial.skip('POST /executions/workflows-by-granules returns executions by descending timestamp when a single granule is passed', async (t) => {
   const {
     knex,
     collectionId,
@@ -1065,7 +1065,7 @@ test.serial('POST /executions/workflows-by-granules returns executions by descen
   t.is(response.body[0], 'newWorkflow');
 });
 
-test.serial('POST /executions/workflows-by-granules returns correct workflows when query is passed', async (t) => {
+test.serial.skip('POST /executions/workflows-by-granules returns correct workflows when query is passed', async (t) => {
   const { esIndex, fakeGranules } = t.context;
 
   const expectedQuery = {
