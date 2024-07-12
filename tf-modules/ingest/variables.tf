@@ -196,3 +196,15 @@ variable "default_log_retention_days" {
   default = 30
   description = "Optional default value that user chooses for their log retention periods"
 }
+
+variable "sqs_message_consumer_watcher_message_limit" {
+  type = number
+  default = 500
+  description = "Number of messages the SQS message consumer Lambda will attempt to read from SQS in a single execution"
+}
+
+variable "sqs_message_consumer_watcher_time_limit" {
+  type = number
+  default = 60
+  description = "Number of seconds the SQS message consumer Lambda will remain active"
+}
