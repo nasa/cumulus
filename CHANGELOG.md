@@ -44,6 +44,8 @@ degraded execution table operations.
   - Added `Bulk Execution Delete` migration type to async operations types
 - **CUMULUS-3742**
   - Script for dumping data into postgres database for testing and replicating issues
+- **CUMULUS-3608**
+  - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations.
 
 ### Changed
 
