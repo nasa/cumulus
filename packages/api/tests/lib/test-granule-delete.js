@@ -7,9 +7,6 @@ const {
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
-
-const { recordNotFoundString } = require('@cumulus/es-client/search');
-
 const {
   createBucket,
   deleteS3Buckets,
@@ -30,11 +27,6 @@ const {
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const { DeletePublishedGranule } = require('@cumulus/errors');
-const { Search } = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // Dynamo mock data factories
@@ -71,11 +63,6 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
-
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esGranulesClient = new Search({}, 'granule', t.context.esIndex);
 
   // Create a Dynamo collection
   // we need this because a granule has a fk referring to collections
@@ -137,7 +124,6 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
-  await cleanupTestIndex(t.context);
 });
 
 test.serial('deleteGranuleAndFiles() throws an error if the granule is published', async (t) => {
@@ -145,7 +131,6 @@ test.serial('deleteGranuleAndFiles() throws an error if the granule is published
     dbClient: t.context.knex,
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
-    esClient: t.context.esClient,
     granuleParams: { published: true },
   });
 
@@ -153,7 +138,6 @@ test.serial('deleteGranuleAndFiles() throws an error if the granule is published
     deleteGranuleAndFiles({
       knex: t.context.knex,
       pgGranule: newPgGranule,
-      esClient: t.context.esClient,
     }),
     { instanceOf: DeletePublishedGranule }
   );
@@ -173,8 +157,8 @@ test.serial('deleteGranuleAndFiles() throws an error if the granule is published
   ]));
 });
 
-test.serial('deleteGranuleAndFiles() removes granules from PostgreSQL/Elasticsearch and files from PostgreSQL/S3', async (t) => {
-  const { collectionId, collectionCumulusId, esClient, esGranulesClient, knex } = t.context;
+test.serial('deleteGranuleAndFiles() removes granules from PostgreSQL and files from PostgreSQL/S3', async (t) => {
+  const { collectionId, collectionCumulusId, knex } = t.context;
 
   const {
     apiGranule,
@@ -186,19 +170,12 @@ test.serial('deleteGranuleAndFiles() removes granules from PostgreSQL/Elasticsea
     collectionId,
     collectionCumulusId,
     granuleParams: { published: false },
-    esClient,
   });
 
   t.true(await granulePgModel.exists(knex, {
     granule_id: newPgGranule.granule_id,
     collection_cumulus_id: collectionCumulusId,
   }));
-  t.true(
-    await esGranulesClient.exists(
-      newPgGranule.granule_id,
-      collectionId
-    )
-  );
   await Promise.all(
     files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
@@ -209,7 +186,6 @@ test.serial('deleteGranuleAndFiles() removes granules from PostgreSQL/Elasticsea
   const details = await deleteGranuleAndFiles({
     knex: knex,
     pgGranule: newPgGranule,
-    esClient,
   });
 
   t.truthy(details.deletionTime);
@@ -268,7 +244,6 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
   const details = await deleteGranuleAndFiles({
     knex: t.context.knex,
     pgGranule: newPgGranule,
-    esClient: t.context.esClient,
   });
 
   t.truthy(details.deletionTime);
@@ -285,12 +260,6 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
       collection_cumulus_id: newPgGranule.collection_cumulus_id,
     }
   ));
-  t.false(
-    await t.context.esGranulesClient.exists(
-      newPgGranule.granule_id,
-      t.context.collectionCumulusId
-    )
-  );
 });
 
 test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL granule delete fails', async (t) => {
@@ -302,7 +271,6 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
     dbClient: t.context.knex,
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
-    esClient: t.context.esClient,
     granuleParams: { published: false },
   });
 
@@ -318,7 +286,6 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
       knex: t.context.knex,
       pgGranule: newPgGranule,
       granulePgModel: mockGranuleModel,
-      esClient: t.context.esClient,
     }),
     { message: 'PG delete failed' }
   );
@@ -331,12 +298,6 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
       collection_cumulus_id: newPgGranule.collection_cumulus_id,
     }
   ));
-  t.true(
-    await t.context.esGranulesClient.exists(
-      newPgGranule.granule_id,
-      t.context.collectionId
-    )
-  );
 
   // Files will still exist in S3 and PostgreSQL.
   await Promise.all(
@@ -352,7 +313,7 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
   ]));
 });
 
-test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the Elasticsearch granule delete fails', async (t) => {
+test.serial('deleteGranuleAndFiles() will delete granule and S3 files', async (t) => {
   const {
     newPgGranule,
     files,
@@ -361,51 +322,30 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     dbClient: t.context.knex,
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
-    esClient: t.context.esClient,
     granuleParams: { published: false },
   });
 
-  const fakeEsClient = {
-    initializeEsClient: () => Promise.resolve(),
-    client: {
-      delete: () => {
-        throw new Error('ES delete failed');
-      },
-      index: (record) => Promise.resolve({
-        body: record,
-      }),
-    },
-  };
-
-  await t.throwsAsync(
+  await t.notThrowsAsync(
     deleteGranuleAndFiles({
       knex: t.context.knex,
       pgGranule: newPgGranule,
-      esClient: fakeEsClient,
-    }),
-    { message: 'ES delete failed' }
+    })
   );
 
   // granule should still exist in PostgreSQL and elasticsearch
-  t.true(await granulePgModel.exists(
+  t.false(await granulePgModel.exists(
     t.context.knex,
     {
       granule_id: newPgGranule.granule_id,
       collection_cumulus_id: newPgGranule.collection_cumulus_id,
     }
   ));
-  t.true(
-    await t.context.esGranulesClient.exists(
-      newPgGranule.granule_id,
-      t.context.collectionId
-    )
-  );
 
   // Files will still exist in S3 and PostgreSQL.
   await Promise.all(
     files.map(async (file) => {
-      t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-      t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
   );
 
@@ -467,26 +407,10 @@ test.serial(
         }))
     );
 
-    // Add granule to elasticsearch
-    const esGranulesClient = new Search(
-      {},
-      'granule',
-      process.env.ES_INDEX
-    );
-
-    await t.context.esClient.client.index({
-      index: t.context.esIndex,
-      type: 'granule',
-      id: newGranule.granuleId,
-      parent: 'fakeCollectionId',
-      body: newGranule,
-    });
-
     await deleteGranuleAndFiles({
       knex: t.context.knex,
       apiGranule: newGranule,
       pgGranule: undefined,
-      esClient: t.context.esClient,
     });
 
     // verify the files are deleted from S3.
@@ -495,11 +419,6 @@ test.serial(
         t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       })
     );
-
-    // Verify record is removed from elasticsearch
-
-    const esResult = await esGranulesClient.get(newGranule.granuleId);
-    t.is(esResult.detail, recordNotFoundString);
 
     t.teardown(() =>
       deleteS3Buckets([s3Buckets.protected.name, s3Buckets.public.name]));
