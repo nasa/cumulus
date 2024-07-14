@@ -84,7 +84,6 @@ const {
 /**
 * @typedef { import('knex').Knex } Knex
 * @typedef { import('knex').Knex.Transaction } KnexTransaction
-* @typedef { typeof Search.es } Esclient and update type
 * @typedef { import('@cumulus/types').ApiGranule } ApiGranule
 * @typedef { import('@cumulus/types').ApiGranuleRecord } ApiGranuleRecord
 * @typedef { Granule } ApiGranuleModel
@@ -545,7 +544,6 @@ const _writeGranuleRecords = async (params) => {
     if (isStatusFinalState(apiGranuleRecord.status)
       && thrownError.name === 'SchemaValidationError') {
       const originalError = apiGranuleRecord.error;
-
       const errors = [];
       if (originalError) {
         errors.push(originalError);
