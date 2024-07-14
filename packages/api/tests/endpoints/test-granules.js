@@ -1035,6 +1035,60 @@ test.serial('DELETE does not require a collectionId', async (t) => {
   t.teardown(() => deleteS3Buckets([s3Buckets.protected.name, s3Buckets.public.name]));
 });
 
+test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully',
+  async (t) => {
+    const { collectionPgModel, knex } = t.context;
+    const testPgCollection = fakeCollectionRecordFactory({
+      name: randomString(),
+      version: '005',
+    });
+    const newCollectionId = constructCollectionId(testPgCollection.name, testPgCollection.version);
+
+    await collectionPgModel.create(knex, testPgCollection);
+    const newGranule = fakeGranuleFactoryV2({
+      granuleId: randomId(),
+      status: 'failed',
+      collectionId: newCollectionId,
+      published: false,
+      files: [],
+    });
+    const newPgGranule = await translateApiGranuleToPostgresGranule({
+      dynamoRecord: newGranule,
+      knexOrTransaction: knex,
+    });
+    const [createdPgGranule] = await granulePgModel.create(knex, newPgGranule);
+
+    t.true(
+      await granulePgModel.exists(knex, {
+        granule_id: createdPgGranule.granule_id,
+        collection_cumulus_id: createdPgGranule.collection_cumulus_id,
+      })
+    );
+
+    const response = await request(app)
+      .delete(`/granules/${newCollectionId}/${newGranule.granuleId}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+
+    t.is(response.status, 200);
+    const responseBody = response.body;
+    t.like(responseBody, {
+      detail: 'Record deleted',
+      collection: newCollectionId,
+      deletedGranuleId: newGranule.granuleId,
+    });
+    t.truthy(responseBody.deletionTime);
+    t.is(responseBody.deletedFiles.length, newGranule.files.length);
+
+    t.false(
+      await granulePgModel.exists(knex, {
+        granule_id: createdPgGranule.granule_id,
+        collection_cumulus_id: createdPgGranule.collection_cumulus_id,
+      })
+    );
+  });
+
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const { s3Buckets, apiGranule, newPgGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
