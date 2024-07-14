@@ -668,7 +668,6 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
     timeToPreprocess: 0,
   };
 
-  // Files array order is not promised to match between datastores
   [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
     record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
   });
@@ -856,6 +855,10 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
     timeToPreprocess: 0,
   };
 
+  [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
+
   // Translated postgres granule matches expected updatedGranule
   // minus model defaults
   t.deepEqual(
@@ -992,7 +995,6 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
     execution: executionUrl,
   };
 
-  // Files array order is not promised to match between datastores
   [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
     record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
   });
@@ -2315,7 +2317,6 @@ test.serial('writeGranulesFromMessage() on re-write with the same granule values
     timeToPreprocess: 0,
   };
 
-  // Files array order is not promised to match between datastores
   [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
     record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
   });
@@ -2428,6 +2429,10 @@ test.serial('writeGranulesFromMessage() on re-write with the same granule values
     timeToPreprocess: 0,
   };
 
+  [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
+
   // Translated postgres granule matches expected updatedGranule
   // minus model defaults
   t.deepEqual(
@@ -2538,6 +2543,9 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "ru
     updatedAt: apiFormattedInitialPostgresGranule.updatedAt,
   };
 
+  [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
   // Translated postgres granule matches expected updatedGranule
   // minus model defaults
   t.deepEqual(
@@ -2648,6 +2656,9 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "qu
     updatedAt: apiFormattedInitialPostgresGranule.updatedAt,
   };
 
+  [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
   // Translated postgres granule matches expected updatedGranule
   // minus model defaults
   t.deepEqual(
@@ -2770,6 +2781,10 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "ru
     execution: executionUrl,
   };
 
+  [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
+
   // Translated postgres granule matches expected updatedGranule
   // minus model defaults
   t.deepEqual(
@@ -2888,6 +2903,9 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "qu
     updatedAt: apiFormattedInitialPostgresGranule.updatedAt,
   };
 
+  [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
   // Translated postgres granule matches expected updatedGranule
   // minus model defaults
   t.deepEqual(
@@ -3004,6 +3022,9 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "ru
     updatedAt: apiFormattedInitialPostgresGranule.updatedAt,
   };
 
+  [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
   // Translated postgres granule matches expected updatedGranule
   // minus model defaults
   t.deepEqual(
@@ -3120,6 +3141,9 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "qu
     updatedAt: apiFormattedInitialPostgresGranule.updatedAt,
   };
 
+  [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
   // Translated postgres granule matches expected updatedGranule
   // minus model defaults
   t.deepEqual(
@@ -3231,6 +3255,9 @@ test.serial('writeGranulesFromMessage() on update with "completed" status and st
     updatedAt: apiFormattedInitialPostgresGranule.updatedAt,
   };
 
+  [expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
   // Translated postgres granule matches expected updatedGranule
   // minus model defaults
   t.deepEqual(
