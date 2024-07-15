@@ -165,7 +165,7 @@ export class SftpClient {
    * List file in remote path
    *
    * @param {string} remotePath - the remote path to be listed
-   * @returns {Promise<Array<Object>>} list of file objects
+   * @returns {Promise<ListResponse>} list of file objects
    */
   async list(remotePath: string): Promise<ListResponse> {
     const remoteFiles = await this.sftp.list(remotePath);
