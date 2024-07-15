@@ -99,6 +99,8 @@ resource "aws_rds_cluster" "cumulus" {
     max_capacity = var.max_capacity
     min_capacity = var.min_capacity
     timeout_action = var.rds_scaling_timeout_action
+    auto_pause = var.auto_pause
+    seconds_until_auto_pause = var.seconds_until_auto_pause
   }
   vpc_security_group_ids          = [aws_security_group.rds_cluster_access.id]
   deletion_protection             = var.deletion_protection
