@@ -38,6 +38,9 @@ degraded execution table operations.
 
 ### Added
 
+- **CUMULUS-3536**
+  - Added `rejectUnauthorized` = false to db-provision-user-database as the Lambda
+    does not have the Serverless v2 SSL certifications installed.
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
@@ -47,6 +50,9 @@ degraded execution table operations.
 
 ### Changed
 
+- **CUMULUS-3536**
+  - Removed `timeout_action`, `auto_pause`, and `seconds_until_auto_pause` from cumulus-rds-tf
+    as Serverless v2 does not support these parameters.
 - **CUMULUS-3320**
   - Updated executions table (please see Migration section and Upgrade
     Instructions for more information) to:
