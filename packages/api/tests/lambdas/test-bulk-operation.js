@@ -1,6 +1,5 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
 
@@ -33,6 +32,7 @@ const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
+const bulkOperation = require('../../lambdas/bulk-operation');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
@@ -40,25 +40,6 @@ const randomGranuleId = () => `granuleId_${cryptoRandomString({ length: 10 })}`;
 const randomWorkflow = () => `workflow_${cryptoRandomString({ length: 10 })}`;
 
 const sandbox = sinon.createSandbox();
-const FakeEsClient = sandbox.stub();
-const esSearchStub = sandbox.stub();
-const esScrollStub = sandbox.stub();
-FakeEsClient.prototype.scroll = esScrollStub;
-FakeEsClient.prototype.search = esSearchStub;
-
-const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
-  '../lib/granules': proxyquire('../../lib/granules', {
-    '@cumulus/es-client/search': {
-      getEsClient: () => Promise.resolve({
-        initializeEsClient: () => Promise.resolve(),
-        client: {
-          search: esSearchStub,
-          scroll: esScrollStub,
-        },
-      }),
-    },
-  }),
-});
 
 let applyWorkflowStub;
 let reingestStub;
