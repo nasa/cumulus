@@ -188,6 +188,13 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 - **CUMULUS-3606**
   - Updated  with additional documentation covering tunneling configuration
     using a PKCS11 provider
+- **CUMULUS-3700**
+  - Added `volume_type` option to `elasticsearch_config` in the
+    `data-persistance` module to allow configuration of the EBS volume type for
+    Elasticsarch; default remains `gp2`.
+- **CUMULUS-3424**
+  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
+    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Changed
 
@@ -276,6 +283,13 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 
 ### Fixed
 
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
+- **CUMULUS-3320**
+  - Execution database deletions by `cumulus_id` should have greatly improved
+    performance as a table scan will no longer be required for each record
+    deletion to validate parent-child relationships
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code

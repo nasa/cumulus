@@ -81,7 +81,7 @@ resource "aws_rds_cluster" "cumulus" {
   db_subnet_group_name    = aws_db_subnet_group.default.id
   apply_immediately       = var.apply_immediately
   storage_encrypted       = true
-
+  
   serverlessv2_scaling_configuration {
     max_capacity = var.max_capacity
     min_capacity = var.min_capacity
