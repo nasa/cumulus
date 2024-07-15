@@ -137,6 +137,7 @@ exit
 3. Install tmux and postgres client
 
     ```sh
+    sudo yum install -y tmux
     sudo amazon-linux-extras install postgresql13
     ```
 
