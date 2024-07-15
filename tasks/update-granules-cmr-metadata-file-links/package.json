@@ -40,6 +40,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/aws-client": "18.2.0",
     "@cumulus/cmrjs": "18.2.0",
     "@cumulus/common": "18.2.0",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
