@@ -38,9 +38,6 @@ test.before(async () => {
   process.env.TOKEN_SECRET = randomString();
   process.env.AccessTokensTable = randomString();
   process.env.granule_sns_topic_arn = randomString();
-  process.env.METRICS_ES_HOST = randomString();
-  process.env.METRICS_ES_USER = randomString();
-  process.env.METRICS_ES_PASS = randomString();
   process.env.CMR_ENVIRONMENT = randomString();
   process.env.cmr_client_id = randomString();
   process.env.cmr_oauth_provider = randomString();
@@ -50,7 +47,6 @@ test.before(async () => {
   process.env.launchpad_api = randomString();
   process.env.launchpad_certificate = randomString();
   process.env.launchpad_passphrase_secret_name = randomString();
-  process.env.ES_HOST = randomString();
 
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
@@ -126,12 +122,8 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       launchpad_api: process.env.launchpad_api,
       launchpad_certificate: process.env.launchpad_certificate,
       launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
-      METRICS_ES_HOST: process.env.METRICS_ES_HOST,
-      METRICS_ES_USER: process.env.METRICS_ES_USER,
-      METRICS_ES_PASS: process.env.METRICS_ES_PASS,
       stackName: process.env.stackName,
       system_bucket: process.env.system_bucket,
-      ES_HOST: process.env.ES_HOST,
     },
   });
   Object.keys(omit(payload.envVars, ['KNEX_DEBUG'])).forEach((envVarKey) => {
@@ -169,85 +161,7 @@ test.serial('bulkDelete() uses correct caller lambda function name', async (t) =
   t.is(asyncOperationStartStub.getCall(0).firstArg.callerLambdaName, functionName);
 });
 
-test.serial('POST /granules/bulkDelete starts an async-operation with the correct payload and ES query', async (t) => {
-  const { asyncOperationStartStub } = t.context;
-  const expectedIndex = 'my-index';
-  const expectedQuery = { query: 'fake-query', size: 2 };
-
-  const body = {
-    index: expectedIndex,
-    query: expectedQuery,
-  };
-
-  const response = await request(app)
-    .post('/granules/bulkDelete')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(body)
-    .expect(202);
-
-  // expect a returned async operation ID
-  t.truthy(response.body.id);
-
-  const {
-    lambdaName,
-    description,
-    payload,
-  } = asyncOperationStartStub.args[0][0];
-  t.true(asyncOperationStartStub.calledOnce);
-  t.is(lambdaName, process.env.BulkOperationLambda);
-  t.is(description, 'Bulk granule deletion');
-  t.deepEqual(payload, {
-    payload: {
-      ...body,
-      concurrency: 10,
-      maxDbConnections: 10,
-    },
-    type: 'BULK_GRANULE_DELETE',
-    envVars: {
-      cmr_client_id: process.env.cmr_client_id,
-      CMR_ENVIRONMENT: process.env.CMR_ENVIRONMENT,
-      cmr_oauth_provider: process.env.cmr_oauth_provider,
-      cmr_password_secret_name: process.env.cmr_password_secret_name,
-      cmr_provider: process.env.cmr_provider,
-      cmr_username: process.env.cmr_username,
-      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
-      KNEX_DEBUG: 'false',
-      launchpad_api: process.env.launchpad_api,
-      launchpad_certificate: process.env.launchpad_certificate,
-      launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
-      METRICS_ES_HOST: process.env.METRICS_ES_HOST,
-      METRICS_ES_USER: process.env.METRICS_ES_USER,
-      METRICS_ES_PASS: process.env.METRICS_ES_PASS,
-      stackName: process.env.stackName,
-      system_bucket: process.env.system_bucket,
-      ES_HOST: process.env.ES_HOST,
-    },
-  });
-  Object.keys(omit(payload.envVars, ['KNEX_DEBUG'])).forEach((envVarKey) => {
-    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
-  });
-});
-
-test.serial('POST /granules/bulkDelete returns a 400 when a query is provided with no index', async (t) => {
-  const { asyncOperationStartStub } = t.context;
-  const expectedQuery = { query: 'fake-query' };
-
-  const body = {
-    query: expectedQuery,
-  };
-
-  await request(app)
-    .post('/granules/bulkDelete')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(body)
-    .expect(400, /Index is required if query is sent/);
-
-  t.true(asyncOperationStartStub.notCalled);
-});
-
-test.serial('POST /granules/bulkDelete returns 400 when no granules or Query is provided', async (t) => {
+test.serial('POST /granules/bulkDelete returns 400 when no granules is provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
 
   const body = {};
@@ -256,7 +170,7 @@ test.serial('POST /granules/bulkDelete returns 400 when no granules or Query is 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /One of granules or query is required/);
+    .expect(400, /Granules is required/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -289,28 +203,6 @@ test.serial('POST /granules/bulkDelete returns 400 when granules is an empty arr
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(400, /no values provided for granules/);
-
-  t.true(asyncOperationStartStub.notCalled);
-});
-
-test.serial('POST /granules/bulkDelete returns 400 when the Metrics ELK stack is not configured', async (t) => {
-  const { asyncOperationStartStub } = t.context;
-
-  const body = {
-    query: 'fake-query',
-  };
-
-  delete process.env.METRICS_ES_HOST;
-  t.teardown(() => {
-    process.env.METRICS_ES_HOST = randomString();
-  });
-
-  await request(app)
-    .post('/granules/bulkDelete')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(body)
-    .expect(400, /ELK Metrics stack not configured/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
