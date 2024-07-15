@@ -28,7 +28,7 @@ Please *carefully* review the migration [process documentation](https://nasa.git
 make these updates properly will likely result in deployment failure and/or
 degraded execution table operations.
 
-#### CUMULUS-3449 Please follow instructions before upgrading Cumulus
+#### CUMULUS-3449 Please follow the instructions before upgrading Cumulus
 
 - The updates in CUMULUS-3449 requires manual update to postgres database in
   production environment. Please follow [Update Cumulus_id Type and
