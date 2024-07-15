@@ -88,11 +88,15 @@ module "archive" {
   metrics_es_username = var.metrics_es_username
 
   daily_execution_payload_cleanup_schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
-  complete_execution_payload_timeout_disable = var.complete_execution_payload_timeout_disable
-  complete_execution_payload_timeout = var.complete_execution_payload_timeout
-  non_complete_execution_payload_timeout_disable = var.non_complete_execution_payload_timeout_disable
-  non_complete_execution_payload_timeout = var.non_complete_execution_payload_timeout
+  cleanup_running        = var.cleanup_running
+  cleanup_non_running     = var.cleanup_non_running
+  cleanup_es             = var.cleanup_es
+  cleanup_postgres       = var.cleanup_postgres
 
+  PAYLOAD_TIMEOUT        = var.payload_timeout
+  
+  ES_INDEX              = var.es_index
+  UPDATE_LIMIT          = var.update_limit
   background_queue_url = module.ingest.background_queue_url
 
   distribution_api_id = var.tea_rest_api_id
