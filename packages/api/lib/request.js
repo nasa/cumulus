@@ -57,16 +57,28 @@ function validateBulkGranulesRequest(req, res, next) {
   // TODO no tests for this
   const payload = req.body;
 
-  if (!payload.granules) {
-    return res.boom.badRequest('Granules is required');
+  if (!payload.granules && !payload.query) {
+    return res.boom.badRequest('One of granules or query is required');
   }
 
   if (payload.granules && !Array.isArray(payload.granules)) {
     return res.boom.badRequest(`granules should be an array of values, received ${payload.granules}`);
   }
 
-  if (payload.granules && payload.granules.length === 0) {
+  if (!payload.query && payload.granules && payload.granules.length === 0) {
     return res.boom.badRequest('no values provided for granules');
+  }
+
+  if (payload.query
+    && !(process.env.METRICS_ES_HOST
+        && process.env.METRICS_ES_USER
+        && process.env.METRICS_ES_PASS)
+  ) {
+    return res.boom.badRequest('ELK Metrics stack not configured');
+  }
+
+  if (payload.query && !payload.index) {
+    return res.boom.badRequest('Index is required if query is sent');
   }
 
   return next();
@@ -75,8 +87,8 @@ function validateBulkGranulesRequest(req, res, next) {
 function validateGranuleExecutionRequest(req, res, next) {
   const payload = req.body;
 
-  if (!payload.granules) {
-    return res.boom.badRequest('Granules is required');
+  if (!payload.granules && !payload.query) {
+    return res.boom.badRequest('One of granules or query is required');
   }
 
   if (payload.granules) {
@@ -84,7 +96,7 @@ function validateGranuleExecutionRequest(req, res, next) {
       return res.boom.badRequest(`granules should be an array of values, received ${payload.granules}`);
     }
 
-    if (payload.granules && payload.granules.length === 0) {
+    if (!payload.query && payload.granules.length === 0) {
       return res.boom.badRequest('no values provided for granules');
     }
 
@@ -98,6 +110,17 @@ function validateGranuleExecutionRequest(req, res, next) {
       }
       return true;
     });
+  } else {
+    if (payload.query
+    && !(process.env.METRICS_ES_HOST
+        && process.env.METRICS_ES_USER
+        && process.env.METRICS_ES_PASS)
+    ) {
+      return res.boom.badRequest('ELK Metrics stack not configured');
+    }
+    if (payload.query && !payload.index) {
+      return res.boom.badRequest('Index is required if query is sent');
+    }
   }
 
   return next();
