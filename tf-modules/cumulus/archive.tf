@@ -93,10 +93,10 @@ module "archive" {
   cleanup_es             = var.cleanup_es
   cleanup_postgres       = var.cleanup_postgres
 
-  PAYLOAD_TIMEOUT        = var.payload_timeout
+  payload_timeout        = var.payload_timeout
   
-  ES_INDEX              = var.es_index
-  UPDATE_LIMIT          = var.update_limit
+  es_index              = var.es_index
+  update_limit          = var.update_limit
   background_queue_url = module.ingest.background_queue_url
 
   distribution_api_id = var.tea_rest_api_id
