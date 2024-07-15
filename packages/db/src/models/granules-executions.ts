@@ -15,21 +15,21 @@ export default class GranulesExecutionsPgModel {
   }
 
   async create(
-    knexTransaction: Knex.Transaction,
+    knexTransaction: Knex | Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
     return await knexTransaction(this.tableName).insert(item);
   }
 
   async exists(
-    knexTransaction: Knex.Transaction,
+    knexTransaction: Knex | Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
     return isRecordDefined(await knexTransaction(this.tableName).where(item).first());
   }
 
   async upsert(
-    knexTransaction: Knex.Transaction,
+    knexTransaction: Knex | Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
     return await knexTransaction(this.tableName)
@@ -38,7 +38,25 @@ export default class GranulesExecutionsPgModel {
       .merge()
       .returning('*');
   }
-
+  /**
+   * Creates multiple granuleExecutions in Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {PostgresGranuleExecution[]} items - Records to insert into the DB
+   * @param {string | Array<string>} returningFields - A string or array of strings
+   *   of columns to return. Defaults to 'cumulus_id'.
+   * @returns {Promise<PostgresGranuleExecution[]>} Returns an array of objects
+   *   from the specified column(s) from returningFields.
+   */
+  async insert(
+    knexOrTransaction: Knex | Knex.Transaction,
+    items: PostgresGranuleExecution[],
+    returningFields: string | string[] = '*'
+  ): Promise<PostgresGranuleExecution[]> {
+    return await knexOrTransaction(this.tableName)
+      .insert(items)
+      .returning(returningFields);
+  }
   /**
    * Get execution_cumulus_id column values from the granule_cumulus_id
    *
@@ -97,6 +115,24 @@ export default class GranulesExecutionsPgModel {
   ) {
     return knexTransaction<PostgresGranuleExecution>(this.tableName)
       .where(query);
+  }
+  async count(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: ([string, string, string] | [Partial<PostgresGranuleExecution>])[]
+  ) {
+    const query = knexOrTransaction(this.tableName)
+      .where((builder) => {
+        params.forEach((param) => {
+          if (param.length === 3) {
+            builder.where(...param);
+          }
+          if (param.length === 1) {
+            builder.where(param[0]);
+          }
+        });
+      })
+      .count();
+    return await query;
   }
 }
 

@@ -37,11 +37,15 @@ NODE_ENV=test
 <dd></dd>
 <dt><a href="#module_Kinesis">Kinesis</a></dt>
 <dd></dd>
+<dt><a href="#module_Lambda">Lambda</a></dt>
+<dd></dd>
 <dt><a href="#module_S3">S3</a></dt>
 <dd></dd>
 <dt><a href="#module_SNS">SNS</a></dt>
 <dd></dd>
 <dt><a href="#module_SQS">SQS</a></dt>
+<dd></dd>
+<dt><a href="#module_STS">STS</a></dt>
 <dd></dd>
 <dt><a href="#module_SecretsManager">SecretsManager</a></dt>
 <dd></dd>
@@ -257,6 +261,26 @@ Describe a Kinesis stream.
 | params.StreamName | <code>string</code> | A Kinesis stream name |
 | retryOptions | <code>Object</code> | Options passed to p-retry module |
 
+<a name="module_Lambda"></a>
+
+## Lambda
+
+* [Lambda](#module_Lambda)
+    * [~isEventBridgeEvent()](#module_Lambda..isEventBridgeEvent)
+    * [~invoke()](#module_Lambda..invoke)
+
+<a name="module_Lambda..isEventBridgeEvent"></a>
+
+### Lambda~isEventBridgeEvent()
+Bare check for EventBridge shape
+
+**Kind**: inner method of [<code>Lambda</code>](#module_Lambda)  
+<a name="module_Lambda..invoke"></a>
+
+### Lambda~invoke()
+Invoke a Lambda function
+
+**Kind**: inner method of [<code>Lambda</code>](#module_Lambda)  
 <a name="module_S3"></a>
 
 ## S3
@@ -264,15 +288,16 @@ Describe a Kinesis stream.
 * [S3](#module_S3)
     * _static_
         * ~~[.getS3Object](#module_S3.getS3Object) ⇒ <code>Promise</code>~~
-        * [.recursivelyDeleteS3Bucket](#module_S3.recursivelyDeleteS3Bucket) ⇒ <code>Promise</code>
+        * [.recursivelyDeleteS3Bucket](#module_S3.recursivelyDeleteS3Bucket) ⇒
         * [.listS3ObjectsV2(params)](#module_S3.listS3ObjectsV2) ⇒ <code>Promise.&lt;Array&gt;</code>
+        * [.listS3ObjectsV2Batch(params)](#module_S3.listS3ObjectsV2Batch)
     * _inner_
         * [~s3Join(...args)](#module_S3..s3Join) ⇒ <code>string</code>
         * [~parseS3Uri(uri)](#module_S3..parseS3Uri) ⇒ <code>Object</code>
         * [~buildS3Uri(bucket, key)](#module_S3..buildS3Uri) ⇒ <code>string</code>
         * [~s3TagSetToQueryString(tagset)](#module_S3..s3TagSetToQueryString) ⇒ <code>string</code>
         * [~deleteS3Object(bucket, key)](#module_S3..deleteS3Object) ⇒ <code>Promise</code>
-        * [~headObject(Bucket, Key, retryOptions)](#module_S3..headObject) ⇒ <code>Promise</code>
+        * [~headObject(Bucket, Key, retryOptions)](#module_S3..headObject) ⇒
         * [~s3ObjectExists(params)](#module_S3..s3ObjectExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
         * [~waitForObjectToExist(params)](#module_S3..waitForObjectToExist) ⇒ <code>Promise.&lt;undefined&gt;</code>
         * [~s3PutObject(params)](#module_S3..s3PutObject) ⇒ <code>Promise</code>
@@ -292,9 +317,9 @@ Describe a Kinesis stream.
         * [~getJsonS3Object(bucket, key)](#module_S3..getJsonS3Object) ⇒ <code>Promise.&lt;\*&gt;</code>
         * [~fileExists(bucket, key)](#module_S3..fileExists) ⇒ <code>Promise</code>
         * [~deleteS3Files(s3Objs)](#module_S3..deleteS3Files) ⇒ <code>Promise</code>
-        * [~deleteS3Buckets(buckets)](#module_S3..deleteS3Buckets) ⇒ <code>Promise</code>
         * [~uploadS3FileStream(fileStream, bucket, key, s3opts)](#module_S3..uploadS3FileStream) ⇒ <code>Promise</code>
-        * [~listS3Objects(bucket, prefix, skipFolders)](#module_S3..listS3Objects) ⇒ <code>Promise</code>
+        * [~listS3Objects()](#module_S3..listS3Objects)
+        * [~deleteS3Buckets(buckets)](#module_S3..deleteS3Buckets) ⇒ <code>Promise</code>
         * [~calculateObjectHash(params)](#module_S3..calculateObjectHash)
         * [~validateS3ObjectChecksum(params)](#module_S3..validateS3ObjectChecksum) ⇒ <code>Promise.&lt;boolean&gt;</code>
         * [~getFileBucketAndKey(pathParams)](#module_S3..getFileBucketAndKey) ⇒ <code>Array.&lt;string&gt;</code>
@@ -321,15 +346,15 @@ Gets an object from S3.
 
 <a name="module_S3.recursivelyDeleteS3Bucket"></a>
 
-### S3.recursivelyDeleteS3Bucket ⇒ <code>Promise</code>
+### S3.recursivelyDeleteS3Bucket ⇒
 Delete a bucket and all of its objects from S3
 
 **Kind**: static property of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise</code> - the promised result of `S3.deleteBucket`  
+**Returns**: the promised result of `S3.deleteBucket`  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| bucket | <code>string</code> | name of the bucket |
+| Param | Description |
+| --- | --- |
+| bucket | name of the bucket |
 
 <a name="module_S3.listS3ObjectsV2"></a>
 
@@ -350,6 +375,24 @@ https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-pr
 | Param | Type | Description |
 | --- | --- | --- |
 | params | <code>Object</code> | params for the s3.listObjectsV2 call |
+
+<a name="module_S3.listS3ObjectsV2Batch"></a>
+
+### S3.listS3ObjectsV2Batch(params)
+Fetch lazy list of S3 objects
+
+listObjectsV2 is limited to 1,000 results per call.  This function continues
+listing objects until there are no more to be fetched.
+
+The passed params must be compatible with the listObjectsV2 call.
+
+https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+
+| Param | Description |
+| --- | --- |
+| params | params for the s3.listObjectsV2 call |
 
 <a name="module_S3..s3Join"></a>
 
@@ -416,17 +459,17 @@ Delete an object from S3
 
 <a name="module_S3..headObject"></a>
 
-### S3~headObject(Bucket, Key, retryOptions) ⇒ <code>Promise</code>
+### S3~headObject(Bucket, Key, retryOptions) ⇒
 Get an object header from S3
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise</code> - returns response from `S3.headObject` as a promise  
+**Returns**: returns response from `S3.headObject` as a promise  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| Bucket | <code>string</code> | name of bucket |
-| Key | <code>string</code> | key for object (filepath + filename) |
-| retryOptions | <code>Object</code> | options to control retry behavior when an   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions   By default, retries will not be performed |
+| Param | Description |
+| --- | --- |
+| Bucket | name of bucket |
+| Key | key for object (filepath + filename) |
+| retryOptions | options to control retry behavior when an   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions   By default, retries will not be performed |
 
 <a name="module_S3..s3ObjectExists"></a>
 
@@ -683,18 +726,6 @@ Delete files from S3
 | --- | --- | --- |
 | s3Objs | <code>Array</code> | An array of objects containing keys 'Bucket' and 'Key' |
 
-<a name="module_S3..deleteS3Buckets"></a>
-
-### S3~deleteS3Buckets(buckets) ⇒ <code>Promise</code>
-Delete a list of buckets and all of their objects from S3
-
-**Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise</code> - the promised result of `S3.deleteBucket`  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| buckets | <code>Array</code> | list of bucket names |
-
 <a name="module_S3..uploadS3FileStream"></a>
 
 ### S3~uploadS3FileStream(fileStream, bucket, key, s3opts) ⇒ <code>Promise</code>
@@ -712,19 +743,21 @@ Upload the file associated with the given stream to an S3 bucket
 
 <a name="module_S3..listS3Objects"></a>
 
-### S3~listS3Objects(bucket, prefix, skipFolders) ⇒ <code>Promise</code>
+### S3~listS3Objects()
 List the objects in an S3 bucket
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise</code> - A promise that resolves to the list of objects. Each S3
-  object is represented as a JS object with the following attributes: `Key`,
-`ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`.  
+<a name="module_S3..deleteS3Buckets"></a>
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| bucket | <code>string</code> |  | The name of the bucket |
-| prefix | <code>string</code> |  | Only objects with keys starting with this prefix   will be included (useful for searching folders in buckets, e.g., '/PDR') |
-| skipFolders | <code>boolean</code> | <code>true</code> | If true don't return objects that are folders   (defaults to true) |
+### S3~deleteS3Buckets(buckets) ⇒ <code>Promise</code>
+Delete a list of buckets and all of their objects from S3
+
+**Kind**: inner method of [<code>S3</code>](#module_S3)  
+**Returns**: <code>Promise</code> - the promised result of `S3.deleteBucket`  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buckets | <code>Array</code> | list of bucket names |
 
 <a name="module_S3..calculateObjectHash"></a>
 
@@ -840,102 +873,96 @@ Move an S3 object to another location in S3
 <a name="module_SNS"></a>
 
 ## SNS
-<a name="module_SNS..publishSnsMessage"></a>
 
-### SNS~publishSnsMessage(snsTopicArn, message, retryOptions) ⇒ <code>Promise.&lt;undefined&gt;</code>
+* [SNS](#module_SNS)
+    * [~publishSnsMessageWithRetry(snsTopicArn, message, retryOptions)](#module_SNS..publishSnsMessageWithRetry) ⇒ <code>Promise.&lt;undefined&gt;</code>
+    * [~createSnsTopic(snsTopicName)](#module_SNS..createSnsTopic) ⇒
+
+<a name="module_SNS..publishSnsMessageWithRetry"></a>
+
+### SNS~publishSnsMessageWithRetry(snsTopicArn, message, retryOptions) ⇒ <code>Promise.&lt;undefined&gt;</code>
 Publish a message to an SNS topic. Does not catch
 errors, to allow more specific handling by the caller.
 
 **Kind**: inner method of [<code>SNS</code>](#module_SNS)  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| snsTopicArn | <code>string</code> | SNS topic ARN |
-| message | <code>Object</code> | Message object |
-| retryOptions | <code>Object</code> | options to control retry behavior when publishing a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions |
+| Param | Description |
+| --- | --- |
+| snsTopicArn | SNS topic ARN |
+| message | Message object |
+| retryOptions | options to control retry behavior when publishing a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions |
+
+<a name="module_SNS..createSnsTopic"></a>
+
+### SNS~createSnsTopic(snsTopicName) ⇒
+Create an SNS topic with a given name.
+
+**Kind**: inner method of [<code>SNS</code>](#module_SNS)  
+**Returns**: - ARN of the created SNS topic  
+
+| Param | Description |
+| --- | --- |
+| snsTopicName | Name of the SNS topic |
 
 <a name="module_SQS"></a>
 
 ## SQS
 
 * [SQS](#module_SQS)
-    * _static_
-        * [.createQueue(QueueName)](#module_SQS.createQueue) ⇒ <code>Promise.&lt;string&gt;</code>
-    * _inner_
-        * [~sendSQSMessage(queueUrl, message, [logOverride])](#module_SQS..sendSQSMessage) ⇒ <code>Promise</code>
-        * [~receiveSQSMessages(queueUrl, options)](#module_SQS..receiveSQSMessages) ⇒ <code>Promise.&lt;Array&gt;</code>
-        * [~deleteSQSMessage(queueUrl, receiptHandle)](#module_SQS..deleteSQSMessage) ⇒ <code>Promise</code>
-        * [~sqsQueueExists(queueUrl)](#module_SQS..sqsQueueExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
+    * [~createQueue()](#module_SQS..createQueue)
+    * [~sendSQSMessage()](#module_SQS..sendSQSMessage)
+    * [~receiveSQSMessages()](#module_SQS..receiveSQSMessages)
+    * [~isSQSRecordLike()](#module_SQS..isSQSRecordLike)
+    * [~parseSQSMessageBody()](#module_SQS..parseSQSMessageBody)
+    * [~deleteSQSMessage()](#module_SQS..deleteSQSMessage)
+    * [~sqsQueueExists()](#module_SQS..sqsQueueExists)
 
-<a name="module_SQS.createQueue"></a>
+<a name="module_SQS..createQueue"></a>
 
-### SQS.createQueue(QueueName) ⇒ <code>Promise.&lt;string&gt;</code>
+### SQS~createQueue()
 Create an SQS Queue.  Properly handles localstack queue URLs
 
-**Kind**: static method of [<code>SQS</code>](#module_SQS)  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the Queue URL  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| QueueName | <code>string</code> | queue name |
-
+**Kind**: inner method of [<code>SQS</code>](#module_SQS)  
 <a name="module_SQS..sendSQSMessage"></a>
 
-### SQS~sendSQSMessage(queueUrl, message, [logOverride]) ⇒ <code>Promise</code>
+### SQS~sendSQSMessage()
 Send a message to AWS SQS
 
 **Kind**: inner method of [<code>SQS</code>](#module_SQS)  
-**Returns**: <code>Promise</code> - resolves when the messsage has been sent  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| queueUrl | <code>string</code> | url of the SQS queue |
-| message | <code>string</code> \| <code>Object</code> | either string or object message. If an   object it will be serialized into a JSON string. |
-| [logOverride] | <code>Logger</code> | optional Logger passed in for testing |
-
 <a name="module_SQS..receiveSQSMessages"></a>
 
-### SQS~receiveSQSMessages(queueUrl, options) ⇒ <code>Promise.&lt;Array&gt;</code>
+### SQS~receiveSQSMessages()
 Receives SQS messages from a given queue. The number of messages received
 can be set and the timeout is also adjustable.
 
 **Kind**: inner method of [<code>SQS</code>](#module_SQS)  
-**Returns**: <code>Promise.&lt;Array&gt;</code> - an array of messages  
+<a name="module_SQS..isSQSRecordLike"></a>
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| queueUrl | <code>string</code> |  | url of the SQS queue |
-| options | <code>Object</code> |  | options object |
-| [options.numOfMessages] | <code>integer</code> | <code>1</code> | number of messages to read from the queue |
-| [options.visibilityTimeout] | <code>integer</code> | <code>30</code> | number of seconds a message is invisible   after read |
-| [options.waitTimeSeconds] | <code>integer</code> | <code>0</code> | number of seconds to poll SQS queue (long polling) |
+### SQS~isSQSRecordLike()
+Bare check for SQS message Shape
 
+**Kind**: inner method of [<code>SQS</code>](#module_SQS)  
+<a name="module_SQS..parseSQSMessageBody"></a>
+
+### SQS~parseSQSMessageBody()
+Extract SQS message body
+
+**Kind**: inner method of [<code>SQS</code>](#module_SQS)  
 <a name="module_SQS..deleteSQSMessage"></a>
 
-### SQS~deleteSQSMessage(queueUrl, receiptHandle) ⇒ <code>Promise</code>
+### SQS~deleteSQSMessage()
 Delete a given SQS message from a given queue.
 
 **Kind**: inner method of [<code>SQS</code>](#module_SQS)  
-**Returns**: <code>Promise</code> - an AWS SQS response  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| queueUrl | <code>string</code> | url of the SQS queue |
-| receiptHandle | <code>integer</code> | the unique identifier of the sQS message |
-
 <a name="module_SQS..sqsQueueExists"></a>
 
-### SQS~sqsQueueExists(queueUrl) ⇒ <code>Promise.&lt;boolean&gt;</code>
+### SQS~sqsQueueExists()
 Test if an SQS queue exists
 
 **Kind**: inner method of [<code>SQS</code>](#module_SQS)  
-**Returns**: <code>Promise.&lt;boolean&gt;</code> - - a Promise that will resolve to a boolean indicating
-                              if the queue exists  
+<a name="module_STS"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| queueUrl | <code>Object</code> | queue url |
-
+## STS
 <a name="module_SecretsManager"></a>
 
 ## SecretsManager
@@ -945,16 +972,16 @@ Test if an SQS queue exists
 
 * [StepFunctions](#module_StepFunctions)
     * _static_
-        * [.describeExecution(params)](#module_StepFunctions.describeExecution) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.describeStateMachine(params)](#module_StepFunctions.describeStateMachine) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.getExecutionHistory(params)](#module_StepFunctions.getExecutionHistory) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.describeExecution(params)](#module_StepFunctions.describeExecution) ⇒ <code>Promise.&lt;DescribeExecutionOutput&gt;</code>
+        * [.describeStateMachine(params)](#module_StepFunctions.describeStateMachine) ⇒ <code>Promise.&lt;DescribeStateMachineOutput&gt;</code>
+        * [.getExecutionHistory(params)](#module_StepFunctions.getExecutionHistory) ⇒ <code>Promise.&lt;GetExecutionHistoryOutput&gt;</code>
         * [.listExecutions(params)](#module_StepFunctions.listExecutions) ⇒ <code>Promise.&lt;Object&gt;</code>
     * _inner_
         * [~executionExists(executionArn)](#module_StepFunctions..executionExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
 
 <a name="module_StepFunctions.describeExecution"></a>
 
-### StepFunctions.describeExecution(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+### StepFunctions.describeExecution(params) ⇒ <code>Promise.&lt;DescribeExecutionOutput&gt;</code>
 Call StepFunctions DescribeExecution
 
 See [StepFunctions.describeExecution()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeExecution-property)
@@ -967,11 +994,11 @@ exponential backoff.
 
 | Param | Type |
 | --- | --- |
-| params | <code>Object</code> | 
+| params | <code>DescribeExecutionInput</code> | 
 
 <a name="module_StepFunctions.describeStateMachine"></a>
 
-### StepFunctions.describeStateMachine(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+### StepFunctions.describeStateMachine(params) ⇒ <code>Promise.&lt;DescribeStateMachineOutput&gt;</code>
 Call StepFunctions DescribeStateMachine
 
 See [StepFunctions.describeStateMachine()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeStateMachine-property)
@@ -984,11 +1011,11 @@ exponential backoff.
 
 | Param | Type |
 | --- | --- |
-| params | <code>Object</code> | 
+| params | <code>DescribeStateMachineInput</code> | 
 
 <a name="module_StepFunctions.getExecutionHistory"></a>
 
-### StepFunctions.getExecutionHistory(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+### StepFunctions.getExecutionHistory(params) ⇒ <code>Promise.&lt;GetExecutionHistoryOutput&gt;</code>
 Call StepFunctions GetExecutionHistory
 
 See [StepFunctions.getExecutionHistory()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#getExecutionHistory-property)
@@ -1001,7 +1028,7 @@ exponential backoff.
 
 | Param | Type |
 | --- | --- |
-| params | <code>Object</code> | 
+| params | <code>GetExecutionHistoryInput</code> | 
 
 <a name="module_StepFunctions.listExecutions"></a>
 
