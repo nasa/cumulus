@@ -76,9 +76,11 @@ test.serial('handler() handles running expiration', async (t) => {
   process.env.LOCAL_ES_HOST = 'localhost';
   let expirationDays = 4;
   let expirationDate = getExpirationDate(expirationDays);
-  process.env.cleanupNonRunning = 'false';
-  process.env.cleanupRunning = 'true';
-  process.env.payloadTimeout = expirationDays;
+  process.env.CLEANUP_NON_RUNNING = 'false';
+  process.env.CLEANUP_RUNNING = 'true';
+  process.env.CLEANUP_POSTGRES = 'true';
+  process.env.CLEANUP_ES = 'true';
+  process.env.PAYLOAD_TIMEOUT = expirationDays;
 
   await handler();
   await sleep(5000);
@@ -111,7 +113,7 @@ test.serial('handler() handles running expiration', async (t) => {
 
   expirationDays = 2;
   expirationDate = getExpirationDate(expirationDays);
-  process.env.payloadTimeout = expirationDays;
+  process.env.PAYLOAD_TIMEOUT = expirationDays;
 
   await handler();
   await sleep(5000);
@@ -150,9 +152,11 @@ test.serial('handler() handles non running expiration', async (t) => {
   process.env.ES_INDEX = t.context.esIndex;
   let expirationDays = 5;
   let expirationDate = getExpirationDate(expirationDays);
-  process.env.cleanupNonRunning = 'true';
-  process.env.cleanupRunning = 'false';
-  process.env.payloadTimeout = expirationDays;
+  process.env.CLEANUP_NON_RUNNING = 'true';
+  process.env.CLEANUP_RUNNING = 'false';
+  process.env.CLEANUP_POSTGRES = 'true';
+  process.env.CLEANUP_ES = 'true';
+  process.env.PAYLOAD_TIMEOUT = expirationDays;
   await handler();
   await sleep(5000);
   const model = new ExecutionPgModel();
@@ -185,7 +189,7 @@ test.serial('handler() handles non running expiration', async (t) => {
 
   expirationDays = 3;
   expirationDate = getExpirationDate(expirationDays);
-  process.env.payloadTimeout = expirationDays;
+  process.env.PAYLOAD_TIMEOUT = expirationDays;
 
   await handler();
   await sleep(5000);
@@ -226,9 +230,11 @@ test.serial('handler() handles both expirations', async (t) => {
   let payloadTimeout = 9;
   let payloadExpiration = getExpirationDate(payloadTimeout);
 
-  process.env.cleanupRunning = 'true';
-  process.env.cleanupNonRunning = 'true';
-  process.env.payloadTimeout = payloadTimeout;
+  process.env.CLEANUP_RUNNING = 'true';
+  process.env.CLEANUP_NON_RUNNING = 'true';
+  process.env.PAYLOAD_TIMEOUT = payloadTimeout;
+  process.env.CLEANUP_POSTGRES = 'true';
+  process.env.CLEANUP_ES = 'true';
 
   await handler();
   await sleep(5000);
@@ -262,7 +268,7 @@ test.serial('handler() handles both expirations', async (t) => {
   payloadTimeout = 8;
 
   payloadExpiration = getExpirationDate(payloadTimeout);
-  process.env.payloadTimeout = payloadTimeout;
+  process.env.PAYLOAD_TIMEOUT = payloadTimeout;
 
   await handler();
   await sleep(5000);
@@ -297,16 +303,16 @@ test.serial('handler() handles both expirations', async (t) => {
 
 test.serial('handler() throws errors when misconfigured', async (t) => {
   const env = clone(process.env);
-  process.env.cleanupRunning = 'false';
-  process.env.cleanupNonRunning = 'false';
+  process.env.CLEANUP_RUNNING = 'false';
+  process.env.CLEANUP_NON_RUNNING = 'false';
 
   await t.throwsAsync(handler(), {
     message: 'running and non-running executions configured to be skipped, nothing to do',
   });
 
-  process.env.cleanupRunning = 'false';
-  process.env.cleanupNonRunning = 'true';
-  process.env.payloadTimeout = 'frogs';
+  process.env.CLEANUP_RUNNING = 'false';
+  process.env.CLEANUP_NON_RUNNING = 'true';
+  process.env.PAYLOAD_TIMEOUT = 'frogs';
   await t.throwsAsync(handler(), {
     message: 'Invalid number of days specified in configuration for payloadTimeout: frogs',
   });
@@ -321,9 +327,11 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
   process.env.ES_INDEX = t.context.esIndex;
   process.env.LOCAL_ES_HOST = 'localhost';
 
-  process.env.cleanupRunning = 'true';
-  process.env.cleanupNonRunning = 'true';
-  process.env.payloadTimeout = 2;
+  process.env.CLEANUP_RUNNING = 'true';
+  process.env.CLEANUP_NON_RUNNING = 'true';
+  process.env.PAYLOAD_TIMEOUT = 2;
+  process.env.CLEANUP_ES = 'true';
+  process.env.CLEANUP_POSTGRES = 'true';
 
   process.env.UPDATE_LIMIT = 2;
 

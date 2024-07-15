@@ -63,7 +63,8 @@ test.serial('cleanupExpiredPGExecutionPayloads() cleans up expired running paylo
   await cleanupExpiredPGExecutionPayloads(
     expirationDays,
     true,
-    false
+    false,
+    100
   );
 
   const massagedPgExecutions = await Promise.all(
@@ -112,7 +113,8 @@ test.serial('cleanupExpiredPGExecutionPayloads() cleans up expired non running p
   await cleanupExpiredPGExecutionPayloads(
     expirationDays,
     false,
-    true
+    true,
+    100
   );
 
   const massagedPgExecutions = await Promise.all(
@@ -160,7 +162,8 @@ test.serial('cleanupExpiredPGExecutionPayloads() cleans up expired payloads', as
   await cleanupExpiredPGExecutionPayloads(
     expirationDays,
     true,
-    true
+    true,
+    100
   );
 
   const massagedPgExecutions = await Promise.all(

@@ -52,6 +52,7 @@ test('cleanupExpiredEsExecutionPayloads() for just running removes expired runni
     timeoutDays,
     true,
     false,
+    100,
     t.context.esIndex
   );
   // await es refresh
@@ -107,6 +108,7 @@ test('cleanupExpiredEsExecutionPayloads() for just running removes expired runni
     timeoutDays,
     true,
     false,
+    100,
     t.context.esIndex
   );
   await sleep(5000);
@@ -163,6 +165,7 @@ test('cleanupExpiredEsExecutionPayloads() for just nonRunning removes expired no
     timeoutDays,
     false,
     true,
+    100,
     t.context.esIndex
   );
   await sleep(5000);
@@ -218,6 +221,7 @@ test('cleanupExpiredEsExecutionPayloads() for just nonRunning removes expired no
     timeoutDays,
     false,
     true,
+    100,
     t.context.esIndex
   );
   await sleep(5000);
@@ -274,6 +278,7 @@ test('cleanupExpiredEsExecutionPayloads() for running and nonRunning executions'
     timeoutDays,
     true,
     true,
+    100,
     t.context.esIndex
   );
   await sleep(5000);
