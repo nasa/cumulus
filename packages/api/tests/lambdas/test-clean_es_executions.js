@@ -56,7 +56,7 @@ test('cleanupExpiredEsExecutionPayloads() for just running removes expired runni
     t.context.esIndex
   );
   // await es refresh
-  await sleep(5000);
+   
 
   let expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
   let relevantExecutions = await t.context.searchClient.query(
@@ -111,7 +111,7 @@ test('cleanupExpiredEsExecutionPayloads() for just running removes expired runni
     100,
     t.context.esIndex
   );
-  await sleep(5000);
+   
 
   expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
   relevantExecutions = await t.context.searchClient.query(
@@ -168,7 +168,7 @@ test('cleanupExpiredEsExecutionPayloads() for just nonRunning removes expired no
     100,
     t.context.esIndex
   );
-  await sleep(5000);
+   
 
   let expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
 
@@ -224,7 +224,7 @@ test('cleanupExpiredEsExecutionPayloads() for just nonRunning removes expired no
     100,
     t.context.esIndex
   );
-  await sleep(5000);
+   
 
   expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
   relevantExecutions = await t.context.searchClient.query(
@@ -281,7 +281,7 @@ test('cleanupExpiredEsExecutionPayloads() for running and nonRunning executions'
     100,
     t.context.esIndex
   );
-  await sleep(5000);
+   
 
   const expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
 

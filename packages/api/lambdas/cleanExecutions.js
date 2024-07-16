@@ -86,6 +86,7 @@ const cleanupExpiredESExecutionPayloads = async (
     body,
     conflicts: 'proceed',
     wait_for_completion: false,
+    refresh: true,
   });
   let taskStatus;
   // this async and poll method allows us to avoid http timeouts
