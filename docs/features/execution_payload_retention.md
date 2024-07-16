@@ -10,7 +10,14 @@ This allows access via the API (or optionally direct DB/Elasticsearch querying) 
 
 ## Payload record cleanup
 
-To reduce storage requirements, a CloudWatch rule (`{stack-name}-dailyExecutionPayloadCleanupRule`) triggering a daily run of the provided cleanExecutions lambda has been added.  This lambda will remove all 'completed' and 'non-completed' payload records in the database that are older than the specified configuration.
+To reduce storage requirements, a CloudWatch rule (`{stack-name}-dailyExecutionPayloadCleanupRule`) triggering a daily run of the provided cleanExecutions lambda has been added.  This lambda will remove a batch of payload records in the database that are older than the specified configuration.
+
+## Execution backlog cleanup
+
+Because many users have accumulated a substantial backlog of un-cleaned execution payloads, this lambda specifies an update_limit configuration to avoid overwhelming elasticsearch or postgres and/or timing out lambda.
+
+### Suggested update_limit
+The cumulus core team has tested
 
 ### Configuration
 
@@ -22,30 +29,40 @@ This configuration option sets the execution times for this Lambda to run, using
 
 Default value is `"cron(0 4 * * ? *)"`.
 
-#### complete_execution_payload_timeout_disable _(bool)_
+#### cleanup_running _(bool)_
 
-This configuration option, when set to true, will disable all cleanup of `completed` execution payloads.
-
-Default value is `false`.
-
-#### complete_execution_payload_timeout _(number)_
-
-This flag defines the cleanup threshold for executions with a 'completed' status in days.   Records with `updatedAt` values older than this with payload information  will have that information removed.
-
-Default value is `10`.
-
-#### non_complete_execution_payload_timeout_disable _(bool)_
-
-This configuration option, when set to true, will disable all cleanup of "non-complete" (any status _other_ than `completed`) execution payloads.
+This configuration option, when set to true, will enable cleanup of `running` execution payloads.
 
 Default value is `false`.
 
-#### non_complete_execution_payload_timeout _(number)_
+#### cleanup_non_running _(bool)_
 
-This flag defines the cleanup threshold for executions with a status other than 'complete' in days.   Records with updateTime values older than this with payload information  will have that information removed.
+This configuration option, when set to true, will enable cleanup of non -running (any status _other_ than `running`) execution payloads.
 
-Default value is 30 days.
+Default value is `true`.
 
-- complete_execution_payload_disable/non_complete_execution_payload_disable
+#### cleanup_es _(bool)_
 
-These flags (true/false) determine if the cleanup script's logic for 'complete' and 'non-complete' executions will run.   Default value is false for both.
+This configuration option, when set to true, will enable cleanup of elasticsearch execution payloads
+
+Default value is `true`.
+
+#### cleanup_postgres _(bool)_
+
+This configuration option, when set to true, will enable cleanup of postgres execution payloads
+
+Default value is `false`.
+
+#### payload_timeout _(number)_
+
+This configuration defines the number of days after which an execution record will be slated for cleanup by this script.
+
+Default value is 10
+
+#### es_index _(string)_
+
+this configuration defines the elasticsearch index to search in for elasticsearch executions to clean up
+
+Default value is `cumulus`
+
+
