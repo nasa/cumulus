@@ -64,7 +64,7 @@ async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
   const promises = cmrFiles.map(async (cmrFileObject) => {
     const granule = updatedGranulesByGranuleId[cmrFileObject.granuleId];
     if (!granule?.files) {
-      throw new Error(`Granule with ID ${cmrFileObject.granuleId} not found in input granules`);
+      throw new Error(`Granule with ID ${cmrFileObject.granuleId} not found in input granules containing files`);
     }
     const cmrFile = granule.files.find(isCMRFile);
     if (!cmrFile) {
