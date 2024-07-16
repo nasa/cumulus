@@ -5,8 +5,6 @@ const moment = require('moment');
 const { fakeExecutionRecordFactory, translatePostgresExecutionToApiExecution } = require('@cumulus/db');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
 
-const { sleep } = require('@cumulus/common');
-
 const { cleanupExpiredESExecutionPayloads } = require('../../lambdas/cleanExecutions');
 test.beforeEach(async (t) => {
   const { esIndex, esClient, searchClient } = await createTestIndex();
@@ -56,7 +54,6 @@ test('cleanupExpiredEsExecutionPayloads() for just running removes expired runni
     t.context.esIndex
   );
   // await es refresh
-   
 
   let expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
   let relevantExecutions = await t.context.searchClient.query(
@@ -111,7 +108,6 @@ test('cleanupExpiredEsExecutionPayloads() for just running removes expired runni
     100,
     t.context.esIndex
   );
-   
 
   expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
   relevantExecutions = await t.context.searchClient.query(
@@ -168,7 +164,6 @@ test('cleanupExpiredEsExecutionPayloads() for just nonRunning removes expired no
     100,
     t.context.esIndex
   );
-   
 
   let expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
 
@@ -224,7 +219,6 @@ test('cleanupExpiredEsExecutionPayloads() for just nonRunning removes expired no
     100,
     t.context.esIndex
   );
-   
 
   expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
   relevantExecutions = await t.context.searchClient.query(
@@ -281,7 +275,6 @@ test('cleanupExpiredEsExecutionPayloads() for running and nonRunning executions'
     100,
     t.context.esIndex
   );
-   
 
   const expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
 

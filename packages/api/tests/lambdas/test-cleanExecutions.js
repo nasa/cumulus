@@ -13,7 +13,6 @@ const {
   localStackConnectionEnv,
 } = require('@cumulus/db');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
-const { sleep } = require('@cumulus/common');
 const { handler, getExpirationDate } = require('../../lambdas/cleanExecutions');
 test.beforeEach(async (t) => {
   t.context.testDbName = randomId('cleanExecutions');
@@ -83,7 +82,7 @@ test.serial('handler() handles running expiration', async (t) => {
   process.env.PAYLOAD_TIMEOUT = expirationDays;
 
   await handler();
-   
+
   const model = new ExecutionPgModel();
   let massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
@@ -116,7 +115,7 @@ test.serial('handler() handles running expiration', async (t) => {
   process.env.PAYLOAD_TIMEOUT = expirationDays;
 
   await handler();
-   
+
   massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
       async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
@@ -158,7 +157,7 @@ test.serial('handler() handles non running expiration', async (t) => {
   process.env.CLEANUP_ES = 'true';
   process.env.PAYLOAD_TIMEOUT = expirationDays;
   await handler();
-   
+
   const model = new ExecutionPgModel();
   let massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
@@ -192,7 +191,7 @@ test.serial('handler() handles non running expiration', async (t) => {
   process.env.PAYLOAD_TIMEOUT = expirationDays;
 
   await handler();
-   
+
   massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
       async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
@@ -237,7 +236,7 @@ test.serial('handler() handles both expirations', async (t) => {
   process.env.CLEANUP_ES = 'true';
 
   await handler();
-   
+
   const model = new ExecutionPgModel();
   let massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
@@ -271,7 +270,7 @@ test.serial('handler() handles both expirations', async (t) => {
   process.env.PAYLOAD_TIMEOUT = payloadTimeout;
 
   await handler();
-   
+
   massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
       async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
@@ -336,7 +335,7 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
   process.env.UPDATE_LIMIT = 2;
 
   await handler();
-   
+
   const model = new ExecutionPgModel();
   let massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
@@ -361,7 +360,7 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
   t.is(esCleanedCount, 2);
 
   await handler();
-   
+
   massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
       async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
@@ -387,7 +386,7 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
   process.env.UPDATE_LIMIT = 12;
 
   await handler();
-   
+
   massagedPgExecutions = await Promise.all(
     t.context.execution_cumulus_ids.map(
       async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
