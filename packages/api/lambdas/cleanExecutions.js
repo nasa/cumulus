@@ -193,7 +193,7 @@ const parseEnvironment = () => {
  */
 async function cleanExecutionPayloads() {
   const envConfig = parseEnvironment();
-  log.info(`running cleanExecutions with configuration ${envConfig}`);
+  log.info(`running cleanExecutions with configuration ${JSON.stringify(envConfig)}`);
   const {
     updateLimit,
     cleanupRunning,
