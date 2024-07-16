@@ -105,7 +105,10 @@ test.after.always(async (t) => {
 
 test('ExecutionSearch returns correct response for basic query', async (t) => {
   const { knex } = t.context;
-  const dbSearch = new ExecutionSearch({});
+  const queryStringParameters = {
+    estimateTableRowCount: 'false',
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
   const results = await dbSearch.query(knex);
   t.is(results.meta.count, 50);
   t.is(results.results.length, 10);
@@ -145,6 +148,7 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
 test('ExecutionSearch supports page and limit params', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 25,
     page: 2,
   };
@@ -154,6 +158,7 @@ test('ExecutionSearch supports page and limit params', async (t) => {
   t.is(response.results?.length, 25);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 10,
     page: 5,
   };
@@ -163,6 +168,7 @@ test('ExecutionSearch supports page and limit params', async (t) => {
   t.is(response.results?.length, 10);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 10,
     page: 11,
   };
@@ -290,6 +296,7 @@ test('ExecutionSearch supports range search', async (t) => {
 test('ExecutionSearch non-existing fields are ignored', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
@@ -304,6 +311,7 @@ test('ExecutionSearch returns fields specified', async (t) => {
   const { knex } = t.context;
   const fields = 'status,arn,type,error';
   const queryStringParameters = {
+    estimateTableRowCount: 'false',
     fields,
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
@@ -330,6 +338,7 @@ test('ExecutionSearch supports search for multiple fields', async (t) => {
 test('ExecutionSearch supports sorting', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 50,
     sort_by: 'timestamp',
   };
@@ -341,6 +350,7 @@ test('ExecutionSearch supports sorting', async (t) => {
   t.true(response.results[1].updatedAt < response.results[25].updatedAt);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 50,
     sort_by: 'timestamp',
     order: 'desc',
@@ -353,6 +363,7 @@ test('ExecutionSearch supports sorting', async (t) => {
   t.true(response2.results[1].updatedAt > response2.results[25].updatedAt);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     sort_key: ['-timestamp'],
   };
@@ -544,6 +555,7 @@ test('ExecutionSearch supports term search for date field', async (t) => {
 test('ExecutionSearch includeFullRecord', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 50,
     includeFullRecord: 'true',
   };

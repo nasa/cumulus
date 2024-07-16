@@ -1,6 +1,7 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
 import pick from 'lodash/pick';
+import set from 'lodash/set';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { ApiExecutionRecord } from '@cumulus/types/api/executions';
 import { BaseSearch } from './BaseSearch';
@@ -24,6 +25,9 @@ interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
  */
 export class ExecutionSearch extends BaseSearch {
   constructor(event: QueryEvent) {
+    if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
+      set(event, 'queryStringParameters.estimateTableRowCount', 'true');
+    }
     super(event, 'execution');
   }
 
@@ -79,7 +83,7 @@ export class ExecutionSearch extends BaseSearch {
     }
 
     const countQuery = knex(this.tableName)
-      .count(`${this.tableName}.cumulus_id`);
+      .count('*');
 
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);

@@ -229,7 +229,7 @@ export const convertQueryStringToDbQueryParameters = (
   type: string,
   queryStringParameters: QueryStringParameters
 ): DbQueryParameters => {
-  const { limit, page, prefix, infix, fields, includeFullRecord } = queryStringParameters;
+  const { limit, page, prefix, infix, fields, estimateTableRowCount, includeFullRecord } = queryStringParameters;
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
@@ -239,6 +239,7 @@ export const convertQueryStringToDbQueryParameters = (
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
+  dbQueryParameters.estimateTableRowCount = (estimateTableRowCount === 'true');
   dbQueryParameters.includeFullRecord = (includeFullRecord === 'true');
   dbQueryParameters.sort = convertSort(type, queryStringParameters);
 

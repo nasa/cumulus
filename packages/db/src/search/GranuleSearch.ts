@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
+import set from 'lodash/set';
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import Logger from '@cumulus/logger';
@@ -30,6 +31,9 @@ interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
  */
 export class GranuleSearch extends BaseSearch {
   constructor(event: QueryEvent) {
+    if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
+      set(event, 'queryStringParameters.estimateTableRowCount', 'true');
+    }
     super(event, 'granule');
   }
 
@@ -50,7 +54,7 @@ export class GranuleSearch extends BaseSearch {
       pdrs: pdrsTable,
     } = TableNames;
     const countQuery = knex(this.tableName)
-      .count(`${this.tableName}.cumulus_id`);
+      .count('*');
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)

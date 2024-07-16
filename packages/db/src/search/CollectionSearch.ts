@@ -53,7 +53,7 @@ export class CollectionSearch extends BaseSearch {
       searchQuery: Knex.QueryBuilder,
     } {
     const countQuery = knex(this.tableName)
-      .count(`${this.tableName}.cumulus_id`);
+      .count('*');
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`);

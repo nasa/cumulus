@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import get from 'lodash/get';
 import omit from 'lodash/omit';
 import Logger from '@cumulus/logger';
 
@@ -81,6 +82,16 @@ class BaseSearch {
   protected searchProvider(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
     return !!(not?.providerName || term?.providerName || terms?.providerName);
+  }
+
+  /**
+   * Determine if an estimated row count should be returned
+   *
+   * @returns whether an estimated row count should be returned
+   */
+  protected returnEstimatedRowcount(sql: string): boolean {
+    const isBasicQuery = (sql === `select count(*) from "${this.tableName}"`);
+    return this.dbQueryParameters.estimateTableRowCount === true && isBasicQuery;
   }
 
   /**
@@ -448,12 +459,23 @@ class BaseSearch {
   async query(testKnex?: Knex) {
     const knex = testKnex ?? await getKnexClient();
     const { countQuery, searchQuery } = this.buildSearch(knex);
+
+    const returnEstimatedRowcount = countQuery ? this.returnEstimatedRowcount(countQuery?.toSQL().sql) : false;
+    const estimateCountQuery = returnEstimatedRowcount? knex.raw(`EXPLAIN (FORMAT JSON) select * from "${this.tableName}"`) : undefined;
+    if (estimateCountQuery) log.debug(`Estimating the row count ${estimateCountQuery.toSQL().sql}`);
+
     try {
-      const [countResult, pgRecords] = await Promise.all([countQuery, searchQuery]);
+      const [countResult, pgRecords] = await Promise.all([estimateCountQuery || countQuery, searchQuery]);
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;
       meta.page = this.dbQueryParameters.page;
-      meta.count = Number(countResult[0]?.count ?? 0);
+      if (returnEstimatedRowcount) {
+        const countPath = 'rows[0]["QUERY PLAN"][0].Plan["Plan Rows"]';
+        const estimatedCount = get(countResult, countPath);
+        meta.count = Number(estimatedCount ?? 0);
+      } else {
+        meta.count = Number(countResult[0]?.count ?? 0);
+      }
 
       const apiRecords = await this.translatePostgresRecordsToApiRecords(pgRecords, knex);
 
