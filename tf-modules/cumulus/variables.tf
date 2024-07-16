@@ -565,7 +565,7 @@ variable "cleanup_running" {
 variable "cleanup_non_running" {
   type    = bool
   default = true
-  description = "Boolean flag that when set to true will enable 'running' execution cleanup"
+  description = "Boolean flag that when set to true will enable non 'running' execution cleanup"
 }
 
 variable "cleanup_es" {
