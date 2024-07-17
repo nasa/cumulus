@@ -15,7 +15,9 @@ const reservedWords = [
   'order',
   'prefix',
   'infix',
+  'estimateTableRowCount',
   'fields',
+  'includeFullRecord',
   'searchContext',
 ];
 
