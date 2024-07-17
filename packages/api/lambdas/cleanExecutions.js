@@ -110,13 +110,16 @@ const cleanupExpiredESExecutionPayloads = async (
  *   payloads
  * @param {boolean} cleanupNonRunning - Enable removal of non-running execution
  *   payloads
+ * @param {number} updateLimit - Number of executions to clean up
+ * @param {number} postgresLimit - batch size to not overwhelm postgres
  * @returns {Promise<void>}
 */
 const cleanupExpiredPGExecutionPayloads = async (
   payloadTimeout,
   cleanupRunning,
   cleanupNonRunning,
-  updateLimit
+  updateLimit,
+  postgresLimit,
 ) => {
   const expiration = getExpirationDate(payloadTimeout);
   const knex = await getKnexClient();
@@ -129,7 +132,10 @@ const cleanupExpiredPGExecutionPayloads = async (
     final_payload: null,
   };
   const executionModel = new ExecutionPgModel();
-  const executionIds = await knex(executionModel.tableName)
+  const batchSize = Math.min(postgresLimit, updateLimit);
+  console.log(batchSize);
+  for (let i = 0; i < updateLimit; i += batchSize) {
+    const executions = await knex(executionModel.tableName)
     .select('cumulus_id')
     .where('updated_at', '<=', expiration)
     .where((builder) => {
@@ -140,12 +146,14 @@ const cleanupExpiredPGExecutionPayloads = async (
       if (cleanupOnlyRunning) queryBuilder.where('status', '=', 'running');
       else if (cleanupOnlyNonRunning) queryBuilder.where('status', '!=', 'running');
     })
-    .limit(updateLimit);
+    .limit(batchSize);
+    // this is done as a search:update because postgres doesn't support limited updates
+    await knex(executionModel.tableName)
+      .whereIn('cumulus_id', executions.map((execution) => execution.cumulus_id))
+      .update(wipedPayloads);
 
-  // this is done as a search:update because postgres doesn't support limited updates
-  await knex(executionModel.tableName)
-    .whereIn('cumulus_id', executionIds.map((execution) => execution.cumulus_id))
-    .update(wipedPayloads);
+    if (executions.length < postgresLimit) break;
+  }
 };
 
 /**
@@ -158,6 +166,7 @@ const cleanupExpiredPGExecutionPayloads = async (
  *   payloadTimeout: number
  *   esIndex: string,
  *   updateLimit: number,
+ *   postgresLimit: number,
  * }}
  */
 const parseEnvironment = () => {
@@ -177,6 +186,7 @@ const parseEnvironment = () => {
   const esIndex = process.env.ES_INDEX || 'cumulus';
 
   const updateLimit = Number(process.env.UPDATE_LIMIT || 10000);
+  const postgresLimit = Number(process.env.POSTGRES_LIMIT || 10000);
   return {
     cleanupRunning,
     cleanupNonRunning,
@@ -185,6 +195,7 @@ const parseEnvironment = () => {
     payloadTimeout,
     esIndex,
     updateLimit,
+    postgresLimit,
   };
 };
 
@@ -204,6 +215,7 @@ async function cleanExecutionPayloads() {
     cleanupES,
     payloadTimeout,
     esIndex,
+    postgresLimit,
   } = envConfig;
 
   const promises = [];
@@ -221,7 +233,8 @@ async function cleanExecutionPayloads() {
       payloadTimeout,
       cleanupRunning,
       cleanupNonRunning,
-      updateLimit
+      updateLimit,
+      postgresLimit,
     ));
   }
   await Promise.all(promises);
