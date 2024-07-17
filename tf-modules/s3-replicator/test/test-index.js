@@ -14,6 +14,8 @@ test('handler returns immediately on non-create event', async (t) => {
 });
 
 test('handler skips records created before a given date', async (t) => {
+  process.env.earlierThanDate = '2023-10-01';
+
   const event = {
     Records: [
       {

@@ -10,7 +10,7 @@ function _getLogDate(objectKey) {
 
 async function handler(event, _context) {
   const s3 = new S3();
-  const skipEarlierThanDate = Date.parse(process.env.earlierThanDate);
+  const skipEarlierThanDate = Date.parse(process.env.earlierThanDate) || null;
 
   return await Promise.all(event.Records.map(async (rec) => {
     const eventType = rec.eventName;
@@ -19,16 +19,16 @@ async function handler(event, _context) {
     const srcKey = rec.s3.object.key;
     const objectDate = _getLogDate(srcKey);
 
-    if (objectDate > skipEarlierThanDate) {
-      return await s3.copyObject({
-        CopySource: `${srcBucket}/${srcKey}`,
-        Bucket: process.env.TARGET_BUCKET,
-        Key: `${process.env.TARGET_PREFIX}/${path.basename(srcKey)}`,
-        ACL: 'bucket-owner-full-control',
-      });
+    if (Number.isFinite(skipEarlierThanDate) && objectDate < skipEarlierThanDate) {
+      return null;
     }
 
-    return null;
+    return await s3.copyObject({
+      CopySource: `${srcBucket}/${srcKey}`,
+      Bucket: process.env.TARGET_BUCKET,
+      Key: `${process.env.TARGET_PREFIX}/${path.basename(srcKey)}`,
+      ACL: 'bucket-owner-full-control',
+    });
   }));
 }
 
