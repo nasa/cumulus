@@ -111,7 +111,7 @@ The following applies only to users with a custom value configured for
   provided image.
 
   Users making use of a custom image configuration should note the base image
-  for Core async operation must support node v20.x.
+  for Core async operations must support node v20.x.
 
 #### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
 
