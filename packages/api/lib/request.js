@@ -122,7 +122,6 @@ function validateGranuleExecutionRequest(req, res, next) {
       return res.boom.badRequest('Index is required if query is sent');
     }
   }
-
   return next();
 }
 
