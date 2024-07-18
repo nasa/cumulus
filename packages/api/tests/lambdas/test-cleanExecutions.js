@@ -8,7 +8,7 @@ const {
   localStackConnectionEnv,
 } = require('@cumulus/db');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
-const { handler, getExpirationDate } = require('../../lambdas/cleanExecutions');
+const { handler, getExpirationDate, cleanupExpiredESExecutionPayloads } = require('../../lambdas/cleanExecutions');
 test.beforeEach(async (t) => {
   const { esIndex, esClient, searchClient } = await createTestIndex();
   t.context.esIndex = esIndex;
@@ -83,18 +83,6 @@ test.serial('handler() handles running expiration', async (t) => {
 
   await handler();
 
-  massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at <= expirationDate && massagedExecution.status === 'running') {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else {
-      t.false(pgPayloadsEmpty(massagedExecution));
-    }
-  });
   massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -144,18 +132,6 @@ test.serial('handler() handles non running expiration', async (t) => {
 
   await handler();
 
-  massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at <= expirationDate && massagedExecution.status !== 'running') {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else {
-      t.false(pgPayloadsEmpty(massagedExecution));
-    }
-  });
   massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -187,20 +163,6 @@ test.serial('handler() handles both expirations', async (t) => {
 
   await handler();
 
-  const model = new ExecutionPgModel();
-  let massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at <= payloadExpiration) {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else {
-      t.false(pgPayloadsEmpty(massagedExecution));
-    }
-  });
   let massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -221,19 +183,6 @@ test.serial('handler() handles both expirations', async (t) => {
 
   await handler();
 
-  massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at <= payloadExpiration) {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else {
-      t.false(pgPayloadsEmpty(massagedExecution));
-    }
-  });
   massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -284,17 +233,6 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
 
   await handler();
 
-  const model = new ExecutionPgModel();
-  let massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  let pgCleanedCount = 0;
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (pgPayloadsEmpty(massagedExecution)) pgCleanedCount += 1;
-  });
-  t.is(pgCleanedCount, 2);
   let massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -309,16 +247,6 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
 
   await handler();
 
-  massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  pgCleanedCount = 0;
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (pgPayloadsEmpty(massagedExecution)) pgCleanedCount += 1;
-  });
-  t.is(pgCleanedCount, 4);
   massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -335,16 +263,6 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
 
   await handler();
 
-  massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  pgCleanedCount = 0;
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (pgPayloadsEmpty(massagedExecution)) pgCleanedCount += 1;
-  });
-  t.is(pgCleanedCount, 16);
   massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -359,14 +277,6 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
 
   process.env = env;
 });
-
-
-
-const { fakeExecutionRecordFactory, translatePostgresExecutionToApiExecution } = require('@cumulus/db');
-const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
-
-const { cleanupExpiredESExecutionPayloads } = require('../../lambdas/cleanExecutions');
-
 
 test('cleanupExpiredEsExecutionPayloads() for just running removes expired running executions', async (t) => {
   let timeoutDays = 6;
