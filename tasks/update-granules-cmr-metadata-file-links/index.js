@@ -62,16 +62,13 @@ async function updateEachCmrFileAccessURLs(
 async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
   const updatedGranulesByGranuleId = cloneDeep(granulesByGranuleId);
   const promises = cmrFiles.map(async (cmrFileObject) => {
-    const granule = updatedGranulesByGranuleId[cmrFileObject.granuleId];
-    if (!granule?.files) {
-      throw new Error(`Granule with ID ${cmrFileObject.granuleId} not found in input granules`);
+    const cmrFile = await updatedGranulesByGranuleId[cmrFileObject.granuleId].files.find(isCMRFile);
+
+    if (cmrFile) {
+      delete cmrFile.checksum;
+      delete cmrFile.checksumType;
     }
-    const cmrFile = granule.files.find(isCMRFile);
-    if (!cmrFile) {
-      throw new Error(`CMR file not found for granule with ID ${cmrFileObject.granuleId}`);
-    }
-    delete cmrFile.checksum;
-    delete cmrFile.checksumType;
+
     const bucket = cmrFileObject.bucket;
     const key = cmrFileObject.key;
 
@@ -79,6 +76,7 @@ async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
   });
 
   await Promise.all(promises);
+
   return updatedGranulesByGranuleId;
 }
 
@@ -134,4 +132,3 @@ async function handler(event, context) {
 
 exports.handler = handler;
 exports.updateGranulesCmrMetadataFileLinks = updateGranulesCmrMetadataFileLinks;
-exports.updateCmrFileInfo = updateCmrFileInfo;
