@@ -19,8 +19,6 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
-const { isCMRFile } = require('@cumulus/cmrjs');
-
 const { updateGranulesCmrMetadataFileLinks, updateCmrFileInfo } = require('..');
 
 function cmrReadStream(file) {
@@ -173,7 +171,7 @@ test.serial('update-granules-cmr-metadata-file-links does not throw error if no 
   );
 });
 
-test.serial('update-granules-cmr-metadata-file-links clears checksums only for updated CMR file', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links clears checksums for updated CMR file', async (t) => {
   const newPayload = buildPayload(t);
 
   await validateConfig(t, newPayload.config);
@@ -182,14 +180,11 @@ test.serial('update-granules-cmr-metadata-file-links clears checksums only for u
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
-  newPayload.input.granules[0].files.forEach((file) => {
-    file.type = 'metadata';
-  });
   const message = await updateGranulesCmrMetadataFileLinks(newPayload);
 
   message.granules.forEach((granule) => {
     granule.files.forEach((file) => {
-      if ((isCMRFile(file))) {
+      if (file.type === 'metadata') {
         t.is(file.checksum, undefined);
         t.is(file.checksumType, undefined);
       } else {
@@ -208,11 +203,12 @@ test.serial('update-granules-cmr-metadata-file-links updates size for updated CM
 
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
+
   const message = await updateGranulesCmrMetadataFileLinks(newPayload);
 
   for (const granule of message.granules) {
     for (const file of granule.files) {
-      if (isCMRFile(file)) {
+      if (file.type === 'metadata') {
         const bucket = file.bucket;
         const key = file.key;
         // eslint-disable-next-line no-await-in-loop
