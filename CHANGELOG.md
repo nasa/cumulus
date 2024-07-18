@@ -44,9 +44,16 @@ degraded execution table operations.
   - Added `Bulk Execution Delete` migration type to async operations types
 - **CUMULUS-3742**
   - Script for dumping data into postgres database for testing and replicating issues
+- **CUMULUS-3608**
+  - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations. Descriptions
+    of the variables [here](tf-modules/ingest/variables.tf) include notes on usage and what users should
+    consider if configuring something other than the default values.
 
 ### Changed
 
+- **NDCUM-1051**
+  - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
+  - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
 - **CUMULUS-3320**
   - Updated executions table (please see Migration section and Upgrade
     Instructions for more information) to:
@@ -449,6 +456,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3562**
   - updated crypto-js to 4.2.0
   - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
+- **CUMULUS-3326**
+  - Updated update-granules-cmr-metadata-file-links task to update the file size of the update metadata file and remove the invalidated checksum associated with this file.
 
 ## [v18.1.0] 2023-10-25
 
