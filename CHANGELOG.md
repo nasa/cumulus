@@ -48,6 +48,20 @@ degraded execution table operations.
   - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations. Descriptions
     of the variables [here](tf-modules/ingest/variables.tf) include notes on usage and what users should
     consider if configuring something other than the default values.
+- **CUMULUS-3449**
+  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
+    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
+    and pdrs.execution_cumulus_id
+  - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
+  - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
+    to granules table
+- **CUMULUS-3700**
+  - Added `volume_type` option to `elasticsearch_config` in the
+    `data-persistance` module to allow configuration of the EBS volume type for
+    Elasticsarch; default remains `gp2`.
+- **CUMULUS-3424**
+  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
+    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Changed
 
@@ -69,6 +83,9 @@ degraded execution table operations.
 
 ### Fixed
 
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
 - **CUMULUS-3787**
   - Fixed developer-side bug causing some ts error sto be swallowed in CI
 - **CUMULUS-3320**
@@ -172,13 +189,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 - **CUMULUS-2897**
   - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
     from the `@cumulus/aws-client` package.
-- **CUMULUS-3449**
-  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
-    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
-    and pdrs.execution_cumulus_id
-  - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
-  - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
-    to granules table
 - **CUMULUS-3779**
   - Updates async_operations Docker image to Node v20 and bumps its cumulus dependencies to v18.3.0 to
     support `aws-sdk` v3 changes.
@@ -195,13 +205,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 - **CUMULUS-3606**
   - Updated  with additional documentation covering tunneling configuration
     using a PKCS11 provider
-- **CUMULUS-3700**
-  - Added `volume_type` option to `elasticsearch_config` in the
-    `data-persistance` module to allow configuration of the EBS volume type for
-    Elasticsarch; default remains `gp2`.
-- **CUMULUS-3424**
-  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
-    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Changed
 
@@ -284,13 +287,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 
 ### Fixed
 
-- **CUMULUS-3785**
-  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
-  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
-- **CUMULUS-3320**
-  - Execution database deletions by `cumulus_id` should have greatly improved
-    performance as a table scan will no longer be required for each record
-    deletion to validate parent-child relationships
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
