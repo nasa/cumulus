@@ -241,7 +241,7 @@ test('updateCmrFileInfo - throws error when granule not found', async (t) => {
   const granulesByGranuleId = {};
 
   await t.throwsAsync(() => updateCmrFileInfo(cmrFiles, granulesByGranuleId), {
-    message: 'Granule with ID granule1 not found in input granules containing files',
+    message: 'Granule with ID granule1 not found in input granules',
   });
 });
 
