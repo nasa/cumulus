@@ -184,7 +184,7 @@ test.serial('update-granules-cmr-metadata-file-links clears checksums for update
 
   message.granules.forEach((granule) => {
     granule.files.forEach((file) => {
-      if (file.type === 'metadata') {
+      if (file.type == "metadata") {
         t.is(file.checksum, undefined);
         t.is(file.checksumType, undefined);
       } else {
@@ -208,11 +208,10 @@ test.serial('update-granules-cmr-metadata-file-links updates size for updated CM
 
   for (const granule of message.granules) {
     for (const file of granule.files) {
-      if (file.type === 'metadata') {
+      if (file.type === "metadata") {
         const bucket = file.bucket;
         const key = file.key;
-        // eslint-disable-next-line no-await-in-loop
-        const expectedSize = await getObjectSize({ s3: s3(), bucket, key });
+        let expectedSize = await getObjectSize({ s3: s3(), bucket, key });
 
         t.is(file.size, expectedSize);
       }
