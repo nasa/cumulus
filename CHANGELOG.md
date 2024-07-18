@@ -80,6 +80,8 @@ degraded execution table operations.
  - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 - **CUMULUS-3641**
  - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
+- **CUMULUS-3642**
+ - Adjusted queries to improve performance
 - **CUMULUS-3695**
  - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
 - **CUMULUS-3688**

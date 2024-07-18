@@ -25,6 +25,7 @@ interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
  */
 export class ExecutionSearch extends BaseSearch {
   constructor(event: QueryEvent) {
+    // estimate the table rowcount by default
     if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
       set(event, 'queryStringParameters.estimateTableRowCount', 'true');
     }

@@ -340,7 +340,7 @@ test.serial('GET executions returns list of executions by default', async (t) =>
   t.is(results.length, 3);
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'executions');
-  t.is(meta.count, 3);
+  t.true(meta.count > 0);
   const arns = fakeExecutions.map((i) => i.arn);
   results.forEach((r) => {
     t.true(arns.includes(r.arn));
