@@ -2,7 +2,6 @@
 
 'use strict';
 
-const { ExecutionPgModel, getKnexClient } = require('@cumulus/db');
 const { getEsClient } = require('@cumulus/es-client/search');
 const moment = require('moment');
 const Logger = require('@cumulus/logger');
@@ -100,83 +99,20 @@ const cleanupExpiredESExecutionPayloads = async (
   } while (taskStatus?.body.completed === false);
   log.info(`es request completed with status ${JSON.stringify(taskStatus?.body.task.status)}`);
 };
-
-/**
- * Clean up PG executions that have expired
- *
- * @param {number} payloadTimeout - Maximum number of days a completed
- *   record may have payload entries
- * @param {boolean} cleanupRunning - Enable removal of running execution
- *   payloads
- * @param {boolean} cleanupNonRunning - Enable removal of non-running execution
- *   payloads
- * @param {number} updateLimit - Number of executions to clean up
- * @param {number} postgresLimit - batch size to not overwhelm postgres
- * @returns {Promise<void>}
-*/
-const cleanupExpiredPGExecutionPayloads = async (
-  payloadTimeout,
-  cleanupRunning,
-  cleanupNonRunning,
-  updateLimit,
-  postgresLimit,
-) => {
-  const expiration = getExpirationDate(payloadTimeout);
-  const knex = await getKnexClient();
-  let cleanupOnlyRunning = false;
-  let cleanupOnlyNonRunning = false;
-  if (cleanupRunning && !cleanupNonRunning) cleanupOnlyRunning = true;
-  else if (!cleanupRunning && cleanupNonRunning) cleanupOnlyNonRunning = true;
-  const wipedPayloads = {
-    original_payload: null,
-    final_payload: null,
-  };
-  const executionModel = new ExecutionPgModel();
-  const batchSize = Math.min(postgresLimit, updateLimit);
-  console.log(batchSize);
-  for (let i = 0; i < updateLimit; i += batchSize) {
-    const executions = await knex(executionModel.tableName)
-    .select('cumulus_id')
-    .where('updated_at', '<=', expiration)
-    .where((builder) => {
-      builder.whereNotNull('final_payload')
-        .orWhereNotNull('original_payload');
-    })
-    .modify((queryBuilder) => {
-      if (cleanupOnlyRunning) queryBuilder.where('status', '=', 'running');
-      else if (cleanupOnlyNonRunning) queryBuilder.where('status', '!=', 'running');
-    })
-    .limit(batchSize);
-    // this is done as a search:update because postgres doesn't support limited updates
-    await knex(executionModel.tableName)
-      .whereIn('cumulus_id', executions.map((execution) => execution.cumulus_id))
-      .update(wipedPayloads);
-
-    if (executions.length < postgresLimit) break;
-  }
-};
-
 /**
  * parse out environment variable configuration
  * @returns {{
  *   cleanupNonRunning: boolean,
  *   cleanupRunning: boolean,
- *   cleanupPostgres: boolean,
- *   cleanupES: boolean,
  *   payloadTimeout: number
  *   esIndex: string,
  *   updateLimit: number,
- *   postgresLimit: number,
  * }}
  */
 const parseEnvironment = () => {
   const cleanupNonRunning = JSON.parse(process.env.CLEANUP_NON_RUNNING || 'true');
   const cleanupRunning = JSON.parse(process.env.CLEANUP_RUNNING || 'false');
-
-  const cleanupPostgres = JSON.parse(process.env.CLEANUP_POSTGRES || 'true');
-  const cleanupES = JSON.parse(process.env.CLEANUP_ES || 'true');
   if (!cleanupRunning && !cleanupNonRunning) throw new Error('running and non-running executions configured to be skipped, nothing to do');
-  if (!cleanupES && !cleanupPostgres) throw new Error('elasticsearch and postgres executions configured to be skipped, nothing to do');
 
   const _payloadTimeout = process.env.PAYLOAD_TIMEOUT || '10';
   const payloadTimeout = Number.parseInt(_payloadTimeout, 10);
@@ -186,21 +122,17 @@ const parseEnvironment = () => {
   const esIndex = process.env.ES_INDEX || 'cumulus';
 
   const updateLimit = Number(process.env.UPDATE_LIMIT || 10000);
-  const postgresLimit = Number(process.env.POSTGRES_LIMIT || 10000);
   return {
     cleanupRunning,
     cleanupNonRunning,
-    cleanupPostgres,
-    cleanupES,
     payloadTimeout,
     esIndex,
     updateLimit,
-    postgresLimit,
   };
 };
 
 /**
- * parse environment variables to extract configuration and run cleanup of PG and ES executions
+ * parse environment variables to extract configuration and run cleanup of ES executions
  *
  * @returns {Promise<void>}
  */
@@ -211,33 +143,17 @@ async function cleanExecutionPayloads() {
     updateLimit,
     cleanupRunning,
     cleanupNonRunning,
-    cleanupPostgres,
-    cleanupES,
     payloadTimeout,
     esIndex,
-    postgresLimit,
   } = envConfig;
 
-  const promises = [];
-  if (cleanupES) {
-    promises.push(cleanupExpiredESExecutionPayloads(
+  await cleanupExpiredESExecutionPayloads(
       payloadTimeout,
       cleanupRunning,
       cleanupNonRunning,
       updateLimit,
       esIndex
-    ));
-  }
-  if (cleanupPostgres) {
-    promises.push(cleanupExpiredPGExecutionPayloads(
-      payloadTimeout,
-      cleanupRunning,
-      cleanupNonRunning,
-      updateLimit,
-      postgresLimit,
-    ));
-  }
-  await Promise.all(promises);
+    );
 }
 
 async function handler(_event) {
@@ -258,6 +174,5 @@ module.exports = {
   handler,
   cleanExecutionPayloads,
   getExpirationDate,
-  cleanupExpiredPGExecutionPayloads,
   cleanupExpiredESExecutionPayloads,
 };

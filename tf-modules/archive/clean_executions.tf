@@ -25,8 +25,6 @@ source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/clea
 
       CLEANUP_RUNNING        = var.cleanup_running
       CLEANUP_NON_RUNNING     = var.cleanup_non_running
-      CLEANUP_ES             = var.cleanup_es
-      CLEANUP_POSTGRES       = var.cleanup_postgres
 
       PAYLOAD_TIMEOUT        = var.payload_timeout
       

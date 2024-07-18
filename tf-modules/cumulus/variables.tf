@@ -568,18 +568,6 @@ variable "cleanup_non_running" {
   description = "Boolean flag that when set to true will enable non 'running' execution cleanup"
 }
 
-variable "cleanup_es" {
-  type    = bool
-  default = true
-  description = "Boolean flag that when set to true will enable elasticsearch execution cleanup"
-}
-
-variable "cleanup_postgres" {
-  type    = bool
-  default = false
-  description = "Boolean flag that when set to true will enable postgres execution cleanup"
-}
-
 variable "payload_timeout" {
   type    = number
   default = 10
