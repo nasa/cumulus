@@ -44,9 +44,16 @@ degraded execution table operations.
   - Added `Bulk Execution Delete` migration type to async operations types
 - **CUMULUS-3742**
   - Script for dumping data into postgres database for testing and replicating issues
+- **CUMULUS-3608**
+  - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations. Descriptions
+    of the variables [here](tf-modules/ingest/variables.tf) include notes on usage and what users should
+    consider if configuring something other than the default values.
 
 ### Changed
 
+- **NDCUM-1051**
+  - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
+  - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
 - **CUMULUS-3320**
   - Updated executions table (please see Migration section and Upgrade
     Instructions for more information) to:
@@ -217,6 +224,13 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 - **CUMULUS-3606**
   - Updated  with additional documentation covering tunneling configuration
     using a PKCS11 provider
+- **CUMULUS-3700**
+  - Added `volume_type` option to `elasticsearch_config` in the
+    `data-persistance` module to allow configuration of the EBS volume type for
+    Elasticsarch; default remains `gp2`.
+- **CUMULUS-3424**
+  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
+    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Changed
 
@@ -299,6 +313,13 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 
 ### Fixed
 
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
+- **CUMULUS-3320**
+  - Execution database deletions by `cumulus_id` should have greatly improved
+    performance as a table scan will no longer be required for each record
+    deletion to validate parent-child relationships
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
@@ -458,6 +479,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3562**
   - updated crypto-js to 4.2.0
   - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
+- **CUMULUS-3326**
+  - Updated update-granules-cmr-metadata-file-links task to update the file size of the update metadata file and remove the invalidated checksum associated with this file.
 
 ## [v18.1.0] 2023-10-25
 
