@@ -44,6 +44,10 @@ degraded execution table operations.
   - Added `Bulk Execution Delete` migration type to async operations types
 - **CUMULUS-3742**
   - Script for dumping data into postgres database for testing and replicating issues
+- **CUMULUS-3608**
+  - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations. Descriptions
+    of the variables [here](tf-modules/ingest/variables.tf) include notes on usage and what users should
+    consider if configuring something other than the default values.
 
 ### Changed
 
