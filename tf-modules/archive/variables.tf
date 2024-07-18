@@ -349,19 +349,7 @@ variable "cleanup_running" {
 variable "cleanup_non_running" {
   type    = bool
   default = true
-  description = "Boolean flag that when set to true will enable 'running' execution cleanup"
-}
-
-variable "cleanup_es" {
-  type    = bool
-  default = true
-  description = "Boolean flag that when set to true will enable elasticsearch execution cleanup"
-}
-
-variable "cleanup_postgres" {
-  type    = bool
-  default = false
-  description = "Boolean flag that when set to true will enable postgres execution cleanup"
+  description = "Boolean flag that when set to true will enable non 'running' execution cleanup"
 }
 
 variable "payload_timeout" {
@@ -377,7 +365,7 @@ variable "es_index" {
 }
 
 variable "update_limit" {
-  type = number
+type = number
   default = 10000
   description = "number of executions to cleanup in one lambda run"
 }
@@ -387,8 +375,6 @@ variable "log_destination_arn" {
   default = "N/A"
   description = "A shared AWS:Log:Destination that receives logs from log_groups"
 }
-
-
 
 variable "es_index_shards" {
   description = "The number of shards for the Elasticsearch index"

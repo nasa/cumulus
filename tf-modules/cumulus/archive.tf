@@ -90,8 +90,6 @@ module "archive" {
   daily_execution_payload_cleanup_schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
   cleanup_running        = var.cleanup_running
   cleanup_non_running     = var.cleanup_non_running
-  cleanup_es             = var.cleanup_es
-  cleanup_postgres       = var.cleanup_postgres
 
   payload_timeout        = var.payload_timeout
   

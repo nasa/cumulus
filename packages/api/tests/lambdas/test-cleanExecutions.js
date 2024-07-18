@@ -2,69 +2,50 @@
 const test = require('ava');
 const moment = require('moment');
 const clone = require('lodash/clone');
-const { randomId } = require('@cumulus/common/test-utils');
 const {
   translatePostgresExecutionToApiExecution,
   fakeExecutionRecordFactory,
-  destroyLocalTestDb,
-  generateLocalTestDb,
-  ExecutionPgModel,
-  migrationDir,
   localStackConnectionEnv,
 } = require('@cumulus/db');
 const { cleanupTestIndex, createTestIndex } = require('@cumulus/es-client/testUtils');
-const { sleep } = require('@cumulus/common');
-const { handler, getExpirationDate } = require('../../lambdas/cleanExecutions');
+const { handler, getExpirationDate, cleanupExpiredESExecutionPayloads } = require('../../lambdas/cleanExecutions');
 test.beforeEach(async (t) => {
-  t.context.testDbName = randomId('cleanExecutions');
-  const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
-
-  t.context.knex = knex;
-  t.context.knexAdmin = knexAdmin;
   const { esIndex, esClient, searchClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
   t.context.searchClient = searchClient;
+
   const records = [];
-  for (let i = 0; i < 10; i += 1) {
-    records.push(fakeExecutionRecordFactory({
+  for (let i = 0; i < 20; i += 2) {
+    records.push(await translatePostgresExecutionToApiExecution(fakeExecutionRecordFactory({
+      updated_at: moment().subtract(i, 'days').toDate(),
+      final_payload: '{"a": "b"}',
+      original_payload: '{"b": "c"}',
+      status: 'completed',
+      cumulus_id: i,
+    })));
+    records.push(await translatePostgresExecutionToApiExecution(fakeExecutionRecordFactory({
       updated_at: moment().subtract(i, 'days').toDate(),
       final_payload: '{"a": "b"}',
       original_payload: '{"b": "c"}',
       status: 'running',
-    }));
-    records.push(fakeExecutionRecordFactory({
-      updated_at: moment().subtract(i, 'days').toDate(),
-      final_payload: '{"a": "b"}',
-      original_payload: '{"b": "c"}',
-      status: 'failed',
-    }));
+      cumulus_id: i + 1,
+    })));
   }
-  const model = new ExecutionPgModel();
-
-  const pgRecords = await model.insert(t.context.knex, records, '*');
-  for (const record of pgRecords) {
+  for (const record of records) {
     await t.context.esClient.client.index({
-      body: await translatePostgresExecutionToApiExecution(record),
-      id: record.cumulus_id,
+      body: record,
+      id: record.cumulusId,
       index: t.context.esIndex,
       type: 'execution',
       refresh: true,
     });
   }
-  t.context.execution_cumulus_ids = pgRecords.map((record) => record.cumulus_id);
 });
 
 test.afterEach.always(async (t) => {
-  await destroyLocalTestDb({
-    knex: t.context.knex,
-    knexAdmin: t.context.knexAdmin,
-    tesetDbName: t.context.testDbName,
-  });
   await cleanupTestIndex(t.context);
 });
-
-const pgPayloadsEmpty = (entry) => !entry.final_payload && !entry.orginal_payload;
 
 const esPayloadsEmpty = (entry) => !entry.finalPayload && !entry.orginalPayload;
 
@@ -78,25 +59,10 @@ test.serial('handler() handles running expiration', async (t) => {
   let expirationDate = getExpirationDate(expirationDays);
   process.env.CLEANUP_NON_RUNNING = 'false';
   process.env.CLEANUP_RUNNING = 'true';
-  process.env.CLEANUP_POSTGRES = 'true';
-  process.env.CLEANUP_ES = 'true';
   process.env.PAYLOAD_TIMEOUT = expirationDays;
 
   await handler();
-  await sleep(5000);
-  const model = new ExecutionPgModel();
-  let massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at <= expirationDate && massagedExecution.status === 'running') {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else {
-      t.false(pgPayloadsEmpty(massagedExecution));
-    }
-  });
+
   let massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -116,19 +82,7 @@ test.serial('handler() handles running expiration', async (t) => {
   process.env.PAYLOAD_TIMEOUT = expirationDays;
 
   await handler();
-  await sleep(5000);
-  massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at <= expirationDate && massagedExecution.status === 'running') {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else {
-      t.false(pgPayloadsEmpty(massagedExecution));
-    }
-  });
+
   massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -154,24 +108,9 @@ test.serial('handler() handles non running expiration', async (t) => {
   let expirationDate = getExpirationDate(expirationDays);
   process.env.CLEANUP_NON_RUNNING = 'true';
   process.env.CLEANUP_RUNNING = 'false';
-  process.env.CLEANUP_POSTGRES = 'true';
-  process.env.CLEANUP_ES = 'true';
   process.env.PAYLOAD_TIMEOUT = expirationDays;
   await handler();
-  await sleep(5000);
-  const model = new ExecutionPgModel();
-  let massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at <= expirationDate && massagedExecution.status !== 'running') {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else {
-      t.false(pgPayloadsEmpty(massagedExecution));
-    }
-  });
+
   let massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -192,19 +131,7 @@ test.serial('handler() handles non running expiration', async (t) => {
   process.env.PAYLOAD_TIMEOUT = expirationDays;
 
   await handler();
-  await sleep(5000);
-  massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at <= expirationDate && massagedExecution.status !== 'running') {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else {
-      t.false(pgPayloadsEmpty(massagedExecution));
-    }
-  });
+
   massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -233,25 +160,9 @@ test.serial('handler() handles both expirations', async (t) => {
   process.env.CLEANUP_RUNNING = 'true';
   process.env.CLEANUP_NON_RUNNING = 'true';
   process.env.PAYLOAD_TIMEOUT = payloadTimeout;
-  process.env.CLEANUP_POSTGRES = 'true';
-  process.env.CLEANUP_ES = 'true';
 
   await handler();
-  await sleep(5000);
-  const model = new ExecutionPgModel();
-  let massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
 
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at <= payloadExpiration) {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else {
-      t.false(pgPayloadsEmpty(massagedExecution));
-    }
-  });
   let massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -271,20 +182,7 @@ test.serial('handler() handles both expirations', async (t) => {
   process.env.PAYLOAD_TIMEOUT = payloadTimeout;
 
   await handler();
-  await sleep(5000);
-  massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
 
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (massagedExecution.updated_at <= payloadExpiration) {
-      t.true(pgPayloadsEmpty(massagedExecution));
-    } else {
-      t.false(pgPayloadsEmpty(massagedExecution));
-    }
-  });
   massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -330,24 +228,11 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
   process.env.CLEANUP_RUNNING = 'true';
   process.env.CLEANUP_NON_RUNNING = 'true';
   process.env.PAYLOAD_TIMEOUT = 2;
-  process.env.CLEANUP_ES = 'true';
-  process.env.CLEANUP_POSTGRES = 'true';
 
   process.env.UPDATE_LIMIT = 2;
 
   await handler();
-  await sleep(5000);
-  const model = new ExecutionPgModel();
-  let massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  let pgCleanedCount = 0;
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (pgPayloadsEmpty(massagedExecution)) pgCleanedCount += 1;
-  });
-  t.is(pgCleanedCount, 2);
+
   let massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -361,17 +246,7 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
   t.is(esCleanedCount, 2);
 
   await handler();
-  await sleep(5000);
-  massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  pgCleanedCount = 0;
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (pgPayloadsEmpty(massagedExecution)) pgCleanedCount += 1;
-  });
-  t.is(pgCleanedCount, 4);
+
   massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -387,17 +262,7 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
   process.env.UPDATE_LIMIT = 12;
 
   await handler();
-  await sleep(5000);
-  massagedPgExecutions = await Promise.all(
-    t.context.execution_cumulus_ids.map(
-      async (cumulusId) => await model.get(t.context.knex, { cumulus_id: cumulusId })
-    )
-  );
-  pgCleanedCount = 0;
-  massagedPgExecutions.forEach((massagedExecution) => {
-    if (pgPayloadsEmpty(massagedExecution)) pgCleanedCount += 1;
-  });
-  t.is(pgCleanedCount, 16);
+
   massagedEsExecutions = await t.context.searchClient.query({
     index: t.context.esIndex,
     type: 'execution',
@@ -411,4 +276,278 @@ test.serial('handler() iterates through data in batches when updateLimit is set 
   t.is(esCleanedCount, 16);
 
   process.env = env;
+});
+
+test('cleanupExpiredEsExecutionPayloads() for just running removes expired running executions', async (t) => {
+  let timeoutDays = 6;
+  await cleanupExpiredESExecutionPayloads(
+    timeoutDays,
+    true,
+    false,
+    100,
+    t.context.esIndex
+  );
+  // await es refresh
+
+  let expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
+  let relevantExecutions = await t.context.searchClient.query(
+    {
+      index: t.context.esIndex,
+      type: 'execution',
+      body: {
+        query: {
+          range: {
+            updatedAt: {
+              lte: expiration,
+            },
+          },
+        },
+      },
+    }
+  );
+  for (const execution of relevantExecutions.results) {
+    if (execution.status === 'running') {
+      t.true(execution.finalPayload === undefined);
+      t.true(execution.originalPayload === undefined);
+    } else {
+      t.false(execution.finalPayload === undefined);
+      t.false(execution.originalPayload === undefined);
+    }
+  }
+  let irrelevantExecutions = await t.context.searchClient.query(
+    {
+      index: t.context.esIndex,
+      type: 'execution',
+      body: {
+        query: {
+          range: {
+            updatedAt: {
+              gt: expiration,
+            },
+          },
+        },
+      },
+    }
+  );
+  for (const execution of irrelevantExecutions.results) {
+    t.false(execution.finalPayload === undefined);
+    t.false(execution.originalPayload === undefined);
+  }
+
+  timeoutDays = 2;
+  await cleanupExpiredESExecutionPayloads(
+    timeoutDays,
+    true,
+    false,
+    100,
+    t.context.esIndex
+  );
+
+  expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
+  relevantExecutions = await t.context.searchClient.query(
+    {
+      index: t.context.esIndex,
+      type: 'execution',
+      body: {
+        query: {
+          range: {
+            updatedAt: {
+              lte: expiration,
+            },
+          },
+        },
+      },
+    }
+  );
+  for (const execution of relevantExecutions.results) {
+    if (execution.status === 'running') {
+      t.true(execution.finalPayload === undefined);
+      t.true(execution.originalPayload === undefined);
+    } else {
+      t.false(execution.finalPayload === undefined);
+      t.false(execution.originalPayload === undefined);
+    }
+  }
+  irrelevantExecutions = await t.context.searchClient.query(
+    {
+      index: t.context.esIndex,
+      type: 'execution',
+      body: {
+        query: {
+          range: {
+            updatedAt: {
+              gt: expiration,
+            },
+          },
+        },
+      },
+    }
+  );
+  for (const execution of irrelevantExecutions.results) {
+    t.false(execution.finalPayload === undefined);
+    t.false(execution.originalPayload === undefined);
+  }
+});
+
+test('cleanupExpiredEsExecutionPayloads() for just nonRunning removes expired non running executions', async (t) => {
+  let timeoutDays = 6;
+  await cleanupExpiredESExecutionPayloads(
+    timeoutDays,
+    false,
+    true,
+    100,
+    t.context.esIndex
+  );
+
+  let expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
+
+  let relevantExecutions = await t.context.searchClient.query(
+    {
+      index: t.context.esIndex,
+      type: 'execution',
+      body: {
+        query: {
+          range: {
+            updatedAt: {
+              lte: expiration,
+            },
+          },
+        },
+      },
+    }
+  );
+  for (const execution of relevantExecutions.results) {
+    if (execution.status !== 'running') {
+      t.true(execution.finalPayload === undefined);
+      t.true(execution.originalPayload === undefined);
+    } else {
+      t.false(execution.finalPayload === undefined);
+      t.false(execution.originalPayload === undefined);
+    }
+  }
+  let irrelevantExecutions = await t.context.searchClient.query(
+    {
+      index: t.context.esIndex,
+      type: 'execution',
+      body: {
+        query: {
+          range: {
+            updatedAt: {
+              gt: expiration,
+            },
+          },
+        },
+      },
+    }
+  );
+  for (const execution of irrelevantExecutions.results) {
+    t.false(execution.finalPayload === undefined);
+    t.false(execution.originalPayload === undefined);
+  }
+
+  timeoutDays = 2;
+  await cleanupExpiredESExecutionPayloads(
+    timeoutDays,
+    false,
+    true,
+    100,
+    t.context.esIndex
+  );
+
+  expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
+  relevantExecutions = await t.context.searchClient.query(
+    {
+      index: t.context.esIndex,
+      type: 'execution',
+      body: {
+        query: {
+          range: {
+            updatedAt: {
+              lte: expiration,
+            },
+          },
+        },
+      },
+    }
+  );
+  for (const execution of relevantExecutions.results) {
+    if (execution.status !== 'running') {
+      t.true(execution.finalPayload === undefined);
+      t.true(execution.originalPayload === undefined);
+    } else {
+      t.false(execution.finalPayload === undefined);
+      t.false(execution.originalPayload === undefined);
+    }
+  }
+  irrelevantExecutions = await t.context.searchClient.query(
+    {
+      index: t.context.esIndex,
+      type: 'execution',
+      body: {
+        query: {
+          range: {
+            updatedAt: {
+              gt: expiration,
+            },
+          },
+        },
+      },
+    }
+  );
+  for (const execution of irrelevantExecutions.results) {
+    t.false(execution.finalPayload === undefined);
+    t.false(execution.originalPayload === undefined);
+  }
+});
+
+test('cleanupExpiredEsExecutionPayloads() for running and nonRunning executions', async (t) => {
+  const timeoutDays = 5;
+  await cleanupExpiredESExecutionPayloads(
+    timeoutDays,
+    true,
+    true,
+    100,
+    t.context.esIndex
+  );
+
+  const expiration = moment().subtract(timeoutDays, 'days').toDate().getTime();
+
+  const relevant = await t.context.searchClient.query(
+    {
+      index: t.context.esIndex,
+      type: 'execution',
+      body: {
+        query: {
+          range: {
+            updatedAt: {
+              lte: expiration,
+            },
+          },
+        },
+      },
+    }
+  );
+  for (const execution of relevant.results) {
+    t.true(execution.finalPayload === undefined);
+    t.true(execution.originalPayload === undefined);
+  }
+  const irrelevantExecutions = await t.context.searchClient.query(
+    {
+      index: t.context.esIndex,
+      type: 'execution',
+      body: {
+        query: {
+          range: {
+            updatedAt: {
+              gt: expiration,
+            },
+          },
+        },
+      },
+    }
+  );
+  for (const execution of irrelevantExecutions.results) {
+    t.false(execution.finalPayload === undefined);
+    t.false(execution.originalPayload === undefined);
+  }
 });
