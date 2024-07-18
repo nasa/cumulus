@@ -136,7 +136,7 @@ export class CollectionSearch extends BaseSearch {
     const granulesTable = TableNames.granules;
     const statsQuery = knex(granulesTable)
       .select(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
-      .count(`${granulesTable}.status`)
+      .count('*')
       .groupBy(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
       .whereIn(`${granulesTable}.collection_cumulus_id`, collectionCumulusIds);
 

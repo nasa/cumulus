@@ -197,7 +197,7 @@ class StatsSearch extends BaseSearch {
       query.select(`${this.tableName}.${this.field} as aggregatedfield`);
     }
     query.modify((queryBuilder) => this.joinTables(queryBuilder))
-      .count(`${this.tableName}.cumulus_id as count`)
+      .count('* as count')
       .groupBy('aggregatedfield')
       .orderBy([{ column: 'count', order: 'desc' }, { column: 'aggregatedfield' }]);
   }

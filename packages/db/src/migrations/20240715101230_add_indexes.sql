@@ -21,3 +21,9 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_coll_status_processendtime_cumu
 SELECT CURRENT_TIMESTAMP;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_status_provider_collection_cumulus_id_index ON granules(status, provider_cumulus_id, collection_cumulus_id, cumulus_id);
 SELECT CURRENT_TIMESTAMP;
+
+SELECT CURRENT_TIMESTAMP;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_status_collection_cumulus_id_index ON executions(status, collection_cumulus_id, cumulus_id);
+SELECT CURRENT_TIMESTAMP;
+
+VACUUM (ANALYZE, VERBOSE) executions;
