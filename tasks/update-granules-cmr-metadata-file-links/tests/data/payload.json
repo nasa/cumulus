@@ -32,34 +32,22 @@
             {
               "bucket": "cumulus-internal",
               "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-              "type": "data",
-              "checksumType": "SHA256",
-              "checksum": "0f02aad08b7bf8ef2d04d11e8f6377152c27a5769cd6b3c36228cab66ead0db9",
-              "size": 379180
+              "type": "data"
             },
             {
               "bucket": "cumulus-internal",
               "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-              "type": "browse",
-              "checksumType": "SHA256",
-              "checksum": "1f02aad08b7bf8ef2d04d11e8f6377152c27a5769cd6b3c36228cab66ead0db9",
-              "size": 379181
+              "type": "browse"
             },
             {
               "bucket": "cumulus-internal",
               "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
-              "type": "browse",
-              "checksumType": "SHA256",
-              "checksum": "2f02aad08b7bf8ef2d04d11e8f6377152c27a5769cd6b3c36228cab66ead0db9",
-              "size": 379182
+              "type": "browse"
             },
             {
               "bucket": "cumulus-internal",
               "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
-              "type": "metadata",
-              "checksumType": "SHA256",
-              "checksum": "3f02aad08b7bf8ef2d04d11e8f6377152c27a5769cd6b3c36228cab66ead0db9",
-              "size": 379183
+              "type": "metadata"
             }
           ]
         },
@@ -69,10 +57,7 @@
              {
               "bucket": "cumulus-internal",
               "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090723.cmr.json",
-              "type": "metadata",
-              "checksumType": "SHA256",
-              "checksum": "4f02aad08b7bf8ef2d04d11e8f6377152c27a5769cd6b3c36228cab66ead0db9",
-              "size": 379184
+              "type": "metadata"
             }
           ]
         },
@@ -82,10 +67,7 @@
             {
               "bucket": "cumulus-internal",
               "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090722.cmr.json",
-              "type": "metadata",
-              "checksumType": "SHA256",
-              "checksum": "5f02aad08b7bf8ef2d04d11e8f6377152c27a5769cd6b3c36228cab66ead0db9",
-              "size": 379185
+              "type": "metadata"
             }
           ]
         }
