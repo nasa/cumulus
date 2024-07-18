@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Replace ElasticSearch Phase 1
+
+- **CUMULUS-3239**
+  - Updated `execution` list api endpoint and added `ExecutionSearch` class to query postgres
+- **CUMULUS-3639**
+  - Updated `/collections/active` endpoint to query postgres
+- **CUMULUS-3641**
+  - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
+- **CUMULUS-3642**
+  - Adjusted queries to improve performance
+- **CUMULUS-3688**
+  - Updated `stats` api endpoint to query postgres instead of elasticsearch
+- **CUMULUS-3689**
+  - Updated `stats/aggregate` api endpoint to query postgres instead of elasticsearch
+  - Created a new StatsSearch class for querying postgres with the stats endpoint
+- **CUMULUS-3692**
+  - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
+    support basic queries for granules
+  - Updated granules List endpoint to query postgres for basic queries
+- **CUMULUS-3693**
+  - Added functionality to `@cumulus/db/src/search` to support range queries
+- **CUMULUS-3694**
+  - Added functionality to `@cumulus/db/src/search` to support term queries
+  - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
+  - Updated granules List endpoint to search postgres
+- **CUMULUS-3695**
+  - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
+- **CUMULUS-3696**
+  - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
+- **CUMULUS-3699**
+  - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
+
 ### Migration Notes
 
 #### CUMULUS-3320 Update executions table
@@ -44,9 +76,16 @@ degraded execution table operations.
   - Added `Bulk Execution Delete` migration type to async operations types
 - **CUMULUS-3742**
   - Script for dumping data into postgres database for testing and replicating issues
+- **CUMULUS-3608**
+  - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations. Descriptions
+    of the variables [here](tf-modules/ingest/variables.tf) include notes on usage and what users should
+    consider if configuring something other than the default values.
 
 ### Changed
 
+- **NDCUM-1051**
+  - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
+  - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
 - **CUMULUS-3320**
   - Updated executions table (please see Migration section and Upgrade
     Instructions for more information) to:
@@ -70,37 +109,6 @@ degraded execution table operations.
     deletion to validate parent-child relationships
 
 ## [v18.3.1] 2024-07-08
-
-### Replace ElasticSearch Phase 1
-- **CUMULUS-3239**
- - Updated `execution` list api endpoint and added `ExecutionSearch` class to query postgres
-- **CUMULUS-3639**
- - Updated `/collections/active` endpoint to query postgres
-- **CUMULUS-3699**
- - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
-- **CUMULUS-3641**
- - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
-- **CUMULUS-3642**
- - Adjusted queries to improve performance
-- **CUMULUS-3695**
- - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
-- **CUMULUS-3688**
- - Updated `stats` api endpoint to query postgres instead of elasticsearch
-- **CUMULUS-3689**
- - Updated `stats/aggregate` api endpoint to query postgres instead of elasticsearch
- - Created a new StatsSearch class for querying postgres with the stats endpoint
-- **CUMULUS-3692**
-  - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
-    support basic queries for granules
-  - Updated granules List endpoint to query postgres for basic queries
-- **CUMULUS-3693**
-  - Added functionality to `@cumulus/db/src/search` to support range queries
-- **CUMULUS-3694**
-  - Added functionality to `@cumulus/db/src/search` to support term queries
-  - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
-  - Updated granules List endpoint to search postgres
-- **CUMULUS-3696**
-  - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
 
 ### Migration Notes
 
@@ -219,6 +227,13 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 - **CUMULUS-3606**
   - Updated  with additional documentation covering tunneling configuration
     using a PKCS11 provider
+- **CUMULUS-3700**
+  - Added `volume_type` option to `elasticsearch_config` in the
+    `data-persistance` module to allow configuration of the EBS volume type for
+    Elasticsarch; default remains `gp2`.
+- **CUMULUS-3424**
+  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
+    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Changed
 
@@ -301,6 +316,13 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 
 ### Fixed
 
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
+- **CUMULUS-3320**
+  - Execution database deletions by `cumulus_id` should have greatly improved
+    performance as a table scan will no longer be required for each record
+    deletion to validate parent-child relationships
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
@@ -460,6 +482,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3562**
   - updated crypto-js to 4.2.0
   - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
+- **CUMULUS-3326**
+  - Updated update-granules-cmr-metadata-file-links task to update the file size of the update metadata file and remove the invalidated checksum associated with this file.
 
 ## [v18.1.0] 2023-10-25
 

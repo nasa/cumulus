@@ -196,3 +196,24 @@ variable "default_log_retention_days" {
   default = 30
   description = "Optional default value that user chooses for their log retention periods"
 }
+
+variable "sqs_message_consumer_watcher_message_limit" {
+  type = number
+  default = 500
+  description = <<EOF
+    Number of messages the SQS message consumer Lambda will attempt to read from SQS in a single execution. 
+    Note that increasing this value may result in a direct increase/decrease in triggered workflows. Users should
+    only adjust this value with the understanding of how it will impact the number of queued workflows in their 
+    system.
+  EOF
+}
+
+variable "sqs_message_consumer_watcher_time_limit" {
+  type = number
+  default = 60
+  description = <<EOF
+    Number of seconds the SQS message consumer Lambda will remain active and polling for new messages. Note that this value 
+    should be less than the overall Lambda invocation timeout or else the Lambda may be terminated while still actively
+    polling SQS. This value should be adjusted in conjunction with sqs_message_consumer_watcher_message_limit.
+  EOF
+}

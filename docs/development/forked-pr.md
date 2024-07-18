@@ -8,7 +8,7 @@ id: forked-pr
 
 * Fork the Cumulus repo
 * Create a new branch from the branch you'd like to contribute to
-* If an issue does't already exist, submit one (see above)
+* If an issue doesn't already exist, submit one (see above)
 
 ## Create a Pull Request
 
