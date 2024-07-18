@@ -148,12 +148,12 @@ async function cleanExecutionPayloads() {
   } = envConfig;
 
   await cleanupExpiredESExecutionPayloads(
-      payloadTimeout,
-      cleanupRunning,
-      cleanupNonRunning,
-      updateLimit,
-      esIndex
-    );
+    payloadTimeout,
+    cleanupRunning,
+    cleanupNonRunning,
+    updateLimit,
+    esIndex
+  );
 }
 
 async function handler(_event) {
