@@ -14,14 +14,16 @@ To reduce storage requirements, a CloudWatch rule (`{stack-name}-dailyExecutionP
 
 ## Execution backlog cleanup
 
-Because many users have accumulated a substantial backlog of un-cleaned execution payloads, this lambda specifies an update_limit configuration to avoid overwhelming elasticsearch or postgres and/or timing out lambda.
-
-### Suggested update_limit
-The cumulus core team has tested
+Because many users have accumulated a substantial backlog of un-cleaned execution payloads, this lambda specifies an update_limit configuration to avoid overwhelming elasticsearch and hogging too many resources.
+For backlog cleanup it is recommended the following
+  - set the daily_execution_payload_cleanup_schedule_expression to run this hourly: `"cron(0 * * * ? *)"`
+  - a conservative update_limit is 1,000,000: this has been tested to be workable on a 1 node t2.small.search cluster
+Starting with this configuration 24 million es records per day can be cleaned up.
+Once backlog has been taken care of, a similar configuration should be able to run once per day and keep up with ingest rate
 
 ### Configuration
 
-The following configuration flags have been made available in the `cumulus` module.   They may be overridden in your deployment's instance of the `cumulus` module by adding the following configuration options:
+The following configuration flags have been made available in the `cumulus` module. They may be overridden in your deployment's instance of the `cumulus` module by adding the following configuration options:
 
 #### daily_execution_payload_cleanup_schedule_expression _(string)_
 
@@ -40,18 +42,6 @@ Default value is `false`.
 This configuration option, when set to true, will enable cleanup of non -running (any status _other_ than `running`) execution payloads.
 
 Default value is `true`.
-
-#### cleanup_es _(bool)_
-
-This configuration option, when set to true, will enable cleanup of elasticsearch execution payloads
-
-Default value is `true`.
-
-#### cleanup_postgres _(bool)_
-
-This configuration option, when set to true, will enable cleanup of postgres execution payloads
-
-Default value is `false`.
 
 #### payload_timeout _(number)_
 
