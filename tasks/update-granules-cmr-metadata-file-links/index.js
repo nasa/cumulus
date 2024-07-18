@@ -3,7 +3,6 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
-const cloneDeep = require('lodash/cloneDeep');
 const { getObjectSize } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
@@ -60,24 +59,19 @@ async function updateEachCmrFileAccessURLs(
 }
 
 async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
-  const updatedGranulesByGranuleId = cloneDeep(granulesByGranuleId);
-  const promises = cmrFiles.map(async (cmrFileObject) => {
-    const cmrFile = await updatedGranulesByGranuleId[cmrFileObject.granuleId].files.find(isCMRFile);
+  for (const cmrFileObject of cmrFiles) {
+    let cmrFile = await granulesByGranuleId[cmrFileObject.granuleId].files.find(isCMRFile);
 
     if (cmrFile) {
       delete cmrFile.checksum;
-      delete cmrFile.checksumType;
+      delete cmrFile.checksumType
     }
 
     const bucket = cmrFileObject.bucket;
     const key = cmrFileObject.key;
 
     cmrFile.size = await getObjectSize({ s3: s3(), bucket, key });
-  });
-
-  await Promise.all(promises);
-
-  return updatedGranulesByGranuleId;
+  }
 }
 
 async function updateGranulesCmrMetadataFileLinks(event) {
@@ -103,11 +97,11 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     distributionBucketMap
   );
 
-  const updatedGranulesByGranuleId = await updateCmrFileInfo(cmrFiles, granulesByGranuleId);
+  await updateCmrFileInfo(cmrFiles, granulesByGranuleId);
 
   // Map etag info from granules' CMR files
   const updatedCmrETags = mapFileEtags(updatedCmrFiles);
-  const outputGranules = Object.values(updatedGranulesByGranuleId);
+  const outputGranules = Object.values(granulesByGranuleId);
   outputGranules.forEach(removeEtagsFromFileObjects);
   return {
     granules: outputGranules,
