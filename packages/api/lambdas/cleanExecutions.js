@@ -78,7 +78,7 @@ const cleanupExpiredESExecutionPayloads = async (
     script: script,
   };
   const esClient = await getEsClient();
-  const [{node}, _ ] = await esConfig();
+  const [{ node }] = await esConfig();
   // this launches the job for ES to perform, asynchronously
   const updateTask = await esClient._client.updateByQuery({
     index,
