@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## [Unreleased]
 
 ### Migration Notes
 
@@ -24,32 +24,94 @@ Deployments with low volume databases and low activity and/or test/development
 environments should be able to install these updates via the normal automatic
 Cumulus deployment process.
 
-
 Please *carefully* review the migration [process documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade_execution_table_CUMULUS_3320).    Failure to
 make these updates properly will likely result in deployment failure and/or
 degraded execution table operations.
 
+#### CUMULUS-3449 Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-3449 requires manual update to postgres database in
+  production environment. Please follow [Update Cumulus_id Type and
+  Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
+
+### Breaking Changes
+
+### Added
+
+- **CUMULUS-3320**
+  - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
+    bulk deletion of executions from elasticsearch by collectionId
+  - Added `Bulk Execution Delete` migration type to async operations types
+- **CUMULUS-3742**
+  - Script for dumping data into postgres database for testing and replicating issues
+- **CUMULUS-3608**
+  - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations. Descriptions
+    of the variables [here](tf-modules/ingest/variables.tf) include notes on usage and what users should
+    consider if configuring something other than the default values.
+- **CUMULUS-3449**
+  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
+    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
+    and pdrs.execution_cumulus_id
+  - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
+  - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
+    to granules table
+- **CUMULUS-3700**
+  - Added `volume_type` option to `elasticsearch_config` in the
+    `data-persistance` module to allow configuration of the EBS volume type for
+    Elasticsarch; default remains `gp2`.
+- **CUMULUS-3424**
+  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
+    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
+
+### Changed
+
+- **NDCUM-1051**
+  - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
+  - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
+- **CUMULUS-3320**
+  - Updated executions table (please see Migration section and Upgrade
+    Instructions for more information) to:
+    - Add index on `collection_cumulus_id`
+    - Add index on `parent_cumulus_id`
+    - Update `executions_parent_cumulus_id_foreign` constraint to add `ON DELETE
+      SET NULL`.  This change will cause deletions in the execution table to
+      allow deletion of parent executions, when this occurs the child will have
+      it's parent reference set to NULL as part of the deletion operations.
+- **CUMULUS-3449**
+  - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
+    from columns ending with "cumulus_id" to number.
+
+### Fixed
+
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
+- **CUMULUS-3787**
+  - Fixed developer-side bug causing some ts error sto be swallowed in CI
+- **CUMULUS-3320**
+  - Execution database deletions by `cumulus_id` should have greatly improved
+    performance as a table scan will no longer be required for each record
+    deletion to validate parent-child relationships
+
+## [v18.3.1] 2024-07-08
+
+### Migration Notes
+
 #### CUMULUS-3433 Update to node.js v20
 
 The following applies only to users with a custom value configured for
-`async_operation_image`:
+`async-operation`:
 
-- As part of the node v20 update process, a new version (49) of the Core
+- As part of the node v20 update process, a new version (52) of the Core
   async-operation container was published - [cumuluss/async
-  operation](https://hub.docker.com/layers/cumuluss/async-operation)  The
-  default value for `async_operation_image` has been updated in the `cumulus`
+  operation](https://hub.docker.com/layers/cumuluss/async-operation/52/images/sha256-78c05f9809c29707f9da87c0fc380d39a71379669cbebd227378c8481eb11c3a?context=explore)  The
+  default value for `async-operation` has been updated in the `cumulus`
   module, however if you are using an internal image repository such as ECR,
   please make sure to update your deployment configuration with the newly
   provided image.
 
   Users making use of a custom image configuration should note the base image
   for Core async operations must support node v20.x.
-
-#### CUMULUS-3449 Please follow instructions before upgrading Cumulus
-
-- The updates in CUMULUS-3449 requires manual update to postgres database in
-  production environment. Please follow [Update Cumulus_id Type and
-  Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
 
 #### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
 
@@ -84,9 +146,14 @@ of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 #### CUMULUS-3779 async_operations Docker image version upgrade
-  
-The `async_operations` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users will need to bump
-the version tag of `async_operations` to at least 52 if using the Docker image.
+
+The `async-operation` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
+to update to at least [async-operations:52](https://hub.docker.com/layers/cumuluss/async-operation/52/images/sha256-78c05f9809c29707f9da87c0fc380d39a71379669cbebd227378c8481eb11c3a?context=explore).
+
+#### CUMULUS-3776 cumulus-ecs-task Docker image version upgrade
+
+The `cumulus-ecs-task` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
+to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cumuluss/cumulus-ecs-task/2.1.0/images/sha256-17bebae3e55171c96272eeb533293b98e573be11dd5371310156b7c2564e691a?context=explore).
 
 ### Breaking Changes
 
@@ -122,24 +189,12 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
 - **CUMULUS-2897**
   - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
     from the `@cumulus/aws-client` package.
-- **CUMULUS-3449**
-  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
-    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
-    and pdrs.execution_cumulus_id
-  - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
-  - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
-    to granules table
 - **CUMULUS-3779**
   - Updates async_operations Docker image to Node v20 and bumps its cumulus dependencies to v18.3.0 to
     support `aws-sdk` v3 changes.
 
 ### Added
-- **CUMULUS-3320**
-  - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
-    bulk deletion of executions from elasticsearch by collectionId
-  - Added `Bulk Execution Delete` migration type to async operations types
-- **CUMULUS-3742**
-  - Script for dumping data into postgres database for testing and replicating issues
+
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
@@ -152,15 +207,7 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
     using a PKCS11 provider
 
 ### Changed
-- **CUMULUS-3320**
-  - Updated executions table (please see Migration section and Upgrade
-    Instructions for more information) to:
-    - Add index on `collection_cumulus_id`
-    - Add index on `parent_cumulus_id`
-    - Update `executions_parent_cumulus_id_foreign` constraint to add `ON DELETE
-      SET NULL`.  This change will cause deletions in the execution table to
-      allow deletion of parent executions, when this occurs the child will have
-      it's parent reference set to NULL as part of the deletion operations.
+
 - **CUMULUS-3735**
   - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
 - **CUMULUS-3746**
@@ -228,9 +275,6 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
-- **CUMULUS-3449**
-  - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
-    from columns ending with "cumulus_id" to number.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3610**
@@ -238,13 +282,11 @@ the version tag of `async_operations` to at least 52 if using the Docker image.
 - **CUMULUS-3617**
   - Added lambdas to migrate DLA messages to `YYYY-MM-DD` subfolder
   - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
+- **CUMULUS-2891**
+  - Updated ECS code to aws sdk v3
 
 ### Fixed
 
-- **CUMULUS-3320**
-  - Execution database deletions by `cumulus_id` should have greatly improved
-    performance as a table scan will no longer be required for each record
-    deletion to validate parent-child relationships
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
@@ -346,8 +388,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
-- **CUMULUS-2891**
-  - Updated ECS code to aws sdk v3
 - **CUMULUS-2895**
   - Updated KMS code to aws sdk v3
 - **CUMULUS-2888**
@@ -407,6 +447,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3562**
   - updated crypto-js to 4.2.0
   - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
+- **CUMULUS-3326**
+  - Updated update-granules-cmr-metadata-file-links task to update the file size of the update metadata file and remove the invalidated checksum associated with this file.
 
 ## [v18.1.0] 2023-10-25
 
@@ -7879,7 +7921,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.2.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v18.3.1...HEAD
+[v18.3.1]: https://github.com/nasa/cumulus/compare/v18.2.2...v18.3.1
 [v18.2.2]: https://github.com/nasa/cumulus/compare/v18.2.1...v18.2.2
 [v18.2.1]: https://github.com/nasa/cumulus/compare/v18.2.0...v18.2.1
 [v18.2.0]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.2.0
