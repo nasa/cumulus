@@ -28,7 +28,7 @@ Please *carefully* review the migration [process documentation](https://nasa.git
 make these updates properly will likely result in deployment failure and/or
 degraded execution table operations.
 
-#### CUMULUS-3449 Please follow instructions before upgrading Cumulus
+#### CUMULUS-3449 Please follow the instructions before upgrading Cumulus
 
 - The updates in CUMULUS-3449 requires manual update to postgres database in
   production environment. Please follow [Update Cumulus_id Type and
@@ -38,19 +38,37 @@ degraded execution table operations.
 
 ### Added
 
+- **CUMULUS-3385**
+  - added generate_db_executions to dump large scale postgres executions
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
   - Added `Bulk Execution Delete` migration type to async operations types
-- **CUMULUS-3742**
-  - Script for dumping data into postgres database for testing and replicating issues
+
 - **CUMULUS-3608**
   - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations. Descriptions
     of the variables [here](tf-modules/ingest/variables.tf) include notes on usage and what users should
     consider if configuring something other than the default values.
+- **CUMULUS-3449**
+  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
+    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
+    and pdrs.execution_cumulus_id
+  - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
+  - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
+    to granules table
+- **CUMULUS-3700**
+  - Added `volume_type` option to `elasticsearch_config` in the
+    `data-persistance` module to allow configuration of the EBS volume type for
+    Elasticsarch; default remains `gp2`.
+- **CUMULUS-3424**
+  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
+    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Changed
 
+- **CUMULUS-3385**
+  - updated cleanExecutions lambda to clean up postgres execution payloads
+  - updated cleanExecutions lambda with configurable limit to control for large size
 - **NDCUM-1051**
   - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
   - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
@@ -69,6 +87,11 @@ degraded execution table operations.
 
 ### Fixed
 
+- **CUMULUS-3385**
+  - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
 - **CUMULUS-3787**
   - Fixed developer-side bug causing some ts error sto be swallowed in CI
 - **CUMULUS-3320**
@@ -83,12 +106,12 @@ degraded execution table operations.
 #### CUMULUS-3433 Update to node.js v20
 
 The following applies only to users with a custom value configured for
-`async_operation_image`:
+`async-operation`:
 
-- As part of the node v20 update process, a new version (49) of the Core
+- As part of the node v20 update process, a new version (52) of the Core
   async-operation container was published - [cumuluss/async
-  operation](https://hub.docker.com/layers/cumuluss/async-operation)  The
-  default value for `async_operation_image` has been updated in the `cumulus`
+  operation](https://hub.docker.com/layers/cumuluss/async-operation/52/images/sha256-78c05f9809c29707f9da87c0fc380d39a71379669cbebd227378c8481eb11c3a?context=explore)  The
+  default value for `async-operation` has been updated in the `cumulus`
   module, however if you are using an internal image repository such as ECR,
   please make sure to update your deployment configuration with the newly
   provided image.
@@ -172,20 +195,11 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 - **CUMULUS-2897**
   - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
     from the `@cumulus/aws-client` package.
-- **CUMULUS-3449**
-  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
-    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
-    and pdrs.execution_cumulus_id
-  - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
-  - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
-    to granules table
 - **CUMULUS-3779**
   - Updates async_operations Docker image to Node v20 and bumps its cumulus dependencies to v18.3.0 to
     support `aws-sdk` v3 changes.
 
 ### Added
-- **CUMULUS-3385**
-  - added generate_db_executions to dump large scale postgres executions
 - **CUMULUS-3742**
   - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3614**
@@ -198,18 +212,9 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 - **CUMULUS-3606**
   - Updated  with additional documentation covering tunneling configuration
     using a PKCS11 provider
-- **CUMULUS-3700**
-  - Added `volume_type` option to `elasticsearch_config` in the
-    `data-persistance` module to allow configuration of the EBS volume type for
-    Elasticsarch; default remains `gp2`.
-- **CUMULUS-3424**
-  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
-    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Changed
-- **CUMULUS-3385**
-  - updated cleanExecutions lambda to clean up postgres execution payloads
-  - updated cleanExecutions lambda with configurable limit to control for large size
+
 - **CUMULUS-3735**
   - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
 - **CUMULUS-3746**
@@ -288,15 +293,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
   - Updated ECS code to aws sdk v3
 
 ### Fixed
-- **CUMULUS-3385**
-  - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
-- **CUMULUS-3785**
-  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
-  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
-- **CUMULUS-3320**
-  - Execution database deletions by `cumulus_id` should have greatly improved
-    performance as a table scan will no longer be required for each record
-    deletion to validate parent-child relationships
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
