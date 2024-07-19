@@ -42,8 +42,7 @@ degraded execution table operations.
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
   - Added `Bulk Execution Delete` migration type to async operations types
-- **CUMULUS-3742**
-  - Script for dumping data into postgres database for testing and replicating issues
+
 - **CUMULUS-3608**
   - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations. Descriptions
     of the variables [here](tf-modules/ingest/variables.tf) include notes on usage and what users should
@@ -293,13 +292,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 ### Fixed
 - **CUMULUS-3385**
   - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
-- **CUMULUS-3785**
-  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
-  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
-- **CUMULUS-3320**
-  - Execution database deletions by `cumulus_id` should have greatly improved
-    performance as a table scan will no longer be required for each record
-    deletion to validate parent-child relationships
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
