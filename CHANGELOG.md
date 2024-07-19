@@ -65,6 +65,8 @@ degraded execution table operations.
 
 ### Fixed
 
+- **CUMULUS-3807**
+  - Pinned @aws-sdk/client-s3 to 3.614 to address timeout/bug in s3().listObjectsV2
 - **CUMULUS-3787**
   - Fixed developer-side bug causing some ts error sto be swallowed in CI
 - **CUMULUS-3320**
