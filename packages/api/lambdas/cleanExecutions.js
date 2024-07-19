@@ -92,7 +92,7 @@ const cleanupExpiredESExecutionPayloads = async (
   let taskStatus;
   // this async and poll method allows us to avoid http timeouts
   // and persist in case of lambda timeout
-  log.info(`launched async ES task id ${updateTask.body.task}
+  log.info(`launched async elasticsearch task id ${updateTask.body.task}
   to check on this task outside this lambda, or to stop this task run the following`);
   log.info(` > curl --request GET ${node}/_tasks/${updateTask.body.task}`);
   log.info(` > curl --request POST ${node}/_tasks/${updateTask.body.task}/_cancel`);
@@ -101,7 +101,7 @@ const cleanupExpiredESExecutionPayloads = async (
     // eslint-disable-next-line no-await-in-loop
     taskStatus = await esClient._client?.tasks.get({ task_id: updateTask.body.task });
   } while (taskStatus?.body.completed === false);
-  log.info(`es request completed with status ${JSON.stringify(taskStatus?.body.task.status)}`);
+  log.info(`elasticsearch task completed with status ${JSON.stringify(taskStatus?.body.task.status)}`);
 };
 /**
  * parse out environment variable configuration
