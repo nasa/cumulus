@@ -72,18 +72,14 @@ degraded execution table operations.
 ## [v18.3.1] 2024-07-08
 
 ### Replace ElasticSearch Phase 1
-- **CUMULUS-3640**
- - Removed elasticsearch from granules endpoint
 - **CUMULUS-3239**
- - Updated `execution` list api endpoint and added `ExecutionSearch` class to query postgres
+  - Updated `execution` list api endpoint and added `ExecutionSearch` class to query postgres
 - **CUMULUS-3639**
- - Updated `/collections/active` endpoint to query postgres
-- **CUMULUS-3699**
- - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
+  - Updated `/collections/active` endpoint to query postgres
+- **CUMULUS-3640**
+  - Removed elasticsearch from granules endpoint
 - **CUMULUS-3641**
- - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
-- **CUMULUS-3695**
- - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
+  - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
 - **CUMULUS-3688**
  - Updated `stats` api endpoint to query postgres instead of elasticsearch
 - **CUMULUS-3689**
@@ -99,8 +95,12 @@ degraded execution table operations.
   - Added functionality to `@cumulus/db/src/search` to support term queries
   - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
   - Updated granules List endpoint to search postgres
+- **CUMULUS-3695**
+  - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
 - **CUMULUS-3696**
   - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
+- **CUMULUS-3699**
+  - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 
 ### Migration Notes
 

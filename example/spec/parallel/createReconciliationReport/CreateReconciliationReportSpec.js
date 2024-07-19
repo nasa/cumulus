@@ -612,7 +612,7 @@ describe('When there are granule differences and granule reconciliation is run',
     });
   });
 
-  // TODO: fix tests in CUMULUS-3806 when CreateReconciliationReport lambda is changed to query postgres
+  // TODO: the internal report functionality will be removed after collections/granules is changed to no longer use ES
   xdescribe('Create an Internal Reconciliation Report to monitor internal discrepancies', () => {
     // report record in db and report in s3
     let reportRecord;

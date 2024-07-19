@@ -724,7 +724,7 @@ test('DELETE successfully deletes if an Elasticsearch execution exists but not P
   );
 });
 
-test.serial.skip('POST /executions/search-by-granules returns 1 record by default', async (t) => {
+test.serial('POST /executions/search-by-granules returns 1 record by default', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
@@ -747,7 +747,7 @@ test.serial.skip('POST /executions/search-by-granules returns 1 record by defaul
   ));
 });
 
-test.serial.skip('POST /executions/search-by-granules supports paging', async (t) => {
+test.serial('POST /executions/search-by-granules supports paging', async (t) => {
   const { fakeGranules, fakeApiExecutions } = t.context;
 
   const page1 = await request(app)
@@ -783,7 +783,7 @@ test.serial.skip('POST /executions/search-by-granules supports paging', async (t
   ));
 });
 
-test.serial.skip('POST /executions/search-by-granules supports sorting', async (t) => {
+test.serial('POST /executions/search-by-granules supports sorting', async (t) => {
   const { fakeGranules, fakeApiExecutions } = t.context;
 
   const response = await request(app)
@@ -827,7 +827,7 @@ test.serial.skip('POST /executions/search-by-granules returns correct executions
   ));
 });
 
-test.serial.skip('POST /executions/search-by-granules returns correct executions when query is passed', async (t) => {
+test.serial('POST /executions/search-by-granules returns correct executions when query is passed', async (t) => {
   const { fakeGranules, fakePGExecutions, esIndex } = t.context;
 
   const expectedQuery = {
