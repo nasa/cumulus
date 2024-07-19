@@ -2,7 +2,7 @@
 
 'use strict';
 
-const { getEsClient } = require('@cumulus/es-client/search');
+const { getEsClient, esConfig } = require('@cumulus/es-client/search');
 const moment = require('moment');
 const Logger = require('@cumulus/logger');
 const { sleep } = require('@cumulus/common');
@@ -78,6 +78,7 @@ const cleanupExpiredESExecutionPayloads = async (
     script: script,
   };
   const esClient = await getEsClient();
+  const [{node}, _ ] = await esConfig();
   // this launches the job for ES to perform, asynchronously
   const updateTask = await esClient._client.updateByQuery({
     index,
@@ -91,7 +92,10 @@ const cleanupExpiredESExecutionPayloads = async (
   let taskStatus;
   // this async and poll method allows us to avoid http timeouts
   // and persist in case of lambda timeout
-  log.info(`launched async ES task id ${updateTask.body.task}`);
+  log.info(`launched async ES task id ${updateTask.body.task}
+  to check on this task outside this lambda, or to stop this task run the following`);
+  log.info(` > curl --request GET ${node}/_tasks/${updateTask.body.task}`);
+  log.info(` > curl --request POST ${node}/_tasks/${updateTask.body.task}/_cancel`);
   do {
     sleep(10000);
     // eslint-disable-next-line no-await-in-loop
