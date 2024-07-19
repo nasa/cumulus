@@ -802,7 +802,7 @@ test.serial('POST /executions/search-by-granules supports sorting', async (t) =>
   t.deepEqual(response.body.results, sortedApiExecutions);
 });
 
-test.serial.skip('POST /executions/search-by-granules returns correct executions when granules array is passed', async (t) => {
+test.serial('POST /executions/search-by-granules returns correct executions when granules array is passed', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
@@ -874,7 +874,7 @@ test.serial('POST /executions/search-by-granules returns correct executions when
   ));
 });
 
-test.serial.skip('POST /executions/search-by-granules returns 400 when a query is provided with no index', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when a query is provided with no index', async (t) => {
   const expectedQuery = { query: 'fake-query' };
 
   const body = {
@@ -891,7 +891,7 @@ test.serial.skip('POST /executions/search-by-granules returns 400 when a query i
   t.regex(response.body.message, /Index is required if query is sent/);
 });
 
-test.serial.skip('POST /executions/search-by-granules returns 400 when no granules or query is provided', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when no granules or query is provided', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -908,7 +908,7 @@ test.serial.skip('POST /executions/search-by-granules returns 400 when no granul
   t.regex(response.body.message, /One of granules or query is required/);
 });
 
-test.serial.skip('POST /executions/search-by-granules returns 400 when granules is not an array', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when granules is not an array', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -926,7 +926,7 @@ test.serial.skip('POST /executions/search-by-granules returns 400 when granules 
   t.regex(response.body.message, /granules should be an array of values/);
 });
 
-test.serial.skip('POST /executions/search-by-granules returns 400 when granules is an empty array', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when granules is an empty array', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -944,7 +944,7 @@ test.serial.skip('POST /executions/search-by-granules returns 400 when granules 
   t.regex(response.body.message, /no values provided for granules/);
 });
 
-test.serial.skip('POST /executions/search-by-granules returns 400 when granules do not have collectionId', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when granules do not have collectionId', async (t) => {
   const expectedIndex = 'my-index';
   const granule = { granuleId: randomId('granuleId') };
 
@@ -963,7 +963,7 @@ test.serial.skip('POST /executions/search-by-granules returns 400 when granules 
   t.regex(response.body.message, new RegExp(`no collectionId provided for ${JSON.stringify(granule)}`));
 });
 
-test.serial.skip('POST /executions/search-by-granules returns 400 when granules do not have granuleId', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when granules do not have granuleId', async (t) => {
   const expectedIndex = 'my-index';
   const granule = { collectionId: randomId('granuleId') };
 
@@ -982,7 +982,7 @@ test.serial.skip('POST /executions/search-by-granules returns 400 when granules 
   t.regex(response.body.message, new RegExp(`no granuleId provided for ${JSON.stringify(granule)}`));
 });
 
-test.serial.skip('POST /executions/search-by-granules returns 400 when the Metrics ELK stack is not configured', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when the Metrics ELK stack is not configured', async (t) => {
   const expectedIndex = 'my-index';
   const expectedQuery = { query: 'fake-query' };
 
@@ -1007,7 +1007,7 @@ test.serial.skip('POST /executions/search-by-granules returns 400 when the Metri
   t.regex(response.body.message, /ELK Metrics stack not configured/);
 });
 
-test.serial.skip('POST /executions/workflows-by-granules returns correct executions when granules array is passed', async (t) => {
+test.serial('POST /executions/workflows-by-granules returns correct executions when granules array is passed', async (t) => {
   const { collectionId, fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
@@ -1031,7 +1031,7 @@ test.serial.skip('POST /executions/workflows-by-granules returns correct executi
   ));
 });
 
-test.serial.skip('POST /executions/workflows-by-granules returns executions by descending timestamp when a single granule is passed', async (t) => {
+test.serial('POST /executions/workflows-by-granules returns executions by descending timestamp when a single granule is passed', async (t) => {
   const {
     knex,
     collectionId,
@@ -1065,7 +1065,7 @@ test.serial.skip('POST /executions/workflows-by-granules returns executions by d
   t.is(response.body[0], 'newWorkflow');
 });
 
-test.serial.skip('POST /executions/workflows-by-granules returns correct workflows when query is passed', async (t) => {
+test.serial('POST /executions/workflows-by-granules returns correct workflows when query is passed', async (t) => {
   const { esIndex, fakeGranules } = t.context;
 
   const expectedQuery = {
