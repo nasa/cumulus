@@ -3,6 +3,9 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
+const cloneDeep = require('lodash/cloneDeep');
+const { getObjectSize } = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
@@ -56,6 +59,29 @@ async function updateEachCmrFileAccessURLs(
   }));
 }
 
+async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
+  const updatedGranulesByGranuleId = cloneDeep(granulesByGranuleId);
+  const promises = cmrFiles.map(async (cmrFileObject) => {
+    const granule = updatedGranulesByGranuleId[cmrFileObject.granuleId];
+    if (!granule?.files) {
+      throw new Error(`Granule with ID ${cmrFileObject.granuleId} not found in input granules containing files`);
+    }
+    const cmrFile = granule.files.find(isCMRFile);
+    if (!cmrFile) {
+      throw new Error(`CMR file not found for granule with ID ${cmrFileObject.granuleId}`);
+    }
+    delete cmrFile.checksum;
+    delete cmrFile.checksumType;
+    const bucket = cmrFileObject.bucket;
+    const key = cmrFileObject.key;
+
+    cmrFile.size = await getObjectSize({ s3: s3(), bucket, key });
+  });
+
+  await Promise.all(promises);
+  return updatedGranulesByGranuleId;
+}
+
 async function updateGranulesCmrMetadataFileLinks(event) {
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
@@ -79,9 +105,11 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     distributionBucketMap
   );
 
+  const updatedGranulesByGranuleId = await updateCmrFileInfo(cmrFiles, granulesByGranuleId);
+
   // Map etag info from granules' CMR files
   const updatedCmrETags = mapFileEtags(updatedCmrFiles);
-  const outputGranules = Object.values(granulesByGranuleId);
+  const outputGranules = Object.values(updatedGranulesByGranuleId);
   outputGranules.forEach(removeEtagsFromFileObjects);
   return {
     granules: outputGranules,
@@ -106,3 +134,4 @@ async function handler(event, context) {
 
 exports.handler = handler;
 exports.updateGranulesCmrMetadataFileLinks = updateGranulesCmrMetadataFileLinks;
+exports.updateCmrFileInfo = updateCmrFileInfo;
