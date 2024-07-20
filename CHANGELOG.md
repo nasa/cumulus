@@ -38,12 +38,13 @@ degraded execution table operations.
 
 ### Added
 
+- **CUMULUS-3385**
+  - added generate_db_executions to dump large scale postgres executions
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
   - Added `Bulk Execution Delete` migration type to async operations types
-- **CUMULUS-3742**
-  - Script for dumping data into postgres database for testing and replicating issues
+
 - **CUMULUS-3608**
   - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations. Descriptions
     of the variables [here](tf-modules/ingest/variables.tf) include notes on usage and what users should
@@ -65,6 +66,9 @@ degraded execution table operations.
 
 ### Changed
 
+- **CUMULUS-3385**
+  - updated cleanExecutions lambda to clean up postgres execution payloads
+  - updated cleanExecutions lambda with configurable limit to control for large size
 - **NDCUM-1051**
   - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
   - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
@@ -85,6 +89,8 @@ degraded execution table operations.
 
 - **CUMULUS-3807**
   - Pinned @aws-sdk/client-s3 to 3.614 to address timeout/bug in s3().listObjectsV2
+- **CUMULUS-3385**
+  - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
 - **CUMULUS-3785**
   - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
   - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
@@ -196,7 +202,8 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
     support `aws-sdk` v3 changes.
 
 ### Added
-
+- **CUMULUS-3742**
+  - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
@@ -288,7 +295,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
   - Updated ECS code to aws sdk v3
 
 ### Fixed
-
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
