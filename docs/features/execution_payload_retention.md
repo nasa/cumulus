@@ -21,7 +21,6 @@ To poll the task's current status use
 ``` bash
  > curl --request GET ${es_endpoint}/_tasks/${task_id}
 
- 
  #{"completed":false,"task":{"node":"pmXVVuVLTDmkv5NWhQeoLg","id":3231161,"type":"transport","action":"indices:data/write/update/byquery","status":{"total":300000,"updated":12000,"created":0,"deleted":0,"batches":13,"version_conflicts":0,"noops":0,"retries":{"bulk":0,"search":0},"throttled_millis":0,"requests_per_second":-1.0,"throttled_until_millis":0},"description":"update-by-query [cumulus][execution] updated with Script{type=inline, lang='painless', idOrCode='ctx._source.remove('finalPayload'); ctx._source.remove('originalPayload')', options={}, params={}}","start_time_in_millis":1721400177604,"running_time_in_nanos":11020601675,"cancellable":true}}
  
 ```
@@ -36,6 +35,17 @@ to cancel the task use
 ```
 
 Upon launch of this elasticsearch task, the cleanExecutions lambda will log (accessible from CloudWatch) the task_id needed above, along with its best guess (subject to change if you are ssh tunnelling to the es cluster etc.) of the es_endpoint and formatted curl commands
+
+## Execution backlog cleanup
+
+Because many users have accumulated a substantial backlog of un-cleaned execution payloads, this lambda specifies an update_limit configuration to avoid overwhelming elasticsearch and hogging too many resources.
+For backlog cleanup it is recommended the following
+
+- set the daily_execution_payload_cleanup_schedule_expression to run this hourly: `"cron(0 * * * ? *)"`
+- a conservative update_limit is 1,000,000: this has been tested to be workable on a 1 node t2.small.search cluster
+
+Starting with this configuration 24 million es records per day can be cleaned up. A more aggressive schedule is likely possible, but will need testing in SIT/UAT to ensure compatibility with cluster configuration.
+Once backlog has been taken care of, a similar configuration should be able to run once per day and keep up with ingest rate
 
 ### Configuration
 
