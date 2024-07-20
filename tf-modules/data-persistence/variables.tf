@@ -29,7 +29,7 @@ variable "elasticsearch_config" {
   })
   default = {
     domain_name    = "es"
-    instance_count = 4
+    instance_count = 1
     instance_type  = "t2.small.elasticsearch"
     version        = "5.3"
     volume_type    = "gp2"
