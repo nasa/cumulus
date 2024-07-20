@@ -452,6 +452,7 @@ const getEsClient = async (host, metrics) => {
 };
 
 module.exports = {
+  esConfig,
   BaseSearch,
   Search,
   EsClient,
