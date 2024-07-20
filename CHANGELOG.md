@@ -88,6 +88,8 @@ degraded execution table operations.
 
 ### Fixed
 
+- **CUMULUS-3807**
+  - Pinned @aws-sdk/client-s3 to 3.614 to address timeout/bug in s3().listObjectsV2
 - **CUMULUS-3385**
   - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
 - **CUMULUS-3785**
