@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-3385**
+  - added generate_db_executions to dump large scale postgres executions
+
+### Changed
+
+- **CUMULUS-3385**
+  - updated cleanExecutions lambda to clean up postgres execution payloads
+  - updated cleanExecutions lambda with configurable limit to control for large size
+
+
+### Fixed
+
+- **CUMULUS-3385**
+  - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
+
 ## [v18.3.1] 2024-07-08
 
 ### Migration Notes
@@ -59,7 +76,7 @@ of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 #### CUMULUS-3779 async_operations Docker image version upgrade
-  
+
 The `async-operation` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
 to update to at least [async-operations:52](https://hub.docker.com/layers/cumuluss/async-operation/52/images/sha256-78c05f9809c29707f9da87c0fc380d39a71379669cbebd227378c8481eb11c3a?context=explore).
 
@@ -107,7 +124,8 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
     support `aws-sdk` v3 changes.
 
 ### Added
-
+- **CUMULUS-3742**
+  - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
@@ -199,7 +217,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
   - Updated ECS code to aws sdk v3
 
 ### Fixed
-
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
