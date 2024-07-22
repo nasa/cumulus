@@ -218,6 +218,7 @@ async function createGranuleAndFiles({
   };
 }
 
+// TODO remove esClient argument after Cumulus-3640 change
 async function createExecutionRecords({
   knex,
   count,
@@ -275,11 +276,6 @@ async function createExecutionRecords({
   const executionRecords = await Promise.all(
     pgExecutions.map((execution) =>
       translatePostgresExecutionToApiExecution(execution[0], knex))
-  );
-
-  await Promise.all(
-    executionRecords.map((record) =>
-      indexExecution(esClient, record, process.env.ES_INDEX))
   );
 
   if (addGranules === true) {

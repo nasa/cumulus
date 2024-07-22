@@ -618,8 +618,6 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
   const {
     knex,
     executionPgModel,
-    esClient,
-    esExecutionsClient,
   } = context;
 
   const originalExecution = fakeExecutionFactoryV2(executionParams);
@@ -629,13 +627,8 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
   const originalPgRecord = await executionPgModel.get(
     knex, { cumulus_id: executionCumulusId }
   );
-  await indexExecution(esClient, originalExecution, process.env.ES_INDEX);
-  const originalEsRecord = await esExecutionsClient.get(
-    originalExecution.arn
-  );
   return {
     originalPgRecord,
-    originalEsRecord,
   };
 };
 

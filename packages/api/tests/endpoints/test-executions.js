@@ -38,6 +38,11 @@ const {
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
+const indexer = require('@cumulus/es-client/indexer');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { AccessToken } = require('../../models');
 // Dynamo mock data factories
@@ -46,7 +51,6 @@ const {
   fakeExecutionFactoryV2,
   setAuthorizedOAuthUsers,
   createExecutionTestRecords,
-  cleanupExecutionTestRecords,
   fakeGranuleFactoryV2,
   fakeAsyncOperationFactory,
 } = require('../../lib/testUtils');
@@ -106,7 +110,11 @@ test.before(async (t) => {
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.granulePgModel = new GranulePgModel();
 
-  // create fake execution records
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+
+  // create fake execution records in Postgres
   const asyncOperationId = uuidv4();
   t.context.asyncOperationId = asyncOperationId;
   await t.context.asyncOperationsPgModel.create(
@@ -212,6 +220,8 @@ test.beforeEach(async (t) => {
   t.context.SubscriptionArn = SubscriptionArn;
 
   const {
+    esClient,
+    esIndex,
     executionPgModel,
     granulePgModel,
     knex,
@@ -226,7 +236,9 @@ test.beforeEach(async (t) => {
   ];
 
   // create fake Postgres granule records
+  // es records are for Metrics search
   t.context.fakePGGranules = await Promise.all(t.context.fakeGranules.map(async (fakeGranule) => {
+    await indexer.indexGranule(esClient, fakeGranule, esIndex);
     const granulePgRecord = await translateApiGranuleToPostgresGranule({
       dynamoRecord: fakeGranule,
       knexOrTransaction: t.context.knex,
@@ -272,6 +284,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
+  await cleanupTestIndex(t.context);
 });
 
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -459,11 +472,6 @@ test.serial('DELETE deletes an execution', async (t) => {
       { arn }
     )
   );
-  t.true(
-    await t.context.esExecutionsClient.exists(
-      arn
-    )
-  );
 
   const response = await request(app)
     .delete(`/executions/${arn}`)
@@ -477,103 +485,6 @@ test.serial('DELETE deletes an execution', async (t) => {
   const dbRecords = await t.context.executionPgModel
     .search(t.context.knex, { arn });
   t.is(dbRecords.length, 0);
-  t.false(
-    await t.context.esExecutionsClient.exists(
-      arn
-    )
-  );
-});
-
-test.serial('del() does not remove from Elasticsearch if removing from PostgreSQL fails', async (t) => {
-  const {
-    originalPgRecord,
-  } = await createExecutionTestRecords(
-    t.context,
-    { parentArn: undefined }
-  );
-  const { arn } = originalPgRecord;
-  t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
-
-  const fakeExecutionPgModel = new ExecutionPgModel();
-  fakeExecutionPgModel.delete = () => {
-    throw new Error('something bad');
-  };
-
-  const expressRequest = {
-    params: {
-      arn,
-    },
-    testContext: {
-      knex: t.context.knex,
-      executionPgModel: fakeExecutionPgModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.true(
-    await t.context.executionPgModel.exists(t.context.knex, {
-      arn,
-    })
-  );
-  t.true(
-    await t.context.esExecutionsClient.exists(
-      arn
-    )
-  );
-});
-
-test.serial('del() does not remove from PostgreSQL if removing from Elasticsearch fails', async (t) => {
-  const {
-    originalPgRecord,
-  } = await createExecutionTestRecords(
-    t.context,
-    { parentArn: undefined }
-  );
-  const { arn } = originalPgRecord;
-  t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
-
-  const fakeEsClient = {
-    initializeEsClient: () => Promise.resolve(),
-    client: {
-      delete: () => {
-        throw new Error('something bad');
-      },
-    },
-  };
-
-  const expressRequest = {
-    params: {
-      arn,
-    },
-    testContext: {
-      knex: t.context.knex,
-      esClient: fakeEsClient,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.true(
-    await t.context.executionPgModel.exists(t.context.knex, {
-      arn,
-    })
-  );
-  t.true(
-    await t.context.esExecutionsClient.exists(
-      arn
-    )
-  );
 });
 
 test.serial('DELETE removes only specified execution from all data stores', async (t) => {
@@ -620,7 +531,7 @@ test.serial('DELETE removes only specified execution from all data stores', asyn
   t.is(originalExecution2.length, 1);
 });
 
-test.serial('DELETE returns a 404 if PostgreSQL and Elasticsearch execution cannot be found', async (t) => {
+test.serial('DELETE returns a 404 if PostgreSQL execution cannot be found', async (t) => {
   const nonExistentExecution = {
     arn: 'arn9',
     status: 'completed',
@@ -634,72 +545,6 @@ test.serial('DELETE returns a 404 if PostgreSQL and Elasticsearch execution cann
     .expect(404);
 
   t.is(response.body.message, 'No record found');
-});
-
-test('DELETE successfully deletes if a PostgreSQL execution exists but not Elasticsearch', async (t) => {
-  const { knex, executionPgModel } = t.context;
-
-  const newExecution = fakeExecutionFactoryV2({
-    status: 'completed',
-    name: 'test_execution',
-  });
-
-  const executionPgRecord = await translateApiExecutionToPostgresExecution(
-    newExecution,
-    knex
-  );
-  await executionPgModel.create(knex, executionPgRecord);
-
-  t.true(await executionPgModel.exists(knex, { arn: newExecution.arn }));
-  t.false(
-    await t.context.esExecutionsClient.exists(
-      newExecution.arn
-    )
-  );
-  await request(app)
-    .delete(`/executions/${newExecution.arn}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const dbRecords = await executionPgModel.search(t.context.knex, {
-    arn: newExecution.arn,
-  });
-
-  t.is(dbRecords.length, 0);
-  t.false(await executionPgModel.exists(knex, { arn: newExecution.arn }));
-});
-
-test('DELETE successfully deletes if an Elasticsearch execution exists but not PostgreSQL', async (t) => {
-  const { knex, executionPgModel } = t.context;
-
-  const newExecution = fakeExecutionFactoryV2({
-    status: 'completed',
-    name: 'test_execution',
-  });
-
-  t.false(await executionPgModel.exists(knex, { arn: newExecution.arn }));
-  t.true(
-    await t.context.esExecutionsClient.exists(
-      newExecution.arn
-    )
-  );
-  await request(app)
-    .delete(`/executions/${newExecution.arn}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const dbRecords = await executionPgModel.search(t.context.knex, {
-    arn: newExecution.arn,
-  });
-
-  t.is(dbRecords.length, 0);
-  t.false(
-    await t.context.esExecutionsClient.exists(
-      newExecution.arn
-    )
-  );
 });
 
 test.serial('POST /executions/search-by-granules returns 1 record by default', async (t) => {
@@ -1084,7 +929,7 @@ test.serial('POST /executions/workflows-by-granules returns correct workflows wh
   t.deepEqual(response.body.sort(), ['fakeWorkflow', 'workflow2']);
 });
 
-test.serial('POST /executions creates a new execution in PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
+test.serial('POST /executions creates a new execution in PostgreSQL with correct timestamps', async (t) => {
   const newExecution = fakeExecutionFactoryV2();
 
   await request(app)
@@ -1101,15 +946,10 @@ test.serial('POST /executions creates a new execution in PostgreSQL/Elasticsearc
     }
   );
 
-  const fetchedEsRecord = await t.context.esExecutionsClient.get(newExecution.arn);
-
   t.true(fetchedPgRecord.created_at.getTime() > newExecution.createdAt);
-
-  t.is(fetchedPgRecord.created_at.getTime(), fetchedEsRecord.createdAt);
-  t.is(fetchedPgRecord.updated_at.getTime(), fetchedEsRecord.updatedAt);
 });
 
-test.serial('POST /executions creates the expected record in PostgreSQL/Elasticsearch', async (t) => {
+test.serial('POST /executions creates the expected record in PostgreSQL', async (t) => {
   const newExecution = fakeExecutionFactoryV2({
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: t.context.collectionId,
@@ -1135,24 +975,12 @@ test.serial('POST /executions creates the expected record in PostgreSQL/Elastics
     }
   );
 
-  const fetchedEsRecord = await t.context.esExecutionsClient.get(newExecution.arn);
-
   t.is(fetchedPgRecord.arn, newExecution.arn);
   t.truthy(fetchedPgRecord.cumulus_id);
   t.is(fetchedPgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
   t.is(fetchedPgRecord.collection_cumulus_id, t.context.collectionCumulusId);
   t.is(fetchedPgRecord.parent_cumulus_id, t.context.fakePGExecutions[1].cumulus_id);
 
-  t.deepEqual(
-    fetchedEsRecord,
-    {
-      ...newExecution,
-      _id: fetchedEsRecord._id,
-      createdAt: fetchedEsRecord.createdAt,
-      updatedAt: fetchedEsRecord.updatedAt,
-      timestamp: fetchedEsRecord.timestamp,
-    }
-  );
   t.deepEqual(
     fetchedPgRecord,
     {
@@ -1317,7 +1145,7 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
   t.deepEqual(executionRecord, translatedExecution);
 });
 
-test.serial('PUT /executions updates the record as expected in PostgreSQL/Elasticsearch', async (t) => {
+test.serial('PUT /executions updates the record as expected in PostgreSQL', async (t) => {
   const execution = fakeExecutionFactoryV2({
     collectionId: t.context.collectionId,
     parentArn: t.context.fakeApiExecutions[1].arn,
@@ -1358,21 +1186,6 @@ test.serial('PUT /executions updates the record as expected in PostgreSQL/Elasti
     t.context.knex,
     {
       arn: execution.arn,
-    }
-  );
-  const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
-  const expectedEsRecord = {
-    ...updatedExecution,
-    collectionId: execution.collectionId,
-    createdAt: updatedPgRecord.created_at.getTime(),
-    updatedAt: updatedPgRecord.updated_at.getTime(),
-  };
-
-  t.like(
-    updatedEsRecord,
-    {
-      ...expectedEsRecord,
-      timestamp: updatedEsRecord.timestamp,
     }
   );
 
@@ -1437,27 +1250,20 @@ test.serial('PUT /executions overwrites a completed record with a running record
       arn: execution.arn,
     }
   );
-  const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
-  const expectedEsRecord = {
+
+  const expectedApiRecord = {
     ...omitBy(updatedExecution, isNull),
     collectionId: execution.collectionId,
     createdAt: updatedPgRecord.created_at.getTime(),
     updatedAt: updatedPgRecord.updated_at.getTime(),
   };
-  t.like(
-    updatedEsRecord,
-    {
-      ...expectedEsRecord,
-      timestamp: updatedEsRecord.timestamp,
-    }
-  );
 
   const translatedExecution = await translatePostgresExecutionToApiExecution(
     updatedPgRecord,
     t.context.knex
   );
 
-  t.deepEqual(translatedExecution, expectedEsRecord);
+  t.deepEqual(translatedExecution, expectedApiRecord);
 });
 
 test.serial('PUT /executions removes execution fields when nullified fields are passed in', async (t) => {
@@ -1512,25 +1318,17 @@ test.serial('PUT /executions removes execution fields when nullified fields are 
     }
   );
 
-  const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
-  const expectedEsRecord = {
+  const expectedApiRecord = {
     ...omitBy(updatedExecution, isNull),
     createdAt: updatedPgRecord.created_at.getTime(),
     updatedAt: updatedPgRecord.updated_at.getTime(),
   };
-  t.like(
-    updatedEsRecord,
-    {
-      ...expectedEsRecord,
-      timestamp: updatedEsRecord.timestamp,
-    }
-  );
 
   const translatedExecution = await translatePostgresExecutionToApiExecution(
     updatedPgRecord,
     t.context.knex
   );
-  t.deepEqual(translatedExecution, expectedEsRecord);
+  t.deepEqual(translatedExecution, expectedApiRecord);
 });
 
 test.serial('PUT /executions throws error for arn mismatch between params and payload', async (t) => {

@@ -19,6 +19,7 @@ const {
   translatePostgresExecutionToApiExecution,
   ExecutionSearch,
 } = require('@cumulus/db');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const { zodParser } = require('../src/zod-utils');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
