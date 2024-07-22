@@ -13,10 +13,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-3760**
+  - Added guidance for handling large backlog of es executions
 - **CUMULUS-3742**
   - Script for dumping data into postgres database for testing and replicating issues
 - **CUMULUS-3385**
-  - added generate_db_executions to dump large scale postgres executions
+  - Added generate_db_executions to dump large scale postgres executions
 
 ### Changed
 
