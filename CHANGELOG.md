@@ -18,7 +18,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - updated cleanExecutions lambda to clean up postgres execution payloads
   - updated cleanExecutions lambda with configurable limit to control for large size
 
-
 ### Fixed
 
 - **CUMULUS-3385**
