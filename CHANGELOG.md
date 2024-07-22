@@ -37,9 +37,10 @@ degraded execution table operations.
 ### Breaking Changes
 
 ### Added
-
+- **CUMULUS-3760**
+  - Added guidance for handling large backlog of es executions
 - **CUMULUS-3385**
-  - added generate_db_executions to dump large scale postgres executions
+  - Added generate_db_executions to dump large scale postgres executions
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
