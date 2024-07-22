@@ -26,6 +26,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
   - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
 
+### Added
+
+- **CUMULUS-3760**
+  - Added guidance for handling large backlog of es executions
+- **CUMULUS-3742**
+  - Script for dumping data into postgres database for testing and replicating issues
+- **CUMULUS-3385**
+  - Added generate_db_executions to dump large scale postgres executions
+
+### Changed
+
+- **CUMULUS-3385**
+  - updated cleanExecutions lambda to clean up postgres execution payloads
+  - updated cleanExecutions lambda with configurable limit to control for large size
+
+### Fixed
+
+- **CUMULUS-3385**
+  - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
+
 ## [v18.3.1] 2024-07-08
 
 ### Migration Notes
@@ -219,7 +239,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
   - Updated ECS code to aws sdk v3
 
 ### Fixed
-
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
