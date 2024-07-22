@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### FIXED
+
+- **CUMULUS-3807**
+  - Pinned @aws-sdk/client-s3 to 3.614 to address timeout/bug in s3().listObjectsV2
+
 ## [v18.3.1] 2024-07-08
 
 ### Migration Notes
