@@ -38,14 +38,14 @@ Upon launch of this elasticsearch task, the cleanExecutions lambda will log (acc
 
 ## Execution backlog cleanup
 
-Because many users have accumulated a substantial backlog of un-cleaned execution payloads, this lambda specifies an update_limit configuration to avoid overwhelming elasticsearch and hogging too many resources.
-For backlog cleanup it is recommended the following
+To facilitate removing payloads for a large quantity of executions, this lambda specifies an update_limit configuration to avoid overwhelming elasticsearch.
+For cleanup of existing execution payloads the following is recommended:
 
 - set the daily_execution_payload_cleanup_schedule_expression to run this hourly: `"cron(0 * * * ? *)"`
 - a conservative update_limit is 1,000,000: this has been tested to be workable on a 1 node t2.small.search cluster
 
-Starting with this configuration 24 million es records per day can be cleaned up. A more aggressive schedule is likely possible, but will need testing in SIT/UAT to ensure compatibility with cluster configuration.
-Once backlog has been taken care of, a similar configuration should be able to run once per day and keep up with ingest rate
+Starting with this configuration, 24 million Elasticsearch records per day can be cleaned up. A more aggressive schedule is likely possible, but will need testing in SIT/UAT to ensure compatibility with cluster configuration.
+Once the older executions have been taken care of, a similar configuration should be able to run once per day and keep up with ingest rate
 
 ### Configuration
 
