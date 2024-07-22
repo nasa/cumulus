@@ -62,9 +62,8 @@ process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
-const { del, bulkDeleteExecutionsByCollection } = require('../../endpoints/executions');
+const { bulkDeleteExecutionsByCollection } = require('../../endpoints/executions');
 const { app } = require('../../app');
-const { buildFakeExpressResponse } = require('./utils');
 
 // create all the variables needed across this test
 const testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;

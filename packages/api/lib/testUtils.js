@@ -28,7 +28,6 @@ const {
   indexRule,
   indexPdr,
   indexAsyncOperation,
-  indexExecution,
   deleteExecution,
 } = require('@cumulus/es-client/indexer');
 const {

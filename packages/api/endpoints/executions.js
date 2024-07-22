@@ -234,7 +234,7 @@ async function del(req, res) {
 async function searchByGranules(req, res) {
   const payload = req.body;
   const knex = await getKnexClient();
-  const granules = await getGranulesForPayload(payload, knex);
+  const granules = await getGranulesForPayload(payload);
   const { page = 1, limit = 1, ...sortParams } = req.query;
 
   const offset = page < 1 ? 0 : (page - 1) * limit;
@@ -269,7 +269,7 @@ async function searchByGranules(req, res) {
 async function workflowsByGranules(req, res) {
   const payload = req.body;
   const knex = await getKnexClient();
-  const granules = await getGranulesForPayload(payload, knex);
+  const granules = await getGranulesForPayload(payload);
 
   const granuleCumulusIds = await getApiGranuleCumulusIds(knex, granules);
 

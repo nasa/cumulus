@@ -4,7 +4,6 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
-const omit = require('lodash/omit');
 
 const {
   ExecutionPgModel,
