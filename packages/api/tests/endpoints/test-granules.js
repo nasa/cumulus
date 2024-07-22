@@ -896,13 +896,13 @@ test.serial('PATCH applies an in-place workflow to an existing granule', async (
 });
 
 test.serial('PATCH removes a granule from CMR', async (t) => {
-  const { s3Buckets, newPgGranule } = await createGranuleAndFiles({
+  const { s3Buckets, apiGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     collectionId: t.context.collectionId,
     granuleParams: { published: true },
   });
 
-  const granuleId = newPgGranule.granule_id;
+  const granuleId = apiGranule.granuleId;
 
   sinon.stub(CMR.prototype, 'deleteGranule').callsFake(() => Promise.resolve());
 
@@ -1035,7 +1035,7 @@ test.serial('DELETE does not require a collectionId', async (t) => {
   t.teardown(() => deleteS3Buckets([s3Buckets.protected.name, s3Buckets.public.name]));
 });
 
-test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully',
+test.serial('DELETE deletes a granule that exists in PostgreSQL successfully',
   async (t) => {
     const { collectionPgModel, knex } = t.context;
     const testPgCollection = fakeCollectionRecordFactory({
@@ -1788,7 +1788,7 @@ test.serial('PATCH with action move returns failure if more than one granule fil
   t.true(expressResponse.boom.conflict.calledWithMatch('Cannot move granule because the following files would be overwritten at the destination location: file1'));
 });
 
-test.serial('create (POST) creates new granule without an execution in PostgreSQL, and Elasticsearch', async (t) => {
+test.serial('create (POST) creates new granule without an execution in PostgreSQL', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1811,7 +1811,7 @@ test.serial('create (POST) creates new granule without an execution in PostgreSQ
   t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
 });
 
-test.serial('create (POST) creates new granule with associated execution in PostgreSQL and Elasticsearch', async (t) => {
+test.serial('create (POST) creates new granule with associated execution in PostgreSQL', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: t.context.executionUrl,
@@ -2069,13 +2069,13 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
   });
 
   const updatedGranule = {
-    granuleId: newPgGranule.granule_id,
+    granuleId: apiGranule.granuleId,
     collectionId: apiGranule.collectionId,
     status: newPgGranule.status,
   };
 
   await request(app)
-    .patch(`/granules/${newPgGranule.granule_id}`)
+    .patch(`/granules/${apiGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -2103,6 +2103,7 @@ test.serial('PATCH does not update non-current-timestamp undefined fields for ex
 
   const {
     newPgGranule,
+    apiGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
@@ -2135,7 +2136,7 @@ test.serial('PATCH does not update non-current-timestamp undefined fields for ex
     execution_cumulus_id: executionPgRecord.cumulus_id,
   });
   const updatedGranule = {
-    granuleId: newPgGranule.granule_id,
+    granuleId: apiGranule.granuleId,
     collectionId: constructCollectionId(t.context.collectionName, t.context.collectionVersion),
     status: newPgGranule.status,
   };
@@ -2182,7 +2183,7 @@ test.serial('PATCH nullifies expected fields for existing granules in all datast
 
   const collectionId = constructCollectionId(collectionName, collectionVersion);
 
-  const { newPgGranule } = await createGranuleAndFiles({
+  const { newPgGranule, apiGranule } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
     granuleParams: {
@@ -2212,7 +2213,7 @@ test.serial('PATCH nullifies expected fields for existing granules in all datast
   });
 
   const updatedGranule = {
-    granuleId: newPgGranule.granule_id,
+    granuleId: apiGranule.granuleId,
     collectionId,
     status: newPgGranule.status,
     createdAt: null,
@@ -2237,7 +2238,7 @@ test.serial('PATCH nullifies expected fields for existing granules in all datast
   };
 
   await request(app)
-    .patch(`/granules/${newPgGranule.granule_id}`)
+    .patch(`/granules/${apiGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -2288,14 +2289,14 @@ test.serial('PATCH does not overwrite existing duration of an existing granule i
     foo: randomString(),
   };
   const updatedGranule = {
-    granuleId: newPgGranule.granule_id,
+    granuleId: apiGranule.granuleId,
     collectionId: apiGranule.collectionId,
     status: 'completed',
     queryFields: newQueryFields,
   };
 
   await request(app)
-    .patch(`/granules/${newPgGranule.granule_id}`)
+    .patch(`/granules/${apiGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -2328,13 +2329,13 @@ test.serial('PATCH does not overwrite existing createdAt of an existing granule 
   t.deepEqual(newPgGranule.created_at, new Date(createdAt));
 
   const updatedGranule = {
-    granuleId: newPgGranule.granule_id,
+    granuleId: apiGranule.granuleId,
     collectionId: apiGranule.collectionId,
     status: 'completed',
   };
 
   await request(app)
-    .patch(`/granules/${newPgGranule.granule_id}`)
+    .patch(`/granules/${apiGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -2638,7 +2639,7 @@ test.serial("patch() sets a default createdAt value for new granule if it's not 
   t.truthy(updateGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
 });
 
-test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
+test.serial('PATCH() does not write to DynamoDB/SNS if writing to PostgreSQL fails', async (t) => {
   const {
     executionUrl,
     knex,
@@ -2701,6 +2702,52 @@ test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to 
     }),
     newPgGranule
   );
+
+  const { Messages } = await sqs()
+    .receiveMessage({
+      QueueUrl: t.context.QueueUrl,
+      WaitTimeSeconds: 10,
+    });
+
+  t.is(Messages.length, 0);
+});
+
+test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if writing to Postgres fails', async (t) => {
+  const { executionUrl, knex, testExecutionCumulusId } = t.context;
+  const { newPgGranule, apiGranule } = await createGranuleAndFiles({
+    dbClient: knex,
+    executionCumulusId: testExecutionCumulusId,
+    granuleParams: {
+      collectionId: t.context.collectionId,
+      status: 'running',
+      execution: executionUrl,
+    },
+  });
+
+  const updatedGranule = {
+    ...apiGranule,
+    status: 'failure', // non-existent status to fail the PG write
+  };
+
+  const expressRequest = {
+    params: {
+      collectionId: t.context.collectionId,
+      granuleId: apiGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await patch(expressRequest, response);
+
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  t.deepEqual(actualPgGranule, newPgGranule);
 
   const { Messages } = await sqs()
     .receiveMessage({

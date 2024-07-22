@@ -307,15 +307,18 @@ const _updateGranule = async ({
   const granuleId = apiGranule.granuleId;
 
   let updatedPgGranule;
-  await createRejectableTransaction(knex, async (trx) => {
+  try {
     [updatedPgGranule] = await granulePgModel.update(
-      trx,
+      knex,
       { cumulus_id: postgresGranule.cumulus_id },
       pgFieldUpdates,
       ['*']
     );
     log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
-  });
+  } catch (error) {
+    console.log(`failed: ${error}`);
+    throw error;
+  }
 
   log.info(
     `

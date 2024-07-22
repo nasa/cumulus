@@ -34,8 +34,8 @@ const { chooseTargetExecution } = require('../lib/executions');
 const startAsyncOperation = require('../lib/startAsyncOperation');
 const {
   createGranuleFromApi,
-  updateGranuleStatusToQueued,
   updateGranuleFromApi,
+  updateGranuleStatusToQueued,
   writeGranuleRecordAndPublishSns,
 } = require('../lib/writeRecords/write-granules');
 const {

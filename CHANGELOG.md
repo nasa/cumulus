@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3639**
   - Updated `/collections/active` endpoint to query postgres
 - **CUMULUS-3640**
-  - Removed elasticsearch from granules endpoint
+  - Removed elasticsearch dependency from granules endpoint
 - **CUMULUS-3641**
   - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
 - **CUMULUS-3688**

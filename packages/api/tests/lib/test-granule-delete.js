@@ -407,16 +407,15 @@ test.serial(
         }))
     );
 
-    await deleteGranuleAndFiles({
+    await t.throwsAsync(deleteGranuleAndFiles({
       knex: t.context.knex,
-      apiGranule: newGranule,
       pgGranule: undefined,
-    });
+    }), { message: 'pgGranule undefined, is required' });
 
-    // verify the files are deleted from S3.
+    // verify the files are not deleted from S3, since deleteGranule errored
     await Promise.all(
       files.map(async (file) => {
-        t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+        t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       })
     );
 

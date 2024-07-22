@@ -14,7 +14,7 @@ import {
   ProviderPgModel,
 } from '@cumulus/db';
 import { DeletePublishedGranule } from '@cumulus/errors';
-import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
+import { ApiFile } from '@cumulus/types';
 import Logger from '@cumulus/logger';
 const { publishGranuleDeleteSnsMessage } = require('../../lib/publishSnsMessageUtils');
 const FileUtils = require('../../lib/FileUtils');
@@ -46,7 +46,6 @@ const deleteS3Files = async (
  *
  * @param {Object} params
  * @param {Knex} params.knex - DB client
- * @param {Object} params.apiGranule - Granule from API
  * @param {PostgresGranule} params.pgGranule - Granule from Postgres
  * @param {number | undefined} params.collectionCumulusId - Optional Collection Cumulus ID
  * @param {FilePgModel} params.filePgModel - File Postgres model
@@ -56,7 +55,6 @@ const deleteS3Files = async (
  */
 const deleteGranuleAndFiles = async (params: {
   knex: Knex,
-  apiGranule?: ApiGranuleRecord,
   pgGranule: PostgresGranuleRecord,
   filePgModel: FilePgModel,
   granulePgModel: GranulePgModel,
@@ -66,7 +64,6 @@ const deleteGranuleAndFiles = async (params: {
   const {
     knex,
     pgGranule,
-    apiGranule,
     filePgModel = new FilePgModel(),
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
@@ -74,20 +71,11 @@ const deleteGranuleAndFiles = async (params: {
 
   // Most of the calls using this method aren't typescripted
   // We cannot rely on typings to save us here
-  if (!pgGranule && !apiGranule) {
-    throw new Error('pgGranule and apiGranule undefined, but one is required');
+  if (!pgGranule) {
+    throw new Error('pgGranule undefined, is required');
   }
-  if (!pgGranule && apiGranule) {
-    logger.info('deleteGranuleAndFiles called without pgGranule, removing ES record only');
-    logger.debug(`Successfully deleted granule ${apiGranule.granuleId} from ES datastore`);
-    await deleteS3Files(apiGranule.files);
-    logger.debug(`Successfully removed S3 files ${JSON.stringify(apiGranule.files)}`);
-    return {
-      collection: apiGranule.collectionId,
-      deletedGranuleId: apiGranule.granuleId,
-      deletionTime: Date.now(),
-      deletedFiles: apiGranule.files,
-    };
+  if (!pgGranule) {
+    logger.info('deleteGranuleAndFiles called without pgGranule');
   }
   if (pgGranule?.published === true) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');

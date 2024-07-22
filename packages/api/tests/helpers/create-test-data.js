@@ -277,7 +277,6 @@ async function createExecutionRecords({
       executionCumulusId: pgExecutions[0][0].cumulus_id,
       collectionId,
       dbClient: knex,
-      esClient,
     });
     const granulesExecutionsModel = new GranulesExecutionsPgModel();
     await Promise.all(pgExecutions.map((execution) => granulesExecutionsModel.create(knex, {
