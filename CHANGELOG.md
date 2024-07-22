@@ -6,10 +6,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### FIXED
+### Added
+
+- **CUMULUS-3700**
+  - Added `volume_type` option to `elasticsearch_config` in the
+    `data-persistance` module to allow configuration of the EBS volume type for
+    Elasticsarch; default remains `gp2`.
+- **CUMULUS-3424**
+  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
+    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
+
+### Fixed
 
 - **CUMULUS-3807**
   - Pinned @aws-sdk/client-s3 to 3.614 to address timeout/bug in s3().listObjectsV2
+- **CUMULUS-3787**
+  - Fixed developer-side bug causing some ts errors to be swallowed in CI
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
 
 ## [v18.3.1] 2024-07-08
 
@@ -64,7 +79,7 @@ of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 #### CUMULUS-3779 async_operations Docker image version upgrade
-  
+
 The `async-operation` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
 to update to at least [async-operations:52](https://hub.docker.com/layers/cumuluss/async-operation/52/images/sha256-78c05f9809c29707f9da87c0fc380d39a71379669cbebd227378c8481eb11c3a?context=explore).
 
@@ -121,7 +136,7 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
   - Added `importGot` helper method to import `got` as an ESM module in
     CommmonJS typescript/webpack clients.
 - **CUMULUS-3606**
-  - Updated  with additional documentation covering tunneling configuration
+  - Updated with additional documentation covering tunneling configuration
     using a PKCS11 provider
 
 ### Changed
