@@ -13,13 +13,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added generate_db_executions to dump large scale postgres executions
 
 ### Changed
-
 - **CUMULUS-3385**
   - updated cleanExecutions lambda to clean up postgres execution payloads
   - updated cleanExecutions lambda with configurable limit to control for large size
 
 ### Fixed
-
 - **CUMULUS-3385**
   - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
 
