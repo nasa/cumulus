@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
 - **CUMULUS-3385**
   - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
+- **CUMULUS-3326**
+  - Updated update-granules-cmr-metadata-file-links task to update the file size of the update metadata file and remove the invalidated checksum associated with this file.
 
 ## [v18.3.1] 2024-07-08
 
