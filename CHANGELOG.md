@@ -15,19 +15,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3424**
   - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
     `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
-
-### Fixed
-
-- **CUMULUS-3807**
-  - Pinned @aws-sdk/client-s3 to 3.614 to address timeout/bug in s3().listObjectsV2
-- **CUMULUS-3787**
-  - Fixed developer-side bug causing some ts errors to be swallowed in CI
-- **CUMULUS-3785**
-  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
-  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
-
-### Added
-
 - **CUMULUS-3760**
   - Added guidance for handling large backlog of es executions
 - **CUMULUS-3742**
@@ -43,6 +30,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3807**
+  - Pinned @aws-sdk/client-s3 to 3.614 to address timeout/bug in s3().listObjectsV2
+- **CUMULUS-3787**
+  - Fixed developer-side bug causing some ts errors to be swallowed in CI
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
 - **CUMULUS-3385**
   - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
 
