@@ -263,7 +263,7 @@ $ aws dynamodb create-table \
 
 Cumulus requires a [PostgreSQL compatible database](../deployment/postgres-database-deployment.md) cluster deployed to AWS. We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html). For further guidance about what type of RDS database to use, please [see the guide on choosing and configuring your RDS database](./choosing_configuring_rds.md).
 
-Cumulus provides a default [template and RDS cluster module](../deployment/postgres-database-deployment.md) utilizing Aurora Serverless.
+Cumulus provides a default [template and RDS cluster module](../deployment/postgres-database-deployment.md) utilizing Aurora Serverless V2.
 
 However, Core intentionally provides a "bring your own" approach, and any well-planned cluster setup should work, given the following:
 

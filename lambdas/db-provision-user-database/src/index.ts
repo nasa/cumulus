@@ -83,6 +83,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         database: `${dbUser}_db`,
         host: (rootKnexConfig.connection as Knex.PgConnectionConfig).host,
         port: (rootKnexConfig.connection as Knex.PgConnectionConfig).port,
+        rejectUnauthorized: 'false',
       }),
     });
   } finally {
