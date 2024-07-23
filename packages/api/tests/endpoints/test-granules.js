@@ -979,7 +979,7 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
     .delete(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
+    .expect(404);
   t.true(response.body.message.includes(`Granule ${granuleId} does not exist or was already deleted`));
 });
 

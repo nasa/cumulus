@@ -305,21 +305,13 @@ const _updateGranule = async ({
   snsEventType = 'Update',
 }) => {
   const granuleId = apiGranule.granuleId;
-
-  let updatedPgGranule;
-  try {
-    [updatedPgGranule] = await granulePgModel.update(
-      knex,
-      { cumulus_id: postgresGranule.cumulus_id },
-      pgFieldUpdates,
-      ['*']
-    );
-    log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
-  } catch (error) {
-    console.log(`failed: ${error}`);
-    throw error;
-  }
-
+  const [updatedPgGranule] = await granulePgModel.update(
+    knex,
+    { cumulus_id: postgresGranule.cumulus_id },
+    pgFieldUpdates,
+    ['*']
+  );
+  log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
   log.info(
     `
     Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${updatedPgGranule.cumulus_id}.

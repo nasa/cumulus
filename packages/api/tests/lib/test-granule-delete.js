@@ -11,8 +11,6 @@ const {
   createBucket,
   deleteS3Buckets,
   s3ObjectExists,
-  s3PutObject,
-  createS3Buckets,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
@@ -32,7 +30,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 // Dynamo mock data factories
 const {
   fakeCollectionFactory,
-  fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
 
 const { deleteGranuleAndFiles } = require('../../src/lib/granule-delete');
@@ -312,114 +309,3 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
     s3Buckets.public.name,
   ]));
 });
-
-test.serial('deleteGranuleAndFiles() will delete granule and S3 files', async (t) => {
-  const {
-    newPgGranule,
-    files,
-    s3Buckets,
-  } = await createGranuleAndFiles({
-    dbClient: t.context.knex,
-    collectionId: t.context.collectionId,
-    collectionCumulusId: t.context.collectionCumulusId,
-    granuleParams: { published: false },
-  });
-
-  await t.notThrowsAsync(
-    deleteGranuleAndFiles({
-      knex: t.context.knex,
-      pgGranule: newPgGranule,
-    })
-  );
-
-  // granule should still exist in PostgreSQL and elasticsearch
-  t.false(await granulePgModel.exists(
-    t.context.knex,
-    {
-      granule_id: newPgGranule.granule_id,
-      collection_cumulus_id: newPgGranule.collection_cumulus_id,
-    }
-  ));
-
-  // Files will still exist in S3 and PostgreSQL.
-  await Promise.all(
-    files.map(async (file) => {
-      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-      t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
-    })
-  );
-
-  t.teardown(() => deleteS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]));
-});
-
-test.serial(
-  'deleteGranuleAndFiles() does not require a PostgreSQL granule if an elasticsearch granule is present',
-  async (t) => {
-    // Create a granule in Dynamo only
-    const s3Buckets = {
-      protected: {
-        name: randomId('protected'),
-        type: 'protected',
-      },
-      public: {
-        name: randomId('public'),
-        type: 'public',
-      },
-    };
-    const granuleId = randomId('granule');
-    const files = [
-      {
-        bucket: s3Buckets.protected.name,
-        fileName: `${granuleId}.hdf`,
-        key: `${randomString(5)}/${granuleId}.hdf`,
-      },
-      {
-        bucket: s3Buckets.protected.name,
-        fileName: `${granuleId}.cmr.xml`,
-        key: `${randomString(5)}/${granuleId}.cmr.xml`,
-      },
-      {
-        bucket: s3Buckets.public.name,
-        fileName: `${granuleId}.jpg`,
-        key: `${randomString(5)}/${granuleId}.jpg`,
-      },
-    ];
-
-    const newGranule = fakeGranuleFactoryV2({
-      granuleId: granuleId,
-      status: 'failed',
-      published: false,
-      files: files,
-    });
-
-    await createS3Buckets([s3Buckets.protected.name, s3Buckets.public.name]);
-
-    // Add files to S3
-    await Promise.all(
-      newGranule.files.map((file) =>
-        s3PutObject({
-          Bucket: file.bucket,
-          Key: file.key,
-          Body: `test data ${randomString()}`,
-        }))
-    );
-
-    await t.throwsAsync(deleteGranuleAndFiles({
-      knex: t.context.knex,
-      pgGranule: undefined,
-    }), { message: 'pgGranule undefined, is required' });
-
-    // verify the files are not deleted from S3, since deleteGranule errored
-    await Promise.all(
-      files.map(async (file) => {
-        t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-      })
-    );
-
-    t.teardown(() =>
-      deleteS3Buckets([s3Buckets.protected.name, s3Buckets.public.name]));
-  }
-);

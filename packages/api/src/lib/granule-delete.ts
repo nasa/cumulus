@@ -71,12 +71,6 @@ const deleteGranuleAndFiles = async (params: {
 
   // Most of the calls using this method aren't typescripted
   // We cannot rely on typings to save us here
-  if (!pgGranule) {
-    throw new Error('pgGranule undefined, is required');
-  }
-  if (!pgGranule) {
-    logger.info('deleteGranuleAndFiles called without pgGranule');
-  }
   if (pgGranule?.published === true) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }

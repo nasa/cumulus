@@ -1833,7 +1833,7 @@ test.serial('_writeGranules attempts to mark granule as failed if a SchemaValida
     knex,
     testOverrides: { stepFunctionUtils },
   }));
-  t.true(error.message.includes('Granule/granule files failed schema validation and will be updated in the datastore with the error and a status of failed'));
+  t.true(error.cause.message.includes('The record has validation errors:'));
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
