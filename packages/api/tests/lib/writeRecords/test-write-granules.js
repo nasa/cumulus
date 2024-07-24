@@ -102,7 +102,7 @@ const apiFormatOmitList = [
  * @param {Object} updateGranulePayload -- Request body for granule update
  * @param {boolean} granuleWriteVia -- Either 'api' (default) or 'message'. Switches
  *   The granule write mechanism
- * @returns {Object} -- Updated granule objects from each datastore and PG-translated payload
+ * @returns {Object} -- Updated granule objects and PG-translated payload
  *   updatedPgGranuleFields,
  *   pgGranule,
  *   dynamoGranule,
@@ -503,7 +503,7 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
   t.is(actual, undefined);
 });
 
-test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/Elasticsearch/SNS', async (t) => {
+test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/SNS', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -537,7 +537,7 @@ test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/Elas
   t.is(Messages.length, 1);
 });
 
-test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/Elasticsearch/SNS with expected values nullified', async (t) => {
+test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/SNS with expected values nullified', async (t) => {
   const {
     collection,
     collectionCumulusId,
@@ -680,7 +680,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
   );
 });
 
-test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/Elasticsearch/SNS without updating product volume if files is undefined', async (t) => {
+test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/SNS without updating product volume if files is undefined', async (t) => {
   const {
     collection,
     collectionCumulusId,
@@ -745,7 +745,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
   t.is(apiFormattedPostgresGranule.productVolume, '15');
 });
 
-test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/Elasticsearch/SNS without modifying undefined values', async (t) => {
+test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/SNS without modifying undefined values', async (t) => {
   const {
     collection,
     collectionCumulusId,
@@ -867,7 +867,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
   );
 });
 
-test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/Elasticsearch/SNS with expected values nullified when granule is updated to running', async (t) => {
+test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/SNS with expected values nullified when granule is updated to running', async (t) => {
   const {
     collection,
     collectionCumulusId,
@@ -1037,14 +1037,10 @@ test.serial('writeGranulesFromMessage() sets a default value of false for `publi
     }
   );
 
-  // Validate objects all match
-  /// translate the PG granule to API granule to directly compare to ES
   const translatedPgRecord = await translatePostgresGranuleToApiGranule({
     granulePgRecord,
     knexOrTransaction: knex,
   });
-
-  // Validate assertion is true in the primary datastore:
 
   t.is(translatedPgRecord.published, false);
 });
@@ -1080,15 +1076,10 @@ test.serial('writeGranulesFromMessage() uses a default value for granule.created
     }
   );
 
-  // Validate objects all match
-  /// translate the PG granule to API granule to directly compare to ES
   const translatedPgRecord = await translatePostgresGranuleToApiGranule({
     granulePgRecord,
     knexOrTransaction: knex,
   });
-
-  // Validate assertion is true in the primary datastore:
-
   t.is(translatedPgRecord.createdAt, workflowStartTime);
 });
 
@@ -1119,19 +1110,14 @@ test.serial('writeGranulesFromMessage() allows overwrite of createdAt and uses g
     }
   );
 
-  // Validate objects all match
-  /// translate the PG granule to API granule to directly compare to ES
   const translatedPgRecord = await translatePostgresGranuleToApiGranule({
     granulePgRecord,
     knexOrTransaction: knex,
   });
-
-  // Validate assertion is true in the primary datastore:
-
   t.is(translatedPgRecord.createdAt, cumulusMessage.payload.granules[0].createdAt);
 });
 
-test.serial('writeGranulesFromMessage() given a payload with undefined files, keeps existing files in all datastores', async (t) => {
+test.serial('writeGranulesFromMessage() given a payload with undefined files, keeps existing files', async (t) => {
   const {
     collectionCumulusId,
     files,
@@ -1295,7 +1281,7 @@ test.serial('writeGranulesFromMessage() given a partial granule overwrites only 
   );
 });
 
-test.serial('writeGranulesFromMessage() given an empty array as a files key will remove all existing files and keep Postgres/Elastic in-sync', async (t) => {
+test.serial('writeGranulesFromMessage() given an empty array as a files key will remove all existing files and keep Postgres in-sync', async (t) => {
   const {
     collectionCumulusId,
     executionCumulusId,
@@ -1380,8 +1366,6 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
   });
-
-  // Files were removed from all datastores
   t.deepEqual(apiGranule.files, []);
 });
 
@@ -1421,7 +1405,7 @@ test.serial('writeGranulesFromMessage() given a null files key will throw an err
     testOverrides: { stepFunctionUtils },
   });
 
-  // Files exist in all datastores
+  // Files exist in all PG
   const originalPGGranule = await t.context.granulePgModel.get(
     knex,
     {
@@ -1644,7 +1628,7 @@ test.serial('writeGranulesFromMessage() throws error if any granule writes fail'
   }));
 });
 
-test.serial('writeGranulesFromMessage() does not write to PostgreSQL/Elasticsearch/SNS if Postgres write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not write to PostgreSQL/SNS if Postgres write fails', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -1688,41 +1672,6 @@ test.serial('writeGranulesFromMessage() does not write to PostgreSQL/Elasticsear
   t.is(Messages.length, 0);
 });
 
-test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/Elasticsearch/SNS if Elasticsearch write fails', async (t) => {
-  const {
-    collectionCumulusId,
-    cumulusMessage,
-    executionCumulusId,
-    granuleId,
-    knex,
-    providerCumulusId,
-    stepFunctionUtils,
-  } = t.context;
-
-  await writeGranulesFromMessage({
-    collectionCumulusId,
-    cumulusMessage,
-    executionCumulusId,
-    knex,
-    providerCumulusId,
-    testOverrides: { stepFunctionUtils },
-  });
-
-  t.true(
-    await t.context.granulePgModel.exists(
-      knex,
-      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-    )
-  );
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  });
-
-  t.true(Messages.length > 0);
-});
-
 test.serial('writeGranulesFromMessage() writes a granule and marks as failed if any file writes fail', async (t) => {
   const {
     cumulusMessage,
@@ -1757,7 +1706,7 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
   t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
-test.serial('writeGranuleFromMessage() writes a new granule with files set to "[]" results in file value set to undefined/default in all datastores', async (t) => {
+test.serial('writeGranuleFromMessage() writes a new granule with files set to "[]" results in file value set to undefined/default', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -2077,19 +2026,14 @@ test.serial('writeGranulesFromMessage() sets `published` to false if null value 
     }
   );
 
-  // Validate objects all match
-  /// translate the PG granule to API granule to directly compare to ES
   const translatedPgRecord = await translatePostgresGranuleToApiGranule({
     granulePgRecord,
     knexOrTransaction: knex,
   });
-
-  // Validate assertion is true in the primary datastore:
-
   t.is(translatedPgRecord.published, false);
 });
 
-test.serial('writeGranulesFromMessage() does not write a granule to Postgres or ES if a granule with the same ID and with a different collection ID already exists', async (t) => {
+test.serial('writeGranulesFromMessage() does not write a granule to Postgres if a granule with the same ID and with a different collection ID already exists', async (t) => {
   const {
     collectionPgModel,
     collectionCumulusId,
@@ -2216,7 +2160,7 @@ test.serial('writeGranulesFromMessage() does not persist file records to Postgre
   );
 });
 
-test.serial('writeGranulesFromMessage() on re-write with the same granule values and files with "completed" status saves granule records to PostgreSQL/Elasticsearch with updated product volume, expected values, and files', async (t) => {
+test.serial('writeGranulesFromMessage() on re-write with the same granule values and files with "completed" status saves granule records to PostgreSQL with updated product volume, expected values, and files', async (t) => {
   // a re-write with same values and files accomplishes the same result
   // as an update with different values
   // for completed status, whether the re-write is with the same execution or a new one
@@ -2329,7 +2273,7 @@ test.serial('writeGranulesFromMessage() on re-write with the same granule values
   );
 });
 
-test.serial('writeGranulesFromMessage() on re-write with the same granule values but different files with "completed" status saves granule records to PostgreSQL/Elasticsearch with updated product volume, expected values, and replaces the files', async (t) => {
+test.serial('writeGranulesFromMessage() on re-write with the same granule values but different files with "completed" status saves granule records to PostgreSQL with updated product volume, expected values, and replaces the files', async (t) => {
   // a re-write with same values and files accomplishes the same result
   // as an update with different values
   // for completed status, whether the re-write is with the same execution or a new one
@@ -2441,7 +2385,7 @@ test.serial('writeGranulesFromMessage() on re-write with the same granule values
   );
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files and the same execution, does not update the granule values or files in Postgres/ES, so the pre-existing values and files will persist', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files and the same execution, does not update the granule values or files in Postgres, so the pre-existing values and files will persist', async (t) => {
   // a re-write with same values and files accomplishes the same result
   // as an update with different values
   // for running status, there is a difference whether the re-write is with the same execution
@@ -2554,7 +2498,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "ru
   );
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files and the same execution, does not update the granule values or files in Postgres/ES, so the pre-existing values and files will persist', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files and the same execution, does not update the granule values or files in Postgres, so the pre-existing values and files will persist', async (t) => {
   // a re-write with same values and files accomplishes the same result
   // as an update with different values
   // for queued status, there is a difference whether the re-write is with the same execution
@@ -2667,7 +2611,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "qu
   );
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files and a new execution, updates only limited granule values to Postgres/ES, and does not persist updates to the files', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files and a new execution, updates only limited granule values to Postgres, and does not persist updates to the files', async (t) => {
   // a re-write with same values accomplishes the same result as an update with different values
   // for running status, there is a difference whether the re-write is with the same execution
   // or a new one
@@ -2793,7 +2737,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "ru
   );
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files and a new execution, does not update the granule values or files in Postgres/ES, so the pre-existing values and files will persist', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files and a new execution, does not update the granule values or files in Postgres, so the pre-existing values and files will persist', async (t) => {
   // a re-write with same values accomplishes the same result as an update with different values
   // for queued status, there is a difference whether the re-write is with the same execution
   // or a new one, but only between an existing execution and a non-existing execution
@@ -2914,7 +2858,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "qu
   );
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files, a new execution, and a stale granule createdAt, does not update the granule values or files in Postgres/ES or to the files, so the pre-existing values and files will persist', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files, a new execution, and a stale granule createdAt, does not update the granule values or files in Postgres or to the files, so the pre-existing values and files will persist', async (t) => {
   // for running status, there is a difference whether the re-write is with the same execution
   // or a new one
   const {
@@ -3033,7 +2977,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "ru
   );
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files, a new execution, and a stale granule createdAt, does not update the granule values or files in Postgres/ES or to the files, so the pre-existing values and files will persist', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files, a new execution, and a stale granule createdAt, does not update the granule values or files in Postgres or to the files, so the pre-existing values and files will persist', async (t) => {
   // for queued status, there is a difference whether the re-write is with the same execution
   // or a new one
   const {
@@ -3152,7 +3096,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "qu
   );
 });
 
-test.serial('writeGranulesFromMessage() on update with "completed" status and stale granule createdAt, does not persist the granule updates to Postgres/ES or to the files', async (t) => {
+test.serial('writeGranulesFromMessage() on update with "completed" status and stale granule createdAt, does not persist the granule updates to Postgres or to the files', async (t) => {
   // for completed status, whether the update is with the same execution or a new one
   // does not make a difference
   const {
@@ -3353,7 +3297,7 @@ test.serial('writeGranuleFromApi() throws for a granule with an invalid collecti
   );
 });
 
-test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and Elasticsearch.', async (t) => {
+test.serial('writeGranuleFromApi() writes a granule to PostgreSQL', async (t) => {
   const {
     collectionCumulusId,
     granule,
@@ -3390,7 +3334,7 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and Elasticsea
   );
 });
 
-test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and Elasticsearch and populates a consistent createdAt default value', async (t) => {
+test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and populates a consistent createdAt default value', async (t) => {
   const {
     collectionCumulusId,
     granule,
@@ -3432,7 +3376,7 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and Elasticsea
   );
 });
 
-test.serial('writeGranuleFromApi() given a payload with undefined files, keeps existing files in all datastores', async (t) => {
+test.serial('writeGranuleFromApi() given a payload with undefined files, keeps existing files', async (t) => {
   const {
     collectionCumulusId,
     files,
@@ -3537,7 +3481,7 @@ test.serial('writeGranuleFromApi() given a partial granule overwrites only provi
   );
 });
 
-test.serial('writeGranuleFromApi() given a granule with all fields populated is written to the DB, on update removes all expected nullified fields from all datastores', async (t) => {
+test.serial('writeGranuleFromApi() given a granule with all fields populated is written to the DB, on update removes all expected nullified fields', async (t) => {
   const {
     collection,
     collectionCumulusId,
@@ -3656,7 +3600,7 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
   );
 });
 
-test.serial('writeGranuleFromApi() when called on a granuleId that exists in the datastore does not modify the `published` field if it is not set', async (t) => {
+test.serial('writeGranuleFromApi() when called on a granuleId does not modify the `published` field if it is not set', async (t) => {
   const {
     collectionCumulusId,
     granule,
@@ -3692,7 +3636,7 @@ test.serial('writeGranuleFromApi() when called on a granuleId that exists in the
   t.is(pgGranule.published, originalPgGranule.published);
 });
 
-test.serial('writeGranuleFromApi() given an empty array as a files key will remove all existing files and keep Postgres/Elastic in-sync', async (t) => {
+test.serial('writeGranuleFromApi() given an empty array as a files key will remove all existing files', async (t) => {
   const {
     collectionCumulusId,
     files,
@@ -3747,8 +3691,6 @@ test.serial('writeGranuleFromApi() given an empty array as a files key will remo
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
   });
-
-  // Files were removed from all datastores
   t.deepEqual(apiGranule.files, []);
 });
 
@@ -3797,7 +3739,7 @@ test.serial('writeGranuleFromApi() throws with granule with an execution url tha
   );
 });
 
-test.serial('writeGranuleFromApi() saves updated values for running granule record to Postgres and ElasticSearch on rewrite', async (t) => {
+test.serial('writeGranuleFromApi() saves updated values for running granule record to Postgres on rewrite', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -3847,7 +3789,7 @@ test.serial('writeGranuleFromApi() saves updated values for running granule reco
   t.is(postgresRecord.status, 'running');
 });
 
-test.serial('writeGranuleFromApi() saves updated values for queued granule record to Postgres and ElasticSearch on rewrite', async (t) => {
+test.serial('writeGranuleFromApi() saves updated values for queued granule record to Postgres on rewrite', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -3998,7 +3940,7 @@ test.serial('writeGranuleFromApi() sets granule to failed with expected error an
   t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
-test.serial('writeGranuleFromApi() allows update of complete granule record in all datastores if older granule exists with same execution in a completed state', async (t) => {
+test.serial('writeGranuleFromApi() allows update of complete granule record if older granule exists with same execution in a completed state', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -4047,7 +3989,7 @@ test.serial('writeGranuleFromApi() allows update of complete granule record in a
   t.is(postgresRecord.published, true);
 });
 
-test.serial('writeGranuleFromApi() allows overwrite of granule records in all datastores if granule exists with newer createdAt and has same execution in a completed state', async (t) => {
+test.serial('writeGranuleFromApi() allows overwrite of granule records if granule exists with newer createdAt and has same execution in a completed state', async (t) => {
   const {
     executionUrl,
     knex,
@@ -4104,7 +4046,7 @@ test.serial('writeGranuleFromApi() allows overwrite of granule records in all da
   t.is(translatedPgGranule.execution, executionUrl);
 });
 
-test.serial('writeGranuleFromApi() allows overwrite of granule records in all datastores and associates with new execution if granule exists with newer createdAt and an existing execution is in a completed state', async (t) => {
+test.serial('writeGranuleFromApi() allows overwrite of granule records and associates with new execution if granule exists with newer createdAt and an existing execution is in a completed state', async (t) => {
   const {
     executionUrl,
     knex,
@@ -4176,7 +4118,7 @@ test.serial('writeGranuleFromApi() allows overwrite of granule records in all da
   t.is(translatedPgGranule.execution, newExecutionUrl);
 });
 
-test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL/Elasticsearch and publishes SNS message', async (t) => {
+test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL and publishes SNS message', async (t) => {
   const {
     collectionCumulusId,
     granule,
@@ -4252,13 +4194,14 @@ test.serial('updateGranuleStatusToQueued() throws error if record does not exist
   );
 });
 
-test.serial('updateGranuleStatusToQueued() does not update Elasticsearch granule if writing to PostgreSQL fails', async (t) => {
+test.serial('updateGranuleStatusToQueued() does not publish a SNS message if writing to PostgreSQL fails', async (t) => {
   const {
     collectionCumulusId,
     granule,
     granuleId,
     granulePgModel,
     knex,
+    QueueUrl,
   } = t.context;
 
   const testGranulePgModel = {
@@ -4306,6 +4249,16 @@ test.serial('updateGranuleStatusToQueued() does not update Elasticsearch granule
 
   // Check that granules are equal in all data stores
   t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl,
+    WaitTimeSeconds: 10,
+  });
+  const snsMessageBody = JSON.parse(Messages[0].Body);
+  const publishedMessage = JSON.parse(snsMessageBody.Message);
+
+  t.is(Messages.length, 1);
+  t.deepEqual(publishedMessage.record, apiGranule);
+  t.is(publishedMessage.event, 'Create');
 });
 
 test.serial('_writeGranule() successfully publishes an SNS message', async (t) => {
@@ -4417,7 +4370,7 @@ test.serial('updateGranuleStatusToFailed() throws error if record does not exist
   );
 });
 
-test.serial('writeGranuleFromApi() overwrites granule record with publish set to null with publish value set to false to all datastores', async (t) => {
+test.serial('writeGranuleFromApi() overwrites granule record with publish set to null with publish value set to false', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -4447,7 +4400,7 @@ test.serial('writeGranuleFromApi() overwrites granule record with publish set to
   t.false(postgresRecord.published);
 });
 
-test.serial('writeGranuleFromApi() overwrites granule record with publish set to true with publish value set to true to all datastores', async (t) => {
+test.serial('writeGranuleFromApi() overwrites granule record with publish set to true with publish value set to true', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -4477,7 +4430,7 @@ test.serial('writeGranuleFromApi() overwrites granule record with publish set to
   t.true(postgresRecord.published);
 });
 
-test.serial('writeGranuleFromApi() overwrites granule record with error set to null with error value set to "{}" to all datastores', async (t) => {
+test.serial('writeGranuleFromApi() overwrites granule record with error set to null with error value set to "{}"', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -4500,7 +4453,7 @@ test.serial('writeGranuleFromApi() overwrites granule record with error set to n
   t.deepEqual(granulePgRecord.error, {});
 });
 
-test.serial('writeGranuleFromApi() overwrites granule record with error set with expected value to all datastores', async (t) => {
+test.serial('writeGranuleFromApi() overwrites granule record with error set with expected value', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -4524,7 +4477,7 @@ test.serial('writeGranuleFromApi() overwrites granule record with error set with
   t.deepEqual(granulePgRecord.error, updatedError);
 });
 
-test.serial('writeGranuleFromApi() overwrites granule record with status "completed" with files set to null with file value set to undefined/default in Elastic and "[]" in Postgres', async (t) => {
+test.serial('writeGranuleFromApi() overwrites granule record with status "completed" with files set to null with file value set to "[]" in Postgres', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -4552,7 +4505,7 @@ test.serial('writeGranuleFromApi() overwrites granule record with status "comple
   t.deepEqual(translatedPgRecord.files, []);
 });
 
-test.serial('writeGranuleFromApi() writes a new granule with files set to "[]" results in file value set to undefined/default in Elastic and "[]" in Postgres', async (t) => {
+test.serial('writeGranuleFromApi() writes a new granule with files set to "[]" results in file value set to "[]" in Postgres', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -4577,7 +4530,7 @@ test.serial('writeGranuleFromApi() writes a new granule with files set to "[]" r
   t.deepEqual(translatedPgRecord.files, []);
 });
 
-test.serial('writeGranuleFromApi() overwrites granule record with status "failed" with files set to null with file value set to undefined/default in Elastic and "[]" in Postgres', async (t) => {
+test.serial('writeGranuleFromApi() overwrites granule record with status "failed" with files set to null with file value set to "[]" in Postgres', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -4605,7 +4558,7 @@ test.serial('writeGranuleFromApi() overwrites granule record with status "failed
   t.deepEqual(translatedPgRecord.files, []);
 });
 
-test.serial('writeGranuleFromApi() overwrites granule record with status "running" with files set to null with file value set to undefined/default in Elastic and "[]" in Postgres', async (t) => {
+test.serial('writeGranuleFromApi() overwrites granule record with status "running" with files set to null with file value set to"[]" in Postgres', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -4633,7 +4586,7 @@ test.serial('writeGranuleFromApi() overwrites granule record with status "runnin
   t.deepEqual(translatedPgRecord.files, []);
 });
 
-test.serial('writeGranuleFromApi() overwrites granule record with status "queued" with files set to null with file value set to undefined/default in Elastic and "[]" in Postgres', async (t) => {
+test.serial('writeGranuleFromApi() overwrites granule record with status "queued" with files set to null with file value set to "[]" in Postgres', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -4661,7 +4614,7 @@ test.serial('writeGranuleFromApi() overwrites granule record with status "queued
   t.deepEqual(translatedPgRecord.files, []);
 });
 
-test.serial('writeGranuleFromApi() overwrites granule record on overwrite with files set to all datastores', async (t) => {
+test.serial('writeGranuleFromApi() overwrites granule record on overwrite with files', async (t) => {
   const {
     knex,
     collectionCumulusId,

@@ -280,8 +280,7 @@ const _publishPostgresGranuleUpdateToSns = async ({
 };
 
 /**
- * Update granule record status in PostgreSQL Elasticsearch.
- * Update granule record status in PostgreSQL and Elasticsearch.
+ * Update granule record status in PostgreSQL
  * Publish SNS event for updated granule.
  *
  * @param {Object}  params
@@ -467,9 +466,7 @@ const _writeGranuleFilesAndThrowIfExpectedWriteError = async ({
 };
 
 /**
- * Write granule to PostgreSQL and ElasticSearch, keeping granules to be written in sync
- * as necessary.
- * If any granule writes fail, keep the data stores in sync.
+ * Write granule to PostgreSQL, if any granule writes fail, keep the data stores in sync.
  *
  * @param {Object}            params
  * @param {PostgresGranuleRecord} params.postgresGranuleRecord - PostgreSQL granule record to write
@@ -629,7 +626,7 @@ const _writeGranule = async ({
 * @summary In cases where a full API record is not passed, but partial/tangential updates to granule
 *          records are called for, updates to files records are not required and pre-write
 *          calculation in methods like write/update GranulesFromApi result in unneded
-*          evaluation/database writes /etc. This method updates the postgres/ES datastore and
+*          evaluation/database writes /etc. This method updates postgres and
 *          publishes the SNS update event without incurring unneded overhead.
 * @param {Object}          params
 * @param {Object}          params.apiGranuleRecord - Api Granule object to write to the database
@@ -995,7 +992,7 @@ const writeGranulesFromMessage = async ({
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
     const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some granules to Postgres/Elasticsearch', aggregateError);
+    log.error('Failed writing some granules to Postgres', aggregateError);
     throw aggregateError;
   }
   return results;

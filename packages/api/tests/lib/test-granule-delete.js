@@ -287,7 +287,7 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
     { message: 'PG delete failed' }
   );
 
-  // granule should still exist in PostgreSQL and Elasticsearch
+  // granule should still exist in PostgreSQL
   t.true(await granulePgModel.exists(
     t.context.knex,
     {

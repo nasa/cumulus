@@ -2092,7 +2092,7 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
   });
 });
 
-test.serial('PATCH does not update non-current-timestamp undefined fields for existing granules in all datastores', async (t) => {
+test.serial('PATCH does not update non-current-timestamp undefined fields for existing granules', async (t) => {
   const {
     knex,
     executionPgRecord,
@@ -2170,7 +2170,7 @@ test.serial('PATCH does not update non-current-timestamp undefined fields for ex
   });
 });
 
-test.serial('PATCH nullifies expected fields for existing granules in all datastores', async (t) => {
+test.serial('PATCH nullifies expected fields for existing granules', async (t) => {
   const {
     collectionName,
     collectionVersion,
@@ -2461,7 +2461,7 @@ test.serial('PATCH replaces an existing granule in all data stores with correct 
   t.is(actualPgGranule.createdAt, newPgGranule.createdAt);
 });
 
-test.serial('PATCH replaces an existing granule in all datastores with a granule that violates message-path write constraints, ignoring message write constraints and field selection', async (t) => {
+test.serial('PATCH replaces an existing granule with a granule that violates message-path write constraints, ignoring message write constraints and field selection', async (t) => {
   const {
     executionUrl,
     knex,

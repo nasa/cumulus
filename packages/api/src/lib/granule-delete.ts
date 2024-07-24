@@ -7,7 +7,6 @@ import {
   GranulePgModel,
   PostgresGranuleRecord,
   PostgresFileRecord,
-  createRejectableTransaction,
   translatePostgresGranuleToApiGranule,
   CollectionPgModel,
   PdrPgModel,
@@ -41,7 +40,7 @@ const deleteS3Files = async (
   );
 
 /**
- * Delete a Granule from Postgres and/or ES, delete the Granule's
+ * Delete a Granule from Postgres, delete the Granule's
  * Files from Postgres and S3
  *
  * @param {Object} params
@@ -91,13 +90,11 @@ const deleteGranuleAndFiles = async (params: {
   });
 
   try {
-    await createRejectableTransaction(knex, async (trx) => {
-      await granulePgModel.delete(trx, {
-        cumulus_id: pgGranule.cumulus_id,
-      });
+    await granulePgModel.delete(knex, {
+      cumulus_id: pgGranule.cumulus_id,
     });
     await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
-    logger.debug(`Successfully deleted granule ${pgGranule.granule_id} from ES/PostGreSQL datastores`);
+    logger.debug(`Successfully deleted granule ${pgGranule.granule_id} from PostgreSQL`);
     await deleteS3Files(files);
     logger.debug(`Successfully removed S3 files ${JSON.stringify(files)}`);
     return {
