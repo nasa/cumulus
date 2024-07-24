@@ -4639,6 +4639,10 @@ test.serial('writeGranuleFromApi() overwrites granule record on overwrite with f
     knexOrTransaction: knex,
   });
 
+  [granule, translatedPgRecord].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
+
   t.deepEqual(translatedPgRecord.files, granule.files);
 });
 
