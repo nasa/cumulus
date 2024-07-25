@@ -19,7 +19,6 @@ const {
   translatePostgresExecutionToApiExecution,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const { indexExecution } = require('@cumulus/es-client/indexer');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // Postgres mock data factories
@@ -210,7 +209,6 @@ async function createGranuleAndFiles({
 async function createExecutionRecords({
   knex,
   count,
-  esClient,
   addGranules = false,
   collectionId,
   addParentExecutions = false,
@@ -264,11 +262,6 @@ async function createExecutionRecords({
   const executionRecords = await Promise.all(
     pgExecutions.map((execution) =>
       translatePostgresExecutionToApiExecution(execution[0], knex))
-  );
-
-  await Promise.all(
-    executionRecords.map((record) =>
-      indexExecution(esClient, record, process.env.ES_INDEX))
   );
 
   if (addGranules === true) {
