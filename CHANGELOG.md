@@ -4,7 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [elasticsearch-executions-release]
+
+### Replace ElasticSearch Phase 1
+- **CUMULUS-3239**
+  - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
+- **CUMULUS-3240**
+  - Removed Elasticsearch dependency from `executions` endpoints
+- **CUMULUS-3692**
+  - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
+    support basic queries for granules
+- **CUMULUS-3693**
+  - Added functionality to `@cumulus/db/src/search` to support range queries
+- **CUMULUS-3694**
+  - Added functionality to `@cumulus/db/src/search` to support term queries
+  - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
+- **CUMULUS-3695**
+  - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
+- **CUMULUS-3696**
+  - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
 
 ### Migration Notes
 

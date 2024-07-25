@@ -19,7 +19,7 @@ const {
   translatePostgresExecutionToApiExecution,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const { indexGranule, indexExecution } = require('@cumulus/es-client/indexer');
+const { indexGranule } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
@@ -275,11 +275,6 @@ async function createExecutionRecords({
   const executionRecords = await Promise.all(
     pgExecutions.map((execution) =>
       translatePostgresExecutionToApiExecution(execution[0], knex))
-  );
-
-  await Promise.all(
-    executionRecords.map((record) =>
-      indexExecution(esClient, record, process.env.ES_INDEX))
   );
 
   if (addGranules === true) {
