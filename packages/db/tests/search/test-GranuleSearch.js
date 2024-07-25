@@ -851,11 +851,11 @@ test('GranuleSearch supports search which checks existence of error', async (t) 
 
 test('GranuleSearch estimates the rowcount of the table', async (t) => {
   const { knex } = t.context;
-  let queryStringParameters = {
+  const queryStringParameters = {
     limit: 50,
   };
-  let dbSearch = new GranuleSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
   t.true(response.meta.count > 0);
   t.is(response.results?.length, 50);
 });
