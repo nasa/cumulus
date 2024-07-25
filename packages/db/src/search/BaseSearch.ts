@@ -460,12 +460,18 @@ class BaseSearch {
     const knex = testKnex ?? await getKnexClient();
     const { countQuery, searchQuery } = this.buildSearch(knex);
 
-    const returnEstimatedRowcount = countQuery ? this.returnEstimatedRowcount(countQuery?.toSQL().sql) : false;
-    const estimateCountQuery = returnEstimatedRowcount? knex.raw(`EXPLAIN (FORMAT JSON) select * from "${this.tableName}"`) : undefined;
+    const returnEstimatedRowcount = countQuery
+      ? this.returnEstimatedRowcount(countQuery?.toSQL().sql)
+      : false;
+    const estimateCountQuery = returnEstimatedRowcount
+      ? knex.raw(`EXPLAIN (FORMAT JSON) select * from "${this.tableName}"`)
+      : undefined;
     if (estimateCountQuery) log.debug(`Estimating the row count ${estimateCountQuery.toSQL().sql}`);
 
     try {
-      const [countResult, pgRecords] = await Promise.all([estimateCountQuery || countQuery, searchQuery]);
+      const [countResult, pgRecords] = await Promise.all([
+        estimateCountQuery || countQuery, searchQuery,
+      ]);
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;
       meta.page = this.dbQueryParameters.page;
