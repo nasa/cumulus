@@ -231,7 +231,15 @@ export const convertQueryStringToDbQueryParameters = (
   type: string,
   queryStringParameters: QueryStringParameters
 ): DbQueryParameters => {
-  const { limit, page, prefix, infix, fields, estimateTableRowCount, includeFullRecord } = queryStringParameters;
+  const {
+    limit,
+    page,
+    prefix,
+    infix,
+    fields,
+    estimateTableRowCount,
+    includeFullRecord,
+  } = queryStringParameters;
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);

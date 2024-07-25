@@ -567,3 +567,14 @@ test('ExecutionSearch includeFullRecord', async (t) => {
   t.true('collectionId' in response.results[40]);
   t.true('asyncOperationId' in response.results[40]);
 });
+
+test('ExecutionSearch estimates the rowcount of the table by default', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 50,
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.true(response.meta.count > 0);
+  t.is(response.results?.length, 50);
+});

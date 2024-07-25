@@ -849,7 +849,7 @@ test('GranuleSearch supports search which checks existence of error', async (t) 
   t.is(response.results?.length, 50);
 });
 
-test('GranuleSearch estimates the rowcount of the table', async (t) => {
+test('GranuleSearch estimates the rowcount of the table by default', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
