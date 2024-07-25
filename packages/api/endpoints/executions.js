@@ -346,7 +346,6 @@ async function bulkDeleteExecutionsByCollection(req, res) {
       type: 'BULK_EXECUTION_DELETE',
       payload: { ...payload, esBatchSize, dbBatchSize, collectionId },
       envVars: {
-        ES_HOST: process.env.ES_HOST,
         KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         stackName: process.env.stackName,
         system_bucket: process.env.system_bucket,

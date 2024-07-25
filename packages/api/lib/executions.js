@@ -128,12 +128,11 @@ const _deleteRdsExecutions = async ({
 );
 
 /**
- * Handles the deletion of execution records from both Elasticsearch and the database.
+ * Handles the deletion of execution records from the database.
  *
  * @param {Object} event - The event object.
  * @param {string} event.collectionId - The ID of the collection whose execution
  * records are to be deleted.
- * @param {string} event.esBatchSize - the batch size to delete from Elasticsearch
  * @param {string} event.dbBatchSize - the batch size to delete from the database
  * @returns {Promise<void>}
  */
