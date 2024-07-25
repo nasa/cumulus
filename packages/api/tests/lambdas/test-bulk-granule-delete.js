@@ -93,7 +93,6 @@ test.after.always(async (t) => {
 test('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
   const {
     knex,
-    esClient,
   } = t.context;
 
   const granulePgModel = new GranulePgModel();
@@ -111,7 +110,6 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
         published: true,
         collection_cumulus_id: collectionPgRecord.cumulus_id,
       },
-      esClient: esClient,
       writeDynamo: false,
     }),
     createGranuleAndFiles({
@@ -120,7 +118,6 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
         published: true,
         collection_cumulus_id: collectionPgRecord.cumulus_id,
       },
-      esClient: esClient,
       writeDynamo: false,
     }),
   ]);
