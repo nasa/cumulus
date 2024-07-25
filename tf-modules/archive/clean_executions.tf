@@ -10,7 +10,7 @@ resource "aws_sqs_queue" "clean_executions_dead_letter_queue" {
 resource "aws_lambda_function" "clean_executions" {
   function_name    = "${var.prefix}-cleanExecutions"
   filename         = "${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip")
+source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"
@@ -21,13 +21,15 @@ resource "aws_lambda_function" "clean_executions" {
   }
   environment {
     variables = {
-      stackName       = var.prefix
+      stackName             = var.prefix
 
-      completeExecutionPayloadTimeoutDisable = var.complete_execution_payload_timeout_disable
-      completeExecutionPayloadTimeout        = var.complete_execution_payload_timeout
+      CLEANUP_RUNNING        = var.cleanup_running
+      CLEANUP_NON_RUNNING     = var.cleanup_non_running
 
-      nonCompleteExecutionPayloadTimeoutDisable = var.non_complete_execution_payload_timeout_disable
-      nonCompleteExecutionPayloadTimeout        = var.non_complete_execution_payload_timeout
+      PAYLOAD_TIMEOUT        = var.payload_timeout
+      
+      ES_INDEX              = var.es_index
+      UPDATE_LIMIT          = var.update_limit
     }
   }
 

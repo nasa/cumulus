@@ -59,10 +59,6 @@ There are many available resources for tmux and the psql client. The following i
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/13/app-psql.html)
 - [Tmux tutorial](https://www.linuxtrainingacademy.com/tmux-tutorial/)
 
-:::note
-The version 9.x psql will be installed. This will work for all our standard SQL but some meta-commands like \d may not work.
-:::
-
 Basic commands for running SQL commands
 
 ```sh
@@ -141,7 +137,8 @@ exit
 3. Install tmux and postgres client
 
     ```sh
-    sudo yum install -y tmux postgresql.x86_64
+    sudo yum install -y tmux
+    sudo amazon-linux-extras install postgresql13
     ```
 
     Once installed, a tmux session is started with two windows. The Cumulus database is connected to in each window
@@ -209,8 +206,7 @@ exit
 
 6. Verify the Updates
 
-     We can verify that the tables are updated successfully by checking the `\d table` results from psql.  We can run the commands
-     outside of EC2 from pgAdmin or a psql client which supports `\d` command.  The following are expected results.
+     We can verify that the tables are updated successfully by checking the `\d table` results from psql.  The following are expected results.
 
     ```sh
     => \d executions;
