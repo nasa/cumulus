@@ -26,12 +26,6 @@ const {
   translatePostgresGranuleToApiGranule,
   getGranuleAndCollection,
 } = require('@cumulus/db');
-const {
-  Search,
-  getEsClient,
-  recordNotFoundString,
-  multipleRecordFoundString,
-} = require('@cumulus/es-client/search');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
@@ -157,7 +151,6 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
 const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
     createGranuleFromApiMethod = createGranuleFromApi,
   } = req.testContext || {};
 
@@ -188,8 +181,7 @@ const create = async (req, res) => {
   try {
     await createGranuleFromApiMethod(
       _setNewGranuleDefaults(granule, true),
-      knex,
-      esClient
+      knex
     );
   } catch (error) {
     log.error('Could not write granule', error);
@@ -214,7 +206,6 @@ const patchGranule = async (req, res) => {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
   let apiGranule = req.body || {};
@@ -279,7 +270,7 @@ const patchGranule = async (req, res) => {
     if (isNewRecord) {
       apiGranule = _setNewGranuleDefaults(apiGranule, isNewRecord);
     }
-    await updateGranuleFromApiMethod(apiGranule, knex, esClient);
+    await updateGranuleFromApiMethod(apiGranule, knex);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
@@ -496,7 +487,7 @@ async function patchByGranuleId(req, res) {
     granulePgModel = new GranulePgModel(),
     knex = await getKnexClient(),
   } = req.testContext || {};
-
+  let pgGranule;
   const body = req.body;
   const action = body.action;
 
@@ -509,11 +500,18 @@ async function patchByGranuleId(req, res) {
     );
   }
 
-  const pgGranule = await getUniqueGranuleByGranuleId(
-    knex,
-    req.params.granuleId,
-    granulePgModel
-  );
+  try {
+    pgGranule = await await getUniqueGranuleByGranuleId(
+      knex,
+      req.params.granuleId,
+      granulePgModel
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.info('Granule does not exist');
+      return res.boom.notFound('No record found');
+    }
+  }
 
   const collectionPgModel = new CollectionPgModel();
   const pgCollection = await collectionPgModel.get(knex, {
@@ -542,7 +540,6 @@ async function patch(req, res) {
 
   const body = req.body;
   const action = body.action;
-
   if (!action) {
     if (_granulePayloadMatchesQueryParams(body, req)) {
       return patchGranule(req, res);
@@ -596,7 +593,6 @@ const associateExecution = async (req, res) => {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   let pgGranule;
@@ -641,6 +637,7 @@ const associateExecution = async (req, res) => {
     ...pgGranule,
     updated_at: new Date(),
   };
+
   const apiGranuleRecord = {
     ...(await translatePostgresGranuleToApiGranule({
       knexOrTransaction: knex,
@@ -652,7 +649,6 @@ const associateExecution = async (req, res) => {
   try {
     await writeGranuleRecordAndPublishSns({
       apiGranuleRecord,
-      esClient,
       executionCumulusId: pgExecution.cumulus_id,
       granulePgModel,
       postgresGranuleRecord: updatedPgGranule,
@@ -684,47 +680,23 @@ const associateExecution = async (req, res) => {
 async function delByGranuleId(req, res) {
   const {
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
-    esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX),
   } = req.testContext || {};
-
+  let pgGranule;
   const granuleId = req.params.granuleId;
   log.info(`granules.del ${granuleId}`);
 
-  let pgGranule;
-  let esResult;
   try {
-    // TODO - Phase 3 - we need a ticket to address granule/collection consistency
-    // For now use granule ID without collection search in ES
     pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      // TODO - Phase 3 - we need to require the collectionID, not infer it
-
-      esResult = await esGranulesClient.get(granuleId);
-
-      if (esResult.detail === recordNotFoundString) {
-        log.info('Granule does not exist in Elasticsearch and PostgreSQL');
-        return res.boom.notFound('No record found');
-      }
-      if (esResult.detail === multipleRecordFoundString) {
-        return res.boom.notFound(
-          'No Postgres record found, multiple ES entries found for deletion'
-        );
-      }
-      log.info(
-        `Postgres Granule with ID ${granuleId} does not exist but exists in Elasticsearch.  Proceeding to remove from elasticsearch.`
-      );
-    } else {
-      throw error;
+      log.info('Granule does not exist');
+      return res.boom.notFound(`Granule ${granuleId} does not exist or was already deleted`);
     }
   }
 
   const deletionDetails = await deleteGranuleAndFiles({
     knex,
-    apiGranule: esResult,
     pgGranule: pgGranule,
-    esClient,
   });
 
   return res.send({ detail: 'Record deleted', ...deletionDetails });
@@ -742,8 +714,6 @@ async function del(req, res) {
     knex = await getKnexClient(),
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
-    esClient = await getEsClient(),
-    esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX),
   } = req.testContext || {};
 
   const granuleId = req.params.granuleId;
@@ -755,7 +725,6 @@ async function del(req, res) {
 
   let pgGranule;
   let pgCollection;
-  let esResult;
   try {
     pgCollection = await collectionPgModel.get(
       knex,
@@ -773,21 +742,6 @@ async function del(req, res) {
           `No collection found for granuleId ${granuleId} with collectionId ${collectionId}`
         );
       }
-
-      esResult = await esGranulesClient.get(granuleId, collectionId);
-
-      if (esResult.detail === recordNotFoundString) {
-        log.info('Granule does not exist in Elasticsearch and PostgreSQL');
-        return res.boom.notFound('No record found');
-      }
-      if (esResult.detail === multipleRecordFoundString) {
-        return res.boom.notFound(
-          'No Postgres record found, multiple ES entries found for deletion'
-        );
-      }
-      log.info(
-        `Postgres Granule with ID ${granuleId} does not exist but exists in Elasticsearch.  Proceeding to remove from elasticsearch.`
-      );
     } else {
       throw error;
     }
@@ -795,9 +749,7 @@ async function del(req, res) {
 
   const deletionDetails = await deleteGranuleAndFiles({
     knex,
-    apiGranule: esResult,
     pgGranule: pgGranule,
-    esClient,
   });
 
   return res.send({ detail: 'Record deleted', ...deletionDetails });
@@ -928,7 +880,6 @@ async function bulkOperations(req, res) {
       payload,
       type: 'BULK_GRANULE',
       envVars: {
-        ES_HOST: process.env.ES_HOST,
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         invoke: process.env.invoke,
         KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
@@ -994,7 +945,6 @@ async function bulkDelete(req, res) {
         cmr_password_secret_name: process.env.cmr_password_secret_name,
         cmr_provider: process.env.cmr_provider,
         cmr_username: process.env.cmr_username,
-        ES_HOST: process.env.ES_HOST,
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         launchpad_api: process.env.launchpad_api,
@@ -1036,7 +986,6 @@ async function bulkReingest(req, res) {
       payload,
       type: 'BULK_GRANULE_REINGEST',
       envVars: {
-        ES_HOST: process.env.ES_HOST,
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         invoke: process.env.invoke,
         KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
