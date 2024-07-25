@@ -218,11 +218,9 @@ async function createGranuleAndFiles({
   };
 }
 
-// TODO remove esClient argument after Cumulus-3640 change
 async function createExecutionRecords({
   knex,
   count,
-  esClient,
   addGranules = false,
   collectionId,
   addParentExecutions = false,
@@ -284,7 +282,6 @@ async function createExecutionRecords({
       executionCumulusId: pgExecutions[0][0].cumulus_id,
       collectionId,
       dbClient: knex,
-      esClient,
     });
     const granulesExecutionsModel = new GranulesExecutionsPgModel();
     await Promise.all(pgExecutions.map((execution) => granulesExecutionsModel.create(knex, {
