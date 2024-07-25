@@ -415,12 +415,10 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granules from Pos
     createGranuleAndFiles({
       dbClient: t.context.knex,
       granuleParams: { published: false },
-      esClient: t.context.esClient,
     }),
     createGranuleAndFiles({
       dbClient: t.context.knex,
       granuleParams: { published: false },
-      esClient: t.context.esClient,
     }),
   ]);
 
@@ -487,12 +485,12 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
   });
 
   const granules = await Promise.all([
-    createGranuleAndFiles({ dbClient: t.context.knex, esClient: t.context.esClient }),
-    createGranuleAndFiles({ dbClient: t.context.knex, esClient: t.context.esClient }),
-    createGranuleAndFiles({ dbClient: t.context.knex, esClient: t.context.esClient }),
-    createGranuleAndFiles({ dbClient: t.context.knex, esClient: t.context.esClient }),
-    createGranuleAndFiles({ dbClient: t.context.knex, esClient: t.context.esClient }),
-    createGranuleAndFiles({ dbClient: t.context.knex, esClient: t.context.esClient }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
   ]);
 
   const apiGranules = await Promise.all(

@@ -23,7 +23,6 @@ const {
   getKnexClient,
   GranulePgModel,
 } = require('@cumulus/db');
-const indexer = require('@cumulus/es-client/indexer');
 const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
@@ -81,7 +80,6 @@ const getExecutionProcessingTimeInfo = ({
  * @param {Object} params.granulePgModel                 - parameter override, used for unit testing
  * @param {Object} params.collectionPgModel              - parameter override, used for unit testing
  * @param {Object} params.filesPgModel                   - parameter override, used for unit testing
- * @param {Object} params.esClient                       - parameter override, used for unit testing
  * @param {Object} params.dbClient                       - parameter override, used for unit testing
  * @returns {Promise<Object>} - Object containing an 'updated'
  *  files object with current file key values and an error object containing a set of
@@ -95,7 +93,6 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
     collectionPgModel = new CollectionPgModel(),
     filesPgModel = new FilePgModel(),
     dbClient = await getKnexClient(),
-    esClient = await getEsClient(),
   } = params;
 
   const { name, version } = deconstructCollectionId(apiGranule.collectionId);
@@ -132,16 +129,6 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
   });
 
   const moveResults = await Promise.allSettled(moveFilePromises);
-
-  await indexer.upsertGranule({
-    esClient,
-    updates: {
-      ...apiGranule,
-      files: updatedFiles,
-    },
-    index: process.env.ES_INDEX,
-  });
-
   const filteredResults = moveResults.filter((r) => r.status === 'rejected');
   const moveGranuleErrors = filteredResults.map((error) => error.reason);
 
