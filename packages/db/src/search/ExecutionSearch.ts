@@ -71,13 +71,17 @@ export class ExecutionSearch extends BaseSearch {
       executions: executionsTable,
     } = TableNames;
 
-    const searchQuery = knex(`${this.tableName} as ${this.tableName}`)
+    const searchQuery = knex(`${this.tableName}`)
       .select(`${this.tableName}.*`)
       .select({
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
-        asyncOperationId: `${asyncOperationsTable}.id`,
+
       });
+
+    if (this.searchAsync() || this.dbQueryParameters.includeFullRecord) {
+      searchQuery.select({ asyncOperationId: `${asyncOperationsTable}.id` });
+    }
 
     if (this.searchParent() || this.dbQueryParameters.includeFullRecord) {
       searchQuery.select({ parentArn: `${executionsTable}_parent.arn` });
@@ -96,7 +100,7 @@ export class ExecutionSearch extends BaseSearch {
     if (this.searchAsync()) {
       countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
       searchQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
-    } else {
+    } else if (this.dbQueryParameters.includeFullRecord) {
       searchQuery.leftJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
     }
 
