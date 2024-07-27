@@ -39,8 +39,7 @@ export class ExecutionSearch extends BaseSearch {
    */
   protected searchAsync(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
-    return (!!(not?.asyncOperationId ||
-       term?.asyncOperationId || terms?.asyncOperationId));
+    return (!!(not?.asyncOperationId || term?.asyncOperationId || terms?.asyncOperationId));
   }
 
   /**
@@ -50,8 +49,7 @@ export class ExecutionSearch extends BaseSearch {
    */
   protected searchParent(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
-    return (!!(not?.parentArn ||
-      term?.parentArn || terms?.parentArn));
+    return (!!(not?.parentArn || term?.parentArn || terms?.parentArn));
   }
 
   /**
@@ -147,8 +145,8 @@ export class ExecutionSearch extends BaseSearch {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
     const apiRecords = pgRecords.map((executionRecord: ExecutionRecord) => {
       const { collectionName, collectionVersion, asyncOperationId, parentArn } = executionRecord;
-      const collectionId = collectionName && collectionVersion ?
-        constructCollectionId(collectionName, collectionVersion) : undefined;
+      const collectionId = collectionName && collectionVersion
+        ? constructCollectionId(collectionName, collectionVersion) : undefined;
       const apiRecord = translatePostgresExecutionToApiExecutionWithoutDbQuery({
         executionRecord,
         collectionId,

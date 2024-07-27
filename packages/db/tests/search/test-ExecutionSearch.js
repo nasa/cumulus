@@ -121,7 +121,6 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
     finalPayload: { final: 'payload__0' },
     type: 'testWorkflow__0',
     execution: 'https://fake-execution0.com/',
-    asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: 'testCollection___8',
     createdAt: new Date(2017, 11, 31).getTime(),
     updatedAt: new Date(2018, 0, 1).getTime(),
@@ -224,6 +223,7 @@ test('ExecutionSearch supports asyncOperationId term search', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
+  t.is(response.results[0].asyncOperationId, t.context.testAsyncOperation.id);
 });
 
 test('ExecutionSearch supports term search for number field', async (t) => {
@@ -437,7 +437,6 @@ test('ExecutionSearch supports parentArn term search', async (t) => {
     finalPayload: { final: 'payload__46' },
     type: 'testWorkflow__46',
     execution: 'https://fake-execution46.com/',
-    asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: 'testCollection___8',
     parentArn: 'fakeArn__21:fakeExecutionName',
     createdAt: new Date(2022, 10, 16).getTime(),
@@ -559,13 +558,47 @@ test('ExecutionSearch includeFullRecord', async (t) => {
     limit: 50,
     includeFullRecord: 'true',
   };
+
   const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 50);
-  t.is(response.results?.length, 50);
-  t.true('parentArn' in response.results[40]);
-  t.true('collectionId' in response.results[40]);
-  t.true('asyncOperationId' in response.results[40]);
+  const results = await dbSearch.query(knex);
+  t.is(results.meta.count, 50);
+  t.is(results.results.length, 50);
+  const expectedResponse1 = {
+    name: 'testExecutionName',
+    status: 'failed',
+    arn: 'testArn__0:testExecutionName',
+    error: { Error: 'UnknownError' },
+    originalPayload: { orginal: 'payload__0' },
+    finalPayload: { final: 'payload__0' },
+    type: 'testWorkflow__0',
+    execution: 'https://fake-execution0.com/',
+    asyncOperationId: t.context.testAsyncOperation.id,
+    collectionId: 'testCollection___8',
+    createdAt: new Date(2017, 11, 31).getTime(),
+    updatedAt: new Date(2018, 0, 1).getTime(),
+    timestamp: new Date(2018, 0, 1).getTime(),
+  };
+
+  const expectedResponse40 = {
+    name: 'testExecutionName',
+    status: 'completed',
+    arn: 'testArn__40:testExecutionName',
+    duration: 100,
+    error: { Error: 'UnknownError' },
+    originalPayload: { orginal: 'payload__40' },
+    finalPayload: { final: 'payload__40' },
+    type: 'testWorkflow__40',
+    execution: 'https://fake-execution40.com/',
+    asyncOperationId: t.context.testAsyncOperation.id,
+    collectionId: 'testCollection___8',
+    parentArn: 'fakeArn__15:fakeExecutionName',
+    createdAt: new Date(2022, 4, 10).getTime(),
+    updatedAt: new Date(2022, 4, 12).getTime(),
+    timestamp: new Date(2022, 4, 12).getTime(),
+  };
+
+  t.deepEqual(results.results[0], expectedResponse1);
+  t.deepEqual(results.results[40], expectedResponse40);
 });
 
 test('ExecutionSearch estimates the rowcount of the table by default', async (t) => {
