@@ -157,7 +157,7 @@ class StatsSearch extends BaseSearch {
     this.buildRangeQuery({ searchQuery: aggregateQuery });
     aggregateQuery.select(
       knex.raw(`COUNT(CASE WHEN ${this.tableName}.error ->> 'Error' is not null THEN 1 END) AS count_errors`),
-      knex.raw(`COUNT(${this.tableName}.cumulus_id) AS count_granules`),
+      knex.raw('COUNT(*) AS count_granules'),
       knex.raw(`AVG(${this.tableName}.duration) AS avg_processing_time`),
       knex.raw(`COUNT(DISTINCT ${this.tableName}.collection_cumulus_id) AS count_collections`)
     );
@@ -167,7 +167,7 @@ class StatsSearch extends BaseSearch {
   }
 
   /**
-   * Performs joins on the provider and/or collection table if neccessary
+   * Performs joins on the collections/pdrs/providers table if neccessary
    *
    * @param query - the knex query to be joined or not
    */
