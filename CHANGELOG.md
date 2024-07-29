@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Used count(*) over count(id) to count rows
     - Estimated row count for large tables (granules and executions) by default for basic query
   - Updated stats summary to default to the last day
+  - Updated ExecutionSearch to not include asyncOperationId by default
 - **CUMULUS-3688**
   - Updated `stats` api endpoint to query postgres instead of elasticsearch
 - **CUMULUS-3689**
