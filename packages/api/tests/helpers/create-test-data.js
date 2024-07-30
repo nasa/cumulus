@@ -221,7 +221,6 @@ async function createGranuleAndFiles({
 async function createExecutionRecords({
   knex,
   count,
-  esClient,
   addGranules = false,
   collectionId,
   addParentExecutions = false,

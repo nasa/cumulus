@@ -12,15 +12,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3240**
   - Removed Elasticsearch dependency from `executions` endpoints
 - **CUMULUS-3692**
-  - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
-    support basic queries for granules
+  - Added `@cumulus/db/src/search` `BaseSearch` class to
+    support SQL queries
 - **CUMULUS-3693**
   - Added functionality to `@cumulus/db/src/search` to support range queries
 - **CUMULUS-3694**
   - Added functionality to `@cumulus/db/src/search` to support term queries
-  - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
+  - Updated `BaseSearch` class to support term queries
 - **CUMULUS-3695**
-  - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
+  - Updated `BaseSearch` class to handle sort fields
 - **CUMULUS-3696**
   - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
 
