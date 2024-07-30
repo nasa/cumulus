@@ -238,6 +238,7 @@ async function del(req, res) {
       log.info(`Collection does not exist in PostgreSQL. Failed to delete collection with name ${name} and version ${version}`);
       return res.boom.notFound('No record found');
     }
+    throw error;
   }
 
   try {

@@ -352,7 +352,7 @@ test.serial('PUT returns 400 for version mismatch between params and payload', a
   t.falsy(record);
 });
 
-test.serial('PUT does not write publish SNS message if writing to PostgreSQL fails', async (t) => {
+test.serial('PUT does not publish SNS message if writing to PostgreSQL fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalCollection,
