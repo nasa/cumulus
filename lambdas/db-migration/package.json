@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/db-migration-lambda",
-  "version": "18.3.1",
+  "version": "18.3.2",
   "description": "A Lambda function used for deploying DB migrations",
   "license": "Apache-2.0",
   "engines": {
@@ -20,7 +20,7 @@
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "dependencies": {
-    "@cumulus/db": "18.3.1",
+    "@cumulus/db": "18.3.2",
     "knex": "2.4.1",
     "pg": "~8.10"
   }
