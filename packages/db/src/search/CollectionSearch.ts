@@ -108,7 +108,7 @@ export class CollectionSearch extends BaseSearch {
     const { knex, countQuery, searchQuery, dbQueryParameters } = params;
     const { range = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
-    const subQuery = knex(granulesTable).distinct(`${granulesTable}.collection_cumulus_id`)
+    const subQuery = knex.select(1).from(granulesTable)
       .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`));
 
     Object.entries(range).forEach(([name, rangeValues]) => {
@@ -119,8 +119,9 @@ export class CollectionSearch extends BaseSearch {
         subQuery.where(`${granulesTable}.${name}`, '<=', rangeValues.lte);
       }
     });
+    subQuery.limit(1);
 
-    [countQuery, searchQuery].forEach((query) => query.whereIn(`${this.tableName}.cumulus_id`, subQuery));
+    [countQuery, searchQuery].forEach((query) => query.whereExists(subQuery));
   }
 
   /**
