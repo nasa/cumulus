@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Replace ElasticSearch Phase 1
+
 - **CUMULUS-3239**
   - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
 - **CUMULUS-3240**
@@ -17,6 +18,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed elasticsearch dependency from granules endpoint
 - **CUMULUS-3641**
   - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
+- **CUMULUS-3642**
+  - Adjusted queries to improve performance:
+    - Used count(*) over count(id) to count rows
+    - Estimated row count for large tables (granules and executions) by default for basic query
+  - Updated stats summary to default to the last day
+  - Updated ExecutionSearch to not include asyncOperationId by default
 - **CUMULUS-3688**
   - Updated `stats` api endpoint to query postgres instead of elasticsearch
 - **CUMULUS-3689**

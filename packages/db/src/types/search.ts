@@ -33,6 +33,7 @@ export type DbQueryParameters = {
   infix?: string,
   limit?: number,
   includeFullRecord?: boolean,
+  estimateTableRowCount?: boolean,
   exists?: { [key: string]: boolean },
   not?: { [key: string]: QueriableType | undefined },
   offset?: number,

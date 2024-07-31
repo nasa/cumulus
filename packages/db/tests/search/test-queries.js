@@ -28,6 +28,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
   };
 
   const expectedDbQueryParameters = {
+    estimateTableRowCount: false,
     exists: {
       error: true,
     },
@@ -83,6 +84,7 @@ test('convertQueryStringToDbQueryParameters correctly converts sortby error para
   };
 
   const expectedDbQueryParameters = {
+    estimateTableRowCount: false,
     limit: 10,
     offset: 0,
     page: 1,

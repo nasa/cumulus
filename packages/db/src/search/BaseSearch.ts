@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import get from 'lodash/get';
 import omit from 'lodash/omit';
 import Logger from '@cumulus/logger';
 
@@ -81,6 +82,17 @@ class BaseSearch {
   protected searchProvider(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
     return !!(not?.providerName || term?.providerName || terms?.providerName);
+  }
+
+  /**
+   * Determine if an estimated row count should be returned
+   *
+   * @param countSql - sql statement for count
+   * @returns whether an estimated row count should be returned
+   */
+  protected shouldEstimateRowcount(countSql: string): boolean {
+    const isBasicQuery = (countSql === `select count(*) from "${this.tableName}"`);
+    return this.dbQueryParameters.estimateTableRowCount === true && isBasicQuery;
   }
 
   /**
@@ -440,6 +452,28 @@ class BaseSearch {
   }
 
   /**
+   * Get estimated table rowcount
+   *
+   * @param params
+   * @param params.knex - DB client
+   * @param [params.tableName] - table name
+   * @returns rowcount
+   */
+  protected async getEstimatedRowcount(params: {
+    knex: Knex,
+    tableName? : string,
+  }) : Promise<number> {
+    const { knex, tableName = this.tableName } = params;
+    const query = knex.raw(`EXPLAIN (FORMAT JSON) select * from "${tableName}"`);
+    log.debug(`Estimating the row count ${query.toSQL().sql}`);
+    const countResult = await query;
+    const countPath = 'rows[0]["QUERY PLAN"][0].Plan["Plan Rows"]';
+    const estimatedCount = get(countResult, countPath);
+    const count = Number(estimatedCount ?? 0);
+    return count;
+  }
+
+  /**
    * Build and execute search query
    *
    * @param testKnex - knex for testing
@@ -448,12 +482,22 @@ class BaseSearch {
   async query(testKnex?: Knex) {
     const knex = testKnex ?? await getKnexClient();
     const { countQuery, searchQuery } = this.buildSearch(knex);
+
+    const shouldEstimateRowcount = countQuery
+      ? this.shouldEstimateRowcount(countQuery?.toSQL().sql)
+      : false;
+    const getEstimate = shouldEstimateRowcount
+      ? this.getEstimatedRowcount({ knex })
+      : undefined;
+
     try {
-      const [countResult, pgRecords] = await Promise.all([countQuery, searchQuery]);
+      const [countResult, pgRecords] = await Promise.all([
+        getEstimate || countQuery, searchQuery,
+      ]);
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;
       meta.page = this.dbQueryParameters.page;
-      meta.count = Number(countResult[0]?.count ?? 0);
+      meta.count = shouldEstimateRowcount ? countResult : Number(countResult[0]?.count ?? 0);
 
       const apiRecords = await this.translatePostgresRecordsToApiRecords(pgRecords, knex);
 
