@@ -14,6 +14,7 @@ const {
   getKnexClient,
   isCollisionError,
   RulePgModel,
+  RuleSearch,
   translateApiRuleToPostgresRuleRaw,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
@@ -47,12 +48,11 @@ const log = new Logger({ sender: '@cumulus/api/rules' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'rule',
-    process.env.ES_INDEX
+  const dbSearch = new RuleSearch(
+    { queryStringParameters: req.query }
   );
-  const response = await search.query();
+
+  const response = await dbSearch.query();
   return res.send(response);
 }
 

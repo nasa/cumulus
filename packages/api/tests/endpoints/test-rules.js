@@ -17,10 +17,7 @@ const { mockClient } = require('aws-sdk-client-mock');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const workflows = require('@cumulus/common/workflows');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
+
 const {
   CollectionPgModel,
   destroyLocalTestDb,
@@ -39,8 +36,6 @@ const {
 } = require('@cumulus/db');
 const awsServices = require('@cumulus/aws-client/services');
 const S3 = require('@cumulus/aws-client/S3');
-const { Search } = require('@cumulus/es-client/search');
-const indexer = require('@cumulus/es-client/indexer');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
@@ -116,16 +111,6 @@ test.before(async (t) => {
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esRulesClient = new Search(
-    {},
-    'rule',
-    t.context.esIndex
-  );
-  process.env.ES_INDEX = esIndex;
-
   await S3.createBucket(process.env.system_bucket);
 
   buildPayloadStub = setBuildPayloadStub();
@@ -199,7 +184,6 @@ test.before(async (t) => {
   const ruleWithTrigger = await rulesHelpers.createRuleTrigger(t.context.testRule);
   t.context.collectionId = constructCollectionId(collectionName, collectionVersion);
   t.context.testPgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, knex);
-  await indexer.indexRule(esClient, ruleWithTrigger, t.context.esIndex);
   t.context.rulePgModel.create(knex, t.context.testPgRule);
 });
 
@@ -215,7 +199,6 @@ test.beforeEach((t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await cleanupTestIndex(t.context);
 
   buildPayloadStub.restore();
   await destroyLocalTestDb({
