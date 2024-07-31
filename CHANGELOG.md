@@ -75,6 +75,8 @@ degraded execution table operations.
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
     deletion to validate parent-child relationships
+- **CUMULUS-3818**
+  - Fixes default value (updated to tag 52) for async-operation-image in tf-modules/cumulus.
 
 ## [v18.3.2] 2024-07-24
 
