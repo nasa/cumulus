@@ -1,9 +1,14 @@
 import omit from 'lodash/omit';
 import { Knex } from 'knex';
+
+import Logger from '@cumulus/logger';
+
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { BaseSearch } from './BaseSearch';
+
+const log = new Logger({ sender: '@cumulus/db/StatsSearch' });
 
 type TotalSummary = {
   count_errors: number,
@@ -72,8 +77,8 @@ class StatsSearch extends BaseSearch {
   /**
    * Formats the postgres records into an API stats/aggregate response
    *
-   * @param {Record<string, Aggregate>} result - the postgres query results
-   * @returns {ApiAggregateResult} the api object with the aggregate statistics
+   * @param result - the postgres query results
+   * @returns the api object with the aggregate statistics
    */
   private formatAggregateResult(result: Record<string, Aggregate>): ApiAggregateResult {
     let totalCount = 0;
@@ -100,8 +105,8 @@ class StatsSearch extends BaseSearch {
   /**
    * Formats the postgres results into an API stats/summary response
    *
-   * @param {TotalSummary} result - the knex summary query results
-   * @returns {SummaryResult} the api object with the summary statistics
+   * @param result - the knex summary query results
+   * @returns the api object with the summary statistics
    */
   private formatSummaryResult(result: TotalSummary): SummaryResult {
     const timestampTo = this.dbQueryParameters.range?.updated_at?.lte ?? new Date();
@@ -143,27 +148,28 @@ class StatsSearch extends BaseSearch {
   /**
    * Queries postgres for a summary of statistics around the granules in the system
    *
-   * @param {Knex} sendKnex - the knex client to be used
-   * @returns {Promise<SummaryResult>} the postgres aggregations based on query
+   * @param testKnex - the knex client to be used
+   * @returns the postgres aggregations based on query
    */
-  public async summary(sendKnex: Knex): Promise<SummaryResult> {
-    const knex = sendKnex ?? await getKnexClient();
+  public async summary(testKnex?: Knex): Promise<SummaryResult> {
+    const knex = testKnex ?? await getKnexClient();
     const aggregateQuery: Knex.QueryBuilder = knex(this.tableName);
     this.buildRangeQuery({ searchQuery: aggregateQuery });
     aggregateQuery.select(
       knex.raw(`COUNT(CASE WHEN ${this.tableName}.error ->> 'Error' is not null THEN 1 END) AS count_errors`),
-      knex.raw(`COUNT(${this.tableName}.cumulus_id) AS count_granules`),
+      knex.raw('COUNT(*) AS count_granules'),
       knex.raw(`AVG(${this.tableName}.duration) AS avg_processing_time`),
       knex.raw(`COUNT(DISTINCT ${this.tableName}.collection_cumulus_id) AS count_collections`)
     );
+    log.debug(`summary about to execute query: ${aggregateQuery?.toSQL().sql}`);
     const aggregateQueryRes: TotalSummary[] = await aggregateQuery;
     return this.formatSummaryResult(aggregateQueryRes[0]);
   }
 
   /**
-   * Performs joins on the provider and/or collection table if neccessary
+   * Performs joins on the collections/pdrs/providers table if neccessary
    *
-   * @param {Knex.QueryBuilder} query - the knex query to be joined or not
+   * @param query - the knex query to be joined or not
    */
   private joinTables(query: Knex.QueryBuilder) {
     const {
@@ -187,8 +193,8 @@ class StatsSearch extends BaseSearch {
   /**
    * Aggregates the search query based on queryStringParameters
    *
-   * @param {Knex.QueryBuilder} query - the knex query to be aggregated
-   * @param {Knex} knex - the knex client to be used
+   * @param query - the knex query to be aggregated
+   * @param knex - the knex client to be used
    */
   private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex) {
     if (this.field?.includes('error.Error')) {
@@ -197,7 +203,7 @@ class StatsSearch extends BaseSearch {
       query.select(`${this.tableName}.${this.field} as aggregatedfield`);
     }
     query.modify((queryBuilder) => this.joinTables(queryBuilder))
-      .count(`${this.tableName}.cumulus_id as count`)
+      .count('* as count')
       .groupBy('aggregatedfield')
       .orderBy([{ column: 'count', order: 'desc' }, { column: 'aggregatedfield' }]);
   }
@@ -205,7 +211,7 @@ class StatsSearch extends BaseSearch {
   /**
    * Builds basic query
    *
-   * @param {Knex} knex - the knex client
+   * @param knex - the knex client
    * @returns the search query
    */
   protected buildBasicQuery(knex: Knex)
@@ -221,7 +227,7 @@ class StatsSearch extends BaseSearch {
    * Builds queries for infix and prefix
    *
    * @param params
-   * @param {Knex.QueryBuilder} params.searchQuery - the search query
+   * @param params.searchQuery - the search query
    * @param [params.dbQueryParameters] - the db query parameters
    */
   protected buildInfixPrefixQuery(params: {
@@ -243,9 +249,9 @@ class StatsSearch extends BaseSearch {
    * Builds queries for term fields
    *
    * @param params
-   * @param {Knex.QueryBuilder} params.searchQuery - the search query
+   * @param params.searchQuery - the search query
    * @param [params.dbQueryParameters] - the db query parameters
-   * @returns {Knex.QueryBuilder} - the updated search query based on queryStringParams
+   * @returns the updated search query based on queryStringParams
    */
   protected buildTermQuery(params: {
     searchQuery: Knex.QueryBuilder,
@@ -267,10 +273,10 @@ class StatsSearch extends BaseSearch {
   /**
    * Executes the aggregate search query
    *
-   * @param {Knex | undefined} testKnex - the knex client to be used
-   * @returns {Promise<ApiAggregateResult>} - the aggregate query results in api format
+   * @param testKnex - the knex client to be used
+   * @returns the aggregate query results in api format
    */
-  async aggregate(testKnex: Knex | undefined): Promise<ApiAggregateResult> {
+  async aggregate(testKnex?: Knex): Promise<ApiAggregateResult> {
     const knex = testKnex ?? await getKnexClient();
     const { searchQuery } = this.buildSearch(knex);
     try {

@@ -1,6 +1,7 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
 import pick from 'lodash/pick';
+import set from 'lodash/set';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { ApiExecutionRecord } from '@cumulus/types/api/executions';
 import { BaseSearch } from './BaseSearch';
@@ -24,6 +25,10 @@ interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
  */
 export class ExecutionSearch extends BaseSearch {
   constructor(event: QueryEvent) {
+    // estimate the table rowcount by default
+    if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
+      set(event, 'queryStringParameters.estimateTableRowCount', 'true');
+    }
     super(event, 'execution');
   }
 
@@ -34,8 +39,7 @@ export class ExecutionSearch extends BaseSearch {
    */
   protected searchAsync(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
-    return (!!(not?.asyncOperationId ||
-       term?.asyncOperationId || terms?.asyncOperationId));
+    return (!!(not?.asyncOperationId || term?.asyncOperationId || terms?.asyncOperationId));
   }
 
   /**
@@ -45,8 +49,7 @@ export class ExecutionSearch extends BaseSearch {
    */
   protected searchParent(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
-    return (!!(not?.parentArn ||
-      term?.parentArn || terms?.parentArn));
+    return (!!(not?.parentArn || term?.parentArn || terms?.parentArn));
   }
 
   /**
@@ -66,20 +69,24 @@ export class ExecutionSearch extends BaseSearch {
       executions: executionsTable,
     } = TableNames;
 
-    const searchQuery = knex(`${this.tableName} as ${this.tableName}`)
+    const searchQuery = knex(`${this.tableName}`)
       .select(`${this.tableName}.*`)
       .select({
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
-        asyncOperationId: `${asyncOperationsTable}.id`,
+
       });
+
+    if (this.searchAsync() || this.dbQueryParameters.includeFullRecord) {
+      searchQuery.select({ asyncOperationId: `${asyncOperationsTable}.id` });
+    }
 
     if (this.searchParent() || this.dbQueryParameters.includeFullRecord) {
       searchQuery.select({ parentArn: `${executionsTable}_parent.arn` });
     }
 
     const countQuery = knex(this.tableName)
-      .count(`${this.tableName}.cumulus_id`);
+      .count('*');
 
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
@@ -91,7 +98,7 @@ export class ExecutionSearch extends BaseSearch {
     if (this.searchAsync()) {
       countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
       searchQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
-    } else {
+    } else if (this.dbQueryParameters.includeFullRecord) {
       searchQuery.leftJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
     }
 
@@ -138,8 +145,8 @@ export class ExecutionSearch extends BaseSearch {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
     const apiRecords = pgRecords.map((executionRecord: ExecutionRecord) => {
       const { collectionName, collectionVersion, asyncOperationId, parentArn } = executionRecord;
-      const collectionId = collectionName && collectionVersion ?
-        constructCollectionId(collectionName, collectionVersion) : undefined;
+      const collectionId = collectionName && collectionVersion
+        ? constructCollectionId(collectionName, collectionVersion) : undefined;
       const apiRecord = translatePostgresExecutionToApiExecutionWithoutDbQuery({
         executionRecord,
         collectionId,
