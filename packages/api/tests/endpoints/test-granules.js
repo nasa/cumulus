@@ -439,7 +439,7 @@ test.serial('default lists and paginates correctly from querying database', asyn
   t.is(results.length, 4);
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granules');
-  t.is(meta.count, 4);
+  t.true(meta.count > 0);
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
   });

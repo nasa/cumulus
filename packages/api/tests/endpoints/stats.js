@@ -91,8 +91,10 @@ test.before(async (t) => {
     granules.push(fakeGranuleRecordFactory({
       collection_cumulus_id: num % 20,
       status: statuses[num % 4],
-      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))),
-      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
+      created_at: num === 99
+        ? new Date() : (new Date(2018 + (num % 6), (num % 12), (num % 30))),
+      updated_at: num === 99
+        ? new Date() : (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
       error: errors[num % 5],
       duration: num + (num / 10),
     }))
@@ -209,17 +211,17 @@ test('GET /stats/aggregate with an invalid access token returns an unauthorized 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test('GET /stats returns correct response, defaulted to all', async (t) => {
+test('GET /stats returns correct response, defaulted to the last day', async (t) => {
   const response = await request(app)
     .get('/stats')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.is(response.body.errors.value, 80);
-  t.is(response.body.processingTime.value, 54.44999999642372);
-  t.is(response.body.granules.value, 100);
-  t.is(response.body.collections.value, 20);
+  t.is(response.body.errors.value, 0);
+  t.is(response.body.processingTime.value, 108.9000015258789);
+  t.is(response.body.granules.value, 1);
+  t.is(response.body.collections.value, 1);
 });
 
 test('GET /stats returns correct response with date params filters values correctly', async (t) => {
@@ -261,10 +263,10 @@ test('GET /stats/aggregate filters correctly by date', async (t) => {
 
   const expectedCount = [
     { key: 'failed', count: 16 },
-    { key: 'running', count: 9 },
     { key: 'completed', count: 8 },
     { key: 'queued', count: 8 },
+    { key: 'running', count: 8 },
   ];
-  t.is(response.body.meta.count, 41);
+  t.is(response.body.meta.count, 40);
   t.deepEqual(response.body.count, expectedCount);
 });

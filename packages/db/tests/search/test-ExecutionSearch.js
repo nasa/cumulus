@@ -105,7 +105,10 @@ test.after.always(async (t) => {
 
 test('ExecutionSearch returns correct response for basic query', async (t) => {
   const { knex } = t.context;
-  const dbSearch = new ExecutionSearch({});
+  const queryStringParameters = {
+    estimateTableRowCount: 'false',
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
   const results = await dbSearch.query(knex);
   t.is(results.meta.count, 50);
   t.is(results.results.length, 10);
@@ -118,7 +121,6 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
     finalPayload: { final: 'payload__0' },
     type: 'testWorkflow__0',
     execution: 'https://fake-execution0.com/',
-    asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: 'testCollection___8',
     createdAt: new Date(2017, 11, 31).getTime(),
     updatedAt: new Date(2018, 0, 1).getTime(),
@@ -145,6 +147,7 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
 test('ExecutionSearch supports page and limit params', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 25,
     page: 2,
   };
@@ -154,6 +157,7 @@ test('ExecutionSearch supports page and limit params', async (t) => {
   t.is(response.results?.length, 25);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 10,
     page: 5,
   };
@@ -163,6 +167,7 @@ test('ExecutionSearch supports page and limit params', async (t) => {
   t.is(response.results?.length, 10);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 10,
     page: 11,
   };
@@ -218,6 +223,7 @@ test('ExecutionSearch supports asyncOperationId term search', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
+  t.is(response.results[0].asyncOperationId, t.context.testAsyncOperation.id);
 });
 
 test('ExecutionSearch supports term search for number field', async (t) => {
@@ -290,6 +296,7 @@ test('ExecutionSearch supports range search', async (t) => {
 test('ExecutionSearch non-existing fields are ignored', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
@@ -304,6 +311,7 @@ test('ExecutionSearch returns fields specified', async (t) => {
   const { knex } = t.context;
   const fields = 'status,arn,type,error';
   const queryStringParameters = {
+    estimateTableRowCount: 'false',
     fields,
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
@@ -330,6 +338,7 @@ test('ExecutionSearch supports search for multiple fields', async (t) => {
 test('ExecutionSearch supports sorting', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 50,
     sort_by: 'timestamp',
   };
@@ -341,6 +350,7 @@ test('ExecutionSearch supports sorting', async (t) => {
   t.true(response.results[1].updatedAt < response.results[25].updatedAt);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 50,
     sort_by: 'timestamp',
     order: 'desc',
@@ -353,6 +363,7 @@ test('ExecutionSearch supports sorting', async (t) => {
   t.true(response2.results[1].updatedAt > response2.results[25].updatedAt);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     sort_key: ['-timestamp'],
   };
@@ -426,7 +437,6 @@ test('ExecutionSearch supports parentArn term search', async (t) => {
     finalPayload: { final: 'payload__46' },
     type: 'testWorkflow__46',
     execution: 'https://fake-execution46.com/',
-    asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: 'testCollection___8',
     parentArn: 'fakeArn__21:fakeExecutionName',
     createdAt: new Date(2022, 10, 16).getTime(),
@@ -544,14 +554,60 @@ test('ExecutionSearch supports term search for date field', async (t) => {
 test('ExecutionSearch includeFullRecord', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 50,
     includeFullRecord: 'true',
   };
+
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const results = await dbSearch.query(knex);
+  t.is(results.meta.count, 50);
+  t.is(results.results.length, 50);
+  const expectedResponse1 = {
+    name: 'testExecutionName',
+    status: 'failed',
+    arn: 'testArn__0:testExecutionName',
+    error: { Error: 'UnknownError' },
+    originalPayload: { orginal: 'payload__0' },
+    finalPayload: { final: 'payload__0' },
+    type: 'testWorkflow__0',
+    execution: 'https://fake-execution0.com/',
+    asyncOperationId: t.context.testAsyncOperation.id,
+    collectionId: 'testCollection___8',
+    createdAt: new Date(2017, 11, 31).getTime(),
+    updatedAt: new Date(2018, 0, 1).getTime(),
+    timestamp: new Date(2018, 0, 1).getTime(),
+  };
+
+  const expectedResponse40 = {
+    name: 'testExecutionName',
+    status: 'completed',
+    arn: 'testArn__40:testExecutionName',
+    duration: 100,
+    error: { Error: 'UnknownError' },
+    originalPayload: { orginal: 'payload__40' },
+    finalPayload: { final: 'payload__40' },
+    type: 'testWorkflow__40',
+    execution: 'https://fake-execution40.com/',
+    asyncOperationId: t.context.testAsyncOperation.id,
+    collectionId: 'testCollection___8',
+    parentArn: 'fakeArn__15:fakeExecutionName',
+    createdAt: new Date(2022, 4, 10).getTime(),
+    updatedAt: new Date(2022, 4, 12).getTime(),
+    timestamp: new Date(2022, 4, 12).getTime(),
+  };
+
+  t.deepEqual(results.results[0], expectedResponse1);
+  t.deepEqual(results.results[40], expectedResponse40);
+});
+
+test('ExecutionSearch estimates the rowcount of the table by default', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 50,
+  };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 50);
+  t.true(response.meta.count > 0);
   t.is(response.results?.length, 50);
-  t.true('parentArn' in response.results[40]);
-  t.true('collectionId' in response.results[40]);
-  t.true('asyncOperationId' in response.results[40]);
 });
