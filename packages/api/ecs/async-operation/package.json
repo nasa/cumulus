@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.529.1",
-    "@cumulus/aws-client": "18.3.0",
+    "@cumulus/aws-client": "18.3.1",
     "@cumulus/db": "18.3.0",
     "@cumulus/es-client": "18.3.0",
     "@cumulus/logger": "18.3.0",
