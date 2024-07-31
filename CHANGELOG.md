@@ -8,7 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Replace ElasticSearch Phase 1
 - **CUMULUS-3239**
-  - Updated `execution` list api endpoint and added `ExecutionSearch` class to query postgres
+  - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
+- **CUMULUS-3240**
+  - Removed Elasticsearch dependency from `executions` endpoints
 - **CUMULUS-3639**
   - Updated `/collections/active` endpoint to query postgres
 - **CUMULUS-3640**
@@ -68,15 +70,11 @@ degraded execution table operations.
 ### Breaking Changes
 
 ### Added
-- **CUMULUS-3760**
-  - Added guidance for handling large backlog of es executions
-- **CUMULUS-3385**
-  - Added generate_db_executions to dump large scale postgres executions
+
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
   - Added `Bulk Execution Delete` migration type to async operations types
-
 - **CUMULUS-3608**
   - Exposes variables for sqs_message_consumer_watcher messageLimit and timeLimit configurations. Descriptions
     of the variables [here](tf-modules/ingest/variables.tf) include notes on usage and what users should
@@ -88,22 +86,9 @@ degraded execution table operations.
   - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
-- **CUMULUS-3700**
-  - Added `volume_type` option to `elasticsearch_config` in the
-    `data-persistance` module to allow configuration of the EBS volume type for
-    Elasticsarch; default remains `gp2`.
-- **CUMULUS-3424**
-  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
-    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
 
 ### Changed
 
-- **CUMULUS-3385**
-  - updated cleanExecutions lambda to clean up postgres execution payloads
-  - updated cleanExecutions lambda with configurable limit to control for large size
-- **NDCUM-1051**
-  - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
-  - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
 - **CUMULUS-3320**
   - Updated executions table (please see Migration section and Upgrade
     Instructions for more information) to:
@@ -119,19 +104,51 @@ degraded execution table operations.
 
 ### Fixed
 
-- **CUMULUS-3807**
-  - Pinned @aws-sdk/client-s3 to 3.614 to address timeout/bug in s3().listObjectsV2
-- **CUMULUS-3385**
-  - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
-- **CUMULUS-3785**
-  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
-  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
-- **CUMULUS-3787**
-  - Fixed developer-side bug causing some ts error sto be swallowed in CI
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
     deletion to validate parent-child relationships
+
+## [v18.3.2] 2024-07-24
+
+### Added
+
+- **CUMULUS-3700**
+  - Added `volume_type` option to `elasticsearch_config` in the
+    `data-persistance` module to allow configuration of the EBS volume type for
+    Elasticsarch; default remains `gp2`.
+- **CUMULUS-3424**
+  - Exposed `auto_pause` and `seconds_until_auto_pause` variables in
+    `cumulus-rds-tf` module to modify `aws_rds_cluster` scaling_configuration
+- **CUMULUS-3760**
+  - Added guidance for handling large backlog of es executions
+- **CUMULUS-3742**
+  - Script for dumping data into postgres database for testing and replicating issues
+- **CUMULUS-3385**
+  - Added generate_db_executions to dump large scale postgres executions
+
+### Changed
+
+- **CUMULUS-3385**
+  - updated cleanExecutions lambda to clean up postgres execution payloads
+  - updated cleanExecutions lambda with configurable limit to control for large size
+- **NDCUM-1051**
+  - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
+  - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
+
+### Fixed
+
+- **CUMULUS-3807**
+  - Pinned @aws-sdk/client-s3 to 3.614 to address timeout/bug in s3().listObjectsV2
+- **CUMULUS-3787**
+  - Fixed developer-side bug causing some ts errors to be swallowed in CI
+- **CUMULUS-3785**
+  - Fixed `SftpProviderClient` not awaiting `decryptBase64String` with AWS KMS
+  - Fixed method typo in `@cumulus/api/endpoints/dashboard.js`
+- **CUMULUS-3385**
+  - fixed cleanExecutions lambda to clean up elasticsearch execution payloads
+- **CUMULUS-3326**
+  - Updated update-granules-cmr-metadata-file-links task to update the file size of the update metadata file and remove the invalidated checksum associated with this file.
 
 ## [v18.3.1] 2024-07-08
 
@@ -234,8 +251,7 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
     support `aws-sdk` v3 changes.
 
 ### Added
-- **CUMULUS-3742**
-  - Script for dumping data into postgres database for testing and replicating issues
+
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
@@ -327,6 +343,7 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
   - Updated ECS code to aws sdk v3
 
 ### Fixed
+
 - **CUMULUS-3715**
   - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
     flags to knex custom code
@@ -486,8 +503,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3562**
   - updated crypto-js to 4.2.0
   - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
-- **CUMULUS-3326**
-  - Updated update-granules-cmr-metadata-file-links task to update the file size of the update metadata file and remove the invalidated checksum associated with this file.
 
 ## [v18.1.0] 2023-10-25
 
@@ -7960,7 +7975,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v18.3.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v18.3.2...HEAD
+[v18.3.2]: https://github.com/nasa/cumulus/compare/v18.3.1...v18.3.2
 [v18.3.1]: https://github.com/nasa/cumulus/compare/v18.2.2...v18.3.1
 [v18.2.2]: https://github.com/nasa/cumulus/compare/v18.2.1...v18.2.2
 [v18.2.1]: https://github.com/nasa/cumulus/compare/v18.2.0...v18.2.1
