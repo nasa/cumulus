@@ -17,12 +17,9 @@ const {
   CollectionPgModel,
   ExecutionPgModel,
   translatePostgresExecutionToApiExecution,
-  createRejectableTransaction,
   ExecutionSearch,
 } = require('@cumulus/db');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
-const { deleteExecution } = require('@cumulus/es-client/indexer');
-const { getEsClient, Search } = require('@cumulus/es-client/search');
 
 const { zodParser } = require('../src/zod-utils');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -208,39 +205,21 @@ async function del(req, res) {
   const {
     executionPgModel = new ExecutionPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { arn } = req.params;
-  const esExecutionsClient = new Search(
-    {},
-    'execution',
-    process.env.ES_INDEX
-  );
 
   try {
     await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (!(await esExecutionsClient.exists(arn))) {
-        log.info('Execution does not exist in Elasticsearch and PostgreSQL');
-        return res.boom.notFound('No record found');
-      }
-      log.info('Execution does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
-    } else {
-      throw error;
+      log.info('Execution does not exist in PostgreSQL');
+      return res.boom.notFound('No record found');
     }
+    throw error;
   }
 
-  await createRejectableTransaction(knex, async (trx) => {
-    await executionPgModel.delete(trx, { arn });
-    await deleteExecution({
-      esClient,
-      arn,
-      index: process.env.ES_INDEX,
-      ignore: [404],
-    });
-  });
+  await executionPgModel.delete(knex, { arn });
 
   return res.send({ message: 'Record deleted' });
 }
@@ -255,7 +234,7 @@ async function del(req, res) {
 async function searchByGranules(req, res) {
   const payload = req.body;
   const knex = await getKnexClient();
-  const granules = await getGranulesForPayload(payload, knex);
+  const granules = await getGranulesForPayload(payload);
   const { page = 1, limit = 1, ...sortParams } = req.query;
 
   const offset = page < 1 ? 0 : (page - 1) * limit;
@@ -290,7 +269,7 @@ async function searchByGranules(req, res) {
 async function workflowsByGranules(req, res) {
   const payload = req.body;
   const knex = await getKnexClient();
-  const granules = await getGranulesForPayload(payload, knex);
+  const granules = await getGranulesForPayload(payload);
 
   const granuleCumulusIds = await getApiGranuleCumulusIds(knex, granules);
 
@@ -367,7 +346,6 @@ async function bulkDeleteExecutionsByCollection(req, res) {
       type: 'BULK_EXECUTION_DELETE',
       payload: { ...payload, esBatchSize, dbBatchSize, collectionId },
       envVars: {
-        ES_HOST: process.env.ES_HOST,
         KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         stackName: process.env.stackName,
         system_bucket: process.env.system_bucket,
