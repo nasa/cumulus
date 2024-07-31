@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration Notes
+
+#### CUMULUS-3792 Add database indexes. Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-3792 requires manual update to postgres database in
+  production environment. Please follow [Update table indexes for CUMULUS-3792]
+  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/update_table_indexes_CUMULUS_3792)
+
 ### Replace ElasticSearch Phase 1
 - **CUMULUS-3239**
   - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
@@ -38,6 +46,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
 - **CUMULUS-3699**
   - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
+- **CUMULUS-3792**
+  - Added database indexes to improve search performance
 
 ### Migration Notes
 
