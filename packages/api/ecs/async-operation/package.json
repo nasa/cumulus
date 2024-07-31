@@ -26,7 +26,7 @@
     "@cumulus/aws-client": "18.3.0",
     "@cumulus/db": "18.3.0",
     "@cumulus/es-client": "18.3.0",
-    "@cumulus/logger": "18.3.0",
+    "@cumulus/logger": "18.3.1",
     "crypto-random-string": "^3.2.0",
     "got": "^11.8.5",
     "lodash": "^4.17.21",
