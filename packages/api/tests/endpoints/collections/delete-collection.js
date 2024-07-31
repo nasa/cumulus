@@ -145,7 +145,7 @@ test('Attempting to delete a collection without an Authorization header returns 
   );
 });
 
-test.serial('del() does not publish a SNS message if removing from PostgreSQL fails', async (t) => {
+test.serial('del() does not publish an SNS message if removing from PostgreSQL fails', async (t) => {
   const {
     originalPgRecord,
   } = await createCollectionTestRecords(
