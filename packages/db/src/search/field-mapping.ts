@@ -264,6 +264,12 @@ const ruleMapping : { [key: string]: Function } = {
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
   }),
+  'rule.type': (value?: string) => ({
+    type: value,
+  }),
+  'rule.value': (value?: string) => ({
+    value: value,
+  }),
   // The following fields require querying other tables
   collectionId: (value?: string) => {
     const { name, version } = (value && deconstructCollectionId(value)) || {};
