@@ -19,8 +19,6 @@ The updates will be automatically created as part of the bootstrap lambda functi
 With large database (e.g. number of rows in executions table is greater than 100,000), the indexes must be applied manually since
 the commands can take significant amount of time and exceeds the bootstrap lambda's 15 minute timeout.
 
-The table below from LP DAAC provides the table sizes before and after `alter table` commands, and timings.  LP DAAC has Aurora PostgreSQL 13.10.
-
 ## Tools Used
 
 Since the update commands can take a few hours to run based on table size and IO throughput, it is recommended that the commands are run in an EC2 instance
