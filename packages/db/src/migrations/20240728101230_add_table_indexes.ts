@@ -19,6 +19,7 @@ export const up = async (knex: Knex): Promise<void> => {
   await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS pdrs_status_provider_collection_cumulus_id_index ON pdrs(status, provider_cumulus_id, collection_cumulus_id, cumulus_id)');
   await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS pdrs_execution_cumulus_id_index ON pdrs(execution_cumulus_id)');
   await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS pdrs_coll_status_cumulus_id_index ON pdrs(collection_cumulus_id, status, cumulus_id)');
+  await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS pdrs_provider_collection_cumulus_id_name_index ON pdrs(provider_cumulus_id, collection_cumulus_id, name)');
 
   await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS providers_updated_at_index ON providers(updated_at)');
 
@@ -53,6 +54,7 @@ export const down = async (knex: Knex): Promise<void> => {
   await knex.raw('DROP INDEX CONCURRENTLY IF EXISTS pdrs_status_provider_collection_cumulus_id_index');
   await knex.raw('DROP INDEX CONCURRENTLY IF EXISTS pdrs_execution_cumulus_id_index');
   await knex.raw('DROP INDEX CONCURRENTLY IF EXISTS pdrs_coll_status_cumulus_id_index');
+  await knex.raw('DROP INDEX CONCURRENTLY IF EXISTS pdrs_provider_collection_cumulus_id_name_index');
 
   await knex.raw('DROP INDEX CONCURRENTLY IF EXISTS providers_updated_at_index');
 

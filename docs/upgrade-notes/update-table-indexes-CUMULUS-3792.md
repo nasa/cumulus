@@ -45,9 +45,9 @@ other issues that would result in the client being killed.
     ```
 
     Once installed, a tmux session is started with two windows. The Cumulus database is connected to in each window
-    using the PostgreSQL client. The primary window is used for running the ALTER commands, while the secondary window
-    is used to monitor the database and alter statement. When the operator hits end of shift or is done monitoring for
-    the day, the tmux session can be detached from and reattached to at a later time.
+    using the PostgreSQL client. The primary window is used for running the `CREATE INDEX` commands, while the secondary
+    window is used to monitor the database and `CREATE INDEX` statement. The tmux session can be detached from and
+    reattached to at a later time.
 
 3. Run SQL Commands
 
@@ -99,6 +99,8 @@ other issues that would result in the client being killed.
     CREATE INDEX CONCURRENTLY IF NOT EXISTS pdrs_execution_cumulus_id_index ON pdrs(execution_cumulus_id);
     SELECT CURRENT_TIMESTAMP;
     CREATE INDEX CONCURRENTLY IF NOT EXISTS pdrs_coll_status_cumulus_id_index ON pdrs(collection_cumulus_id, status, cumulus_id);
+    SELECT CURRENT_TIMESTAMP;
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS pdrs_provider_collection_cumulus_id_name_index ON pdrs(provider_cumulus_id, collection_cumulus_id, name);
 
     SELECT CURRENT_TIMESTAMP;
     CREATE INDEX CONCURRENTLY IF NOT EXISTS providers_updated_at_index ON providers(updated_at);
