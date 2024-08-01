@@ -6,46 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Replace ElasticSearch Phase 1
-
-- **CUMULUS-3239**
-  - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
-- **CUMULUS-3240**
-  - Removed Elasticsearch dependency from `executions` endpoints
-- **CUMULUS-3639**
-  - Updated `/collections/active` endpoint to query postgres
-- **CUMULUS-3640**
-  - Removed elasticsearch dependency from granules endpoint
-- **CUMULUS-3641**
-  - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
-- **CUMULUS-3642**
-  - Adjusted queries to improve performance:
-    - Used count(*) over count(id) to count rows
-    - Estimated row count for large tables (granules and executions) by default for basic query
-  - Updated stats summary to default to the last day
-  - Updated ExecutionSearch and CollectionSearch queries
-- **CUMULUS-3688**
-  - Updated `stats` api endpoint to query postgres instead of elasticsearch
-- **CUMULUS-3689**
-  - Updated `stats/aggregate` api endpoint to query postgres instead of elasticsearch
-  - Created a new StatsSearch class for querying postgres with the stats endpoint
-- **CUMULUS-3692**
-  - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
-    support basic queries for granules
-  - Updated granules List endpoint to query postgres for basic queries
-- **CUMULUS-3693**
-  - Added functionality to `@cumulus/db/src/search` to support range queries
-- **CUMULUS-3694**
-  - Added functionality to `@cumulus/db/src/search` to support term queries
-  - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
-  - Updated granules List endpoint to search postgres
-- **CUMULUS-3695**
-  - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
-- **CUMULUS-3696**
-  - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
-- **CUMULUS-3699**
-  - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
-
 ### Migration Notes
 
 #### CUMULUS-3320 Update executions table
