@@ -18,7 +18,6 @@ const {
   isCollisionError,
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
-  CollectionSearch,
 } = require('@cumulus/db');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { getEsClient, Search } = require('@cumulus/es-client/search');
@@ -26,6 +25,7 @@ const {
   indexCollection,
   deleteCollection,
 } = require('@cumulus/es-client/indexer');
+const Collection = require('@cumulus/es-client/collections');
 const {
   publishCollectionCreateSnsMessage,
   publishCollectionDeleteSnsMessage,
@@ -45,12 +45,14 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  log.debug(`list query ${JSON.stringify(req.query)}`);
-  const { getMMT, ...queryStringParameters } = req.query;
-  const dbSearch = new CollectionSearch(
-    { queryStringParameters }
+  const { getMMT, includeStats, ...queryStringParameters } = req.query;
+  const collection = new Collection(
+    { queryStringParameters },
+    undefined,
+    process.env.ES_INDEX,
+    includeStats === 'true'
   );
-  let result = await dbSearch.query();
+  let result = await collection.query();
   if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }
@@ -67,10 +69,15 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function activeList(req, res) {
-  log.debug(`activeList query ${JSON.stringify(req.query)}`);
-  const { getMMT, ...queryStringParameters } = req.query;
-  const dbSearch = new CollectionSearch({ queryStringParameters: { active: 'true', ...queryStringParameters } });
-  let result = await dbSearch.query();
+  const { getMMT, includeStats, ...queryStringParameters } = req.query;
+
+  const collection = new Collection(
+    { queryStringParameters },
+    undefined,
+    process.env.ES_INDEX,
+    includeStats === 'true'
+  );
+  let result = await collection.queryCollectionsWithActiveGranules();
   if (getMMT === 'true') {
     result = await insertMMTLinks(result);
   }

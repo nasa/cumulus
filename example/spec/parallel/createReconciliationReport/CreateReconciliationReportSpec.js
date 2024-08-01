@@ -345,7 +345,7 @@ describe('When there are granule differences and granule reconciliation is run',
       await s3().putObject({ Body: 'delete-me', ...extraS3Object });
 
       extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket);
-      
+
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
