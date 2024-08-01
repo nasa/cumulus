@@ -17,7 +17,7 @@ The updates will be automatically created as part of the bootstrap lambda functi
 ## Apply the Changes in Production Environment
 
 With large database (e.g. number of rows in executions table is greater than 100,000), the indexes must be applied manually since
-the commands can take significant amount of time and exceeds the bootstrap lambda's 15 minute timeout. 
+the commands can take significant amount of time and exceeds the bootstrap lambda's 15 minute timeout.
 
 The table below from LP DAAC provides the table sizes before and after `alter table` commands, and timings.  LP DAAC has Aurora PostgreSQL 13.10.
 
@@ -36,7 +36,7 @@ other issues that would result in the client being killed.
     and click the Connect button.
 
     From AWS CLI: aws ssm start-session --target `EC2 Instance ID`.
-  
+
     :::note Remember to take a note on which instance you run the commands.
 
 2. Install tmux and postgres client
