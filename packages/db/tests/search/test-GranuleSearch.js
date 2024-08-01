@@ -169,6 +169,7 @@ test('GranuleSearch returns 10 granule records by default', async (t) => {
 test('GranuleSearch supports page and limit params', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 20,
     page: 2,
   };
@@ -178,6 +179,7 @@ test('GranuleSearch supports page and limit params', async (t) => {
   t.is(response.results?.length, 20);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 11,
     page: 10,
   };
@@ -187,6 +189,7 @@ test('GranuleSearch supports page and limit params', async (t) => {
   t.is(response.results?.length, 1);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 10,
     page: 11,
   };
@@ -409,6 +412,7 @@ test('GranuleSearch supports search for multiple fields', async (t) => {
 test('GranuleSearch non-existing fields are ignored', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
@@ -423,6 +427,7 @@ test('GranuleSearch returns fields specified', async (t) => {
   const { knex } = t.context;
   const fields = 'granuleId,endingDateTime,collectionId,published,status';
   const queryStringParameters = {
+    estimateTableRowCount: 'false',
     fields,
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
@@ -435,6 +440,7 @@ test('GranuleSearch returns fields specified', async (t) => {
 test('GranuleSearch supports sorting', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     sort_by: 'timestamp',
   };
@@ -446,6 +452,7 @@ test('GranuleSearch supports sorting', async (t) => {
   t.true(response.results[1].updatedAt < response.results[50].updatedAt);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     sort_by: 'timestamp',
     order: 'desc',
@@ -458,6 +465,7 @@ test('GranuleSearch supports sorting', async (t) => {
   t.true(response2.results[1].updatedAt > response2.results[50].updatedAt);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     sort_key: ['-timestamp'],
   };
@@ -469,6 +477,7 @@ test('GranuleSearch supports sorting', async (t) => {
   t.true(response3.results[1].updatedAt > response3.results[50].updatedAt);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     sort_key: ['+productVolume'],
   };
@@ -480,6 +489,7 @@ test('GranuleSearch supports sorting', async (t) => {
   t.true(Number(response4.results[98].productVolume) < Number(response4.results[99].productVolume));
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     sort_key: ['-timestamp', '+productVolume'],
   };
@@ -493,6 +503,7 @@ test('GranuleSearch supports sorting', async (t) => {
   t.true(Number(response5.results[0].productVolume) < Number(response5.results[10].productVolume));
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     sort_key: ['-timestamp'],
     sort_by: 'timestamp',
@@ -509,6 +520,7 @@ test('GranuleSearch supports sorting', async (t) => {
 test('GranuleSearch supports sorting by CollectionId', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     sort_by: 'collectionId',
     order: 'asc',
@@ -521,6 +533,7 @@ test('GranuleSearch supports sorting by CollectionId', async (t) => {
   t.true(response8.results[0].collectionId < response8.results[50].collectionId);
 
   queryStringParameters = {
+    estimateTableRowCount: 'false',
     limit: 200,
     sort_key: ['-collectionId'],
   };
@@ -833,5 +846,16 @@ test('GranuleSearch supports search which checks existence of error', async (t) 
   dbSearch = new GranuleSearch({ queryStringParameters });
   response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch estimates the rowcount of the table by default', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 50,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.true(response.meta.count > 0);
   t.is(response.results?.length, 50);
 });

@@ -37,7 +37,16 @@ function getType(req) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function summary(req, res) {
-  const stats = new StatsSearch({ queryStringParameters: req.query }, 'granule');
+  const params = req.query;
+
+  const now = Date.now();
+  params.timestamp__from = Number.parseInt(get(
+    params,
+    'timestamp__from',
+    now - 24 * 3600 * 1000
+  ), 10);
+  params.timestamp__to = Number.parseInt(get(params, 'timestamp__to', now), 10);
+  const stats = new StatsSearch({ queryStringParameters: params }, 'granule');
   const r = await stats.summary();
   return res.send(r);
 }
@@ -50,8 +59,9 @@ async function summary(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function aggregate(req, res) {
-  if (getType(req)) {
-    const stats = new StatsSearch({ queryStringParameters: omit(req.query, 'type') }, getType(req));
+  const type = getType(req);
+  if (type) {
+    const stats = new StatsSearch({ queryStringParameters: omit(req.query, 'type') }, type);
     const r = await stats.aggregate();
     return res.send(r);
   }

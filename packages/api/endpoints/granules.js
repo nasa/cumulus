@@ -487,7 +487,6 @@ async function patchByGranuleId(req, res) {
     granulePgModel = new GranulePgModel(),
     knex = await getKnexClient(),
   } = req.testContext || {};
-  let pgGranule;
   const body = req.body;
   const action = body.action;
 
@@ -500,18 +499,11 @@ async function patchByGranuleId(req, res) {
     );
   }
 
-  try {
-    pgGranule = await await getUniqueGranuleByGranuleId(
-      knex,
-      req.params.granuleId,
-      granulePgModel
-    );
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      log.info('Granule does not exist');
-      return res.boom.notFound('No record found');
-    }
-  }
+  const pgGranule = await getUniqueGranuleByGranuleId(
+    knex,
+    req.params.granuleId,
+    granulePgModel
+  );
 
   const collectionPgModel = new CollectionPgModel();
   const pgCollection = await collectionPgModel.get(knex, {
@@ -681,10 +673,10 @@ async function delByGranuleId(req, res) {
   const {
     knex = await getKnexClient(),
   } = req.testContext || {};
-  let pgGranule;
   const granuleId = req.params.granuleId;
   log.info(`granules.del ${granuleId}`);
 
+  let pgGranule;
   try {
     pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
@@ -692,6 +684,7 @@ async function delByGranuleId(req, res) {
       log.info('Granule does not exist');
       return res.boom.notFound(`Granule ${granuleId} does not exist or was already deleted`);
     }
+    throw error;
   }
 
   const deletionDetails = await deleteGranuleAndFiles({
