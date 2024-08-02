@@ -546,14 +546,12 @@ const createProviderTestRecords = async (context, providerParams) => {
  * @param {PostgresRule} - Postgres Rule parameters
  *
  * @returns {Object}
- *   Returns new object consisting of `originalApiRule`, `originalPgRecord, and `originalEsRecord`
+ *   Returns new object consisting of `originalApiRule` and `originalPgRecord`
  */
 const createRuleTestRecords = async (context, ruleParams) => {
   const {
     testKnex,
     rulePgModel,
-    esClient,
-    esRulesClient,
   } = context;
 
   const originalRule = fakeRuleRecordFactory(ruleParams);
@@ -564,14 +562,10 @@ const createRuleTestRecords = async (context, ruleParams) => {
 
   const [originalPgRecord] = await rulePgModel.create(testKnex, pgRuleWithTrigger, '*');
   const originalApiRule = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
-  await indexRule(esClient, originalApiRule, process.env.ES_INDEX);
-  const originalEsRecord = await esRulesClient.get(
-    originalRule.name
-  );
+
   return {
     originalApiRule,
     originalPgRecord,
-    originalEsRecord,
   };
 };
 

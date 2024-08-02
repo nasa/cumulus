@@ -93,7 +93,6 @@ async function post(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   let record;
@@ -116,7 +115,6 @@ async function post(req, res) {
       await createRejectableTransaction(knex, async (trx) => {
         const [pgRecord] = await rulePgModel.create(trx, postgresRule);
         record = await translatePostgresRuleToApiRule(pgRecord, knex);
-        await indexRule(esClient, record, process.env.ES_INDEX);
       });
     } catch (innerError) {
       if (isCollisionError(innerError)) {
@@ -143,7 +141,6 @@ async function post(req, res) {
  * @param {object} params.apiRule           - updated API rule
  * @param {object} params.rulePgModel       - @cumulus/db compatible rule module instance
  * @param {object} params.knex              - Knex object
- * @param {object} params.esClient          - Elasticsearch client
  * @returns {Promise<object>} - promise of an express response object.
  */
 async function patchRule(params) {
@@ -153,7 +150,6 @@ async function patchRule(params) {
     apiRule,
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = params;
 
   log.debug(`rules.patchRule oldApiRule: ${JSON.stringify(oldApiRule)}, apiRule: ${JSON.stringify(apiRule)}`);
@@ -172,7 +168,6 @@ async function patchRule(params) {
     const [pgRule] = await rulePgModel.upsert(trx, apiPgRule);
     log.debug(`rules.patchRule pgRule: ${JSON.stringify(pgRule)}`);
     translatedRule = await translatePostgresRuleToApiRule(pgRule, knex);
-    await indexRule(esClient, translatedRule, process.env.ES_INDEX);
   });
 
   log.info(`rules.patchRule translatedRule: ${JSON.stringify(translatedRule)}`);
@@ -242,7 +237,6 @@ async function put(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { params: { name }, body } = req;
@@ -272,7 +266,7 @@ async function put(req, res) {
 
     apiRule.createdAt = oldApiRule.createdAt;
 
-    return await patchRule({ res, oldApiRule, apiRule, knex, esClient, rulePgModel });
+    return await patchRule({ res, oldApiRule, apiRule, knex, rulePgModel });
   } catch (error) {
     log.error('Unexpected error when updating rule:', error);
     if (error instanceof RecordDoesNotExist) {
@@ -293,15 +287,10 @@ async function del(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const name = (req.params.name || '').replace(/%20/g, ' ');
-  const esRulesClient = new Search(
-    {},
-    'rule',
-    process.env.ES_INDEX
-  );
+
   let rule;
   let apiRule;
 
@@ -309,13 +298,9 @@ async function del(req, res) {
     rule = await rulePgModel.get(knex, { name });
     apiRule = await translatePostgresRuleToApiRule(rule, knex);
   } catch (error) {
-    // If rule doesn't exist in PG or ES, return not found
     if (error instanceof RecordDoesNotExist) {
-      if (!(await esRulesClient.exists(name))) {
-        log.info('Rule does not exist in Elasticsearch and PostgreSQL');
-        return res.boom.notFound('No record found');
-      }
-      log.info('Rule does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+      // TODO probably don't need this catch.
+      return res.boom.notFound('No record found');
     } else {
       throw error;
     }
@@ -323,12 +308,6 @@ async function del(req, res) {
 
   await createRejectableTransaction(knex, async (trx) => {
     await rulePgModel.delete(trx, { name });
-    await deleteRule({
-      esClient,
-      name,
-      index: process.env.ES_INDEX,
-      ignore: [404],
-    });
     if (rule) await deleteRuleResources(knex, apiRule);
   });
 
