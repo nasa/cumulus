@@ -1,6 +1,6 @@
 ---
 id: update_table_indexes_CUMULUS_3792
-title: Update table indexes for CUMULUS-3792
+title: Update Table Indexes for CUMULUS-3792
 hide_title: false
 ---
 
@@ -11,8 +11,8 @@ are being updated to query RDS instead.  New database indexes are required to ma
 
 The updates will be automatically created as part of the bootstrap lambda function on deployment of the data-persistence module.
 
-*In cases where the indexes are already applied, the updates will have no effect.*
-*If you have an existing index with the same definition but a different name than the one we are creating, you can rename it.*
+*In cases where the indexes are already applied, the updates will have no effect. If you have an existing index with the same definition
+but a different name than the one we are creating, you can rename your existing index to the new index name.*
 
 ## Apply the Changes in Production Environment
 
@@ -28,7 +28,7 @@ other issues that would result in the client being killed.
 
 ## Upgrade Steps
 
-1. Login into EC2 instance with database access.
+1. Login into EC2 instance with database access
 
     From AWS console: Go to EC2, pick a `<prefix>-CumulusECSCluster` instance, click Connect, click Session Manager
     and click the Connect button.
@@ -49,7 +49,7 @@ other issues that would result in the client being killed.
     window is used to monitor the database and `CREATE INDEX` statement. The tmux session can be detached from and
     reattached to at a later time.
 
-3. Run SQL Commands
+3. Run SQL commands
 
     The database login credentials can be retrieved from the prefix_db_login secret.
     When the SQL commands are running, perform step 5 to monitor the commands.
@@ -127,7 +127,7 @@ other issues that would result in the client being killed.
     SELECT CURRENT_TIMESTAMP;
     ```
 
-4. Monitor the Running Command
+4. Monitor the running command
 
     ```sh
     # From tmux CumulusUpgrade session, open another window
@@ -138,13 +138,13 @@ other issues that would result in the client being killed.
     select pid, query, state, wait_event_type, wait_event from pg_stat_activity where state = 'active';
     ```
 
-5. Verify the Updates
+5. Verify the updates
 
-     We can verify that the tables are updated successfully by checking the `\d table` results from psql, and the indexes created should be listed.
+     We can verify that the tables are updated successfully by checking the `\d tablename` results from psql, and the indexes created should be listed.
 
      If the concurrent index query fails for any reason, you may have an `invalid` index - if this occurs,
-     make sure to drop and/or recreate the index to avoid resources being used for the invalid index.
+     make sure to drop and create the index again to avoid resources being used for the invalid index.
 
-6. Close the Session
+6. Close the session
 
     Close the tmux session after the task is complete by `exit` or `<Ctrl>-b x`.
