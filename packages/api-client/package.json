@@ -41,7 +41,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@aws-sdk/client-lambda": "^3.529.1",
+    "@aws-sdk/client-lambda": "^3.621.0",
     "@cumulus/aws-client": "18.3.2",
     "@cumulus/logger": "18.3.2",
     "p-retry": "^2.0.0"

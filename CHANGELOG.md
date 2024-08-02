@@ -71,6 +71,8 @@ degraded execution table operations.
 
 ### Fixed
 
+- **CUMULUS-3817**
+  - updated applicable @aws-sdk dependencies to 3.621.0 to remove inherited vulnerability from fast-xml-parser
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
