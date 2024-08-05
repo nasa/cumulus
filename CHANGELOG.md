@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 #### CUMULUS-3792 Add database indexes. Please follow the instructions before upgrading Cumulus
 
 - The updates in CUMULUS-3792 require a manual update to the postgres database in the production environment.
-  Please follow [Update table indexes for CUMULUS-3792]
+  Please follow [Update Table Indexes for CUMULUS-3792]
   (https://nasa.github.io/cumulus/docs/next/upgrade-notes/update_table_indexes_CUMULUS_3792)
 
 ### Replace ElasticSearch Phase 1
