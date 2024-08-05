@@ -131,7 +131,7 @@ other issues that would result in the client being killed.
 
     ```sh
     # From tmux CumulusUpgrade session, open another window
-    <Ctrl>-b c
+    Ctrl-b c
 
     psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -W
 
@@ -147,4 +147,4 @@ other issues that would result in the client being killed.
 
 6. Close the session
 
-    Close the tmux session after the task is complete by `exit` or `<Ctrl>-b x`.
+    Close the tmux session after the task is complete by `exit` or `Ctrl-b x`.
