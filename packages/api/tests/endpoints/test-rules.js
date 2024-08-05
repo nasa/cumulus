@@ -53,7 +53,7 @@ const {
   createRuleTestRecords,
   createSqsQueues,
 } = require('../../lib/testUtils');
-const { patch, post, put, del } = require('../../endpoints/rules');
+const { patch, post, put } = require('../../endpoints/rules');
 
 const rulesHelpers = require('../../lib/rulesHelpers');
 const AccessToken = require('../../models/access-tokens');
@@ -465,7 +465,6 @@ test('POST creates a rule', async (t) => {
     collectionPgModel,
     newRule,
     providerPgModel,
-    rulePgModel,
     testKnex,
   } = t.context;
 
@@ -508,8 +507,6 @@ test('POST creates a rule', async (t) => {
     .expect(200);
 
   const { message } = response.body;
-  const fetchedPostgresRecord = await rulePgModel
-    .get(testKnex, { name: newRule.name });
 
   t.is(message, 'Record saved');
 });

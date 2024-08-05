@@ -25,7 +25,6 @@ const {
 const {
   indexCollection,
   indexProvider,
-  indexRule,
   indexPdr,
   indexAsyncOperation,
   deleteExecution,

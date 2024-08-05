@@ -297,9 +297,8 @@ async function del(req, res) {
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
-    } else {
-      throw error;
     }
+    throw error;
   }
 
   await createRejectableTransaction(knex, async (trx) => {
