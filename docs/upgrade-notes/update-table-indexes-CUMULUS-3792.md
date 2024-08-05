@@ -6,7 +6,7 @@ hide_title: false
 
 ## Background
 
-As part of the ElasticSearch removal efforts, Cumulus API endpoints which previously query ElasticSearch
+As part of the ElasticSearch removal efforts, Cumulus API endpoints which previously queried ElasticSearch
 are being updated to query RDS instead.  New database indexes are required to make RDS queries more efficient.
 
 The updates will be automatically created as part of the bootstrap lambda function on deployment of the data-persistence module.
@@ -16,14 +16,14 @@ but a different name than the one we are creating, you can rename your existing 
 
 ## Apply the Changes in Production Environment
 
-With large database (e.g. number of rows in executions table is greater than 100,000), the indexes must be applied manually since
-the commands can take significant amount of time and exceeds the bootstrap lambda's 15 minute timeout.
+With a large database (e.g. number of rows in executions table is greater than 100,000), the indexes must be applied manually since
+the commands can take a significant amount of time and exceed the bootstrap lambda's 15 minute timeout.
 
 ## Tools Used
 
 Since the update commands can take a few hours to run based on table size and IO throughput, it is recommended that the commands are run in an EC2 instance
 in the AWS environment in a tmux or screen session. This will minimize the number of network hops and potential disconnects between the database client
-and the database. In addition, this will allow operators applying the patch to check on progress periodically and not worry about credential expiration or
+and the database. Additionally, this will allow operators applying the patch to check on progress periodically and not worry about credential expiration or
 other issues that would result in the client being killed.
 
 ## Upgrade Steps
