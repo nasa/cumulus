@@ -18,8 +18,6 @@ const {
   translateApiRuleToPostgresRuleRaw,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
-const { Search, getEsClient } = require('@cumulus/es-client/search');
-const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const {
   requireApiVersion,
@@ -193,7 +191,6 @@ async function patch(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { params: { name }, body } = req;
@@ -211,7 +208,7 @@ async function patch(req, res) {
     apiRule.createdAt = oldApiRule.createdAt;
     apiRule = merge(cloneDeep(oldApiRule), apiRule);
 
-    return await patchRule({ res, oldApiRule, apiRule, knex, esClient, rulePgModel });
+    return await patchRule({ res, oldApiRule, apiRule, knex, rulePgModel });
   } catch (error) {
     log.error('Unexpected error when updating rule:', error);
     if (error instanceof RecordDoesNotExist) {
@@ -299,7 +296,6 @@ async function del(req, res) {
     apiRule = await translatePostgresRuleToApiRule(rule, knex);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      // TODO probably don't need this catch.
       return res.boom.notFound('No record found');
     } else {
       throw error;

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Replace ElasticSearch Phase 2
+- **CUMULUS-3229**
+  - Remove ElasticSearch queries from Rule LIST endpoint
+- **CUMULUS-3230**
+  - Remove ElasticSearch dependency from Rule Endpoints
+
 ### Replace ElasticSearch Phase 1
 - **CUMULUS-3239**
   - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
