@@ -44,7 +44,7 @@ other issues that would result in the client being killed.
     sudo amazon-linux-extras install postgresql13
     ```
 
-    Once installed, a tmux session is started with two windows. The Cumulus database is connected to in each window
+    Once installed, a tmux session is started with two windows, the Cumulus database is connected to each window
     using the PostgreSQL client. The primary window is used for running the `CREATE INDEX` commands, while the secondary
     window is used to monitor the database and `CREATE INDEX` statement. The tmux session can be detached from and
     reattached to at a later time.
@@ -140,7 +140,7 @@ other issues that would result in the client being killed.
 
 5. Verify the updates
 
-     We can verify that the tables are updated successfully by checking the `\d tablename` results from psql, and the indexes created should be listed.
+     We can verify that the tables are updated successfully by checking the `\d tablename` results from psql, the indexes created should be listed.
 
      If the concurrent index query fails for any reason, you may have an `invalid` index - if this occurs,
      make sure to drop and create the index again to avoid resources being used for the invalid index.
