@@ -68,6 +68,8 @@ degraded execution table operations.
 - **CUMULUS-3449**
   - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
     from columns ending with "cumulus_id" to number.
+- **CUMULUS-3824**
+  - Changed the default ECS docker storage driver to `overlay2`, since `devicemapper` is removed in Docker Engine v25.0 
 
 ### Fixed
 

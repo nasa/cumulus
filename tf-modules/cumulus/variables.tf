@@ -306,7 +306,7 @@ variable "ecs_docker_hub_config" {
 variable "ecs_docker_storage_driver" {
   description = "Storage driver for ECS tasks"
   type        = string
-  default     = "devicemapper"
+  default     = "overlay2"
 }
 
 variable "ecs_efs_config" {
