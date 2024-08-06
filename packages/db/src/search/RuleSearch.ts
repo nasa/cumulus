@@ -7,6 +7,7 @@ import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresRuleRecord } from '../types/rule';
 import { translatePostgresRuleToApiRule } from '../translate/rules';
+import { TableNames } from '../tables';
 
 const log = new Logger({ sender: '@cumulus/db/RuleSearch' });
 
@@ -28,11 +29,23 @@ export class RuleSearch extends BaseSearch {
     countQuery: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
   } {
+    const {
+        collections: collectionsTable,
+        providers: providersTable,
+    } = TableNames;
+
     const countQuery = knex(this.tableName)
       .count(`${this.tableName}.cumulus_id`);
 
     const searchQuery = knex(this.tableName)
-      .select(`${this.tableName}.*`);
+      .select(`${this.tableName}.*`)
+      .select({
+        collectionName: `${collectionsTable}.version`,
+        collectionVersion: `${collectionsTable}.version`,
+        provider: `${providersTable}.name`,
+      })
+      .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
+      .innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
 
     return { countQuery, searchQuery };
   }
@@ -73,13 +86,12 @@ export class RuleSearch extends BaseSearch {
   ): Promise<Partial<Promise<RuleRecord>>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
-    const apiRecords = pgRecords.map((record) => {
+    const apiRecords = await Promise.all(pgRecords.map((record) => {
       const apiRecord = translatePostgresRuleToApiRule(record, knex);
       return this.dbQueryParameters.fields
         ? pick(apiRecord, this.dbQueryParameters.fields)
         : apiRecord;
-    });
-
+    }));
     return apiRecords;
   }
 }

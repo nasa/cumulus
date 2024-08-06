@@ -5,19 +5,28 @@ import { RuleRecord, Rule } from '@cumulus/types/api/rules';
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';
 import { PostgresRule, PostgresRuleRecord } from '../types/rule';
+import { PostgresProviderRecord } from '../types/provider';
+import { PostgresCollectionRecord } from '../types/collection';
 
 export const translatePostgresRuleToApiRule = async (
   pgRule: PostgresRuleRecord,
   knex: Knex | Knex.Transaction,
   collectionPgModel = new CollectionPgModel(),
-  providerPgModel = new ProviderPgModel()
+  providerPgModel = new ProviderPgModel(),
+  provider?: PostgresProviderRecord,
+  collection?: PostgresCollectionRecord,
 ): Promise<RuleRecord> => {
-  const provider = pgRule.provider_cumulus_id
-    ? await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id })
-    : undefined;
-  const collection = pgRule.collection_cumulus_id
+    if (!provider) {
+      provider = pgRule.provider_cumulus_id
+      ? await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id })
+      : undefined;
+    }
+
+    if (!collection) {
+      collection = pgRule.collection_cumulus_id
     ? await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id })
     : undefined;
+    }
 
   const apiRule: RuleRecord = {
     name: pgRule.name,
