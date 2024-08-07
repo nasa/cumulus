@@ -389,7 +389,26 @@ test.serial('search returns correct list of rules', async (t) => {
   t.is(newResults.length, 0);
 });
 
-test('GET gets a rule', async (t) => {
+test.serial('search returns the expected fields', async (t) => {
+  const response = await request(app)
+    .get('/rules?page=1&rule.type=onetime&state=ENABLED')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+
+  const expectedRule = {
+    ...t.context.testRule,
+    updatedAt: results[0].updatedAt,
+    createdAt: results[0].createdAt,
+  };
+
+  t.is(results.length, 1);
+  t.deepEqual(results[0], expectedRule)
+});
+
+test.serial('GET gets a rule', async (t) => {
   const response = await request(app)
     .get(`/rules/${t.context.testRule.name}`)
     .set('Accept', 'application/json')

@@ -40,7 +40,7 @@ export class RuleSearch extends BaseSearch {
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)
       .select({
-        collectionName: `${collectionsTable}.version`,
+        collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
         provider: `${providersTable}.name`,
       })

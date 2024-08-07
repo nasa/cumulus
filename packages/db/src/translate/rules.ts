@@ -4,41 +4,41 @@ import { RuleRecord, Rule } from '@cumulus/types/api/rules';
 
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';
-import { PostgresRule, PostgresRuleRecord } from '../types/rule';
-import { PostgresProviderRecord } from '../types/provider';
-import { PostgresCollectionRecord } from '../types/collection';
+import { PostgresRule } from '../types/rule';
 
 export const translatePostgresRuleToApiRule = async (
-  pgRule: PostgresRuleRecord,
+  pgRule: any, // TODO: create type for pgRule with collection and provider
   knex: Knex | Knex.Transaction,
   collectionPgModel = new CollectionPgModel(),
   providerPgModel = new ProviderPgModel(),
-  providerRecord?: PostgresProviderRecord,
-  collectionRecord?: PostgresCollectionRecord
 ): Promise<RuleRecord> => {
-  let provider = providerRecord;
-  let collection = collectionRecord;
+  let collection;
+  let pgProvider;
 
-  if (!provider) {
-    provider = pgRule.provider_cumulus_id
-      ? await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id })
-      : undefined;
+  if (!pgRule.provider && pgRule.provider_cumulus_id) {
+    pgProvider = await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id });
   }
 
-  if (!collection) {
-    collection = pgRule.collection_cumulus_id
-      ? await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id })
-      : undefined;
+  if (pgRule.collectionName && pgRule.collectionVersion) {
+    collection = {
+      name: pgRule.collectionName,
+      version: pgRule.collectionVersion,
+    }
+  } else {
+    if (pgRule.collection_cumulus_id) {
+      const pgCollection = await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id });
+      collection = {
+        name: pgCollection.name,
+        version: pgCollection.version,
+      }
+    }
   }
 
   const apiRule: RuleRecord = {
     name: pgRule.name,
     workflow: pgRule.workflow,
-    provider: provider ? provider.name : undefined,
-    collection: collection ? {
-      name: collection.name,
-      version: collection.version,
-    } : undefined,
+    provider: pgRule.provider || pgProvider?.name,
+    collection,
     rule: <Rule>removeNilProperties({
       type: pgRule.type,
       arn: pgRule.arn,
