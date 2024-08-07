@@ -10,7 +10,7 @@ export const translatePostgresRuleToApiRule = async (
   pgRule: any, // TODO: create type for pgRule with collection and provider
   knex: Knex | Knex.Transaction,
   collectionPgModel = new CollectionPgModel(),
-  providerPgModel = new ProviderPgModel(),
+  providerPgModel = new ProviderPgModel()
 ): Promise<RuleRecord> => {
   let collection;
   let pgProvider;
@@ -23,15 +23,16 @@ export const translatePostgresRuleToApiRule = async (
     collection = {
       name: pgRule.collectionName,
       version: pgRule.collectionVersion,
-    }
-  } else {
-    if (pgRule.collection_cumulus_id) {
-      const pgCollection = await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id });
-      collection = {
-        name: pgCollection.name,
-        version: pgCollection.version,
-      }
-    }
+    };
+  } else if (pgRule.collection_cumulus_id) {
+    const pgCollection = await collectionPgModel.get(
+      knex,
+      { cumulus_id: pgRule.collection_cumulus_id }
+    );
+    collection = {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    };
   }
 
   const apiRule: RuleRecord = {

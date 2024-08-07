@@ -405,7 +405,7 @@ test.serial('search returns the expected fields', async (t) => {
   };
 
   t.is(results.length, 1);
-  t.deepEqual(results[0], expectedRule)
+  t.deepEqual(results[0], expectedRule);
 });
 
 test.serial('GET gets a rule', async (t) => {
