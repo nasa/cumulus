@@ -13,20 +13,23 @@ export const translatePostgresRuleToApiRule = async (
   knex: Knex | Knex.Transaction,
   collectionPgModel = new CollectionPgModel(),
   providerPgModel = new ProviderPgModel(),
-  provider?: PostgresProviderRecord,
-  collection?: PostgresCollectionRecord,
+  providerRecord?: PostgresProviderRecord,
+  collectionRecord?: PostgresCollectionRecord
 ): Promise<RuleRecord> => {
-    if (!provider) {
-      provider = pgRule.provider_cumulus_id
+  let provider = providerRecord;
+  let collection = collectionRecord;
+
+  if (!provider) {
+    provider = pgRule.provider_cumulus_id
       ? await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id })
       : undefined;
-    }
+  }
 
-    if (!collection) {
-      collection = pgRule.collection_cumulus_id
-    ? await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id })
-    : undefined;
-    }
+  if (!collection) {
+    collection = pgRule.collection_cumulus_id
+      ? await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id })
+      : undefined;
+  }
 
   const apiRule: RuleRecord = {
     name: pgRule.name,

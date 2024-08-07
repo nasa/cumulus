@@ -30,8 +30,8 @@ export class RuleSearch extends BaseSearch {
     searchQuery: Knex.QueryBuilder,
   } {
     const {
-        collections: collectionsTable,
-        providers: providersTable,
+      collections: collectionsTable,
+      providers: providersTable,
     } = TableNames;
 
     const countQuery = knex(this.tableName)
