@@ -9,7 +9,6 @@ const {
   RecordDoesNotExist,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   CollectionPgModel,
@@ -21,11 +20,6 @@ const {
   CollectionSearch,
 } = require('@cumulus/db');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
-const { getEsClient, Search } = require('@cumulus/es-client/search');
-const {
-  indexCollection,
-  deleteCollection,
-} = require('@cumulus/es-client/indexer');
 const {
   publishCollectionCreateSnsMessage,
   publishCollectionDeleteSnsMessage,
@@ -108,7 +102,6 @@ async function post(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
     collectionConfigStore = new CollectionConfigStore(
       process.env.system_bucket,
       process.env.stackName
@@ -135,9 +128,6 @@ async function post(req, res) {
       await createRejectableTransaction(knex, async (trx) => {
         const [pgCollection] = await collectionPgModel.create(trx, dbRecord);
         translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
-        // process.env.ES_INDEX is only used to isolate the index for
-        // each unit test suite
-        await indexCollection(esClient, translatedCollection, process.env.ES_INDEX);
         await publishCollectionCreateSnsMessage(translatedCollection);
       });
       await collectionConfigStore.put(name, version, translatedCollection);
@@ -176,7 +166,6 @@ async function put(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
     collectionConfigStore = new CollectionConfigStore(
       process.env.system_bucket,
       process.env.stackName
@@ -211,11 +200,7 @@ async function put(req, res) {
   try {
     await createRejectableTransaction(knex, async (trx) => {
       const [pgCollection] = await collectionPgModel.upsert(trx, postgresCollection);
-
-      // process.env.ES_INDEX is only used to isolate the index for
-      // each unit test suite
       apiPgCollection = translatePostgresCollectionToApiCollection(pgCollection);
-      await indexCollection(esClient, apiPgCollection, process.env.ES_INDEX);
       await publishCollectionUpdateSnsMessage(apiPgCollection);
       await collectionConfigStore.put(name, version, apiPgCollection);
     });
@@ -238,7 +223,6 @@ async function del(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
     collectionConfigStore = new CollectionConfigStore(
       process.env.system_bucket,
       process.env.stackName
@@ -246,36 +230,20 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const { name, version } = req.params;
-  const collectionId = constructCollectionId(name, version);
-  const esCollectionsClient = new Search(
-    {},
-    'collection',
-    process.env.ES_INDEX
-  );
 
   try {
     await collectionPgModel.get(knex, { name, version });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (!(await esCollectionsClient.exists(collectionId))) {
-        log.info('Collection does not exist in Elasticsearch and PostgreSQL');
-        return res.boom.notFound('No record found');
-      }
-      log.info('Collection does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
-    } else {
-      throw error;
+      log.info(`Collection does not exist in PostgreSQL. Failed to delete collection with name ${name} and version ${version}`);
+      return res.boom.notFound('No record found');
     }
+    throw error;
   }
 
   try {
     await createRejectableTransaction(knex, async (trx) => {
       await collectionPgModel.delete(trx, { name, version });
-      await deleteCollection({
-        esClient,
-        collectionId,
-        index: process.env.ES_INDEX,
-        ignore: [404],
-      });
       await publishCollectionDeleteSnsMessage({ name, version });
     });
   } catch (error) {
