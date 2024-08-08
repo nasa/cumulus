@@ -70,7 +70,8 @@ degraded execution table operations.
     from columns ending with "cumulus_id" to number.
 
 ### Fixed
-
+- **CUMULUS-3836**
+  - Terraform configuration for cleanExecutions now correctly configures ES_HOST and lambda security group
 - **CUMULUS-3817**
   - updated applicable @aws-sdk dependencies to 3.621.0 to remove inherited vulnerability from fast-xml-parser
 - **CUMULUS-3320**
