@@ -84,6 +84,16 @@ const esProdConfig = (host, credentials) => {
   } else if (host) {
     node = `https://${host}`;
   }
+  logger.warn ("with config", {
+    node,
+    ...createEsAmazonConnection({
+      credentials,
+      region: process.env.AWS_REGION,
+    }),
+
+    // Note that this doesn't abort the query.
+    requestTimeout: 50000, // milliseconds
+  })
   return {
     node,
     ...createEsAmazonConnection({
