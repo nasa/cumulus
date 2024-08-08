@@ -39,9 +39,7 @@ source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/clea
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id
-      ]
+      security_group_ids = locals.lambda_security_group_ids
     }
   }
 }
