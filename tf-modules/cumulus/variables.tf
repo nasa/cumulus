@@ -303,12 +303,6 @@ variable "ecs_docker_hub_config" {
   default     = null
 }
 
-variable "ecs_docker_storage_driver" {
-  description = "Storage driver for ECS tasks"
-  type        = string
-  default     = "overlay2"
-}
-
 variable "ecs_efs_config" {
   description = "Config for using EFS with ECS instances"
   type        = object({ mount_target_id = string, mount_point = string })
