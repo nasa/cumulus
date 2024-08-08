@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3824**
+  - Changed the ECS docker storage driver to `overlay2`, since `devicemapper` is removed in Docker Engine v25.0.
+  - Removed `ecs_docker_storage_driver` property from cumulus module.
 - **CUMULUS-3836**
   - Terraform configuration for cleanExecutions now correctly configures ES_HOST and lambda security group
 
