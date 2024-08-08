@@ -76,7 +76,6 @@ const esTestConfig = () => ({
  * AWS connection details, and request timeout.
  */
 const esProdConfig = (host, credentials) => {
-  logger.warn('in esProdConfig with', process.env, host)
   let node = 'http://localhost:9200';
 
   if (process.env.ES_HOST) {
@@ -84,16 +83,6 @@ const esProdConfig = (host, credentials) => {
   } else if (host) {
     node = `https://${host}`;
   }
-  logger.warn ("with config", {
-    node,
-    ...createEsAmazonConnection({
-      credentials,
-      region: process.env.AWS_REGION,
-    }),
-
-    // Note that this doesn't abort the query.
-    requestTimeout: 50000, // milliseconds
-  })
   return {
     node,
     ...createEsAmazonConnection({
