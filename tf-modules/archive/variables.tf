@@ -336,7 +336,7 @@ variable "vpc_id" {
 
 variable "daily_execution_payload_cleanup_schedule_expression" {
   type    = string
-  default = "cron(* * * * ? *)"
+  default = "cron(0 4 * * ? *)"
   description = "Cloud Watch cron schedule for the execution payload cleanup lambda"
 }
 
