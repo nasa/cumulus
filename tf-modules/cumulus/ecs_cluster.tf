@@ -233,7 +233,6 @@ locals {
     cluster_name              = aws_ecs_cluster.default.name
     container_stop_timeout    = var.ecs_container_stop_timeout,
     docker_hub_config         = var.ecs_docker_hub_config,
-    docker_storage_driver     = var.ecs_docker_storage_driver,
     docker_volume_size        = var.ecs_cluster_instance_docker_volume_size,
     docker_volume_create_size = var.ecs_cluster_instance_docker_volume_size - 1,
     efs_dns_name              = var.ecs_efs_config == null ? null : data.aws_efs_mount_target.ecs_cluster_instance[0].dns_name,

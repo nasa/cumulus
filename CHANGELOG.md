@@ -15,7 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   (https://nasa.github.io/cumulus/docs/next/upgrade-notes/update_table_indexes_CUMULUS_3792)
 
 ### Replace ElasticSearch Phase 1
-
+- **CUMULUS-3238**
+  - Removed elasticsearch dependency from collections endpoint
 - **CUMULUS-3239**
   - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
 - **CUMULUS-3240**
@@ -118,13 +119,20 @@ degraded execution table operations.
 - **CUMULUS-3449**
   - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
     from columns ending with "cumulus_id" to number.
+- **CUMULUS-3824**
+  - Changed the ECS docker storage driver to `overlay2`, since `devicemapper` is removed in Docker Engine v25.0.
+  - Removed `ecs_docker_storage_driver` property from cumulus module.
 
 ### Fixed
 
+- **CUMULUS-3817**
+  - updated applicable @aws-sdk dependencies to 3.621.0 to remove inherited vulnerability from fast-xml-parser
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
     deletion to validate parent-child relationships
+- **CUMULUS-3818**
+  - Fixes default value (updated to tag 52) for async-operation-image in tf-modules/cumulus.
 
 ## [v18.3.2] 2024-07-24
 
