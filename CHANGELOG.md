@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-3836**
+  - Terraform configuration for cleanExecutions now correctly configures ES_HOST and lambda security group
+
 ## [v18.3.2] 2024-07-24
 
 ### Added
