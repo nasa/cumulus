@@ -76,6 +76,7 @@ const esTestConfig = () => ({
  * AWS connection details, and request timeout.
  */
 const esProdConfig = (host, credentials) => {
+  logger.warn('in esProdConfig with', process.env, host)
   let node = 'http://localhost:9200';
 
   if (process.env.ES_HOST) {
