@@ -19,13 +19,6 @@ import type {
 } from './types';
 
 const { EcsStartTaskError, MissingRequiredArgument } = require('@cumulus/errors');
-const {
-  indexAsyncOperation,
-} = require('@cumulus/es-client/indexer');
-const {
-  getEsClient, EsClient,
-} = require('@cumulus/es-client/search');
-
 const logger = new Logger({ sender: '@cumulus/async-operation' });
 
 type StartEcsTaskReturnType = Promise<RunTaskCommandOutput>;
@@ -127,7 +120,6 @@ export const createAsyncOperation = async (
     stackName: string,
     systemBucket: string,
     knexConfig?: NodeJS.ProcessEnv,
-    esClient?: typeof EsClient,
     asyncOperationPgModel?: AsyncOperationPgModelObject
   }
 ): Promise<Partial<ApiAsyncOperation>> => {
@@ -136,7 +128,6 @@ export const createAsyncOperation = async (
     stackName,
     systemBucket,
     knexConfig = process.env,
-    esClient = await getEsClient(),
     asyncOperationPgModel = new AsyncOperationPgModel(),
   } = params;
 
@@ -147,10 +138,7 @@ export const createAsyncOperation = async (
   return await createRejectableTransaction(knex, async (trx: Knex.Transaction) => {
     const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
     const pgRecord = await asyncOperationPgModel.create(trx, pgCreateObject, ['*']);
-    const apiRecord = translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
-    await indexAsyncOperation(esClient, apiRecord, process.env.ES_INDEX);
-
-    return apiRecord;
+    return translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
   });
 };
 
