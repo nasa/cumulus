@@ -13,7 +13,6 @@
     "http-cache-semantics",
     "lodash.pick",
     "hoek",
-    "fast-xml-parser",
     "semver"
   ]
 }
