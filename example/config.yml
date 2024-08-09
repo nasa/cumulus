@@ -8,6 +8,11 @@ cumulus-sit:
   apiUsername: jasmine
   pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
+cumulus-std:
+  bucket: cumulus-sit-internal
+  apiUsername: jasmine
+  pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
+
 mvd-tf:
   bucket: mvd-internal
 
@@ -40,3 +45,4 @@ nnaga-tf:
 
 ecarton:
   bucket: ecarton-internal
+
