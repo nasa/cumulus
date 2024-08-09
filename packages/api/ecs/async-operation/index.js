@@ -20,12 +20,9 @@ const {
   getObject,
   getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
-const indexer = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
 const {
   getKnexClient,
   AsyncOperationPgModel,
-  createRejectableTransaction,
   translatePostgresAsyncOperationToApiAsyncOperation,
 } = require('@cumulus/db');
 
@@ -186,27 +183,6 @@ const writeAsyncOperationToPostgres = async (params) => {
     );
 };
 
-const writeAsyncOperationToEs = async (params) => {
-  const {
-    env,
-    status,
-    dbOutput,
-    updatedTime,
-    esClient,
-  } = params;
-
-  await indexer.updateAsyncOperation(
-    esClient,
-    env.asyncOperationId,
-    {
-      status,
-      output: dbOutput,
-      updatedAt: Number(updatedTime),
-    },
-    process.env.ES_INDEX
-  );
-};
-
 /**
  * Update an AsyncOperation item in Postgres
  *
@@ -222,7 +198,6 @@ const updateAsyncOperation = async (params) => {
     status,
     output,
     envOverride = {},
-    esClient = await getEsClient(),
     asyncOperationPgModel = new AsyncOperationPgModel(),
   } = params;
 
@@ -234,20 +209,17 @@ const updateAsyncOperation = async (params) => {
   logger.info(`About to update async operation to ${JSON.stringify(status)} with output: ${dbOutput}`);
   const knex = await getKnexClient({ env });
 
-  return await createRejectableTransaction(knex, async (trx) => {
-    const pgRecords = await writeAsyncOperationToPostgres({
-      dbOutput,
-      env,
-      status,
-      trx,
-      updatedTime,
-      asyncOperationPgModel,
-    });
-    const result = translatePostgresAsyncOperationToApiAsyncOperation(pgRecords[0]);
-    await writeAsyncOperationToEs({ env, status, dbOutput, updatedTime, esClient });
-    logger.info(`Successfully updated async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(dbOutput)}`);
-    return result;
+  const pgRecords = await writeAsyncOperationToPostgres({
+    dbOutput,
+    env,
+    status,
+    knex,
+    updatedTime,
+    asyncOperationPgModel,
   });
+  const result = translatePostgresAsyncOperationToApiAsyncOperation(pgRecords[0]);
+  logger.info(`Successfully updated async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(dbOutput)}`);
+  return result;
 };
 
 /**
