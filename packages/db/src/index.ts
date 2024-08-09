@@ -154,6 +154,9 @@ export {
 export {
   CollectionSearch,
 } from './search/CollectionSearch';
+export {
+  ProviderSearch,
+} from './search/ProviderSearch';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';

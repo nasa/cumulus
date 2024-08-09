@@ -7,7 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Replace ElasticSearch Phase 1
-
+- **CUMULUS-3239**
+  - Updated `providers` list api endpoint and added `ProviderSearch` class to query postgres
+  - Removed Elasticsearch dependency from `providers` endpoints
 - **CUMULUS-3239**
   - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
 - **CUMULUS-3240**
