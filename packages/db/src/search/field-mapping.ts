@@ -234,10 +234,22 @@ const pdrMapping : { [key: string]: Function } = {
 };
 
 const providerMapping : { [key: string]: Function } = {
+  allowedRedirects: (value?: string) => ({
+    allowed_redirects: value?.split(','),
+  }),
+  certificateUrl: (value?: string) => ({
+    certificate_url: value,
+  }),
+  cmKeyId: (value?: string) => ({
+    cm_key_id: value,
+  }),
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
   id: (value?: string) => ({
+    name: value,
+  }),
+  name: (value?: string) => ({
     name: value,
   }),
   timestamp: (value?: string) => ({
@@ -245,6 +257,27 @@ const providerMapping : { [key: string]: Function } = {
   }),
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
+  }),
+  globalConnectionLimit: (value?: string) => ({
+    global_connection_limit: value && Number(value),
+  }),
+  host: (value?: string) => ({
+    host: value,
+  }),
+  password: (value?: string) => ({
+    password: value,
+  }),
+  port: (value?: string) => ({
+    port: value,
+  }),
+  privateKey: (value?: string) => ({
+    private_key: value,
+  }),
+  protocol: (value?: string) => ({
+    protocol: value,
+  }),
+  username: (value?: string) => ({
+    username: value,
   }),
 };
 

@@ -8,9 +8,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { getEsClient } = require('@cumulus/es-client/search');
-const indexer = require('@cumulus/es-client/indexer');
 
 const {
   ProviderPgModel,
@@ -34,10 +31,6 @@ process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
-
-const esIndex = randomString();
-let esClient;
-
 let jwtAuthToken;
 let accessTokenModel;
 
@@ -48,18 +41,6 @@ test.before(async (t) => {
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
-
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-
-  await Promise.all([
-    accessTokenModel.createTable(),
-    bootstrapElasticSearch({
-      host: 'fakehost',
-      index: esIndex,
-      alias: esAlias,
-    }),
-  ]);
 
   t.context.testDbName = `test_providers_${cryptoRandomString({ length: 10 })}`;
 
@@ -73,14 +54,11 @@ test.before(async (t) => {
   };
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-
-  esClient = await getEsClient('fakehost');
 });
 
 test.after.always((t) => Promise.all([
   recursivelyDeleteS3Bucket(process.env.system_bucket),
   accessTokenModel.deleteTable(),
-  esClient.client.indices.delete({ index: esIndex }),
   destroyLocalTestDb({
     ...t.context,
   }),
@@ -110,9 +88,7 @@ test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user 
 test('default returns list of providers', async (t) => {
   const testProvider = fakeProviderRecordFactory();
   const providerPgModel = new ProviderPgModel();
-  const [provider] = await providerPgModel.create(t.context.knex, testProvider);
-  const pgProvider = await providerPgModel.get(t.context.knex, { cumulus_id: provider.cumulus_id });
-  await indexer.indexProvider(esClient, pgProvider, esIndex);
+  await providerPgModel.create(t.context.knex, testProvider);
 
   const response = await request(app)
     .get('/providers')

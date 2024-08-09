@@ -62,15 +62,6 @@ test.before(async (t) => {
 
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esProviderClient = new Search(
-    {},
-    'provider',
-    t.context.esIndex
-  );
-
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -95,7 +86,6 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
-  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -160,18 +150,6 @@ test('PUT updates existing provider', async (t) => {
       postgresOmitList
     )
   );
-
-  const updatedEsRecord = await t.context.esProviderClient.get(
-    testProvider.id
-  );
-  t.like(
-    updatedEsRecord,
-    {
-      ...expectedProvider,
-      updatedAt: actualPostgresProvider.updated_at.getTime(),
-      timestamp: updatedEsRecord.timestamp,
-    }
-  );
 });
 
 test('PUT updates existing provider and correctly removes fields', async (t) => {
@@ -216,7 +194,7 @@ test('PUT updates existing provider and correctly removes fields', async (t) => 
   t.is(actualPostgresProvider.global_connection_limit, null);
 });
 
-test('PUT updates existing provider in all data stores with correct timestamps', async (t) => {
+test('PUT updates existing provider in postgres with correct timestamps', async (t) => {
   const { testProvider, testProvider: { id } } = t.context;
   const expectedProvider = omit(testProvider,
     ['globalConnectionLimit', 'protocol', 'cmKeyId']);
@@ -238,16 +216,10 @@ test('PUT updates existing provider in all data stores with correct timestamps',
     t.context.testKnex,
     { name: id }
   );
-  const updatedEsRecord = await t.context.esProviderClient.get(
-    testProvider.id
-  );
 
   t.true(actualPostgresProvider.updated_at.getTime() > updatedProvider.updatedAt);
   // createdAt timestamp from original record should have been preserved
   t.is(actualPostgresProvider.created_at.getTime(), testProvider.createdAt);
-  // PG and ES records have the same timestamps
-  t.is(actualPostgresProvider.created_at.getTime(), updatedEsRecord.createdAt);
-  t.is(actualPostgresProvider.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
 
 test('PUT returns 404 for non-existent provider', async (t) => {

@@ -71,15 +71,6 @@ test.before(async (t) => {
 
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esProviderClient = new Search(
-    {},
-    'provider',
-    t.context.esIndex
-  );
-
   const username = randomId('user');
   await setAuthorizedOAuthUsers([username]);
 
@@ -99,19 +90,16 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   const testPgProvider = fakeProviderRecordFactory();
   t.context.testPgProvider = testPgProvider;
-  const testProvider = translatePostgresProviderToApiProvider(testPgProvider);
   const [pgProvider] = await t.context.providerPgModel
     .create(
       t.context.testKnex,
       testPgProvider
     );
   t.context.providerCumulusId = pgProvider.cumulus_id;
-  await indexer.indexProvider(t.context.esClient, testProvider, t.context.esIndex);
 });
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await cleanupTestIndex(t.context);
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
@@ -144,7 +132,7 @@ test('Attempting to delete a provider with an invalid access token returns an un
 
 test.todo('Attempting to delete a provider with an unauthorized user returns an unauthorized response');
 
-test('Deleting a provider removes the provider from all data stores', async (t) => {
+test('Deleting a provider removes the provider from postgres', async (t) => {
   const { testPgProvider, providerPgModel } = t.context;
   const name = testPgProvider.name;
   await request(app)
@@ -154,70 +142,9 @@ test('Deleting a provider removes the provider from all data stores', async (t) 
     .expect(200);
 
   t.false(await providerPgModel.exists(t.context.testKnex, { name }));
-  t.false(
-    await t.context.esProviderClient.exists(
-      testPgProvider.name
-    )
-  );
 });
 
-test('Deleting a provider that exists in PostgreSQL and not Elasticsearch succeeds', async (t) => {
-  const testPgProvider = fakeProviderRecordFactory();
-  await t.context.providerPgModel
-    .create(
-      t.context.testKnex,
-      testPgProvider
-    );
-
-  await request(app)
-    .delete(`/providers/${testPgProvider.name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  t.false(
-    await t.context.providerPgModel.exists(
-      t.context.testKnex,
-      { name: testPgProvider.name }
-    )
-  );
-  t.false(
-    await t.context.esProviderClient.exists(
-      testPgProvider.name
-    )
-  );
-});
-
-test('Deleting a provider that exists in Elasticsearch and not PostgreSQL succeeds', async (t) => {
-  const testPgProvider = fakeProviderRecordFactory();
-  const testProvider = translatePostgresProviderToApiProvider(testPgProvider);
-  await indexer.indexProvider(t.context.esClient, testProvider, t.context.esIndex);
-
-  t.true(
-    await t.context.esProviderClient.exists(
-      testPgProvider.name
-    )
-  );
-
-  await request(app)
-    .delete(`/providers/${testPgProvider.name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-  t.false(
-    await t.context.providerPgModel.exists(
-      t.context.testKnex,
-      { name: testPgProvider.name }
-    )
-  );
-  t.false(
-    await t.context.esProviderClient.exists(
-      testPgProvider.name
-    )
-  );
-});
-
-test('Deleting a provider that does not exist in PostgreSQL and Elasticsearch returns a 404', async (t) => {
+test('Deleting a provider that does not exist in PostgreSQL returns a 404', async (t) => {
   const { status } = await request(app)
     .delete(`/providers/${randomString}`)
     .set('Accept', 'application/json')
@@ -245,95 +172,6 @@ test('Attempting to delete a provider with an associated postgres rule returns a
 
   t.is(response.status, 409);
   t.true(response.body.message.includes('Cannot delete provider with associated rules'));
-});
-
-test('del() does not remove from Elasticsearch if removing from PostgreSQL fails', async (t) => {
-  const {
-    originalPgRecord,
-  } = await createProviderTestRecords(
-    t.context
-  );
-
-  const fakeproviderPgModel = {
-    delete: () => {
-      throw new Error('something bad');
-    },
-    get: () => Promise.resolve(originalPgRecord),
-  };
-
-  const expressRequest = {
-    params: {
-      id: originalPgRecord.id,
-    },
-    testContext: {
-      knex: t.context.testKnex,
-      providerPgModel: fakeproviderPgModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.true(
-    await t.context.providerPgModel.exists(t.context.testKnex, {
-      name: originalPgRecord.name,
-    })
-  );
-  t.true(
-    await t.context.esProviderClient.exists(
-      originalPgRecord.name
-    )
-  );
-});
-
-test('del() does not remove from PostgreSQL if removing from Elasticsearch fails', async (t) => {
-  const {
-    originalProvider,
-  } = await createProviderTestRecords(
-    t.context
-  );
-
-  const fakeEsClient = {
-    initializeEsClient: () => Promise.resolve(),
-    client: {
-      delete: () => {
-        throw new Error('something bad');
-      },
-    },
-  };
-
-  const expressRequest = {
-    params: {
-      id: originalProvider.id,
-    },
-    body: originalProvider,
-    testContext: {
-      knex: t.context.testKnex,
-      esClient: fakeEsClient,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.true(
-    await t.context.providerPgModel.exists(t.context.testKnex, {
-      name: originalProvider.id,
-    })
-  );
-  t.true(
-    await t.context.esProviderClient.exists(
-      originalProvider.id
-    )
-  );
 });
 
 test('Attempting to delete a provider with an associated granule does not delete the provider', async (t) => {
