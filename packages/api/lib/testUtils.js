@@ -23,7 +23,6 @@ const {
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
-  indexCollection,
   indexRule,
   indexPdr,
   indexAsyncOperation,
@@ -489,8 +488,6 @@ const createCollectionTestRecords = async (context, collectionParams) => {
     testKnex,
     collectionModel,
     collectionPgModel,
-    esClient,
-    esCollectionClient,
   } = context;
   const originalCollection = fakeCollectionFactory(collectionParams);
   if (collectionModel) {
@@ -502,14 +499,9 @@ const createCollectionTestRecords = async (context, collectionParams) => {
   const originalPgRecord = await collectionPgModel.get(
     testKnex, { cumulus_id: pgCollection.cumulus_id }
   );
-  await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
-  const originalEsRecord = await esCollectionClient.get(
-    constructCollectionId(originalCollection.name, originalCollection.version)
-  );
   return {
     originalCollection,
     originalPgRecord,
-    originalEsRecord,
   };
 };
 
