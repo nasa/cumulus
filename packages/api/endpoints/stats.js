@@ -1,8 +1,11 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
 const get = require('lodash/get');
-const Stats = require('@cumulus/es-client/stats');
+const { StatsSearch } = require('@cumulus/db');
+const omit = require('lodash/omit');
 
 /**
  * Map requested stats types to supported types
@@ -36,15 +39,15 @@ function getType(req) {
 async function summary(req, res) {
   const params = req.query;
 
+  const now = Date.now();
   params.timestamp__from = Number.parseInt(get(
     params,
     'timestamp__from',
-    0
+    now - 24 * 3600 * 1000
   ), 10);
-  params.timestamp__to = Number.parseInt(get(params, 'timestamp__to', Date.now()), 10);
-
-  const stats = new Stats({ queryStringParameters: params }, undefined, process.env.ES_INDEX);
-  const r = await stats.query();
+  params.timestamp__to = Number.parseInt(get(params, 'timestamp__to', now), 10);
+  const stats = new StatsSearch({ queryStringParameters: params }, 'granule');
+  const r = await stats.summary();
   return res.send(r);
 }
 
@@ -57,12 +60,12 @@ async function summary(req, res) {
  */
 async function aggregate(req, res) {
   const type = getType(req);
-
-  const stats = new Stats({
-    queryStringParameters: req.query,
-  }, type, process.env.ES_INDEX);
-  const r = await stats.count();
-  return res.send(r);
+  if (type) {
+    const stats = new StatsSearch({ queryStringParameters: omit(req.query, 'type') }, type);
+    const r = await stats.aggregate();
+    return res.send(r);
+  }
+  return res.boom.badRequest('Type must be included in Stats Aggregate query string parameters');
 }
 
 router.get('/aggregate/:type?', aggregate);

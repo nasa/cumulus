@@ -139,6 +139,21 @@ export {
 export {
   QuerySearchClient,
 } from './lib/QuerySearchClient';
+export {
+  BaseSearch,
+} from './search/BaseSearch';
+export {
+  ExecutionSearch,
+} from './search/ExecutionSearch';
+export {
+  GranuleSearch,
+} from './search/GranuleSearch';
+export {
+  StatsSearch,
+} from './search/StatsSearch';
+export {
+  CollectionSearch,
+} from './search/CollectionSearch';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';

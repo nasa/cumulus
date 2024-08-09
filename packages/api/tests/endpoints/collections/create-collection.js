@@ -24,14 +24,6 @@ const {
   SubscribeCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
-const {
-  constructCollectionId,
-} = require('@cumulus/message/Collections');
-const EsCollection = require('@cumulus/es-client/collections');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const AccessToken = require('../../../models/access-tokens');
 const {
@@ -70,15 +62,6 @@ test.before(async (t) => {
   t.context.testKnexAdmin = knexAdmin;
 
   t.context.collectionPgModel = new CollectionPgModel();
-
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esCollectionClient = new EsCollection(
-    {},
-    undefined,
-    t.context.esIndex
-  );
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
@@ -124,7 +107,6 @@ test.afterEach(async (t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -166,7 +148,7 @@ test('POST with invalid authorization scheme returns an invalid token response',
   assertions.isInvalidAuthorizationResponse(t, res);
 });
 
-test.serial('POST creates a new collection in all data stores and publishes an SNS message', async (t) => {
+test.serial('POST creates a new collection and publishes an SNS message', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   const res = await request(app)
@@ -192,11 +174,6 @@ test.serial('POST creates a new collection in all data stores and publishes an S
   t.is(res.body.message, 'Record saved');
   t.like(res.body.record, translatedCollection);
 
-  const esRecord = await t.context.esCollectionClient.get(
-    constructCollectionId(newCollection.name, newCollection.version)
-  );
-  t.like(esRecord, translatedCollection);
-
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
@@ -209,7 +186,7 @@ test.serial('POST creates a new collection in all data stores and publishes an S
   t.deepEqual(message.record, translatedCollection);
 });
 
-test.serial('POST creates a new collection in all data stores with correct timestamps', async (t) => {
+test.serial('POST creates a new collection with correct timestamps', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   await request(app)
@@ -227,15 +204,8 @@ test.serial('POST creates a new collection in all data stores with correct times
     }
   );
 
-  const esRecord = await t.context.esCollectionClient.get(
-    constructCollectionId(newCollection.name, newCollection.version)
-  );
-
   t.true(collectionPgRecord.created_at.getTime() > newCollection.createdAt);
   t.true(collectionPgRecord.updated_at.getTime() > newCollection.updatedAt);
-  // Records have the same timestamps
-  t.is(collectionPgRecord.created_at.getTime(), esRecord.createdAt);
-  t.is(collectionPgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
 test.serial('POST creates collection configuration store via name and version', async (t) => {
@@ -528,7 +498,7 @@ test.serial('POST with file.checksumFor matching its own file returns 400 bad re
   t.true(res.body.message.includes('checksumFor \'^.*$\' cannot be used to validate itself'));
 });
 
-test.serial('POST does not write to Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
+test.serial('POST does not write to SNS if writing to PostgreSQL fails', async (t) => {
   const collection = fakeCollectionFactory();
 
   const fakeCollectionPgModel = {
@@ -547,48 +517,6 @@ test.serial('POST does not write to Elasticsearch/SNS if writing to PostgreSQL f
   await post(expressRequest, response);
 
   t.true(response.boom.badImplementation.calledWithMatch('something bad'));
-
-  t.false(await t.context.esCollectionClient.exists(
-    constructCollectionId(collection.name, collection.version)
-  ));
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  });
-
-  t.is(Messages.length, 0);
-});
-
-test.serial('POST does not write to PostgreSQL/SNS if writing to Elasticsearch fails', async (t) => {
-  const collection = fakeCollectionFactory();
-
-  const fakeEsClient = {
-    initializeEsClient: () => Promise.resolve(),
-    client: {
-      index: () => Promise.reject(new Error('something bad')),
-    },
-  };
-
-  const expressRequest = {
-    body: collection,
-    testContext: {
-      esClient: fakeEsClient,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await post(expressRequest, response);
-
-  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
-
-  t.false(
-    await t.context.collectionPgModel.exists(t.context.testKnex, {
-      name: collection.name,
-      version: collection.version,
-    })
-  );
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,

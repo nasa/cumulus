@@ -10,8 +10,6 @@ const {
   batchDeleteExecutionFromDatabaseByCumulusCollectionId,
 } = require('@cumulus/db');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
-const { batchDeleteExecutionsByCollection } = require('@cumulus/es-client/executions');
-const { defaultIndexAlias } = require('@cumulus/es-client/search');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 
@@ -130,12 +128,11 @@ const _deleteRdsExecutions = async ({
 );
 
 /**
- * Handles the deletion of execution records from both Elasticsearch and the database.
+ * Handles the deletion of execution records from the database.
  *
  * @param {Object} event - The event object.
  * @param {string} event.collectionId - The ID of the collection whose execution
  * records are to be deleted.
- * @param {string} event.esBatchSize - the batch size to delete from Elasticsearch
  * @param {string} event.dbBatchSize - the batch size to delete from the database
  * @returns {Promise<void>}
  */
@@ -143,20 +140,7 @@ const batchDeleteExecutions = async (event) => {
   const knex = await getKnexClient();
 
   const collectionId = event.collectionId;
-  const esBatchSize = Number(event.esBatchSize) || 10000;
   const dbBatchSize = Number(event.dbBatchSize) || 10000;
-
-  // Delete ES execution records
-  log.info(
-    `Starting deletion of executions records from Elasticsearch for collection ${collectionId}, batch size ${event.esBatchSize}`
-  );
-  await batchDeleteExecutionsByCollection({
-    index: process.env.ES_INDEX || defaultIndexAlias,
-    collectionId,
-    batchSize: esBatchSize,
-  });
-
-  log.info('Elasticsearch deletion complete');
 
   // Delete RDS execution records
   log.info(

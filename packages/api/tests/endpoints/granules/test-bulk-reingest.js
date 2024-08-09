@@ -30,7 +30,6 @@ process.env = {
   EcsCluster: randomId('EcsCluster'),
   BulkOperationLambda: randomId('BulkOperationLambda'),
   invoke: randomId('invoke'),
-  ES_HOST: randomId('esHost'),
   METRICS_ES_HOST: randomId('metricsEsHost'),
   METRICS_ES_USER: randomId('metricsEsUser'),
   METRICS_ES_PASS: randomId('metricsEsPass'),
@@ -98,7 +97,6 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     payload: body,
     type: 'BULK_GRANULE_REINGEST',
     envVars: {
-      ES_HOST: process.env.ES_HOST,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
@@ -174,7 +172,6 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     payload: body,
     type: 'BULK_GRANULE_REINGEST',
     envVars: {
-      ES_HOST: process.env.ES_HOST,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,

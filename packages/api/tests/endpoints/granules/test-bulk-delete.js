@@ -50,7 +50,6 @@ test.before(async () => {
   process.env.launchpad_api = randomString();
   process.env.launchpad_certificate = randomString();
   process.env.launchpad_passphrase_secret_name = randomString();
-  process.env.ES_HOST = randomString();
 
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
@@ -131,7 +130,6 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
       stackName: process.env.stackName,
       system_bucket: process.env.system_bucket,
-      ES_HOST: process.env.ES_HOST,
     },
   });
   Object.keys(omit(payload.envVars, ['KNEX_DEBUG'])).forEach((envVarKey) => {
@@ -221,7 +219,6 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
       stackName: process.env.stackName,
       system_bucket: process.env.system_bucket,
-      ES_HOST: process.env.ES_HOST,
     },
   });
   Object.keys(omit(payload.envVars, ['KNEX_DEBUG'])).forEach((envVarKey) => {
