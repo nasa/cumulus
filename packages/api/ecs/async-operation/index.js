@@ -162,7 +162,7 @@ function buildErrorOutput(error) {
 
 const writeAsyncOperationToPostgres = async (params) => {
   const {
-    trx,
+    knex,
     env,
     dbOutput,
     status,
@@ -172,7 +172,7 @@ const writeAsyncOperationToPostgres = async (params) => {
   const id = env.asyncOperationId;
   return await asyncOperationPgModel
     .update(
-      trx,
+      knex,
       { id },
       {
         status,
