@@ -16,6 +16,7 @@ const { mockClient } = require('aws-sdk-client-mock');
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { removeNilProperties } = require('@cumulus/common/util');
 const workflows = require('@cumulus/common/workflows');
 
 const {
@@ -159,6 +160,20 @@ test.before(async (t) => {
     provider: t.context.pgProvider.name,
   });
 
+  t.context.testRuleWithoutForeignKeys = fakeRuleFactoryV2({
+    name: 'testRuleWithoutForeignKeys',
+    workflow: workflow,
+    rule: {
+      type: 'onetime',
+      arn: 'arn',
+      value: 'value',
+    },
+    state: 'ENABLED',
+    queueUrl: 'https://sqs.us-west-2.amazonaws.com/123456789012/queue_url',
+    collection: undefined,
+    provider: undefined,
+  });
+
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -185,6 +200,10 @@ test.before(async (t) => {
   t.context.collectionId = constructCollectionId(collectionName, collectionVersion);
   t.context.testPgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, knex);
   t.context.rulePgModel.create(knex, t.context.testPgRule);
+
+  const rule2WithTrigger = await rulesHelpers.createRuleTrigger(t.context.testRuleWithoutForeignKeys);
+  t.context.testPgRule2 = await translateApiRuleToPostgresRuleRaw(rule2WithTrigger, knex);
+  t.context.rulePgModel.create(knex, t.context.testPgRule2);
 });
 
 test.beforeEach((t) => {
@@ -366,7 +385,7 @@ test.serial('default returns list of rules', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  t.is(results.length, 1);
+  t.is(results.length, 2);
 });
 
 test.serial('search returns correct list of rules', async (t) => {
@@ -377,7 +396,7 @@ test.serial('search returns correct list of rules', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  t.is(results.length, 1);
+  t.is(results.length, 2);
 
   const newResponse = await request(app)
     .get('/rules?page=1&rule.type=sqs&state=ENABLED')
@@ -391,7 +410,7 @@ test.serial('search returns correct list of rules', async (t) => {
 
 test.serial('search returns the expected fields', async (t) => {
   const response = await request(app)
-    .get('/rules?page=1&rule.type=onetime&state=ENABLED')
+    .get(`/rules?page=1&rule.type=onetime&provider=${t.context.pgProvider.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -406,6 +425,26 @@ test.serial('search returns the expected fields', async (t) => {
 
   t.is(results.length, 1);
   t.deepEqual(results[0], expectedRule);
+});
+
+test.serial('Rules search returns results without a provider or collection', async (t) => {
+  const response = await request(app)
+    .get(`/rules?page=1&name=${t.context.testPgRule2.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+
+  t.is(results.length, 1);
+
+  const expectedRule = {
+    ...t.context.testRuleWithoutForeignKeys,
+    updatedAt: results[0].updatedAt,
+    createdAt: results[0].createdAt,
+  };
+
+  t.deepEqual(results[0], removeNilProperties(expectedRule));
 });
 
 test.serial('GET gets a rule', async (t) => {
