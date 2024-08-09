@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Replace ElasticSearch Phase 2
+
+- **CUMULUS-3235**
+  - Updated `asyncOperations` api endpoint to query postgres
+
 ### Migration Notes
 
 #### CUMULUS-3792 Add database indexes. Please follow the instructions before upgrading Cumulus
