@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sftp-client",
-  "version": "18.3.2",
+  "version": "18.3.3",
   "description": "A Promise-based SFTP client",
   "keywords": [
     "GIBS",
@@ -39,16 +39,16 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.3.2",
-    "@cumulus/common": "18.3.2",
+    "@cumulus/aws-client": "18.3.3",
+    "@cumulus/common": "18.3.3",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.27",
     "ssh2": "^1.0.0",
     "ssh2-sftp-client": "^7.0.4"
   },
   "devDependencies": {
-    "@cumulus/checksum": "18.3.2",
-    "@cumulus/test-data": "18.3.2",
+    "@cumulus/checksum": "18.3.3",
+    "@cumulus/test-data": "18.3.3",
     "@types/ssh2-sftp-client": "^7.0.0"
   }
 }
