@@ -43,7 +43,7 @@ export class RuleSearch extends BaseSearch {
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
         provider: `${providersTable}.name`,
-      })
+      });
 
     if (this.searchCollection()) {
       searchQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);

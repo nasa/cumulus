@@ -201,7 +201,9 @@ test.before(async (t) => {
   t.context.testPgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, knex);
   t.context.rulePgModel.create(knex, t.context.testPgRule);
 
-  const rule2WithTrigger = await rulesHelpers.createRuleTrigger(t.context.testRuleWithoutForeignKeys);
+  const rule2WithTrigger = await rulesHelpers.createRuleTrigger(
+    t.context.testRuleWithoutForeignKeys
+  );
   t.context.testPgRule2 = await translateApiRuleToPostgresRuleRaw(rule2WithTrigger, knex);
   t.context.rulePgModel.create(knex, t.context.testPgRule2);
 });
