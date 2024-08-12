@@ -410,7 +410,7 @@ variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(number)
   default = {
-    cleanExecutions = 400           # archive
+    cleanExecutions = 800           # archive
     DistributionApiEndpoints = 400  # cumulus_distribution
     s3-credentials-endpoint  = 400  # distribution
     HelloWorld = 400                # ingest
