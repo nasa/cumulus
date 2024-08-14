@@ -54,10 +54,10 @@ export class AsyncOperationSearch extends BaseSearch {
     const { countQuery, searchQuery, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.id`, `%${infix}%`));
+      [countQuery, searchQuery].forEach((query) => query.whereRaw(`${this.tableName}.id::text like '%${infix}%'`));
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.id`, `${prefix}%`));
+      [countQuery, searchQuery].forEach((query) => query.whereRaw(`${this.tableName}.id::text like '${prefix}%'`));
     }
   }
 
