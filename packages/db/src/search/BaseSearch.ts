@@ -293,11 +293,7 @@ class BaseSearch {
           [countQuery, searchQuery].forEach((query) => query?.where(`${executionsTable}_parent.arn`, value));
           break;
         default:
-          if (name.endsWith('::text')) {
-            [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.${name} = '${value}'`));
-          } else {
-            [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, value));
-          }
+          [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, value));
           break;
       }
     });

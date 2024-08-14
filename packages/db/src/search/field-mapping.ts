@@ -90,10 +90,10 @@ const asyncOperationMapping : { [key: string]: Function } = {
     created_at: value && new Date(Number(value)),
   }),
   id: (value?: string) => ({
-    'id::text': value,
+    id: value,
   }),
   _id: (value?: string) => ({
-    'id::text': value,
+    id: value,
   }),
   operationType: (value?: string) => ({
     operation_type: value,
