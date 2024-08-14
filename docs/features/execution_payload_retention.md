@@ -75,6 +75,12 @@ This configuration defines the number of days after which an execution record wi
 
 Default value is 10
 
+#### update_limit _(number)_
+
+This configuration defines the maximum number of executions to clean up in one run.
+
+default value is 10,000
+
 #### es_index _(string)_
 
 this configuration defines the elasticsearch index to search in for elasticsearch executions to clean up
