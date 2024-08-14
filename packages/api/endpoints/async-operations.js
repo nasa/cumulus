@@ -124,8 +124,11 @@ async function post(req, res) {
     let apiDbRecord;
     await createRejectableTransaction(knex, async (trx) => {
       const pgRecord = await asyncOperationPgModel.create(trx, dbRecord, ['*']);
-      apiDbRecord = await translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
+      apiDbRecord = translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
     });
+    if (apiDbRecord === undefined) {
+      return res.boom.badImplementation('Failed to create async operation');
+    }
     logger.info(`Successfully created async operation ${apiDbRecord.id}:`);
     return res.send({
       message: 'Record saved',
