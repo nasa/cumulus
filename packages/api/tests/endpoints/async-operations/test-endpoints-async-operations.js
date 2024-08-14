@@ -96,17 +96,14 @@ test.after.always(async (t) => {
 });
 
 test.serial('GET /asyncOperations returns a list of operations', async (t) => {
-  const { esClient, esIndex } = t.context;
   const asyncOperation1 = fakeAsyncOperationFactory();
   const asyncOperation2 = fakeAsyncOperationFactory();
 
   const asyncOpPgRecord1 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation1);
   await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord1);
-  await indexer.indexAsyncOperation(esClient, asyncOperation1, esIndex);
 
   const asyncOpPgRecord2 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation2);
   await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord2);
-  await indexer.indexAsyncOperation(esClient, asyncOperation2, esIndex);
 
   const response = await request(app)
     .get('/asyncOperations')
@@ -134,19 +131,15 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
 });
 
 test.serial('GET /asyncOperations with a timestamp parameter returns a list of filtered results', async (t) => {
-  const { esClient, esIndex } = t.context;
   const firstDate = Date.now();
   const asyncOperation1 = fakeAsyncOperationFactory();
-  const asyncOperation2 = fakeAsyncOperationFactory();
   const asyncOpPgRecord1 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation1);
   await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord1);
-  await indexer.indexAsyncOperation(esClient, asyncOperation1, esIndex);
 
   const secondDate = Date.now();
-
+  const asyncOperation2 = fakeAsyncOperationFactory();
   const asyncOpPgRecord2 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation2);
   await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord2);
-  await indexer.indexAsyncOperation(esClient, asyncOperation2, esIndex);
 
   const response1 = await request(app)
     .get(`/asyncOperations?timestamp__from=${firstDate}`)
