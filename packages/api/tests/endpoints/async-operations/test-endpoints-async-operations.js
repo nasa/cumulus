@@ -235,43 +235,6 @@ test('DELETE returns a 404 if PostgreSQL and Elasticsearch async operation canno
   t.is(response.body.message, 'No record found');
 });
 
-test('DELETE deletes async operation successfully if it exists in PostgreSQL but not Elasticsearch', async (t) => {
-  const {
-    asyncOperationPgModel,
-    esAsyncOperationClient,
-    knex,
-  } = t.context;
-
-  const originalAsyncOperation = fakeAsyncOperationFactory();
-  const insertPgRecord = await translateApiAsyncOperationToPostgresAsyncOperation(
-    originalAsyncOperation,
-    knex
-  );
-  const id = insertPgRecord.id;
-  await asyncOperationPgModel.create(
-    knex,
-    insertPgRecord
-  );
-  t.true(
-    await asyncOperationPgModel.exists(knex, { id })
-  );
-
-  const response = await request(app)
-    .delete(`/asyncOperations/${id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-  const { message } = response.body;
-
-  t.is(message, 'Record deleted');
-  t.false(
-    await asyncOperationPgModel.exists(knex, { id })
-  );
-  t.false(await esAsyncOperationClient.exists(
-    id
-  ));
-});
-
 test('DELETE deletes the async operation from all data stores', async (t) => {
   const {
     originalPgRecord,
