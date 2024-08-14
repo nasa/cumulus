@@ -18,93 +18,93 @@ const {
   migrationDir,
   RulePgModel,
   ProviderPgModel,
-  fakeProviderRecordFactory
+  fakeProviderRecordFactory,
 } = require('../../dist');
 
 const testDbName = `rule_${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {
-    const { knexAdmin, knex } = await generateLocalTestDb(
-      testDbName,
-      migrationDir
-    );
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
 
-    t.context.knexAdmin = knexAdmin;
-    t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
 
-    // Create a PG Collection
-    t.context.collectionPgModel = new CollectionPgModel();
-    t.context.testPgCollection = fakeCollectionRecordFactory(
-      { cumulus_id: 0,
-        name: 'testCollection',
-        version: 8 }
-    );
+  // Create a PG Collection
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.testPgCollection = fakeCollectionRecordFactory(
+    { cumulus_id: 0,
+      name: 'testCollection',
+      version: 8 }
+  );
 
-    await t.context.collectionPgModel.insert(
-      t.context.knex,
-      t.context.testPgCollection
-    );
+  await t.context.collectionPgModel.insert(
+    t.context.knex,
+    t.context.testPgCollection
+  );
 
-    t.context.collectionCumulusId = t.context.testPgCollection.cumulus_id;
+  t.context.collectionCumulusId = t.context.testPgCollection.cumulus_id;
 
-    t.context.collectionId = constructCollectionId(
-      t.context.testPgCollection.name,
-      t.context.testPgCollection.version
-    );
+  t.context.collectionId = constructCollectionId(
+    t.context.testPgCollection.name,
+    t.context.testPgCollection.version
+  );
 
-    // Create a Provider
-    t.context.providerPgModel = new ProviderPgModel();
-    t.context.testProvider = fakeProviderRecordFactory({
-      name: 'testProvider',
-    });
-
-    const [pgProvider] = await t.context.providerPgModel.insert(
-      t.context.knex,
-      t.context.testProvider,
-    );
-
-    t.context.providerCumulusId = pgProvider.cumulus_id;
-
-    // Create an Async Operation
-    t.context.asyncOperationsPgModel = new AsyncOperationPgModel();
-    t.context.testAsyncOperation = fakeAsyncOperationRecordFactory({ cumulus_id: 140 });
-    t.context.asyncCumulusId = t.context.testAsyncOperation.cumulus_id;
-
-    await t.context.asyncOperationsPgModel.insert(
-      t.context.knex,
-      t.context.testAsyncOperation
-    );
-
-    t.context.duration = 100;
-
-    // Create a lot of Rules
-    const rules = [];
-    t.context.rulePgModel = new RulePgModel();
-
-    range(50).map((num) => (
-      rules.push(fakeRuleRecordFactory({
-        name: `fakeRule-${num}`,
-        created_at: new Date(2017, 11, 31),
-        updated_at: new Date(2018, 0, 1),
-        enabled: num % 2 === 0 ? true : false,
-        workflow: `testWorkflow-${num}`,
-        collection_cumulus_id: t.context.collectionCumulusId,
-        provider_cumulus_id: t.context.providerCumulusId,
-      }))
-    ));
-
-    await t.context.rulePgModel.insert(
-      t.context.knex,
-      rules
-    );
+  // Create a Provider
+  t.context.providerPgModel = new ProviderPgModel();
+  t.context.testProvider = fakeProviderRecordFactory({
+    name: 'testProvider',
   });
 
-  test.after.always(async (t) => {
-    await destroyLocalTestDb({
-      ...t.context,
-      testDbName,
-    });
+  const [pgProvider] = await t.context.providerPgModel.insert(
+    t.context.knex,
+    t.context.testProvider
+  );
+
+  t.context.providerCumulusId = pgProvider.cumulus_id;
+
+  // Create an Async Operation
+  t.context.asyncOperationsPgModel = new AsyncOperationPgModel();
+  t.context.testAsyncOperation = fakeAsyncOperationRecordFactory({ cumulus_id: 140 });
+  t.context.asyncCumulusId = t.context.testAsyncOperation.cumulus_id;
+
+  await t.context.asyncOperationsPgModel.insert(
+    t.context.knex,
+    t.context.testAsyncOperation
+  );
+
+  t.context.duration = 100;
+
+  // Create a lot of Rules
+  const rules = [];
+  t.context.rulePgModel = new RulePgModel();
+
+  range(50).map((num) => (
+    rules.push(fakeRuleRecordFactory({
+      name: `fakeRule-${num}`,
+      created_at: new Date(2017, 11, 31),
+      updated_at: new Date(2018, 0, 1),
+      enabled: num % 2 === 0,
+      workflow: `testWorkflow-${num}`,
+      collection_cumulus_id: t.context.collectionCumulusId,
+      provider_cumulus_id: t.context.providerCumulusId,
+    }))
+  ));
+
+  await t.context.rulePgModel.insert(
+    t.context.knex,
+    rules
+  );
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
   });
+});
 
 test('RuleSearch returns correct response for basic query', async (t) => {
   const { knex } = t.context;
@@ -150,7 +150,7 @@ test('RuleSearch returns correct response for basic query', async (t) => {
 });
 
 test('RuleSearchsupports page and limit params', async (t) => {
-const { knex } = t.context;
+  const { knex } = t.context;
   let queryStringParameters = {
     limit: 25,
     page: 2,
@@ -205,19 +205,18 @@ test('RuleSearch supports prefix search', async (t) => {
 
 test('RuleSearch supports term search for string field', async (t) => {
   const { knex } = t.context;
-  let queryStringParameters = {
+  const queryStringParameters = {
     limit: 10,
     workflow: 'testWorkflow-11',
   };
-  let dbSearch = new RuleSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
-  console.log(response.results);
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
 test('RuleSearch non-existing fields are ignored', async (t) => {
-const { knex } = t.context;
+  const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
@@ -244,13 +243,13 @@ test('RuleSearch returns fields specified', async (t) => {
 
 test('RuleSearch supports search for multiple fields', async (t) => {
   const { knex } = t.context;
-  let queryStringParameters = {
+  const queryStringParameters = {
     limit: 10,
     prefix: 'fakeRule-1',
     state: 'DISABLED',
   };
-  let dbSearch = new RuleSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
 
   t.is(response.meta.count, 6);
   t.is(response.results?.length, 6);
@@ -258,7 +257,7 @@ test('RuleSearch supports search for multiple fields', async (t) => {
 
 test('RuleSearch supports sorting', async (t) => {
   const { knex } = t.context;
-  let queryStringParameters = {
+  const queryStringParameters = {
     limit: 200,
     sort_by: 'workflow',
     order: 'desc',

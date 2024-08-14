@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 import pick from 'lodash/pick';
 
 import Logger from '@cumulus/logger';
-// import { RuleRecord } from '@cumulus/types/api/rules';
+import { RuleRecord } from '@cumulus/types/api/rules';
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresRuleRecord } from '../types/rule';
@@ -95,15 +95,15 @@ export class RuleSearch extends BaseSearch {
   protected async translatePostgresRecordsToApiRecords(
     pgRecords: PostgresRuleRecord[],
     knex: Knex
-  ): Promise<any> { // TODO you sure about that?
+  ): Promise<Partial<RuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
-    const apiRecords = await Promise.all(pgRecords.map(async (record) => {
+    const apiRecords = pgRecords.map(async (record) => {
       const apiRecord = await translatePostgresRuleToApiRule(record, knex);
       return this.dbQueryParameters.fields
         ? pick(apiRecord, this.dbQueryParameters.fields)
         : apiRecord;
-    }));
-    return apiRecords;
+    });
+    return await Promise.all(apiRecords);
   }
 }

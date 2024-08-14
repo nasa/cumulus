@@ -4,10 +4,17 @@ import { RuleRecord, Rule } from '@cumulus/types/api/rules';
 
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';
-import { PostgresRule } from '../types/rule';
+import { PostgresRule, PostgresRuleRecord } from '../types/rule';
+
+// Rule queries can include fields from external tables like provider and collection
+interface RuleRecordWithExternals extends PostgresRuleRecord {
+  provider?: string,
+  collectionName?: string,
+  collectionVersion?: string,
+}
 
 export const translatePostgresRuleToApiRule = async (
-  pgRule: any, // TODO: create type for pgRule with collection and provider
+  pgRule: RuleRecordWithExternals,
   knex: Knex | Knex.Transaction,
   collectionPgModel = new CollectionPgModel(),
   providerPgModel = new ProviderPgModel()
