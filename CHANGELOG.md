@@ -14,8 +14,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
 
-### Replace ElasticSearch Phase 1
-
 ### Migration Notes
 
 #### CUMULUS-3792 Add database indexes. Please follow the instructions before upgrading Cumulus
