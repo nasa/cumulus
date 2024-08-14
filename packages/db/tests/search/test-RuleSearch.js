@@ -87,7 +87,7 @@ test.before(async (t) => {
         created_at: new Date(2017, 11, 31),
         updated_at: new Date(2018, 0, 1),
         enabled: num % 2 === 0 ? true : false,
-        workflow: 'testWorkflow',
+        workflow: `testWorkflow-${num}`,
         collection_cumulus_id: t.context.collectionCumulusId,
         provider_cumulus_id: t.context.providerCumulusId,
       }))
@@ -121,7 +121,7 @@ test('RuleSearch returns correct response for basic query', async (t) => {
     rule: {
       type: 'onetime',
     },
-    workflow: 'testWorkflow',
+    workflow: 'testWorkflow-0',
     collection: {
       name: 'testCollection',
       version: '8',
@@ -137,7 +137,7 @@ test('RuleSearch returns correct response for basic query', async (t) => {
     rule: {
       type: 'onetime',
     },
-    workflow: 'testWorkflow',
+    workflow: 'testWorkflow-9',
     collection: {
       name: 'testCollection',
       version: '8',
@@ -179,28 +179,94 @@ const { knex } = t.context;
   t.is(response.results?.length, 0);
 });
 
-test.only('RuleSearch supports infix search', async (t) => {
+test('RuleSearch supports infix search', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 50,
-    infix: 'fake',
+    infix: 'Rule-27',
   };
   const dbSearch = new RuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 25);
-  t.is(response.results?.length, 25);
+  t.is(response.meta.count, 1);
+  t.is(response.results?.length, 1);
 });
 
-test('RuleSearch supports prefix search', async (t) => {});
+test('RuleSearch supports prefix search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 50,
+    prefix: 'fakeRule-1',
+  };
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 11);
+  t.is(response.results?.length, 11);
+});
 
-test('RuleSearch supports term search for string field', async (t) => {});
+test('RuleSearch supports term search for string field', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 10,
+    workflow: 'testWorkflow-11',
+  };
+  let dbSearch = new RuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  console.log(response.results);
+  t.is(response.meta.count, 1);
+  t.is(response.results?.length, 1);
+});
 
-test('RuleSearch supports range search', async (t) => {});
+test('RuleSearch non-existing fields are ignored', async (t) => {
+const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
+    non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
+  };
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
 
-test('RuleSearch non-existing fields are ignored', async (t) => {});
+test('RuleSearch returns fields specified', async (t) => {
+  const { knex } = t.context;
+  const fields = 'state,name';
+  const queryStringParameters = {
+    fields,
+  };
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 10);
+  response.results.forEach((rule) => t.deepEqual(Object.keys(rule), fields.split(',')));
+});
 
-test('RuleSearch returns fields specified', async (t) => {});
+test('RuleSearch supports search for multiple fields', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 10,
+    prefix: 'fakeRule-1',
+    state: 'DISABLED',
+  };
+  let dbSearch = new RuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
 
-test('RuleSearch supports search for multiple fields', async (t) => {});
+  t.is(response.meta.count, 6);
+  t.is(response.results?.length, 6);
+});
 
-test('RuleSearch supports sorting', async (t) => {});
+test('RuleSearch supports sorting', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    sort_by: 'workflow',
+    order: 'desc',
+  };
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+  t.true(response.results[0].workflow > response.results[10].workflow);
+  t.true(response.results[1].workflow > response.results[30].workflow);
+});
