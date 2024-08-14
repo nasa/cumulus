@@ -89,10 +89,7 @@ async function del(req, res) {
     return res.boom.badImplementation(JSON.stringify(error));
   }
 
-  await createRejectableTransaction(knex, async (trx) => {
-    await asyncOperationPgModel.delete(trx, { id });
-  });
-
+  await asyncOperationPgModel.delete(knex, { id });
   return res.send({ message: 'Record deleted' });
 }
 
