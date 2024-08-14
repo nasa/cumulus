@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:48"
+  default = "cumuluss/async-operation:52"
 }
 
 variable "cmr_client_id" {
@@ -301,12 +301,6 @@ variable "ecs_docker_hub_config" {
   description = "Credentials for integrating ECS with containers hosted on Docker Hu"
   type        = object({ username = string, password = string, email = string })
   default     = null
-}
-
-variable "ecs_docker_storage_driver" {
-  description = "Storage driver for ECS tasks"
-  type        = string
-  default     = "devicemapper"
 }
 
 variable "ecs_efs_config" {
