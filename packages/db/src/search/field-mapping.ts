@@ -274,7 +274,7 @@ const ruleMapping : { [key: string]: Function } = {
     log_event_arn: value,
   }),
   executionNamePrefix: (value?: string) => ({
-    executionNamePrefix: value,
+    execution_name_prefix: value,
   }),
   queueUrl: (value?: string) => ({
     queue_url: value,
