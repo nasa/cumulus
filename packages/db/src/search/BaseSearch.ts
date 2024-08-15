@@ -454,7 +454,9 @@ class BaseSearch {
       meta.limit = this.dbQueryParameters.limit;
       meta.page = this.dbQueryParameters.page;
       meta.count = Number(countResult[0]?.count ?? 0);
+
       const apiRecords = await this.translatePostgresRecordsToApiRecords(pgRecords, knex);
+
       return {
         meta,
         results: apiRecords,
