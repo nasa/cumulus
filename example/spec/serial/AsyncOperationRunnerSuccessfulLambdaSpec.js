@@ -4,7 +4,7 @@ const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
 
 const get = require('lodash/get');
 const { v4: uuidv4 } = require('uuid');
-const { createAsyncOperation, deleteAsyncOperation, listAsyncOperations } = require('@cumulus/api-client/asyncOperations');
+const { createAsyncOperation, deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { startECSTask } = require('@cumulus/async-operations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -108,15 +108,12 @@ describe('The AsyncOperation task runner executing a successful lambda function'
   it('returns the updated record from GET /asyncOperations', async () => {
     if (beforeAllError) fail(beforeAllError);
     else {
-      const response = await listAsyncOperations({
+      const response = await getAsyncOperation({
         prefix: config.stackName,
-        query: {
-          id: asyncOperationId,
-        },
+        asyncOperationId: asyncOperationId,
       });
-      const { results } = JSON.parse(response.body);
-      expect(results.length).toEqual(1);
-      const [record] = results;
+
+      const record = response;
       expect(record.status).toEqual('SUCCEEDED');
       const parsedOutput = JSON.parse(record.output);
       expect(parsedOutput).toEqual([1, 2, 3]);
