@@ -61,7 +61,7 @@ const log = new Logger({ sender: '@cumulus/rulesHelpers' });
  * @returns {Promise<Array<Object>>} all matching rules
  */
 async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
-  const query = { ...queryParams, page: pageNumber };
+  const query = { ...queryParams, page: pageNumber, limit: 100 };
   const apiResponse = await listRules({
     prefix: process.env.stackName,
     query,
