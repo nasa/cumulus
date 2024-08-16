@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3235**
   - Updated `asyncOperations` api endpoint to query postgres
+- **CUMULUS-3236**
+  - Update API AsyncOperation endpoints `POST` and `DEL` to not update
+    Elasticsearch
+  - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
+    reporting status of async operation
 
 ### Migration Notes
 
