@@ -206,7 +206,7 @@ abstract class BaseSearch {
           break;
         case 'error':
         case 'error.Error':
-          [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`));
+          [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error ->> 'Error' is ?`, checkNull));
           break;
         case 'parentArn':
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.parent_cumulus_id`));
@@ -435,7 +435,7 @@ abstract class BaseSearch {
     const { sort } = dbQueryParameters || this.dbQueryParameters;
     sort?.forEach((key) => {
       if (key.column.startsWith('error')) {
-        searchQuery.orderByRaw(`${this.tableName}.error ->> 'Error' ${key.order}`);
+        searchQuery.orderByRaw(`${this.tableName}.error ->> 'Error' ?`, key.order);
       } else {
         searchQuery.orderBy([key]);
       }
