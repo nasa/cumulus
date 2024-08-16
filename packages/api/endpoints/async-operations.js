@@ -122,9 +122,6 @@ async function post(req, res) {
     logger.debug(`Attempting to create async operation ${dbRecord.id}`);
     const pgRecord = await asyncOperationPgModel.create(knex, dbRecord, ['*']);
     const apiDbRecord = translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
-    if (apiDbRecord === undefined) {
-      return res.boom.badImplementation('Failed to create async operation');
-    }
     logger.info(`Successfully created async operation ${apiDbRecord.id}:`);
     return res.send({
       message: 'Record saved',
