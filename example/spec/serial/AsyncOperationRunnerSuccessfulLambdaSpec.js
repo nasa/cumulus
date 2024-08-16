@@ -108,12 +108,10 @@ describe('The AsyncOperation task runner executing a successful lambda function'
   it('returns the updated record from GET /asyncOperations', async () => {
     if (beforeAllError) fail(beforeAllError);
     else {
-      const response = await getAsyncOperation({
+      const record = await getAsyncOperation({
         prefix: config.stackName,
         asyncOperationId: asyncOperationId,
       });
-
-      const record = response;
       expect(record.status).toEqual('SUCCEEDED');
       const parsedOutput = JSON.parse(record.output);
       expect(parsedOutput).toEqual([1, 2, 3]);
