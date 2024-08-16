@@ -10,7 +10,6 @@ const {
   getKnexClient,
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
-  createRejectableTransaction,
 } = require('@cumulus/db');
 const {
   RecordDoesNotExist,
@@ -121,11 +120,8 @@ async function post(req, res) {
     }
     const dbRecord = translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation);
     logger.debug(`Attempting to create async operation ${dbRecord.id}`);
-    let apiDbRecord;
-    await createRejectableTransaction(knex, async (trx) => {
-      const pgRecord = await asyncOperationPgModel.create(trx, dbRecord, ['*']);
-      apiDbRecord = translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
-    });
+    const pgRecord = await asyncOperationPgModel.create(knex, dbRecord, ['*']);
+    const apiDbRecord = translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
     if (apiDbRecord === undefined) {
       return res.boom.badImplementation('Failed to create async operation');
     }
