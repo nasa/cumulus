@@ -58,9 +58,9 @@ test.after.always(async (t) => {
 test('AsyncOperationSearch returns 10 async operations by default', async (t) => {
   const { knex } = t.context;
   const dbSearch = new AsyncOperationSearch({});
-  const results = await dbSearch.query(knex);
-  t.is(results.meta.count, 100);
-  t.is(results.results.length, 10);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 100);
+  t.is(results.length, 10);
 });
 
 test('AsyncOperationSearch supports page and limit params', async (t) => {
@@ -100,9 +100,9 @@ test('AsyncOperationSearch supports infix search', async (t) => {
     infix: t.context.asyncOperations[5].id.slice(1),
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
 });
 
 test('AsyncOperationSearch supports prefix search', async (t) => {
@@ -112,9 +112,9 @@ test('AsyncOperationSearch supports prefix search', async (t) => {
     prefix: t.context.asyncOperations[5].id.slice(0, -1),
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
 });
 
 test('AsyncOperationSearch supports term search for uuid field', async (t) => {
@@ -125,9 +125,9 @@ test('AsyncOperationSearch supports term search for uuid field', async (t) => {
     id: dbRecord.id,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
 });
 
 test('AsyncOperationSearch supports term search for date field', async (t) => {
@@ -137,9 +137,9 @@ test('AsyncOperationSearch supports term search for date field', async (t) => {
     updatedAt: `${t.context.asyncOperationSearchTmestamp + 1}`,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 50);
-  t.is(response.results?.length, 50);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 50);
+  t.is(results?.length, 50);
 });
 
 test('AsyncOperationSearch supports term search for _id field', async (t) => {
@@ -150,9 +150,9 @@ test('AsyncOperationSearch supports term search for _id field', async (t) => {
     _id: dbRecord.id,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
 });
 
 test('AsyncOperationSearch supports term search for string field', async (t) => {
@@ -162,9 +162,9 @@ test('AsyncOperationSearch supports term search for string field', async (t) => 
     operationType: 'Bulk Granules',
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 50);
-  t.is(response.results?.length, 50);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 50);
+  t.is(results?.length, 50);
 });
 
 test('AsyncOperationSearch supports range search', async (t) => {
@@ -175,9 +175,9 @@ test('AsyncOperationSearch supports range search', async (t) => {
     timestamp__to: `${t.context.asyncOperationSearchTmestamp + 2}`,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 50);
-  t.is(response.results?.length, 50);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 50);
+  t.is(results?.length, 50);
 });
 
 test('AsyncOperationSearch supports search for multiple fields', async (t) => {
@@ -188,9 +188,9 @@ test('AsyncOperationSearch supports search for multiple fields', async (t) => {
     updatedAt: `${t.context.asyncOperationSearchTmestamp}`,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
 });
 
 test('AsyncOperationSearch non-existing fields are ignored', async (t) => {
@@ -201,9 +201,9 @@ test('AsyncOperationSearch non-existing fields are ignored', async (t) => {
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 100);
-  t.is(response.results?.length, 100);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 100);
+  t.is(results?.length, 100);
 });
 
 test('AsyncOperationSearch returns fields specified', async (t) => {
@@ -213,10 +213,10 @@ test('AsyncOperationSearch returns fields specified', async (t) => {
     fields,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 100);
-  t.is(response.results?.length, 10);
-  response.results.forEach((asyncOperation) => t.deepEqual(Object.keys(asyncOperation), fields.split(',')));
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 100);
+  t.is(results?.length, 10);
+  results.forEach((asyncOperation) => t.deepEqual(Object.keys(asyncOperation), fields.split(',')));
 });
 
 test('AsyncOperationSearch supports sorting', async (t) => {
@@ -308,9 +308,9 @@ test('AsyncOperationSearch supports search which checks existence of asyncOperat
     output_exists: 'true',
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 50);
-  t.is(response.results?.length, 50);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 50);
+  t.is(results?.length, 50);
 });
 
 test('AsyncOperationSearch returns the correct record', async (t) => {
@@ -321,11 +321,11 @@ test('AsyncOperationSearch returns the correct record', async (t) => {
     id: dbRecord.id,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 1);
-  t.is(response.results?.length, 1);
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
 
   const expectedApiRecord = translatePostgresAsyncOperationToApiAsyncOperation(dbRecord);
-  t.deepEqual(omit(response.results?.[0], 'createdAt'), omit(expectedApiRecord, 'createdAt'));
-  t.truthy(response.results?.[0]?.createdAt);
+  t.deepEqual(omit(results?.[0], 'createdAt'), omit(expectedApiRecord, 'createdAt'));
+  t.truthy(results?.[0]?.createdAt);
 });
