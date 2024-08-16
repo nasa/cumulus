@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Replace ElasticSearch Phase 2
+
+- **CUMULUS-3236**
+  - Update API AsyncOperation endpoints `POST` and `DEL` to not update
+    Elasticsearch
+  - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
+    reporting status of async operation
+
 ### Migration Notes
 
 #### CUMULUS-3792 Add database indexes. Please follow the instructions before upgrading Cumulus
