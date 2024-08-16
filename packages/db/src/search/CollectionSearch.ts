@@ -45,13 +45,11 @@ export class CollectionSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
-   * @param [params.knex] - db client
    * @param params.countQuery - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
-    knex?: Knex,
     countQuery: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,

@@ -249,13 +249,11 @@ class StatsSearch extends BaseSearch {
    * Builds queries for term fields
    *
    * @param params
-   * @param params.knex - db client
    * @param params.searchQuery - the search query
    * @param [params.dbQueryParameters] - the db query parameters
    * @returns the updated search query based on queryStringParams
    */
   protected buildTermQuery(params: {
-    knex: Knex,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
