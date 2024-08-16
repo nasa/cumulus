@@ -140,14 +140,18 @@ class BaseSearch {
    * Build basic query
    *
    * @param knex - DB client
-   * @throws - function is not implemented
+   * @returns queries for getting count and search result
    */
   protected buildBasicQuery(knex: Knex): {
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
   } {
-    log.debug(`buildBasicQuery is not implemented ${knex.constructor.name}`);
-    throw new Error('buildBasicQuery is not implemented');
+    const countQuery = knex(this.tableName)
+      .count('*');
+
+    const searchQuery = knex(this.tableName)
+      .select(`${this.tableName}.*`);
+    return { countQuery, searchQuery };
   }
 
   /**
@@ -233,13 +237,12 @@ class BaseSearch {
     const { range = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(range).forEach(([name, rangeValues]) => {
-      if (rangeValues.gte) {
-        countQuery?.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
-        searchQuery.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
+      const { gte, lte } = rangeValues;
+      if (gte) {
+        [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, '>=', gte));
       }
-      if (rangeValues.lte) {
-        countQuery?.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
-        searchQuery.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
+      if (lte) {
+        [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, '<=', lte));
       }
     });
   }
