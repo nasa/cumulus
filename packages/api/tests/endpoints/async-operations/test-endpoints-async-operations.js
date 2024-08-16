@@ -36,7 +36,6 @@ const {
   setAuthorizedOAuthUsers,
   createAsyncOperationTestRecords,
 } = require('../../../lib/testUtils');
-const { buildFakeExpressResponse } = require('../utils');
 
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
@@ -225,7 +224,7 @@ test('del() returns a 401 bad request if id is not provided', async (t) => {
   t.true(fakeResponse.boom.badRequest.called);
 });
 
-test('DELETE returns a 404 if PostgreSQL and Elasticsearch async operation cannot be found', async (t) => {
+test('DELETE returns a 404 if PostgreSQL async operation cannot be found', async (t) => {
   const nonExistentAsyncOperation = fakeAsyncOperationFactory();
   const response = await request(app)
     .delete(`/asyncOperations/${nonExistentAsyncOperation.id}`)
@@ -235,7 +234,7 @@ test('DELETE returns a 404 if PostgreSQL and Elasticsearch async operation canno
   t.is(response.body.message, 'No record found');
 });
 
-test('DELETE deletes the async operation from all data stores', async (t) => {
+test('DELETE deletes the async operation from the database', async (t) => {
   const {
     originalPgRecord,
   } = await createAsyncOperationTestRecords(t.context);
@@ -257,46 +256,4 @@ test('DELETE deletes the async operation from all data stores', async (t) => {
   const dbRecords = await t.context.asyncOperationPgModel
     .search(t.context.knex, { id });
   t.is(dbRecords.length, 0);
-});
-
-test('del() does not remove from Elasticsearch if removing from PostgreSQL fails', async (t) => {
-  const {
-    originalPgRecord,
-  } = await createAsyncOperationTestRecords(t.context);
-  const { id } = originalPgRecord;
-
-  const fakeAsyncOperationPgModel = {
-    delete: () => {
-      throw new Error('PG something bad');
-    },
-    get: () => Promise.resolve(originalPgRecord),
-  };
-
-  const expressRequest = {
-    params: {
-      id,
-    },
-    testContext: {
-      knex: t.context.knex,
-      asyncOperationPgModel: fakeAsyncOperationPgModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'PG something bad' }
-  );
-
-  t.true(
-    await t.context.asyncOperationPgModel.exists(t.context.knex, {
-      id,
-    })
-  );
-  t.true(
-    await t.context.esAsyncOperationClient.exists(
-      id
-    )
-  );
 });
