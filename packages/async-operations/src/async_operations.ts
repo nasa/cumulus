@@ -1,5 +1,4 @@
 import { RunTaskCommandOutput } from '@aws-sdk/client-ecs';
-import { Knex } from 'knex';
 import { FunctionConfiguration, GetFunctionConfigurationCommand } from '@aws-sdk/client-lambda';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 
@@ -8,7 +7,6 @@ import {
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
   AsyncOperationPgModel,
-  createRejectableTransaction,
 } from '@cumulus/db';
 import Logger from '@cumulus/logger';
 import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
@@ -135,11 +133,9 @@ export const createAsyncOperation = async (
   if (!systemBucket) throw new TypeError('systemBucket is required');
 
   const knex = await getKnexClient({ env: knexConfig });
-  return await createRejectableTransaction(knex, async (trx: Knex.Transaction) => {
-    const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
-    const pgRecord = await asyncOperationPgModel.create(trx, pgCreateObject, ['*']);
-    return translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
-  });
+  const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
+  const pgRecord = await asyncOperationPgModel.create(knex, pgCreateObject, ['*']);
+  return translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
 };
 
 /**
