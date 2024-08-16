@@ -17,12 +17,6 @@ const {
   translateApiAsyncOperationToPostgresAsyncOperation,
   migrationDir,
 } = require('@cumulus/db');
-const { Search } = require('@cumulus/es-client/search');
-const indexer = require('@cumulus/es-client/indexer');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 const { fakeAsyncOperationFactory } = require('../../../lib/testUtils');
 
 const {
@@ -63,15 +57,6 @@ test.before(async (t) => {
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esAsyncOperationClient = new Search(
-    {},
-    'asyncOperation',
-    t.context.esIndex
-  );
-
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
@@ -91,7 +76,6 @@ test.after.always(async (t) => {
     knexAdmin: t.context.testKnexAdmin,
     testDbName,
   });
-  await cleanupTestIndex(t.context);
 });
 
 test.serial('GET /asyncOperations returns a list of operations', async (t) => {
