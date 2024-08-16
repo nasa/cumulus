@@ -23,22 +23,24 @@ export class AsyncOperationSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
+   * @param params.knex - db client
    * @param params.countQuery - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
+    knex: Knex,
     countQuery: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { countQuery, searchQuery, dbQueryParameters, knex } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereRaw(`${this.tableName}.id::text like '%${infix}%'`));
+      [countQuery, searchQuery].forEach((query) => query.where(knex.raw(`${this.tableName}.id::text like ?`, `%${infix}%`)));
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereRaw(`${this.tableName}.id::text like '${prefix}%'`));
+      [countQuery, searchQuery].forEach((query) => query.where(knex.raw(`${this.tableName}.id::text like ?`, `${prefix}%`)));
     }
   }
 

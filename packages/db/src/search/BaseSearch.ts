@@ -33,7 +33,7 @@ export const typeToTable: { [key: string]: string } = {
 /**
  * Class to build and execute db search query
  */
-class BaseSearch {
+abstract class BaseSearch {
   readonly type: string;
   readonly tableName: string;
   readonly queryStringParameters: QueryStringParameters;
@@ -107,12 +107,12 @@ class BaseSearch {
       searchQuery: Knex.QueryBuilder,
     } {
     const { countQuery, searchQuery } = this.buildBasicQuery(knex);
-    this.buildTermQuery({ countQuery, searchQuery });
-    this.buildTermsQuery({ countQuery, searchQuery });
-    this.buildNotMatchQuery({ countQuery, searchQuery });
+    this.buildTermQuery({ knex, countQuery, searchQuery });
+    this.buildTermsQuery({ knex, countQuery, searchQuery });
+    this.buildNotMatchQuery({ knex, countQuery, searchQuery });
     this.buildRangeQuery({ knex, countQuery, searchQuery });
     this.buildExistsQuery({ countQuery, searchQuery });
-    this.buildInfixPrefixQuery({ countQuery, searchQuery });
+    this.buildInfixPrefixQuery({ knex, countQuery, searchQuery });
     this.buildSortQuery({ searchQuery });
 
     const { limit, offset } = this.dbQueryParameters;
@@ -158,11 +158,13 @@ class BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
+   * @param params.knex - db client
    * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
+    knex?: Knex,
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -251,11 +253,13 @@ class BaseSearch {
    * Build queries for term fields
    *
    * @param params
+   * @param params.knex - db client
    * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildTermQuery(params: {
+    knex: Knex,
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -268,7 +272,7 @@ class BaseSearch {
       executions: executionsTable,
     } = TableNames;
 
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { knex, countQuery, searchQuery, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(term).forEach(([name, value]) => {
@@ -287,7 +291,7 @@ class BaseSearch {
           break;
         case 'error.Error':
           [countQuery, searchQuery]
-            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`));
+            .forEach((query) => value && query?.where(knex.raw(`${this.tableName}.error->>'Error' = ?`, value)));
           break;
         case 'asyncOperationId':
           [countQuery, searchQuery].forEach((query) => query?.where(`${asyncOperationsTable}.id`, value));
@@ -306,11 +310,13 @@ class BaseSearch {
    * Build queries for terms fields
    *
    * @param params
+   * @param params.knex - db client
    * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildTermsQuery(params: {
+    knex: Knex,
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -323,7 +329,7 @@ class BaseSearch {
       executions: executionsTable,
     } = TableNames;
 
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { knex, countQuery, searchQuery, dbQueryParameters } = params;
     const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     // collection name and version are searched in pair
@@ -350,7 +356,7 @@ class BaseSearch {
           break;
         case 'error.Error':
           [countQuery, searchQuery]
-            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' in ('${value.join('\',\'')}')`));
+            .forEach((query) => query?.where(knex.raw(`${this.tableName}.error->>'Error' in (${value.map(() => '?').join(',')})`, [...value])));
           break;
         case 'asyncOperationId':
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${asyncOperationsTable}.id`, value));
@@ -369,11 +375,13 @@ class BaseSearch {
    * Build queries for checking if field doesn't match the given value
    *
    * @param params
+   * @param params.knex - db client
    * @param [params.countQuery] - query builder for getting count
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildNotMatchQuery(params: {
+    knex: Knex,
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -386,7 +394,7 @@ class BaseSearch {
       executions: executionsTable,
     } = TableNames;
 
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { knex, countQuery, searchQuery, dbQueryParameters } = params;
     const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     // collection name and version are searched in pair
@@ -411,7 +419,7 @@ class BaseSearch {
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${executionsTable}_parent.arn`, value));
           break;
         case 'error.Error':
-          [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' != '${value}'`));
+          [countQuery, searchQuery].forEach((query) => value && query?.where(knex.raw(`${this.tableName}.error->>'Error' != ?`, value)));
           break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${this.tableName}.${name}`, value));
@@ -467,7 +475,7 @@ class BaseSearch {
     tableName? : string,
   }) : Promise<number> {
     const { knex, tableName = this.tableName } = params;
-    const query = knex.raw(`EXPLAIN (FORMAT JSON) select * from "${tableName}"`);
+    const query = knex.raw('EXPLAIN (FORMAT JSON) select * from ??', tableName);
     log.debug(`Estimating the row count ${query.toSQL().sql}`);
     const countResult = await query;
     const countPath = 'rows[0]["QUERY PLAN"][0].Plan["Plan Rows"]';
