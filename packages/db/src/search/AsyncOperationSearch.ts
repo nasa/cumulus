@@ -53,12 +53,11 @@ export class AsyncOperationSearch extends BaseSearch {
   protected translatePostgresRecordsToApiRecords(pgRecords: PostgresAsyncOperationRecord[])
     : Partial<ApiAsyncOperation>[] {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    const { fields } = this.dbQueryParameters;
     const apiRecords = pgRecords.map((item: PostgresAsyncOperationRecord) => {
       const pgAsyncOperation = item;
       const apiRecord = translatePostgresAsyncOperationToApiAsyncOperation(pgAsyncOperation);
-      return this.dbQueryParameters.fields
-        ? pick(apiRecord, this.dbQueryParameters.fields)
-        : apiRecord;
+      return fields ? pick(apiRecord, fields) : apiRecord;
     });
     return apiRecords;
   }

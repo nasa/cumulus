@@ -162,6 +162,7 @@ export class CollectionSearch extends BaseSearch {
   protected async translatePostgresRecordsToApiRecords(pgRecords: PostgresCollectionRecord[],
     knex: Knex): Promise<Partial<CollectionRecordApi>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    const { fields } = this.dbQueryParameters;
     let statsRecords: StatsRecords;
     const cumulusIds = pgRecords.map((record) => record.cumulus_id);
     if (this.includeStats) {
@@ -170,9 +171,7 @@ export class CollectionSearch extends BaseSearch {
 
     const apiRecords = pgRecords.map((record) => {
       const apiRecord: CollectionRecordApi = translatePostgresCollectionToApiCollection(record);
-      const apiRecordFinal = this.dbQueryParameters.fields
-        ? pick(apiRecord, this.dbQueryParameters.fields)
-        : apiRecord;
+      const apiRecordFinal = fields ? pick(apiRecord, fields) : apiRecord;
 
       if (statsRecords) {
         apiRecordFinal.stats = statsRecords[record.cumulus_id] ? statsRecords[record.cumulus_id]
