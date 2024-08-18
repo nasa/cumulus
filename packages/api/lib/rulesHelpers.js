@@ -56,12 +56,13 @@ const log = new Logger({ sender: '@cumulus/rulesHelpers' });
  *
  * @param {Object} params - function params
  * @param {number} [params.pageNumber] - current page of API results
+ * @param {number} [params.pageSize] - databse query page size used when calling listRules
  * @param {Array<Object>} [params.rules] - partial rules Array
  * @param {Object} [params.queryParams] - API query params, empty query returns all rules
  * @returns {Promise<Array<Object>>} all matching rules
  */
-async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
-  const query = { ...queryParams, page: pageNumber, limit: 100 };
+async function fetchRules({ pageNumber = 1, pageSize = 100, rules = [], queryParams = {} }) {
+  const query = { ...queryParams, page: pageNumber, limit: pageSize};
   const apiResponse = await listRules({
     prefix: process.env.stackName,
     query,
@@ -70,6 +71,7 @@ async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
   if (responseBody.results.length > 0) {
     return fetchRules({
       pageNumber: (pageNumber + 1),
+      pageSize,
       rules: rules.concat(responseBody.results),
       queryParams,
     });
