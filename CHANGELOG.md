@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Replace ElasticSearch Phase 2
 
+- **CUMULUS-3235**
+  - Updated `asyncOperations` api endpoint to query postgres
 - **CUMULUS-3236**
   - Update API AsyncOperation endpoints `POST` and `DEL` to not update
     Elasticsearch

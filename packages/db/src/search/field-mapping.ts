@@ -92,6 +92,9 @@ const asyncOperationMapping : { [key: string]: Function } = {
   id: (value?: string) => ({
     id: value,
   }),
+  _id: (value?: string) => ({
+    id: value,
+  }),
   operationType: (value?: string) => ({
     operation_type: value,
   }),
