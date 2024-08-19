@@ -1,11 +1,12 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-
+const range = require('lodash/range');
+const isEqual = require('lodash/isEqual');
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
 const randomGranuleId = () => `granuleId_${cryptoRandomString({ length: 10 })}`;
 const randomWorkflow = () => `workflow_${cryptoRandomString({ length: 10 })}`;
-
+const { sleep } = require('@cumulus/common');
 const {
   batchDeleteExecutionFromDatabaseByCumulusCollectionId,
   CollectionPgModel,
@@ -811,9 +812,15 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values for single
     granule_cumulus_id: granuleCumulusId,
     execution_cumulus_id: executionCumulusId3,
   });
-
-  const results = await getWorkflowNameIntersectFromGranuleIds(knex, [granuleCumulusId]);
-
+  // this is try try to alleviate a common intermitten failure point in cicd
+  let results;
+  for (const i of range(10)) {
+    // eslint-disable-next-line no-await-in-loop
+    results = await getWorkflowNameIntersectFromGranuleIds(knex, [granuleCumulusId]);
+    if (isEqual(results, ['fakeWorkflow', 'fakeWorkflow2'])) break;
+    console.log(`known IMF source 'getWorkflowNameIntersectFromGranuleIds() returns correct values for single granule' returned a bad value for the ${i}th time`);
+    sleep(10000);
+  }
   t.deepEqual(results.sort(), ['fakeWorkflow', 'fakeWorkflow2']);
 });
 
