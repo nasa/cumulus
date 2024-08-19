@@ -4,7 +4,7 @@ const sinon = require('sinon');
 const path = require('path');
 const test = require('ava');
 const range = require('lodash/range');
-const sleep = require('@cumulus/common');
+const { sleep } = require('@cumulus/common');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   calculateObjectHash,
