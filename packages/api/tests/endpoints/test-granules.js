@@ -324,7 +324,7 @@ test.beforeEach(async (t) => {
       timestamp: new Date(Date.now()),
     }),
   ];
-  console.log("pushing up ", t.context.fakePgGranules.map((i) => i.granule_id))
+  console.log("pushing up ", t.context.fakePGGranules.map((i) => i.granule_id))
   t.context.fakePGGranuleRecords = await Promise.all(
     t.context.fakePGGranules.map((granule) =>
       upsertGranuleWithExecutionJoinRecord({
