@@ -819,6 +819,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values for single
     results = await getWorkflowNameIntersectFromGranuleIds(knex, [granuleCumulusId]);
     if (isEqual(results, ['fakeWorkflow', 'fakeWorkflow2'])) break;
     console.log(`known IMF source 'getWorkflowNameIntersectFromGranuleIds() returns correct values for single granule' returned a bad value for the ${i}th time`);
+    // eslint-disable-next-line no-await-in-loop
     await sleep(10000);
   }
   t.deepEqual(results.sort(), ['fakeWorkflow', 'fakeWorkflow2']);

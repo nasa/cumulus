@@ -3,7 +3,6 @@
 const sinon = require('sinon');
 const path = require('path');
 const test = require('ava');
-const range = require('lodash/range');
 const { sleep } = require('@cumulus/common');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
@@ -262,15 +261,15 @@ test.serial('verify that all returned granules have sync_granule_duration set', 
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
   let output;
-  console.log(t.context.event)
   // this is to try to alleviate a common intermitten failure point in cicd
-    try {
-      output = await syncGranule(t.context.event);
-    } catch (error) {
-      console.log(`known IMF source 'verify that all returned granules have sync_granule_duration set' returned a bad value, trying again`);
-      await sleep(10000);
-      output = await syncGranule(t.context.event);
-    }
+  // this will fail if done in a loop to repeatedly re-attempt
+  try {
+    output = await syncGranule(t.context.event);
+  } catch (error) {
+    console.log('known IMF source "verify that all returned granules have sync_granule_duration set" returned a bad value, trying again');
+    await sleep(10000);
+    output = await syncGranule(t.context.event);
+  }
 
   await validateOutput(t, output);
 
