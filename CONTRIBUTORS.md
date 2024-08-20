@@ -4,6 +4,7 @@
 * Abdelhak Marouane
 * Adithya Krishna
 * Aimee Barciauskas
+* Alin Vlad
 * Andrew Pawloski
 * Anthony Lukach
 * Anthony Ortega
@@ -15,11 +16,13 @@
 * Drew Bollinger
 * Filip Graniczny
 * Gary Sieling
+* GitHub Actions
 * Jacob Campbell
 * James Norton
 * Jason Gilman
 * Jennifer Tran
 * Jenny Liu
+* Jim Cole
 * Jonathan Kovarik
 * Juanisa McCoy
 * Katherine Kelly
@@ -30,6 +33,8 @@
 * Mark Schwab
 * Matt Savoie
 * Menno Van Diermen
+* Michael Dorfman
+* Mike Dorfman
 * Naga Nages
 * Nagavenkata Nageswaran
 * Nate Pauzenga
@@ -45,3 +50,4 @@
 * Tim Clark
 * Tobias Nießen
 * Vanh Khuyen Nguyen
+* Vanh Nguyen

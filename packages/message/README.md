@@ -37,7 +37,7 @@ from a Cumulus message</p>
 <dt><a href="#exp_module_Collections--constructCollectionId">constructCollectionId(name, version)</a> ⇒ <code>string</code> ⏏</dt>
 <dd><p>Returns the collection ID.</p>
 </dd>
-<dt><a href="#exp_module_Collections--deconstructCollectionId">deconstructCollectionId(collectionId)</a> ⇒ <code>Object</code> ⏏</dt>
+<dt><a href="#exp_module_Collections--deconstructCollectionId">deconstructCollectionId(collectionId)</a> ⇒ ⏏</dt>
 <dd><p>Returns the name and version of a collection based on
 the collectionId used in elasticsearch indexing</p>
 </dd>
