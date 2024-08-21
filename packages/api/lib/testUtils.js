@@ -19,13 +19,11 @@ const {
   translateApiExecutionToPostgresExecution,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRuleRaw,
-  translatePostgresPdrToApiPdr,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
   indexProvider,
   indexRule,
-  indexPdr,
   deleteExecution,
 } = require('@cumulus/es-client/indexer');
 const {
@@ -570,8 +568,6 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   const {
     knex,
     pdrPgModel,
-    esClient,
-    esPdrsClient,
     collectionCumulusId,
     providerCumulusId,
   } = context;
@@ -593,14 +589,8 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pgPdr.cumulus_id }
   );
-  const originalPdr = await translatePostgresPdrToApiPdr(originalPgRecord, knex);
-  await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
-  const originalEsRecord = await esPdrsClient.get(
-    originalPdr.pdrName
-  );
   return {
     originalPgRecord,
-    originalEsRecord,
   };
 };
 
