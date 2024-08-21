@@ -25,7 +25,6 @@ const {
 const {
   indexRule,
   indexPdr,
-  indexAsyncOperation,
   deleteExecution,
 } = require('@cumulus/es-client/indexer');
 const {
@@ -619,8 +618,6 @@ const createAsyncOperationTestRecords = async (context) => {
   const {
     knex,
     asyncOperationPgModel,
-    esClient,
-    esAsyncOperationClient,
   } = context;
 
   const originalAsyncOperation = fakeAsyncOperationFactory();
@@ -635,13 +632,8 @@ const createAsyncOperationTestRecords = async (context) => {
   const originalPgRecord = await asyncOperationPgModel.get(
     knex, { cumulus_id: pgAsyncOperation.cumulus_id }
   );
-  await indexAsyncOperation(esClient, originalAsyncOperation, process.env.ES_INDEX);
-  const originalEsRecord = await esAsyncOperationClient.get(
-    originalAsyncOperation.id
-  );
   return {
     originalPgRecord,
-    originalEsRecord,
   };
 };
 
