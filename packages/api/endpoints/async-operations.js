@@ -17,6 +17,7 @@ const {
 } = require('@cumulus/errors');
 
 const Logger = require('@cumulus/logger');
+const { AsyncOperationSearch } = require('@cumulus/db');
 
 const { Search } = require('@cumulus/es-client/search');
 const { isBadRequestError } = require('../lib/errors');
@@ -27,13 +28,9 @@ const asyncSchema = require('../lib/schemas').asyncOperation;
 const logger = new Logger({ sender: '@cumulus/api/asyncOperations' });
 
 async function list(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'asyncOperation',
-    process.env.ES_INDEX
-  );
+  const dbSearch = new AsyncOperationSearch({ queryStringParameters: req.query });
 
-  const response = await search.query();
+  const response = await dbSearch.query();
   return res.send(response);
 }
 

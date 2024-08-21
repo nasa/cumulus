@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3232**
   - Update API PDR endpoints `DEL` and `GET` to not update Elasticsearch
+- **CUMULUS-3235**
+  - Updated `asyncOperations` api endpoint to query postgres
 - **CUMULUS-3236**
   - Update API AsyncOperation endpoints `POST` and `DEL` to not update
     Elasticsearch
