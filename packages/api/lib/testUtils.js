@@ -19,13 +19,11 @@ const {
   translateApiExecutionToPostgresExecution,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRuleRaw,
-  translatePostgresPdrToApiPdr,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
   indexProvider,
   indexRule,
-  indexPdr,
   deleteExecution,
 } = require('@cumulus/es-client/indexer');
 const {
