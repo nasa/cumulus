@@ -19,7 +19,6 @@ const {
 const Logger = require('@cumulus/logger');
 const { AsyncOperationSearch } = require('@cumulus/db');
 
-const { Search } = require('@cumulus/es-client/search');
 const { isBadRequestError } = require('../lib/errors');
 
 const { recordIsValid } = require('../lib/schema');
