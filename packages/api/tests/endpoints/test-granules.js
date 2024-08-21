@@ -324,7 +324,6 @@ test.beforeEach(async (t) => {
       timestamp: new Date(Date.now()),
     }),
   ];
-  console.log("pushing up ", t.context.fakePGGranules.map((i) => i.granule_id))
   t.context.fakePGGranuleRecords = await Promise.all(
     t.context.fakePGGranules.map((granule) =>
       upsertGranuleWithExecutionJoinRecord({
@@ -375,6 +374,16 @@ test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
   await sns().send(new DeleteTopicCommand({ TopicArn }));
+  const granuleModel = new GranulePgModel();
+  const granuleExecutionModel = new GranulesExecutionsPgModel();
+  await Promise.all(t.context.fakePGGranuleRecords.map(async (pgGranule) => {
+      await granuleModel.delete(t.context.knex, {cumulus_id: pgGranule[0].cumulus_id})
+      await granuleExecutionModel.delete(t.context.knex, {
+        granule_cumulus_id: pgGranule[0].cumulus_id,
+        execution_cumulus_id: t.context.testExecutionCumulusId
+      })
+    }
+  ));
 });
 
 test.after.always(async (t) => {
