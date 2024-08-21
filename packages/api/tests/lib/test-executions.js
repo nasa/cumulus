@@ -127,6 +127,7 @@ test('chooseTargetExecution() throws exactly any error raised in the database fu
 });
 
 test.serial('batchDeleteExecutions() deletes expected executions from the database.', async (t) => {
+  t.true(false);
   const collectionId = 'originalCollection___001';
   const executionCount = 57;
   const otherCollectionId = 'otherCollectionId___001';
