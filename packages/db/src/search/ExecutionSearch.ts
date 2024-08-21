@@ -143,6 +143,7 @@ export class ExecutionSearch extends BaseSearch {
   protected translatePostgresRecordsToApiRecords(pgRecords: ExecutionRecord[])
     : Partial<ApiExecutionRecord>[] {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    const { fields } = this.dbQueryParameters;
     const apiRecords = pgRecords.map((executionRecord: ExecutionRecord) => {
       const { collectionName, collectionVersion, asyncOperationId, parentArn } = executionRecord;
       const collectionId = collectionName && collectionVersion
@@ -153,9 +154,7 @@ export class ExecutionSearch extends BaseSearch {
         asyncOperationId,
         parentArn,
       });
-      return this.dbQueryParameters.fields
-        ? pick(apiRecord, this.dbQueryParameters.fields)
-        : apiRecord;
+      return fields ? pick(apiRecord, fields) : apiRecord;
     });
     return apiRecords;
   }
