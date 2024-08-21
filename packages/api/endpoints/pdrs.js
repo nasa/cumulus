@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
@@ -9,8 +11,7 @@ const {
   createRejectableTransaction,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { indexPdr, deletePdr } = require('@cumulus/es-client/indexer');
-const { Search, getEsClient } = require('@cumulus/es-client/search');
+const { Search } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: '@cumulus/api/pdrs' });
@@ -56,8 +57,6 @@ async function get(req, res) {
     throw error;
   }
 }
-
-const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist');
 
 /**
  * delete a given PDR
