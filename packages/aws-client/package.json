@@ -37,7 +37,7 @@
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
-    "timeout": "30s"
+    "timeout": "30s",
     "files": [
       "tests/**/*.js"
     ],
