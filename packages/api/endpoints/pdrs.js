@@ -70,63 +70,23 @@ async function del(req, res) {
   const {
     pdrPgModel = new PdrPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
     s3Utils = S3UtilsLib,
   } = req.testContext || {};
 
   const pdrName = req.params.pdrName;
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
-  const esPdrsClient = new Search(
-    {},
-    'pdr',
-    process.env.ES_INDEX
-  );
 
   try {
-    await pdrPgModel.get(knex, { name: pdrName });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      if (!(await esPdrsClient.exists(pdrName))) {
-        log.info('PDR does not exist in Elasticsearch');
+    await createRejectableTransaction(knex, async (trx) => {
+      const deleteResultsCount = await pdrPgModel.delete(trx, { name: pdrName });
+      if (deleteResultsCount === 0) {
         return res.boom.notFound('No record found');
       }
-      log.info('PDR does not exist in PostgreSQL, it only exists in Elasticsearch');
-    } else {
-      throw error;
-    }
-  }
-
-  const esPdrClient = new Search(
-    {},
-    'pdr',
-    process.env.ES_INDEX
-  );
-  const esPdrRecord = await esPdrClient.get(pdrName).catch(log.info);
-
-  try {
-    let esPdrDeleted = false;
-    try {
-      await createRejectableTransaction(knex, async (trx) => {
-        await pdrPgModel.delete(trx, { name: pdrName });
-        await deletePdr({
-          esClient,
-          name: pdrName,
-          index: process.env.ES_INDEX,
-          ignore: [404],
-        });
-        esPdrDeleted = true;
-        await s3Utils.deleteS3Object(process.env.system_bucket, pdrS3Key);
-      });
-    } catch (innerError) {
-      if (esPdrDeleted && esPdrRecord) {
-        delete esPdrRecord._id;
-        await indexPdr(esClient, esPdrRecord, process.env.ES_INDEX);
-      }
-      throw innerError;
-    }
+      return await s3Utils.deleteS3Object(process.env.system_bucket, pdrS3Key);
+    });
   } catch (error) {
     log.debug(`Failed to delete PDR with name ${pdrName}. Error ${JSON.stringify(error)}.`);
-    if (!isRecordDoesNotExistError(error)) throw error;
+    throw error;
   }
   return res.send({ detail: 'Record deleted' });
 }
