@@ -20,26 +20,6 @@ export class ProviderSearch extends BaseSearch {
   }
 
   /**
-   * Build basic query
-   *
-   * @param knex - DB client
-   * @returns queries for getting count and search result
-   */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
-    const countQuery = knex(this.tableName)
-      .count('*');
-
-    const searchQuery = knex(this.tableName)
-      .select(`${this.tableName}.*`);
-
-    return { countQuery, searchQuery };
-  }
-
-  /**
    * Build queries for infix and prefix
    *
    * @param params
