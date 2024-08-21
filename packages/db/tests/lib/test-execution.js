@@ -814,14 +814,8 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values for single
   });
   // this is try try to alleviate a common intermitten failure point in cicd
   let results;
-  for (const i of range(10)) {
-    // eslint-disable-next-line no-await-in-loop
-    results = await getWorkflowNameIntersectFromGranuleIds(knex, [granuleCumulusId]);
-    if (isEqual(results, ['fakeWorkflow', 'fakeWorkflow2'])) break;
-    console.log(`known IMF source 'getWorkflowNameIntersectFromGranuleIds() returns correct values for single granule' returned a bad value for the ${i}th time`);
-    // eslint-disable-next-line no-await-in-loop
-    await sleep(10000);
-  }
+  results = await getWorkflowNameIntersectFromGranuleIds(knex, [granuleCumulusId]);
+
   t.deepEqual(results.sort(), ['fakeWorkflow', 'fakeWorkflow2']);
 });
 
