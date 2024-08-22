@@ -6,10 +6,16 @@ import { RuleRecord } from '@cumulus/types/api/rules';
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresRuleRecord } from '../types/rule';
-import { translatePostgresRuleToApiRule } from '../translate/rules';
+import { translatePostgresRuleToApiRuleWithoutDbQuery } from '../translate/rules';
 import { TableNames } from '../tables';
 
 const log = new Logger({ sender: '@cumulus/db/RuleSearch' });
+
+interface RuleRecordWithExternals extends PostgresRuleRecord {
+  collectionName: string,
+  collectionVersion: string,
+  providerName?: string,
+}
 
 /**
  * Class to build and execute db search query for rules
@@ -42,7 +48,7 @@ export class RuleSearch extends BaseSearch {
       .select({
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
-        provider: `${providersTable}.name`,
+        providerName: `${providersTable}.name`,
       });
 
     if (this.searchCollection()) {
@@ -93,13 +99,21 @@ export class RuleSearch extends BaseSearch {
   * @returns translated api records
   */
   protected async translatePostgresRecordsToApiRecords(
-    pgRecords: PostgresRuleRecord[],
-    knex: Knex
+    pgRecords: RuleRecordWithExternals[],
   ): Promise<Partial<RuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
     const apiRecords = pgRecords.map(async (record) => {
-      const apiRecord = await translatePostgresRuleToApiRule(record, knex);
+      const providerPgRecord = record.providerName ? { name: record.providerName } : undefined;
+      const collectionPgRecord = {
+        name: record.collectionName,
+        version: record.collectionVersion,
+      };
+      const apiRecord = await translatePostgresRuleToApiRuleWithoutDbQuery(
+        record,
+        collectionPgRecord,
+        providerPgRecord,
+      );
       return this.dbQueryParameters.fields
         ? pick(apiRecord, this.dbQueryParameters.fields)
         : apiRecord;

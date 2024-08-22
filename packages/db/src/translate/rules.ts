@@ -5,64 +5,58 @@ import { RuleRecord, Rule } from '@cumulus/types/api/rules';
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';
 import { PostgresRule, PostgresRuleRecord } from '../types/rule';
+import { PostgresProviderRecord } from '../types/provider';
+import { PostgresCollectionRecord } from '../types/collection';
 
-// Rule queries can include fields from external tables like provider and collection
-interface RuleRecordWithExternals extends PostgresRuleRecord {
-  provider?: string,
-  collectionName?: string,
-  collectionVersion?: string,
-}
+export const translatePostgresRuleToApiRuleWithoutDbQuery = async (
+  pgRule: PostgresRuleRecord,
+  collectionPgRecord?: Pick<PostgresCollectionRecord, 'name' | 'version'>,
+  providerPgRecord?: Partial<PostgresProviderRecord>,
+): Promise<RuleRecord> => {
+  const apiRule: RuleRecord = {
+      name: pgRule.name,
+      workflow: pgRule.workflow,
+      provider: providerPgRecord ? providerPgRecord.name : undefined,
+      collection: collectionPgRecord ? {
+        name: collectionPgRecord.name,
+        version: collectionPgRecord.version,
+      } : undefined,
+      rule: <Rule>removeNilProperties({
+        type: pgRule.type,
+        arn: pgRule.arn,
+        logEventArn: pgRule.log_event_arn,
+        value: pgRule.value,
+      }),
+      state: pgRule.enabled ? 'ENABLED' : 'DISABLED',
+      meta: pgRule.meta,
+      payload: pgRule.payload,
+      executionNamePrefix: pgRule.execution_name_prefix,
+      queueUrl: pgRule.queue_url,
+      tags: pgRule.tags,
+      createdAt: pgRule.created_at.getTime(),
+      updatedAt: pgRule.updated_at.getTime(),
+    };
+    return <RuleRecord>removeNilProperties(apiRule);
+};
 
 export const translatePostgresRuleToApiRule = async (
-  pgRule: RuleRecordWithExternals,
+  pgRule: PostgresRuleRecord,
   knex: Knex | Knex.Transaction,
   collectionPgModel = new CollectionPgModel(),
   providerPgModel = new ProviderPgModel()
 ): Promise<RuleRecord> => {
-  let collection;
-  let pgProvider;
+  const providerPgRecord = pgRule.provider_cumulus_id
+    ? await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id })
+    : undefined;
+  const collectionPgRecord = pgRule.collection_cumulus_id
+    ? await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id })
+    : undefined;
 
-  if (!pgRule.provider && pgRule.provider_cumulus_id) {
-    pgProvider = await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id });
-  }
-
-  if (pgRule.collectionName && pgRule.collectionVersion) {
-    collection = {
-      name: pgRule.collectionName,
-      version: pgRule.collectionVersion,
-    };
-  } else if (pgRule.collection_cumulus_id) {
-    const pgCollection = await collectionPgModel.get(
-      knex,
-      { cumulus_id: pgRule.collection_cumulus_id }
-    );
-    collection = {
-      name: pgCollection.name,
-      version: pgCollection.version,
-    };
-  }
-
-  const apiRule: RuleRecord = {
-    name: pgRule.name,
-    workflow: pgRule.workflow,
-    provider: pgRule.provider || pgProvider?.name,
-    collection,
-    rule: <Rule>removeNilProperties({
-      type: pgRule.type,
-      arn: pgRule.arn,
-      logEventArn: pgRule.log_event_arn,
-      value: pgRule.value,
-    }),
-    state: pgRule.enabled ? 'ENABLED' : 'DISABLED',
-    meta: pgRule.meta,
-    payload: pgRule.payload,
-    executionNamePrefix: pgRule.execution_name_prefix,
-    queueUrl: pgRule.queue_url,
-    tags: pgRule.tags,
-    createdAt: pgRule.created_at.getTime(),
-    updatedAt: pgRule.updated_at.getTime(),
-  };
-  return <RuleRecord>removeNilProperties(apiRule);
+  return translatePostgresRuleToApiRuleWithoutDbQuery(
+    pgRule,
+    collectionPgRecord,
+    providerPgRecord,
+  );
 };
 
 /**

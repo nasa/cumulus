@@ -1,6 +1,7 @@
 const test = require('ava');
 const {
   translatePostgresRuleToApiRule,
+  translatePostgresRuleToApiRuleWithoutDbQuery,
   translateApiRuleToPostgresRule,
   translateApiRuleToPostgresRuleRaw,
 } = require('../../dist/translate/rules');
@@ -240,6 +241,65 @@ test('translatePostgresRuleToApiRule handles optional fields', async (t) => {
 
   t.deepEqual(
     await translatePostgresRuleToApiRule(pgRecord),
+    expectedRule
+  );
+});
+
+test('translatePostgresRuleToApiRuleWithoutDbQuery translates a postgres Rule', async (t) => {
+  const pgRecord = {
+    name: 'testRule',
+    workflow: 'testWorkflow',
+    type: 'onetime',
+    enabled: true,
+    collection_cumulus_id: 1,
+    provider_cumulus_id: 2,
+    execution_name_prefix: 'test',
+    value: 'abcd',
+    arn: 'arn:123',
+    log_event_arn: 'arn:987',
+    payload: { object: 'value' },
+    meta: {
+      retries: 2,
+      visibility: 30,
+      more: 'meta',
+    },
+    tags: ['tag1', 'tag2'],
+    queue_url: 'https://sqs.us-west-2.amazonaws.com/123456789012/my-queue',
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
+  // Assume provider, collection are already retrieved, no query required
+  const fakeCollection = { name: 'abc', version: '123' };
+  const fakeProvider = { name: 'abc' };
+
+  const expectedRule = {
+    name: pgRecord.name,
+    state: 'ENABLED',
+    workflow: pgRecord.workflow,
+    collection: fakeCollection,
+    provider: fakeProvider.name,
+    meta: pgRecord.meta,
+    payload: pgRecord.payload,
+    queueUrl: pgRecord.queue_url,
+    rule: {
+      type: pgRecord.type,
+      arn: pgRecord.arn,
+      logEventArn: pgRecord.log_event_arn,
+      value: pgRecord.value,
+    },
+    executionNamePrefix: pgRecord.execution_name_prefix,
+    tags: pgRecord.tags,
+    createdAt: pgRecord.created_at.getTime(),
+    updatedAt: pgRecord.updated_at.getTime(),
+  };
+
+  t.deepEqual(
+    await translatePostgresRuleToApiRuleWithoutDbQuery(
+      pgRecord,
+      fakeCollection,
+      fakeProvider
+    ),
     expectedRule
   );
 });
