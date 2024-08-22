@@ -201,13 +201,21 @@ test.serial('fetchRules invokes API to fetch rules', async (t) => {
 });
 
 test.serial('fetchRules allows for configurable page size', async (t) => {
-  listRulesStub.callsFake(({ query }) => {
+  listRulesStub.onFirstCall().callsFake(({ query }) => {
+    t.is(query.limit, 100);
+    return { body: JSON.stringify({ results: [] }) };
+  });
+
+  listRulesStub.onSecondCall().callsFake(({ query }) => {
     t.is(query.limit, 50);
     return { body: JSON.stringify({ results: [] }) };
   });
   
+  await rulesHelpers.fetchRules({});
+
   await rulesHelpers.fetchRules({ pageSize: 50 });
-  t.true(listRulesStub.calledOnce);
+  
+  t.true(listRulesStub.calledTwice);
 });
 
 test.serial('fetchRules pages through results until reaching an empty list', async (t) => {
