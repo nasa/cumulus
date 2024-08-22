@@ -19,7 +19,6 @@ const {
   migrationDir,
   PdrPgModel,
   ProviderPgModel,
-  translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
 const {
   fakeCollectionRecordFactory,
@@ -40,7 +39,6 @@ const {
   fakePdrFactory,
   setAuthorizedOAuthUsers,
   createPdrTestRecords,
-  fakePdrFactoryV2,
 } = require('../../lib/testUtils');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
@@ -281,7 +279,7 @@ test('GET fails if pdr is not found', async (t) => {
   t.true(message.includes('No record found for'));
 });
 
-test('DELETE returns a 404 if PostgreSQL and Elasticsearch PDR cannot be found', async (t) => {
+test('DELETE returns a 404 if PostgreSQL PDR cannot be found', async (t) => {
   const nonExistentPdr = fakePdrFactory('completed');
   const response = await request(app)
     .delete(`/pdrs/${nonExistentPdr.pdrName}`)
@@ -291,9 +289,8 @@ test('DELETE returns a 404 if PostgreSQL and Elasticsearch PDR cannot be found',
   t.is(response.body.message, 'No record found');
 });
 
-test('Deleting a PDR that exists in PostgreSQL and not Elasticsearch succeeds', async (t) => {
+test('Deleting a PDR that exists in PostgreSQL succeeds', async (t) => {
   const {
-    esPdrsClient,
     collectionCumulusId,
     providerCumulusId,
     knex,
@@ -310,12 +307,6 @@ test('Deleting a PDR that exists in PostgreSQL and not Elasticsearch succeeds', 
     knex, { cumulus_id: pgPdr.cumulus_id }
   );
 
-  t.false(
-    await esPdrsClient.exists(
-      originalPgRecord.name
-    )
-  );
-
   const response = await request(app)
     .delete(`/pdrs/${originalPgRecord.name}`)
     .set('Accept', 'application/json')
@@ -327,43 +318,10 @@ test('Deleting a PDR that exists in PostgreSQL and not Elasticsearch succeeds', 
   t.false(await pdrPgModel.exists(knex, { name: originalPgRecord.name }));
 });
 
-test.serial('Deleting a PDR that exists in Elastisearch and not PostgreSQL succeeds', async (t) => {
-  const {
-    esPdrsClient,
-    testPgCollection,
-    testPgProvider,
-    knex,
-    pdrPgModel,
-  } = t.context;
-
-  const testPdr = fakePdrFactoryV2({
-    collectionId: constructCollectionId(testPgCollection.name, testPgCollection.version),
-    provider: testPgProvider.name,
-  });
-  await indexer.indexPdr(t.context.esClient, testPdr, t.context.esIndex);
-
-  t.false(await pdrPgModel.exists(knex, { name: testPdr.pdrName }));
-
-  const response = await request(app)
-    .delete(`/pdrs/${testPdr.pdrName}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-  const { detail } = response.body;
-
-  t.is(detail, 'Record deleted');
-  t.false(
-    await esPdrsClient.exists(
-      testPdr.pdrName
-    )
-  );
-});
-
 test.serial('DELETE handles the case where the PDR exists in PostgreSQL but not in S3', async (t) => {
   const {
     knex,
     pdrPgModel,
-    esClient,
     collectionCumulusId,
     providerCumulusId,
   } = t.context;
@@ -377,9 +335,6 @@ test.serial('DELETE handles the case where the PDR exists in PostgreSQL but not 
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pdr.cumulus_id }
   );
-  const originalPdr = await translatePostgresPdrToApiPdr(originalPgRecord, knex);
-  await indexer.indexPdr(esClient, originalPdr, process.env.ES_INDEX);
-
   const response = await request(app)
     .delete(`/pdrs/${originalPgRecord.name}`)
     .set('Accept', 'application/json')
@@ -387,14 +342,12 @@ test.serial('DELETE handles the case where the PDR exists in PostgreSQL but not 
     .expect(200);
 
   t.is(response.status, 200);
-
   const parsedBody = response.body;
   t.is(parsedBody.detail, 'Record deleted');
   t.false(await pdrPgModel.exists(knex, { name: originalPgRecord.name }));
-  t.false(await t.context.esPdrsClient.exists(originalPgRecord.name));
 });
 
-test.serial('DELETE removes a PDR from all data stores', async (t) => {
+test.serial('DELETE removes a PDR from data store', async (t) => {
   const {
     originalPgRecord,
   } = await createPdrTestRecords(t.context);
@@ -409,11 +362,6 @@ test.serial('DELETE removes a PDR from all data stores', async (t) => {
 
   t.false(await t.context.pdrPgModel.exists(t.context.knex, { name: originalPgRecord.name }));
   t.false(
-    await t.context.esPdrsClient.exists(
-      originalPgRecord.name
-    )
-  );
-  t.false(
     await s3ObjectExists({
       Bucket: process.env.system_bucket,
       Key: pdrS3Key(originalPgRecord.name),
@@ -421,7 +369,7 @@ test.serial('DELETE removes a PDR from all data stores', async (t) => {
   );
 });
 
-test.serial('del() does not remove from Elasticsearch/S3 if removing from PostgreSQL fails', async (t) => {
+test.serial('del() does not remove from S3 if removing from PostgreSQL fails', async (t) => {
   const {
     originalPgRecord,
   } = await createPdrTestRecords(
@@ -431,12 +379,6 @@ test.serial('del() does not remove from Elasticsearch/S3 if removing from Postgr
   t.teardown(async () => {
     await t.context.pdrPgModel.delete(t.context.knex, {
       name: originalPgRecord.name,
-    });
-    await indexer.deleteRecord({
-      esClient: t.context.esClient,
-      id: originalPgRecord.name,
-      type: 'pdr',
-      index: t.context.esIndex,
     });
     await deleteS3Object(process.env.system_bucket, pdrS3Key(originalPgRecord.name));
   });
@@ -471,11 +413,6 @@ test.serial('del() does not remove from Elasticsearch/S3 if removing from Postgr
     })
   );
   t.true(
-    await t.context.esPdrsClient.exists(
-      originalPgRecord.name
-    )
-  );
-  t.true(
     await s3ObjectExists({
       Bucket: process.env.system_bucket,
       Key: pdrS3Key(originalPgRecord.name),
@@ -483,7 +420,7 @@ test.serial('del() does not remove from Elasticsearch/S3 if removing from Postgr
   );
 });
 
-test.serial('del() does not remove from PostgreSQL/S3 if removing from Elasticsearch fails', async (t) => {
+test.serial('del() does not remove from PostgreSQL if removing from S3 fails', async (t) => {
   const {
     originalPgRecord,
   } = await createPdrTestRecords(
@@ -493,76 +430,6 @@ test.serial('del() does not remove from PostgreSQL/S3 if removing from Elasticse
   t.teardown(async () => {
     await t.context.pdrPgModel.delete(t.context.knex, {
       name: originalPgRecord.name,
-    });
-    await indexer.deleteRecord({
-      esClient: t.context.esClient,
-      id: originalPgRecord.name,
-      type: 'pdr',
-      index: t.context.esIndex,
-    });
-    await deleteS3Object(process.env.system_bucket, pdrS3Key(originalPgRecord.name));
-  });
-
-  const fakeEsClient = {
-    initializeEsClient: () => Promise.resolve(),
-    client: {
-      delete: () => {
-        throw new Error('something bad');
-      },
-    },
-  };
-
-  const expressRequest = {
-    params: {
-      pdrName: originalPgRecord.name,
-    },
-    testContext: {
-      knex: t.context.knex,
-      esClient: fakeEsClient,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.true(
-    await t.context.pdrPgModel.exists(t.context.knex, {
-      name: originalPgRecord.name,
-    })
-  );
-  t.true(
-    await t.context.esPdrsClient.exists(
-      originalPgRecord.name
-    )
-  );
-  t.true(
-    await s3ObjectExists({
-      Bucket: process.env.system_bucket,
-      Key: pdrS3Key(originalPgRecord.name),
-    })
-  );
-});
-
-test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing from S3 fails', async (t) => {
-  const {
-    originalPgRecord,
-  } = await createPdrTestRecords(
-    t.context
-  );
-
-  t.teardown(async () => {
-    await t.context.pdrPgModel.delete(t.context.knex, {
-      name: originalPgRecord.name,
-    });
-    await indexer.deleteRecord({
-      esClient: t.context.esClient,
-      id: originalPgRecord.name,
-      type: 'pdr',
-      index: t.context.esIndex,
     });
     await deleteS3Object(process.env.system_bucket, pdrS3Key(originalPgRecord.name));
   });
@@ -594,11 +461,6 @@ test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing fro
     await t.context.pdrPgModel.exists(t.context.knex, {
       name: originalPgRecord.name,
     })
-  );
-  t.true(
-    await t.context.esPdrsClient.exists(
-      originalPgRecord.name
-    )
   );
   t.true(
     await s3ObjectExists({

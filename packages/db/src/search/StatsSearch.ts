@@ -241,7 +241,7 @@ class StatsSearch extends BaseSearch {
       searchQuery.whereLike(`${this.tableName}.${fieldName}`, `%${infix}%`);
     }
     if (prefix) {
-      searchQuery.whereLike(`${this.tableName}.${fieldName}`, `%${prefix}%`);
+      searchQuery.whereLike(`${this.tableName}.${fieldName}`, `${prefix}%`);
     }
   }
 
