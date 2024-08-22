@@ -42,26 +42,6 @@ export class CollectionSearch extends BaseSearch {
   }
 
   /**
-   * Build basic query
-   *
-   * @param knex - DB client
-   * @returns queries for getting count and search result
-   */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
-    const countQuery = knex(this.tableName)
-      .count(`${this.tableName}.cumulus_id`);
-
-    const searchQuery = knex(this.tableName)
-      .select(`${this.tableName}.*`);
-
-    return { countQuery, searchQuery };
-  }
-
-  /**
    * Build queries for infix and prefix
    *
    * @param params
@@ -80,7 +60,7 @@ export class CollectionSearch extends BaseSearch {
       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${prefix}%`));
+      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
     }
   }
 
@@ -136,7 +116,7 @@ export class CollectionSearch extends BaseSearch {
     const granulesTable = TableNames.granules;
     const statsQuery = knex(granulesTable)
       .select(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
-      .count(`${granulesTable}.status`)
+      .count('*')
       .groupBy(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
       .whereIn(`${granulesTable}.collection_cumulus_id`, collectionCumulusIds);
 
@@ -180,6 +160,7 @@ export class CollectionSearch extends BaseSearch {
   protected async translatePostgresRecordsToApiRecords(pgRecords: PostgresCollectionRecord[],
     knex: Knex): Promise<Partial<CollectionRecordApi>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    const { fields } = this.dbQueryParameters;
     let statsRecords: StatsRecords;
     const cumulusIds = pgRecords.map((record) => record.cumulus_id);
     if (this.includeStats) {
@@ -188,9 +169,7 @@ export class CollectionSearch extends BaseSearch {
 
     const apiRecords = pgRecords.map((record) => {
       const apiRecord: CollectionRecordApi = translatePostgresCollectionToApiCollection(record);
-      const apiRecordFinal = this.dbQueryParameters.fields
-        ? pick(apiRecord, this.dbQueryParameters.fields)
-        : apiRecord;
+      const apiRecordFinal = fields ? pick(apiRecord, fields) : apiRecord;
 
       if (statsRecords) {
         apiRecordFinal.stats = statsRecords[record.cumulus_id] ? statsRecords[record.cumulus_id]

@@ -11,8 +11,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Remove ElasticSearch queries from Rule LIST endpoint
 - **CUMULUS-3230**
   - Remove ElasticSearch dependency from Rule Endpoints
+- **CUMULUS-3232**
+  - Update API PDR endpoints `DEL` and `GET` to not update Elasticsearch
+- **CUMULUS-3233**
+  - Updated `providers` list api endpoint and added `ProviderSearch` class to query postgres
+  - Removed Elasticsearch dependency from `providers` endpoints
+- **CUMULUS-3235**
+  - Updated `asyncOperations` api endpoint to query postgres
+- **CUMULUS-3236**
+  - Update API AsyncOperation endpoints `POST` and `DEL` to not update
+    Elasticsearch
+  - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
+    reporting status of async operation
+
+### Migration Notes
+
+#### CUMULUS-3792 Add database indexes. Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-3792 require a manual update to the postgres database in the production environment.
+  Please follow [Update Table Indexes for CUMULUS-3792]
+  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/update_table_indexes_CUMULUS_3792)
 
 ### Replace ElasticSearch Phase 1
+- **CUMULUS-3238**
+  - Removed elasticsearch dependency from collections endpoint
 - **CUMULUS-3239**
   - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
 - **CUMULUS-3240**
@@ -23,6 +45,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed elasticsearch dependency from granules endpoint
 - **CUMULUS-3641**
   - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
+- **CUMULUS-3642**
+  - Adjusted queries to improve performance:
+    - Used count(*) over count(id) to count rows
+    - Estimated row count for large tables (granules and executions) by default for basic query
+  - Updated stats summary to default to the last day
+  - Updated ExecutionSearch to not include asyncOperationId by default
 - **CUMULUS-3688**
   - Updated `stats` api endpoint to query postgres instead of elasticsearch
 - **CUMULUS-3689**
@@ -44,6 +72,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
 - **CUMULUS-3699**
   - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
+- **CUMULUS-3792**
+  - Added database indexes to improve search performance
 
 ### Migration Notes
 
@@ -107,13 +137,20 @@ degraded execution table operations.
 - **CUMULUS-3449**
   - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
     from columns ending with "cumulus_id" to number.
+- **CUMULUS-3824**
+  - Changed the ECS docker storage driver to `overlay2`, since `devicemapper` is removed in Docker Engine v25.0.
+  - Removed `ecs_docker_storage_driver` property from cumulus module.
 
 ### Fixed
 
+- **CUMULUS-3817**
+  - updated applicable @aws-sdk dependencies to 3.621.0 to remove inherited vulnerability from fast-xml-parser
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
     deletion to validate parent-child relationships
+- **CUMULUS-3818**
+  - Fixes default value (updated to tag 52) for async-operation-image in tf-modules/cumulus.
 
 ## [v18.3.2] 2024-07-24
 

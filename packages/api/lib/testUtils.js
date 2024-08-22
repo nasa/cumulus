@@ -19,14 +19,9 @@ const {
   translateApiExecutionToPostgresExecution,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRuleRaw,
-  translatePostgresPdrToApiPdr,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
-  indexCollection,
-  indexProvider,
-  indexPdr,
-  indexAsyncOperation,
   deleteExecution,
 } = require('@cumulus/es-client/indexer');
 const {
@@ -489,8 +484,6 @@ const createCollectionTestRecords = async (context, collectionParams) => {
     testKnex,
     collectionModel,
     collectionPgModel,
-    esClient,
-    esCollectionClient,
   } = context;
   const originalCollection = fakeCollectionFactory(collectionParams);
   if (collectionModel) {
@@ -502,14 +495,9 @@ const createCollectionTestRecords = async (context, collectionParams) => {
   const originalPgRecord = await collectionPgModel.get(
     testKnex, { cumulus_id: pgCollection.cumulus_id }
   );
-  await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
-  const originalEsRecord = await esCollectionClient.get(
-    constructCollectionId(originalCollection.name, originalCollection.version)
-  );
   return {
     originalCollection,
     originalPgRecord,
-    originalEsRecord,
   };
 };
 
@@ -517,8 +505,6 @@ const createProviderTestRecords = async (context, providerParams) => {
   const {
     testKnex,
     providerPgModel,
-    esClient,
-    esProviderClient,
   } = context;
   const originalProvider = fakeProviderFactory(providerParams);
 
@@ -527,14 +513,9 @@ const createProviderTestRecords = async (context, providerParams) => {
   const originalPgRecord = await providerPgModel.get(
     testKnex, { cumulus_id: pgProvider.cumulus_id }
   );
-  await indexProvider(esClient, originalProvider, process.env.ES_INDEX);
-  const originalEsRecord = await esProviderClient.get(
-    originalProvider.id
-  );
   return {
     originalProvider,
     originalPgRecord,
-    originalEsRecord,
   };
 };
 
@@ -572,8 +553,6 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   const {
     knex,
     pdrPgModel,
-    esClient,
-    esPdrsClient,
     collectionCumulusId,
     providerCumulusId,
   } = context;
@@ -595,14 +574,8 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pgPdr.cumulus_id }
   );
-  const originalPdr = await translatePostgresPdrToApiPdr(originalPgRecord, knex);
-  await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
-  const originalEsRecord = await esPdrsClient.get(
-    originalPdr.pdrName
-  );
   return {
     originalPgRecord,
-    originalEsRecord,
   };
 };
 
@@ -628,8 +601,6 @@ const createAsyncOperationTestRecords = async (context) => {
   const {
     knex,
     asyncOperationPgModel,
-    esClient,
-    esAsyncOperationClient,
   } = context;
 
   const originalAsyncOperation = fakeAsyncOperationFactory();
@@ -644,13 +615,8 @@ const createAsyncOperationTestRecords = async (context) => {
   const originalPgRecord = await asyncOperationPgModel.get(
     knex, { cumulus_id: pgAsyncOperation.cumulus_id }
   );
-  await indexAsyncOperation(esClient, originalAsyncOperation, process.env.ES_INDEX);
-  const originalEsRecord = await esAsyncOperationClient.get(
-    originalAsyncOperation.id
-  );
   return {
     originalPgRecord,
-    originalEsRecord,
   };
 };
 

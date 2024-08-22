@@ -12,6 +12,8 @@
     "cacheable-request",
     "http-cache-semantics",
     "lodash.pick",
-    "hoek"
+    "hoek",
+    "fast-xml-parser",
+    "semver"
   ]
 }

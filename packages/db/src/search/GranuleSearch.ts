@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
+import set from 'lodash/set';
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import Logger from '@cumulus/logger';
@@ -30,6 +31,10 @@ interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
  */
 export class GranuleSearch extends BaseSearch {
   constructor(event: QueryEvent) {
+    // estimate the table rowcount by default
+    if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
+      set(event, 'queryStringParameters.estimateTableRowCount', 'true');
+    }
     super(event, 'granule');
   }
 
@@ -50,7 +55,7 @@ export class GranuleSearch extends BaseSearch {
       pdrs: pdrsTable,
     } = TableNames;
     const countQuery = knex(this.tableName)
-      .count(`${this.tableName}.cumulus_id`);
+      .count('*');
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)
@@ -114,6 +119,7 @@ export class GranuleSearch extends BaseSearch {
   protected translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[])
     : Partial<ApiGranuleRecord>[] {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    const { fields } = this.dbQueryParameters;
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
       const granulePgRecord = item;
       const collectionPgRecord = {
@@ -126,9 +132,7 @@ export class GranuleSearch extends BaseSearch {
       const apiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
         granulePgRecord, collectionPgRecord, pdr, providerPgRecord,
       });
-      return this.dbQueryParameters.fields
-        ? pick(apiRecord, this.dbQueryParameters.fields)
-        : apiRecord;
+      return fields ? pick(apiRecord, fields) : apiRecord;
     });
     return apiRecords;
   }
