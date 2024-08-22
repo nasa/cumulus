@@ -210,11 +210,10 @@ test.serial('fetchRules allows for configurable page size', async (t) => {
     t.is(query.limit, 50);
     return { body: JSON.stringify({ results: [] }) };
   });
-  
-  await rulesHelpers.fetchRules({});
 
+  await rulesHelpers.fetchRules({});
   await rulesHelpers.fetchRules({ pageSize: 50 });
-  
+
   t.true(listRulesStub.calledTwice);
 });
 
