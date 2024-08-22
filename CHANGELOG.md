@@ -68,6 +68,9 @@ degraded execution table operations.
 - **CUMULUS-3449**
   - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
     from columns ending with "cumulus_id" to number.
+- **CUMULUS-3841**
+  - Increased `fetchRules` page size to default to 100 instead of 10. This improves overall query time when
+    fetching all rules such as in `sqsMessageConsumer`.
 
 ### Fixed
 
