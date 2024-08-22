@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-3841**
+  - Increased fetchRules page size to default to 100 instead of 10. This improves overall query time when fetching all rules such as in sqsMessageConsumer.
+
 ## [v18.3.3] 2024-08-09
 
 **Please note** changes in v18.3.3 may not yet be released in future versions, as this
