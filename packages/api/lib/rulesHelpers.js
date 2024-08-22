@@ -56,7 +56,7 @@ const log = new Logger({ sender: '@cumulus/rulesHelpers' });
  *
  * @param {Object} params - function params
  * @param {number} [params.pageNumber] - current page of API results
- * @param {number} [params.pageSize] - databse query page size used when calling listRules
+ * @param {number} [params.pageSize] - database query page size used when calling listRules
  * @param {Array<Object>} [params.rules] - partial rules Array
  * @param {Object} [params.queryParams] - API query params, empty query returns all rules
  * @returns {Promise<Array<Object>>} all matching rules

@@ -200,20 +200,30 @@ test.serial('fetchRules invokes API to fetch rules', async (t) => {
   t.true(listRulesStub.calledOnce);
 });
 
+test.serial('fetchRules allows for configurable page size', async (t) => {
+  listRulesStub.callsFake(({ query }) => {
+    t.is(query.limit, 50);
+    return { body: JSON.stringify({ results: [] }) };
+  });
+  
+  await rulesHelpers.fetchRules({ pageSize: 50 });
+  t.true(listRulesStub.calledOnce);
+});
+
 test.serial('fetchRules pages through results until reaching an empty list', async (t) => {
   const rule1 = { name: 'rule-1' };
   const rule2 = { name: 'rule-2' };
   const firstCallArgs = {
     prefix: process.env.stackName,
-    query: { page: 1 },
+    query: { limit: 100, page: 1 },
   };
   const secondCallArgs = {
     prefix: process.env.stackName,
-    query: { page: 2 },
+    query: { limit: 100, page: 2 },
   };
   const thirdCallArgs = {
     prefix: process.env.stackName,
-    query: { page: 3 },
+    query: { limit: 100, page: 3 },
   };
   listRulesStub.onFirstCall().callsFake((params) => {
     t.deepEqual(params, firstCallArgs);
