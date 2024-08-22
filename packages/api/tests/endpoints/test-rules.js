@@ -410,7 +410,7 @@ test.serial('search returns correct list of rules', async (t) => {
   t.is(newResults.length, 0);
 });
 
-test.serial('search returns the expected fields', async (t) => {
+test.serial('Rules search returns the expected fields', async (t) => {
   const response = await request(app)
     .get(`/rules?page=1&rule.type=onetime&provider=${t.context.pgProvider.name}`)
     .set('Accept', 'application/json')
