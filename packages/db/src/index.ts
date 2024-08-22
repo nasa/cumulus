@@ -152,6 +152,9 @@ export {
   GranuleSearch,
 } from './search/GranuleSearch';
 export {
+  ProviderSearch,
+} from './search/ProviderSearch';
+export {
   StatsSearch,
 } from './search/StatsSearch';
 

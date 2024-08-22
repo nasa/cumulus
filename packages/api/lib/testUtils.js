@@ -22,7 +22,6 @@ const {
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
-  indexProvider,
   indexRule,
   deleteExecution,
 } = require('@cumulus/es-client/indexer');
@@ -507,8 +506,6 @@ const createProviderTestRecords = async (context, providerParams) => {
   const {
     testKnex,
     providerPgModel,
-    esClient,
-    esProviderClient,
   } = context;
   const originalProvider = fakeProviderFactory(providerParams);
 
@@ -517,14 +514,9 @@ const createProviderTestRecords = async (context, providerParams) => {
   const originalPgRecord = await providerPgModel.get(
     testKnex, { cumulus_id: pgProvider.cumulus_id }
   );
-  await indexProvider(esClient, originalProvider, process.env.ES_INDEX);
-  const originalEsRecord = await esProviderClient.get(
-    originalProvider.id
-  );
   return {
     originalProvider,
     originalPgRecord,
-    originalEsRecord,
   };
 };
 

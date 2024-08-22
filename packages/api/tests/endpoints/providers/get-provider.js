@@ -9,8 +9,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { getEsClient } = require('@cumulus/es-client/search');
 const {
   destroyLocalTestDb,
   fakeProviderRecordFactory,
@@ -32,23 +30,12 @@ process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
-const esIndex = randomString();
-let esClient;
-
 let jwtAuthToken;
 let accessTokenModel;
 
 test.before(async (t) => {
   t.context.testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
   await s3().createBucket({ Bucket: process.env.system_bucket });
-
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch({
-    host: 'fakehost',
-    index: esIndex,
-    alias: esAlias,
-  });
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -59,7 +46,6 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
-  esClient = await getEsClient('fakehost');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
@@ -83,7 +69,6 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
-  await esClient.client.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
