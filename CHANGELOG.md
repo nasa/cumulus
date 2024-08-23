@@ -68,6 +68,9 @@ degraded execution table operations.
 - **CUMULUS-3449**
   - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
     from columns ending with "cumulus_id" to number.
+- **CUMULUS-3841**
+  - Increased `fetchRules` page size to default to 100 instead of 10. This improves overall query time when
+    fetching all rules such as in `sqsMessageConsumer`.
 
 ### Fixed
 
@@ -79,6 +82,8 @@ degraded execution table operations.
     deletion to validate parent-child relationships
 - **CUMULUS-3818**
   - Fixes default value (updated to tag 52) for async-operation-image in tf-modules/cumulus.
+- **CUMULUS-3840**
+  - Fixed `@cumulus/api/bin/serve` to correctly use EsClient.
 
 ## [v18.3.3] 2024-08-09
 
