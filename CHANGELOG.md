@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [v18.4.0] 2024-08-16
+## [Unreleased]
+
+### Breaking Changes
+
+- This release includes `Replace ElasicSearch Phase 1` updates, we no longer save `collection/granule/execution` records to
+ElasticSearch, the `collections/granules/executions` API endpoints are updated to perform operations on the postgres database.
 
 ### Migration Notes
 
@@ -15,6 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   (https://nasa.github.io/cumulus/docs/next/upgrade-notes/update_table_indexes_CUMULUS_3792)
 
 ### Replace ElasticSearch Phase 1
+
 - **CUMULUS-3238**
   - Removed elasticsearch dependency from collections endpoint
 - **CUMULUS-3239**
@@ -56,6 +62,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
+
+## [v18.4.0] 2024-08-16
 
 ### Migration Notes
 
