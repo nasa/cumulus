@@ -32,12 +32,17 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
 
-  // Create a PG Collection
+  // Create PG Collections
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.testPgCollection = fakeCollectionRecordFactory(
     { cumulus_id: 0,
       name: 'testCollection',
       version: 8 }
+  );
+  t.context.testPgCollection2 = fakeCollectionRecordFactory(
+    { cumulus_id: 1,
+      name: 'testCollection2',
+      version: 4 }
   );
 
   await t.context.collectionPgModel.insert(
@@ -45,11 +50,21 @@ test.before(async (t) => {
     t.context.testPgCollection
   );
 
+  await t.context.collectionPgModel.insert(
+    t.context.knex,
+    t.context.testPgCollection2
+  );
+
   t.context.collectionCumulusId = t.context.testPgCollection.cumulus_id;
+  t.context.collectionCumulusId2 = t.context.testPgCollection2.cumulus_id;
 
   t.context.collectionId = constructCollectionId(
     t.context.testPgCollection.name,
     t.context.testPgCollection.version
+  );
+  t.context.collectionId2 = constructCollectionId(
+    t.context.testPgCollection2.name,
+    t.context.testPgCollection2.version
   );
 
   // Create a Provider
@@ -57,13 +72,21 @@ test.before(async (t) => {
   t.context.testProvider = fakeProviderRecordFactory({
     name: 'testProvider',
   });
+  t.context.testProvider2 = fakeProviderRecordFactory({
+    name: 'testProvider2',
+  });
 
   const [pgProvider] = await t.context.providerPgModel.insert(
     t.context.knex,
     t.context.testProvider
   );
+  const [pgProvider2] = await t.context.providerPgModel.insert(
+    t.context.knex,
+    t.context.testProvider2
+  );
 
   t.context.providerCumulusId = pgProvider.cumulus_id;
+  t.context.providerCumulusId2 = pgProvider2.cumulus_id;
 
   // Create an Async Operation
   t.context.asyncOperationsPgModel = new AsyncOperationPgModel();
@@ -78,18 +101,27 @@ test.before(async (t) => {
   t.context.duration = 100;
 
   // Create a lot of Rules
+  t.context.ruleSearchFields = {
+    createdAt: new Date(2017, 11, 31),
+    updatedAt: new Date(2018, 0, 1),
+    updatedAt2: new Date(2018, 0, 2),
+  };
+
   const rules = [];
   t.context.rulePgModel = new RulePgModel();
 
   range(50).map((num) => (
     rules.push(fakeRuleRecordFactory({
       name: `fakeRule-${num}`,
-      created_at: new Date(2017, 11, 31),
-      updated_at: new Date(2018, 0, 1),
+      created_at: t.context.ruleSearchFields.createdAt,
+      updated_at: (num % 2) ?
+        t.context.ruleSearchFields.updatedAt : t.context.ruleSearchFields.updatedAt2,
       enabled: num % 2 === 0,
       workflow: `testWorkflow-${num}`,
-      collection_cumulus_id: t.context.collectionCumulusId,
-      provider_cumulus_id: t.context.providerCumulusId,
+      collection_cumulus_id: (num % 2)
+        ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
+      provider_cumulus_id: (num % 2)
+        ?t.context.providerCumulusId : t.context.providerCumulusId2,
     }))
   ));
 
@@ -115,24 +147,24 @@ test('RuleSearch returns correct response for basic query', async (t) => {
 
   const expectedResponse1 = {
     name: 'fakeRule-0',
-    createdAt: new Date(2017, 11, 31).getTime(),
-    updatedAt: new Date(2018, 0, 1).getTime(),
+    createdAt: t.context.ruleSearchFields.createdAt.getTime(),
+    updatedAt: t.context.ruleSearchFields.updatedAt2.getTime(),
     state: 'ENABLED',
     rule: {
       type: 'onetime',
     },
     workflow: 'testWorkflow-0',
     collection: {
-      name: 'testCollection',
-      version: '8',
+      name: 'testCollection2',
+      version: '4',
     },
-    provider: t.context.testProvider.name,
+    provider: t.context.testProvider2.name,
   };
 
   const expectedResponse10 = {
     name: 'fakeRule-9',
-    createdAt: new Date(2017, 11, 31).getTime(),
-    updatedAt: new Date(2018, 0, 1).getTime(),
+    createdAt: t.context.ruleSearchFields.createdAt.getTime(),
+    updatedAt: t.context.ruleSearchFields.updatedAt.getTime(),
     state: 'DISABLED',
     rule: {
       type: 'onetime',
@@ -268,4 +300,78 @@ test('RuleSearch supports sorting', async (t) => {
   t.is(response.results?.length, 50);
   t.true(response.results[0].workflow > response.results[10].workflow);
   t.true(response.results[1].workflow > response.results[30].workflow);
+});
+
+test('RuleSearch supports collectionId term search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    collectionId: t.context.collectionId,
+  };
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
+});
+
+test('RuleSearch supports provider term search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    provider: t.context.testProvider.name,
+  };
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
+});
+
+test('RuleSearch supports term search for date field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    updatedAt: t.context.ruleSearchFields.updatedAt,
+  };
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
+});
+
+test('RuleSearch supports term search for boolean field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    state: 'ENABLED', // maps to the bool field "enabled"
+  };
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
+});
+
+test('RuleSearch supports term search for timestamp', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    timestamp: t.context.ruleSearchFields.updatedAt, //maps to timestamp
+  };
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
+});
+
+test('RuleSearch supports range search', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    timestamp__from: t.context.ruleSearchFields.timestamp,
+    timestamp__to: t.context.ruleSearchFields.timestamp + 1600,
+  };
+  let dbSearch = new RuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
 });
