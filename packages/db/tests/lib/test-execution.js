@@ -1,9 +1,11 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
 const randomGranuleId = () => `granuleId_${cryptoRandomString({ length: 10 })}`;
 const randomWorkflow = () => `workflow_${cryptoRandomString({ length: 10 })}`;
+
 const {
   batchDeleteExecutionFromDatabaseByCumulusCollectionId,
   CollectionPgModel,
@@ -809,6 +811,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values for single
     granule_cumulus_id: granuleCumulusId,
     execution_cumulus_id: executionCumulusId3,
   });
+
   const results = await getWorkflowNameIntersectFromGranuleIds(knex, [granuleCumulusId]);
 
   t.deepEqual(results.sort(), ['fakeWorkflow', 'fakeWorkflow2']);
