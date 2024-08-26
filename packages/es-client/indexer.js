@@ -295,20 +295,6 @@ function indexReconciliationReport(esClient, payload, index = defaultIndexAlias,
 }
 
 /**
- * Indexes the rule type on Elasticsearch
- *
- * @param  {Object} esClient - Elasticsearch Connection object
- * @param  {Object} payload  - the Rule record
- * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type     - Elasticsearch type (default: rule)
- * @returns {Promise} Elasticsearch response
- */
-
-function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') {
-  return genericRecordUpdate(esClient, payload.name, payload, index, type);
-}
-
-/**
  * Indexes the granule type on Elasticsearch
  *
  * @param  {Object} esClient - Elasticsearch Connection object
@@ -610,33 +596,6 @@ function deleteProvider({
 }
 
 /**
- * Deletes the rule in Elasticsearch
- *
- * @param  {Object} params
- * @param  {Object} params.esClient - Elasticsearch Connection object
- * @param  {string} params.name - the rule name
- * @param  {string[]} [params.ignore] - Array of response codes to ignore
- * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
- * @param  {string} params.type - Elasticsearch type (default: rule)
- * @returns {Promise} Elasticsearch response
- */
-function deleteRule({
-  esClient,
-  name,
-  ignore,
-  index = defaultIndexAlias,
-  type = 'rule',
-}) {
-  return deleteRecord({
-    esClient,
-    id: name,
-    index,
-    type,
-    ignore,
-  });
-}
-
-/**
  * Deletes the PDR in Elasticsearch
  *
  * @param  {Object} params
@@ -805,7 +764,6 @@ module.exports = {
   deleteProvider,
   deleteReconciliationReport,
   deleteRecord,
-  deleteRule,
   executionInvalidNullFields,
   granuleInvalidNullFields,
   genericRecordUpdate,
@@ -816,7 +774,6 @@ module.exports = {
   indexPdr,
   indexProvider,
   indexReconciliationReport,
-  indexRule,
   updateAsyncOperation,
   upsertExecution,
   upsertGranule,
