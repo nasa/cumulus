@@ -1,12 +1,7 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-const sinon = require('sinon');
 const test = require('ava');
-const omit = require('lodash/omit');
 
-const sortBy = require('lodash/sortBy');
 const cryptoRandomString = require('crypto-random-string');
 const {
   CollectionPgModel,
@@ -19,7 +14,6 @@ const {
   fakeProviderRecordFactory,
   FilePgModel,
   generateLocalTestDb,
-  getUniqueGranuleByGranuleId,
   GranulePgModel,
   GranulesExecutionsPgModel,
   localStackConnectionEnv,
@@ -27,67 +21,40 @@ const {
   PdrPgModel,
   ProviderPgModel,
   translateApiExecutionToPostgresExecution,
-  translateApiFiletoPostgresFile,
-  translateApiGranuleToPostgresGranule,
-  translatePostgresFileToApiFile,
   translatePostgresGranuleToApiGranule,
   upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 
 const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
 const {
-  buildS3Uri,
   createBucket,
-  createS3Buckets,
-  deleteS3Buckets,
   recursivelyDeleteS3Bucket,
-  s3ObjectExists,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
-const { secretsManager, sfn, s3, sns, sqs } = require('@cumulus/aws-client/services');
+const { secretsManager, sns, sqs } = require('@cumulus/aws-client/services');
 const {
   SubscribeCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
-const { CMR } = require('@cumulus/cmr-client');
-const { metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search, multipleRecordFoundString } = require('@cumulus/es-client/search');
-const launchpad = require('@cumulus/launchpad-auth');
+const { Search } = require('@cumulus/es-client/search');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { removeNilProperties } = require('@cumulus/common/util');
-
-const { getBucketsConfigKey } = require('@cumulus/common/stack');
-const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { create, del, patch, patchGranule } = require('../../endpoints/granules');
-const { sortFilesByKey } = require('../helpers/sort');
 const assertions = require('../../lib/assertions');
-const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
 
 const { request } = require('../helpers/request');
-
-const { version } = require('../../lib/version');
 
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
   fakeAccessTokenFactory,
-  fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers,
   fakeExecutionFactoryV2,
 } = require('../../lib/testUtils');
 const { createJwtToken } = require('../../lib/token');
-
-const {
-  generateMoveGranuleTestFilesAndEntries,
-  getFileNameFromKey,
-  getPgFilesFromGranuleCumulusId,
-} = require('./granules/helpers');
-const { buildFakeExpressResponse } = require('./utils');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
@@ -106,51 +73,6 @@ process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
-
-async function runTestUsingBuckets(buckets, testFunction) {
-  try {
-    await createS3Buckets(buckets);
-    await testFunction();
-  } finally {
-    await Promise.all(buckets.map(recursivelyDeleteS3Bucket));
-  }
-}
-
-/**
- * Helper for creating and uploading bucket configuration for 'move' tests.
- * @returns {Object} with keys of internalBucket, and publicBucket.
- */
-async function setupBucketsConfig() {
-  const systemBucket = process.env.system_bucket;
-  const buckets = {
-    protected: {
-      name: systemBucket,
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-
-  process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
-  await s3PutObject({
-    Bucket: systemBucket,
-    Key: getBucketsConfigKey(process.env.stackName),
-    Body: JSON.stringify(buckets),
-  });
-  await createBucket(buckets.public.name);
-  // Create the required bucket map configuration file
-  await s3PutObject({
-    Bucket: systemBucket,
-    Key: getDistributionBucketMapKey(process.env.stackName),
-    Body: JSON.stringify({
-      [systemBucket]: systemBucket,
-      [buckets.public.name]: buckets.public.name,
-    }),
-  });
-  return { internalBucket: systemBucket, publicBucket: buckets.public.name };
-}
 
 test.before(async (t) => {
   process.env.CMR_ENVIRONMENT = 'SIT';

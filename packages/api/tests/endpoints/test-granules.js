@@ -374,15 +374,6 @@ test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
   await sns().send(new DeleteTopicCommand({ TopicArn }));
-  const granuleModel = new GranulePgModel();
-  const granuleExecutionModel = new GranulesExecutionsPgModel();
-  await Promise.all(t.context.fakePGGranuleRecords.map(async (pgGranule) => {
-    await granuleModel.delete(t.context.knex, { cumulus_id: pgGranule[0].cumulus_id });
-    await granuleExecutionModel.delete(t.context.knex, {
-      granule_cumulus_id: pgGranule[0].cumulus_id,
-      execution_cumulus_id: t.context.testExecutionCumulusId,
-    });
-  }));
 });
 
 test.after.always(async (t) => {
@@ -407,69 +398,6 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('default lists and paginates correctly with search_after', async (t) => {
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
-  const response = await request(app)
-    .get('/granules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { meta, results } = response.body;
-  t.is(results.length, 3);
-  t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'granule');
-  t.is(meta.count, 3);
-  results.forEach((r) => {
-    t.true(granuleIds.includes(r.granuleId));
-  });
-  // default paginates correctly with search_after
-  const firstResponse = await request(app)
-    .get('/granules?limit=1')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { meta: firstMeta, results: firstResults } = firstResponse.body;
-  t.is(firstResults.length, 1);
-  t.is(firstMeta.page, 1);
-  t.truthy(firstMeta.searchContext);
-
-  const newResponse = await request(app)
-    .get(`/granules?limit=1&page=2&searchContext=${firstMeta.searchContext}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { meta: newMeta, results: newResults } = newResponse.body;
-  t.is(newResults.length, 1);
-  t.is(newMeta.page, 2);
-  t.truthy(newMeta.searchContext);
-
-  t.true(granuleIds.includes(results[0].granuleId));
-  t.true(granuleIds.includes(newResults[0].granuleId));
-  t.not(results[0].granuleId, newResults[0].granuleId);
-  t.not(meta.searchContext === newMeta.searchContext);
-});
-
-test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const response = await request(app)
-    .get('/granules')
-    .set('Accept', 'application/json')
-    .expect(401);
-
-  assertions.isAuthorizationMissingResponse(t, response);
-});
-
-test.serial('CUMULUS-911 GET with pathParameters.granuleId set and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const response = await request(app)
-    .get('/granules/asdf')
-    .set('Accept', 'application/json')
-    .expect(401);
-
-  assertions.isAuthorizationMissingResponse(t, response);
-});
-
 test.serial('CUMULUS-911 .patch with pathParameters.granuleId set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .patch('/granules/asdf')
@@ -487,42 +415,6 @@ test.serial('CUMULUS-911 DELETE with pathParameters.granuleId set and without an
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
-
-test.serial('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const response = await request(app)
-    .get('/granules/asdf')
-    .set('Accept', 'application/json')
-    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(401);
-
-  assertions.isInvalidAccessTokenResponse(t, response);
-});
-
-test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
-  const accessTokenRecord = fakeAccessTokenFactory();
-  await accessTokenModel.create(accessTokenRecord);
-  const jwtToken = createJwtToken(accessTokenRecord);
-
-  const response = await request(app)
-    .get('/granules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtToken}`)
-    .expect(401);
-
-  assertions.isUnauthorizedUserResponse(t, response);
-});
-
-test.serial('CUMULUS-912 GET with pathParameters.granuleId set and with an invalid access token returns an unauthorized response', async (t) => {
-  const response = await request(app)
-    .get('/granules/asdf')
-    .set('Accept', 'application/json')
-    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(401);
-
-  assertions.isInvalidAccessTokenResponse(t, response);
-});
-
-test.todo('CUMULUS-912 GET with pathParameters.granuleId set and with an unauthorized user returns an unauthorized response');
 
 test.serial('CUMULUS-912 PUT with pathParameters.granuleId set and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
@@ -548,114 +440,6 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleId set and with an un
     .expect(401);
 
   assertions.isUnauthorizedUserResponse(t, response);
-});
-
-test.serial('GET returns the expected existing granule if a collectionId is NOT provided', async (t) => {
-  const { knex, fakePGGranules } = t.context;
-
-  const response = await request(app)
-    .get(`/granules/${t.context.fakePGGranules[0].granule_id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const pgGranule = await granulePgModel.get(knex, {
-    granule_id: fakePGGranules[0].granule_id,
-    collection_cumulus_id: fakePGGranules[0].collection_cumulus_id,
-  });
-
-  const expectedGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    knexOrTransaction: knex,
-  });
-
-  t.deepEqual(response.body, expectedGranule);
-});
-
-test.serial('GET returns the expected existing granule if a collectionId is provided', async (t) => {
-  const { knex, fakePGGranules, testPgCollection } = t.context;
-
-  const collectionId = constructCollectionId(testPgCollection.name, testPgCollection.version);
-
-  const response = await request(app)
-    .get(`/granules/${collectionId}/${t.context.fakePGGranules[2].granule_id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const pgGranule = await granulePgModel.get(knex, {
-    granule_id: fakePGGranules[2].granule_id,
-    collection_cumulus_id: fakePGGranules[2].collection_cumulus_id,
-  });
-
-  const expectedGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    knexOrTransaction: knex,
-  });
-
-  t.deepEqual(response.body, expectedGranule);
-});
-
-test.serial('GET returns a granule that has no files with the correct empty array files field', async (t) => {
-  const { knex, fakePGGranules } = t.context;
-
-  const response = await request(app)
-    .get(`/granules/${t.context.fakePGGranules[1].granule_id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const pgGranule = await granulePgModel.get(knex, {
-    granule_id: fakePGGranules[1].granule_id,
-    collection_cumulus_id: fakePGGranules[1].collection_cumulus_id,
-  });
-
-  const expectedGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    knexOrTransaction: knex,
-  });
-
-  t.deepEqual(response.body.files, []);
-  t.deepEqual(expectedGranule.files, []);
-});
-
-test.serial('GET returns a 400 response if the collectionId is in the wrong format', async (t) => {
-  const response = await request(app)
-    .get(`/granules/unknownCollection/${t.context.fakePGGranules[2].granule_id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
-
-  t.is(response.status, 400);
-  const { message } = response.body;
-  t.is(message, 'invalid collectionId: "unknownCollection"');
-});
-
-test.serial("GET returns a 404 response if the granule's collection is not found", async (t) => {
-  const response = await request(app)
-    .get(`/granules/unknown___unknown/${t.context.fakePGGranules[2].granule_id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404);
-
-  t.is(response.status, 404);
-  const { message } = response.body;
-  t.is(
-    message,
-    `No collection found for granuleId ${t.context.fakePGGranules[2].granule_id} with collectionId unknown___unknown`
-  );
-});
-
-test.serial('GET returns a 404 response if the granule is not found', async (t) => {
-  const response = await request(app)
-    .get('/granules/unknownGranule')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404);
-
-  t.is(response.status, 404);
-  const { message } = response.body;
-  t.is(message, 'Granule not found');
 });
 
 test.serial('PATCH fails if action is not supported', async (t) => {
@@ -3850,50 +3634,6 @@ test.serial('PUT returns 404 if collection is not part of URI', async (t) => {
     .send(newGranule);
 
   t.is(response.statusCode, 404);
-});
-
-test.serial('default paginates correctly with search_after', async (t) => {
-  const response = await request(app)
-    .get('/granules?limit=1')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
-
-  const { meta, results } = response.body;
-  t.is(results.length, 1);
-  t.is(meta.page, 1);
-  t.truthy(meta.searchContext);
-
-  const newResponse = await request(app)
-    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { meta: newMeta, results: newResults } = newResponse.body;
-  t.is(newResults.length, 1);
-  t.is(newMeta.page, 2);
-  t.truthy(newMeta.searchContext);
-  console.log(`default paginates granuleIds: ${JSON.stringify(granuleIds)}, results: ${results[0].granuleId}, ${newResults[0].granuleId}`);
-  t.true(granuleIds.includes(results[0].granuleId));
-  t.true(granuleIds.includes(newResults[0].granuleId));
-  t.not(results[0].granuleId, newResults[0].granuleId);
-  t.not(meta.searchContext === newMeta.searchContext);
-});
-
-test.serial('PUT returns 400 for version value less than the configured value', async (t) => {
-  const granuleId = t.context.createGranuleId();
-  const response = await request(app)
-    .put(`/granules/${t.context.collectionId}/${granuleId}`)
-    .set('Cumulus-API-Version', '0')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
-    .expect(400);
-  t.is(response.status, 400);
-  t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
 });
 
 test.serial('PATCH returns 400 for version value less than the configured value', async (t) => {
