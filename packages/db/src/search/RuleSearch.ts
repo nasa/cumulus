@@ -99,7 +99,7 @@ export class RuleSearch extends BaseSearch {
   * @returns translated api records
   */
   protected async translatePostgresRecordsToApiRecords(
-    pgRecords: RuleRecordWithExternals[],
+    pgRecords: RuleRecordWithExternals[]
   ): Promise<Partial<RuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
@@ -112,7 +112,7 @@ export class RuleSearch extends BaseSearch {
       const apiRecord = await translatePostgresRuleToApiRuleWithoutDbQuery(
         record,
         collectionPgRecord,
-        providerPgRecord,
+        providerPgRecord
       );
       return this.dbQueryParameters.fields
         ? pick(apiRecord, this.dbQueryParameters.fields)

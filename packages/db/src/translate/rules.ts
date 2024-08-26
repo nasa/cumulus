@@ -11,32 +11,32 @@ import { PostgresCollectionRecord } from '../types/collection';
 export const translatePostgresRuleToApiRuleWithoutDbQuery = async (
   pgRule: PostgresRuleRecord,
   collectionPgRecord?: Pick<PostgresCollectionRecord, 'name' | 'version'>,
-  providerPgRecord?: Partial<PostgresProviderRecord>,
+  providerPgRecord?: Partial<PostgresProviderRecord>
 ): Promise<RuleRecord> => {
   const apiRule: RuleRecord = {
-      name: pgRule.name,
-      workflow: pgRule.workflow,
-      provider: providerPgRecord ? providerPgRecord.name : undefined,
-      collection: collectionPgRecord ? {
-        name: collectionPgRecord.name,
-        version: collectionPgRecord.version,
-      } : undefined,
-      rule: <Rule>removeNilProperties({
-        type: pgRule.type,
-        arn: pgRule.arn,
-        logEventArn: pgRule.log_event_arn,
-        value: pgRule.value,
-      }),
-      state: pgRule.enabled ? 'ENABLED' : 'DISABLED',
-      meta: pgRule.meta,
-      payload: pgRule.payload,
-      executionNamePrefix: pgRule.execution_name_prefix,
-      queueUrl: pgRule.queue_url,
-      tags: pgRule.tags,
-      createdAt: pgRule.created_at.getTime(),
-      updatedAt: pgRule.updated_at.getTime(),
-    };
-    return <RuleRecord>removeNilProperties(apiRule);
+    name: pgRule.name,
+    workflow: pgRule.workflow,
+    provider: providerPgRecord ? providerPgRecord.name : undefined,
+    collection: collectionPgRecord ? {
+      name: collectionPgRecord.name,
+      version: collectionPgRecord.version,
+    } : undefined,
+    rule: <Rule>removeNilProperties({
+      type: pgRule.type,
+      arn: pgRule.arn,
+      logEventArn: pgRule.log_event_arn,
+      value: pgRule.value,
+    }),
+    state: pgRule.enabled ? 'ENABLED' : 'DISABLED',
+    meta: pgRule.meta,
+    payload: pgRule.payload,
+    executionNamePrefix: pgRule.execution_name_prefix,
+    queueUrl: pgRule.queue_url,
+    tags: pgRule.tags,
+    createdAt: pgRule.created_at.getTime(),
+    updatedAt: pgRule.updated_at.getTime(),
+  };
+  return <RuleRecord>removeNilProperties(apiRule);
 };
 
 export const translatePostgresRuleToApiRule = async (
@@ -55,7 +55,7 @@ export const translatePostgresRuleToApiRule = async (
   return translatePostgresRuleToApiRuleWithoutDbQuery(
     pgRule,
     collectionPgRecord,
-    providerPgRecord,
+    providerPgRecord
   );
 };
 

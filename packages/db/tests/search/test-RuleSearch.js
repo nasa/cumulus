@@ -121,7 +121,7 @@ test.before(async (t) => {
       collection_cumulus_id: (num % 2)
         ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
       provider_cumulus_id: (num % 2)
-        ?t.context.providerCumulusId : t.context.providerCumulusId2,
+        ? t.context.providerCumulusId : t.context.providerCumulusId2,
     }))
   ));
 
@@ -364,13 +364,13 @@ test('RuleSearch supports term search for timestamp', async (t) => {
 
 test('RuleSearch supports range search', async (t) => {
   const { knex } = t.context;
-  let queryStringParameters = {
+  const queryStringParameters = {
     limit: 200,
     timestamp__from: t.context.ruleSearchFields.timestamp,
     timestamp__to: t.context.ruleSearchFields.timestamp + 1600,
   };
-  let dbSearch = new RuleSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  const dbSearch = new RuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
 
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
