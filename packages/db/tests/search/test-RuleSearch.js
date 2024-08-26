@@ -118,6 +118,7 @@ test.before(async (t) => {
         t.context.ruleSearchFields.updatedAt : t.context.ruleSearchFields.updatedAt2,
       enabled: num % 2 === 0,
       workflow: `testWorkflow-${num}`,
+      queue_url: (num % 2) ? 'https://sqs.us-east-1.amazonaws.com/123/456' : null,
       collection_cumulus_id: (num % 2)
         ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
       provider_cumulus_id: (num % 2)
@@ -175,6 +176,7 @@ test('RuleSearch returns correct response for basic query', async (t) => {
       version: '8',
     },
     provider: t.context.testProvider.name,
+    queueUrl: 'https://sqs.us-east-1.amazonaws.com/123/456',
   };
 
   t.deepEqual(results.results[0], expectedResponse1);
@@ -372,6 +374,69 @@ test('RuleSearch supports range search', async (t) => {
   const dbSearch = new RuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
 
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('RuleSearch supports search which checks existence of queue URL field', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    queueUrl__exists: 'true',
+  };
+  let dbSearch = new RuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
+
+  queryStringParameters = {
+    limit: 200,
+    queueUrl__exists: 'false',
+  };
+  dbSearch = new RuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
+});
+
+test('RuleSearch supports collectionId terms search', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    collectionId__in: [t.context.collectionId2, constructCollectionId('fakecollectionterms', 'v1')].join(','),
+  };
+  let dbSearch = new RuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
+
+  queryStringParameters = {
+    limit: 200,
+    collectionId__in: [t.context.collectionId, t.context.collectionId2].join(','),
+  };
+  dbSearch = new RuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('RuleSearch supports search which provider does not match the given value', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 200,
+    provider__not: t.context.testProvider.name,
+  };
+  let dbSearch = new RuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 25);
+  t.is(response.results?.length, 25);
+
+  queryStringParameters = {
+    limit: 200,
+    provider__not: 'providernotexist',
+  };
+  dbSearch = new RuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
