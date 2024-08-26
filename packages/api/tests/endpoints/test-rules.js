@@ -444,10 +444,6 @@ test.serial('Rules search returns results without a provider or collection', asy
     ...t.context.testRuleWithoutForeignKeys,
     updatedAt: results[0].updatedAt,
     createdAt: results[0].createdAt,
-    collection: {
-      name: null,
-      version: null,
-    },
   };
 
   t.deepEqual(results[0], removeNilProperties(expectedRule));

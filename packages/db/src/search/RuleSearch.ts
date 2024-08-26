@@ -105,10 +105,10 @@ export class RuleSearch extends BaseSearch {
 
     const apiRecords = pgRecords.map(async (record) => {
       const providerPgRecord = record.providerName ? { name: record.providerName } : undefined;
-      const collectionPgRecord = {
+      const collectionPgRecord = record.collectionName ? {
         name: record.collectionName,
         version: record.collectionVersion,
-      };
+      }: undefined;
       const apiRecord = await translatePostgresRuleToApiRuleWithoutDbQuery(
         record,
         collectionPgRecord,
