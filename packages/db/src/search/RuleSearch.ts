@@ -108,7 +108,7 @@ export class RuleSearch extends BaseSearch {
       const collectionPgRecord = record.collectionName ? {
         name: record.collectionName,
         version: record.collectionVersion,
-      }: undefined;
+      } : undefined;
       const apiRecord = await translatePostgresRuleToApiRuleWithoutDbQuery(
         record,
         collectionPgRecord,
