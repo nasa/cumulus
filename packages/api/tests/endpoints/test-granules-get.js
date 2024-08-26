@@ -12,10 +12,8 @@ const {
   fakeGranuleRecordFactory,
   fakePdrRecordFactory,
   fakeProviderRecordFactory,
-  FilePgModel,
   generateLocalTestDb,
   GranulePgModel,
-  GranulesExecutionsPgModel,
   localStackConnectionEnv,
   migrationDir,
   PdrPgModel,
@@ -60,9 +58,7 @@ const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
 let accessTokenModel;
 let executionPgModel;
-let filePgModel;
 let granulePgModel;
-let granulesExecutionsPgModel;
 let jwtAuthToken;
 
 process.env.AccessTokensTable = randomId('token');
@@ -74,18 +70,16 @@ process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
-test.before(async (t) => {
+test.before(() => {
   process.env.CMR_ENVIRONMENT = 'SIT';
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
-
 });
 
 test.beforeEach(async (t) => {
-
   // create a fake bucket
   await createBucket(process.env.system_bucket);
 
@@ -96,8 +90,6 @@ test.beforeEach(async (t) => {
 
   granulePgModel = new GranulePgModel();
   t.context.granulePgModel = granulePgModel;
-  filePgModel = new FilePgModel();
-  granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -319,7 +311,6 @@ test.afterEach(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-
 test.serial('default lists and paginates correctly with search_after', async (t) => {
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const response = await request(app)
@@ -365,7 +356,6 @@ test.serial('default lists and paginates correctly with search_after', async (t)
   t.not(meta.searchContext === newMeta.searchContext);
 });
 
-
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/granules')
@@ -384,7 +374,6 @@ test.serial('CUMULUS-911 GET with pathParameters.granuleId set and without an Au
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-
 test.serial('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
     .get('/granules/asdf')
@@ -394,7 +383,6 @@ test.serial('CUMULUS-912 GET without pathParameters and with an invalid access t
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
-
 
 test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
@@ -421,7 +409,6 @@ test.serial('CUMULUS-912 GET with pathParameters.granuleId set and with an inval
 });
 
 test.todo('CUMULUS-912 GET with pathParameters.granuleId set and with an unauthorized user returns an unauthorized response');
-
 
 test.serial('GET returns the expected existing granule if a collectionId is NOT provided', async (t) => {
   const { knex, fakePGGranules } = t.context;
