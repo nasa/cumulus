@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/dla-migration-lambda",
-  "version": "18.3.3",
+  "version": "18.4.0",
   "description": "A Lambda function used for DLA migrations",
   "license": "Apache-2.0",
   "engines": {
@@ -24,11 +24,11 @@
     "webpack": "../../node_modules/.bin/webpack"
   },
   "dependencies": {
-    "@cumulus/aws-client": "18.3.3",
-    "@cumulus/common": "18.3.3",
-    "@cumulus/logger": "18.3.3",
-    "@cumulus/message": "18.3.3",
-    "@cumulus/types": "18.3.3",
+    "@cumulus/aws-client": "18.4.0",
+    "@cumulus/common": "18.4.0",
+    "@cumulus/logger": "18.4.0",
+    "@cumulus/message": "18.4.0",
+    "@cumulus/types": "18.4.0",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "p-map": "^4.0.0"
