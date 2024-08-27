@@ -8,8 +8,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { getEsClient } = require('@cumulus/es-client/search');
 const {
   localStackConnectionEnv,
   generateLocalTestDb,
@@ -34,9 +32,6 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-const esIndex = randomString();
-let esClient;
-
 let jwtAuthToken;
 let accessTokenModel;
 
@@ -53,14 +48,6 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
   t.context.collectionPgModel = new CollectionPgModel();
 
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch({
-    host: 'fakehost',
-    index: esIndex,
-    alias: esAlias,
-  });
-
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
@@ -70,8 +57,6 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-
-  esClient = await getEsClient('fakehost');
 });
 
 test.beforeEach(async (t) => {
@@ -85,7 +70,6 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.client.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
