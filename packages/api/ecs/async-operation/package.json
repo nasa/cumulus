@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ecs-async-operation",
-  "version": "18.3.3",
+  "version": "18.3.4",
   "description": "The docker image for running async operations",
   "keywords": [
     "NASA",
