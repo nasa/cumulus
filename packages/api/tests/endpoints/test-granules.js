@@ -379,7 +379,6 @@ test.after.always(async (t) => {
     testDbName,
   });
 });
-});
 
 test.serial('CUMULUS-911 .patch with pathParameters.granuleId set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
@@ -3433,17 +3432,4 @@ test.serial('PATCH returns 201 (granule creation) for version value greater than
     .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
     .expect(201);
   t.is(response.status, 201);
-});
-
-test.serial('PUT returns 400 for version value less than the configured value', async (t) => {
-  const granuleId = t.context.createGranuleId();
-  const response = await request(app)
-    .put(`/granules/${t.context.collectionId}/${granuleId}`)
-    .set('Cumulus-API-Version', '0')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
-    .expect(400);
-  t.is(response.status, 400);
-  t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
 });

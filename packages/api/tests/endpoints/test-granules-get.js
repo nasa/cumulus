@@ -311,7 +311,7 @@ test.afterEach(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('default lists and paginates correctly with search_after', async (t) => {
+test.serial.skip('default lists and paginates correctly with search_after', async (t) => {
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const response = await request(app)
     .get('/granules')
@@ -354,6 +354,48 @@ test.serial('default lists and paginates correctly with search_after', async (t)
   t.true(granuleIds.includes(newResults[0].granuleId));
   t.not(results[0].granuleId, newResults[0].granuleId);
   t.not(meta.searchContext === newMeta.searchContext);
+});
+
+test.serial('default lists and paginates correctly from querying database', async (t) => {
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+  const response = await request(app)
+    .get('/granules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 4);
+  t.is(meta.stack, process.env.stackName);
+  t.is(meta.table, 'granules');
+  t.true(meta.count > 0);
+  results.forEach((r) => {
+    t.true(granuleIds.includes(r.granuleId));
+  });
+  // default paginates correctly
+  const firstResponse = await request(app)
+    .get('/granules?limit=1')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: firstMeta, results: firstResults } = firstResponse.body;
+  t.is(firstResults.length, 1);
+  t.is(firstMeta.page, 1);
+
+  const newResponse = await request(app)
+    .get('/granules?limit=1&page=2')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newResults.length, 1);
+  t.is(newMeta.page, 2);
+
+  t.true(granuleIds.includes(results[0].granuleId));
+  t.true(granuleIds.includes(newResults[0].granuleId));
+  t.not(results[0].granuleId, newResults[0].granuleId);
 });
 
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -546,4 +588,39 @@ test.serial('default paginates correctly with search_after', async (t) => {
   t.true(granuleIds.includes(newResults[0].granuleId));
   t.not(results[0].granuleId, newResults[0].granuleId);
   t.not(meta.searchContext === newMeta.searchContext);
+});
+
+test.serial('LIST endpoint returns search result correctly', async (t) => {
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+  const searchParams = new URLSearchParams({
+    granuleId: granuleIds[3],
+  });
+  const response = await request(app)
+    .get(`/granules?limit=1&page=2&${searchParams}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta, results } = response.body;
+  t.is(meta.count, 2);
+  t.is(results.length, 1);
+  t.true([granuleIds[2], granuleIds[3]].includes(results[0].granuleId));
+
+  const newSearchParams = new URLSearchParams({
+    collectionId: t.context.collectionId,
+    status: 'failed',
+    duration: 52.235,
+    timestamp: t.context.fakePGGranules[0].timestamp.getTime(),
+  });
+  const newResponse = await request(app)
+    .get(`/granules?${newSearchParams}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newMeta.count, 2);
+  t.is(newResults.length, 2);
+  const newResultIds = newResults.map((g) => g.granuleId);
+  t.deepEqual([granuleIds[1], granuleIds[2]].sort(), newResultIds.sort());
 });
