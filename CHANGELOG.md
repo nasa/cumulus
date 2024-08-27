@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Fixed
+
+- **CUMULUS-3846**
+  - improve reliability of unit tests
+    - tests for granules api get requests separated out to new file
+    - cleanup of granule database resources to ensure no overlap
+    - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
+
 ## [v18.4.0] 2024-08-16
 
 ### Migration Notes
