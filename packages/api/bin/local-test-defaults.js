@@ -20,7 +20,7 @@ const getESClientAndIndex = async (stackName = localStackName) => {
   setLocalEsVariables(stackName);
   const client = await getEsClient(process.env.ES_HOST);
   const index = process.env.ES_INDEX;
-  return { client: client.client, index };
+  return { client, index };
 };
 
 module.exports = {
