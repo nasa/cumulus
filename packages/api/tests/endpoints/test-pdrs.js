@@ -26,12 +26,6 @@ const {
   fakePdrRecordFactory,
   fakeProviderRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
-const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
@@ -74,15 +68,6 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esPdrsClient = new Search(
-    {},
-    'pdr',
-    t.context.esIndex
-  );
-
   // create a fake bucket
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
@@ -98,11 +83,6 @@ test.before(async (t) => {
 
   // create fake PDR records
   fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
-  await Promise.all(
-    fakePdrs.map(
-      (pdr) => indexer.indexPdr(t.context.esClient, pdr, t.context.esIndex)
-    )
-  );
 
   // Create a PG Collection
   t.context.testPgCollection = fakeCollectionRecordFactory();
@@ -136,7 +116,6 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await cleanupTestIndex(t.context);
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,
@@ -216,7 +195,7 @@ test('default returns list of pdrs', async (t) => {
   const { meta, results } = response.body;
   t.is(results.length, 2);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'pdr');
+  t.is(meta.table, 'pdrs');
   t.is(meta.count, 2);
   const pdrNames = fakePdrs.map((i) => i.pdrName);
   results.forEach((r) => {
