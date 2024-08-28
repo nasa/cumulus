@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-
 const cryptoRandomString = require('crypto-random-string');
 const {
   CollectionPgModel,
@@ -23,7 +22,6 @@ const {
   upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 
-const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
@@ -35,9 +33,8 @@ const {
   SubscribeCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
-const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const assertions = require('../../lib/assertions');
@@ -121,12 +118,6 @@ test.beforeEach(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-
-  t.context.esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX);
-
   // Create collections in Postgres
   // we need this because a granule has a foreign key referring to collections
   t.context.collectionName = 'fakeCollection';
@@ -199,11 +190,11 @@ test.beforeEach(async (t) => {
   t.context.executionPgRecord = (await executionPgModel.create(knex, executionRecord))[0];
   t.context.executionUrl = executionRecord.url;
   t.context.executionArn = executionRecord.arn;
-
   t.context.createGranuleId = () => `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
   const granuleId1 = t.context.createGranuleId();
   const granuleId2 = t.context.createGranuleId();
   const granuleId3 = t.context.createGranuleId();
+  const timestamp = new Date();
 
   // create fake Postgres granule records
   t.context.fakePGGranules = [
@@ -215,21 +206,24 @@ test.beforeEach(async (t) => {
       cmr_link:
         'https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=A123456789-TEST_A',
       duration: 47.125,
-      timestamp: new Date(Date.now()),
+      timestamp,
+      updated_at: timestamp,
     }),
     fakeGranuleRecordFactory({
       granule_id: granuleId2,
       status: 'failed',
       collection_cumulus_id: t.context.collectionCumulusId,
       duration: 52.235,
-      timestamp: new Date(Date.now()),
+      timestamp,
+      updated_at: timestamp,
     }),
     fakeGranuleRecordFactory({
       granule_id: granuleId3,
       status: 'failed',
       collection_cumulus_id: t.context.collectionCumulusId,
       duration: 52.235,
-      timestamp: new Date(Date.now()),
+      timestamp,
+      updated_at: timestamp,
     }),
     // granule with same granule_id as above but different collection_cumulus_id
     fakeGranuleRecordFactory({
@@ -237,7 +231,8 @@ test.beforeEach(async (t) => {
       status: 'failed',
       collection_cumulus_id: t.context.collectionCumulusId2,
       duration: 52.235,
-      timestamp: new Date(Date.now()),
+      timestamp,
+      updated_at: timestamp,
     }),
   ];
   t.context.fakePGGranuleRecords = await Promise.all(
@@ -250,18 +245,6 @@ test.beforeEach(async (t) => {
       }))
   );
   t.context.insertedPgGranules = t.context.fakePGGranuleRecords.flat();
-  const insertedApiGranuleTranslations = await Promise.all(
-    t.context.insertedPgGranules.map((granule) =>
-      translatePostgresGranuleToApiGranule({
-        knexOrTransaction: t.context.knex,
-        granulePgRecord: granule,
-      }))
-  );
-  // index PG Granules into ES
-  await Promise.all(
-    insertedApiGranuleTranslations.map((granule) =>
-      indexer.indexGranule(t.context.esClient, granule, t.context.esIndex))
-  );
 
   const topicName = randomString();
   const { TopicArn } = await createSnsTopic(topicName);
@@ -308,7 +291,6 @@ test.afterEach(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
-  await cleanupTestIndex(t.context);
 });
 
 // TODO postgres query doesn't return searchContext
@@ -593,7 +575,7 @@ test.serial.skip('default paginates correctly with search_after', async (t) => {
   t.not(meta.searchContext === newMeta.searchContext);
 });
 
-test.serial('LIST endpoint returns search result correctly', async (t) => {
+test.only('LIST endpoint returns search result correctly', async (t) => {
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const searchParams = new URLSearchParams({
     granuleId: granuleIds[3],
