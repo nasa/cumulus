@@ -169,5 +169,5 @@ export { GranulePgModel } from './models/granule';
 export { GranulesExecutionsPgModel } from './models/granules-executions';
 export { PdrPgModel } from './models/pdr';
 export { ProviderPgModel } from './models/provider';
-export { ReconciliationReportPgModel } from './models/reconciliation_report'
+export { ReconciliationReportPgModel } from './models/reconciliation_report';
 export { RulePgModel } from './models/rule';

@@ -5,10 +5,10 @@ import { TableNames } from '../tables';
 import { PostgresReconciliationReport, PostgresReconciliationReportRecord } from '../types/reconciliation_report';
 
 class ReconciliationReportPgModel extends BasePgModel<PostgresReconciliationReport, PostgresReconciliationReportRecord> {
-  constructor () {
+  constructor() {
     super({
       tableName: TableNames.reconciliationReports,
-    })
+    });
   }
 
   create(
@@ -20,7 +20,7 @@ class ReconciliationReportPgModel extends BasePgModel<PostgresReconciliationRepo
 
   upsert(
     knexOrTransaction: Knex | Knex.Transaction,
-    reconciliationReport: PostgresReconciliationReport 
+    reconciliationReport: PostgresReconciliationReport
   ) {
     return knexOrTransaction(this.tableName)
       .insert(reconciliationReport)

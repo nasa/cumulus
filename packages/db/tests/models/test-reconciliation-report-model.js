@@ -1,4 +1,4 @@
-const test = require ('ava');
+const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const {
@@ -7,16 +7,15 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   migrationDir,
-} = require ('../../dist')
-// other models?
+} = require('../../dist');
 
 const testDbName = `rule_${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {
-  const { knexAdmin, knex } = generateLocalTestDb(
+  const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
     migrationDir
-  )
+  );
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
 
@@ -34,7 +33,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('ReconciliationReportPgModel.upsert() creates new reconciliation report' async (t) => {
+test('ReconciliationReportPgModel.upsert() creates new reconciliation report', async (t) => {
   const {
     knex,
     reconciliationReportPgModel,
@@ -49,27 +48,27 @@ test('ReconciliationReportPgModel.upsert() creates new reconciliation report' as
   );
 });
 
-test('ReconciliationReportPgModel.upsert() overwrites a reconciliation report record' async (t) => {
- const {
-  knex,
-  reconciliationReportPgModel,
-  reconciliationReportRecord,
- } = t.context
+test('ReconciliationReportPgModel.upsert() overwrites a reconciliation report record', async (t) => {
+  const {
+    knex,
+    reconciliationReportPgModel,
+    reconciliationReportRecord,
+  } = t.context;
 
- await reconciliationReportPgModel.create(knex, reconciliationReportRecord);
+  await reconciliationReportPgModel.create(knex, reconciliationReportRecord);
 
- const updatedReconciliationReport = {
-  ...reconciliationReportRecord,
-  type: 'ORCA Backup',
-  status: 'Failed',
- }
+  const updatedReconciliationReport = {
+    ...reconciliationReportRecord,
+    type: 'ORCA Backup',
+    status: 'Failed',
+  };
 
- t.like(
-  await reconciliationReportPgModel.get(knex, {
-    name: reconciliationReportRecord.name,
-  }),
-  updatedReconciliationReport
- );
+  t.like(
+    await reconciliationReportPgModel.get(knex, {
+      name: reconciliationReportRecord.name,
+    }),
+    updatedReconciliationReport
+  );
 });
-// test('ReconciliationReportPgModel.upsert() ' async (t) => {
+// test('ReconciliationReportPgModel.upsert() ', async (t) => {
 // });

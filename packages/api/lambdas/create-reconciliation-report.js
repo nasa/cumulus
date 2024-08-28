@@ -28,11 +28,10 @@ const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
 const { getEsClient } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 
+const { ReconciliationReportPgModel } = require('@cumulus/db');
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
-// const { ReconciliationReport } = require('../models');
-const { ReconciliationReportPgModel } = require ('@cumulus/db')
 const { errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
@@ -864,7 +863,7 @@ async function processRequest(params) {
     const updatedRecord = {
       ...reportPgRecord,
       status: 'Generated',
-    }
+    };
     reportPgRecord = await reconciliationReportModel.upsert(knex, updatedRecord);
     await indexReconciliationReport(esClient, reportPgRecord, process.env.ES_INDEX);
   } catch (error) {
@@ -887,7 +886,7 @@ async function processRequest(params) {
     throw error;
   }
 
-  return reconciliationReportModel.get(knex, { name: reportRecord.name });
+  return reconciliationReportModel.get(knex, { name: reportPgRecord.name });
 }
 
 async function handler(event) {
