@@ -31,7 +31,8 @@ const Logger = require('@cumulus/logger');
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
-const { ReconciliationReport } = require('../models');
+// const { ReconciliationReport } = require('../models');
+const { ReconciliationReportPgModel } = require ('@cumulus/db')
 const { errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
@@ -803,7 +804,7 @@ async function createReconciliationReport(recReportParams) {
  * @param {string} params.stackName - the name of the CUMULUS stack
  * @param {string} params.reportType - the type of reconciliation report
  * @param {string} params.reportName - the name of the report
- * @param {Knex} params.knex - Optional Instance of a Knex client for testing
+ * @param {Knex} params.knex - Knex client to interact with pg
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
@@ -824,16 +825,18 @@ async function processRequest(params) {
   if (reportType === 'Granule Inventory') reportKey = reportKey.replace('.json', '.csv');
 
   // add request to database
-  const reconciliationReportModel = new ReconciliationReport();
-  const reportRecord = {
+  // TODO: do this with pg/knex
+  // const reconciliationReportModel = new ReconciliationReport();
+  const reconciliationReportModel = new ReconciliationReportPgModel();
+  const builtReportRecord = {
     name: reportRecordName,
     type: reportType,
     status: 'Pending',
     location: buildS3Uri(systemBucket, reportKey),
   };
-  let apiRecord = await reconciliationReportModel.create(reportRecord);
-  await indexReconciliationReport(esClient, apiRecord, process.env.ES_INDEX);
-  log.info(`Report added to database as pending: ${JSON.stringify(apiRecord)}.`);
+  let [reportPgRecord] = await reconciliationReportModel.create(knex, builtReportRecord);
+  await indexReconciliationReport(esClient, reportPgRecord, process.env.ES_INDEX);
+  log.info(`Report added to database as pending: ${JSON.stringify(reportPgRecord)}.`);
 
   const concurrency = env.CONCURRENCY || 3;
 
@@ -857,27 +860,34 @@ async function processRequest(params) {
       // reportType is in ['Inventory', 'Granule Not Found']
       await createReconciliationReport(recReportParams);
     }
-    apiRecord = await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
-    await indexReconciliationReport(esClient, { ...apiRecord, status: 'Generated' }, process.env.ES_INDEX);
+    // apiRecord = await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
+    const updatedRecord = {
+      ...reportPgRecord,
+      status: 'Generated',
+    }
+    reportPgRecord = await reconciliationReportModel.upsert(knex, updatedRecord);
+    await indexReconciliationReport(esClient, reportPgRecord, process.env.ES_INDEX);
   } catch (error) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`);
-    const updates = {
+    const updatedErrorRecord = {
+      ...reportPgRecord,
       status: 'Failed',
       error: {
         Error: error.message,
         Cause: errorify(error),
       },
     };
-    apiRecord = await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+    // apiRecord = await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+    reportPgRecord = await reconciliationReportModel.upsert(knex, updatedErrorRecord);
     await indexReconciliationReport(
       esClient,
-      { ...apiRecord, ...updates },
+      reportPgRecord,
       process.env.ES_INDEX
     );
     throw error;
   }
 
-  return reconciliationReportModel.get({ name: reportRecord.name });
+  return reconciliationReportModel.get(knex, { name: reportRecord.name });
 }
 
 async function handler(event) {

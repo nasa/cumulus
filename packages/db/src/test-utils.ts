@@ -16,6 +16,7 @@ import { PostgresFile } from './types/file';
 import { PostgresGranule } from './types/granule';
 import { PostgresPdr } from './types/pdr';
 import { PostgresProvider } from './types/provider';
+import { PostgresReconciliationReport } from './types/reconciliation_report';
 import { PostgresRule } from './types/rule';
 
 export const createTestDatabase = async (knex: Knex, dbName: string, dbUser: string) => {
@@ -150,5 +151,16 @@ export const fakePdrRecordFactory = (
   name: `pdr${cryptoRandomString({ length: 10 })}`,
   status: 'running',
   created_at: new Date(),
+  ...params,
+});
+
+export const fakeReconciliationReportRecordFactory = (
+  params: Partial<PostgresReconciliationReport>
+) => ({
+  name: `reconReport${cryptoRandomString({ length: 10 })}`,
+  type: 'Granule Inventory',
+  status: 'Generated',
+  created_at: new Date(),
+  updated_at: new Date(),
   ...params,
 });
