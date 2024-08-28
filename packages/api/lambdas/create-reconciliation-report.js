@@ -859,16 +859,16 @@ async function processRequest(params) {
       // reportType is in ['Inventory', 'Granule Not Found']
       await createReconciliationReport(recReportParams);
     }
-    // apiRecord = await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
-    const updatedRecord = {
+
+    const generatedRecord = {
       ...reportPgRecord,
       status: 'Generated',
     };
-    reportPgRecord = await reconciliationReportModel.upsert(knex, updatedRecord);
+    reportPgRecord = await reconciliationReportModel.upsert(knex, generatedRecord);
     await indexReconciliationReport(esClient, reportPgRecord, process.env.ES_INDEX);
   } catch (error) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`);
-    const updatedErrorRecord = {
+    const erroredRecord = {
       ...reportPgRecord,
       status: 'Failed',
       error: {
@@ -876,8 +876,7 @@ async function processRequest(params) {
         Cause: errorify(error),
       },
     };
-    // apiRecord = await reconciliationReportModel.update({ name: reportRecord.name }, updates);
-    reportPgRecord = await reconciliationReportModel.upsert(knex, updatedErrorRecord);
+    reportPgRecord = await reconciliationReportModel.upsert(knex, erroredRecord);
     await indexReconciliationReport(
       esClient,
       reportPgRecord,

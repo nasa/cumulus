@@ -2,8 +2,12 @@ import { Knex } from 'knex';
 import { BasePgModel } from './base';
 import { TableNames } from '../tables';
 
-import { PostgresReconciliationReport, PostgresReconciliationReportRecord } from '../types/reconciliation_report';
+import {
+  PostgresReconciliationReport,
+  PostgresReconciliationReportRecord,
+} from '../types/reconciliation_report';
 
+// eslint-disable-next-line max-len
 class ReconciliationReportPgModel extends BasePgModel<PostgresReconciliationReport, PostgresReconciliationReportRecord> {
   constructor() {
     super({
