@@ -65,6 +65,16 @@ abstract class BaseSearch {
   }
 
   /**
+   * check if joined executions table search is needed
+   *
+   * @returns whether execution search is needed
+   */
+  protected searchExecution(): boolean {
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.executionArn || term?.executionArn || terms?.executionArn);
+  }
+
+  /**
    * check if joined pdrs table search is needed
    *
    * @returns whether pdr search is needed
@@ -195,6 +205,9 @@ abstract class BaseSearch {
         case 'collectionVersion':
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.collection_cumulus_id`));
           break;
+        case 'executionArn':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.execution_cumulus_id`));
+          break;
         case 'providerName':
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.provider_cumulus_id`));
           break;
@@ -279,6 +292,9 @@ abstract class BaseSearch {
         case 'collectionVersion':
           [countQuery, searchQuery].forEach((query) => query?.where(`${collectionsTable}.version`, value));
           break;
+        case 'executionArn':
+          [countQuery, searchQuery].forEach((query) => query?.where(`${executionsTable}.arn`, value));
+          break;
         case 'providerName':
           [countQuery, searchQuery].forEach((query) => query?.where(`${providersTable}.name`, value));
           break;
@@ -342,6 +358,9 @@ abstract class BaseSearch {
 
     Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
+        case 'executionArn':
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${executionsTable}.arn`, value));
+          break;
         case 'providerName':
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${providersTable}.name`, value));
           break;
@@ -398,6 +417,9 @@ abstract class BaseSearch {
     }
     Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
+        case 'executionArn':
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${executionsTable}.arn`, value));
+          break;
         case 'providerName':
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${providersTable}.name`, value));
           break;

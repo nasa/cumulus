@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Replace ElasticSearch Phase 2
 
+- **CUMULUS-3231**
+  - Updated API `pdrs` `LIST` endpoint to query postgres
 - **CUMULUS-3232**
   - Update API PDR endpoints `DEL` and `GET` to not update Elasticsearch
 - **CUMULUS-3235**

@@ -56,8 +56,7 @@ export class PdrSearch extends BaseSearch {
         executionArn: `${executionsTable}.arn`,
       })
       .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
-      .innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`)
-      .leftJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
+      .innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
 
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
@@ -65,6 +64,13 @@ export class PdrSearch extends BaseSearch {
 
     if (this.searchProvider()) {
       countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    }
+
+    if (this.searchExecution()) {
+      [countQuery, searchQuery].forEach((query) =>
+        query.innerJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`));
+    } else {
+      searchQuery.leftJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
     }
 
     return { countQuery, searchQuery };
