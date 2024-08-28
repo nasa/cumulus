@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v19.0.0] 2024-08-28
+
 ### Breaking Changes
 
 - This release includes `Replace ElasicSearch Phase 1` updates, we no longer save `collection/granule/execution` records to
@@ -8024,7 +8026,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v18.4.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v19.0.0...HEAD
+[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v19.0.0
 [v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.4.0
 [v18.3.3]: https://github.com/nasa/cumulus/compare/v18.3.2...v18.3.3
 [v18.3.2]: https://github.com/nasa/cumulus/compare/v18.3.1...v18.3.2
