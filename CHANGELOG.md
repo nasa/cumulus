@@ -146,6 +146,17 @@ degraded execution table operations.
 - **CUMULUS-3840**
   - Fixed `@cumulus/api/bin/serve` to correctly use EsClient.
 
+## [v18.3.4] 2024-08-27
+
+**Please note** changes in v18.3.4 may not yet be released in future versions, as this
+is a backport/patch release on the v18.3.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Changed
+
+- **CUMULUS-3841**
+  - Increased `fetchRules` page size to default to 100 instead of 10. This improves overall query time when fetching all rules such as in `sqsMessageConsumer`.
+
 ## [v18.3.3] 2024-08-09
 
 **Please note** changes in v18.3.3 may not yet be released in future versions, as this
@@ -8028,7 +8039,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 [Unreleased]: https://github.com/nasa/cumulus/compare/v19.0.0...HEAD
 [v19.0.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v19.0.0
-[v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.4.0
+[v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.4...v18.4.0
+[v18.3.4]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.3.4
 [v18.3.3]: https://github.com/nasa/cumulus/compare/v18.3.2...v18.3.3
 [v18.3.2]: https://github.com/nasa/cumulus/compare/v18.3.1...v18.3.2
 [v18.3.1]: https://github.com/nasa/cumulus/compare/v18.2.2...v18.3.1
