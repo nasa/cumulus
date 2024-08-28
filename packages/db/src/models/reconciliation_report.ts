@@ -22,7 +22,7 @@ class ReconciliationReportPgModel extends BasePgModel<PostgresReconciliationRepo
     knexOrTransaction: Knex | Knex.Transaction,
     reconciliationReport: PostgresReconciliationReport 
   ) {
-    return await knexOrTransaction(this.tableName)
+    return knexOrTransaction(this.tableName)
       .insert(reconciliationReport)
       .onConflict('name')
       .merge()
