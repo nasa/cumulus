@@ -60,7 +60,7 @@ export class CollectionSearch extends BaseSearch {
       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${prefix}%`));
+      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
     }
   }
 
@@ -160,6 +160,7 @@ export class CollectionSearch extends BaseSearch {
   protected async translatePostgresRecordsToApiRecords(pgRecords: PostgresCollectionRecord[],
     knex: Knex): Promise<Partial<CollectionRecordApi>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+
     const { fields } = this.dbQueryParameters;
     let statsRecords: StatsRecords;
     const cumulusIds = pgRecords.map((record) => record.cumulus_id);

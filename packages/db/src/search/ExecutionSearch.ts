@@ -130,7 +130,7 @@ export class ExecutionSearch extends BaseSearch {
       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.arn`, `%${infix}%`));
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.arn`, `%${prefix}%`));
+      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.arn`, `${prefix}%`));
     }
   }
 
