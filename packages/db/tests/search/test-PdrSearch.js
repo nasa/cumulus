@@ -134,7 +134,7 @@ test.before(async (t) => {
   );
 });
 
-test('GranuleSearch returns 10 granule records by default', async (t) => {
+test('GranuleSearch returns 10 PDR records by default', async (t) => {
   const { knex } = t.context;
   const dbSearch = new PdrSearch();
   const response = await dbSearch.query(knex);
@@ -397,7 +397,7 @@ test('PdrSearch returns fields specified', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 10);
-  response.results.forEach((granule) => t.deepEqual(Object.keys(granule), fields.split(',')));
+  response.results.forEach((pdr) => t.deepEqual(Object.keys(pdr), fields.split(',')));
 });
 
 test('PdrSearch supports sorting', async (t) => {
