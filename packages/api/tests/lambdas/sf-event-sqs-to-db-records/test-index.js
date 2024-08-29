@@ -9,11 +9,12 @@ const uuidv4 = require('uuid/v4');
 const proxyquire = require('proxyquire');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const {
-  sns,
-  sqs,
-} = require('@cumulus/aws-client/services');
+const { sns, sqs } = require('@cumulus/aws-client/services');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
+const {
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,
@@ -200,11 +201,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 
@@ -283,8 +284,8 @@ test.after.always(async (t) => {
     testDbName: t.context.testDbName,
   });
   await cleanupTestIndex(t.context);
-  await sns().deleteTopic({ TopicArn: ExecutionsTopicArn });
-  await sns().deleteTopic({ TopicArn: PdrsTopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn: ExecutionsTopicArn }));
+  await sns().send(new DeleteTopicCommand({ TopicArn: PdrsTopicArn }));
 });
 
 test('writeRecords() throws error if requirements to write execution to PostgreSQL are not met', async (t) => {
@@ -387,7 +388,7 @@ test.serial('Lambda sends message to DLQ when writeRecords() throws an error', a
       WaitTimeSeconds: 10,
     });
   const dlqMessage = JSON.parse(Messages[0].Body);
-  t.deepEqual(dlqMessage, sqsEvent.Records[0]);
+  t.like(dlqMessage, sqsEvent.Records[0]);
 });
 
 test.serial('Lambda returns partial batch response to reprocess messages when getCumulusMessageFromExecutionEvent() throws an error', async (t) => {
@@ -484,4 +485,39 @@ test.serial('writeRecords() discards an out of order message that has an older s
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   )).status);
   t.is('completed', (await pdrPgModel.get(testKnex, { name: pdrName })).status);
+});
+
+test.serial('Lambda captures error type on error', async (t) => {
+  const {
+    handlerResponse,
+    sqsEvent,
+  } = await runHandler({
+    ...t.context,
+    cumulusMessages: [
+      { ...t.context.cumulusMessage, fail: true },
+    ],
+  });
+
+  t.is(handlerResponse.batchItemFailures.length, 0);
+  const {
+    numberOfMessagesAvailable,
+    numberOfMessagesNotVisible,
+  } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
+  t.is(numberOfMessagesAvailable, 1);
+  t.is(numberOfMessagesNotVisible, 0);
+  const { Messages } = await sqs()
+    .receiveMessage({
+      QueueUrl: t.context.queues.deadLetterQueueUrl,
+      WaitTimeSeconds: 10,
+      MaxNumberOfMessages: 3,
+    });
+
+  const expectedMessage = {
+    ...sqsEvent.Records[0],
+    error: 'Error: Intentional failure: test case',
+  };
+  t.deepEqual(
+    JSON.parse(Messages[0].Body),
+    expectedMessage
+  );
 });

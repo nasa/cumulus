@@ -42,7 +42,7 @@ const {
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, getEsClient } = require('@cumulus/es-client/search');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
 const {
@@ -346,7 +346,7 @@ test.before(async (t) => {
   await awsServices.secretsManager().createSecret({
     Name: process.env.cmr_password_secret_name,
     SecretString: randomId('cmr-password'),
-  }).promise();
+  });
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
@@ -382,7 +382,7 @@ test.beforeEach(async (t) => {
     index: esIndex,
     alias: esAlias,
   });
-  esClient = await Search.es();
+  esClient = await getEsClient();
   t.context.esReportClient = new Search(
     {},
     'reconciliationReport',
@@ -410,14 +410,14 @@ test.afterEach.always(async (t) => {
     { cumulus_id: t.context.executionCumulusId }
   );
   CMR.prototype.searchConcept.restore();
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
 });
 
 test.after.always(async (t) => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
   delete process.env.cmr_password_secret_name;
   await destroyLocalTestDb({
     knex: t.context.knex,

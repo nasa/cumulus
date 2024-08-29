@@ -2,6 +2,7 @@
   "default": true,
   "line-length": false,
   "no-duplicate-header": false,
+  "no-duplicate-heading": false,
   "ol-prefix": { "style": "ordered" },
   "no-inline-html": { "allowed_elements": ["code", "br", "b", "ul", "li", "details", "summary", "JSON"] }
 }

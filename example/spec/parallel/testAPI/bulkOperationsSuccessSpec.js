@@ -1,5 +1,7 @@
 'use strict';
 
+const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
+
 const get = require('lodash/get');
 const pAll = require('p-all');
 
@@ -258,7 +260,7 @@ describe('POST /granules/bulk', () => {
         const describeTasksResponse = await ecs().describeTasks({
           cluster: clusterArn,
           tasks: [taskArn],
-        }).promise();
+        });
 
         expect(describeTasksResponse.tasks.length).toEqual(1);
       }
@@ -267,13 +269,10 @@ describe('POST /granules/bulk', () => {
     it('eventually generates the correct output', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
-        await ecs().waitFor(
-          'tasksStopped',
-          {
-            cluster: clusterArn,
-            tasks: [taskArn],
-          }
-        ).promise();
+        await waitUntilTasksStopped(
+          { client: ecs(), maxWaitTime: 600, maxDelay: 1, minDelay: 1 },
+          { cluster: clusterArn, tasks: [taskArn] }
+        );
 
         const asyncOperation = await getAsyncOperation({
           prefix,

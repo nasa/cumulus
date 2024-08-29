@@ -15,7 +15,7 @@ const { constructCollectionId, deconstructCollectionId } = require('@cumulus/mes
 const { generateGranuleApiRecord } = require('@cumulus/message/Granules');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 
 const {
   CollectionPgModel,
@@ -81,7 +81,7 @@ test.beforeEach(async (t) => {
     index: esIndex,
     alias: esAlias,
   });
-  esClient = await Search.es();
+  esClient = await getEsClient();
 
   t.context.testDbName = `test_internal_recon_${cryptoRandomString({ length: 10 })}`;
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
@@ -106,7 +106,7 @@ test.afterEach.always(async (t) => {
       new models.ReconciliationReport().deleteTable(),
     ])
   );
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
 });
 
 test.serial('internalRecReportForCollections reports discrepancy of collection holdings in ES and DB', async (t) => {

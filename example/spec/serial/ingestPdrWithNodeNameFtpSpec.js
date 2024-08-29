@@ -5,6 +5,10 @@
  * granule's provider using NODE_NAME with a provider that utilizes login credentials
  */
 
+const {
+  InvokeCommand,
+} = require('@aws-sdk/client-lambda');
+
 const S3 = require('@cumulus/aws-client/S3');
 const { s3, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -109,12 +113,12 @@ describe('Ingesting from PDR', () => {
 
       let testData;
       try {
-        testData = await lambda().invoke({
+        testData = await lambda().send(new InvokeCommand({
           FunctionName: functionName,
           Payload: new TextEncoder().encode(JSON.stringify({
             prefix: config.stackName,
           })),
-        });
+        }));
       } catch (error) {
         console.log(error);
       }
@@ -189,14 +193,14 @@ describe('Ingesting from PDR', () => {
       providerId: nodeNameProviderId,
     }).catch(console.error);
     // TODO Inovke cleanup lambda
-    const deletionRequest = await lambda().invoke({
+    const deletionRequest = await lambda().send(new InvokeCommand({
       FunctionName: functionName,
       Payload: new TextEncoder().encode(JSON.stringify({
         prefix: config.stackName,
         command: 'delete',
         filePaths: testFilePaths,
       })),
-    });
+    }));
     if (deletionRequest.StatusCode !== 200) {
       throw new Error(deletionRequest);
     }

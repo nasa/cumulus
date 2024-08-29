@@ -1,6 +1,6 @@
-import { ECS } from 'aws-sdk';
+import { RunTaskCommandOutput } from '@aws-sdk/client-ecs';
 import { Knex } from 'knex';
-import { FunctionConfiguration } from '@aws-sdk/client-lambda';
+import { FunctionConfiguration, GetFunctionConfigurationCommand } from '@aws-sdk/client-lambda';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 
 import {
@@ -13,8 +13,6 @@ import {
 import Logger from '@cumulus/logger';
 import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
 import { v4 as uuidv4 } from 'uuid';
-import type { AWSError } from 'aws-sdk/lib/error';
-import type { PromiseResult } from 'aws-sdk/lib/request';
 
 import type {
   AsyncOperationPgModelObject,
@@ -25,18 +23,18 @@ const {
   indexAsyncOperation,
 } = require('@cumulus/es-client/indexer');
 const {
-  Search,
+  getEsClient, EsClient,
 } = require('@cumulus/es-client/search');
 
 const logger = new Logger({ sender: '@cumulus/async-operation' });
 
-type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSError>>;
+type StartEcsTaskReturnType = Promise<RunTaskCommandOutput>;
 
 export const getLambdaConfiguration = async (
   functionName: string
-): Promise<FunctionConfiguration> => lambda().getFunctionConfiguration({
+): Promise<FunctionConfiguration> => lambda().send(new GetFunctionConfigurationCommand({
   FunctionName: functionName,
-});
+}));
 
 export const getLambdaEnvironmentVariables = (
   configuration: FunctionConfiguration
@@ -120,7 +118,7 @@ export const startECSTask = async ({
         },
       ],
     },
-  }).promise();
+  });
 };
 
 export const createAsyncOperation = async (
@@ -129,7 +127,7 @@ export const createAsyncOperation = async (
     stackName: string,
     systemBucket: string,
     knexConfig?: NodeJS.ProcessEnv,
-    esClient?: object,
+    esClient?: typeof EsClient,
     asyncOperationPgModel?: AsyncOperationPgModelObject
   }
 ): Promise<Partial<ApiAsyncOperation>> => {
@@ -138,7 +136,7 @@ export const createAsyncOperation = async (
     stackName,
     systemBucket,
     knexConfig = process.env,
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     asyncOperationPgModel = new AsyncOperationPgModel(),
   } = params;
 

@@ -19,14 +19,12 @@ knexFakeError.name = 'KnexTimeoutError';
 
 test.before(async (t) => {
   t.context.secretsManager = {
-    getSecretValue: () => ({
-      promise: () => Promise.resolve({
-        SecretString: JSON.stringify({
-          host: fakeConnectionConfig.host,
-          username: fakeConnectionConfig.user,
-          password: fakeConnectionConfig.password,
-          database: fakeConnectionConfig.database,
-        }),
+    getSecretValue: () => Promise.resolve({
+      SecretString: JSON.stringify({
+        host: fakeConnectionConfig.host,
+        username: fakeConnectionConfig.user,
+        password: fakeConnectionConfig.password,
+        database: fakeConnectionConfig.database,
       }),
     }),
   };
@@ -56,7 +54,10 @@ test('getKnexClient returns expected Knex object with migration defined',
     });
     t.is('testMigrationDir', results.migrate.config.directory);
     t.is('knex_migrations', results.migrate.config.tableName);
-    t.deepEqual(fakeConnectionConfig, results.client.config.connection);
+    t.deepEqual(
+      { ...fakeConnectionConfig, ssl: { rejectUnauthorized: true } },
+      results.client.config.connection
+    );
     t.is(true, results.client.config.debug);
     t.is(true, results.client.config.asyncStackTraces);
     t.is('pg', results.client.config.client);
@@ -90,7 +91,7 @@ test('getKnexClient returns Knex object with a default migration set when env.mi
     t.is('knex_migrations', results.migrate.config.tableName);
   });
 
-test('getKnexClient returns expected Knex object with manual db configuraiton options set',
+test('getKnexClient returns expected Knex object with manual db configuration options set',
   async (t) => {
     const results = await getKnexClient({
       env: {
@@ -105,7 +106,10 @@ test('getKnexClient returns expected Knex object with manual db configuraiton op
     });
     t.is('testMigrationDir', results.migrate.config.directory);
     t.is('knex_migrations', results.migrate.config.tableName);
-    t.deepEqual(fakeConnectionConfig, results.client.config.connection);
+    t.deepEqual(
+      { ...fakeConnectionConfig, ssl: { rejectUnauthorized: true } },
+      results.client.config.connection
+    );
     t.is(true, results.client.config.debug);
     t.is(true, results.client.config.asyncStackTraces);
     t.is('pg', results.client.config.client);
@@ -131,14 +135,8 @@ test('getKnexClient logs retry errors and throws expected knexTimeoutError', asy
     knex(t.context.tableName).where({}),
     { instanceOf: KnexTimeoutError }
   );
-  const actual = [loggerWarnStub.args[0][0], loggerWarnStub.args[0][1].message];
-  t.deepEqual(
-    actual,
-    [
-      'knex failed on attempted connection',
-      'connect ECONNREFUSED 127.0.0.1:5400',
-    ]
-  );
+  t.deepEqual(loggerWarnStub.args[0][0], 'knex failed on attempted connection');
+  t.is(loggerWarnStub.args[0][1].code, 'ECONNREFUSED');
   console.log(loggerWarnStub.callCount);
   t.true(loggerWarnStub.callCount > 1);
 });

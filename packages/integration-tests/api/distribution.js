@@ -1,6 +1,9 @@
+//@ts-check
+
 'use strict';
 
 const { URL } = require('url');
+const { InvokeCommand } = require('@aws-sdk/client-lambda');
 const { lambda } = require('@cumulus/aws-client/services');
 const got = require('got');
 const jwt = require('jsonwebtoken');
@@ -40,10 +43,10 @@ async function invokeDistributionApiLambda(path, headers) {
     stageVariables: null,
   };
 
-  const data = await lambda().invoke({
+  const data = await lambda().send(new InvokeCommand({
     FunctionName,
     Payload: new TextEncoder().encode(JSON.stringify(event)),
-  });
+  }));
 
   const payload = JSON.parse(new TextDecoder('utf-8').decode(data.Payload));
 
@@ -93,10 +96,10 @@ async function invokeTEADistributionLambda(
     stageVariables: null,
   };
 
-  const data = await lambda().invoke({
+  const data = await lambda().send(new InvokeCommand({
     FunctionName,
     Payload: new TextEncoder().encode(JSON.stringify(event)),
-  });
+  }));
 
   const payload = JSON.parse(new TextDecoder('utf-8').decode(data.Payload));
 
@@ -119,10 +122,10 @@ async function invokeS3CredentialsLambda(path, headers) {
     headers,
   };
 
-  const data = await lambda().invoke({
+  const data = await lambda().send(new InvokeCommand({
     FunctionName,
     Payload: new TextEncoder().encode(JSON.stringify(event)),
-  });
+  }));
 
   const payload = JSON.parse(new TextDecoder('utf-8').decode(data.Payload));
 

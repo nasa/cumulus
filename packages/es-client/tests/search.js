@@ -11,7 +11,7 @@ const {
 } = require('../testUtils');
 const esSearch = rewire('../search');
 
-const { Search } = esSearch;
+const { Search, getEsClient } = esSearch;
 
 const localEsHost = process.env.LOCAL_ES_HOST;
 
@@ -19,23 +19,18 @@ test.before(async (t) => {
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
+  const awsCredentialsMock = () => () => Promise.resolve({
+    accessKeyId: 'testAccessKeyId',
+    secretAccessKey: 'testsecretAccessKey',
+  });
 
-  const awsMock = {
-    config: {
-      credentials: {
-        user: 'test',
-        password: 'testPassword',
-      },
-    },
-  };
-  esSearch.__set__('aws', awsMock);
+  esSearch.__set__('fromNodeProviderChain', awsCredentialsMock);
 });
-
 test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('Configured with Metrics host when metrics propety is set', async (t) => {
+test.serial('Configured with Metrics host when metrics property is set', async (t) => {
   process.env.METRICS_ES_HOST = 'example.com';
   process.env.METRICS_ES_USER = 'test';
   process.env.METRICS_ES_PASS = 'password';
@@ -51,8 +46,8 @@ test.serial('Configured with Metrics host when metrics propety is set', async (t
     revertTestModeStub();
   });
 
-  const esClient = await Search.es(undefined, true);
-  const connection = esClient.connectionPool;
+  const esClient = await getEsClient(undefined, true);
+  const connection = esClient.client.connectionPool;
   t.assert(connection);
   t.is(connection.connections.get('https://example.com/').url.origin, 'https://example.com');
   t.is(connection._auth.username, 'test');
@@ -71,8 +66,8 @@ test.serial('Configured with default host when no metrics property is set', asyn
     revertTestModeStub();
   });
 
-  const esClient = await Search.es();
-  const connection = esClient.connectionPool;
+  const esClient = await getEsClient();
+  const connection = esClient.client.connectionPool;
   t.assert(connection);
   t.is(connection.connections.get('https://example.com/').url.origin, 'https://example.com');
 });
@@ -81,7 +76,7 @@ test('Search.get() returns record', async (t) => {
   const record = { foo: 'bar' };
   const id = randomString();
   const type = 'record';
-  await t.context.esClient.index({
+  await t.context.esClient.client.index({
     body: record,
     id,
     index: t.context.esIndex,
@@ -101,7 +96,7 @@ test('Search.exists() returns true if record exists', async (t) => {
   const record = { foo: 'bar' };
   const id = randomString();
   const type = 'record';
-  await t.context.esClient.index({
+  await t.context.esClient.client.index({
     body: record,
     id,
     index: t.context.esIndex,
@@ -134,7 +129,7 @@ test('Search.get() returns record by parentId', async (t) => {
   const type = `child${randomString()}`;
   const parentType = `parent${randomString()}`;
 
-  await t.context.esClient.indices.putMapping({
+  await t.context.esClient.client.indices.putMapping({
     index: t.context.esIndex,
     type,
     body: {
@@ -146,7 +141,7 @@ test('Search.get() returns record by parentId', async (t) => {
     },
   });
 
-  await t.context.esClient.index({
+  await t.context.esClient.client.index({
     body: record,
     id,
     index: t.context.esIndex,

@@ -5,12 +5,8 @@ const {
   PdrPgModel,
   translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
-const {
-  upsertPdr,
-} = require('@cumulus/es-client/indexer');
-const {
-  Search,
-} = require('@cumulus/es-client/search');
+const { upsertPdr } = require('@cumulus/es-client/indexer');
+const { getEsClient } = require('@cumulus/es-client/search');
 const {
   getMessagePdrName,
   messageHasPdr,
@@ -95,7 +91,7 @@ const writePdrToEs = async (params) => {
   const {
     cumulusMessage,
     updatedAt = Date.now(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = params;
   const pdrApiRecord = generatePdrApiRecordFromMessage(cumulusMessage, updatedAt);
   if (!pdrApiRecord) {

@@ -7,6 +7,9 @@ const sinon = require('sinon');
 const omit = require('lodash/omit');
 
 const { v4: uuidv4 } = require('uuid');
+const { mockClient } = require('aws-sdk-client-mock');
+const { GetFunctionConfigurationCommand } = require('@aws-sdk/client-lambda');
+
 const { ecs, lambda, s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 // eslint-disable-next-line node/no-unpublished-require
@@ -65,12 +68,8 @@ test.before(async (t) => {
   ecsClient = ecs();
   ecsClient.runTask = (params) => {
     stubbedEcsRunTaskParams = params;
-    return {
-      promise: () => {
-        if (!stubbedEcsRunTaskResult) return Promise.reject(new Error('stubbedEcsRunTaskResult has not yet been set'));
-        return Promise.resolve(stubbedEcsRunTaskResult);
-      },
-    };
+    if (!stubbedEcsRunTaskResult) return Promise.reject(new Error('stubbedEcsRunTaskResult has not yet been set'));
+    return Promise.resolve(stubbedEcsRunTaskResult);
   };
 
   t.context.functionConfig = {
@@ -81,10 +80,10 @@ test.before(async (t) => {
     },
   };
 
-  sinon.stub(lambda(), 'getFunctionConfiguration').returns(
+  const mockLambdaClient = mockClient(lambda()).onAnyCommand().rejects();
+  mockLambdaClient.on(GetFunctionConfigurationCommand).resolves(
     Promise.resolve(t.context.functionConfig)
   );
-
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 });
 
@@ -526,8 +525,11 @@ test.serial('createAsyncOperation() does not write to Elasticsearch if writing t
 test.serial('createAsyncOperation() does not write to PostgreSQL if writing to Elasticsearch fails', async (t) => {
   const { id, createObject } = t.context;
   const fakeEsClient = {
-    index: () => {
-      throw new Error('ES something bad');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      index: () => {
+        throw new Error('ES something bad');
+      },
     },
   };
 

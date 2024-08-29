@@ -8,6 +8,16 @@ const cloneDeep = require('lodash/cloneDeep');
 const proxyquire = require('proxyquire');
 const fs = require('fs-extra');
 
+const {
+  CreateEventSourceMappingCommand,
+  CreateFunctionCommand,
+  DeleteEventSourceMappingCommand,
+  GetPolicyCommand,
+  ListEventSourceMappingsCommand,
+  AddPermissionCommand,
+  RemovePermissionCommand,
+} = require('@aws-sdk/client-lambda');
+const { mockClient } = require('aws-sdk-client-mock');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const awsServices = require('@cumulus/aws-client/services');
 const workflows = require('@cumulus/common/workflows');
@@ -16,6 +26,12 @@ const Logger = require('@cumulus/logger');
 const SQS = require('@cumulus/aws-client/SQS');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
+const {
+  UnsubscribeCommand,
+  DeleteTopicCommand,
+  ListSubscriptionsByTopicCommand,
+  SubscribeCommand,
+} = require('@aws-sdk/client-sns');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
@@ -71,15 +87,15 @@ const createEventSourceMapping = async (rule) => {
       StartingPosition: 'TRIM_HORIZON',
       Enabled: true,
     };
-    return awsServices.lambda().createEventSourceMapping(params);
+    return awsServices.lambda().send(new CreateEventSourceMappingCommand(params));
   });
   return await Promise.all(eventSourceMapping);
 };
 
 const getKinesisEventMappings = async () => {
   const mappingPromises = eventLambdas.map((lambda) => {
-    const mappingParms = { FunctionName: lambda };
-    return awsServices.lambda().listEventSourceMappings(mappingParms);
+    const mappingParams = { FunctionName: lambda };
+    return awsServices.lambda().send(new ListEventSourceMappingsCommand(mappingParams));
   });
   return await Promise.all(mappingPromises);
 };
@@ -96,7 +112,7 @@ const deleteKinesisEventSourceMappings = async () => {
   );
 
   return await Promise.all(allEventMappings.map((e) =>
-    awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID })));
+    awsServices.lambda().send(new DeleteEventSourceMappingCommand({ UUID: e.UUID }))));
 };
 
 test.before(async (t) => {
@@ -119,10 +135,9 @@ test.before(async (t) => {
       Body: '{}',
     }),
   ]);
-
   await Promise.all(
     ['messageConsumer', 'KinesisInboundEventLogger'].map(async (name) => {
-      const lambdaCreated = await awsServices.lambda().createFunction({
+      const lambdaCreated = await awsServices.lambda().send(new CreateFunctionCommand({
         Code: {
           ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
         },
@@ -130,11 +145,10 @@ test.before(async (t) => {
         Role: `arn:aws:iam::123456789012:role/${randomId('role')}`,
         Handler: 'index.handler',
         Runtime: 'nodejs16.x',
-      });
+      }));
       process.env[name] = lambdaCreated.FunctionName;
     })
   );
-
   eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
 
   process.env = {
@@ -142,7 +156,6 @@ test.before(async (t) => {
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
-
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
@@ -161,7 +174,7 @@ test.beforeEach(async (t) => {
 test.afterEach.always(async (t) => {
   listRulesStub.reset();
   t.context.sandbox.restore();
-  await awsServices.sns().deleteTopic({ TopicArn: t.context.snsTopicArn });
+  await awsServices.sns().send(new DeleteTopicCommand({ TopicArn: t.context.snsTopicArn }));
 });
 
 test.after.always(async (t) => {
@@ -187,20 +200,37 @@ test.serial('fetchRules invokes API to fetch rules', async (t) => {
   t.true(listRulesStub.calledOnce);
 });
 
+test.serial('fetchRules allows for configurable page size', async (t) => {
+  listRulesStub.onFirstCall().callsFake(({ query }) => {
+    t.is(query.limit, 100);
+    return { body: JSON.stringify({ results: [] }) };
+  });
+
+  listRulesStub.onSecondCall().callsFake(({ query }) => {
+    t.is(query.limit, 50);
+    return { body: JSON.stringify({ results: [] }) };
+  });
+
+  await rulesHelpers.fetchRules({});
+  await rulesHelpers.fetchRules({ pageSize: 50 });
+
+  t.true(listRulesStub.calledTwice);
+});
+
 test.serial('fetchRules pages through results until reaching an empty list', async (t) => {
   const rule1 = { name: 'rule-1' };
   const rule2 = { name: 'rule-2' };
   const firstCallArgs = {
     prefix: process.env.stackName,
-    query: { page: 1 },
+    query: { limit: 100, page: 1 },
   };
   const secondCallArgs = {
     prefix: process.env.stackName,
-    query: { page: 2 },
+    query: { limit: 100, page: 2 },
   };
   const thirdCallArgs = {
     prefix: process.env.stackName,
-    query: { page: 3 },
+    query: { limit: 100, page: 3 },
   };
   listRulesStub.onFirstCall().callsFake((params) => {
     t.deepEqual(params, firstCallArgs);
@@ -701,31 +731,24 @@ test.serial('isEventSourceMappingShared returns false if a rule does not share a
 
 test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
   const { testKnex } = t.context;
+  const snsMock = mockClient(awsServices.sns());
   const sandbox = sinon.createSandbox();
-  sandbox.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => (
-        Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        })
-      ),
-      unsubscribe: () => (
-        Promise.resolve()
-      ),
-    });
-  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
+  const lambdaMock = mockClient(awsServices.lambda());
+  lambdaMock.onAnyCommand().rejects();
+  lambdaMock.on(RemovePermissionCommand).resolves({});
+  lambdaMock.on(AddPermissionCommand).resolves({});
+  snsMock
+    .onAnyCommand()
+    .rejects()
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        Endpoint: process.env.messageConsumer,
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(UnsubscribeCommand)
+    .resolves({});
   const snsTopicArn = randomString();
   const params = {
     rule: {
@@ -738,15 +761,15 @@ test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
   const snsRule = fakeRuleFactoryV2(params);
 
   await rulesHelpers.deleteSnsTrigger(testKnex, snsRule);
-  t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({
+
+  t.true(snsMock.commandCalls(UnsubscribeCommand, {
     SubscriptionArn: snsRule.rule.arn,
-  }));
+  }).length > 0);
 
   t.teardown(() => {
+    lambdaMock.restore();
     sandbox.restore();
-    snsStub.restore();
-    unsubscribeSpy.restore();
+    snsMock.restore();
   });
 });
 
@@ -837,30 +860,23 @@ test.serial('deleteRuleResources correctly deletes resources for kinesis rule', 
 
 test.serial('deleteRuleResources correctly deletes resources for sns rule', async (t) => {
   const { testKnex } = t.context;
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => (
-        Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        })
-      ),
-      unsubscribe: () => (
-        Promise.resolve()
-      ),
-    });
-  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
+  const lambdaMock = mockClient(awsServices.lambda());
+  lambdaMock.onAnyCommand().rejects();
+  lambdaMock.on(RemovePermissionCommand).resolves();
+  lambdaMock.on(AddPermissionCommand).resolves();
+  const snsMock = mockClient(awsServices.sns());
+  snsMock
+    .onAnyCommand()
+    .rejects()
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        Endpoint: process.env.messageConsumer,
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(UnsubscribeCommand)
+    .resolves({});
   const snsTopicArn = randomString();
   const params = {
     rule: {
@@ -873,15 +889,13 @@ test.serial('deleteRuleResources correctly deletes resources for sns rule', asyn
   const snsRule = fakeRuleFactoryV2(params);
 
   await deleteRuleResources(testKnex, snsRule);
-  t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({
+  t.true(snsMock.commandCalls(UnsubscribeCommand, {
     SubscriptionArn: snsRule.rule.arn,
-  }));
+  }).length > 0);
 
   t.teardown(() => {
-    lambdaStub.restore();
-    snsStub.restore();
-    unsubscribeSpy.restore();
+    lambdaMock.restore();
+    snsMock.restore();
   });
 });
 
@@ -1008,9 +1022,9 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   const { subExists } = await checkForSnsSubscriptions(ruleWithTrigger);
   t.true(subExists);
 
-  const { Policy } = await awsServices.lambda().getPolicy({
+  const { Policy } = await awsServices.lambda().send(new GetPolicyCommand({
     FunctionName: process.env.messageConsumer,
-  });
+  }));
   const { Statement } = JSON.parse(Policy);
   t.true(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(ruleWithTrigger)));
 
@@ -1020,9 +1034,9 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   t.false(subExists2);
 
   await t.throwsAsync(
-    awsServices.lambda().getPolicy({
+    awsServices.lambda().send(new GetPolicyCommand({
       FunctionName: process.env.messageConsumer,
-    }),
+    })),
     { name: 'ResourceNotFoundException' }
   );
   t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
@@ -1051,7 +1065,9 @@ test.serial('deleteRuleResources() does not throw if a rule is passed in without
   const origSnsCheck = await checkForSnsSubscriptions(ruleWithTrigger);
   t.true(origSnsCheck.subExists);
 
-  await awsServices.sns().unsubscribe({ SubscriptionArn: ruleWithTrigger.rule.arn });
+  await awsServices.sns().send(
+    new UnsubscribeCommand({ SubscriptionArn: ruleWithTrigger.rule.arn })
+  );
   const snsCheck = await checkForSnsSubscriptions(ruleWithTrigger);
   t.false(snsCheck.subExists);
   await t.notThrowsAsync(deleteRuleResources(testKnex, ruleWithTrigger));
@@ -1177,8 +1193,6 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
     testKnex,
   } = t.context;
 
-  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
-
   const item = fakeRuleFactoryV2({
     workflow,
     rule: {
@@ -1192,16 +1206,16 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
 
   t.is(ruleWithTrigger.rule.value, snsTopicArn);
 
+  const oldSubscriptions = await awsServices.sns().send(
+    new ListSubscriptionsByTopicCommand({ TopicArn: snsTopicArn })
+  );
+  t.true(oldSubscriptions.Subscriptions.length > 0);
+
   await rulesHelpers.deleteRuleResources(testKnex, ruleWithTrigger);
-
-  t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({
-    SubscriptionArn: ruleWithTrigger.rule.arn,
-  }));
-
-  t.teardown(() => {
-    unsubscribeSpy.restore();
-  });
+  const newSubscriptions = await awsServices.sns().send(
+    new ListSubscriptionsByTopicCommand({ TopicArn: snsTopicArn })
+  );
+  t.true(newSubscriptions.Subscriptions.length < 1);
 });
 
 test.serial('Multiple rules using same SNS topic can be created and deleted', async (t) => {
@@ -1238,7 +1252,7 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
       '*'
     ),
   ]);
-  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
+  const sendSpy = sinon.spy(awsServices.sns(), 'send');
   const { TopicArn } = await createSnsTopic('topic');
 
   const ruleWithTrigger = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
@@ -1289,16 +1303,17 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
   await rulePgModel.delete(testKnex, rule2);
 
   // Ensure that cleanup for SNS rule subscription was actually called
-  t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({
+  t.true(sendSpy.called);
+  t.true(sendSpy.getCall(-1).args[0] instanceof UnsubscribeCommand);
+  t.deepEqual(sendSpy.getCall(-1).args[0].input, {
     SubscriptionArn: ruleWithTrigger.rule.arn,
-  }));
+  });
 
   t.teardown(async () => {
-    unsubscribeSpy.restore();
-    await awsServices.sns().deleteTopic({
+    sendSpy.restore();
+    await awsServices.sns().send(new DeleteTopicCommand({
       TopicArn,
-    });
+    }));
   });
 });
 
@@ -1307,7 +1322,6 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
   const error = new Error(errorMessage);
   error.name = 'ResourceNotFoundException';
   const { snsTopicArn } = t.context;
-  const lambdaStub = sinon.stub(awsServices.lambda(), 'removePermission').throws(error);
 
   const ruleWithTrigger = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
     rule: {
@@ -1317,6 +1331,9 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
     workflow,
     state: 'ENABLED',
   }));
+
+  const lambdaStub = sinon.stub(awsServices.lambda(), 'send');
+  lambdaStub.throws(error);
 
   await t.throwsAsync(
     rulesHelpers.deleteSnsTrigger(t.context.testKnex, ruleWithTrigger),
@@ -1675,31 +1692,19 @@ test('Creating a disabled SNS rule creates no event source mapping', async (t) =
 test.serial('Creating an enabled SNS rule creates an event source mapping', async (t) => {
   const { TopicArn } = await createSnsTopic(randomId('topic'));
 
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
+  const snsMock = mockClient(awsServices.sns());
 
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => (
-        Promise.resolve({
-          Subscriptions: [{
-            SubscriptionArn: randomString(),
-          }],
-        })
-      ),
-      subscribe: () => (
-        Promise.resolve({
-          SubscriptionArn: randomString(),
-        })
-      ),
-    });
+  snsMock
+    .onAnyCommand()
+    .rejects()
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(SubscribeCommand)
+    .resolves({ SubscriptionArn: randomString() });
 
   const rule = fakeRuleFactoryV2({
     rule: {
@@ -1709,24 +1714,29 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
     workflow,
     state: 'ENABLED',
   });
-  const subscribeSpy = sinon.spy(awsServices.sns(), 'subscribe');
-  const addPermissionSpy = sinon.spy(awsServices.lambda(), 'addPermission');
+
+  const lambdaMock = mockClient(awsServices.lambda());
+  let mockCalled = false;
+  lambdaMock.onAnyCommand().rejects();
+  lambdaMock.on(AddPermissionCommand).callsFake(() => {
+    mockCalled = true;
+  });
 
   await createRuleTrigger(rule);
-  t.true(subscribeSpy.called);
-  t.true(subscribeSpy.calledWith({
+  const subscribeCalls = snsMock.commandCalls(SubscribeCommand);
+
+  t.true(subscribeCalls.length > 0);
+  t.deepEqual(subscribeCalls[0].firstArg.input, {
     TopicArn: rule.rule.value,
     Protocol: 'lambda',
     Endpoint: process.env.messageConsumer,
     ReturnSubscriptionArn: true,
-  }));
-  t.true(addPermissionSpy.called);
+  });
+  t.true(mockCalled);
   t.teardown(async () => {
-    lambdaStub.restore();
-    snsStub.restore();
-    subscribeSpy.restore();
-    addPermissionSpy.restore();
-    await awsServices.sns().deleteTopic({ TopicArn });
+    snsMock.restore();
+    lambdaMock.restore();
+    await awsServices.sns().send(new DeleteTopicCommand({ TopicArn }));
   });
 });
 
@@ -2181,9 +2191,9 @@ test.serial('Updating the queue for an SQS rule succeeds and allows 0 retries an
 test.serial('Updating an SNS rule updates the event source mapping', async (t) => {
   const snsTopicArn = randomString();
   const newSnsTopicArn = randomString();
-
   const { TopicArn } = await createSnsTopic(snsTopicArn);
   const { TopicArn: TopicArn2 } = await createSnsTopic(newSnsTopicArn);
+  const snsMock = mockClient(awsServices.sns());
 
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
@@ -2194,20 +2204,19 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
         promise: () => Promise.resolve(),
       }),
     });
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => (
-        Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        })
-      ),
-      unsubscribe: () => (
-        Promise.resolve()
-      ),
-    });
+
+  snsMock
+    .onAnyCommand()
+    .rejects()
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        Endpoint: process.env.messageConsumer,
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(UnsubscribeCommand)
+    .resolves();
 
   const rule = fakeRuleFactoryV2({
     rule: {
@@ -2240,14 +2249,15 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
 
   t.teardown(async () => {
     lambdaStub.restore();
-    snsStub.restore();
-    await awsServices.sns().deleteTopic({ TopicArn: TopicArn2 });
+    snsMock.restore();
+    await awsServices.sns().send(new DeleteTopicCommand({ TopicArn: TopicArn2 }));
   });
 });
 
 test.serial('Updating an SNS rule to "disabled" removes the event source mapping ARN', async (t) => {
   const snsTopicArn = randomString();
   const { TopicArn } = await createSnsTopic(snsTopicArn);
+  const snsMock = mockClient(awsServices.sns());
 
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
@@ -2258,20 +2268,19 @@ test.serial('Updating an SNS rule to "disabled" removes the event source mapping
         promise: () => Promise.resolve(),
       }),
     });
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => (
-        Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        })
-      ),
-      unsubscribe: () => (
-        Promise.resolve()
-      ),
-    });
+
+  snsMock
+    .onAnyCommand()
+    .rejects()
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        Endpoint: process.env.messageConsumer,
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(UnsubscribeCommand)
+    .resolves();
 
   const rule = fakeRuleFactoryV2({
     rule: {
@@ -2298,8 +2307,8 @@ test.serial('Updating an SNS rule to "disabled" removes the event source mapping
 
   t.teardown(async () => {
     lambdaStub.restore();
-    snsStub.restore();
-    await awsServices.sns().deleteTopic({ TopicArn });
+    snsMock.restore();
+    await awsServices.sns().send(new DeleteTopicCommand({ TopicArn }));
   });
 });
 
@@ -2345,7 +2354,7 @@ test.serial('Enabling a disabled SNS rule and passing rule.arn throws specific e
   // Should fail because a disabled rule should not have an ARN
   // when being updated
   await t.throwsAsync(updateRuleTrigger(rule, updates, t.context.testKnex),
-    null,
+    undefined,
     'Including rule.arn is not allowed when enabling a disabled rule');
   t.teardown(() => {
     snsStub.restore();

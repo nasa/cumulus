@@ -350,7 +350,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "48"
+  default = "52"
 }
 
 variable "cumulus_process_activity_version" {
@@ -362,7 +362,7 @@ variable "cumulus_process_activity_version" {
 variable "ecs_task_image_version" {
   description = "docker image version to use for Cumulus hello world task"
     type = string
-    default = "1.9.0"
+    default = "2.1.0"
 }
 
 variable "cumulus_test_ingest_image_version" {
@@ -423,12 +423,12 @@ variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
   type = map(number)
   default = {
-    cleanExecutions = 384           # archive
-    DistributionApiEndpoints = 384  # cumulus_distribution
-    s3-credentials-endpoint  = 384  # distribution
-    HelloWorld = 384                # ingest
-    s3-replicator = 384             # s3-replicator
-    TeaCache = 384                  # tea-map-cache
+    cleanExecutions = 512           # archive
+    DistributionApiEndpoints = 512  # cumulus_distribution
+    HelloWorld = 512                # ingest
+    s3-credentials-endpoint  = 512  # distribution
+    s3-replicator = 512             # s3-replicator
+    TeaCache = 512                  # tea-map-cache
   }
 }
 

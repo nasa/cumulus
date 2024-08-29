@@ -64,7 +64,9 @@ export {
   PostgresFile,
   PostgresFileRecord,
 } from './types/file';
-
+export {
+  PostgresGranuleExecution,
+} from './types/granule-execution';
 export {
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
@@ -109,12 +111,13 @@ export {
 } from './lib/collection';
 
 export {
+  batchDeleteExecutionFromDatabaseByCumulusCollectionId,
   executionArnsFromGranuleIdsAndWorkflowNames,
-  newestExecutionArnFromGranuleIdWorkflowName,
-  getWorkflowNameIntersectFromGranuleIds,
   getApiExecutionCumulusIds,
   getApiGranuleExecutionCumulusIdsByExecution,
   getExecutionInfoByGranuleCumulusId,
+  getWorkflowNameIntersectFromGranuleIds,
+  newestExecutionArnFromGranuleIdWorkflowName,
 } from './lib/execution';
 
 export {
@@ -136,6 +139,21 @@ export {
 export {
   QuerySearchClient,
 } from './lib/QuerySearchClient';
+export {
+  BaseSearch,
+} from './search/BaseSearch';
+export {
+  ExecutionSearch,
+} from './search/ExecutionSearch';
+export {
+  GranuleSearch,
+} from './search/GranuleSearch';
+export {
+  StatsSearch,
+} from './search/StatsSearch';
+export {
+  CollectionSearch,
+} from './search/CollectionSearch';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';

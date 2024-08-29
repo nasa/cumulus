@@ -17,7 +17,7 @@ const {
   translateApiRuleToPostgresRuleRaw,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, getEsClient } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const {
@@ -93,7 +93,7 @@ async function post(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   let record;
@@ -153,7 +153,7 @@ async function patchRule(params) {
     apiRule,
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = params;
 
   log.debug(`rules.patchRule oldApiRule: ${JSON.stringify(oldApiRule)}, apiRule: ${JSON.stringify(apiRule)}`);
@@ -198,7 +198,7 @@ async function patch(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { params: { name }, body } = req;
@@ -242,7 +242,7 @@ async function put(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { params: { name }, body } = req;
@@ -293,7 +293,7 @@ async function del(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const name = (req.params.name || '').replace(/%20/g, ' ');

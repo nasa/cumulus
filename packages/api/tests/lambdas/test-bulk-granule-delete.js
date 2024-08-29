@@ -18,10 +18,11 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
-  sns,
-  sqs,
-} = require('@cumulus/aws-client/services');
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 
 const { bulkGranuleDelete } = require('../../lambdas/bulk-operation');
@@ -65,11 +66,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 });
@@ -77,7 +78,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
-  await sns().deleteTopic({ TopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn }));
 });
 
 test.after.always(async (t) => {
@@ -92,7 +93,6 @@ test.after.always(async (t) => {
 test('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
   const {
     knex,
-    esClient,
   } = t.context;
 
   const granulePgModel = new GranulePgModel();
@@ -110,7 +110,6 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
         published: true,
         collection_cumulus_id: collectionPgRecord.cumulus_id,
       },
-      esClient: esClient,
       writeDynamo: false,
     }),
     createGranuleAndFiles({
@@ -119,7 +118,6 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
         published: true,
         collection_cumulus_id: collectionPgRecord.cumulus_id,
       },
-      esClient: esClient,
       writeDynamo: false,
     }),
   ]);

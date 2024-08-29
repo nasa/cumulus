@@ -20,7 +20,7 @@ const {
 
 const Logger = require('@cumulus/logger');
 
-const { Search } = require('@cumulus/es-client/search');
+const { Search, getEsClient } = require('@cumulus/es-client/search');
 const { deleteAsyncOperation } = require('@cumulus/es-client/indexer');
 const { isBadRequestError } = require('../lib/errors');
 
@@ -74,7 +74,7 @@ async function del(req, res) {
   const {
     asyncOperationPgModel = new AsyncOperationPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { id } = req.params || {};
@@ -126,7 +126,7 @@ async function post(req, res) {
   const {
     asyncOperationPgModel = new AsyncOperationPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const apiAsyncOperation = req.body;

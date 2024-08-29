@@ -109,6 +109,18 @@ variable "enable_upgrade" {
   default = true
 }
 
+variable "auto_pause" {
+  description = "Determines if the RDS cluster should automatically pause after a period of inactivity"
+  type = bool
+  default = true
+}
+
+variable "seconds_until_auto_pause" {
+  description = "Number of seconds of inactivity before RDS cluster is paused"
+  type = number
+  default = 300
+}
+
 variable "max_capacity" {
   type = number
   default = 4
@@ -167,6 +179,11 @@ variable "db_parameters" {
     {
       name  = "shared_preload_libraries"
       value = "pg_stat_statements,auto_explain"
+      apply_method = "pending-reboot"
+    },
+    {
+      name         = "rds.force_ssl"
+      value        = 1
       apply_method = "pending-reboot"
     }
   ]

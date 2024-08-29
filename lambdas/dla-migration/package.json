@@ -1,0 +1,36 @@
+{
+  "name": "@cumulus/dla-migration-lambda",
+  "version": "19.0.0",
+  "description": "A Lambda function used for DLA migrations",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.12.2"
+  },
+  "main": "./dist/lambda/index.js",
+  "types": "./dist/lambda/index.d.ts",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf dist",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py",
+    "build": "rm -rf dist && mkdir dist && npm run prepare && npm run webpack",
+    "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
+    "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
+    "test": "../../node_modules/.bin/ava --timeout=5m",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "prepare": "npm run tsc",
+    "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "webpack": "../../node_modules/.bin/webpack"
+  },
+  "dependencies": {
+    "@cumulus/aws-client": "19.0.0",
+    "@cumulus/common": "19.0.0",
+    "@cumulus/logger": "19.0.0",
+    "@cumulus/message": "19.0.0",
+    "@cumulus/types": "19.0.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "p-map": "^4.0.0"
+  }
+}

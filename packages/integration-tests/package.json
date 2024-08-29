@@ -1,12 +1,12 @@
 {
   "name": "@cumulus/integration-tests",
-  "version": "18.2.2",
+  "version": "19.0.0",
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "main": "index.js",
   "publishConfig": {
@@ -23,23 +23,24 @@
     "clean": "rm -rf dist",
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "18.2.2",
-    "@cumulus/api-client": "18.2.2",
-    "@cumulus/aws-client": "18.2.2",
-    "@cumulus/cmr-client": "18.2.2",
-    "@cumulus/cmrjs": "18.2.2",
-    "@cumulus/common": "18.2.2",
-    "@cumulus/launchpad-auth": "18.2.2",
-    "@cumulus/logger": "18.2.2",
-    "@cumulus/message": "18.2.2",
-    "@cumulus/oauth-client": "18.2.2",
-    "aws-sdk": "^2.1492.0",
+    "@aws-sdk/client-lambda": "^3.621.0",
+    "@cumulus/api": "19.0.0",
+    "@cumulus/api-client": "19.0.0",
+    "@cumulus/aws-client": "19.0.0",
+    "@cumulus/cmr-client": "19.0.0",
+    "@cumulus/cmrjs": "19.0.0",
+    "@cumulus/common": "19.0.0",
+    "@cumulus/launchpad-auth": "19.0.0",
+    "@cumulus/logger": "19.0.0",
+    "@cumulus/message": "19.0.0",
+    "@cumulus/oauth-client": "19.0.0",
     "base-64": "^0.1.0",
     "commander": "^2.15.0",
     "dotenv": "^8.2.0",

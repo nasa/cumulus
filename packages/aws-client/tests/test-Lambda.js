@@ -22,6 +22,6 @@ test.serial('create, invoke and delete function', async (t) => {
 
   t.is(lambdaFunction.FunctionName, functionName);
   const unittestResponse = await Lambda.invoke(lambdaFunction.FunctionName, {});
-  t.false(unittestResponse);
+  t.is(unittestResponse, undefined);
   await lambda().deleteFunction({ FunctionName: functionName });
 });

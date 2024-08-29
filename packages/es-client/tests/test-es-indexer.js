@@ -1,14 +1,17 @@
 'use strict';
 
 const test = require('ava');
-const rewire = require('rewire');
+
+const cloneDeep = require('lodash/cloneDeep');
+const sinon = require('sinon');
+
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { IndexExistsError } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const indexer = rewire('../indexer');
+const indexer = require('../indexer');
 const { Search } = require('../search');
 const {
   createTestIndex,
@@ -19,9 +22,10 @@ process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
 test.before(async (t) => {
-  const { esIndex, esClient } = await createTestIndex();
+  const { esIndex, esClient, searchClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
+  t.context.searchClient = searchClient;
 
   // create bucket
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
@@ -75,7 +79,7 @@ test.serial('deleteGranule deletes granule record and creates deletedgranule rec
     parent: collectionId,
   };
 
-  let deletedRecord = await esClient.get(deletedGranParams)
+  let deletedRecord = await esClient.client.get(deletedGranParams)
     .then((response) => response.body);
   t.true(deletedRecord.found);
   t.deepEqual(deletedRecord._source.files, granule.files);
@@ -86,7 +90,7 @@ test.serial('deleteGranule deletes granule record and creates deletedgranule rec
   // the deletedgranule deletedRecord is removed if the granule is ingested again
   r = await indexer.indexGranule(esClient, granule, esIndex, granuleType);
   t.is(r.result, 'created');
-  deletedRecord = await esClient.get(deletedGranParams, { ignore: [404] })
+  deletedRecord = await esClient.client.get(deletedGranParams, { ignore: [404] })
     .then((response) => response.body);
   t.false(deletedRecord.found);
 });
@@ -110,7 +114,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
   // add the records
   let response = await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esIndex)));
   t.is(response.length, 11);
-  await esClient.indices.refresh();
+  await esClient.client.indices.refresh();
 
   // now delete the records
   response = await Promise.all(granules
@@ -125,7 +129,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
   t.is(response.length, 11);
   response.forEach((r) => t.is(r.result, 'deleted'));
 
-  await esClient.indices.refresh();
+  await esClient.client.indices.refresh();
 
   // retrieve deletedgranule records which are deleted within certain range
   // and are from a given collection
@@ -155,7 +159,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
     },
   };
 
-  response = await esClient.search(deletedGranParams)
+  response = await esClient.client.search(deletedGranParams)
     .then((searchResponse) => searchResponse.body);
   t.is(response.hits.total, 11);
   response.hits.hits.forEach((r) => {
@@ -177,7 +181,7 @@ test.serial('indexing a rule record', async (t) => {
   t.is(r.result, 'created');
 
   // check the record exists
-  const record = await esClient.get({
+  const record = await esClient.client.get({
     index: esIndex,
     type: 'rule',
     id: testRecord.name,
@@ -200,7 +204,7 @@ test.serial('indexing a provider record', async (t) => {
   t.is(r.result, 'created');
 
   // check the record exists
-  const record = await esClient.get({
+  const record = await esClient.client.get({
     index: esIndex,
     type: 'provider',
     id: testRecord.id,
@@ -208,6 +212,64 @@ test.serial('indexing a provider record', async (t) => {
 
   t.is(record._id, testRecord.id);
   t.is(typeof record._source.timestamp, 'number');
+});
+
+test.serial('genericRecordUpdate handles a `ResponseError` and retries the query after refreshing the client', async (t) => {
+  const esClient = cloneDeep(t.context.esClient);
+  const { esIndex } = t.context;
+  const record = {
+    name: 'SomeName',
+    version: 'someVersion',
+  };
+  const collectionId = constructCollectionId(record.name, record.version);
+
+  const refreshClientStub = sinon.stub();
+  esClient.refreshClient = refreshClientStub;
+
+  const indexStub = sinon.stub();
+  esClient._client = { index: indexStub };
+
+  const responseError = new Error();
+  responseError.name = 'ResponseError';
+  responseError.meta = {
+    body: { message: 'The security token included in the request is expired' },
+  };
+  const successText = 'TestStub Success';
+  indexStub.onCall(0).throws(responseError);
+  indexStub.onCall(1).returns({ body: successText });
+
+  const result = await indexer.genericRecordUpdate(esClient, collectionId, record, esIndex, 'collection');
+  t.is(result, successText);
+  t.is(refreshClientStub.callCount, 1);
+});
+
+test.serial('genericRecordUpdate handles a `ResponseError` and retries the query after refreshing the client, throwing an error if one is thrown', async (t) => {
+  const esClient = cloneDeep(t.context.esClient);
+  const { esIndex } = t.context;
+  const record = {
+    name: 'SomeName',
+    version: 'someVersion',
+  };
+  const collectionId = constructCollectionId(record.name, record.version);
+
+  const refreshClientStub = sinon.stub();
+  esClient.refreshClient = refreshClientStub;
+
+  const indexStub = sinon.stub();
+  esClient._client = { index: indexStub };
+
+  const responseError = new Error();
+  responseError.name = 'ResponseError';
+  responseError.meta = {
+    body: { message: 'The security token included in the request is expired' },
+  };
+
+  const errorMessage = 'second error';
+  indexStub.onCall(0).throws(responseError);
+  indexStub.onCall(1).throws(new Error(errorMessage));
+
+  await t.throwsAsync(indexer.genericRecordUpdate(esClient, collectionId, record, esIndex, 'collection'), undefined, errorMessage);
+  t.is(refreshClientStub.callCount, 1);
 });
 
 test.serial('indexing a collection record', async (t) => {
@@ -225,7 +287,7 @@ test.serial('indexing a collection record', async (t) => {
   t.is(r.result, 'created');
 
   // check the record exists
-  const record = await esClient.get({
+  const record = await esClient.client.get({
     index: esIndex,
     type: 'collection',
     id: collectionId,
@@ -258,14 +320,14 @@ test.serial('indexing collection records with different versions', async (t) => 
   }
   /* eslint-enable no-await-in-loop */
 
-  await esClient.indices.refresh();
+  await esClient.client.indices.refresh();
   // check each record exists and is not affected by other collections
   for (let i = 1; i < 11; i += 1) {
     const version = `00${i}`;
     const key = `key${i}`;
     const value = `value${i}`;
     const collectionId = constructCollectionId(name, version);
-    const record = await esClient.get({ // eslint-disable-line no-await-in-loop
+    const record = await esClient.client.get({ // eslint-disable-line no-await-in-loop
       index: esIndex,
       type: 'collection',
       id: collectionId,
@@ -313,7 +375,7 @@ test.serial('updating a collection record', async (t) => {
   t.is(r.result, 'updated');
 
   // check the record exists
-  const record = await esClient.get({
+  const record = await esClient.client.get({
     index: esIndex,
     type: 'collection',
     id: collectionId,
@@ -357,7 +419,7 @@ test.serial('delete a provider record', async (t) => {
   t.is(r.result, 'deleted');
 
   await t.throwsAsync(
-    () => esClient.get({ index: esIndex, type, id: testRecord.id }),
+    () => esClient.client.get({ index: esIndex, type, id: testRecord.id }),
     { message: 'Response Error' }
   );
   t.false(await esProvidersClient.exists(id));
@@ -445,7 +507,7 @@ test.serial('deleteReconciliationReport deletes a reconciliation report record',
   t.is(r.result, 'deleted');
 
   await t.throwsAsync(
-    () => esClient.get({ index: esIndex, type, id: testRecord.name }),
+    () => esClient.client.get({ index: esIndex, type, id: testRecord.name }),
     { message: 'Response Error' }
   );
 });
@@ -461,7 +523,7 @@ test.serial('indexing a granule record', async (t) => {
   await indexer.indexGranule(esClient, granule, esIndex);
 
   // test granule record is added
-  const record = await esClient.get({
+  const record = await esClient.client.get({
     index: esIndex,
     type: 'granule',
     id: granule.granuleId,
@@ -481,7 +543,7 @@ test.serial('indexing a PDR record', async (t) => {
   await indexer.indexPdr(esClient, pdr, esIndex);
 
   // test granule record is added
-  const record = await esClient.get({
+  const record = await esClient.client.get({
     index: esIndex,
     type: 'pdr',
     id: pdr.pdrName,
@@ -501,7 +563,7 @@ test.serial('updateAsyncOperation updates an async operation record', async (t) 
 
   await indexer.indexAsyncOperation(esClient, asyncOperation, esIndex);
 
-  const record = await esClient.get({
+  const record = await esClient.client.get({
     index: esIndex,
     type: 'asyncOperation',
     id,
@@ -517,7 +579,7 @@ test.serial('updateAsyncOperation updates an async operation record', async (t) 
     esIndex
   );
 
-  const updatedRecord = await esClient.get({
+  const updatedRecord = await esClient.client.get({
     index: esIndex,
     type: 'asyncOperation',
     id,
@@ -614,12 +676,12 @@ test.serial('Create new index', async (t) => {
   await indexer.createIndex(esClient, newIndex);
 
   try {
-    const indexExists = await esClient.indices.exists({ index: newIndex })
+    const indexExists = await esClient.client.indices.exists({ index: newIndex })
       .then((response) => response.body);
 
     t.true(indexExists);
   } finally {
-    await esClient.indices.delete({ index: newIndex });
+    await esClient.client.indices.delete({ index: newIndex });
   }
 });
 
@@ -637,7 +699,7 @@ test.serial('Create new index - index already exists', async (t) => {
     }
   );
 
-  await esClient.indices.delete({ index: newIndex });
+  await esClient.client.indices.delete({ index: newIndex });
 });
 
 test.serial('Create new index with number of shards env var set', async (t) => {
@@ -649,12 +711,12 @@ test.serial('Create new index with number of shards env var set', async (t) => {
   try {
     await indexer.createIndex(esClient, newIndex);
 
-    const indexSettings = await esClient.indices.get({ index: newIndex })
+    const indexSettings = await esClient.client.indices.get({ index: newIndex })
       .then((response) => response.body);
 
     t.is(indexSettings[newIndex].settings.index.number_of_shards, '4');
   } finally {
     delete process.env.ES_INDEX_SHARDS;
-    await esClient.indices.delete({ index: newIndex });
+    await esClient.client.indices.delete({ index: newIndex });
   }
 });

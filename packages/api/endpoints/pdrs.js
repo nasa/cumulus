@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { indexPdr, deletePdr } = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, getEsClient } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: '@cumulus/api/pdrs' });
@@ -70,7 +70,7 @@ async function del(req, res) {
   const {
     pdrPgModel = new PdrPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     s3Utils = S3UtilsLib,
   } = req.testContext || {};
 

@@ -1,4 +1,3 @@
-import AWS from 'aws-sdk';
 import got from 'got';
 import Logger from '@cumulus/logger';
 import path from 'path';
@@ -16,6 +15,7 @@ import S3ObjectStore from '@cumulus/aws-client/S3ObjectStore';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
 import { sts } from '@cumulus/aws-client/services';
+import { AssumeRoleResponse } from '@cumulus/aws-client/STS';
 import {
   constructDistributionUrl,
   fetchDistributionBucketMap,
@@ -31,18 +31,21 @@ import {
 } from './errors';
 import { isFulfilledPromise } from './typeGuards';
 import {
-  MakeBackupFileRequestResult,
+  ApiGranule,
+  BackupConfig,
   HandlerEvent,
+  MakeBackupFileRequestResult,
   MessageGranule,
   MessageGranuleFilesObject,
   MessageGranuleFromStepOutput,
-  ApiGranule,
 } from './types';
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
 const S3_LINK_EXPIRY_SECONDS_DEFAULT = 3600;
 const CREDS_EXPIRY_SECONDS = S3_LINK_EXPIRY_SECONDS_DEFAULT;
+
+const getLzardsProviderOrDefault = (lzardsProvider: string | undefined) => lzardsProvider || process.env.lzards_provider || '';
 
 export const generateCloudfrontUrl = async (params: {
   Bucket: string,
@@ -59,7 +62,7 @@ export const generateCloudfrontUrl = async (params: {
 };
 
 export const generateDirectS3Url = async (params: {
-  roleCreds: AWS.STS.AssumeRoleResponse,
+  roleCreds: AssumeRoleResponse,
   Bucket: string,
   Key: string,
   usePassedCredentials?: boolean
@@ -95,7 +98,7 @@ export const generateAccessUrl = async (params: {
   Bucket: string,
   Key: string,
   urlConfig: {
-    roleCreds: AWS.STS.AssumeRoleResponse,
+    roleCreds: AssumeRoleResponse,
     urlType?: string,
     cloudfrontEndpoint?: string,
   },
@@ -146,7 +149,8 @@ export const postRequestToLzards = async (params: {
   file: MessageGranuleFilesObject,
   granuleId: string,
   provider: string,
-  createdAt: number
+  createdAt: number,
+  lzardsProvider?: string,
 }) => {
   const {
     accessUrl,
@@ -156,18 +160,23 @@ export const postRequestToLzards = async (params: {
     granuleId,
     provider,
     createdAt,
+    lzardsProvider,
   } = params;
 
-  const lzardsProvider = getRequiredEnvVar('lzards_provider');
+  const configuredLzardsProvider = getLzardsProviderOrDefault(lzardsProvider);
+  if (!configuredLzardsProvider) {
+    log.warn(
+      'Warning - no LZARDS provider set in the configuration object or Cumulus `lzards_provider` configuration.  Backup may fail.'
+    );
+  }
   const lzardsApiUrl = getRequiredEnvVar('lzards_api');
-
   const checksumConfig = setLzardsChecksumQueryType(file, granuleId);
 
   try {
     return await got.post(lzardsApiUrl,
       {
         json: {
-          provider: lzardsProvider,
+          provider: configuredLzardsProvider,
           objectUrl: accessUrl,
           metadata: {
             filename: buildS3Uri(file.bucket, file.key),
@@ -191,12 +200,7 @@ export const postRequestToLzards = async (params: {
 };
 
 export const makeBackupFileRequest = async (params: {
-  backupConfig: {
-    roleCreds: AWS.STS.AssumeRoleResponse,
-    authToken: string,
-    urlType: string,
-    cloudfrontEndpoint?: string,
-  },
+  backupConfig: BackupConfig
   collectionId: string,
   file: MessageGranuleFilesObject,
   granuleId: string,
@@ -229,6 +233,7 @@ export const makeBackupFileRequest = async (params: {
     const { statusCode, body } = await lzardsPostMethod({
       accessUrl,
       authToken,
+      lzardsProvider: backupConfig.lzardsProvider,
       collection: collectionId,
       file,
       granuleId,
@@ -294,12 +299,7 @@ export const getGranuleCollection = async (params: {
 
 export const backupGranule = async (params: {
   granule: MessageGranule,
-  backupConfig: {
-    roleCreds: AWS.STS.AssumeRoleResponse,
-    authToken: string,
-    urlType: string,
-    cloudfrontEndpoint?: string,
-  },
+  backupConfig: BackupConfig,
 }) => {
   let granuleCollection : CollectionRecord;
   let collectionId: string = '';
@@ -361,8 +361,8 @@ export const generateAccessCredentials = async () => {
     DurationSeconds: CREDS_EXPIRY_SECONDS,
     RoleSessionName: `${Date.now()}`,
   };
-  const roleCreds = await sts().assumeRole(params).promise();
-  return roleCreds as AWS.STS.AssumeRoleResponse;
+  const roleCreds = await sts().assumeRole(params);
+  return roleCreds as AssumeRoleResponse;
 };
 
 export const backupGranulesToLzards = async (

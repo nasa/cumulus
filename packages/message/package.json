@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/message",
-  "version": "18.2.2",
+  "version": "19.0.0",
   "description": "Utilities for building and parsing Cumulus messages",
   "keywords": [
     "GIBS",
@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "publishConfig": {
     "access": "public"
@@ -22,6 +22,7 @@
     "build-docs": "npm run clean && npm run tsc && ../../node_modules/.bin/jsdoc2md --heading-depth 3 -t templates/README.md.hbs *.js > README.md",
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -34,19 +35,20 @@
       "tests/**"
     ],
     "verbose": true,
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.2.2",
-    "@cumulus/common": "18.2.2",
-    "@cumulus/errors": "18.2.2",
-    "@cumulus/logger": "18.2.2",
-    "@cumulus/types": "18.2.2",
+    "@cumulus/aws-client": "19.0.0",
+    "@cumulus/common": "19.0.0",
+    "@cumulus/errors": "19.0.0",
+    "@cumulus/logger": "19.0.0",
+    "@cumulus/types": "19.0.0",
     "jsonpath-plus": "^3.0.0",
     "lodash": "^4.17.21",
-    "uuid": "^8.2.0"
+    "uuidv4": "^6.2.13"
   },
   "devDependencies": {
     "@types/uuid": "^8.0.0"

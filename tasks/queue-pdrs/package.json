@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/queue-pdrs",
-  "version": "18.2.2",
+  "version": "19.0.0",
   "description": "Add discovered PDRs to a queue",
   "main": "index.js",
   "directories": {
@@ -16,28 +16,30 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
     "clean": "rm -rf dist",
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.2.2",
-    "@cumulus/common": "18.2.2",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/ingest": "18.2.2",
-    "@cumulus/message": "18.2.2",
+    "@cumulus/aws-client": "19.0.0",
+    "@cumulus/common": "19.0.0",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
+    "@cumulus/ingest": "19.0.0",
+    "@cumulus/message": "19.0.0",
     "lodash": "^4.17.21"
   }
 }

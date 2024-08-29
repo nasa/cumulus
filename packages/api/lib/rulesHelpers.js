@@ -7,7 +7,18 @@ const get = require('lodash/get');
 const isNil = require('lodash/isNil');
 const set = require('lodash/set');
 
+const {
+  AddPermissionCommand,
+  DeleteEventSourceMappingCommand,
+  RemovePermissionCommand,
+  ListEventSourceMappingsCommand,
+  UpdateEventSourceMappingCommand,
+  CreateEventSourceMappingCommand,
+  EventSourcePosition,
+} = require('@aws-sdk/client-lambda');
+
 const awsServices = require('@cumulus/aws-client/services');
+const { lambda } = require('@cumulus/aws-client/services');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const Logger = require('@cumulus/logger');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -20,6 +31,12 @@ const { getRequiredEnvVar } = require('@cumulus/common/env');
 
 const { listRules } = require('@cumulus/api-client/rules');
 const { omitDeepBy, removeNilProperties } = require('@cumulus/common/util');
+
+const {
+  SubscribeCommand,
+  UnsubscribeCommand,
+  ListSubscriptionsByTopicCommand,
+} = require('@aws-sdk/client-sns');
 
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
@@ -39,12 +56,13 @@ const log = new Logger({ sender: '@cumulus/rulesHelpers' });
  *
  * @param {Object} params - function params
  * @param {number} [params.pageNumber] - current page of API results
+ * @param {number} [params.pageSize] - database query page size used when calling listRules
  * @param {Array<Object>} [params.rules] - partial rules Array
  * @param {Object} [params.queryParams] - API query params, empty query returns all rules
  * @returns {Promise<Array<Object>>} all matching rules
  */
-async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
-  const query = { ...queryParams, page: pageNumber };
+async function fetchRules({ pageNumber = 1, pageSize = 100, rules = [], queryParams = {} }) {
+  const query = { ...queryParams, page: pageNumber, limit: pageSize };
   const apiResponse = await listRules({
     prefix: process.env.stackName,
     query,
@@ -53,6 +71,7 @@ async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
   if (responseBody.results.length > 0) {
     return fetchRules({
       pageNumber: (pageNumber + 1),
+      pageSize,
       rules: rules.concat(responseBody.results),
       queryParams,
     });
@@ -218,7 +237,7 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
       UUID: id[eventType],
     };
     log.info(`Deleting event source with UUID ${id[eventType]}`);
-    return awsServices.lambda().deleteEventSourceMapping(params);
+    return lambda().send(new DeleteEventSourceMappingCommand(params));
   }
   log.info(`Event source mapping is shared with another rule. Will not delete kinesis event source for ${rule.name}`);
   return undefined;
@@ -254,14 +273,16 @@ async function deleteKinesisEventSources(knex, rule, testContext = {
       },
     },
   ];
-  const deleteEventPromises = kinesisSourceEvents.map(
-    (lambda) => deleteKinesisEventSourceMethod(knex, rule, lambda.eventType, lambda.type).catch(
-      (error) => {
-        log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
-        if (error.name !== 'ResourceNotFoundException') throw error;
-      }
-    )
-  );
+  const deleteEventPromises = kinesisSourceEvents.map((kinesisLambda) =>
+    deleteKinesisEventSourceMethod(
+      knex,
+      rule,
+      kinesisLambda.eventType,
+      kinesisLambda.type
+    ).catch((error) => {
+      log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
+      if (error.name !== 'ResourceNotFoundException') throw error;
+    }));
   return await Promise.all(deleteEventPromises);
 }
 
@@ -283,7 +304,7 @@ async function deleteSnsTrigger(knex, rule) {
     StatementId: getSnsTriggerPermissionId(rule),
   };
   try {
-    await awsServices.lambda().removePermission(permissionParams);
+    await lambda().send(new RemovePermissionCommand(permissionParams));
   } catch (error) {
     if (isResourceNotFoundException(error)) {
       throw new ResourceNotFoundError(error);
@@ -296,7 +317,7 @@ async function deleteSnsTrigger(knex, rule) {
     SubscriptionArn: rule.rule.arn,
   };
   log.info(`Successfully deleted SNS subscription for ARN ${rule.rule.arn}.`);
-  return awsServices.sns().unsubscribe(subscriptionParams);
+  return awsServices.sns().send(new UnsubscribeCommand(subscriptionParams));
 }
 
 /**
@@ -385,13 +406,14 @@ async function validateAndUpdateSqsRule(rule) {
    * @param {{ name: string | undefined}}  lambda - The name of the target lambda
    * @returns {Promise}
    */
-async function addKinesisEventSource(item, lambda) {
+async function addKinesisEventSource(item, kinesisLambda) {
   // use the existing event source mapping if it already exists and is enabled
   const listParams = {
-    FunctionName: lambda.name,
+    FunctionName: kinesisLambda.name,
     EventSourceArn: item.rule.value,
   };
-  const listData = await awsServices.lambda().listEventSourceMappings(listParams);
+  const mappingInput = new ListEventSourceMappingsCommand(listParams);
+  const listData = await awsServices.lambda().send(mappingInput);
   if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
     const currentMapping = listData.EventSourceMappings[0];
 
@@ -399,20 +421,22 @@ async function addKinesisEventSource(item, lambda) {
     if (currentMapping.State === 'Enabled') {
       return currentMapping;
     }
-    return awsServices.lambda().updateEventSourceMapping({
-      UUID: currentMapping.UUID,
-      Enabled: true,
-    });
+    return awsServices.lambda().send(
+      new UpdateEventSourceMappingCommand({
+        UUID: currentMapping.UUID,
+        Enabled: true,
+      })
+    );
   }
 
   // create event source mapping
   const params = {
     EventSourceArn: item.rule.value,
-    FunctionName: lambda.name,
-    StartingPosition: 'TRIM_HORIZON',
+    FunctionName: kinesisLambda.name,
+    StartingPosition: EventSourcePosition.TRIM_HORIZON,
     Enabled: true,
   };
-  return awsServices.lambda().createEventSourceMapping(params);
+  return awsServices.lambda().send(new CreateEventSourceMappingCommand(params));
 }
 
 /**
@@ -431,7 +455,7 @@ async function addKinesisEventSources(rule) {
   ];
 
   const sourceEventPromises = kinesisSourceEvents.map(
-    (lambda) => addKinesisEventSource(rule, lambda).catch(
+    (kinesisLambda) => addKinesisEventSource(rule, kinesisLambda).catch(
       (error) => {
         log.error(`Error adding eventSourceMapping for ${rule.name}: ${error}`);
         if (error.name !== 'ResourceNotFoundException') throw error;
@@ -449,7 +473,7 @@ async function addKinesisEventSources(rule) {
  *
  * @param {RuleRecord} ruleItem - Rule to check
  *
- * @returns {Object}
+ * @returns {Promise<Object>}
  *  subExists - boolean
  *  existingSubscriptionArn - ARN of subscription
  */
@@ -459,10 +483,10 @@ async function checkForSnsSubscriptions(ruleItem) {
   let subscriptionArn;
   /* eslint-disable no-await-in-loop */
   do {
-    const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
+    const subsResponse = await awsServices.sns().send(new ListSubscriptionsByTopicCommand({
       TopicArn: ruleItem.rule.value,
       NextToken: token,
-    });
+    }));
     token = subsResponse.NextToken;
     if (subsResponse.Subscriptions) {
       /* eslint-disable no-loop-func */
@@ -505,7 +529,7 @@ async function addSnsTrigger(item) {
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
     };
-    const r = await awsServices.sns().subscribe(subscriptionParams);
+    const r = await awsServices.sns().send(new SubscribeCommand(subscriptionParams));
     subscriptionArn = r.SubscriptionArn;
     // create permission to invoke lambda
     const permissionParams = {
@@ -515,7 +539,7 @@ async function addSnsTrigger(item) {
       SourceArn: item.rule.value,
       StatementId: getSnsTriggerPermissionId(item),
     };
-    await awsServices.lambda().addPermission(permissionParams);
+    await lambda().send(new AddPermissionCommand(permissionParams));
   }
   return subscriptionArn;
 }

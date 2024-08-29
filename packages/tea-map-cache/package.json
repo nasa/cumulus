@@ -1,15 +1,16 @@
 {
   "name": "@cumulus/tea-map-cache",
-  "version": "18.2.2",
+  "version": "19.0.0",
   "description": "Tea Bucket Map Cache Writer",
   "main": "index.js",
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
     "package": "npm run prepare && npm run webpack && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -22,15 +23,15 @@
     "files": [
       "tests/**/*.js"
     ],
-    "fail-fast": true,
+    "failFast": true,
     "verbose": true,
     "timeout": "2m"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.2.2",
-    "@cumulus/logger": "18.2.2",
+    "@cumulus/aws-client": "19.0.0",
+    "@cumulus/logger": "19.0.0",
     "got": "^11.8.5",
     "p-retry": "^4.2.0"
   },

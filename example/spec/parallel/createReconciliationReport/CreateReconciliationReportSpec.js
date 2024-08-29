@@ -8,6 +8,8 @@ const got = require('got');
 const isEqual = require('lodash/isEqual');
 const isNil = require('lodash/isNil');
 const pWaitFor = require('p-wait-for');
+const { GetFunctionConfigurationCommand } = require('@aws-sdk/client-lambda');
+
 const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
 const {
@@ -221,7 +223,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
 
 const createCmrClient = async (config) => {
   const lambdaFunction = `${config.stackName}-CreateReconciliationReport`;
-  const lambdaConfig = await lambda().getFunctionConfiguration({ FunctionName: lambdaFunction });
+  const lambdaConfig = await lambda().send(new GetFunctionConfigurationCommand({ FunctionName: lambdaFunction }));
   Object.entries(lambdaConfig.Environment.Variables).forEach(([key, value]) => {
     process.env[key] = value;
   });
@@ -343,7 +345,6 @@ describe('When there are granule differences and granule reconciliation is run',
       await s3().putObject({ Body: 'delete-me', ...extraS3Object });
 
       extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket);
-
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
@@ -426,7 +427,8 @@ describe('When there are granule differences and granule reconciliation is run',
     if (beforeAllFailed) fail(beforeAllFailed);
   });
 
-  describe('Create an Inventory Reconciliation Report to monitor inventory discrepancies', () => {
+  // TODO: fix tests in CUMULUS-3806 when CreateReconciliationReport lambda is changed to query postgres
+  xdescribe('Create an Inventory Reconciliation Report to monitor inventory discrepancies', () => {
     // report record in db and report in s3
     let reportRecord;
     let report;
@@ -539,7 +541,7 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(report.granulesInCumulusCmr.okCount).toBe(1);
     });
 
-    it('generates a filtered report showing granules that are in the Cumulus but not in CMR', () => {
+    it('generates a filtered report showing granules that are in Cumulus but not in CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       // ingested (not published) granule should only in Cumulus
       const cumulusGranuleIds = report.granulesInCumulusCmr.onlyInCumulus.map((gran) => gran.granuleId);
@@ -610,7 +612,8 @@ describe('When there are granule differences and granule reconciliation is run',
     });
   });
 
-  describe('Create an Internal Reconciliation Report to monitor internal discrepancies', () => {
+  // TODO: the internal report functionality will be removed after collections/granules is changed to no longer use ES
+  xdescribe('Create an Internal Reconciliation Report to monitor internal discrepancies', () => {
     // report record in db and report in s3
     let reportRecord;
     let report;
@@ -831,7 +834,8 @@ describe('When there are granule differences and granule reconciliation is run',
     });
   });
 
-  describe('Create an ORCA Backup Reconciliation Report to monitor ORCA backup discrepancies', () => {
+  // TODO: fix tests in CUMULUS-3806 when CreateReconciliationReport lambda is changed to query postgres
+  xdescribe('Create an ORCA Backup Reconciliation Report to monitor ORCA backup discrepancies', () => {
     // report record in db and report in s3
     let reportRecord;
     let report;

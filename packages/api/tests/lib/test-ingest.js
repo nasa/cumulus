@@ -4,6 +4,9 @@ const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const { sns } = require('@cumulus/aws-client/services');
+const {
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { createBucket } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -143,7 +146,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
-  await sns().deleteTopic({ TopicArn: t.context.granules_sns_topic_arn });
+  await sns().send(new DeleteTopicCommand({ TopicArn: t.context.granules_sns_topic_arn }));
 });
 
 test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {

@@ -5,7 +5,7 @@ const { randomId, randomString } = require('@cumulus/common/test-utils');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, getEsClient } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 
 const {
@@ -25,17 +25,18 @@ const esSearchStub = sandbox.stub();
 const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
-class FakeSearch {
-  static es() {
-    return new FakeEsClient();
-  }
-}
 
-const { getGranulesForPayload, getGranuleIdsForPayload, translateGranule } = proxyquire(
+const { getGranulesForPayload, translateGranule } = proxyquire(
   '../../lib/granules',
   {
     '@cumulus/es-client/search': {
-      Search: FakeSearch,
+      getEsClient: () => Promise.resolve({
+        initializeEsClient: () => Promise.resolve(),
+        client: {
+          search: esSearchStub,
+          scroll: esScrollStub,
+        },
+      }),
     },
   }
 );
@@ -277,102 +278,6 @@ test('moveGranuleFilesAndUpdateDatastore throws if granulePgModel.getRecordCumul
   );
 });
 
-test('getGranuleIdsForPayload returns unique granule IDs from payload', async (t) => {
-  const granuleId1 = randomId('granule');
-  const granuleId2 = randomId('granule');
-  const ids = [granuleId1, granuleId1, granuleId2];
-  const returnedIds = await getGranuleIdsForPayload({
-    ids,
-  });
-  t.deepEqual(returnedIds.sort(), [granuleId1, granuleId2].sort());
-});
-
-test.serial('getGranuleIdsForPayload returns unique granule IDs from query', async (t) => {
-  const granuleId1 = randomId('granule');
-  const granuleId2 = randomId('granule');
-  esSearchStub.resolves({
-    body: {
-      hits: {
-        hits: [
-          {
-            _source: {
-              granuleId: granuleId1,
-            },
-          },
-          {
-            _source: {
-              granuleId: granuleId1,
-            },
-          },
-          {
-            _source: {
-              granuleId: granuleId2,
-            },
-          },
-        ],
-        total: {
-          value: 3,
-        },
-      },
-    },
-  });
-  const returnedIds = await getGranuleIdsForPayload({
-    query: 'fake-query',
-    index: 'fake-index',
-  });
-  t.deepEqual(returnedIds.sort(), [granuleId1, granuleId2].sort());
-});
-
-test.serial('getGranuleIdsForPayload handles query paging', async (t) => {
-  const granuleId1 = randomId('granule');
-  const granuleId2 = randomId('granule');
-  const granuleId3 = randomId('granule');
-  esSearchStub.resolves({
-    body: {
-      hits: {
-        hits: [
-          {
-            _source: {
-              granuleId: granuleId1,
-            },
-          },
-          {
-            _source: {
-              granuleId: granuleId2,
-            },
-          },
-        ],
-        total: {
-          value: 3,
-        },
-      },
-    },
-  });
-  esScrollStub.resolves({
-    body: {
-      hits: {
-        hits: [
-          {
-            _source: {
-              granuleId: granuleId3,
-            },
-          },
-        ],
-        total: {
-          value: 3,
-        },
-      },
-    },
-  });
-  t.deepEqual(
-    await getGranuleIdsForPayload({
-      query: 'fake-query',
-      index: 'fake-index',
-    }),
-    [granuleId1, granuleId2, granuleId3]
-  );
-});
-
 test('getGranulesForPayload returns unique granules from payload', async (t) => {
   const granuleId1 = randomId('granule');
   const granuleId2 = randomId('granule');
@@ -544,7 +449,7 @@ test.serial(
     const esAlias = randomId('esAlias');
     const esIndex = randomId('esindex');
     process.env.ES_INDEX = esAlias;
-    const esClient = await Search.es();
+    const esClient = await getEsClient();
 
     await bootstrapElasticSearch({
       host: 'fakeHost',

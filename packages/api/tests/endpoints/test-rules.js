@@ -7,6 +7,12 @@ const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const test = require('ava');
 const sinon = require('sinon');
+const {
+  CreateFunctionCommand,
+  AddPermissionCommand,
+  RemovePermissionCommand,
+} = require('@aws-sdk/client-lambda');
+const { mockClient } = require('aws-sdk-client-mock');
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -36,6 +42,11 @@ const S3 = require('@cumulus/aws-client/S3');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+
+const {
+  ListSubscriptionsByTopicCommand,
+  UnsubscribeCommand,
+} = require('@aws-sdk/client-sns');
 
 const { buildFakeExpressResponse } = require('./utils');
 const {
@@ -88,7 +99,7 @@ test.before(async (t) => {
 
   await Promise.all(
     ['messageConsumer', 'KinesisInboundEventLogger'].map(async (name) => {
-      const lambdaCreated = await awsServices.lambda().createFunction({
+      const lambdaCreated = await awsServices.lambda().send(new CreateFunctionCommand({
         Code: {
           ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
         },
@@ -96,7 +107,7 @@ test.before(async (t) => {
         Role: `arn:aws:iam::123456789012:role/${randomId('role')}`,
         Handler: 'index.handler',
         Runtime: 'nodejs16.x',
-      });
+      }));
       process.env[name] = lambdaCreated.FunctionName;
     })
   );
@@ -986,7 +997,9 @@ test.serial('post() does not write to PostgreSQL if writing to Elasticsearch fai
   const { newRule, testKnex } = t.context;
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const expressRequest = {
@@ -1193,32 +1206,28 @@ test.serial('PATCH nullifies expected fields for existing rule in all datastores
 });
 
 test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => (
-        Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        })
-      ),
-      unsubscribe: () => (
-        Promise.resolve()
-      ),
-    });
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
+  const snsMock = mockClient(awsServices.sns());
+
+  snsMock
+    .onAnyCommand()
+    .rejects()
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        Endpoint: process.env.messageConsumer,
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(UnsubscribeCommand)
+    .resolves({});
+
+  const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
+  mockLambdaClient.on(AddPermissionCommand).resolves();
+  mockLambdaClient.on(RemovePermissionCommand).resolves();
+
   t.teardown(() => {
-    snsStub.restore();
-    lambdaStub.restore();
+    snsMock.restore();
+    mockLambdaClient.restore();
   });
 
   const {
@@ -1503,7 +1512,9 @@ test('PATCH does not write to PostgreSQL if writing to Elasticsearch fails', asy
   );
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const updatedRule = {
@@ -1945,8 +1956,10 @@ test.serial('PATCH keeps initial trigger information if writing to Elasticsearch
     body: updateRule,
     testContext: {
       esClient: {
-        index: () => {
-          throw new Error('ES fail');
+        client: {
+          index: () => {
+            throw new Error('ES fail');
+          },
         },
       },
     },
@@ -2173,34 +2186,28 @@ test.serial('PUT removes existing fields if not specified or set to null', async
 });
 
 test.serial('PUT sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => (
-        Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        })
-      ),
-      unsubscribe: () => (
-        Promise.resolve()
-      ),
-    });
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
-  t.teardown(() => {
-    snsStub.restore();
-    lambdaStub.restore();
-  });
+  const snsMock = mockClient(awsServices.sns());
 
+  snsMock
+    .onAnyCommand()
+    .rejects()
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        Endpoint: process.env.messageConsumer,
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(UnsubscribeCommand)
+    .resolves({});
+  const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
+  mockLambdaClient.on(AddPermissionCommand).resolves();
+  mockLambdaClient.on(RemovePermissionCommand).resolves();
+
+  t.teardown(() => {
+    snsMock.restore();
+    mockLambdaClient.restore();
+  });
   const {
     esRulesClient,
     rulePgModel,
@@ -2460,7 +2467,9 @@ test('PUT does not write to PostgreSQL if writing to Elasticsearch fails', async
   );
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const updatedRule = {
@@ -2904,8 +2913,10 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
     body: updateRule,
     testContext: {
       esClient: {
-        index: () => {
-          throw new Error('ES fail');
+        client: {
+          index: () => {
+            throw new Error('ES fail');
+          },
         },
       },
     },
@@ -3176,9 +3187,12 @@ test('del() does not remove from PostgreSQL if removing from Elasticsearch fails
   );
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('something bad');
+    client: {
+      delete: () => {
+        throw new Error('something bad');
+      },
     },
+    initializeEsClient: () => Promise.resolve(),
   };
 
   const expressRequest = {

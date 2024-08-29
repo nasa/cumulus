@@ -1,9 +1,9 @@
 {
   "name": "@cumulus/db-provision-user-database-lambda",
-  "version": "18.2.2",
+  "version": "19.0.0",
   "description": "A Lambda function used for provisioning user databases",
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "private": true,
   "scripts": {
@@ -11,6 +11,7 @@
     "package": "npm run clean && npm run tsc && npm run webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "python-lint": "true",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -23,11 +24,13 @@
   },
   "license": "Apache-2.0",
   "ava": {
-    "timeout": "2m"
+    "timeout": "2m",
+    "failFast": true
   },
   "dependencies": {
-    "@cumulus/common": "18.2.2",
-    "@cumulus/db": "18.2.2",
+    "@aws-sdk/client-secrets-manager": "^3.621.0",
+    "@cumulus/common": "19.0.0",
+    "@cumulus/db": "19.0.0",
     "knex": "2.4.1",
     "pg": "~8.10"
   },

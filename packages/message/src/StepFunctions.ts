@@ -2,10 +2,10 @@
 
 /**
  * Utility functions for working with AWS Step Function events/messages
- * @module StepFunctions
  *
+ * @module StepFunctions
  * @example
- * const StepFunctions = require('@cumulus/message/StepFunctions');
+ *   const StepFunctions = require('@cumulus/message/StepFunctions');
  */
 
 import { EventBridgeEvent } from 'aws-lambda';
@@ -13,7 +13,7 @@ import { JSONPath } from 'jsonpath-plus';
 import get from 'lodash/get';
 import set from 'lodash/set';
 
-import { getExecutionHistory } from '@cumulus/aws-client/StepFunctions';
+import { getExecutionHistory, HistoryEvent } from '@cumulus/aws-client/StepFunctions';
 import { getStepExitedEvent, getTaskExitedEventOutput } from '@cumulus/common/execution-history';
 import { Message } from '@cumulus/types';
 import * as s3Utils from '@cumulus/aws-client/S3';
@@ -49,9 +49,9 @@ const executionStatusToWorkflowStatus = (
  * of S3 remote message
  *
  * @param {Message.CumulusRemoteMessage} event - Source event
- * @returns {Promise<Object>} Updated event with target path replaced by remote message
+ * @param event.replace - Cumulus message replace config
+ * @returns {Promise<object>} Updated event with target path replaced by remote message
  * @throws {Error} if target path cannot be found on source event
- *
  * @async
  * @alias module:StepFunctions
  */
@@ -92,8 +92,7 @@ export const pullStepFunctionEvent = async (
  *
  * @param {CMAMessage} stepMessage - Message for the step
  * @param {string} stepName - Name of the step
- * @returns {Promise<Object>} Parsed and updated event with target path replaced by remote message
- *
+ * @returns {Promise<object>} Parsed and updated event with target path replaced by remote message
  * @async
  * @alias module:StepFunctions
  */
@@ -123,17 +122,18 @@ export const parseStepMessage = async (
  * Searches the Execution step History for the TaskStateEntered pertaining to
  * the failed task Id.  HistoryEvent ids are numbered sequentially, starting at
  * one.
-*
+ *
  * @param {HistoryEvent[]} events - Step Function events array
- * @param {HistoryEvent} failedStepEvent - Step Function's failed event.
+ * @param {failedStepEvent} failedStepEvent - Step Function's failed event.
+ * @param failedStepEvent.id - number (long), Step Functions failed event id.
  * @returns {string} name of the current stepfunction task or 'UnknownFailedStepName'.
  */
 export const getFailedStepName = (
-  events: AWS.StepFunctions.HistoryEvent[],
-  failedStepEvent: { id: number }
+  events: HistoryEvent[],
+  failedStepEvent: HistoryEvent
 ) => {
   try {
-    const previousEvents = events.slice(0, failedStepEvent.id - 1);
+    const previousEvents = events.slice(0, failedStepEvent.id as number - 1);
     const startEvents = previousEvents.filter(
       (e) => e.type === 'TaskStateEntered'
     );
@@ -150,15 +150,15 @@ export const getFailedStepName = (
 /**
  * Finds all failed execution events and returns the last one in the list.
  *
- * @param {Array<HistoryEventList>} events - array of AWS Stepfunction execution HistoryEvents
- * @returns {HistoryEventList | undefined} - the last lambda or activity that failed in the
+ * @param {HistoryEvent[]} events - array of AWS Stepfunction execution HistoryEvents
+ * @returns {HistoryEvent[] | undefined} - the last lambda or activity that failed in the
  * event array, or an empty array.
  */
 export const lastFailedEventStep = (
-  events: AWS.StepFunctions.HistoryEvent[]
-): AWS.StepFunctions.HistoryEvent | undefined => {
+  events: HistoryEvent[]
+): HistoryEvent | undefined => {
   const failures = events.filter((event) =>
-    ['LambdaFunctionFailed', 'ActivityFailed'].includes(event.type));
+    ['LambdaFunctionFailed', 'ActivityFailed'].includes(event.type as string));
   return failures.pop();
 };
 
