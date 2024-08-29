@@ -12,6 +12,7 @@ export {
   fakeGranuleRecordFactory,
   fakePdrRecordFactory,
   fakeProviderRecordFactory,
+  fakeReconciliationReportRecordFactory,
   fakeRuleRecordFactory,
   generateLocalTestDb,
 } from './test-utils';

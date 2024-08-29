@@ -13,8 +13,8 @@ export type ReconciliationReportStatus = 'Generated' | 'Pending' | 'Failed';
 
 export interface PostgresReconciliationReport {
   name: string,
-  type: ReconciliationReportType, // string
-  status: ReconciliationReportStatus, // string
+  type: ReconciliationReportType,
+  status: ReconciliationReportStatus,
   location?: string,
   error?: object,
   created_at: Date | undefined,

@@ -147,7 +147,7 @@ export const fakeAsyncOperationRecordFactory = (
 
 export const fakePdrRecordFactory = (
   params: Partial<PostgresPdr>
-) => ({
+): Partial<PostgresPdr> => ({
   name: `pdr${cryptoRandomString({ length: 10 })}`,
   status: 'running',
   created_at: new Date(),
@@ -156,7 +156,7 @@ export const fakePdrRecordFactory = (
 
 export const fakeReconciliationReportRecordFactory = (
   params: Partial<PostgresReconciliationReport>
-) => ({
+): PostgresReconciliationReport => ({
   name: `reconReport${cryptoRandomString({ length: 10 })}`,
   type: 'Granule Inventory',
   status: 'Generated',

@@ -42,8 +42,9 @@ test('ReconciliationReportPgModel.upsert() creates new reconciliation report', a
 
   await reconciliationReportPgModel.upsert(knex, reconciliationReportRecord);
 
+  const pgReport = await reconciliationReportPgModel.get(knex, reconciliationReportRecord);
   t.like(
-    await reconciliationReportPgModel.get(knex, reconciliationReportRecord),
+    pgReport,
     reconciliationReportRecord
   );
 });
@@ -63,12 +64,13 @@ test('ReconciliationReportPgModel.upsert() overwrites a reconciliation report re
     status: 'Failed',
   };
 
+  await reconciliationReportPgModel.upsert(knex, updatedReconciliationReport);
+
+  const pgReport = await reconciliationReportPgModel.get(knex, {
+    name: reconciliationReportRecord.name,
+  });
   t.like(
-    await reconciliationReportPgModel.get(knex, {
-      name: reconciliationReportRecord.name,
-    }),
+    pgReport,
     updatedReconciliationReport
   );
 });
-// test('ReconciliationReportPgModel.upsert() ', async (t) => {
-// });

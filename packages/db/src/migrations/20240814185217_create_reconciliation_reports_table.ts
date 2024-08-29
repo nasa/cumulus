@@ -26,6 +26,7 @@ export const up = async (knex: Knex): Promise<void> => {
       .timestamps(false, true);
     table.index('status');
     table.index('updated_at');
+    table.unique(['name']);
   });
 };
 
