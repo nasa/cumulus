@@ -37,6 +37,8 @@ NODE_ENV=test
 <dd></dd>
 <dt><a href="#module_Kinesis">Kinesis</a></dt>
 <dd></dd>
+<dt><a href="#module_Lambda">Lambda</a></dt>
+<dd></dd>
 <dt><a href="#module_S3">S3</a></dt>
 <dd></dd>
 <dt><a href="#module_SNS">SNS</a></dt>
@@ -889,18 +891,6 @@ errors, to allow more specific handling by the caller.
 | snsTopicArn | SNS topic ARN |
 | message | Message object |
 | retryOptions | options to control retry behavior when publishing a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions |
-
-<a name="module_SNS..createSnsTopic"></a>
-
-### SNS~createSnsTopic(snsTopicName) ⇒
-Create an SNS topic with a given name.
-
-**Kind**: inner method of [<code>SNS</code>](#module_SNS)  
-**Returns**: - ARN of the created SNS topic  
-
-| Param | Description |
-| --- | --- |
-| snsTopicName | Name of the SNS topic |
 
 <a name="module_SNS..createSnsTopic"></a>
 
