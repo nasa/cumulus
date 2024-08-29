@@ -1,4 +1,4 @@
-prefix = "cumulus-sit"
+prefix = "cumulus-std"
 
 buckets = {
   internal = {
