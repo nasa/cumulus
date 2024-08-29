@@ -67,8 +67,8 @@ export class PdrSearch extends BaseSearch {
     }
 
     if (this.searchExecution()) {
-      [countQuery, searchQuery].forEach((query) =>
-        query.innerJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`));
+      countQuery.innerJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
+      searchQuery.innerJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
     } else {
       searchQuery.leftJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
     }
