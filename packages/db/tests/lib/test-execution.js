@@ -765,7 +765,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns empty array if there is n
   t.deepEqual(results, []);
 });
 
-test.only('getWorkflowNameIntersectFromGranuleIds() returns the unique names of workflows corresponding to a single granule regardless of time collisions', async (t) => {
+test('getWorkflowNameIntersectFromGranuleIds() returns the unique names of workflows corresponding to a single granule regardless of time collisions', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -868,7 +868,7 @@ test.only('getWorkflowNameIntersectFromGranuleIds() returns the unique names of 
   t.deepEqual(timeSyncedResults.sort(), ['fakeWorkflow', 'fakeWorkflow2']);
 });
 
-test.only('getWorfklowNameIntersectFromGranuleIds() returns unique workflow_names corresponding to multiple granules, regardless of time collisions', async (t) => {
+test('getWorfklowNameIntersectFromGranuleIds() returns unique workflow_names corresponding to multiple granules, regardless of time collisions', async (t) => {
   const {
     knex,
     collectionCumulusId,
