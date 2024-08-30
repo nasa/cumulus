@@ -178,27 +178,22 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
   const numberOfGranules = granuleCumulusIdsArray.length;
   const { executions: executionsTable, granulesExecutions: granulesExecutionsTable } = TableNames;
 
-  const aggregatedWorkflowCounts: Array<{ workflow_name: string }> = await knexOrTransaction(
+  const aggregatedWorkflowCounts: Array<{ workflow_name: string, timestamp: number }> = await knexOrTransaction(
     executionsTable
   )
-    .select('workflow_name')
-    .countDistinct('granule_cumulus_id')
+    .select(['workflow_name']).min('timestamp')
     .innerJoin(granulesExecutionsTable, `${executionsTable}.cumulus_id`, `${granulesExecutionsTable}.execution_cumulus_id`)
     .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
     .groupBy('workflow_name')
+    .countDistinct('granule_cumulus_id')
     .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules])
-    .modify((queryBuilder) => {
-      if (numberOfGranules === 1) {
-        queryBuilder.groupBy('timestamp')
-          .orderBy('timestamp', 'desc');
-      }
-    });
 
-  return [...new Set(
-    aggregatedWorkflowCounts.map(
+    if (numberOfGranules === 1){
+      aggregatedWorkflowCounts.sort((a, b) => b.timestamp - a.timestamp);
+    }
+    return aggregatedWorkflowCounts.map(
       (workflowCounts: { workflow_name: string }) => workflowCounts.workflow_name
     )
-  )];
 };
 
 /**
