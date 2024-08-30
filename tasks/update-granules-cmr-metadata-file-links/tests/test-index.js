@@ -7,7 +7,9 @@ const cloneDeep = require('lodash/cloneDeep');
 
 const {
   buildS3Uri,
+  getObject,
   getObjectSize,
+  getObjectStreamContents,
   recursivelyDeleteS3Bucket,
   putJsonS3Object,
   promiseS3Upload,
@@ -238,6 +240,66 @@ test.serial('update-granules-cmr-metadata-file-links properly handles a case whe
   const message = await updateGranulesCmrMetadataFileLinks(newPayload);
 
   t.deepEqual(message.granules, newPayload.input.granules);
+});
+
+test.serial('update-granules-cmr-metadata-file-links properly handles a case where the excludeFileRegex is provided but does not match any files', async (t) => {
+  const newPayload = buildPayload(t);
+
+  // A regex that will never match
+  const excludeFileRegex = '.*some_extension_that_does_not_exist';
+  newPayload.config.excludeFileRegex = excludeFileRegex;
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  await t.throwsAsync(() => updateGranulesCmrMetadataFileLinks(newPayload), {
+    message: `No files matched the excludeFileRegex ${excludeFileRegex}.  Found files: ${newPayload.input.granules[0].files.map((file) => file.key).join(', ')}`,
+  });
+});
+
+
+test.serial('update-granules-cmr-metadata-file-links properly filters files using the excludeFileRegex', async (t) => {
+  const newPayload = buildPayload(t);
+
+  const ext = '.some.extension';
+  const excludeFileRegex = `.*${ext}`;
+
+  // Modify the payload to include a file that should be excluded
+  // The bucket must be public or protected, otherwise we will see a false test-success since only public/protected files are updated in the metadata
+  newPayload.input.granules.forEach((granule) => {
+    const newFile ={
+      bucket: t.context.publicBucket,
+      key: `some/prefix/some_filename${ext}`,
+      type: 'data'
+    }
+    granule.files.push(newFile)
+  });
+  newPayload.config.excludeFileRegex = excludeFileRegex;
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  await updateGranulesCmrMetadataFileLinks(newPayload);
+
+  // TODO; instead of checking the resulting metadata, mock updateCMRMetadata and just verify that the function was called with the correct files
+  const cmr_files = []
+  await newPayload.input.granules.forEach( async (granule) => {
+    granule.files.forEach( async (file) => {
+      if (isCMRFile(file)) {
+        cmr_files.push(file)
+      }
+    })
+  });
+  await Promise.all(cmr_files.map(async cmr_file => {
+    const payloadResponse = await getObject(s3(), { Bucket: cmr_file.bucket, Key: cmr_file.key });
+    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
+    t.true(!payloadContents.includes(ext))
+  }));
 });
 
 test('updateCmrFileInfo - throws error when granule not found', async (t) => {

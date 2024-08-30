@@ -63,6 +63,10 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
 
+### Added
+- **CUMULUS-3756**
+  - Added excludeFileRegex configuration to update-granules-cmr-metadata-file-links to allow files matching specified regex to be excluded when updating the Related URLs list. Defaults to the current behavior of excluding no files.
+
 ## [v18.4.0] 2024-08-16
 
 ### Migration Notes
