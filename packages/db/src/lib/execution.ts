@@ -178,7 +178,10 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
   const numberOfGranules = granuleCumulusIdsArray.length;
   const { executions: executionsTable, granulesExecutions: granulesExecutionsTable } = TableNames;
 
-  const aggregatedWorkflowCounts: Array<{ workflow_name: string, timestamp: number }> = await knexOrTransaction(
+  const aggregatedWorkflowCounts: Array<{
+    workflow_name: string,
+    timestamp: number
+  }> = await knexOrTransaction(
     executionsTable
   )
     .select(['workflow_name']).min('timestamp')
@@ -186,14 +189,20 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
     .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
     .groupBy('workflow_name')
     .countDistinct('granule_cumulus_id')
-    .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules])
+    .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules]);
 
-    if (numberOfGranules === 1){
-      aggregatedWorkflowCounts.sort((a, b) => b.timestamp - a.timestamp);
-    }
-    return aggregatedWorkflowCounts.map(
-      (workflowCounts: { workflow_name: string }) => workflowCounts.workflow_name
-    )
+  /*
+  sort (and group by) in knex causes an edge case where two distinct workflows
+  of the same name will be returned if they have different timestamps. This means
+  different returns depending on whether you have asked for one or multiple granules
+  hence this sort has been moved to js logic
+  */
+  if (numberOfGranules === 1) {
+    aggregatedWorkflowCounts.sort((a, b) => b.timestamp - a.timestamp);
+  }
+  return aggregatedWorkflowCounts.map(
+    (workflowCounts: { workflow_name: string }) => workflowCounts.workflow_name
+  );
 };
 
 /**
