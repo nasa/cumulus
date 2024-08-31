@@ -41,15 +41,24 @@ async function updateEachCmrFileAccessURLs(
   cmrGranuleUrlType,
   distEndpoint,
   bucketTypes,
-  distributionBucketMap
+  distributionBucketMap,
+  excludeFileRegexPattern
 ) {
   return await Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
+    var files = granule.files
+    if (excludeFileRegexPattern !== null) {
+      const excludeFileRegex = new RegExp(excludeFileRegexPattern)
+      files = granule.files.filter((file) => !file.key.match(excludeFileRegex))
+      if (files.length === granule.files.length) {
+        throw new Error(`No files matched the excludeFileRegex ${excludeFileRegexPattern}.  Found files: ${files.map((file) => file.key).join(', ')}`);
+      }
+    }
     return await updateCMRMetadata({
       granuleId,
       cmrFile: granule.files.find(isCMRFile),
-      files: granule.files,
+      files: files,
       distEndpoint,
       published: false,
       bucketTypes,
@@ -89,6 +98,7 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     .map(({ name, type }) => [name, type]));
 
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
+  const excludeFileRegexPattern = get(config, 'excludeFileRegex', null);
 
   const incomingETags = event.config.etags || {};
   const granules = event.input.granules.map((g) => addEtagsToFileObjects(g, incomingETags));
@@ -102,7 +112,8 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     cmrGranuleUrlType,
     config.distribution_endpoint,
     bucketTypes,
-    distributionBucketMap
+    distributionBucketMap,
+    excludeFileRegexPattern
   );
 
   const updatedGranulesByGranuleId = await updateCmrFileInfo(cmrFiles, granulesByGranuleId);
