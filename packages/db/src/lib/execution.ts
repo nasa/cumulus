@@ -192,7 +192,7 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
     .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules])
     .modify((queryBuilder) => {
       if (numberOfGranules === 1) {
-        queryBuilder.min('timestamp')
+        queryBuilder.min('timestamp');
       }
     });
 
