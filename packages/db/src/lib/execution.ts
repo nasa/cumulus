@@ -180,7 +180,7 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
 
   const aggregatedWorkflowCounts: Array<{
     workflow_name: string,
-    timestamp: number
+    min: number
   }> = await knexOrTransaction(
     executionsTable
   )
@@ -198,7 +198,7 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
   hence this sort has been moved to js logic
   */
   if (numberOfGranules === 1) {
-    aggregatedWorkflowCounts.sort((a, b) => b.timestamp - a.timestamp);
+    aggregatedWorkflowCounts.sort((a, b) => b.min - a.min);
   }
   return aggregatedWorkflowCounts.map(
     (workflowCounts: { workflow_name: string }) => workflowCounts.workflow_name
