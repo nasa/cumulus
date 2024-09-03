@@ -184,12 +184,17 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
   }> = await knexOrTransaction(
     executionsTable
   )
-    .select(['workflow_name']).min('timestamp')
+    .select(['workflow_name'])
     .innerJoin(granulesExecutionsTable, `${executionsTable}.cumulus_id`, `${granulesExecutionsTable}.execution_cumulus_id`)
     .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
     .groupBy('workflow_name')
     .countDistinct('granule_cumulus_id')
-    .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules]);
+    .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules])
+    .modify((queryBuilder) => {
+      if (numberOfGranules === 1) {
+        queryBuilder.min('timestamp')
+      }
+    });
 
   /*
   sort (and group by) in knex causes an edge case where two distinct workflows
