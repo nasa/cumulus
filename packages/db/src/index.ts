@@ -155,6 +155,9 @@ export {
   ProviderSearch,
 } from './search/ProviderSearch';
 export {
+  RuleSearch,
+} from './search/RuleSearch';
+export {
   StatsSearch,
 } from './search/StatsSearch';
 

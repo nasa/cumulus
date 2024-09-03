@@ -4,10 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## Phase 2 Release
 
 ### Replace ElasticSearch Phase 2
 
+- **CUMULUS-3229**
+  - Remove ElasticSearch queries from Rule LIST endpoint
+- **CUMULUS-3230**
+  - Remove ElasticSearch dependency from Rule Endpoints
 - **CUMULUS-3232**
   - Update API PDR endpoints `DEL` and `GET` to not update Elasticsearch
 - **CUMULUS-3233**
@@ -21,6 +25,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
 
+## [Unreleased]
+
+### Breaking Changes
+
+- This release includes `Replace ElasicSearch Phase 1` updates, we no longer save `collection/granule/execution` records to
+ElasticSearch, the `collections/granules/executions` API endpoints are updated to perform operations on the postgres database.
+
 ### Migration Notes
 
 #### CUMULUS-3792 Add database indexes. Please follow the instructions before upgrading Cumulus
@@ -30,6 +41,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   (https://nasa.github.io/cumulus/docs/next/upgrade-notes/update_table_indexes_CUMULUS_3792)
 
 ### Replace ElasticSearch Phase 1
+
 - **CUMULUS-3238**
   - Removed elasticsearch dependency from collections endpoint
 - **CUMULUS-3239**
@@ -71,6 +83,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
+
+## [v18.4.0] 2024-08-16
 
 ### Migration Notes
 
@@ -134,9 +148,9 @@ degraded execution table operations.
 - **CUMULUS-3449**
   - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
     from columns ending with "cumulus_id" to number.
-- **CUMULUS-3824**
-  - Changed the ECS docker storage driver to `overlay2`, since `devicemapper` is removed in Docker Engine v25.0.
-  - Removed `ecs_docker_storage_driver` property from cumulus module.
+- **CUMULUS-3841**
+  - Increased `fetchRules` page size to default to 100 instead of 10. This improves overall query time when
+    fetching all rules such as in `sqsMessageConsumer`.
 
 ### Fixed
 
@@ -148,6 +162,22 @@ degraded execution table operations.
     deletion to validate parent-child relationships
 - **CUMULUS-3818**
   - Fixes default value (updated to tag 52) for async-operation-image in tf-modules/cumulus.
+- **CUMULUS-3840**
+  - Fixed `@cumulus/api/bin/serve` to correctly use EsClient.
+
+## [v18.3.3] 2024-08-09
+
+**Please note** changes in v18.3.3 may not yet be released in future versions, as this
+is a backport/patch release on the v18.3.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Fixed
+
+- **CUMULUS-3824**
+  - Changed the ECS docker storage driver to `overlay2`, since `devicemapper` is removed in Docker Engine v25.0.
+  - Removed `ecs_docker_storage_driver` property from cumulus module.
+- **CUMULUS-3836**
+  - Terraform configuration for cleanExecutions now correctly configures ES_HOST and lambda security group
 
 ## [v18.3.2] 2024-07-24
 
@@ -8015,7 +8045,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v18.3.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v18.4.0...HEAD
+[v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.4.0
+[v18.3.3]: https://github.com/nasa/cumulus/compare/v18.3.2...v18.3.3
 [v18.3.2]: https://github.com/nasa/cumulus/compare/v18.3.1...v18.3.2
 [v18.3.1]: https://github.com/nasa/cumulus/compare/v18.2.2...v18.3.1
 [v18.2.2]: https://github.com/nasa/cumulus/compare/v18.2.1...v18.2.2

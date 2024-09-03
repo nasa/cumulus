@@ -160,6 +160,7 @@ export class CollectionSearch extends BaseSearch {
   protected async translatePostgresRecordsToApiRecords(pgRecords: PostgresCollectionRecord[],
     knex: Knex): Promise<Partial<CollectionRecordApi>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+
     const { fields } = this.dbQueryParameters;
     let statsRecords: StatsRecords;
     const cumulusIds = pgRecords.map((record) => record.cumulus_id);
