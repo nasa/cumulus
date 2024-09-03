@@ -260,7 +260,6 @@ test.serial('update-granules-cmr-metadata-file-links properly handles a case whe
   });
 });
 
-
 test.serial('update-granules-cmr-metadata-file-links properly filters files using the excludeFileRegex', async (t) => {
   const newPayload = buildPayload(t);
 
@@ -268,14 +267,15 @@ test.serial('update-granules-cmr-metadata-file-links properly filters files usin
   const excludeFileRegex = `.*${ext}`;
 
   // Modify the payload to include a file that should be excluded
-  // The bucket must be public or protected, otherwise we will see a false test-success since only public/protected files are updated in the metadata
+  // The bucket must be public or protected, otherwise we will see a false test-success
+  // since only public/protected files are updated in the metadata
   newPayload.input.granules.forEach((granule) => {
-    const newFile ={
+    const newFile = {
       bucket: t.context.publicBucket,
       key: `some/prefix/some_filename${ext}`,
-      type: 'data'
-    }
-    granule.files.push(newFile)
+      type: 'data',
+    };
+    granule.files.push(newFile);
   });
   newPayload.config.excludeFileRegex = excludeFileRegex;
 
@@ -286,19 +286,20 @@ test.serial('update-granules-cmr-metadata-file-links properly filters files usin
   await uploadFiles(filesToUpload, t.context.stagingBucket);
   await updateGranulesCmrMetadataFileLinks(newPayload);
 
-  // TODO; instead of checking the resulting metadata, mock updateCMRMetadata and just verify that the function was called with the correct files
-  const cmr_files = []
-  await newPayload.input.granules.forEach( async (granule) => {
-    granule.files.forEach( async (file) => {
+  // TODO; instead of checking the resulting metadata, mock updateCMRMetadata
+  // and just verify that the function was called with the correct files
+  const cmrFiles = [];
+  await newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
       if (isCMRFile(file)) {
-        cmr_files.push(file)
+        cmrFiles.push(file);
       }
-    })
+    });
   });
-  await Promise.all(cmr_files.map(async cmr_file => {
-    const payloadResponse = await getObject(s3(), { Bucket: cmr_file.bucket, Key: cmr_file.key });
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
     const payloadContents = await getObjectStreamContents(payloadResponse.Body);
-    t.true(!payloadContents.includes(ext))
+    t.true(!payloadContents.includes(ext));
   }));
 });
 

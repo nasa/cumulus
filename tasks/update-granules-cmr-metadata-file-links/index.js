@@ -47,10 +47,10 @@ async function updateEachCmrFileAccessURLs(
   return await Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
-    var files = granule.files
+    let files = granule.files;
     if (excludeFileRegexPattern !== null) {
-      const excludeFileRegex = new RegExp(excludeFileRegexPattern)
-      files = granule.files.filter((file) => !file.key.match(excludeFileRegex))
+      const excludeFileRegex = new RegExp(excludeFileRegexPattern);
+      files = granule.files.filter((file) => !file.key.match(excludeFileRegex));
       if (files.length === granule.files.length) {
         throw new Error(`No files matched the excludeFileRegex ${excludeFileRegexPattern}.  Found files: ${files.map((file) => file.key).join(', ')}`);
       }
