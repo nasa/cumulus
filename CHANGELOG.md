@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added the missing double quote in ecs_cluster autoscaling cf template
 - **Snyk**
   - Upgraded moment from 2.29.4 to 2.30.1
+  - Upgraded pg from ~8.10 to ~8.12
 
 ## [v19.0.0] 2024-08-28
 
