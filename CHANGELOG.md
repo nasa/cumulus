@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+### Fixed
+
+- **CUMULUS-3824**
+  - Added the missing double quote in ecs_cluster autoscaling cf template
+- **Snyk**
+  - Upgraded moment from 2.29.4 to 2.30.1
+
 ## [v19.0.0] 2024-08-28
 
 ### Breaking Changes
