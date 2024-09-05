@@ -398,9 +398,7 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await Promise.all(
-    flatten(t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket))
-  );
+  await Promise.all(flatten(t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket)));
   await t.context.executionPgModel.delete(
     t.context.knex,
     { cumulus_id: t.context.executionCumulusId }
