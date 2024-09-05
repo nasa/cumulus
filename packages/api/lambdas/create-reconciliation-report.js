@@ -867,7 +867,7 @@ async function processRequest(params) {
       status: 'Generated',
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, generatedRecord);
-    reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord);
+    reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord); // eslint-disable-line max-len
     await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   } catch (error) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`); // eslint-disable-line max-len
