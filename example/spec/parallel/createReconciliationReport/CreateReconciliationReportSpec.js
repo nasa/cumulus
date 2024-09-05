@@ -332,7 +332,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
       config = await loadConfig();
 
-      process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
       process.env.CMR_ENVIRONMENT = 'UAT';
 
       cmrClient = await createCmrClient(config);

@@ -199,7 +199,6 @@ async function indexFromDatabase(event) {
   const {
     indexName: esIndex,
     esHost = process.env.ES_HOST,
-    reconciliationReportsTable = process.env.ReconciliationReportsTable,
     postgresResultPageSize,
     postgresConnectionPoolSize,
   } = event;
