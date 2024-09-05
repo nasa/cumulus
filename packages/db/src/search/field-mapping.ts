@@ -285,6 +285,9 @@ const providerMapping : { [key: string]: Function } = {
 };
 
 const ruleMapping : { [key: string]: Function } = {
+  arn: (value?: string) => ({
+    arn: value,
+  }),
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
@@ -299,6 +302,24 @@ const ruleMapping : { [key: string]: Function } = {
   }),
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
+  }),
+  workflow: (value?: string) => ({
+    workflow: value,
+  }),
+  logEventArn: (value?: string) => ({
+    log_event_arn: value,
+  }),
+  executionNamePrefix: (value?: string) => ({
+    execution_name_prefix: value,
+  }),
+  queueUrl: (value?: string) => ({
+    queue_url: value,
+  }),
+  'rule.type': (value?: string) => ({
+    type: value,
+  }),
+  'rule.value': (value?: string) => ({
+    value: value,
   }),
   // The following fields require querying other tables
   collectionId: (value?: string) => {

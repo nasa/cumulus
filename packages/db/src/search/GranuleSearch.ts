@@ -119,6 +119,7 @@ export class GranuleSearch extends BaseSearch {
   protected translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[])
     : Partial<ApiGranuleRecord>[] {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+
     const { fields } = this.dbQueryParameters;
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
       const granulePgRecord = item;

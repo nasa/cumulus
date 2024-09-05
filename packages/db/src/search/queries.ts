@@ -262,7 +262,6 @@ export const convertQueryStringToDbQueryParameters = (
   // for each search strategy, get all parameters and convert them to db parameters
   Object.keys(regexes).forEach((k: string) => {
     const matchedFields = fieldsList.filter((f) => f.name.match(regexes[k]));
-
     if (matchedFields && matchedFields.length > 0 && convert[k]) {
       const queryParams = convert[k](type, matchedFields, regexes[k]);
       Object.assign(dbQueryParameters, queryParams);

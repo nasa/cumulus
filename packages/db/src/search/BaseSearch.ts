@@ -33,6 +33,7 @@ export const typeToTable: { [key: string]: string } = {
 /**
  * Class to build and execute db search query
  */
+
 abstract class BaseSearch {
   readonly type: string;
   readonly tableName: string;

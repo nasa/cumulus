@@ -102,7 +102,7 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
  */
 async function eraseElasticsearchIndices(esClient, esIndex) {
   try {
-    await esClient.indices.delete({ index: esIndex });
+    await esClient.client.indices.delete({ index: esIndex });
   } catch (error) {
     if (error.message !== 'index_not_found_exception') throw error;
   }
