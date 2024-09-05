@@ -55,7 +55,6 @@ const {
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
-const models = require('../../models');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 
@@ -1862,10 +1861,12 @@ test.serial('When report creation fails, reconciliation report status is set to 
 
   await t.throwsAsync(handler(event));
 
-  const reportPgRecord = await t.context.reconciliationReportPgModel.get(t.context.knex, { name: reportName });
+  const reportPgRecord = await t.context.reconciliationReportPgModel.get(
+    t.context.knex, { name: reportName }
+  );
   // reconciliation report lambda outputs the translated API version, not the PG version, so
   // it should be translated for comparison, at least for the comparison with the ES (API) version
-  const reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord);
+  const reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord); // eslint-disable-line max-len
   t.is(reportApiRecord.status, 'Failed');
   t.is(reportApiRecord.type, 'Inventory');
 
@@ -2212,10 +2213,12 @@ test.serial('When there is an error for an ORCA backup report, it throws', async
     { message: 'ORCA error' }
   );
 
-  const reportPgRecord = await t.context.reconciliationReportPgModel.get(t.context.knex, { name: reportName });
+  const reportPgRecord = await t.context.reconciliationReportPgModel.get(
+    t.context.knex, { name: reportName }
+  );
   // reconciliation report lambda outputs the translated API version, not the PG version, so
   // it should be translated for comparison, at least for the comparison with the ES (API) version
-  const reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord);
+  const reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord); // eslint-disable-line max-len
   t.is(reportApiRecord.status, 'Failed');
   t.is(reportApiRecord.type, event.reportType);
 

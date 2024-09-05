@@ -354,6 +354,7 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log('XXX Completed for setupCollectionAndTestData');
 
       // Write an extra file to the DynamoDB Files table
+      // TODO: is ^ comment above correct, or should it be modified?
       extraFileInDb = {
         bucket: protectedBucket,
         key: randomString(),

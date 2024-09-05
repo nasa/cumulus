@@ -28,8 +28,8 @@ const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
 const { getEsClient } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 
-const { 
-  ReconciliationReportPgModel, 
+const {
+  ReconciliationReportPgModel,
   translatePostgresReconciliationReportToApiReconciliationReport,
 } = require('@cumulus/db');
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
@@ -835,7 +835,7 @@ async function processRequest(params) {
     location: buildS3Uri(systemBucket, reportKey),
   };
   let [reportPgRecord] = await reconciliationReportPgModel.create(knex, builtReportRecord);
-  let reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord);
+  let reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord); // eslint-disable-line max-len
   await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   log.info(`Report added to database as pending: ${JSON.stringify(reportApiRecord)}.`);
 
@@ -870,7 +870,7 @@ async function processRequest(params) {
     reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord);
     await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   } catch (error) {
-    log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`);
+    log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`); // eslint-disable-line max-len
     const erroredRecord = {
       ...reportPgRecord,
       status: 'Failed',
@@ -880,7 +880,7 @@ async function processRequest(params) {
       },
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, erroredRecord);
-    reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord);
+    reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord); // eslint-disable-line max-len
     await indexReconciliationReport(
       esClient,
       reportApiRecord,
