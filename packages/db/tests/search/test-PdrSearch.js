@@ -134,7 +134,7 @@ test.before(async (t) => {
   );
 });
 
-test('GranuleSearch returns 10 PDR records by default', async (t) => {
+test('PdrSearch returns 10 PDR records by default', async (t) => {
   const { knex } = t.context;
   const dbSearch = new PdrSearch();
   const response = await dbSearch.query(knex);
