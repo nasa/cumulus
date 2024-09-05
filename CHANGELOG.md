@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Remove ElasticSearch queries from Rule LIST endpoint
 - **CUMULUS-3230**
   - Remove ElasticSearch dependency from Rule Endpoints
+- **CUMULUS-3231**
+  - Updated API `pdrs` `LIST` endpoint to query postgres
 - **CUMULUS-3232**
   - Update API PDR endpoints `DEL` and `GET` to not update Elasticsearch
 - **CUMULUS-3233**

@@ -3,6 +3,7 @@
 const test = require('ava');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
+const range = require('lodash/range');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
@@ -26,12 +27,6 @@ const {
   fakePdrRecordFactory,
   fakeProviderRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
-const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
@@ -57,7 +52,6 @@ const pdrS3Key = (pdrName) => `${process.env.stackName}/pdrs/${pdrName}`;
 
 // create all the variables needed across this test
 const testDbName = `pdrs_${cryptoRandomString({ length: 10 })}`;
-let fakePdrs;
 let jwtAuthToken;
 let accessTokenModel;
 
@@ -74,15 +68,6 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esPdrsClient = new Search(
-    {},
-    'pdr',
-    t.context.esIndex
-  );
-
   // create a fake bucket
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
@@ -95,14 +80,6 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-
-  // create fake PDR records
-  fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
-  await Promise.all(
-    fakePdrs.map(
-      (pdr) => indexer.indexPdr(t.context.esClient, pdr, t.context.esIndex)
-    )
-  );
 
   // Create a PG Collection
   t.context.testPgCollection = fakeCollectionRecordFactory();
@@ -132,11 +109,36 @@ test.before(async (t) => {
     t.context.testPgExecution
   );
   t.context.executionCumulusId = pgExecution.cumulus_id;
+  const timestamp = new Date();
+  t.context.pdrs = range(2).map(() => fakePdrRecordFactory({
+    collection_cumulus_id: t.context.collectionCumulusId,
+    provider_cumulus_id: t.context.providerCumulusId,
+    execution_cumulus_id: t.context.executionCumulusId,
+    progress: 0.5,
+    pan_sent: false,
+    pan_message: `pan${cryptoRandomString({ length: 10 })}`,
+    stats: {
+      processing: 0,
+      completed: 0,
+      failed: 0,
+      total: 0,
+    },
+    address: `address${cryptoRandomString({ length: 10 })}`,
+    original_url: 'https://example.com',
+    duration: 6.8,
+    created_at: timestamp,
+    updated_at: timestamp,
+  }));
+
+  t.context.pdrPgModel = new PdrPgModel();
+  t.context.pgPdrs = await t.context.pdrPgModel.insert(
+    knex,
+    t.context.pdrs
+  );
 });
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await cleanupTestIndex(t.context);
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,
@@ -206,7 +208,7 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('default returns list of pdrs', async (t) => {
+test.serial('default returns list of pdrs', async (t) => {
   const response = await request(app)
     .get('/pdrs')
     .set('Accept', 'application/json')
@@ -216,15 +218,15 @@ test('default returns list of pdrs', async (t) => {
   const { meta, results } = response.body;
   t.is(results.length, 2);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'pdr');
+  t.is(meta.table, 'pdrs');
   t.is(meta.count, 2);
-  const pdrNames = fakePdrs.map((i) => i.pdrName);
+  const pdrNames = t.context.pdrs.map((i) => i.name);
   results.forEach((r) => {
     t.true(pdrNames.includes(r.pdrName));
   });
 });
 
-test('GET returns an existing pdr', async (t) => {
+test.serial('GET returns an existing pdr', async (t) => {
   const timestamp = new Date();
 
   const newPGPdr = {
@@ -289,7 +291,7 @@ test('DELETE returns a 404 if PostgreSQL PDR cannot be found', async (t) => {
   t.is(response.body.message, 'No record found');
 });
 
-test('Deleting a PDR that exists in PostgreSQL succeeds', async (t) => {
+test.serial('Deleting a PDR that exists in PostgreSQL succeeds', async (t) => {
   const {
     collectionCumulusId,
     providerCumulusId,
