@@ -751,7 +751,9 @@ async function createReconciliationReport(recReportParams) {
 
       bucketReports.forEach((bucketReport) => {
         report.filesInCumulus.okCount += bucketReport.okCount;
-        report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3); // eslint-disable-line max-len
+        report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(
+          bucketReport.onlyInS3
+        );
         report.filesInCumulus.onlyInDb = report.filesInCumulus.onlyInDb.concat(
           bucketReport.onlyInDb
         );
@@ -835,7 +837,9 @@ async function processRequest(params) {
     location: buildS3Uri(systemBucket, reportKey),
   };
   let [reportPgRecord] = await reconciliationReportPgModel.create(knex, builtReportRecord);
-  let reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord); // eslint-disable-line max-len
+  let reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(
+    reportPgRecord
+  );
   await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   log.info(`Report added to database as pending: ${JSON.stringify(reportApiRecord)}.`);
 
@@ -867,7 +871,9 @@ async function processRequest(params) {
       status: 'Generated',
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, generatedRecord);
-    reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord); // eslint-disable-line max-len
+    reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(
+      reportPgRecord
+    );
     await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   } catch (error) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`); // eslint-disable-line max-len
@@ -880,7 +886,9 @@ async function processRequest(params) {
       },
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, erroredRecord);
-    reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord); // eslint-disable-line max-len
+    reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(
+      reportPgRecord
+    );
     await indexReconciliationReport(
       esClient,
       reportApiRecord,
