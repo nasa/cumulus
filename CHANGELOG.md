@@ -6,14 +6,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
 ### Fixed
 
+- **CUMULUS-3824**
+  - Added the missing double quote in ecs_cluster autoscaling cf template
 - **CUMULUS-3846**
   - improve reliability of unit tests
     - tests for granules api get requests separated out to new file
     - cleanup of granule database resources to ensure no overlap
     - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
     - increase timeout in aws-client tests
+- **Snyk**
+  - Upgraded moment from 2.29.4 to 2.30.1
+  - Upgraded pg from ~8.10 to ~8.12
 
 ## [v19.0.0] 2024-08-28
 
