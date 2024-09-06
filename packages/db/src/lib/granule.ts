@@ -215,7 +215,7 @@ export const getApiGranuleExecutionCumulusIds = async (
  * @param {string | Array<string>} [sortByFields] - Field(s) to sort by
  * @returns {Knex.QueryBuilder}
  */
-export const getGranulesByApiPropertiesQuery = (
+export const getGranulesByApiPropertiesQuery = ( // TODO Parmeterize this function.  Good grief.
   knex: Knex,
   {
     collectionIds,
@@ -230,13 +230,15 @@ export const getGranulesByApiPropertiesQuery = (
     updatedAtRange?: UpdatedAtRange,
     status?: string,
   },
-  sortByFields?: string | string[]
+  sortByFields?: string | string[],
+  temporalBoundByCreatedAt: boolean = false
 ): Knex.QueryBuilder => {
   const {
     granules: granulesTable,
     collections: collectionsTable,
     providers: providersTable,
   } = TableNames;
+  const temporalColumn = temporalBoundByCreatedAt ? 'created_at' : 'updated_at';
   return knex<GranuleWithProviderAndCollectionInfo>(granulesTable)
     .select(`${granulesTable}.*`)
     .select({
@@ -268,10 +270,10 @@ export const getGranulesByApiPropertiesQuery = (
         queryBuilder.whereIn(`${providersTable}.name`, providerNames);
       }
       if (updatedAtRange.updatedAtFrom) {
-        queryBuilder.where(`${granulesTable}.updated_at`, '>=', updatedAtRange.updatedAtFrom);
+        queryBuilder.where(`${granulesTable}.${temporalColumn}`, '>=', updatedAtRange.updatedAtFrom);
       }
       if (updatedAtRange.updatedAtTo) {
-        queryBuilder.where(`${granulesTable}.updated_at`, '<=', updatedAtRange.updatedAtTo);
+        queryBuilder.where(`${granulesTable}.${temporalColumn}`, '<=', updatedAtRange.updatedAtTo);
       }
       if (status) {
         queryBuilder.where(`${granulesTable}.status`, status);

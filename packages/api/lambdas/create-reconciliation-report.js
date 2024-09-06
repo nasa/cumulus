@@ -24,11 +24,8 @@ const {
 const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
 const Collection = require('@cumulus/es-client/collections');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
-const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 
-const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
 const { ReconciliationReport } = require('../models');
@@ -814,7 +811,6 @@ async function processRequest(params) {
     reportName,
     systemBucket,
     stackName,
-    esClient = await getEsClient(),
     knex = await getKnexClient(env),
   } = params;
   const createStartTime = moment.utc();
@@ -832,7 +828,6 @@ async function processRequest(params) {
     location: buildS3Uri(systemBucket, reportKey),
   };
   let apiRecord = await reconciliationReportModel.create(reportRecord);
-  await indexReconciliationReport(esClient, apiRecord, process.env.ES_INDEX);
   log.info(`Report added to database as pending: ${JSON.stringify(apiRecord)}.`);
 
   const concurrency = env.CONCURRENCY || 3;
@@ -848,17 +843,19 @@ async function processRequest(params) {
     };
     log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
     if (reportType === 'Internal') {
-      await createInternalReconciliationReport(recReportParams);
+      log.error(
+        'Internal Reconciliation Reports are no longer valid, as Cumulus is no longer utilizing Elasticsearch'
+      );
+      throw new Error('Internal Reconciliation Reports are no longer valid');
     } else if (reportType === 'Granule Inventory') {
       await createGranuleInventoryReport(recReportParams);
     } else if (reportType === 'ORCA Backup') {
       await createOrcaBackupReconciliationReport(recReportParams);
-    } else {
+    } else { // TODO: Should we throw if type is invalid?  Probably.
       // reportType is in ['Inventory', 'Granule Not Found']
-      await createReconciliationReport(recReportParams);
+      await createReconciliationReport(recReportParams); // TODO Update to not use elasticsearch
     }
     apiRecord = await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
-    await indexReconciliationReport(esClient, { ...apiRecord, status: 'Generated' }, process.env.ES_INDEX);
   } catch (error) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`);
     const updates = {
@@ -869,14 +866,8 @@ async function processRequest(params) {
       },
     };
     apiRecord = await reconciliationReportModel.update({ name: reportRecord.name }, updates);
-    await indexReconciliationReport(
-      esClient,
-      { ...apiRecord, ...updates },
-      process.env.ES_INDEX
-    );
     throw error;
   }
-
   return reconciliationReportModel.get({ name: reportRecord.name });
 }
 
@@ -885,10 +876,12 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE', 'ES_SCROLL', 'ES_SCROLL_SIZE'];
+  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE'];
   const envsToLog = pickBy(process.env, (value, key) => varsToLog.includes(key));
-  log.info(`CMR and ES Environment variables: ${JSON.stringify(envsToLog)}`);
+  log.info(`CMR Environment variables: ${JSON.stringify(envsToLog)}`);
 
   return await processRequest(event);
 }
 exports.handler = handler;
+
+//TODO: Remove irrelevant env vars from terraform

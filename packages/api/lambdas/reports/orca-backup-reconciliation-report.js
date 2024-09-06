@@ -1,3 +1,5 @@
+////@ts-check
+
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
@@ -8,13 +10,21 @@ const set = require('lodash/set');
 const moment = require('moment');
 const path = require('path');
 
+const {
+  getGranulesByApiPropertiesQuery,
+  getFilesAndGranuleInfoQuery,
+  QuerySearchClient,
+  getKnexClient,
+  FilePgModel,
+} = require('@cumulus/db');
 const { s3 } = require('@cumulus/aws-client/services');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const Logger = require('@cumulus/logger');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { deconstructCollectionId, constructCollectionId } = require('@cumulus/message/Collections');
+const filePgModel = new FilePgModel();
 
 const {
-  convertToESCollectionSearchParams,
+  convertToDBGranuleSearchParams,
   convertToESGranuleSearchParamsWithCreatedAtRange,
   convertToOrcaGranuleSearchParams,
   initialReportHeader,
@@ -35,21 +45,34 @@ const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'up
  * Fetch orca configuration for all or specified collections
  *
  * @param {Object} recReportParams - input report params
- * @param {Object} recReportParams.collectionIds - array of collectionIds
+ * @param {[String]} recReportParams.collectionIds - array of collectionIds
  * @returns {Promise<Array>} - list of { collectionId, orca configuration }
  */
 async function fetchCollectionsConfig(recReportParams) {
+  const knex = await getKnexClient();
   const collectionsConfig = {};
-  const searchParams = convertToESCollectionSearchParams(pick(recReportParams, ['collectionIds']));
-  const esCollectionsIterator = new ESSearchQueue(
-    { ...searchParams, sort_key: ['name', 'version'] }, 'collection', process.env.ES_INDEX
-  );
-  let nextEsItem = await esCollectionsIterator.shift();
-  while (nextEsItem) {
-    const collectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
-    const excludedFileExtensions = get(nextEsItem, 'meta.orca.excludedFileExtensions');
+  // TODO - DB Lib this?
+  const query = knex('collections')
+    .select('name', 'version', 'meta');
+  if (recReportParams.collectionIds) { //TODO typing
+    const collectionObjects = recReportParams.collectionIds.map((collectionId) =>
+      deconstructCollectionId(collectionId));
+    query.where((builder) => {
+      collectionObjects.forEach(({ name, version }) => {
+        builder.orWhere((qb) => {
+          qb.where('name', name).andWhere('version', version);
+        });
+      });
+    });
+  }
+
+  const pgCollectionSearchClient = new QuerySearchClient(query, 100);
+  let nextPgItem = await pgCollectionSearchClient.shift();
+  while (nextPgItem) {
+    const collectionId = constructCollectionId(nextPgItem.name, nextPgItem.version);
+    const excludedFileExtensions = get(nextPgItem, 'meta.orca.excludedFileExtensions');
     if (excludedFileExtensions) set(collectionsConfig, `${collectionId}.orca.excludedFileExtensions`, excludedFileExtensions);
-    nextEsItem = await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+    nextPgItem = await pgCollectionSearchClient.shift(); // eslint-disable-line no-await-in-loop
   }
 
   return collectionsConfig;
@@ -123,7 +146,16 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
       granuleReport.cumulusFilesCount += 1;
       granuleReport.orcaFilesCount += 1;
 
-      if (!shouldFileBeExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
+      if (
+        !shouldFileBeExcludedFromOrca(
+          collectionsConfig,
+          constructCollectionId(
+            cumulusGranule.collectionName,
+            cumulusGranule.collectionVersion
+          ),
+          fileName
+        )
+      ) {
         granuleReport.okFilesCount += 1;
       } else {
         const conflictFile = {
@@ -137,7 +169,16 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
     } else if (cumulusFiles[fileName] && orcaFiles[fileName] === undefined) {
       granuleReport.cumulusFilesCount += 1;
 
-      if (shouldFileBeExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
+      if (
+        shouldFileBeExcludedFromOrca(
+          collectionsConfig,
+          constructCollectionId(
+            cumulusGranule.collectionName,
+            cumulusGranule.collectionVersion
+          ),
+          fileName
+        )
+      ) {
         granuleReport.okFilesCount += 1;
       } else {
         const conflictFile = {
@@ -184,10 +225,33 @@ function constructOrcaOnlyGranuleForReport(orcaGranule) {
   return granule;
 }
 
-function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule, orcaGranule }) {
+// TODO - Docstring
+// TODO - This method can *never* be called with cumulusGranule == undefined
+// based on the parent logic. This should be enforced in the type system and throw
+// an error if it is not the case.
+// TODO - assumes that if orcaGranule isn't present that all files are conflicts
+async function addGranuleToReport({
+  granulesReport,
+  collectionsConfig,
+  cumulusGranule,
+  orcaGranule,
+  knex,
+}) {
+  if (!cumulusGranule) {
+    throw new Error('cumulusGranule must be defined to add to the orca report');
+  }
+
+
+  cumulusGranule.files = await filePgModel.search(knex, {
+    granule_cumulus_id: cumulusGranule.cumulus_id,
+  });
+
   /* eslint-disable no-param-reassign */
   const granReport = getReportForOneGranule({
-    collectionsConfig, cumulusGranule, orcaGranule,
+    knex,
+    collectionsConfig,
+    cumulusGranule,
+    orcaGranule,
   });
 
   if (granReport.ok) {
@@ -234,18 +298,27 @@ async function orcaReconciliationReportForGranules(recReportParams) {
     onlyInOrca: [],
   };
 
+  // TODO - Generate this config from Postgres -- DONE
   const collectionsConfig = await fetchCollectionsConfig(recReportParams);
-  log.debug(`fetchESCollections returned ${JSON.stringify(collectionsConfig)}`);
+  log.debug(`fetchCollections returned ${JSON.stringify(collectionsConfig)}`);
 
-  const esSearchParams = convertToESGranuleSearchParamsWithCreatedAtRange(recReportParams);
-  log.debug(`Create ES granule iterator with ${JSON.stringify(esSearchParams)}`);
-  const esGranulesIterator = new ESSearchQueue(
-    {
-      ...esSearchParams,
-      sort_key: ['granuleId', 'collectionId'],
-    },
-    'granule',
-    process.env.ES_INDEX
+  // TODO remove method and update to query for same response from postgres
+  const knex = await getKnexClient();
+  const searchParams = convertToDBGranuleSearchParams(recReportParams);
+
+  const granulesSearchQuery = getGranulesByApiPropertiesQuery(
+    knex,
+    searchParams,
+    ['granule_id', 'collectionName', 'collectionVersion'],
+    true
+  );
+
+  log.debug(`Create PG granule iterator with ${granulesSearchQuery}`);
+
+  const pgGranulesIterator = new QuerySearchClient(
+    granulesSearchQuery,
+    100 // arbitrary limit on how items are fetched at once
+    // TODO: Configure?x
   );
 
   const orcaSearchParams = convertToOrcaGranuleSearchParams(recReportParams);
@@ -254,21 +327,23 @@ async function orcaReconciliationReportForGranules(recReportParams) {
 
   try {
     let [nextCumulusItem, nextOrcaItem] = await Promise.all(
-      [esGranulesIterator.peek(), orcaGranulesIterator.peek()]
+      [pgGranulesIterator.peek(), orcaGranulesIterator.peek()]
     );
 
     while (nextCumulusItem && nextOrcaItem) {
-      const nextCumulusId = `${nextCumulusItem.granuleId}:${nextCumulusItem.collectionId}`;
+      const nextCumulusId = `${nextCumulusItem.granule_id}:${constructCollectionId(nextCumulusItem.collectionName, nextCumulusItem.collectionVersion)}`;
       const nextOrcaId = `${nextOrcaItem.id}:${nextOrcaItem.collectionId}`;
       if (nextCumulusId < nextOrcaId) {
         // Found an item that is only in Cumulus and not in ORCA.
-        addGranuleToReport({
+        // eslint-disable-next-line no-await-in-loop
+        await addGranuleToReport({
           granulesReport,
           collectionsConfig,
           cumulusGranule: nextCumulusItem,
+          knex,
         });
         granulesReport.cumulusCount += 1;
-        await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+        await pgGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       } else if (nextCumulusId > nextOrcaId) {
         // Found an item that is only in ORCA and not in Cumulus
         granulesReport.onlyInOrca.push(constructOrcaOnlyGranuleForReport(nextOrcaItem));
@@ -277,29 +352,33 @@ async function orcaReconciliationReportForGranules(recReportParams) {
       } else {
         // Found an item that is in both ORCA and Cumulus database
         // Check if the granule (files) should be in orca, and act accordingly
-        addGranuleToReport({
+        // eslint-disable-next-line no-await-in-loop
+        await addGranuleToReport({
           granulesReport,
           collectionsConfig,
           cumulusGranule: nextCumulusItem,
           orcaGranule: nextOrcaItem,
+          knex,
         });
         granulesReport.cumulusCount += 1;
         granulesReport.orcaCount += 1;
-        await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+        await pgGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
         await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       }
 
-      [nextCumulusItem, nextOrcaItem] = await Promise.all([esGranulesIterator.peek(), orcaGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
+      [nextCumulusItem, nextOrcaItem] = await Promise.all([pgGranulesIterator.peek(), orcaGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
     }
 
     // Add any remaining cumulus items to the report
-    while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
-      const cumulusItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+    while (await pgGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+      const cumulusItem = await pgGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       // Found an item that is only in Cumulus database and not in ORCA.
-      addGranuleToReport({
+      // eslint-disable-next-line no-await-in-loop
+      await addGranuleToReport({
         granulesReport,
         collectionsConfig,
         cumulusGranule: cumulusItem,
+        knex,
       });
       granulesReport.cumulusCount += 1;
     }
@@ -308,7 +387,10 @@ async function orcaReconciliationReportForGranules(recReportParams) {
     while (await orcaGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
       const orcaItem = await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       granulesReport.onlyInOrca.push(constructOrcaOnlyGranuleForReport(orcaItem));
-      granulesReport.conflictFilesCount += get(orcaItem, 'files', []).length;
+      granulesReport.constructCollectionId(
+        cumulusGranule.collectionName,
+        cumulusGranule.collectionVersion
+      ) += get(orcaItem, 'files', []).length;
       granulesReport.orcaFilesCount += get(orcaItem, 'files', []).length;
       granulesReport.orcaCount += 1;
     }

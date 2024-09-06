@@ -4,11 +4,26 @@ const test = require('ava');
 const rewire = require('rewire');
 const sinon = require('sinon');
 const sortBy = require('lodash/sortBy');
+const cryptoRandomString = require('crypto-random-string');
+// TODO abstract this setup
 
 const { randomId } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const indexer = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
+const {
+  fakeProviderRecordFactory,
+  CollectionPgModel,
+  GranulePgModel,
+  FilePgModel,
+  GranulesExecutionsPgModel,
+  ProviderPgModel,
+  migrationDir,
+  destroyLocalTestDb,
+  generateLocalTestDb,
+  translateApiGranuleToPostgresGranule,
+  translateApiCollectionToPostgresCollection,
+  localStackConnectionEnv,
+  translateApiFiletoPostgresFile,
+} = require('@cumulus/db');
 
 const {
   fakeCollectionFactory,
@@ -24,9 +39,15 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 const shouldFileBeExcludedFromOrca = OBRP.__get__('shouldFileBeExcludedFromOrca');
 const getReportForOneGranule = OBRP.__get__('getReportForOneGranule');
 
-let esAlias;
-let esIndex;
-let esClient;
+function translateTestGranuleObject(apiGranule) {
+  const { name: collectionName, version: collectionVersion } =
+    deconstructCollectionId(apiGranule.collectionId);
+  return {
+    ...apiGranule,
+    collectionName,
+    collectionVersion,
+  };
+}
 
 function fakeCollectionsAndGranules() {
   const fakeCollectionV1 = fakeCollectionFactory({
@@ -73,7 +94,7 @@ function fakeCollectionsAndGranules() {
     ],
   };
 
-  // granule is in cumulus only, should not be in orca, and conform to configuratio
+  // granule is in cumulus only, should not be in orca, and conform to configuration
   const matchingCumulusOnlyGran = {
     ...fakeGranuleFactoryV2(),
     granuleId: randomId('matchingCumulusOnlyGranId'),
@@ -82,12 +103,12 @@ function fakeCollectionsAndGranules() {
       {
         bucket: 'cumulus-protected-bucket',
         fileName: 'fakeFileName.xml',
-        key: 'fakePath/fakeFileName.xml',
+        key: 'fakePath/fakeFileName4.xml',
       },
       {
         bucket: 'cumulus-protected-bucket',
         fileName: 'fakeFileName.hdf.met',
-        key: 'fakePath/fakeFileName.hdf.met',
+        key: 'fakePath/fakeFileName4.hdf.met',
       },
     ],
   };
@@ -102,22 +123,22 @@ function fakeCollectionsAndGranules() {
       {
         bucket: 'cumulus-protected-bucket',
         fileName: 'fakeFileName.hdf',
-        key: 'fakePath/fakeFileName.hdf',
+        key: 'fakePath/fakeFileName3.hdf',
       },
       {
         bucket: 'cumulus-private-bucket',
         fileName: 'fakeFileName.hdf.met',
-        key: 'fakePath/fakeFileName.hdf.met',
+        key: 'fakePath/fakeFileName3.hdf.met',
       },
       {
         bucket: 'cumulus-fake-bucket',
         fileName: 'fakeFileName_onlyInCumulus.jpg',
-        key: 'fakePath/fakeFileName_onlyInCumulus.jpg',
+        key: 'fakePath/fakeFileName3_onlyInCumulus.jpg',
       },
       {
         bucket: 'cumulus-fake-bucket-2',
         fileName: 'fakeFileName.cmr.xml',
-        key: 'fakePath/fakeFileName.cmr.xml',
+        key: 'fakePath/fakeFileName3.cmr.xml',
       },
     ],
   };
@@ -131,19 +152,19 @@ function fakeCollectionsAndGranules() {
         name: 'fakeFileName.hdf',
         cumulusArchiveLocation: 'cumulus-protected-bucket',
         orcaArchiveLocation: 'orca-bucket',
-        keyPath: 'fakePath/fakeFileName.hdf',
+        keyPath: 'fakePath/fakeFileName3.hdf',
       },
       {
         name: 'fakeFileName_onlyInOrca.jpg',
         cumulusArchiveLocation: 'cumulus-fake-bucket',
         orcaArchiveLocation: 'orca-bucket',
-        keyPath: 'fakePath/fakeFileName_onlyInOrca.jpg',
+        keyPath: 'fakePath/fakeFileName3_onlyInOrca.jpg',
       },
       {
         name: 'fakeFileName.cmr.xml',
         cumulusArchiveLocation: 'cumulus-fake-bucket-2',
         orcaArchiveLocation: 'orca-bucket',
-        keyPath: 'fakePath/fakeFileName.cmr.xml',
+        keyPath: 'fakePath/fakeFileName3.cmr.xml',
       },
     ],
   };
@@ -191,19 +212,34 @@ test.beforeEach(async (t) => {
   t.context.systemBucket = randomId('bucket');
   process.env.system_bucket = t.context.systemBucket;
 
-  esAlias = randomId('esalias');
-  esIndex = randomId('esindex');
-  process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch({
-    host: 'fakehost',
-    index: esIndex,
-    alias: esAlias,
-  });
-  esClient = await getEsClient();
+  // Setup Postgres DB
+
+  t.context.testDbName = `orca_backup_recon_${cryptoRandomString({ length: 10 })}`;
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    t.context.testDbName,
+    migrationDir,
+    { dbMaxPool: 10 }
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
+
+  t.context.granulePgModel = new GranulePgModel();
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+  t.context.filePgModel = new FilePgModel();
+
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: t.context.testDbName,
+    dbMaxPool: 10,
+  };
 });
 
-test.afterEach.always(async () => {
-  await esClient.client.indices.delete({ index: esIndex });
+test.afterEach.always(async (t) => {
+  await destroyLocalTestDb({
+    ...t.context,
+  });
 });
 
 test.serial('shouldFileBeExcludedFromOrca returns true for configured file types', (t) => {
@@ -224,13 +260,19 @@ test.serial('shouldFileBeExcludedFromOrca returns true for configured file types
   t.false(shouldFileBeExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, randomId('file')));
 });
 
-test.serial('getReportForOneGranule reports ok for one granule in both cumulus and orca with no file discrepancy', (t) => {
+test.serial('getReportForOneGranule reports ok for one granule in both cumulus and orca with no file discrepancy', async (t) => {
+  const { knex } = t.context;
   const collectionsConfig = {};
   const {
     matchingCumulusGran: cumulusGranule,
     matchingOrcaGran: orcaGranule,
   } = fakeCollectionsAndGranules();
-  const report = getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule });
+  const report = await getReportForOneGranule({
+    collectionsConfig,
+    cumulusGranule,
+    orcaGranule,
+    knex,
+  });
   t.true(report.ok);
   t.is(report.okFilesCount, 1);
   t.is(report.cumulusFilesCount, 1);
@@ -238,7 +280,9 @@ test.serial('getReportForOneGranule reports ok for one granule in both cumulus a
   t.is(report.conflictFiles.length, 0);
 });
 
-test.serial('getReportForOneGranule reports no ok for one granule in both cumulus and orca with file discrepancy', (t) => {
+test.serial('getReportForOneGranule reports no ok for one granule in both cumulus and orca with file discrepancy', async (t) => {
+  const { knex } = t.context;
+
   const collectionsConfig = {
     fakeCollection___v1: {
       orca: {
@@ -246,11 +290,17 @@ test.serial('getReportForOneGranule reports no ok for one granule in both cumulu
       },
     },
   };
-  const {
-    conflictCumulusGran: cumulusGranule,
-    conflictOrcaGran: orcaGranule,
-  } = fakeCollectionsAndGranules();
-  const report = getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule });
+
+  const granules = fakeCollectionsAndGranules();
+  const cumulusGranule = translateTestGranuleObject(granules.conflictCumulusGran);
+  const orcaGranule = translateTestGranuleObject(granules.conflictOrcaGran);
+
+  const report = await getReportForOneGranule({
+    collectionsConfig,
+    cumulusGranule,
+    orcaGranule,
+    knex,
+  });
   t.false(report.ok);
   t.is(report.okFilesCount, 2);
   t.is(report.cumulusFilesCount, 4);
@@ -281,9 +331,10 @@ test.serial('getReportForOneGranule reports ok for one granule in cumulus only w
       },
     },
   };
-  const {
-    matchingCumulusOnlyGran: cumulusGranule,
-  } = fakeCollectionsAndGranules();
+
+  const granules = fakeCollectionsAndGranules();
+  const cumulusGranule = translateTestGranuleObject(granules.matchingCumulusOnlyGran);
+
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
   t.true(report.ok);
   t.is(report.okFilesCount, 2);
@@ -300,9 +351,10 @@ test.serial('getReportForOneGranule reports not ok for one granule in cumulus on
       },
     },
   };
-  const {
-    conflictCumulusOnlyGran: cumulusGranule,
-  } = fakeCollectionsAndGranules();
+
+  const granules = fakeCollectionsAndGranules();
+  const cumulusGranule = translateTestGranuleObject(granules.conflictCumulusOnlyGran);
+
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
   t.false(report.ok);
   t.is(report.okFilesCount, 1);
@@ -313,9 +365,10 @@ test.serial('getReportForOneGranule reports not ok for one granule in cumulus on
 
 test.serial('getReportForOneGranule reports ok for one granule in cumulus only with no files', (t) => {
   const collectionsConfig = {};
-  const {
-    cumulusOnlyGranNoFile: cumulusGranule,
-  } = fakeCollectionsAndGranules();
+
+  const granules = fakeCollectionsAndGranules();
+  const cumulusGranule = translateTestGranuleObject(granules.cumulusOnlyGranNoFile);
+
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
   t.true(report.ok);
   t.is(report.okFilesCount, 0);
@@ -325,6 +378,7 @@ test.serial('getReportForOneGranule reports ok for one granule in cumulus only w
 });
 
 test.serial('orcaReconciliationReportForGranules reports discrepancy of granule holdings in cumulus and orca', async (t) => {
+  const { collectionPgModel, granulePgModel, filePgModel, knex } = t.context;
   const {
     fakeCollectionV1,
     fakeCollectionV2,
@@ -338,24 +392,49 @@ test.serial('orcaReconciliationReportForGranules reports discrepancy of granule 
     conflictCumulusOnlyGran,
   } = fakeCollectionsAndGranules();
 
-  const esGranules = [
+  // Create provider
+  const fakeProvider = fakeProviderRecordFactory({ name: 'fakeProvider' });
+  const fakeProvider2 = fakeProviderRecordFactory({ name: 'fakeProvider2' });
+  const providerPgModel = new ProviderPgModel();
+  await Promise.all(
+    [fakeProvider, fakeProvider2].map((p) =>
+      providerPgModel.create(knex, p))
+  );
+
+  // Create collections
+  const pgCollections = await Promise.all(
+    [fakeCollectionV1, fakeCollectionV2].map((c) => translateApiCollectionToPostgresCollection(c))
+  );
+  await Promise.all(
+    pgCollections.map((collection) => collectionPgModel.create(knex, collection))
+  );
+
+  const apiGranules = [
     cumulusOnlyGranNoFile,
     conflictCumulusGran,
     matchingCumulusGran,
     matchingCumulusOnlyGran,
     conflictCumulusOnlyGran,
   ];
-  const esCollections = [fakeCollectionV1, fakeCollectionV2];
 
-  // add granules and related collections to es and db
+  // Create granules
   await Promise.all(
-    esCollections.map(async (collection) => {
-      await indexer.indexCollection(esClient, collection, esAlias);
-    })
-  );
-  await Promise.all(
-    esGranules.map(async (granule) => {
-      await indexer.indexGranule(esClient, granule, esAlias);
+    apiGranules.map(async (granule) => {
+      const pgGranule = await translateApiGranuleToPostgresGranule({
+        dynamoRecord: granule,
+        knexOrTransaction: knex,
+      });
+      const pgRecord = await granulePgModel.create(knex, pgGranule);
+      if (!granule.files) {
+        return;
+      }
+      const pgFiles = granule.files.map((f) => (translateApiFiletoPostgresFile(f)));
+      await Promise.all(
+        pgFiles.map(async (f) => await filePgModel.create(knex, {
+          ...f,
+          granule_cumulus_id: pgRecord[0].cumulus_id,
+        }))
+      );
     })
   );
 
@@ -368,7 +447,7 @@ test.serial('orcaReconciliationReportForGranules reports discrepancy of granule 
   // matchingCumulusGran, matchingCumulusOnlyGran, cumulusOnlyGranNoFile
   t.is(granulesReport.okCount, 3);
   t.is(granulesReport.cumulusCount, 5);
-  // conflictOrcaGran, orcaOnlyGranule, matchingOrcaGran,
+  // conflictOrcaGran, orcaOnlyGr 5anule, matchingOrcaGran,
   t.is(granulesReport.orcaCount, 3);
   // matchingCumulusGran has 1, matchingCumulusOnlyGran 2,
   // conflictCumulusGran 2, conflictCumulusOnlyGran 1
