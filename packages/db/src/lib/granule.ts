@@ -205,34 +205,36 @@ export const getApiGranuleExecutionCumulusIds = async (
 /**
  * Helper to build a query to search granules by various API granule record properties.
  *
- * @param {Knex} knex - DB client
- * @param {Object} searchParams
- * @param {string | Array<string>} [searchParams.collectionIds] - Collection ID
- * @param {string | Array<string>} [searchParams.granuleIds] - array of granule IDs
- * @param {string} [searchParams.providerNames] - Provider names
- * @param {UpdatedAtRange} [searchParams.updatedAtRange] - Date range for updated_at column
- * @param {string} [searchParams.status] - Granule status to search by
- * @param {string | Array<string>} [sortByFields] - Field(s) to sort by
+ * @param params
+ * @param params.knex - DB client
+ * @param params.searchParams
+ * @param [params.searchParams.collectionIds] - Collection ID
+ * @param [params.searchParams.granuleIds] - array of granule IDs
+ * @param [params.searchParams.providerNames] - Provider names
+ * @param [params.searchParams.updatedAtRange] - Date range for updated_at column
+ * @param [params.searchParams.status] - Granule status to search by
+ * @param [params.sortByFields] - Field(s) to sort by
+ * @param params.temporalBoundByCreatedAt -- If true, temporal bounds
+ * are applied to created_at column instead of updated_at column
  * @returns {Knex.QueryBuilder}
  */
-export const getGranulesByApiPropertiesQuery = ( // TODO Parmeterize this function.  Good grief.
+export const getGranulesByApiPropertiesQuery = ({
+  knex,
+  searchParams,
+  sortByFields = [],
+  temporalBoundByCreatedAt = false,
+} : {
   knex: Knex,
-  {
-    collectionIds,
-    granuleIds,
-    providerNames,
-    updatedAtRange = {},
-    status,
-  }: {
+  searchParams: {
     collectionIds?: string | string[],
     granuleIds?: string | string[],
     providerNames?: string[],
     updatedAtRange?: UpdatedAtRange,
-    status?: string,
+    status?: string
   },
   sortByFields?: string | string[],
-  temporalBoundByCreatedAt: boolean = false
-): Knex.QueryBuilder => {
+  temporalBoundByCreatedAt: boolean,
+}) : Knex.QueryBuilder => {
   const {
     granules: granulesTable,
     collections: collectionsTable,
@@ -249,8 +251,8 @@ export const getGranulesByApiPropertiesQuery = ( // TODO Parmeterize this functi
     .innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
     .leftJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`)
     .modify((queryBuilder) => {
-      if (collectionIds) {
-        const collectionIdFilters = [collectionIds].flat();
+      if (searchParams.collectionIds) {
+        const collectionIdFilters = [searchParams.collectionIds].flat();
         const collectionIdConcatField = `(${collectionsTable}.name || '${collectionIdSeparator}' || ${collectionsTable}.version)`;
         const collectionIdInClause = collectionIdFilters.map(() => '?').join(',');
         queryBuilder.whereRaw(
@@ -258,25 +260,25 @@ export const getGranulesByApiPropertiesQuery = ( // TODO Parmeterize this functi
           collectionIdFilters
         );
       }
-      if (granuleIds) {
-        const granuleIdFilters = [granuleIds].flat();
+      if (searchParams.granuleIds) {
+        const granuleIdFilters = [searchParams.granuleIds].flat();
         queryBuilder.where((nestedQueryBuilder) => {
           granuleIdFilters.forEach((granuleId) => {
             nestedQueryBuilder.orWhere(`${granulesTable}.granule_id`, 'LIKE', `%${granuleId}%`);
           });
         });
       }
-      if (providerNames) {
-        queryBuilder.whereIn(`${providersTable}.name`, providerNames);
+      if (searchParams.providerNames) {
+        queryBuilder.whereIn(`${providersTable}.name`, searchParams.providerNames);
       }
-      if (updatedAtRange.updatedAtFrom) {
-        queryBuilder.where(`${granulesTable}.${temporalColumn}`, '>=', updatedAtRange.updatedAtFrom);
+      if (searchParams?.updatedAtRange?.updatedAtFrom) {
+        queryBuilder.where(`${granulesTable}.${temporalColumn}`, '>=', searchParams.updatedAtRange.updatedAtFrom);
       }
-      if (updatedAtRange.updatedAtTo) {
-        queryBuilder.where(`${granulesTable}.${temporalColumn}`, '<=', updatedAtRange.updatedAtTo);
+      if (searchParams?.updatedAtRange?.updatedAtTo) {
+        queryBuilder.where(`${granulesTable}.${temporalColumn}`, '<=', searchParams.updatedAtRange.updatedAtTo);
       }
-      if (status) {
-        queryBuilder.where(`${granulesTable}.status`, status);
+      if (searchParams.status) {
+        queryBuilder.where(`${granulesTable}.status`, searchParams.status);
       }
       if (sortByFields) {
         queryBuilder.orderBy([sortByFields].flat());
