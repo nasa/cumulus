@@ -358,7 +358,6 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  process.env.ReconciliationReportsTable = randomId('reconciliationTable');
 
   t.context.bucketsToCleanup = [];
   t.context.stackName = randomId('stack');
@@ -367,8 +366,6 @@ test.beforeEach(async (t) => {
 
   await awsServices.s3().createBucket({ Bucket: t.context.systemBucket })
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
-
-  await new models.ReconciliationReport().createTable();
 
   const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
   cmrSearchStub.withArgs('collections').resolves([]);
@@ -402,7 +399,6 @@ test.afterEach.always(async (t) => {
   await Promise.all(
     flatten([
       t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
-      new models.ReconciliationReport().deleteTable(),
     ])
   );
   await t.context.executionPgModel.delete(

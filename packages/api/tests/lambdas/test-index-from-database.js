@@ -46,14 +46,11 @@ const {
 } = require('../../lib/testUtils');
 
 const workflowList = getWorkflowList();
-process.env.ReconciliationReportsTable = randomString();
 const reconciliationReportModel = new models.ReconciliationReport();
 
 // create all the variables needed across this test
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
-
-const reconciliationReportsTable = process.env.ReconciliationReportsTable;
 
 function sortAndFilter(input, omitList, sortKey) {
   return input.map((r) => omit(r, omitList))
@@ -213,16 +210,6 @@ test.serial('getEsRequestConcurrency throws an error when 0 is specified', (t) =
     () => indexFromDatabase.getEsRequestConcurrency({}),
     { instanceOf: TypeError }
   );
-});
-
-test('No error is thrown if nothing is in the database', async (t) => {
-  const { esAlias, knex } = t.context;
-
-  await t.notThrowsAsync(() => indexFromDatabase.indexFromDatabase({
-    indexName: esAlias,
-    reconciliationReportsTable,
-    knex,
-  }));
 });
 
 test.serial('Lambda successfully indexes records of all types', async (t) => {
@@ -386,7 +373,6 @@ test.serial('failure in indexing record of specific type should not prevent inde
   try {
     await indexFromDatabase.handler({
       indexName: esAlias,
-      reconciliationReportsTable,
       knex,
     });
 
@@ -463,7 +449,6 @@ test.serial(
     try {
       await indexFromDatabase.handler({
         indexName: esAlias,
-        reconciliationReportsTable,
         knex,
       });
 

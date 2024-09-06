@@ -35,7 +35,6 @@ process.env.invoke = 'granule-reconciliation-reports';
 process.env.stackName = 'test-stack';
 process.env.system_bucket = 'testsystembucket';
 process.env.AccessTokensTable = randomId('accessTokensTable');
-process.env.ReconciliationReportsTable = randomId('recReportsTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('bucket');
