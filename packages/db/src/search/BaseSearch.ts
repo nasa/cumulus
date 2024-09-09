@@ -33,7 +33,8 @@ export const typeToTable: { [key: string]: string } = {
 /**
  * Class to build and execute db search query
  */
-class BaseSearch {
+
+abstract class BaseSearch {
   readonly type: string;
   readonly tableName: string;
   readonly queryStringParameters: QueryStringParameters;
@@ -140,14 +141,18 @@ class BaseSearch {
    * Build basic query
    *
    * @param knex - DB client
-   * @throws - function is not implemented
+   * @returns queries for getting count and search result
    */
   protected buildBasicQuery(knex: Knex): {
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
   } {
-    log.debug(`buildBasicQuery is not implemented ${knex.constructor.name}`);
-    throw new Error('buildBasicQuery is not implemented');
+    const countQuery = knex(this.tableName)
+      .count('*');
+
+    const searchQuery = knex(this.tableName)
+      .select(`${this.tableName}.*`);
+    return { countQuery, searchQuery };
   }
 
   /**
@@ -233,13 +238,12 @@ class BaseSearch {
     const { range = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(range).forEach(([name, rangeValues]) => {
-      if (rangeValues.gte) {
-        countQuery?.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
-        searchQuery.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
+      const { gte, lte } = rangeValues;
+      if (gte) {
+        [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, '>=', gte));
       }
-      if (rangeValues.lte) {
-        countQuery?.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
-        searchQuery.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
+      if (lte) {
+        [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, '<=', lte));
       }
     });
   }
@@ -284,7 +288,7 @@ class BaseSearch {
           break;
         case 'error.Error':
           [countQuery, searchQuery]
-            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`));
+            .forEach((query) => value && query?.whereRaw(`${this.tableName}.error->>'Error' = ?`, value));
           break;
         case 'asyncOperationId':
           [countQuery, searchQuery].forEach((query) => query?.where(`${asyncOperationsTable}.id`, value));
@@ -347,7 +351,7 @@ class BaseSearch {
           break;
         case 'error.Error':
           [countQuery, searchQuery]
-            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' in ('${value.join('\',\'')}')`));
+            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' in (${value.map(() => '?').join(',')})`, [...value]));
           break;
         case 'asyncOperationId':
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${asyncOperationsTable}.id`, value));
@@ -408,7 +412,7 @@ class BaseSearch {
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${executionsTable}_parent.arn`, value));
           break;
         case 'error.Error':
-          [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' != '${value}'`));
+          [countQuery, searchQuery].forEach((query) => value && query?.whereRaw(`${this.tableName}.error->>'Error' != ?`, value));
           break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${this.tableName}.${name}`, value));
@@ -464,7 +468,7 @@ class BaseSearch {
     tableName? : string,
   }) : Promise<number> {
     const { knex, tableName = this.tableName } = params;
-    const query = knex.raw(`EXPLAIN (FORMAT JSON) select * from "${tableName}"`);
+    const query = knex.raw('EXPLAIN (FORMAT JSON) select * from ??', tableName);
     log.debug(`Estimating the row count ${query.toSQL().sql}`);
     const countResult = await query;
     const countPath = 'rows[0]["QUERY PLAN"][0].Plan["Plan Rows"]';

@@ -9,11 +9,6 @@ const sinon = require('sinon');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
-const { Search } = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 const {
   localStackConnectionEnv,
   generateLocalTestDb,
@@ -26,8 +21,6 @@ const {
 
 const assertions = require('../../../lib/assertions');
 const { fakeAsyncOperationFactory } = require('../../../lib/testUtils');
-const { buildFakeExpressResponse } = require('../utils');
-const { post } = require('../../../endpoints/async-operations');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
@@ -58,15 +51,6 @@ test.before(async (t) => {
   t.context.testKnexAdmin = knexAdmin;
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esAsyncOperationsClient = new Search(
-    {},
-    'asyncOperation',
-    t.context.esIndex
-  );
-
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
@@ -83,7 +67,6 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await t.context.accessTokenModel.deleteTable().catch(noop);
-  await cleanupTestIndex(t.context);
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
@@ -117,7 +100,7 @@ test('POST with an invalid access token returns an unauthorized response', async
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test('POST creates a new async operation in all data stores', async (t) => {
+test('POST creates and stores expected new async operation record', async (t) => {
   const { asyncOperationPgModel, jwtAuthToken } = t.context;
   const asyncOperation = fakeAsyncOperationFactory({
     output: JSON.stringify({ age: 59 }),
@@ -151,14 +134,9 @@ test('POST creates a new async operation in all data stores', async (t) => {
     omit(pgAsyncOperation, omitList)
   );
   t.deepEqual(asyncOperationPgRecord.output, pgAsyncOperation.output);
-
-  const esRecord = await t.context.esAsyncOperationsClient.get(
-    asyncOperation.id
-  );
-  t.like(esRecord, record);
 });
 
-test('POST creates a new async operation in PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
+test('POST creates a new async operation record with correct timestamps', async (t) => {
   const { asyncOperationPgModel, jwtAuthToken } = t.context;
   const asyncOperation = fakeAsyncOperationFactory({
     output: JSON.stringify({ age: 59 }),
@@ -184,12 +162,8 @@ test('POST creates a new async operation in PostgreSQL/Elasticsearch with correc
   t.true(apiRecord.createdAt > asyncOperation.createdAt);
   t.true(apiRecord.updatedAt > asyncOperation.updatedAt);
 
-  const esRecord = await t.context.esAsyncOperationsClient.get(asyncOperation.id);
-
   t.is(asyncOperationPgRecord.created_at.getTime(), record.createdAt);
   t.is(asyncOperationPgRecord.updated_at.getTime(), record.updatedAt);
-  t.is(asyncOperationPgRecord.created_at.getTime(), esRecord.createdAt);
-  t.is(asyncOperationPgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
 test('POST returns a 409 error if the async operation already exists in PostgreSQL', async (t) => {
@@ -268,34 +242,4 @@ test('POST returns a 400 response if invalid JSON provided', async (t) => {
   t.is(response.statusCode, 400);
   t.is(error.error, 'Bad Request');
   t.is(error.message, 'Async Operations require an ID');
-});
-
-test('post() does not write to PostgreSQL if writing to Elasticsearch fails', async (t) => {
-  const asyncOperation = fakeAsyncOperationFactory({
-    output: JSON.stringify({ age: 59 }),
-  });
-  const fakeEsClient = {
-    client: {
-      index: () => Promise.reject(new Error('something bad')),
-    },
-  };
-
-  const expressRequest = {
-    body: asyncOperation,
-    testContext: {
-      esClient: fakeEsClient,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await post(expressRequest, response);
-
-  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
-
-  t.false(
-    await t.context.asyncOperationPgModel.exists(t.context.testKnex, {
-      id: asyncOperation.id,
-    })
-  );
 });

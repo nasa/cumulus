@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Phase 2 Release
+
+### Replace ElasticSearch Phase 2
+
+- **CUMULUS-3229**
+  - Remove ElasticSearch queries from Rule LIST endpoint
+- **CUMULUS-3230**
+  - Remove ElasticSearch dependency from Rule Endpoints
+- **CUMULUS-3232**
+  - Update API PDR endpoints `DEL` and `GET` to not update Elasticsearch
+- **CUMULUS-3233**
+  - Updated `providers` list api endpoint and added `ProviderSearch` class to query postgres
+  - Removed Elasticsearch dependency from `providers` endpoints
+- **CUMULUS-3235**
+  - Updated `asyncOperations` api endpoint to query postgres
+- **CUMULUS-3236**
+  - Update API AsyncOperation endpoints `POST` and `DEL` to not update
+    Elasticsearch
+  - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
+    reporting status of async operation
+- **CUMULUS-3837**
+  - added `reconciliation_reports` table in RDS, including indexes
+  - created model and types for `reconciliationReports`
+  - updated reconciliation reports lambda to write to new RDS table instead of Dynamo 
+
 ## [Unreleased]
 
 ### Added
