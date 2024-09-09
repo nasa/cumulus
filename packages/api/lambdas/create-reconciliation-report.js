@@ -25,6 +25,8 @@ const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGra
 const Collection = require('@cumulus/es-client/collections');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const Logger = require('@cumulus/logger');
+const { getEsClient } = require('@cumulus/es-client/search');
+const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
 
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
@@ -812,6 +814,7 @@ async function processRequest(params) {
     systemBucket,
     stackName,
     knex = await getKnexClient(env),
+    esClient = await getEsClient(),
   } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName
@@ -856,6 +859,7 @@ async function processRequest(params) {
       await createReconciliationReport(recReportParams); // TODO Update to not use elasticsearch
     }
     apiRecord = await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
+    await indexReconciliationReport(esClient, { ...apiRecord, status: 'Generated' }, process.env.ES_INDEX);
   } catch (error) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`);
     const updates = {
@@ -866,6 +870,11 @@ async function processRequest(params) {
       },
     };
     apiRecord = await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+    await indexReconciliationReport(
+      esClient,
+      { ...apiRecord, ...updates },
+      process.env.ES_INDEX
+    );
     throw error;
   }
   return reconciliationReportModel.get({ name: reportRecord.name });

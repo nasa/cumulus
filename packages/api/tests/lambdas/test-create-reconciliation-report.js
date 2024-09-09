@@ -27,18 +27,20 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
-  generateLocalTestDb,
-  localStackConnectionEnv,
-  FilePgModel,
-  GranulePgModel,
-  fakeCollectionRecordFactory,
-  fakeGranuleRecordFactory,
-  migrationDir,
-  translateApiGranuleToPostgresGranule,
-  translatePostgresCollectionToApiCollection,
   ExecutionPgModel,
+  fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
-  upsertGranuleWithExecutionJoinRecord,
+  fakeGranuleRecordFactory,
+  fakeProviderRecordFactory,
+  FilePgModel,
+  generateLocalTestDb,
+  GranulePgModel,
+  localStackConnectionEnv,
+  migrationDir,
+  ProviderPgModel,
+  translateApiGranuleToPostgresGranule,
+  translateApiFiletoPostgresFile,
+  translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const indexer = require('@cumulus/es-client/indexer');
@@ -46,7 +48,6 @@ const { Search, getEsClient } = require('@cumulus/es-client/search');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
 const {
-  fakeCollectionFactory,
   fakeGranuleFactoryV2,
   fakeOrcaGranuleFactory,
 } = require('../../lib/testUtils');
@@ -351,6 +352,7 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
+  t.context.providerPgModel = new ProviderPgModel();
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.filePgModel = new FilePgModel();
@@ -1880,79 +1882,6 @@ test.serial('When report creation fails, reconciliation report status is set to 
   t.like(esRecord, reportRecord);
 });
 
-test.serial('A valid internal reconciliation report is generated when ES and DB are in sync', async (t) => {
-  const {
-    knex,
-    execution,
-    executionCumulusId,
-  } = t.context;
-
-  const collection = fakeCollectionRecordFactory();
-  const collectionId = constructCollectionId(
-    collection.name,
-    collection.version
-  );
-  const [pgCollection] = await t.context.collectionPgModel.create(
-    t.context.knex,
-    collection
-  );
-  await indexer.indexCollection(
-    esClient,
-    translatePostgresCollectionToApiCollection(pgCollection),
-    esAlias
-  );
-
-  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({
-    collectionId,
-    execution: execution.url,
-  }));
-  await Promise.all(
-    matchingGrans.map(async (gran) => {
-      await indexer.indexGranule(esClient, gran, esAlias);
-      const pgGranule = await translateApiGranuleToPostgresGranule({
-        dynamoRecord: gran,
-        knexOrTransaction: knex,
-      });
-      await upsertGranuleWithExecutionJoinRecord({
-        executionCumulusId,
-        granule: pgGranule,
-        knexTransaction: knex,
-      });
-    })
-  );
-
-  const event = {
-    systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName,
-    reportType: 'Internal',
-    reportName: randomId('reportName'),
-    collectionId,
-    startTimestamp: moment.utc().subtract(1, 'hour').format(),
-    endTimestamp: moment.utc().add(1, 'hour').format(),
-  };
-
-  const reportRecord = await handler(event);
-  t.is(reportRecord.status, 'Generated');
-  t.is(reportRecord.name, event.reportName);
-  t.is(reportRecord.type, event.reportType);
-
-  const report = await fetchCompletedReport(reportRecord);
-  t.is(report.status, 'SUCCESS');
-  t.is(report.error, undefined);
-  t.is(report.reportType, 'Internal');
-  t.is(report.collections.okCount, 1);
-  t.is(report.collections.onlyInEs.length, 0);
-  t.is(report.collections.onlyInDb.length, 0);
-  t.is(report.collections.withConflicts.length, 0);
-  t.is(report.granules.okCount, 10);
-  t.is(report.granules.onlyInEs.length, 0);
-  t.is(report.granules.onlyInDb.length, 0);
-  t.is(report.granules.withConflicts.length, 0);
-
-  const esRecord = await t.context.esReportClient.get(reportRecord.name);
-  t.like(esRecord, reportRecord);
-});
-
 test.serial('Creates a valid Granule Inventory report', async (t) => {
   const {
     granulePgModel,
@@ -2010,12 +1939,13 @@ test.serial('Creates a valid Granule Inventory report', async (t) => {
 });
 
 test.serial('A valid ORCA Backup reconciliation report is generated', async (t) => {
-  const collection = fakeCollectionFactory({
+  const { knex, collectionPgModel, granulePgModel, providerPgModel, filePgModel } = t.context;
+  const collection = fakeCollectionRecordFactory({
     name: 'fakeCollection',
     version: 'v2',
   });
-  await indexer.indexCollection(esClient, collection, esAlias);
 
+  await collectionPgModel.create(knex, collection);
   const collectionId = constructCollectionId(collection.name, collection.version);
 
   const matchingCumulusGran = {
@@ -2047,7 +1977,23 @@ test.serial('A valid ORCA Backup reconciliation report is generated', async (t) 
     ],
   };
 
-  await indexer.indexGranule(esClient, matchingCumulusGran, esAlias);
+  await providerPgModel.create(
+    knex,
+    fakeProviderRecordFactory({ name: matchingCumulusGran.provider })
+  );
+  const pgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: matchingCumulusGran,
+    knexOrTransaction: knex,
+  });
+  const pgGranuleRecord = await granulePgModel.create(knex, pgGranule);
+  await Promise.all(
+    matchingCumulusGran.files.map((file) =>
+      filePgModel.create(knex, {
+        ...translateApiFiletoPostgresFile(file),
+        granule_cumulus_id: pgGranuleRecord[0].cumulus_id,
+      }))
+  );
+
   const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
   searchOrcaStub.resolves({ anotherPage: false, granules: [matchingOrcaGran] });
   t.teardown(() => searchOrcaStub.restore());
@@ -2086,39 +2032,6 @@ test.serial('A valid ORCA Backup reconciliation report is generated', async (t) 
 
   const esRecord = await t.context.esReportClient.get(reportRecord.name);
   t.like(esRecord, reportRecord);
-});
-
-test.serial('Internal Reconciliation report JSON is formatted', async (t) => {
-  const matchingColls = range(5).map(() => fakeCollectionFactory());
-  const collectionId = constructCollectionId(matchingColls[0].name, matchingColls[0].version);
-  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId }));
-  await Promise.all(
-    matchingColls.map((collection) => indexer.indexCollection(esClient, collection, esAlias))
-  );
-  await Promise.all(
-    matchingGrans.map((gran) => indexer.indexGranule(esClient, gran, esAlias))
-  );
-
-  const event = {
-    systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName,
-    reportType: 'Internal',
-    reportName: randomId('reportName'),
-    collectionId,
-    startTimestamp: moment.utc().subtract(1, 'hour').format(),
-    endTimestamp: moment.utc().add(1, 'hour').format(),
-  };
-
-  const reportRecord = await handler(event);
-
-  const formattedReport = await fetchCompletedReportString(reportRecord);
-
-  // Force report to unformatted (single line)
-  const unformattedReportString = JSON.stringify(JSON.parse(formattedReport), undefined, 0);
-  const unformattedReportObj = JSON.parse(unformattedReportString);
-
-  t.true(!unformattedReportString.includes('\n')); // validate unformatted report is on a single line
-  t.is(formattedReport, JSON.stringify(unformattedReportObj, undefined, 2));
 });
 
 test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
@@ -2225,4 +2138,17 @@ test.serial('When there is an error for an ORCA backup report, it throws', async
 
   const esRecord = await t.context.esReportClient.get(reportRecord.name);
   t.like(esRecord, reportRecord);
+});
+
+test.serial('Internal reconciliation report type throws an error', async(t) => {
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'Internal',
+  };
+
+  await t.throwsAsync(
+    handler(event),
+    { message: 'Internal Reconciliation Reports are no longer valid' }
+  );
 });
