@@ -4,7 +4,39 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Phase 2 Release
+
+### Replace ElasticSearch Phase 2
+
+- **CUMULUS-3229**
+  - Remove ElasticSearch queries from Rule LIST endpoint
+- **CUMULUS-3230**
+  - Remove ElasticSearch dependency from Rule Endpoints
+- **CUMULUS-3231**
+  - Updated API `pdrs` `LIST` endpoint to query postgres
+- **CUMULUS-3232**
+  - Update API PDR endpoints `DEL` and `GET` to not update Elasticsearch
+- **CUMULUS-3233**
+  - Updated `providers` list api endpoint and added `ProviderSearch` class to query postgres
+  - Removed Elasticsearch dependency from `providers` endpoints
+- **CUMULUS-3235**
+  - Updated `asyncOperations` api endpoint to query postgres
+- **CUMULUS-3236**
+  - Update API AsyncOperation endpoints `POST` and `DEL` to not update
+    Elasticsearch
+  - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
+    reporting status of async operation
+
 ## [Unreleased]
+
+### Fixed
+
+- **CUMULUS-3846**
+  - improve reliability of unit tests
+    - tests for granules api get requests separated out to new file
+    - cleanup of granule database resources to ensure no overlap
+    - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
+    - increase timeout in aws-client tests
 
 ## [v19.0.0] 2024-08-28
 
