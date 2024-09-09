@@ -2140,7 +2140,7 @@ test.serial('When there is an error for an ORCA backup report, it throws', async
   t.like(esRecord, reportRecord);
 });
 
-test.serial('Internal reconciliation report type throws an error', async(t) => {
+test.serial('Internal reconciliation report type throws an error', async (t) => {
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
