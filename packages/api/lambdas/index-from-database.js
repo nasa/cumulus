@@ -287,7 +287,6 @@ async function indexFromDatabase(event) {
     }),
     indexReconciliationReports({
       esClient,
-      tableName: reconciliationReportsTable,
       esIndex,
       indexFn: indexer.indexReconciliationReport,
       limitEsRequests,

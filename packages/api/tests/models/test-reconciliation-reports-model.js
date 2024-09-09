@@ -1,14 +1,13 @@
 'use strict';
 
 const test = require('ava');
-const { randomString } = require('@cumulus/common/test-utils');
 const { fakeReconciliationReportFactory } = require('../../lib/testUtils');
 const { ReconciliationReport } = require('../../models');
 
 let reconciliationReportModel;
-test.before(async () => {
-  reconciliationReportModel = new ReconciliationReport();
-});
+test.before(
+  reconciliationReportModel = new ReconciliationReport()
+);
 
 test('create() creates a valid ReconciliationReport record', async (t) => {
   const reportData = fakeReconciliationReportFactory();

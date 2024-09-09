@@ -21,8 +21,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
-const { ReconciliationReport } = require('../models');
-
 const testUtils = require('../lib/testUtils');
 const serveUtils = require('./serveUtils');
 const {

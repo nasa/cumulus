@@ -358,7 +358,6 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-
   t.context.bucketsToCleanup = [];
   t.context.stackName = randomId('stack');
   t.context.systemBucket = randomId('bucket');
