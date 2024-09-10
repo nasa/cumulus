@@ -153,8 +153,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     newCollection,
     provider,
     inputPayload
-  ); // TODO -- We shouldn't be using a workflow for this test, given we have API calls
-  // that will do this.  Dispatch a ticket and fix.
+  );
 
   ingestGranuleExecutionArn = workflowExecution.executionArn;
 

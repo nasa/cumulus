@@ -394,7 +394,7 @@ async function internalRecReportForGranules(recReportParams) {
  *   uploaded to S3
  */
 async function createInternalReconciliationReport(recReportParams) {
-  log.error(`createInternalReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
+  log.info(`createInternalReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
   const {
     reportKey,
     systemBucket,

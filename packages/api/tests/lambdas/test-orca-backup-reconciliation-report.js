@@ -447,7 +447,7 @@ test.serial('orcaReconciliationReportForGranules reports discrepancy of granule 
   // matchingCumulusGran, matchingCumulusOnlyGran, cumulusOnlyGranNoFile
   t.is(granulesReport.okCount, 3);
   t.is(granulesReport.cumulusCount, 5);
-  // conflictOrcaGran, orcaOnlyGr 5anule, matchingOrcaGran,
+  // conflictOrcaGran, orcaOnlyGranule, matchingOrcaGran,
   t.is(granulesReport.orcaCount, 3);
   // matchingCumulusGran has 1, matchingCumulusOnlyGran 2,
   // conflictCumulusGran 2, conflictCumulusOnlyGran 1
