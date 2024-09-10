@@ -36,8 +36,6 @@ const fileConflictTypes = {
   onlyInOrca: 'onlyInOrca',
 };
 
-const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt'];
-
 /**
  * Fetch orca configuration for all or specified collections
  *
@@ -103,7 +101,16 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
     okFilesCount: 0,
     cumulusFilesCount: 0,
     orcaFilesCount: 0,
-    ...pick(cumulusGranule, granuleFields),
+    ...{
+      granuleId: cumulusGranule.granule_id,
+      collectionId: constructCollectionId(
+        cumulusGranule.collectionName,
+        cumulusGranule.collectionVersion
+      ),
+      provider: cumulusGranule.providerName,
+      createdAt: cumulusGranule.created_at,
+      updatedAt: cumulusGranule.updated_at,
+    },
     conflictFiles: [],
   };
 
@@ -237,10 +244,9 @@ async function addGranuleToReport({
   if (!cumulusGranule) {
     throw new Error('cumulusGranule must be defined to add to the orca report');
   }
+  const modifiedCumulusGranule = { ...cumulusGranule };
 
-  const modifiedCumuluGranule = { ...cumulusGranule };
-
-  modifiedCumuluGranule.files = await filePgModel.search(knex, {
+  modifiedCumulusGranule.files = await filePgModel.search(knex, {
     granule_cumulus_id: cumulusGranule.cumulus_id,
   });
 
@@ -248,7 +254,7 @@ async function addGranuleToReport({
   const granReport = getReportForOneGranule({
     knex,
     collectionsConfig,
-    cumulusGranule: modifiedCumuluGranule,
+    cumulusGranule: modifiedCumulusGranule,
     orcaGranule,
   });
 
@@ -296,11 +302,9 @@ async function orcaReconciliationReportForGranules(recReportParams) {
     onlyInOrca: [],
   };
 
-  // TODO - Generate this config from Postgres -- DONE
   const collectionsConfig = await fetchCollectionsConfig(recReportParams);
   log.debug(`fetchCollections returned ${JSON.stringify(collectionsConfig)}`);
 
-  // TODO remove method and update to query for same response from postgres
   const knex = await getKnexClient();
   const searchParams = convertToDBGranuleSearchParams(recReportParams);
 
@@ -316,7 +320,7 @@ async function orcaReconciliationReportForGranules(recReportParams) {
   const pgGranulesIterator = new QuerySearchClient(
     granulesSearchQuery,
     100 // arbitrary limit on how items are fetched at once
-    // TODO: Configure?x
+    // TODO: Configure?
   );
 
   const orcaSearchParams = convertToOrcaGranuleSearchParams(recReportParams);
