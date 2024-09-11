@@ -56,6 +56,7 @@ const { createReport } = require('../../endpoints/reconciliation-reports');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 
 const { buildFakeExpressResponse } = require('./utils');
+const cryptoRandomString = require('crypto-random-string');
 
 let esClient;
 const esIndex = randomId('esindex');
@@ -244,13 +245,14 @@ test.serial('CUMULUS-911 DELETE with pathParameters and with an invalid access t
 
 test.todo('CUMULUS-911 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test.serial('default returns list of reports', async (t) => {
+test.only('default returns list of reports', async (t) => {
   const response = await request(app)
     .get('/reconciliationReports')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
+  const reconMod = ReconciliationReportPgModel();
+  const recons = ReconciliationReportPgModel(t.context.knex)
   const results = response.body;
   t.is(results.results.length, 3);
 

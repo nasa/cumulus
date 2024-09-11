@@ -19,7 +19,10 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-const { Search, getEsClient } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
+
+const { ReconciliationReportSearch } = require('@cumulus/db');
+
 const indexer = require('@cumulus/es-client/indexer');
 
 const {
@@ -42,14 +45,15 @@ const maxResponsePayloadSizeBytes = 6 * 1000 * 1000;
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function listReports(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'reconciliationReport',
-    process.env.ES_INDEX
-  );
+async function listReports(req, res, knex) {
+  // const search = new Search(
+  //   { queryStringParameters: req.query },
+  //   'reconciliationReport',
+  //   process.env.ES_INDEX
+  // );
 
-  const response = await search.query();
+  const search = new ReconciliationReportSearch({ queryStringParameters: req.query });
+  const response = await search.query(knex);
   return res.send(response);
 }
 

@@ -170,6 +170,9 @@ export {
 export {
   StatsSearch,
 } from './search/StatsSearch';
+export {
+  ReconciliationReportSearch,
+} from './search/ReconciliationReportSearch';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';
