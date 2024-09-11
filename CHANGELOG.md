@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Replace ElasticSearch Phase 2
 
+- **CUMULUS-3806**
+  - Update `@cumulus/db/lib/granule.getGranulesByApiPropertiesQuery` to
+    be parameterized and include a modifier on `temporalBoundByCreatedAt`
+  - Remove endpoint call to and all tests for Internal Reconciliation Reports
+    and updated API to throw an error if report is requested
+  - Update Orca reconciliation reports to pull granules for comparison from
+    postgres via `getGranulesByApiPropertiesQuery`
 - **CUMULUS-3229**
   - Remove ElasticSearch queries from Rule LIST endpoint
 - **CUMULUS-3230**
