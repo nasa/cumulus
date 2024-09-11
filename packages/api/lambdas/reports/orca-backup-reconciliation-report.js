@@ -394,7 +394,6 @@ async function orcaReconciliationReportForGranules(recReportParams) {
   const pgGranulesIterator = new QuerySearchClient(
     granulesSearchQuery,
     100 // arbitrary limit on how items are fetched at once
-    // TODO: Configure?
   );
 
   const orcaSearchParams = convertToOrcaGranuleSearchParams(recReportParams);
