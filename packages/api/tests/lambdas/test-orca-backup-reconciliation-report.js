@@ -4,6 +4,7 @@ const test = require('ava');
 const rewire = require('rewire');
 const sinon = require('sinon');
 const sortBy = require('lodash/sortBy');
+const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
 // TODO abstract this setup
 
@@ -42,10 +43,14 @@ const getReportForOneGranule = OBRP.__get__('getReportForOneGranule');
 function translateTestGranuleObject(apiGranule) {
   const { name: collectionName, version: collectionVersion } =
     deconstructCollectionId(apiGranule.collectionId);
+  const ProviderName = apiGranule.provider;
   return {
-    ...apiGranule,
+    ...(omit(apiGranule, ['collectionId', 'provider', 'createdAt', 'updatedAt'])),
     collectionName,
     collectionVersion,
+    ProviderName,
+    created_at: new Date(apiGranule.createdAt),
+    updated_at: new Date(apiGranule.updatedAt),
   };
 }
 
@@ -269,7 +274,7 @@ test.serial('getReportForOneGranule reports ok for one granule in both cumulus a
   } = fakeCollectionsAndGranules();
   const report = await getReportForOneGranule({
     collectionsConfig,
-    cumulusGranule,
+    cumulusGranule: translateTestGranuleObject(cumulusGranule),
     orcaGranule,
     knex,
   });
@@ -293,7 +298,7 @@ test.serial('getReportForOneGranule reports no ok for one granule in both cumulu
 
   const granules = fakeCollectionsAndGranules();
   const cumulusGranule = translateTestGranuleObject(granules.conflictCumulusGran);
-  const orcaGranule = translateTestGranuleObject(granules.conflictOrcaGran);
+  const orcaGranule = granules.conflictOrcaGran;
 
   const report = await getReportForOneGranule({
     collectionsConfig,
@@ -335,7 +340,10 @@ test.serial('getReportForOneGranule reports ok for one granule in cumulus only w
   const granules = fakeCollectionsAndGranules();
   const cumulusGranule = translateTestGranuleObject(granules.matchingCumulusOnlyGran);
 
-  const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
+  const report = getReportForOneGranule({
+    collectionsConfig,
+    cumulusGranule,
+  });
   t.true(report.ok);
   t.is(report.okFilesCount, 2);
   t.is(report.cumulusFilesCount, 2);
@@ -355,7 +363,10 @@ test.serial('getReportForOneGranule reports not ok for one granule in cumulus on
   const granules = fakeCollectionsAndGranules();
   const cumulusGranule = translateTestGranuleObject(granules.conflictCumulusOnlyGran);
 
-  const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
+  const report = getReportForOneGranule({
+    collectionsConfig,
+    cumulusGranule,
+  });
   t.false(report.ok);
   t.is(report.okFilesCount, 1);
   t.is(report.cumulusFilesCount, 2);
@@ -369,7 +380,10 @@ test.serial('getReportForOneGranule reports ok for one granule in cumulus only w
   const granules = fakeCollectionsAndGranules();
   const cumulusGranule = translateTestGranuleObject(granules.cumulusOnlyGranNoFile);
 
-  const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
+  const report = getReportForOneGranule({
+    collectionsConfig,
+    cumulusGranule,
+  });
   t.true(report.ok);
   t.is(report.okFilesCount, 0);
   t.is(report.cumulusFilesCount, 0);
