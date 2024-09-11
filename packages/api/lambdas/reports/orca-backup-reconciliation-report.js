@@ -37,6 +37,8 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
  * @property {string} [orcaBucket]
  * @property {string} reason
  */
+
+/** @typedef { import('@cumulus/db').PostgresGranuleRecord } PostgresGranuleRecord */
 /**
  * @typedef {Object} GranuleReport
  * @property {boolean} ok
@@ -58,14 +60,9 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 /** @typedef {import('@cumulus/db').PostgresFileRecord} PostgresFileRecord */
 
 /**
-   * @typedef {Object} CumulusGranule
-   * @property {number} cumulus_id - The ID of the granule in the Cumulus database
-   * @property {Date} updated_at - The last update date of the granule
-   * @property {Date} created_at - The creation date of the granule
-   * @property {string} granule_id - The ID of the granule
+   * @typedef {Object} OrcaReportGranuleObject
    * @property {string} collectionId - The ID of the collection
-   * @property {string} status - The status of the granule
-   * @property {string} collectionName} - The name of the collection associated with the granule
+   * @property {string} collectionName - The name of the collection associated with the granule
    * @property {string} collectionVersion - The version of
    * the collection associated with the granule
    * @property {string} providerName - The name of the provider associated with the granule
@@ -87,6 +84,8 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
  * @property {Array<Object>} onlyInCumulus - The list of granules only in Cumulus.
  * @property {Array<Object>} onlyInOrca - The list of granules only in ORCA.
  */
+
+/** @typedef {OrcaReportGranuleObject & PostgresGranuleRecord } CumulusGranule */
 
 const log = new Logger({ sender: '@api/lambdas/orca-backup-reconciliation-report' });
 
