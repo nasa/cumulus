@@ -742,7 +742,6 @@ describe('When there are granule differences and granule reconciliation is run',
     let reportRecord;
     let report;
     let orcaReportAsyncOperationId;
-    let provider;
 
     afterAll(async () => {
       if (orcaReportAsyncOperationId) {
