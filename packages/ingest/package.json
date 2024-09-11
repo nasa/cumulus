@@ -56,7 +56,7 @@
     "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.22",
-    "moment": "2.29.4",
+    "moment": "^2.30.1",
     "simplecrawler": "^1.1.9",
     "tough-cookie": "~4.0.0"
   },
