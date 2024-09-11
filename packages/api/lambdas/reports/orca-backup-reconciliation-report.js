@@ -34,7 +34,7 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
  * @property {string} fileName
  * @property {string} bucket
  * @property {string} key
- * @property {string} orcaBucket
+ * @property {string} [orcaBucket]
  * @property {string} reason
  */
 /**
@@ -61,14 +61,14 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
    * @typedef {Object} CumulusGranule
    * @property {number} cumulus_id - The ID of the granule in the Cumulus database
    * @property {Date} updated_at - The last update date of the granule
+   * @property {Date} created_at - The creation date of the granule
    * @property {string} granule_id - The ID of the granule
    * @property {string} collectionId - The ID of the collection
    * @property {string} status - The status of the granule
-   * @property {Date} createdAt - The creation date of the granule
-   * @property {Date} updatedAt - The last update date of the granule
    * @property {string} collectionName} - The name of the collection associated with the granule
    * @property {string} collectionVersion - The version of
    * the collection associated with the granule
+   * @property {string} providerName - The name of the provider associated with the granule
    * @property {PostgresFileRecord[]} files - The files associated with the granule
    */
 /**
@@ -154,10 +154,10 @@ function shouldFileBeExcludedFromOrca(collectionsConfig, collectionId, fileName)
  * compare cumulus granule with its orcaGranule if any, and generate report
  *
  * @param {Object} params
- * @param {Object} params.collectionsConfig - collections configuration
- * @param {Object} params.cumulusGranule - cumulus granule
+ * @param {CollectionConfig} params.collectionsConfig - collections configuration
+ * @param {CumulusGranule} params.cumulusGranule - cumulus granule
  * @param {Object} params.orcaGranule - orca granule
- * @returns {Object} - discrepency report of the granule
+ * @returns {GranuleReport} - discrepancy report of the granule
  */
 function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule }) {
   /** @type {GranuleReport} */
@@ -173,8 +173,8 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
         cumulusGranule.collectionVersion
       ),
       provider: cumulusGranule.providerName,
-      createdAt: cumulusGranule.created_at,
-      updatedAt: cumulusGranule.updated_at,
+      createdAt: cumulusGranule.created_at.getTime(),
+      updatedAt: cumulusGranule.updated_at.getTime(),
     },
     conflictFiles: [],
   };
@@ -192,6 +192,11 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
   // if no granule file conflicts, set granuleReport.ok to true
 
   // reducer, key: fileName, value: file object with selected fields
+  /**
+   * @param {Object<string, {bucket: string, key: string} >} accumulator
+   * @param {PostgresFileRecord} currentValue
+   * @returns {Object<string, {bucket: string, key: string} >}
+   */
   const cumulusFileReducer = (accumulator, currentValue) => {
     const fileName = path.basename(currentValue.key);
     return ({
@@ -207,7 +212,9 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
     });
   };
 
-  const cumulusFiles = get(cumulusGranule, 'files', []).reduce(cumulusFileReducer, {});
+  const cumulusFilesArray = /** @type {PostgresFileRecord[]} */ (get(cumulusGranule, 'files', []));
+  const cumulusFiles = cumulusFilesArray.reduce(cumulusFileReducer, {});
+
   const orcaFiles = get(orcaGranule, 'files', []).reduce(orcaFileReducer, {});
   const allFileNames = Object.keys({ ...cumulusFiles, ...orcaFiles });
   allFileNames.forEach((fileName) => {
