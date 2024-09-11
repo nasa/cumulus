@@ -8,7 +8,7 @@ const isMatch = require('lodash/isMatch');
 const omit = require('lodash/omit');
 const request = require('supertest');
 
-const { localStackConnectionEnv } = require('@cumulus/db');
+const { localStackConnectionEnv, ReconciliationReportPgModel, generateLocalTestDb, migrationDir } = require('@cumulus/db');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
@@ -53,6 +53,7 @@ const {
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 
 const { buildFakeExpressResponse } = require('./utils');
+const cryptoRandomString = require('crypto-random-string');
 
 let esClient;
 const esIndex = randomId('esindex');
@@ -62,7 +63,7 @@ let accessTokenModel;
 let reconciliationReportModel;
 let fakeReportRecords = [];
 
-test.before(async () => {
+test.before(async (t) => {
   // create esClient
   esClient = await getEsClient('fakehost');
 
@@ -80,6 +81,11 @@ test.before(async () => {
 
   reconciliationReportModel = new models.ReconciliationReport();
   await reconciliationReportModel.createTable();
+  const testDbName = `test_recon_reports_${cryptoRandomString({ length: 10 })}`;
+  const { knex } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  const reconPgModel = new ReconciliationReportPgModel();
+
 
   await awsServices.s3().createBucket({
     Bucket: process.env.system_bucket,
@@ -120,9 +126,13 @@ test.before(async () => {
     })));
 
   // add records to es
-  await Promise.all(fakeReportRecords.map((reportRecord) =>
-    reconciliationReportModel.create(reportRecord)
-      .then((record) => indexer.indexReconciliationReport(esClient, record, esAlias))));
+  await Promise.all(fakeReportRecords.map( async (reportRecord) =>
+    {
+      await reconciliationReportModel.create(reportRecord)
+        .then((record) => indexer.indexReconciliationReport(esClient, record, esAlias))
+      await reconPgModel.create(t.context.knex, reportRecord)
+    }
+  ))
 });
 
 test.after.always(async () => {
@@ -218,13 +228,14 @@ test.serial('CUMULUS-911 DELETE with pathParameters and with an invalid access t
 
 test.todo('CUMULUS-911 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test.serial('default returns list of reports', async (t) => {
+test.only('default returns list of reports', async (t) => {
   const response = await request(app)
     .get('/reconciliationReports')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
+  const reconMod = ReconciliationReportPgModel();
+  const recons = ReconciliationReportPgModel(t.context.knex)
   const results = response.body;
   t.is(results.results.length, 3);
 
