@@ -1,5 +1,3 @@
-//@ts-check
-
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
@@ -856,7 +854,7 @@ async function processRequest(params) {
       await createGranuleInventoryReport(recReportParams);
     } else if (reportType === 'ORCA Backup') {
       await createOrcaBackupReconciliationReport(recReportParams);
-    } else { // TODO: Should we throw if type is invalid?  Probably.
+    } else {
       // reportType is in ['Inventory', 'Granule Not Found']
       await createReconciliationReport(recReportParams); // TODO Update to not use elasticsearch
     }
@@ -887,12 +885,11 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE'];
+  //TODO: Remove irrelevant env vars from terraform after ES reports are removed
+  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE', 'ES_SCROLL', 'ES_SCROLL_SIZE'];
   const envsToLog = pickBy(process.env, (value, key) => varsToLog.includes(key));
-  log.info(`CMR Environment variables: ${JSON.stringify(envsToLog)}`);
+  log.info(`CMR and ES Environment variables: ${JSON.stringify(envsToLog)}`);
 
   return await processRequest(event);
 }
 exports.handler = handler;
-
-//TODO: Remove irrelevant env vars from terraform
