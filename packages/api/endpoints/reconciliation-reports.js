@@ -88,7 +88,7 @@ async function getReport(req, res) {
     );
 
     if (Key.endsWith('.json') || Key.endsWith('.csv')) {
-      const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key }) ?? 0; // or check for undefined and throw?
+      const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key }) ?? 0;
       // estimated payload size, add extra
       const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
       let maxResponsePayloadSize;
@@ -103,7 +103,7 @@ async function getReport(req, res) {
           data: `Error: Report ${name} exceeded maximum allowed payload size`,
         });
       } else {
-        const file = await getS3Object(Bucket, Key); // TODO should use not deprecated method???
+        const file = await getS3Object(Bucket, Key);
         logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
         if (!file.Body) {
           return res.boom.badRequest('Report file does not have a body.');
