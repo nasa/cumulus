@@ -332,7 +332,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
       config = await loadConfig();
 
-      process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
       process.env.CMR_ENVIRONMENT = 'UAT';
 
       cmrClient = await createCmrClient(config);
@@ -351,10 +350,8 @@ describe('When there are granule differences and granule reconciliation is run',
 
       console.log('XXX Waiting for setupCollectionAndTestData');
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
-      console.log('XXX Completed for setupCollectionAndTestData');
+      console.log('XXX Completed setupCollectionAndTestData');
 
-      // Write an extra file to the DynamoDB Files table
-      // TODO: is ^ comment above correct, or should it be modified?
       extraFileInDb = {
         bucket: protectedBucket,
         key: randomString(),
@@ -388,8 +385,8 @@ describe('When there are granule differences and granule reconciliation is run',
         collectionId,
         constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version),
       ];
-
       await waitForCollectionRecordsInList(config.stackName, collectionIds, { timestamp__from: ingestTime });
+      console.log('XXXXX Completed collections in list');
 
       // update one of the granule files in database so that that file won't match with CMR
       console.log('XXXXX Waiting for getGranule()');
@@ -398,7 +395,7 @@ describe('When there are granule differences and granule reconciliation is run',
         granuleId: publishedGranuleId,
         collectionId,
       });
-      console.log('XXXXX Completed for getGranule()');
+      console.log('XXXXX Completed getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
       console.log(`XXXXX Waiting for updateGranuleFile(${publishedGranuleId})`);
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(
@@ -407,7 +404,7 @@ describe('When there are granule differences and granule reconciliation is run',
         /jpg$/,
         'jpg2'
       ));
-      console.log(`XXXXX Completed for updateGranuleFile(${publishedGranuleId})`);
+      console.log(`XXXXX Completed updateGranuleFile(${publishedGranuleId})`);
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
         getGranule({ prefix: config.stackName, granuleId: dbGranuleId, collectionId }),
@@ -418,6 +415,7 @@ describe('When there are granule differences and granule reconciliation is run',
         waitForGranuleRecordUpdatedInList(config.stackName, dbGranule),
         waitForGranuleRecordUpdatedInList(config.stackName, granuleAfterUpdate),
       ]);
+      console.log('XXXX Completed granules updated in list');
     } catch (error) {
       console.log(error);
       beforeAllFailed = error;

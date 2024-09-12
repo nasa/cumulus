@@ -104,7 +104,7 @@ export {
   translatePostgresProviderToApiProvider,
 } from './translate/providers';
 export {
-  translatePostgresReconciliationReportToApiReconciliationReport,
+  translatePostgresReconReportToApiReconReport,
 } from './translate/reconciliation_reports';
 export {
   translatePostgresRuleToApiRule,

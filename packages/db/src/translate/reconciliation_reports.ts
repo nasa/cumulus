@@ -6,7 +6,7 @@ import { PostgresReconciliationReportRecord } from '../types/reconciliation_repo
  * @param {Object} pgReconciliationReport - a PostgreSQL reconciliation report record
  * @returns {Object} an API reconciliation report record
  */
-export const translatePostgresReconciliationReportToApiReconciliationReport = (
+export const translatePostgresReconReportToApiReconReport = (
   pgReconciliationReport: PostgresReconciliationReportRecord
 ) => {
   const apiReconciliationReport = {

@@ -30,7 +30,7 @@ const Logger = require('@cumulus/logger');
 
 const {
   ReconciliationReportPgModel,
-  translatePostgresReconciliationReportToApiReconciliationReport,
+  translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
@@ -837,9 +837,7 @@ async function processRequest(params) {
     location: buildS3Uri(systemBucket, reportKey),
   };
   let [reportPgRecord] = await reconciliationReportPgModel.create(knex, builtReportRecord);
-  let reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(
-    reportPgRecord
-  );
+  let reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
   await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   log.info(`Report added to database as pending: ${JSON.stringify(reportApiRecord)}.`);
 
@@ -871,9 +869,7 @@ async function processRequest(params) {
       status: 'Generated',
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, generatedRecord);
-    reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(
-      reportPgRecord
-    );
+    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
     await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   } catch (error) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`); // eslint-disable-line max-len
@@ -886,9 +882,7 @@ async function processRequest(params) {
       },
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, erroredRecord);
-    reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(
-      reportPgRecord
-    );
+    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
     await indexReconciliationReport(
       esClient,
       reportApiRecord,
@@ -898,7 +892,7 @@ async function processRequest(params) {
   }
 
   reportPgRecord = await reconciliationReportPgModel.get(knex, { name: builtReportRecord.name });
-  return translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord);
+  return translatePostgresReconReportToApiReconReport(reportPgRecord);
 }
 
 async function handler(event) {

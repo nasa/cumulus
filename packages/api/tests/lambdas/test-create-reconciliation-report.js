@@ -39,7 +39,7 @@ const {
   fakeGranuleRecordFactory,
   translatePostgresCollectionToApiCollection,
   translateApiGranuleToPostgresGranule,
-  translatePostgresReconciliationReportToApiReconciliationReport,
+  translatePostgresReconReportToApiReconReport,
   upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
@@ -1866,7 +1866,7 @@ test.serial('When report creation fails, reconciliation report status is set to 
   );
   // reconciliation report lambda outputs the translated API version, not the PG version, so
   // it should be translated for comparison, at least for the comparison with the ES (API) version
-  const reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord); // eslint-disable-line max-len
+  const reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
   t.is(reportApiRecord.status, 'Failed');
   t.is(reportApiRecord.type, 'Inventory');
 
@@ -2218,7 +2218,7 @@ test.serial('When there is an error for an ORCA backup report, it throws', async
   );
   // reconciliation report lambda outputs the translated API version, not the PG version, so
   // it should be translated for comparison, at least for the comparison with the ES (API) version
-  const reportApiRecord = translatePostgresReconciliationReportToApiReconciliationReport(reportPgRecord); // eslint-disable-line max-len
+  const reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
   t.is(reportApiRecord.status, 'Failed');
   t.is(reportApiRecord.type, event.reportType);
 
