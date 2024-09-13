@@ -1,8 +1,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const uuid = require('uuid/v4');
 
-const AsyncOperation = require('@cumulus/api/models/async-operation');
+const ReconciliationReport = require('@cumulus/api/models/reconciliation_reports');
 
 const {
   createBucket,
@@ -29,7 +28,7 @@ test.before(async (t) => {
     PG_DATABASE: testDbName,
     stackName: cryptoRandomString({ length: 10 }),
     system_bucket: cryptoRandomString({ length: 10 }),
-    AsyncOperationsTable: cryptoRandomString({ length: 10 }),
+    ReconciliationReportsTable: cryptoRandomString({ length: 10 }),
   };
 
   await createBucket(process.env.system_bucket);
@@ -37,13 +36,13 @@ test.before(async (t) => {
   const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
   const messageTemplateKey = `${process.env.stackName}/workflow_template.json`;
 
-  t.context.asyncOperationsModel = new AsyncOperation({
+  t.context.reconciliationReportsModel = new ReconciliationReport({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
   });
 
   await Promise.all([
-    t.context.asyncOperationsModel.createTable(),
+    t.context.reconciliationReportsModel.createTable(),
   ]);
 
   await Promise.all([
@@ -64,7 +63,7 @@ test.before(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await t.context.asyncOperationsModel.deleteTable();
+  await t.context.reconciliationReportsModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
@@ -75,35 +74,31 @@ test.after.always(async (t) => {
   });
 });
 
-test('handler migrates async operations', async (t) => {
-  const { asyncOperationsModel } = t.context;
+test('handler migrates reconciliation reports', async (t) => {
+  const { reconciliationReportsModel } = t.context;
 
-  const fakeAsyncOperation = {
-    id: uuid(),
-    description: 'unittest async operation',
-    operationType: 'ES Index',
-    output: '{ "output": "test" }',
-    status: 'SUCCEEDED',
-    taskArn: 'arn:aws:ecs:task:1234',
+  const fakeReconciliationReport = {
+    name: cryptoRandomString({ length: 5 }),
+    type: 'Granule Inventory',
+    status: 'Generated',
+    error: {},
     createdAt: (Date.now() - 1000),
     updatedAt: Date.now(),
   };
 
   await Promise.all([
-    asyncOperationsModel.create(fakeAsyncOperation),
+    reconciliationReportsModel.create(fakeReconciliationReport),
   ]);
 
-  t.teardown(() => asyncOperationsModel.delete({ id: fakeAsyncOperation.id }));
+  t.teardown(() => reconciliationReportsModel.delete({ id: fakeReconciliationReport.id }));
 
   const call = await handler({});
   const expected = {
     MigrationSummary: {
-      async_operations: {
-        failed: 0,
-        migrated: 1,
-        skipped: 0,
-        total_dynamo_db_records: 1,
-      },
+      failed: 0,
+      migrated: 1,
+      skipped: 0,
+      total_dynamo_db_records: 1,
     },
   };
   t.deepEqual(call, expected);

@@ -2,21 +2,20 @@ locals {
   lambda_path      = "${path.module}/dist/webpack/lambda.zip"
 }
 
-resource "aws_lambda_function" "reconciliation_report_migration" {
-  function_name    = "${var.prefix}-reconciliation-report-migration"
+resource "aws_lambda_function" "reconciliation_reports_migration" {
+  function_name    = "${var.prefix}-ReconciliationReportsMigration"
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
   role             = aws_iam_role.data_migration1.arn
   runtime          = "nodejs20.x"
-  timeout          = lookup(var.lambda_timeouts, "dlaMigration", 900)
-  memory_size      = lookup(var.lambda_memory_sizes, "dlaMigration", 512)
+  timeout          = lookup(var.lambda_timeouts, "ReconciliationReportsMigration", 900)
+  memory_size      = lookup(var.lambda_memory_sizes, "ReconciliationReportsMigration", 1024)
 
   environment {
     variables = {
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
-      AsyncOperationsTable = var.dynamo_tables.async_operations.name
-      dbHeartBeat = var.rds_connection_heartbeat
+      ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
       stackName        = var.prefix
     }
   }

@@ -4,27 +4,27 @@ import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { envUtils } from '@cumulus/common';
 import {
-  AsyncOperationPgModel,
-  translateApiAsyncOperationToPostgresAsyncOperation,
+  ReconciliationReportPgModel,
+  translateApiReconReportToPostgresReconReport,
 } from '@cumulus/db';
-import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
+import { ApiReconciliationReport } from '@cumulus/types/api/reconciliation-reports';
 import Logger from '@cumulus/logger';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 
 import { MigrationSummary } from './types';
 
-const logger = new Logger({ sender: '@cumulus/data-migration/async-operations' });
+const logger = new Logger({ sender: '@cumulus/data-migration/reconciliation-reports' });
 
-export const migrateAsyncOperationRecord = async (
-  dynamoRecord: ApiAsyncOperation,
+export const migrateReconciliationReportRecord = async (
+  dynamoRecord: ApiReconciliationReport,
   knex: Knex
 ): Promise<void> => {
-  const asyncOperationPgModel = new AsyncOperationPgModel();
+  const reconReportPgModel = new ReconciliationReportPgModel();
 
   let existingRecord;
 
   try {
-    existingRecord = await asyncOperationPgModel.get(knex, { id: dynamoRecord.id });
+    existingRecord = await reconReportPgModel.get(knex, { name: dynamoRecord.name });
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;
@@ -34,24 +34,24 @@ export const migrateAsyncOperationRecord = async (
   if (existingRecord
     && dynamoRecord.updatedAt
     && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
-    throw new RecordAlreadyMigrated(`Async Operation ${dynamoRecord.id} was already migrated, skipping`);
+    throw new RecordAlreadyMigrated(`Async Operation ${dynamoRecord.name} was already migrated, skipping`);
   }
 
-  const updatedRecord = translateApiAsyncOperationToPostgresAsyncOperation(
-    <ApiAsyncOperation>dynamoRecord
+  const updatedRecord = translateApiReconReportToPostgresReconReport(
+    <ApiReconciliationReport>dynamoRecord
   );
 
-  await asyncOperationPgModel.upsert(knex, updatedRecord);
+  await reconReportPgModel.upsert(knex, updatedRecord);
 };
 
-export const migrateAsyncOperations = async (
+export const migrateReconciliationReports = async (
   env: NodeJS.ProcessEnv,
   knex: Knex
 ): Promise<MigrationSummary> => {
-  const asyncOperationsTable = envUtils.getRequiredEnvVar('AsyncOperationsTable', env);
+  const reconciliationReportsTable = envUtils.getRequiredEnvVar('ReconciliationReportsTable', env);
 
   const searchQueue = new DynamoDbSearchQueue({
-    TableName: asyncOperationsTable,
+    TableName: reconciliationReportsTable,
   });
 
   const migrationSummary = {
@@ -67,8 +67,8 @@ export const migrateAsyncOperations = async (
     migrationSummary.dynamoRecords += 1;
 
     try {
-      const apiRecord = unmarshall(record) as ApiAsyncOperation;
-      await migrateAsyncOperationRecord(apiRecord, knex);
+      const apiRecord = unmarshall(record) as ApiReconciliationReport;
+      await migrateReconciliationReportRecord(apiRecord, knex);
       migrationSummary.success += 1;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
@@ -76,7 +76,7 @@ export const migrateAsyncOperations = async (
       } else {
         migrationSummary.failed += 1;
         logger.error(
-          `Could not create async-operation record in RDS for Dynamo async-operation id ${record.id}:`,
+          `Could not create reconciliationReport record in RDS for Dynamo reconciliationReport name ${record.name}:`,
           error
         );
       }
@@ -86,6 +86,6 @@ export const migrateAsyncOperations = async (
     record = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
-  logger.info(`successfully migrated ${migrationSummary.success} async operation records`);
+  logger.info(`successfully migrated ${migrationSummary.success} reconciliationReport records`);
   return migrationSummary;
 };
