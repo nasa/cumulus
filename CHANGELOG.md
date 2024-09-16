@@ -27,7 +27,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
 - **CUMULUS-3833**
-  - Added `ReconciliationReportsMigration` lambda and instructions to migrate ReconciliationReports
+  - Added `ReconciliationReportMigration` lambda and instructions to migrate ReconciliationReports
     from DynamoDB to Postgres
 
 ## [Unreleased]

@@ -55,7 +55,7 @@ test('handler calls startAsyncOperation with the expected parameters for DLA Mig
   });
 });
 
-test('handler calls startAsyncOperation with the expected parameters ReconciliationReport Migration', async (t) => {
+test('handler calls startAsyncOperation with the expected parameters for ReconciliationReport Migration', async (t) => {
   const {
     asyncOperationTaskDefinition,
     callerLambdaName,

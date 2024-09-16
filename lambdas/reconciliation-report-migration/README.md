@@ -1,9 +1,9 @@
-# ReconciliationReportsMigration Lambda
+# ReconciliationReportMigration Lambda
 
 ## The lambda migrates existing ReconciliationReports data from DynamoDB to PostgreSQL.
 
 ### Running the API
-This ReconciliationReportsMigration Lambda is designed to be run manually from your AWS console or CLI as the first step in the data migration process.
+This ReconciliationReportMigration Lambda is designed to be run manually from your AWS console or CLI as the first step in the data migration process.
 
 The result will be a migration summary. For example:
 

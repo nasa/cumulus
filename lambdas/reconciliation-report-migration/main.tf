@@ -2,15 +2,15 @@ locals {
   lambda_path      = "${path.module}/dist/webpack/lambda.zip"
 }
 
-resource "aws_lambda_function" "reconciliation_reports_migration" {
-  function_name    = "${var.prefix}-ReconciliationReportsMigration"
+resource "aws_lambda_function" "reconciliation_report_migration" {
+  function_name    = "${var.prefix}-ReconciliationReportMigration"
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
   role             = aws_iam_role.data_migration1.arn
   runtime          = "nodejs20.x"
-  timeout          = lookup(var.lambda_timeouts, "ReconciliationReportsMigration", 900)
-  memory_size      = lookup(var.lambda_memory_sizes, "ReconciliationReportsMigration", 1024)
+  timeout          = lookup(var.lambda_timeouts, "ReconciliationReportMigration", 900)
+  memory_size      = lookup(var.lambda_memory_sizes, "ReconciliationReportMigration", 1024)
 
   environment {
     variables = {

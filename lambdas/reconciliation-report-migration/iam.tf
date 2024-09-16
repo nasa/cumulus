@@ -35,7 +35,7 @@ data "aws_iam_policy_document" "reconciliation_report_migration" {
       "dynamodb:Scan",
     ]
     resources = [
-      var.dynamo_tables.async_operations.arn,
+      var.dynamo_tables.reconciliation_reports.arn,
     ]
   }
 
