@@ -48,7 +48,7 @@ async function updateEachCmrFileAccessURLs(
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
     let files = granule.files;
-    if (excludeFileRegexPattern !== null) {
+    if (excludeFileRegexPattern) {
       const excludeFileRegex = new RegExp(excludeFileRegexPattern);
       files = granule.files.filter((file) => !file.key.match(excludeFileRegex));
       if (files.length === granule.files.length) {
@@ -98,7 +98,7 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     .map(({ name, type }) => [name, type]));
 
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
-  const excludeFileRegexPattern = get(config, 'excludeFileRegex', null);
+  const excludeFileRegexPattern = get(config, 'excludeFileRegex');
 
   const incomingETags = event.config.etags || {};
   const granules = event.input.granules.map((g) => addEtagsToFileObjects(g, incomingETags));
