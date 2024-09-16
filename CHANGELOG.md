@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+
 - **CUMULUS-3756**
   - Added excludeFileRegex configuration to update-granules-cmr-metadata-file-links
   - This is to allow files matching specified regex to be excluded when updating the Related URLs list
@@ -86,8 +87,6 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
   - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
-
-### Added
 
 ## [v18.4.0] 2024-08-16
 
