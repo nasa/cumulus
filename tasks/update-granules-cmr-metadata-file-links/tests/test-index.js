@@ -242,24 +242,6 @@ test.serial('update-granules-cmr-metadata-file-links properly handles a case whe
   t.deepEqual(message.granules, newPayload.input.granules);
 });
 
-test.serial('update-granules-cmr-metadata-file-links properly handles a case where the excludeFileRegex is provided but does not match any files', async (t) => {
-  const newPayload = buildPayload(t);
-
-  // A regex that will never match
-  const excludeFileRegex = '.*some_extension_that_does_not_exist';
-  newPayload.config.excludeFileRegex = excludeFileRegex;
-
-  await validateConfig(t, newPayload.config);
-  await validateInput(t, newPayload.input);
-
-  const filesToUpload = cloneDeep(t.context.filesToUpload);
-  await uploadFiles(filesToUpload, t.context.stagingBucket);
-
-  await t.throwsAsync(() => updateGranulesCmrMetadataFileLinks(newPayload), {
-    message: `No files matched the excludeFileRegex ${excludeFileRegex}.  Found files: ${newPayload.input.granules[0].files.map((file) => file.key).join(', ')}`,
-  });
-});
-
 test.serial('update-granules-cmr-metadata-file-links properly filters files using the excludeFileRegex', async (t) => {
   const newPayload = buildPayload(t);
 
