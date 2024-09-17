@@ -268,8 +268,6 @@ test.serial('update-granules-cmr-metadata-file-links properly filters files usin
   await uploadFiles(filesToUpload, t.context.stagingBucket);
   await updateGranulesCmrMetadataFileLinks(newPayload);
 
-  // TODO; instead of checking the resulting metadata, mock updateCMRMetadata
-  // and just verify that the function was called with the correct files
   const cmrFiles = [];
   await newPayload.input.granules.forEach((granule) => {
     granule.files.forEach((file) => {
