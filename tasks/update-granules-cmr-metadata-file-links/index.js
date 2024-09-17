@@ -21,6 +21,7 @@ const {
   updateCMRMetadata,
 } = require('@cumulus/cmrjs');
 
+const logger = new Logger({ sender: '@cumulus/update-granules-cmr-metadata-file-links' });
 /**
  * Update each of the CMR files' OnlineAccessURL fields to represent the new
  * file locations. This function assumes that there will only ever be a single CMR file per granule.
@@ -38,7 +39,6 @@ const {
  *
  */
 
-const logger = new Logger({ sender: '@cumulus/update-granules-cmr-metadata-file-links' });
 async function updateEachCmrFileAccessURLs(
   cmrFiles,
   granulesObject,
@@ -103,7 +103,6 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     .map(({ name, type }) => [name, type]));
 
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
-  const excludeFileRegexPattern = get(config, 'excludeFileRegex');
 
   const incomingETags = event.config.etags || {};
   const granules = event.input.granules.map((g) => addEtagsToFileObjects(g, incomingETags));
@@ -118,7 +117,7 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     config.distribution_endpoint,
     bucketTypes,
     distributionBucketMap,
-    excludeFileRegexPattern
+    config.excludeFileRegexPattern
   );
 
   const updatedGranulesByGranuleId = await updateCmrFileInfo(cmrFiles, granulesByGranuleId);
