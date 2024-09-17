@@ -167,8 +167,8 @@ export {
   StatsSearch,
 } from './search/StatsSearch';
 
-export { BasePgModel } from './models/base';
 export { AsyncOperationPgModel } from './models/async_operation';
+export { BasePgModel } from './models/base';
 export { CollectionPgModel } from './models/collection';
 export { ExecutionPgModel } from './models/execution';
 export { FilePgModel } from './models/file';

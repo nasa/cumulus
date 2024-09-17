@@ -1,8 +1,7 @@
-export type ReconciliationReportType =
-  'Granule Inventory' | 'Granule Not Found' | 'Internal' | 'Inventory' | 'ORCA Backup';
-export type ReconciliationReportStatus = 'Generated' | 'Pending' | 'Failed';
-// rules imports some types from '@cumulus/types/api/rules',
-// not sure if these should be moved there later
+import { 
+  ReconciliationReportType,
+  ReconciliationReportStatus,
+} from '@cumulus/types/api/reconciliation_reports';
 
 /**
  * PostgresReconciliationReport
@@ -17,8 +16,8 @@ export interface PostgresReconciliationReport {
   status: ReconciliationReportStatus,
   location?: string,
   error?: object,
-  created_at: Date | undefined,
-  updated_at: Date | undefined,
+  created_at?: Date,
+  updated_at?: Date,
 }
 
 /**

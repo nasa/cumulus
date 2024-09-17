@@ -8,7 +8,7 @@ const {
   deleteS3Object,
   fileExists,
   getObjectSize,
-  getS3Object,
+  getObject,
   parseS3Uri,
   buildS3Uri,
   getObjectStreamContents,
@@ -26,7 +26,6 @@ const {
   ReconciliationReportPgModel,
   createRejectableTransaction,
   getKnexClient,
-  translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
 const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
 const startAsyncOperation = require('../lib/startAsyncOperation');
@@ -91,19 +90,15 @@ async function getReport(req, res) {
       const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key }) ?? 0;
       // estimated payload size, add extra
       const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
-      let maxResponsePayloadSize;
-      if (process.env.maxResponsePayloadSizeBytes) {
-        maxResponsePayloadSize = Number(process.env.maxResponsePayloadSizeBytes)
-      } else {
-        maxResponsePayloadSize = maxResponsePayloadSizeBytes
-      }
-      if (estimatedPayloadSize > maxResponsePayloadSize) {
+      if (estimatedPayloadSize > 
+        Number(process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
+      ) {
         res.json({
           presignedS3Url,
           data: `Error: Report ${name} exceeded maximum allowed payload size`,
         });
       } else {
-        const file = await getS3Object(Bucket, Key);
+        const file = await getObject(s3(), { Bucket, Key });
         logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
         if (!file.Body) {
           return res.boom.badRequest('Report file does not have a body.');
@@ -122,6 +117,7 @@ async function getReport(req, res) {
     }
     throw error;
   }
+
   return res.boom.badImplementation('Reconciliation report getReport failed in an indeterminate manner.');
 }
 
@@ -148,20 +144,7 @@ async function deleteReport(req, res) {
         await deleteS3Object(Bucket, Key);
       }
       await reconciliationReportPgModel.delete(knex, { name });
-    })
-
-    if (inTestMode()) {
-      const esClient = await getEsClient(process.env.ES_HOST);
-      await indexer.deleteRecord({
-        esClient,
-        id: name,
-        type: 'reconciliationReport',
-        index: process.env.ES_INDEX,
-        ignore: [404],
-      });
-    }
-
-    return res.send({ message: 'Report deleted' });
+    });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${name}`);
@@ -169,7 +152,18 @@ async function deleteReport(req, res) {
     throw error;
   }
 
-  return res.boom.badImplementation('Reconciliation report deleteReport failed in an indeterminate manner.');
+  if (inTestMode()) {
+    const esClient = await getEsClient(process.env.ES_HOST);
+    await indexer.deleteRecord({
+      esClient,
+      id: name,
+      type: 'reconciliationReport',
+      index: process.env.ES_INDEX,
+      ignore: [404],
+    });
+  }
+
+  return res.send({ message: 'Report deleted' });
 }
 
 /**

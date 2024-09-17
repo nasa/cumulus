@@ -7,14 +7,17 @@ export const up = async (knex: Knex): Promise<void> => {
       .primary();
     table
       .text('name')
-      .comment('Reconciliation Report name');
+      .comment('Reconciliation Report name')
+      .notNullable();
     table
       .enum('type',
         ['Granule Inventory', 'Granule Not Found', 'Internal', 'Inventory', 'ORCA Backup'])
-      .comment('Type of Reconciliation Report');
+      .comment('Type of Reconciliation Report')
+      .notNullable();
     table
       .enum('status', ['Generated', 'Pending', 'Failed'])
-      .comment('Status of Reconciliation Report');
+      .comment('Status of Reconciliation Report')
+      .notNullable();
     table
       .text('location')
       .comment('Location of Reconciliation Report');

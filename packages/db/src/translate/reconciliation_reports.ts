@@ -1,23 +1,22 @@
 import { PostgresReconciliationReportRecord } from '../types/reconciliation_report';
+import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
+
+const { removeNilProperties } = require('@cumulus/common/util');
+const pick = require('lodash/pick');
 
 /**
  * Generate an API Reconciliation Report record from a PostgreSQL record.
  *
- * @param {Object} pgReconciliationReport - a PostgreSQL reconciliation report record
+ * @param pgReconciliationReport - a PostgreSQL reconciliation report record
  * @returns {Object} an API reconciliation report record
  */
 export const translatePostgresReconReportToApiReconReport = (
   pgReconciliationReport: PostgresReconciliationReportRecord
-) => {
-  const apiReconciliationReport = {
-    // id or cumulus_id?
-    name: pgReconciliationReport.name,
-    type: pgReconciliationReport.type,
-    status: pgReconciliationReport.status,
-    location: pgReconciliationReport.location,
-    error: pgReconciliationReport.error,
+): ApiReconciliationReportRecord => {
+  const apiReconciliationReport = removeNilProperties({
+    ...pick(pgReconciliationReport, ['name', 'type', 'status', 'location', 'error']),
     createdAt: pgReconciliationReport.created_at?.getTime(),
     updatedAt: pgReconciliationReport.updated_at?.getTime(),
-  };
+  });
   return apiReconciliationReport;
 };
