@@ -8,7 +8,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-3536**
+  - Added `rejectUnauthorized` = false to db-provision-user-database as the Lambda
+    does not have the Serverless v2 SSL certifications installed.
+
 ### Changed
+
+- **CUMULUS-3725**
+  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
+    to 0. This setting for the Aurora Serverless v2 database allows non-SSL
+    connections to the database, and is intended to be a temporary solution
+    until Cumulus has been updated to import the RDS rds-ca-rsa2048-g1 CA bundles in Lambda environments.
+    See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
 
 ### Fixed
 
@@ -116,13 +127,6 @@ degraded execution table operations.
 ### Breaking Changes
 
 ### Added
-- **CUMULUS-3536**
-  - Added `rejectUnauthorized` = false to db-provision-user-database as the Lambda
-    does not have the Serverless v2 SSL certifications installed.
-- **CUMULUS-3760**
-  - Added guidance for handling large backlog of es executions
-- **CUMULUS-3385**
-  - Added generate_db_executions to dump large scale postgres executions
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
@@ -141,9 +145,6 @@ degraded execution table operations.
 
 ### Changed
 
-- **NDCUM-1051**
-  - Modified addHyraxUrlToUmmG to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
-  - Modified addHyraxUrlToEcho10 to test whether the provide Hyrax URL is already included in the metadata, and if so return the metadata unaltered.
 - **CUMULUS-3320**
   - Updated executions table (please see Migration section and Upgrade
     Instructions for more information) to:
@@ -354,12 +355,6 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
 
 ### Changed
 
-- **CUMULUS-3725**
-  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
-    to 0. This setting for the Aurora Serverless v2 database allows non-SSL
-    connections to the database, and is intended to be a temporary solution
-    until Cumulus has been updated to import the RDS rds-ca-rsa2048-g1 CA bundles in Lambda environments.
-    See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
 - **CUMULUS-3735**
   - Remove unused getGranuleIdsForPayload from `@cumulus/api/lib`
 - **CUMULUS-3746**
