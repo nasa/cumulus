@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-3756**
-  - Added excludeFileRegex configuration to update-granules-cmr-metadata-file-links
+  - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
   - This is to allow files matching specified regex to be excluded when updating the Related URLs list
   - Defaults to the current behavior of excluding no files.
 
