@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration Notes
+
+#### CUMULUS-3536 Upgrading from Aurora Serverless V1 to V2
+
+- The updates in CUMULUS-3536 require an upgrade of the postgres database.
+  Please follow [Upgrading from Aurora Serverless V1 to V2]
+  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/serverless-v2-upgrade)
+  
 ### Added
 
 - **CUMULUS-3536**
@@ -34,14 +42,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **Snyk**
   - Upgraded moment from 2.29.4 to 2.30.1
   - Upgraded pg from ~8.10 to ~8.12
-
-### Migration Notes
-
-#### CUMULUS-3536 Upgrading from Aurora Serverless V1 to V2
-
-- The updates in CUMULUS-3536 require an upgrade of the postgres database.
-  Please follow [Upgrading from Aurora Serverless V1 to V2]
-  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/serverless-v2-upgrade)
 
 ## [v19.0.0] 2024-08-28
 
