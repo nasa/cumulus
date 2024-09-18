@@ -140,8 +140,8 @@ test.before(async (t) => {
   await Promise.all(fakeReportRecords.map((reportRecord) =>
     t.context.reconciliationReportPgModel.create(knex, reportRecord)
       .then(([reportPgRecord]) => translatePostgresReconReportToApiReconReport(reportPgRecord))
-      .then((repApiRecord) => indexer.indexReconciliationReport(esClient, repApiRecord, esAlias))
-  ));
+      .then((repApiRecord) => indexer.indexReconciliationReport(esClient, repApiRecord, esAlias)))
+  );
 });
 
 test.after.always(async () => {
@@ -252,8 +252,7 @@ test.serial('default returns list of reports', async (t) => {
   // fakeReportRecords were created with the factory that creates PG version recon reports, so
   // should be translated as the list endpoint returns the API version of recon reports
   const fakeReportApiRecords = fakeReportRecords.map((fakeRecord) =>
-    translatePostgresReconReportToApiReconReport(fakeRecord)
-  );
+    translatePostgresReconReportToApiReconReport(fakeRecord));
 
   results.results.forEach((item) => {
     const recordsFound = fakeReportApiRecords.filter((record) => recordsAreEqual(record, item));
