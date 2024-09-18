@@ -49,7 +49,7 @@ export interface ErrorWithName extends Error {
  * Test to see if a given exception is an AWS Throttling Exception
  */
 export const isThrottlingException = (err: ErrorWithOptionalCode) =>
-  err.code === 'ThrottlingException';
+  err.name === 'ThrottlingException';
 
 /**
  * Returns true if the error is a resource error.
