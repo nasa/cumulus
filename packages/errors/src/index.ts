@@ -41,15 +41,12 @@ export interface ErrorWithOptionalCode extends Error {
   code?: string;
 }
 
-export interface ErrorWithName extends Error {
-  name: string;
-}
 
 /**
  * Test to see if a given exception is an AWS Throttling Exception
  */
 export const isThrottlingException = (err: ErrorWithOptionalCode) =>
-  err.name === 'ThrottlingException';
+  err.name === 'ThrottlingException' || err.code === 'ThrottlingException';
 
 /**
  * Returns true if the error is a resource error.
@@ -59,8 +56,8 @@ export const isWorkflowError = (error: Error) => error.name.includes('WorkflowEr
 /**
  * Returns true if the error is a DynamoDB conditional check exception.
  */
-export const isConditionalCheckException = (error: ErrorWithName) =>
-  error.name === 'ConditionalCheckFailedException';
+export const isConditionalCheckException = (error: ErrorWithOptionalCode) =>
+  error.name === 'ConditionalCheckFailedException' || error.code === 'ThrottlingException';
 
 /**
  * WorkflowError should be bubbled out to the overall workflow in the 'exception' field, rather than
