@@ -398,3 +398,9 @@ variable "report_sns_topic_subscriber_arns" {
   default = null
   description = "Account ARNs to supply to report SNS topics policy with subscribe action"
 }
+
+variable "sf_event_sqs_lambda_timeout" {
+  type = number
+  default = null
+  description = "A timeout override for the sf_event_sqs_to_db_records lambda.  Defaults to (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60).   Use with caution, system instability may result if modified"
+}
