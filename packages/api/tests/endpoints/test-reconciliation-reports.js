@@ -148,8 +148,7 @@ test.before(async (t) => {
         .then(
           (reportApiRecord) =>
             indexer.indexReconciliationReport(esClient, reportApiRecord, esAlias)
-        )
-    )
+        ))
   );
 });
 
