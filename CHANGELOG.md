@@ -38,6 +38,8 @@ degraded execution table operations.
 
 ### Added
 
+- **CUMULUS-3020**
+  - Add sf_event_sqs_lambda_timeout option to `cumulus`/`archive` terraform modules to allow user modification of sfEventSqsLambda's timeout, overriding the default configuration value derived from postgres `acquireTimeoutMillis`configuration
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
