@@ -62,7 +62,7 @@ async function listReports(req, res) {
  */
 async function getReport(req, res) {
   const name = req.params.name;
-  
+
   try {
     const reconciliationReportPgModel = new ReconciliationReportPgModel();
     const knex = await getKnexClient();
@@ -90,7 +90,7 @@ async function getReport(req, res) {
       const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key }) ?? 0;
       // estimated payload size, add extra
       const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
-      if (estimatedPayloadSize > 
+      if (estimatedPayloadSize >
         Number(process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
       ) {
         res.json({
@@ -139,7 +139,7 @@ async function deleteReport(req, res) {
     }
     const { Bucket, Key } = parseS3Uri(record.location);
 
-    await createRejectableTransaction(knex, async (trx) => {
+    await createRejectableTransaction(knex, async () => {
       if (await fileExists(Bucket, Key)) {
         await deleteS3Object(Bucket, Key);
       }

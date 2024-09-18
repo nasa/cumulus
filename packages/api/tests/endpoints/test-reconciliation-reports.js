@@ -63,7 +63,6 @@ const testDbName = `test_recon_reports_${cryptoRandomString({ length: 10 })}`;
 
 let jwtAuthToken;
 let accessTokenModel;
-let reconciliationReportModel;
 let fakeReportRecords = [];
 
 test.before(async (t) => {
@@ -87,7 +86,6 @@ test.before(async (t) => {
   });
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
-
 
   await awsServices.s3().createBucket({
     Bucket: process.env.system_bucket,
@@ -138,16 +136,15 @@ test.before(async (t) => {
       }),
     })));
 
-  let esResponse
   // add records to es
   await Promise.all(fakeReportRecords.map((reportRecord) =>
     t.context.reconciliationReportPgModel.create(knex, reportRecord)
       .then(([reportPgRecord]) => translatePostgresReconReportToApiReconReport(reportPgRecord))
       .then((repApiRecord) => indexer.indexReconciliationReport(esClient, repApiRecord, esAlias))
-    ));
+  ));
 });
 
-test.after.always(async (t) => {
+test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await esClient.client.indices.delete({
     index: esIndex,
@@ -252,11 +249,11 @@ test.serial('default returns list of reports', async (t) => {
   const recordsAreEqual = (record1, record2) =>
     isEqual(omit(record1, ['updatedAt', 'timestamp']), omit(record2, ['updatedAt', 'timestamp']));
 
-  // fakeReportRecords were created with the factory that creates PG version recon reports, so 
+  // fakeReportRecords were created with the factory that creates PG version recon reports, so
   // should be translated as the list endpoint returns the API version of recon reports
-  const fakeReportApiRecords = fakeReportRecords.map((fakeRecord) => {
-    return translatePostgresReconReportToApiReconReport(fakeRecord);
-  });
+  const fakeReportApiRecords = fakeReportRecords.map((fakeRecord) =>
+    translatePostgresReconReportToApiReconReport(fakeRecord)
+  );
 
   results.results.forEach((item) => {
     const recordsFound = fakeReportApiRecords.filter((record) => recordsAreEqual(record, item));

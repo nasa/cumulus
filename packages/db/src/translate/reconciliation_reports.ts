@@ -1,5 +1,5 @@
-import { PostgresReconciliationReportRecord } from '../types/reconciliation_report';
 import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
+import { PostgresReconciliationReportRecord } from '../types/reconciliation_report';
 
 const { removeNilProperties } = require('@cumulus/common/util');
 const pick = require('lodash/pick');
@@ -8,7 +8,7 @@ const pick = require('lodash/pick');
  * Generate an API Reconciliation Report record from a PostgreSQL record.
  *
  * @param pgReconciliationReport - a PostgreSQL reconciliation report record
- * @returns {Object} an API reconciliation report record
+ * @returns ApiReconciliationReportRecord - an API reconciliation report record
  */
 export const translatePostgresReconReportToApiReconReport = (
   pgReconciliationReport: PostgresReconciliationReportRecord

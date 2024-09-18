@@ -1,4 +1,4 @@
-import { 
+import {
   ReconciliationReportType,
   ReconciliationReportStatus,
 } from '@cumulus/types/api/reconciliation_reports';
