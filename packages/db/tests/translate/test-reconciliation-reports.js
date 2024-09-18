@@ -1,11 +1,10 @@
 const test = require('ava');
 const { randomId } = require('@cumulus/common/test-utils');
+const pick = require('lodash/pick');
 
 const { translatePostgresReconReportToApiReconReport } = require('../../dist/translate/reconciliation_reports');
 
-const pick = require('lodash/pick');
-
-test('translatePostgresReconReportToApiReconReport translates a Postgres Reconciliation Report to an API Reconciliation Report', async(t) => {
+test('translatePostgresReconReportToApiReconReport translates a Postgres Reconciliation Report to an API Reconciliation Report', (t) => {
   const createdTime = new Date(Date.now());
   const updatedTime = new Date(Date.now());
 
@@ -17,21 +16,21 @@ test('translatePostgresReconReportToApiReconReport translates a Postgres Reconci
     error: null,
     created_at: createdTime,
     updated_at: updatedTime,
-  }
+  };
 
   const expectedApiReconReport = {
     ...pick(pgReconReport, ['name', 'type', 'status', 'location']),
     // no error b/c null or undefined should be removed
     createdAt: createdTime.getTime(),
     updatedAt: updatedTime.getTime(),
-  }
+  };
 
   const translatedReport = translatePostgresReconReportToApiReconReport(pgReconReport);
 
   t.deepEqual(expectedApiReconReport, translatedReport);
 });
 
-test('translatePostgresReconReportToApiReconReport translates a error Postgres Reconciliation Report with an error to an API Reconciliation Report', async (t) => {
+test('translatePostgresReconReportToApiReconReport translates Postgres Reconciliation Report with an error to an API Reconciliation Report', (t) => {
   const createdTime = new Date(Date.now());
   const updatedTime = new Date(Date.now());
 
@@ -46,13 +45,13 @@ test('translatePostgresReconReportToApiReconReport translates a error Postgres R
     },
     created_at: createdTime,
     updated_at: updatedTime,
-  }
+  };
 
   const expectedApiReconReport = {
     ...pick(pgReconReport, ['name', 'type', 'status', 'location', 'error']),
     createdAt: createdTime.getTime(),
     updatedAt: updatedTime.getTime(),
-  }
+  };
 
   const translatedReport = translatePostgresReconReportToApiReconReport(pgReconReport);
 
