@@ -41,7 +41,6 @@ export interface ErrorWithOptionalCode extends Error {
   code?: string;
 }
 
-
 /**
  * Test to see if a given exception is an AWS Throttling Exception
  */
