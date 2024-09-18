@@ -137,10 +137,19 @@ test.before(async (t) => {
     })));
 
   // add records to es
-  await Promise.all(fakeReportRecords.map((reportRecord) =>
-    t.context.reconciliationReportPgModel.create(knex, reportRecord)
-      .then(([reportPgRecord]) => translatePostgresReconReportToApiReconReport(reportPgRecord))
-      .then((repApiRecord) => indexer.indexReconciliationReport(esClient, repApiRecord, esAlias)))
+  await Promise.all(
+    fakeReportRecords.map((reportRecord) =>
+      t.context.reconciliationReportPgModel
+        .create(knex, reportRecord)
+        .then(
+          ([reportPgRecord]) =>
+            translatePostgresReconReportToApiReconReport(reportPgRecord)
+        )
+        .then(
+          (reportApiRecord) =>
+            indexer.indexReconciliationReport(esClient, reportApiRecord, esAlias)
+        )
+    )
   );
 });
 
