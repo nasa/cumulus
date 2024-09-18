@@ -66,12 +66,6 @@ let accessTokenModel;
 let fakeReportRecords = [];
 
 test.before(async (t) => {
-  process.env = {
-    ...process.env,
-    ...localStackConnectionEnv,
-    PG_DATABASE: testDbName,
-  };
-
   // create esClient
   esClient = await getEsClient('fakehost');
 
