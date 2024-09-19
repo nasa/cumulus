@@ -147,7 +147,7 @@ test.before(async (t) => {
   );
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await esClient.client.indices.delete({
     index: esIndex,
