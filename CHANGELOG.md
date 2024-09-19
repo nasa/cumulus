@@ -26,6 +26,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Elasticsearch
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
+- **CUMULUS-3837**
+  - Added `reconciliation_reports` table in RDS, including indexes
+  - Created pg model, types, and translation for `reconciliationReports` in `@cumulus/db`
+  - Created api types for `reconciliation_reports` in `@cumulus/types/api`
+  - Updated reconciliation reports lambda to write to new RDS table instead of Dynamo 
+  - Updated `@cumulus/api/endpoints/reconciliation-reports` `getReport` and `deleteReport` to work with the new RDS table instead of Dynamo
 
 ## [Unreleased]
 

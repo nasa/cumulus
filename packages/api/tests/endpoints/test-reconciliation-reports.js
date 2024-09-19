@@ -7,8 +7,17 @@ const isEqual = require('lodash/isEqual');
 const isMatch = require('lodash/isMatch');
 const omit = require('lodash/omit');
 const request = require('supertest');
+const cryptoRandomString = require('crypto-random-string');
 
-const { localStackConnectionEnv } = require('@cumulus/db');
+const {
+  ReconciliationReportPgModel,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  localStackConnectionEnv,
+  migrationDir,
+  fakeReconciliationReportRecordFactory,
+  translatePostgresReconReportToApiReconReport,
+} = require('@cumulus/db');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
@@ -24,7 +33,6 @@ const { getEsClient } = require('@cumulus/es-client/search');
 const startAsyncOperation = require('../../lib/startAsyncOperation');
 const {
   createFakeJwtAuthToken,
-  fakeReconciliationReportFactory,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
@@ -35,7 +43,6 @@ process.env.invoke = 'granule-reconciliation-reports';
 process.env.stackName = 'test-stack';
 process.env.system_bucket = 'testsystembucket';
 process.env.AccessTokensTable = randomId('accessTokensTable');
-process.env.ReconciliationReportsTable = randomId('recReportsTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('bucket');
@@ -44,12 +51,8 @@ process.env.AsyncOperationTaskDefinition = randomId('asyncOpTaskDefinition');
 process.env.EcsCluster = randomId('ecsCluster');
 
 // import the express app after setting the env variables
-const {
-  app,
-} = require('../../app');
-const {
-  createReport,
-} = require('../../endpoints/reconciliation-reports');
+const { app } = require('../../app');
+const { createReport } = require('../../endpoints/reconciliation-reports');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 
 const { buildFakeExpressResponse } = require('./utils');
@@ -57,12 +60,13 @@ const { buildFakeExpressResponse } = require('./utils');
 let esClient;
 const esIndex = randomId('esindex');
 
+const testDbName = `test_recon_reports_${cryptoRandomString({ length: 10 })}`;
+
 let jwtAuthToken;
 let accessTokenModel;
-let reconciliationReportModel;
 let fakeReportRecords = [];
 
-test.before(async () => {
+test.before(async (t) => {
   // create esClient
   esClient = await getEsClient('fakehost');
 
@@ -78,9 +82,6 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  reconciliationReportModel = new models.ReconciliationReport();
-  await reconciliationReportModel.createTable();
-
   await awsServices.s3().createBucket({
     Bucket: process.env.system_bucket,
   });
@@ -93,6 +94,17 @@ test.before(async () => {
     username,
   });
 
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  t.context.reconciliationReportPgModel = new ReconciliationReportPgModel();
+
   const reportNameTypes = [
     { name: randomId('report1'), type: 'Inventory' },
     { name: randomId('report2'), type: 'Granule Inventory' },
@@ -102,7 +114,7 @@ test.before(async () => {
   const reportDirectory = `${process.env.stackName}/reconciliation-reports`;
   const typeToExtension = (type) => ((type === 'Granule Inventory') ? '.csv' : '.json');
 
-  fakeReportRecords = reportNameTypes.map((nameType) => fakeReconciliationReportFactory({
+  fakeReportRecords = reportNameTypes.map((nameType) => fakeReconciliationReportRecordFactory({
     name: nameType.name,
     type: nameType.type,
     location: buildS3Uri(process.env.system_bucket,
@@ -120,18 +132,32 @@ test.before(async () => {
     })));
 
   // add records to es
-  await Promise.all(fakeReportRecords.map((reportRecord) =>
-    reconciliationReportModel.create(reportRecord)
-      .then((record) => indexer.indexReconciliationReport(esClient, record, esAlias))));
+  await Promise.all(
+    fakeReportRecords.map((reportRecord) =>
+      t.context.reconciliationReportPgModel
+        .create(knex, reportRecord)
+        .then(
+          ([reportPgRecord]) =>
+            translatePostgresReconReportToApiReconReport(reportPgRecord)
+        )
+        .then(
+          (reportApiRecord) =>
+            indexer.indexReconciliationReport(esClient, reportApiRecord, esAlias)
+        ))
+  );
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await reconciliationReportModel.deleteTable();
   await esClient.client.indices.delete({
     index: esIndex,
   });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -231,8 +257,13 @@ test.serial('default returns list of reports', async (t) => {
   const recordsAreEqual = (record1, record2) =>
     isEqual(omit(record1, ['updatedAt', 'timestamp']), omit(record2, ['updatedAt', 'timestamp']));
 
+  // fakeReportRecords were created with the factory that creates PG version recon reports, so
+  // should be translated as the list endpoint returns the API version of recon reports
+  const fakeReportApiRecords = fakeReportRecords.map((fakeRecord) =>
+    translatePostgresReconReportToApiReconReport(fakeRecord));
+
   results.results.forEach((item) => {
-    const recordsFound = fakeReportRecords.filter((record) => recordsAreEqual(record, item));
+    const recordsFound = fakeReportApiRecords.filter((record) => recordsAreEqual(record, item));
     t.is(recordsFound.length, 1);
   });
 });
