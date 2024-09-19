@@ -130,27 +130,30 @@ async function getReport(req, res) {
  */
 async function deleteReport(req, res) {
   const name = req.params.name;
-  try {
-    const reconciliationReportPgModel = new ReconciliationReportPgModel();
-    const knex = await getKnexClient();
-    const record = await reconciliationReportPgModel.get(knex, { name });
-    if (!record.location) {
-      return res.boom.badRequest('The reconciliation report record does not contain a location!');
-    }
-    const { Bucket, Key } = parseS3Uri(record.location);
+  let record;
 
-    await createRejectableTransaction(knex, async () => {
-      if (await fileExists(Bucket, Key)) {
-        await deleteS3Object(Bucket, Key);
-      }
-      await reconciliationReportPgModel.delete(knex, { name });
-    });
+  const reconciliationReportPgModel = new ReconciliationReportPgModel();
+  const knex = await getKnexClient();
+  try {
+    record = await reconciliationReportPgModel.get(knex, { name });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${name}`);
     }
     throw error;
   }
+
+  if (!record.location) {
+    return res.boom.badRequest('The reconciliation report record does not contain a location!');
+  }
+  const { Bucket, Key } = parseS3Uri(record.location);
+
+  await createRejectableTransaction(knex, async () => {
+    if (await fileExists(Bucket, Key)) {
+      await deleteS3Object(Bucket, Key);
+    }
+    await reconciliationReportPgModel.delete(knex, { name });
+  });
 
   if (inTestMode()) {
     const esClient = await getEsClient(process.env.ES_HOST);
