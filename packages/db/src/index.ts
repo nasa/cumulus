@@ -45,50 +45,59 @@ export {
   PostgresExecutionRecord,
 } from './types/execution';
 export {
-  PostgresFile,
-  PostgresFileRecord,
-} from './types/file';
+  PostgresProvider,
+  PostgresProviderRecord,
+} from './types/provider';
+export {
+  PostgresRule,
+  PostgresRuleRecord,
+} from './types/rule';
 export {
   PostgresGranule,
   PostgresGranuleRecord,
 } from './types/granule';
 export {
-  PostgresGranuleExecution,
-} from './types/granule-execution';
-export {
   PostgresPdr,
   PostgresPdrRecord,
 } from './types/pdr';
 export {
-  PostgresProvider,
-  PostgresProviderRecord,
-} from './types/provider';
+  PostgresFile,
+  PostgresFileRecord,
+} from './types/file';
+export {
+  PostgresGranuleExecution,
+} from './types/granule-execution';
 export {
   PostgresReconciliationReport,
   PostgresReconciliationReportRecord,
 } from './types/reconciliation_report';
-export {
-  PostgresRule,
-  PostgresRuleRecord,
-} from './types/rule';
 
 export {
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
 } from './translate/async_operations';
 export {
+  translateApiFiletoPostgresFile,
+  translatePostgresFileToApiFile,
+} from './translate/file';
+export {
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
 } from './translate/collections';
+export {
+  translateApiProviderToPostgresProvider,
+  translatePostgresProviderToApiProvider,
+} from './translate/providers';
+export {
+  translatePostgresRuleToApiRule,
+  translateApiRuleToPostgresRule,
+  translateApiRuleToPostgresRuleRaw,
+} from './translate/rules';
 export {
   translateApiExecutionToPostgresExecution,
   translateApiExecutionToPostgresExecutionWithoutNilsRemoved,
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
-export {
-  translateApiFiletoPostgresFile,
-  translatePostgresFileToApiFile,
-} from './translate/file';
 export {
   translateApiGranuleToPostgresGranule,
   translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
@@ -100,17 +109,8 @@ export {
   translatePostgresPdrToApiPdr,
 } from './translate/pdr';
 export {
-  translateApiProviderToPostgresProvider,
-  translatePostgresProviderToApiProvider,
-} from './translate/providers';
-export {
   translatePostgresReconReportToApiReconReport,
 } from './translate/reconciliation_reports';
-export {
-  translatePostgresRuleToApiRule,
-  translateApiRuleToPostgresRule,
-  translateApiRuleToPostgresRuleRaw,
-} from './translate/rules';
 
 export {
   getCollectionsByGranuleIds,
