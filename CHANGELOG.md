@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v18.3.5] 2024-09-19
+
+- **CUMULUS-3901**
+  - Fix error checking in @cumulus/errors to use Error.name in addition to Error.code
+
 ## [v18.3.4] 2024-08-27
 
 **Please note** changes in v18.3.4 may not yet be released in future versions, as this
