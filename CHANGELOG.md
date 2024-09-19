@@ -7,7 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Phase 2 Release
 
 ### Replace ElasticSearch Phase 2
-
+- **CUMULUS-3842**
+  - Remove reconciliationReports DynamoDB table
 - **CUMULUS-3229**
   - Remove ElasticSearch queries from Rule LIST endpoint
 - **CUMULUS-3230**

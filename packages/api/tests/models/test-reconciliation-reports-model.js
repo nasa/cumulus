@@ -1,15 +1,12 @@
 'use strict';
 
 const test = require('ava');
-const { randomString } = require('@cumulus/common/test-utils');
 const { fakeReconciliationReportFactory } = require('../../lib/testUtils');
 const { ReconciliationReport } = require('../../models');
 
 let reconciliationReportModel;
-test.before(async () => {
-  process.env.ReconciliationReportsTable = randomString();
+test.before(() => {
   reconciliationReportModel = new ReconciliationReport();
-  await reconciliationReportModel.createTable();
 });
 
 test.after.always(async () => {

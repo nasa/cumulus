@@ -550,7 +550,6 @@ test.serial('Reindex from database - startAsyncOperation is called with expected
   const indexName = randomString();
   const processEnv = { ...process.env };
   process.env.ES_HOST = 'fakeEsHost';
-  process.env.ReconciliationReportsTable = 'fakeReportsTable';
 
   const asyncOperationsStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
   const payload = {
@@ -572,7 +571,6 @@ test.serial('Reindex from database - startAsyncOperation is called with expected
     t.deepEqual(asyncOperationsStub.getCall(0).args[0].payload, {
       ...payload,
       esHost: process.env.ES_HOST,
-      reconciliationReportsTable: process.env.ReconciliationReportsTable,
     });
   } finally {
     process.env = processEnv;

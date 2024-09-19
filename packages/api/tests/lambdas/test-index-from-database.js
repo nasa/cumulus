@@ -46,14 +46,11 @@ const {
 } = require('../../lib/testUtils');
 
 const workflowList = getWorkflowList();
-process.env.ReconciliationReportsTable = randomString();
 const reconciliationReportModel = new models.ReconciliationReport();
 
 // create all the variables needed across this test
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
-
-const reconciliationReportsTable = process.env.ReconciliationReportsTable;
 
 function sortAndFilter(input, omitList, sortKey) {
   return input.map((r) => omit(r, omitList))
@@ -92,7 +89,6 @@ test.before(async (t) => {
   t.context.esIndices = [];
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
-  await reconciliationReportModel.createTable();
 
   const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
   const tKey = `${process.env.stackName}/workflow_template.json`;
@@ -220,7 +216,6 @@ test('No error is thrown if nothing is in the database', async (t) => {
 
   await t.notThrowsAsync(() => indexFromDatabase.indexFromDatabase({
     indexName: esAlias,
-    reconciliationReportsTable,
     knex,
   }));
 });
@@ -386,7 +381,6 @@ test.serial('failure in indexing record of specific type should not prevent inde
   try {
     await indexFromDatabase.handler({
       indexName: esAlias,
-      reconciliationReportsTable,
       knex,
     });
 
@@ -463,7 +457,6 @@ test.serial(
     try {
       await indexFromDatabase.handler({
         indexName: esAlias,
-        reconciliationReportsTable,
         knex,
       });
 
