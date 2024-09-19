@@ -3,7 +3,7 @@ set -ex
 error_to_s3 () {
   ngap_env=$(echo $NGAP_ENV | awk '{print tolower($0)}')
   bucket_name=${ngap_env}-unit-test-error-logs
-  aws s3api create-bucket --bucket $bucket_name | echo "bucket ${bucket_name} could not be created"
+  aws s3api create-bucket --bucket $bucket_name 2>/dev/null | echo "bucket ${bucket_name} could not be created"
   if [ -n "$(ls -A $CUMULUS_UNIT_TEST_DATA/unit-logs/@cumulus 2>/dev/null)" ]
   then
       aws s3 sync $CUMULUS_UNIT_TEST_DATA/unit-logs/@cumulus/ s3://${ngap_env}-unit-test-error-logs/$(git rev-parse --abbrev-ref HEAD)/$(date +%Y-%m-%dT%H.%M.%S)/;
