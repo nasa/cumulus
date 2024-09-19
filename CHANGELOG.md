@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Remove ElasticSearch queries from Rule LIST endpoint
 - **CUMULUS-3230**
   - Remove ElasticSearch dependency from Rule Endpoints
+- **CUMULUS-3231**
+  - Updated API `pdrs` `LIST` endpoint to query postgres
 - **CUMULUS-3232**
   - Update API PDR endpoints `DEL` and `GET` to not update Elasticsearch
 - **CUMULUS-3233**
@@ -24,8 +26,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Elasticsearch
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
+- **CUMULUS-3837**
+  - Added `reconciliation_reports` table in RDS, including indexes
+  - Created pg model, types, and translation for `reconciliationReports` in `@cumulus/db`
+  - Created api types for `reconciliation_reports` in `@cumulus/types/api`
+  - Updated reconciliation reports lambda to write to new RDS table instead of Dynamo 
+  - Updated `@cumulus/api/endpoints/reconciliation-reports` `getReport` and `deleteReport` to work with the new RDS table instead of Dynamo
 
 ## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
+- **CUMULUS-3824**
+  - Added the missing double quote in ecs_cluster autoscaling cf template
+- **CUMULUS-3846**
+  - improve reliability of unit tests
+    - tests for granules api get requests separated out to new file
+    - cleanup of granule database resources to ensure no overlap
+    - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
+    - increase timeout in aws-client tests
+- **Snyk**
+  - Upgraded moment from 2.29.4 to 2.30.1
+  - Upgraded pg from ~8.10 to ~8.12
+
+## [v19.0.0] 2024-08-28
 
 ### Breaking Changes
 
@@ -164,6 +192,17 @@ degraded execution table operations.
   - Fixes default value (updated to tag 52) for async-operation-image in tf-modules/cumulus.
 - **CUMULUS-3840**
   - Fixed `@cumulus/api/bin/serve` to correctly use EsClient.
+
+## [v18.3.4] 2024-08-27
+
+**Please note** changes in v18.3.4 may not yet be released in future versions, as this
+is a backport/patch release on the v18.3.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Changed
+
+- **CUMULUS-3841**
+  - Increased `fetchRules` page size to default to 100 instead of 10. This improves overall query time when fetching all rules such as in `sqsMessageConsumer`.
 
 ## [v18.3.3] 2024-08-09
 
@@ -8045,8 +8084,10 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v18.4.0...HEAD
-[v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.4.0
+[Unreleased]: https://github.com/nasa/cumulus/compare/v19.0.0...HEAD
+[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v19.0.0
+[v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.4...v18.4.0
+[v18.3.4]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.3.4
 [v18.3.3]: https://github.com/nasa/cumulus/compare/v18.3.2...v18.3.3
 [v18.3.2]: https://github.com/nasa/cumulus/compare/v18.3.1...v18.3.2
 [v18.3.1]: https://github.com/nasa/cumulus/compare/v18.2.2...v18.3.1

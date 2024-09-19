@@ -12,6 +12,7 @@ export {
   fakeGranuleRecordFactory,
   fakePdrRecordFactory,
   fakeProviderRecordFactory,
+  fakeReconciliationReportRecordFactory,
   fakeRuleRecordFactory,
   generateLocalTestDb,
 } from './test-utils';
@@ -31,7 +32,6 @@ export {
 export {
   BaseRecord,
 } from './types/base';
-
 export {
   PostgresAsyncOperation,
   PostgresAsyncOperationRecord,
@@ -68,6 +68,11 @@ export {
   PostgresGranuleExecution,
 } from './types/granule-execution';
 export {
+  PostgresReconciliationReport,
+  PostgresReconciliationReportRecord,
+} from './types/reconciliation_report';
+
+export {
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
 } from './translate/async_operations';
@@ -75,12 +80,10 @@ export {
   translateApiFiletoPostgresFile,
   translatePostgresFileToApiFile,
 } from './translate/file';
-
 export {
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
 } from './translate/collections';
-
 export {
   translateApiProviderToPostgresProvider,
   translatePostgresProviderToApiProvider,
@@ -105,6 +108,9 @@ export {
   translateApiPdrToPostgresPdr,
   translatePostgresPdrToApiPdr,
 } from './translate/pdr';
+export {
+  translatePostgresReconReportToApiReconReport,
+} from './translate/reconciliation_reports';
 
 export {
   getCollectionsByGranuleIds,
@@ -152,6 +158,9 @@ export {
   GranuleSearch,
 } from './search/GranuleSearch';
 export {
+  PdrSearch,
+} from './search/PdrSearch';
+export {
   ProviderSearch,
 } from './search/ProviderSearch';
 export {
@@ -170,4 +179,5 @@ export { GranulePgModel } from './models/granule';
 export { GranulesExecutionsPgModel } from './models/granules-executions';
 export { PdrPgModel } from './models/pdr';
 export { ProviderPgModel } from './models/provider';
+export { ReconciliationReportPgModel } from './models/reconciliation_report';
 export { RulePgModel } from './models/rule';

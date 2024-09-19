@@ -158,7 +158,6 @@ const collectionMapping : { [key: string]: Function } = {
   }),
 };
 
-// TODO add and verify all queryable fields for the following record types
 const executionMapping : { [key: string]: Function } = {
   arn: (value?: string) => ({
     arn: value,
@@ -208,11 +207,29 @@ const executionMapping : { [key: string]: Function } = {
 };
 
 const pdrMapping : { [key: string]: Function } = {
+  address: (value?: string) => ({
+    address: value,
+  }),
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
+  duration: (value?: string) => ({
+    duration: value && Number(value),
+  }),
+  originalUrl: (value?: string) => ({
+    original_url: value,
+  }),
+  PANSent: (value?: string) => ({
+    pan_sent: (value === 'true'),
+  }),
+  PANmessage: (value?: string) => ({
+    pan_message: value,
+  }),
   pdrName: (value?: string) => ({
     name: value,
+  }),
+  progress: (value?: string) => ({
+    progress: value && Number(value),
   }),
   status: (value?: string) => ({
     status: value,
@@ -233,6 +250,9 @@ const pdrMapping : { [key: string]: Function } = {
   },
   provider: (value?: string) => ({
     providerName: value,
+  }),
+  execution: (value?: string) => ({
+    executionArn: value && value.split('/').pop(),
   }),
 };
 
