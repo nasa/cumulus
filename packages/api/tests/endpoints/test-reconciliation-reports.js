@@ -12,6 +12,7 @@ const cryptoRandomString = require('crypto-random-string');
 const {
   ReconciliationReportPgModel,
   generateLocalTestDb,
+  destroyLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
   fakeReconciliationReportRecordFactory,
@@ -152,6 +153,11 @@ test.after.always(async () => {
     index: esIndex,
   });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
