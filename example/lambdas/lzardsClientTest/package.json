@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-lzards-api-lambda",
-  "version": "18.3.4",
+  "version": "18.3.5",
   "description": "LZARDS API Client Test Lambda",
   "private": true,
   "engines": {
@@ -20,7 +20,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/logger": "18.3.4",
-    "@cumulus/lzards-api-client": "18.3.4"
+    "@cumulus/logger": "18.3.5",
+    "@cumulus/lzards-api-client": "18.3.5"
   }
 }
