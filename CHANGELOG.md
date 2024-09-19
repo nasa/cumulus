@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - cleanup of granule database resources to ensure no overlap
     - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
     - increase timeout in aws-client tests
+- **CUMULUS-3904**
+  - Passed sqs_message_consumer_watcher_message_limit and sqs_message_consumer_watcher_time_limit through the cumulus terraform module to the ingest terraform module.
 - **Snyk**
   - Upgraded moment from 2.29.4 to 2.30.1
   - Upgraded pg from ~8.10 to ~8.12
