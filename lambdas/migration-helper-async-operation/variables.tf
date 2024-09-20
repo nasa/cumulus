@@ -56,11 +56,6 @@ variable "permissions_boundary_arn" {
 variable "prefix" {
   type = string
 }
-
-variable "reconciliation_report_migration_function_arn" {
-  type = string
-}
-
 variable "rds_connection_timing_configuration" {
   description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
   type = map(number)

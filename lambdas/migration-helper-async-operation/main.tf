@@ -22,7 +22,6 @@ resource "aws_lambda_function" "migration_helper_async_operation" {
       ES_HOST                      = var.elasticsearch_hostname
       idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
       DlaMigrationLambda           = var.dla_migration_function_arn
-      ReconciliationReportMigrationLambda = var.reconciliation_report_migration_function_arn
       reapIntervalMillis           = var.rds_connection_timing_configuration.reapIntervalMillis
       stackName                    = var.prefix
       system_bucket                = var.system_bucket

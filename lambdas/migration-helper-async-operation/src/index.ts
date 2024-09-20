@@ -16,19 +16,17 @@ export interface HandlerEvent {
 exports.handler = async (event: HandlerEvent, context: Context) => {
   const { operationType } = event;
 
-  if (!['DLA Migration', 'ReconciliationReport Migration'].includes(operationType)) {
+  if (!['DLA Migration'].includes(operationType)) {
     const errorMessage = `${operationType} is not supported`;
     throw new Error(errorMessage);
   }
 
   logger.info(`About to start async operation for ${operationType}`);
-  const description = operationType === 'DLA Migration'
-    ? 'Migrate Dead Letter Archive Messages' : 'Migrate Reconciliation Reports';
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     callerLambdaName: context.functionName,
-    description,
+    description: 'Migrate Dead Letter Archive Messages',
     knexConfig: process.env,
     lambdaName: process.env.DlaMigrationLambda,
     operationType,
@@ -38,6 +36,6 @@ exports.handler = async (event: HandlerEvent, context: Context) => {
     useLambdaEnvironmentVariables: true,
   });
 
-  logger.info(`Started async operation ${asyncOperation.id} for ${operationType} ${description}`);
+  logger.info(`Started async operation ${asyncOperation.id} for ${operationType}`);
   return asyncOperation;
 };
