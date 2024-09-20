@@ -23,6 +23,7 @@ const {
   fakeGranuleRecordFactory,
   fakePdrRecordFactory,
   fakeProviderRecordFactory,
+  fakeReconciliationReportRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
   migrationDir,
@@ -36,10 +37,6 @@ const {
   translatePostgresProviderToApiProvider,
   translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
-
-const {
-  fakeReconciliationReportFactory,
-} = require('../../lib/testUtils');
 
 const indexFromDatabase = require('../../lambdas/index-from-database');
 const {
@@ -256,7 +253,7 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
   const fakeReconciliationReportRecords = await addFakeData(
     knex,
     numItems,
-    fakeReconciliationReportFactory,
+    fakeReconciliationReportRecordFactory,
     new ReconciliationReportPgModel(),
     dateObject
   );
