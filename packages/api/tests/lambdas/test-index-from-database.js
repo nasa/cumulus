@@ -34,6 +34,7 @@ const {
   translatePostgresGranuleToApiGranule,
   translatePostgresPdrToApiPdr,
   translatePostgresProviderToApiProvider,
+  translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
 
 const {
@@ -297,6 +298,9 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
   const providerResults = await Promise.all(
     fakeProviderRecords.map((r) => translatePostgresProviderToApiProvider(r))
   );
+  const reconciliationReportResults = await Promise.all(
+    fakeReconciliationReportRecords.map((r) => translatePostgresReconReportToApiReconReport(r))
+  );
 
   t.deepEqual(
     searchResults[0].results
@@ -328,7 +332,7 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
 
   t.deepEqual(
     sortAndFilter(searchResults[5].results, ['timestamp'], 'name'),
-    sortAndFilter(fakeReconciliationReportRecords, ['timestamp'], 'name')
+    sortAndFilter(reconciliationReportResults, ['timestamp'], 'name')
   );
 });
 
