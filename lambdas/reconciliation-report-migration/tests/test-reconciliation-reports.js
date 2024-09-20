@@ -12,6 +12,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   ReconciliationReportPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
@@ -20,9 +21,6 @@ const {
   migrateReconciliationReports,
 } = require('../dist/lambda/reconciliation-reports');
 
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
-
 const testDbName = `reconciliation_reports_migration_${cryptoRandomString({ length: 10 })}`;
 
 const generateFakeReconciliationReport = (params) => ({
@@ -30,6 +28,7 @@ const generateFakeReconciliationReport = (params) => ({
   type: 'Granule Inventory',
   status: 'Generated',
   error: {},
+  location: `s3://${cryptoRandomString({ length: 10 })}/${cryptoRandomString({ length: 10 })}`,
   createdAt: (Date.now() - 1000),
   updatedAt: Date.now(),
   ...params,
@@ -117,8 +116,8 @@ test.serial('migrateReconciliationReportRecord migrates reconciliationReport rec
   const { knex, reconciliationReportPgModel } = t.context;
 
   const fakeReconReport = generateFakeReconciliationReport();
-  delete fakeReconReport.output;
-  delete fakeReconReport.taskArn;
+  delete fakeReconReport.error;
+  delete fakeReconReport.location;
   await migrateReconciliationReportRecord(fakeReconReport, t.context.knex);
 
   const createdRecord = await reconciliationReportPgModel.get(
@@ -131,6 +130,7 @@ test.serial('migrateReconciliationReportRecord migrates reconciliationReport rec
     omit({
       ...fakeReconReport,
       error: null,
+      location: null,
       created_at: new Date(fakeReconReport.createdAt),
       updated_at: new Date(fakeReconReport.updatedAt),
     }, ['createdAt', 'updatedAt'])
@@ -188,8 +188,8 @@ test.serial('migrateReconciliationReports processes multiple reconciliation repo
     reconciliationReportsModel.create(fakeReconReport2),
   ]);
   t.teardown(() => Promise.all([
-    reconciliationReportsModel.delete({ name: fakeReconReport1.id }),
-    reconciliationReportsModel.delete({ name: fakeReconReport2.id }),
+    reconciliationReportsModel.delete({ name: fakeReconReport1.name }),
+    reconciliationReportsModel.delete({ name: fakeReconReport2.name }),
   ]));
 
   const migrationSummary = await migrateReconciliationReports(process.env, t.context.knex);
@@ -222,12 +222,12 @@ test.serial('migrateReconciliationReports processes all non-failing records', as
     dynamodbDocClient().put({
       TableName: process.env.ReconciliationReportsTable,
       Item: fakeReconReport1,
-    }).promise(),
+    }),
     reconciliationReportsModel.create(fakeReconReport2),
   ]);
   t.teardown(() => Promise.all([
-    reconciliationReportsModel.delete({ name: fakeReconReport1.id }),
-    reconciliationReportsModel.delete({ name: fakeReconReport2.id }),
+    reconciliationReportsModel.delete({ name: fakeReconReport1.name }),
+    reconciliationReportsModel.delete({ name: fakeReconReport2.name }),
   ]));
 
   const migrationSummary = await migrateReconciliationReports(process.env, t.context.knex);

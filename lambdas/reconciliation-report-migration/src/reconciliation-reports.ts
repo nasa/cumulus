@@ -1,22 +1,23 @@
 import { Knex } from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
-import { unmarshall } from '@aws-sdk/util-dynamodb';
+// import type { AttributeValue } from '@aws-sdk/client-dynamodb';
+// import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { envUtils } from '@cumulus/common';
 import {
   ReconciliationReportPgModel,
   translateApiReconReportToPostgresReconReport,
 } from '@cumulus/db';
-import { ApiReconciliationReport } from '@cumulus/types/api/reconciliation-reports';
+import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
 import Logger from '@cumulus/logger';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
 
-import { MigrationSummary } from './types';
+import { MigrationResult } from './types';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/reconciliation-reports' });
 
 export const migrateReconciliationReportRecord = async (
-  dynamoRecord: ApiReconciliationReport,
+  dynamoRecord: ApiReconciliationReportRecord,
   knex: Knex
 ): Promise<void> => {
   const reconReportPgModel = new ReconciliationReportPgModel();
@@ -38,7 +39,7 @@ export const migrateReconciliationReportRecord = async (
   }
 
   const updatedRecord = translateApiReconReportToPostgresReconReport(
-    <ApiReconciliationReport>dynamoRecord
+    <ApiReconciliationReportRecord>dynamoRecord
   );
 
   await reconReportPgModel.upsert(knex, updatedRecord);
@@ -47,7 +48,7 @@ export const migrateReconciliationReportRecord = async (
 export const migrateReconciliationReports = async (
   env: NodeJS.ProcessEnv,
   knex: Knex
-): Promise<MigrationSummary> => {
+): Promise<MigrationResult> => {
   const reconciliationReportsTable = envUtils.getRequiredEnvVar('ReconciliationReportsTable', env);
 
   const searchQueue = new DynamoDbSearchQueue({
@@ -55,8 +56,8 @@ export const migrateReconciliationReports = async (
   });
 
   const migrationSummary = {
-    dynamoRecords: 0,
-    success: 0,
+    total_dynamo_db_records: 0,
+    migrated: 0,
     failed: 0,
     skipped: 0,
   };
@@ -64,12 +65,11 @@ export const migrateReconciliationReports = async (
   let record = await searchQueue.peek();
   /* eslint-disable no-await-in-loop */
   while (record) {
-    migrationSummary.dynamoRecords += 1;
+    migrationSummary.total_dynamo_db_records += 1;
 
     try {
-      const apiRecord = unmarshall(record) as ApiReconciliationReport;
-      await migrateReconciliationReportRecord(apiRecord, knex);
-      migrationSummary.success += 1;
+      await migrateReconciliationReportRecord(record as any, knex);
+      migrationSummary.migrated += 1;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
         migrationSummary.skipped += 1;
@@ -86,6 +86,6 @@ export const migrateReconciliationReports = async (
     record = await searchQueue.peek();
   }
   /* eslint-enable no-await-in-loop */
-  logger.info(`successfully migrated ${migrationSummary.success} reconciliationReport records`);
+  logger.info(`successfully migrated ${migrationSummary.migrated} reconciliationReport records`);
   return migrationSummary;
 };

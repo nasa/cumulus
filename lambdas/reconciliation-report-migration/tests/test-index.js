@@ -1,7 +1,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const ReconciliationReport = require('@cumulus/api/models/reconciliation_reports');
+const ReconciliationReport = require('@cumulus/api/models/reconciliation-reports');
 
 const {
   createBucket,
@@ -13,12 +13,11 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   localStackConnectionEnv,
+  migrationDir,
 } = require('@cumulus/db');
 
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 const { handler } = require('../dist/lambda');
-const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
+const testDbName = `reconciliation_report_migration_1_${cryptoRandomString({ length: 10 })}`;
 const workflow = cryptoRandomString({ length: 10 });
 
 test.before(async (t) => {
@@ -90,11 +89,11 @@ test('handler migrates reconciliation reports', async (t) => {
     reconciliationReportsModel.create(fakeReconciliationReport),
   ]);
 
-  t.teardown(() => reconciliationReportsModel.delete({ id: fakeReconciliationReport.id }));
+  t.teardown(() => reconciliationReportsModel.delete({ name: fakeReconciliationReport.name }));
 
   const call = await handler({});
   const expected = {
-    MigrationSummary: {
+    reconciliation_reports: {
       failed: 0,
       migrated: 1,
       skipped: 0,
