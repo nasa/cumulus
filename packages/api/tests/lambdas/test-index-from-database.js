@@ -28,6 +28,7 @@ const {
   migrationDir,
   PdrPgModel,
   ProviderPgModel,
+  ReconciliationReportPgModel,
   translatePostgresCollectionToApiCollection,
   translatePostgresExecutionToApiExecution,
   translatePostgresGranuleToApiGranule,
@@ -39,14 +40,12 @@ const {
   fakeReconciliationReportFactory,
 } = require('../../lib/testUtils');
 
-const models = require('../../models');
 const indexFromDatabase = require('../../lambdas/index-from-database');
 const {
   getWorkflowList,
 } = require('../../lib/testUtils');
 
 const workflowList = getWorkflowList();
-const reconciliationReportModel = new models.ReconciliationReport();
 
 // create all the variables needed across this test
 process.env.system_bucket = randomString();
@@ -55,20 +54,6 @@ process.env.stackName = randomString();
 function sortAndFilter(input, omitList, sortKey) {
   return input.map((r) => omit(r, omitList))
     .sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : -1));
-}
-
-async function addFakeDynamoData(numItems, factory, model, factoryParams = {}) {
-  const items = [];
-
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < numItems; i += 1) {
-    const item = factory(factoryParams);
-    items.push(item);
-    await model.create(item);
-  }
-  /* eslint-enable no-await-in-loop */
-
-  return items;
 }
 
 async function addFakeData(knex, numItems, factory, model, factoryParams = {}) {
@@ -267,10 +252,12 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
     ...dateObject,
   });
 
-  const fakeReconciliationReportRecords = await addFakeDynamoData(
+  const fakeReconciliationReportRecords = await addFakeData(
+    knex,
     numItems,
     fakeReconciliationReportFactory,
-    reconciliationReportModel
+    new ReconciliationReportPgModel(),
+    dateObject
   );
 
   await indexFromDatabase.handler({
