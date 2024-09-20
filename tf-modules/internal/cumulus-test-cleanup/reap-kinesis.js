@@ -40,7 +40,7 @@ async function nukeStream(streamName) {
   try {
     return await kinesis.deleteStream({ StreamName: streamName });
   } catch (error) {
-    if (error.code === 'LimitExceededException') {
+    if (error.code === 'LimitExceededException' || error.name === 'LimitExceededException') {
       const delay = randomInterval();
       console.log(`Limit exceeded...waiting ${delay / 1000} seconds and retrying to delete ${streamName}`);
       await new Promise((resolve) => setTimeout(resolve, delay));
