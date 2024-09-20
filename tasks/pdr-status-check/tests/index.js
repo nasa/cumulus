@@ -91,7 +91,7 @@ test.serial('returns the correct results in the nominal case', async (t) => {
     sfn.describeExecution = ({ executionArn }) => {
       if (!executionStatuses[executionArn]) {
         const error = new Error(`Execution does not exist: ${executionArn}`);
-        error.code = 'ExecutionDoesNotExist';
+        error.name = 'ExecutionDoesNotExist';
         return Promise.reject(error);
       }
       return Promise.resolve({

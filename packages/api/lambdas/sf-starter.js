@@ -145,7 +145,7 @@ async function handleSourceMappingEvent(event) {
       return await dispatch(sqsRecord.eventSourceARN, sqsRecord);
     } catch (error) {
       // If error is ExecutionAlreadyExists, do not include in batchItemFailures
-      if (error.code === 'ExecutionAlreadyExists') {
+      if (error.name === 'ExecutionAlreadyExists' || error.code === 'ExecutionAlreadyExists') {
         logger.debug(`Warning: ${error}`);
         return batchItemFailures;
       }

@@ -136,7 +136,7 @@ async function describeExecutionStatus(executionArn) {
   try {
     return await StepFunctions.describeExecution({ executionArn });
   } catch (error) {
-    if (error.code === 'ExecutionDoesNotExist') {
+    if (error.name === 'ExecutionDoesNotExist' || error.name === 'ExecutionDoesNotExist') {
       return { executionArn: executionArn, status: 'RUNNING' };
     }
     throw error;

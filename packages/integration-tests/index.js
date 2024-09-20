@@ -142,7 +142,7 @@ async function getExecutionStatus(executionArn) {
     const { status } = await StepFunctions.describeExecution({ executionArn });
     return status;
   } catch (error) {
-    if (error.code === 'ExecutionDoesNotExist') return 'STARTING';
+    if (error.name === 'ExecutionDoesNotExist' || error.code === 'ExecutionDoesNotExist') return 'STARTING';
     throw error;
   }
 }
