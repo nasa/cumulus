@@ -1,9 +1,15 @@
 # ReconciliationReportMigration Lambda
 
-## The lambda migrates existing ReconciliationReports data from DynamoDB to PostgreSQL.
+The lambda migrates existing ReconciliationReports data from DynamoDB to PostgreSQL.
 
-### Running the API
-This ReconciliationReportMigration Lambda is designed to be run manually from your AWS console or CLI as the first step in the data migration process.
+To invoke the Lambda and start the ReconciliationReport migration, you can use the AWS Console or CLI:
+
+```bash
+aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
+```
+
+- `PREFIX` is your Cumulus deployment prefix.
+- `OUTFILE` (**optional**) is the filepath where the Lambda output will be saved.
 
 The result will be a migration summary. For example:
 

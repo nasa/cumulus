@@ -5,6 +5,7 @@ import { migrateReconciliationReports } from './reconciliation-reports';
 import { MigrationSummary } from './types';
 
 const logger = new Logger({ sender: '@cumulus/reconciliation-report-migration' });
+
 export interface HandlerEvent {
   env?: NodeJS.ProcessEnv
 }

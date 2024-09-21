@@ -194,10 +194,10 @@ test.serial('migrateReconciliationReports processes multiple reconciliation repo
 
   const migrationSummary = await migrateReconciliationReports(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 0,
-    success: 2,
+    migrated: 2,
   });
 
   const records = await reconciliationReportPgModel.search(
@@ -232,10 +232,10 @@ test.serial('migrateReconciliationReports processes all non-failing records', as
 
   const migrationSummary = await migrateReconciliationReports(process.env, t.context.knex);
   t.deepEqual(migrationSummary, {
-    dynamoRecords: 2,
+    total_dynamo_db_records: 2,
     skipped: 0,
     failed: 1,
-    success: 1,
+    migrated: 1,
   });
   const records = await reconciliationReportPgModel.search(
     knex,

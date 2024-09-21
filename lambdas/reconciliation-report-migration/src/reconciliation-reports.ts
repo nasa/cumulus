@@ -1,16 +1,14 @@
 import { Knex } from 'knex';
 
-import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
-// import type { AttributeValue } from '@aws-sdk/client-dynamodb';
-// import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { DynamoDbSearchQueue } from '@cumulus/aws-client';
 import { envUtils } from '@cumulus/common';
 import {
   ReconciliationReportPgModel,
   translateApiReconReportToPostgresReconReport,
 } from '@cumulus/db';
-import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
-import Logger from '@cumulus/logger';
 import { RecordAlreadyMigrated, RecordDoesNotExist } from '@cumulus/errors';
+import Logger from '@cumulus/logger';
+import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
 
 import { MigrationResult } from './types';
 
@@ -23,7 +21,6 @@ export const migrateReconciliationReportRecord = async (
   const reconReportPgModel = new ReconciliationReportPgModel();
 
   let existingRecord;
-
   try {
     existingRecord = await reconReportPgModel.get(knex, { name: dynamoRecord.name });
   } catch (error) {
@@ -35,7 +32,7 @@ export const migrateReconciliationReportRecord = async (
   if (existingRecord
     && dynamoRecord.updatedAt
     && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
-    throw new RecordAlreadyMigrated(`Async Operation ${dynamoRecord.name} was already migrated, skipping`);
+    throw new RecordAlreadyMigrated(`Reconciliation report ${dynamoRecord.name} was already migrated, skipping`);
   }
 
   const updatedRecord = translateApiReconReportToPostgresReconReport(
