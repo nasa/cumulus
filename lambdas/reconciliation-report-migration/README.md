@@ -14,9 +14,5 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 The result will be a migration summary. For example:
 
 ```
-Migration summary:
-    Out of 48 DynamoDB records:
-    $ 48 records migrated
-    $ 1 records skipped
-    $ 0 records failed
+{"reconciliation_reports":{"total_dynamo_db_records":36,"migrated":36,"failed":0,"skipped":0}}
 ```

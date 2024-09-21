@@ -7,7 +7,7 @@ resource "aws_lambda_function" "reconciliation_report_migration" {
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
-  role             = aws_iam_role.data_migration1.arn
+  role             = aws_iam_role.reconciliation_report_migration.arn
   runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "ReconciliationReportMigration", 900)
   memory_size      = lookup(var.lambda_memory_sizes, "ReconciliationReportMigration", 1024)
@@ -25,7 +25,7 @@ resource "aws_lambda_function" "reconciliation_report_migration" {
     content {
       subnet_ids = var.lambda_subnet_ids
       security_group_ids = compact([
-        aws_security_group.data_migration1[0].id,
+        aws_security_group.reconciliation_report_migration[0].id,
         var.rds_security_group_id
       ])
     }
