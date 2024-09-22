@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v18.4.1] 2024-09-21
 
+- **CUMULUS-3901**
+  - Fix error checking in @cumulus/errors to use Error.name in addition to Error.code
   - Fix async Operation migration to include Migration Count Report
 
 ## [v18.4.0] 2024-08-16
