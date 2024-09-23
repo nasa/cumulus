@@ -14,11 +14,68 @@ import { FilePgModel } from '../models/file';
 
 import { getExecutionInfoByGranuleCumulusId } from '../lib/execution';
 import { PostgresCollectionRecord } from '../types/collection';
+import { PostgresExecutionRecord } from '../types/execution';
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
+import { PostgresFileRecord } from '../types/file';
+import { PostgresPdrRecord } from '../types/pdr';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
 import { PostgresProviderRecord } from '../types/provider';
 
 import { translatePostgresFileToApiFile } from './file';
+
+/**
+ * Generate an API Granule object from the granule and associated Postgres objects without
+ * querying the database
+ *
+ * @param params - params
+ * @param params.granulePgRecord - Granule from Postgres
+ * @param params.collectionPgRecord - Collection from Postgres
+ * @param [params.executionUrls] - executionUrls from Postgres
+ * @param [params.files] - granule files from Postgres
+ * @param [params.pdr] - pdr from Postgres
+ * @param [params.providerPgRecord] - provider from Postgres
+ * @returns An API Granule with associated Files
+ */
+export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
+  granulePgRecord,
+  collectionPgRecord,
+  executionUrls = [],
+  files = [],
+  pdr,
+  providerPgRecord,
+}: {
+  granulePgRecord: PostgresGranuleRecord,
+  collectionPgRecord: Pick<PostgresCollectionRecord, 'cumulus_id' | 'name' | 'version'>,
+  executionUrls?: Partial<PostgresExecutionRecord>[],
+  files?: PostgresFileRecord[],
+  pdr?: Pick<PostgresPdrRecord, 'name'>,
+  providerPgRecord?: Pick<PostgresProviderRecord, 'name'>,
+}): ApiGranuleRecord => removeNilProperties({
+  beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
+  cmrLink: granulePgRecord.cmr_link,
+  collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
+  createdAt: granulePgRecord.created_at?.getTime(),
+  duration: granulePgRecord.duration,
+  endingDateTime: granulePgRecord.ending_date_time?.toISOString(),
+  error: granulePgRecord.error,
+  execution: executionUrls[0] ? executionUrls[0].url : undefined,
+  files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : [],
+  granuleId: granulePgRecord.granule_id,
+  lastUpdateDateTime: granulePgRecord.last_update_date_time?.toISOString(),
+  pdrName: pdr ? pdr.name : undefined,
+  processingEndDateTime: granulePgRecord.processing_end_date_time?.toISOString(),
+  processingStartDateTime: granulePgRecord.processing_start_date_time?.toISOString(),
+  productionDateTime: granulePgRecord.production_date_time?.toISOString(),
+  productVolume: granulePgRecord.product_volume,
+  provider: providerPgRecord ? providerPgRecord.name : undefined,
+  published: granulePgRecord.published,
+  queryFields: granulePgRecord.query_fields,
+  status: granulePgRecord.status as GranuleStatus,
+  timestamp: granulePgRecord.timestamp?.getTime(),
+  timeToArchive: granulePgRecord.time_to_archive,
+  timeToPreprocess: granulePgRecord.time_to_process,
+  updatedAt: granulePgRecord.updated_at?.getTime(),
+});
 
 /**
  * Generate an API Granule object from a Postgres Granule with associated Files.
@@ -88,34 +145,14 @@ export const translatePostgresGranuleToApiGranule = async ({
     );
   }
 
-  const apiGranule: ApiGranuleRecord = removeNilProperties({
-    beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
-    cmrLink: granulePgRecord.cmr_link,
-    collectionId: constructCollectionId(collection.name, collection.version),
-    createdAt: granulePgRecord.created_at?.getTime(),
-    duration: granulePgRecord.duration,
-    endingDateTime: granulePgRecord.ending_date_time?.toISOString(),
-    error: granulePgRecord.error,
-    execution: executionUrls[0] ? executionUrls[0].url : undefined,
-    files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : [],
-    granuleId: granulePgRecord.granule_id,
-    lastUpdateDateTime: granulePgRecord.last_update_date_time?.toISOString(),
-    pdrName: pdr ? pdr.name : undefined,
-    processingEndDateTime: granulePgRecord.processing_end_date_time?.toISOString(),
-    processingStartDateTime: granulePgRecord.processing_start_date_time?.toISOString(),
-    productionDateTime: granulePgRecord.production_date_time?.toISOString(),
-    productVolume: granulePgRecord.product_volume,
-    provider: provider ? provider.name : undefined,
-    published: granulePgRecord.published,
-    queryFields: granulePgRecord.query_fields,
-    status: granulePgRecord.status as GranuleStatus,
-    timestamp: granulePgRecord.timestamp?.getTime(),
-    timeToArchive: granulePgRecord.time_to_archive,
-    timeToPreprocess: granulePgRecord.time_to_process,
-    updatedAt: granulePgRecord.updated_at?.getTime(),
+  return translatePostgresGranuleToApiGranuleWithoutDbQuery({
+    granulePgRecord,
+    collectionPgRecord: collection,
+    executionUrls,
+    files,
+    pdr,
+    providerPgRecord: provider,
   });
-
-  return apiGranule;
 };
 
 /**
