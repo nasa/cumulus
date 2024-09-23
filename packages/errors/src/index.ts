@@ -1,4 +1,7 @@
 /* eslint-disable max-classes-per-file */
+
+import { ConditionalCheckFailedException } from '@cumulus/aws-client/DynamoDb'
+
 /**
  * A constructor function that returns an instance of Error (or something that inherits from Error).
  * Typically, this is going to be a class, such as `Error`, `TypeError`, etc.
@@ -44,8 +47,8 @@ export interface ErrorWithOptionalCode extends Error {
 /**
  * Test to see if a given exception is an AWS Throttling Exception
  */
-export const isThrottlingException = (err: ErrorWithOptionalCode) =>
-  err.name === 'ThrottlingException' || err.code === 'ThrottlingException';
+export const isThrottlingException = (err: Error) =>
+  err instanceof ThrottlingException;
 
 /**
  * Returns true if the error is a resource error.
@@ -55,8 +58,8 @@ export const isWorkflowError = (error: Error) => error.name.includes('WorkflowEr
 /**
  * Returns true if the error is a DynamoDB conditional check exception.
  */
-export const isConditionalCheckException = (error: ErrorWithOptionalCode) =>
-  error.name === 'ConditionalCheckFailedException' || error.code === 'ConditionalCheckFailedException';
+export const isConditionalCheckException = (error: Error) =>
+  error instanceof ConditionalCheckFailedException;
 
 /**
  * WorkflowError should be bubbled out to the overall workflow in the 'exception' field, rather than

@@ -18,7 +18,13 @@ import { sfn } from './services';
 import { retryOnThrottlingException } from './utils';
 import { inTestMode } from './test-utils';
 
-export { HistoryEvent, DescribeExecutionOutput } from '@aws-sdk/client-sfn';
+export {
+  DescribeExecutionOutput,
+  ExecutionDoesNotExist,
+  ExecutionAlreadyExists,
+  HistoryEvent,
+  StateMachineDoesNotExist,
+} from '@aws-sdk/client-sfn';
 
 // Utility functions
 

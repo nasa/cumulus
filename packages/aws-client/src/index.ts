@@ -1,3 +1,4 @@
+export * as APIGateway from './ApiGateway';
 export * as CloudFormation from './CloudFormation';
 export * as DynamoDb from './DynamoDb';
 export * as KMS from './KMS';
