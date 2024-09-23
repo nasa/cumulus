@@ -18,11 +18,6 @@ variable "rds_user_access_secret_arn" {
   type        = string
 }
 
-variable "system_bucket" {
-  description = "The name of the S3 bucket to be used for staging deployment files"
-  type        = string
-}
-
 # Optional
 
 variable "lambda_memory_sizes" {
@@ -46,12 +41,6 @@ variable "rds_security_group_id" {
   description = "RDS Security Group used for access to RDS cluster"
   type        = string
   default     = ""
-}
-
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type    = bool
-  default = false
 }
 
 variable "tags" {

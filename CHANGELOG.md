@@ -40,8 +40,8 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
 - **CUMULUS-3833**
-  - Added `ReconciliationReportMigration` lambda and instructions to migrate ReconciliationReports
-    from DynamoDB to Postgres
+  - Added `ReconciliationReportMigration` lambda to migrate ReconciliationReports from DynamoDB
+    to Postgres
 - **CUMULUS-3837**
   - Added `reconciliation_reports` table in RDS, including indexes
   - Created pg model, types, and translation for `reconciliationReports` in `@cumulus/db`
