@@ -30,7 +30,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
 
 ### Fixed
-
+- **CUMULUS-3901**
+  - Fix error checking in @cumulus/errors to use Error.name in addition to Error.code
 - **CUMULUS-3824**
   - Added the missing double quote in ecs_cluster autoscaling cf template
 - **CUMULUS-3846**
