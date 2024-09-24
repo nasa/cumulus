@@ -117,7 +117,7 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     config.distribution_endpoint,
     bucketTypes,
     distributionBucketMap,
-    config.excludeFileRegexPattern
+    config.excludeFileRegex
   );
 
   const updatedGranulesByGranuleId = await updateCmrFileInfo(cmrFiles, granulesByGranuleId);
