@@ -1,6 +1,6 @@
 import { receiveSQSMessages, SQSMessage } from '@cumulus/aws-client/SQS';
 import * as sqs from '@cumulus/aws-client/SQS';
-import { ExecutionAlreadyExists } from '@cumulus/aws-client/StepFunctions'
+import { ExecutionAlreadyExists } from '@cumulus/aws-client/StepFunctions';
 import Logger from '@cumulus/logger';
 
 export type MessageConsumerFunction = (queueUrl: string, message: SQSMessage) => Promise<void>;

@@ -19,7 +19,7 @@ import {
   QueueAttributeName,
   ReceiveMessageCommand,
   SendMessageCommand,
- } from '@aws-sdk/client-sqs';
+} from '@aws-sdk/client-sqs';
 
 import { StepFunctionEventBridgeEvent } from './Lambda';
 import { sqs } from './services';
