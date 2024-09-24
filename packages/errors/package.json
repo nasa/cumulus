@@ -33,6 +33,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "19.0.0"
+    "@aws-sdk/client-dynamodb": "^3.621.0"
   }
 }

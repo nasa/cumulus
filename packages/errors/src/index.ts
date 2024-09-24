@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 
-import { ConditionalCheckFailedException } from '@cumulus/aws-client/DynamoDb';
+import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 
 /**
  * A constructor function that returns an instance of Error (or something that inherits from Error).
