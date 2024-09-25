@@ -6,8 +6,7 @@
 // cleaned up.
 
 const moment = require('moment');
-const { Kinesis } = require('@aws-sdk/client-kinesis');
-const { LimitExceededException } = require('@cumulus/aws-client/APIGateway');
+const { Kinesis, LimitExceededException } = require('@aws-sdk/client-kinesis');
 
 const kinesis = new Kinesis();
 const deleteOlderThanDays = 1;
