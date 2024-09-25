@@ -45,10 +45,11 @@ export interface ErrorWithOptionalCode extends Error {
 }
 
 /**
- * Test to see if a given exception is an AWS Throttling Exception
+ * Test to see if a given exception is a Throttling Exception.
+ * Note: ThrottlingException is a Cumulus-defined error, not an AWS-SDK error
  */
-export const isThrottlingException = (err: Error) =>
-  err instanceof ThrottlingException;
+export const isThrottlingException = (err: ErrorWithOptionalCode) =>
+  err.name === 'ThrottlingException' || err.code === 'ThrottlingException';;
 
 /**
  * Returns true if the error is a resource error.
