@@ -54,7 +54,7 @@ export interface ErrorWithOptionalCode extends Error {
  * that inherits from that service's base error class.
  */
 export const isThrottlingException = (err: ErrorWithOptionalCode) =>
-  err.name === 'ThrottlingException' || err.code === 'ThrottlingException';;
+  err.name === 'ThrottlingException' || err.code === 'ThrottlingException';
 
 /**
  * Returns true if the error is a resource error.
