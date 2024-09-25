@@ -4,6 +4,105 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v18.5.0] 2024-09-25
+
+### Migration Notes
+
+#### CUMULUS-3536 Upgrading from Aurora Serverless V1 to V2
+
+- The updates in CUMULUS-3536 require an upgrade of the postgres database.
+  Please follow [Upgrading from Aurora Serverless V1 to V2]
+  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/serverless-v2-upgrade)
+  
+### Added
+
+- **CUMULUS-3536**
+  - Added `rejectUnauthorized` = false to db-provision-user-database as the Lambda
+    does not have the Serverless v2 SSL certifications installed.
+
+### Changed
+
+- **CUMULUS-3725**
+  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
+    to 0. This setting for the Aurora Serverless v2 database allows non-SSL
+    connections to the database, and is intended to be a temporary solution
+    until Cumulus has been updated to import the RDS rds-ca-rsa2048-g1 CA bundles in Lambda environments.
+    See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
+
+### Fixed
+- **CUMULUS-3901**
+  - Fix error checking in @cumulus/errors to use Error.name in addition to Error.code
+- **CUMULUS-3824**
+  - Added the missing double quote in ecs_cluster autoscaling cf template
+- **CUMULUS-3846**
+  - improve reliability of unit tests
+    - tests for granules api get requests separated out to new file
+    - cleanup of granule database resources to ensure no overlap
+    - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
+    - increase timeout in aws-client tests
+- **Snyk**
+  - Upgraded moment from 2.29.4 to 2.30.1
+  - Upgraded pg from ~8.10 to ~8.12
+
+## [v19.0.0] 2024-08-28
+
+### Breaking Changes
+
+- This release includes `Replace ElasicSearch Phase 1` updates, we no longer save `collection/granule/execution` records to
+ElasticSearch, the `collections/granules/executions` API endpoints are updated to perform operations on the postgres database.
+
+### Migration Notes
+
+#### CUMULUS-3792 Add database indexes. Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-3792 require a manual update to the postgres database in the production environment.
+  Please follow [Update Table Indexes for CUMULUS-3792]
+  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/update_table_indexes_CUMULUS_3792)
+
+### Replace ElasticSearch Phase 1
+
+- **CUMULUS-3238**
+  - Removed elasticsearch dependency from collections endpoint
+- **CUMULUS-3239**
+  - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
+- **CUMULUS-3240**
+  - Removed Elasticsearch dependency from `executions` endpoints
+- **CUMULUS-3639**
+  - Updated `/collections/active` endpoint to query postgres
+- **CUMULUS-3640**
+  - Removed elasticsearch dependency from granules endpoint
+- **CUMULUS-3641**
+  - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
+- **CUMULUS-3642**
+  - Adjusted queries to improve performance:
+    - Used count(*) over count(id) to count rows
+    - Estimated row count for large tables (granules and executions) by default for basic query
+  - Updated stats summary to default to the last day
+  - Updated ExecutionSearch to not include asyncOperationId by default
+- **CUMULUS-3688**
+  - Updated `stats` api endpoint to query postgres instead of elasticsearch
+- **CUMULUS-3689**
+  - Updated `stats/aggregate` api endpoint to query postgres instead of elasticsearch
+  - Created a new StatsSearch class for querying postgres with the stats endpoint
+- **CUMULUS-3692**
+  - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
+    support basic queries for granules
+  - Updated granules List endpoint to query postgres for basic queries
+- **CUMULUS-3693**
+  - Added functionality to `@cumulus/db/src/search` to support range queries
+- **CUMULUS-3694**
+  - Added functionality to `@cumulus/db/src/search` to support term queries
+  - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
+  - Updated granules List endpoint to search postgres
+- **CUMULUS-3695**
+  - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
+- **CUMULUS-3696**
+  - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
+- **CUMULUS-3699**
+  - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
+- **CUMULUS-3792**
+  - Added database indexes to improve search performance
+
 ## [v18.4.0] 2024-08-16
 
 ### Migration Notes
@@ -37,7 +136,6 @@ degraded execution table operations.
 ### Breaking Changes
 
 ### Added
-
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
