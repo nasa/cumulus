@@ -21,7 +21,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     does not have the Serverless v2 SSL certifications installed.
 
 ### Changed
-
+- **CUMULUS-3890**
+  - Changed fastGet used in the sftp-client package to have 0 concurrency
 - **CUMULUS-3725**
   - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
     to 0. This setting for the Aurora Serverless v2 database allows non-SSL

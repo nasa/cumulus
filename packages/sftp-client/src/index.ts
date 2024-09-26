@@ -112,7 +112,9 @@ export class SftpClient {
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
-    await this.sftp.fastGet(remotePath, localPath);
+    await this.sftp.fastGet(remotePath, localPath, {
+      concurrency: 0,
+    });
 
     log.info(`Finished downloading ${remoteUrl} to ${localPath}`);
   }
