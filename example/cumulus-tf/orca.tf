@@ -13,7 +13,7 @@ locals {
 # ORCA Module
 module "orca" {
   aws_region = var.region
-  source = "https://github.com/paulpilone/cumulus-orca/archive/refs/tags/v10.0.0-beta2.zip"
+  source = "https://github.com/nasa/cumulus-orca/releases/download/v10.0.0-beta2/cumulus-orca-terraform.zip"
 
   ## --------------------------
   ## Cumulus Variables
