@@ -45,21 +45,21 @@
                 "sha256:6eb3d0561e7ddb4f960faa7b30ee3af9c02a813f9639741cc052ce8650db60fc"
             ],
             "markers": "python_version ~= '3.6'",
-            "version": "==2.0.3"
+            "version": "==2.0.4"
         },
         "cumulus-message-adapter-python": {
             "hashes": [
                 "sha256:f63f3caa3576e457bf9f078b68271779021dc9526480a3e85e88b3c2a93a45c5"
             ],
             "index": "pypi",
-            "version": "==2.2.0"
+            "version": "==2.3.0"
         },
         "cumulus-process": {
             "hashes": [
                 "sha256:60423a1d657fcb09b33e640816817363326ac52e4facc0e784bee6b8c210dc8d"
             ],
             "index": "pypi",
-            "version": "==1.3.0"
+            "version": "==1.4.0"
         },
         "decorator": {
             "hashes": [
