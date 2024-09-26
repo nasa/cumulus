@@ -16,7 +16,7 @@ configured [Aurora Serverless](https://aws.amazon.com/rds/aurora/serverless/) cl
 
 To that end, Cumulus provides a terraform module
 [`cumulus-rds-tf`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-rds-tf)
-that will deploy an AWS RDS Aurora Serverless PostgreSQL 13 compatible [database cluster](https://aws.amazon.com/rds/aurora/postgresql-features/), and optionally provision a single deployment database with credentialed secrets for use with Cumulus.
+that will deploy an AWS RDS Aurora Serverless V2 PostgreSQL 13 compatible [database cluster](https://aws.amazon.com/rds/aurora/postgresql-features/), and optionally provision a single deployment database with credentialed secrets for use with Cumulus.
 
 We have provided an example terraform deployment using this module in the [Cumulus template-deploy repository](https://github.com/nasa/cumulus-template-deploy/tree/master/rds-cluster-tf) on GitHub.
 
@@ -59,7 +59,7 @@ For Cumulus specific instructions on installation of Terraform, refer to the mai
 
 #### Aurora/RDS
 
-This document also assumes some basic familiarity with PostgreSQL databases and Amazon Aurora/RDS.   If you're unfamiliar consider perusing the [AWS docs](https://aws.amazon.com/rds/aurora/) and the [Aurora Serverless V1 docs](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.html).
+This document also assumes some basic familiarity with PostgreSQL databases and Amazon Aurora/RDS.   If you're unfamiliar consider perusing the [AWS docs](https://aws.amazon.com/rds/aurora/) and the [Aurora Serverless V2 docs](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.html).
 
 ## Prepare Deployment Repository
 
@@ -145,6 +145,7 @@ Fill in the appropriate values in `terraform.tfvars`. See the [rds-cluster-tf mo
 - `max_capacity` -- the max ACUs the cluster is allowed to use.    Carefully consider cost/performance concerns when setting this value.
 - `min_capacity` -- the minimum ACUs the cluster will scale to
 - `provision_user_database` -- Optional flag to allow module to provision a user database in addition to creating the cluster.   Described in the [next section](#provision-user-and-user-database).
+- `cluster_instance_count` -- Number of RDS instances in the custer. Defaults to 1.
 
 #### Provision User and User Database
 
@@ -227,6 +228,7 @@ Terraform will perform the following actions:
       + backup_retention_period         = 1
       + cluster_identifier              = "xxxxxxxxx"
       + cluster_identifier_prefix       = (known after apply)
+      + cluster_instance_count          = 1
       + cluster_members                 = (known after apply)
       + cluster_resource_id             = (known after apply)
       + copy_tags_to_snapshot           = false
@@ -237,7 +239,7 @@ Terraform will perform the following actions:
       + enable_http_endpoint            = true
       + endpoint                        = (known after apply)
       + engine                          = "aurora-postgresql"
-      + engine_mode                     = "serverless"
+      + engine_mode                     = "provisioned"
       + engine_version                  = "10.12"
       + final_snapshot_identifier       = "xxxxxxxxx"
       + hosted_zone_id                  = (known after apply)
@@ -250,7 +252,7 @@ Terraform will perform the following actions:
       + preferred_maintenance_window    = (known after apply)
       + reader_endpoint                 = (known after apply)
       + skip_final_snapshot             = false
-      + storage_encrypted               = (known after apply)
+      + storage_encrypted               = true
       + tags                            = {
           + "Deployment" = "xxxxxxxxx"
         }
