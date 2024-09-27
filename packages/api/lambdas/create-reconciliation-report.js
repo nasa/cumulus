@@ -288,7 +288,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
  * @returns {Promise<Object>} an object with the okCollections, onlyInCumulus and
  * onlyInCmr
  */
-async function reconciliationReportForCollections(recReportParams) {
+async function reconciliationReportForCollections(recReportParams, knex) {
   // compare collection holdings:
   //   Get list of collections from CMR
   //   Get list of collections from CUMULUS
@@ -476,6 +476,8 @@ exports.reconciliationReportForGranuleFiles = reconciliationReportForGranuleFile
  * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
  *                                                 (e.g. { bucket: distribution path })
  * @param {Object} params.recReportParams        - Lambda report paramaters for narrowing focus
+ * @param {Object} params.knex                   - Database client for interacting with PostgreSQL
+ * database
  * @returns {Promise<Object>}                    - an object with the granulesReport and filesReport
  */
 async function reconciliationReportForGranules(params) {
@@ -485,12 +487,11 @@ async function reconciliationReportForGranules(params) {
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
   log.info(`reconciliationReportForGranules(${params.collectionId})`);
-  const { collectionId, bucketsConfig, distributionBucketMap, recReportParams } = params;
+  const { collectionId, bucketsConfig, distributionBucketMap, recReportParams, knex } = params;
   const { name, version } = deconstructCollectionId(collectionId);
   const granulesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
   const filesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
   try {
-    const knex = await getKnexClient();
     const cmrSettings = await getCmrSettings();
     const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: ['granule_ur'] });
     cmrGranuleSearchParams(recReportParams).forEach(([paramName, paramValue]) => {
@@ -643,8 +644,9 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  */
 async function reconciliationReportForCumulusCMR(params) {
   log.info(`reconciliationReportForCumulusCMR with params ${JSON.stringify(params)}`);
+  const knex = await getKnexClient();
   const { bucketsConfig, distributionBucketMap, recReportParams } = params;
-  const collectionReport = await reconciliationReportForCollections(recReportParams);
+  const collectionReport = await reconciliationReportForCollections(recReportParams, knex);
   const collectionsInCumulusCmr = {
     okCount: collectionReport.okCollections.length,
     onlyInCumulus: collectionReport.onlyInCumulus,
@@ -653,9 +655,8 @@ async function reconciliationReportForCumulusCMR(params) {
 
   // create granule and granule file report for collections in both Cumulus and CMR
   const promisedGranuleReports = collectionReport.okCollections.map(
-    // TODO2 this needs to move to postgres
     (collectionId) => reconciliationReportForGranules({
-      collectionId, bucketsConfig, distributionBucketMap, recReportParams,
+      collectionId, bucketsConfig, distributionBucketMap, recReportParams, knex,
     })
   );
   const granuleAndFilesReports = await Promise.all(promisedGranuleReports);
@@ -726,7 +727,6 @@ async function createReconciliationReport(recReportParams) {
     stackName,
     systemBucket,
     location,
-    knex,
   } = recReportParams;
   log.info(`createReconciliationReport (${JSON.stringify(recReportParams)})`);
   // Fetch the bucket names to reconcile
