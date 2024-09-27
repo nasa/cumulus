@@ -179,7 +179,8 @@ function storeCollectionsToElasticsearch(collections) {
   return result;
 }
 
-async function storeCollectionAndGranuleToPostgres(collection, context) { // TODO name this abomination
+async function storeCollectionAndGranuleToPostgres(collection, context) {
+  // TODO name this abomination
   const postgresCollection = translateApiCollectionToPostgresCollection({
     ...collection,
     ...requiredStaticCollectionFields,
@@ -291,18 +292,6 @@ async function generateRandomGranules(t, {
   return { files, granules: pgGranules, matchingColls, dataBuckets };
 }
 
-/**
- * Index granules to ES for testing
- *
- * @param {Array<object>} granules - list of granules objects
- * @returns {Promise} - Promise of indexed granules
- */
-async function storeGranulesToElasticsearch(granules) {
-  await Promise.all(
-    granules.map((granule) => indexer.indexGranule(esClient, granule, esAlias))
-  );
-}
-
 async function fetchCompletedReport(reportRecord) {
   const { Bucket, Key } = parseS3Uri(reportRecord.location);
   return await getJsonS3Object(Bucket, Key);
@@ -312,37 +301,6 @@ async function fetchCompletedReportString(reportRecord) {
   return await awsServices.s3()
     .getObject(parseS3Uri(reportRecord.location))
     .then((response) => getObjectStreamContents(response.Body));
-}
-
-/**
- * Looks up and returns the granulesIds given a list of collectionIds.
- *
- * @param {Array<string>} collectionIds - list of collectionIds
- * @returns {Array<string>} list of matching granuleIds
- */
-async function granuleIdsFromCollectionIds(collectionIds) {
-  const esValues = await (new Search(
-    { queryStringParameters: { collectionId__in: collectionIds.join(',') } },
-    'granule',
-    esAlias
-  )).query();
-  return esValues.results.map((value) => value.granuleId);
-}
-
-/**
- * Looks up and returns the providers given a list of collectionIds.
- *
- * @param {Array<string>} collectionIds - list of collectionIds
- * @returns {Array<string>} list of matching providers
- */
-async function providersFromCollectionIds(collectionIds) {
-  const esValues = await (new Search(
-    { queryStringParameters: { collectionId__in: collectionIds.join(',') } },
-    'granule',
-    esAlias
-  )).query();
-
-  return esValues.results.map((value) => value.provider);
 }
 
 const randomBetween = (a, b) => Math.floor(Math.random() * (b - a + 1) + a);
@@ -452,13 +410,14 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
   cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
   cmrSearchStub.withArgs('granules').resolves([]);
 
-  const { collections: createdCollections, granules: collectionGranules } = await storeCollectionsWithGranuleToPostgres(
-    matchingCollections
-      .concat(matchingCollectionsOutsideRange)
-      .concat(extraESCollections)
-      .concat(extraESCollectionsOutOfRange),
-    t.context
-  );
+  const { collections: createdCollections, granules: collectionGranules } =
+    await storeCollectionsWithGranuleToPostgres(
+      matchingCollections
+        .concat(matchingCollectionsOutsideRange)
+        .concat(extraESCollections)
+        .concat(extraESCollectionsOutOfRange),
+      t.context
+    );
 
   const mappedProviders = {};
   createdCollections.forEach((collection) => {
@@ -573,7 +532,7 @@ test.afterEach.always(async (t) => {
   });
 });
 
-test.after.always(async (t) => {
+test.after.always(async () => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true,
@@ -1390,8 +1349,7 @@ test.serial(
   }
 );
 
-// TODO - Fix granules
-/* test.serial(
+test.serial(
   'When an array of providers exists, creates a valid one-way reconciliation report.',
   async (t) => {
     const setupVars = await setupElasticAndCMRForTests({ t });
@@ -1438,7 +1396,7 @@ test.serial(
     t.is(report.reportEndTime, undefined);
     t.is(report.reportStartTime, undefined);
   }
-); */
+);
 
 // TODO - still writing to elasticsearch.  Break and test
 // TODO - this test feels *wholly* inadaquate are we relying on spec tests?
