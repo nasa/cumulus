@@ -256,7 +256,7 @@ export const getGranulesByApiPropertiesQuery = ({
         const collectionIdConcatField = `(${collectionsTable}.name || '${collectionIdSeparator}' || ${collectionsTable}.version)`;
         const collectionIdInClause = collectionIdFilters.map(() => '?').join(',');
         queryBuilder.whereRaw(
-          `${collectionIdConcatField} IN (${collectionIdInClause})`,
+        `${collectionIdConcatField} IN (${collectionIdInClause})`,
           collectionIdFilters
         );
       }

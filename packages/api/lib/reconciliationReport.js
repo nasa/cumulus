@@ -23,6 +23,7 @@ function cmrGranuleSearchParams(recReportParams) {
   return [];
 }
 
+// TODO: remove
 /**
  * Prepare a list of collectionIds into an _id__in object
  *
@@ -49,6 +50,7 @@ function dateStringToDateOrNull(dateable) {
   return !Number.isNaN(date.valueOf()) ? date : undefined;
 }
 
+//TODO Verify this function is still needed
 /**
  *
  * @param {Object} params - request params to convert to Elasticsearch params
@@ -118,6 +120,8 @@ function convertToESGranuleSearchParams(params) {
   });
 }
 
+
+// TODO - type this
 /**
  * Convert reconciliation report parameters to PostgreSQL database search params.
  *
@@ -152,7 +156,7 @@ function convertToDBGranuleSearchParams(params) {
  * convert to es search parameters using createdAt for report time range
  *
  * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for Elasticsearch.
+ * @returns {Object} object of desired parameters formatted for Elasticsearch.
  */
 function convertToESGranuleSearchParamsWithCreatedAtRange(params) {
   const searchParamsWithUpdatedAt = convertToESGranuleSearchParams(params);
@@ -167,7 +171,7 @@ function convertToESGranuleSearchParamsWithCreatedAtRange(params) {
 /**
  *
  * @param {Object} params - request params to convert to orca params
- * @returns {Object} object of desired parameters formated for orca
+ * @returns {Object} object of desired parameters formatted for orca
  */
 function convertToOrcaGranuleSearchParams(params) {
   const { collectionIds, granuleIds, providers, startTimestamp, endTimestamp } = params;

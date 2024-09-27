@@ -262,6 +262,7 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
   return granuleRecord;
 };
 
+// TODO -- Ragefix this
 /**
  * Generate a Postgres granule record from a DynamoDB record. Removes
  *   any null/undefined properties.
