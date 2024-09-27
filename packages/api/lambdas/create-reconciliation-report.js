@@ -99,21 +99,6 @@ function isOneWayGranuleReport(reportParams) {
 }
 
 /**
- * Checks to see if the searchParams have any value that would require a
- * filtered search in ES
- * @param {Object} searchParams
- * @returns {boolean} returns true if searchParams contain a key that causes filtering to occur.
- */
-function shouldAggregateGranulesForCollections(searchParams) {
-  return [
-    'updatedAt__from',
-    'updatedAt__to',
-    'granuleId__in',
-    'provider__in',
-  ].some((e) => !!searchParams[e]);
-}
-
-/**
  * fetch CMR collections and filter the returned UMM CMR collections by the desired collectionIds
  *
  * @param {Object} recReportParams - input report params
@@ -142,9 +127,14 @@ async function fetchCMRCollections({ collectionIds }) {
   return cmrCollectionIds.filter((item) => collectionIds.includes(item));
 }
 
-async function fetchDbCollections(recReportParams) {
-  const { collectionIds, granuleIds, providers, startTimestamp, endTimestamp } = recReportParams;
-  const knex = await getKnexClient(); // TODO single knex client?
+async function fetchDbCollections(recReportParams, knex) {
+  const {
+    collectionIds,
+    granuleIds,
+    providers,
+    startTimestamp,
+    endTimestamp,
+  } = recReportParams;
   if (providers || granuleIds || startTimestamp || endTimestamp) {
     const filteredDbCollections = await getUniqueCollectionsByGranuleFilter({
       knex: knex,
@@ -308,7 +298,7 @@ async function reconciliationReportForCollections(recReportParams, knex) {
     // 'Version' as sort_key
     log.debug('Fetching collections from CMR.');
     const cmrCollectionIds = await fetchCMRCollections(recReportParams);
-    const dbCollectionIds = await fetchDbCollections(recReportParams);
+    const dbCollectionIds = await fetchDbCollections(recReportParams, knex);
     log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${dbCollectionIds.length} Elasticsearch collections`);
 
     /** @type {string | undefined } */
@@ -506,8 +496,10 @@ async function reconciliationReportForGranules(params) {
       format: 'umm_json',
     });
 
-
-    const dbSearchParams = convertToDBGranuleSearchParams({ ...recReportParams, collectionIds: [collectionId]});
+    const dbSearchParams = convertToDBGranuleSearchParams({
+      ...recReportParams,
+      collectionIds: [collectionId],
+    });
     // TODO: fix typing
     const granulesSearchQuery = getGranulesByApiPropertiesQuery({
       knex,
