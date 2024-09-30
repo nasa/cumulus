@@ -144,10 +144,12 @@ async function deleteReport(req, res) {
  * Creates a new report
  *
  * @param {Object} req - express request object
+ * @param {RecReportParams} req.body
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
+  /** @type RecReportParams */
   let validatedInput;
   try {
     validatedInput = normalizeEvent(req.body);
