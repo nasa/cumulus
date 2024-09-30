@@ -440,6 +440,7 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
 
 test.before(async () => {
   process.env.cmr_password_secret_name = randomId('cmr-secret-name');
+  process.env.DISTRIBUTION_ENDPOINT = 'TEST_ENDPOINT';
   await awsServices.secretsManager().createSecret({
     Name: process.env.cmr_password_secret_name,
     SecretString: randomId('cmr-password'),

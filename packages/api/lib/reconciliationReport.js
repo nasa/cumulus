@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const isEqual = require('lodash/isEqual');
@@ -8,6 +10,26 @@ const { constructCollectionId, deconstructCollectionId } = require('@cumulus/mes
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
+
+/** @typedef {import('../lib/types').RecReportParams } RecReportParams */
+
+/**
+ * @typedef {Object} ReportHeader
+ * @property {string | undefined} collectionId - The collection ID.
+ * @property {string | string[] | undefined} collectionIds - The collection IDs.
+ * @property {string | undefined} createEndTime - The end time of the report creation.
+ * @property {string} createStartTime - The start time of the report creation.
+ * @property {string | undefined} error - Any error that occurred.
+ * @property {string | undefined} granuleId - The granule ID.
+ * @property {string | string[] | undefined} granuleIds - The granule IDs.
+ * @property {string | string[] | undefined} provider - The provider.
+ * @property {string | string[] | undefined} providers - The providers.
+ * @property {string | undefined} location - The location.
+ * @property {moment.Moment | undefined} reportEndTime - The end time of the report.
+ * @property {moment.Moment | undefined} reportStartTime - The start time of the report.
+ * @property {string} reportType - The type of the report.
+ * @property {string} status - The status of the report.
+ */
 
 /**
  * Extra search params to add to the cmrGranules searchConceptQueue
@@ -120,12 +142,10 @@ function convertToESGranuleSearchParams(params) {
   });
 }
 
-
-// TODO - type this
 /**
  * Convert reconciliation report parameters to PostgreSQL database search params.
  *
- * @param {Object} params - request params to convert to database params
+ * @param {RecReportParams} params - request params to convert to database params
  * @returns {Object} object of desired parameters formated for database granule search
  */
 function convertToDBGranuleSearchParams(params) {
@@ -187,12 +207,8 @@ function convertToOrcaGranuleSearchParams(params) {
 /**
  * create initial report header
  *
- * @param {Object} recReportParams - params
- * @param {Object} recReportParams.reportType - the report type
- * @param {moment} recReportParams.createStartTime - when the report creation was begun
- * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
- * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
- * @returns {Object} report header
+ * @param {RecReportParams} recReportParams - params
+ * @returns {ReportHeader} report header
  */
 function initialReportHeader(recReportParams) {
   const {
