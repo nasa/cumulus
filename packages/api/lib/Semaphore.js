@@ -30,9 +30,7 @@ class Semaphore {
       // Only re-throw errors that are not conditional check failures. A
       // conditional check failure here means that a row tracking the semaphore
       // for this key already exists, which is expected after the first operation.
-      console.log('error::::', JSON.stringify(error));
       if (!isConditionalCheckException(error)) {
-        console.log('is NOT Conditional Check Failed Exception::::');
         throw error;
       }
     }
