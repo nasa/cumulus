@@ -209,7 +209,7 @@ test('normalizeEvent throws error if provider and granuleId are passed to non-In
 
 test('Invalid report type throws InvalidArgument error', (t) => {
   const reportType = randomId('badType');
-  const inputEvent = { reportType };
+  const inputEvent = { reportType, systemBucket: 'systemBucket', stackName: 'stackName' };
 
   t.throws(() => normalizeEvent(inputEvent), {
     instanceOf: InvalidArgument,
@@ -220,6 +220,32 @@ test('Invalid report type throws InvalidArgument error', (t) => {
 test('valid Reports types from reconciliation schema do not throw an error.', (t) => {
   const validReportTypes = reconciliationReport.properties.type.enum;
   validReportTypes.forEach((reportType) => {
-    t.notThrows(() => normalizeEvent({ reportType }));
+    t.notThrows(() => normalizeEvent({ reportType, systemBucket: 'systemBucket', stackName: 'stackName' }));
+  });
+});
+
+test('normalizeEvent throws error if no systemBucket is provided', (t) => {
+  const inputEvent = {
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Inventory',
+    stackName: 'stackName',
+    startTimestamp: new Date().toISOString(),
+  };
+  t.throws(() => normalizeEvent(inputEvent), {
+    instanceOf: InvalidArgument,
+    message: 'systemBucket is required.',
+  });
+});
+
+test('normalizeEvent throws error if no stackName is provided', (t) => {
+  const inputEvent = {
+    endTimestamp: new Date().toISOString(),
+    reportType: 'Inventory',
+    startTimestamp: new Date().toISOString(),
+    systemBucket: 'systemBucket',
+  };
+  t.throws(() => normalizeEvent(inputEvent), {
+    instanceOf: InvalidArgument,
+    message: 'stackName is required.',
   });
 });
