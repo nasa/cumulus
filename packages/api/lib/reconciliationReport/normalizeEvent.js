@@ -16,7 +16,7 @@ const { InvalidArgument } = require('@cumulus/errors');
  * ensures input reportType can be handled by the lambda code.
  *
  * @param {string} reportType
- * @returns {undefined} - if reportType is valid
+ * @returns {void} - if reportType is valid
  * @throws {InvalidArgument} - otherwise
  */
 function validateReportType(reportType) {
@@ -52,20 +52,13 @@ function isoTimestamp(dateable) {
 }
 
 /**
- * Transforms input granuleId into correct parameters for use in the
- * Reconciliation Report lambda.
- * @param {string[]|string|undefined} granuleId - list of granule Ids
- * @param {Object} modifiedEvent - input event
- * @returns {Object} updated input even with correct granuleId and granuleIds values.
+ * Normalizes the input into an array of granule IDs.
+ *
+ * @param {string|string[]|undefined} granuleId - The granule ID or an array of granule IDs.
+ * @returns {string[]|undefined} An array of granule IDs, or undefined if no granule ID is provided.
  */
-function updateGranuleIds(granuleId, modifiedEvent) {
-  let returnEvent = { ...modifiedEvent };
-  if (granuleId) {
-    // transform input granuleId into an array on granuleIds
-    const granuleIds = isString(granuleId) ? [granuleId] : granuleId;
-    returnEvent = { ...modifiedEvent, granuleIds };
-  }
-  return returnEvent;
+function generateGranuleIds(granuleId) {
+  return granuleId ? (isString(granuleId) ? [granuleId] : granuleId) : undefined;
 }
 
 /**
@@ -85,14 +78,14 @@ function updateCollectionIds(collectionId, modifiedEvent) {
   return returnEvent;
 }
 
-function updateProviders(provider, modifiedEvent) {
-  let returnEvent = { ...modifiedEvent };
-  if (provider) {
-    // transform input provider into an array on providers
-    const providers = isString(provider) ? [provider] : provider;
-    returnEvent = { ...modifiedEvent, providers };
-  }
-  return returnEvent;
+/**
+ * Normalizes the input provider into an array of providers.
+ *
+ * @param {string|string[]|undefined} provider - The provider or list of providers.
+ * @returns {string[]|undefined} An array of providers, or undefined if no provider is provided.
+ */
+function generateProviders(provider) {
+  return provider ? (isString(provider) ? [provider] : provider) : undefined;
 }
 
 /**
@@ -133,8 +126,6 @@ function normalizeEvent(event) {
     throw new InvalidArgument(`${reportType} reports cannot be launched with more than one input (granuleId, collectionId, or provider).`);
   }
   modifiedEvent = updateCollectionIds(collectionId, modifiedEvent);
-  modifiedEvent = updateGranuleIds(granuleId, modifiedEvent);
-  modifiedEvent = updateProviders(provider, modifiedEvent);
 
   return (removeNilProperties({
     ...modifiedEvent,
@@ -143,6 +134,8 @@ function normalizeEvent(event) {
     startTimestamp,
     endTimestamp,
     reportType,
+    granuleIds: generateGranuleIds(granuleId),
+    providers: generateProviders(provider),
   }));
 }
 exports.normalizeEvent = normalizeEvent;

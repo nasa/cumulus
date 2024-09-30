@@ -12,6 +12,7 @@ const Logger = require('@cumulus/logger');
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
 /** @typedef {import('../lib/types').RecReportParams } RecReportParams */
+/** @typedef {import('../lib/types').NormalizedRecReportParams } NormalizedRecReportParams */
 
 /**
  * @typedef {Object} ReportHeader
@@ -25,8 +26,8 @@ const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
  * @property {string | string[] | undefined} provider - The provider.
  * @property {string | string[] | undefined} providers - The providers.
  * @property {string | undefined} location - The location.
- * @property {moment.Moment | undefined} reportEndTime - The end time of the report.
- * @property {moment.Moment | undefined} reportStartTime - The start time of the report.
+ * @property {string | undefined} reportEndTime - The end time of the report.
+ * @property {string | undefined} reportStartTime - The start time of the report.
  * @property {string} reportType - The type of the report.
  * @property {string} status - The status of the report.
  */
@@ -59,7 +60,7 @@ function searchParamsForCollectionIdArray(collectionIds) {
 
 /**
  * @param {string} dateable - any input valid for a JS Date contstructor.
- * @returns {number} - primitive value of input date string or undefined, if
+ * @returns {number | undefined} - primitive value of input date string or undefined, if
  *                     input string not convertable.
  */
 function dateToValue(dateable) {
@@ -98,9 +99,9 @@ function convertToESCollectionSearchParams(params) {
  * @param {[Object]} params.collectionIds - List containing single Collection object
  *                                          multiple or no collections will result in a
  *                                          search object without a collection object
- * @param {moment} params.endTimestamp    - ending report datetime ISO Timestamp
- * @param {moment} params.startTimestamp  - beginning report datetime ISO timestamp
- * @returns {[Object]}                    - array of objects of desired
+ * @param {string} params.endTimestamp    - ending report datetime ISO Timestamp
+ * @param {string} params.startTimestamp  - beginning report datetime ISO timestamp
+ * @returns {Object[]}                    - array of objects of desired
  *                                          parameters formatted for database collection
  *                                          search
  */
@@ -145,7 +146,7 @@ function convertToESGranuleSearchParams(params) {
 /**
  * Convert reconciliation report parameters to PostgreSQL database search params.
  *
- * @param {RecReportParams} params - request params to convert to database params
+ * @param {NormalizedRecReportParams} params - request params to convert to database params
  * @returns {Object} object of desired parameters formated for database granule search
  */
 function convertToDBGranuleSearchParams(params) {
@@ -207,7 +208,7 @@ function convertToOrcaGranuleSearchParams(params) {
 /**
  * create initial report header
  *
- * @param {RecReportParams} recReportParams - params
+ * @param {NormalizedRecReportParams} recReportParams - params
  * @returns {ReportHeader} report header
  */
 function initialReportHeader(recReportParams) {

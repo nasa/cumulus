@@ -49,7 +49,7 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  * @typedef {typeof process.env } ProcessEnv
  * @typedef {import('Knex')} Knex
  * @typedef {import('@cumulus/es-client/search').EsClient} EsClient
- * @typedef {import('../lib/types').RecReportParams } RecReportParams
+ * @typedef {import('../lib/types').NormalizedRecReportParams } NormalizedRecReportParams
  * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRSettings
  */
 
@@ -153,19 +153,9 @@ function isOneWayGranuleReport(reportParams) {
 }
 
 /**
- * fetch CMR collections and filter the returned UMM CMR collections by the desired collectionIds
- *
- * @param {Object} recReportParams - input report params
- * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
- * @returns {Array<string>} filtered list of collectionIds returned from CMR
- */
-
-/**
  * Fetches collections from the CMR (Common Metadata Repository) and returns their IDs.
  *
- * @param {Object} recReportParams - The parameters for the function.
- * @param {string[]} [recReportParams.collectionIds] - An optional array of collection IDs to
- * filter the results.
+ * @param {NormalizedRecReportParams} recReportParams - The parameters for the function.
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
  *
  * @example
@@ -197,6 +187,13 @@ async function fetchCMRCollections({ collectionIds }) {
   return cmrCollectionIds.filter((item) => collectionIds.includes(item));
 }
 
+/**
+ * Fetches collections from the database based on the provided parameters.
+ *
+ * @param {NormalizedRecReportParams} recReportParams - The reconciliation report parameters.
+ * @param {Object} knex - The Knex.js database connection.
+ * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs.
+ */
 async function fetchDbCollections(recReportParams, knex) {
   const {
     collectionIds,
@@ -343,7 +340,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
 /**
  * Compare the collection holdings in CMR with Cumulus
  *
- * @param {Object} recReportParams - lambda's input filtering parameters to
+ * @param {NormalizedRecReportParams} recReportParams - lambda's input filtering parameters to
  *                                   narrow limit of report.
  * @returns {Promise<Object>} an object with the okCollections, onlyInCumulus and
  * onlyInCmr
@@ -539,7 +536,8 @@ exports.reconciliationReportForGranuleFiles = reconciliationReportForGranuleFile
  * @param {Object} params.bucketsConfig            - bucket configuration object
  * @param {Object} params.distributionBucketMap    - mapping of bucket->distirubtion path values
  *                                                   (e.g. { bucket: distribution path })
- * @param {RecReportParams} params.recReportParams - Lambda report paramaters for narrowing focus
+ * @param {NormalizedRecReportParams} params.recReportParams - Lambda report paramaters for
+ *                                                             narrowing focus
  * @param {Object} params.knex                     - Database client for interacting with PostgreSQL
  *                                                   database
  * @returns {Promise<Object>}                      - an object with the granulesReport and
@@ -710,7 +708,7 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  * @param {Object} params.bucketsConfig            - bucket configuration object
  * @param {Object} params.distributionBucketMap    - mapping of bucket->distirubtion path values
  *                                                 (e.g. { bucket: distribution path })
- * @param {RecReportParams} params.recReportParams - Lambda endpoint's input params to
+ * @param {NormalizedRecReportParams} params.recReportParams - Lambda endpoint's input params to
  *                                                     narrow focus of report
  * @returns {Promise<Object>}                      - a reconciliation report
  */
@@ -778,7 +776,7 @@ function _uploadReportToS3(report, systemBucket, reportKey) {
 /**
  * Create a Reconciliation report and save it to S3
  *
- * @param {RecReportParams} recReportParams - params
+ * @param {NormalizedRecReportParams} recReportParams - params
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
@@ -933,9 +931,10 @@ async function processRequest(params) {
   let apiRecord = await reconciliationReportModel.create(reportRecord);
   log.info(`Report added to database as pending: ${JSON.stringify(apiRecord)}.`);
 
-  const concurrency = env.CONCURRENCY || 3;
+  const concurrency = env.CONCURRENCY || '3';
 
   try {
+    /** @type NormalizedRecReportParams */
     const recReportParams = {
       ...params,
       createStartTime,

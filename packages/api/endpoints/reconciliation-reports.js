@@ -149,7 +149,7 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
-  /** @type RecReportParams */
+  /** @type NormalizedRecReportParams */
   let validatedInput;
   try {
     validatedInput = normalizeEvent(req.body);
