@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 
-import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
+// import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 
 /**
  * A constructor function that returns an instance of Error (or something that inherits from Error).
@@ -65,7 +65,7 @@ export const isWorkflowError = (error: Error) => error.name.includes('WorkflowEr
  * Returns true if the error is a DynamoDB conditional check exception.
  */
 export const isConditionalCheckException = (error: any) =>
-  error instanceof ConditionalCheckFailedException; // TODO if not this, DynamoDBServiceException?
+  error.name === 'ConditionalCheckFailedException';
 
 /**
  * WorkflowError should be bubbled out to the overall workflow in the 'exception' field, rather than
