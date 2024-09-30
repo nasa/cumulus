@@ -42,11 +42,9 @@ const {
   translateApiCollectionToPostgresCollection,
   translateApiGranuleToPostgresGranule,
   translateApiFiletoPostgresFile,
-  translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
-const indexer = require('@cumulus/es-client/indexer');
-const { Search, getEsClient } = require('@cumulus/es-client/search');
+const { Search } = require('@cumulus/es-client/search');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
 const {
@@ -65,7 +63,6 @@ const handler = (event) => unwrappedHandler(normalizeEvent(event));
 
 let esAlias;
 let esIndex;
-let esClient;
 
 const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket });
 const requiredStaticCollectionFields = {
@@ -132,55 +129,7 @@ async function storeFilesToS3(files) {
   );
 }
 
-// TODO - can we just use API test helpers?
-// what about createGranuleAndFiles?
-/**
- * Index a single collection to elasticsearch. If the collection object has an
- * updatedAt value, use a sinon stub to set the time of the granule to that
- * input time.
- *
- * @param {object} collection  - a collection object
- *  @returns {Promise} - promise of indexed collection with active granule
- */
-async function storeCollection(collection) {
-  let stub;
-  if (collection.updatedAt) {
-    stub = sinon.stub(Date, 'now').returns(collection.updatedAt);
-  }
-  try {
-    await indexer.indexCollection(esClient, collection, esAlias);
-    return indexer.indexGranule(
-      esClient,
-      fakeGranuleFactoryV2({
-        collectionId: constructCollectionId(collection.name, collection.version),
-        updatedAt: collection.updatedAt,
-        provider: randomString(),
-      }),
-      esAlias
-    );
-  } finally {
-    if (collection.updatedAt) stub.restore();
-  }
-}
-
-// TODO: remove
-/**
- * Index Dated collections to ES for testing timeranges.  These need to happen
- * in sequence because of the way we are stubbing Date.now() during indexing.
- *
- * @param {Array<object>} collections - list of collection objects
- * @returns {Promise} - Promise of collections indexed
- */
-function storeCollectionsToElasticsearch(collections) {
-  let result = Promise.resolve();
-  collections.forEach((collection) => {
-    result = result.then(() => storeCollection(collection));
-  });
-  return result;
-}
-
 async function storeCollectionAndGranuleToPostgres(collection, context) {
-  // TODO name this abomination
   const postgresCollection = translateApiCollectionToPostgresCollection({
     ...collection,
     ...requiredStaticCollectionFields,
@@ -215,8 +164,6 @@ async function storeCollectionAndGranuleToPostgres(collection, context) {
   };
 }
 
-// Current return: [collections*]
-// Proposed return: { collections: collection[], granules: granule[]
 async function storeCollectionsWithGranuleToPostgres(collections, context) {
   const records = await Promise.all(
     collections.map((collection) => storeCollectionAndGranuleToPostgres(collection, context))
@@ -330,7 +277,7 @@ const randomTimeBetween = (t1, t2) => randomBetween(t1, t2);
  *      excluded from CMR mock. (only in ES out of range)
  *  + extraCmrCollections - collections not in ES but returned by the CMR mock.
  */
-const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
+const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
   const dataBuckets = range(2).map(() => randomId('bucket'));
   await Promise.all(
     dataBuckets.map((bucket) =>
@@ -487,7 +434,6 @@ test.beforeEach(async (t) => {
     index: esIndex,
     alias: esAlias,
   });
-  esClient = await getEsClient();
   t.context.esReportClient = new Search(
     {},
     'reconciliationReport',
@@ -525,7 +471,6 @@ test.afterEach.always(async (t) => {
     { cumulus_id: t.context.executionCumulusId }
   );
   CMR.prototype.searchConcept.restore();
-  await esClient.client.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
@@ -853,7 +798,7 @@ test.serial('Generates valid reconciliation report when there are both extra pos
     numExtraESCollectionsOutOfRange: 0,
   };
 
-  const setupVars = await setupElasticAndCMRForTests({ t, params });
+  const setupVars = await setupDatabaseAndCMRForTests({ t, params });
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -888,7 +833,7 @@ test.serial('Generates valid reconciliation report when there are both extra pos
 test.serial(
   'With input time params, generates a valid filtered reconciliation report, when there are extra cumulus database and CMR collections',
   async (t) => {
-    const { startTimestamp, endTimestamp, ...setupVars } = await setupElasticAndCMRForTests({ t });
+    const { startTimestamp, endTimestamp, ...setupVars } = await setupDatabaseAndCMRForTests({ t });
 
     const event = {
       systemBucket: t.context.systemBucket,
@@ -1015,7 +960,7 @@ test.serial(
       numExtraESCollectionsOutOfRange: 0,
     };
 
-    const setupVars = await setupElasticAndCMRForTests({ t, params });
+    const setupVars = await setupDatabaseAndCMRForTests({ t, params });
 
     const event = {
       systemBucket: t.context.systemBucket,
@@ -1048,7 +993,7 @@ test.serial(
 test.serial(
   'Generates valid reconciliation report without time params and there are extra cumulus DB and CMR collections',
   async (t) => {
-    const setupVars = await setupElasticAndCMRForTests({ t });
+    const setupVars = await setupDatabaseAndCMRForTests({ t });
 
     const eventNoTimeStamps = {
       systemBucket: t.context.systemBucket,
@@ -1095,7 +1040,7 @@ test.serial(
 test.serial(
   'Generates valid ONE WAY reconciliation report with time params and filters by collectionIds when there are extra cumulus DB and CMR collections',
   async (t) => {
-    const { startTimestamp, endTimestamp, ...setupVars } = await setupElasticAndCMRForTests({ t });
+    const { startTimestamp, endTimestamp, ...setupVars } = await setupDatabaseAndCMRForTests({ t });
 
     const testCollection = [
       setupVars.matchingCollections[3],
@@ -1148,7 +1093,7 @@ test.serial(
 test.serial(
   'When a collectionId is in both CMR and Cumulus a valid bi-directional reconciliation report is created.',
   async (t) => {
-    const setupVars = await setupElasticAndCMRForTests({ t });
+    const setupVars = await setupDatabaseAndCMRForTests({ t });
 
     const testCollection = setupVars.matchingCollections[3];
     console.log(`testCollection: ${JSON.stringify(testCollection)}`);
@@ -1178,7 +1123,7 @@ test.serial(
 test.serial(
   'When an array of collectionId exists only in CMR, creates a valid bi-directional reconciliation report.',
   async (t) => {
-    const setupVars = await setupElasticAndCMRForTests({ t });
+    const setupVars = await setupDatabaseAndCMRForTests({ t });
 
     const testCollection = [
       setupVars.extraCmrCollections[3],
@@ -1216,7 +1161,7 @@ test.serial(
 test.serial(
   'When a filtered collectionId exists only in Cumulus, generates a valid bi-directional reconciliation report.',
   async (t) => {
-    const setupVars = await setupElasticAndCMRForTests({ t });
+    const setupVars = await setupDatabaseAndCMRForTests({ t });
 
     const testCollection = setupVars.extraESCollections[3];
     console.log(`testCollection: ${JSON.stringify(testCollection)}`);
@@ -1252,7 +1197,7 @@ test.serial(
 test.serial(
   'Generates valid ONE WAY reconciliation report with time params and filters by granuleIds when there are extra cumulus/ES and CMR collections',
   async (t) => {
-    const { startTimestamp, endTimestamp, ...setupVars } = await setupElasticAndCMRForTests({ t });
+    const { startTimestamp, endTimestamp, ...setupVars } = await setupDatabaseAndCMRForTests({ t });
 
     const testCollection = [
       setupVars.matchingCollections[3],
@@ -1309,7 +1254,7 @@ test.serial(
 test.serial(
   'When an array of granuleId exists, creates a valid one-way reconciliation report.',
   async (t) => {
-    const setupVars = await setupElasticAndCMRForTests({ t });
+    const setupVars = await setupDatabaseAndCMRForTests({ t });
 
     const testCollection = [
       setupVars.extraCmrCollections[3],
@@ -1353,7 +1298,7 @@ test.serial(
 test.serial(
   'When an array of providers exists, creates a valid one-way reconciliation report.',
   async (t) => {
-    const setupVars = await setupElasticAndCMRForTests({ t });
+    const setupVars = await setupDatabaseAndCMRForTests({ t });
     // TODO: collections work!    Failures should be granules now.
 
     const testCollection = [
@@ -1853,12 +1798,6 @@ test.serial('Creates a valid Granule Inventory report', async (t) => {
     collection
   );
   const collectionCumulusId = pgCollection.cumulus_id;
-  await indexer.indexCollection(
-    esClient,
-    translatePostgresCollectionToApiCollection(pgCollection),
-    esAlias
-  );
-
   const matchingGrans = range(10).map(() => fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
   }));
@@ -2031,7 +1970,7 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
   cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
   cmrSearchStub.withArgs('granules').resolves([]);
 
-  await storeCollectionsToElasticsearch(matchingColls);
+  await storeCollectionsWithGranuleToPostgres(matchingColls, t.context);
 
   const eventFormatted = {
     systemBucket: t.context.systemBucket,
