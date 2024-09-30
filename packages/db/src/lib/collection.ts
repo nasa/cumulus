@@ -42,7 +42,7 @@ export const getUniqueCollectionsByGranuleFilter = async (params: {
   // TODO use TableNames.* instead of hardcoding table names
   const query = knex('collections')
     .distinct('collections.*')
-    .innerJoin('granules', 'collections.cumulus_id', 'granules.collection_cumulus_id')
+    .innerJoin('granules', 'collections.cumulus_id', 'granules.collection_cumulus_id');
   if (params.startTimestamp) {
     query.where('granules.updated_at', '>=', params.startTimestamp);
   }
