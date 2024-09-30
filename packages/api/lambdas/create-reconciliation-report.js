@@ -47,7 +47,7 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
 // Typescript annotations
 /**
  * @typedef {typeof process.env } ProcessEnv
- * @typedef {import('Knex')} Knex
+ * @typedef {import('knex').Knex} Knex
  * @typedef {import('@cumulus/es-client/search').EsClient} EsClient
  * @typedef {import('../lib/types').NormalizedRecReportParams } NormalizedRecReportParams
  * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRSettings
@@ -191,7 +191,7 @@ async function fetchCMRCollections({ collectionIds }) {
  * Fetches collections from the database based on the provided parameters.
  *
  * @param {NormalizedRecReportParams} recReportParams - The reconciliation report parameters.
- * @param {Object} knex - The Knex.js database connection.
+ * @param {Knex} knex - The Knex.js database connection.
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs.
  */
 async function fetchDbCollections(recReportParams, knex) {
@@ -210,7 +210,6 @@ async function fetchDbCollections(recReportParams, knex) {
     return filteredDbCollections.map((collection) =>
       constructCollectionId(collection.name, collection.version));
   }
-  // TODO - make this a testable method
   const query = knex('collections')
     .select('cumulus_id', 'name', 'version');
   if (startTimestamp) {
@@ -342,6 +341,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
  *
  * @param {NormalizedRecReportParams} recReportParams - lambda's input filtering parameters to
  *                                   narrow limit of report.
+ * @param {Knex} knex - Database client for interacting with PostgreSQL database
  * @returns {Promise<Object>} an object with the okCollections, onlyInCumulus and
  * onlyInCmr
  */
