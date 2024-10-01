@@ -1,6 +1,8 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
 
+import { deconstructCollectionId } from '@cumulus/message/Collections';
+
 import { RetryOnDbConnectionTerminateError } from './retry';
 import { TableNames } from '../tables';
 
@@ -30,6 +32,7 @@ export const getCollectionsByGranuleIds = async (
 
 // TODO - This function is going to be super-non-performant
 // We need to identify the specific need here and see if we can optimize
+
 export const getUniqueCollectionsByGranuleFilter = async (params: {
   startTimestamp?: string,
   endTimestamp?: string,
@@ -39,43 +42,43 @@ export const getUniqueCollectionsByGranuleFilter = async (params: {
   knex: Knex,
 }) => {
   const { knex } = params;
-  // TODO use TableNames.* instead of hardcoding table names
-  const query = knex('collections')
-    .distinct('collections.*')
-    .innerJoin('granules', 'collections.cumulus_id', 'granules.collection_cumulus_id');
+  const collectionsTable = TableNames.collections;
+  const granulesTable = TableNames.granules;
+  const providersTable = TableNames.providers;
+
+  const query = knex(collectionsTable)
+    .distinct(`${collectionsTable}.*`)
+    .innerJoin(granulesTable, `${collectionsTable}.cumulus_id`, `${granulesTable}.collection_cumulus_id`);
+
   if (params.startTimestamp) {
-    query.where('granules.updated_at', '>=', params.startTimestamp);
+    query.where(`${granulesTable}.updated_at`, '>=', params.startTimestamp);
   }
   if (params.endTimestamp) {
-    query.where('granules.updated_at', '<=', params.endTimestamp);
+    query.where(`${granulesTable}.updated_at`, '<=', params.endTimestamp);
   }
 
   // Filter by collectionIds
   if (params.collectionIds && params.collectionIds.length > 0) {
-    const collectionNameVersionPairs = params.collectionIds.map((id) => {
-      const [name, version] = id.split('___'); // TODO this is a common, trivial method )
-      return { name, version };
-    });
+    const collectionNameVersionPairs = params.collectionIds.map((id) =>
+      deconstructCollectionId(id));
 
     query.whereIn(
-      ['collections.name', 'collections.version'],
+      [`${collectionsTable}.name`, `${collectionsTable}.version`],
       collectionNameVersionPairs.map(({ name, version }) => [name, version])
     );
   }
 
   // Filter by granuleIds
   if (params.granuleIds && params.granuleIds.length > 0) {
-    query.whereIn('granules.granule_id', params.granuleIds);
+    query.whereIn(`${granulesTable}.granule_id`, params.granuleIds);
   }
 
   // Filter by provider names
   if (params.providers && params.providers.length > 0) {
-    query.innerJoin('providers', 'granules.provider_cumulus_id', 'providers.cumulus_id');
-    query.whereIn('providers.name', params.providers);
+    query.innerJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    query.whereIn(`${providersTable}.name`, params.providers);
   }
 
-  query.orderBy(['collections.name', 'collections.version']);
-
-  console.log('query is', query.toString());
+  query.orderBy([`${collectionsTable}.name`, `${collectionsTable}.version`]);
   return query;
 };
