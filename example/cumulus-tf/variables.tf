@@ -339,7 +339,6 @@ variable "rds_connection_timing_configuration" {
       createTimeoutMillis: 20000,
       idleTimeoutMillis: 1000,
       reapIntervalMillis: 1000,
-      rejectUnauthorized: false,
   }
 }
 
