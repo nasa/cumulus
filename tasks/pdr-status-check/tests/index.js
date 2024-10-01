@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const awsServices = require('@cumulus/aws-client/services');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const isEqual = require('lodash/isEqual');
 const some = require('lodash/some');
 const {
@@ -90,7 +91,7 @@ test.serial('returns the correct results in the nominal case', async (t) => {
   try {
     sfn.describeExecution = ({ executionArn }) => {
       if (!executionStatuses[executionArn]) {
-        const error = awsServices.sfn().ExecutionDoesNotExist;
+        const error = new StepFunctions.ExecutionDoesNotExist;
         return Promise.reject(error);
       }
       return Promise.resolve({
