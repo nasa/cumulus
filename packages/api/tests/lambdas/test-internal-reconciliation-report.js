@@ -46,7 +46,6 @@ const {
   internalRecReportForGranules,
 } = require('../../lambdas/internal-reconciliation-report');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
-const models = require('../../models');
 
 let esAlias;
 let esIndex;
@@ -61,8 +60,6 @@ test.before((t) => {
 });
 
 test.beforeEach(async (t) => {
-  process.env.ReconciliationReportsTable = randomId('reconciliationTable');
-
   t.context.bucketsToCleanup = [];
   t.context.stackName = randomId('stack');
   t.context.systemBucket = randomId('bucket');
@@ -70,8 +67,6 @@ test.beforeEach(async (t) => {
 
   await awsServices.s3().createBucket({ Bucket: t.context.systemBucket })
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
-
-  await new models.ReconciliationReport().createTable();
 
   esAlias = randomId('esalias');
   esIndex = randomId('esindex');
@@ -100,12 +95,7 @@ test.afterEach.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName: t.context.testDbName,
   });
-  await Promise.all(
-    flatten([
-      t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
-      new models.ReconciliationReport().deleteTable(),
-    ])
-  );
+  await Promise.all(flatten(t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket)));
   await esClient.client.indices.delete({ index: esIndex });
 });
 
