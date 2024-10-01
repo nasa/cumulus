@@ -6,6 +6,7 @@ const sinon = require('sinon');
 const test = require('ava');
 
 const awsServices = require('@cumulus/aws-client/services');
+const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
 const sqs = require('@cumulus/aws-client/SQS');
 const {
   createQueue,
@@ -196,9 +197,7 @@ test.serial('handleEvent deletes message if execution already exists', async (t)
 
   const stubSFNThrowError = () => ({
     startExecution: () => {
-      const error = new Error('ExecutionAlreadyExists');
-      error.code = 'ExecutionAlreadyExists';
-      throw error;
+      throw new ExecutionAlreadyExists;
     },
   });
   const revert = sfStarter.__set__('sfn', stubSFNThrowError);
@@ -409,9 +408,7 @@ test.serial('handleSourceMappingEvent calls dispatch on messages in an EventSour
   };
   const stubSFNThrowError = () => ({
     startExecution: () => {
-      const error = new Error('ExecutionAlreadyExists');
-      error.code = 'ExecutionAlreadyExists';
-      throw error;
+      throw new ExecutionAlreadyExists;
     },
   });
   const stubSFNRandomThrowError = () => ({
