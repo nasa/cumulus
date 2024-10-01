@@ -30,9 +30,12 @@ const Logger = require('@cumulus/logger');
 const { getEsClient } = require('@cumulus/es-client/search');
 const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
 
+const {
+  ReconciliationReportPgModel,
+  translatePostgresReconReportToApiReconReport,
+} = require('@cumulus/db');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
-const { ReconciliationReport } = require('../models');
 const { errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
@@ -843,7 +846,9 @@ async function createReconciliationReport(recReportParams) {
 
       bucketReports.forEach((bucketReport) => {
         report.filesInCumulus.okCount += bucketReport.okCount;
-        report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3); // eslint-disable-line max-len
+        report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(
+          bucketReport.onlyInS3
+        );
         report.filesInCumulus.onlyInDb = report.filesInCumulus.onlyInDb.concat(
           bucketReport.onlyInDb
         );
@@ -921,15 +926,17 @@ async function processRequest(params) {
   if (reportType === 'Granule Inventory') reportKey = reportKey.replace('.json', '.csv');
 
   // add request to database
-  const reconciliationReportModel = new ReconciliationReport();
-  const reportRecord = {
+  const reconciliationReportPgModel = new ReconciliationReportPgModel();
+  const builtReportRecord = {
     name: reportRecordName,
     type: reportType,
     status: 'Pending',
     location: buildS3Uri(systemBucket, reportKey),
   };
-  let apiRecord = await reconciliationReportModel.create(reportRecord);
-  log.info(`Report added to database as pending: ${JSON.stringify(apiRecord)}.`);
+  let [reportPgRecord] = await reconciliationReportPgModel.create(knex, builtReportRecord);
+  let reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+  await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
+  log.info(`Report added to database as pending: ${JSON.stringify(reportApiRecord)}.`);
 
   const concurrency = env.CONCURRENCY || '3';
 
@@ -961,26 +968,36 @@ async function processRequest(params) {
       // TODO make this a better error (res.boom?)
       throw new Error(`Invalid report type: ${reportType}`);
     }
-    apiRecord = await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
-    await indexReconciliationReport(esClient, { ...apiRecord, status: 'Generated' }, process.env.ES_INDEX);
+
+    const generatedRecord = {
+      ...reportPgRecord,
+      status: 'Generated',
+    };
+    [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, generatedRecord);
+    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+    await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   } catch (error) {
-    log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`);
-    const updates = {
+    log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`); // eslint-disable-line max-len
+    const erroredRecord = {
+      ...reportPgRecord,
       status: 'Failed',
       error: {
         Error: error.message,
         Cause: errorify(error),
       },
     };
-    apiRecord = await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+    [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, erroredRecord);
+    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
     await indexReconciliationReport(
       esClient,
-      { ...apiRecord, ...updates },
+      reportApiRecord,
       process.env.ES_INDEX
     );
     throw error;
   }
-  return reconciliationReportModel.get({ name: reportRecord.name });
+
+  reportPgRecord = await reconciliationReportPgModel.get(knex, { name: builtReportRecord.name });
+  return translatePostgresReconReportToApiReconReport(reportPgRecord);
 }
 
 async function handler(event) {

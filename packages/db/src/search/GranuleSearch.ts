@@ -15,14 +15,9 @@ import { TableNames } from '../tables';
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
 interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
-  cumulus_id: number,
-  updated_at: Date,
-  collection_cumulus_id: number,
   collectionName: string,
   collectionVersion: string,
-  pdr_cumulus_id: number,
   pdrName?: string,
-  provider_cumulus_id?: number,
   providerName?: string,
 }
 

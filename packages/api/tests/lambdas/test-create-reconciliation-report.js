@@ -39,9 +39,11 @@ const {
   localStackConnectionEnv,
   migrationDir,
   ProviderPgModel,
+  ReconciliationReportPgModel,
   translateApiCollectionToPostgresCollection,
-  translateApiGranuleToPostgresGranule,
   translateApiFiletoPostgresFile,
+  translateApiGranuleToPostgresGranule,
+  translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { Search } = require('@cumulus/es-client/search');
@@ -54,7 +56,6 @@ const {
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
-const models = require('../../models');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 
@@ -410,8 +411,10 @@ test.beforeEach(async (t) => {
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.filePgModel = new FilePgModel();
   t.context.granulePgModel = new GranulePgModel();
-  process.env.ReconciliationReportsTable = randomId('reconciliationTable');
+  t.context.reconciliationReportPgModel = new ReconciliationReportPgModel();
+});
 
+test.beforeEach(async (t) => {
   t.context.bucketsToCleanup = [];
   t.context.stackName = randomId('stack');
   t.context.systemBucket = randomId('bucket');
@@ -419,8 +422,6 @@ test.beforeEach(async (t) => {
 
   await awsServices.s3().createBucket({ Bucket: t.context.systemBucket })
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
-
-  await new models.ReconciliationReport().createTable();
 
   const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
   cmrSearchStub.withArgs('collections').resolves([]);
@@ -460,12 +461,7 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await Promise.all(
-    flatten([
-      t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
-      new models.ReconciliationReport().deleteTable(),
-    ])
-  );
+  await Promise.all(flatten(t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket)));
   await t.context.executionPgModel.delete(
     t.context.knex,
     { cumulus_id: t.context.executionCumulusId }
@@ -1769,17 +1765,23 @@ test.serial('When report creation fails, reconciliation report status is set to 
   };
 
   await t.throwsAsync(handler(event));
-  const reportRecord = await new models.ReconciliationReport().get({ name: reportName });
-  t.is(reportRecord.status, 'Failed');
-  t.is(reportRecord.type, 'Inventory');
+
+  const reportPgRecord = await t.context.reconciliationReportPgModel.get(
+    t.context.knex, { name: reportName }
+  );
+  // reconciliation report lambda outputs the translated API version, not the PG version, so
+  // it should be translated for comparison, at least for the comparison with the ES (API) version
+  const reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+  t.is(reportApiRecord.status, 'Failed');
+  t.is(reportApiRecord.type, 'Inventory');
 
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
   t.is(report.status, 'Failed');
   t.truthy(report.error);
 
-  const esRecord = await t.context.esReportClient.get(reportRecord.name);
-  t.like(esRecord, reportRecord);
+  const esRecord = await t.context.esReportClient.get(reportName);
+  t.like(esRecord, reportApiRecord);
 });
 
 test.serial('Creates a valid Granule Inventory report', async (t) => {
@@ -2021,17 +2023,22 @@ test.serial('When there is an error for an ORCA backup report, it throws', async
     { message: 'ORCA error' }
   );
 
-  const reportRecord = await new models.ReconciliationReport().get({ name: reportName });
-  t.is(reportRecord.status, 'Failed');
-  t.is(reportRecord.type, event.reportType);
+  const reportPgRecord = await t.context.reconciliationReportPgModel.get(
+    t.context.knex, { name: reportName }
+  );
+  // reconciliation report lambda outputs the translated API version, not the PG version, so
+  // it should be translated for comparison, at least for the comparison with the ES (API) version
+  const reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+  t.is(reportApiRecord.status, 'Failed');
+  t.is(reportApiRecord.type, event.reportType);
 
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
   t.is(report.status, 'Failed');
   t.is(report.reportType, event.reportType);
 
-  const esRecord = await t.context.esReportClient.get(reportRecord.name);
-  t.like(esRecord, reportRecord);
+  const esRecord = await t.context.esReportClient.get(reportName);
+  t.like(esRecord, reportApiRecord);
 });
 
 test.serial('Internal reconciliation report type throws an error', async (t) => {

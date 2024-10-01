@@ -11,7 +11,7 @@ const {
   createRejectableTransaction,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { Search } = require('@cumulus/es-client/search');
+const { PdrSearch } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: '@cumulus/api/pdrs' });
@@ -24,12 +24,8 @@ const log = new Logger({ sender: '@cumulus/api/pdrs' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'pdr',
-    process.env.ES_INDEX
-  );
-  const result = await search.query();
+  const dbSearch = new PdrSearch({ queryStringParameters: req.query });
+  const result = await dbSearch.query();
   return res.send(result);
 }
 

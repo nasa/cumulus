@@ -12,7 +12,6 @@
     "cacheable-request",
     "http-cache-semantics",
     "lodash.pick",
-    "hoek",
     "semver",
     "axios"
   ]
