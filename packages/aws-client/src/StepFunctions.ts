@@ -7,6 +7,7 @@ import {
   DescribeExecutionOutput,
   DescribeStateMachineInput,
   DescribeStateMachineOutput,
+  ExecutionDoesNotExist,
   GetExecutionHistoryInput,
   GetExecutionHistoryOutput,
   HistoryEvent,
@@ -32,7 +33,7 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
   describeExecutionPromise
     .then(() => true)
     .catch((error) => {
-      if (error.name === 'ExecutionDoesNotExist') return false;
+      if (error instanceof ExecutionDoesNotExist) return false;
       if (inTestMode() && error.name === 'InvalidName') return false;
       throw error;
     });
