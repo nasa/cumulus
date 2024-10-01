@@ -90,7 +90,7 @@ test.serial('returns the correct results in the nominal case', async (t) => {
   try {
     sfn.describeExecution = ({ executionArn }) => {
       if (!executionStatuses[executionArn]) {
-        const error = new sfn.ExecutionDoesNotExist;
+        const error = awsServices.sfn().ExecutionDoesNotExist;
         return Promise.reject(error);
       }
       return Promise.resolve({

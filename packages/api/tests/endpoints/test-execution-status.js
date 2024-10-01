@@ -165,7 +165,7 @@ const stepFunctionMock = {
 const executionExistsMock = (arn) => {
   if ((arn.executionArn === expiredExecutionArn)
       || (arn.executionArn === expiredMissingExecutionArn)) {
-    const error = new awsServices.StepFunctions.ExecutionDoesNotExist;
+    const error = awsServices.sfn().ExecutionDoesNotExist;
     return Promise.reject(error);
   }
 
