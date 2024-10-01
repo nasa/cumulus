@@ -24,8 +24,6 @@ import { RecordDoesNotExist } from '@cumulus/errors';
 import { dynamodb } from './services';
 import { improveStackTrace } from './utils';
 
-export { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
-
 /**
  * Call DynamoDb client get
  *

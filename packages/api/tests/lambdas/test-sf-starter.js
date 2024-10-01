@@ -297,7 +297,7 @@ test.serial('handleThrottledEvent logs error and deletes message when execution 
       promise: async () => {
         const response = await semaphore.get(queueUrl);
         t.is(response.semvalue, 1);
-        throw awsServices.sfn().ExecutionAlreadyExists;
+        throw new ExecutionAlreadyExists();
       },
     }),
   });

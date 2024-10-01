@@ -1,5 +1,4 @@
 /* eslint-disable max-classes-per-file */
-
 /**
  * A constructor function that returns an instance of Error (or something that inherits from Error).
  * Typically, this is going to be a class, such as `Error`, `TypeError`, etc.
