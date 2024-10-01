@@ -8,13 +8,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Replace ElasticSearch Phase 2
 
-- **CUMULUS-3806**
-  - Update `@cumulus/db/lib/granule.getGranulesByApiPropertiesQuery` to
-    be parameterized and include a modifier on `temporalBoundByCreatedAt`
-  - Remove endpoint call to and all tests for Internal Reconciliation Reports
-    and updated API to throw an error if report is requested
-  - Update Orca reconciliation reports to pull granules for comparison from
-    postgres via `getGranulesByApiPropertiesQuery`
 - **CUMULUS-3229**
   - Remove ElasticSearch queries from Rule LIST endpoint
 - **CUMULUS-3230**
@@ -33,11 +26,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Elasticsearch
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
+- **CUMULUS-3806**
+  - Update `@cumulus/db/lib/granule.getGranulesByApiPropertiesQuery` to
+    be parameterized and include a modifier on `temporalBoundByCreatedAt`
+  - Remove endpoint call to and all tests for Internal Reconciliation Reports
+    and updated API to throw an error if report is requested
+  - Update Orca reconciliation reports to pull granules for comparison from
+    postgres via `getGranulesByApiPropertiesQuery`
 - **CUMULUS-3837**
   - Added `reconciliation_reports` table in RDS, including indexes
   - Created pg model, types, and translation for `reconciliationReports` in `@cumulus/db`
   - Created api types for `reconciliation_reports` in `@cumulus/types/api`
-  - Updated reconciliation reports lambda to write to new RDS table instead of Dynamo 
+  - Updated reconciliation reports lambda to write to new RDS table instead of Dynamo
   - Updated `@cumulus/api/endpoints/reconciliation-reports` `getReport` and `deleteReport` to work with the new RDS table instead of Dynamo
 
 ## [Unreleased]
