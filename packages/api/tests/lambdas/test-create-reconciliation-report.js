@@ -405,16 +405,12 @@ test.beforeEach(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
-
   t.context.providerPgModel = new ProviderPgModel();
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.filePgModel = new FilePgModel();
   t.context.granulePgModel = new GranulePgModel();
   t.context.reconciliationReportPgModel = new ReconciliationReportPgModel();
-});
-
-test.beforeEach(async (t) => {
   t.context.bucketsToCleanup = [];
   t.context.stackName = randomId('stack');
   t.context.systemBucket = randomId('bucket');
@@ -461,7 +457,9 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await Promise.all(flatten(t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket)));
+  await Promise.all(
+    flatten(t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket))
+  );
   await t.context.executionPgModel.delete(
     t.context.knex,
     { cumulus_id: t.context.executionCumulusId }
