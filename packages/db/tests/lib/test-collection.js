@@ -17,7 +17,7 @@ const {
 
 const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
 
-test.before(async (t) => {
+test.beforeEach(async (t) => {
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
     migrationDir
@@ -27,34 +27,35 @@ test.before(async (t) => {
 
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.granulePgModel = new GranulePgModel();
+
+  t.context.collection1 = fakeCollectionRecordFactory();
+  t.context.collection2 = fakeCollectionRecordFactory();
+  t.context.pgCollections = await t.context.collectionPgModel.insert(
+    t.context.knex,
+    [t.context.collection1, t.context.collection2],
+    '*'
+  );
+
+  t.context.granules = [
+    fakeGranuleRecordFactory({ collection_cumulus_id: t.context.pgCollections[0].cumulus_id }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: t.context.pgCollections[1].cumulus_id }),
+  ];
+
+  await t.context.granulePgModel.insert(
+    t.context.knex,
+    t.context.granules
+  );
 });
 
-test.after.always(async (t) => {
+test.afterEach.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
     testDbName,
   });
 });
 
-test('getCollectionsByGranuleIds() returns collections for given granule IDs', async (t) => {
-  const collection1 = fakeCollectionRecordFactory();
-  const collection2 = fakeCollectionRecordFactory();
-
-  const pgCollections = await t.context.collectionPgModel.insert(
-    t.context.knex,
-    [collection1, collection2],
-    '*'
-  );
-
-  const granules = [
-    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[0].cumulus_id }),
-    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[1].cumulus_id }),
-  ];
-  await t.context.granulePgModel.insert(
-    t.context.knex,
-    granules
-  );
-
+test.serial('getCollectionsByGranuleIds() returns collections for given granule IDs', async (t) => {
+  const { pgCollections, granules } = t.context;
   const collections = await getCollectionsByGranuleIds(
     t.context.knex,
     granules.map((granule) => granule.granule_id)
@@ -64,24 +65,16 @@ test('getCollectionsByGranuleIds() returns collections for given granule IDs', a
 });
 
 test('getCollectionsByGranuleIds() only returns unique collections', async (t) => {
-  const collection1 = fakeCollectionRecordFactory();
-  const collection2 = fakeCollectionRecordFactory();
-
-  const pgCollections = await t.context.collectionPgModel.insert(
-    t.context.knex,
-    [collection1, collection2],
-    '*'
-  );
-
-  const granules = [
-    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[0].cumulus_id }),
-    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[1].cumulus_id }),
-    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[1].cumulus_id }),
-  ];
+  const { pgCollections } = t.context;
+  const testGranule = fakeGranuleRecordFactory({
+    collection_cumulus_id: pgCollections[1].cumulus_id,
+  });
   await t.context.granulePgModel.insert(
     t.context.knex,
-    granules
+    [testGranule]
   );
+
+  const granules = [...t.context.granules, testGranule];
 
   const collections = await getCollectionsByGranuleIds(
     t.context.knex,
@@ -92,21 +85,15 @@ test('getCollectionsByGranuleIds() only returns unique collections', async (t) =
 });
 
 test.serial('getCollectionsByGranuleIds() retries on connection terminated unexpectedly error', async (t) => {
-  const { knex } = t.context;
-  const collection1 = fakeCollectionRecordFactory();
-  const collection2 = fakeCollectionRecordFactory();
-
-  const pgCollections = await t.context.collectionPgModel.insert(
-    knex,
-    [collection1, collection2],
-    '*'
+  const { knex, pgCollections } = t.context;
+  const testGranule = fakeGranuleRecordFactory({
+    collection_cumulus_id: pgCollections[1].cumulus_id,
+  });
+  await t.context.granulePgModel.insert(
+    t.context.knex,
+    [testGranule]
   );
-
-  const granules = [
-    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[0].cumulus_id }),
-    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[1].cumulus_id }),
-    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[1].cumulus_id }),
-  ];
+  const granules = [...t.context.granules, testGranule];
 
   const knexStub = sinon.stub(knex, 'select').returns({
     select: sinon.stub().returnsThis(),
