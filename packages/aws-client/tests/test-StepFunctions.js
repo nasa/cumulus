@@ -167,8 +167,7 @@ test('doesExecutionExist() returns true if the Promise resolves', async (t) => {
 });
 
 test('doesExecutionExist() returns false if the Promise rejects with an ExecutionDoesNotExist name', async (t) => {
-  const err = awsServices.sfn().ExecutionDoesNotExist;
-
+  const err = StepFunctions.ExecutionDoesNotExist;
   t.false(await StepFunctions.doesExecutionExist(Promise.reject(err)));
 });
 
