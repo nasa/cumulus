@@ -42,14 +42,8 @@ export interface ErrorWithOptionalCode extends Error {
   code?: string;
 }
 
-// TODO: This could use a closer look. We're expecting a ThrottlingException error
-//   on e.g. getStackStatus, which calls the CloudFormation SDK. That service doesn't appear
-//   to throw this error.
 /**
  * Test to see if a given exception is a Throttling Exception.
- * Note: ThrottlingException is a Cumulus-defined error, not an AWS-SDK error type.
- * Each aws-sdk service can throw a ThrottlingException error and each is a unique type
- * that inherits from that service's base error class.
  */
 export const isThrottlingException = (err: ErrorWithOptionalCode) =>
   err.name === 'ThrottlingException' || err.code === 'ThrottlingException';
