@@ -59,6 +59,9 @@ module "ingest" {
 
   sf_event_sqs_to_db_records_sqs_queue_url = module.archive.sf_event_sqs_to_db_records_sqs_queue_url
 
+  sqs_message_consumer_watcher_time_limit = var.sqs_message_consumer_watcher_time_limit
+  sqs_message_consumer_watcher_message_limit = var.sqs_message_consumer_watcher_message_limit
+
   tags = var.tags
 
   # Cloudwatch log retention config
