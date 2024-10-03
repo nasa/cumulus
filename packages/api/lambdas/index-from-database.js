@@ -3,7 +3,6 @@
 const isNil = require('lodash/isNil');
 const pLimit = require('p-limit');
 
-const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const log = require('@cumulus/common/log');
 
 const { getEsClient } = require('@cumulus/es-client/search');
@@ -15,6 +14,7 @@ const {
   ProviderPgModel,
   RulePgModel,
   PdrPgModel,
+  ReconciliationReportPgModel,
   getKnexClient,
   translatePostgresCollectionToApiCollection,
   translatePostgresExecutionToApiExecution,
@@ -23,6 +23,7 @@ const {
   translatePostgresProviderToApiProvider,
   translatePostgresPdrToApiPdr,
   translatePostgresRuleToApiRule,
+  translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
 const indexer = require('@cumulus/es-client/indexer');
 
@@ -59,62 +60,6 @@ const getEsRequestConcurrency = (event) => {
 
   return 10;
 };
-
-// Legacy method used for indexing Reconciliation Reports only
-async function indexReconciliationReports({
-  esClient,
-  tableName,
-  esIndex,
-  indexFn,
-  limitEsRequests,
-}) {
-  const scanQueue = new DynamoDbSearchQueue({
-    TableName: tableName,
-  });
-
-  let itemsComplete = false;
-  let totalItemsIndexed = 0;
-
-  /* eslint-disable no-await-in-loop */
-  while (itemsComplete === false) {
-    await scanQueue.fetchItems();
-
-    itemsComplete = scanQueue.items[scanQueue.items.length - 1] === null;
-
-    if (itemsComplete) {
-      // pop the null item off
-      scanQueue.items.pop();
-    }
-
-    if (scanQueue.items.length === 0) {
-      log.info(`No records to index for ${tableName}`);
-      return true;
-    }
-
-    log.info(`Attempting to index ${scanQueue.items.length} records from ${tableName}`);
-
-    const input = scanQueue.items.map(
-      (item) => limitEsRequests(
-        async () => {
-          try {
-            return await indexFn(esClient, item, esIndex);
-          } catch (error) {
-            log.error(`Error indexing record ${JSON.stringify(item)}, error: ${error}`);
-            return false;
-          }
-        }
-      )
-    );
-    const results = await Promise.all(input);
-    const successfulResults = results.filter((result) => result !== false);
-    totalItemsIndexed += successfulResults;
-
-    log.info(`Completed index of ${successfulResults.length} records from ${tableName}`);
-  }
-  /* eslint-enable no-await-in-loop */
-
-  return totalItemsIndexed;
-}
 
 /**
 * indexModel - Index a postgres RDS table's contents to ElasticSearch
@@ -199,7 +144,6 @@ async function indexFromDatabase(event) {
   const {
     indexName: esIndex,
     esHost = process.env.ES_HOST,
-    reconciliationReportsTable = process.env.ReconciliationReportsTable,
     postgresResultPageSize,
     postgresConnectionPoolSize,
   } = event;
@@ -286,12 +230,15 @@ async function indexFromDatabase(event) {
       knex,
       pageSize,
     }),
-    indexReconciliationReports({
+    indexModel({
       esClient,
-      tableName: reconciliationReportsTable,
       esIndex,
       indexFn: indexer.indexReconciliationReport,
       limitEsRequests,
+      postgresModel: new ReconciliationReportPgModel(),
+      translationFunction: translatePostgresReconReportToApiReconReport,
+      knex,
+      pageSize,
     }),
     indexModel({
       esClient,
