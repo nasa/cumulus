@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Phase 2 Release
 
+### Migration Notes
+
+#### CUMULUS-3833 Migration of ReconciliationReports from DynamoDB to Postgres after Cumulus is upgraded.
+
+To invoke the Lambda and start the ReconciliationReport migration, you can use the AWS Console or CLI:
+
+```bash
+aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
+```
+
+- `PREFIX` is your Cumulus deployment prefix.
+- `OUTFILE` (**optional**) is the filepath where the Lambda output will be saved.
+
 ### Replace ElasticSearch Phase 2
 
 - **CUMULUS-3229**
@@ -26,6 +39,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Elasticsearch
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
+- **CUMULUS-3833**
+  - Added `ReconciliationReportMigration` lambda to migrate ReconciliationReports from DynamoDB
+    to Postgres
 - **CUMULUS-3837**
   - Added `reconciliation_reports` table in RDS, including indexes
   - Created pg model, types, and translation for `reconciliationReports` in `@cumulus/db`
