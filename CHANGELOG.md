@@ -6,9 +6,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration Notes
+
+#### CUMULUS-3536 Upgrading from Aurora Serverless V1 to V2
+
+- The updates in CUMULUS-3536 require an upgrade of the postgres database.
+  Please follow [Upgrading from Aurora Serverless V1 to V2]
+  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/serverless-v2-upgrade)
+  
 ### Added
 
+- **CUMULUS-3536**
+  - Added `rejectUnauthorized` = false to db-provision-user-database as the Lambda
+    does not have the Serverless v2 SSL certifications installed.
+- **CUMULUS-3020**
+  - Add sf_event_sqs_lambda_timeout option to `cumulus`/`archive` terraform modules to 
+    allow user modification of sfEventSqsLambda's timeout, overriding the default configuration 
+    value derived from postgres `acquireTimeoutMillis`configuration
+
 ### Changed
+
+- **CUMULUS-3725**
+  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
+    to 0. This setting for the Aurora Serverless v2 database allows non-SSL
+    connections to the database, and is intended to be a temporary solution
+    until Cumulus has been updated to import the RDS rds-ca-rsa2048-g1 CA bundles in Lambda environments.
+    See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
 
 ### Fixed
 - **CUMULUS-3901**
@@ -118,8 +141,6 @@ degraded execution table operations.
 
 ### Added
 
-- **CUMULUS-3020**
-  - Add sf_event_sqs_lambda_timeout option to `cumulus`/`archive` terraform modules to allow user modification of sfEventSqsLambda's timeout, overriding the default configuration value derived from postgres `acquireTimeoutMillis`configuration
 - **CUMULUS-3320**
   - Added endpoint `/executions/bulkDeleteExecutionsByCollection` to allow
     bulk deletion of executions from elasticsearch by collectionId
