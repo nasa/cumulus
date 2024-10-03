@@ -1,7 +1,7 @@
 locals {
   # Pulled out into a local to prevent cyclic dependencies
   # between the IAM role, queue, and lambda function.
-  sf_event_sqs_lambda_timeout = var.sf_event_sqs_lambda_timeout != null ? var.sf_event_sqs_lambda_timeout : (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60
+  sf_event_sqs_lambda_timeout = lookup(var.lambda_timeouts, "sfEventSqsToDbRecords", (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60)
 }
 
 resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {

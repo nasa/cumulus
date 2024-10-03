@@ -23,8 +23,6 @@ module "archive" {
   elasticsearch_security_group_id           = var.elasticsearch_security_group_id
   elasticsearch_remove_index_alias_conflict = var.elasticsearch_remove_index_alias_conflict
 
-  sf_event_sqs_lambda_timeout = var.sf_event_sqs_lambda_timeout
-
   es_index_shards        = var.es_index_shards
   es_request_concurrency = var.es_request_concurrency
 

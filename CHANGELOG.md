@@ -13,16 +13,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The updates in CUMULUS-3536 require an upgrade of the postgres database.
   Please follow [Upgrading from Aurora Serverless V1 to V2]
   (https://nasa.github.io/cumulus/docs/next/upgrade-notes/serverless-v2-upgrade)
-  
+
 ### Added
 
 - **CUMULUS-3536**
   - Added `rejectUnauthorized` = false to db-provision-user-database as the Lambda
     does not have the Serverless v2 SSL certifications installed.
 - **CUMULUS-3020**
-  - Add sf_event_sqs_lambda_timeout option to `cumulus`/`archive` terraform modules to 
-    allow user modification of sfEventSqsLambda's timeout, overriding the default configuration 
-    value derived from postgres `acquireTimeoutMillis`configuration
+  - Updated sfEventSqsToDbRecords to allow override of the default value
+   (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60)
+   via a key 'sfEventSqsToDbRecords' on `var.lambda_timeouts` on the main cumulus module/archive module
+
+  **Please note** - updating this configuration is for adavanced users only.  Value changes will modify the visibility
+  timeout on `sfEventSqsToDbRecordsDeadLetterQueue` and `sfEventSqsToDbRecordsInputQueue` and may lead to system
+  instability.
 
 ### Changed
 
