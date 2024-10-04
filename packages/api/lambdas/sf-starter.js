@@ -5,6 +5,7 @@ const get = require('lodash/get');
 
 const { sfn } = require('@cumulus/aws-client/services');
 const sqs = require('@cumulus/aws-client/SQS');
+const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
 const Logger = require('@cumulus/logger');
 const {
   buildExecutionArn,
@@ -145,7 +146,7 @@ async function handleSourceMappingEvent(event) {
       return await dispatch(sqsRecord.eventSourceARN, sqsRecord);
     } catch (error) {
       // If error is ExecutionAlreadyExists, do not include in batchItemFailures
-      if (error.code === 'ExecutionAlreadyExists') {
+      if (error instanceof ExecutionAlreadyExists) {
         logger.debug(`Warning: ${error}`);
         return batchItemFailures;
       }
