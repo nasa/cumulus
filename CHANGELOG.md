@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v18.5.0] 2024-10-03
+
+### Migration Notes
+
+#### CUMULUS-3536 Upgrading from Aurora Serverless V1 to V2
+
+- The updates in CUMULUS-3536 require an upgrade of the postgres database.
+  Please follow [Upgrading from Aurora Serverless V1 to V2]
+  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/serverless-v2-upgrade)
+
+### Added
+
+- **CUMULUS-3536**
+  - Added `rejectUnauthorized` = false to db-provision-user-database as the Lambda
+    does not have the Serverless v2 SSL certifications installed.
+
+### Changed
+
+- **CUMULUS-3725**
+  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
+    to 0. This setting for the Aurora Serverless v2 database allows non-SSL
+    connections to the database, and is intended to be a temporary solution
+    until Cumulus has been updated to import the RDS rds-ca-rsa2048-g1 CA bundles in Lambda environments.
+    See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
+
+### Fixed
+
+- **CUMULUS-3901**
+  - Fix error checking in @cumulus/errors to use Error.name in addition to Error.code
+- **CUMULUS-3824**
+  - Added the missing double quote in ecs_cluster autoscaling cf template
+- **CUMULUS-3846**
+  - improve reliability of unit tests
+    - tests for granules api get requests separated out to new file
+    - cleanup of granule database resources to ensure no overlap
+    - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
+    - increase timeout in aws-client tests
+- **Snyk**
+  - Upgraded moment from 2.29.4 to 2.30.1
+  - Upgraded pg from ~8.10 to ~8.12
+
 ## [v18.4.0] 2024-08-16
 
 ### Migration Notes
@@ -7965,7 +8006,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v18.4.0...HEAD
+[v18.5.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v18.5.0
 [v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.4.0
 [v18.3.3]: https://github.com/nasa/cumulus/compare/v18.3.2...v18.3.3
 [v18.3.2]: https://github.com/nasa/cumulus/compare/v18.3.1...v18.3.2
