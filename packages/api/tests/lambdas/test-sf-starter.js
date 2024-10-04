@@ -12,6 +12,7 @@ const {
   receiveSQSMessages,
   sendSQSMessage,
 } = require('@cumulus/aws-client/SQS');
+const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
 const { ResourcesLockedError } = require('@cumulus/errors');
 const { sleep } = require('@cumulus/common');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -196,9 +197,7 @@ test.serial('handleEvent deletes message if execution already exists', async (t)
 
   const stubSFNThrowError = () => ({
     startExecution: () => {
-      const error = new Error('ExecutionAlreadyExists');
-      error.code = 'ExecutionAlreadyExists';
-      throw error;
+      throw new ExecutionAlreadyExists();
     },
   });
   const revert = sfStarter.__set__('sfn', stubSFNThrowError);
@@ -298,9 +297,7 @@ test.serial('handleThrottledEvent logs error and deletes message when execution 
       promise: async () => {
         const response = await semaphore.get(queueUrl);
         t.is(response.semvalue, 1);
-        const error = new Error('ExecutionAlreadyExists');
-        error.code = 'ExecutionAlreadyExists';
-        throw error;
+        throw new ExecutionAlreadyExists();
       },
     }),
   });
@@ -409,9 +406,7 @@ test.serial('handleSourceMappingEvent calls dispatch on messages in an EventSour
   };
   const stubSFNThrowError = () => ({
     startExecution: () => {
-      const error = new Error('ExecutionAlreadyExists');
-      error.code = 'ExecutionAlreadyExists';
-      throw error;
+      throw new ExecutionAlreadyExists();
     },
   });
   const stubSFNRandomThrowError = () => ({
