@@ -37,8 +37,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     until Cumulus has been updated to import the RDS rds-ca-rsa2048-g1 CA bundles in Lambda environments.
     See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
 - **CUMULUS-3906**
-  - Bumps example ORCA deployment to version v10.0.0. This version is necessary to support
-    Aurora Serverless V2.
+  - Bumps example ORCA deployment to version v10.0.0.
 
 ### Fixed
 
