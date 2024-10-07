@@ -38,6 +38,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
 
 ### Fixed
+- **CUMULUS-3902**
+  - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
 - **CUMULUS-3901**
   - Fix error checking in @cumulus/errors to use Error.name in addition to Error.code
 - **CUMULUS-3824**

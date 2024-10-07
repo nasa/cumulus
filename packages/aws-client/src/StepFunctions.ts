@@ -7,6 +7,7 @@ import {
   DescribeExecutionOutput,
   DescribeStateMachineInput,
   DescribeStateMachineOutput,
+  ExecutionDoesNotExist,
   GetExecutionHistoryInput,
   GetExecutionHistoryOutput,
   HistoryEvent,
@@ -18,7 +19,13 @@ import { sfn } from './services';
 import { retryOnThrottlingException } from './utils';
 import { inTestMode } from './test-utils';
 
-export { HistoryEvent, DescribeExecutionOutput } from '@aws-sdk/client-sfn';
+export {
+  DescribeExecutionOutput,
+  ExecutionDoesNotExist,
+  ExecutionAlreadyExists,
+  HistoryEvent,
+  StateMachineDoesNotExist,
+} from '@aws-sdk/client-sfn';
 
 // Utility functions
 
@@ -26,7 +33,7 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
   describeExecutionPromise
     .then(() => true)
     .catch((error) => {
-      if (error.name === 'ExecutionDoesNotExist') return false;
+      if (error instanceof ExecutionDoesNotExist) return false;
       if (inTestMode() && error.name === 'InvalidName') return false;
       throw error;
     });

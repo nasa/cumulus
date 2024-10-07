@@ -12,7 +12,7 @@ test.before((t) => {
 
       if (params.Key === 'does-not-exist') {
         const error = new Error();
-        error.code = 'NotFound';
+        error.name = 'NotFound';
         return Promise.reject(error);
       }
 
