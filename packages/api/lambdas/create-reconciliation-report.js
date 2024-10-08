@@ -20,10 +20,10 @@ const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const {
   getFilesAndGranuleInfoQuery,
-  getKnexClient,
-  QuerySearchClient,
-  getUniqueCollectionsByGranuleFilter,
   getGranulesByApiPropertiesQuery,
+  getKnexClient,
+  getUniqueCollectionsByGranuleFilter,
+  QuerySearchClient,
   translatePostgresFileToApiFile,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
@@ -53,7 +53,15 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  * @typedef {import('knex').Knex} Knex
  * @typedef {import('@cumulus/es-client/search').EsClient} EsClient
  * @typedef {import('../lib/types').NormalizedRecReportParams } NormalizedRecReportParams
+ * @typedef {import('../lib/types').EnhancedNormalizedRecReportParams}
+ * EnhancedNormalizedRecReportParams
  * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRSettings
+ * @typedef {import('@cumulus/db').PostgresReconciliationReportRecord}
+ * PostgresReconciliationReportRecord
+ * @typedef {import('@cumulus/types/api/reconciliation_reports').ReconciliationReportStatus}
+ * ReconciliationReportStatus
+ * @typedef {import('@cumulus/types/api/reconciliation_reports').ReconciliationReportType}
+ * ReconciliationReportType
  */
 
 /**
@@ -120,6 +128,14 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  * - The list of granules only in Cumulus.
  * @property {Array<{granuleId: string, collectionId: string}>} onlyInCumulus
  */
+
+/**
+  * @typedef {Object} FilesInCumulus
+  * @property {number} okCount
+  * @property {Object<string, number>} okCountByGranule
+  * @property {string[]} onlyInS3
+  * @property {Object[]} onlyInDb
+  */
 /**
  *
  * @param {string} reportType - reconciliation report type
@@ -663,7 +679,6 @@ async function reconciliationReportForGranules(params) {
         await pgGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
         await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
 
-        // TODO - this is an api granule file object.
         // compare the files now to avoid keeping the granules' information in memory
         // eslint-disable-next-line no-await-in-loop
         const fileReport = await reconciliationReportForGranuleFiles({
@@ -797,7 +812,7 @@ function _uploadReportToS3(report, systemBucket, reportKey) {
 /**
  * Create a Reconciliation report and save it to S3
  *
- * @param {NormalizedRecReportParams} recReportParams - params
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - params
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
@@ -819,13 +834,7 @@ async function createReconciliationReport(recReportParams) {
   const bucketsConfig = new BucketsConfig(bucketsConfigJson);
 
   // Write an initial report to S3
-  /**
-  * @type {Object}
-  * @property {number} okCount
-  * @property {Object<string, number>} okCountByGranule
-  * @property {string[]} onlyInS3
-  * @property {Object[]} [onlyInDb]
-  */
+  /** @type {FilesInCumulus} */
   const filesInCumulus = {
     okCount: 0,
     okCountByGranule: {},
@@ -880,7 +889,7 @@ async function createReconciliationReport(recReportParams) {
               + bucketGranuleCount;
           });
         } else {
-          delete report.filesInCumulus.okCountByGranule;
+          report.filesInCumulus.okCountByGranule = {};
         }
       });
     }
@@ -919,7 +928,7 @@ async function createReconciliationReport(recReportParams) {
  * @param {Object} params - params
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @param {string} params.stackName - the name of the CUMULUS stack
- * @param {string} params.reportType - the type of reconciliation report
+ * @param {ReconciliationReportType} params.reportType - the type of reconciliation report
  * @param {string} params.reportName - the name of the report
  * @param {Env} params.env - the environment variables
  * @param {Knex} params.knex - Optional Instance of a Knex client for testing
@@ -948,6 +957,7 @@ async function processRequest(params) {
   const builtReportRecord = {
     name: reportRecordName,
     type: reportType,
+    /** @type ReconciliationReportStatus */
     status: 'Pending',
     location: buildS3Uri(systemBucket, reportKey),
   };
@@ -959,7 +969,6 @@ async function processRequest(params) {
   const concurrency = env.CONCURRENCY || '3';
 
   try {
-    /** @type NormalizedRecReportParams */
     const recReportParams = {
       ...params,
       createStartTime,
@@ -989,6 +998,7 @@ async function processRequest(params) {
 
     const generatedRecord = {
       ...reportPgRecord,
+      /** @type ReconciliationReportStatus */
       status: 'Generated',
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, generatedRecord);
@@ -998,6 +1008,7 @@ async function processRequest(params) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`); // eslint-disable-line max-len
     const erroredRecord = {
       ...reportPgRecord,
+      /** @type ReconciliationReportStatus */
       status: 'Failed',
       error: {
         Error: error.message,

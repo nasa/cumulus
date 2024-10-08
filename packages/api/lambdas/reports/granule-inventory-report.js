@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const noop = require('lodash/noop');
@@ -16,10 +18,13 @@ const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
 const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
 
 /**
+ * @typedef {import('../../lib/types').EnhancedNormalizedRecReportParams}
+ * EnhancedNormalizedRecReportParams
+ */
+
+/**
  * Builds a CSV file of all granules in the Cumulus DB
- * @param {Object} recReportParams
- * @param {string} recReportParams.reportKey - s3 key to store report
- * @param {string} recReportParams.systemBucket - bucket to store report.
+ * @param {EnhancedNormalizedRecReportParams} recReportParams
  * @returns {Promise<null>} - promise of a report written to s3.
  */
 async function createGranuleInventoryReport(recReportParams) {

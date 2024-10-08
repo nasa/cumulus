@@ -36,6 +36,11 @@ const logger = new Logger({ sender: '@cumulus/api' });
 const maxResponsePayloadSizeBytes = 6 * 1000 * 1000;
 
 /**
+* @typedef {import('../lib/types').NormalizedRecReportParams} NormalizedRecReportParams
+* @typedef {import('../lib/types').RecReportParams} RecReportParams
+*/
+
+/**
  * List all reconciliation reports
  *
  * @param {Object} req - express request object

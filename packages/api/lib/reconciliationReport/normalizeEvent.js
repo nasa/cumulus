@@ -111,7 +111,11 @@ function normalizeEvent(event) {
   validateReportType(reportType);
 
   let {
-    collectionIds: anyCollectionIds, collectionId, granuleId, provider, ...modifiedEvent
+    collectionIds: anyCollectionIds,
+    collectionId = undefined,
+    granuleId = undefined,
+    provider = undefined,
+    ...modifiedEvent
   } = { ...event };
   if (anyCollectionIds) {
     throw new InvalidArgument('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');

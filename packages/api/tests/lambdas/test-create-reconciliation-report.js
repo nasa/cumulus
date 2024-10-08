@@ -578,7 +578,7 @@ test.serial('Generates a valid Inventory reconciliation report when everything i
   const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
   t.is(report.status, 'SUCCESS');
 
-  t.is(filesInCumulus.okCountByGranule, undefined);
+  t.deepEqual(filesInCumulus.okCountByGranule, {});
 
   t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, files.length);
