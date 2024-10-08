@@ -73,7 +73,7 @@ function dateStringToDateOrNull(dateable) {
   return !Number.isNaN(date.valueOf()) ? date : undefined;
 }
 
-//TODO Verify this function is still needed
+// TODO - Remove this in 3806 PR #3
 /**
  *
  * @param {Object} params - request params to convert to Elasticsearch params
