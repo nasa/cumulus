@@ -38,7 +38,8 @@ each Cumulus version between your current version and v19.1.0 as normal.
 ## [v19.0.0] 2024-08-28
 
 ### Deprecated
-This release has been deprecated in favor of the 18.5->19.1 release series.
+This release has been deprecated in favor of the 18.5->19.1 release series. The changes
+listed here are still valid and also contained in the v19.1.0 release and beyond.
 
 ### Breaking Changes
 
