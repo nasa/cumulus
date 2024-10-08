@@ -213,11 +213,12 @@ export const getGranulesByApiPropertiesQuery = ({
 } : {
   knex: Knex,
   searchParams: {
+    collate?: string,
     collectionIds?: string | string[],
     granuleIds?: string | string[],
     providerNames?: string[],
-    updatedAtRange?: UpdatedAtRange,
     status?: string
+    updatedAtRange?: UpdatedAtRange,
   },
   sortByFields?: string | string[],
   temporalBoundByCreatedAt?: boolean,
@@ -268,7 +269,13 @@ export const getGranulesByApiPropertiesQuery = ({
         queryBuilder.where(`${granulesTable}.status`, searchParams.status);
       }
       if (sortByFields) {
-        queryBuilder.orderBy([sortByFields].flat());
+        if (!searchParams.collate) {
+          queryBuilder.orderBy([sortByFields].flat());
+        } else {
+          [sortByFields].flat().forEach((field) => {
+            queryBuilder.orderByRaw(`${field} collate \"${searchParams.collate}\"`);
+          });
+        }
       }
     })
     .groupBy(`${granulesTable}.cumulus_id`)

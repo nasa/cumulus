@@ -355,7 +355,6 @@ async function reconciliationReportForCollections(recReportParams, knex) {
   //   Report collections only in CMR
   //   Report collections only in CUMULUS
   log.info(`reconciliationReportForCollections (${JSON.stringify(recReportParams)})`);
-  //TODO - remove
   const oneWayReport = isOneWayCollectionReport(recReportParams);
   log.debug(`Creating one way report: ${oneWayReport}`);
 
@@ -367,9 +366,11 @@ async function reconciliationReportForCollections(recReportParams, knex) {
     // get all collections from CMR and sort them, since CMR query doesn't support
     // 'Version' as sort_key
     log.debug('Fetching collections from CMR.');
-    const cmrCollectionIds = await fetchCMRCollections(recReportParams);
-    const dbCollectionIds = await fetchDbCollections(recReportParams, knex);
-    log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${dbCollectionIds.length} Elasticsearch collections`);
+    const cmrCollectionIds = (await fetchCMRCollections(recReportParams)).sort();
+    const dbCollectionIds = (await fetchDbCollections(recReportParams, knex)).sort();
+
+    log.info(`Comparing ${JSON.stringify(cmrCollectionIds)} CMR collections to ${dbCollectionIds} PostgreSQL collections`);
+    log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${dbCollectionIds.length} PostgreSQL collections`);
 
     /** @type {string | undefined } */
     let nextDbCollectionId = dbCollectionIds[0];
@@ -558,7 +559,6 @@ async function reconciliationReportForGranules(params) {
 
   /** @type {GranulesReport} */
   const granulesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
-
   const filesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
   try {
     const cmrSettings = /** @type CMRSettings */(await getCmrSettings());
@@ -580,11 +580,10 @@ async function reconciliationReportForGranules(params) {
       ...recReportParams,
       collectionIds: [collectionId],
     });
-    // TODO: fix typing
     const granulesSearchQuery = getGranulesByApiPropertiesQuery({
       knex,
-      searchParams: dbSearchParams,
-      sortByFields: ['granule_id'],
+      searchParams: { ...dbSearchParams, collate: 'C' },
+      sortByFields: 'granules.granule_id',
     });
 
     const pgGranulesIterator = /** @type {QuerySearchClient<DbItem>} */(new QuerySearchClient(
@@ -604,8 +603,6 @@ async function reconciliationReportForGranules(params) {
       const nextCmrGranuleId = nextCmrItem.umm.GranuleUR;
 
       if (nextDbGranuleId < nextCmrGranuleId) {
-        console.log('pushing in iteration');
-        console.log(JSON.stringify(nextDbItem));
         // Found an item that is only in Cumulus database and not in CMR
         granulesReport.onlyInCumulus.push({
           granuleId: nextDbGranuleId,
