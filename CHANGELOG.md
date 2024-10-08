@@ -8,17 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
-#### CUMULUS-3536 Upgrading from Aurora Serverless V1 to V2
-
-- The updates in CUMULUS-3536 require an upgrade of the postgres database.
-  Please follow [Upgrading from Aurora Serverless V1 to V2]
-  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/serverless-v2-upgrade)
-
 ### Added
 
-- **CUMULUS-3536**
-  - Added `rejectUnauthorized` = false to db-provision-user-database as the Lambda
-    does not have the Serverless v2 SSL certifications installed.
 - **CUMULUS-3020**
   - Updated sfEventSqsToDbRecords to allow override of the default value
    (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60)
@@ -30,6 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+<<<<<<< HEAD
 - **CUMULUS-3725**
   - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
     to 0. This setting for the Aurora Serverless v2 database allows non-SSL
@@ -39,23 +31,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3906**
   - Bumps example ORCA deployment to version v10.0.0.
 
+=======
+>>>>>>> 1b4fa3900c (CUMULUS-3897 - Merges v18.5.0 CL updates)
 ### Fixed
 
 - **CUMULUS-3902**
   - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
-- **CUMULUS-3901**
-  - Fix error checking in @cumulus/errors to use Error.name in addition to Error.code
-- **CUMULUS-3824**
-  - Added the missing double quote in ecs_cluster autoscaling cf template
-- **CUMULUS-3846**
-  - improve reliability of unit tests
-    - tests for granules api get requests separated out to new file
-    - cleanup of granule database resources to ensure no overlap
-    - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
-    - increase timeout in aws-client tests
-- **Snyk**
-  - Upgraded moment from 2.29.4 to 2.30.1
-  - Upgraded pg from ~8.10 to ~8.12
 
 ## [v19.0.0] 2024-08-28
 
@@ -115,6 +96,47 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
   - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
+
+## [v18.5.0] 2024-10-03
+
+### Migration Notes
+
+#### CUMULUS-3536 Upgrading from Aurora Serverless V1 to V2
+
+- The updates in CUMULUS-3536 require an upgrade of the postgres database.
+  Please follow [Upgrading from Aurora Serverless V1 to V2]
+  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/serverless-v2-upgrade)
+
+### Added
+
+- **CUMULUS-3536**
+  - Added `rejectUnauthorized` = false to db-provision-user-database as the Lambda
+    does not have the Serverless v2 SSL certifications installed.
+
+### Changed
+
+- **CUMULUS-3725**
+  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
+    to 0. This setting for the Aurora Serverless v2 database allows non-SSL
+    connections to the database, and is intended to be a temporary solution
+    until Cumulus has been updated to import the RDS rds-ca-rsa2048-g1 CA bundles in Lambda environments.
+    See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
+
+### Fixed
+
+- **CUMULUS-3901**
+  - Fix error checking in @cumulus/errors to use Error.name in addition to Error.code
+- **CUMULUS-3824**
+  - Added the missing double quote in ecs_cluster autoscaling cf template
+- **CUMULUS-3846**
+  - improve reliability of unit tests
+    - tests for granules api get requests separated out to new file
+    - cleanup of granule database resources to ensure no overlap
+    - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
+    - increase timeout in aws-client tests
+- **Snyk**
+  - Upgraded moment from 2.29.4 to 2.30.1
+  - Upgraded pg from ~8.10 to ~8.12
 
 ## [v18.4.0] 2024-08-16
 
