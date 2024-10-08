@@ -40,7 +40,8 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 
 /**
  * @typedef { import('@cumulus/db').PostgresGranuleRecord } PostgresGranuleRecord
- * @typedef {import('../../lib/types').NormalizedRecReportParams } NormalizedRecReportParams
+ * @typedef {import('../../lib/types').EnhancedNormalizedRecReportParams }
+ * EnhancedNormalizedRecReportParams
  */
 
 /**
@@ -102,7 +103,7 @@ const fileConflictTypes = {
 /**
  * Fetch orca configuration for all or specified collections
  *
- * @param {NormalizedRecReportParams} recReportParams - input report params
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - input report params
  * @returns {Promise<CollectionConfig>} - list of { collectionId, orca configuration }
  */
 async function fetchCollectionsConfig(recReportParams) {
@@ -357,7 +358,7 @@ async function addGranuleToReport({
 /**
  * Compare the granule holdings in Cumulus with ORCA
  *
- * @param {NormalizedRecReportParams} recReportParams - input report params
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - input report params
  * @returns {Promise<Object>} an object with the okCount, onlyInCumulus, onlyInOrca
  * and withConfilcts
  */
@@ -498,7 +499,7 @@ async function orcaReconciliationReportForGranules(recReportParams) {
 /**
  * Create an ORCA Backup Reconciliation report and save it to S3
  *
- * @param {NormalizedRecReportParams} recReportParams - params
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - params
  * @returns {Promise<void>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
