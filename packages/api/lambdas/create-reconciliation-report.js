@@ -95,6 +95,25 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  */
 
 /**
+ * @typedef {Object} FileDetail
+ *
+ * @property {string} fileName
+ * @property {string} bucket
+ * @property {string} key
+ * @property {number} size
+ * @property {string} checksumType
+ * @property {string} checksum
+*/
+
+/**
+ * @typedef {Object} FilesReport
+ * @property {number} okCount
+ * @property {FileDetail[]} onlyInCumulus
+ * @property {FileDetail[]} onlyInCmr
+ *
+ */
+
+/**
  * @typedef {Object} GranulesReport
  * @property {number} okCount - The count of OK granules.
  * @property {Array<{GranuleUR: string, ShortName: string, Version: string}>} onlyInCmr
@@ -542,9 +561,10 @@ exports.reconciliationReportForGranuleFiles = reconciliationReportForGranuleFile
  *                                                   (e.g. { bucket: distribution path })
  * @param {NormalizedRecReportParams} params.recReportParams - Lambda report paramaters for
  *                                                             narrowing focus
- * @param {Object} params.knex                     - Database client for interacting with PostgreSQL
+ * @param {Knex} params.knex                     - Database client for interacting with PostgreSQL
  *                                                   database
- * @returns {Promise<Object>}                      - an object with the granulesReport and
+ * @returns {Promise<{ granulesReport: GranulesReport, filesReport: FilesReport }>}
+ *  - an object with the granulesReport and
  *                                                   filesReport
  */
 async function reconciliationReportForGranules(params) {
@@ -559,6 +579,7 @@ async function reconciliationReportForGranules(params) {
 
   /** @type {GranulesReport} */
   const granulesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
+  /** @type {FilesReport} */
   const filesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
   try {
     const cmrSettings = /** @type CMRSettings */(await getCmrSettings());
@@ -599,7 +620,7 @@ async function reconciliationReportForGranules(params) {
     );
 
     while (nextDbItem && nextCmrItem) {
-      const nextDbGranuleId = nextDbItem.granule_id; // TODO typing :( -- oops.
+      const nextDbGranuleId = nextDbItem.granule_id;
       const nextCmrGranuleId = nextCmrItem.umm.GranuleUR;
 
       if (nextDbGranuleId < nextCmrGranuleId) {
