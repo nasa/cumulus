@@ -62,6 +62,8 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  * ReconciliationReportStatus
  * @typedef {import('@cumulus/types/api/reconciliation_reports').ReconciliationReportType}
  * ReconciliationReportType
+ * @typedef {import('@cumulus/types/api/files').ApiFile} ApiFile
+ * @typedef {import('@cumulus/db').PostgresGranuleRecord} PostgresGranuleRecord
  */
 
 /**
@@ -96,28 +98,10 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  */
 
 /**
- * @typedef {Object} DbItem
- * @property {string} granule_id - The unique name for the granule (per collection)
- * @property {number} cumulus_id - The unique identifier for the granule record in the database.
- * @property {Date} updated_at - The last updated timestamp for the granule in the database.
- */
-
-/**
- * @typedef {Object} FileDetail
- *
- * @property {string} fileName
- * @property {string} bucket
- * @property {string} key
- * @property {number} size
- * @property {string} checksumType
- * @property {string} checksum
-*/
-
-/**
  * @typedef {Object} FilesReport
  * @property {number} okCount
- * @property {FileDetail[]} onlyInCumulus
- * @property {FileDetail[]} onlyInCmr
+ * @property {ApiFile[]} onlyInCumulus
+ * @property {ApiFile[]} onlyInCmr
  *
  */
 
@@ -623,10 +607,13 @@ async function reconciliationReportForGranules(params) {
       sortByFields: 'granules.granule_id',
     });
 
-    const pgGranulesIterator = /** @type {QuerySearchClient<DbItem>} */(new QuerySearchClient(
-      granulesSearchQuery,
-      100 // arbitrary limit on how items are fetched at once
-    ));
+    const pgGranulesIterator =
+      /** @type {QuerySearchClient<PostgresGranuleRecord>} */ (
+        new QuerySearchClient(
+          granulesSearchQuery,
+          100 // arbitrary limit on how items are fetched at once
+        )
+      );
 
     const oneWay = isOneWayGranuleReport(recReportParams);
     log.debug(`is oneWay granule report: ${collectionId}, ${oneWay}`);
