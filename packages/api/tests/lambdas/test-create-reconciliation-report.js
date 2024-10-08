@@ -150,8 +150,6 @@ async function storeCollectionAndGranuleToPostgres(collection, context) {
     collection_cumulus_id: pgCollectionRecord.cumulus_id,
     provider_cumulus_id: pgProviderRecord.cumulus_id,
   });
-  // TODO - verify edit, this was originally retruning granuleRows,
-  // and collection was granuleRows[0] :\
   await context.granulePgModel.create(context.knex, collectionGranule);
   return {
     granule: {
