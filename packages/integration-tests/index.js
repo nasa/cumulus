@@ -288,6 +288,9 @@ function getProviderPort({ protocol, port }) {
   if (protocol === 'ftp') {
     return Number(process.env.PROVIDER_FTP_PORT) || port;
   }
+  if (protocol === 'sftp') {
+    return Number(process.env.PROVIDER_SFTP_PORT) || port;
+  }
 
   return Number(process.env.PROVIDER_HTTP_PORT) || port;
 }

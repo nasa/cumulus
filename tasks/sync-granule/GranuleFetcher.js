@@ -399,12 +399,14 @@ class GranuleFetcher {
           fileRemotePath,
         });
       } else {
-        log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey}`);
+        const fastGet = process.env.fastGet;
+        log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey} fastGet ${fastGet}`);
         await syncFileFunction({
           destinationBucket,
           destinationKey,
           bucket: sourceBucket,
           fileRemotePath,
+          fastGet,
         });
         // Verify file integrity
         log.debug(`await verifyFile ${JSON.stringify(file)}, s3://${destinationBucket}/${destinationKey}`);

@@ -1,3 +1,4 @@
+import fs from 'fs';
 import get from 'lodash/get';
 import * as log from '@cumulus/common/log';
 import mime from 'mime-types';
@@ -6,6 +7,7 @@ import { s3 } from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
 import Client from 'ssh2-sftp-client';
 import { ConnectConfig } from 'ssh2';
+//const { PassThrough } = require('stream');
 
 export interface SftpClientConfig {
   host: string,
@@ -141,11 +143,7 @@ export class SftpClient {
 
     log.info(`Copying ${remoteUrl} to ${s3uri}`);
 
-    // TODO Issue PR against ssh2-sftp-client to allow for getting a
-    // readable stream back, rather than having to access the underlying
-    // sftp object.
-    // @ts-expect-error
-    const sftpReadStream = this.sftp.sftp.createReadStream(remotePath);
+    const sftpReadStream = await this.sftp.createReadStream(remotePath);
 
     const result = await S3.promiseS3Upload({
       params: {
@@ -157,6 +155,43 @@ export class SftpClient {
     });
 
     log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
+
+    return { s3uri, etag: result.ETag };
+  }
+
+  logProgress(total_transferred: number, chunk: number, total: number): void {
+    log.debug(`total_transferred, chunk, total: ${total_transferred}, ${chunk}, ${total}`);
+  }
+
+  async syncToS32(
+    remotePath: string,
+    bucket: string,
+    key: string
+  ): Promise<SyncToS3Response> {
+    const remoteUrl = this.buildRemoteUrl(remotePath);
+
+    const s3uri = S3.buildS3Uri(bucket, key);
+    const localFile = `/tmp/${path.basename(remotePath)}`;
+    log.info(`syncToS32 downloading ${remoteUrl} to ${localFile}`);
+    if (process.env.DEBUG_SFTP) {
+      await this.sftp.fastGet(remotePath, localFile, { step: this.logProgress });
+    } else {
+      await this.sftp.fastGet(remotePath, localFile);
+    }
+
+    log.info(`syncToS32 uploading ${localFile} to ${s3uri}`);
+    const readStream = fs.createReadStream(localFile);
+    const result = await S3.promiseS3Upload({
+      params: {
+        Bucket: bucket,
+        Key: key,
+        Body: readStream,
+        ContentType: mime.lookup(key) || undefined,
+      },
+    });
+
+    log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
+    fs.unlinkSync(localFile);
 
     return { s3uri, etag: result.ETag };
   }
