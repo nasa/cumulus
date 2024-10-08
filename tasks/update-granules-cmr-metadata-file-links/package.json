@@ -48,7 +48,7 @@
     "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "@cumulus/aws-client": "19.0.0",
+    "@cumulus/aws-client": "19.1.0",
     "@cumulus/schemas": "19.1.0"
   }
 }
