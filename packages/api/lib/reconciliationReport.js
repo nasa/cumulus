@@ -96,11 +96,11 @@ function convertToESCollectionSearchParams(params) {
  * convertToDBCollectionSearchObject      - Creates Postgres search object from
  *                                          InternalRecReport Parameters
  * @param {Object} params                 - request params to convert to database params
- * @param {[Object]} params.collectionIds - List containing single Collection object
+ * @param {string[]} [params.collectionIds] - List containing single Collection object
  *                                          multiple or no collections will result in a
  *                                          search object without a collection object
- * @param {string} params.endTimestamp    - ending report datetime ISO Timestamp
- * @param {string} params.startTimestamp  - beginning report datetime ISO timestamp
+ * @param {string} [params.endTimestamp]    - ending report datetime ISO Timestamp
+ * @param {string} [params.startTimestamp]  - beginning report datetime ISO timestamp
  * @returns {Object[]}                    - array of objects of desired
  *                                          parameters formatted for database collection
  *                                          search
