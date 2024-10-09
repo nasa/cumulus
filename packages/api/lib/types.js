@@ -9,16 +9,17 @@
  * @property {string} [location]
  * @property {string} stackName
  * @property {string} systemBucket
+ * @property {string} [status] - Optional granule status filter for report
  */
 
 /**
  * @typedef {Object} EnhancedParams
- * @property {Moment.moment} createStartTime
- * @property {string} reportKey
- * @property {string} reportType
- * @property {Knex} knex
- * @property {string} concurrency
- * @property {string} [location]
+ * @property {Moment.moment} createStartTime - Report creation start time.
+ * @property {string} reportKey - Key to store report object in S3
+ * @property {string} reportType - Type of the report
+ * @property {Knex} knex - Knex instance
+ * @property {string} concurrency - Concurrency used in report generation
+ * @property {string} [location] - Location of the report
 */
 
 /**
@@ -39,6 +40,7 @@
  * @property {string} [stackName] - An optional stack name for the report.
  * @property {string} [systemBucket] - An optional system bucket name for the report.
  * @property {string} [location]
+ * @property {string} [status] - Optional granule status filter for report
  */
 
 module.exports = {};

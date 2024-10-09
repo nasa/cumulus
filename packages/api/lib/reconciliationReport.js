@@ -12,6 +12,11 @@ const Logger = require('@cumulus/logger');
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
 /** @typedef {import('../lib/types').RecReportParams } RecReportParams */
+/**
+ * @typedef {import('../lib/types').EnhancedNormalizedRecReportParams }
+ * EnhancedNormalizedRecReportParams
+ */
+
 /** @typedef {import('../lib/types').NormalizedRecReportParams } NormalizedRecReportParams */
 
 /**
@@ -146,8 +151,8 @@ function convertToESGranuleSearchParams(params) {
 /**
  * Convert reconciliation report parameters to PostgreSQL database search params.
  *
- * @param {NormalizedRecReportParams} params - request params to convert to database params
- * @returns {Object} object of desired parameters formated for database granule search
+ * @param {EnhancedNormalizedRecReportParams} params - request params to convert to database params
+ * @returns object of desired parameters formatted for database granule search
  */
 function convertToDBGranuleSearchParams(params) {
   const {
@@ -208,7 +213,7 @@ function convertToOrcaGranuleSearchParams(params) {
 /**
  * create initial report header
  *
- * @param {NormalizedRecReportParams} recReportParams - params
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - params
  * @returns {ReportHeader} report header
  */
 function initialReportHeader(recReportParams) {
