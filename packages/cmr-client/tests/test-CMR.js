@@ -257,3 +257,17 @@ test('getToken returns a token when the user\'s token is provided', async (t) =>
 
   t.is(await cmrObj.getToken(), 'abcde');
 });
+
+test('getToken throws if no username is provided when using Earthdata Login', async (t) => {
+  const cmrObj = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    password: 'password',
+    oauthProvider: 'earthdata',
+  });
+
+  await t.throwsAsync(
+    () => cmrObj.getToken(),
+    { message: 'Username not specified for non-launchpad CMR client' }
+  );
+});
