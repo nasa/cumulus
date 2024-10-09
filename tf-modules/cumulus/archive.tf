@@ -23,7 +23,6 @@ module "archive" {
   elasticsearch_security_group_id           = var.elasticsearch_security_group_id
   elasticsearch_remove_index_alias_conflict = var.elasticsearch_remove_index_alias_conflict
 
-
   es_index_shards        = var.es_index_shards
   es_request_concurrency = var.es_request_concurrency
 
@@ -92,7 +91,7 @@ module "archive" {
   cleanup_non_running     = var.cleanup_non_running
 
   payload_timeout        = var.payload_timeout
-  
+
   es_index              = var.es_index
   update_limit          = var.update_limit
   background_queue_url = module.ingest.background_queue_url
