@@ -42,7 +42,7 @@ const {
   fakeGranuleRecordFactory,
   translatePostgresCollectionToApiCollection,
   translateApiGranuleToPostgresGranule,
-  translatePostgresReconReportToApiReconReport
+  translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const indexer = require('@cumulus/es-client/indexer');

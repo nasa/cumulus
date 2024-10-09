@@ -32,7 +32,6 @@ const {
   ReconciliationReportPgModel,
   translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
-const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
 const { errorify, filenamify } = require('../lib/utils');
