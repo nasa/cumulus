@@ -1336,7 +1336,7 @@ test.serial(
   }
 );
 
-// TODO - this test feels *wholly* inadaquate are we relying on spec tests?
+// TODO - this test feels *wholly* not great are we relying on spec tests?
 // TODO - add test for *multiple* collections, etc.   // SPEC TESTS?
 test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in CUMULUS and CMR for a single collection', async (t) => {
   // TODO - common methods?
