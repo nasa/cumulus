@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Replace ElasticSearch Phase 2
 
+
 - **CUMULUS-3229**
   - Remove ElasticSearch queries from Rule LIST endpoint
 - **CUMULUS-3230**
@@ -27,6 +28,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
 - **CUMULUS-3806**
+  - Update `@cumulus/db/search` to allow for ordered collation as a
+    dbQueryParameter
+  - Update `@cumulus/db/search` to allow `dbQueryParameters.limit` to be set to
+    `null` to allow for optional unlimited page sizes in search results
+  - Update/add type annotations/logic fixes to `@cumulus/api` reconciliation report code
+  - Annotation/typing fixes to `@cumulus/cmr-client`
+  - Typing fixes to `@cumulus/db`
+  - Re-enable Reconciliation Report integration tests
+  - Update `@cumulus/client/CMR.getToken` to throw if a non-launchpad token is requested without a username
+  - Update `Inventory` and `Granule Not Found` reports to query postgreSQL
+    database instead of elasticsearch
+  - Update `@cumulus/db/lib/granule.getGranulesByApiPropertiesQuery` to
+    allow order by collation to be optionally specified
   - Update `@cumulus/db/lib/granule.getGranulesByApiPropertiesQuery` to
     be parameterized and include a modifier on `temporalBoundByCreatedAt`
   - Remove endpoint call to and all tests for Internal Reconciliation Reports
