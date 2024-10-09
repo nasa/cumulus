@@ -13,12 +13,14 @@ const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue')
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
+const { removeNilProperties } = require('@cumulus/common/util');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const {
+  CollectionSearch,
   getFilesAndGranuleInfoQuery,
   getGranulesByApiPropertiesQuery,
   getKnexClient,
@@ -40,6 +42,8 @@ const { errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
   convertToDBGranuleSearchParams,
+  convertToDBCollectionSearchObject,
+  dateStringToDateOrNull,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
 
@@ -177,7 +181,7 @@ function isOneWayGranuleReport(reportParams) {
 /**
  * Fetches collections from the CMR (Common Metadata Repository) and returns their IDs.
  *
- * @param {NormalizedRecReportParams} recReportParams - The parameters for the function.
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - The parameters for the function.
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
  *
  * @example
@@ -212,42 +216,38 @@ async function fetchCMRCollections({ collectionIds }) {
 /**
  * Fetches collections from the database based on the provided parameters.
  *
- * @param {NormalizedRecReportParams} recReportParams - The reconciliation report parameters.
- * @param {Knex} knex - The Knex.js database connection.
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - The reconciliation
+ * report parameters.
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs.
  */
-async function fetchDbCollections(recReportParams, knex) {
+async function fetchDbCollections(recReportParams) {
   const {
     collectionIds,
+    endTimestamp,
     granuleIds,
+    knex,
     providers,
     startTimestamp,
-    endTimestamp,
   } = recReportParams;
   if (providers || granuleIds || startTimestamp || endTimestamp) {
     const filteredDbCollections = await getUniqueCollectionsByGranuleFilter({
-      knex: knex,
       ...recReportParams,
     });
     return filteredDbCollections.map((collection) =>
       constructCollectionId(collection.name, collection.version));
   }
-  const query = knex('collections')
-    .select('cumulus_id', 'name', 'version');
-  if (startTimestamp) {
-    query.where('updated_at', '>=', startTimestamp);
-  }
-  if (endTimestamp) {
-    query.where('updated_at', '<=', endTimestamp);
-  }
-  if (collectionIds) {
-    collectionIds.forEach((collectionId) => {
-      const { name, version } = deconstructCollectionId(collectionId);
-      query.orWhere({ name, version });
-    });
-  }
-  query.orderBy(['name', 'version']);
-  const dbCollections = await query;
+
+  const queryStringParameters = removeNilProperties({
+    _id__in: collectionIds ? collectionIds.join(',') : undefined,
+    timestamp__from: startTimestamp,
+    timestamp__to: endTimestamp,
+    sort_key: ['name', 'version'],
+    collate: 'C',
+  });
+  const searchResponse = await new CollectionSearch({
+    queryStringParameters: { ...queryStringParameters, limit: null },
+  }).query(knex);
+  const dbCollections = searchResponse.results;
   return dbCollections.map((collection) =>
     constructCollectionId(collection.name, collection.version));
 }
@@ -361,13 +361,12 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
 /**
  * Compare the collection holdings in CMR with Cumulus
  *
- * @param {NormalizedRecReportParams} recReportParams - lambda's input filtering parameters to
- *                                   narrow limit of report.
- * @param {Knex} knex - Database client for interacting with PostgreSQL database
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - lambda's input filtering
+ * parameters to narrow limit of report.
  * @returns {Promise<Object>} an object with the okCollections, onlyInCumulus and
  * onlyInCmr
  */
-async function reconciliationReportForCollections(recReportParams, knex) {
+async function reconciliationReportForCollections(recReportParams) {
   // compare collection holdings:
   //   Get list of collections from CMR
   //   Get list of collections from CUMULUS
@@ -386,7 +385,7 @@ async function reconciliationReportForCollections(recReportParams, knex) {
     // 'Version' as sort_key
     log.debug('Fetching collections from CMR.');
     const cmrCollectionIds = (await fetchCMRCollections(recReportParams)).sort();
-    const dbCollectionIds = (await fetchDbCollections(recReportParams, knex)).sort();
+    const dbCollectionIds = (await fetchDbCollections(recReportParams)).sort();
 
     log.info(`Comparing ${JSON.stringify(cmrCollectionIds)} CMR collections to ${dbCollectionIds} PostgreSQL collections`);
     log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${dbCollectionIds.length} PostgreSQL collections`);
@@ -559,10 +558,8 @@ exports.reconciliationReportForGranuleFiles = reconciliationReportForGranuleFile
  * @param {Object} params.bucketsConfig            - bucket configuration object
  * @param {Object} params.distributionBucketMap    - mapping of bucket->distirubtion path values
  *                                                   (e.g. { bucket: distribution path })
- * @param {NormalizedRecReportParams} params.recReportParams - Lambda report paramaters for
- *                                                             narrowing focus
- * @param {Knex} params.knex                     - Database client for interacting with PostgreSQL
- *                                                   database
+ * @param {EnhancedNormalizedRecReportParams} params.recReportParams - Lambda report paramaters for
+ * narrowing focus database
  * @returns {Promise<{ granulesReport: GranulesReport, filesReport: FilesReport }>}
  *  - an object with the granulesReport and
  *                                                   filesReport
@@ -574,7 +571,8 @@ async function reconciliationReportForGranules(params) {
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
   log.info(`reconciliationReportForGranules(${params.collectionId})`);
-  const { collectionId, bucketsConfig, distributionBucketMap, recReportParams, knex } = params;
+  const { collectionId, bucketsConfig, distributionBucketMap, recReportParams } = params;
+  const { knex } = recReportParams;
   const { name, version } = deconstructCollectionId(collectionId);
 
   /** @type {GranulesReport} */
@@ -731,15 +729,18 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  * @param {Object} params.bucketsConfig            - bucket configuration object
  * @param {Object} params.distributionBucketMap    - mapping of bucket->distirubtion path values
  *                                                 (e.g. { bucket: distribution path })
- * @param {NormalizedRecReportParams} params.recReportParams - Lambda endpoint's input params to
- *                                                     narrow focus of report
+ * @param {EnhancedNormalizedRecReportParams} params.recReportParams - Lambda endpoint's input
+ * params to narrow focus of report
  * @returns {Promise<Object>}                      - a reconciliation report
  */
 async function reconciliationReportForCumulusCMR(params) {
   log.info(`reconciliationReportForCumulusCMR with params ${JSON.stringify(params)}`);
-  const knex = await getKnexClient();
-  const { bucketsConfig, distributionBucketMap, recReportParams } = params;
-  const collectionReport = await reconciliationReportForCollections(recReportParams, knex);
+  const {
+    bucketsConfig,
+    distributionBucketMap,
+    recReportParams,
+  } = params;
+  const collectionReport = await reconciliationReportForCollections(recReportParams);
   const collectionsInCumulusCmr = {
     okCount: collectionReport.okCollections.length,
     onlyInCumulus: collectionReport.onlyInCumulus,
@@ -749,7 +750,7 @@ async function reconciliationReportForCumulusCMR(params) {
   // create granule and granule file report for collections in both Cumulus and CMR
   const promisedGranuleReports = collectionReport.okCollections.map(
     (collectionId) => reconciliationReportForGranules({
-      collectionId, bucketsConfig, distributionBucketMap, recReportParams, knex,
+      collectionId, bucketsConfig, distributionBucketMap, recReportParams,
     })
   );
   const granuleAndFilesReports = await Promise.all(promisedGranuleReports);
