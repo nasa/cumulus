@@ -42,8 +42,6 @@ const { errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
   convertToDBGranuleSearchParams,
-  convertToDBCollectionSearchObject,
-  dateStringToDateOrNull,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
 
@@ -387,7 +385,6 @@ async function reconciliationReportForCollections(recReportParams) {
     const cmrCollectionIds = (await fetchCMRCollections(recReportParams)).sort();
     const dbCollectionIds = (await fetchDbCollections(recReportParams)).sort();
 
-    log.info(`Comparing ${JSON.stringify(cmrCollectionIds)} CMR collections to ${dbCollectionIds} PostgreSQL collections`);
     log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${dbCollectionIds.length} PostgreSQL collections`);
 
     /** @type {string | undefined } */
