@@ -1,5 +1,6 @@
 import { receiveSQSMessages, SQSMessage } from '@cumulus/aws-client/SQS';
 import * as sqs from '@cumulus/aws-client/SQS';
+import { ExecutionAlreadyExists } from '@cumulus/aws-client/StepFunctions';
 import Logger from '@cumulus/logger';
 
 export type MessageConsumerFunction = (queueUrl: string, message: SQSMessage) => Promise<void>;
@@ -49,7 +50,7 @@ export class Consumer {
       }
       return 1;
     } catch (error) {
-      if (error.code === 'ExecutionAlreadyExists') {
+      if (error instanceof ExecutionAlreadyExists) {
         log.debug('Deleting message for execution that already exists...');
         await sqs.deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
         log.debug('Completed deleting message.');
