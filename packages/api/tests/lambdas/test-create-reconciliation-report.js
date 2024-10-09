@@ -1394,8 +1394,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
     collectionId,
     bucketsConfig: new BucketsConfig({}),
     distributionBucketMap: {},
-    recReportParams: {},
-    knex: t.context.knex,
+    recReportParams: { knex: t.context.knex },
   });
 
   t.is(granulesReport.okCount, 10);
