@@ -13,7 +13,7 @@ const fakeS3 = () => ({
       promise: () => {
         if (headObjectCallCount === 1) {
           const err = new Error('NotFound');
-          err.code = 'NotFound';
+          err.name = 'NotFound';
           return Promise.reject(err);
         }
 
