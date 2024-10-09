@@ -976,9 +976,6 @@ async function processRequest(params) {
     } else if (['Inventory', 'Granule Not Found'].includes(reportType)) {
       // reportType is in ['Inventory', 'Granule Not Found']
       await createReconciliationReport(recReportParams);
-    } else {
-      // TODO make this a better error (res.boom?)
-      throw new Error(`Invalid report type: ${reportType}`);
     }
 
     const generatedRecord = {
