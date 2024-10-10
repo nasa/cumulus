@@ -26,9 +26,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-3906**
-  - Bumps example ORCA deployment to version v10.0.0.
-
 ### Fixed
 
 - **CUMULUS-3902**
