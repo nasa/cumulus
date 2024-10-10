@@ -107,14 +107,17 @@ export class SftpClient {
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} localPath - the full local destination file path
+   * @param {boolean} fastDownload - whether fast download is performed using parallel reads
    * @returns {Promise<string>} - the local path that the file was saved to
    */
-  async download(remotePath: string, localPath: string): Promise<void> {
+  async download(remotePath: string, localPath: string, fastDownload: boolean = false)
+    : Promise<void> {
     const remoteUrl = this.buildRemoteUrl(remotePath);
 
-    log.info(`Downloading ${remoteUrl} to ${localPath}`);
+    log.info(`Downloading ${remoteUrl} to ${localPath}, fastDownload is ${fastDownload}`);
 
-    await this.sftp.fastGet(remotePath, localPath);
+    const getMethod = fastDownload ? 'fastGet' : 'get';
+    await this.sftp[getMethod](remotePath, localPath);
 
     log.info(`Finished downloading ${remoteUrl} to ${localPath}`);
   }
@@ -163,6 +166,17 @@ export class SftpClient {
     log.debug(`total_transferred, chunk, total: ${total_transferred}, ${chunk}, ${total}`);
   }
 
+  /**
+   * Transfer the remote file to a given s3 location.
+   * Download is performed using parallel reads for faster throughput.
+   * Lambda ephemeral storage is used to download files before files are uploaded to s3
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} bucket - destination s3 bucket of the file
+   * @param {string} key - destination s3 key of the file
+   * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
+   *    the S3 URI and ETag of the destination file
+   */
   async syncToS3Fast(
     remotePath: string,
     bucket: string,

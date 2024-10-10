@@ -130,11 +130,12 @@ class SftpProviderClient {
    * @param {Object} params             - parameter object
    * @param {string} params.remotePath  - the full path to the remote file to be fetched
    * @param {string} params.localPath   - the full local destination file path
+   * @param {boolean} params.fastDownload - whether fast download is performed using parallel reads
    * @returns {Promise<void>}        - the path that the file was saved to
    */
   async download(params) {
-    const { remotePath, localPath } = params;
-    return await this.getSftpClient().download(remotePath, localPath);
+    const { remotePath, localPath, fastDownload } = params;
+    return await this.getSftpClient().download(remotePath, localPath, fastDownload);
   }
 
   /**
@@ -161,7 +162,7 @@ class SftpProviderClient {
    * @param {string} params.fileRemotePath - the full path to the remote file to be fetched
    * @param {string} params.destinationBucket - destination s3 bucket of the file
    * @param {string} params.destinationKey - destination s3 key of the file
-   * @param {string} params.fastDownload - 'true' or 'false'
+   * @param {boolean} params.fastDownload - whether fast download is performed using parallel reads
    * @returns {Promise<{ s3uri: string, etag?: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
@@ -169,7 +170,7 @@ class SftpProviderClient {
     const remotePath = params.fileRemotePath;
     const bucket = params.destinationBucket;
     const key = params.destinationKey;
-    const syncMethod = params.fastDownload === 'true' ? 'syncToS3Fast' : 'syncToS3';
+    const syncMethod = params.fastDownload ? 'syncToS3Fast' : 'syncToS3';
     return await this.getSftpClient()[syncMethod](remotePath, bucket, key);
   }
 }
