@@ -92,6 +92,9 @@ const asyncOperationMapping : { [key: string]: Function } = {
   id: (value?: string) => ({
     id: value,
   }),
+  _id: (value?: string) => ({
+    id: value,
+  }),
   operationType: (value?: string) => ({
     operation_type: value,
   }),
@@ -155,7 +158,6 @@ const collectionMapping : { [key: string]: Function } = {
   }),
 };
 
-// TODO add and verify all queryable fields for the following record types
 const executionMapping : { [key: string]: Function } = {
   arn: (value?: string) => ({
     arn: value,
@@ -205,11 +207,29 @@ const executionMapping : { [key: string]: Function } = {
 };
 
 const pdrMapping : { [key: string]: Function } = {
+  address: (value?: string) => ({
+    address: value,
+  }),
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
+  duration: (value?: string) => ({
+    duration: value && Number(value),
+  }),
+  originalUrl: (value?: string) => ({
+    original_url: value,
+  }),
+  PANSent: (value?: string) => ({
+    pan_sent: (value === 'true'),
+  }),
+  PANmessage: (value?: string) => ({
+    pan_message: value,
+  }),
   pdrName: (value?: string) => ({
     name: value,
+  }),
+  progress: (value?: string) => ({
+    progress: value && Number(value),
   }),
   status: (value?: string) => ({
     status: value,
@@ -231,13 +251,28 @@ const pdrMapping : { [key: string]: Function } = {
   provider: (value?: string) => ({
     providerName: value,
   }),
+  execution: (value?: string) => ({
+    executionArn: value && value.split('/').pop(),
+  }),
 };
 
 const providerMapping : { [key: string]: Function } = {
+  allowedRedirects: (value?: string) => ({
+    allowed_redirects: value?.split(','),
+  }),
+  certificateUrl: (value?: string) => ({
+    certificate_url: value,
+  }),
+  cmKeyId: (value?: string) => ({
+    cm_key_id: value,
+  }),
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
   id: (value?: string) => ({
+    name: value,
+  }),
+  name: (value?: string) => ({
     name: value,
   }),
   timestamp: (value?: string) => ({
@@ -246,9 +281,33 @@ const providerMapping : { [key: string]: Function } = {
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
   }),
+  globalConnectionLimit: (value?: string) => ({
+    global_connection_limit: value && Number(value),
+  }),
+  host: (value?: string) => ({
+    host: value,
+  }),
+  password: (value?: string) => ({
+    password: value,
+  }),
+  port: (value?: string) => ({
+    port: value,
+  }),
+  privateKey: (value?: string) => ({
+    private_key: value,
+  }),
+  protocol: (value?: string) => ({
+    protocol: value,
+  }),
+  username: (value?: string) => ({
+    username: value,
+  }),
 };
 
 const ruleMapping : { [key: string]: Function } = {
+  arn: (value?: string) => ({
+    arn: value,
+  }),
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
@@ -263,6 +322,24 @@ const ruleMapping : { [key: string]: Function } = {
   }),
   updatedAt: (value?: string) => ({
     updated_at: value && new Date(Number(value)),
+  }),
+  workflow: (value?: string) => ({
+    workflow: value,
+  }),
+  logEventArn: (value?: string) => ({
+    log_event_arn: value,
+  }),
+  executionNamePrefix: (value?: string) => ({
+    execution_name_prefix: value,
+  }),
+  queueUrl: (value?: string) => ({
+    queue_url: value,
+  }),
+  'rule.type': (value?: string) => ({
+    type: value,
+  }),
+  'rule.value': (value?: string) => ({
+    value: value,
   }),
   // The following fields require querying other tables
   collectionId: (value?: string) => {

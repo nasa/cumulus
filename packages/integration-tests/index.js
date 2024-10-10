@@ -49,7 +49,7 @@ const lambdaStep = new LambdaStep();
 /**
  * Wait for an AsyncOperation to reach a given status
  *
- * Retries using exponental backoff until desired has been reached.  If the
+ * Retries using exponential backoff until desired has been reached.  If the
  *   desired state is not reached an error is thrown.
  *
  * @param {Object} params - params

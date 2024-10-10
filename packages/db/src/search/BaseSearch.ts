@@ -33,7 +33,8 @@ export const typeToTable: { [key: string]: string } = {
 /**
  * Class to build and execute db search query
  */
-class BaseSearch {
+
+abstract class BaseSearch {
   readonly type: string;
   readonly tableName: string;
   readonly queryStringParameters: QueryStringParameters;
@@ -62,6 +63,16 @@ class BaseSearch {
       || term?.collectionVersion
       || terms?.collectionName
       || terms?.collectionVersion);
+  }
+
+  /**
+   * check if joined executions table search is needed
+   *
+   * @returns whether execution search is needed
+   */
+  protected searchExecution(): boolean {
+    const { not, term, terms } = this.dbQueryParameters;
+    return !!(not?.executionArn || term?.executionArn || terms?.executionArn);
   }
 
   /**
@@ -140,14 +151,18 @@ class BaseSearch {
    * Build basic query
    *
    * @param knex - DB client
-   * @throws - function is not implemented
+   * @returns queries for getting count and search result
    */
   protected buildBasicQuery(knex: Knex): {
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
   } {
-    log.debug(`buildBasicQuery is not implemented ${knex.constructor.name}`);
-    throw new Error('buildBasicQuery is not implemented');
+    const countQuery = knex(this.tableName)
+      .count('*');
+
+    const searchQuery = knex(this.tableName)
+      .select(`${this.tableName}.*`);
+    return { countQuery, searchQuery };
   }
 
   /**
@@ -191,6 +206,9 @@ class BaseSearch {
         case 'collectionVersion':
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.collection_cumulus_id`));
           break;
+        case 'executionArn':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.execution_cumulus_id`));
+          break;
         case 'providerName':
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.provider_cumulus_id`));
           break;
@@ -233,13 +251,12 @@ class BaseSearch {
     const { range = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(range).forEach(([name, rangeValues]) => {
-      if (rangeValues.gte) {
-        countQuery?.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
-        searchQuery.where(`${this.tableName}.${name}`, '>=', rangeValues.gte);
+      const { gte, lte } = rangeValues;
+      if (gte) {
+        [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, '>=', gte));
       }
-      if (rangeValues.lte) {
-        countQuery?.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
-        searchQuery.where(`${this.tableName}.${name}`, '<=', rangeValues.lte);
+      if (lte) {
+        [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, '<=', lte));
       }
     });
   }
@@ -276,6 +293,9 @@ class BaseSearch {
         case 'collectionVersion':
           [countQuery, searchQuery].forEach((query) => query?.where(`${collectionsTable}.version`, value));
           break;
+        case 'executionArn':
+          [countQuery, searchQuery].forEach((query) => query?.where(`${executionsTable}.arn`, value));
+          break;
         case 'providerName':
           [countQuery, searchQuery].forEach((query) => query?.where(`${providersTable}.name`, value));
           break;
@@ -284,7 +304,7 @@ class BaseSearch {
           break;
         case 'error.Error':
           [countQuery, searchQuery]
-            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' = '${value}'`));
+            .forEach((query) => value && query?.whereRaw(`${this.tableName}.error->>'Error' = ?`, value));
           break;
         case 'asyncOperationId':
           [countQuery, searchQuery].forEach((query) => query?.where(`${asyncOperationsTable}.id`, value));
@@ -339,6 +359,9 @@ class BaseSearch {
 
     Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
+        case 'executionArn':
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${executionsTable}.arn`, value));
+          break;
         case 'providerName':
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${providersTable}.name`, value));
           break;
@@ -347,7 +370,7 @@ class BaseSearch {
           break;
         case 'error.Error':
           [countQuery, searchQuery]
-            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' in ('${value.join('\',\'')}')`));
+            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' in (${value.map(() => '?').join(',')})`, [...value]));
           break;
         case 'asyncOperationId':
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${asyncOperationsTable}.id`, value));
@@ -395,6 +418,9 @@ class BaseSearch {
     }
     Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
+        case 'executionArn':
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${executionsTable}.arn`, value));
+          break;
         case 'providerName':
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${providersTable}.name`, value));
           break;
@@ -408,7 +434,7 @@ class BaseSearch {
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${executionsTable}_parent.arn`, value));
           break;
         case 'error.Error':
-          [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' != '${value}'`));
+          [countQuery, searchQuery].forEach((query) => value && query?.whereRaw(`${this.tableName}.error->>'Error' != ?`, value));
           break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${this.tableName}.${name}`, value));
@@ -464,7 +490,7 @@ class BaseSearch {
     tableName? : string,
   }) : Promise<number> {
     const { knex, tableName = this.tableName } = params;
-    const query = knex.raw(`EXPLAIN (FORMAT JSON) select * from "${tableName}"`);
+    const query = knex.raw('EXPLAIN (FORMAT JSON) select * from ??', tableName);
     log.debug(`Estimating the row count ${query.toSQL().sql}`);
     const countResult = await query;
     const countPath = 'rows[0]["QUERY PLAN"][0].Plan["Plan Rows"]';
