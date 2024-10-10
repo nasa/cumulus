@@ -967,7 +967,6 @@ async function processRequest(params) {
       log.error(
         'Internal Reconciliation Reports are no longer valid, as Cumulus is no longer utilizing Elasticsearch'
       );
-      //TODO remove internal rec report code
       throw new Error('Internal Reconciliation Reports are no longer valid');
     } else if (reportType === 'Granule Inventory') {
       await createGranuleInventoryReport(recReportParams);
