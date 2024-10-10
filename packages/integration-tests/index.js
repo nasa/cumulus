@@ -285,14 +285,11 @@ const getProviderHost = ({ host }) => process.env.PROVIDER_HOST || host;
  * @returns {number} provider port
  */
 function getProviderPort({ protocol, port }) {
-  if (protocol === 'ftp') {
-    return Number(process.env.PROVIDER_FTP_PORT) || port;
+  if (['ftp', 'http', 'https', 'sftp'].includes(protocol)) {
+    const envName = `PROVIDER_${protocol.toUpperCase()}_PORT`;
+    return Number(process.env[envName]) || port;
   }
-  if (protocol === 'sftp') {
-    return Number(process.env.PROVIDER_SFTP_PORT) || port;
-  }
-
-  return Number(process.env.PROVIDER_HTTP_PORT) || port;
+  return port;
 }
 
 /**

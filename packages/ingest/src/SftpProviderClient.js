@@ -161,7 +161,7 @@ class SftpProviderClient {
    * @param {string} params.fileRemotePath - the full path to the remote file to be fetched
    * @param {string} params.destinationBucket - destination s3 bucket of the file
    * @param {string} params.destinationKey - destination s3 key of the file
-   * @param {string} params.fastGet - 'true' or 'false'
+   * @param {string} params.fastDownload - 'true' or 'false'
    * @returns {Promise<{ s3uri: string, etag?: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
@@ -169,7 +169,7 @@ class SftpProviderClient {
     const remotePath = params.fileRemotePath;
     const bucket = params.destinationBucket;
     const key = params.destinationKey;
-    const syncMethod = params.fastGet === 'true' ? 'syncToS32' : 'syncToS3';
+    const syncMethod = params.fastDownload === 'true' ? 'syncToS3Fast' : 'syncToS3';
     return await this.getSftpClient()[syncMethod](remotePath, bucket, key);
   }
 }

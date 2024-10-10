@@ -163,7 +163,7 @@ export class SftpClient {
     log.debug(`total_transferred, chunk, total: ${total_transferred}, ${chunk}, ${total}`);
   }
 
-  async syncToS32(
+  async syncToS3Fast(
     remotePath: string,
     bucket: string,
     key: string
@@ -172,14 +172,12 @@ export class SftpClient {
 
     const s3uri = S3.buildS3Uri(bucket, key);
     const localFile = `/tmp/${path.basename(remotePath)}`;
-    log.info(`syncToS32 downloading ${remoteUrl} to ${localFile}`);
-    if (process.env.DEBUG_SFTP) {
-      await this.sftp.fastGet(remotePath, localFile, { step: this.logProgress });
-    } else {
-      await this.sftp.fastGet(remotePath, localFile);
-    }
 
-    log.info(`syncToS32 uploading ${localFile} to ${s3uri}`);
+    log.info(`syncToS3Fast downloading ${remoteUrl} to ${localFile}`);
+    const progressLogging = process.env.SFTP_DEBUG ? { step: this.logProgress } : undefined;
+    await this.sftp.fastGet(remotePath, localFile, progressLogging);
+
+    log.info(`syncToS3Fast uploading ${localFile} to ${s3uri}`);
     const readStream = fs.createReadStream(localFile);
     const result = await S3.promiseS3Upload({
       params: {

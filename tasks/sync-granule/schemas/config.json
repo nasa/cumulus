@@ -144,6 +144,11 @@
       ],
       "default": "error"
     },
+    "sftpFastDownload": {
+      "type": "boolean",
+      "description": "If true, sftp download is performed using parallel reads for faster throughput. Lambda ephemeral storage is used to download files before sending to s3. Please note that not all sftp servers have the concurrency support required. Default: false.",
+      "default": false
+    },
     "syncChecksumFiles": {
       "type": "boolean",
       "description": "If true, checksum files are also synced. Default: false.",
