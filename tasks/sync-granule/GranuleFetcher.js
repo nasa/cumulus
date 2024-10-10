@@ -100,7 +100,7 @@ class GranuleFetcher {
    *    checksum files
    * @returns {Promise<Object>} return granule object
    */
-  async ingest({ granule, bucket, syncChecksumFiles = false }) {
+  async ingest({ granule, bucket, fastDownload = false, syncChecksumFiles = false }) {
     // for each granule file
     // download / verify integrity / upload
 
@@ -129,7 +129,8 @@ class GranuleFetcher {
     const downloadPromises = filesToDownload.map((file) => this.ingestFile(
       file,
       bucket,
-      this.duplicateHandling
+      this.duplicateHandling,
+      fastDownload
     ));
     log.debug('awaiting all download.Files');
     const downloadResults = await Promise.all(downloadPromises);
@@ -345,7 +346,7 @@ class GranuleFetcher {
    * 'version' to keep both files if they have different checksums
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
-  async ingestFile(file, destinationBucket, duplicateHandling) {
+  async ingestFile(file, destinationBucket, duplicateHandling, fastDownload = false) {
     let duplicateFound;
     const fileRemotePath = path.join(file.path, file.name);
     const sourceBucket = file.source_bucket;
@@ -405,6 +406,7 @@ class GranuleFetcher {
           destinationKey,
           bucket: sourceBucket,
           fileRemotePath,
+          fastDownload: process.env.fastGet === 'true' || fastDownload, // TODO remove for testing
         });
         // Verify file integrity
         log.debug(`await verifyFile ${JSON.stringify(file)}, s3://${destinationBucket}/${destinationKey}`);
