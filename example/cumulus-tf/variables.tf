@@ -394,6 +394,18 @@ variable "orca_dlq_subscription_email" {
   default = "test@email.com"
 }
 
+variable "orca_s3_access_key" {
+  type        = string
+  description = "Access key for communicating with Orca S3 buckets."
+  default = ""
+}
+
+variable "orca_s3_secret_key" {
+  type        = string
+  description = "Secret key for communicating with Orca S3 buckets."
+  default = ""
+}
+
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(number)
