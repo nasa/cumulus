@@ -204,19 +204,6 @@ export const getApiGranuleExecutionCumulusIds = async (
 
 /**
  * Helper to build a query to search granules by various API granule record properties.
- *
- * @param params
- * @param params.knex - DB client
- * @param params.searchParams
- * @param [params.searchParams.collectionIds] - Collection ID
- * @param [params.searchParams.granuleIds] - array of granule IDs
- * @param [params.searchParams.providerNames] - Provider names
- * @param [params.searchParams.updatedAtRange] - Date range for updated_at column
- * @param [params.searchParams.status] - Granule status to search by
- * @param [params.sortByFields] - Field(s) to sort by
- * @param params.temporalBoundByCreatedAt -- If true, temporal bounds
- * are applied to created_at column instead of updated_at column
- * @returns {Knex.QueryBuilder}
  */
 export const getGranulesByApiPropertiesQuery = ({
   knex,
@@ -226,14 +213,15 @@ export const getGranulesByApiPropertiesQuery = ({
 } : {
   knex: Knex,
   searchParams: {
+    collate?: string,
     collectionIds?: string | string[],
     granuleIds?: string | string[],
     providerNames?: string[],
-    updatedAtRange?: UpdatedAtRange,
     status?: string
+    updatedAtRange?: UpdatedAtRange,
   },
   sortByFields?: string | string[],
-  temporalBoundByCreatedAt: boolean,
+  temporalBoundByCreatedAt?: boolean,
 }) : Knex.QueryBuilder => {
   const {
     granules: granulesTable,
@@ -281,7 +269,13 @@ export const getGranulesByApiPropertiesQuery = ({
         queryBuilder.where(`${granulesTable}.status`, searchParams.status);
       }
       if (sortByFields) {
-        queryBuilder.orderBy([sortByFields].flat());
+        if (!searchParams.collate) {
+          queryBuilder.orderBy([sortByFields].flat());
+        } else {
+          [sortByFields].flat().forEach((field) => {
+            queryBuilder.orderByRaw(`${field} collate \"${searchParams.collate}\"`);
+          });
+        }
       }
     })
     .groupBy(`${granulesTable}.cumulus_id`)

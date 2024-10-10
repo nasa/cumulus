@@ -9,7 +9,6 @@ const CRP = rewire('../../lambdas/create-reconciliation-report');
 const linkingFilesToGranules = CRP.__get__('linkingFilesToGranules');
 const isOneWayCollectionReport = CRP.__get__('isOneWayCollectionReport');
 const isOneWayGranuleReport = CRP.__get__('isOneWayGranuleReport');
-const shouldAggregateGranulesForCollections = CRP.__get__('shouldAggregateGranulesForCollections');
 
 test(
   'isOneWayCollectionReport returns true only when one or more specific parameters '
@@ -83,39 +82,6 @@ test(
     );
     t.false(isOneWayGranuleReport(allFalseKeys));
     t.true(isOneWayGranuleReport({ ...allTrueKeys, ...allFalseKeys }));
-  }
-);
-
-test(
-  'shouldAggregateGranulesForCollections returns true only when one or more specific parameters '
-  + ' are present on the reconciliation report object.',
-  (t) => {
-    const paramsThatShouldReturnTrue = ['updatedAt__to', 'updatedAt__from'];
-    const paramsThatShouldReturnFalse = [
-      'stackName',
-      'systemBucket',
-      'startTimestamp',
-      'anythingAtAll',
-    ];
-
-    paramsThatShouldReturnTrue.map((p) =>
-      t.true(shouldAggregateGranulesForCollections({ [p]: randomId('value') })));
-
-    paramsThatShouldReturnFalse.map((p) =>
-      t.false(shouldAggregateGranulesForCollections({ [p]: randomId('value') })));
-
-    const allTrueKeys = paramsThatShouldReturnTrue.reduce(
-      (accum, current) => ({ ...accum, [current]: randomId('value') }),
-      {}
-    );
-    t.true(shouldAggregateGranulesForCollections(allTrueKeys));
-
-    const allFalseKeys = paramsThatShouldReturnFalse.reduce(
-      (accum, current) => ({ ...accum, [current]: randomId('value') }),
-      {}
-    );
-    t.false(shouldAggregateGranulesForCollections(allFalseKeys));
-    t.true(shouldAggregateGranulesForCollections({ ...allTrueKeys, ...allFalseKeys }));
   }
 );
 

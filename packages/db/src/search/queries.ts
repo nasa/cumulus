@@ -243,9 +243,10 @@ export const convertQueryStringToDbQueryParameters = (
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
-  dbQueryParameters.limit = Number.parseInt(limit ?? '10', 10);
-  dbQueryParameters.offset = (dbQueryParameters.page - 1) * dbQueryParameters.limit;
-
+  if (limit !== null) {
+    dbQueryParameters.limit = Number.parseInt(limit ?? '10', 10);
+    dbQueryParameters.offset = (dbQueryParameters.page - 1) * dbQueryParameters.limit;
+  }
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
