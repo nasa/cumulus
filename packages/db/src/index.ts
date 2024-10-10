@@ -109,6 +109,7 @@ export {
   translatePostgresPdrToApiPdr,
 } from './translate/pdr';
 export {
+  translateApiReconReportToPostgresReconReport,
   translatePostgresReconReportToApiReconReport,
 } from './translate/reconciliation_reports';
 
