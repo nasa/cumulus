@@ -45,6 +45,7 @@
     "@cumulus/common": "19.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/distribution-utils": "19.0.0",
+    "@cumulus/logger": "19.0.0",
     "lodash": "^4.17.15"
   },
   "devDependencies": {

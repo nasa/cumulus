@@ -4,6 +4,7 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
 const cloneDeep = require('lodash/cloneDeep');
+const Logger = require('@cumulus/logger');
 const { getObjectSize } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
@@ -20,36 +21,49 @@ const {
   updateCMRMetadata,
 } = require('@cumulus/cmrjs');
 
+const logger = new Logger({ sender: '@cumulus/update-granules-cmr-metadata-file-links' });
 /**
  * Update each of the CMR files' OnlineAccessURL fields to represent the new
  * file locations. This function assumes that there will only ever be a single CMR file per granule.
  *
- * @param {Array<Object>} cmrFiles       - array of objects that include CMR xmls uris and
- *                                         granuleIds
- * @param {Object} granulesObject        - an object of the granules where the key is the granuleId
- * @param {string} cmrGranuleUrlType .   - type of granule CMR url
- * @param {string} distEndpoint          - the api distribution endpoint
- * @param {Object} bucketTypes           - map of bucket names to bucket types
- * @param {Object} distributionBucketMap - mapping of bucket->distirubtion path values
- *                                         (e.g. { bucket: distribution path })
+ * @param {Array<Object>} cmrFiles         - array of objects that include CMR xmls uris and
+ *                                           granuleIds
+ * @param {Object} granulesObject          - an object of the granules where the key is granuleId
+ * @param {string} cmrGranuleUrlType .     - type of granule CMR url
+ * @param {string} distEndpoint            - the api distribution endpoint
+ * @param {Object} bucketTypes             - map of bucket names to bucket types
+ * @param {Object} distributionBucketMap   - mapping of bucket->distribution path values
+ *                                           (e.g. { bucket: distribution path })
+ * @param {Object} excludeFileRegexPattern - pattern by which to exclude files from processing
  * @returns {Promise<Object[]>} Array of updated CMR files with etags of newly updated files.
  *
  */
+
 async function updateEachCmrFileAccessURLs(
   cmrFiles,
   granulesObject,
   cmrGranuleUrlType,
   distEndpoint,
   bucketTypes,
-  distributionBucketMap
+  distributionBucketMap,
+  excludeFileRegexPattern
 ) {
   return await Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
+    let files = granule.files;
+    if (excludeFileRegexPattern) {
+      const excludeFileRegex = new RegExp(excludeFileRegexPattern);
+      files = granule.files.filter((file) => !file.key.match(excludeFileRegex));
+
+      if (files.length === granule.files.length) {
+        logger.warn(`No files matched the excludeFileRegex ${excludeFileRegexPattern}.  Found files: ${files.map((file) => file.key).join(', ')}`);
+      }
+    }
     return await updateCMRMetadata({
       granuleId,
       cmrFile: granule.files.find(isCMRFile),
-      files: granule.files,
+      files: files,
       distEndpoint,
       published: false,
       bucketTypes,
@@ -102,7 +116,8 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     cmrGranuleUrlType,
     config.distribution_endpoint,
     bucketTypes,
-    distributionBucketMap
+    distributionBucketMap,
+    config.excludeFileRegex
   );
 
   const updatedGranulesByGranuleId = await updateCmrFileInfo(cmrFiles, granulesByGranuleId);

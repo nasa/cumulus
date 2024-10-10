@@ -7,7 +7,9 @@ const cloneDeep = require('lodash/cloneDeep');
 
 const {
   buildS3Uri,
+  getObject,
   getObjectSize,
+  getObjectStreamContents,
   recursivelyDeleteS3Bucket,
   putJsonS3Object,
   promiseS3Upload,
@@ -238,6 +240,47 @@ test.serial('update-granules-cmr-metadata-file-links properly handles a case whe
   const message = await updateGranulesCmrMetadataFileLinks(newPayload);
 
   t.deepEqual(message.granules, newPayload.input.granules);
+});
+
+test.serial('update-granules-cmr-metadata-file-links properly filters files using the excludeFileRegex', async (t) => {
+  const newPayload = buildPayload(t);
+
+  const ext = '.some.extension';
+  const excludeFileRegex = `.*${ext}`;
+
+  // Modify the payload to include a file that should be excluded
+  // The bucket must be public or protected, otherwise we will see a false test-success
+  // since only public/protected files are updated in the metadata
+  newPayload.input.granules.forEach((granule) => {
+    const newFile = {
+      bucket: t.context.publicBucket,
+      key: `some/prefix/some_filename${ext}`,
+      type: 'data',
+    };
+    granule.files.push(newFile);
+  });
+  newPayload.config.excludeFileRegex = excludeFileRegex;
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  await updateGranulesCmrMetadataFileLinks(newPayload);
+
+  const cmrFiles = [];
+  await newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if (isCMRFile(file)) {
+        cmrFiles.push(file);
+      }
+    });
+  });
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
+    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
+    t.true(!payloadContents.includes(ext));
+  }));
 });
 
 test('updateCmrFileInfo - throws error when granule not found', async (t) => {
