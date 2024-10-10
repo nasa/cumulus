@@ -24,15 +24,14 @@ const {
 const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
 const Collection = require('@cumulus/es-client/collections');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
-const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
+const { getEsClient } = require('@cumulus/es-client/search');
+const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
 
 const {
   ReconciliationReportPgModel,
   translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
-const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
 const { errorify, filenamify } = require('../lib/utils');
@@ -819,8 +818,8 @@ async function processRequest(params) {
     reportName,
     systemBucket,
     stackName,
-    esClient = await getEsClient(),
     knex = await getKnexClient(env),
+    esClient = await getEsClient(),
   } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName
@@ -854,14 +853,17 @@ async function processRequest(params) {
     };
     log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
     if (reportType === 'Internal') {
-      await createInternalReconciliationReport(recReportParams);
+      log.error(
+        'Internal Reconciliation Reports are no longer valid, as Cumulus is no longer utilizing Elasticsearch'
+      );
+      throw new Error('Internal Reconciliation Reports are no longer valid');
     } else if (reportType === 'Granule Inventory') {
       await createGranuleInventoryReport(recReportParams);
     } else if (reportType === 'ORCA Backup') {
       await createOrcaBackupReconciliationReport(recReportParams);
     } else {
       // reportType is in ['Inventory', 'Granule Not Found']
-      await createReconciliationReport(recReportParams);
+      await createReconciliationReport(recReportParams); // TODO Update to not use elasticsearch
     }
 
     const generatedRecord = {
@@ -900,6 +902,7 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
+  //TODO: Remove irrelevant env vars from terraform after ES reports are removed
   const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE', 'ES_SCROLL', 'ES_SCROLL_SIZE'];
   const envsToLog = pickBy(process.env, (value, key) => varsToLog.includes(key));
   log.info(`CMR and ES Environment variables: ${JSON.stringify(envsToLog)}`);
