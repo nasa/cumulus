@@ -71,6 +71,11 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   timeout on `sfEventSqsToDbRecordsDeadLetterQueue` and `sfEventSqsToDbRecordsInputQueue` and may lead to system
   instability.
 
+- **CUMULUS-3756**
+  - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
+  - This is to allow files matching specified regex to be excluded when updating the Related URLs list
+  - Defaults to the current behavior of excluding no files.
+
 ### Changed
 
 ### Fixed
