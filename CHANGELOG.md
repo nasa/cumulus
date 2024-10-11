@@ -12,11 +12,16 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 
 ### Added
 
+<<<<<<< HEAD
 - **CUMULUS-3773**
   - Added sftpFastDownload configuration to SyncGranule task.
   - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
   - Added sftp support to FakeProvider
   - Added sftp integration test
+- **CUMULUS-3756**
+  - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
+  - This is to allow files matching specified regex to be excluded when updating the Related URLs list
+  - Defaults to the current behavior of excluding no files.
 
 ## [v18.5.0] 2024-10-03
 
