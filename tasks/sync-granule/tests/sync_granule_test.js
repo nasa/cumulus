@@ -3,6 +3,7 @@
 const sinon = require('sinon');
 const path = require('path');
 const test = require('ava');
+const crypto = require('crypto');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   calculateObjectHash,
@@ -199,7 +200,8 @@ test.serial('download Granule from FTP endpoint', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+  const expectedHash = crypto.createHash('md5').update(output.granules[0].granuleId).digest('hex');
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/${expectedHash}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
 
   const expected = {
     bucket: t.context.internalBucketName,
@@ -233,7 +235,8 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+  const expectedHash = crypto.createHash('md5').update(output.granules[0].granuleId).digest('hex');
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/${expectedHash}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
 
   const expected = {
     bucket: t.context.internalBucketName,
@@ -294,7 +297,8 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+  const expectedHash = crypto.createHash('md5').update(output.granules[0].granuleId).digest('hex');
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/${expectedHash}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
   const expected = {
     bucket: t.context.internalBucketName,
     key,
@@ -378,7 +382,8 @@ test.serial('download granule from S3 provider with checksum and data file in an
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+  const expectedHash = crypto.createHash('md5').update(output.granules[0].granuleId).digest('hex');
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/${expectedHash}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
   const expected = {
     bucket: t.context.internalBucketName,
     key,
@@ -430,7 +435,8 @@ test.serial('download granule from S3 provider', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+    const expectedHash = crypto.createHash('md5').update(output.granules[0].granuleId).digest('hex');
+    const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/${expectedHash}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
     const expected = {
       bucket: t.context.internalBucketName,
       key,
@@ -478,7 +484,8 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
 
   await validateOutput(t, output);
 
-  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2`;
+  const expectedHash = crypto.createHash('md5').update(output.granules[0].granuleId).digest('hex');
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/${expectedHash}/20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2`;
   const expected = {
     bucket: t.context.internalBucketName,
     key,
@@ -531,7 +538,8 @@ test.serial('download granule as well as checksum file from an HTTP endpoint', a
   const checksumFilename = input.granules[0].files[1].name;
   const { name, version } = config.collection;
   const collectionId = constructCollectionId(name, version);
-  const keypath = `file-staging/${config.stack}/${collectionId}`;
+  const expectedHash = crypto.createHash('md5').update(output.granules[0].granuleId).digest('hex');
+  const keypath = `file-staging/${config.stack}/${collectionId}/${expectedHash}`;
   const granuleFile = output.granules[0].files.find(
     (file) => file.key.endsWith(granuleFilename)
   );
@@ -583,8 +591,9 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
   // Stage the files to be downloaded
   const granuleFilename = t.context.event.input.granules[0].files[0].name;
   const granuleChecksumType = t.context.event.input.granules[0].files[0].checksumType;
+  const expectedHash = crypto.createHash('md5').update(t.context.event.input.granules[0].granuleId).digest('hex');
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}`;
+  const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/${expectedHash}`;
   const errorMessage = `Invalid checksum for S3 object s3://${t.context.internalBucketName}/${keypath}/${granuleFilename} with type ${granuleChecksumType} and expected sum ${granuleChecksumValue}`;
 
   await t.throwsAsync(
@@ -621,7 +630,8 @@ test.serial('validate file properties', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 2);
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}`;
+  const expectedHash = crypto.createHash('md5').update(t.context.event.input.granules[0].granuleId).digest('hex');
+  const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/${expectedHash}`;
   t.is(
     `${output.granules[0].files[0].bucket}/${output.granules[0].files[0].key}`,
     `${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -736,10 +746,12 @@ async function duplicateHandlingErrorTest(t) {
   } catch (error) {
     const collection = t.context.event.config.collection;
     const collectionId = constructCollectionId(collection.name, collection.version);
+    const expectedHash = crypto.createHash('md5').update(t.context.event.input.granules[0].granuleId).digest('hex');
     const granuleFileKey = s3Join(
       t.context.event.config.fileStagingDir,
       t.context.event.config.stack,
       collectionId,
+      expectedHash,
       granuleFileName
     );
     t.true(error instanceof errors.DuplicateFile);
@@ -798,7 +810,6 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
       bucket: t.context.event.config.provider.host,
       key,
     });
-
     output = await syncGranule(t.context.event);
     await validateOutput(t, output);
 
@@ -1025,6 +1036,49 @@ test.serial('download multiple granules from S3 provider to staging directory', 
   try {
     await prepareS3DownloadEvent(t);
 
+    const output = await syncGranule(t.context.event);
+
+    await validateOutput(t, output);
+
+    t.is(output.granules.length, 3);
+
+    const config = t.context.event.config;
+
+    // verify the files are downloaded to the correct staging area
+    for (let i = 0; i < output.granules.length; i += 1) {
+      for (let j = 0; j < output.granules[i].files.length; j += 1) {
+        const collectionId = constructCollectionId(
+          output.granules[i].dataType, output.granules[i].version
+        );
+        const expectedHash = crypto.createHash('md5').update(output.granules[i].granuleId).digest('hex');
+        const keypath = `${config.fileStagingDir}/${config.stack}/${collectionId}/${expectedHash}`;
+        const granuleFileName = t.context.event.input.granules[i].files[j].name;
+        t.is(
+          `${output.granules[i].files[j].bucket}/${output.granules[i].files[j].key}`,
+          `${t.context.internalBucketName}/${keypath}/${granuleFileName}`
+        );
+
+        t.true(
+          // eslint-disable-next-line no-await-in-loop
+          await s3ObjectExists({
+            Bucket: t.context.internalBucketName,
+            Key: `${keypath}/${granuleFileName}`,
+          })
+        );
+      }
+    }
+  } finally {
+    // Clean up
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
+
+test.serial('download multiple granules from S3 provider to correct staging directory when useGranIdPath is set to false', async (t) => {
+  t.context.event.input.granules = t.context.event_multigran.input.granules;
+  try {
+    await prepareS3DownloadEvent(t);
+
+    t.context.event.config.useGranIdPath = false;
     const output = await syncGranule(t.context.event);
 
     await validateOutput(t, output);

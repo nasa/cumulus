@@ -1,5 +1,8 @@
+//@ts-check
+
 'use strict';
 
+const crypto = require('crypto');
 const flatten = require('lodash/flatten');
 const has = require('lodash/has');
 const path = require('path');
@@ -98,9 +101,11 @@ class GranuleFetcher {
    * @param {string} kwargs.bucket - s3 bucket to use for files
    * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest
    *    checksum files
+   * @param {boolean} [kwargs.useGranIdPath=true] - if 'true', use a md5 hash of the
+   * granuleID in the object prefix staging location
    * @returns {Promise<Object>} return granule object
    */
-  async ingest({ granule, bucket, syncChecksumFiles = false }) {
+  async ingest({ granule, bucket, syncChecksumFiles = false, useGranIdPath = true }) {
     // for each granule file
     // download / verify integrity / upload
 
@@ -129,7 +134,8 @@ class GranuleFetcher {
     const downloadPromises = filesToDownload.map((file) => this.ingestFile(
       file,
       bucket,
-      this.duplicateHandling
+      this.duplicateHandling,
+      useGranIdPath ? granule.granuleId : undefined
     ));
     log.debug('awaiting all download.Files');
     const downloadResults = await Promise.all(downloadPromises);
@@ -343,14 +349,22 @@ class GranuleFetcher {
    * 'replace' to replace the duplicate,
    * 'skip' to skip duplicate,
    * 'version' to keep both files if they have different checksums
+   * @param {string} [pathId] - ID (nominally a granuleId) to use as a per-granule prefix
+   * differentiation
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
-  async ingestFile(file, destinationBucket, duplicateHandling) {
+  async ingestFile(file, destinationBucket, duplicateHandling, pathId) { // TODO - Parameterize
     let duplicateFound;
     const fileRemotePath = path.join(file.path, file.name);
     const sourceBucket = file.source_bucket;
     // place files in the <collectionId> subdirectory
-    const stagingPath = S3.s3Join(this.fileStagingDir, this.collectionId);
+    // TODO: make this optional
+    const granulePath = pathId ? crypto.createHash('md5').update(pathId).digest('hex') : '';
+    const stagingPath = S3.s3Join(this.fileStagingDir, this.collectionId, granulePath);
+    // TODO can granuleID be an object string?   Can we safely *hash* it?
+    // - Consider hashing granID to avoid mismatch between AWS valid strings/grandId valid values
+
+    // TODO - Handle missing granuleId? (or is it always present?)
     const destinationKey = S3.s3Join(stagingPath, file.name);
 
     // the staged file expected
