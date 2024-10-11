@@ -357,14 +357,9 @@ class GranuleFetcher {
     let duplicateFound;
     const fileRemotePath = path.join(file.path, file.name);
     const sourceBucket = file.source_bucket;
-    // place files in the <collectionId> subdirectory
-    // TODO: make this optional
+    // place files in the <collectionId>/(optional) <granuleId-hash> subdirectory
     const granulePath = pathId ? crypto.createHash('md5').update(pathId).digest('hex') : '';
     const stagingPath = S3.s3Join(this.fileStagingDir, this.collectionId, granulePath);
-    // TODO can granuleID be an object string?   Can we safely *hash* it?
-    // - Consider hashing granID to avoid mismatch between AWS valid strings/grandId valid values
-
-    // TODO - Handle missing granuleId? (or is it always present?)
     const destinationKey = S3.s3Join(stagingPath, file.name);
 
     // the staged file expected
