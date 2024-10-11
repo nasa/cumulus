@@ -96,6 +96,8 @@ class GranuleFetcher {
    * @param {Object} kwargs - keyword parameters
    * @param {Object} kwargs.granule - granule object
    * @param {string} kwargs.bucket - s3 bucket to use for files
+   * @param {boolean} [kwargs.fastDownload=false] - whether fast download is performed using
+   *    parallel reads
    * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest
    *    checksum files
    * @returns {Promise<Object>} return granule object
