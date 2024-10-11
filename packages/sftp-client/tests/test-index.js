@@ -137,6 +137,7 @@ test.serial('sftpClient.syncToS3() transfers a file from SFTP to S3 with the cor
 });
 
 test.serial('sftpClient.syncToS3Fast() transfers a file from SFTP to S3 with the correct content-type', async (t) => {
+  process.env.SFTP_DEBUG = 'true';
   const key = `${randomString()}.hdf`;
 
   await t.context.sftpClient.syncToS3Fast(
