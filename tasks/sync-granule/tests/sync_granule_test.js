@@ -316,7 +316,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
   );
 });
 
-test.serial.only('download Granule with sftpFastDownload set to true from SFTP endpoint', async (t) => {
+test.serial('download Granule with sftpFastDownload set to true from SFTP endpoint', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
