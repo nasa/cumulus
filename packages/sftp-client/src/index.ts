@@ -7,7 +7,6 @@ import { s3 } from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
 import Client from 'ssh2-sftp-client';
 import { ConnectConfig } from 'ssh2';
-//const { PassThrough } = require('stream');
 
 export interface SftpClientConfig {
   host: string,
