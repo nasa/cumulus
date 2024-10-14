@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ingest",
-  "version": "18.4.0",
+  "version": "19.0.0",
   "description": "Ingest utilities",
   "engines": {
     "node": ">=20.12.2"
@@ -41,13 +41,13 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.4.0",
-    "@cumulus/common": "18.4.0",
-    "@cumulus/db": "18.4.0",
-    "@cumulus/errors": "18.4.0",
-    "@cumulus/logger": "18.4.0",
-    "@cumulus/message": "18.4.0",
-    "@cumulus/sftp-client": "18.4.0",
+    "@cumulus/aws-client": "19.0.0",
+    "@cumulus/common": "19.0.0",
+    "@cumulus/db": "19.0.0",
+    "@cumulus/errors": "19.0.0",
+    "@cumulus/logger": "19.0.0",
+    "@cumulus/message": "19.0.0",
+    "@cumulus/sftp-client": "19.0.0",
     "cksum": "^1.3.0",
     "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",
@@ -56,14 +56,14 @@
     "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.22",
-    "moment": "2.29.4",
+    "moment": "^2.30.1",
     "simplecrawler": "^1.1.9",
     "tough-cookie": "~4.0.0"
   },
   "devDependencies": {
-    "@cumulus/checksum": "18.4.0",
-    "@cumulus/cmrjs": "18.4.0",
-    "@cumulus/test-data": "18.4.0",
-    "@cumulus/types": "18.4.0"
+    "@cumulus/checksum": "19.0.0",
+    "@cumulus/cmrjs": "19.0.0",
+    "@cumulus/test-data": "19.0.0",
+    "@cumulus/types": "19.0.0"
   }
 }

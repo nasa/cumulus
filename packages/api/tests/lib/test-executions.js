@@ -6,13 +6,8 @@ const {
   destroyLocalTestDb,
   generateLocalTestDb,
   migrationDir,
+  ExecutionSearch,
 } = require('@cumulus/db');
-
-const { Search } = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 
 const { createExecutionRecords } = require('../helpers/create-test-data');
 
@@ -31,12 +26,9 @@ test.beforeEach(async (t) => {
   try {
     const testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
     process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
-    const { esIndex, esClient } = await createTestIndex();
     const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
     t.context = {
       ...t.context,
-      esClient,
-      esIndex,
       knex,
       knexAdmin,
       testDbName,
@@ -53,20 +45,16 @@ test.afterEach.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName: t.context.testDbName,
   });
-  await cleanupTestIndex(t.context);
 });
 
-const searchAllExecutionsForCollection = async (collectionId, esIndex) => {
-  const searchClient = new Search(
+const searchAllExecutionsForCollection = async (collectionId) => {
+  const searchClient = new ExecutionSearch(
     {
       queryStringParameters: {
         collectionId,
       },
-    },
-    'execution',
-    esIndex
+    }
   );
-  await searchClient.initializeEsClient();
   const response = await searchClient.query();
   return response;
 };
@@ -135,7 +123,6 @@ test.serial('batchDeleteExecutions() deletes expected executions from the databa
   const { pgCollectionRecord } = await createExecutionRecords({
     knex: t.context.knex,
     count: executionCount,
-    esClient: t.context.esClient,
     collectionId,
     addParentExecutions: true,
   });
@@ -143,19 +130,16 @@ test.serial('batchDeleteExecutions() deletes expected executions from the databa
   const otherCollectionRecords = await createExecutionRecords({
     knex: t.context.knex,
     count: otherExecutionCount,
-    esClient: t.context.esClient,
     collectionId: otherCollectionId,
     addParentExecutions: true,
   });
 
   const setupExecutions = await searchAllExecutionsForCollection(
-    collectionId,
-    t.context.esIndex
+    collectionId
   );
 
   const otherCollectionEsExecutions = await searchAllExecutionsForCollection(
-    otherCollectionId,
-    t.context.esIndex
+    otherCollectionId
   );
 
   const setupRdsExecutions = await t.context.knex('executions').select();
@@ -169,8 +153,7 @@ test.serial('batchDeleteExecutions() deletes expected executions from the databa
     batchSize: 7,
   });
   const postDeleteEsExecutions = await searchAllExecutionsForCollection(
-    collectionId,
-    t.context.esIndex
+    collectionId
   );
   const postDeleteRdsExecutions = await t.context.knex('executions').where('collection_cumulus_id', pgCollectionRecord[0].cumulus_id);
   t.is(postDeleteRdsExecutions.length, 0);
@@ -178,8 +161,7 @@ test.serial('batchDeleteExecutions() deletes expected executions from the databa
 
   // Validate original executions exist
   const otherEsExecutions = await searchAllExecutionsForCollection(
-    otherCollectionId,
-    t.context.esIndex
+    otherCollectionId
   );
   const otherRdsExecutions = await t.context.knex('executions').where('collection_cumulus_id', otherCollectionRecords.pgCollectionRecord[0].cumulus_id);
   t.is(otherEsExecutions.meta.count, otherExecutionCount + 1);
