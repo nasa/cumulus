@@ -13,7 +13,7 @@
       "description": "The name of the deployment stack"
     },
     "fileStagingDir": {
-      "description": "Directory used for staging location of files. Default is `file-staging`. Granules are further organized by stack name and collection name making the full path `file-staging/<stack name>/<collection name>`",
+      "description": "Directory used for staging location of files. Default is `file-staging`. Granules are further organized by stack name and collection name making the full path `file-staging/<stack name>/<collection name>/<optional granuleIdHash>`",
       "type": "string"
     },
     "provider": {
