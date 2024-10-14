@@ -408,7 +408,7 @@ class GranuleFetcher {
           destinationKey,
           bucket: sourceBucket,
           fileRemotePath,
-          fastDownload: process.env.fastGet === 'true' || fastDownload, // TODO remove for testing
+          fastDownload,
         });
         // Verify file integrity
         log.debug(`await verifyFile ${JSON.stringify(file)}, s3://${destinationBucket}/${destinationKey}`);
