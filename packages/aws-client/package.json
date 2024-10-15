@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/aws-client",
-  "version": "18.3.5",
+  "version": "19.0.0",
   "description": "Utilities for working with AWS",
   "keywords": [
     "GIBS",
@@ -68,10 +68,10 @@
     "@aws-sdk/s3-request-presigner": "^3.447.0",
     "@aws-sdk/signature-v4-crt": "^3.447.0",
     "@aws-sdk/types": "^3.447.0",
-    "@cumulus/checksum": "18.3.5",
-    "@cumulus/errors": "18.3.5",
-    "@cumulus/logger": "18.3.5",
-    "@cumulus/types": "18.3.5",
+    "@cumulus/checksum": "19.0.0",
+    "@cumulus/errors": "19.0.0",
+    "@cumulus/logger": "19.0.0",
+    "@cumulus/types": "19.0.0",
     "lodash": "~4.17.21",
     "mem": "^8.0.2",
     "p-map": "^1.2.0",
@@ -82,7 +82,7 @@
     "uuid": "^8.2.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "18.3.5",
+    "@cumulus/test-data": "19.0.0",
     "@types/uuid": "^8.0.0"
   }
 }
