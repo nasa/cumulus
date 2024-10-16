@@ -149,6 +149,11 @@
       "description": "If true, checksum files are also synced. Default: false.",
       "default": false
     },
+    "useGranIdPath": {
+      "type": "boolean",
+      "description": "If true, a md5 has of the granuleId is used as the staging path for the granule files.   Defaults to false.",
+      "default": false
+    },
     "workflowStartTime": {
       "type": "integer",
       "description": "Specifies the start time for the current workflow (as a timestamp) and will be used as the createdAt time for granules output"

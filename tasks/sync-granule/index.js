@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const pMap = require('p-map');
@@ -10,12 +12,55 @@ const log = require('@cumulus/common/log');
 const GranuleFetcher = require('./GranuleFetcher');
 
 /**
+ * @typedef {Object} SyncGranuleConfig
+ * @property {string} [stack] - The name of the deployment stack.
+ * @property {string} [fileStagingDir] - Directory used for staging
+ * location of files. Default is `file-staging`.
+ * Granules are further organized by stack name and collection
+ * name making the full path `file-staging/<stack name>/<collection name>/<optional granuleIdHash>`.
+ * @property {Object} provider - Provider configuration.
+ * @property {string} [provider.id] - Provider ID.
+ * @property {string} [provider.username] - Provider username.
+ * @property {string} [provider.password] - Provider password.
+ * @property {string} provider.host - Provider host.
+ * @property {number} [provider.port] - Provider port.
+ * @property {number} [provider.globalConnectionLimit] - Global connection limit.
+ * @property {'ftp' | 'sftp' | 'http' | 'https' | 's3'} provider.protocol - Provider protocol.
+ * @property {Object.<string, {name: string, type: string}>} buckets - AWS S3
+ * buckets used by this task.
+ * @property {string} downloadBucket - AWS S3 bucket to use
+ * when downloading files.
+ * @property {Object} [collection] - Collection configuration.
+ * @property {string} collection.name - Collection name.
+ * @property {string} [collection.process] - Collection process.
+ * @property {string} [collection.url_path] - Collection URL path.
+ * @property {string} [collection.duplicateHandling] - How to handle duplicate files.
+ * @property {Array<{regex: string, bucket: string, url_path?: string}>} collection.files -
+ * Array of file configurations.
+ * @property {Object} [pdr] - PDR configuration.
+ * @property {string} pdr.name - PDR name.
+ * @property {string} pdr.path - PDR path.
+ * @property {'replace' | 'version' | 'skip' | 'error'} [duplicateHandling='error'] - Specifies
+ * how duplicate filenames should be handled. `error` will throw
+ * an error that, if not caught, will fail the task/workflow execution.
+ * `version` will add a suffix to the existing filename to avoid a clash.
+ * @property {boolean} [syncChecksumFiles=false] - If true, checksum files
+ *  are also synced. Default: false.
+ * @property {boolean} [useGranIdPath=false] - If true, use a md5 hash of the
+ * granuleID in the object prefix staging location.
+ * @property {number} [workflowStartTime] - Specifies the start time for
+ *  the current workflow (as a timestamp) and will be used as the createdAt
+ *  time for granules output.
+ */
+
+/**
  * Ingest a list of granules
  *
  * @param {Object} kwargs - keyword arguments
  * @param {Object} kwargs.ingest - an ingest object
  * @param {string} kwargs.bucket - the name of an S3 bucket, used for locking
- * @param {string} kwargs.provider - the name of a provider, used for locking
+ * @param {Object} kwargs.provider - The provider object as defined in the
+ * task schema
  * @param {Object[]} kwargs.granules - the granules to be ingested
  * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest
  *    all corresponding checksum files
@@ -86,6 +131,8 @@ async function download({
  * Ingest a list of granules
  *
  * @param {Object} event - contains input and config parameters
+ * @param {SyncGranuleConfig} event.config - the task configuration object
+ * @param {Object} event.input - the input object
  * @returns {Promise.<Object>} - a description of the ingested granules
  */
 function syncGranule(event) {
@@ -106,9 +153,12 @@ function syncGranule(event) {
   const workflowStartTime = configWorkflowStartTime ? Math.min(configWorkflowStartTime, now) : now;
 
   // use stack and collection names to suffix fileStagingDir
+  if (!stack) {
+    log.warn(`Warning - stack name not provided, file staging dir will be set to ${config.fileStagingDir} or the default vaule of 'file-staging'`);
+  }
   const fileStagingDir = s3Join(
     (config.fileStagingDir || 'file-staging'),
-    stack
+    (stack || '')
   );
 
   if (!provider) {
