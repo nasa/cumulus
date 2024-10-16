@@ -183,8 +183,7 @@ class GranuleFetcher {
    * @param {string} kwargs.bucket - s3 bucket to use for files
    * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest checksum files
    * @param {boolean} [kwargs.useGranIdPath=true] - if 'true', use a md5 hash of the granuleID
-   *  in the object prefix
-   *  staging location
+   *  in the object prefix staging location
    * @returns {Promise<Object>} return granule object
    */
   async ingest({

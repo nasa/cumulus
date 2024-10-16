@@ -153,9 +153,6 @@ function syncGranule(event) {
   const workflowStartTime = configWorkflowStartTime ? Math.min(configWorkflowStartTime, now) : now;
 
   // use stack and collection names to suffix fileStagingDir
-  if (!stack) {
-    log.warn(`Warning - stack name not provided, file staging dir will be set to ${config.fileStagingDir} or the default vaule of 'file-staging'`);
-  }
   const fileStagingDir = s3Join(
     (config.fileStagingDir || 'file-staging'),
     (stack || '')
