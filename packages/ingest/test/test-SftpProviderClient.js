@@ -177,7 +177,7 @@ test('SftpProviderClient.list filters listed objects with path', async (t) => {
   t.is(list[0].name, 'MOD09GQ_1granule_v3.PDR');
 });
 
-test('Download remote file to s3 with correct content-type', async (t) => {
+test.serial('Download remote file to s3 with correct content-type', async (t) => {
   const { mySftpProviderClient } = t.context;
 
   const expectedContentType = 'application/x-hdf';
@@ -203,7 +203,7 @@ test('Download remote file to s3 with correct content-type', async (t) => {
   t.is(expectedContentType, s3HeadResponse.ContentType);
 });
 
-test('Fast download remote file to s3 with correct content-type', async (t) => {
+test.serial('Fast download remote file to s3 with correct content-type', async (t) => {
   const { mySftpProviderClient } = t.context;
 
   const expectedContentType = 'application/x-hdf';
@@ -230,7 +230,7 @@ test('Fast download remote file to s3 with correct content-type', async (t) => {
   t.is(expectedContentType, s3HeadResponse.ContentType);
 });
 
-test('Download remote file to local disk', async (t) => {
+test.serial('Download remote file to local disk', async (t) => {
   const { mySftpProviderClient } = t.context;
 
   const localPath = path.join(os.tmpdir(), `delete-me-${randomString()}.txt`);
@@ -243,7 +243,7 @@ test('Download remote file to local disk', async (t) => {
   fs.unlinkSync(localPath);
 });
 
-test('Fast download remote file to local disk', async (t) => {
+test.serial('Fast download remote file to local disk', async (t) => {
   const { mySftpProviderClient } = t.context;
 
   const localPath = path.join(os.tmpdir(), `delete-me-${randomString()}.txt`);
