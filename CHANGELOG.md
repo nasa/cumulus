@@ -25,8 +25,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Defaults to the current behavior of excluding no files.
 
 ### Changed
-- **CUMULUS-3906**
-  - Bumps example ORCA deployment to version v10.0.0.
+
 - **CUMULUS-3838**
   - Updated python dependencies to latest:
     - cumulus-process-py 1.4.0
