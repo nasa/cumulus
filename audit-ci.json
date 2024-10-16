@@ -9,7 +9,11 @@
         "expiry": "1 July 2023 11:00"
       }
     },
-    "jsonpath-plus",
-    "semver"
+    "semver",
+    "cacheable-request",
+    "http-cache-semantics",
+    "lodash.pick",
+    "semver",
+    "axios"
   ]
 }
