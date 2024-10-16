@@ -46,7 +46,7 @@ const GranuleFetcher = require('./GranuleFetcher');
  * `version` will add a suffix to the existing filename to avoid a clash.
  * @property {boolean} [syncChecksumFiles=false] - If true, checksum files
  *  are also synced. Default: false.
- * @property {boolean} [useGranIdPath=false] - If true, use a md5 hash of the
+ * @property {boolean} [useGranIdPath=true] - If true, use a md5 hash of the
  * granuleID in the object prefix staging location.
  * @property {number} [workflowStartTime] - Specifies the start time for
  *  the current workflow (as a timestamp) and will be used as the createdAt

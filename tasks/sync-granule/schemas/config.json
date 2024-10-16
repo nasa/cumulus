@@ -152,7 +152,7 @@
     "useGranIdPath": {
       "type": "boolean",
       "description": "If true, a md5 has of the granuleId is used as the staging path for the granule files.   Defaults to false.",
-      "default": false
+      "default": true
     },
     "workflowStartTime": {
       "type": "integer",
