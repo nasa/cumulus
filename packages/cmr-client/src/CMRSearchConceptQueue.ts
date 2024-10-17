@@ -79,10 +79,10 @@ export class CMRSearchConceptQueue<T> {
    * items in the queue, returns 'null'.
    *
    */
-  async peek(): Promise<T> {
+  async peek(): Promise<T | null> {
     if (this.items.length === 0) await this.fetchItems();
     if (this.items[0] === null) {
-      return null as unknown as T;
+      return null;
     }
     return this.items[0];
   }
@@ -97,7 +97,7 @@ export class CMRSearchConceptQueue<T> {
     const item = this.items.shift();
     // eslint-disable-next-line lodash/prefer-is-nil
     if (item === null || item === undefined) {
-      return null as unknown as T;
+      return null;
     }
     return item;
   }

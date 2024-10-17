@@ -73,7 +73,6 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  * @typedef {import('./create-reconciliation-report-types').FilesReport } FilesReport
  * @typedef {import('./create-reconciliation-report-types').GranulesReport } GranulesReport
  * @typedef {import('./create-reconciliation-report-types').FilesInCumulus } FilesInCumulus
- * @typedef {import('@aws-sdk').PutObjectCommandOutput} PutObjectCommandOutput
  */
 
 /**
