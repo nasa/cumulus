@@ -47,6 +47,24 @@ const buildFtpProvider = async (postfix = '') => {
   return provider;
 };
 
+const buildSftpProvider = async (postfix = '') => {
+  const provider = {
+    id: `sftp_provider${postfix}`,
+    protocol: 'sftp',
+    host: await getProviderHost(),
+    username: 'testuser',
+    password: 'testpass',
+    globalConnectionLimit: 10,
+    maxDownloadTime: 500,
+  };
+
+  if (process.env.PROVIDER_SFTP_PORT) {
+    provider.port = Number(process.env.PROVIDER_SFTP_PORT);
+  }
+
+  return provider;
+};
+
 const fakeProviderPortMap = {
   http: process.env.PROVIDER_HTTP_PORT ? Number(process.env.PROVIDER_HTTP_PORT) : 3030,
   https: process.env.PROVIDER_HTTPS_PORT ? Number(process.env.PROVIDER_HTTPS_PORT) : 4040,
@@ -230,6 +248,7 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
 module.exports = {
   buildFtpProvider,
   buildHttpOrHttpsProvider,
+  buildSftpProvider,
   createProvider,
   fetchFakeProviderIp,
   fetchFakeS3ProviderBuckets,

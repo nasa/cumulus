@@ -27,6 +27,7 @@ async function download({
   bucket,
   provider,
   granules,
+  sftpFastDownload = false,
   syncChecksumFiles = false,
 }) {
   if (!Array.isArray(granules) || granules.length === 0) return [];
@@ -55,6 +56,7 @@ async function download({
         granule,
         bucket,
         syncChecksumFiles,
+        fastDownload: sftpFastDownload,
       });
       const endTime = Date.now();
 
@@ -95,6 +97,7 @@ function syncGranule(event) {
   const collection = config.collection;
   const downloadBucket = config.downloadBucket;
   const syncChecksumFiles = config.syncChecksumFiles;
+  const sftpFastDownload = config.sftpFastDownload;
   const duplicateHandling = duplicateHandlingType(event);
   const workflowStartTime = config.workflowStartTime ?
     Math.min(config.workflowStartTime, now) :
@@ -125,6 +128,7 @@ function syncGranule(event) {
     bucket: downloadBucket,
     provider,
     granules: input.granules,
+    sftpFastDownload,
     syncChecksumFiles,
   }).then((granuleResults) => {
     // eslint-disable-next-line camelcase
