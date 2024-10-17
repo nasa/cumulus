@@ -45,16 +45,12 @@ const maxResponsePayloadSizeBytes = 6 * 1000 * 1000;
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function listReports(req, res, knex) {
-  // const search = new Search(
-  //   { queryStringParameters: req.query },
-  //   'reconciliationReport',
-  //   process.env.ES_INDEX
-  // );
-
-  const search = new ReconciliationReportSearch({ queryStringParameters: req.query });
-  const response = await search.query(knex);
-  return res.send(response);
+async function listReports(req, res) {
+  const dbSearch = new ReconciliationReportSearch(
+    { queryStringParameters: req.query }
+  );
+  const result = await dbSearch.query();
+  return res.send(result);
 }
 
 /**
@@ -158,17 +154,6 @@ async function deleteReport(req, res) {
     }
     await reconciliationReportPgModel.delete(knex, { name });
   });
-
-  if (inTestMode()) {
-    const esClient = await getEsClient(process.env.ES_HOST);
-    await indexer.deleteRecord({
-      esClient,
-      id: name,
-      type: 'reconciliationReport',
-      index: process.env.ES_INDEX,
-      ignore: [404],
-    });
-  }
 
   return res.send({ message: 'Report deleted' });
 }

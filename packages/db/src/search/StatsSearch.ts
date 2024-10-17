@@ -59,6 +59,7 @@ const infixMapping: { [key: string]: string } = {
   providers: 'name',
   executions: 'arn',
   pdrs: 'name',
+  reconciliationReports: 'name',
 };
 
 /**

@@ -8,17 +8,19 @@ const { StatsSearch } = require('../../dist/search/StatsSearch');
 const {
   destroyLocalTestDb,
   generateLocalTestDb,
-  GranulePgModel,
   CollectionPgModel,
+  GranulePgModel,
+  ExecutionPgModel,
+  PdrPgModel,
+  ProviderPgModel,
+  ReconciliationReportPgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
-  fakeProviderRecordFactory,
-  migrationDir,
-  fakePdrRecordFactory,
   fakeExecutionRecordFactory,
-  PdrPgModel,
-  ExecutionPgModel,
-  ProviderPgModel,
+  fakePdrRecordFactory,
+  fakeProviderRecordFactory,
+  fakeReconciliationReportRecordFactory,
+  migrationDir,
 } = require('../../dist');
 
 const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
@@ -34,17 +36,16 @@ test.before(async (t) => {
 
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.granulePgModel = new GranulePgModel();
-  t.context.providerPgModel = new ProviderPgModel();
-  t.context.pdrPgModel = new PdrPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
+  t.context.pdrPgModel = new PdrPgModel();
+  t.context.providerPgModel = new ProviderPgModel();
+  t.context.reconciliationReportPgModel = new ReconciliationReportPgModel();
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
   const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
-  const granules = [];
-  const collections = [];
-  const executions = [];
-  const pdrs = [];
-  const providers = [];
+  const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory', 'ORCA Backup'];
+  const reconReportStatuses = ['Generated', 'Pending', 'Failed'];
+  const [granules, collections, executions, pdrs, providers, reconReports] = [[], [], [], [], [], []];
 
   range(20).map((num) => (
     collections.push(fakeCollectionRecordFactory({
@@ -92,30 +93,21 @@ test.before(async (t) => {
     }))
   ));
 
-  await t.context.collectionPgModel.insert(
-    t.context.knex,
-    collections
-  );
+  range(24).map((num) => (
+    reconReports.push(fakeReconciliationReportRecordFactory({
+      type: reconReportTypes[(num % 4)],
+      status: reconReportStatuses[(num % 3)],
+      created_at: (new Date(2024 + (num % 6), (num % 12), (num % 30))),
+      updated_at: (new Date(2024 + (num % 6), (num % 12), ((num + 1) % 29))),
+    }))
+  ));
 
-  await t.context.providerPgModel.insert(
-    t.context.knex,
-    providers
-  );
-
-  await t.context.granulePgModel.insert(
-    t.context.knex,
-    granules
-  );
-
-  await t.context.executionPgModel.insert(
-    t.context.knex,
-    executions
-  );
-
-  await t.context.pdrPgModel.insert(
-    t.context.knex,
-    pdrs
-  );
+  await t.context.collectionPgModel.insert(t.context.knex, collections);
+  await t.context.providerPgModel.insert(t.context.knex, providers);
+  await t.context.granulePgModel.insert(t.context.knex, granules);
+  await t.context.executionPgModel.insert(t.context.knex, executions);
+  await t.context.pdrPgModel.insert(t.context.knex, pdrs);
+  await t.context.reconciliationReportPgModel.insert(t.context.knex, reconReports);
 });
 
 test.after.always(async (t) => {
@@ -125,7 +117,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('StatsSearch returns correct response for basic granules query', async (t) => {
+test('StatsSearch aggregate returns correct response for basic query with type granules', async (t) => {
   const { knex } = t.context;
   const AggregateSearch = new StatsSearch({}, 'granule');
   const results = await AggregateSearch.aggregate(knex);
@@ -139,7 +131,7 @@ test('StatsSearch returns correct response for basic granules query', async (t) 
   t.deepEqual(results.count, expectedResponse);
 });
 
-test('StatsSearch filters correctly by date', async (t) => {
+test('StatsSearch aggregate filters granules correctly by date', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     timestamp__from: `${(new Date(2020, 1, 28)).getTime()}`,
@@ -158,7 +150,7 @@ test('StatsSearch filters correctly by date', async (t) => {
   t.deepEqual(results.count, expectedResponse);
 });
 
-test('StatsSearch filters executions correctly', async (t) => {
+test('StatsSearch aggregate filters executions correctly', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     field: 'status',
@@ -205,7 +197,7 @@ test('StatsSearch filters executions correctly', async (t) => {
   t.is(results3.meta.count, 1);
 });
 
-test('StatsSearch filters PDRs correctly', async (t) => {
+test('StatsSearch aggregate filters PDRs correctly', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     field: 'status',
@@ -247,7 +239,39 @@ test('StatsSearch filters PDRs correctly', async (t) => {
   t.deepEqual(results3.count, expectedResponse3);
 });
 
-test('StatsSearch returns correct response when queried by provider', async (t) => {
+test('StatsSearch aggregate filters Reconciliation Reports correctly', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    field: 'type',
+  };
+
+  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'reconciliationReport');
+  const results = await AggregateSearch.aggregate(knex);
+  const expectedResponse = [
+    { key: 'Granule Inventory', count: 6 },
+    { key: 'Granule Not Found', count: 6 },
+    { key: 'Inventory', count: 6 },
+    { key: 'ORCA Backup', count: 6 },
+  ];
+  t.is(results.meta.count, 24);
+  t.deepEqual(results.count, expectedResponse);
+
+  queryStringParameters = {
+    field: 'status',
+  };
+
+  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'reconciliationReport');
+  const results2 = await AggregateSearch2.aggregate(knex);
+  const expectedResponse2 = [
+    { key: 'Failed', count: 8 },
+    { key: 'Generated', count: 8 },
+    { key: 'Pending', count: 8 },
+  ];
+  t.is(results2.meta.count, 24);
+  t.deepEqual(results2.count, expectedResponse2);
+});
+
+test('StatsSearch returns correct aggregate response for type granule when queried by provider', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     field: 'status',
@@ -261,7 +285,7 @@ test('StatsSearch returns correct response when queried by provider', async (t) 
   t.deepEqual(results.count, expectedResponse);
 });
 
-test('StatsSearch returns correct response when queried by collection', async (t) => {
+test('StatsSearch returns correct aggregate response for type granule when queried by collection', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     field: 'status',
@@ -275,7 +299,7 @@ test('StatsSearch returns correct response when queried by collection', async (t
   t.deepEqual(results.count, expectedResponse);
 });
 
-test('StatsSearch returns correct response when queried by collection and provider', async (t) => {
+test('StatsSearch returns correct aggregate response for type granule when queried by collection and provider', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     field: 'status',
@@ -318,7 +342,7 @@ test('StatsSearch returns correct response when queried by collection and provid
   t.deepEqual(results3.count, expectedResponse3);
 });
 
-test('StatsSearch returns correct response when queried by error', async (t) => {
+test('StatsSearch returns correct aggregate response for type granule when queried by error', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     field: 'error.Error.keyword',
@@ -396,7 +420,7 @@ test('StatsSearch can query by infix and prefix when type is defined', async (t)
   t.deepEqual(results3.count, expectedResponse3);
 });
 
-test('StatsSummary works', async (t) => {
+test('StatsSearch summary works', async (t) => {
   const { knex } = t.context;
   const StatsSummary = new StatsSearch({}, 'granule');
   const results = await StatsSummary.summary(knex);

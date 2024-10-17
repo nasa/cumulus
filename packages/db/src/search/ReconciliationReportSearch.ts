@@ -1,15 +1,17 @@
 import { Knex } from 'knex';
+import Logger from '@cumulus/logger';
+import pick from 'lodash/pick';
 import set from 'lodash/set';
 
-// import { ApiGranuleRecord } from '@cumulus/types/api/granules';
-// import Logger from '@cumulus/logger';
-
 // import { BaseRecord } from '../types/base';
+import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
+import { translatePostgresReconReportToApiReconReport } from '../translate/reconciliation_reports';
+import { PostgresReconciliationReportRecord } from '../types/reconciliation_report';
 import { TableNames } from '../tables';
 
-// const log = new Logger({ sender: '@cumulus/db/ReconciliationReportSearch' });
+const log = new Logger({ sender: '@cumulus/db/ReconciliationReportSearch' });
 
 // interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
 //   cumulus_id: number,
@@ -85,4 +87,22 @@ export class ReconciliationReportSearch extends BaseSearch {
     }
   }
 
+  /**
+   * Translate postgres records to api records
+   *
+   * @param pgRecords - postgres records returned from query
+   * @returns translated api records
+   */
+  protected translatePostgresRecordsToApiRecords(pgRecords: PostgresReconciliationReportRecord[])
+    : Partial<ApiReconciliationReportRecord>[] {
+    log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    const { fields } = this.dbQueryParameters;
+
+    const apiRecords = pgRecords.map((pgRecord) => {
+      const apiRecord = translatePostgresReconReportToApiReconReport(pgRecord);
+      return fields ? pick(apiRecord, fields) : apiRecord;
+    });
+
+    return apiRecords;
+  }
 }

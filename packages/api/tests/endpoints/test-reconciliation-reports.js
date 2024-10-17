@@ -26,9 +26,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const indexer = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
 
 const startAsyncOperation = require('../../lib/startAsyncOperation');
 const {
@@ -56,10 +53,6 @@ const { createReport } = require('../../endpoints/reconciliation-reports');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 
 const { buildFakeExpressResponse } = require('./utils');
-const cryptoRandomString = require('crypto-random-string');
-
-let esClient;
-const esIndex = randomId('esindex');
 
 const testDbName = `test_recon_reports_${cryptoRandomString({ length: 10 })}`;
 
@@ -68,18 +61,6 @@ let accessTokenModel;
 let fakeReportRecords = [];
 
 test.before(async (t) => {
-  // create esClient
-  esClient = await getEsClient('fakehost');
-
-  const esAlias = randomId('esalias');
-  process.env.ES_INDEX = esAlias;
-
-  // add fake elasticsearch index
-  await bootstrapElasticSearch({
-    host: 'fakehost',
-    index: esIndex,
-    alias: esAlias,
-  });
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
@@ -132,7 +113,7 @@ test.before(async (t) => {
       }),
     })));
 
-  // add records to es
+  // add records to pg
   await Promise.all(
     fakeReportRecords.map((reportRecord) =>
       t.context.reconciliationReportPgModel
@@ -140,19 +121,12 @@ test.before(async (t) => {
         .then(
           ([reportPgRecord]) =>
             translatePostgresReconReportToApiReconReport(reportPgRecord)
-        )
-        .then(
-          (reportApiRecord) =>
-            indexer.indexReconciliationReport(esClient, reportApiRecord, esAlias)
         ))
   );
 });
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await esClient.client.indices.delete({
-    index: esIndex,
-  });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,
@@ -245,14 +219,13 @@ test.serial('CUMULUS-911 DELETE with pathParameters and with an invalid access t
 
 test.todo('CUMULUS-911 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test.only('default returns list of reports', async (t) => {
+test.serial('default returns list of reports', async (t) => {
   const response = await request(app)
     .get('/reconciliationReports')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-  const reconMod = ReconciliationReportPgModel();
-  const recons = ReconciliationReportPgModel(t.context.knex)
+
   const results = response.body;
   t.is(results.results.length, 3);
 
