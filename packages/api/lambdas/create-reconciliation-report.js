@@ -73,7 +73,7 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  * @typedef {import('./create-reconciliation-report-types').FilesReport } FilesReport
  * @typedef {import('./create-reconciliation-report-types').GranulesReport } GranulesReport
  * @typedef {import('./create-reconciliation-report-types').FilesInCumulus } FilesInCumulus
- *
+ * @typedef {import('@aws-sdk').PutObjectCommandOutput} PutObjectCommandOutput
  */
 
 /**
@@ -738,7 +738,7 @@ async function reconciliationReportForCumulusCMR(params) {
  * @param {Object} report       - report to upload
  * @param {string} systemBucket - system bucket
  * @param {string} reportKey    - report key
- * @returns {Promise}
+ * @returns - A promise that resolves with the status of the return object
  */
 function _uploadReportToS3(report, systemBucket, reportKey) {
   return s3().putObject({
@@ -752,7 +752,7 @@ function _uploadReportToS3(report, systemBucket, reportKey) {
  * Create a Reconciliation report and save it to S3
  *
  * @param {EnhancedNormalizedRecReportParams} recReportParams - params
- * @returns {Promise<null>} a Promise that resolves when the report has been
+ * @returns - a Promise that resolves when the report has been
  *   uploaded to S3
  */
 async function createReconciliationReport(recReportParams) {
