@@ -49,7 +49,7 @@ export class ReconciliationReportSearch extends BaseSearch {
       searchQuery: Knex.QueryBuilder,
     } {
     const {
-      reconciliationReports: reconciliationReportsTable
+      reconciliationReports: reconciliationReportsTable,
     } = TableNames;
     const countQuery = knex(this.tableName)
       .count('*');
@@ -58,13 +58,11 @@ export class ReconciliationReportSearch extends BaseSearch {
       .select(`${this.tableName}.*`)
       .select({
         reconciliationReportsName: `${reconciliationReportsTable}.name`,
-      })
+      });
     return { countQuery, searchQuery };
   }
 
-
-
- /**
+  /**
    * Build queries for infix and prefix
    *
    * @param params

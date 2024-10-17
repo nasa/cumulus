@@ -45,7 +45,12 @@ test.before(async (t) => {
   const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
   const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory', 'ORCA Backup'];
   const reconReportStatuses = ['Generated', 'Pending', 'Failed'];
-  const [granules, collections, executions, pdrs, providers, reconReports] = [[], [], [], [], [], []];
+  const granules = [];
+  const collections = [];
+  const executions = [];
+  const pdrs = [];
+  const providers = [];
+  const reconReports = [];
 
   range(20).map((num) => (
     collections.push(fakeCollectionRecordFactory({

@@ -16,14 +16,10 @@ const {
 const S3ObjectStore = require('@cumulus/aws-client/S3ObjectStore');
 const { s3 } = require('@cumulus/aws-client/services');
 
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-const { getEsClient } = require('@cumulus/es-client/search');
 
 const { ReconciliationReportSearch } = require('@cumulus/db');
-
-const indexer = require('@cumulus/es-client/indexer');
 
 const {
   ReconciliationReportPgModel,

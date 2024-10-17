@@ -28,7 +28,7 @@ export const typeToTable: { [key: string]: string } = {
   pdr: TableNames.pdrs,
   provider: TableNames.providers,
   rule: TableNames.rules,
-  reconciliationReport: TableNames.reconciliationReports
+  reconciliationReport: TableNames.reconciliationReports,
 };
 
 /**

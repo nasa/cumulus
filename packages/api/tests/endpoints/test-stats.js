@@ -9,12 +9,6 @@ const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const models = require('../../models');
-const {
-  createFakeJwtAuthToken,
-  setAuthorizedOAuthUsers,
-} = require('../../lib/testUtils');
-
 const {
   destroyLocalTestDb,
   generateLocalTestDb,
@@ -27,6 +21,12 @@ const {
   fakeReconciliationReportRecordFactory,
   ReconciliationReportPgModel,
 } = require('@cumulus/db');
+
+const models = require('../../models');
+const {
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers,
+} = require('../../lib/testUtils');
 
 const testDbName = randomId('collection');
 
@@ -300,7 +300,7 @@ test('GET /stats/aggregate with type `reconciliationReports` and field `type` re
 
   t.is(response.body.meta.count, 24);
   t.deepEqual(response.body.count, expectedCount);
-})
+});
 
 test('GET /stats/aggregate with type `reconciliationReports` and field `status` returns the correct response', async (t) => {
   const response = await request(app)
@@ -317,4 +317,4 @@ test('GET /stats/aggregate with type `reconciliationReports` and field `status` 
 
   t.is(response.body.meta.count, 24);
   t.deepEqual(response.body.count, expectedCount);
-})
+});
