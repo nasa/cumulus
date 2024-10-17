@@ -41,6 +41,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3838**
+  - Updated python dependencies to latest:
+    - cumulus-process-py 1.4.0
+    - cumulus-message-adapter-python 2.3.0
+
 ### Fixed
 
 - **CUMULUS-3902**
