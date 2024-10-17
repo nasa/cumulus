@@ -21,7 +21,6 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 
 ### Replace ElasticSearch Phase 2
 
-
 - **CUMULUS-3229**
   - Remove ElasticSearch queries from Rule LIST endpoint
 - **CUMULUS-3230**
