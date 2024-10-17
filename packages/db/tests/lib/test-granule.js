@@ -523,12 +523,12 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by single 
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const record = await getGranulesByApiPropertiesQuery(
+  const record = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       collectionIds: collectionId,
-    }
-  );
+    },
+  });
   t.deepEqual(
     [{
       ...granule,
@@ -581,13 +581,13 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by multipl
       granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id })
   )));
 
-  const records = await getGranulesByApiPropertiesQuery(
+  const records = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       collectionIds: [collectionId, collectionId2],
     },
-    ['granule_id']
-  );
+    sortByFields: ['granule_id'],
+  });
   t.deepEqual(
     [{
       ...granules.find((granule) => granule.granule_id === granule1.granule_id),
@@ -622,12 +622,12 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by single 
 
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const records = await getGranulesByApiPropertiesQuery(
+  const records = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       granuleIds: [granule.granule_id],
-    }
-  );
+    },
+  });
   t.deepEqual(
     [{
       ...granule,
@@ -668,12 +668,12 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by multipl
       granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id })
   )));
 
-  const records = await getGranulesByApiPropertiesQuery(
+  const records = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       granuleIds: [granules[0].granule_id, granules[1].granule_id],
-    }
-  );
+    },
+  });
   t.deepEqual(
     [{
       ...granules[0],
@@ -711,12 +711,12 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by provide
     '*'
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
-  const records = await getGranulesByApiPropertiesQuery(
+  const records = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       providerNames: [fakeProvider.name],
-    }
-  );
+    },
+  });
   t.deepEqual(
     [{
       ...granule,
@@ -760,12 +760,12 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by status'
     (granule) =>
       granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id })
   )));
-  const records = await getGranulesByApiPropertiesQuery(
+  const records = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       status: 'completed',
-    }
-  );
+    },
+  });
   t.is(records.length, 1);
   t.deepEqual(
     [{
@@ -799,14 +799,14 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const records = await getGranulesByApiPropertiesQuery(
+  const records = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       updatedAtRange: {
         updatedAtFrom: updatedAt,
       },
-    }
-  );
+    },
+  });
   t.deepEqual(
     [{
       ...granule,
@@ -817,14 +817,14 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated
     records
   );
 
-  const records2 = await getGranulesByApiPropertiesQuery(
+  const records2 = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       updatedAtRange: {
         updatedAtFrom: new Date(now - 1),
       },
-    }
-  );
+    },
+  });
   t.deepEqual(
     [{
       ...granule,
@@ -857,14 +857,14 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const records = await getGranulesByApiPropertiesQuery(
+  const records = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       updatedAtRange: {
         updatedAtTo: updatedAt,
       },
-    }
-  );
+    },
+  });
   t.deepEqual(
     [{
       ...granule,
@@ -875,14 +875,14 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated
     records
   );
 
-  const records2 = await getGranulesByApiPropertiesQuery(
+  const records2 = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       updatedAtRange: {
         updatedAtTo: new Date(now + 1),
       },
-    }
-  );
+    },
+  });
   t.deepEqual(
     [{
       ...granule,
@@ -915,15 +915,15 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const records = await getGranulesByApiPropertiesQuery(
+  const records = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       updatedAtRange: {
         updatedAtFrom: updatedAt,
         updatedAtTo: updatedAt,
       },
-    }
-  );
+    },
+  });
   t.deepEqual(
     [{
       ...granule,
@@ -934,15 +934,15 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated
     records
   );
 
-  const records2 = await getGranulesByApiPropertiesQuery(
+  const records2 = await getGranulesByApiPropertiesQuery({
     knex,
-    {
+    searchParams: {
       updatedAtRange: {
         updatedAtFrom: new Date(now - 1),
         updatedAtTo: new Date(now + 1),
       },
-    }
-  );
+    },
+  });
   t.deepEqual(
     [{
       ...granule,

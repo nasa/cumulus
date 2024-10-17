@@ -24,14 +24,16 @@ const {
 const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
 const Collection = require('@cumulus/es-client/collections');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
-const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
+const { getEsClient } = require('@cumulus/es-client/search');
+const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
 
-const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
+const {
+  ReconciliationReportPgModel,
+  translatePostgresReconReportToApiReconReport,
+} = require('@cumulus/db');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
-const { ReconciliationReport } = require('../models');
 const { errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
@@ -748,7 +750,9 @@ async function createReconciliationReport(recReportParams) {
 
       bucketReports.forEach((bucketReport) => {
         report.filesInCumulus.okCount += bucketReport.okCount;
-        report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3); // eslint-disable-line max-len
+        report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(
+          bucketReport.onlyInS3
+        );
         report.filesInCumulus.onlyInDb = report.filesInCumulus.onlyInDb.concat(
           bucketReport.onlyInDb
         );
@@ -803,7 +807,7 @@ async function createReconciliationReport(recReportParams) {
  * @param {string} params.stackName - the name of the CUMULUS stack
  * @param {string} params.reportType - the type of reconciliation report
  * @param {string} params.reportName - the name of the report
- * @param {Knex} params.knex - Optional Instance of a Knex client for testing
+ * @param {Knex} params.knex - Knex client to interact with pg
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
@@ -814,8 +818,8 @@ async function processRequest(params) {
     reportName,
     systemBucket,
     stackName,
-    esClient = await getEsClient(),
     knex = await getKnexClient(env),
+    esClient = await getEsClient(),
   } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName
@@ -824,16 +828,17 @@ async function processRequest(params) {
   if (reportType === 'Granule Inventory') reportKey = reportKey.replace('.json', '.csv');
 
   // add request to database
-  const reconciliationReportModel = new ReconciliationReport();
-  const reportRecord = {
+  const reconciliationReportPgModel = new ReconciliationReportPgModel();
+  const builtReportRecord = {
     name: reportRecordName,
     type: reportType,
     status: 'Pending',
     location: buildS3Uri(systemBucket, reportKey),
   };
-  let apiRecord = await reconciliationReportModel.create(reportRecord);
-  await indexReconciliationReport(esClient, apiRecord, process.env.ES_INDEX);
-  log.info(`Report added to database as pending: ${JSON.stringify(apiRecord)}.`);
+  let [reportPgRecord] = await reconciliationReportPgModel.create(knex, builtReportRecord);
+  let reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+  await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
+  log.info(`Report added to database as pending: ${JSON.stringify(reportApiRecord)}.`);
 
   const concurrency = env.CONCURRENCY || 3;
 
@@ -848,36 +853,48 @@ async function processRequest(params) {
     };
     log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
     if (reportType === 'Internal') {
-      await createInternalReconciliationReport(recReportParams);
+      log.error(
+        'Internal Reconciliation Reports are no longer valid, as Cumulus is no longer utilizing Elasticsearch'
+      );
+      throw new Error('Internal Reconciliation Reports are no longer valid');
     } else if (reportType === 'Granule Inventory') {
       await createGranuleInventoryReport(recReportParams);
     } else if (reportType === 'ORCA Backup') {
       await createOrcaBackupReconciliationReport(recReportParams);
     } else {
       // reportType is in ['Inventory', 'Granule Not Found']
-      await createReconciliationReport(recReportParams);
+      await createReconciliationReport(recReportParams); // TODO Update to not use elasticsearch
     }
-    apiRecord = await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
-    await indexReconciliationReport(esClient, { ...apiRecord, status: 'Generated' }, process.env.ES_INDEX);
+
+    const generatedRecord = {
+      ...reportPgRecord,
+      status: 'Generated',
+    };
+    [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, generatedRecord);
+    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+    await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   } catch (error) {
-    log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`);
-    const updates = {
+    log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`); // eslint-disable-line max-len
+    const erroredRecord = {
+      ...reportPgRecord,
       status: 'Failed',
       error: {
         Error: error.message,
         Cause: errorify(error),
       },
     };
-    apiRecord = await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+    [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, erroredRecord);
+    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
     await indexReconciliationReport(
       esClient,
-      { ...apiRecord, ...updates },
+      reportApiRecord,
       process.env.ES_INDEX
     );
     throw error;
   }
 
-  return reconciliationReportModel.get({ name: reportRecord.name });
+  reportPgRecord = await reconciliationReportPgModel.get(knex, { name: builtReportRecord.name });
+  return translatePostgresReconReportToApiReconReport(reportPgRecord);
 }
 
 async function handler(event) {
@@ -885,6 +902,7 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
+  //TODO: Remove irrelevant env vars from terraform after ES reports are removed
   const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE', 'ES_SCROLL', 'ES_SCROLL_SIZE'];
   const envsToLog = pickBy(process.env, (value, key) => varsToLog.includes(key));
   log.info(`CMR and ES Environment variables: ${JSON.stringify(envsToLog)}`);
