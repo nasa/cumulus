@@ -209,7 +209,7 @@ async function fetchDbCollections(recReportParams) {
  * PostgreSQL, and that there are no extras in either S3 or PostgreSQL
  *
  * @param {string} Bucket - the bucket containing files to be reconciled
- * @param {Object} recReportParams - input report params.
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - input report params.
  * @returns {Promise<Object>} a report
  */
 async function createReconciliationReportForBucket(Bucket, recReportParams) {
@@ -224,7 +224,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     sortColumns: ['key'],
     granuleColumns: ['granule_id'],
     collectionIds: recReportParams.collectionIds,
-    providers: recReportParams.provider,
+    providers: recReportParams.providers,
     granuleIds: recReportParams.granuleIds,
   });
 
