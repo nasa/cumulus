@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/extensions
-import { DuplicateHandling } from '..';
+import { DuplicateHandling } from '../duplicateHandling';
 
 export type CollectionId = string;
 

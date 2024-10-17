@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const flow = require('lodash/flow');
 const fs = require('fs-extra');
 const replace = require('lodash/fp/replace');
@@ -186,6 +187,7 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
 
   return flow([
     replace(/replace-me-granuleId/g, newGranuleId),
+    replace(/replace-me-hashedGranuleId/g, crypto.createHash('md5').update(newGranuleId).digest('hex')),
     replace(/replace-me-path/g, newPath),
     replace(/replace-me-collectionId/g, newCollectionId),
     replace(/replace-me-stackId/g, stackId),
