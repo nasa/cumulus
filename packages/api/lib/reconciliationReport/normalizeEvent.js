@@ -5,7 +5,7 @@
 /*eslint prefer-const: ["error", {"destructuring": "all"}]*/
 const isString = require('lodash/isString');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { InvalidArgument } = require('@cumulus/errors');
+const { InvalidArgument, MissingRequiredArgument } = require('@cumulus/errors');
 
 /**
  * @typedef {import('../types').RecReportParams } RecReportParams
@@ -98,11 +98,11 @@ function generateProviders(provider) {
 function normalizeEvent(event) {
   const systemBucket = event.systemBucket || process.env.system_bucket;
   if (!systemBucket) {
-    throw new InvalidArgument('systemBucket is required.');
+    throw new MissingRequiredArgument('systemBucket is required.');
   }
   const stackName = event.stackName || process.env.stackName;
   if (!stackName) {
-    throw new InvalidArgument('stackName is required.');
+    throw new MissingRequiredArgument('stackName is required.');
   }
   const startTimestamp = isoTimestamp(event.startTimestamp);
   const endTimestamp = isoTimestamp(event.endTimestamp);
