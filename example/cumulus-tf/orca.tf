@@ -27,8 +27,8 @@ module "orca" {
   vpc_id                   = local.vpc_id
 
   ## OPTIONAL
-  tags                     = var.tags
-  deploy_rds_cluster_role_association = true
+  tags                                = var.tags
+  deploy_rds_cluster_role_association = false
 
   ## --------------------------
   ## ORCA Variables
