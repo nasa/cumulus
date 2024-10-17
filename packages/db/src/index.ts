@@ -115,6 +115,7 @@ export {
 
 export {
   getCollectionsByGranuleIds,
+  getUniqueCollectionsByGranuleFilter,
 } from './lib/collection';
 
 export {

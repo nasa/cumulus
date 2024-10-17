@@ -2,18 +2,12 @@ import { CMR, CMRConstructorParams } from './CMR';
 
 /**
  * Shim to correctly add a default provider_short_name to the input searchParams
- *
- * @param {Object} params
- * @param {URLSearchParams} params.searchParams - input search
- *  parameters for searchConceptQueue. This parameter can be either a
- *  URLSearchParam object or a plain Object.
- * @returns {URLSearchParams} - input object appeneded with a default provider_short_name
  */
 export const providerParams = ({
   searchParams = new URLSearchParams(),
   cmrSettings,
 }: {
-  searchParams: URLSearchParams,
+  searchParams?: URLSearchParams,
   cmrSettings: {
     provider: string
   }
@@ -28,7 +22,7 @@ export const providerParams = ({
 export interface CMRSearchConceptQueueConstructorParams {
   cmrSettings: CMRConstructorParams,
   type: string,
-  searchParams: URLSearchParams,
+  searchParams?: URLSearchParams,
   format?: string
 }
 
@@ -49,18 +43,18 @@ export interface CMRSearchConceptQueueConstructorParams {
  *   format: 'json'
  * });
  */
-export class CMRSearchConceptQueue {
+export class CMRSearchConceptQueue<T> {
   type: string;
   params: URLSearchParams;
   format?: string;
-  items: unknown[];
+  items: (T | null)[];
   CMR: CMR;
 
   /**
    * The constructor for the CMRSearchConceptQueue class
    *
    * @param {Object} params
-   * @param {string} params.cmrSettings - the CMR settings for the requests - the provider,
+   * @param {Object} params.cmrSettings - the CMR settings for the requests - the provider,
    * clientId, and either launchpad token or EDL username and password
    * @param {string} params.type - the type of search 'granule' or 'collection'
    * @param {URLSearchParams} [params.searchParams={}] - the search parameters
@@ -84,10 +78,12 @@ export class CMRSearchConceptQueue {
    * This does not remove the object from the queue.  When there are no more
    * items in the queue, returns 'null'.
    *
-   * @returns {Promise<Object>} an item from the CMR search
    */
-  async peek(): Promise<unknown> {
+  async peek(): Promise<T | null> {
     if (this.items.length === 0) await this.fetchItems();
+    if (this.items[0] === null) {
+      return null;
+    }
     return this.items[0];
   }
 
@@ -95,12 +91,15 @@ export class CMRSearchConceptQueue {
    * Remove the next item from the queue
    *
    * When there are no more items in the queue, returns `null`.
-   *
-   * @returns {Promise<Object>} an item from the CMR search
    */
-  async shift(): Promise<unknown> {
+  async shift(): Promise<T | null> {
     if (this.items.length === 0) await this.fetchItems();
-    return this.items.shift();
+    const item = this.items.shift();
+    // eslint-disable-next-line lodash/prefer-is-nil
+    if (item === null || item === undefined) {
+      return null;
+    }
+    return item;
   }
 
   /**
@@ -116,7 +115,7 @@ export class CMRSearchConceptQueue {
       this.format,
       false
     );
-    this.items = results;
+    this.items = results as T[];
 
     const paramsPageNum = this.params.get('page_num') ?? '0';
     this.params.set('page_num', String(Number(paramsPageNum) + 1));
