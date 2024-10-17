@@ -28,20 +28,20 @@ module "orca" {
 
   ## OPTIONAL
   tags                     = var.tags
+  deploy_rds_cluster_role_association = true
 
   ## --------------------------
   ## ORCA Variables
   ## --------------------------
   ## REQUIRED
   db_admin_password         = local.rds_admin_login.password
+  db_cluster_identifier     = local.rds_admin_login.dbClusterIdentifier
   db_host_endpoint          = local.rds_admin_login.host
   db_user_password          = var.orca_db_user_password
   dlq_subscription_email    = var.orca_dlq_subscription_email
   orca_default_bucket       = var.orca_default_bucket
   orca_reports_bucket_name  = var.system_bucket
   rds_security_group_id     = local.rds_security_group
-  s3_access_key             = var.orca_s3_access_key
-  s3_secret_key             = var.orca_s3_secret_key
 
   ## OPTIONAL
   db_admin_username                                    = local.rds_admin_login.username
