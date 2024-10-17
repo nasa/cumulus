@@ -226,7 +226,7 @@ class GranuleFetcher {
         destinationBucket: bucket,
         duplicateHandling: this.duplicateHandling,
         collectionId: this.collectionId ? this.collectionId : '',
-        pathId: useGranIdPath ? granule.granuleId : undefined,
+        granuleId: useGranIdPath ? granule.granuleId : undefined,
       }));
     log.debug('awaiting all download.Files');
     const downloadResults = await Promise.all(downloadPromises);
@@ -453,7 +453,7 @@ class GranuleFetcher {
    * 'replace' to replace the duplicate,
    * 'skip' to skip duplicate,
    * 'version' to keep both files if they have different checksums
-   * @param {string} [params.pathId] - ID (nominally a granuleId) to use as a per-granule prefix
+   * @param {string} [params.granuleId] - granuleId to use as a per-granule prefix
    * differentiation
   * @returns {Promise<{
   *   files: Array<{
@@ -474,15 +474,15 @@ class GranuleFetcher {
     file,
     destinationBucket,
     duplicateHandling,
-    pathId,
+    granuleId,
     collectionId,
   }) {
     let duplicateFound;
     const fileRemotePath = path.join(file.path, file.name);
     const sourceBucket = file.source_bucket;
     // place files in the <collectionId>/(optional) <granuleId-hash> subdirectory
-    const granulePath = pathId
-      ? crypto.createHash('md5').update(pathId).digest('hex')
+    const granulePath = granuleId
+      ? crypto.createHash('md5').update(granuleId).digest('hex')
       : '';
     const stagingPath = S3.s3Join(
       this.fileStagingDir,
