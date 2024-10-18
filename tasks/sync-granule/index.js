@@ -9,7 +9,7 @@ const lock = require('@cumulus/ingest/lock');
 const { duplicateHandlingType } = require('@cumulus/ingest/granule');
 const { s3Join } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-const GranuleFetcher = require('./GranuleFetcher');
+const { GranuleFetcher } = require('./GranuleFetcher');
 
 /**
  * @typedef {import ('./index-types').SyncGranulePDR } SyncGranulePDR

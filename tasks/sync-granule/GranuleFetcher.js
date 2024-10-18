@@ -591,4 +591,8 @@ class GranuleFetcher {
   }
 }
 
-module.exports = GranuleFetcher;
+module.exports = {
+  collectionNameFrom,
+  collectionVersionFrom,
+  GranuleFetcher,
+};

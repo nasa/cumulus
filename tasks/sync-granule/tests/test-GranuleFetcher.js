@@ -9,7 +9,12 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const errors = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const GranuleFetcher = require('../GranuleFetcher');
+const {
+  collectionVersionFrom,
+  collectionNameFrom,
+  GranuleFetcher,
+} = require('../GranuleFetcher');
+
 const sums = require('./fixtures/sums');
 
 test.before((t) => {
@@ -609,4 +614,32 @@ test('addChecksumsToFiles throws an error if no file matches the checksumFor con
       message: `Could not find file to match ${checksumFile.name} checksumFor ${checksumFor}`,
     }
   );
+});
+
+test('collectionVersionFrom returns granuleVersion if it is defined', (t) => {
+  const granuleVersion = 'v1';
+  t.is(collectionVersionFrom({ version: granuleVersion }, { version: 'foobar' }), granuleVersion);
+});
+
+test('collectionVersionFrom returns collectionVersion if granuleVersion is not defined and collection version is defined', (t) => {
+  const collectionVersion = 'v0';
+  t.is(collectionVersionFrom(null, { version: collectionVersion }), collectionVersion);
+});
+
+test('collectionVersionFrom throws an error if neither granuleVersion nor collection version is defined', (t) => {
+  t.throws(() => collectionVersionFrom());
+});
+
+test('collectionNameFrom returns granuleVersion if it is defined', (t) => {
+  const collectionName = 'foobar';
+  t.is(collectionNameFrom({ dataType: collectionName }, { name: 'foobar' }), collectionName);
+});
+
+test('collectionNameFrom returns collectionVersion if granuleVersion is not defined and collection version is defined', (t) => {
+  const collectionName = 'foobar';
+  t.is(collectionNameFrom(null, { name: collectionName }), collectionName);
+});
+
+test('collectionNameFrom throws an error if neither granuleVersion nor collection version is defined', (t) => {
+  t.throws(() => collectionVersionFrom());
 });
