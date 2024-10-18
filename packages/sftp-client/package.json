@@ -43,8 +43,8 @@
     "@cumulus/common": "19.0.0",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.27",
-    "ssh2": "^1.0.0",
-    "ssh2-sftp-client": "^7.0.4"
+    "ssh2": "^1.16.0",
+    "ssh2-sftp-client": "^11.0.0"
   },
   "devDependencies": {
     "@cumulus/checksum": "19.0.0",
