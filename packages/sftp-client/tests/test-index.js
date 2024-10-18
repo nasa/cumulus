@@ -102,6 +102,24 @@ test.serial('sftpClient.download() saves a remote file to disk', async (t) => {
   }
 });
 
+test.serial('sftpClient.download() with fastDownload saves a remote file to disk', async (t) => {
+  const localPath = path.join(os.tmpdir(), randomString());
+
+  try {
+    await t.context.sftpClient.download(
+      '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+      localPath,
+      true
+    );
+
+    const { size } = await stat(localPath);
+
+    t.is(size, 1098034);
+  } finally {
+    await unlink(localPath);
+  }
+});
+
 test.serial('sftpClient.syncToS3() transfers a file from SFTP to S3 with the correct content-type', async (t) => {
   const key = `${randomString()}.hdf`;
 
@@ -111,6 +129,25 @@ test.serial('sftpClient.syncToS3() transfers a file from SFTP to S3 with the cor
     key
   );
 
+  t.truthy(S3.fileExists(t.context.s3Bucket, key));
+
+  const s3HeadResponse = await S3.headObject(t.context.s3Bucket, key);
+  t.is(s3HeadResponse.ContentLength, 1098034);
+  t.is(s3HeadResponse.ContentType, 'application/x-hdf');
+});
+
+test.serial('sftpClient.syncToS3Fast() transfers a file from SFTP to S3 with the correct content-type', async (t) => {
+  process.env.SFTP_DEBUG = 'true';
+  const key = `${randomString()}.hdf`;
+
+  await t.context.sftpClient.syncToS3Fast(
+    '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    t.context.s3Bucket,
+    key
+  );
+  const localTmpFile = '/tmp/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf';
+
+  t.false(fs.existsSync(localTmpFile));
   t.truthy(S3.fileExists(t.context.s3Bucket, key));
 
   const s3HeadResponse = await S3.headObject(t.context.s3Bucket, key);

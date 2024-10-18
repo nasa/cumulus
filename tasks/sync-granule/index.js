@@ -29,6 +29,7 @@ const GranuleFetcher = require('./GranuleFetcher');
  *    all corresponding checksum files
  * @param {boolean} [kwargs.useGranIdPath=true] - if 'true', use a md5 hash of the
  * granuleID in the object prefix staging location
+ * @param {boolean} [kwargs.sftpFastDownload=false] - if 'true' use sftpFastDownload
  * @returns {Promise<Array>} the list of successfully ingested granules, or an
  *    empty list if the input granules was not a non-empty array of granules
  */
@@ -37,6 +38,7 @@ async function download({
   bucket,
   provider,
   granules,
+  sftpFastDownload = false,
   syncChecksumFiles = false,
   useGranIdPath = true,
 }) {
@@ -67,6 +69,7 @@ async function download({
         bucket,
         syncChecksumFiles,
         useGranIdPath,
+        fastDownload: sftpFastDownload,
       });
       const endTime = Date.now();
 
@@ -109,6 +112,7 @@ function syncGranule(event) {
     downloadBucket,
     useGranIdPath,
     syncChecksumFiles,
+    sftpFastDownload,
     workflowStartTime: configWorkflowStartTime,
   } = config;
 
@@ -140,6 +144,7 @@ function syncGranule(event) {
     granules: input.granules,
     ingest,
     provider,
+    sftpFastDownload,
     syncChecksumFiles,
     useGranIdPath,
   }).then((granuleResults) => {

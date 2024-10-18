@@ -184,6 +184,8 @@ class GranuleFetcher {
    * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest checksum files
    * @param {boolean} [kwargs.useGranIdPath=true] - if 'true', use a md5 hash of the granuleID
    *  in the object prefix staging location
+   * @param {boolean} [kwargs.fastDownload=false] - whether fast download is performed using
+   *  parallel reads
    * @returns {Promise<Object>} return granule object
    */
   async ingest({
@@ -191,8 +193,8 @@ class GranuleFetcher {
     bucket,
     syncChecksumFiles = false,
     useGranIdPath = true,
+    fastDownload = false,
   }) {
-    // for each granule file
     // download / verify integrity / upload
 
     const collectionName = collectionNameFrom(granule, this.collection);
@@ -227,6 +229,7 @@ class GranuleFetcher {
         duplicateHandling: this.duplicateHandling,
         collectionId: this.collectionId ? this.collectionId : '',
         granuleId: useGranIdPath ? granule.granuleId : undefined,
+        fastDownload,
       }));
     log.debug('awaiting all download.Files');
     const downloadResults = await Promise.all(downloadPromises);
@@ -447,12 +450,13 @@ class GranuleFetcher {
    * @param {SyncGranuleFileWithChecksums} params.file - file to download
    * @param {string} params.destinationBucket - bucket to put file in
    * @param {DuplicateHandling} params.duplicateHandling - how to handle duplicate files
-   * @param {string} params.collectionId - collection ID
    * value can be
    * 'error' to throw an error,
    * 'replace' to replace the duplicate,
    * 'skip' to skip duplicate,
    * 'version' to keep both files if they have different checksums
+   * @param {string} params.collectionId - collection ID
+   * @param {boolean} params.fastDownload - configuration option to set if fastDownload is used
    * @param {string} [params.granuleId] - granuleId to use as a per-granule prefix
    * differentiation
   * @returns {Promise<{
@@ -476,6 +480,7 @@ class GranuleFetcher {
     duplicateHandling,
     granuleId,
     collectionId,
+    fastDownload = false,
   }) {
     let duplicateFound;
     const fileRemotePath = path.join(file.path, file.name);
@@ -546,6 +551,7 @@ class GranuleFetcher {
           destinationKey,
           bucket: sourceBucket,
           fileRemotePath,
+          fastDownload,
         });
         // Verify file integrity
         log.debug(

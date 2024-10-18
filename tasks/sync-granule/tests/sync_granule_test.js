@@ -5,6 +5,7 @@ const path = require('path');
 const test = require('ava');
 const crypto = require('crypto');
 const { s3 } = require('@cumulus/aws-client/services');
+const { SftpClient } = require('@cumulus/sftp-client');
 const {
   calculateObjectHash,
   listS3ObjectsV2,
@@ -318,6 +319,82 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
       Key: key,
     })
   );
+});
+
+test.serial('download Granule with sftpFastDownload set to true from SFTP endpoint', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'sftp',
+    host: '127.0.0.1',
+    port: 2222,
+    username: 'user',
+    password: 'password',
+  };
+
+  t.context.event.input.granules[0].files[0].path = '/granules';
+
+  const config = { ...t.context.event.config, sftpFastDownload: true };
+  await validateConfig(t, config);
+  await validateInput(t, t.context.event.input);
+  const event = { ...t.context.event, config };
+
+  const output = await syncGranule(event);
+
+  await validateOutput(t, output);
+
+  t.is(output.granules.length, 1);
+  t.is(output.granules[0].files.length, 1);
+
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+  const expected = {
+    bucket: t.context.internalBucketName,
+    key,
+    size: 1098034,
+    source: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    checksum: '1435712144',
+    checksumType: 'CKSUM',
+    type: 'data',
+  };
+  t.deepEqual(output.granules[0].files[0], expected);
+
+  t.is(
+    true,
+    await s3ObjectExists({
+      Bucket: t.context.internalBucketName,
+      Key: key,
+    })
+  );
+});
+
+test.serial('when downloading Granule with sftpFastDownload set to true, SftpClient.syncToS3Fast is called', async (t) => {
+  const syncToS3FastStub = sinon.stub(SftpClient.prototype, 'syncToS3Fast');
+  const syncToS3Stub = sinon.stub(SftpClient.prototype, 'syncToS3');
+
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'sftp',
+    host: '127.0.0.1',
+    port: 2222,
+    username: 'user',
+    password: 'password',
+  };
+
+  t.context.event.input.granules[0].files[0].path = '/granules';
+
+  const config = { ...t.context.event.config, sftpFastDownload: true };
+  await validateInput(t, t.context.event.input);
+  const event = { ...t.context.event, config };
+  try {
+    await syncGranule(event);
+  } catch (error) {
+    // ignore errors after fake download
+  }
+
+  t.true(syncToS3FastStub.calledOnce);
+  t.true(syncToS3Stub.notCalled);
+  syncToS3FastStub.restore();
+  syncToS3Stub.restore();
 });
 
 test.serial('download granule from S3 provider with checksum and data file in an alternate bucket', async (t) => {

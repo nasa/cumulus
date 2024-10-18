@@ -26,6 +26,7 @@
  *  are also synced. Default: false.
  * @property {boolean} [useGranIdPath=true] - If true, use a md5 hash of the
  * granuleID in the object prefix staging location.
+ * @property {boolean} [sftpFastDownload=false] - If true, use sftpFastDownload
  * @property {number} [workflowStartTime] - Specifies the start time for
  *  the current workflow (as a timestamp) and will be used as the createdAt
  *  time for granules output.

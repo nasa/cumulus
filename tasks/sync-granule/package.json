@@ -54,6 +54,7 @@
   },
   "devDependencies": {
     "@cumulus/schemas": "19.0.0",
+    "@cumulus/sftp-client": "19.0.0",
     "@cumulus/test-data": "19.0.0"
   }
 }
