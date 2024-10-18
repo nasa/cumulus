@@ -9,7 +9,12 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const errors = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const GranuleFetcher = require('../GranuleFetcher');
+const {
+  collectionVersionFrom,
+  collectionNameFrom,
+  GranuleFetcher,
+} = require('../GranuleFetcher');
+
 const sums = require('./fixtures/sums');
 
 test.before((t) => {
@@ -120,7 +125,12 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
   const {
     files: oldfiles,
     duplicate: initialDuplicate,
-  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  } = await testGranule._ingestFile({
+    file,
+    destinationBucket: destBucket,
+    duplicateHandling,
+    collectionId: constructCollectionId(collectionConfig.name, collectionConfig.version),
+  });
   t.is(oldfiles.length, 1);
   t.is(initialDuplicate, undefined);
 
@@ -130,7 +140,12 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
   const {
     files: newfiles,
     duplicate: finalDuplicate,
-  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  } = await testGranule._ingestFile({
+    file,
+    destinationBucket: destBucket,
+    duplicateHandling,
+    collectionId: constructCollectionId(collectionConfig.name, collectionConfig.version),
+  });
   t.is(newfiles.length, 2);
   t.deepEqual(
     finalDuplicate,
@@ -169,12 +184,21 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   // This test needs to use a unique bucket for each test (or remove the object
   // added to the destination bucket). Otherwise, it will throw an error on the
   // first attempt to ingest the file.
-  await testGranule.ingestFile(file, destBucket, duplicateHandling);
-
+  await testGranule._ingestFile({
+    file,
+    destinationBucket: destBucket,
+    duplicateHandling,
+    collectionId: constructCollectionId(collectionConfig.name, collectionConfig.version),
+  });
   const destFileKey = S3.s3Join(fileStagingDir, testGranule.collectionId, file.name);
 
   await t.throwsAsync(
-    () => testGranule.ingestFile(file, destBucket, duplicateHandling),
+    () => testGranule._ingestFile({
+      file,
+      destinationBucket: destBucket,
+      duplicateHandling,
+      collectionId: constructCollectionId(collectionConfig.name, collectionConfig.version),
+    }),
     {
       instanceOf: errors.DuplicateFile,
       message: `${destFileKey} already exists in ${destBucket} bucket`,
@@ -205,7 +229,12 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
   const {
     files: oldfiles,
     duplicate: initialDuplicate,
-  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  } = await testGranule._ingestFile({
+    file,
+    destinationBucket: destBucket,
+    duplicateHandling,
+    collectionId: constructCollectionId(collectionConfig.name, collectionConfig.version),
+  });
   t.is(oldfiles.length, 1);
   t.is(initialDuplicate, undefined);
   t.is(oldfiles[0].size, params.Body.length);
@@ -216,7 +245,12 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
   const {
     files: newfiles,
     duplicate: finalDuplicate,
-  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  } = await testGranule._ingestFile({
+    file,
+    destinationBucket: destBucket,
+    duplicateHandling,
+    collectionId: constructCollectionId(collectionConfig.name, collectionConfig.version),
+  });
   t.is(newfiles.length, 1);
   t.not(finalDuplicate, undefined);
   t.is(newfiles[0].size, oldfiles[0].size);
@@ -243,10 +277,13 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
     duplicateHandling,
   });
 
-  const {
-    files: oldfiles,
-    duplicate: initialDuplicate,
-  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  const { files: oldfiles, duplicate: initialDuplicate }
+    = await testGranule._ingestFile({
+      file,
+      destinationBucket: destBucket,
+      duplicateHandling,
+      collectionId: constructCollectionId(collectionConfig.name, collectionConfig.version),
+    });
   t.is(oldfiles.length, 1);
   t.is(initialDuplicate, undefined);
   t.is(oldfiles[0].size, params.Body.length);
@@ -257,7 +294,12 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
   const {
     files: newfiles,
     duplicate: finalDuplicate,
-  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  } = await testGranule._ingestFile({
+    file,
+    destinationBucket: destBucket,
+    duplicateHandling,
+    collectionId: constructCollectionId(collectionConfig.name, collectionConfig.version),
+  });
   t.is(newfiles.length, 1);
   t.not(finalDuplicate, undefined);
   t.not(newfiles[0].size, oldfiles[0].size);
@@ -293,7 +335,12 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
   // first attempt to ingest the file.
 
   await t.throwsAsync(
-    () => testGranule.ingestFile(file, destBucket, duplicateHandling),
+    () => testGranule._ingestFile({
+      file,
+      destinationBucket: destBucket,
+      duplicateHandling,
+      collectionId: constructCollectionId(collectionConfig.name, collectionConfig.version),
+    }),
     {
       instanceOf: errors.InvalidChecksum,
       message: `Invalid checksum for S3 object s3://${destBucket}/${stagingPath}/${file.name} with type ${file.checksumType} and expected sum ${file.checksum}`,
@@ -327,7 +374,12 @@ test('ingestFile throws an error when no checksum is provided and the size is no
   // added to the destination bucket). Otherwise, it will throw an error on the
   // first attempt to ingest the file.
   await t.throwsAsync(
-    () => testGranule.ingestFile(file, destBucket, duplicateHandling),
+    () => testGranule._ingestFile({
+      file,
+      destinationBucket: destBucket,
+      duplicateHandling,
+      collectionId: constructCollectionId(collectionConfig.name, collectionConfig.version),
+    }),
     {
       instanceOf: errors.UnexpectedFileSize,
       message: `verifyFile ${file.name} failed: Actual file size ${params.Body.length} did not match expected file size ${file.size}`,
@@ -562,4 +614,32 @@ test('addChecksumsToFiles throws an error if no file matches the checksumFor con
       message: `Could not find file to match ${checksumFile.name} checksumFor ${checksumFor}`,
     }
   );
+});
+
+test('collectionVersionFrom returns granuleVersion if it is defined', (t) => {
+  const granuleVersion = 'v1';
+  t.is(collectionVersionFrom({ version: granuleVersion }, { version: 'foobar' }), granuleVersion);
+});
+
+test('collectionVersionFrom returns collectionVersion if granuleVersion is not defined and collection version is defined', (t) => {
+  const collectionVersion = 'v0';
+  t.is(collectionVersionFrom(null, { version: collectionVersion }), collectionVersion);
+});
+
+test('collectionVersionFrom throws an error if neither granuleVersion nor collection version is defined', (t) => {
+  t.throws(() => collectionVersionFrom());
+});
+
+test('collectionNameFrom returns granuleVersion if it is defined', (t) => {
+  const collectionName = 'foobar';
+  t.is(collectionNameFrom({ dataType: collectionName }, { name: 'foobar' }), collectionName);
+});
+
+test('collectionNameFrom returns collectionVersion if granuleVersion is not defined and collection version is defined', (t) => {
+  const collectionName = 'foobar';
+  t.is(collectionNameFrom(null, { name: collectionName }), collectionName);
+});
+
+test('collectionNameFrom throws an error if neither granuleVersion nor collection version is defined', (t) => {
+  t.throws(() => collectionVersionFrom());
 });
