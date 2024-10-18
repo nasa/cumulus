@@ -339,13 +339,14 @@ test.serial('download Granule with sftpFastDownload set to true from SFTP endpoi
   const event = { ...t.context.event, config };
 
   const output = await syncGranule(event);
+  const expectedHash = crypto.createHash('md5').update(output.granules[0].granuleId).digest('hex');
 
   await validateOutput(t, output);
 
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
 
-  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/${expectedHash}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
   const expected = {
     bucket: t.context.internalBucketName,
     key,
