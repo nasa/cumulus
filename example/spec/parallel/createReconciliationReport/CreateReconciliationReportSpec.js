@@ -111,13 +111,10 @@ const createActiveCollection = async (prefix, sourceBucket) => {
   const sourcePath = `${prefix}/tmp/${randomId('test-')}`;
 
   // Create the collection
-  const newCollection = await createCollection(
-    prefix,
-    {
-      duplicateHandling: 'error',
-      process: 'modis',
-    }
-  );
+  const newCollection = await createCollection(prefix, {
+    duplicateHandling: 'error',
+    process: 'modis',
+  });
 
   // Create the S3 provider
   const provider = await createProvider(prefix, { host: sourceBucket });
@@ -150,7 +147,12 @@ const createActiveCollection = async (prefix, sourceBucket) => {
   };
 
   const workflowExecution = await buildAndExecuteWorkflow(
-    prefix, sourceBucket, 'IngestGranule', newCollection, provider, inputPayload
+    prefix,
+    sourceBucket,
+    'IngestGranule',
+    newCollection,
+    provider,
+    inputPayload
   );
 
   ingestGranuleExecutionArn = workflowExecution.executionArn;
@@ -160,7 +162,10 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     {
       prefix,
       granuleId: inputPayload.granules[0].granuleId,
-      collectionId: constructCollectionId(newCollection.name, newCollection.version),
+      collectionId: constructCollectionId(
+        newCollection.name,
+        newCollection.version
+      ),
     },
     'completed'
   );
@@ -172,10 +177,15 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     status: 'completed',
   });
 
-  await getGranuleWithStatus({ prefix,
+  await getGranuleWithStatus({
+    prefix,
     granuleId,
-    collectionId: constructCollectionId(newCollection.name, newCollection.version),
-    status: 'completed' });
+    collectionId: constructCollectionId(
+      newCollection.name,
+      newCollection.version
+    ),
+    status: 'completed',
+  });
   return newCollection;
 };
 
@@ -611,114 +621,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
   });
 
-  // TODO: the internal report functionality will be removed after collections/granules is changed to no longer use ES
-  xdescribe('Create an Internal Reconciliation Report to monitor internal discrepancies', () => {
-    // report record in db and report in s3
-    let reportRecord;
-    let report;
-    let internalReportAsyncOperationId;
-
-    afterAll(async () => {
-      if (internalReportAsyncOperationId) {
-        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: internalReportAsyncOperationId });
-      }
-    });
-
-    it('generates an async operation through the Cumulus API', async () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      const request = {
-        reportType: 'Internal',
-        reportName: randomId('InternalReport'),
-        startTimestamp,
-        endTimestamp: moment.utc().format(),
-        collectionId,
-        granuleId: [publishedGranuleId, dbGranuleId, randomId('granuleId')],
-        provider: [randomId('provider'), `s3_provider${testSuffix}`],
-      };
-      const response = await reconciliationReportsApi.createReconciliationReport({
-        prefix: config.stackName,
-        request,
-      });
-
-      const responseBody = JSON.parse(response.body);
-      internalReportAsyncOperationId = responseBody.id;
-      console.log('internalReportAsyncOperationId', internalReportAsyncOperationId);
-      expect(response.statusCode).toBe(202);
-    });
-
-    it('generates reconciliation report through the Cumulus API', async () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      let asyncOperation;
-      try {
-        asyncOperation = await waitForAsyncOperationStatus({
-          id: internalReportAsyncOperationId,
-          status: 'SUCCEEDED',
-          stackName: config.stackName,
-          retryOptions: {
-            retries: 60,
-            factor: 1.08,
-          },
-        });
-      } catch (error) {
-        fail(error);
-      }
-      expect(asyncOperation.operationType).toBe('Reconciliation Report');
-      reportRecord = JSON.parse(asyncOperation.output);
-    });
-
-    it('fetches a reconciliation report through the Cumulus API', async () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
-      report = JSON.parse(reportContent);
-      expect(report.reportType).toBe('Internal');
-      expect(report.status).toBe('SUCCESS');
-    });
-
-    it('generates a report showing number of collections that are in both ES and DB', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      expect(report.collections.okCount).toBe(1);
-      expect(report.collections.withConflicts.length).toBe(0);
-      expect(report.collections.onlyInEs.length).toBe(0);
-      expect(report.collections.onlyInDb.length).toBe(0);
-    });
-
-    it('generates a report showing number of granules that are in both ES and DB', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      expect(report.granules.okCount).toBe(2);
-      expect(report.granules.withConflicts.length).toBe(0);
-      if (report.granules.withConflicts.length !== 0) {
-        console.log(`XXXX ${JSON.stringify(report.granules.withConflicts)}`);
-      }
-      expect(report.granules.onlyInEs.length).toBe(0);
-      expect(report.granules.onlyInDb.length).toBe(0);
-    });
-
-    it('deletes a reconciliation report through the Cumulus API', async () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      await reconciliationReportsApi.deleteReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-      });
-
-      const parsed = parseS3Uri(reportRecord.location);
-      const exists = await fileExists(parsed.Bucket, parsed.Key);
-      expect(exists).toBeFalse();
-
-      let responseError;
-      try {
-        await reconciliationReportsApi.getReconciliationReport({
-          prefix: config.stackName,
-          name: reportRecord.name,
-        });
-      } catch (error) {
-        responseError = error;
-      }
-
-      expect(responseError.statusCode).toBe(404);
-      expect(JSON.parse(responseError.apiMessage).message).toBe(`No record found for ${reportRecord.name}`);
-    });
-  });
-
   describe('Creates \'Granule Inventory\' reports.', () => {
     let reportRecord;
     let reportArray;
@@ -834,7 +736,7 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   // TODO: fix tests in CUMULUS-3806 when CreateReconciliationReport lambda is changed to query postgres
-  xdescribe('Create an ORCA Backup Reconciliation Report to monitor ORCA backup discrepancies', () => {
+  describe('Create an ORCA Backup Reconciliation Report to monitor ORCA backup discrepancies', () => {
     // report record in db and report in s3
     let reportRecord;
     let report;
@@ -915,6 +817,8 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(granules.conflictFilesCount).toBe(6);
       expect(granules.onlyInCumulus.length).toBe(1);
       expect(granules.onlyInCumulus[0].granuleId).toBe(dbGranuleId);
+      expect(granules.onlyInCumulus[0].collectionId).toBe(collectionId);
+      expect(granules.onlyInCumulus[0].provider).toBe(`s3_provider${testSuffix}`);
       expect(granules.onlyInCumulus[0].okFilesCount).toBe(1);
       expect(granules.onlyInCumulus[0].cumulusFilesCount).toBe(5);
       expect(granules.onlyInCumulus[0].orcaFilesCount).toBe(0);
@@ -926,6 +830,8 @@ describe('When there are granule differences and granule reconciliation is run',
       }
       expect(granules.withConflicts.length).toBe(1);
       expect(granules.withConflicts[0].granuleId).toBe(publishedGranuleId);
+      expect(granules.withConflicts[0].collectionId).toBe(collectionId);
+      expect(granules.withConflicts[0].provider).toBe(`s3_provider${testSuffix}`);
       expect(granules.withConflicts[0].okFilesCount).toBe(4);
       expect(granules.withConflicts[0].cumulusFilesCount).toBe(5);
       expect(granules.withConflicts[0].orcaFilesCount).toBe(4);
