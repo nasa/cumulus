@@ -263,11 +263,11 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
     ...recReportParams,
     collectionIds: collectionId,
   });
-  const granulesSearchQuery = getGranulesByApiPropertiesQuery(
-    recReportParams.knex,
+  const granulesSearchQuery = getGranulesByApiPropertiesQuery({
+    knex: recReportParams.knex,
     searchParams,
-    ['collectionName', 'collectionVersion', 'granule_id']
-  );
+    sortByFields: ['collectionName', 'collectionVersion', 'granule_id'],
+  });
   const pgGranulesSearchClient = new QuerySearchClient(
     granulesSearchQuery,
     100 // arbitrary limit on how items are fetched at once

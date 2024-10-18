@@ -23,19 +23,16 @@ const {
   fakeGranuleRecordFactory,
   fakePdrRecordFactory,
   fakeProviderRecordFactory,
-  fakeRuleRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
   migrationDir,
   PdrPgModel,
   ProviderPgModel,
-  RulePgModel,
   translatePostgresCollectionToApiCollection,
   translatePostgresExecutionToApiExecution,
   translatePostgresGranuleToApiGranule,
   translatePostgresPdrToApiPdr,
   translatePostgresProviderToApiProvider,
-  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 
 const {
@@ -281,19 +278,6 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
     reconciliationReportModel
   );
 
-  const fakeRuleRecords = await addFakeData(
-    knex,
-    numItems,
-    fakeRuleRecordFactory,
-    new RulePgModel(),
-    {
-      workflow: workflowList[0].name,
-      collection_cumulus_id: fakeCollectionRecords[0].cumulus_id,
-      provider_cumulus_id: fakeProviderRecords[0].cumulus_id,
-      ...dateObject,
-    }
-  );
-
   await indexFromDatabase.handler({
     indexName: esAlias,
     pageSize: 6,
@@ -307,7 +291,6 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
     searchEs('pdr', esAlias, '20'),
     searchEs('provider', esAlias, '20'),
     searchEs('reconciliationReport', esAlias, '20'),
-    searchEs('rule', esAlias, '20'),
   ]);
 
   searchResults.map((res) => t.is(res.meta.count, numItems));
@@ -331,9 +314,6 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
   );
   const providerResults = await Promise.all(
     fakeProviderRecords.map((r) => translatePostgresProviderToApiProvider(r))
-  );
-  const ruleResults = await Promise.all(
-    fakeRuleRecords.map((r) => translatePostgresRuleToApiRule(r, knex))
   );
 
   t.deepEqual(
@@ -367,11 +347,6 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
   t.deepEqual(
     sortAndFilter(searchResults[5].results, ['timestamp'], 'name'),
     sortAndFilter(fakeReconciliationReportRecords, ['timestamp'], 'name')
-  );
-
-  t.deepEqual(
-    sortAndFilter(searchResults[6].results, ['timestamp'], 'name'),
-    sortAndFilter(ruleResults, ['timestamp'], 'name')
   );
 });
 

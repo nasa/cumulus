@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
@@ -6,7 +8,7 @@ const {
   deleteS3Object,
   fileExists,
   getObjectSize,
-  getS3Object,
+  getObject,
   parseS3Uri,
   buildS3Uri,
   getObjectStreamContents,
@@ -20,7 +22,11 @@ const Logger = require('@cumulus/logger');
 const { Search, getEsClient } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 
-const models = require('../models');
+const {
+  ReconciliationReportPgModel,
+  createRejectableTransaction,
+  getKnexClient,
+} = require('@cumulus/db');
 const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
 const startAsyncOperation = require('../lib/startAsyncOperation');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -56,10 +62,14 @@ async function listReports(req, res) {
  */
 async function getReport(req, res) {
   const name = req.params.name;
-  const reconciliationReportModel = new models.ReconciliationReport();
 
   try {
-    const result = await reconciliationReportModel.get({ name });
+    const reconciliationReportPgModel = new ReconciliationReportPgModel();
+    const knex = await getKnexClient();
+    const result = await reconciliationReportPgModel.get(knex, { name });
+    if (!result.location) {
+      return res.boom.badRequest('The reconciliation report record does not contain a location.');
+    }
     const { Bucket, Key } = parseS3Uri(result.location);
     const reportExists = await fileExists(Bucket, Key);
     if (!reportExists) {
@@ -77,20 +87,22 @@ async function getReport(req, res) {
     );
 
     if (Key.endsWith('.json') || Key.endsWith('.csv')) {
-      const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key });
+      const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key }) ?? 0;
       // estimated payload size, add extra
       const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
-      if (
-        estimatedPayloadSize
-          > (process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
+      if (estimatedPayloadSize >
+        Number(process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
       ) {
         res.json({
           presignedS3Url,
           data: `Error: Report ${name} exceeded maximum allowed payload size`,
         });
       } else {
-        const file = await getS3Object(Bucket, Key);
+        const file = await getObject(s3(), { Bucket, Key });
         logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
+        if (!file.Body) {
+          return res.boom.badRequest('Report file does not have a body.');
+        }
         const fileBody = await getObjectStreamContents(file.Body);
         return res.json({
           presignedS3Url,
@@ -98,14 +110,15 @@ async function getReport(req, res) {
         });
       }
     }
-    logger.debug('reconciliation report getReport received an unhandled report type.');
+    logger.debug('Reconciliation report getReport received an unhandled report type.');
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${name}`);
     }
     throw error;
   }
-  return res.boom.badImplementation('reconciliation report getReport failed in an indeterminate manner.');
+
+  return res.boom.badImplementation('Reconciliation report getReport failed in an indeterminate manner.');
 }
 
 /**
@@ -117,14 +130,30 @@ async function getReport(req, res) {
  */
 async function deleteReport(req, res) {
   const name = req.params.name;
-  const reconciliationReportModel = new models.ReconciliationReport();
-  const record = await reconciliationReportModel.get({ name });
+  let record;
 
-  const { Bucket, Key } = parseS3Uri(record.location);
-  if (await fileExists(Bucket, Key)) {
-    await deleteS3Object(Bucket, Key);
+  const reconciliationReportPgModel = new ReconciliationReportPgModel();
+  const knex = await getKnexClient();
+  try {
+    record = await reconciliationReportPgModel.get(knex, { name });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`No record found for ${name}`);
+    }
+    throw error;
   }
-  await reconciliationReportModel.delete({ name });
+
+  if (!record.location) {
+    return res.boom.badRequest('The reconciliation report record does not contain a location!');
+  }
+  const { Bucket, Key } = parseS3Uri(record.location);
+
+  await createRejectableTransaction(knex, async () => {
+    if (await fileExists(Bucket, Key)) {
+      await deleteS3Object(Bucket, Key);
+    }
+    await reconciliationReportPgModel.delete(knex, { name });
+  });
 
   if (inTestMode()) {
     const esClient = await getEsClient(process.env.ES_HOST);

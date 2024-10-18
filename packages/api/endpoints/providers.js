@@ -10,14 +10,13 @@ const {
   translateApiProviderToPostgresProvider,
   translatePostgresProviderToApiProvider,
   validateProviderHost,
+  ProviderSearch,
 } = require('@cumulus/db');
 const {
   RecordDoesNotExist,
   ValidationError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-const { getEsClient, Search } = require('@cumulus/es-client/search');
-const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
 const { removeNilProperties } = require('@cumulus/common/util');
 
 const { isBadRequestError } = require('../lib/errors');
@@ -31,14 +30,11 @@ const log = new Logger({ sender: '@cumulus/api/providers' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'provider',
-    process.env.ES_INDEX
+  const dbSearch = new ProviderSearch(
+    { queryStringParameters: req.query }
   );
-
-  const response = await search.query();
-  return res.send(response);
+  const result = await dbSearch.query();
+  return res.send(result);
 }
 
 /**
@@ -75,7 +71,6 @@ async function post(req, res) {
   const {
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const apiProvider = req.body;
@@ -97,7 +92,6 @@ async function post(req, res) {
     await createRejectableTransaction(knex, async (trx) => {
       const [updatedPostgresProvider] = await providerPgModel.create(trx, postgresProvider, '*');
       record = translatePostgresProviderToApiProvider(updatedPostgresProvider);
-      await indexProvider(esClient, record, process.env.ES_INDEX);
     });
     return res.send({ record, message: 'Record saved' });
   } catch (error) {
@@ -125,7 +119,6 @@ async function put(req, res) {
   const {
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { params: { id }, body } = req;
@@ -160,7 +153,6 @@ async function put(req, res) {
   await createRejectableTransaction(knex, async (trx) => {
     const [updatedPostgresProvider] = await providerPgModel.upsert(trx, postgresProvider);
     record = translatePostgresProviderToApiProvider(updatedPostgresProvider);
-    await indexProvider(esClient, record, process.env.ES_INDEX);
   });
 
   return res.send(record);
@@ -177,39 +169,23 @@ async function del(req, res) {
   const {
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { id } = req.params;
-  const esProvidersClient = new Search(
-    {},
-    'provider',
-    process.env.ES_INDEX
-  );
 
   try {
     await providerPgModel.get(knex, { name: id });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (!(await esProvidersClient.exists(id))) {
-        log.info('Provider does not exist in Elasticsearch and PostgreSQL');
-        return res.boom.notFound('No record found');
-      }
-      log.info('Provider does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
-    } else {
-      throw error;
+      log.info('Provider does not exist in PostgreSQL');
+      return res.boom.notFound('No record found');
     }
+    throw error;
   }
 
   try {
     await createRejectableTransaction(knex, async (trx) => {
       await providerPgModel.delete(trx, { name: id });
-      await deleteProvider({
-        esClient,
-        id,
-        index: process.env.ES_INDEX,
-        ignore: [404],
-      });
     });
     log.debug(`deleted provider ${id}`);
     return res.send({ message: 'Record deleted' });
