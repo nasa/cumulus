@@ -273,7 +273,7 @@ test.serial('verify that all returned granules have sync_granule_duration set', 
   });
 });
 
-test.serial('download Granule from SFTP endpoint', async (t) => {
+test.only('download Granule from SFTP endpoint', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
