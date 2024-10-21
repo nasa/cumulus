@@ -170,7 +170,7 @@ const deleteGranules = async (prefix, granules) => {
  * stackId, and return the file as a JS object.
  *
  * @param {string} filename - file path
- * @param {string} newGranuleId - new granule id
+ * @param {string} [newGranuleId] - new granule id
  * @param {string} newPath - the new data path
  * @param {string} newCollectionId - the new collection id
  * @param {stackId} stackId - the new stack id
@@ -185,9 +185,11 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
 ) => {
   const fileContents = fs.readFileSync(filename, 'utf8');
 
+  const hashedGranuleId = newGranuleId ? crypto.createHash('md5').update(newGranuleId).digest('hex') : '';
+
   return flow([
     replace(/replace-me-granuleId/g, newGranuleId),
-    replace(/replace-me-hashedGranuleId/g, crypto.createHash('md5').update(newGranuleId).digest('hex')),
+    replace(/replace-me-hashedGranuleId/g, hashedGranuleId),
     replace(/replace-me-path/g, newPath),
     replace(/replace-me-collectionId/g, newCollectionId),
     replace(/replace-me-stackId/g, stackId),
