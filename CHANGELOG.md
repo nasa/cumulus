@@ -50,6 +50,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated python dependencies to latest:
     - cumulus-process-py 1.4.0
     - cumulus-message-adapter-python 2.3.0
+- **CUMULUS-3906**
+  - Bumps example ORCA deployment to version v10.0.1.
 
 ### Fixed
 
