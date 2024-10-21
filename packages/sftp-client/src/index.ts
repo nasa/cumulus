@@ -1,3 +1,4 @@
+import fs from 'fs';
 import get from 'lodash/get';
 import * as log from '@cumulus/common/log';
 import mime from 'mime-types';
@@ -105,14 +106,17 @@ export class SftpClient {
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} localPath - the full local destination file path
+   * @param {boolean} fastDownload - whether fast download is performed using parallel reads
    * @returns {Promise<string>} - the local path that the file was saved to
    */
-  async download(remotePath: string, localPath: string): Promise<void> {
+  async download(remotePath: string, localPath: string, fastDownload: boolean = false)
+    : Promise<void> {
     const remoteUrl = this.buildRemoteUrl(remotePath);
 
-    log.info(`Downloading ${remoteUrl} to ${localPath}`);
+    log.info(`Downloading ${remoteUrl} to ${localPath}, fastDownload is ${fastDownload}`);
 
-    await this.sftp.fastGet(remotePath, localPath);
+    const getMethod = fastDownload ? 'fastGet' : 'get';
+    await this.sftp[getMethod](remotePath, localPath);
 
     log.info(`Finished downloading ${remoteUrl} to ${localPath}`);
   }
@@ -141,11 +145,7 @@ export class SftpClient {
 
     log.info(`Copying ${remoteUrl} to ${s3uri}`);
 
-    // TODO Issue PR against ssh2-sftp-client to allow for getting a
-    // readable stream back, rather than having to access the underlying
-    // sftp object.
-    // @ts-expect-error
-    const sftpReadStream = this.sftp.sftp.createReadStream(remotePath);
+    const sftpReadStream = await this.sftp.createReadStream(remotePath);
 
     const result = await S3.promiseS3Upload({
       params: {
@@ -157,6 +157,52 @@ export class SftpClient {
     });
 
     log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
+
+    return { s3uri, etag: result.ETag };
+  }
+
+  logProgress(total_transferred: number, chunk: number, total: number): void {
+    log.debug(`total_transferred, chunk, total: ${total_transferred}, ${chunk}, ${total}`);
+  }
+
+  /**
+   * Transfer the remote file to a given s3 location.
+   * Download is performed using parallel reads for faster throughput.
+   * Lambda ephemeral storage is used to download files before files are uploaded to s3
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} bucket - destination s3 bucket of the file
+   * @param {string} key - destination s3 key of the file
+   * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
+   *    the S3 URI and ETag of the destination file
+   */
+  async syncToS3Fast(
+    remotePath: string,
+    bucket: string,
+    key: string
+  ): Promise<SyncToS3Response> {
+    const remoteUrl = this.buildRemoteUrl(remotePath);
+
+    const s3uri = S3.buildS3Uri(bucket, key);
+    const localFile = `/tmp/${path.basename(remotePath)}`;
+
+    log.info(`syncToS3Fast downloading ${remoteUrl} to ${localFile}`);
+    const progressLogging = process.env.SFTP_DEBUG ? { step: this.logProgress } : undefined;
+    await this.sftp.fastGet(remotePath, localFile, progressLogging);
+
+    log.info(`syncToS3Fast uploading ${localFile} to ${s3uri}`);
+    const readStream = fs.createReadStream(localFile);
+    const result = await S3.promiseS3Upload({
+      params: {
+        Bucket: bucket,
+        Key: key,
+        Body: readStream,
+        ContentType: mime.lookup(key) || undefined,
+      },
+    });
+
+    log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
+    fs.unlinkSync(localFile);
 
     return { s3uri, etag: result.ETag };
   }

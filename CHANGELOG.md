@@ -75,6 +75,11 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
   - This is to allow files matching specified regex to be excluded when updating the Related URLs list
   - Defaults to the current behavior of excluding no files.
+- **CUMULUS-3773**
+  - Added sftpFastDownload configuration to SyncGranule task.
+  - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
+  - Added sftp support to FakeProvider
+  - Added sftp integration test
 
 ### Changed
 
@@ -82,6 +87,8 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Updated python dependencies to latest:
     - cumulus-process-py 1.4.0
     - cumulus-message-adapter-python 2.3.0
+- **CUMULUS-3906**
+  - Bumps example ORCA deployment to version v10.0.1.
 
 ### Fixed
 

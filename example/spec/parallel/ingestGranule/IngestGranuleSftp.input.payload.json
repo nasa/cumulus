@@ -1,0 +1,33 @@
+{
+    "granules": [
+      {
+        "granuleId": "MOD09GQ.A2017224.h27v08.006.2017227165029",
+        "dataType": "MOD09GQ",
+        "version": "006",
+        "files": [
+          {
+            "path": "/granules",
+            "size": 1098034,
+            "type": "data",
+            "name": "MOD09GQ.A2017224.h27v08.006.2017227165029.hdf"
+          },
+          {
+            "path": "/granules",
+            "size": 20165,
+            "type": "metadata",
+            "name": "MOD09GQ.A2017224.h27v08.006.2017227165029.hdf.met"
+          },
+          {
+            "path": "/granules",
+            "name": "MOD09GQ.A2017224.h27v08.006.2017227165029.hdf.md5"
+          }
+        ]
+      }
+    ],
+    "pdr": {
+      "path": "/pdrs",
+      "size": 596,
+      "name": "MOD09GQ_1granule_v6.PDR",
+      "time": 1520873050000
+    }
+}
