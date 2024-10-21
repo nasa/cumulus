@@ -175,6 +175,18 @@ variable "db_parameters" {
   ]
 }
 
+variable "disableSSL" {
+  description = "If set to true, disable use of SSL with Core database connections."
+  type = bool
+  default = false
+}
+
+variable "rejectUnauthorized" {
+  description = "If disableSSL is false or not set, set to false to allow self-signed certificates or non-supported CAs."
+  type = bool
+  default = false
+}
+
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
   type = map(number)
