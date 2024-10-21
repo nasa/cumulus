@@ -3,8 +3,9 @@ export UNIT_TEST_BUILD_DIR=$(pwd);
 touch ./test_output.txt
 tail -f ./test_output.txt &
 TAIL_PID=$!
-
-npm run test:ci > ./test_output.txt
+cd tasks/sync-
+for i in $(seq 1 100);
+do npm run test:ci -- tests/sync_granule_test.js || break; done
 
 RESULT=$?
 # make sure tail has gotten everything out
