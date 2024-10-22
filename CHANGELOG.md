@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
+### Breaking Changes
+
+- **CUMULUS-2564**
+  - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
+    This modifies the task behavior to stage granules to
+    `<staging_path>/<collection_id>/<md5_granuleIdHash>` to allow for better S3
+    partitioning/performance for large collections.
+    Because of this benefit
+    the default has been set to `true`, however as sync-granules relies on
+    object name collision, this configuration changes the duplicate collision
+    behavior of sync-granules to be per-granule-id instead of per-collection
+    when active.
+    If the prior behavior is desired, please add `"useGranIdPath": true` to your
+    task config in your workflow definitions that use `sync-granule`.
+
 ### Added
 
 - **CUMULUS-3020**
