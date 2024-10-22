@@ -31,11 +31,6 @@ included in the future will have a corresponding CHANGELOG entry in future relea
     - cumulus-process-py 1.4.0
     - cumulus-message-adapter-python 2.3.0
 
-### Fixed
-
-- **CUMULUS-3902**
-  - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
-
 ## [v18.5.0] 2024-10-03
 
 ### Migration Notes
