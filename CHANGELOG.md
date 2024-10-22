@@ -29,7 +29,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added sftp support to FakeProvider
   - Added sftp integration test
 - **CUMULUS-3919**
-  - Added terraform variables `disableSsl` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
+  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 
 ### Changed
 
