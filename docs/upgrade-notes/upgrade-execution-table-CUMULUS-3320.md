@@ -43,7 +43,7 @@ For reference, in testing, using a 4ACU Aurora Serverless V1 cluster on a table 
 To do this, use the following query:
 
 ```sql
-CREATE INDEX executions_parent_cumulus_id_index ON executions(parent_cumulus_id)'
+CREATE INDEX executions_parent_cumulus_id_index ON executions(parent_cumulus_id)
 ```
 
 ##### Create index concurrently/with ongoing ingest
@@ -51,7 +51,7 @@ CREATE INDEX executions_parent_cumulus_id_index ON executions(parent_cumulus_id)
 The required index can also be created while the database is in use *prior to installing the upgrade containing CUMULUS-3320* by running the following query:
 
 ```sql
-CREATE INDEX CONCURRENTLY executions_parent_cumulus_id_index ON executions(parent_cumulus_id)'
+CREATE INDEX CONCURRENTLY executions_parent_cumulus_id_index ON executions(parent_cumulus_id)
 ```
 
 Please note this may take *significantly* longer than creating the index non-concurrently, especially if the table is under heavy use.
