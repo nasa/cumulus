@@ -13,6 +13,7 @@
     "http-cache-semantics",
     "lodash.pick",
     "hoek",
+    "jsonpath-plus",
     "semver",
     "axios"
   ]
