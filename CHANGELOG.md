@@ -21,6 +21,8 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
   - This is to allow files matching specified regex to be excluded when updating the Related URLs list
   - Defaults to the current behavior of excluding no files.
+- **CUMULUS-3919**
+  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 
 ### Changed
 
