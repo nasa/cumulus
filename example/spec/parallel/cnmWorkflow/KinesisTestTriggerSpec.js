@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('crypto');
+
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isMatch = require('lodash/isMatch');
@@ -175,7 +177,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     };
 
     fileData = expectedTranslatePayload.granules[0].files[0];
-    filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000`;
+    filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000/${crypto.createHash('md5').update(record.product.name).digest('hex')}`;
 
     const fileDataWithFilename = {
       bucket: testConfig.buckets.private.name,
