@@ -1,6 +1,6 @@
 const test = require('ava');
 const omit = require('lodash/omit');
-const { InvalidArgument } = require('@cumulus/errors');
+const { InvalidArgument, MissingRequiredArgument } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomId } = require('@cumulus/common/test-utils');
 const { normalizeEvent } = require('../../../lib/reconciliationReport/normalizeEvent');
@@ -232,7 +232,7 @@ test('normalizeEvent throws error if no systemBucket is provided', (t) => {
     startTimestamp: new Date().toISOString(),
   };
   t.throws(() => normalizeEvent(inputEvent), {
-    instanceOf: InvalidArgument,
+    instanceOf: MissingRequiredArgument,
     message: 'systemBucket is required.',
   });
 });
@@ -245,7 +245,7 @@ test('normalizeEvent throws error if no stackName is provided', (t) => {
     systemBucket: 'systemBucket',
   };
   t.throws(() => normalizeEvent(inputEvent), {
-    instanceOf: InvalidArgument,
+    instanceOf: MissingRequiredArgument,
     message: 'stackName is required.',
   });
 });
