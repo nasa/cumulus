@@ -36,6 +36,11 @@ const logger = new Logger({ sender: '@cumulus/api' });
 const maxResponsePayloadSizeBytes = 6 * 1000 * 1000;
 
 /**
+* @typedef {import('../lib/types').NormalizedRecReportParams} NormalizedRecReportParams
+* @typedef {import('../lib/types').RecReportParams} RecReportParams
+*/
+
+/**
  * List all reconciliation reports
  *
  * @param {Object} req - express request object
@@ -173,10 +178,12 @@ async function deleteReport(req, res) {
  * Creates a new report
  *
  * @param {Object} req - express request object
+ * @param {RecReportParams} req.body
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
+  /** @type NormalizedRecReportParams */
   let validatedInput;
   try {
     validatedInput = normalizeEvent(req.body);
