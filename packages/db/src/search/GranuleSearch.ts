@@ -15,14 +15,9 @@ import { TableNames } from '../tables';
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
 interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
-  cumulus_id: number,
-  updated_at: Date,
-  collection_cumulus_id: number,
   collectionName: string,
   collectionVersion: string,
-  pdr_cumulus_id: number,
   pdrName?: string,
-  provider_cumulus_id?: number,
   providerName?: string,
 }
 
@@ -119,6 +114,8 @@ export class GranuleSearch extends BaseSearch {
   protected translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[])
     : Partial<ApiGranuleRecord>[] {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+
+    const { fields } = this.dbQueryParameters;
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
       const granulePgRecord = item;
       const collectionPgRecord = {
@@ -131,9 +128,7 @@ export class GranuleSearch extends BaseSearch {
       const apiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
         granulePgRecord, collectionPgRecord, pdr, providerPgRecord,
       });
-      return this.dbQueryParameters.fields
-        ? pick(apiRecord, this.dbQueryParameters.fields)
-        : apiRecord;
+      return fields ? pick(apiRecord, fields) : apiRecord;
     });
     return apiRecords;
   }

@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
@@ -8,20 +10,15 @@ const {
   getKnexClient,
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
-  createRejectableTransaction,
 } = require('@cumulus/db');
 const {
   RecordDoesNotExist,
   ValidationError,
 } = require('@cumulus/errors');
-const {
-  indexAsyncOperation,
-} = require('@cumulus/es-client/indexer');
 
 const Logger = require('@cumulus/logger');
+const { AsyncOperationSearch } = require('@cumulus/db');
 
-const { Search, getEsClient } = require('@cumulus/es-client/search');
-const { deleteAsyncOperation } = require('@cumulus/es-client/indexer');
 const { isBadRequestError } = require('../lib/errors');
 
 const { recordIsValid } = require('../lib/schema');
@@ -30,13 +27,9 @@ const asyncSchema = require('../lib/schemas').asyncOperation;
 const logger = new Logger({ sender: '@cumulus/api/asyncOperations' });
 
 async function list(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'asyncOperation',
-    process.env.ES_INDEX
-  );
+  const dbSearch = new AsyncOperationSearch({ queryStringParameters: req.query });
 
-  const response = await search.query();
+  const response = await dbSearch.query();
   return res.send(response);
 }
 
@@ -74,16 +67,9 @@ async function del(req, res) {
   const {
     asyncOperationPgModel = new AsyncOperationPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { id } = req.params || {};
-  const esAsyncOperationsClient = new Search(
-    {},
-    'asyncOperation',
-    process.env.ES_INDEX
-  );
-
   if (!id) {
     return res.boom.badRequest('id parameter is missing');
   }
@@ -92,26 +78,13 @@ async function del(req, res) {
     await asyncOperationPgModel.get(knex, { id });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (!(await esAsyncOperationsClient.exists(id))) {
-        logger.info('Async Operation does not exist in Elasticsearch and PostgreSQL');
-        return res.boom.notFound('No record found');
-      }
-      logger.info('Async Operation does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
-    } else {
-      throw error;
+      logger.info('Async Operation does not exist PostgreSQL');
+      return res.boom.notFound('No record found');
     }
+    return res.boom.badImplementation(JSON.stringify(error));
   }
 
-  await createRejectableTransaction(knex, async (trx) => {
-    await asyncOperationPgModel.delete(trx, { id });
-    await deleteAsyncOperation({
-      esClient,
-      id,
-      index: process.env.ES_INDEX,
-      ignore: [404],
-    });
-  });
-
+  await asyncOperationPgModel.delete(knex, { id });
   return res.send({ message: 'Record deleted' });
 }
 
@@ -126,7 +99,6 @@ async function post(req, res) {
   const {
     asyncOperationPgModel = new AsyncOperationPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const apiAsyncOperation = req.body;
@@ -144,12 +116,8 @@ async function post(req, res) {
     }
     const dbRecord = translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation);
     logger.debug(`Attempting to create async operation ${dbRecord.id}`);
-    let apiDbRecord;
-    await createRejectableTransaction(knex, async (trx) => {
-      const pgRecord = await asyncOperationPgModel.create(trx, dbRecord, ['*']);
-      apiDbRecord = await translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
-      await indexAsyncOperation(esClient, apiDbRecord, process.env.ES_INDEX);
-    });
+    const pgRecord = await asyncOperationPgModel.create(knex, dbRecord, ['*']);
+    const apiDbRecord = translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
     logger.info(`Successfully created async operation ${apiDbRecord.id}:`);
     return res.send({
       message: 'Record saved',

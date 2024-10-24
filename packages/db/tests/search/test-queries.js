@@ -77,6 +77,16 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
   t.deepEqual(dbQueryParams, expectedDbQueryParameters);
 });
 
+test('convertQueryStringToDbQueryParameters does not include limit/offset parameters if limit is explicitly set to null', (t) => {
+  const queryStringParameters = {
+    limit: null,
+    offset: 3,
+  };
+  const dbQueryParams = convertQueryStringToDbQueryParameters('granule', queryStringParameters);
+  t.is(dbQueryParams.limit, undefined);
+  t.is(dbQueryParams.offset, undefined);
+});
+
 test('convertQueryStringToDbQueryParameters correctly converts sortby error parameter to db query parameters', (t) => {
   const queryStringParameters = {
     sort_by: 'error.Error.keyword',
