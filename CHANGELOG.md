@@ -57,6 +57,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3933**
+  - Update example/bamboo/integration-tests.sh to properly exit if lock-stack
+    errors/detects another stack lock
 - **CUMULUS-3902**
   - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
 
