@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v18.5.1] 2024-10-23
+
+**Please note** changes in v18.5.1 may not yet be released in future versions, as this
+is a backport/patch release on the v18.5.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-3773**
+  - Added sftpFastDownload configuration to SyncGranule task.
+  - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
+  - Added sftp support to FakeProvider
+  - Added sftp integration test
+- **CUMULUS-3756**
+  - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
+  - This is to allow files matching specified regex to be excluded when updating the Related URLs list
+  - Defaults to the current behavior of excluding no files.
+- **CUMULUS-3919**
+  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
+
+### Changed
+
+- **CUMULUS-3838**
+  - Updated python dependencies to latest:
+    - cumulus-process-py 1.4.0
+    - cumulus-message-adapter-python 2.3.0
+
+### Fixed
+
+- **CUMULUS-3902**
+  - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
+
 ## [v18.5.0] 2024-10-03
 
 ### Migration Notes

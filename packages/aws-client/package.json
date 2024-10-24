@@ -72,7 +72,6 @@
     "@cumulus/errors": "18.5.0",
     "@cumulus/logger": "18.5.0",
     "@cumulus/types": "18.5.0",
-    "jsonpath-plus": "^1.1.0",
     "lodash": "~4.17.21",
     "mem": "^8.0.2",
     "p-map": "^1.2.0",
@@ -83,7 +82,7 @@
     "uuid": "^8.2.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "18.0.0",
+    "@cumulus/test-data": "18.5.0",
     "@types/uuid": "^8.0.0"
   }
 }
