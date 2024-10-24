@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const pMap = require('p-map');
@@ -7,7 +9,12 @@ const lock = require('@cumulus/ingest/lock');
 const { duplicateHandlingType } = require('@cumulus/ingest/granule');
 const { s3Join } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-const GranuleFetcher = require('./GranuleFetcher');
+const { GranuleFetcher } = require('./GranuleFetcher');
+
+/**
+ * @typedef {import ('./index-types').SyncGranulePDR } SyncGranulePDR
+ * @typedef {import ('./index-types').SyncGranuleConfig } SyncGranuleConfig
+ */
 
 /**
  * Ingest a list of granules
@@ -15,10 +22,14 @@ const GranuleFetcher = require('./GranuleFetcher');
  * @param {Object} kwargs - keyword arguments
  * @param {Object} kwargs.ingest - an ingest object
  * @param {string} kwargs.bucket - the name of an S3 bucket, used for locking
- * @param {string} kwargs.provider - the name of a provider, used for locking
+ * @param {Object} kwargs.provider - The provider object as defined in the
+ * task schema
  * @param {Object[]} kwargs.granules - the granules to be ingested
  * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest
  *    all corresponding checksum files
+ * @param {boolean} [kwargs.useGranIdPath=true] - if 'true', use a md5 hash of the
+ * granuleID in the object prefix staging location
+ * @param {boolean} [kwargs.sftpFastDownload=false] - if 'true' use sftpFastDownload
  * @returns {Promise<Array>} the list of successfully ingested granules, or an
  *    empty list if the input granules was not a non-empty array of granules
  */
@@ -27,7 +38,9 @@ async function download({
   bucket,
   provider,
   granules,
+  sftpFastDownload = false,
   syncChecksumFiles = false,
+  useGranIdPath = true,
 }) {
   if (!Array.isArray(granules) || granules.length === 0) return [];
 
@@ -55,6 +68,8 @@ async function download({
         granule,
         bucket,
         syncChecksumFiles,
+        useGranIdPath,
+        fastDownload: sftpFastDownload,
       });
       const endTime = Date.now();
 
@@ -82,28 +97,32 @@ async function download({
  * Ingest a list of granules
  *
  * @param {Object} event - contains input and config parameters
+ * @param {SyncGranuleConfig} event.config - the task configuration object
+ * @param {Object} event.input - the input object
  * @returns {Promise.<Object>} - a description of the ingested granules
  */
-
 function syncGranule(event) {
   const now = Date.now();
-  const config = event.config;
-  const input = event.input;
-  const stack = config.stack;
-  const buckets = config.buckets;
-  const provider = config.provider;
-  const collection = config.collection;
-  const downloadBucket = config.downloadBucket;
-  const syncChecksumFiles = config.syncChecksumFiles;
+  const { config, input } = event;
+  const {
+    stack,
+    buckets,
+    provider,
+    collection,
+    downloadBucket,
+    useGranIdPath,
+    syncChecksumFiles,
+    sftpFastDownload,
+    workflowStartTime: configWorkflowStartTime,
+  } = config;
+
   const duplicateHandling = duplicateHandlingType(event);
-  const workflowStartTime = config.workflowStartTime ?
-    Math.min(config.workflowStartTime, now) :
-    now;
+  const workflowStartTime = configWorkflowStartTime ? Math.min(configWorkflowStartTime, now) : now;
 
   // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = s3Join(
     (config.fileStagingDir || 'file-staging'),
-    stack
+    (stack || '')
   );
 
   if (!provider) {
@@ -121,11 +140,13 @@ function syncGranule(event) {
   });
 
   return download({
-    ingest,
     bucket: downloadBucket,
-    provider,
     granules: input.granules,
+    ingest,
+    provider,
+    sftpFastDownload,
     syncChecksumFiles,
+    useGranIdPath,
   }).then((granuleResults) => {
     // eslint-disable-next-line camelcase
     const granuleDuplicates = {};

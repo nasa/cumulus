@@ -6,25 +6,61 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration Notes
+
+### Breaking Changes
+
+- **CUMULUS-2564**
+  - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
+    This modifies the task behavior to stage granules to
+    `<staging_path>/<collection_id>/<md5_granuleIdHash>` to allow for better S3
+    partitioning/performance for large collections.
+    Because of this benefit
+    the default has been set to `true`, however as sync-granules relies on
+    object name collision, this configuration changes the duplicate collision
+    behavior of sync-granules to be per-granule-id instead of per-collection
+    when active.
+    If the prior behavior is desired, please add `"useGranIdPath": true` to your
+    task config in your workflow definitions that use `sync-granule`.
+
 ### Added
+
+- **CUMULUS-3020**
+  - Updated sfEventSqsToDbRecords to allow override of the default value
+   (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60)
+   via a key 'sfEventSqsToDbRecords' on `var.lambda_timeouts` on the main cumulus module/archive module
+
+  **Please note** - updating this configuration is for adavanced users only.  Value changes will modify the visibility
+  timeout on `sfEventSqsToDbRecordsDeadLetterQueue` and `sfEventSqsToDbRecordsInputQueue` and may lead to system
+  instability.
+
+- **CUMULUS-3756**
+  - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
+  - This is to allow files matching specified regex to be excluded when updating the Related URLs list
+  - Defaults to the current behavior of excluding no files.
+- **CUMULUS-3773**
+  - Added sftpFastDownload configuration to SyncGranule task.
+  - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
+  - Added sftp support to FakeProvider
+  - Added sftp integration test
+- **CUMULUS-3919**
+  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 
 ### Changed
 
+- **CUMULUS-3838**
+  - Updated python dependencies to latest:
+    - cumulus-process-py 1.4.0
+    - cumulus-message-adapter-python 2.3.0
+- **CUMULUS-3906**
+  - Bumps example ORCA deployment to version v10.0.1.
+
 ### Fixed
 
-- **CUMULUS-3824**
-  - Added the missing double quote in ecs_cluster autoscaling cf template
-- **CUMULUS-3846**
-  - improve reliability of unit tests
-    - tests for granules api get requests separated out to new file
-    - cleanup of granule database resources to ensure no overlap
-    - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
-    - increase timeout in aws-client tests
 - **CUMULUS-3904**
   - Passed sqs_message_consumer_watcher_message_limit and sqs_message_consumer_watcher_time_limit through the cumulus terraform module to the ingest terraform module.
-- **Snyk**
-  - Upgraded moment from 2.29.4 to 2.30.1
-  - Upgraded pg from ~8.10 to ~8.12
+- **CUMULUS-3902**
+  - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
 
 ## [v19.0.0] 2024-08-28
 
@@ -84,6 +120,47 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
   - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
+
+## [v18.5.0] 2024-10-03
+
+### Migration Notes
+
+#### CUMULUS-3536 Upgrading from Aurora Serverless V1 to V2
+
+- The updates in CUMULUS-3536 require an upgrade of the postgres database.
+  Please follow [Upgrading from Aurora Serverless V1 to V2]
+  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/serverless-v2-upgrade)
+
+### Added
+
+- **CUMULUS-3536**
+  - Added `rejectUnauthorized` = false to db-provision-user-database as the Lambda
+    does not have the Serverless v2 SSL certifications installed.
+
+### Changed
+
+- **CUMULUS-3725**
+  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
+    to 0. This setting for the Aurora Serverless v2 database allows non-SSL
+    connections to the database, and is intended to be a temporary solution
+    until Cumulus has been updated to import the RDS rds-ca-rsa2048-g1 CA bundles in Lambda environments.
+    See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
+
+### Fixed
+
+- **CUMULUS-3901**
+  - Fix error checking in @cumulus/errors to use Error.name in addition to Error.code
+- **CUMULUS-3824**
+  - Added the missing double quote in ecs_cluster autoscaling cf template
+- **CUMULUS-3846**
+  - improve reliability of unit tests
+    - tests for granules api get requests separated out to new file
+    - cleanup of granule database resources to ensure no overlap
+    - ensure uniqueness of execution names from getWorkflowNameIntersectFromGranuleIds
+    - increase timeout in aws-client tests
+- **Snyk**
+  - Upgraded moment from 2.29.4 to 2.30.1
+  - Upgraded pg from ~8.10 to ~8.12
 
 ## [v18.4.0] 2024-08-16
 
@@ -8058,7 +8135,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 [Unreleased]: https://github.com/nasa/cumulus/compare/v19.0.0...HEAD
-[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v19.0.0
+[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.0...v19.0.0
+[v18.5.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v18.5.0
 [v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.4...v18.4.0
 [v18.3.4]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.3.4
 [v18.3.3]: https://github.com/nasa/cumulus/compare/v18.3.2...v18.3.3
