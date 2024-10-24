@@ -22,6 +22,12 @@ if [[ $CHECK_STATUS -eq 101 ]]; then
   ./bamboo/deploy-dev-integration-test-stack.sh
   ./bamboo/bootstrap-integration-tests.sh
 fi
+
+if [[ $CHECK_STATUS -eq 1 ]]; then
+  echo "*** Stack is locked by another build *or* another error occurred in lock-stack.js"
+  exit 1
+fi
+
 if [[ $LOCK_EXISTS_STATUS -gt 0 ]]; then
   exit 1
 fi
