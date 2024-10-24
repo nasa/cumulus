@@ -54,6 +54,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - cumulus-message-adapter-python 2.3.0
 - **CUMULUS-3906**
   - Bumps example ORCA deployment to version v10.0.1.
+- **CUMULUS-3931**
+  - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
+    new task deployment on terraform redeploy.   See docs for more details:
+    https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
 
 ### Fixed
 
