@@ -36,6 +36,11 @@ variable "target_prefix" {
   type = string
 }
 
+variable "target_region" {
+  type    = string
+  default = ""
+}
+
 variable "source_bucket" {
   type = string
 }

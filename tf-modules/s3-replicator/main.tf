@@ -52,6 +52,7 @@ resource "aws_lambda_function" "s3_replicator" {
     variables = {
       TARGET_BUCKET = var.target_bucket
       TARGET_PREFIX = var.target_prefix
+      TARGET_REGION = length(var.target_region) == 0 ? null : var.target_region
     }
   }
 
