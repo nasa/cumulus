@@ -82,7 +82,7 @@
     "uuid": "^8.2.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "18.3.5",
+    "@cumulus/test-data": "18.5.0",
     "@types/uuid": "^8.0.0"
   }
 }
