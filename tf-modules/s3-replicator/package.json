@@ -20,7 +20,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.621.0"
+    "@cumulus/aws-client": "19.0.0"
   },
   "private": true
 }
