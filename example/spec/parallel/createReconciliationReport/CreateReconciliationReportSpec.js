@@ -734,7 +734,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
   });
 
-  // TODO: fix tests in CUMULUS-3806 when CreateReconciliationReport lambda is changed to query postgres
   describe('Create an ORCA Backup Reconciliation Report to monitor ORCA backup discrepancies', () => {
     // report record in db and report in s3
     let reportRecord;
