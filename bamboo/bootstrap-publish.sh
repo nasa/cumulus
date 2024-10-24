@@ -17,3 +17,4 @@ apt-get install -y jq rsync zip
 echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
 
 git config --global user.name "Bamboo CI"
+git config --global user.email "cumulus.bot@gmail.com"
