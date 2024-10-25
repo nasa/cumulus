@@ -31,6 +31,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3928**
+  - updated publish scripting to use cumulus.bot@gmail.com for user email
+  - updated publish scripting to use esm over common import of latest-version
+  - updated bigint testing to remove intermitted failure source.
+  - updated postgres dependency version
 - **CUMULUS-3838**
   - Updated python dependencies to latest:
     - cumulus-process-py 1.4.0
