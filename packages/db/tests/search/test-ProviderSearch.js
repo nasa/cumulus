@@ -26,13 +26,13 @@ test.before(async (t) => {
 
   t.context.providerPgModel = new ProviderPgModel();
   const providers = [];
-  t.context.providerSearchTmestamp = 1579352700000;
+  t.context.providerSearchTimestamp = 1579352700000;
 
   range(100).map((num) => (
     providers.push(fakeProviderRecordFactory({
       cumulus_id: num,
-      updated_at: new Date(t.context.providerSearchTmestamp + (num % 2)),
-      created_at: new Date(t.context.providerSearchTmestamp - (num % 2)),
+      updated_at: new Date(t.context.providerSearchTimestamp + (num % 2)),
+      created_at: new Date(t.context.providerSearchTimestamp - (num % 2)),
       name: num % 2 === 0 ? `testProvider${num}` : `fakeProvider${num}`,
       host: num % 2 === 0 ? 'cumulus-sit' : 'cumulus-uat',
       global_connection_limit: num % 2 === 0 ? 0 : 10,
@@ -119,7 +119,7 @@ test('ProviderSearch supports prefix search', async (t) => {
 
 test('ProviderSearch supports term search for date field', async (t) => {
   const { knex } = t.context;
-  const testUpdatedAt = t.context.providerSearchTmestamp + 1;
+  const testUpdatedAt = t.context.providerSearchTimestamp + 1;
   const queryStringParameters = {
     limit: 200,
     updatedAt: `${testUpdatedAt}`,
@@ -159,8 +159,8 @@ test('ProviderSearch supports term search for string field', async (t) => {
 
 test('ProviderSearch supports range search', async (t) => {
   const { knex } = t.context;
-  const timestamp1 = t.context.providerSearchTmestamp + 1;
-  const timestamp2 = t.context.providerSearchTmestamp + 2;
+  const timestamp1 = t.context.providerSearchTimestamp + 1;
+  const timestamp2 = t.context.providerSearchTimestamp + 2;
   const queryStringParameters = {
     limit: 200,
     timestamp__from: `${timestamp1}`,

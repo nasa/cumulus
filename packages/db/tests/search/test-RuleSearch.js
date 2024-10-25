@@ -139,7 +139,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('RuleSearch returns correct response for basic query', async (t) => {
+test('RuleSearch returns the correct response for a basic query', async (t) => {
   const { knex } = t.context;
   const dbSearch = new RuleSearch({});
   const results = await dbSearch.query(knex);
@@ -183,7 +183,7 @@ test('RuleSearch returns correct response for basic query', async (t) => {
   t.deepEqual(results.results[9], expectedResponse10);
 });
 
-test('RuleSearchsupports page and limit params', async (t) => {
+test('RuleSearch supports page and limit params', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 25,

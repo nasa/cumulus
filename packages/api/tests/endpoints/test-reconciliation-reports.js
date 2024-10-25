@@ -113,16 +113,7 @@ test.before(async (t) => {
       }),
     })));
 
-  // add records to pg
-  await Promise.all(
-    fakeReportRecords.map((reportRecord) =>
-      t.context.reconciliationReportPgModel
-        .create(knex, reportRecord)
-        .then(
-          ([reportPgRecord]) =>
-            translatePostgresReconReportToApiReconReport(reportPgRecord)
-        ))
-  );
+  await t.context.reconciliationReportPgModel.insert(t.context.knex, fakeReportRecords);
 });
 
 test.after.always(async (t) => {

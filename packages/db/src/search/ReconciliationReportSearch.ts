@@ -1,9 +1,7 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
 import pick from 'lodash/pick';
-import set from 'lodash/set';
 
-// import { BaseRecord } from '../types/base';
 import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
@@ -13,27 +11,11 @@ import { TableNames } from '../tables';
 
 const log = new Logger({ sender: '@cumulus/db/ReconciliationReportSearch' });
 
-// interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
-//   cumulus_id: number,
-//   updated_at: Date,
-//   collection_cumulus_id: number,
-//   collectionName: string,
-//   collectionVersion: string,
-//   pdr_cumulus_id: number,
-//   pdrName?: string,
-//   provider_cumulus_id?: number,
-//   providerName?: string,
-// }
-
 /**
  * Class to build and execute db search query for granules
  */
 export class ReconciliationReportSearch extends BaseSearch {
   constructor(event: QueryEvent) {
-    // estimate the table rowcount by default
-    if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
-      set(event, 'queryStringParameters.estimateTableRowCount', 'true');
-    }
     super(event, 'reconciliationReport');
   }
 
