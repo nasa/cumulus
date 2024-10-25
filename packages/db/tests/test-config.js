@@ -442,7 +442,7 @@ test('canSafelyConvertBigInt() throws exception if number exceeds safe range', (
 });
 
 test('canSafelyConvertBigInt() throws exception for non-numeric string', (t) => {
-  const nonNumericString = `a${cryptoRandomString({ length: 16 })}`;
+  const nonNumericString = `a${cryptoRandomString({ length: 9 })}`;
   t.throws(
     () => canSafelyConvertBigInt(nonNumericString),
     {
