@@ -19,13 +19,13 @@ class ReconciliationReportPgModel extends BasePgModel<PostgresReconciliationRepo
     knexOrTransaction: Knex | Knex.Transaction,
     item: PostgresReconciliationReport
   ) {
-    return super.create(knexOrTransaction, item, '*');
+    return super.create(knexOrTransaction, item, '*') as Promise<PostgresReconciliationReportRecord[]>;
   }
 
   upsert(
     knexOrTransaction: Knex | Knex.Transaction,
     reconciliationReport: PostgresReconciliationReport
-  ) {
+  ): Promise<PostgresReconciliationReportRecord[]> {
     return knexOrTransaction(this.tableName)
       .insert(reconciliationReport)
       .onConflict('name')

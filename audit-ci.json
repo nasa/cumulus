@@ -3,11 +3,7 @@
   "pass-enoaudit": true,
   "retry-count": 20,
   "allowlist": [
-    "cacheable-request",
-    "http-cache-semantics",
-    "lodash.pick",
-    "semver",
-    "axios",
-    "jsonpath-plus"
+    "jsonpath-plus",
+    "semver"
   ]
 }

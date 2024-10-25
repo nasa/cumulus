@@ -40,18 +40,29 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
 - **CUMULUS-3806**
+  - Update `@cumulus/db/search` to allow for ordered collation as a
+    dbQueryParameter
+  - Update `@cumulus/db/search` to allow `dbQueryParameters.limit` to be set to
+    `null` to allow for optional unlimited page sizes in search results
+  - Update/add type annotations/logic fixes to `@cumulus/api` reconciliation report code
+  - Annotation/typing fixes to `@cumulus/cmr-client`
+  - Typing fixes to `@cumulus/db`
+  - Re-enable Reconciliation Report integration tests
+  - Update `@cumulus/client/CMR.getToken` to throw if a non-launchpad token is requested without a username
+  - Update `Inventory` and `Granule Not Found` reports to query postgreSQL
+    database instead of elasticsearch
+  - Update `@cumulus/db/lib/granule.getGranulesByApiPropertiesQuery` to
+    allow order by collation to be optionally specified
   - Update `@cumulus/db/lib/granule.getGranulesByApiPropertiesQuery` to
     be parameterized and include a modifier on `temporalBoundByCreatedAt`
   - Remove endpoint call to and all tests for Internal Reconciliation Reports
     and updated API to throw an error if report is requested
   - Update Orca reconciliation reports to pull granules for comparison from
     postgres via `getGranulesByApiPropertiesQuery`
-- **CUMULUS-3833**
-  - Added `ReconciliationReportMigration` lambda to migrate ReconciliationReports from DynamoDB
-    to Postgres
 - **CUMULUS-3837**
   - Added `reconciliation_reports` table in RDS, including indexes
   - Created pg model, types, and translation for `reconciliationReports` in `@cumulus/db`
+- **CUMULUS-3833**
   - Created api types for `reconciliation_reports` in `@cumulus/types/api`
   - Updated reconciliation reports lambda to write to new RDS table instead of Dynamo
   - Updated `@cumulus/api/endpoints/reconciliation-reports` `getReport` and `deleteReport` to work with the new RDS table instead of Dynamo
@@ -78,6 +89,11 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
   - This is to allow files matching specified regex to be excluded when updating the Related URLs list
   - Defaults to the current behavior of excluding no files.
+- **CUMULUS-3773**
+  - Added sftpFastDownload configuration to SyncGranule task.
+  - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
+  - Added sftp support to FakeProvider
+  - Added sftp integration test
 
 ### Changed
 
@@ -85,6 +101,8 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Updated python dependencies to latest:
     - cumulus-process-py 1.4.0
     - cumulus-message-adapter-python 2.3.0
+- **CUMULUS-3906**
+  - Bumps example ORCA deployment to version v10.0.1.
 
 ### Fixed
 

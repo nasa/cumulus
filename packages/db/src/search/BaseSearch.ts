@@ -459,7 +459,13 @@ abstract class BaseSearch {
     const { sort } = dbQueryParameters || this.dbQueryParameters;
     sort?.forEach((key) => {
       if (key.column.startsWith('error')) {
-        searchQuery.orderByRaw(`${this.tableName}.error ->> 'Error' ${key.order}`);
+        searchQuery.orderByRaw(
+          `${this.tableName}.error ->> 'Error' ${key.order}`
+        );
+      } else if (dbQueryParameters?.collate) {
+        searchQuery.orderByRaw(
+          `${key} collate \"${dbQueryParameters.collate}\"`
+        );
       } else {
         searchQuery.orderBy([key]);
       }
