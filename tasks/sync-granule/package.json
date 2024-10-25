@@ -23,8 +23,8 @@
     "clean": "rm -rf dist",
     "build": "rm -rf dist && mkdir dist && npm run generate-task-schemas && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
     "package": "npm run build && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js schemas)",
-    "test": "for i in $(seq 1 100); do  ../../node_modules/.bin/ava tests/sync_granule_test.js || break; done",
-    "test:ci": "npm run test",
+    "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
