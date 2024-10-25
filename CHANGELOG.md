@@ -26,6 +26,11 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 
 ### Changed
 
+- **CUMULUS-3928**
+  - updated publish scripting to use cumulus.bot@gmail.com for user email
+  - updated publish scripting to use esm over common import of latest-version
+  - updated bigint testing to remove intermitted failure source.
+  - updated postgres dependency version
 - **CUMULUS-3838**
   - Updated python dependencies to latest:
     - cumulus-process-py 1.4.0
