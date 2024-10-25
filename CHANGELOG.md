@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
+### Breaking Changes
+
+- **CUMULUS-2564**
+  - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
+    This modifies the task behavior to stage granules to
+    `<staging_path>/<collection_id>/<md5_granuleIdHash>` to allow for better S3
+    partitioning/performance for large collections.
+    Because of this benefit
+    the default has been set to `true`, however as sync-granules relies on
+    object name collision, this configuration changes the duplicate collision
+    behavior of sync-granules to be per-granule-id instead of per-collection
+    when active.
+    If the prior behavior is desired, please add `"useGranIdPath": true` to your
+    task config in your workflow definitions that use `sync-granule`.
+
 ### Added
 
 - **CUMULUS-3020**
@@ -28,6 +43,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
   - Added sftp support to FakeProvider
   - Added sftp integration test
+- **CUMULUS-3919**
+  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 
 ### Changed
 
@@ -42,6 +59,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - cumulus-message-adapter-python 2.3.0
 - **CUMULUS-3906**
   - Bumps example ORCA deployment to version v10.0.1.
+- **CUMULUS-3931**
+  - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
+    new task deployment on terraform redeploy.   See docs for more details:
+    https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
 
 ### Fixed
 

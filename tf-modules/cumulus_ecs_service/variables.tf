@@ -111,3 +111,9 @@ variable "health_check" {
   })
   default = null
 }
+
+variable "force_new_deployment" {
+  description = "Enable to force a new task deployment of the service. See https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
+  type = bool
+  default = false
+}
