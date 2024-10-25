@@ -3,7 +3,7 @@
 'use strict';
 
 const fs = require('fs-extra');
-const getLatestVersion = require('latest-version');
+import getLatestVersion from 'latest-version';
 const semver = require('semver');
 
 // Given a git tag (process.env.GIT_TAG), this function determines what NPM
