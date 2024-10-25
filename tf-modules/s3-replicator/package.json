@@ -22,5 +22,8 @@
   "dependencies": {
     "@cumulus/aws-client": "19.0.0"
   },
+  "devDependencies": {
+    "@cumulus/common": "19.0.0"
+  },
   "private": true
 }
