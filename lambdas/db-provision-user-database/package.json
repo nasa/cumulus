@@ -32,7 +32,7 @@
     "@cumulus/common": "18.5.1",
     "@cumulus/db": "18.5.1",
     "knex": "2.4.1",
-    "pg": "~8.10"
+    "pg": "~8.13"
   },
   "devDependencies": {
     "@types/pg": "^7.14.4"
