@@ -48,6 +48,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3678**
+  - sqs messages truncated to max sqs length if necessary
 - **CUMULUS-3928**
   - updated publish scripting to use cumulus.bot@gmail.com for user email
   - updated publish scripting to use esm over common import of latest-version
@@ -417,8 +419,7 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
     support `aws-sdk` v3 changes.
 
 ### Add
-- **CUMULUS-3678**
-  - sqs messages truncated to max sqs length if necessary
+
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**

@@ -18,7 +18,9 @@ import {
   Message,
   QueueAttributeName,
   ReceiveMessageCommand,
-  SendMessageCommand } from '@aws-sdk/client-sqs';
+  SendMessageCommand,
+  SendMessageCommandOutput
+} from '@aws-sdk/client-sqs';
 
 import { StepFunctionEventBridgeEvent } from './Lambda';
 import { sqs } from './services';
@@ -105,7 +107,8 @@ export const sendSQSMessage = (
     const warningString = '...TruncatedForLength';
     messageBody = `${messageBody.substring(0, maxLength - warningString.length)}${warningString}`;
   }
-  return sqs().sendMessage({
+
+  const command = new SendMessageCommand({
     MessageBody: messageBody,
     QueueUrl: queueUrl,
   });
