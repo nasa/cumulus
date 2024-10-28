@@ -13,7 +13,7 @@
       "description": "The name of the deployment stack"
     },
     "fileStagingDir": {
-      "description": "Directory used for staging location of files. Default is `file-staging`. Granules are further organized by stack name and collection name making the full path `file-staging/<stack name>/<collection name>`",
+      "description": "Directory used for staging location of files. Default is `file-staging`. Granules are further organized by stack name and collection name making the full path `file-staging/<stack name>/<collection name>/<optional granuleIdHash>`",
       "type": "string"
     },
     "provider": {
@@ -144,10 +144,20 @@
       ],
       "default": "error"
     },
+    "sftpFastDownload": {
+      "type": "boolean",
+      "description": "If true, sftp download is performed using parallel reads for faster throughput. Lambda ephemeral storage is used to download files before files are uploaded to s3. Please note that not all sftp servers have the concurrency support required. See https://www.npmjs.com/package/ssh2-sftp-client#orge45232c for more information. Default: false.",
+      "default": false
+    },
     "syncChecksumFiles": {
       "type": "boolean",
       "description": "If true, checksum files are also synced. Default: false.",
       "default": false
+    },
+    "useGranIdPath": {
+      "type": "boolean",
+      "description": "If true, a md5 has of the granuleId is used as the staging path for the granule files.   Defaults to false.",
+      "default": true
     },
     "workflowStartTime": {
       "type": "integer",

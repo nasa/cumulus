@@ -62,7 +62,7 @@ test('upsertGranule removes deleted granule record', async (t) => {
     parent: granule.collectionId,
   };
 
-  let deletedRecord = await esClient.get(deletedGranParams)
+  let deletedRecord = await esClient.client.get(deletedGranParams)
     .then((response) => response.body);
   t.like(deletedRecord._source, granule);
 
@@ -72,7 +72,7 @@ test('upsertGranule removes deleted granule record', async (t) => {
     index: esIndex,
   });
 
-  deletedRecord = await esClient.get(deletedGranParams, { ignore: [404] })
+  deletedRecord = await esClient.client.get(deletedGranParams, { ignore: [404] })
     .then((response) => response.body);
   t.false(deletedRecord.found);
 });
@@ -275,7 +275,7 @@ test('upsertGranule updates record with expected nullified values for same execu
   t.like(updatedEsRecord, granule);
 });
 
-test('upsertGranule updates record with expected nullified values for same execution if writeConstraints is true and write conditions are met and createdAt is not set', async (t) => {
+test.serial('upsertGranule updates record with expected nullified values for same execution if writeConstraints is true and write conditions are met and createdAt is not set', async (t) => {
   const { esIndex, esClient } = t.context;
   const granule = {
     createdAt: Date.now(),
@@ -1770,7 +1770,7 @@ test('upsertGranule does update "completed" granule to "failed" for new executio
   t.like(updatedEsRecord, updates);
 });
 
-test('upsertGranule handles version conflicts on parallel updates', async (t) => {
+test.serial('upsertGranule handles version conflicts on parallel updates', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const execution = randomString();
@@ -1809,7 +1809,7 @@ test('upsertGranule handles version conflicts on parallel updates', async (t) =>
     }),
   ]);
 
-  await esClient.indices.refresh({ index: esIndex });
+  await esClient.client.indices.refresh({ index: esIndex });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(updatedEsRecord, updates);
 });

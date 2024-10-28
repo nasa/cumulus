@@ -6,6 +6,8 @@ import pRetry from 'p-retry';
 import { DescribeStreamInput, ResourceNotFoundException } from '@aws-sdk/client-kinesis';
 import { kinesis } from './services';
 
+export { LimitExceededException } from '@aws-sdk/client-kinesis';
+
 /**
  * Describe a Kinesis stream.
  *

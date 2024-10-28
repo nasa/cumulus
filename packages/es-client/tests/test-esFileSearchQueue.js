@@ -5,7 +5,7 @@ const sinon = require('sinon');
 const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('../bootstrap');
 const { ESFileQueue } = require('../esFileQueue');
-const { Search } = require('../search');
+const { EsClient } = require('../search');
 const { granuleFactory, loadGranules } = require('./helpers/helpers');
 
 const sandbox = sinon.createSandbox();
@@ -19,13 +19,14 @@ test.beforeEach(async (t) => {
     index: t.context.esIndex,
     alias: t.context.esAlias,
   });
-  t.context.esClient = await Search.es();
-  t.context.esClientSpy = sandbox.spy(t.context.esClient, 'scroll');
+  t.context.esClient = await new EsClient();
+  await t.context.esClient.initializeEsClient();
+  t.context.esClientSpy = sandbox.spy(t.context.esClient._client, 'scroll');
 });
 
 test.afterEach.always(async (t) => {
   sandbox.restore();
-  await t.context.esClient.indices.delete({ index: t.context.esIndex });
+  await t.context.esClient.client.indices.delete({ index: t.context.esIndex });
 });
 
 // sort function to return granules in order that Elasticsearch will return them.

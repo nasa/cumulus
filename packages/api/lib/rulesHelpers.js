@@ -1,9 +1,12 @@
+//@ts-check
+
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isNil = require('lodash/isNil');
 const set = require('lodash/set');
+
 const {
   AddPermissionCommand,
   DeleteEventSourceMappingCommand,
@@ -29,6 +32,12 @@ const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { listRules } = require('@cumulus/api-client/rules');
 const { omitDeepBy, removeNilProperties } = require('@cumulus/common/util');
 
+const {
+  SubscribeCommand,
+  UnsubscribeCommand,
+  ListSubscriptionsByTopicCommand,
+} = require('@aws-sdk/client-sns');
+
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
 const { getSnsTriggerPermissionId } = require('./snsRuleHelpers');
@@ -47,12 +56,13 @@ const log = new Logger({ sender: '@cumulus/rulesHelpers' });
  *
  * @param {Object} params - function params
  * @param {number} [params.pageNumber] - current page of API results
+ * @param {number} [params.pageSize] - database query page size used when calling listRules
  * @param {Array<Object>} [params.rules] - partial rules Array
  * @param {Object} [params.queryParams] - API query params, empty query returns all rules
  * @returns {Promise<Array<Object>>} all matching rules
  */
-async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
-  const query = { ...queryParams, page: pageNumber };
+async function fetchRules({ pageNumber = 1, pageSize = 100, rules = [], queryParams = {} }) {
+  const query = { ...queryParams, page: pageNumber, limit: pageSize };
   const apiResponse = await listRules({
     prefix: process.env.stackName,
     query,
@@ -61,6 +71,7 @@ async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
   if (responseBody.results.length > 0) {
     return fetchRules({
       pageNumber: (pageNumber + 1),
+      pageSize,
       rules: rules.concat(responseBody.results),
       queryParams,
     });
@@ -306,7 +317,7 @@ async function deleteSnsTrigger(knex, rule) {
     SubscriptionArn: rule.rule.arn,
   };
   log.info(`Successfully deleted SNS subscription for ARN ${rule.rule.arn}.`);
-  return awsServices.sns().unsubscribe(subscriptionParams);
+  return awsServices.sns().send(new UnsubscribeCommand(subscriptionParams));
 }
 
 /**
@@ -462,7 +473,7 @@ async function addKinesisEventSources(rule) {
  *
  * @param {RuleRecord} ruleItem - Rule to check
  *
- * @returns {Object}
+ * @returns {Promise<Object>}
  *  subExists - boolean
  *  existingSubscriptionArn - ARN of subscription
  */
@@ -472,10 +483,10 @@ async function checkForSnsSubscriptions(ruleItem) {
   let subscriptionArn;
   /* eslint-disable no-await-in-loop */
   do {
-    const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
+    const subsResponse = await awsServices.sns().send(new ListSubscriptionsByTopicCommand({
       TopicArn: ruleItem.rule.value,
       NextToken: token,
-    });
+    }));
     token = subsResponse.NextToken;
     if (subsResponse.Subscriptions) {
       /* eslint-disable no-loop-func */
@@ -518,7 +529,7 @@ async function addSnsTrigger(item) {
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
     };
-    const r = await awsServices.sns().subscribe(subscriptionParams);
+    const r = await awsServices.sns().send(new SubscribeCommand(subscriptionParams));
     subscriptionArn = r.SubscriptionArn;
     // create permission to invoke lambda
     const permissionParams = {
@@ -584,8 +595,9 @@ async function addRule(item, payload) {
 /**
  * Checks if record is valid
  *
- * @param {RuleRecord} rule - Rule to check validation
- * @returns {void}          - Returns if record is valid, throws error otherwise
+ * @param {any} rule - Object to validate as a Rule Record validation
+ * @param {any} rule     - Object to validate as a Rule Record validation
+ * @returns {RuleRecord} - Returns if record is valid, throws error otherwise
  */
 function validateRecord(rule) {
   const error = new Error('The record has validation errors. ');
@@ -603,12 +615,13 @@ function validateRecord(rule) {
     throw error;
   }
 
-  recordIsValid(omitDeepBy(rule, isNil), ruleSchema, false);
+  recordIsValid(rule, ruleSchema, false);
 
   if (rule.rule.type !== 'onetime' && !rule.rule.value) {
     error.message += `Rule value is undefined for ${rule.rule.type} rule`;
     throw error;
   }
+  return rule;
 }
 
 /**
@@ -629,15 +642,14 @@ async function invokeRerun(rule) {
 }
 
 /**
- * Updates rule trigger for rule
+ * Updates rule trigger for rule object
  *
  * @param {RuleRecord} original - Rule to update trigger for
- * @param {RuleRecord} updated  - Updated rule for rule trigger
+ * @param {Object} updated  - Updated rule for rule trigger
  * @returns {Promise<RuleRecord>}        - Returns new rule object
  */
 async function updateRuleTrigger(original, updated) {
-  let resultRule = cloneDeep(updated);
-  validateRecord(resultRule);
+  let resultRule = validateRecord(omitDeepBy(updated, isNil));
 
   const stateChanged = updated.state && updated.state !== original.state;
   const valueUpdated = updated.rule && updated.rule.value !== original.rule.value;
@@ -685,18 +697,19 @@ async function updateRuleTrigger(original, updated) {
 /**
  * Creates rule trigger for rule
  *
- * @param {RuleRecord} ruleItem - Rule to create trigger for
+ * @param {Object} ruleItem - Rule to create trigger for
  * @param {Object} testParams - Function to determine to use actual invoke or testInvoke
  * @returns {Promise<RuleRecord>} - Returns new rule object
  */
 async function createRuleTrigger(ruleItem, testParams = {}) {
-  let newRuleItem = cloneDeep(ruleItem);
+  const candidateRuleItem = omitDeepBy(ruleItem, isNil);
+
   // the default value for enabled is true
-  if (newRuleItem.state === undefined) {
-    newRuleItem.state = 'ENABLED';
+  if (candidateRuleItem.state === undefined) {
+    candidateRuleItem.state = 'ENABLED';
   }
 
-  const enabled = newRuleItem.state === 'ENABLED';
+  const enabled = candidateRuleItem.state === 'ENABLED';
   const invokeMethod = testParams.invokeMethod || invoke;
   // make sure the name only has word characters
   const re = /\W/;
@@ -705,7 +718,7 @@ async function createRuleTrigger(ruleItem, testParams = {}) {
   }
 
   // Validate rule before kicking off workflows or adding event source mappings
-  validateRecord(newRuleItem);
+  let newRuleItem = validateRecord(candidateRuleItem);
 
   const payload = await buildPayload(newRuleItem);
   switch (newRuleItem.rule.type) {

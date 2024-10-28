@@ -23,7 +23,6 @@ module "archive" {
   elasticsearch_security_group_id           = var.elasticsearch_security_group_id
   elasticsearch_remove_index_alias_conflict = var.elasticsearch_remove_index_alias_conflict
 
-
   es_index_shards        = var.es_index_shards
   es_request_concurrency = var.es_request_concurrency
 
@@ -88,11 +87,13 @@ module "archive" {
   metrics_es_username = var.metrics_es_username
 
   daily_execution_payload_cleanup_schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
-  complete_execution_payload_timeout_disable = var.complete_execution_payload_timeout_disable
-  complete_execution_payload_timeout = var.complete_execution_payload_timeout
-  non_complete_execution_payload_timeout_disable = var.non_complete_execution_payload_timeout_disable
-  non_complete_execution_payload_timeout = var.non_complete_execution_payload_timeout
+  cleanup_running        = var.cleanup_running
+  cleanup_non_running     = var.cleanup_non_running
 
+  payload_timeout        = var.payload_timeout
+
+  es_index              = var.es_index
+  update_limit          = var.update_limit
   background_queue_url = module.ingest.background_queue_url
 
   distribution_api_id = var.tea_rest_api_id

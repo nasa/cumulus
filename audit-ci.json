@@ -9,11 +9,7 @@
         "expiry": "1 July 2023 11:00"
       }
     },
-    "knex",
-    "jsonwebtoken",
-    "cacheable-request",
-    "http-cache-semantics",
-    "lodash.pick",
-    "hoek"
+    "jsonpath-plus",
+    "semver"
   ]
 }

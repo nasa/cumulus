@@ -178,21 +178,36 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
   const numberOfGranules = granuleCumulusIdsArray.length;
   const { executions: executionsTable, granulesExecutions: granulesExecutionsTable } = TableNames;
 
-  const aggregatedWorkflowCounts = await knexOrTransaction(executionsTable)
-    .select('workflow_name')
-    .countDistinct('granule_cumulus_id')
+  const aggregatedWorkflowCounts: Array<{
+    workflow_name: string,
+    min: number
+  }> = await knexOrTransaction(
+    executionsTable
+  )
+    .select(['workflow_name'])
     .innerJoin(granulesExecutionsTable, `${executionsTable}.cumulus_id`, `${granulesExecutionsTable}.execution_cumulus_id`)
     .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
     .groupBy('workflow_name')
+    .countDistinct('granule_cumulus_id')
     .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules])
     .modify((queryBuilder) => {
       if (numberOfGranules === 1) {
-        queryBuilder.groupBy('timestamp')
-          .orderBy('timestamp', 'desc');
+        queryBuilder.min('timestamp');
       }
     });
-  return aggregatedWorkflowCounts
-    .map((workflowCounts: { workflow_name: string }) => workflowCounts.workflow_name);
+
+  /*
+  sort (and group by) in knex causes an edge case where two distinct workflows
+  of the same name will be returned if they have different timestamps. This means
+  different returns depending on whether you have asked for one or multiple granules
+  hence this sort has been moved to js logic
+  */
+  if (numberOfGranules === 1) {
+    aggregatedWorkflowCounts.sort((a, b) => b.min - a.min);
+  }
+  return aggregatedWorkflowCounts.map(
+    (workflowCounts: { workflow_name: string }) => workflowCounts.workflow_name
+  );
 };
 
 /**
@@ -239,4 +254,25 @@ export const getApiGranuleExecutionCumulusIdsByExecution = async (
     .searchByExecutionCumulusIds(knexOrTransaction, executionCumulusIds);
 
   return granuleCumulusIds;
+};
+
+export const batchDeleteExecutionFromDatabaseByCumulusCollectionId = async (
+  params: {
+    knex: Knex | Knex.Transaction,
+    collectionCumulusId: number,
+    batchSize: number,
+  }
+) => {
+  const { knex, collectionCumulusId, batchSize = 1 } = params;
+  try {
+    return await knex('executions')
+      .whereIn('cumulus_id',
+        knex.select('cumulus_id')
+          .from('executions')
+          .where('collection_cumulus_id', collectionCumulusId)
+          .limit(batchSize))
+      .delete();
+  } catch (error) {
+    throw new Error(`Failed to delete from database: ${error.message}`);
+  }
 };

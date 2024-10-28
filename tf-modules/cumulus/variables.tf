@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:48"
+  default = "cumuluss/async-operation:52"
 }
 
 variable "cmr_client_id" {
@@ -303,12 +303,6 @@ variable "ecs_docker_hub_config" {
   default     = null
 }
 
-variable "ecs_docker_storage_driver" {
-  description = "Storage driver for ECS tasks"
-  type        = string
-  default     = "devicemapper"
-}
-
 variable "ecs_efs_config" {
   description = "Config for using EFS with ECS instances"
   type        = object({ mount_target_id = string, mount_point = string })
@@ -556,29 +550,34 @@ variable "daily_execution_payload_cleanup_schedule_expression" {
   description = "Cloud Watch cron schedule for the execution payload cleanup lambda"
 }
 
-variable "complete_execution_payload_timeout_disable" {
-  type        = bool
-  default     = false
-  description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
+variable "cleanup_running" {
+  type    = bool
+  default = false
+  description = "Boolean flag that when set to true will enable 'running' execution cleanup"
 }
 
-variable "complete_execution_payload_timeout" {
-  type        = number
-  default     = 10
-  description = "Number of days to retain 'complete' execution payload records in the database"
+variable "cleanup_non_running" {
+  type    = bool
+  default = true
+  description = "Boolean flag that when set to true will enable non 'running' execution cleanup"
 }
 
-variable "non_complete_execution_payload_timeout_disable" {
-  type        = bool
-  default     = false
-  description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
-
+variable "payload_timeout" {
+  type    = number
+  default = 10
+  description = "Number of days to retain execution payload records in the database"
 }
 
-variable "non_complete_execution_payload_timeout" {
-  description = "Number of days to retain 'non-complete' execution payload records in the database"
-  type        = number
-  default     = 30
+variable "es_index" {
+  type = string
+  default = "cumulus"
+  description = "elasticsearch index to be affected"
+}
+
+variable "update_limit" {
+  type = number
+  default = 10000
+  description = "number of executions to cleanup in one lambda run"
 }
 
 variable "archive_api_url" {

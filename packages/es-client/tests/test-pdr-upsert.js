@@ -18,7 +18,7 @@ test.before(async (t) => {
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
-
+  await esClient.initializeEsClient();
   t.context.esPdrsClient = new Search(
     {},
     'pdr',
@@ -459,7 +459,7 @@ test('upsertPdr handles version conflicts on parallel updates', async (t) => {
     }),
   ]);
 
-  await esClient.indices.refresh({
+  await esClient.client.indices.refresh({
     index: esIndex,
   });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);

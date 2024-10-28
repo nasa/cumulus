@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
@@ -15,7 +17,7 @@ const {
   translateApiRuleToPostgresRuleRaw,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, getEsClient } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const {
@@ -32,6 +34,10 @@ const {
 const schemas = require('../lib/schemas.js');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
+
+/**
+ * @typedef {import('@cumulus/types/api/rules').RuleRecord} RuleRecord
+ */
 
 /**
  * List all rules.
@@ -87,7 +93,7 @@ async function post(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   let record;
@@ -133,7 +139,7 @@ async function post(req, res) {
  *
  * @param {object} params                   - params object
  * @param {object} params.res               - express response object
- * @param {object} params.oldApiRule        - API 'rule' to update
+ * @param {RuleRecord} params.oldApiRule    - API 'rule' to update
  * @param {object} params.apiRule           - updated API rule
  * @param {object} params.rulePgModel       - @cumulus/db compatible rule module instance
  * @param {object} params.knex              - Knex object
@@ -147,7 +153,7 @@ async function patchRule(params) {
     apiRule,
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = params;
 
   log.debug(`rules.patchRule oldApiRule: ${JSON.stringify(oldApiRule)}, apiRule: ${JSON.stringify(apiRule)}`);
@@ -158,7 +164,7 @@ async function patchRule(params) {
     return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
   }
 
-  const apiRuleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule, knex);
+  const apiRuleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule);
   const apiPgRule = await translateApiRuleToPostgresRuleRaw(apiRuleWithTrigger, knex);
   log.debug(`rules.patchRule apiRuleWithTrigger: ${JSON.stringify(apiRuleWithTrigger)}`);
 
@@ -192,7 +198,7 @@ async function patch(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { params: { name }, body } = req;
@@ -236,7 +242,7 @@ async function put(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { params: { name }, body } = req;
@@ -287,7 +293,7 @@ async function del(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const name = (req.params.name || '').replace(/%20/g, ' ');

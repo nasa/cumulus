@@ -23,7 +23,7 @@ const {
   indexAsyncOperation,
 } = require('@cumulus/es-client/indexer');
 const {
-  Search,
+  getEsClient, EsClient,
 } = require('@cumulus/es-client/search');
 
 const logger = new Logger({ sender: '@cumulus/async-operation' });
@@ -127,7 +127,7 @@ export const createAsyncOperation = async (
     stackName: string,
     systemBucket: string,
     knexConfig?: NodeJS.ProcessEnv,
-    esClient?: object,
+    esClient?: typeof EsClient,
     asyncOperationPgModel?: AsyncOperationPgModelObject
   }
 ): Promise<Partial<ApiAsyncOperation>> => {
@@ -136,7 +136,7 @@ export const createAsyncOperation = async (
     stackName,
     systemBucket,
     knexConfig = process.env,
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     asyncOperationPgModel = new AsyncOperationPgModel(),
   } = params;
 

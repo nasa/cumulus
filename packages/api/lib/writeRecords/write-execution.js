@@ -3,22 +3,16 @@ const isUndefined = require('lodash/isUndefined');
 const omitBy = require('lodash/omitBy');
 
 const {
-  createRejectableTransaction,
   ExecutionPgModel,
   translateApiExecutionToPostgresExecutionWithoutNilsRemoved,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
-const {
-  upsertExecution,
-} = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
 const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
   getMessageCumulusVersion,
   getMessageExecutionOriginalPayload,
   getMessageExecutionFinalPayload,
-  generateExecutionApiRecordFromMessage,
 } = require('@cumulus/message/Executions');
 const {
   getMetaStatus,
@@ -88,87 +82,49 @@ const buildExecutionRecord = ({
   return omitBy(record, isUndefined);
 };
 
-const writeExecutionToES = async (params) => {
-  const {
-    apiRecord,
-    esClient = await Search.es(),
-    writeConstraints = true,
-  } = params;
-  return await upsertExecution({
-    esClient,
-    updates: apiRecord,
-    index: process.env.ES_INDEX,
-  }, writeConstraints);
-};
-
 /**
  * Write execution record to databases
  *
- * @param {Object} params
- * @param {Object} params.apiRecord - Execution API record to be written
- * @param {Object} params.postgresRecord - Execution PostgreSQL record to be written
- * @param {Object} params.knex - Knex client
- * @param {Object} [params.executionPgModel] - PostgreSQL execution model
- * @param {number} [params.updatedAt] - updatedAt timestamp to use when writing records
- * @param {Object} [params.esClient] - Elasticsearch client
- * @returns {Promise<Object>} - PostgreSQL execution record that was written to the database
+ * @param {object} params
+ * @param {object} params.postgresRecord - Execution PostgreSQL record to be written
+ * @param {object} params.knex - Knex client
+ * @param {object} [params.executionPgModel] - PostgreSQL execution model
+ * @param {object} [params.writeConstraints] - Boolean flag to set if record write constraints apply
+ * @returns {Promise<object>} - PostgreSQL execution record that was written to the database
  */
-const _writeExecutionRecord = ({
-  apiRecord,
+const _writeExecutionRecord = async ({
   postgresRecord,
   knex,
   executionPgModel = new ExecutionPgModel(),
-  updatedAt = Date.now(),
-  esClient,
   writeConstraints = true,
-}) => createRejectableTransaction(knex, async (trx) => {
+}) => {
   logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
-  const [executionPgRecord] = await executionPgModel.upsert(trx, postgresRecord, writeConstraints);
+  const [executionPgRecord] = await executionPgModel.upsert(knex, postgresRecord, writeConstraints);
   logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionPgRecord.cumulus_id}`);
-  try {
-    await writeExecutionToES({
-      apiRecord,
-      updatedAt,
-      esClient,
-      writeConstraints,
-    });
-    logger.info(`Successfully wrote Elasticsearch record for execution ${apiRecord.arn}`);
-  } catch (error) {
-    logger.info(`Write to Elasticsearch failed, rolling back data store write for execution ${apiRecord.arn}`);
-    throw error;
-  }
   return executionPgRecord;
-});
+};
 
 /**
  * Write execution record to databases and publish SNS message
  *
- * @param {Object} params
- * @param {Object} params.apiRecord - Execution API record to be written
- * @param {Object} params.postgresRecord - Execution PostgreSQL record to be written
- * @param {Object} params.knex - Knex client
- * @param {Object} [params.executionPgModel] - PostgreSQL execution model
- * @param {number} [params.updatedAt] - updatedAt timestamp to use when writing records
- * @param {Object} [params.esClient] - Elasticsearch client
- * @returns {Promise<Object>} - PostgreSQL execution record that was written to the database
+ * @param {object} params
+ * @param {object} params.postgresRecord - Execution PostgreSQL record to be written
+ * @param {object} params.knex - Knex client
+ * @param {object} [params.executionPgModel] - PostgreSQL execution model
+ * @param {object} [params.writeConstraints] - Boolean flag to set if record write constraints apply
+ * @returns {Promise<object>} - PostgreSQL execution record that was written to the database
  */
 const _writeExecutionAndPublishSnsMessage = async ({
-  apiRecord,
   postgresRecord,
   knex,
   executionPgModel,
-  updatedAt,
-  esClient,
   writeConstraints = true,
 }) => {
   const writeExecutionResponse = await _writeExecutionRecord(
     {
-      apiRecord,
       postgresRecord,
       knex,
-      esClient,
       executionPgModel,
-      updatedAt,
       writeConstraints,
     }
   );
@@ -187,7 +143,6 @@ const writeExecutionRecordFromMessage = async ({
   asyncOperationCumulusId,
   parentExecutionCumulusId,
   updatedAt = Date.now(),
-  esClient,
 }) => {
   const postgresRecord = buildExecutionRecord({
     cumulusMessage,
@@ -196,13 +151,9 @@ const writeExecutionRecordFromMessage = async ({
     parentExecutionCumulusId,
     updatedAt,
   });
-  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   const writeExecutionResponse = await _writeExecutionAndPublishSnsMessage({
-    apiRecord: executionApiRecord,
     postgresRecord: omitBy(postgresRecord, isUndefined),
     knex,
-    updatedAt,
-    esClient,
   });
   return writeExecutionResponse.cumulus_id;
 };
@@ -214,7 +165,6 @@ const writeExecutionRecordFromApi = async ({
   const postgresRecord = await
   translateApiExecutionToPostgresExecutionWithoutNilsRemoved(apiRecord, knex);
   return await _writeExecutionAndPublishSnsMessage({
-    apiRecord,
     postgresRecord: omitBy(postgresRecord, isUndefined),
     knex,
     writeConstraints: false,
@@ -224,7 +174,6 @@ const writeExecutionRecordFromApi = async ({
 module.exports = {
   buildExecutionRecord,
   shouldWriteExecutionToPostgres,
-  writeExecutionToES,
   writeExecutionRecordFromMessage,
   writeExecutionRecordFromApi,
 };

@@ -42,6 +42,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     knex = await getKnexClient({
       env: {
         databaseCredentialSecretArn: event.rootLoginSecret,
+        KNEX_DEBUG: process.env.KNEX_DEBUG,
       },
       secretsManager,
     });
@@ -82,6 +83,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         database: `${dbUser}_db`,
         host: (rootKnexConfig.connection as Knex.PgConnectionConfig).host,
         port: (rootKnexConfig.connection as Knex.PgConnectionConfig).port,
+        rejectUnauthorized: 'false',
       }),
     });
   } finally {

@@ -4,7 +4,6 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
-const omit = require('lodash/omit');
 
 const {
   ExecutionPgModel,
@@ -13,12 +12,12 @@ const {
   migrationDir,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
-const { Search } = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { sns, sqs } = require('@cumulus/aws-client/services');
+const {
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 const { generateExecutionApiRecordFromMessage } = require('@cumulus/message/Executions');
 
 const {
@@ -40,20 +39,12 @@ test.before(async (t) => {
 
   t.context.executionPgModel = new ExecutionPgModel();
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esExecutionsClient = new Search(
-    {},
-    'execution',
-    t.context.esIndex
-  );
   t.context.postRDSDeploymentVersion = '9.0.0';
 });
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.execution_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -66,11 +57,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 
@@ -116,14 +107,13 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
-  await sns().deleteTopic({ TopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn }));
 });
 
 test.after.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
   });
-  await cleanupTestIndex(t.context);
 });
 
 test('shouldWriteExecutionToPostgres() returns false if collection from message is not found in Postgres', async (t) => {
@@ -258,7 +248,7 @@ test('buildExecutionRecord returns record with error', (t) => {
   t.deepEqual(record.error, exception);
 });
 
-test.serial('writeExecutionRecordFromMessage() saves execution to RDS/Elasticsearch if write to RDS is enabled', async (t) => {
+test.serial('writeExecutionRecordFromMessage() saves execution to RDS', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -269,24 +259,6 @@ test.serial('writeExecutionRecordFromMessage() saves execution to RDS/Elasticsea
   await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   t.true(await executionPgModel.exists(knex, { arn: executionArn }));
-  t.true(await t.context.esExecutionsClient.exists(executionArn));
-});
-
-test.serial('writeExecutionRecordFromMessage() saves execution to RDS/Elasticsearch with same timestamps', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionArn,
-    executionPgModel,
-  } = t.context;
-
-  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
-
-  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  const esRecord = await t.context.esExecutionsClient.get(executionArn);
-
-  t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
-  t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
 test.serial('writeExecutionRecordFromMessage() properly sets originalPayload on initial write and finalPayload on subsequent write', async (t) => {
@@ -306,10 +278,8 @@ test.serial('writeExecutionRecordFromMessage() properly sets originalPayload on 
   await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  const esRecord = await t.context.esExecutionsClient.get(executionArn);
 
   t.deepEqual(pgRecord.original_payload, originalPayload);
-  t.deepEqual(esRecord.originalPayload, originalPayload);
 
   cumulusMessage.meta.status = 'completed';
   const finalPayload = {
@@ -319,12 +289,9 @@ test.serial('writeExecutionRecordFromMessage() properly sets originalPayload on 
   await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   const updatedPgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  const updatedEsRecord = await t.context.esExecutionsClient.get(executionArn);
 
   t.deepEqual(updatedPgRecord.original_payload, originalPayload);
-  t.deepEqual(updatedEsRecord.originalPayload, originalPayload);
   t.deepEqual(updatedPgRecord.final_payload, finalPayload);
-  t.deepEqual(updatedEsRecord.finalPayload, finalPayload);
 });
 
 test.serial('writeExecutionRecordFromMessage() properly handles out of order writes and correctly preserves originalPayload/finalPayload', async (t) => {
@@ -344,15 +311,10 @@ test.serial('writeExecutionRecordFromMessage() properly handles out of order wri
   await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  const esRecord = await t.context.esExecutionsClient.get(executionArn);
 
   t.like(pgRecord, {
     status: 'completed',
     final_payload: finalPayload,
-  });
-  t.like(esRecord, {
-    status: 'completed',
-    finalPayload,
   });
 
   cumulusMessage.meta.status = 'running';
@@ -363,71 +325,39 @@ test.serial('writeExecutionRecordFromMessage() properly handles out of order wri
   await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   const updatedPgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  const updatedEsRecord = await t.context.esExecutionsClient.get(executionArn);
 
   t.like(updatedPgRecord, {
     status: 'completed',
     final_payload: finalPayload,
     original_payload: originalPayload,
   });
-  t.like(updatedEsRecord, {
-    status: 'completed',
-    finalPayload,
-    originalPayload,
-  });
 });
 
-test.serial('writeExecutionRecordFromMessage() does not write record to Elasticsearch if RDS write fails', async (t) => {
+test.serial('writeExecutionRecordFromMessage() does not publish an SNS messagee if RDS write fails', async (t) => {
   const {
     cumulusMessage,
     knex,
     executionArn,
     executionPgModel,
+    QueueUrl,
   } = t.context;
 
-  const fakeTrxCallback = (cb) => {
-    const fakeTrx = sinon.stub().returns({
-      insert: () => {
-        throw new Error('execution RDS error');
-      },
-    });
-    return cb(fakeTrx);
-  };
-  const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
-  t.teardown(() => trxStub.restore());
+  const knexStub = sinon.stub(knex, 'insert').returns({
+    insert: () => {
+      throw new Error('execution RDS error');
+    },
+  });
+
+  t.teardown(() => knexStub.restore());
 
   await t.throwsAsync(
-    writeExecutionRecordFromMessage({ cumulusMessage, knex }),
+    writeExecutionRecordFromMessage({ cumulusMessage, knex: knexStub }),
     { message: 'execution RDS error' }
   );
   t.false(await executionPgModel.exists(knex, { arn: executionArn }));
-  t.false(await t.context.esExecutionsClient.exists(executionArn));
-});
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
 
-test.serial('writeExecutionRecordFromMessage() does not write record to RDS if Elasticsearch write fails', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionArn,
-    executionPgModel,
-  } = t.context;
-
-  const fakeEsClient = {
-    update: () => {
-      throw new Error('ES error');
-    },
-  };
-
-  await t.throwsAsync(
-    writeExecutionRecordFromMessage({
-      cumulusMessage,
-      knex,
-      esClient: fakeEsClient,
-    }),
-    { message: 'ES error' }
-  );
-  t.false(await executionPgModel.exists(knex, { arn: executionArn }));
-  t.false(await t.context.esExecutionsClient.exists(executionArn));
+  t.is(Messages.length, 0);
 });
 
 test.serial('writeExecutionRecordFromMessage() correctly sets both original_payload and final_payload in postgres when execution records are run in sequence', async (t) => {
@@ -452,26 +382,6 @@ test.serial('writeExecutionRecordFromMessage() correctly sets both original_payl
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
   t.deepEqual(pgRecord.original_payload, originalPayload);
   t.deepEqual(pgRecord.final_payload, finalPayload);
-});
-
-test.serial('writeExecutionRecordFromApi() saves execution to RDS/Elasticsearch with same timestamps', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionArn,
-    executionPgModel,
-  } = t.context;
-
-  const apiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
-  await writeExecutionRecordFromApi({
-    record: apiRecord,
-    knex,
-  });
-
-  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  const esRecord = await t.context.esExecutionsClient.get(executionArn);
-  t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
-  t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
 test.serial('writeExecutionRecordFromMessage() does not allow a running execution to replace a completed execution due to write constraints', async (t) => {
@@ -500,11 +410,6 @@ test.serial('writeExecutionRecordFromMessage() does not allow a running executio
   t.deepEqual(pgRecord.final_payload, finalPayload);
   t.deepEqual(pgRecord.tasks, tasks);
 
-  let esRecord = await t.context.esExecutionsClient.get(executionArn);
-  t.deepEqual(esRecord.originalPayload, originalPayload);
-  t.deepEqual(esRecord.finalPayload, finalPayload);
-  t.deepEqual(esRecord.tasks, tasks);
-
   // writeConstraints apply, status is not updated in data stores
   cumulusMessage.meta.status = 'running';
   cumulusMessage.payload = updatedOriginalPayload;
@@ -518,8 +423,11 @@ test.serial('writeExecutionRecordFromMessage() does not allow a running executio
   t.is(pgRecord.status, 'completed');
 
   const translatedExecution = await translatePostgresExecutionToApiExecution(pgRecord, knex);
-  esRecord = await t.context.esExecutionsClient.get(executionArn);
-  t.deepEqual(omit(esRecord, ['_id']), translatedExecution);
+  t.is(translatedExecution.arn, executionArn);
+  t.deepEqual(translatedExecution.status, 'completed');
+  t.deepEqual(translatedExecution.originalPayload, updatedOriginalPayload);
+  t.deepEqual(translatedExecution.finalPayload, finalPayload);
+  t.deepEqual(translatedExecution.tasks, tasks);
 });
 
 test.serial('writeExecutionRecordFromMessage() on re-write saves execution with expected values nullified', async (t) => {
@@ -547,11 +455,6 @@ test.serial('writeExecutionRecordFromMessage() on re-write saves execution with 
   t.deepEqual(pgRecord.final_payload, finalPayload);
   t.deepEqual(pgRecord.tasks, tasks);
 
-  let esRecord = await t.context.esExecutionsClient.get(executionArn);
-  t.deepEqual(esRecord.originalPayload, originalPayload);
-  t.deepEqual(esRecord.finalPayload, finalPayload);
-  t.deepEqual(esRecord.tasks, tasks);
-
   cumulusMessage.meta.status = 'failed';
   cumulusMessage.payload = null;
   cumulusMessage.meta.workflow_tasks = null;
@@ -564,8 +467,11 @@ test.serial('writeExecutionRecordFromMessage() on re-write saves execution with 
   t.is(pgRecord.tasks, null);
 
   const translatedExecution = await translatePostgresExecutionToApiExecution(pgRecord, knex);
-  esRecord = await t.context.esExecutionsClient.get(executionArn);
-  t.deepEqual(omit(esRecord, ['_id']), translatedExecution);
+  t.is(translatedExecution.arn, executionArn);
+  t.deepEqual(translatedExecution.status, cumulusMessage.meta.status);
+  t.deepEqual(translatedExecution.originalPayload, originalPayload);
+  t.falsy(translatedExecution.finalPayload);
+  t.falsy(translatedExecution.tasks);
 });
 
 test.serial('writeExecutionRecordFromApi() allows a running execution to replace a completed execution', async (t) => {
@@ -596,11 +502,6 @@ test.serial('writeExecutionRecordFromApi() allows a running execution to replace
   t.deepEqual(pgRecord.final_payload, finalPayload);
   t.deepEqual(pgRecord.tasks, tasks);
 
-  let esRecord = await t.context.esExecutionsClient.get(executionArn);
-  t.deepEqual(esRecord.originalPayload, originalPayload);
-  t.deepEqual(esRecord.finalPayload, finalPayload);
-  t.deepEqual(esRecord.tasks, tasks);
-
   // writeConstraints do not apply, status is updated in data stores,
   // null fields are removed
   cumulusMessage.meta.status = 'running';
@@ -616,8 +517,11 @@ test.serial('writeExecutionRecordFromApi() allows a running execution to replace
   t.is(pgRecord.status, cumulusMessage.meta.status);
 
   const translatedExecution = await translatePostgresExecutionToApiExecution(pgRecord, knex);
-  esRecord = await t.context.esExecutionsClient.get(executionArn);
-  t.deepEqual(omit(esRecord, ['_id']), translatedExecution);
+  t.is(translatedExecution.arn, executionArn);
+  t.deepEqual(translatedExecution.status, cumulusMessage.meta.status);
+  t.deepEqual(translatedExecution.originalPayload, updatedOriginalPayload);
+  t.deepEqual(translatedExecution.finalPayload, finalPayload);
+  t.falsy(translatedExecution.tasks);
 });
 
 test.serial('writeExecutionRecordFromApi() on re-write saves execution with expected values nullified', async (t) => {
@@ -647,11 +551,6 @@ test.serial('writeExecutionRecordFromApi() on re-write saves execution with expe
   t.deepEqual(pgRecord.final_payload, finalPayload);
   t.deepEqual(pgRecord.tasks, tasks);
 
-  let esRecord = await t.context.esExecutionsClient.get(executionArn);
-  t.deepEqual(esRecord.originalPayload, originalPayload);
-  t.deepEqual(esRecord.finalPayload, finalPayload);
-  t.deepEqual(esRecord.tasks, tasks);
-
   cumulusMessage.meta.status = 'failed';
   cumulusMessage.payload = null;
   cumulusMessage.meta.workflow_tasks = null;
@@ -665,8 +564,11 @@ test.serial('writeExecutionRecordFromApi() on re-write saves execution with expe
   t.is(pgRecord.tasks, null);
 
   const translatedExecution = await translatePostgresExecutionToApiExecution(pgRecord, knex);
-  esRecord = await t.context.esExecutionsClient.get(executionArn);
-  t.deepEqual(omit(esRecord, ['_id']), translatedExecution);
+  t.is(translatedExecution.arn, executionArn);
+  t.deepEqual(translatedExecution.status, cumulusMessage.meta.status);
+  t.deepEqual(translatedExecution.originalPayload, originalPayload);
+  t.falsy(translatedExecution.finalPayload);
+  t.falsy(translatedExecution.tasks);
 });
 
 test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message', async (t) => {

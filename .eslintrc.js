@@ -54,7 +54,7 @@ module.exports = {
     'plugin:promise/recommended',
     'plugin:unicorn/recommended',
   ],
-  parser: 'babel-eslint',
+  parser: '@babel/eslint-parser',
   env: {
     jasmine: true,
     node: true,
@@ -166,6 +166,9 @@ module.exports = {
     'unicorn/prefer-trim-start-end': 'off',
     'unicorn/prevent-abbreviations': 'off',
   },
+  parserOptions: {
+    requireConfigFile: false,
+  },
   overrides: [
     {
       files: ['*.ts'],
@@ -228,6 +231,7 @@ module.exports = {
         'example/spec/**/*.js',
       ],
       rules: {
+        'jsdoc/require-jsdoc': 'off',
         'max-classes-per-file': 'off',
         'no-console': 'off',
         'no-new': 'off',

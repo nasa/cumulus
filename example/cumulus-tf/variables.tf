@@ -350,7 +350,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "48"
+  default = "52"
 }
 
 variable "cumulus_process_activity_version" {
@@ -362,7 +362,7 @@ variable "cumulus_process_activity_version" {
 variable "ecs_task_image_version" {
   description = "docker image version to use for Cumulus hello world task"
     type = string
-    default = "1.9.0"
+    default = "2.1.0"
 }
 
 variable "cumulus_test_ingest_image_version" {
@@ -392,18 +392,6 @@ variable "orca_dlq_subscription_email" {
   type        = string
   description = "The email to notify users when messages are received in dead letter SQS queue due to orca restore failure."
   default = "test@email.com"
-}
-
-variable "orca_s3_access_key" {
-  type        = string
-  description = "Access key for communicating with Orca S3 buckets."
-  default = ""
-}
-
-variable "orca_s3_secret_key" {
-  type        = string
-  description = "Secret key for communicating with Orca S3 buckets."
-  default = ""
 }
 
 variable "lambda_timeouts" {

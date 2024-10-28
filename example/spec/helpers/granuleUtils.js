@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const flow = require('lodash/flow');
 const fs = require('fs-extra');
 const replace = require('lodash/fp/replace');
@@ -169,7 +170,7 @@ const deleteGranules = async (prefix, granules) => {
  * stackId, and return the file as a JS object.
  *
  * @param {string} filename - file path
- * @param {string} newGranuleId - new granule id
+ * @param {string} [newGranuleId] - new granule id
  * @param {string} newPath - the new data path
  * @param {string} newCollectionId - the new collection id
  * @param {stackId} stackId - the new stack id
@@ -184,8 +185,11 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
 ) => {
   const fileContents = fs.readFileSync(filename, 'utf8');
 
+  const hashedGranuleId = newGranuleId ? crypto.createHash('md5').update(newGranuleId).digest('hex') : '';
+
   return flow([
     replace(/replace-me-granuleId/g, newGranuleId),
+    replace(/replace-me-hashedGranuleId/g, hashedGranuleId),
     replace(/replace-me-path/g, newPath),
     replace(/replace-me-collectionId/g, newCollectionId),
     replace(/replace-me-stackId/g, stackId),
@@ -234,6 +238,7 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
       'beginningDateTime',
       'endingDateTime',
       'error',
+      'execution', // TODO remove after CUMULUS-3698
       'files', // TODO -2714 this should be removed
       'lastUpdateDateTime',
       'productionDateTime',

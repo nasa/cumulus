@@ -1,11 +1,11 @@
 {
   "name": "@cumulus/ftp-populate-test-lambda",
-  "version": "18.2.0",
+  "version": "19.0.0",
   "description": "FTP Population Utility Lambda",
   "main": "index.js",
   "private": true,
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R granules ./dist/granules && ../../../node_modules/.bin/webpack",
@@ -19,13 +19,12 @@
     "access": "private"
   },
   "dependencies": {
-    "@cumulus/api": "18.2.0",
-    "@cumulus/api-client": "18.2.0",
-    "@cumulus/common": "18.2.0",
-    "@cumulus/integration-tests": "18.2.0",
-    "@cumulus/logger": "18.2.0",
-    "@cumulus/test-data": "18.2.0",
-    "aws-sdk": "^2.1492.0",
+    "@cumulus/api": "19.0.0",
+    "@cumulus/api-client": "19.0.0",
+    "@cumulus/common": "19.0.0",
+    "@cumulus/integration-tests": "19.0.0",
+    "@cumulus/logger": "19.0.0",
+    "@cumulus/test-data": "19.0.0",
     "fs-extra": "^9.0.0",
     "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
     "lodash": "^4.17.20"

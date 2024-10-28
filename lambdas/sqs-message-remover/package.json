@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sqs-message-remover-lambda",
-  "version": "18.2.0",
+  "version": "19.0.0",
   "description": "Remove processed messages from SQS queues",
   "main": "src/index.js",
   "private": true,
@@ -13,7 +13,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "clean": "rm -rf dist",
@@ -21,6 +21,7 @@
     "webpack": "../../node_modules/.bin/webpack",
     "package": "npm run prepare && npm run webpack && (cd dist && node ../../../bin/zip.js lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "npm run clean && mkdir dist && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
@@ -38,10 +39,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.2.0",
-    "@cumulus/common": "18.2.0",
-    "@cumulus/ingest": "18.2.0",
-    "@cumulus/logger": "18.2.0",
+    "@cumulus/aws-client": "19.0.0",
+    "@cumulus/common": "19.0.0",
+    "@cumulus/ingest": "19.0.0",
+    "@cumulus/logger": "19.0.0",
     "lodash": "^4.17.21"
   }
 }

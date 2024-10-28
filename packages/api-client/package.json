@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api-client",
-  "version": "18.2.0",
+  "version": "19.0.0",
   "description": "API client for working with the Cumulus archive API",
   "keywords": [
     "GIBS",
@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "publishConfig": {
     "access": "public"
@@ -22,6 +22,7 @@
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -40,12 +41,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.2.0",
-    "@cumulus/logger": "18.2.0",
-    "@aws-sdk/client-lambda": "^3.529.1",
+    "@aws-sdk/client-lambda": "^3.621.0",
+    "@cumulus/aws-client": "19.0.0",
+    "@cumulus/logger": "19.0.0",
     "p-retry": "^2.0.0"
   },
   "devDependencies": {
-    "@cumulus/types": "18.2.0"
+    "@cumulus/types": "19.0.0"
   }
 }

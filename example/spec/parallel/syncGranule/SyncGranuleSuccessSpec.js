@@ -21,7 +21,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
@@ -81,7 +81,7 @@ describe('The Sync Granules workflow', () => {
 
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     provider = { id: `s3_provider${testSuffix}` };
-    const newCollectionId = encodedConstructCollectionId(collection.name, collection.version);
+    const newCollectionId = constructCollectionId(collection.name, collection.version);
 
     // populate collections, providers and test data
     await Promise.all([
@@ -117,12 +117,12 @@ describe('The Sync Granules workflow', () => {
             files: [
               {
                 bucket: config.buckets.internal.name,
-                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-hashedGranuleId/replace-me-granuleId.hdf`,
                 source: `${testDataFolder}/replace-me-granuleId.hdf`,
               },
               {
                 bucket: config.buckets.internal.name,
-                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-hashedGranuleId/replace-me-granuleId.hdf.met`,
                 source: `${testDataFolder}/replace-me-granuleId.hdf.met`,
               },
             ],
@@ -158,7 +158,7 @@ describe('The Sync Granules workflow', () => {
     // clean up stack state added by test
     await Promise.all(inputPayload.granules.map(
       async (granule) => {
-        const collectionId = encodedConstructCollectionId(collection.name, collection.version);
+        const collectionId = constructCollectionId(collection.name, collection.version);
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
@@ -291,7 +291,7 @@ describe('The Sync Granules workflow', () => {
       granule = await getGranule({
         prefix: config.stackName,
         granuleId: newGranuleId,
-        collectionId: encodedConstructCollectionId(collection.name, collection.version),
+        collectionId: constructCollectionId(collection.name, collection.version),
       });
 
       oldUpdatedAt = granule.updatedAt;
@@ -299,7 +299,7 @@ describe('The Sync Granules workflow', () => {
       const reingestGranuleResponse = await reingestGranule({
         prefix: config.stackName,
         granuleId: newGranuleId,
-        collectionId: encodedConstructCollectionId(collection.name, collection.version),
+        collectionId: constructCollectionId(collection.name, collection.version),
       });
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
     });
@@ -347,7 +347,7 @@ describe('The Sync Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
-          collectionId: encodedConstructCollectionId(collection.name, collection.version),
+          collectionId: constructCollectionId(collection.name, collection.version),
         },
         'completed'
       );
@@ -355,7 +355,7 @@ describe('The Sync Granules workflow', () => {
       const updatedGranule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
-        collectionId: encodedConstructCollectionId(collection.name, collection.version),
+        collectionId: constructCollectionId(collection.name, collection.version),
 
       });
       expect(updatedGranule.status).toEqual('completed');

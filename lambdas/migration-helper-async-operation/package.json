@@ -1,11 +1,11 @@
 {
   "name": "@cumulus/migration-helper-async-operation",
-  "version": "18.2.0",
+  "version": "19.0.0",
   "description": "Lambda function helps with various migrations",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "private": true,
   "main": "./dist/lambda/index.js",
@@ -16,6 +16,7 @@
     "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
     "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -30,13 +31,12 @@
     "failFast": true
   },
   "dependencies": {
-    "@cumulus/api": "18.2.0",
-    "@cumulus/async-operations": "18.2.0",
-    "@cumulus/aws-client": "18.2.0",
-    "@cumulus/common": "18.2.0",
-    "@cumulus/logger": "18.2.0",
-    "@cumulus/types": "18.2.0",
+    "@cumulus/api": "19.0.0",
+    "@cumulus/async-operations": "19.0.0",
+    "@cumulus/aws-client": "19.0.0",
+    "@cumulus/common": "19.0.0",
+    "@cumulus/logger": "19.0.0",
+    "@cumulus/types": "19.0.0",
     "lodash": "^4.17.21"
   }
 }
-

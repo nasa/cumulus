@@ -1,6 +1,11 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
+const { v4: uuidv4 } = require('uuid');
+const { z } = require('zod');
+const isError = require('lodash/isError');
 
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
@@ -9,19 +14,50 @@ const {
   getApiGranuleExecutionCumulusIds,
   getApiGranuleCumulusIds,
   getWorkflowNameIntersectFromGranuleIds,
+  CollectionPgModel,
   ExecutionPgModel,
   translatePostgresExecutionToApiExecution,
-  createRejectableTransaction,
+  ExecutionSearch,
 } = require('@cumulus/db');
-const { deleteExecution } = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
+const { zodParser } = require('../src/zod-utils');
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
+const startAsyncOperation = require('../lib/startAsyncOperation');
 const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
+const { returnCustomValidationErrors } = require('../lib/endpoints');
 const { writeExecutionRecordFromApi } = require('../lib/writeRecords/write-execution');
-const { validateGranuleExecutionRequest } = require('../lib/request');
+const { validateGranuleExecutionRequest, getFunctionNameFromRequestContext } = require('../lib/request');
 
 const log = new Logger({ sender: '@cumulus/api/executions' });
+
+const BulkExecutionDeletePayloadSchema = z.object({
+  esBatchSize: z.union([
+    z.string().transform((val) => {
+      const num = Number(val);
+      if (Number.isNaN(num)) {
+        throw new TypeError('Invalid number');
+      }
+      return num;
+    }),
+    z.number(),
+  ]).pipe(z.number().int().positive().optional()),
+  dbBatchSize: z.union([
+    z.string().transform((val) => {
+      const num = Number(val);
+      if (Number.isNaN(num)) {
+        throw new TypeError('Invalid number');
+      }
+      return num;
+    }),
+    z.number(),
+  ]).pipe(z.number().int().positive().optional()),
+  knexDebug: z.boolean().optional(),
+  collectionId: z.string(),
+}).catchall(z.unknown());
+
+const parseBulkDeletePayload = zodParser('Bulk Execution Delete Payload', BulkExecutionDeletePayloadSchema);
 
 /**
  * create an execution
@@ -125,11 +161,8 @@ async function update(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'execution',
-    process.env.ES_INDEX
-  );
+  log.debug(`list query ${JSON.stringify(req.query)}`);
+  const search = new ExecutionSearch({ queryStringParameters: req.query });
   const response = await search.query();
   return res.send(response);
 }
@@ -162,6 +195,8 @@ async function get(req, res) {
 /**
  * Delete an execution
  *
+ * Does *not* publish execution deletion event to SNS topic
+ *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
@@ -170,39 +205,21 @@ async function del(req, res) {
   const {
     executionPgModel = new ExecutionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
   } = req.testContext || {};
 
   const { arn } = req.params;
-  const esExecutionsClient = new Search(
-    {},
-    'execution',
-    process.env.ES_INDEX
-  );
 
   try {
     await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (!(await esExecutionsClient.exists(arn))) {
-        log.info('Execution does not exist in Elasticsearch and PostgreSQL');
-        return res.boom.notFound('No record found');
-      }
-      log.info('Execution does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
-    } else {
-      throw error;
+      log.info('Execution does not exist in PostgreSQL');
+      return res.boom.notFound('No record found');
     }
+    throw error;
   }
 
-  await createRejectableTransaction(knex, async (trx) => {
-    await executionPgModel.delete(trx, { arn });
-    await deleteExecution({
-      esClient,
-      arn,
-      index: process.env.ES_INDEX,
-      ignore: [404],
-    });
-  });
+  await executionPgModel.delete(knex, { arn });
 
   return res.send({ message: 'Record deleted' });
 }
@@ -217,7 +234,7 @@ async function del(req, res) {
 async function searchByGranules(req, res) {
   const payload = req.body;
   const knex = await getKnexClient();
-  const granules = await getGranulesForPayload(payload, knex);
+  const granules = await getGranulesForPayload(payload);
   const { page = 1, limit = 1, ...sortParams } = req.query;
 
   const offset = page < 1 ? 0 : (page - 1) * limit;
@@ -252,7 +269,7 @@ async function searchByGranules(req, res) {
 async function workflowsByGranules(req, res) {
   const payload = req.body;
   const knex = await getKnexClient();
-  const granules = await getGranulesForPayload(payload, knex);
+  const granules = await getGranulesForPayload(payload);
 
   const granuleCumulusIds = await getApiGranuleCumulusIds(knex, granules);
 
@@ -261,8 +278,97 @@ async function workflowsByGranules(req, res) {
   return res.send(workflowNames);
 }
 
+/**
+ * Deletes execution records in bulk for a specific collection.
+ *
+ * Does *not* publish execution deletion event to SNS topic
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} req.params - The request parameters.
+ * @param {Object} req.body - The request body.
+ * @param {number|string} [req.body.esBatchSize=10000] - The number of records to delete
+ * in each batch
+ * @param {number|string} [req.body.dbBatchSize=10000] - The number of records to delete
+ * in each batch.
+ * @param {string} req.body.collectionId - The CollectionID to delete execution records for.
+ * @param {string} [req.body.knexDebug=false] - Boolean to enabled Knex Debugging for the request
+ * @param {Object} [req.testObject] - Object to allow for dependency injection in tests
+ * @Param {Function} [req.testObject.invokeStartAsyncOperationLambda] - Function to invoke
+ * the startAsyncOperation Lambda
+ * @param {Object} res - The response object.
+ */
+async function bulkDeleteExecutionsByCollection(req, res) {
+  const invokeStartAsyncOperationLambda =
+    req?.testObject?.invokeStartAsyncOperationLambda ||
+    startAsyncOperation.invokeStartAsyncOperationLambda;
+  const payload = parseBulkDeletePayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
+  }
+
+  const esBatchSize = payload.esBatchSize || 10000;
+  const dbBatchSize = payload.dbBatchSize || 10000;
+  const collectionId = req.body.collectionId;
+  const collectionPgModel = new CollectionPgModel();
+
+  if (!collectionId) {
+    res.boom.badRequest('Execution update must include a valid CollectionId');
+  }
+  try {
+    log.info(`Collection ID Is ${collectionId}`);
+    const knex = await getKnexClient();
+    await collectionPgModel.get(
+      knex,
+      deconstructCollectionId(collectionId)
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.error(
+        `collectionId ${collectionId} does not exist, cannot delete exeuctions`
+      );
+      res.boom.badRequest(
+        `collectionId ${collectionId} is invalid`
+      );
+    } else {
+      res.boom.badRequest(error.message);
+    }
+  }
+
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
+    cluster: process.env.EcsCluster,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
+    lambdaName: process.env.BulkOperationLambda,
+    description: 'Bulk Execution Deletion by CollectionId',
+    operationType: 'Bulk Execution Delete',
+    payload: {
+      type: 'BULK_EXECUTION_DELETE',
+      payload: { ...payload, esBatchSize, dbBatchSize, collectionId },
+      envVars: {
+        KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
+        stackName: process.env.stackName,
+        system_bucket: process.env.system_bucket,
+      },
+    },
+  };
+
+  log.debug(
+    `About to invoke lambda to start async operation ${asyncOperationId}`
+  );
+  await invokeStartAsyncOperationLambda(
+    asyncOperationEvent
+  );
+  return res.status(202).send({ id: asyncOperationId });
+}
+
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
+router.post(
+  '/bulk-delete-by-collection/',
+  bulkDeleteExecutionsByCollection,
+  asyncOperationEndpointErrorHandler
+);
 router.post('/', create);
 router.put('/:arn', update);
 router.get('/:arn', get);
@@ -272,4 +378,5 @@ router.delete('/:arn', del);
 module.exports = {
   del,
   router,
+  bulkDeleteExecutionsByCollection,
 };

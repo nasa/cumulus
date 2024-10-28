@@ -5,7 +5,6 @@ import { TableNames } from '../tables';
 
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { getSortFields } from '../lib/sort';
-
 class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionRecord> {
   constructor() {
     super({
@@ -56,13 +55,13 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
    * @param {Object} [params] - Optional object with addition params for query
    * @param {number} [params.limit] - number of records to be returned
    * @param {number} [params.offset] - record offset
-   * @returns {Promise<Array<number>>} An array of executions
+   * @returns An array of executions
    */
   async searchByCumulusIds(
     knexOrTrx: Knex | Knex.Transaction,
     executionCumulusIds: Array<number> | number,
     params: { limit: number, offset: number }
-  ): Promise<Array<number>> {
+  ): Promise<Array<PostgresExecutionRecord>> {
     const { limit, offset, ...sortQueries } = params || {};
     const sortFields = getSortFields(sortQueries);
     const executionCumulusIdsArray = [executionCumulusIds].flat();

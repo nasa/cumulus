@@ -8,7 +8,7 @@ const sortBy = require('lodash/sortBy');
 const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 
 const {
   fakeCollectionFactory,
@@ -199,11 +199,11 @@ test.beforeEach(async (t) => {
     index: esIndex,
     alias: esAlias,
   });
-  esClient = await Search.es();
+  esClient = await getEsClient();
 });
 
 test.afterEach.always(async () => {
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
 });
 
 test.serial('shouldFileBeExcludedFromOrca returns true for configured file types', (t) => {

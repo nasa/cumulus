@@ -39,6 +39,7 @@ declare -a param_list=(
   "bamboo_SECRET_ORCA_DATABASE_USER_PASSWORD"
   "bamboo_SECRET_PROVIDER_FTP_PORT"
   "bamboo_SECRET_PROVIDER_HTTP_PORT"
+  "bamboo_SECRET_PROVIDER_SFTP_PORT"
   "bamboo_SECRET_RDS_ADMIN_ACCESS_SECRET_ARN"
   "bamboo_SECRET_RDS_SECURITY_GROUP"
   "bamboo_SECRET_SECURITY_GROUP"
@@ -199,5 +200,5 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
 else
   export UNIT_TEST_BUILD_DIR=/uncached/cumulus
 fi
-
+export CUMULUS_UNIT_TEST_DATA=/tmp/cumulus_unit_test_data
 export TS_BUILD_CACHE_FILE=ts-build-cache.tgz

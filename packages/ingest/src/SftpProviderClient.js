@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const get = require('lodash/get');
@@ -7,10 +9,24 @@ const omit = require('lodash/omit');
 const S3 = require('@cumulus/aws-client/S3');
 const { SftpClient } = require('@cumulus/sftp-client');
 const isNil = require('lodash/isNil');
+const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { recursion } = require('./recursion');
 const { decrypt } = require('./util');
 
+/**
+ * @typedef {import('./recursion').RecursionFile} RecursionFile
+ */
 class SftpProviderClient {
+  /**
+   *
+   * @param {Object} providerConfig
+   * @param {string} providerConfig.username
+   * @param {string} providerConfig.password
+   * @param {string} providerConfig.plaintextProviderKey
+   * @param {string} providerConfig.host
+   * @param {string} providerConfig.privateKey
+   * @param {string} providerConfig.cmKeyId
+   */
   constructor(providerConfig) {
     this.providerConfig = providerConfig;
 
@@ -35,14 +51,14 @@ class SftpProviderClient {
       privateKey: await this.getPrivateKey(),
     });
 
-    await this.privateSftpClient.connect(this.clientOptions);
+    await this.privateSftpClient.connect();
 
     this.connected = true;
   }
 
   async end() {
     if (this.connected) {
-      await this.privateSftpClient.end();
+      await this.getSftpClient().end();
 
       this.connected = false;
     }
@@ -83,13 +99,13 @@ class SftpProviderClient {
       // we are assuming that the specified private key is in the S3 crypto
       // directory
       const fetchedKey = await S3.getTextObject(
-        process.env.system_bucket,
+        getRequiredEnvVar('system_bucket', process.env),
         `${process.env.stackName}/crypto/${this.providerConfig.privateKey}`
       );
 
       if (this.providerConfig.cmKeyId) {
         // we are using AWS KMS and the privateKey is encrypted
-        this.plaintextProviderKey = KMS.decryptBase64String(fetchedKey);
+        this.plaintextProviderKey = await KMS.decryptBase64String(fetchedKey);
       } else {
         this.plaintextProviderKey = fetchedKey;
       }
@@ -98,9 +114,11 @@ class SftpProviderClient {
     return this.plaintextProviderKey;
   }
 
-  /* @private */
+  /** @private
+   * @returns {SftpClient}
+   */
   getSftpClient() {
-    if (!this.connected) {
+    if (!this.connected || !this.privateSftpClient) {
       throw new Error('Client not connected');
     }
 
@@ -112,18 +130,19 @@ class SftpProviderClient {
    * @param {Object} params             - parameter object
    * @param {string} params.remotePath  - the full path to the remote file to be fetched
    * @param {string} params.localPath   - the full local destination file path
-   * @returns {Promise<string>}        - the path that the file was saved to
+   * @param {boolean} params.fastDownload - whether fast download is performed using parallel reads
+   * @returns {Promise<void>}        - the path that the file was saved to
    */
   async download(params) {
-    const { remotePath, localPath } = params;
-    return await this.getSftpClient().download(remotePath, localPath);
+    const { remotePath, localPath, fastDownload } = params;
+    return await this.getSftpClient().download(remotePath, localPath, fastDownload);
   }
 
   /**
    * List all files from a given endpoint
    *
    * @param {string} path - the path to list
-   * @returns {Promise}
+   * @returns {Promise<Array<Pick<RecursionFile, "name">>>}
    */
   async list(path) {
     const sftpClient = this.getSftpClient();
@@ -139,17 +158,20 @@ class SftpProviderClient {
   /**
    * Transfer the remote file to a given s3 location
    *
-   * @param {string} remotePath - the full path to the remote file to be fetched
-   * @param {string} bucket - destination s3 bucket of the file
-   * @param {string} key - destination s3 key of the file
-   * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
+   * @param {Object} params
+   * @param {string} params.fileRemotePath - the full path to the remote file to be fetched
+   * @param {string} params.destinationBucket - destination s3 bucket of the file
+   * @param {string} params.destinationKey - destination s3 key of the file
+   * @param {boolean} params.fastDownload - whether fast download is performed using parallel reads
+   * @returns {Promise<{ s3uri: string, etag?: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
   async sync(params) {
     const remotePath = params.fileRemotePath;
     const bucket = params.destinationBucket;
     const key = params.destinationKey;
-    return await this.getSftpClient().syncToS3(remotePath, bucket, key);
+    const syncMethod = params.fastDownload ? 'syncToS3Fast' : 'syncToS3';
+    return await this.getSftpClient()[syncMethod](remotePath, bucket, key);
   }
 }
 

@@ -1,7 +1,7 @@
 locals {
   # Pulled out into a local to prevent cyclic dependencies
-  # between the IAM role, queue and lambda function.
-  sf_event_sqs_lambda_timeout = (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60
+  # between the IAM role, queue, and lambda function.
+  sf_event_sqs_lambda_timeout = lookup(var.lambda_timeouts, "sfEventSqsToDbRecords", (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60)
 }
 
 resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
@@ -171,7 +171,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   function_name    = "${var.prefix}-sfEventSqsToDbRecords"
   role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
   handler          = "index.handler"
-  runtime          = "nodejs16.x"
+  runtime          = "nodejs20.x"
   timeout          = local.sf_event_sqs_lambda_timeout
   memory_size      = lookup(var.lambda_memory_sizes, "sfEventSqsToDbRecords", 1024)
 
@@ -218,7 +218,7 @@ resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
   function_name    = "${var.prefix}-writeDbRecordsDLQtoS3"
   role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
   handler          = "index.handler"
-  runtime          = "nodejs16.x"
+  runtime          = "nodejs20.x"
   timeout          = local.sf_event_sqs_lambda_timeout
   memory_size      = lookup(var.lambda_memory_sizes, "writeDbRecordsDLQtoS3", 512)
 
