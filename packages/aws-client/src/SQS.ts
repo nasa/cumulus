@@ -132,7 +132,7 @@ type ReceiveSQSMessagesOptions = {
  */
 export const receiveSQSMessages = async (
   queueUrl: string,
-  options: ReceiveSQSMessagesOptions = {}
+  options: ReceiveSQSMessagesOptions
 ): Promise<SQSMessage[]> => {
   const params = {
     QueueUrl: queueUrl,
