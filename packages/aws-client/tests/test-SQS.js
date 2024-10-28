@@ -109,8 +109,8 @@ test('sendSQSMessage truncates oversized messages safely', async (t) => {
   const overflowMessage = '0'.repeat(maxLength + 2);
   await sendSQSMessage(queueUrl, overflowMessage);
 
-  let recievedMessage = await receiveSQSMessages(queueUrl, {});
-  let messageBody = recievedMessage[0].Body;
+  const recievedMessage = await receiveSQSMessages(queueUrl, {});
+  const messageBody = recievedMessage[0].Body;
   t.true(messageBody.endsWith('...TruncatedForLength'));
   t.is(messageBody.length, maxLength);
 });
@@ -121,8 +121,8 @@ test('sendSQSMessage does not alter objects of normal size', async (t) => {
   const maxLength = 262144;
   const underflowMessage = '0'.repeat(maxLength);
   await sendSQSMessage(queueUrl, underflowMessage);
-  recievedMessage = await receiveSQSMessages(queueUrl, {});
-  messageBody = recievedMessage[0].Body;
+  const recievedMessage = await receiveSQSMessages(queueUrl, {});
+  const messageBody = recievedMessage[0].Body;
 
   t.deepEqual(messageBody, underflowMessage);
   t.false(messageBody.endsWith('...TruncatedForLength'));
