@@ -3,7 +3,7 @@
 const pRetry = require('p-retry');
 
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
-const { describeStream } = require('@cumulus/aws-client/Kinesis');
+const { describeStream, LimitExceededException } = require('@cumulus/aws-client/Kinesis');
 const { kinesis } = require('@cumulus/aws-client/services');
 const { sleep } = require('@cumulus/common');
 
@@ -107,7 +107,7 @@ async function createKinesisStream(streamName) {
       try {
         return await kinesis().createStream({ StreamName: streamName, ShardCount: 1 });
       } catch (error) {
-        if (error.code === 'LimitExceededException') throw error;
+        if (error instanceof LimitExceededException) throw error;
         throw new pRetry.AbortError(error);
       }
     },

@@ -41,6 +41,8 @@ resource "aws_secretsmanager_secret_version" "rds_login" {
     hostReader          = aws_rds_cluster.cumulus.reader_endpoint
     port                = 5432
     dbClusterIdentifier = aws_rds_cluster.cumulus.id
+    disableSSL          = var.disableSSL
+    rejectUnauthorized  = var.rejectUnauthorized
   })
 }
 

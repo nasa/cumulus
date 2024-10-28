@@ -47,12 +47,14 @@
     "@cumulus/errors": "19.0.0",
     "@cumulus/ingest": "19.0.0",
     "@cumulus/message": "19.0.0",
+    "@cumulus/types": "19.0.0",
     "lodash": "^4.17.21",
     "p-map": "^2.1.0",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
     "@cumulus/schemas": "19.0.0",
+    "@cumulus/sftp-client": "19.0.0",
     "@cumulus/test-data": "19.0.0"
   }
 }

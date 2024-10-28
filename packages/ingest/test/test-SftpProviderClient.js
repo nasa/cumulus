@@ -203,12 +203,52 @@ test('Download remote file to s3 with correct content-type', async (t) => {
   t.is(expectedContentType, s3HeadResponse.ContentType);
 });
 
+test('Fast download remote file to s3 with correct content-type', async (t) => {
+  const { mySftpProviderClient } = t.context;
+
+  const expectedContentType = 'application/x-hdf';
+
+  const key = `${randomString()}.hdf`;
+  const { s3uri, etag } = await mySftpProviderClient.sync({
+    fileRemotePath: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    destinationBucket: process.env.system_bucket,
+    destinationKey: key,
+    fastDownload: true,
+  });
+  t.truthy(s3uri, 'Missing s3uri');
+  t.truthy(etag, 'Missing etag');
+  t.truthy(S3.fileExists(process.env.system_bucket, key));
+  const sum = await S3.calculateObjectHash({
+    s3: s3(),
+    algorithm: 'CKSUM',
+    bucket: process.env.system_bucket,
+    key,
+  });
+  t.is(sum, '1435712144');
+
+  const s3HeadResponse = await S3.headObject(process.env.system_bucket, key);
+  t.is(expectedContentType, s3HeadResponse.ContentType);
+});
+
 test('Download remote file to local disk', async (t) => {
   const { mySftpProviderClient } = t.context;
 
   const localPath = path.join(os.tmpdir(), `delete-me-${randomString()}.txt`);
   await mySftpProviderClient.download({
     remotePath: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', localPath,
+  });
+
+  const sum = await generateChecksumFromStream('CKSUM', fs.createReadStream(localPath));
+  t.is(sum, '1435712144');
+  fs.unlinkSync(localPath);
+});
+
+test('Fast download remote file to local disk', async (t) => {
+  const { mySftpProviderClient } = t.context;
+
+  const localPath = path.join(os.tmpdir(), `delete-me-${randomString()}.txt`);
+  await mySftpProviderClient.download({
+    remotePath: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', localPath, fastDownload: true,
   });
 
   const sum = await generateChecksumFromStream('CKSUM', fs.createReadStream(localPath));

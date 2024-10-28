@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Fake http and ftp providers for use with Cumulus integration tests
+Description: Fake http, ftp and sftp providers for use with Cumulus integration tests
 Parameters:
   Prefix:
     Type: String
@@ -184,6 +184,32 @@ Resources:
             chown -R testuser:testuser /home/testuser
             find /home/testuser -type d -exec chmod 0700 {} \;
             find /home/testuser -type f -exec chmod 0600 {} \;
+
+            # Configure sftp
+            yum install -y openssh-server
+
+            ## Stage sftp test data
+            mkdir -p /var/sftp/testdata
+            rsync -a /cumulus/packages/test-data/pdrs /var/sftp/testdata
+            rsync -a /cumulus/packages/test-data/granules /var/sftp/testdata
+
+            ## use the same account (testuser) both ftp and sftp
+            chown testuser:testuser /var/sftp/testdata/granules
+            chown testuser:testuser /var/sftp/testdata/pdrs
+
+            cat >> /etc/ssh/sshd_config <<EOS
+            Port 22
+            Match User testuser
+            ForceCommand internal-sftp
+            PasswordAuthentication yes
+            ChrootDirectory /var/sftp/testdata
+            PermitTunnel no
+            AllowAgentForwarding no
+            AllowTcpForwarding no
+            X11Forwarding no
+            EOS
+
+            service sshd restart
 
             # Cleanup
             rm -rf /cumulus

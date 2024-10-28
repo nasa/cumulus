@@ -286,7 +286,7 @@ async function stateMachineExists(stateMachineName) {
   try {
     await StepFunctions.describeStateMachine({ stateMachineArn });
   } catch (error) {
-    if (error.code === 'StateMachineDoesNotExist') return false;
+    if (error instanceof StepFunctions.StateMachineDoesNotExist) return false;
     throw error;
   }
   return true;
