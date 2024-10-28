@@ -15,8 +15,8 @@ const {
 
 const testDbName = `reconReport_${cryptoRandomString({ length: 10 })}`;
 
-test.before(async(t) => {
-  const {knexAdmin, knex} = await generateLocalTestDb(
+test.before(async (t) => {
+  const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
     migrationDir
   );
@@ -66,7 +66,7 @@ test('ReconciliationReportSearch returns the correct response for a basic query'
     location: `s3://fakeBucket${t.context.reportBucket}/fakeKey${t.context.reportKey}`,
     updatedAt: t.context.reconReportSearchTimestamp,
     createdAt: t.context.reconReportSearchTimestamp,
-  }
+  };
 
   const expectedResponse10 = {
     name: 'fakeReconReport-10',
@@ -75,7 +75,7 @@ test('ReconciliationReportSearch returns the correct response for a basic query'
     location: `s3://fakeBucket${t.context.reportBucket}/fakeKey${t.context.reportKey}`,
     updatedAt: t.context.reconReportSearchTimestamp + 1,
     createdAt: t.context.reconReportSearchTimestamp - 1,
-  }
+  };
 
   t.deepEqual(response.results[0], expectedResponse1);
   t.deepEqual(response.results[9], expectedResponse10);
@@ -116,7 +116,7 @@ test('ReconciliationReportSearch supports prefix search', async (t) => {
   const queryStringParameters = {
     limit: 50,
     prefix: 'fakeReconReport-1',
-  }
+  };
   const dbSearch = new ReconciliationReportSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 11);
@@ -125,15 +125,15 @@ test('ReconciliationReportSearch supports prefix search', async (t) => {
 
 test('ReconciliationReportSearch supports infix search', async (t) => {
   const { knex } = t.context;
-  let queryStringParameters = {
+  const queryStringParameters = {
     limit: 50,
     infix: 'conReport-2',
-  }
-  let dbSearch = new ReconciliationReportSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  };
+  const dbSearch = new ReconciliationReportSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
   t.is(response.meta.count, 11);
   t.is(response.results?.length, 11);
-  
+
   // queryStringParameters = {
   //   limit: 50,
   //   infix: 'ending', // ending, status
@@ -217,9 +217,8 @@ test('ReconciliationReportSearch supports search for multiple fields', async (t)
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 4);
   t.is(response.results?.length, 4);
-  t.true(response.results?.every((report) => 
-    report.type === 'Inventory' && report.status === 'Failed'
-  ));
+  t.true(response.results?.every((report) =>
+    report.type === 'Inventory' && report.status === 'Failed'));
 });
 
 test('ReconciliationReportSearch returns fields specified', async (t) => {
