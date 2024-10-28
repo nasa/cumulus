@@ -131,4 +131,5 @@ test('sendSQSMessage does not alter objects of normal size', async (t) => {
   messageBody = recievedMessage[0].Body;
 
   t.deepEqual(messageBody, underflowMessage);
+  t.false(messageBody.endsWith('...TruncatedForLength'));
 });
