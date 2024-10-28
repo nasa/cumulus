@@ -3,7 +3,10 @@
 'use strict';
 
 const fs = require('fs-extra');
-const getLatestVersion = require('latest-version');
+async function importGetLatestVersion() {
+  const { default: getLatestVersion } = await import('latest-version');
+  return getLatestVersion;
+}
 const semver = require('semver');
 
 // Given a git tag (process.env.GIT_TAG), this function determines what NPM
@@ -26,6 +29,7 @@ const semver = require('semver');
 //   tagged "latest" in NPM then this is a new "latest" release, and "latest" is
 //   returned.
 async function getNpmTag() {
+  const getLatestVersion = await importGetLatestVersion();
   const thisTag = process.env.GIT_TAG;
   if (!thisTag) throw new Error('Version is not set');
 
