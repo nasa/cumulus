@@ -121,3 +121,14 @@ test('sendSQSMessage truncates oversized messages safely', async (t) => {
 
   t.deepEqual(messageBody, underflowMessage);
 });
+
+test('sendSQSMessage does not alter objects of normal size', async (t) => {
+  const queueName = randomString();
+  const queueUrl = await createQueue(queueName);
+  const underflowMessage = '0'.repeat(maxLength);
+  await sendSQSMessage(queueUrl, underflowMessage);
+  recievedMessage = await receiveSQSMessages(queueUrl);
+  messageBody = recievedMessage[0].Body;
+
+  t.deepEqual(messageBody, underflowMessage);
+});
