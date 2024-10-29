@@ -37,7 +37,7 @@
     "@cumulus/common": "19.0.0",
     "@cumulus/errors": "19.0.0",
     "@cumulus/logger": "19.0.0",
-    "@cumulus/message": "19.0.0",
+    "@cumulus/message": "19.1.0",
     "@cumulus/types": "19.0.0",
     "crypto-random-string": "^3.2.0",
     "is-valid-hostname": "1.0.2",
