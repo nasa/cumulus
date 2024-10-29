@@ -25,12 +25,13 @@ buckets = {
   }
 }
 s3_replicator_config = {
-  source_bucket = ""
-  source_prefix = ""
-  target_bucket = ""
-  target_prefix = ""
-  target_region = ""
+  source_bucket = "cumulus-sit-access-logs"
+  source_prefix = "s3_access_logs"
+  target_bucket = "cumulus-sit-access-logs-destination"
+  target_prefix = "input/s3_access/sit"
+  target_region = "us-west-2"
 }
+
 system_bucket="cumulus-sit-internal"
 ftp_host_configuration_bucket = "cumulus-sit-internal"
 

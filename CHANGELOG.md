@@ -61,6 +61,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
 - **CUMULUS-3876**
   - Fixed `s3-replicator` lambda cross region write failure
+  - Added `target_region` variable to `tf-modules/s3-replicator` module
 
 ## [v19.0.0] 2024-08-28
 

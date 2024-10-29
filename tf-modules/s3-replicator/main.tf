@@ -12,12 +12,7 @@ terraform {
 
 locals {
   security_group_ids_set = var.security_group_ids != null
-}
-
-data "archive_file" "replicator_package" {
-  type        = "zip"
-  source_file = "${path.module}/index.js"
-  output_path = "${path.module}/build/replicator.zip"
+  lambda_path = "${path.module}/dist/webpack/lambda.zip"
 }
 
 resource "aws_security_group" "s3_replicator_lambda" {
@@ -33,15 +28,14 @@ resource "aws_security_group" "s3_replicator_lambda" {
 }
 
 resource "aws_lambda_function" "s3_replicator" {
-  filename      = data.archive_file.replicator_package.output_path
   function_name = "${var.prefix}-s3-replicator"
+  filename         = local.lambda_path
+  source_code_hash = filebase64sha256(local.lambda_path)
   role          = aws_iam_role.replicator_lambda_role.arn
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   timeout       = lookup(var.lambda_timeouts, "s3-replicator", 300)
   memory_size   = lookup(var.lambda_memory_sizes, "s3-replicator", 512)
-
-  source_code_hash = data.archive_file.replicator_package.output_base64sha256
 
   vpc_config {
     subnet_ids         = var.subnet_ids
