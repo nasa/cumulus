@@ -49,7 +49,7 @@
     "@cumulus/aws-client": "19.0.0",
     "@cumulus/common": "19.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
-    "@cumulus/db": "19.0.0",
+    "@cumulus/db": "19.1.0",
     "@cumulus/distribution-utils": "19.0.0",
     "@cumulus/launchpad-auth": "19.0.0",
     "@cumulus/logger": "19.0.0",
