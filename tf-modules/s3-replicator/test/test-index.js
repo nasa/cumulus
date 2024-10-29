@@ -4,7 +4,8 @@ const test = require('ava');
 const { randomId } = require('@cumulus/common/test-utils');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { handler } = require('..');
+// eslint-disable-next-line unicorn/import-index
+const { handler } = require('../dist/lambda/index');
 
 test.before(async (t) => {
   t.context.sourceRegion = 'us-west-2';
