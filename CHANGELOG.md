@@ -6,8 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Migration Notes
-
 ### Breaking Changes
 
 - **CUMULUS-2564**
@@ -22,6 +20,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     when active.
     If the prior behavior is desired, please add `"useGranIdPath": true` to your
     task config in your workflow definitions that use `sync-granule`.
+
+
+### Added
+
+- **CUMULUS-3919**
+  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
+
+### Changed
+
+- **CUMULUS-3931**
+  - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
+    new task deployment on terraform redeploy.   See docs for more details:
+    https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
+
+## [v19.1.0] 2024-10-07
+
+### Migration Notes
+
+This release contains changes listed here as well as changes listed in v19.0.0,
+despite v19.0.0 being deprecated. Please review Changelog entries and Migration Notes for
+each Cumulus version between your current version and v19.1.0 as normal.
 
 ### Added
 
@@ -43,8 +62,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
   - Added sftp support to FakeProvider
   - Added sftp integration test
-- **CUMULUS-3919**
-  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 
 ### Changed
 
@@ -59,10 +76,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - cumulus-message-adapter-python 2.3.0
 - **CUMULUS-3906**
   - Bumps example ORCA deployment to version v10.0.1.
-- **CUMULUS-3931**
-  - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
-    new task deployment on terraform redeploy.   See docs for more details:
-    https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
 
 ### Fixed
 
@@ -70,6 +83,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
 
 ## [v19.0.0] 2024-08-28
+
+### Deprecated
+This release has been deprecated in favor of the 18.5->19.1 release series. The changes
+listed here are still valid and also contained in the v19.1.0 release and beyond.
 
 ### Breaking Changes
 
@@ -8141,7 +8158,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v19.0.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v19.1.0...HEAD
+[v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
 [v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.0...v19.0.0
 [v18.5.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v18.5.0
 [v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.4...v18.4.0
