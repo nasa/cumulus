@@ -145,6 +145,44 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
 
+## [v18.5.1] 2024-10-25
+
+**Please note** changes in v18.5.1 may not yet be released in future versions, as this
+is a backport/patch release on the v18.5.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-3773**
+  - Added sftpFastDownload configuration to SyncGranule task.
+  - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
+  - Added sftp support to FakeProvider
+  - Added sftp integration test
+- **CUMULUS-3756**
+  - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
+  - This is to allow files matching specified regex to be excluded when updating the Related URLs list
+  - Defaults to the current behavior of excluding no files.
+- **CUMULUS-3919**
+  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
+
+### Changed
+
+- **CUMULUS-3928**
+  - updated publish scripting to use cumulus.bot@gmail.com for user email
+  - updated publish scripting to use esm over common import of latest-version
+  - updated bigint testing to remove intermitted failure source.
+  - updated postgres dependency version
+- **CUMULUS-3838**
+  - Updated python dependencies to latest:
+    - cumulus-process-py 1.4.0
+    - cumulus-message-adapter-python 2.3.0
+
+### Fixed
+
+- **CUMULUS-3902**
+  - Update error handling to use AWS SDK V3 error classes instead of properties
+    on js objects
+
 ## [v18.5.0] 2024-10-03
 
 ### Migration Notes
@@ -8158,9 +8196,11 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
+
 [Unreleased]: https://github.com/nasa/cumulus/compare/v19.1.0...HEAD
 [v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
 [v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.0...v19.0.0
+[v18.5.1]: https://github.com/nasa/cumulus/compare/v18.5.0...v18.5.1
 [v18.5.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v18.5.0
 [v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.4...v18.4.0
 [v18.3.4]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.3.4
