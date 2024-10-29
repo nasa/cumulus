@@ -37,8 +37,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "19.0.0",
-    "@cumulus/cmrjs": "19.0.0",
-    "@cumulus/common": "19.0.0",
+    "@cumulus/cmrjs": "19.1.0",
+    "@cumulus/common": "19.1.0",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/errors": "19.0.0",
     "@cumulus/launchpad-auth": "19.0.0",
