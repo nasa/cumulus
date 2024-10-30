@@ -6,7 +6,6 @@
     "node": ">=20.12.2"
   },
   "main": "./dist/lambda/index.js",
-  "types": "./dist/lambda/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist",
     "build": "rm -rf dist && mkdir dist && npm run prepare && npm run webpack",
