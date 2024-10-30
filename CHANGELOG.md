@@ -79,6 +79,8 @@ each Cumulus version between your current version and v19.1.0 as normal.
 
 ### Fixed
 
+- **CUMULUS-3904**
+  - Passed sqs_message_consumer_watcher_message_limit and sqs_message_consumer_watcher_time_limit through the cumulus terraform module to the ingest terraform module.
 - **CUMULUS-3902**
   - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
 
