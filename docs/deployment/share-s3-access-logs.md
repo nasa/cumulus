@@ -38,7 +38,7 @@ The Terraform source package can be found on the [Cumulus GitHub Release page](h
 In the NGAP environment, the ESDIS Metrics team has set up an ELK stack to process logs from Cumulus instances.  To use this system, you must deliver any S3 Server Access logs that Cumulus creates.
 
 Configure the S3 Replicator as described above using the `target_bucket`, `target_prefix` and `target_region` provided by the Metrics team.  `target_region` is optional if
-it's in the same region as the lambda and source bucket.
+it's the same region as the lambda and source bucket.
 
 The Metrics team has taken care of setting up Logstash to ingest the files that get delivered to their bucket into their Elasticsearch instance.
 
