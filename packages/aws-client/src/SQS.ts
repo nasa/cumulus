@@ -90,6 +90,28 @@ export const getQueueAttributes = async (queueName: string) => {
 };
 
 /**
+ * Ensure that a string does not overrun SQS max body size of 262144 bytes
+ */
+export const limitSQSMessageLength = (str: string) => {
+  const maxSize = 262144;
+  // because this string can be a mix of
+  // if there is a chance this is overflowing, do a more expensive check and fix
+  if (str.length <= maxSize / 2) {
+    return str;
+  }
+
+  const encoded = (new TextEncoder()).encode(str);
+  if (encoded.length <= maxSize) {
+    return str;
+  }
+  const warningString = '...TruncatedForLength';
+  // In the specific edge case that a unicode (2 byte) character is split
+  // TextDecoder decoding pads it with 2 hidden bytes
+  const finalStr = new TextDecoder().decode(encoded.slice(0, maxSize - warningString.length - 2));
+  return `${finalStr}${warningString}`;
+};
+
+/**
  * Send a message to AWS SQS
  **/
 export const sendSQSMessage = (
@@ -99,14 +121,12 @@ export const sendSQSMessage = (
 ): Promise<SendMessageCommandOutput> => {
   const logger = logOverride || log;
   let messageBody;
+  console.log(messageBody);
   if (isString(message)) messageBody = message;
   else if (isObject(message)) messageBody = JSON.stringify(message);
   else throw new Error('body type is not accepted');
-  const maxLength = 262144;
-  if (messageBody.length > maxLength) {
-    const warningString = '...TruncatedForLength';
-    messageBody = `${messageBody.substring(0, maxLength - warningString.length)}${warningString}`;
-  }
+
+  messageBody = limitSQSMessageLength(messageBody);
 
   const command = new SendMessageCommand({
     MessageBody: messageBody,
