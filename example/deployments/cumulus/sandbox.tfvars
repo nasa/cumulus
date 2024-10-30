@@ -25,11 +25,11 @@ buckets = {
   }
 }
 s3_replicator_config = {
-  source_bucket = "cumulus-test-sandbox-access-logs"
-  source_prefix = "s3_access_logs"
-  target_bucket = "cumulus-test-sandbox-access-logs-destination"
-  target_prefix = "input/s3_access/sandbox"
-  target_region = "us-west-2"
+  source_bucket = ""
+  source_prefix = ""
+  target_bucket = ""
+  target_prefix = ""
+  target_region = ""
 }
 
 system_bucket="cumulus-test-sandbox-internal"
