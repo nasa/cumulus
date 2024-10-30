@@ -177,11 +177,13 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
       cumulus_id: granuleCumulusId,
     }
   );
+  const granuleExecutions = await granulesExecutionsPgModel.search(
+    knex,
+    { granule_cumulus_id: granuleCumulusId }
+  );
+  granuleExecutions.sort((a, b) => a.execution_cumulus_id - b.execution_cumulus_id);
   t.deepEqual(
-    await granulesExecutionsPgModel.search(
-      knex,
-      { granule_cumulus_id: granuleCumulusId }
-    ),
+    granuleExecutions,
     [executionCumulusId, secondExecutionCumulusId].map((executionId) => ({
       granule_cumulus_id: granuleCumulusId,
       execution_cumulus_id: executionId,
