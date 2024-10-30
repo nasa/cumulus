@@ -27,10 +27,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "19.0.0"
+    "@cumulus/aws-client": "19.1.0"
   },
   "devDependencies": {
-    "@cumulus/common": "19.0.0"
+    "@cumulus/common": "19.1.0"
   },
   "private": true
 }
