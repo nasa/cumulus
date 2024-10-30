@@ -2,27 +2,8 @@
 const path = require('path');
 const { IgnorePlugin } = require('webpack');
 
-const ignoredPackages = [
-  'better-sqlite3',
-  'mssql',
-  'mssql/lib/base',
-  'mssql/package.json',
-  'mysql',
-  'mysql2',
-  'oracledb',
-  'pg-native',
-  'pg-query-stream',
-  'sqlite3',
-  'tedious'
-];
-
 module.exports = {
-  plugins: [
-    new IgnorePlugin({
-      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
-    }),
-  ],
-  mode: 'production',
+  mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './dist/lambda/index.js',
   output: {
     chunkFormat: false,
@@ -49,5 +30,9 @@ module.exports = {
   target: 'node',
   externals: [
     /@aws-sdk\//
-  ]
+  ],
+  devtool: 'eval-cheap-module-source-map',
+  optimization: {
+    nodeEnv: false
+  },
 };

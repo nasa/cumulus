@@ -1,10 +1,8 @@
-'use strict';
-
 import path from 'path';
-import { Context, S3Event, S3EventRecord } from 'aws-lambda';
+import { S3Event, S3EventRecord } from 'aws-lambda';
 import { s3 } from '@cumulus/aws-client/services';
 
-exports.handler = async (event: S3Event, _context: Context) => {
+export const handler = async (event: S3Event) => {
   const targetRegion = process.env.TARGET_REGION;
   const serviceOptions = targetRegion ? { region: targetRegion } : {};
   const s3Client = s3(serviceOptions);
@@ -20,4 +18,4 @@ exports.handler = async (event: S3Event, _context: Context) => {
       ACL: 'bucket-owner-full-control',
     });
   }));
-}
+};
