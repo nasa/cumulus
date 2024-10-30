@@ -116,8 +116,7 @@ test('sendSQSMessage truncates oversized messages safely', async (t) => {
   t.true(messageBody.length <= maxLength);
 });
 
-test('limitSQSMessageLength truncates unicode messages of greater than maximum byte size', async (t) => {
-
+test('limitSQSMessageLength truncates unicode messages of greater than maximum byte size', (t) => {
   const maxLength = 262144;
   const overflowMessageUnicodeMessage = 'è'.repeat(maxLength / 2 + 20);
   const massagedMessage = limitSQSMessageLength(overflowMessageUnicodeMessage);
@@ -132,18 +131,17 @@ test('limitSQSMessageLength truncates unicode messages of greater than maximum b
   t.true(massagedMixedMessage.length <= maxLength);
 });
 
-test('limitSQSMessageLength does not truncate messages appropriate for sqs to handle', async (t) => {
+test('limitSQSMessageLength does not truncate messages appropriate for sqs to handle', (t) => {
   const maxLength = 262144;
   let underflowMessage = '0'.repeat(maxLength);
-  t.is(limitSQSMessageLength(underflowMessage), underflowMessage)
+  t.is(limitSQSMessageLength(underflowMessage), underflowMessage);
 
+  underflowMessage = 'ř'.repeat(maxLength / 2);
+  t.is(limitSQSMessageLength(underflowMessage), underflowMessage);
 
-  underflowMessage = 'ř'.repeat(maxLength/2);
-  t.is(limitSQSMessageLength(underflowMessage), underflowMessage)
-
-  underflowMessage = 'a'.repeat(maxLength/2);
-  t.is(limitSQSMessageLength(underflowMessage), underflowMessage)
+  underflowMessage = 'a'.repeat(maxLength / 2);
+  t.is(limitSQSMessageLength(underflowMessage), underflowMessage);
 
   underflowMessage = 'abcd';
-  t.is(limitSQSMessageLength(underflowMessage), underflowMessage)
+  t.is(limitSQSMessageLength(underflowMessage), underflowMessage);
 });
