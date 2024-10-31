@@ -16,6 +16,8 @@ const {
   PdrPgModel,
   ProviderPgModel,
   migrationDir,
+  FilePgModel,
+  fakeFileRecordFactory,
 } = require('../../dist');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
@@ -147,6 +149,19 @@ test.before(async (t) => {
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
     }))
+  );
+  t.context.filePgModel = new FilePgModel();
+  t.context.pgFiles = await t.context.filePgModel.insert(
+    knex,
+    t.context.pgGranules.map((granule) => fakeFileRecordFactory(
+      {granule_cumulus_id: granule.cumulus_id},
+    ))
+  );
+  t.context.pgFiles = await t.context.filePgModel.insert(
+    knex,
+    t.context.pgGranules.map((granule) => fakeFileRecordFactory(
+      {granule_cumulus_id: granule.cumulus_id},
+    ))
   );
 });
 
@@ -588,6 +603,7 @@ test('GranuleSearch supports terms search', async (t) => {
   response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
+  console.log(JSON.stringify(response))
 });
 
 test('GranuleSearch supports collectionId terms search', async (t) => {
@@ -859,3 +875,16 @@ test('GranuleSearch estimates the rowcount of the table by default', async (t) =
   t.true(response.meta.count > 0);
   t.is(response.results?.length, 50);
 });
+
+test('GranuleSearch retrieves associated file objects for granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.results?.length, 100);
+  response.results.forEach((granuleRecord) => {
+    t.is(granuleRecord.files?.length, 2);
+  })
+})

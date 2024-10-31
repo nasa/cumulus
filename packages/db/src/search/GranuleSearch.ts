@@ -11,6 +11,10 @@ import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresGranuleRecord } from '../types/granule';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
 import { TableNames } from '../tables';
+import { FilePgModel } from '../models/file';
+import { translatePostgresFileToApiFile } from '../translate/file';
+import { ApiFile } from '@cumulus/types';
+import { PostgresFileRecord } from '../types/file';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
@@ -116,9 +120,23 @@ export class GranuleSearch extends BaseSearch {
    * @param pgRecords - postgres records returned from query
    * @returns translated api records
    */
-  protected translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[])
-    : Partial<ApiGranuleRecord>[] {
+  protected async translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[], knex: Knex)
+    : Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    
+    //get Files
+    const cumulus_ids = pgRecords.map((record) => record.cumulus_id);
+    const fileModel = new FilePgModel();
+    const files = await fileModel.searchByGranuleCumulusIds(knex, cumulus_ids);
+    const fileMapping: { [key: number]: PostgresFileRecord[] } = {};
+    files.forEach((file) => {
+      if(!(file.granule_cumulus_id in fileMapping)) {
+        fileMapping[file.granule_cumulus_id] = [];
+      }
+      fileMapping[file.granule_cumulus_id].push(file);
+    })
+    
+
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
       const granulePgRecord = item;
       const collectionPgRecord = {
@@ -128,13 +146,16 @@ export class GranuleSearch extends BaseSearch {
       };
       const pdr = item.pdrName ? { name: item.pdrName } : undefined;
       const providerPgRecord = item.providerName ? { name: item.providerName } : undefined;
+      const files = fileMapping[granulePgRecord.cumulus_id] || [];
       const apiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
-        granulePgRecord, collectionPgRecord, pdr, providerPgRecord,
+        granulePgRecord, collectionPgRecord, pdr, providerPgRecord, files
       });
-      return this.dbQueryParameters.fields
-        ? pick(apiRecord, this.dbQueryParameters.fields)
-        : apiRecord;
+      return apiRecord
     });
-    return apiRecords;
+    return apiRecords.map((apiRecord) => (
+      this.dbQueryParameters.fields
+      ? pick(apiRecord, this.dbQueryParameters.fields)
+      : apiRecord
+    ));
   }
 }
