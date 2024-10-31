@@ -472,6 +472,7 @@ to update to at least [cumulus-ecs-task:2.1.0](https://hub.docker.com/layers/cum
     support `aws-sdk` v3 changes.
 
 ### Added
+
 - **CUMULUS-3698**
   - GranuleSearch now retrieves associated files for granules
 - **CUMULUS-3614**
