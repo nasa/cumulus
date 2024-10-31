@@ -183,8 +183,7 @@ describe('The Granules API', () => {
       });
 
       const searchedGranule = JSON.parse(searchResults.body).results[0];
-      // TODO CUMULUS-3698 includes files
-      expect(searchedGranule).toEqual(jasmine.objectContaining(omit(randomGranuleRecord, 'files')));
+      expect(searchedGranule).toEqual(jasmine.objectContaining(randomGranuleRecord));
     });
 
     it('can modify the granule via API.', async () => {
