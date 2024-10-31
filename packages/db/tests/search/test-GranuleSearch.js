@@ -184,18 +184,18 @@ test.before(async (t) => {
       execution_cumulus_id: executionRecords[i].cumulus_id,
     }))
   );
-  executionRecords = []
+  executionRecords = [];
   // it's important for later testing that these are uploaded strictly in order
   for (const i of range(100)) {
-    const [executionRecord] = await executionPgModel.insert(
+    const [executionRecord] = await executionPgModel.insert( // eslint-disable-line no-await-in-loop
       knex,
       [fakeExecutionRecordFactory({
         url: `laterUrl${i}`,
       })]
     );
-    executionRecords.push(executionRecord)
+    executionRecords.push(executionRecord);
     //ensure that timestamp in execution record is distinct
-    await sleep(1);
+    await sleep(1); // eslint-disable-line no-await-in-loop
   }
 
   await granuleExecutionPgModel.insert(
@@ -964,8 +964,9 @@ test('GranuleSearch retrieves latest associated Url object for granules', async 
   t.is(response.results?.length, 100);
   response.results.sort((a, b) => a.cumulus_id - b.cumulus_id);
   // these executions are loaded from lowest to highest number
-  // but each granule is associated with multiple executions: earlierUrl${i}, laterUrl${i}, and laterUrl${99-i}
-  // hence `laterUrl${max(i, 99-i)}` is the most recently updated execution associated with the granule
+  // but each granule is associated with multiple executions:
+  //   earlierUrl${i}, laterUrl${i}, and laterUrl${99-i}
+  // hence `laterUrl${max(i, 99-i)}` is the most recently updated execution
   response.results.forEach((granuleRecord, i) => {
     t.is(granuleRecord.execution, `laterUrl${Math.max(i, 99 - i)}`);
   });

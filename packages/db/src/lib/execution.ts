@@ -19,7 +19,7 @@ const log = new Logger({ sender: '@cumulus/db/lib/execution' });
 /**
  * Returns execution info sorted by most recent first for an input
  * set of Granule Cumulus IDs.
- *   Array of arn objects with the most recent first.
+ * @returns Array of arn objects with the most recent first.
  */
 export const getExecutionInfoByGranuleCumulusIds = async ({
   knexOrTransaction,
@@ -29,11 +29,11 @@ export const getExecutionInfoByGranuleCumulusIds = async ({
   knexOrTransaction: Knex | Knex.Transaction,
   granuleCumulusIds: number[],
   limit?: number
-}): Promise<{granule_cumulus_id: number, url: string }[]> => {
+}): Promise<{ granule_cumulus_id: number, url: string }[]> => {
   const knexQuery = knexOrTransaction(TableNames.executions)
     .column([
       `${TableNames.executions}.url`,
-      `${TableNames.granulesExecutions}.granule_cumulus_id`
+      `${TableNames.granulesExecutions}.granule_cumulus_id`,
     ])
     .whereIn(`${TableNames.granulesExecutions}.granule_cumulus_id`, granuleCumulusIds)
     .join(
