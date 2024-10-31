@@ -26,21 +26,20 @@ test.before(async (t) => {
   t.context.reconciliationReportPgModel = new ReconciliationReportPgModel();
   const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory', 'ORCA Backup'];
   const reconReportStatuses = ['Generated', 'Pending', 'Failed'];
-  const reconReports = [];
   t.context.reconReportSearchTimestamp = 1704100000000;
   t.context.reportBucket = cryptoRandomString({ length: 8 });
   t.context.reportKey = cryptoRandomString({ length: 8 });
 
-  range(50).map((num) => (
-    reconReports.push(fakeReconciliationReportRecordFactory({
+  const reconReports = range(50).map((num) =>
+    fakeReconciliationReportRecordFactory({
       name: `fakeReconReport-${num + 1}`,
       type: reconReportTypes[num % 4],
       status: reconReportStatuses[num % 3],
       location: `s3://fakeBucket${t.context.reportBucket}/fakeKey${t.context.reportKey}`,
       updated_at: new Date(t.context.reconReportSearchTimestamp + (num % 2)),
       created_at: new Date(t.context.reconReportSearchTimestamp - (num % 2)),
-    }))
-  ));
+    })
+  );
 
   await t.context.reconciliationReportPgModel.insert(t.context.knex, reconReports);
 });
@@ -133,15 +132,6 @@ test('ReconciliationReportSearch supports infix search', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 11);
   t.is(response.results?.length, 11);
-
-  // queryStringParameters = {
-  //   limit: 50,
-  //   infix: 'ending', // ending, status
-  // }
-  // dbSearch = new ReconciliationReportSearch({ queryStringParameters });
-  // response = await dbSearch.query(knex);
-  // t.is(response.meta.count, 17);
-  // t.is(response.results?.length, 17);
 });
 
 test('ReconciliationReportSearch supports sorting', async (t) => {

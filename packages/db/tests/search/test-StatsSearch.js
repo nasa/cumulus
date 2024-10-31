@@ -45,30 +45,24 @@ test.before(async (t) => {
   const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
   const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory', 'ORCA Backup'];
   const reconReportStatuses = ['Generated', 'Pending', 'Failed'];
-  const granules = [];
-  const collections = [];
-  const executions = [];
-  const pdrs = [];
-  const providers = [];
-  const reconReports = [];
 
-  range(20).map((num) => (
-    collections.push(fakeCollectionRecordFactory({
+  const collections = range(20).map((num) =>
+    fakeCollectionRecordFactory({
       name: 'testCollection',
       version: `${num}`,
       cumulus_id: num,
-    }))
-  ));
+    })
+  );
 
-  range(10).map((num) => (
-    providers.push(fakeProviderRecordFactory({
+  const providers = range(10).map((num) =>
+    fakeProviderRecordFactory({
       cumulus_id: num,
       name: `testProvider${num}`,
-    }))
-  ));
+    })
+  );
 
-  range(100).map((num) => (
-    granules.push(fakeGranuleRecordFactory({
+  const granules = range(100).map((num) =>
+    fakeGranuleRecordFactory({
       collection_cumulus_id: num % 20,
       granule_id: num % 2 === 0 ? `testGranule${num}` : `query__Granule${num}`,
       status: statuses[num % 4],
@@ -77,35 +71,37 @@ test.before(async (t) => {
       error: errors[num % 5],
       duration: num + (num / 10),
       provider_cumulus_id: num % 10,
-    }))
-  ));
+    })
+  );
 
-  range(20).map((num) => (
-    pdrs.push(fakePdrRecordFactory({
+  const pdrs = range(20).map((num) =>
+    fakePdrRecordFactory({
       collection_cumulus_id: num,
       status: statuses[(num % 3) + 1],
       provider_cumulus_id: num % 10,
       created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))),
       updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
-    // eslint-disable-next-line no-sequences
-    })),
-    executions.push(fakeExecutionRecordFactory({
+    })
+  );
+  
+  const executions = range(20).map((num) =>
+    fakeExecutionRecordFactory({
       collection_cumulus_id: num,
       status: statuses[(num % 3) + 1],
       error: errors[num % 5],
       created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))),
       updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
-    }))
-  ));
+    })
+  );
 
-  range(24).map((num) => (
-    reconReports.push(fakeReconciliationReportRecordFactory({
+  reconReports = range(24).map((num) =>
+    fakeReconciliationReportRecordFactory({
       type: reconReportTypes[(num % 4)],
       status: reconReportStatuses[(num % 3)],
       created_at: (new Date(2024 + (num % 6), (num % 12), (num % 30))),
       updated_at: (new Date(2024 + (num % 6), (num % 12), ((num + 1) % 29))),
-    }))
-  ));
+    })
+  );
 
   await t.context.collectionPgModel.insert(t.context.knex, collections);
   await t.context.providerPgModel.insert(t.context.knex, providers);

@@ -25,11 +25,10 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   t.context.providerPgModel = new ProviderPgModel();
-  const providers = [];
   t.context.providerSearchTimestamp = 1579352700000;
 
-  range(100).map((num) => (
-    providers.push(fakeProviderRecordFactory({
+  const providers = range(100).map((num) =>
+    fakeProviderRecordFactory({
       cumulus_id: num,
       updated_at: new Date(t.context.providerSearchTimestamp + (num % 2)),
       created_at: new Date(t.context.providerSearchTimestamp - (num % 2)),
@@ -37,13 +36,10 @@ test.before(async (t) => {
       host: num % 2 === 0 ? 'cumulus-sit' : 'cumulus-uat',
       global_connection_limit: num % 2 === 0 ? 0 : 10,
       private_key: num % 2 === 0 ? `fakeKey${num}` : undefined,
-    }))
-  ));
-
-  await t.context.providerPgModel.insert(
-    t.context.knex,
-    providers
+    })
   );
+
+  await t.context.providerPgModel.insert(t.context.knex, providers);
 });
 
 test.after.always(async (t) => {
