@@ -35,16 +35,11 @@ export const getExecutionInfoByGranuleCumulusIds = async ({
       `${TableNames.executions}.url`,
       `${TableNames.granulesExecutions}.granule_cumulus_id`
     ])
-    .whereIn(`${TableNames.granules}.cumulus_id`, granuleCumulusIds)
+    .whereIn(`${TableNames.granulesExecutions}.granule_cumulus_id`, granuleCumulusIds)
     .join(
       TableNames.granulesExecutions,
       `${TableNames.executions}.cumulus_id`,
       `${TableNames.granulesExecutions}.execution_cumulus_id`
-    )
-    .join(
-      TableNames.granules,
-      `${TableNames.granules}.cumulus_id`,
-      `${TableNames.granulesExecutions}.granule_cumulus_id`
     )
     .orderBy(`${TableNames.executions}.timestamp`, 'desc');
   if (limit) {
@@ -79,51 +74,11 @@ export const getExecutionInfoByGranuleCumulusId = async ({
 }): Promise<Partial<PostgresExecutionRecord>[]> => {
   const knexQuery = knexOrTransaction(TableNames.executions)
     .column(executionColumns.map((column) => `${TableNames.executions}.${column}`))
-    .where(`${TableNames.granules}.cumulus_id`, granuleCumulusId)
+    .where(`${TableNames.granulesExecutions}.granule_cumulus_id`, granuleCumulusId)
     .join(
       TableNames.granulesExecutions,
       `${TableNames.executions}.cumulus_id`,
       `${TableNames.granulesExecutions}.execution_cumulus_id`
-    )
-    .join(
-      TableNames.granules,
-      `${TableNames.granules}.cumulus_id`,
-      `${TableNames.granulesExecutions}.granule_cumulus_id`
-    )
-    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
-  if (limit) {
-    knexQuery.limit(limit);
-  }
-  return await knexQuery;
-};
-
-/**
- * Returns a list of executionArns sorted by most recent first, for an input
- * Granule Cumulus ID.
- *
- * @param {Knex | Knex.Transaction} knexOrTransaction
- *   Knex client for reading from RDS database
- * @param {number} granuleCumulusId - The primary ID for a Granule
- * @param {number} limit - limit to number of executions to query
- * @returns {Promise<ArnRecord[]>} - Array of arn objects with the most recent first.
- */
-export const getExecutionArnsByGranuleCumulusId = async (
-  knexOrTransaction: Knex | Knex.Transaction,
-  granuleCumulusId: Number,
-  limit?: number
-): Promise<ArnRecord[]> => {
-  const knexQuery = knexOrTransaction(TableNames.executions)
-    .select(`${TableNames.executions}.arn`)
-    .where(`${TableNames.granules}.cumulus_id`, granuleCumulusId)
-    .join(
-      TableNames.granulesExecutions,
-      `${TableNames.executions}.cumulus_id`,
-      `${TableNames.granulesExecutions}.execution_cumulus_id`
-    )
-    .join(
-      TableNames.granules,
-      `${TableNames.granules}.cumulus_id`,
-      `${TableNames.granulesExecutions}.granule_cumulus_id`
     )
     .orderBy(`${TableNames.executions}.timestamp`, 'desc');
   if (limit) {
