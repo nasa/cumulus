@@ -122,27 +122,26 @@ export class GranuleSearch extends BaseSearch {
   protected async translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[], knex: Knex)
     : Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
-    
-    const cumulus_ids = pgRecords.map((record) => record.cumulus_id);
+
+    const cumulusIds = pgRecords.map((record) => record.cumulus_id);
 
     //get Files
     const fileModel = new FilePgModel();
-    const files = await fileModel.searchByGranuleCumulusIds(knex, cumulus_ids);
+    const files = await fileModel.searchByGranuleCumulusIds(knex, cumulusIds);
     const fileMapping: { [key: number]: PostgresFileRecord[] } = {};
     files.forEach((file) => {
-      if(!(file.granule_cumulus_id in fileMapping)) {
+      if (!(file.granule_cumulus_id in fileMapping)) {
         fileMapping[file.granule_cumulus_id] = [];
       }
       fileMapping[file.granule_cumulus_id].push(file);
-    })
+    });
 
     //get Executions
     const executionUrls = await getExecutionInfoByGranuleCumulusIds({
       knexOrTransaction: knex,
-      granuleCumulusIds: cumulus_ids,
-      executionColumns: ['url']
+      granuleCumulusIds: cumulusIds,
+      executionColumns: ['url'],
     });
-    
 
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
       const granulePgRecord = item;
@@ -153,16 +152,21 @@ export class GranuleSearch extends BaseSearch {
       };
       const pdr = item.pdrName ? { name: item.pdrName } : undefined;
       const providerPgRecord = item.providerName ? { name: item.providerName } : undefined;
-      const files = fileMapping[granulePgRecord.cumulus_id] || [];
+      const fileRecords = fileMapping[granulePgRecord.cumulus_id] || [];
       const apiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
-        granulePgRecord, collectionPgRecord, pdr, providerPgRecord, files, executionUrls
+        granulePgRecord,
+        collectionPgRecord,
+        pdr,
+        providerPgRecord,
+        files: fileRecords,
+        executionUrls,
       });
-      return apiRecord
+      return apiRecord;
     });
     return apiRecords.map((apiRecord) => (
       this.dbQueryParameters.fields
-      ? pick(apiRecord, this.dbQueryParameters.fields)
-      : apiRecord
+        ? pick(apiRecord, this.dbQueryParameters.fields)
+        : apiRecord
     ));
   }
 }

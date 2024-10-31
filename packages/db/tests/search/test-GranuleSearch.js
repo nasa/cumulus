@@ -144,7 +144,7 @@ test.before(async (t) => {
         ? t.context.granuleSearchFields.lastUpdateDateTime : undefined,
       published: !!(num % 2),
       product_volume: Math.round(Number(t.context.granuleSearchFields.productVolume)
-         * (1 / (num + 1))).toString(),
+        * (1 / (num + 1))).toString(),
       time_to_archive: !(num % 10)
         ? Number(t.context.granuleSearchFields.timeToArchive) : undefined,
       time_to_process: !(num % 20)
@@ -153,52 +153,50 @@ test.before(async (t) => {
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
     }))
   );
-  
+
   const filePgModel = new FilePgModel();
   await filePgModel.insert(
     knex,
     t.context.pgGranules.map((granule) => fakeFileRecordFactory(
-      {granule_cumulus_id: granule.cumulus_id},
+      { granule_cumulus_id: granule.cumulus_id }
     ))
   );
   await filePgModel.insert(
     knex,
     t.context.pgGranules.map((granule) => fakeFileRecordFactory(
-      {granule_cumulus_id: granule.cumulus_id},
+      { granule_cumulus_id: granule.cumulus_id }
     ))
   );
 
- 
   const executionPgModel = new ExecutionPgModel();
   const granuleExecutionPgModel = new GranulesExecutionsPgModel();
 
   let executionRecords = await executionPgModel.insert(
     knex,
     t.context.pgGranules.map((_, i) => fakeExecutionRecordFactory({
-      url: `earlierUrl${i}`
+      url: `earlierUrl${i}`,
     }))
-  )
+  );
   await granuleExecutionPgModel.insert(
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
-      execution_cumulus_id: executionRecords[i].cumulus_id
+      execution_cumulus_id: executionRecords[i].cumulus_id,
     }))
-  )
+  );
   executionRecords = await executionPgModel.insert(
     knex,
     t.context.pgGranules.map((_, i) => fakeExecutionRecordFactory({
-      url: `laterUrl${i}`
+      url: `laterUrl${i}`,
     }))
-  )
+  );
   await granuleExecutionPgModel.insert(
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
-      execution_cumulus_id: executionRecords[i].cumulus_id
+      execution_cumulus_id: executionRecords[i].cumulus_id,
     }))
-  )
-  
+  );
 });
 
 test('GranuleSearch returns 10 granule records by default', async (t) => {
@@ -639,7 +637,6 @@ test('GranuleSearch supports terms search', async (t) => {
   response = await dbSearch.query(knex);
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
-  console.log(JSON.stringify(response))
 });
 
 test('GranuleSearch supports collectionId terms search', async (t) => {
@@ -922,12 +919,12 @@ test('GranuleSearch retrieves associated file objects for granules', async (t) =
   t.is(response.results?.length, 100);
   response.results.forEach((granuleRecord) => {
     t.is(granuleRecord.files?.length, 2);
-    t.true('bucket' in granuleRecord.files[0])
-    t.true('key' in granuleRecord.files[0])
-    t.true('bucket' in granuleRecord.files[1])
-    t.true('key' in granuleRecord.files[1])
-  })
-})
+    t.true('bucket' in granuleRecord.files[0]);
+    t.true('key' in granuleRecord.files[0]);
+    t.true('bucket' in granuleRecord.files[1]);
+    t.true('key' in granuleRecord.files[1]);
+  });
+});
 
 test('GranuleSearch retrieves one associated Url object for granules', async (t) => {
   const { knex } = t.context;
@@ -938,10 +935,10 @@ test('GranuleSearch retrieves one associated Url object for granules', async (t)
   const response = await dbSearch.query(knex);
   t.is(response.results?.length, 100);
   response.results.forEach((granuleRecord) => {
-    t.true('execution' in granuleRecord)
-    t.true(typeof (granuleRecord.execution) === 'string')
-  })
-})
+    t.true('execution' in granuleRecord);
+    t.true(granuleRecord.execution.isString);
+  });
+});
 
 test('GranuleSearch retrieves latest associated Url object for granules', async (t) => {
   const { knex } = t.context;
@@ -953,5 +950,5 @@ test('GranuleSearch retrieves latest associated Url object for granules', async 
   t.is(response.results?.length, 100);
   response.results.forEach((granuleRecord) => {
     t.true(granuleRecord.execution.startsWith('laterUrl'));
-  })
-})
+  });
+});
