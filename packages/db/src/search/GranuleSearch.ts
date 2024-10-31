@@ -12,9 +12,8 @@ import { PostgresGranuleRecord } from '../types/granule';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
 import { TableNames } from '../tables';
 import { FilePgModel } from '../models/file';
-import { translatePostgresFileToApiFile } from '../translate/file';
-import { ApiFile } from '@cumulus/types';
 import { PostgresFileRecord } from '../types/file';
+import { getExecutionInfoByGranuleCumulusIds } from '../lib/execution';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
@@ -124,8 +123,9 @@ export class GranuleSearch extends BaseSearch {
     : Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
     
-    //get Files
     const cumulus_ids = pgRecords.map((record) => record.cumulus_id);
+
+    //get Files
     const fileModel = new FilePgModel();
     const files = await fileModel.searchByGranuleCumulusIds(knex, cumulus_ids);
     const fileMapping: { [key: number]: PostgresFileRecord[] } = {};
@@ -135,6 +135,13 @@ export class GranuleSearch extends BaseSearch {
       }
       fileMapping[file.granule_cumulus_id].push(file);
     })
+
+    //get Executions
+    const executionUrls = await getExecutionInfoByGranuleCumulusIds({
+      knexOrTransaction: knex,
+      granuleCumulusIds: cumulus_ids,
+      executionColumns: ['url']
+    });
     
 
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
@@ -148,7 +155,7 @@ export class GranuleSearch extends BaseSearch {
       const providerPgRecord = item.providerName ? { name: item.providerName } : undefined;
       const files = fileMapping[granulePgRecord.cumulus_id] || [];
       const apiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
-        granulePgRecord, collectionPgRecord, pdr, providerPgRecord, files
+        granulePgRecord, collectionPgRecord, pdr, providerPgRecord, files, executionUrls
       });
       return apiRecord
     });

@@ -18,6 +18,9 @@ const {
   migrationDir,
   FilePgModel,
   fakeFileRecordFactory,
+  ExecutionPgModel,
+  fakeExecutionRecordFactory,
+  GranulesExecutionsPgModel,
 } = require('../../dist');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
@@ -150,19 +153,52 @@ test.before(async (t) => {
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
     }))
   );
-  t.context.filePgModel = new FilePgModel();
-  t.context.pgFiles = await t.context.filePgModel.insert(
+  
+  const filePgModel = new FilePgModel();
+  await filePgModel.insert(
     knex,
     t.context.pgGranules.map((granule) => fakeFileRecordFactory(
       {granule_cumulus_id: granule.cumulus_id},
     ))
   );
-  t.context.pgFiles = await t.context.filePgModel.insert(
+  await filePgModel.insert(
     knex,
     t.context.pgGranules.map((granule) => fakeFileRecordFactory(
       {granule_cumulus_id: granule.cumulus_id},
     ))
   );
+
+ 
+  const executionPgModel = new ExecutionPgModel();
+  const granuleExecutionPgModel = new GranulesExecutionsPgModel();
+
+  let executionRecords = await executionPgModel.insert(
+    knex,
+    t.context.pgGranules.map((_, i) => fakeExecutionRecordFactory({
+      url: `earlierUrl${i}`
+    }))
+  )
+  await granuleExecutionPgModel.insert(
+    knex,
+    t.context.pgGranules.map((granule, i) => ({
+      granule_cumulus_id: granule.cumulus_id,
+      execution_cumulus_id: executionRecords[i].cumulus_id
+    }))
+  )
+  executionRecords = await executionPgModel.insert(
+    knex,
+    t.context.pgGranules.map((_, i) => fakeExecutionRecordFactory({
+      url: `laterUrl${i}`
+    }))
+  )
+  await granuleExecutionPgModel.insert(
+    knex,
+    t.context.pgGranules.map((granule, i) => ({
+      granule_cumulus_id: granule.cumulus_id,
+      execution_cumulus_id: executionRecords[i].cumulus_id
+    }))
+  )
+  
 });
 
 test('GranuleSearch returns 10 granule records by default', async (t) => {
@@ -886,5 +922,36 @@ test('GranuleSearch retrieves associated file objects for granules', async (t) =
   t.is(response.results?.length, 100);
   response.results.forEach((granuleRecord) => {
     t.is(granuleRecord.files?.length, 2);
+    t.true('bucket' in granuleRecord.files[0])
+    t.true('key' in granuleRecord.files[0])
+    t.true('bucket' in granuleRecord.files[1])
+    t.true('key' in granuleRecord.files[1])
+  })
+})
+
+test('GranuleSearch retrieves one associated Url object for granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.results?.length, 100);
+  response.results.forEach((granuleRecord) => {
+    t.true('execution' in granuleRecord)
+    t.true(typeof (granuleRecord.execution) === 'string')
+  })
+})
+
+test('GranuleSearch retrieves latest associated Url object for granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.results?.length, 100);
+  response.results.forEach((granuleRecord) => {
+    t.true(granuleRecord.execution.startsWith('laterUrl'));
   })
 })

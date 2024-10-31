@@ -16,6 +16,50 @@ export interface ArnRecord {
 
 const log = new Logger({ sender: '@cumulus/db/lib/execution' });
 
+
+/**
+ * Returns execution info sorted by most recent first for an input
+ * set of Granule Cumulus IDs.
+ *
+ * @param {Object} params
+ * @param {Knex | Knex.Transaction} params.knexOrTransaction
+ *   Knex client for reading from RDS database
+ * @param {Array<string>} params.executionColumns - Columns to return from executions table
+ * @param {number[]} params.granuleCumulusIds - The primary ID for a batch of granules
+ * @returns {Promise<Partial<PostgresExecutionRecord>[]>}
+ *   Array of arn objects with the most recent first.
+ */
+export const getExecutionInfoByGranuleCumulusIds = async ({
+  knexOrTransaction,
+  granuleCumulusIds,
+  executionColumns = ['url'],
+  limit,
+}: {
+  knexOrTransaction: Knex | Knex.Transaction,
+  granuleCumulusIds: number[],
+  executionColumns: string[],
+  limit?: number
+}): Promise<Partial<PostgresExecutionRecord>[]> => {
+  const knexQuery = knexOrTransaction(TableNames.executions)
+    .column(executionColumns.map((column) => `${TableNames.executions}.${column}`))
+    .whereIn(`${TableNames.granules}.cumulus_id`, granuleCumulusIds)
+    .join(
+      TableNames.granulesExecutions,
+      `${TableNames.executions}.cumulus_id`,
+      `${TableNames.granulesExecutions}.execution_cumulus_id`
+    )
+    .join(
+      TableNames.granules,
+      `${TableNames.granules}.cumulus_id`,
+      `${TableNames.granulesExecutions}.granule_cumulus_id`
+    )
+    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
+  if (limit) {
+    knexQuery.limit(limit);
+  }
+  return await knexQuery;
+};
+
 /**
  * Returns execution info sorted by most recent first for an input
  * Granule Cumulus ID.
