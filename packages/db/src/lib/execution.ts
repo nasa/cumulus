@@ -19,28 +19,23 @@ const log = new Logger({ sender: '@cumulus/db/lib/execution' });
 /**
  * Returns execution info sorted by most recent first for an input
  * set of Granule Cumulus IDs.
- *
- * @param {Object} params
- * @param {Knex | Knex.Transaction} params.knexOrTransaction
- *   Knex client for reading from RDS database
- * @param {Array<string>} params.executionColumns - Columns to return from executions table
- * @param {number[]} params.granuleCumulusIds - The primary ID for a batch of granules
- * @returns {Promise<Partial<PostgresExecutionRecord>[]>}
  *   Array of arn objects with the most recent first.
  */
 export const getExecutionInfoByGranuleCumulusIds = async ({
   knexOrTransaction,
   granuleCumulusIds,
-  executionColumns = ['url'],
   limit,
 }: {
   knexOrTransaction: Knex | Knex.Transaction,
   granuleCumulusIds: number[],
-  executionColumns: string[],
   limit?: number
-}): Promise<Partial<PostgresExecutionRecord>[]> => {
+}): Promise<{granule_cumulus_id: number, url: string }[]> => {
   const knexQuery = knexOrTransaction(TableNames.executions)
-    .column(executionColumns.map((column) => `${TableNames.executions}.${column}`))
+    // .column(executionColumns.map((column) => `${TableNames.executions}.${column}`))
+    .column([
+      `${TableNames.executions}.url`,
+      `${TableNames.granulesExecutions}.granule_cumulus_id`
+    ])
     .whereIn(`${TableNames.granules}.cumulus_id`, granuleCumulusIds)
     .join(
       TableNames.granulesExecutions,

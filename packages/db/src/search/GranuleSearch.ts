@@ -9,6 +9,7 @@ import { BaseRecord } from '../types/base';
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresGranuleRecord } from '../types/granule';
+import { PostgresExecutionRecord } from '../types/execution';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
 import { TableNames } from '../tables';
 import { FilePgModel } from '../models/file';
@@ -137,12 +138,16 @@ export class GranuleSearch extends BaseSearch {
     });
 
     //get Executions
-    const executionUrls = await getExecutionInfoByGranuleCumulusIds({
+    const executions = await getExecutionInfoByGranuleCumulusIds({
       knexOrTransaction: knex,
       granuleCumulusIds: cumulusIds,
-      executionColumns: ['url'],
     });
-
+    const executionMapping: { [key: number]: Partial<PostgresExecutionRecord>[] } = {};
+    executions.forEach((execution) => {
+      if (!(execution.granule_cumulus_id in executionMapping)) {
+        executionMapping[execution.granule_cumulus_id] = [{ url: execution.url }]
+      }
+    })
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
       const granulePgRecord = item;
       const collectionPgRecord = {
@@ -159,11 +164,11 @@ export class GranuleSearch extends BaseSearch {
         pdr,
         providerPgRecord,
         files: fileRecords,
-        executionUrls,
+        executionUrls: executionMapping[item.cumulus_id],
       });
       return this.dbQueryParameters.fields
-          ? pick(apiRecord, this.dbQueryParameters.fields)
-          : apiRecord;
+        ? pick(apiRecord, this.dbQueryParameters.fields)
+        : apiRecord;
     });
     return apiRecords
   }

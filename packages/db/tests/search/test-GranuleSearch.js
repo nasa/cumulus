@@ -3,7 +3,7 @@ const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
-
+const { sleep } = require('@cumulus/common');
 const {
   CollectionPgModel,
   fakeCollectionRecordFactory,
@@ -184,17 +184,32 @@ test.before(async (t) => {
       execution_cumulus_id: executionRecords[i].cumulus_id,
     }))
   );
-  executionRecords = await executionPgModel.insert(
+  executionRecords = []
+  // it's important for later testing that these are uploaded strictly in order
+  for (const i of range(100)) {
+    const [executionRecord] = await executionPgModel.insert(
+      knex,
+      [fakeExecutionRecordFactory({
+        url: `laterUrl${i}`,
+      })]
+    );
+    executionRecords.push(executionRecord)
+    //ensure that timestamp in execution record is distinct
+    await sleep(1);
+  }
+
+  await granuleExecutionPgModel.insert(
     knex,
-    t.context.pgGranules.map((_, i) => fakeExecutionRecordFactory({
-      url: `laterUrl${i}`,
+    t.context.pgGranules.map((granule, i) => ({
+      granule_cumulus_id: granule.cumulus_id,
+      execution_cumulus_id: executionRecords[i].cumulus_id,
     }))
   );
   await granuleExecutionPgModel.insert(
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
-      execution_cumulus_id: executionRecords[i].cumulus_id,
+      execution_cumulus_id: executionRecords[99 - i].cumulus_id,
     }))
   );
 });
@@ -936,7 +951,6 @@ test('GranuleSearch retrieves one associated Url object for granules', async (t)
   t.is(response.results?.length, 100);
   response.results.forEach((granuleRecord) => {
     t.true('execution' in granuleRecord);
-    t.true(granuleRecord.execution.isString);
   });
 });
 
@@ -948,7 +962,11 @@ test('GranuleSearch retrieves latest associated Url object for granules', async 
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
   t.is(response.results?.length, 100);
-  response.results.forEach((granuleRecord) => {
-    t.true(granuleRecord.execution.startsWith('laterUrl'));
+  response.results.sort((a, b) => a.cumulus_id - b.cumulus_id);
+  // these executions are loaded from lowest to highest number
+  // but each granule is associated with multiple executions: earlierUrl${i}, laterUrl${i}, and laterUrl${99-i}
+  // hence `laterUrl${max(i, 99-i)}` is the most recently updated execution associated with the granule
+  response.results.forEach((granuleRecord, i) => {
+    t.is(granuleRecord.execution, `laterUrl${Math.max(i, 99 - i)}`);
   });
 });
