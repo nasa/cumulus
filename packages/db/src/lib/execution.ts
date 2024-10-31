@@ -31,7 +31,6 @@ export const getExecutionInfoByGranuleCumulusIds = async ({
   limit?: number
 }): Promise<{granule_cumulus_id: number, url: string }[]> => {
   const knexQuery = knexOrTransaction(TableNames.executions)
-    // .column(executionColumns.map((column) => `${TableNames.executions}.${column}`))
     .column([
       `${TableNames.executions}.url`,
       `${TableNames.granulesExecutions}.granule_cumulus_id`
