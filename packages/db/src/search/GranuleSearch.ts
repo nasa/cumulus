@@ -161,12 +161,10 @@ export class GranuleSearch extends BaseSearch {
         files: fileRecords,
         executionUrls,
       });
-      return apiRecord;
+      return this.dbQueryParameters.fields
+          ? pick(apiRecord, this.dbQueryParameters.fields)
+          : apiRecord;
     });
-    return apiRecords.map((apiRecord) => (
-      this.dbQueryParameters.fields
-        ? pick(apiRecord, this.dbQueryParameters.fields)
-        : apiRecord
-    ));
+    return apiRecords
   }
 }
