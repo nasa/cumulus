@@ -28,7 +28,7 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
   searchByGranuleCumulusIds(
     knexOrTrx: Knex | Knex.Transaction,
     granule_cumulus_ids: number[],
-    returning: string | string[] = '*'
+    returning: string = '*'
   ): Promise<PostgresFileRecord[]> {
     return knexOrTrx(this.tableName)
       .whereIn('granule_cumulus_id', granule_cumulus_ids)
