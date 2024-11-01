@@ -16,11 +16,10 @@ const {
 const S3ObjectStore = require('@cumulus/aws-client/S3ObjectStore');
 const { s3 } = require('@cumulus/aws-client/services');
 
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-const { Search, getEsClient } = require('@cumulus/es-client/search');
-const indexer = require('@cumulus/es-client/indexer');
+
+const { ReconciliationReportSearch } = require('@cumulus/db');
 
 const {
   ReconciliationReportPgModel,
@@ -48,14 +47,11 @@ const maxResponsePayloadSizeBytes = 6 * 1000 * 1000;
  * @returns {Promise<Object>} the promise of express response object
  */
 async function listReports(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'reconciliationReport',
-    process.env.ES_INDEX
+  const dbSearch = new ReconciliationReportSearch(
+    { queryStringParameters: req.query }
   );
-
-  const response = await search.query();
-  return res.send(response);
+  const result = await dbSearch.query();
+  return res.send(result);
 }
 
 /**
@@ -159,17 +155,6 @@ async function deleteReport(req, res) {
     }
     await reconciliationReportPgModel.delete(knex, { name });
   });
-
-  if (inTestMode()) {
-    const esClient = await getEsClient(process.env.ES_HOST);
-    await indexer.deleteRecord({
-      esClient,
-      id: name,
-      type: 'reconciliationReport',
-      index: process.env.ES_INDEX,
-      ignore: [404],
-    });
-  }
 
   return res.send({ message: 'Report deleted' });
 }

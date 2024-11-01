@@ -26,9 +26,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const indexer = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
 
 const startAsyncOperation = require('../../lib/startAsyncOperation');
 const {
@@ -57,9 +54,6 @@ const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEven
 
 const { buildFakeExpressResponse } = require('./utils');
 
-let esClient;
-const esIndex = randomId('esindex');
-
 const testDbName = `test_recon_reports_${cryptoRandomString({ length: 10 })}`;
 
 let jwtAuthToken;
@@ -67,18 +61,6 @@ let accessTokenModel;
 let fakeReportRecords = [];
 
 test.before(async (t) => {
-  // create esClient
-  esClient = await getEsClient('fakehost');
-
-  const esAlias = randomId('esalias');
-  process.env.ES_INDEX = esAlias;
-
-  // add fake elasticsearch index
-  await bootstrapElasticSearch({
-    host: 'fakehost',
-    index: esIndex,
-    alias: esAlias,
-  });
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
@@ -131,27 +113,11 @@ test.before(async (t) => {
       }),
     })));
 
-  // add records to es
-  await Promise.all(
-    fakeReportRecords.map((reportRecord) =>
-      t.context.reconciliationReportPgModel
-        .create(knex, reportRecord)
-        .then(
-          ([reportPgRecord]) =>
-            translatePostgresReconReportToApiReconReport(reportPgRecord)
-        )
-        .then(
-          (reportApiRecord) =>
-            indexer.indexReconciliationReport(esClient, reportApiRecord, esAlias)
-        ))
-  );
+  await t.context.reconciliationReportPgModel.insert(t.context.knex, fakeReportRecords);
 });
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await esClient.client.indices.delete({
-    index: esIndex,
-  });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,
