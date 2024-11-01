@@ -33,9 +33,9 @@ export class ExecutionSearch extends BaseSearch {
   }
 
   /**
-   * check if joined async_ops table search is needed
+   * check if joined async_operations table search is needed
    *
-   * @returns whether collection search is needed
+   * @returns whether async_operations search is needed
    */
   protected searchAsync(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
@@ -43,9 +43,9 @@ export class ExecutionSearch extends BaseSearch {
   }
 
   /**
-   * check if joined async_ops table search is needed
+   * check if joined parent execution table search is needed
    *
-   * @returns whether collection search is needed
+   * @returns whether parent execution search is needed
    */
   protected searchParent(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
