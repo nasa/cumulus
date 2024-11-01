@@ -158,13 +158,21 @@ test.before(async (t) => {
   await filePgModel.insert(
     knex,
     t.context.pgGranules.map((granule) => fakeFileRecordFactory(
-      { granule_cumulus_id: granule.cumulus_id }
+      {
+        granule_cumulus_id: granule.cumulus_id,
+        path: 'a.txt',
+        checksum_type: 'md5',
+      }
     ))
   );
   await filePgModel.insert(
     knex,
     t.context.pgGranules.map((granule) => fakeFileRecordFactory(
-      { granule_cumulus_id: granule.cumulus_id }
+      {
+        granule_cumulus_id: granule.cumulus_id,
+        path: 'b.txt',
+        checksum_type: 'sha256',
+      }
     ))
   );
 
@@ -940,6 +948,24 @@ test('GranuleSearch retrieves associated file objects for granules', async (t) =
     t.true('key' in granuleRecord.files[1]);
   });
 });
+test('GranuleSearch retrieves associated file translated to api key format', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.results?.length, 100);
+  response.results.forEach((granuleRecord) => {
+    t.is(granuleRecord.files?.length, 2);
+    t.true('bucket' in granuleRecord.files[0]);
+    t.true('key' in granuleRecord.files[0]);
+    t.true('checksumType' in granuleRecord.files[0]);
+    t.true('bucket' in granuleRecord.files[1]);
+    t.true('key' in granuleRecord.files[1]);
+    t.true('checksumType' in granuleRecord.files[1]);
+  });
+});
 
 test('GranuleSearch retrieves one associated Url object for granules', async (t) => {
   const { knex } = t.context;
@@ -969,5 +995,22 @@ test('GranuleSearch retrieves latest associated Url object for granules', async 
   // hence `laterUrl${max(i, 99-i)}` is the most recently updated execution
   response.results.forEach((granuleRecord, i) => {
     t.is(granuleRecord.execution, `laterUrl${Math.max(i, 99 - i)}`);
+  });
+});
+
+test('GranuleSearch retrieves granules, files and executions, with limit specifying number of granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 4,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.results?.length, 4);
+  response.results.forEach((granuleRecord) => {
+    t.is(granuleRecord.files?.length, 2);
+    t.true('bucket' in granuleRecord.files[0]);
+    t.true('key' in granuleRecord.files[0]);
+    t.true('bucket' in granuleRecord.files[1]);
+    t.true('key' in granuleRecord.files[1]);
   });
 });
