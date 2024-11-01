@@ -97,6 +97,12 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
     new task deployment on terraform redeploy.   See docs for more details:
     https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
 
+### Fixed
+
+- **CUMULUS-3876**
+  - Fixed `s3-replicator` lambda cross region write failure
+  - Added `target_region` variable to `tf-modules/s3-replicator` module
+
 ## [v19.1.0] 2024-10-07
 
 ### Migration Notes
