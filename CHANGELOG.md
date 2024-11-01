@@ -66,6 +66,8 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Created api types for `reconciliation_reports` in `@cumulus/types/api`
   - Updated reconciliation reports lambda to write to new RDS table instead of Dynamo
   - Updated `@cumulus/api/endpoints/reconciliation-reports` `getReport` and `deleteReport` to work with the new RDS table instead of Dynamo
+- **CUMULUS-3859**
+  - Updated `@cumulus/api/bin/serveUtils` to no longer add records to ElasticSearch
 
 ## [Unreleased]
 
