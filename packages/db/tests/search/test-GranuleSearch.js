@@ -932,10 +932,11 @@ test('GranuleSearch estimates the rowcount of the table by default', async (t) =
   t.is(response.results?.length, 50);
 });
 
-test('GranuleSearch retrieves associated file objects for granules', async (t) => {
+test('GranuleSearch with includeFullRecord true retrieves associated file objects for granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
+    includeFullRecord: 'true',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -948,10 +949,11 @@ test('GranuleSearch retrieves associated file objects for granules', async (t) =
     t.true('key' in granuleRecord.files[1]);
   });
 });
-test('GranuleSearch retrieves associated file translated to api key format', async (t) => {
+test('GranuleSearch with includeFullRecord true retrieves associated file translated to api key format', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
+    includeFullRecord: 'true',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -967,10 +969,11 @@ test('GranuleSearch retrieves associated file translated to api key format', asy
   });
 });
 
-test('GranuleSearch retrieves one associated Url object for granules', async (t) => {
+test('GranuleSearch with includeFullRecord true retrieves one associated Url object for granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
+    includeFullRecord: 'true',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -980,10 +983,11 @@ test('GranuleSearch retrieves one associated Url object for granules', async (t)
   });
 });
 
-test('GranuleSearch retrieves latest associated Url object for granules', async (t) => {
+test('GranuleSearch with includeFullRecord true retrieves latest associated Url object for granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
+    includeFullRecord: 'true',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -998,10 +1002,11 @@ test('GranuleSearch retrieves latest associated Url object for granules', async 
   });
 });
 
-test('GranuleSearch retrieves granules, files and executions, with limit specifying number of granules', async (t) => {
+test('GranuleSearch with includeFullRecord true retrieves granules, files and executions, with limit specifying number of granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 4,
+    includeFullRecord: 'true',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);

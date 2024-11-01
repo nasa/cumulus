@@ -123,30 +123,31 @@ export class GranuleSearch extends BaseSearch {
     : Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
-    const cumulusIds = pgRecords.map((record) => record.cumulus_id);
-
-    //get Files
-    const fileModel = new FilePgModel();
-    const files = await fileModel.searchByGranuleCumulusIds(knex, cumulusIds);
     const fileMapping: { [key: number]: PostgresFileRecord[] } = {};
-    files.forEach((file) => {
-      if (!(file.granule_cumulus_id in fileMapping)) {
-        fileMapping[file.granule_cumulus_id] = [];
-      }
-      fileMapping[file.granule_cumulus_id].push(file);
-    });
-
-    //get Executions
-    const executions = await getExecutionInfoByGranuleCumulusIds({
-      knexOrTransaction: knex,
-      granuleCumulusIds: cumulusIds,
-    });
     const executionMapping: { [key: number]: { url: string, granule_cumulus_id: number } } = {};
-    executions.forEach((execution) => {
-      if (!(execution.granule_cumulus_id in executionMapping)) {
-        executionMapping[execution.granule_cumulus_id] = execution;
-      }
-    });
+    const cumulusIds = pgRecords.map((record) => record.cumulus_id);
+    if (this.dbQueryParameters.includeFullRecord) {
+      //get Files
+      const fileModel = new FilePgModel();
+      const files = await fileModel.searchByGranuleCumulusIds(knex, cumulusIds);
+      files.forEach((file) => {
+        if (!(file.granule_cumulus_id in fileMapping)) {
+          fileMapping[file.granule_cumulus_id] = [];
+        }
+        fileMapping[file.granule_cumulus_id].push(file);
+      });
+
+      //get Executions
+      const executions = await getExecutionInfoByGranuleCumulusIds({
+        knexOrTransaction: knex,
+        granuleCumulusIds: cumulusIds,
+      });
+      executions.forEach((execution) => {
+        if (!(execution.granule_cumulus_id in executionMapping)) {
+          executionMapping[execution.granule_cumulus_id] = execution;
+        }
+      });
+    }
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
       const granulePgRecord = item;
       const collectionPgRecord = {
