@@ -107,21 +107,19 @@ test.before(async (t) => {
     updatedAt2: new Date(2018, 0, 2),
   };
   t.context.rulePgModel = new RulePgModel();
-  const rules = range(50).map((num) =>
-    fakeRuleRecordFactory({
-      name: `fakeRule-${num}`,
-      created_at: t.context.ruleSearchFields.createdAt,
-      updated_at: (num % 2) ?
-        t.context.ruleSearchFields.updatedAt : t.context.ruleSearchFields.updatedAt2,
-      enabled: num % 2 === 0,
-      workflow: `testWorkflow-${num}`,
-      queue_url: (num % 2) ? 'https://sqs.us-east-1.amazonaws.com/123/456' : null,
-      collection_cumulus_id: (num % 2)
-        ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
-      provider_cumulus_id: (num % 2)
-        ? t.context.providerCumulusId : t.context.providerCumulusId2,
-    })
-  );
+  const rules = range(50).map((num) => fakeRuleRecordFactory({
+    name: `fakeRule-${num}`,
+    created_at: t.context.ruleSearchFields.createdAt,
+    updated_at: (num % 2) ?
+      t.context.ruleSearchFields.updatedAt : t.context.ruleSearchFields.updatedAt2,
+    enabled: num % 2 === 0,
+    workflow: `testWorkflow-${num}`,
+    queue_url: (num % 2) ? 'https://sqs.us-east-1.amazonaws.com/123/456' : null,
+    collection_cumulus_id: (num % 2)
+      ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
+    provider_cumulus_id: (num % 2)
+      ? t.context.providerCumulusId : t.context.providerCumulusId2,
+  }));
   await t.context.rulePgModel.insert(t.context.knex, rules);
 });
 

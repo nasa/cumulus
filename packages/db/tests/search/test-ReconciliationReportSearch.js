@@ -30,16 +30,14 @@ test.before(async (t) => {
   t.context.reportBucket = cryptoRandomString({ length: 8 });
   t.context.reportKey = cryptoRandomString({ length: 8 });
 
-  const reconReports = range(50).map((num) =>
-    fakeReconciliationReportRecordFactory({
-      name: `fakeReconReport-${num + 1}`,
-      type: reconReportTypes[num % 4],
-      status: reconReportStatuses[num % 3],
-      location: `s3://fakeBucket${t.context.reportBucket}/fakeKey${t.context.reportKey}`,
-      updated_at: new Date(t.context.reconReportSearchTimestamp + (num % 2)),
-      created_at: new Date(t.context.reconReportSearchTimestamp - (num % 2)),
-    })
-  );
+  const reconReports = range(50).map((num) => fakeReconciliationReportRecordFactory({
+    name: `fakeReconReport-${num + 1}`,
+    type: reconReportTypes[num % 4],
+    status: reconReportStatuses[num % 3],
+    location: `s3://fakeBucket${t.context.reportBucket}/fakeKey${t.context.reportKey}`,
+    updated_at: new Date(t.context.reconReportSearchTimestamp + (num % 2)),
+    created_at: new Date(t.context.reconReportSearchTimestamp - (num % 2)),
+  }));
 
   await t.context.reconciliationReportPgModel.insert(t.context.knex, reconReports);
 });
