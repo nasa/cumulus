@@ -32,7 +32,7 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
   ): Promise<PostgresFileRecord[]> {
     return knexOrTrx(this.tableName)
       .select(columns)
-      .whereIn('granule_cumulus_id', granule_cumulus_ids)
+      .whereIn('granule_cumulus_id', granule_cumulus_ids);
   }
 }
 

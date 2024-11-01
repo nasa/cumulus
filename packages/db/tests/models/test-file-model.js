@@ -119,7 +119,7 @@ test('FilePgModel.searchByGranuleCumulusIds() returns relevant files', async (t)
     t.context.knex,
     usedGranuleCumulusIds.map((granuleCumulusId) => (
       fakeFileRecordFactory({
-        granule_cumulus_id: granuleCumulusId
+        granule_cumulus_id: granuleCumulusId,
       })
     ))
   );
@@ -127,29 +127,29 @@ test('FilePgModel.searchByGranuleCumulusIds() returns relevant files', async (t)
     t.context.knex,
     unUsedGranuleCumulusIds.map((granuleCumulusId) => (
       fakeFileRecordFactory({
-        granule_cumulus_id: granuleCumulusId
+        granule_cumulus_id: granuleCumulusId,
       })
     ))
   );
   const searched = await t.context.filePgModel.searchByGranuleCumulusIds(
     t.context.knex,
-    usedGranuleCumulusIds,
+    usedGranuleCumulusIds
   );
-  
+
   const foundFileCumulusIds = searched.map((file) => file.cumulus_id);
   const foundGranuleCumulusIds = searched.map((file) => file.granule_cumulus_id);
   relevantFiles.forEach((relevantFile) => {
     t.true(foundFileCumulusIds.includes(relevantFile.cumulus_id));
-  })
+  });
   irrelevantFiles.forEach((irrelevantFile) => {
     t.false(foundFileCumulusIds.includes(irrelevantFile.cumulus_id));
-  })
+  });
   usedGranuleCumulusIds.forEach((usedGranuleCumulusId) => {
     t.true(foundGranuleCumulusIds.includes(usedGranuleCumulusId));
-  })
+  });
   unUsedGranuleCumulusIds.forEach((unUsedGranuleCumulusId) => {
     t.false(foundGranuleCumulusIds.includes(unUsedGranuleCumulusId));
-  })
+  });
 });
 
 test('FilePgModel.searchByGranuleCumulusIds() allows to specify desired columns', async (t) => {
@@ -163,15 +163,15 @@ test('FilePgModel.searchByGranuleCumulusIds() allows to specify desired columns'
     t.context.knex,
     usedGranuleCumulusIds.map((granuleCumulusId) => (
       fakeFileRecordFactory({
-        granule_cumulus_id: granuleCumulusId
+        granule_cumulus_id: granuleCumulusId,
       })
     ))
   );
-  let irrelevantFiles = await t.context.filePgModel.insert(
+  const irrelevantFiles = await t.context.filePgModel.insert(
     t.context.knex,
     unUsedGranuleCumulusIds.map((granuleCumulusId) => (
       fakeFileRecordFactory({
-        granule_cumulus_id: granuleCumulusId
+        granule_cumulus_id: granuleCumulusId,
       })
     ))
   );
@@ -196,19 +196,18 @@ test('FilePgModel.searchByGranuleCumulusIds() allows to specify desired columns'
     t.true(file.type === undefined);
   });
 
-  
   let foundFileCumulusIds = searched.map((file) => file.cumulus_id);
   relevantFiles.forEach((relevantFile) => {
     t.true(foundFileCumulusIds.includes(relevantFile.cumulus_id));
-  })
+  });
   irrelevantFiles.forEach((irrelevantFile) => {
     t.false(foundFileCumulusIds.includes(irrelevantFile.cumulus_id));
-  })
+  });
 
   searched = await t.context.filePgModel.searchByGranuleCumulusIds(
     t.context.knex,
     usedGranuleCumulusIds,
-    ['cumulus_id','granule_cumulus_id']
+    ['cumulus_id', 'granule_cumulus_id']
   );
 
   searched.forEach((file) => {
@@ -225,20 +224,19 @@ test('FilePgModel.searchByGranuleCumulusIds() allows to specify desired columns'
     t.true(file.type === undefined);
   });
 
-  
   foundFileCumulusIds = searched.map((file) => file.cumulus_id);
   const foundGranuleCumulusIds = searched.map((file) => file.granule_cumulus_id);
   relevantFiles.forEach((relevantFile) => {
     t.true(foundFileCumulusIds.includes(relevantFile.cumulus_id));
-  })
+  });
   irrelevantFiles.forEach((irrelevantFile) => {
     t.false(foundFileCumulusIds.includes(irrelevantFile.cumulus_id));
-  })
+  });
 
   usedGranuleCumulusIds.forEach((usedGranuleCumulusId) => {
     t.true(foundGranuleCumulusIds.includes(usedGranuleCumulusId));
-  })
+  });
   unUsedGranuleCumulusIds.forEach((unUsedGranuleCumulusId) => {
     t.false(foundGranuleCumulusIds.includes(unUsedGranuleCumulusId));
-  })
+  });
 });
