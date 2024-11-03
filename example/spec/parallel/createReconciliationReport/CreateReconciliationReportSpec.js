@@ -172,10 +172,12 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     status: 'completed',
   });
 
-  await getGranuleWithStatus({ prefix,
+  await getGranuleWithStatus({
+    prefix,
     granuleId,
     collectionId: constructCollectionId(newCollection.name, newCollection.version),
-    status: 'completed' });
+    status: 'completed'
+  });
   return newCollection;
 };
 
@@ -272,8 +274,10 @@ async function updateGranuleFile(prefix, granule, regex, replacement) {
 const waitForCollectionRecordsInList = async (stackName, collectionIds, additionalQueryParams = {}) => await pWaitFor(
   async () => {
     // Verify the collection is returned when listing collections
-    const collsResp = await getCollections({ prefix: stackName,
-      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
+    const collsResp = await getCollections({
+      prefix: stackName,
+      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 }
+    });
     const results = get(JSON.parse(collsResp.body), 'results', []);
     const ids = results.map((c) => constructCollectionId(c.name, c.version));
     return isEqual(ids.sort(), collectionIds.sort());
@@ -398,7 +402,13 @@ describe('When there are granule differences and granule reconciliation is run',
         collectionId,
       });
       console.log('XXXXX Completed for getGranule()');
-      await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
+      await waitForGranuleRecordUpdatedInList(
+        config.stackName,
+        granuleBeforeUpdate,
+        {
+          includeFullRecord: 'true'
+        }
+      );
       console.log(`XXXXX Waiting for updateGranuleFile(${publishedGranuleId})`);
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(
         config.stackName,
@@ -414,8 +424,20 @@ describe('When there are granule differences and granule reconciliation is run',
       ]);
       console.log('XXXX Waiting for granules updated in list');
       await Promise.all([
-        waitForGranuleRecordUpdatedInList(config.stackName, dbGranule),
-        waitForGranuleRecordUpdatedInList(config.stackName, granuleAfterUpdate),
+        waitForGranuleRecordUpdatedInList(
+          config.stackName,
+          dbGranule,
+          {
+            includeFullRecord: 'true'
+          }
+        ),
+        waitForGranuleRecordUpdatedInList(
+          config.stackName,
+          granuleAfterUpdate,
+          {
+            includeFullRecord: 'true'
+          }
+        ),
       ]);
     } catch (error) {
       console.log(error);
