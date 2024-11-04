@@ -176,7 +176,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     prefix,
     granuleId,
     collectionId: constructCollectionId(newCollection.name, newCollection.version),
-    status: 'completed'
+    status: 'completed',
   });
   return newCollection;
 };
@@ -276,7 +276,7 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
     // Verify the collection is returned when listing collections
     const collsResp = await getCollections({
       prefix: stackName,
-      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 }
+      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 },
     });
     const results = get(JSON.parse(collsResp.body), 'results', []);
     const ids = results.map((c) => constructCollectionId(c.name, c.version));
@@ -406,7 +406,7 @@ describe('When there are granule differences and granule reconciliation is run',
         config.stackName,
         granuleBeforeUpdate,
         {
-          includeFullRecord: 'true'
+          includeFullRecord: 'true',
         }
       );
       console.log(`XXXXX Waiting for updateGranuleFile(${publishedGranuleId})`);
@@ -428,14 +428,14 @@ describe('When there are granule differences and granule reconciliation is run',
           config.stackName,
           dbGranule,
           {
-            includeFullRecord: 'true'
+            includeFullRecord: 'true',
           }
         ),
         waitForGranuleRecordUpdatedInList(
           config.stackName,
           granuleAfterUpdate,
           {
-            includeFullRecord: 'true'
+            includeFullRecord: 'true',
           }
         ),
       ]);
