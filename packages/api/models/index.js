@@ -6,6 +6,6 @@ const ReconciliationReport = require('./reconciliation-reports');
 
 module.exports = {
   AccessToken,
-  ReconciliationReport,
   Manager,
+  ReconciliationReport,
 };

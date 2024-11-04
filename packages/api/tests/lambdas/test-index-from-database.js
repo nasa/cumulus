@@ -21,57 +21,37 @@ const {
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
+  fakeReconciliationReportRecordFactory,
   fakePdrRecordFactory,
   fakeProviderRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
   migrationDir,
+  ReconciliationReportPgModel,
   PdrPgModel,
   ProviderPgModel,
   translatePostgresCollectionToApiCollection,
   translatePostgresExecutionToApiExecution,
   translatePostgresGranuleToApiGranule,
+  translatePostgresReconReportToApiReconReport,
   translatePostgresPdrToApiPdr,
   translatePostgresProviderToApiProvider,
 } = require('@cumulus/db');
 
-const {
-  fakeReconciliationReportFactory,
-} = require('../../lib/testUtils');
-
-const models = require('../../models');
 const indexFromDatabase = require('../../lambdas/index-from-database');
 const {
   getWorkflowList,
 } = require('../../lib/testUtils');
 
 const workflowList = getWorkflowList();
-process.env.ReconciliationReportsTable = randomString();
-const reconciliationReportModel = new models.ReconciliationReport();
 
 // create all the variables needed across this test
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
-const reconciliationReportsTable = process.env.ReconciliationReportsTable;
-
 function sortAndFilter(input, omitList, sortKey) {
   return input.map((r) => omit(r, omitList))
     .sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : -1));
-}
-
-async function addFakeDynamoData(numItems, factory, model, factoryParams = {}) {
-  const items = [];
-
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < numItems; i += 1) {
-    const item = factory(factoryParams);
-    items.push(item);
-    await model.create(item);
-  }
-  /* eslint-enable no-await-in-loop */
-
-  return items;
 }
 
 async function addFakeData(knex, numItems, factory, model, factoryParams = {}) {
@@ -92,7 +72,6 @@ test.before(async (t) => {
   t.context.esIndices = [];
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
-  await reconciliationReportModel.createTable();
 
   const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
   const tKey = `${process.env.stackName}/workflow_template.json`;
@@ -220,7 +199,6 @@ test('No error is thrown if nothing is in the database', async (t) => {
 
   await t.notThrowsAsync(() => indexFromDatabase.indexFromDatabase({
     indexName: esAlias,
-    reconciliationReportsTable,
     knex,
   }));
 });
@@ -272,10 +250,12 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
     ...dateObject,
   });
 
-  const fakeReconciliationReportRecords = await addFakeDynamoData(
+  const fakeReconciliationReportRecords = await addFakeData(
+    knex,
     numItems,
-    fakeReconciliationReportFactory,
-    reconciliationReportModel
+    fakeReconciliationReportRecordFactory,
+    new ReconciliationReportPgModel(),
+    dateObject
   );
 
   await indexFromDatabase.handler({
@@ -308,6 +288,9 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
         granulePgRecord: r,
         knexOrTransaction: knex,
       }))
+  );
+  const reconciliationReportResults = await Promise.all(
+    fakeReconciliationReportRecords.map((r) => translatePostgresReconReportToApiReconReport(r))
   );
   const pdrResults = await Promise.all(
     fakePdrRecords.map((r) => translatePostgresPdrToApiPdr(r, knex))
@@ -346,7 +329,7 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
 
   t.deepEqual(
     sortAndFilter(searchResults[5].results, ['timestamp'], 'name'),
-    sortAndFilter(fakeReconciliationReportRecords, ['timestamp'], 'name')
+    sortAndFilter(reconciliationReportResults, ['timestamp'], 'name')
   );
 });
 
@@ -386,7 +369,6 @@ test.serial('failure in indexing record of specific type should not prevent inde
   try {
     await indexFromDatabase.handler({
       indexName: esAlias,
-      reconciliationReportsTable,
       knex,
     });
 
@@ -463,7 +445,6 @@ test.serial(
     try {
       await indexFromDatabase.handler({
         indexName: esAlias,
-        reconciliationReportsTable,
         knex,
       });
 
