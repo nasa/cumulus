@@ -38,7 +38,12 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
  * @property {string} reason
  */
 
-/** @typedef { import('@cumulus/db').PostgresGranuleRecord } PostgresGranuleRecord */
+/**
+ * @typedef { import('@cumulus/db').PostgresGranuleRecord } PostgresGranuleRecord
+ * @typedef {import('../../lib/types').EnhancedNormalizedRecReportParams }
+ * EnhancedNormalizedRecReportParams
+ */
+
 /**
  * @typedef {Object} GranuleReport
  * @property {boolean} ok
@@ -98,8 +103,7 @@ const fileConflictTypes = {
 /**
  * Fetch orca configuration for all or specified collections
  *
- * @param {Object} recReportParams - input report params
- * @param {String[]} recReportParams.collectionIds - array of collectionIds
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - input report params
  * @returns {Promise<CollectionConfig>} - list of { collectionId, orca configuration }
  */
 async function fetchCollectionsConfig(recReportParams) {
@@ -354,8 +358,7 @@ async function addGranuleToReport({
 /**
  * Compare the granule holdings in Cumulus with ORCA
  *
- * @param {Object} recReportParams - input report params
- * @param {String[]} recReportParams.collectionIds - array of collectionIds
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - input report params
  * @returns {Promise<Object>} an object with the okCount, onlyInCumulus, onlyInOrca
  * and withConfilcts
  */
@@ -496,17 +499,7 @@ async function orcaReconciliationReportForGranules(recReportParams) {
 /**
  * Create an ORCA Backup Reconciliation report and save it to S3
  *
- * @param {Object} recReportParams - params
- * @param {Object} recReportParams.collectionIds - array of collectionIds
- * @param {Object} recReportParams.providers - array of providers
- * @param {Object} recReportParams.granuleIds - array of granuleIds
- * @param {Object} recReportParams.reportType - the report type
- * @param {moment} recReportParams.createStartTime - when the report creation was begun
- * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
- * @param {string} recReportParams.reportKey - the s3 report key
- * @param {string} recReportParams.stackName - the name of the CUMULUS stack
- * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
- * @param {string} recReportParams.systemBucket - the name of the CUMULUS system bucket
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - params
  * @returns {Promise<void>} a Promise that resolves when the report has been
  *   uploaded to S3
  */

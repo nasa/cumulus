@@ -354,6 +354,33 @@ const ruleMapping : { [key: string]: Function } = {
   }),
 };
 
+const reconciliationReportMapping: { [key: string]: Function } = {
+  name: (value?: string) => ({
+    name: value,
+  }),
+  type: (value?: string) => ({
+    type: value,
+  }),
+  status: (value?: string) => ({
+    status: value,
+  }),
+  location: (value?: string) => ({
+    location: value,
+  }),
+  error: (value?: string) => ({
+    error: value,
+  }),
+  createdAt: (value?: string) => ({
+    created_at: value && new Date(Number(value)),
+  }),
+  updatedAt: (value?: string) => ({
+    updated_at: value && new Date(Number(value)),
+  }),
+  timestamp: (value?: string) => ({
+    updated_at: value && new Date(Number(value)),
+  }),
+};
+
 // type and its mapping
 const supportedMappings: { [key: string]: any } = {
   granule: granuleMapping,
@@ -363,6 +390,7 @@ const supportedMappings: { [key: string]: any } = {
   pdr: pdrMapping,
   provider: providerMapping,
   rule: ruleMapping,
+  reconciliationReport: reconciliationReportMapping,
 };
 
 /**

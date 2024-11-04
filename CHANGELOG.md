@@ -40,25 +40,81 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
 - **CUMULUS-3806**
+  - Update `@cumulus/db/search` to allow for ordered collation as a
+    dbQueryParameter
+  - Update `@cumulus/db/search` to allow `dbQueryParameters.limit` to be set to
+    `null` to allow for optional unlimited page sizes in search results
+  - Update/add type annotations/logic fixes to `@cumulus/api` reconciliation report code
+  - Annotation/typing fixes to `@cumulus/cmr-client`
+  - Typing fixes to `@cumulus/db`
+  - Re-enable Reconciliation Report integration tests
+  - Update `@cumulus/client/CMR.getToken` to throw if a non-launchpad token is requested without a username
+  - Update `Inventory` and `Granule Not Found` reports to query postgreSQL
+    database instead of elasticsearch
+  - Update `@cumulus/db/lib/granule.getGranulesByApiPropertiesQuery` to
+    allow order by collation to be optionally specified
   - Update `@cumulus/db/lib/granule.getGranulesByApiPropertiesQuery` to
     be parameterized and include a modifier on `temporalBoundByCreatedAt`
   - Remove endpoint call to and all tests for Internal Reconciliation Reports
     and updated API to throw an error if report is requested
   - Update Orca reconciliation reports to pull granules for comparison from
     postgres via `getGranulesByApiPropertiesQuery`
-- **CUMULUS-3833**
-  - Added `ReconciliationReportMigration` lambda to migrate ReconciliationReports from DynamoDB
-    to Postgres
 - **CUMULUS-3837**
   - Added `reconciliation_reports` table in RDS, including indexes
   - Created pg model, types, and translation for `reconciliationReports` in `@cumulus/db`
+- **CUMULUS-3833**
   - Created api types for `reconciliation_reports` in `@cumulus/types/api`
   - Updated reconciliation reports lambda to write to new RDS table instead of Dynamo
   - Updated `@cumulus/api/endpoints/reconciliation-reports` `getReport` and `deleteReport` to work with the new RDS table instead of Dynamo
+- **CUMULUS-3718**
+  - Updated `reconciliation_reports` list api endpoint and added `ReconciliationReportSearch` class to query postgres
+  - Added `reconciliationReports` type to stats endpoint, so `aggregate` query will work for reconciliation reports
+- **CUMULUS-3859**
+  - Updated `@cumulus/api/bin/serveUtils` to no longer add records to ElasticSearch
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **CUMULUS-2564**
+  - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
+    This modifies the task behavior to stage granules to
+    `<staging_path>/<collection_id>/<md5_granuleIdHash>` to allow for better S3
+    partitioning/performance for large collections.
+    Because of this benefit
+    the default has been set to `true`, however as sync-granules relies on
+    object name collision, this configuration changes the duplicate collision
+    behavior of sync-granules to be per-granule-id instead of per-collection
+    when active.
+    If the prior behavior is desired, please add `"useGranIdPath": true` to your
+    task config in your workflow definitions that use `sync-granule`.
+
+
+### Added
+
+- **CUMULUS-3919**
+  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
+
+### Changed
+
+- **CUMULUS-3931**
+  - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
+    new task deployment on terraform redeploy.   See docs for more details:
+    https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
+
+### Fixed
+
+- **CUMULUS-3876**
+  - Fixed `s3-replicator` lambda cross region write failure
+  - Added `target_region` variable to `tf-modules/s3-replicator` module
+
+## [v19.1.0] 2024-10-07
+
 ### Migration Notes
+
+This release contains changes listed here as well as changes listed in v19.0.0,
+despite v19.0.0 being deprecated. Please review Changelog entries and Migration Notes for
+each Cumulus version between your current version and v19.1.0 as normal.
 
 ### Added
 
@@ -75,15 +131,38 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
   - This is to allow files matching specified regex to be excluded when updating the Related URLs list
   - Defaults to the current behavior of excluding no files.
+- **CUMULUS-3773**
+  - Added sftpFastDownload configuration to SyncGranule task.
+  - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
+  - Added sftp support to FakeProvider
+  - Added sftp integration test
 
 ### Changed
 
+- **CUMULUS-3928**
+  - updated publish scripting to use cumulus.bot@gmail.com for user email
+  - updated publish scripting to use esm over common import of latest-version
+  - updated bigint testing to remove intermitted failure source.
+  - updated postgres dependency version
+- **CUMULUS-3838**
+  - Updated python dependencies to latest:
+    - cumulus-process-py 1.4.0
+    - cumulus-message-adapter-python 2.3.0
+- **CUMULUS-3906**
+  - Bumps example ORCA deployment to version v10.0.1.
+
 ### Fixed
 
+- **CUMULUS-3904**
+  - Passed sqs_message_consumer_watcher_message_limit and sqs_message_consumer_watcher_time_limit through the cumulus terraform module to the ingest terraform module.
 - **CUMULUS-3902**
   - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
 
 ## [v19.0.0] 2024-08-28
+
+### Deprecated
+This release has been deprecated in favor of the 18.5->19.1 release series. The changes
+listed here are still valid and also contained in the v19.1.0 release and beyond.
 
 ### Breaking Changes
 
@@ -141,6 +220,44 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
   - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
+
+## [v18.5.1] 2024-10-25
+
+**Please note** changes in v18.5.1 may not yet be released in future versions, as this
+is a backport/patch release on the v18.5.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-3773**
+  - Added sftpFastDownload configuration to SyncGranule task.
+  - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
+  - Added sftp support to FakeProvider
+  - Added sftp integration test
+- **CUMULUS-3756**
+  - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
+  - This is to allow files matching specified regex to be excluded when updating the Related URLs list
+  - Defaults to the current behavior of excluding no files.
+- **CUMULUS-3919**
+  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
+
+### Changed
+
+- **CUMULUS-3928**
+  - updated publish scripting to use cumulus.bot@gmail.com for user email
+  - updated publish scripting to use esm over common import of latest-version
+  - updated bigint testing to remove intermitted failure source.
+  - updated postgres dependency version
+- **CUMULUS-3838**
+  - Updated python dependencies to latest:
+    - cumulus-process-py 1.4.0
+    - cumulus-message-adapter-python 2.3.0
+
+### Fixed
+
+- **CUMULUS-3902**
+  - Update error handling to use AWS SDK V3 error classes instead of properties
+    on js objects
 
 ## [v18.5.0] 2024-10-03
 
@@ -8155,8 +8272,11 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v19.0.0...HEAD
+
+[Unreleased]: https://github.com/nasa/cumulus/compare/v19.1.0...HEAD
+[v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
 [v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.0...v19.0.0
+[v18.5.1]: https://github.com/nasa/cumulus/compare/v18.5.0...v18.5.1
 [v18.5.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v18.5.0
 [v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.4...v18.4.0
 [v18.3.4]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.3.4

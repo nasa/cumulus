@@ -728,6 +728,53 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by provide
   );
 });
 
+test.serial('getGranulesByApiPropertiesQuery returns results POSIX/ASCII sorted when collition is set to "C"', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+    providerPgModel,
+  } = t.context;
+
+  const fakeProvider = fakeProviderRecordFactory();
+  const [provider] = await providerPgModel.create(knex, fakeProvider);
+
+  const granules = await granulePgModel.insert(
+    knex,
+    [
+      fakeGranuleRecordFactory({
+        collection_cumulus_id: collectionCumulusId,
+        provider_cumulus_id: provider.cumulus_id,
+        status: 'completed',
+        granule_id: 'MYDGRANULE',
+      }),
+      fakeGranuleRecordFactory({
+        collection_cumulus_id: collectionCumulusId,
+        provider_cumulus_id: provider.cumulus_id,
+        status: 'completed',
+        granule_id: 'lowerCaseGranuleShouldGoLast',
+      }),
+    ],
+    '*'
+  );
+  t.teardown(() => Promise.all(granules.map(
+    (granule) =>
+      granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id })
+  )));
+  const query = getGranulesByApiPropertiesQuery({
+    knex,
+    searchParams: {
+      collate: 'C',
+      status: 'completed',
+    },
+    sortByFields: ['granule_id'],
+  });
+  const records = await query;
+  t.is(records.length, 2);
+  t.is(records[0].granule_id, 'MYDGRANULE');
+  t.is(records[1].granule_id, 'lowerCaseGranuleShouldGoLast');
+});
+
 test.serial('getGranulesByApiPropertiesQuery returns correct granules by status', async (t) => {
   const {
     collectionCumulusId,
