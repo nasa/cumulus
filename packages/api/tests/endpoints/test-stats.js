@@ -9,12 +9,6 @@ const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const models = require('../../models');
-const {
-  createFakeJwtAuthToken,
-  setAuthorizedOAuthUsers,
-} = require('../../lib/testUtils');
-
 const {
   destroyLocalTestDb,
   generateLocalTestDb,
@@ -24,7 +18,15 @@ const {
   fakeGranuleRecordFactory,
   migrationDir,
   localStackConnectionEnv,
-} = require('../../../db/dist');
+  fakeReconciliationReportRecordFactory,
+  ReconciliationReportPgModel,
+} = require('@cumulus/db');
+
+const models = require('../../models');
+const {
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers,
+} = require('../../lib/testUtils');
 
 const testDbName = randomId('collection');
 
@@ -74,41 +76,39 @@ test.before(async (t) => {
 
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.granulePgModel = new GranulePgModel();
+  t.context.reconciliationReportPgModel = new ReconciliationReportPgModel();
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
   const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
-  const granules = [];
-  const collections = [];
+  const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory', 'ORCA Backup'];
+  const reconReportStatuses = ['Generated', 'Pending', 'Failed'];
 
-  range(20).map((num) => (
-    collections.push(fakeCollectionRecordFactory({
-      name: `testCollection${num}`,
-      cumulus_id: num,
-    }))
-  ));
+  const collections = range(20).map((num) => fakeCollectionRecordFactory({
+    name: `testCollection${num}`,
+    cumulus_id: num,
+  }));
 
-  range(100).map((num) => (
-    granules.push(fakeGranuleRecordFactory({
-      collection_cumulus_id: num % 20,
-      status: statuses[num % 4],
-      created_at: num === 99
-        ? new Date() : (new Date(2018 + (num % 6), (num % 12), (num % 30))),
-      updated_at: num === 99
-        ? new Date() : (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
-      error: errors[num % 5],
-      duration: num + (num / 10),
-    }))
-  ));
+  const granules = range(100).map((num) => fakeGranuleRecordFactory({
+    collection_cumulus_id: num % 20,
+    status: statuses[num % 4],
+    created_at: num === 99
+      ? new Date() : (new Date(2018 + (num % 6), (num % 12), (num % 30))),
+    updated_at: num === 99
+      ? new Date() : (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
+    error: errors[num % 5],
+    duration: num + (num / 10),
+  }));
 
-  await t.context.collectionPgModel.insert(
-    t.context.knex,
-    collections
-  );
+  const reconReports = range(24).map((num) => fakeReconciliationReportRecordFactory({
+    type: reconReportTypes[num % 4],
+    status: reconReportStatuses[num % 3],
+    created_at: (new Date(2024 + (num % 6), (num % 12), (num % 30))),
+    updated_at: (new Date(2024 + (num % 6), (num % 12), ((num + 1) % 29))),
+  }));
 
-  await t.context.granulePgModel.insert(
-    t.context.knex,
-    granules
-  );
+  await t.context.collectionPgModel.insert(t.context.knex, collections);
+  await t.context.granulePgModel.insert(t.context.knex, granules);
+  await t.context.reconciliationReportPgModel.insert(t.context.knex, reconReports);
 });
 
 test.after.always(async (t) => {
@@ -187,6 +187,12 @@ test('getType gets correct type for providers', (t) => {
   t.is(type, 'provider');
 });
 
+test('getType gets correct type for reconciliation reports', (t) => {
+  const type = getType({ params: { type: 'reconciliationReports' } });
+
+  t.is(type, 'reconciliationReport');
+});
+
 test('getType returns undefined if type is not supported', (t) => {
   const type = getType({ params: { type: 'provide' } });
 
@@ -237,7 +243,7 @@ test('GET /stats returns correct response with date params filters values correc
   t.is(response.body.granules.value, 17);
 });
 
-test('GET /stats/aggregate returns correct response', async (t) => {
+test('GET /stats/aggregate with type `granules` returns correct response', async (t) => {
   const response = await request(app)
     .get('/stats/aggregate?type=granules')
     .set('Accept', 'application/json')
@@ -254,7 +260,7 @@ test('GET /stats/aggregate returns correct response', async (t) => {
   t.deepEqual(response.body.count, expectedCount);
 });
 
-test('GET /stats/aggregate filters correctly by date', async (t) => {
+test('GET /stats/aggregate with type `granules` filters correctly by date', async (t) => {
   const response = await request(app)
     .get(`/stats/aggregate?type=granules&timestamp__from=${(new Date(2020, 11, 28)).getTime()}&timestamp__to=${(new Date(2023, 8, 30)).getTime()}`)
     .set('Accept', 'application/json')
@@ -268,5 +274,40 @@ test('GET /stats/aggregate filters correctly by date', async (t) => {
     { key: 'running', count: 8 },
   ];
   t.is(response.body.meta.count, 40);
+  t.deepEqual(response.body.count, expectedCount);
+});
+
+test('GET /stats/aggregate with type `reconciliationReports` and field `type` returns the correct response', async (t) => {
+  const response = await request(app)
+    .get('/stats/aggregate?type=reconciliationReports&field=type')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const expectedCount = [
+    { key: 'Granule Inventory', count: 6 },
+    { key: 'Granule Not Found', count: 6 },
+    { key: 'Inventory', count: 6 },
+    { key: 'ORCA Backup', count: 6 },
+  ];
+
+  t.is(response.body.meta.count, 24);
+  t.deepEqual(response.body.count, expectedCount);
+});
+
+test('GET /stats/aggregate with type `reconciliationReports` and field `status` returns the correct response', async (t) => {
+  const response = await request(app)
+    .get('/stats/aggregate?type=reconciliationReports&field=status')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const expectedCount = [
+    { key: 'Failed', count: 8 },
+    { key: 'Generated', count: 8 },
+    { key: 'Pending', count: 8 },
+  ];
+
+  t.is(response.body.meta.count, 24);
   t.deepEqual(response.body.count, expectedCount);
 });
