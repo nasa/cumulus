@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     object name collision, this configuration changes the duplicate collision
     behavior of sync-granules to be per-granule-id instead of per-collection
     when active.
-    If the prior behavior is desired, please add `"useGranIdPath": true` to your
+    If the prior behavior is desired, please add `"useGranIdPath": false` to your
     task config in your workflow definitions that use `sync-granule`.
 
 ### Added
