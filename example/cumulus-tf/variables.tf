@@ -107,7 +107,7 @@ variable "data_persistence_remote_state_config" {
 }
 
 variable "s3_replicator_config" {
-  type        = object({ source_bucket = string, source_prefix = string, target_bucket = string, target_prefix = string })
+  type        = object({ source_bucket = string, source_prefix = string, target_bucket = string, target_prefix = string, target_region = string })
   default     = null
   description = "Configuration for the s3-replicator module. Items with prefix of source_prefix in the source_bucket will be replicated to the target_bucket with target_prefix."
 }
@@ -392,18 +392,6 @@ variable "orca_dlq_subscription_email" {
   type        = string
   description = "The email to notify users when messages are received in dead letter SQS queue due to orca restore failure."
   default = "test@email.com"
-}
-
-variable "orca_s3_access_key" {
-  type        = string
-  description = "Access key for communicating with Orca S3 buckets."
-  default = ""
-}
-
-variable "orca_s3_secret_key" {
-  type        = string
-  description = "Secret key for communicating with Orca S3 buckets."
-  default = ""
 }
 
 variable "lambda_timeouts" {

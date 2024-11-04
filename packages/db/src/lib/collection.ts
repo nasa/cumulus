@@ -1,6 +1,8 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
 
+import { deconstructCollectionId } from '@cumulus/message/Collections';
+
 import { RetryOnDbConnectionTerminateError } from './retry';
 import { TableNames } from '../tables';
 
@@ -26,4 +28,57 @@ export const getCollectionsByGranuleIds = async (
     .whereIn(`${granulesTable}.granule_id`, granuleIds)
     .groupBy(`${collectionsTable}.cumulus_id`);
   return await RetryOnDbConnectionTerminateError(query, {}, log);
+};
+
+// TODO - This function is going to be super-non-performant
+// We need to identify the specific need here and see if we can optimize
+
+export const getUniqueCollectionsByGranuleFilter = async (params: {
+  startTimestamp?: string,
+  endTimestamp?: string,
+  collectionIds?: string[],
+  granuleIds?: string[],
+  providers?: string[],
+  knex: Knex,
+}) => {
+  const { knex } = params;
+  const collectionsTable = TableNames.collections;
+  const granulesTable = TableNames.granules;
+  const providersTable = TableNames.providers;
+
+  const query = knex(collectionsTable)
+    .distinct(`${collectionsTable}.*`)
+    .innerJoin(granulesTable, `${collectionsTable}.cumulus_id`, `${granulesTable}.collection_cumulus_id`);
+
+  if (params.startTimestamp) {
+    query.where(`${granulesTable}.updated_at`, '>=', params.startTimestamp);
+  }
+  if (params.endTimestamp) {
+    query.where(`${granulesTable}.updated_at`, '<=', params.endTimestamp);
+  }
+
+  // Filter by collectionIds
+  if (params.collectionIds && params.collectionIds.length > 0) {
+    const collectionNameVersionPairs = params.collectionIds.map((id) =>
+      deconstructCollectionId(id));
+
+    query.whereIn(
+      [`${collectionsTable}.name`, `${collectionsTable}.version`],
+      collectionNameVersionPairs.map(({ name, version }) => [name, version])
+    );
+  }
+
+  // Filter by granuleIds
+  if (params.granuleIds && params.granuleIds.length > 0) {
+    query.whereIn(`${granulesTable}.granule_id`, params.granuleIds);
+  }
+
+  // Filter by provider names
+  if (params.providers && params.providers.length > 0) {
+    query.innerJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    query.whereIn(`${providersTable}.name`, params.providers);
+  }
+
+  query.orderBy([`${collectionsTable}.name`, `${collectionsTable}.version`]);
+  return query;
 };

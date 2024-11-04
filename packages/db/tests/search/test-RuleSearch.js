@@ -106,30 +106,21 @@ test.before(async (t) => {
     updatedAt: new Date(2018, 0, 1),
     updatedAt2: new Date(2018, 0, 2),
   };
-
-  const rules = [];
   t.context.rulePgModel = new RulePgModel();
-
-  range(50).map((num) => (
-    rules.push(fakeRuleRecordFactory({
-      name: `fakeRule-${num}`,
-      created_at: t.context.ruleSearchFields.createdAt,
-      updated_at: (num % 2) ?
-        t.context.ruleSearchFields.updatedAt : t.context.ruleSearchFields.updatedAt2,
-      enabled: num % 2 === 0,
-      workflow: `testWorkflow-${num}`,
-      queue_url: (num % 2) ? 'https://sqs.us-east-1.amazonaws.com/123/456' : null,
-      collection_cumulus_id: (num % 2)
-        ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
-      provider_cumulus_id: (num % 2)
-        ? t.context.providerCumulusId : t.context.providerCumulusId2,
-    }))
-  ));
-
-  await t.context.rulePgModel.insert(
-    t.context.knex,
-    rules
-  );
+  const rules = range(50).map((num) => fakeRuleRecordFactory({
+    name: `fakeRule-${num}`,
+    created_at: t.context.ruleSearchFields.createdAt,
+    updated_at: (num % 2) ?
+      t.context.ruleSearchFields.updatedAt : t.context.ruleSearchFields.updatedAt2,
+    enabled: num % 2 === 0,
+    workflow: `testWorkflow-${num}`,
+    queue_url: (num % 2) ? 'https://sqs.us-east-1.amazonaws.com/123/456' : null,
+    collection_cumulus_id: (num % 2)
+      ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
+    provider_cumulus_id: (num % 2)
+      ? t.context.providerCumulusId : t.context.providerCumulusId2,
+  }));
+  await t.context.rulePgModel.insert(t.context.knex, rules);
 });
 
 test.after.always(async (t) => {
@@ -139,7 +130,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('RuleSearch returns correct response for basic query', async (t) => {
+test('RuleSearch returns the correct response for a basic query', async (t) => {
   const { knex } = t.context;
   const dbSearch = new RuleSearch({});
   const results = await dbSearch.query(knex);
@@ -183,7 +174,7 @@ test('RuleSearch returns correct response for basic query', async (t) => {
   t.deepEqual(results.results[9], expectedResponse10);
 });
 
-test('RuleSearchsupports page and limit params', async (t) => {
+test('RuleSearch supports page and limit params', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 25,
