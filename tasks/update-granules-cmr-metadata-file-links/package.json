@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/update-granules-cmr-metadata-file-links",
-  "version": "19.1.0",
+  "version": "19.2.0-alpha.0",
   "description": "Update CMR metadata files with correct online access urls and etags and transfer etag info to granules' CMR files",
   "main": "index.js",
   "directories": {
@@ -40,16 +40,16 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "19.1.0",
-    "@cumulus/cmrjs": "19.1.0",
-    "@cumulus/common": "19.1.0",
+    "@cumulus/aws-client": "19.2.0-alpha.0",
+    "@cumulus/cmrjs": "19.2.0-alpha.0",
+    "@cumulus/common": "19.2.0-alpha.0",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
-    "@cumulus/distribution-utils": "19.1.0",
-    "@cumulus/logger": "19.1.0",
+    "@cumulus/distribution-utils": "19.2.0-alpha.0",
+    "@cumulus/logger": "19.2.0-alpha.0",
     "lodash": "^4.17.15"
   },
   "devDependencies": {
     "@cumulus/aws-client": "19.1.0",
-    "@cumulus/schemas": "19.1.0"
+    "@cumulus/schemas": "19.2.0-alpha.0"
   }
 }
