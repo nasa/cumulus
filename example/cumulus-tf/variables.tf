@@ -107,7 +107,7 @@ variable "data_persistence_remote_state_config" {
 }
 
 variable "s3_replicator_config" {
-  type        = object({ source_bucket = string, source_prefix = string, target_bucket = string, target_prefix = string })
+  type        = object({ source_bucket = string, source_prefix = string, target_bucket = string, target_prefix = string, target_region = string })
   default     = null
   description = "Configuration for the s3-replicator module. Items with prefix of source_prefix in the source_bucket will be replicated to the target_bucket with target_prefix."
 }
