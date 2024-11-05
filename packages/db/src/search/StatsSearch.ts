@@ -59,6 +59,7 @@ const infixMapping: { [key: string]: string } = {
   providers: 'name',
   executions: 'arn',
   pdrs: 'name',
+  reconciliationReports: 'name',
 };
 
 /**
@@ -241,7 +242,7 @@ class StatsSearch extends BaseSearch {
       searchQuery.whereLike(`${this.tableName}.${fieldName}`, `%${infix}%`);
     }
     if (prefix) {
-      searchQuery.whereLike(`${this.tableName}.${fieldName}`, `%${prefix}%`);
+      searchQuery.whereLike(`${this.tableName}.${fieldName}`, `${prefix}%`);
     }
   }
 

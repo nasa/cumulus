@@ -18,14 +18,9 @@ import { getExecutionInfoByGranuleCumulusIds } from '../lib/execution';
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
 interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
-  cumulus_id: number,
-  updated_at: Date,
-  collection_cumulus_id: number,
   collectionName: string,
   collectionVersion: string,
-  pdr_cumulus_id: number,
   pdrName?: string,
-  provider_cumulus_id?: number,
   providerName?: string,
 }
 
@@ -123,10 +118,12 @@ export class GranuleSearch extends BaseSearch {
     : Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
+    const { fields, includeFullRecord } = this.dbQueryParameters;
+
     const fileMapping: { [key: number]: PostgresFileRecord[] } = {};
     const executionMapping: { [key: number]: { url: string, granule_cumulus_id: number } } = {};
     const cumulusIds = pgRecords.map((record) => record.cumulus_id);
-    if (this.dbQueryParameters.includeFullRecord) {
+    if (includeFullRecord) {
       //get Files
       const fileModel = new FilePgModel();
       const files = await fileModel.searchByGranuleCumulusIds(knex, cumulusIds);
@@ -169,9 +166,7 @@ export class GranuleSearch extends BaseSearch {
         files: fileRecords,
         executionUrls,
       });
-      return this.dbQueryParameters.fields
-        ? pick(apiRecord, this.dbQueryParameters.fields)
-        : apiRecord;
+      return fields ? pick(apiRecord, fields) : apiRecord;
     });
     return apiRecords;
   }

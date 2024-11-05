@@ -78,8 +78,6 @@ process.env.TOKEN_SECRET = randomId('secret');
 test.before(async (t) => {
   process.env = {
     ...process.env,
-    ...localStackConnectionEnv,
-    PG_DATABASE: testDbName,
     METRICS_ES_HOST: 'fakehost',
     METRICS_ES_USER: randomId('metricsUser'),
     METRICS_ES_PASS: randomId('metricsPass'),
