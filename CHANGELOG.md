@@ -93,8 +93,10 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 ### Added
 
 - **CUMULUS-3698**
-  - GranuleSearch now retrieves associated files for granules
-  - GranuleSearch now retrieves latest associated execution for granules
+  - GranuleSearch now can retrieve associated files for granules
+  - GranuleSearch now can retrieve latest associated execution for granules
+  - GranuleSearch retrieving files/execution is toggled
+      by setting "includeFullRecord" field to 'true' in relevant api endpoint params
 - **CUMULUS-3919**
   - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 
