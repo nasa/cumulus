@@ -18,7 +18,7 @@ test.before(async () => {
   await esClient.initializeEsClient();
 });
 
-test('bootstrap creates index with alias', async (t) => {
+test.serial('bootstrap creates index with alias', async (t) => {
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
 
@@ -61,7 +61,7 @@ test.serial('bootstrap creates index with specified number of shards', async (t)
   }
 });
 
-test('bootstrap adds alias to existing index', async (t) => {
+test.serial('bootstrap adds alias to existing index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -83,7 +83,7 @@ test('bootstrap adds alias to existing index', async (t) => {
   await esClient.client.indices.delete({ index: indexName });
 });
 
-test('Missing types added to index', async (t) => {
+test.serial('Missing types added to index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -111,7 +111,7 @@ test('Missing types added to index', async (t) => {
   await esClient.client.indices.delete({ index: indexName });
 });
 
-test('Missing fields added to index', async (t) => {
+test.serial('Missing fields added to index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -139,7 +139,7 @@ test('Missing fields added to index', async (t) => {
   await esClient.client.indices.delete({ index: indexName });
 });
 
-test('If an index exists with the alias name, it is deleted on bootstrap', async (t) => {
+test.serial('If an index exists with the alias name, it is deleted on bootstrap', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -164,7 +164,7 @@ test('If an index exists with the alias name, it is deleted on bootstrap', async
   await esClient.client.indices.delete({ index: indexName });
 });
 
-test('If an index exists with the alias name, and removeAliasConflict is set to false it is deleted on bootstrap', async (t) => {
+test.serial('If an index exists with the alias name, and removeAliasConflict is set to false it is deleted on bootstrap', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
@@ -182,7 +182,7 @@ test('If an index exists with the alias name, and removeAliasConflict is set to 
   }), { message: 'Aborting ES recreation as configuration does not allow removal of index' });
 });
 
-test('If an alias exists that index is used and a new one is not created', async (t) => {
+test.serial('If an alias exists that index is used and a new one is not created', async (t) => {
   const indexName = randomId('index');
   const existingIndex = randomId('index');
   const existingAlias = randomId('esalias');
