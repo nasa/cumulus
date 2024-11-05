@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     object name collision, this configuration changes the duplicate collision
     behavior of sync-granules to be per-granule-id instead of per-collection
     when active.
-    If the prior behavior is desired, please add `"useGranIdPath": true` to your
+    If the prior behavior is desired, please add `"useGranIdPath": false` to your
     task config in your workflow definitions that use `sync-granule`.
 
 
@@ -33,6 +33,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
     new task deployment on terraform redeploy.   See docs for more details:
     https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
+
+### Fixed
+
+- **CUMULUS-3933**
+  - Update example/bamboo/integration-tests.sh to properly exit if lock-stack
+    errors/detects another stack lock
+- **CUMULUS-3876**
+  - Fixed `s3-replicator` lambda cross region write failure
+  - Added `target_region` variable to `tf-modules/s3-replicator` module
 
 ## [v19.1.0] 2024-10-07
 
@@ -79,9 +88,8 @@ each Cumulus version between your current version and v19.1.0 as normal.
 
 ### Fixed
 
-- **CUMULUS-3933**
-  - Update example/bamboo/integration-tests.sh to properly exit if lock-stack
-    errors/detects another stack lock
+- **CUMULUS-3904**
+  - Passed sqs_message_consumer_watcher_message_limit and sqs_message_consumer_watcher_time_limit through the cumulus terraform module to the ingest terraform module.
 - **CUMULUS-3902**
   - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
 
