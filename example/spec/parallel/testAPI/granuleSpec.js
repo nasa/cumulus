@@ -50,7 +50,6 @@ describe('The Granules API', () => {
   let prefix;
   let putReplaceGranule;
   let randomGranuleRecord;
-  let randomBareGranuleRecord;
   let updatedGranuleFromApi;
 
   beforeAll(async () => {
@@ -102,14 +101,6 @@ describe('The Granules API', () => {
         execution: undefined,
         files: [granuleFile],
       }));
-      randomBareGranuleRecord = removeNilProperties(fakeGranuleFactoryV2({
-        collectionId,
-        published: false,
-        dataType: undefined,
-        version: undefined,
-        execution: undefined,
-        files: [],
-      }));
       console.log('granule record: %j', randomGranuleRecord);
 
       granuleId = randomGranuleRecord.granuleId;
@@ -120,7 +111,6 @@ describe('The Granules API', () => {
 
   afterAll(async () => {
     await deleteExecution({ prefix, executionArn: executionRecord.arn });
-    await deleteGranule({ prefix, granuleId: randomBareGranuleRecord.granuleId, collectionId: randomBareGranuleRecord.collectionId });
     await deleteGranule({ prefix, granuleId: granule1.granuleId, collectionId: granule1.collectionId });
     await deleteGranule({ prefix, granuleId: invalidModifiedGranule.granuleId, collectionId: invalidModifiedGranule.collectionId });
     await deleteGranule({ prefix, granuleId: putReplaceGranule.granuleId, collectionId: putReplaceGranule.collectionId });
@@ -165,10 +155,6 @@ describe('The Granules API', () => {
       expect(response.statusCode).toBe(200);
       const { message } = JSON.parse(response.body);
       expect(message).toBe(`Successfully wrote granule with Granule Id: ${granuleId}, Collection Id: ${collectionId}`);
-      await createGranule({
-        prefix,
-        body: randomBareGranuleRecord,
-      });
     });
 
     it('can discover the granule directly via the API.', async () => {
@@ -192,12 +178,15 @@ describe('The Granules API', () => {
       const searchResults = await waitForListGranulesResult({
         prefix,
         query: {
-          granuleId: randomBareGranuleRecord.granuleId,
+          granuleId: randomGranuleRecord.granuleId,
         },
       });
 
       const searchedGranule = JSON.parse(searchResults.body).results[0];
-      expect(searchedGranule).toEqual(jasmine.objectContaining(randomBareGranuleRecord));
+      expect(searchedGranule).toEqual(jasmine.objectContaining({
+        ...randomGranuleRecord,
+        files: []
+      }));
     });
     it('can search the granule including files via the API.', async () => {
       if (beforeAllError) {
