@@ -17,7 +17,7 @@ export interface ArnRecord {
 const log = new Logger({ sender: '@cumulus/db/lib/execution' });
 
 /**
- * Returns execution info sorted by most recent first for an input
+ * Returns execution records sorted by most recent first for an input
  * set of Granule Cumulus IDs.
  * @returns Array of arn objects with the most recent first.
  */
@@ -49,7 +49,7 @@ export const getExecutionInfoByGranuleCumulusIds = async ({
 };
 
 /**
- * Returns execution info sorted by most recent first for an input
+ * Returns execution records sorted by most recent first for an input
  * Granule Cumulus ID.
  *
  * @param {Object} params

@@ -359,7 +359,9 @@ describe('When there are granule differences and granule reconciliation is run',
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
-
+      const apiParams = {
+        includeFullRecord: 'true',
+      };
       console.log('XXX Waiting for setupCollectionAndTestData');
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
       console.log('XXX Completed setupCollectionAndTestData');
@@ -411,9 +413,7 @@ describe('When there are granule differences and granule reconciliation is run',
       await waitForGranuleRecordUpdatedInList(
         config.stackName,
         granuleBeforeUpdate,
-        {
-          includeFullRecord: 'true',
-        }
+        apiParams
       );
       console.log(`XXXXX Waiting for updateGranuleFile(${publishedGranuleId})`);
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(
@@ -433,16 +433,12 @@ describe('When there are granule differences and granule reconciliation is run',
         waitForGranuleRecordUpdatedInList(
           config.stackName,
           dbGranule,
-          {
-            includeFullRecord: 'true',
-          }
+          apiParams
         ),
         waitForGranuleRecordUpdatedInList(
           config.stackName,
           granuleAfterUpdate,
-          {
-            includeFullRecord: 'true',
-          }
+          apiParams
         ),
       ]);
       console.log('XXXX Completed granules updated in list');
