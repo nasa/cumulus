@@ -76,6 +76,11 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 
 ### Breaking Changes
 
+- **CUMULUS-3698**
+  - GranuleSearch retrieving files/execution is toggled
+      by setting "includeFullRecord" field to 'true' in relevant api endpoint params
+  - GranuleSearch does *not* retrieve files/execution by default unless includeFullRecord is set to 'true'
+  - @cumulus/db function getExecutionArnByGranuleCumulusId is removed. To replace this function use getExecutionInfoByGranuleCumulusId with parameter executionColumns set to ['arn'] or unset (['arn'] is the default argument)
 - **CUMULUS-2564**
   - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
     This modifies the task behavior to stage granules to
@@ -92,6 +97,9 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 
 ### Added
 
+- **CUMULUS-3698**
+  - GranuleSearch now can retrieve associated files for granules
+  - GranuleSearch now can retrieve latest associated execution for granules
 - **CUMULUS-3919**
   - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 

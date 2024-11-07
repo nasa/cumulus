@@ -11,6 +11,9 @@ import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresGranuleRecord } from '../types/granule';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
 import { TableNames } from '../tables';
+import { FilePgModel } from '../models/file';
+import { PostgresFileRecord } from '../types/file';
+import { getExecutionInfoByGranuleCumulusIds } from '../lib/execution';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
@@ -111,11 +114,37 @@ export class GranuleSearch extends BaseSearch {
    * @param pgRecords - postgres records returned from query
    * @returns translated api records
    */
-  protected translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[])
-    : Partial<ApiGranuleRecord>[] {
+  protected async translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[], knex: Knex)
+    : Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
-    const { fields } = this.dbQueryParameters;
+    const { fields, includeFullRecord } = this.dbQueryParameters;
+
+    const fileMapping: { [key: number]: PostgresFileRecord[] } = {};
+    const executionMapping: { [key: number]: { url: string, granule_cumulus_id: number } } = {};
+    const cumulusIds = pgRecords.map((record) => record.cumulus_id);
+    if (includeFullRecord) {
+      //get Files
+      const fileModel = new FilePgModel();
+      const files = await fileModel.searchByGranuleCumulusIds(knex, cumulusIds);
+      files.forEach((file) => {
+        if (!(file.granule_cumulus_id in fileMapping)) {
+          fileMapping[file.granule_cumulus_id] = [];
+        }
+        fileMapping[file.granule_cumulus_id].push(file);
+      });
+
+      //get Executions
+      const executions = await getExecutionInfoByGranuleCumulusIds({
+        knexOrTransaction: knex,
+        granuleCumulusIds: cumulusIds,
+      });
+      executions.forEach((execution) => {
+        if (!(execution.granule_cumulus_id in executionMapping)) {
+          executionMapping[execution.granule_cumulus_id] = execution;
+        }
+      });
+    }
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
       const granulePgRecord = item;
       const collectionPgRecord = {
@@ -123,10 +152,19 @@ export class GranuleSearch extends BaseSearch {
         name: item.collectionName,
         version: item.collectionVersion,
       };
+      const executionUrls = executionMapping[item.cumulus_id]?.url
+        ? [{ url: executionMapping[item.cumulus_id].url }]
+        : [];
       const pdr = item.pdrName ? { name: item.pdrName } : undefined;
       const providerPgRecord = item.providerName ? { name: item.providerName } : undefined;
+      const fileRecords = fileMapping[granulePgRecord.cumulus_id] || [];
       const apiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
-        granulePgRecord, collectionPgRecord, pdr, providerPgRecord,
+        granulePgRecord,
+        collectionPgRecord,
+        pdr,
+        providerPgRecord,
+        files: fileRecords,
+        executionUrls,
       });
       return fields ? pick(apiRecord, fields) : apiRecord;
     });
