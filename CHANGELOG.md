@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-3934**
+  - Updated `ecs_cluster_instance_allow_ssh` and `ecs_cluster_instance_allow_egress` resources to best practices
+  - Restricted CIDR range of above resources to the VPC to address vulnerability
+
 ### Breaking Changes
 
 - **CUMULUS-2564**
