@@ -192,21 +192,15 @@ resource "aws_security_group" "ecs_cluster_instance" {
   tags   = var.tags
 }
 
-resource "aws_security_group_rule" "ecs_cluster_instance_allow_ssh" {
-  type              = "ingress"
-  from_port         = 2
-  to_port           = 2
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
+resource "aws_vpc_security_group_ingress_rule" "ecs_cluster_instance_allow_ssh" {
+  ip_protocol       = "-1"
+  cidr_ipv4 = cidrsubnet(data.aws_vpc.selected.cidr_block, 4, 1)
   security_group_id = aws_security_group.ecs_cluster_instance.id
 }
 
-resource "aws_security_group_rule" "ecs_cluster_instance_allow_egress" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
+resource "aws_vpc_security_group_egress_rule" "ecs_cluster_instance_allow_egress" {
+  ip_protocol       = "-1"
+  cidr_ipv4 = cidrsubnet(data.aws_vpc.selected.cidr_block, 4, 1)
   security_group_id = aws_security_group.ecs_cluster_instance.id
 }
 
