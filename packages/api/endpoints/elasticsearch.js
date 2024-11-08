@@ -194,7 +194,6 @@ async function indexFromDatabase(req, res) {
     operationType: 'ES Index',
     payload: {
       indexName,
-      reconciliationReportsTable: process.env.ReconciliationReportsTable,
       esHost: process.env.ES_HOST,
       esRequestConcurrency: esRequestConcurrency || process.env.ES_CONCURRENCY,
       postgresResultPageSize,
