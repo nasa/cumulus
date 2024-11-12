@@ -29,6 +29,9 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { isFileExtensionMatched } = require('@cumulus/message/utils');
 const log = require('@cumulus/common/log');
+const { deconstructCollectionid, constructCollectionId } = require('@cumulus/message/Collections');
+const { getCollection } = require('@cumulus/api-client/collections')
+const { updateGranule } = require('@cumulus/api-client/granules');
 
 const MB = 1024 * 1024;
 
@@ -47,6 +50,24 @@ function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
     };
   });
   return duplicatesObject;
+}
+
+/**
+ * Updates granule collection to new collection if necessary
+ * @param {import('../../packages/types').ApiGranuleRecord} granule 
+ * @param {import('../../packages/types').CollectionRecord} collection 
+ */
+async function updateGranuleCollection(prefix, granule, collection) {
+  const collectionId = constructCollectionId(collection.name, collection.version);
+  if (granule.collectionId !== collectionId) {
+    granule.collectionId = collectionId;
+    await updateGranule({
+      prefix,
+      body: granule,
+      granuleId: granule.granuleId,
+      collectionId,
+    })
+  }
 }
 
 /**
@@ -79,7 +100,7 @@ function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
  * `collection.files.regexp`.  CMR metadata files have a file type added.
  *
  * @param {Object} granulesObject - an object of granules where the key is the granuleId
- * @param {Object} collection - configuration object defining a collection
+ * @param {import('../../packages/types').CollectionRecord} collection - configuration object defining a collection
  *                              of granules and their files
  * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
  * @param {BucketsConfig} bucketsConfig -  instance associated with the stack
@@ -249,6 +270,7 @@ async function moveFilesForAllGranules(
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
  *                                 from staging to final bucket. Mostly useful for testing.
  * @param {Object} event.input - a granules object containing an array of granules
+ * @param {Array<import('../../packages/types').ApiGranuleRecord>} event.input.granules
  *
  * @returns {Promise} returns the promise of an updated event object
  */
@@ -256,7 +278,7 @@ async function moveGranules(event) {
   // We have to post the meta-xml file of all output granules
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
-
+  const prefix = process.env.stackName;
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
     ? config.s3MultipartChunksizeMb : process.env.default_s3_multipart_chunksize_mb;
@@ -281,6 +303,12 @@ async function moveGranules(event) {
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 
   let movedGranulesByGranuleId;
+
+  // update granule collections in store if necessary
+  await Promise.all(granulesInput.map(
+    async (granule) => await updateGranuleCollection(prefix, granule, config.collection)
+  ));
+
 
   // allows us to disable moving the files
   if (moveStagedFiles) {

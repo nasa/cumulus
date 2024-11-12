@@ -5,6 +5,7 @@ const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
 const range = require('lodash/range');
+const proxyquire = require('proxyquire');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
@@ -27,7 +28,38 @@ const {
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
 
-const { moveGranules } = require('..');
+const Logger = require('@cumulus/logger');
+
+
+class FakeLogger extends Logger {
+  constructor(options = {}) {
+    super({ ...options, console: fakeConsole });
+  }
+}
+
+const fakeGranulesModule = {
+  updateGranule: ({ 
+    granuleId,
+    collectionid,
+    body: granule,
+  }) => {
+      return Promise.resolve({
+        statusCode: 200,
+        body: '{"status": "completed"}',
+      });
+}};
+
+// Import the discover-granules functions that we'll be testing, configuring them to use the fake
+// granules module and the fake logger.
+const {
+  moveGranules,
+} = proxyquire(
+  '..',
+  {
+    '@cumulus/api-client/granules': fakeGranulesModule,
+    '@cumulus/logger': FakeLogger,
+  }
+);
 
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => {
