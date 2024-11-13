@@ -206,6 +206,7 @@ resource "aws_security_group_rule" "ecs_cluster_instance_allow_egress" {
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.ecs_cluster_instance.id
 }
+
 resource "aws_s3_bucket_object" "task_reaper" {
   bucket = var.system_bucket
   key    = "${var.prefix}/task-reaper.sh"
