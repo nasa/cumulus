@@ -38,8 +38,11 @@ resource "aws_secretsmanager_secret_version" "rds_login" {
     database            = "postgres"
     engine              = "postgres"
     host                = aws_rds_cluster.cumulus.endpoint
+    hostReader          = aws_rds_cluster.cumulus.reader_endpoint
     port                = 5432
     dbClusterIdentifier = aws_rds_cluster.cumulus.id
+    disableSSL          = var.disableSSL
+    rejectUnauthorized  = var.rejectUnauthorized
   })
 }
 
@@ -50,21 +53,6 @@ resource "aws_security_group_rule" "rds_security_group_allow_postgres" {
   protocol          = "tcp"
   security_group_id = aws_security_group.rds_cluster_access.id
   self              = true
-}
-
-resource "aws_rds_cluster_parameter_group" "rds_cluster_group" {
-  count = var.enable_upgrade ? 0 : 1
-  name   = "${var.prefix}-cluster-parameter-group"
-  family = var.parameter_group_family
-
-  dynamic "parameter" {
-    for_each = var.db_parameters
-    content {
-      apply_method = parameter.value["apply_method"]
-      name = parameter.value["name"]
-      value = parameter.value["value"]
-    }
-  }
 }
 
 resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
@@ -82,9 +70,9 @@ resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
 }
 
 resource "aws_rds_cluster" "cumulus" {
-  depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group]
+  depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group_v13]
   cluster_identifier      = var.cluster_identifier
-  engine_mode             = "serverless"
+  engine_mode             = "provisioned"
   engine                  = "aurora-postgresql"
   engine_version          = var.engine_version
   database_name           = "postgres"
@@ -94,13 +82,11 @@ resource "aws_rds_cluster" "cumulus" {
   preferred_backup_window = var.backup_window
   db_subnet_group_name    = aws_db_subnet_group.default.id
   apply_immediately       = var.apply_immediately
-
-  scaling_configuration {
+  storage_encrypted       = true
+  
+  serverlessv2_scaling_configuration {
     max_capacity = var.max_capacity
     min_capacity = var.min_capacity
-    timeout_action = var.rds_scaling_timeout_action
-    auto_pause = var.auto_pause
-    seconds_until_auto_pause = var.seconds_until_auto_pause
   }
   vpc_security_group_ids          = [aws_security_group.rds_cluster_access.id]
   deletion_protection             = var.deletion_protection
@@ -108,9 +94,18 @@ resource "aws_rds_cluster" "cumulus" {
   tags                            = var.tags
   final_snapshot_identifier       = "${var.cluster_identifier}-final-snapshot"
   snapshot_identifier             = var.snapshot_identifier
-  db_cluster_parameter_group_name = var.enable_upgrade ? aws_rds_cluster_parameter_group.rds_cluster_group_v13.id : aws_rds_cluster_parameter_group.rds_cluster_group[0].id
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.rds_cluster_group_v13.id
 
   lifecycle {
     ignore_changes = [engine_version]
   }
+}
+
+resource "aws_rds_cluster_instance" "cumulus" {
+  cluster_identifier = aws_rds_cluster.cumulus.id
+  identifier = "${aws_rds_cluster.cumulus.id}-instance-${count.index+1}"
+  count              = var.cluster_instance_count
+  instance_class     = "db.serverless"
+  engine             = aws_rds_cluster.cumulus.engine
+  engine_version     = aws_rds_cluster.cumulus.engine_version
 }

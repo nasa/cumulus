@@ -12,6 +12,7 @@ export {
   fakeGranuleRecordFactory,
   fakePdrRecordFactory,
   fakeProviderRecordFactory,
+  fakeReconciliationReportRecordFactory,
   fakeRuleRecordFactory,
   generateLocalTestDb,
 } from './test-utils';
@@ -31,7 +32,6 @@ export {
 export {
   BaseRecord,
 } from './types/base';
-
 export {
   PostgresAsyncOperation,
   PostgresAsyncOperationRecord,
@@ -68,6 +68,11 @@ export {
   PostgresGranuleExecution,
 } from './types/granule-execution';
 export {
+  PostgresReconciliationReport,
+  PostgresReconciliationReportRecord,
+} from './types/reconciliation_report';
+
+export {
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
 } from './translate/async_operations';
@@ -75,12 +80,10 @@ export {
   translateApiFiletoPostgresFile,
   translatePostgresFileToApiFile,
 } from './translate/file';
-
 export {
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
 } from './translate/collections';
-
 export {
   translateApiProviderToPostgresProvider,
   translatePostgresProviderToApiProvider,
@@ -105,9 +108,14 @@ export {
   translateApiPdrToPostgresPdr,
   translatePostgresPdrToApiPdr,
 } from './translate/pdr';
+export {
+  translateApiReconReportToPostgresReconReport,
+  translatePostgresReconReportToApiReconReport,
+} from './translate/reconciliation_reports';
 
 export {
   getCollectionsByGranuleIds,
+  getUniqueCollectionsByGranuleFilter,
 } from './lib/collection';
 
 export {
@@ -163,6 +171,9 @@ export {
 export {
   StatsSearch,
 } from './search/StatsSearch';
+export {
+  ReconciliationReportSearch,
+} from './search/ReconciliationReportSearch';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';
@@ -173,4 +184,5 @@ export { GranulePgModel } from './models/granule';
 export { GranulesExecutionsPgModel } from './models/granules-executions';
 export { PdrPgModel } from './models/pdr';
 export { ProviderPgModel } from './models/provider';
+export { ReconciliationReportPgModel } from './models/reconciliation_report';
 export { RulePgModel } from './models/rule';
