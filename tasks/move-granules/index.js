@@ -29,7 +29,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { isFileExtensionMatched } = require('@cumulus/message/utils');
 const log = require('@cumulus/common/log');
-const { deconstructCollectionid, constructCollectionId } = require('@cumulus/message/Collections');
+const { deconstructCollectionId, constructCollectionId } = require('@cumulus/message/Collections');
 const { getCollection } = require('@cumulus/api-client/collections')
 const { updateGranule } = require('@cumulus/api-client/granules');
 
@@ -53,16 +53,29 @@ function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
 }
 
 /**
+ * 
+ * @param {import('../../packages/types').ApiFile} file 
+ * @param {string} oldCollectionName 
+ * @param {string} newCollectionName 
+ */
+function updateFileCollectionData(
+  file,
+  oldCollectionName,
+  newCollectionName,
+) {
+  Object.keys(file).forEach((key)  => file[key] = file[key].replace(oldCollectionName, newCollectionName));
+}
+/**
  * Updates granule collection to new collection if necessary
  * @param {import('../../packages/types').ApiGranuleRecord} granule 
  * @param {import('../../packages/types').CollectionRecord} collection 
  */
-async function updateGranuleCollection(prefix, granule, collection) {
+async function updateGranuleCollection(granule, collection) {
   const collectionId = constructCollectionId(collection.name, collection.version);
   if (granule.collectionId !== collectionId) {
     granule.collectionId = collectionId;
     await updateGranule({
-      prefix,
+      prefix: process.env.stackName,
       body: granule,
       granuleId: granule.granuleId,
       collectionId,
@@ -147,6 +160,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
       });
     });
     updatedGranules[granuleId].files = [...updatedFiles];
+    updateGranuleCollection(updatedGranules[granuleId], collection)
   }));
   return updatedGranules;
 }
