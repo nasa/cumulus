@@ -38,16 +38,17 @@ class FakeLogger extends Logger {
 }
 
 const fakeGranulesModule = {
-  updateGranule: ({ 
+  updateGranule: ({
     granuleId,
     collectionid,
     body: granule,
   }) => {
-      return Promise.resolve({
-        statusCode: 200,
-        body: '{"status": "completed"}',
-      });
-}};
+    return Promise.resolve({
+      statusCode: 200,
+      body: '{"status": "completed"}',
+    });
+  }
+};
 
 // Import the discover-granules functions that we'll be testing, configuring them to use the fake
 // granules module and the fake logger.
@@ -810,3 +811,69 @@ test.serial('default_s3_multipart_chunksize_mb is used for moving s3 files if ta
 
   moveObjectStub.restore();
 });
+
+test.serial('new collection causes granule to move to that collection', async (t) => {
+  const newCollection = {
+    files: [
+      {
+        regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+        sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+        bucket: 'protected'
+      },
+      {
+        regex: '^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+        sampleFileName: 'BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+        bucket: 'private'
+      },
+      {
+        regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$',
+        sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met',
+        bucket: 'private'
+      },
+      {
+        regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$',
+        sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+        bucket: 'public'
+      },
+      {
+        regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$',
+        sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+        bucket: 'public'
+      },
+      {
+        regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$',
+        sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+        bucket: 'public',
+        url_path: 'jpg/example2/'
+      }
+    ],
+    url_path: 'example2/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/',
+    name: 'MOD11A2',
+    granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
+    dataType: 'MOD11A2',
+    process: 'modis',
+    version: '006',
+    sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+    id: 'MOD11A2'
+  };
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  t.context.payload.config.collection = newCollection
+
+  const newPayload = buildPayload(t)
+  const expectedFileKeys = [
+    'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+    'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+    'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+    'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+  ]
+
+
+  const output = await moveGranules(newPayload);
+  const outputFileKeys = output.granules[0].files.map((f) => f.key);
+  t.deepEqual(expectedFileKeys.sort(), outputFileKeys.sort());
+  await Promise.all(output.granules[0].files.map(async (fileObj) => {
+    t.true(await s3ObjectExists({Bucket: fileObj.bucket, Key: fileObj.key}))
+  }))
+  
+})
