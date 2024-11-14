@@ -20,7 +20,7 @@
       "files": [
         {
           "regex": "^ATL08_[\\d]{14}_[\\d]{8}_004_[\\d]{2}\\.h5$",
-          "sampleFileName": "ATL08_20181027045009_04360109_004_01.h5",
+          "sampleFileName": "AFFTL08_20181027045009_04360109_004_01.h5",
           "bucket": "protected"
         },
         {
@@ -40,6 +40,7 @@
   "input": {
     "granules": [
       {
+        "collectionId": "ATL08___004",
         "granuleId": "ATL08_20181208064514_10790104_004_01",
         "files": [
           {
