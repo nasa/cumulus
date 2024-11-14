@@ -278,7 +278,6 @@ async function moveGranules(event) {
   // We have to post the meta-xml file of all output granules
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
-  const prefix = process.env.stackName;
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
     ? config.s3MultipartChunksizeMb : process.env.default_s3_multipart_chunksize_mb;
