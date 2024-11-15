@@ -44,6 +44,7 @@ async function erasePostgresTables(knex) {
   const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
+  const reconReportPgModel = new ReconciliationReportPgModel();
   const rulePgModel = new RulePgModel();
 
   await granulesExecutionsPgModel.delete(knex, {});
@@ -56,6 +57,7 @@ async function erasePostgresTables(knex) {
   await rulePgModel.delete(knex, {});
   await collectionPgModel.delete(knex, {});
   await providerPgModel.delete(knex, {});
+  await reconReportPgModel.delete(knex, {});
 }
 
 async function resetPostgresDb() {
@@ -210,7 +212,6 @@ async function addPdrs(pdrs) {
   );
 }
 
-// TODO this is dynamodb
 async function addReconciliationReports(reconciliationReports) {
   const knex = await getKnexClient({
     env: {
