@@ -252,7 +252,6 @@ class StatsSearch extends BaseSearch {
    * @param params
    * @param params.searchQuery - the search query
    * @param [params.dbQueryParameters] - the db query parameters
-   * @returns the updated search query based on queryStringParams
    */
   protected buildTermQuery(params: {
     searchQuery: Knex.QueryBuilder,
@@ -265,7 +264,7 @@ class StatsSearch extends BaseSearch {
       searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is not null`);
     }
 
-    return super.buildTermQuery({
+    super.buildTermQuery({
       ...params,
       dbQueryParameters: { term: omit(term, 'error.Error') },
     });

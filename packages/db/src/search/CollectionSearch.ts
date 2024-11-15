@@ -1,9 +1,11 @@
 import { Knex } from 'knex';
+import omit from 'lodash/omit';
 import pick from 'lodash/pick';
 
 import Logger from '@cumulus/logger';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import { BaseSearch } from './BaseSearch';
+import { convertQueryStringToDbQueryParameters } from './queries';
 import { GranuleSearch } from './GranuleSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { translatePostgresCollectionToApiCollection } from '../translate/collections';
@@ -40,6 +42,13 @@ export class CollectionSearch extends BaseSearch {
     super({ queryStringParameters }, 'collection');
     this.active = (active === 'true');
     this.includeStats = (includeStats === 'true');
+
+    // for active collection search, granuleId is a granule field
+    if (this.active) {
+      this.dbQueryParameters = convertQueryStringToDbQueryParameters(
+        this.type, omit(this.queryStringParameters, ['granuleId', 'granuleId__in'])
+      );
+    }
   }
 
   /**
