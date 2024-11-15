@@ -4,6 +4,7 @@ import pick from 'lodash/pick';
 import Logger from '@cumulus/logger';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import { BaseSearch } from './BaseSearch';
+import { GranuleSearch } from './GranuleSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { translatePostgresCollectionToApiCollection } from '../translate/collections';
 import { PostgresCollectionRecord } from '../types/collection';
@@ -66,6 +67,7 @@ export class CollectionSearch extends BaseSearch {
 
   /**
    * Build queries for range fields
+   * For active collections, the range search is for granules.
    *
    * @param params
    * @param params.knex - db client
@@ -81,27 +83,51 @@ export class CollectionSearch extends BaseSearch {
   }) {
     if (!this.active) {
       super.buildRangeQuery(params);
-      return;
+    }
+  }
+
+  /**
+   * Build subquery for active collections
+   * The subquery will search granules
+   *
+   * @param knex - db client
+   * @returns granule query
+   */
+  private buildSubQueryForActiveCollections(knex: Knex): Knex.QueryBuilder {
+    const granulesTable = TableNames.granules;
+    const granuleSearch = new GranuleSearch({ queryStringParameters: this.queryStringParameters });
+    const { countQuery } = granuleSearch.buildSearchForActiveCollections(knex);
+
+    const subQuery = countQuery.clone()
+      .clear('select')
+      .select(1)
+      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`))
+      .limit(1);
+    return subQuery;
+  }
+
+  /**
+   * Build the search query
+   *
+   * @param knex - DB client
+   * @returns queries for getting count and search result
+   */
+  protected buildSearch(knex: Knex)
+    : {
+      countQuery?: Knex.QueryBuilder,
+      searchQuery: Knex.QueryBuilder,
+    } {
+    const queries = super.buildSearch(knex);
+    if (!this.active) {
+      return queries;
     }
 
-    const granulesTable = TableNames.granules;
-    const { knex, countQuery, searchQuery, dbQueryParameters } = params;
-    const { range = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    const subQuery = this.buildSubQueryForActiveCollections(knex);
+    const { countQuery, searchQuery } = queries;
+    [countQuery, searchQuery].forEach((query) => query?.whereExists(subQuery));
 
-    const subQuery = knex.select(1).from(granulesTable)
-      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`));
-
-    Object.entries(range).forEach(([name, rangeValues]) => {
-      if (rangeValues.gte) {
-        subQuery.where(`${granulesTable}.${name}`, '>=', rangeValues.gte);
-      }
-      if (rangeValues.lte) {
-        subQuery.where(`${granulesTable}.${name}`, '<=', rangeValues.lte);
-      }
-    });
-    subQuery.limit(1);
-
-    [countQuery, searchQuery].forEach((query) => query.whereExists(subQuery));
+    log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
+    return { countQuery, searchQuery };
   }
 
   /**
@@ -114,22 +140,20 @@ export class CollectionSearch extends BaseSearch {
   private async retrieveGranuleStats(collectionCumulusIds: number[], knex: Knex)
     : Promise<StatsRecords> {
     const granulesTable = TableNames.granules;
-    const statsQuery = knex(granulesTable)
+    let granuleQuery = knex(granulesTable);
+    if (this.active) {
+      const granuleSearch = new GranuleSearch({
+        queryStringParameters: this.queryStringParameters,
+      });
+      const { countQuery } = granuleSearch.buildSearchForActiveCollections(knex);
+      granuleQuery = countQuery.clear('select');
+    }
+    const statsQuery = granuleQuery.clone()
       .select(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
       .count('*')
       .groupBy(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
       .whereIn(`${granulesTable}.collection_cumulus_id`, collectionCumulusIds);
 
-    if (this.active) {
-      Object.entries(this.dbQueryParameters?.range ?? {}).forEach(([name, rangeValues]) => {
-        if (rangeValues.gte) {
-          statsQuery.where(`${granulesTable}.${name}`, '>=', rangeValues.gte);
-        }
-        if (rangeValues.lte) {
-          statsQuery.where(`${granulesTable}.${name}`, '<=', rangeValues.lte);
-        }
-      });
-    }
     log.debug(`retrieveGranuleStats statsQuery: ${statsQuery?.toSQL().sql}`);
     const results = await statsQuery;
     const reduced = results.reduce((acc, record) => {
