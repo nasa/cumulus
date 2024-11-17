@@ -6,6 +6,7 @@ const sinon = require('sinon');
 const test = require('ava');
 const range = require('lodash/range');
 const proxyquire = require('proxyquire');
+const deepEqual = require('deep-equal');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
@@ -17,37 +18,27 @@ const {
   headObject,
   parseS3Uri,
 } = require('@cumulus/aws-client/S3');
-const { isCMRFile } = require('@cumulus/cmrjs');
+const { isCMRFile, isISOFile, granulesToCmrFileObjects } = require('@cumulus/cmrjs');
 const cloneDeep = require('lodash/cloneDeep');
 const set = require('lodash/set');
 const errors = require('@cumulus/errors');
 const S3 = require('@cumulus/aws-client/S3');
+
+const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const {
   randomString, randomId, validateConfig, validateInput, validateOutput,
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
+const { keyBy } = require('lodash/keyBy');
 
-const Logger = require('@cumulus/logger');
-
-
-class FakeLogger extends Logger {
-  constructor(options = {}) {
-    super({ ...options, console: fakeConsole });
-  }
-}
+const { updateGranuleMetadata } = require('..');
 
 const fakeGranulesModule = {
-  updateGranule: ({
-    granuleId,
-    collectionid,
-    body: granule,
-  }) => {
-    return Promise.resolve({
-      statusCode: 200,
-      body: '{"status": "completed"}',
-    });
-  }
+  updateGranule: () => Promise.resolve({
+    statusCode: 200,
+    body: '{"status": "completed"}',
+  }),
 };
 
 // Import the discover-granules functions that we'll be testing, configuring them to use the fake
@@ -58,7 +49,6 @@ const {
   '..',
   {
     '@cumulus/api-client/granules': fakeGranulesModule,
-    '@cumulus/logger': FakeLogger,
   }
 );
 
@@ -101,7 +91,7 @@ function granulesToFileURIs(stagingBucket, granules) {
 function buildPayload(t) {
   const newPayload = t.context.payload;
 
-  newPayload.config.bucket = t.context.stagingBucket;
+  // newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
@@ -112,6 +102,16 @@ function buildPayload(t) {
     });
   });
 
+  return newPayload;
+}
+
+function buildCollectionMovePayload(t) {
+  const newPayload = t.context.payload;
+
+  // newPayload.config.bucket = t.context.stagingBucket;
+  newPayload.config.buckets.internal.name = t.context.stagingBucket;
+  newPayload.config.buckets.public.name = t.context.publicBucket;
+  newPayload.config.buckets.protected.name = t.context.protectedBucket;
   return newPayload;
 }
 
@@ -189,6 +189,26 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
+
+test('updateGranuleMetadata edits a copy of granules object without altering original', async (t) => {
+  const newPayload = buildPayload(t);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  const granulesObject = newPayload.input.granules;
+  const collection = newPayload.config.collection;
+  const filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
+  const cmrFiles = granulesToCmrFileObjects(granulesObject, filterFunc);
+  const bucketsConfig = new BucketsConfig(newPayload.config.buckets);
+
+  const granulesById = keyBy(granulesObject, 'granuleId');
+
+  const granulesCopy = cloneDeep(granulesById);
+  const output = await updateGranuleMetadata(granulesById, collection, cmrFiles, bucketsConfig);
+  t.deepEqual(granulesById, granulesCopy);
+  t.false(deepEqual(granulesObject, output.granules));
+});
+
 
 test.serial('Should move files to final location.', async (t) => {
   const newPayload = buildPayload(t);
@@ -813,38 +833,52 @@ test.serial('default_s3_multipart_chunksize_mb is used for moving s3 files if ta
 });
 
 test.serial('new collection causes granule to move to that collection', async (t) => {
+  const payload = buildPayload(t);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  const firstOutput = await moveGranules(payload);
+  await validateOutput(t, firstOutput);
+  const check = await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+  });
+
+  t.true(check);
+
+  // now that files have been moved to their first collection, move them to a second
   const newCollection = {
     files: [
       {
         regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
         sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-        bucket: 'protected'
+        bucket: 'protected',
       },
       {
         regex: '^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
         sampleFileName: 'BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-        bucket: 'private'
+        bucket: 'private',
       },
       {
         regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$',
         sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met',
-        bucket: 'private'
+        bucket: 'private',
       },
       {
         regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$',
         sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-        bucket: 'public'
+        bucket: 'public',
       },
       {
         regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$',
         sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-        bucket: 'public'
+        bucket: 'public',
       },
       {
         regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$',
         sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
         bucket: 'public',
-        url_path: 'jpg/example2/'
+        url_path: 'jpg/example2/',
       }
     ],
     url_path: 'example2/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/',
@@ -856,11 +890,9 @@ test.serial('new collection causes granule to move to that collection', async (t
     sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
     id: 'MOD11A2'
   };
-  const filesToUpload = cloneDeep(t.context.filesToUpload);
-  await uploadFiles(filesToUpload, t.context.stagingBucket);
   t.context.payload.config.collection = newCollection
-
-  const newPayload = buildPayload(t)
+  t.context.payload.input.granules = firstOutput.granules
+  const newPayload = buildCollectionMovePayload(t)
   const expectedFileKeys = [
     'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
     'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
@@ -868,12 +900,11 @@ test.serial('new collection causes granule to move to that collection', async (t
     'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   ]
 
-
   const output = await moveGranules(newPayload);
   const outputFileKeys = output.granules[0].files.map((f) => f.key);
   t.deepEqual(expectedFileKeys.sort(), outputFileKeys.sort());
   await Promise.all(output.granules[0].files.map(async (fileObj) => {
-    t.true(await s3ObjectExists({Bucket: fileObj.bucket, Key: fileObj.key}))
+    t.true(await s3ObjectExists({ Bucket: fileObj.bucket, Key: fileObj.key }))
   }))
-  
+
 })
