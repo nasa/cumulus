@@ -41,6 +41,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/api-client": "19.1.0",
     "@cumulus/aws-client": "19.1.0",
     "@cumulus/cmrjs": "19.1.0",
     "@cumulus/common": "19.1.0",
@@ -49,10 +50,10 @@
     "@cumulus/errors": "19.1.0",
     "@cumulus/ingest": "19.1.0",
     "@cumulus/message": "19.1.0",
-    "@cumulus/api-client": "19.1.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@cumulus/schemas": "19.1.0"
+    "@cumulus/schemas": "19.1.0",
+    "deep-equal": "^2.2.3"
   }
 }
