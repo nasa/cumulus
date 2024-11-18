@@ -25,16 +25,17 @@ const {
 } = require('@cumulus/cmrjs');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { isFileExtensionMatched } = require('@cumulus/message/utils');
 const log = require('@cumulus/common/log');
-const { deconstructCollectionId, constructCollectionId } = require('@cumulus/message/Collections');
-const { getCollection } = require('@cumulus/api-client/collections')
 const { updateGranule } = require('@cumulus/api-client/granules');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const MB = 1024 * 1024;
-
+/**
+* @typedef { import('@cumulus/types').ApiGranuleRecord } ApiGranuleRecord
+* @typedef { import('@cumulus/types').CollectionRecord } CollectionRecord
+*/
 function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
   const duplicatesObject = {};
   Object.keys(movedGranulesByGranuleId).forEach((k) => {
@@ -53,34 +54,24 @@ function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
 }
 
 /**
- * 
- * @param {import('../../packages/types').ApiFile} file 
- * @param {string} oldCollectionName 
- * @param {string} newCollectionName 
- */
-function updateFileCollectionData(
-  file,
-  oldCollectionName,
-  newCollectionName,
-) {
-  Object.keys(file).forEach((key)  => file[key] = file[key].replace(oldCollectionName, newCollectionName));
-}
-/**
  * Updates granule collection to new collection if necessary
- * @param {import('../../packages/types').ApiGranuleRecord} granule 
- * @param {import('../../packages/types').CollectionRecord} collection 
+ * @param {ApiGranuleRecord} granule
+ * @param {CollectionRecord} collection
+ * @returns {}
  */
 async function updateGranuleCollection(granule, collection) {
   const collectionId = constructCollectionId(collection.name, collection.version);
+  const updatedGranule = { ...granule };
   if (granule.collectionId !== collectionId) {
-    granule.collectionId = collectionId;
+    updatedGranule.collectionId = collectionId;
     await updateGranule({
       prefix: process.env.stackName,
-      body: granule,
-      granuleId: granule.granuleId,
+      body: updatedGranule,
+      granuleId: updatedGranule.granuleId,
       collectionId,
-    })
+    });
   }
+  return updatedGranule;
 }
 
 /**
@@ -93,11 +84,10 @@ async function updateGranuleCollection(granule, collection) {
  * @throws {InvalidArgument} - If match is invalid, throws an error.
  */
 function validateFileMatch(bucketsConfig, fileName, fileSpecs) {
-  
   const collectionRegexes = fileSpecs.map((spec) => spec.regex);
   const match_ = fileSpecs.filter(
-    (collectionFile => unversionFilename(fileName).match(collectionFile.regex))
-  )
+    ((collectionFile) => unversionFilename(fileName).match(collectionFile.regex))
+  );
   if (match_.length > 1) {
     throw new InvalidArgument(`File (${fileName}) matched more than one of ${JSON.stringify(collectionRegexes)}.`);
   }
@@ -153,7 +143,7 @@ function updateGranuleFile(
  * `collection.files.regexp`.  CMR metadata files have a file type added.
  *
  * @param {Object} granulesObject - an object of granules where the key is the granuleId
- * @param {import('../../packages/types').CollectionRecord} collection - configuration object defining a collection
+ * @param {CollectionRecord} collection - configuration object defining a collection
  *                              of granules and their files
  * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
  * @param {BucketsConfig} bucketsConfig -  instance associated with the stack
@@ -165,23 +155,25 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
   const cmrFileNames = cmrFiles.map((f) => path.basename(f.key));
   await Promise.all(Object.keys(granulesObject).map(async (granuleId) => {
     const updatedFiles = [];
-    updatedGranules[granuleId] = { ...granulesObject[granuleId] };
+    updatedGranules[granuleId] = await updateGranuleCollection(
+      granulesObject[granuleId],
+      collection
+    );
     const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
-    const cmrMetadata = cmrFile ? await metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`) : {};
-    granulesObject[granuleId].files.forEach((file) => {
-      
+    const cmrMetadata = cmrFile ?
+      await metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`) :
+      {};
+    updatedGranules[granuleId].files.forEach((file) => {
       updatedFiles.push(updateGranuleFile(
         file,
-        granulesObject[granuleId],
+        updatedGranules[granuleId],
         bucketsConfig,
         cmrFileNames,
         collection,
         cmrMetadata
-      ))
+      ));
     });
     updatedGranules[granuleId].files = [...updatedFiles];
-    updateGranuleCollection(updatedGranules[granuleId], collection)
-
   }));
   return updatedGranules;
 }
@@ -244,7 +236,6 @@ async function moveFileRequest(
       copyTags: true,
       chunkSize,
     });
-    console
   }
 
   const renamedFiles = versionedFiles.map((f) => ({
@@ -297,7 +288,6 @@ async function moveFilesForAllGranules(
  *
  * @param {Object} event - Lambda function payload
  * @param {Object} event.config - the config object
- * @param {string} event.config.bucket - AWS S3 bucket that contains the granule files
  * @param {Object} event.config.buckets - Buckets config
  * @param {string} event.config.distribution_endpoint - distribution endpoint for the api
  * @param {Object} event.config.collection - collection configuration
@@ -342,10 +332,9 @@ async function moveGranules(event) {
     async (granule) => await updateGranuleCollection(granule, config.collection)
   ));
 
-
   // allows us to disable moving the files
   if (moveStagedFiles) {
-    // Update all granules with aspirational metadata 
+    // Update all granules with aspirational metadata
     // (where the files should end up after moving).
     const granulesToMove = await updateGranuleMetadata(
       granulesByGranuleId, config.collection, cmrFiles, bucketsConfig
