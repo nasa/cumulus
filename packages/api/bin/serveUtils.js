@@ -17,6 +17,7 @@ const {
   ProviderPgModel,
   ReconciliationReportPgModel,
   RulePgModel,
+  translateApiAsyncOperationToPostgresAsyncOperation,
   translateApiCollectionToPostgresCollection,
   translateApiExecutionToPostgresExecution,
   translateApiGranuleToPostgresGranule,
@@ -79,6 +80,22 @@ async function resetPostgresDb() {
   await knex.migrate.latest();
 
   await erasePostgresTables(knex);
+}
+
+async function addAsyncOperations(asyncOperations) {
+  const knex = await getKnexClient({
+    env: {
+      ...envParams,
+      ...localStackConnectionEnv,
+    },
+  });
+  const asyncOperationPgModel = new AsyncOperationPgModel();
+  return await Promise.all(
+    asyncOperations.map(async (r) => {
+      const dbRecord = await translateApiAsyncOperationToPostgresAsyncOperation(r, knex);
+      await asyncOperationPgModel.create(knex, dbRecord);
+    })
+  );
 }
 
 async function addCollections(collections) {
@@ -230,6 +247,7 @@ async function addReconciliationReports(reconciliationReports) {
 
 module.exports = {
   resetPostgresDb,
+  addAsyncOperations,
   addProviders,
   addCollections,
   addExecutions,
