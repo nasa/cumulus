@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
+const keyBy = require('lodash/keyBy');
 const range = require('lodash/range');
 const proxyquire = require('proxyquire');
 const deepEqual = require('deep-equal');
@@ -30,7 +31,6 @@ const {
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
-const { keyBy } = require('lodash/keyBy');
 
 const { updateGranuleMetadata } = require('..');
 
@@ -208,7 +208,6 @@ test('updateGranuleMetadata edits a copy of granules object without altering ori
   t.deepEqual(granulesById, granulesCopy);
   t.false(deepEqual(granulesObject, output.granules));
 });
-
 
 test.serial('Should move files to final location.', async (t) => {
   const newPayload = buildPayload(t);
@@ -879,7 +878,7 @@ test.serial('new collection causes granule to move to that collection', async (t
         sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
         bucket: 'public',
         url_path: 'jpg/example2/',
-      }
+      },
     ],
     url_path: 'example2/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/',
     name: 'MOD11A2',
@@ -888,23 +887,22 @@ test.serial('new collection causes granule to move to that collection', async (t
     process: 'modis',
     version: '006',
     sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-    id: 'MOD11A2'
+    id: 'MOD11A2',
   };
-  t.context.payload.config.collection = newCollection
-  t.context.payload.input.granules = firstOutput.granules
-  const newPayload = buildCollectionMovePayload(t)
+  t.context.payload.config.collection = newCollection;
+  t.context.payload.input.granules = firstOutput.granules;
+  const newPayload = buildCollectionMovePayload(t);
   const expectedFileKeys = [
     'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
     'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
     'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
     'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-  ]
+  ];
 
   const output = await moveGranules(newPayload);
   const outputFileKeys = output.granules[0].files.map((f) => f.key);
   t.deepEqual(expectedFileKeys.sort(), outputFileKeys.sort());
   await Promise.all(output.granules[0].files.map(async (fileObj) => {
-    t.true(await s3ObjectExists({ Bucket: fileObj.bucket, Key: fileObj.key }))
-  }))
-
-})
+    t.true(await s3ObjectExists({ Bucket: fileObj.bucket, Key: fileObj.key }));
+  }));
+});
