@@ -4,11 +4,19 @@ export interface Pdr {
   [key: string]: unknown
 }
 
+export interface FailedExecution {
+  arn: string
+  reason: string
+}
+
 export interface Pan {
   uri: string
 }
 export interface HandlerInput {
   pdr: Pdr,
+  running: string[],
+  completed: string[],
+  failed: FailedExecution[],
   [key: string]: unknown
 }
 
