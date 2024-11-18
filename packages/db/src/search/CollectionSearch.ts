@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import omit from 'lodash/omit';
+import omitBy from 'lodash/omitBy';
 import pick from 'lodash/pick';
 
 import Logger from '@cumulus/logger';
@@ -30,6 +30,14 @@ interface CollectionRecordApi extends CollectionRecord {
   stats?: Statuses,
 }
 
+const isGranuleField = (
+  _value: any, key: string
+): boolean => {
+  const granuleFields = ['createdAt', 'granuleId', 'timestamp', 'updatedAt'];
+  const field = key.split('__')[0];
+  return granuleFields.includes(field);
+};
+
 /**
  * Class to build and execute db search query for collections
  */
@@ -43,10 +51,10 @@ export class CollectionSearch extends BaseSearch {
     this.active = (active === 'true');
     this.includeStats = (includeStats === 'true');
 
-    // for active collection search, granuleId is a granule field
+    // for active collection search, omit the fields which are for searching granules
     if (this.active) {
       this.dbQueryParameters = convertQueryStringToDbQueryParameters(
-        this.type, omit(this.queryStringParameters, ['granuleId', 'granuleId__in'])
+        this.type, omitBy(this.queryStringParameters, isGranuleField)
       );
     }
   }
@@ -71,27 +79,6 @@ export class CollectionSearch extends BaseSearch {
     }
     if (prefix) {
       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
-    }
-  }
-
-  /**
-   * Build queries for range fields
-   * For active collections, the range search is for granules.
-   *
-   * @param params
-   * @param params.knex - db client
-   * @param [params.countQuery] - query builder for getting count
-   * @param params.searchQuery - query builder for search
-   * @param [params.dbQueryParameters] - db query parameters
-   */
-  protected buildRangeQuery(params: {
-    knex: Knex,
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    if (!this.active) {
-      super.buildRangeQuery(params);
     }
   }
 

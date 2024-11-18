@@ -44,10 +44,6 @@ test.before(async (t) => {
     })
   ));
 
-  t.context.granulePgModel = new GranulePgModel();
-  const statuses = ['queued', 'failed', 'completed', 'running'];
-  t.context.granuleSearchTmestamp = 1688888800000;
-
   // Create provider
   t.context.providerPgModel = new ProviderPgModel();
   t.context.provider = fakeProviderRecordFactory();
@@ -58,6 +54,9 @@ test.before(async (t) => {
   );
   t.context.providerCumulusId = pgProvider.cumulus_id;
 
+  t.context.granulePgModel = new GranulePgModel();
+  const statuses = ['queued', 'failed', 'completed', 'running'];
+  t.context.granuleSearchTmestamp = 1688888800000;
   t.context.granules = range(1000).map((num) => (
     fakeGranuleRecordFactory({
       // collection with cumulus_id 0-9 each has 11 granules,
