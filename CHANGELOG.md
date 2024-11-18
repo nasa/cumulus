@@ -72,7 +72,7 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 - **CUMULUS-3859**
   - Updated `@cumulus/api/bin/serveUtils` to no longer add records to ElasticSearch
   - Removed ElasticSearch from local API server code
-  - Updated CollectionSearch to filter additional granule fields for active collections
+  - Updated CollectionSearch to filter granule fields in addition to time frame for active collections
 
 ## [Unreleased]
 

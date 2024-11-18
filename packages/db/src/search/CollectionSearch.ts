@@ -30,9 +30,7 @@ interface CollectionRecordApi extends CollectionRecord {
   stats?: Statuses,
 }
 
-const isGranuleField = (
-  _value: any, key: string
-): boolean => {
+const isGranuleField = (_value: any, key: string): boolean => {
   const granuleFields = ['createdAt', 'granuleId', 'timestamp', 'updatedAt'];
   const field = key.split('__')[0];
   return granuleFields.includes(field);
