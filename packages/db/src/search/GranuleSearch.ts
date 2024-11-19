@@ -134,6 +134,7 @@ export class GranuleSearch extends BaseSearch {
    * Translate postgres records to api records
    *
    * @param pgRecords - postgres records returned from query
+   * @param knex - DB client
    * @returns translated api records
    */
   protected async translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[], knex: Knex)

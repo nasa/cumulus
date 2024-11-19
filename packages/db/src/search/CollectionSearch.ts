@@ -90,9 +90,9 @@ export class CollectionSearch extends BaseSearch {
   private buildSubQueryForActiveCollections(knex: Knex): Knex.QueryBuilder {
     const granulesTable = TableNames.granules;
     const granuleSearch = new GranuleSearch({ queryStringParameters: this.queryStringParameters });
-    const { countQuery } = granuleSearch.buildSearchForActiveCollections(knex);
+    const { countQuery: subQuery } = granuleSearch.buildSearchForActiveCollections(knex);
 
-    const subQuery = countQuery.clone()
+    subQuery
       .clear('select')
       .select(1)
       .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`))
@@ -134,15 +134,17 @@ export class CollectionSearch extends BaseSearch {
   private async retrieveGranuleStats(collectionCumulusIds: number[], knex: Knex)
     : Promise<StatsRecords> {
     const granulesTable = TableNames.granules;
-    let granuleQuery = knex(granulesTable);
+    let statsQuery = knex(granulesTable);
+
     if (this.active) {
       const granuleSearch = new GranuleSearch({
         queryStringParameters: this.queryStringParameters,
       });
       const { countQuery } = granuleSearch.buildSearchForActiveCollections(knex);
-      granuleQuery = countQuery.clear('select');
+      statsQuery = countQuery.clear('select');
     }
-    const statsQuery = granuleQuery.clone()
+
+    statsQuery
       .select(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
       .count('*')
       .groupBy(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
