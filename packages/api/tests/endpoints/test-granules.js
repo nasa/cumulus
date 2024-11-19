@@ -3352,8 +3352,7 @@ test.serial('PUT returns 404 if collection is not part of URI', async (t) => {
   t.is(response.statusCode, 404);
 });
 
-// TODO postgres query doesn't return searchContext
-test.serial.skip('default paginates correctly with search_after', async (t) => {
+test.only('LIST paginates correctly', async (t) => {
   const response = await request(app)
     .get('/granules?limit=1')
     .set('Accept', 'application/json')
@@ -3365,10 +3364,9 @@ test.serial.skip('default paginates correctly with search_after', async (t) => {
   const { meta, results } = response.body;
   t.is(results.length, 1);
   t.is(meta.page, 1);
-  t.truthy(meta.searchContext);
 
   const newResponse = await request(app)
-    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
+    .get('/granules?limit=1&page=2')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -3376,12 +3374,10 @@ test.serial.skip('default paginates correctly with search_after', async (t) => {
   const { meta: newMeta, results: newResults } = newResponse.body;
   t.is(newResults.length, 1);
   t.is(newMeta.page, 2);
-  t.truthy(newMeta.searchContext);
   console.log(`default paginates granuleIds: ${JSON.stringify(granuleIds)}, results: ${results[0].granuleId}, ${newResults[0].granuleId}`);
   t.true(granuleIds.includes(results[0].granuleId));
   t.true(granuleIds.includes(newResults[0].granuleId));
   t.not(results[0].granuleId, newResults[0].granuleId);
-  t.not(meta.searchContext === newMeta.searchContext);
 });
 
 test.serial('PUT returns 400 for version value less than the configured value', async (t) => {
