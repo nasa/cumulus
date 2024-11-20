@@ -192,15 +192,6 @@ resource "aws_security_group" "ecs_cluster_instance" {
   tags   = var.tags
 }
 
-resource "aws_security_group_rule" "ecs_cluster_instance_allow_ssh" {
-  type              = "ingress"
-  from_port         = 2
-  to_port           = 2
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.ecs_cluster_instance.id
-}
-
 resource "aws_security_group_rule" "ecs_cluster_instance_allow_egress" {
   type              = "egress"
   from_port         = 0
