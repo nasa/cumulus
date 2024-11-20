@@ -70,7 +70,6 @@ describe('The MoveGranules task', () => {
 
       moveGranulesResponse = await moveGranules({
         config: {
-          bucket: config.bucket,
           buckets: config.buckets,
           distribution_endpoint: 'http://www.example.com',
           collection,
