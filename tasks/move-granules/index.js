@@ -25,13 +25,17 @@ const {
 } = require('@cumulus/cmrjs');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { isFileExtensionMatched } = require('@cumulus/message/utils');
 const log = require('@cumulus/common/log');
+const { updateGranule } = require('@cumulus/api-client/granules');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const MB = 1024 * 1024;
-
+/**
+* @typedef { import('@cumulus/types').ApiGranuleRecord } ApiGranuleRecord
+* @typedef { import('@cumulus/types').CollectionRecord } CollectionRecord
+*/
 function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
   const duplicatesObject = {};
   Object.keys(movedGranulesByGranuleId).forEach((k) => {
@@ -50,27 +54,82 @@ function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
 }
 
 /**
+ * Updates granule collection to new collection if necessary
+ * @param {ApiGranuleRecord} granule
+ * @param {CollectionRecord} collection
+ * @returns {}
+ */
+async function updateGranuleCollection(granule, collection) {
+  const collectionId = constructCollectionId(collection.name, collection.version);
+  const updatedGranule = { ...granule };
+  if (granule.collectionId !== collectionId) {
+    updatedGranule.collectionId = collectionId;
+    // TODO api call to update granule in pg here
+  }
+  return updatedGranule;
+}
+
+/**
  * Validates the file matched only one collection.file and has a valid bucket
  * config.
  *
- * @param {Array<Object>} match - list of matched collection.file.
  * @param {BucketsConfig} bucketsConfig - instance describing stack configuration.
  * @param {Object} fileName - the file name tested.
  * @param {Array<Object>} fileSpecs - array of collection file specifications objects.
  * @throws {InvalidArgument} - If match is invalid, throws an error.
  */
-function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
+function validateFileMatch(bucketsConfig, fileName, fileSpecs) {
   const collectionRegexes = fileSpecs.map((spec) => spec.regex);
-  if (match.length > 1) {
+  const match_ = fileSpecs.filter(
+    ((collectionFile) => unversionFilename(fileName).match(collectionFile.regex))
+  );
+  if (match_.length > 1) {
     throw new InvalidArgument(`File (${fileName}) matched more than one of ${JSON.stringify(collectionRegexes)}.`);
   }
-  if (match.length === 0) {
+  if (match_.length === 0) {
     throw new InvalidArgument(`File (${fileName}) did not match any of ${JSON.stringify(collectionRegexes)}`);
   }
-  if (!bucketsConfig.keyExists(match[0].bucket)) {
+  const [match] = match_;
+  if (!bucketsConfig.keyExists(match.bucket)) {
     throw new InvalidArgument(`Collection config specifies a bucket key of ${match[0].bucket}, `
       + `but the configured bucket keys are: ${Object.keys(bucketsConfig).join(', ')}`);
   }
+  return match;
+}
+
+function updateGranuleFile(
+  file,
+  granule,
+  bucketsConfig,
+  cmrFileNames,
+  collection,
+  cmrMetadata
+) {
+  const fileName = path.basename(file.key);
+
+  const match = validateFileMatch(bucketsConfig, fileName, collection.files);
+
+  const cmrFileTypeObject = {};
+  if (cmrFileNames.includes(fileName) && !file.type) {
+    cmrFileTypeObject.type = 'metadata';
+  }
+  const URLPathTemplate = match.url_path || collection.url_path || '';
+  const urlPath = urlPathTemplate(URLPathTemplate, {
+    file,
+    granule: granule,
+    cmrMetadata,
+  });
+  const bucketName = bucketsConfig.nameByKey(match.bucket);
+  const updatedKey = S3.s3Join(urlPath, fileName);
+
+  return {
+    ...file,
+    ...cmrFileTypeObject, // Add type if the file is a CMR file
+    bucket: bucketName,
+    key: updatedKey,
+    sourceBucket: file.bucket,
+    sourceKey: file.key,
+  };
 }
 
 /**
@@ -79,7 +138,7 @@ function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
  * `collection.files.regexp`.  CMR metadata files have a file type added.
  *
  * @param {Object} granulesObject - an object of granules where the key is the granuleId
- * @param {Object} collection - configuration object defining a collection
+ * @param {CollectionRecord} collection - configuration object defining a collection
  *                              of granules and their files
  * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
  * @param {BucketsConfig} bucketsConfig -  instance associated with the stack
@@ -89,41 +148,25 @@ function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
 async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucketsConfig) {
   const updatedGranules = {};
   const cmrFileNames = cmrFiles.map((f) => path.basename(f.key));
-  const fileSpecs = collection.files;
-
   await Promise.all(Object.keys(granulesObject).map(async (granuleId) => {
     const updatedFiles = [];
-    updatedGranules[granuleId] = { ...granulesObject[granuleId] };
-
+    updatedGranules[granuleId] = await updateGranuleCollection(
+      granulesObject[granuleId],
+      collection
+    );
     const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
-    const cmrMetadata = cmrFile ? await metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`) : {};
-
-    granulesObject[granuleId].files.forEach((file) => {
-      const cmrFileTypeObject = {};
-      const fileName = path.basename(file.key);
-      if (cmrFileNames.includes(fileName) && !file.type) {
-        cmrFileTypeObject.type = 'metadata';
-      }
-
-      const match = fileSpecs.filter((cf) => unversionFilename(fileName).match(cf.regex));
-      validateMatch(match, bucketsConfig, fileName, fileSpecs);
-
-      const URLPathTemplate = match[0].url_path || collection.url_path || '';
-      const urlPath = urlPathTemplate(URLPathTemplate, {
+    const cmrMetadata = cmrFile ?
+      await metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`) :
+      {};
+    updatedGranules[granuleId].files.forEach((file) => {
+      updatedFiles.push(updateGranuleFile(
         file,
-        granule: granulesObject[granuleId],
-        cmrMetadata,
-      });
-      const bucketName = bucketsConfig.nameByKey(match[0].bucket);
-      const updatedKey = S3.s3Join(urlPath, fileName);
-
-      updatedFiles.push({
-        ...file,
-        ...cmrFileTypeObject, // Add type if the file is a CMR file
-        bucket: bucketName,
-        sourceKey: file.key,
-        key: updatedKey,
-      });
+        updatedGranules[granuleId],
+        bucketsConfig,
+        cmrFileNames,
+        collection,
+        cmrMetadata
+      ));
     });
     updatedGranules[granuleId].files = [...updatedFiles];
   }));
@@ -144,13 +187,12 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
  */
 async function moveFileRequest(
   file,
-  sourceBucket,
   duplicateHandling,
   markDuplicates = true,
   s3MultipartChunksizeMb
 ) {
   const source = {
-    Bucket: sourceBucket,
+    Bucket: file.sourceBucket,
     Key: file.sourceKey,
   };
   const target = {
@@ -164,6 +206,7 @@ async function moveFileRequest(
   // the file moved to destination
   const fileMoved = { ...file };
   delete fileMoved.sourceKey;
+  delete fileMoved.sourceBucket;
 
   const s3ObjAlreadyExists = await S3.s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
@@ -179,6 +222,7 @@ async function moveFileRequest(
     });
   } else {
     const chunkSize = s3MultipartChunksizeMb ? Number(s3MultipartChunksizeMb) * MB : undefined;
+
     await S3.moveObject({
       sourceBucket: source.Bucket,
       sourceKey: source.Key,
@@ -204,14 +248,12 @@ async function moveFileRequest(
  * and update granule files to include renamed files if any.
  *
  * @param {Object} granulesObject - an object of the granules where the key is the granuleId
- * @param {string} sourceBucket - source bucket location of files
  * @param {string} duplicateHandling - how to handle duplicate files
  * @param {number} s3MultipartChunksizeMb - S3 multipart upload chunk size in MB
  * @returns {Object} the object with updated granules
  */
 async function moveFilesForAllGranules(
   granulesObject,
-  sourceBucket,
   duplicateHandling,
   s3MultipartChunksizeMb
 ) {
@@ -221,11 +263,11 @@ async function moveFilesForAllGranules(
     const cmrFiles = granule.files.filter((file) => isCMRFile(file));
     const filesMoved = await Promise.all(
       filesToMove.map((file) =>
-        moveFileRequest(file, sourceBucket, duplicateHandling, true, s3MultipartChunksizeMb))
+        moveFileRequest(file, duplicateHandling, true, s3MultipartChunksizeMb))
     );
     const cmrFilesMoved = await Promise.all(
       cmrFiles.map(
-        (file) => moveFileRequest(file, sourceBucket, 'replace', false)
+        (file) => moveFileRequest(file, 'replace', false)
       )
     );
     granule.files = flatten(filesMoved).concat(flatten(cmrFilesMoved));
@@ -241,7 +283,6 @@ async function moveFilesForAllGranules(
  *
  * @param {Object} event - Lambda function payload
  * @param {Object} event.config - the config object
- * @param {string} event.config.bucket - AWS S3 bucket that contains the granule files
  * @param {Object} event.config.buckets - Buckets config
  * @param {string} event.config.distribution_endpoint - distribution endpoint for the api
  * @param {Object} event.config.collection - collection configuration
@@ -249,6 +290,7 @@ async function moveFilesForAllGranules(
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
  *                                 from staging to final bucket. Mostly useful for testing.
  * @param {Object} event.input - a granules object containing an array of granules
+ * @param {Array<import('../../packages/types').ApiGranuleRecord>} event.input.granules
  *
  * @returns {Promise} returns the promise of an updated event object
  */
@@ -256,7 +298,6 @@ async function moveGranules(event) {
   // We have to post the meta-xml file of all output granules
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
-
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
     ? config.s3MultipartChunksizeMb : process.env.default_s3_multipart_chunksize_mb;
@@ -275,31 +316,34 @@ async function moveGranules(event) {
   } else {
     filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
   }
-
   const granulesInput = event.input.granules;
   const cmrFiles = granulesToCmrFileObjects(granulesInput, filterFunc);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 
   let movedGranulesByGranuleId;
 
+  // update granule collections in store if necessary
+  await Promise.all(granulesInput.map(
+    async (granule) => await updateGranuleCollection(granule, config.collection)
+  ));
+
   // allows us to disable moving the files
   if (moveStagedFiles) {
-    // Update all granules with aspirational metadata (where the files should
-    // end up after moving).
+    // Update all granules with aspirational metadata
+    // (where the files should end up after moving).
     const granulesToMove = await updateGranuleMetadata(
       granulesByGranuleId, config.collection, cmrFiles, bucketsConfig
     );
 
     // Move files from staging location to final location
     movedGranulesByGranuleId = await moveFilesForAllGranules(
-      granulesToMove, config.bucket, duplicateHandling, s3MultipartChunksizeMb
+      granulesToMove, duplicateHandling, s3MultipartChunksizeMb
     );
   } else {
     movedGranulesByGranuleId = granulesByGranuleId;
   }
 
   const granuleDuplicates = buildGranuleDuplicatesObject(movedGranulesByGranuleId);
-
   return {
     granuleDuplicates,
     granules: Object.values(movedGranulesByGranuleId),
@@ -320,3 +364,4 @@ async function handler(event, context) {
 
 exports.handler = handler;
 exports.moveGranules = moveGranules;
+exports.updateGranuleMetadata = updateGranuleMetadata;

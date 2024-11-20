@@ -28,15 +28,17 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('The MoveGranules task', () => {
   let beforeAllFailed = false;
   let collection;
+  let collection2;
   let config;
   let granuleId;
+  let movedCollectionFile;
   let movedFile;
-  let moveGranulesResponse;
+  let preliminaryMoveGranulesResponse;
+  let moveGranulesCollectionResponse;
   let prefix;
   let sourceBucket;
   let sourceKey;
 
-  // const zeroByteFilename = '0byte.dat';
   beforeAll(async () => {
     try {
       config = await loadConfig();
@@ -54,6 +56,14 @@ describe('The MoveGranules task', () => {
           process: 'modis',
         }
       );
+      collection2 = await createCollection(
+        prefix,
+        {
+          duplicateHandling: 'replace',
+          process: 'modis2',
+          bucket: 'a'
+        }
+      );
 
       granuleId = randomId('granule-id-');
 
@@ -68,7 +78,7 @@ describe('The MoveGranules task', () => {
         Tagging: querystring.stringify({ granuleId }),
       });
 
-      moveGranulesResponse = await moveGranules({
+      preliminaryMoveGranulesResponse = await moveGranules({
         config: {
           buckets: config.buckets,
           distribution_endpoint: 'http://www.example.com',
@@ -89,8 +99,21 @@ describe('The MoveGranules task', () => {
           ],
         },
       });
+      movedFile = preliminaryMoveGranulesResponse.granules[0].files[0];
+      moveGranulesCollectionResponse = await moveGranules({
+        config: {
+          buckets: config.buckets,
+          distribution_endpoint: 'http://www.example.com',
+          collection: collection2,
+        },
+        input: {
+          granules: preliminaryMoveGranulesResponse.granules
+        },
+      });
 
-      movedFile = moveGranulesResponse.granules[0].files[0];
+      movedCollectionFile = moveGranulesCollectionResponse.granules[0].files[0];
+
+
     } catch (error) {
       beforeAllFailed = true;
       throw error;
@@ -102,34 +125,44 @@ describe('The MoveGranules task', () => {
       [
         () => deleteS3Object(sourceBucket, sourceKey),
         () => deleteS3Object(movedFile.bucket, movedFile.key),
+        () => deleteS3Object(movedCollectionFile.bucket, movedCollectionFile.key),
         () => deleteCollection({
           prefix,
           collectionName: get(collection, 'name'),
           collectionVersion: get(collection, 'version'),
+        }),
+        () => deleteCollection({
+          prefix,
+          collectionName: get(collection2, 'name'),
+          collectionVersion: get(collection2, 'version'),
         }),
       ],
       { stopOnError: false }
     ).catch(console.error);
   });
 
-  it('succeeds moving the 0 byte file', async () => {
+  it('updates granule data in cumulus datastores', async () => {
+    // #TODO
+  });
+
+  it('succeeds moving file to new collection', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
 
-    const existCheck = await s3ObjectExists({ Bucket: movedFile.bucket, Key: movedFile.key });
-    const object = await headObject(movedFile.bucket, movedFile.key);
+    const existCheck = await s3ObjectExists({ Bucket: movedCollectionFile.bucket, Key: movedCollectionFile.key });
+    const object = await headObject(movedCollectionFile.bucket, movedCollectionFile.key);
     const objectSize = object.ContentLength;
 
     expect(existCheck).toEqual(true);
     expect(objectSize).toEqual(0);
   });
 
-  it('preserves object tags', async () => {
+  it('preserves object tags across collection move', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
 
     // Verify that the tags of the moved granule match the tags of the source
     const movedFileTags = await s3GetObjectTagging(
-      movedFile.bucket,
-      movedFile.key
+      movedCollectionFile.bucket,
+      movedCollectionFile.key
     );
 
     const expectedTagSet = [

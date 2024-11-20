@@ -67,6 +67,7 @@
   "input": {
     "granules": [
       {
+        "collectionId": "MOD11A1___006",
         "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
         "files": [
           {
