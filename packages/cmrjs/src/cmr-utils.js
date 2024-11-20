@@ -1084,7 +1084,8 @@ async function getUserAccessibleBuckets(edlUser, cmrProvider = process.env.cmr_p
  * Extract temporal information from granule object
  *
  * @param {Object} granule - granule object
- * @returns {Promise<Object>} - temporal information (beginningDateTime,
+ * @returns {Promise<import('@cumulus/types').PartialGranuleProcessingInfo>}
+ * - temporal information (beginningDateTime,
  *    endingDateTime, productionDateTime, lastUpdateDateTime) of the granule if
  *    available.
  */
