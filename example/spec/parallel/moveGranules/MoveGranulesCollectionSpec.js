@@ -141,7 +141,11 @@ describe('The MoveGranules task', () => {
     ).catch(console.error);
   });
 
-  it('succeeds moving the 0 byte file', async () => {
+  it('updates granule data in cumulus datastores', async () => {
+    // #TODO
+  });
+
+  it('succeeds moving file to new collection', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
 
     const existCheck = await s3ObjectExists({ Bucket: movedCollectionFile.bucket, Key: movedCollectionFile.key });
@@ -152,7 +156,7 @@ describe('The MoveGranules task', () => {
     expect(objectSize).toEqual(0);
   });
 
-  it('preserves object tags', async () => {
+  it('preserves object tags across collection move', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
 
     // Verify that the tags of the moved granule match the tags of the source
