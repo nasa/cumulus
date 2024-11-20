@@ -64,12 +64,7 @@ async function updateGranuleCollection(granule, collection) {
   const updatedGranule = { ...granule };
   if (granule.collectionId !== collectionId) {
     updatedGranule.collectionId = collectionId;
-    await updateGranule({
-      prefix: process.env.stackName,
-      body: updatedGranule,
-      granuleId: updatedGranule.granuleId,
-      collectionId,
-    });
+    // TODO api call to update granule in pg here
   }
   return updatedGranule;
 }
