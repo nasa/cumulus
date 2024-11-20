@@ -7,7 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Breaking Changes
-
+- **CUMULUS-3751**
+  - Updated `move-granules` task to get source bucket from input granules files' configured bucket,
+    rather than config.bucket parameter
 - **CUMULUS-2564**
   - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
     This modifies the task behavior to stage granules to
@@ -23,7 +25,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
 ### Added
-
+- **CUMULUS-3751**
+  - updated `move-granules` task to accept a collection that *is not* the current granules collection
+    as an instruction to *move* that granule to that collection
+    - updating granule metadata in task return
+    - updating granule metadata in cumulus data stores
+    - moving s3 files to new collection buckets and prefixes
 - **CUMULUS-3919**
   - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 
