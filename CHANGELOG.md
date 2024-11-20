@@ -71,6 +71,8 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Added `reconciliationReports` type to stats endpoint, so `aggregate` query will work for reconciliation reports
 - **CUMULUS-3859**
   - Updated `@cumulus/api/bin/serveUtils` to no longer add records to ElasticSearch
+  - Removed ElasticSearch from local API server code
+  - Updated CollectionSearch to filter granule fields in addition to time frame for active collections
 
 ## [Unreleased]
 
