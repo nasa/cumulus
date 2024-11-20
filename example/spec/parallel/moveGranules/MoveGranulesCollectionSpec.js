@@ -61,7 +61,6 @@ describe('The MoveGranules task', () => {
         {
           duplicateHandling: 'replace',
           process: 'modis2',
-          bucket: 'a'
         }
       );
 
@@ -107,13 +106,11 @@ describe('The MoveGranules task', () => {
           collection: collection2,
         },
         input: {
-          granules: preliminaryMoveGranulesResponse.granules
+          granules: preliminaryMoveGranulesResponse.granules,
         },
       });
 
       movedCollectionFile = moveGranulesCollectionResponse.granules[0].files[0];
-
-
     } catch (error) {
       beforeAllFailed = true;
       throw error;

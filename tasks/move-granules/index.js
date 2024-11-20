@@ -28,7 +28,6 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { isFileExtensionMatched } = require('@cumulus/message/utils');
 const log = require('@cumulus/common/log');
-const { updateGranule } = require('@cumulus/api-client/granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const MB = 1024 * 1024;
@@ -59,6 +58,7 @@ function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
  * @param {CollectionRecord} collection
  * @returns {}
  */
+// eslint-disable-next-line require-await
 async function updateGranuleCollection(granule, collection) {
   const collectionId = constructCollectionId(collection.name, collection.version);
   const updatedGranule = { ...granule };
