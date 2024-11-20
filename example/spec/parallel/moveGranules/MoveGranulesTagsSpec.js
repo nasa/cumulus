@@ -101,7 +101,7 @@ describe('The MoveGranules task', () => {
     await pAll(
       [
         () => deleteS3Object(sourceBucket, sourceKey),
-        () => deleteS3Object(movedFile.bucket, movedFile.filepath),
+        () => deleteS3Object(movedFile.bucket, movedFile.key),
         () => deleteCollection({
           prefix,
           collectionName: get(collection, 'name'),
