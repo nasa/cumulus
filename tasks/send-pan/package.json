@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/send-pan",
-  "version": "19.1.0",
+  "version": "19.2.0-alpha.1",
   "description": "Sends a PAN response after parsing a PDR.",
   "main": "dist/index.js",
   "private": true,
@@ -40,15 +40,15 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "19.1.0",
-    "@cumulus/common": "19.1.0",
+    "@cumulus/api": "19.2.0-alpha.1",
+    "@cumulus/common": "19.2.0-alpha.1",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
-    "@cumulus/ingest": "19.1.0",
-    "@cumulus/logger": "19.1.0",
+    "@cumulus/ingest": "19.2.0-alpha.1",
+    "@cumulus/logger": "19.2.0-alpha.1",
     "got": "^11.8.5"
   },
   "devDependencies": {
-    "@cumulus/aws-client": "19.1.0",
+    "@cumulus/aws-client": "19.2.0-alpha.1",
     "url-join": "^4.0.0"
   }
 }
