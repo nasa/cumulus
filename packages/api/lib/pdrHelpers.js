@@ -5,7 +5,7 @@ const pvl = require('@cumulus/pvl');
 /**
  * Generate Short PAN message
  *
- * @param {string} disposition disposition message
+ * @param {string} disposition - disposition message
  * @returns {string} the PAN message
  */
 function generateShortPAN(disposition) {

@@ -49,12 +49,9 @@ async function sendPAN(event: HandlerEvent): Promise<HandlerOutput> {
     throw new Error('Executions still running');
   }
 
-  let pan;
-  if (input.failed.length > 0) {
-    pan = pdrHelpers.generateShortPAN('FAILED');
-  } else {
-    pan = pdrHelpers.generateShortPAN('SUCCESSFUL');
-  }
+  const disposition = (input.failed.length > 0) ? 'FAILED' : 'SUCCESSFUL';
+  const pan = pdrHelpers.generateShortPAN(disposition);
+
   const localPath = path.join(tmpdir(), panName);
   fs.writeFileSync(localPath, pan);
 

@@ -266,7 +266,7 @@ test('SendPan task sends failed PAN to s3', async (t) => {
       },
       running: [],
       completed: ['arn:completed:execution', 'arn:completed:execution', 'arn:completed:execution'],
-      failed: ['arn:failed:execution'],
+      failed: [{ arn: 'arn:failed:execution', reason: 'Workflow Failed' }],
     },
   };
 

@@ -1,31 +1,31 @@
-export interface Pdr {
+export type Pdr = {
   name: string,
   path?: string,
   [key: string]: unknown
-}
+};
 
-export interface FailedExecution {
+export type FailedExecution = {
   arn: string
   reason: string
-}
+};
 
-export interface Pan {
+export type Pan = {
   uri: string
-}
-export interface HandlerInput {
+};
+export type HandlerInput = {
   pdr: Pdr,
   running: string[],
   completed: string[],
   failed: FailedExecution[],
   [key: string]: unknown
-}
+};
 
-export interface HandlerOutput {
+export type HandlerOutput = {
   pdr: Pdr,
   pan: Pan,
   [key: string]: unknown
-}
-export interface HandlerEvent {
+};
+export type HandlerEvent = {
   config: {
     provider: {
       protocol: string,
@@ -34,4 +34,4 @@ export interface HandlerEvent {
     remoteDir: string | null,
   },
   input: HandlerInput,
-}
+};
