@@ -17,6 +17,7 @@ const {
   ProviderPgModel,
   ReconciliationReportPgModel,
   RulePgModel,
+  translateApiAsyncOperationToPostgresAsyncOperation,
   translateApiCollectionToPostgresCollection,
   translateApiExecutionToPostgresExecution,
   translateApiGranuleToPostgresGranule,
@@ -44,6 +45,7 @@ async function erasePostgresTables(knex) {
   const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
+  const reconReportPgModel = new ReconciliationReportPgModel();
   const rulePgModel = new RulePgModel();
 
   await granulesExecutionsPgModel.delete(knex, {});
@@ -56,6 +58,7 @@ async function erasePostgresTables(knex) {
   await rulePgModel.delete(knex, {});
   await collectionPgModel.delete(knex, {});
   await providerPgModel.delete(knex, {});
+  await reconReportPgModel.delete(knex, {});
 }
 
 async function resetPostgresDb() {
@@ -77,6 +80,22 @@ async function resetPostgresDb() {
   await knex.migrate.latest();
 
   await erasePostgresTables(knex);
+}
+
+async function addAsyncOperations(asyncOperations) {
+  const knex = await getKnexClient({
+    env: {
+      ...envParams,
+      ...localStackConnectionEnv,
+    },
+  });
+  const asyncOperationPgModel = new AsyncOperationPgModel();
+  return await Promise.all(
+    asyncOperations.map(async (r) => {
+      const dbRecord = await translateApiAsyncOperationToPostgresAsyncOperation(r, knex);
+      await asyncOperationPgModel.create(knex, dbRecord);
+    })
+  );
 }
 
 async function addCollections(collections) {
@@ -210,7 +229,6 @@ async function addPdrs(pdrs) {
   );
 }
 
-// TODO this is dynamodb
 async function addReconciliationReports(reconciliationReports) {
   const knex = await getKnexClient({
     env: {
@@ -229,6 +247,7 @@ async function addReconciliationReports(reconciliationReports) {
 
 module.exports = {
   resetPostgresDb,
+  addAsyncOperations,
   addProviders,
   addCollections,
   addExecutions,

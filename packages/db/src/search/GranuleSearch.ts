@@ -109,9 +109,32 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
+   * Build the search query for active collections.
+   * If time params are specified the query will search granules that have been updated
+   * in that time frame.  If granuleId or providerId are provided, it will filter those as well.
+   *
+   * @param knex - DB client
+   * @returns queries for getting count and search result
+   */
+  public buildSearchForActiveCollections(knex: Knex)
+    : {
+      countQuery: Knex.QueryBuilder,
+      searchQuery: Knex.QueryBuilder,
+    } {
+    const { countQuery, searchQuery } = this.buildBasicQuery(knex);
+    this.buildTermQuery({ countQuery, searchQuery });
+    this.buildTermsQuery({ countQuery, searchQuery });
+    this.buildRangeQuery({ knex, countQuery, searchQuery });
+
+    log.debug(`buildSearchForActiveCollections returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
+    return { countQuery, searchQuery };
+  }
+
+  /**
    * Translate postgres records to api records
    *
    * @param pgRecords - postgres records returned from query
+   * @param knex - DB client
    * @returns translated api records
    */
   protected async translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[], knex: Knex)

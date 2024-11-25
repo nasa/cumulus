@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Phase 2 Release
 
+### Breaking Changes
+
+- **CUMULUS-3698**
+  - GranuleSearch retrieving files/execution is toggled
+      by setting "includeFullRecord" field to 'true' in relevant api endpoint params
+  - GranuleSearch does *not* retrieve files/execution by default unless includeFullRecord is set to 'true'
+  - @cumulus/db function getExecutionArnByGranuleCumulusId is removed. To replace this function use getExecutionInfoByGranuleCumulusId with parameter executionColumns set to ['arn'] or unset (['arn'] is the default argument)
+
 ### Migration Notes
 
 #### CUMULUS-3833 Migration of ReconciliationReports from DynamoDB to Postgres after Cumulus is upgraded.
@@ -19,8 +27,16 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 - `PREFIX` is your Cumulus deployment prefix.
 - `OUTFILE` (**optional**) is the filepath where the Lambda output will be saved.
 
+
+#### CUMULUS-3967
+
+External tooling making use of `searchContext` in the `GET` `/granules/` endpoint will need to update to make use of standard pagination via `limit` and `page` scrolling, as `searchContext` is no longer supported/is an ES specific feature.
+
 ### Replace ElasticSearch Phase 2
 
+- **CUMULUS-3967**
+  - Remove `searchContext` from API granules GET `/granules` endpoint.
+  - Update relevant tests to validate expected behavior utilizing postgres pagination
 - **CUMULUS-3229**
   - Remove ElasticSearch queries from Rule LIST endpoint
 - **CUMULUS-3230**
@@ -39,6 +55,9 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
     Elasticsearch
   - Update `@cumlus/api/ecs/async-operation` to not update Elasticsearch index when
     reporting status of async operation
+- **CUMULUS-3698**
+  - GranuleSearch now can retrieve associated files for granules
+  - GranuleSearch now can retrieve latest associated execution for granules
 - **CUMULUS-3806**
   - Update `@cumulus/db/search` to allow for ordered collation as a
     dbQueryParameter
@@ -71,16 +90,19 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
   - Added `reconciliationReports` type to stats endpoint, so `aggregate` query will work for reconciliation reports
 - **CUMULUS-3859**
   - Updated `@cumulus/api/bin/serveUtils` to no longer add records to ElasticSearch
+  - Removed ElasticSearch from local API server code
+  - Updated CollectionSearch to filter granule fields in addition to time frame for active collections
 
 ## [Unreleased]
 
 ### Breaking Changes
 
-- **CUMULUS-3698**
-  - GranuleSearch retrieving files/execution is toggled
-      by setting "includeFullRecord" field to 'true' in relevant api endpoint params
-  - GranuleSearch does *not* retrieve files/execution by default unless includeFullRecord is set to 'true'
-  - @cumulus/db function getExecutionArnByGranuleCumulusId is removed. To replace this function use getExecutionInfoByGranuleCumulusId with parameter executionColumns set to ['arn'] or unset (['arn'] is the default argument)
+- **CUMULUS-3934**
+  - Removed `ecs_cluster_instance_allow_ssh` resource.
+  - The `ecs_cluster_instance_allow_ssh` was implemented before SSM hosts were deployed
+    to NGAP accounts and allowed for SSHing into an instance from an SSH bastion, which no longer exists.
+  - Tunneling into an EC2 via SSM is still supported. Users relying solely on SSH will need to transition to SSM.
+
 - **CUMULUS-2564**
   - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
     This modifies the task behavior to stage granules to
@@ -91,15 +113,12 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
     object name collision, this configuration changes the duplicate collision
     behavior of sync-granules to be per-granule-id instead of per-collection
     when active.
-    If the prior behavior is desired, please add `"useGranIdPath": true` to your
+    If the prior behavior is desired, please add `"useGranIdPath": false` to your
     task config in your workflow definitions that use `sync-granule`.
 
 
 ### Added
 
-- **CUMULUS-3698**
-  - GranuleSearch now can retrieve associated files for granules
-  - GranuleSearch now can retrieve latest associated execution for granules
 - **CUMULUS-3919**
   - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 
@@ -112,9 +131,15 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 
 ### Fixed
 
+- **CUMULUS-3933**
+  - Update example/bamboo/integration-tests.sh to properly exit if lock-stack
+    errors/detects another stack lock
 - **CUMULUS-3876**
   - Fixed `s3-replicator` lambda cross region write failure
   - Added `target_region` variable to `tf-modules/s3-replicator` module
+- **Security Vulnerabilities**
+  - Updated `@octokit/graphql` from 2.1.1 to ^2.3.0 to address [CVE-2024-21538]
+    (https://github.com/advisories/GHSA-3xgq-45jj-v275)
 
 ## [v19.1.0] 2024-10-07
 
