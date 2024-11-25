@@ -26,6 +26,7 @@ Resources:
           --==BOUNDARY==
           Content-Type: text/cloud-boothook; charset="us-ascii"
 
+          #!/bin/bash
           vgcreate docker /dev/xvdcz
 
           lvcreate -n docker-data -L${docker_volume_create_size}G docker
@@ -47,6 +48,7 @@ Resources:
           --==BOUNDARY==
           Content-Type: text/x-shellscript; charset="us-ascii"
 
+          #!/bin/bash
 %{ if efs_dns_name != null && efs_mount_point != null ~}
           AZ=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone)
 
@@ -82,9 +84,6 @@ Resources:
 
           aws s3 cp s3://${task_reaper_object.bucket}/${task_reaper_object.key} /usr/local/bin/task-reaper.sh
           chmod +x /usr/local/bin/task-reaper.sh
-          echo "$(echo '0,30 * * * * /usr/sbin/logrotate -v /etc/logrotate.conf' ; crontab -l)" | crontab -
-          sed -i 's/size.*/size 100M\n    dateformat -%Y%m%d%s\n    copytruncate/' /etc/logrotate.d/awslogs
-          sed -i 's/rotate 4/rotate 2/' /etc/logrotate.d/awslogs
           cat <<'EOF' >> /etc/cron.d/task-reaper
           PATH=/bin:/usr/local/bin
           AWS_DEFAULT_REGION=${region}
