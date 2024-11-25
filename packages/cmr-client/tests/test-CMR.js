@@ -166,7 +166,7 @@ test('getReadHeaders returns clientId and token for launchpad', (t) => {
 });
 
 test.serial('ingestUMMGranule() returns CMRInternalError when CMR is down', async (t) => {
-  const cmrSearch = new CMR({ provider: 'my-provider', token: 'abc', clientId: 'client' });
+  const cmrSearch = new CMR({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
 
   const ummgMetadata = { GranuleUR: 'asdf' };
 
@@ -192,7 +192,7 @@ test.serial('ingestUMMGranule() returns CMRInternalError when CMR is down', asyn
 });
 
 test.serial('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
-  const cmrSearch = new CMR({ provider: 'my-provider', token: 'abc', clientId: 'client' });
+  const cmrSearch = new CMR({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
 
   const ummgMetadata = { GranuleUR: 'asdf' };
 
@@ -256,4 +256,18 @@ test('getToken returns a token when the user\'s token is provided', async (t) =>
   });
 
   t.is(await cmrObj.getToken(), 'abcde');
+});
+
+test('getToken throws if no username is provided when using Earthdata Login', async (t) => {
+  const cmrObj = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    password: 'password',
+    oauthProvider: 'earthdata',
+  });
+
+  await t.throwsAsync(
+    () => cmrObj.getToken(),
+    { message: 'Username not specified for non-launchpad CMR client' }
+  );
 });
