@@ -27,8 +27,16 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 - `PREFIX` is your Cumulus deployment prefix.
 - `OUTFILE` (**optional**) is the filepath where the Lambda output will be saved.
 
+
+#### CUMULUS-3967
+
+External tooling making use of `searchContext` in the `GET` `/granules/` endpoint will need to update to make use of standard pagination via `limit` and `page` scrolling, as `searchContext` is no longer supported/is an ES specific feature.
+
 ### Replace ElasticSearch Phase 2
 
+- **CUMULUS-3967**
+  - Remove `searchContext` from API granules GET `/granules` endpoint.
+  - Update relevant tests to validate expected behavior utilizing postgres pagination
 - **CUMULUS-3229**
   - Remove ElasticSearch queries from Rule LIST endpoint
 - **CUMULUS-3230**
