@@ -1,137 +1,301 @@
 'use strict';
-
+import { Context } from 'aws-lambda';
 import cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 import get from 'lodash/get';
-import flatten from 'lodash/flatten';
 import keyBy from 'lodash/keyBy';
+import cloneDeep from 'lodash/cloneDeep';
 import path from 'path';
-
+import { MissingS3FileError } from '@cumulus/errors/src';
 import S3 from '@cumulus/aws-client/S3';
 const { InvalidArgument } = require('@cumulus/errors');
 
-// const {
-//   handleDuplicateFile,
-//   unversionFilename,
-//   duplicateHandlingType,
-// } = require('@cumulus/ingest/granule');
 import {
-    handleDuplicateFile,
-    unversionFilename,
-    duplicateHandlingType,
+  unversionFilename,
+  duplicateHandlingType,
 } from '@cumulus/ingest/granule';
-// const {
-//   isCMRFile,
-//   isISOFile,
-//   metadataObjectFromCMRFile,
-//   granulesToCmrFileObjects,
-// } = require('@cumulus/cmrjs');
 import {
-    isCMRFile,
-    isISOFile,
-    metadataObjectFromCMRFile,
-    granulesToCmrFileObjects
- } from '@cumulus/cmrjs';
-// const BucketsConfig = require('@cumulus/common/BucketsConfig');
+  isCMRFile,
+  isISOFile,
+  metadataObjectFromCMRFile,
+  granulesToCmrFileObjects
+} from '@cumulus/cmrjs';
 import { BucketsConfig } from '@cumulus/common/BucketsConfig';
-// const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
-// const { isFileExtensionMatched } = require('@cumulus/message/utils');
 import { isFileExtensionMatched } from '@cumulus/message/utils';
-// const log = require('@cumulus/common/log');
 import { log } from '@cumulus/common';
-// const { constructCollectionId } = require('@cumulus/message/Collections');
-import { constructCollectionId } from '@cumulus/message/Collections';
-
-import { ApiFile, ApiGranule, CollectionRecord } from '@cumulus/types';
+import { ApiGranule, DuplicateHandling } from '@cumulus/types';
+import { ApiFile } from '@cumulus/types/api/files';
 import { AssertionError } from 'assert';
+import { CumulusMessage } from '@cumulus/types/message';
+import { CMRFile } from '@cumulus/cmrjs/src/types';
+import { Dictionary, zip } from 'lodash';
+import { CollectionFile } from '../../packages/types';
+import { DuplicateFile } from '../../packages/errors/src';
 
 const MB = 1024 * 1024;
 
+interface EventConfig {
+  collection: {
+    meta: {
+      granuleMetadataFileExtension: string,
+    },
+    url_path?: string,
+    files: Array<CollectionFile>,
+    duplicateHandling?: DuplicateHandling,
+  },
+  duplicateHandling?: DuplicateHandling,
+  buckets: Array<string>,
+  s3MultipartChunksizeMb?: number,
+}
+
+interface MoveGranulesEvent {
+  config: EventConfig,
+  cumulus_config?: {
+    cumulus_context?: {
+      forceDuplicateOverwrite?: boolean,
+    }
+  },
+  input: {
+    granules: Array<ApiGranule>,
+  }
+}
+
+interface ValidApiFile extends ApiFile {
+  bucket: string,
+  key: string
+}
+
 /**
- * Move Granule files to final location.
- * See the schemas directory for detailed input and output schemas.
- *
- * @param {Object} event - Lambda function payload
- * @param {Object} event.config - the config object
- * @param {Object} event.config.buckets - Buckets config
- * @param {string} event.config.distribution_endpoint - distribution endpoint for the api
- * @param {Object} event.config.collection - collection configuration
- *                     https://nasa.github.io/cumulus/docs/data-cookbooks/setup#collections
- * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
- *                                 from staging to final bucket. Mostly useful for testing.
- * @param {Object} event.input - a granules object containing an array of granules
- * @param {Array<import('@cumulus/types').ApiGranuleRecord>} event.input.granules
- *
- * @returns {Promise} returns the promise of an updated event object
+ * Validates the file matched only one collection.file and has a valid bucket
+ * config.
  */
-async function moveGranules(event) {
+function identifyFileMatch(bucketsConfig: BucketsConfig, fileName: string, fileSpecs: Array<CollectionFile>) {
+  const collectionRegexes = fileSpecs.map((spec) => spec.regex);
+  const match_ = fileSpecs.filter(
+    ((collectionFile) => unversionFilename(fileName).match(collectionFile.regex))
+  );
+  if (match_.length > 1) {
+    throw new InvalidArgument(`File (${fileName}) matched more than one of ${JSON.stringify(collectionRegexes)}.`);
+  }
+  if (match_.length === 0) {
+    throw new InvalidArgument(`File (${fileName}) did not match any of ${JSON.stringify(collectionRegexes)}`);
+  }
+  const [match] = match_;
+  if (!bucketsConfig.keyExists(match.bucket)) {
+    throw new InvalidArgument(`Collection config specifies a bucket key of ${match.bucket}, `
+      + `but the configured bucket keys are: ${Object.keys(bucketsConfig).join(', ')}`);
+  }
+  return match;
+}
+
+function apiFileIsValid(file: ApiFile): file is ValidApiFile {
+  if (file.bucket === undefined || file.key === undefined) {
+    return false;
+  }
+  return true;
+}
+
+async function s3MoveNeeded(
+  sourceFile: ValidApiFile,
+  targetFile: ValidApiFile,
+): Promise<boolean> {
+  if (sourceFile.key === targetFile.key && sourceFile.bucket === targetFile.bucket) {
+    return false;
+  }
+  const sourceExists = await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key });
+  const targetExists = await S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key });
+  if (targetExists && sourceExists) {
+    // TODO should this use duplicateHandling?
+    throw new DuplicateFile(`target location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} already occupied`)
+  }
+  if (sourceExists) {
+    return true;
+  }
+  if (targetExists) {
+    return false;
+  }
+  throw new MissingS3FileError(`source location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} doesn't exist`)
+}
+
+async function moveGranulesInS3(
+  sourceGranules: Array<ApiGranule>,
+  targetGranules: Array<ApiGranule>,
+  s3MultipartChunksizeMb?: number
+): Promise<Array<ApiGranule>> {
+  const movedGranules = await Promise.all(zip(sourceGranules, targetGranules).map(async ([sourceGranule, targetGranule]) => {
+    if (sourceGranule?.files === undefined || targetGranule?.files === undefined) {
+      return;
+    }
+    const movedFiles = await Promise.all(zip(sourceGranule.files, targetGranule.files).map(async ([sourceFile, targetFile]) => {
+      if (sourceFile === undefined || targetFile === undefined) {
+        return;
+      }
+      if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
+        throw new AssertionError({ message: `` })
+      }
+      if (await s3MoveNeeded(sourceFile, targetFile)) {
+        S3.moveObject({
+          sourceBucket: sourceFile.bucket,
+          sourceKey: sourceFile.key,
+          destinationBucket: targetFile.bucket,
+          destinationKey: targetFile.key,
+          chunkSize: s3MultipartChunksizeMb,
+        });
+        return targetFile;
+      }
+      return;
+    }));
+    return {
+      ...targetGranule,
+      files: movedFiles.filter((f) => f !== undefined)
+    }
+  }));
+
+  return movedGranules.filter((g) => g !== undefined);
+}
+
+async function moveGranulesInCumulusDatastores(
+  sourceGranules: Array<ApiGranule>,
+  targetGranules: Array<ApiGranule>,
+): Promise<void> {
+  // interface with API here to update granules in PG etc
+  return
+}
+
+/**
+ * Move all files in a collection of granules from staging location to final location,
+ * and update granule files to include renamed files if any.
+ */
+async function moveFilesForAllGranules(
+  sourceGranules: Array<ApiGranule>,
+  targetGranules: Array<ApiGranule>,
+  s3MultipartChunksizeMb?: number,
+): Promise<Array<ApiGranule>> {
+  return moveGranulesInS3(sourceGranules, targetGranules, s3MultipartChunksizeMb);
+}
+
+function updateFileMetadata(
+  file: ApiFile,
+  granule: ApiGranule,
+  config: EventConfig,
+  cmrMetadata: Object,
+  cmrFileNames: Array<string>,
+): ApiFile {
+  if (file.key === undefined) {
+    throw new AssertionError({ 'message': 'damn' });
+  }
+  const bucketsConfig = new BucketsConfig(config.buckets);
+
+  const fileName = path.basename(file.key);
+  const cmrFileTypeObject: { type?: string } = {};
+  /* #TODO followup on why there was a '&& !file.type' when file doesn't have a type attribute */
+  if (cmrFileNames.includes(fileName)) {
+    cmrFileTypeObject.type = 'metadata';
+  }
+
+  const match = identifyFileMatch(bucketsConfig, fileName, config.collection.files);
+  const URLPathTemplate = match.url_path || config.collection.url_path || '';
+  const urlPath = urlPathTemplate(URLPathTemplate, {
+    file,
+    granule: granule,
+    cmrMetadata,
+  });
+  const updatedBucket = bucketsConfig.nameByKey(match.bucket);
+  const updatedKey = S3.s3Join(urlPath, fileName);
+  const output = {
+    ...cloneDeep(file),
+    ...cmrFileTypeObject, // Add type if the file is a CMR file
+    bucket: updatedBucket,
+    key: updatedKey
+  }
+  return output;
+}
+
+async function updateGranuleMetadata(
+  granule: ApiGranule,
+  config: EventConfig,
+  cmrFiles: { [key: string]: CMRFile },
+  cmrFileNames: Array<string>
+): Promise<ApiGranule> {
+
+  const cmrFile = get(cmrFiles, granule.granuleId, null);
+
+  const cmrMetadata = cmrFile ?
+    await metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`) :
+    {};
+
+  const newFiles = granule.files?.map((file) => updateFileMetadata(file, granule, config, cmrMetadata, cmrFileNames));
+
+  return {
+    ...cloneDeep(granule),
+    files: newFiles
+  }
+}
+
+async function buildTargetGranules(
+  granules: Array<ApiGranule>,
+  config: EventConfig,
+  cmrFiles: { [key: string]: CMRFile },
+): Promise<Array<ApiGranule>> {
+  const cmrFileNames = Object.values(cmrFiles).map((f) => path.basename(f.key));
+
+  return await Promise.all(granules.map(
+    async (granule) => updateGranuleMetadata(granule, config, cmrFiles, cmrFileNames)
+  ));
+}
+
+async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
   // We have to post the meta-xml file of all output granules
   const config = event.config;
-  const bucketsConfig = new BucketsConfig(config.buckets);
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
-    ? config.s3MultipartChunksizeMb : process.env.default_s3_multipart_chunksize_mb;
+    ? config.s3MultipartChunksizeMb : Number(process.env.default_s3_multipart_chunksize_mb);
 
+  const chunkSize = s3MultipartChunksizeMb ? s3MultipartChunksizeMb * MB : undefined;
   const duplicateHandling = duplicateHandlingType(event);
-  const granuleMetadataFileExtension = get(config, 'collection.meta.granuleMetadataFileExtension');
+  const granuleMetadataFileExtension: string = get(config, 'collection.meta.granuleMetadataFileExtension');
 
   log.debug(`moveGranules config duplicateHandling: ${duplicateHandling}, `
     + `moveStagedFiles: ${moveStagedFiles}, `
     + `s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}, `
     + `granuleMetadataFileExtension ${granuleMetadataFileExtension}`);
 
+  const granulesInput = event.input.granules;
+
   let filterFunc;
   if (granuleMetadataFileExtension) {
-    filterFunc = (fileobject) => isFileExtensionMatched(fileobject, granuleMetadataFileExtension);
+    filterFunc = (fileobject: ApiFile) => isFileExtensionMatched(fileobject, granuleMetadataFileExtension);
   } else {
-    filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
-  }
-  const granulesInput = event.input.granules;
-  const cmrFiles = granulesToCmrFileObjects(granulesInput, filterFunc);
-  const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
-
-  let movedGranulesByGranuleId;
-
-  // update granule collections in store if necessary
-  await Promise.all(granulesInput.map(
-    async (granule) => await updateGranuleCollection(granule, config.collection)
-  ));
-
-  // allows us to disable moving the files
-  if (moveStagedFiles) {
-    // Update all granules with aspirational metadata
-    // (where the files should end up after moving).
-    const granulesToMove = await updateGranuleMetadata(
-      granulesByGranuleId, config.collection, cmrFiles, bucketsConfig
-    );
-
-    // Move files from staging location to final location
-    movedGranulesByGranuleId = await moveFilesForAllGranules(
-      granulesToMove, duplicateHandling, s3MultipartChunksizeMb
-    );
-  } else {
-    movedGranulesByGranuleId = granulesByGranuleId;
+    filterFunc = (fileobject: ApiFile) => isCMRFile(fileobject) || isISOFile(fileobject);
   }
 
-  const granuleDuplicates = buildGranuleDuplicatesObject(movedGranulesByGranuleId);
+  const cmrFiles: Array<CMRFile> = granulesToCmrFileObjects(granulesInput, filterFunc);
+  const cmrFilesByGranuleId: Dictionary<CMRFile> = keyBy(cmrFiles, 'granuleId');
+
+  const targetGranules = await buildTargetGranules(
+    granulesInput, config, cmrFilesByGranuleId
+  );
+
+  // Move files from staging location to final location
+  const movedGranules = await moveFilesForAllGranules(
+    granulesInput, targetGranules, chunkSize,
+  );
+
+  await moveGranulesInCumulusDatastores(
+    granulesInput, targetGranules,
+  )
+
   return {
-    granuleDuplicates,
-    granules: Object.values(movedGranulesByGranuleId),
+    granules: movedGranules,
   };
 }
 
 /**
  * Lambda handler
- *
- * @param {Object} event      - a Cumulus Message
- * @param {Object} context    - an AWS Lambda context
- * @returns {Promise<Object>} - Returns output from task.
- *                              See schemas/output.json for detailed output schema
  */
-async function handler(event, context) {
+async function handler(event: CumulusMessage, context: Context): Promise<Object> {
   return await cumulusMessageAdapter.runCumulusTask(moveGranules, event, context);
 }
 
 exports.handler = handler;
 exports.moveGranules = moveGranules;
-exports.updateGranuleMetadata = updateGranuleMetadata;
