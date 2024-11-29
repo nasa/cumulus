@@ -5,9 +5,8 @@ import get from 'lodash/get';
 import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
 import path from 'path';
-import { MissingS3FileError } from '@cumulus/errors/src';
-import S3 from '@cumulus/aws-client/S3';
-const { InvalidArgument } = require('@cumulus/errors');
+import { MissingS3FileError, DuplicateFile, InvalidArgument } from '@cumulus/errors';
+import { S3 } from '@cumulus/aws-client';
 
 import {
   unversionFilename,
@@ -19,7 +18,7 @@ import {
   metadataObjectFromCMRFile,
   granulesToCmrFileObjects
 } from '@cumulus/cmrjs';
-import { BucketsConfig } from '@cumulus/common/BucketsConfig';
+import { BucketsConfig } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
 import { isFileExtensionMatched } from '@cumulus/message/utils';
 import { log } from '@cumulus/common';
@@ -27,10 +26,10 @@ import { ApiGranule, DuplicateHandling } from '@cumulus/types';
 import { ApiFile } from '@cumulus/types/api/files';
 import { AssertionError } from 'assert';
 import { CumulusMessage } from '@cumulus/types/message';
-import { CMRFile } from '@cumulus/cmrjs/src/types';
+import { CMRFile } from '@cumulus/cmrjs/types';
 import { Dictionary, zip } from 'lodash';
-import { CollectionFile } from '../../packages/types';
-import { DuplicateFile } from '../../packages/errors/src';
+import { CollectionFile } from '@cumulus/types';
+import { BucketsConfigObject } from '@cumulus/common/types';
 
 const MB = 1024 * 1024;
 
@@ -44,7 +43,7 @@ interface EventConfig {
     duplicateHandling?: DuplicateHandling,
   },
   duplicateHandling?: DuplicateHandling,
-  buckets: Array<string>,
+  buckets: BucketsConfigObject,
   s3MultipartChunksizeMb?: number,
 }
 
@@ -88,7 +87,7 @@ function identifyFileMatch(bucketsConfig: BucketsConfig, fileName: string, fileS
   return match;
 }
 
-function apiFileIsValid(file: ApiFile): file is ValidApiFile {
+function apiFileIsValid(file: Omit<ApiFile, 'granuleId'>): file is ValidApiFile {
   if (file.bucket === undefined || file.key === undefined) {
     return false;
   }
@@ -126,15 +125,17 @@ async function moveGranulesInS3(
     if (sourceGranule?.files === undefined || targetGranule?.files === undefined) {
       return;
     }
-    const movedFiles = await Promise.all(zip(sourceGranule.files, targetGranule.files).map(async ([sourceFile, targetFile]) => {
+    const movedFiles = await Promise.all(zip(sourceGranule.files, targetGranule.files).map(async ([sourceFile, targetFile]): Promise<ApiFile | undefined> => {
       if (sourceFile === undefined || targetFile === undefined) {
         return;
       }
       if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
         throw new AssertionError({ message: `` })
       }
+      console.log(sourceFile, targetFile);
+      console.log('...............')
       if (await s3MoveNeeded(sourceFile, targetFile)) {
-        S3.moveObject({
+        await S3.moveObject({
           sourceBucket: sourceFile.bucket,
           sourceKey: sourceFile.key,
           destinationBucket: targetFile.bucket,
@@ -145,13 +146,14 @@ async function moveGranulesInS3(
       }
       return;
     }));
+    const filteredFiles = movedFiles.filter((f) => f !== undefined) as ApiFile[];
     return {
       ...targetGranule,
-      files: movedFiles.filter((f) => f !== undefined)
+      files: filteredFiles,
     }
   }));
-
-  return movedGranules.filter((g) => g !== undefined);
+  const filteredGranules = movedGranules.filter((g) => g !== undefined) as ApiGranule[];
+  return filteredGranules;
 }
 
 async function moveGranulesInCumulusDatastores(
@@ -159,6 +161,7 @@ async function moveGranulesInCumulusDatastores(
   targetGranules: Array<ApiGranule>,
 ): Promise<void> {
   // interface with API here to update granules in PG etc
+  console.log(sourceGranules, targetGranules);
   return
 }
 
@@ -175,12 +178,12 @@ async function moveFilesForAllGranules(
 }
 
 function updateFileMetadata(
-  file: ApiFile,
+  file: Omit<ApiFile, 'granuleId'>,
   granule: ApiGranule,
   config: EventConfig,
   cmrMetadata: Object,
   cmrFileNames: Array<string>,
-): ApiFile {
+): Omit<ApiFile, 'granuleId'> {
   if (file.key === undefined) {
     throw new AssertionError({ 'message': 'damn' });
   }
@@ -268,7 +271,6 @@ async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
   } else {
     filterFunc = (fileobject: ApiFile) => isCMRFile(fileobject) || isISOFile(fileobject);
   }
-
   const cmrFiles: Array<CMRFile> = granulesToCmrFileObjects(granulesInput, filterFunc);
   const cmrFilesByGranuleId: Dictionary<CMRFile> = keyBy(cmrFiles, 'granuleId');
 
