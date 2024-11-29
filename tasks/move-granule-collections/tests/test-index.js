@@ -121,17 +121,12 @@ test.beforeEach(async (t) => {
     
   }
   t.context.bucketMapping = bucketMapping;
-  console.log(t.context.publicBucket);
-  console.log(t.context.protectedBucket);
-  console.log(t.context.privateBucket);
-  console.log(t.context.systemBucket);
   await Promise.all([
     s3().createBucket({ Bucket: t.context.publicBucket }),
     s3().createBucket({ Bucket: t.context.protectedBucket }),
     s3().createBucket({ Bucket: t.context.privateBucket }),
     s3().createBucket({ Bucket: t.context.systemBucket }),
   ]);
-  console.log('got past creating buckets')
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
   putJsonS3Object(
@@ -144,7 +139,6 @@ test.beforeEach(async (t) => {
       [t.context.systemBucket]: t.context.systemBucket,
     }
   );
-  console.log('got pst putJsonS3Object')
 
   
 });
@@ -161,7 +155,6 @@ test('Should move files to final location.', async (t) => {
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
     .replaceAll('replaceme-private', t.context.bucketMapping.private)
     .replaceAll('replaceme-protected', t.context.bucketMapping.protected)
-  console.log(rawPayload)
   t.context.payload = JSON.parse(rawPayload);
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granules
@@ -170,13 +163,9 @@ test('Should move files to final location.', async (t) => {
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  console.log(
-    'got past uplodaing files int est'
-  )
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
-  console.log('checking', t.context.publicBucket, 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg')
   const check = await s3ObjectExists({
     Bucket: t.context.publicBucket,
     Key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
@@ -184,24 +173,6 @@ test('Should move files to final location.', async (t) => {
 
   t.true(check);
 });
-
-// test.serial('should not move files when event.moveStagedFiles is false', async (t) => {
-//   const newPayload = buildPayload(t);
-//   newPayload.config.moveStagedFiles = false;
-//   const filesToUpload = cloneDeep(t.context.filesToUpload);
-
-//   await uploadFiles(filesToUpload, t.context.stagingBucket);
-
-//   const output = await moveGranules(newPayload);
-//   await validateOutput(t, output);
-
-//   const check = await s3ObjectExists({
-//     Bucket: t.context.publicBucket,
-//     Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-//   });
-
-//   t.false(check);
-// });
 
 // test.serial('should add input files to returned granule event.moveStagedFiles is false', async (t) => {
 //   const newPayload = buildPayload(t);

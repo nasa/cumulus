@@ -132,8 +132,6 @@ async function moveGranulesInS3(
       if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
         throw new AssertionError({ message: `` })
       }
-      console.log(sourceFile, targetFile);
-      console.log('...............')
       if (await s3MoveNeeded(sourceFile, targetFile)) {
         await S3.moveObject({
           sourceBucket: sourceFile.bucket,
