@@ -185,11 +185,11 @@ export const headObject = (
 /**
  * Test if an object exists in S3
  *
- * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
- * @returns {Promise<boolean>} a Promise that will resolve to a boolean indicating
+ * @param params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
+ * @returns a Promise that will resolve to a boolean indicating
  *                               if the object exists
  */
-export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
+export const s3ObjectExists = (params: { Bucket: string, Key: string }): Promise<boolean> =>
   headObject(params.Bucket, params.Key)
     .then(() => true)
     .catch((error) => {
