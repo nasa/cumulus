@@ -27,6 +27,11 @@ Resources:
           Content-Type: text/cloud-boothook; charset="us-ascii"
 
           #!/bin/bash
+
+          if ! rpm -q lvm2 >/dev/null 2>&1; then
+            yum install -y lvm2
+          fi
+
           vgcreate docker /dev/xvdcz
 
           lvcreate -n docker-data -L${docker_volume_create_size}G docker
