@@ -51,6 +51,8 @@ async function download({
     + `granuleID: ${granules[0].granuleId}, `
   );
 
+  // TODO globalConnectionLimit is evaluated in proceed
+  // which compares locks on the bucket to provider.globalConnectonLimit
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
   if (!proceed) {
