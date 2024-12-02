@@ -32,7 +32,9 @@ const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
 } = require('./utils');
-
+/**
+ * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams
+ */
 const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
 function getS3KeyOfFile(file) {
@@ -753,7 +755,7 @@ async function updateUMMGMetadata({
  * @param {string} cmrConfig.certificate - Launchpad certificate
  * @param {string} cmrConfig.username - EDL username
  * @param {string} cmrConfig.passwordSecretName - CMR password secret name
- * @returns {Promise<Object>} object to create CMR instance - contains the
+ * @returns {Promise<CMRConstructorParams>} object to create CMR instance - contains the
  *    provider, clientId, and either launchpad token or EDL username and
  *    password
 */

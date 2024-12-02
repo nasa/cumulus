@@ -8,6 +8,7 @@ import path from 'path';
 import { MissingS3FileError, DuplicateFile, InvalidArgument } from '@cumulus/errors';
 import { S3 } from '@cumulus/aws-client';
 
+import { CMR } from '@cumulus/cmr-client';
 import {
   unversionFilename,
   duplicateHandlingType,
@@ -30,6 +31,8 @@ import { CMRFile } from '@cumulus/cmrjs/types';
 import { Dictionary, zip } from 'lodash';
 import { CollectionFile } from '@cumulus/types';
 import { BucketsConfigObject } from '@cumulus/common/types';
+import { getCmrSettings } from '@cumulus/cmrjs/cmr-utils';
+import { CMRConstructorParams } from '@cumulus/cmr-client/CMR';
 
 const MB = 1024 * 1024;
 
@@ -212,6 +215,17 @@ function updateFileMetadata(
   return output;
 }
 
+async function getCMRMetadata(cmrFile: CMRFile, granuleId: string): Promise<Object> {
+  try {
+    return metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`)
+  } catch {
+    const cmrSettings: CMRConstructorParams = await getCmrSettings();
+    const cmr = new CMR(cmrSettings);
+    const [granulesOutput] = await cmr.searchGranules({granuleId}) as Array<Object>;
+    return granulesOutput;
+  }
+}
+
 async function updateGranuleMetadata(
   granule: ApiGranule,
   config: EventConfig,
@@ -222,7 +236,7 @@ async function updateGranuleMetadata(
   const cmrFile = get(cmrFiles, granule.granuleId, null);
 
   const cmrMetadata = cmrFile ?
-    await metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`) :
+    await getCMRMetadata(cmrFile, granule.granuleId) :
     {};
 
   const newFiles = granule.files?.map((file) => updateFileMetadata(file, granule, config, cmrMetadata, cmrFileNames));
