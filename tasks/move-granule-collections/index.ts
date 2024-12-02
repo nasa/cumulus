@@ -1,9 +1,13 @@
 'use strict';
+
 import { Context } from 'aws-lambda';
-import cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+import cumulusMessageAdapter from '@cumulus/cumulus-message-adapter-js';
 import get from 'lodash/get';
 import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
+import zip from 'lodash/zip';
+// eslint-disable-next-line lodash/import-scope
+import { Dictionary } from 'lodash';
 import path from 'path';
 import { MissingS3FileError, DuplicateFile, InvalidArgument } from '@cumulus/errors';
 import { S3 } from '@cumulus/aws-client';
@@ -17,7 +21,7 @@ import {
   isCMRFile,
   isISOFile,
   metadataObjectFromCMRFile,
-  granulesToCmrFileObjects
+  granulesToCmrFileObjects,
 } from '@cumulus/cmrjs';
 import { BucketsConfig } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
@@ -28,7 +32,6 @@ import { ApiFile } from '@cumulus/types/api/files';
 import { AssertionError } from 'assert';
 import { CumulusMessage } from '@cumulus/types/message';
 import { CMRFile } from '@cumulus/cmrjs/types';
-import { Dictionary, zip } from 'lodash';
 import { CollectionFile } from '@cumulus/types';
 import { BucketsConfigObject } from '@cumulus/common/types';
 import { getCmrSettings } from '@cumulus/cmrjs/cmr-utils';
@@ -71,18 +74,22 @@ interface ValidApiFile extends ApiFile {
  * Validates the file matched only one collection.file and has a valid bucket
  * config.
  */
-function identifyFileMatch(bucketsConfig: BucketsConfig, fileName: string, fileSpecs: Array<CollectionFile>) {
+function identifyFileMatch(
+  bucketsConfig: BucketsConfig,
+  fileName: string,
+  fileSpecs: Array<CollectionFile>
+): CollectionFile {
   const collectionRegexes = fileSpecs.map((spec) => spec.regex);
-  const match_ = fileSpecs.filter(
+  const matches = fileSpecs.filter(
     ((collectionFile) => unversionFilename(fileName).match(collectionFile.regex))
   );
-  if (match_.length > 1) {
+  if (matches.length > 1) {
     throw new InvalidArgument(`File (${fileName}) matched more than one of ${JSON.stringify(collectionRegexes)}.`);
   }
-  if (match_.length === 0) {
+  if (matches.length === 0) {
     throw new InvalidArgument(`File (${fileName}) did not match any of ${JSON.stringify(collectionRegexes)}`);
   }
-  const [match] = match_;
+  const [match] = matches;
   if (!bucketsConfig.keyExists(match.bucket)) {
     throw new InvalidArgument(`Collection config specifies a bucket key of ${match.bucket}, `
       + `but the configured bucket keys are: ${Object.keys(bucketsConfig).join(', ')}`);
@@ -99,7 +106,7 @@ function apiFileIsValid(file: Omit<ApiFile, 'granuleId'>): file is ValidApiFile 
 
 async function s3MoveNeeded(
   sourceFile: ValidApiFile,
-  targetFile: ValidApiFile,
+  targetFile: ValidApiFile
 ): Promise<boolean> {
   if (sourceFile.key === targetFile.key && sourceFile.bucket === targetFile.bucket) {
     return false;
@@ -108,7 +115,7 @@ async function s3MoveNeeded(
   const targetExists = await S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key });
   if (targetExists && sourceExists) {
     // TODO should this use duplicateHandling?
-    throw new DuplicateFile(`target location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} already occupied`)
+    throw new DuplicateFile(`target location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} already occupied`);
   }
   if (sourceExists) {
     return true;
@@ -116,7 +123,7 @@ async function s3MoveNeeded(
   if (targetExists) {
     return false;
   }
-  throw new MissingS3FileError(`source location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} doesn't exist`)
+  throw new MissingS3FileError(`source location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} doesn't exist`);
 }
 
 async function moveGranulesInS3(
@@ -124,46 +131,49 @@ async function moveGranulesInS3(
   targetGranules: Array<ApiGranule>,
   s3MultipartChunksizeMb?: number
 ): Promise<Array<ApiGranule>> {
-  const movedGranules = await Promise.all(zip(sourceGranules, targetGranules).map(async ([sourceGranule, targetGranule]) => {
-    if (sourceGranule?.files === undefined || targetGranule?.files === undefined) {
-      return;
-    }
-    const movedFiles = await Promise.all(zip(sourceGranule.files, targetGranule.files).map(async ([sourceFile, targetFile]): Promise<ApiFile | undefined> => {
-      if (sourceFile === undefined || targetFile === undefined) {
-        return;
+  const movedGranules = await Promise.all(
+    zip(sourceGranules, targetGranules).map(async ([sourceGranule, targetGranule]) => {
+      if (sourceGranule?.files === undefined || targetGranule?.files === undefined) {
+        return null;
       }
-      if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
-        throw new AssertionError({ message: `` })
-      }
-      if (await s3MoveNeeded(sourceFile, targetFile)) {
-        await S3.moveObject({
-          sourceBucket: sourceFile.bucket,
-          sourceKey: sourceFile.key,
-          destinationBucket: targetFile.bucket,
-          destinationKey: targetFile.key,
-          chunkSize: s3MultipartChunksizeMb,
-        });
-        return targetFile;
-      }
-      return;
-    }));
-    const filteredFiles = movedFiles.filter((f) => f !== undefined) as ApiFile[];
-    return {
-      ...targetGranule,
-      files: filteredFiles,
-    }
-  }));
-  const filteredGranules = movedGranules.filter((g) => g !== undefined) as ApiGranule[];
+      const movedFiles = await Promise.all(zip(sourceGranule.files, targetGranule.files)
+        .map(async ([sourceFile, targetFile]): Promise<ApiFile | null> => {
+          if (!(sourceFile && targetFile)) {
+            return null;
+          }
+          if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
+            throw new AssertionError({ message: '' });
+          }
+          if (await s3MoveNeeded(sourceFile, targetFile)) {
+            await S3.moveObject({
+              sourceBucket: sourceFile.bucket,
+              sourceKey: sourceFile.key,
+              destinationBucket: targetFile.bucket,
+              destinationKey: targetFile.key,
+              chunkSize: s3MultipartChunksizeMb,
+            });
+            return targetFile;
+          }
+          return null;
+        })) as Array<ApiFile | undefined>;
+      const filteredFiles = movedFiles.filter((f) => f !== null) as ApiFile[];
+      return {
+        ...targetGranule,
+        files: filteredFiles,
+      };
+    })
+  );
+  const filteredGranules = movedGranules.filter((g) => g !== null) as ApiGranule[];
   return filteredGranules;
 }
 
 async function moveGranulesInCumulusDatastores(
   sourceGranules: Array<ApiGranule>,
-  targetGranules: Array<ApiGranule>,
-): Promise<void> {
+  targetGranules: Array<ApiGranule>
+): Promise<null> {
   // interface with API here to update granules in PG etc
   console.log(sourceGranules, targetGranules);
-  return
+  return null;
 }
 
 /**
@@ -173,7 +183,7 @@ async function moveGranulesInCumulusDatastores(
 async function moveFilesForAllGranules(
   sourceGranules: Array<ApiGranule>,
   targetGranules: Array<ApiGranule>,
-  s3MultipartChunksizeMb?: number,
+  s3MultipartChunksizeMb?: number
 ): Promise<Array<ApiGranule>> {
   return moveGranulesInS3(sourceGranules, targetGranules, s3MultipartChunksizeMb);
 }
@@ -183,10 +193,10 @@ function updateFileMetadata(
   granule: ApiGranule,
   config: EventConfig,
   cmrMetadata: Object,
-  cmrFileNames: Array<string>,
+  cmrFileNames: Array<string>
 ): Omit<ApiFile, 'granuleId'> {
   if (file.key === undefined) {
-    throw new AssertionError({ 'message': 'damn' });
+    throw new AssertionError({ message: 'damn' });
   }
   const bucketsConfig = new BucketsConfig(config.buckets);
 
@@ -210,18 +220,18 @@ function updateFileMetadata(
     ...cloneDeep(file),
     ...cmrFileTypeObject, // Add type if the file is a CMR file
     bucket: updatedBucket,
-    key: updatedKey
-  }
+    key: updatedKey,
+  };
   return output;
 }
 
 async function getCMRMetadata(cmrFile: CMRFile, granuleId: string): Promise<Object> {
   try {
-    return metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`)
+    return metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`);
   } catch {
     const cmrSettings: CMRConstructorParams = await getCmrSettings();
     const cmr = new CMR(cmrSettings);
-    const [granulesOutput] = await cmr.searchGranules({granuleId}) as Array<Object>;
+    const [granulesOutput] = await cmr.searchGranules({ granuleId }) as Array<Object>;
     return granulesOutput;
   }
 }
@@ -232,25 +242,26 @@ async function updateGranuleMetadata(
   cmrFiles: { [key: string]: CMRFile },
   cmrFileNames: Array<string>
 ): Promise<ApiGranule> {
-
   const cmrFile = get(cmrFiles, granule.granuleId, null);
 
   const cmrMetadata = cmrFile ?
     await getCMRMetadata(cmrFile, granule.granuleId) :
     {};
 
-  const newFiles = granule.files?.map((file) => updateFileMetadata(file, granule, config, cmrMetadata, cmrFileNames));
+  const newFiles = granule.files?.map(
+    (file: ApiFile) => updateFileMetadata(file, granule, config, cmrMetadata, cmrFileNames)
+  );
 
   return {
     ...cloneDeep(granule),
-    files: newFiles
-  }
+    files: newFiles,
+  };
 }
 
 async function buildTargetGranules(
   granules: Array<ApiGranule>,
   config: EventConfig,
-  cmrFiles: { [key: string]: CMRFile },
+  cmrFiles: { [key: string]: CMRFile }
 ): Promise<Array<ApiGranule>> {
   const cmrFileNames = Object.values(cmrFiles).map((f) => path.basename(f.key));
 
@@ -267,7 +278,10 @@ async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
 
   const chunkSize = s3MultipartChunksizeMb ? s3MultipartChunksizeMb * MB : undefined;
   const duplicateHandling = duplicateHandlingType(event);
-  const granuleMetadataFileExtension: string = get(config, 'collection.meta.granuleMetadataFileExtension');
+  const granuleMetadataFileExtension: string = get(
+    config,
+    'collection.meta.granuleMetadataFileExtension'
+  );
 
   log.debug(`moveGranules config duplicateHandling: ${duplicateHandling}, `
     + `moveStagedFiles: ${moveStagedFiles}, `
@@ -278,7 +292,10 @@ async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
 
   let filterFunc;
   if (granuleMetadataFileExtension) {
-    filterFunc = (fileobject: ApiFile) => isFileExtensionMatched(fileobject, granuleMetadataFileExtension);
+    filterFunc = (fileobject: ApiFile) => isFileExtensionMatched(
+      fileobject,
+      granuleMetadataFileExtension
+    );
   } else {
     filterFunc = (fileobject: ApiFile) => isCMRFile(fileobject) || isISOFile(fileobject);
   }
@@ -291,12 +308,12 @@ async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
 
   // Move files from staging location to final location
   const movedGranules = await moveFilesForAllGranules(
-    granulesInput, targetGranules, chunkSize,
+    granulesInput, targetGranules, chunkSize
   );
 
   await moveGranulesInCumulusDatastores(
-    granulesInput, targetGranules,
-  )
+    granulesInput, targetGranules
+  );
 
   return {
     granules: movedGranules,

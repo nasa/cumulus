@@ -2,27 +2,18 @@
 
 const fs = require('fs');
 const path = require('path');
-const sinon = require('sinon');
 const test = require('ava');
-const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
-  listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
   putJsonS3Object,
   s3ObjectExists,
   promiseS3Upload,
-  headObject,
   parseS3Uri,
 } = require('@cumulus/aws-client/S3');
-const { isCMRFile } = require('@cumulus/cmrjs');
-const cloneDeep = require('lodash/cloneDeep');
-const set = require('lodash/set');
-const errors = require('@cumulus/errors');
-const S3 = require('@cumulus/aws-client/S3');
 const {
-  randomString, randomId, validateConfig, validateInput, validateOutput,
+  randomId, validateOutput,
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
@@ -49,16 +40,6 @@ async function uploadFiles(files) {
   }));
 }
 
-function updateCmrFileType(payload) {
-  payload.input.granules.forEach(
-    (g) => {
-      g.files.filter(isCMRFile).forEach((cmrFile) => {
-        cmrFile.type = 'userSetType';
-      });
-    }
-  );
-}
-
 function granulesToFileURIs(granules) {
   const files = granules.reduce((arr, g) => arr.concat(g.files), []);
   return files.map((file) => buildS3Uri(file.bucket, file.key));
@@ -66,7 +47,7 @@ function granulesToFileURIs(granules) {
 
 function buildPayload(t, collection) {
   const newPayload = t.context.payload;
-  newPayload.config.collection = collection
+  newPayload.config.collection = collection;
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
   newPayload.config.buckets.public.name = t.context.publicBucket;
@@ -74,38 +55,6 @@ function buildPayload(t, collection) {
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
 
   return newPayload;
-}
-
-function getExpectedOutputFileKeys() {
-  return [
-    'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-    'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-    'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-    'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-  ];
-}
-/**
- * Get file metadata for a set of files.
- * headObject from localstack doesn't return LastModified with millisecond,
- * use listObjectsV2 instead
- *
- * @param {Array<Object>} files - array of file objects
- * @returns {Promise<Array>} - file detail responses
- */
-async function getFilesMetadata(files) {
-  const getFileRequests = files.map(async (f) => {
-    const s3list = await listS3ObjectsV2(
-      { Bucket: f.bucket, Prefix: f.Key }
-    );
-    const s3object = s3list.filter((s3file) => s3file.Key === f.key);
-
-    return {
-      key: f.key,
-      size: s3object[0].Size,
-      LastModified: s3object[0].LastModified,
-    };
-  });
-  return await Promise.all(getFileRequests);
 }
 
 test.beforeEach(async (t) => {
@@ -118,8 +67,8 @@ test.beforeEach(async (t) => {
     public: t.context.publicBucket,
     protected: t.context.protectedBucket,
     private: t.context.privateBucket,
-    
-  }
+
+  };
   t.context.bucketMapping = bucketMapping;
   await Promise.all([
     s3().createBucket({ Bucket: t.context.publicBucket }),
@@ -139,8 +88,6 @@ test.beforeEach(async (t) => {
       [t.context.systemBucket]: t.context.systemBucket,
     }
   );
-
-  
 });
 
 test.afterEach.always(async (t) => {
@@ -154,7 +101,7 @@ test.only('Should move files to final location.', async (t) => {
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
     .replaceAll('replaceme-private', t.context.bucketMapping.private)
-    .replaceAll('replaceme-protected', t.context.bucketMapping.protected)
+    .replaceAll('replaceme-protected', t.context.bucketMapping.protected);
   t.context.payload = JSON.parse(rawPayload);
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granules
@@ -184,7 +131,7 @@ test.only('Should move files to final location.', async (t) => {
   }));
 });
 
-test('updates cumulus datastores', async (t) => {
+test('updates cumulus datastores', (t) => {
   t.pass();
 });
 
@@ -193,7 +140,7 @@ test('is idempotent with respect to files moved in s3', async (t) => {
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
     .replaceAll('replaceme-private', t.context.bucketMapping.private)
-    .replaceAll('replaceme-protected', t.context.bucketMapping.protected)
+    .replaceAll('replaceme-protected', t.context.bucketMapping.protected);
   t.context.payload = JSON.parse(rawPayload);
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granules
@@ -227,5 +174,4 @@ test('is idempotent with respect to files moved in s3', async (t) => {
 
   const newOutput = await moveGranules(newPayload);
   await validateOutput(t, newOutput);
-
 });

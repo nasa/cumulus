@@ -1,6 +1,6 @@
 export interface CMRFile {
-    key: string
-    bucket: string
-};
+  key: string
+  bucket: string
+}
 
-export interface ISOFile extends CMRFile {};
+export interface ISOFile extends CMRFile { }
