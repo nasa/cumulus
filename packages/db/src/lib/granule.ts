@@ -354,3 +354,58 @@ export const getGranulesByGranuleId = async (
     .where({ granule_id: granuleId });
   return records;
 };
+
+/**
+ * Change a granules' PG record and its files' PG record based on collection move
+ * 
+ * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+ * @param {Object} [collectionPgModel] - Collection PG model class instance
+ * @param {string[]} granuleIds - list of granules by granuleIds to change
+ * @param {string} collectionId - collection ID
+ * @returns {Promise<void>}
+ */
+ export const updateGranuleAndFiles = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  collectionPgModel = new CollectionPgModel(),
+  granuleIds: string[],
+  collectionId: string,
+):Promise<void> =>  {
+  let pgCollection;
+  let notFoundError;
+  const {
+    granules: granulesTable,
+    files: filesTable,
+  } = TableNames;
+  try {
+    pgCollection = await collectionPgModel.get(
+      knexOrTransaction, deconstructCollectionId(collectionId)
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (collectionId && pgCollection === undefined) {
+        notFoundError = `No collection found with collectionId ${collectionId}`;
+        throw new Error(notFoundError);
+      }
+    } else {
+      throw error;
+    }
+  }
+  let newCollectionCumulusId = pgCollection?.cumulus_id;
+
+  await knexOrTransaction(granulesTable).whereIn('granule_id', granuleIds).update({
+    collection_cumulus_id: newCollectionCumulusId,
+    updated_at: knexOrTransaction.fn.now(),
+    last_update_date_time: new Date().toISOString(),
+  });
+
+  for(const granuleId of granuleIds) {
+    let granule = await getUniqueGranuleByGranuleId(knexOrTransaction, granuleId);
+    await knexOrTransaction(filesTable).where('granule_cumulus_id', '=', granule.cumulus_id).update({
+      updated_at: knexOrTransaction.fn.now(),
+      // need to decide how/what to do to change these:
+      // bucket: ''.
+      // key: '',
+      // path: '',
+    });
+  }
+}
