@@ -2,7 +2,7 @@
   "name": "@cumulus/move-granule-collections",
   "version": "19.1.0",
   "description": "Move granule files from staging to final location",
-  "main": "index.js",
+  "main": "dist/index.js",
   "directories": {
     "test": "tests"
   },
