@@ -246,7 +246,6 @@ async function buildTargetGranules(
 }
 
 async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
-  // We have to post the meta-xml file of all output granules
   const config = event.config;
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
