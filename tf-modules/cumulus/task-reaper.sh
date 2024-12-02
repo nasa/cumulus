@@ -15,11 +15,13 @@ CONTAINER_INSTANCE_ARN=$(
     --filter "ec2InstanceId == $INSTANCE_ID" |\
   jq -r '.containerInstanceArns[0]'
 )
+echo "containerInstanceArn ${CONTAINER_INSTANCE_ARN}"
+
 CONTAINER_INSTANCE_STATUS=$(
   aws ecs describe-container-instances \
     --cluster "$CLUSTER" \
     --container-instances "$CONTAINER_INSTANCE_ARN" |\
-  jq -r .containerInstances[0].status
+  jq -r '.containerInstances[0].status'
 )
 
 if [ "$CONTAINER_INSTANCE_STATUS" = 'ACTIVE' ]; then
