@@ -222,6 +222,23 @@ class GranuleFetcher {
       (f) => syncChecksumFiles || !this.isChecksumFile(f)
     );
 
+    // For testing
+    const fileDownloadPageSize = 10; //This will be an ENV or on the Provider config
+
+    if (fileDownloadPageSize && filesToDownload.length > fileDownloadPageSize) {
+      // Download the first fileDownloadPageSize worth of filesToDownload,
+      // continue paginating until all downloaded.
+      let startPos = 0;
+
+      while (startPos < filesToDownload.length) {
+        await ingestFiles(filesToDownload.slice(startPos, fileDownloadPageSize - 1));
+        startPos += fileDownloadPageSize - 1;
+      }
+    } else {
+      await ingestFiles(filesToDownload);
+    }
+
+    // The below becomes ingestFiles function
     const downloadPromises = filesToDownload.map((file) =>
       this._ingestFile({
         file,
