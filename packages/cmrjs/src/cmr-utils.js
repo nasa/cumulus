@@ -230,12 +230,17 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
 
   // choose xml or json and do the things.
   if (isECHO10Filename(cmrFileName)) {
-    return await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    const out = await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    const check = await cmrClient.searchGranules({ granuleId: cmrPublishObject.granuleId });
+    log.warn('check value:', check);
+    return out;
   }
   if (isUMMGFilename(cmrFileName)) {
-    return await publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    const out = await publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    const check = await cmrClient.searchGranules({ granuleId: cmrPublishObject.granuleId });
+    log.warn('check value:', check);
+    return out;
   }
-
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
 }
 
