@@ -249,7 +249,7 @@ async function updateGranuleMetadata(
     {};
 
   const newFiles = granule.files?.map(
-    (file: ApiFile) => updateFileMetadata(file, granule, config, cmrMetadata, cmrFileNames)
+    (file) => updateFileMetadata(file, granule, config, cmrMetadata, cmrFileNames)
   );
 
   return {
