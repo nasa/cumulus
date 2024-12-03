@@ -20,7 +20,9 @@
   },
   "scripts": {
     "generate-task-schemas": "npx generate-task-schemas . files",
-    "package": "(node ../../bin/zip.js lambda.zip index.js schemas)",
+    "build": "npm run tsc",
+    "clean": "rm -rf ./*.js && rm -rf ./*.d.ts",
+    "package": "npm run build && (node ../../bin/zip.js lambda.zip index.js schemas)",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
