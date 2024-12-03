@@ -228,7 +228,7 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
   const cmrFileName = getFilename(cmrPublishObject);
   log.warn('creds are', creds);
-  log.warn('object is', json.stringify(cmrPublishObject));
+  log.warn('object is', JSON.stringify(cmrPublishObject));
   // choose xml or json and do the things.
   if (isECHO10Filename(cmrFileName)) {
     const out = await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
