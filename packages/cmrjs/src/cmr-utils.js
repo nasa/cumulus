@@ -228,7 +228,7 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
   const cmrFileName = getFilename(cmrPublishObject);
   log.warn('creds are', creds);
-  const collection = cmrClient.searchCollections({native_id: `${cmrPublishObject.metadataObject.Granule.Collection.ShortName}___${cmrPublishObject.metadataObject.Granule.Collection.VersionId}`})
+  const collection = await cmrClient.searchCollections({native_id: `${cmrPublishObject.metadataObject.Granule.Collection.ShortName}___${cmrPublishObject.metadataObject.Granule.Collection.VersionId}`})
   log.warn('colection is', collection)
   log.warn('object is', JSON.stringify(cmrPublishObject));
   // choose xml or json and do the things.
