@@ -212,7 +212,7 @@ test('SendPan task sends PAN to default location when remoteDir is null', async 
   }
 });
 
-test('SendPan task with executions still running', async (t) => {
+test('SendPan task fails with executions still running', async (t) => {
   const event = {
     config: {
       provider: {
