@@ -63,7 +63,7 @@ data "aws_lambda_function" "sts_policy_helper" {
 }
 
 data "aws_ssm_parameter" "ecs_image_id" {
-  name = "/ngap/amis/image_id_ecs_al2023_x86"
+  name = "image_id_ecs_amz2"
 }
 
 data "aws_ecr_repository" "async_operation" {
