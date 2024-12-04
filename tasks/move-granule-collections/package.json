@@ -21,7 +21,7 @@
   "scripts": {
     "generate-task-schemas": "npx generate-task-schemas . files",
     "build": "npm run tsc",
-    "clean": "rm -rf ./*.js && rm -rf ./*.d.ts",
+    "clean": "git clean -d -x -e node_modules -f",
     "package": "npm run build && (node ../../bin/zip.js lambda.zip index.js schemas)",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",

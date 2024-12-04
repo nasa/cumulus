@@ -224,7 +224,7 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
  * @param {string} cmrRevisionId - Optional CMR Revision ID
  * if not provided, CMR username and password are used to get a cmr token
  */
-async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
+function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
   const cmrFileName = getFilename(cmrPublishObject);
   // choose xml or json and do the things.
