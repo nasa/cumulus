@@ -1,6 +1,6 @@
 {
-  "title": "MoveGranulesConfig",
-  "description": "Describes the config used by the move-granules task",
+  "title": "MoveGranuleCollectionsConfig",
+  "description": "Describes the config used by the move-granule-collections task",
   "type": "object",
   "required": [
     "bucket",
@@ -9,10 +9,6 @@
     "buckets"
   ],
   "properties": {
-    "bucket": {
-      "type": "string",
-      "description": "the source aws s3 bucket that contains the granule files"
-    },
     "buckets": {
       "type": "object",
       "description": "aws s3 buckets used by this task",
@@ -39,6 +35,7 @@
     },
     "collection": {
       "type": "object",
+      "description": "collection to move granules over to",
       "required": [
         "files",
         "name"

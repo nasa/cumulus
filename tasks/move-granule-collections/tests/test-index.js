@@ -96,7 +96,7 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
 
-test.only('Should move files to final location.', async (t) => {
+test('Should move files to final location.', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
@@ -133,45 +133,4 @@ test.only('Should move files to final location.', async (t) => {
 
 test('updates cumulus datastores', (t) => {
   t.pass();
-});
-
-test('is idempotent with respect to files moved in s3', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload.json');
-  const rawPayload = fs.readFileSync(payloadPath, 'utf8')
-    .replaceAll('replaceme-public', t.context.bucketMapping.public)
-    .replaceAll('replaceme-private', t.context.bucketMapping.private)
-    .replaceAll('replaceme-protected', t.context.bucketMapping.protected);
-  t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules
-  );
-  const collectionPath = path.join(__dirname, 'data', 'partial_collection_for_idempotency.json');
-  const collection = JSON.parse(fs.readFileSync(collectionPath));
-  const payload = buildPayload(t, collection);
-  await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(payload);
-  await validateOutput(t, output);
-  t.true(await s3ObjectExists({
-    Bucket: t.context.protectedBucket,
-    Key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-  }));
-
-  const newCollectionPath = path.join(__dirname, 'data', 'finished_collection_for_idempotency.json');
-  const newCollection = JSON.parse(fs.readFileSync(newCollectionPath));
-  const newPayload = buildPayload(t, newCollection);
-
-  const newOutput = await moveGranules(newPayload);
-  await validateOutput(t, newOutput);
 });

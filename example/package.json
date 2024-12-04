@@ -65,6 +65,7 @@
     "@cumulus/integration-tests": "19.1.0",
     "@cumulus/message": "19.1.0",
     "@cumulus/move-granules": "19.1.0",
+    "@cumulus/move-granule-collections": "19.1.0",
     "@cumulus/parse-pdr": "19.1.0",
     "@cumulus/pdr-status-check": "19.1.0",
     "@cumulus/post-to-cmr": "19.1.0",

@@ -346,7 +346,7 @@ async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
   );
 
   // Move files from staging location to final location
-  const movedGranules = await moveFilesForAllGranules(
+  await moveFilesForAllGranules(
     granulesInput, targetGranules, chunkSize
   );
 
@@ -356,7 +356,7 @@ async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
    */
   // await cleanupCMRMetadataFiles(granulesInput);
   return {
-    granules: movedGranules,
+    granules: targetGranules,
   };
 }
 

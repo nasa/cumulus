@@ -80,6 +80,15 @@ Move granule files from staging to final location
 
 ---
 
+### [@cumulus/move-granule-collections](https://github.com/nasa/cumulus/tree/master/tasks/move-granule-collections)
+
+Move granule files and records in cumulus datastores from one collection to another
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/move-granule-collections/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/move-granule-collections) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/move-granule-collections)
+
+---
+### [@cumulus/move-granule-collections] #TODO
 ### [@cumulus/orca-copy-to-archive-adapter](https://github.com/nasa/cumulus/tree/master/tasks/orca-copy-to-archive-adapter)
 
 Adapter to invoke orca copy-to-archive lambda
