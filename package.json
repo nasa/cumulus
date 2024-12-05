@@ -35,7 +35,7 @@
     "bootstrap-no-build-quiet": "lerna bootstrap --no-ci --force-local --loglevel=error",
     "ci:bootstrap": "lerna bootstrap --no-ci --force-local && lerna run prepublish",
     "ci:bootstrap-no-scripts": "lerna bootstrap --no-ci --force-local --ignore-scripts",
-    "ci:bootstrap-no-scripts-quiet": "lerna bootstrap --no-ci --force-local --loglevel=error",
+    "ci:bootstrap-no-scripts-quiet": "lerna bootstrap --no-ci --force-local --ignore-scripts --loglevel=error",
     "update": "lerna version --exact --force-publish --no-git-tag-version --no-push",
     "clean": "lerna run clean && lerna clean --yes && rm -rf ./node_modules && rm -f .bootstrapSha",
     "build": "lerna run --ignore @cumulus/cumulus-integration-tests build",
