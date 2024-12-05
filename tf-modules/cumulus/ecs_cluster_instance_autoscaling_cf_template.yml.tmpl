@@ -55,7 +55,8 @@ Resources:
 
           #!/bin/bash
 %{ if efs_dns_name != null && efs_mount_point != null ~}
-          AZ=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone)
+          TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+          AZ=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
 
           if ! rpm -q nfs-utils >/dev/null 2>&1; then
             yum install -y nfs-utils
