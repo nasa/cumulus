@@ -106,21 +106,39 @@ function apiFileIsValid(file: Omit<ApiFile, 'granuleId'>): file is ValidApiFile 
 }
 
 function isCMRMetadataFile(file: ApiFile | Omit<ApiFile, 'granuleId'>): boolean {
-  if (file.type === 'metadata') {
-    return true;
-  }
-  return false;
+  return file.type === 'metadata';
+}
+
+function moveRequested(
+  sourceFile: ValidApiFile,
+  targetFile: ValidApiFile,
+): boolean {
+  return !((sourceFile.key === targetFile.key) && (sourceFile.bucket === targetFile.bucket))
 }
 
 async function s3MoveNeeded(
   sourceFile: ValidApiFile,
-  targetFile: ValidApiFile
+  targetFile: ValidApiFile,
+  isMetadataFile: boolean,
 ): Promise<boolean> {
-  if (sourceFile.key === targetFile.key && sourceFile.bucket === targetFile.bucket) {
+  if (!moveRequested(sourceFile, targetFile)) {
     return false;
   }
-  const sourceExists = await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key });
+
   const targetExists = await S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key });
+  /**
+   * cmrmetadata file must skip duplicate behavior since it will
+   * intentionally be duplicated during first move. It should be impossible to get here with
+   * target and *not* source existing, but this is not a normal duplicate situation.
+   * this is because old cmrfile won't be deleted until after postgres record is updated
+  */
+  if (isMetadataFile) {
+    if (targetExists) {
+      return false;
+    }
+    return true;
+  }
+  const sourceExists = await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key });
   if (targetExists && sourceExists) {
     // TODO should this use duplicateHandling?
     throw new DuplicateFile(`target location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} already occupied`);
@@ -152,10 +170,11 @@ async function moveGranulesInS3(
           if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
             throw new AssertionError({ message: '' });
           }
-          if (!await s3MoveNeeded(sourceFile, targetFile)) {
+          const isMetadataFile = isCMRMetadataFile(targetFile);
+          if (!await s3MoveNeeded(sourceFile, targetFile, isMetadataFile)) {
             return;
           }
-          if (isCMRMetadataFile(targetFile)) {
+          if (isMetadataFile) {
             await s3CopyObject({
               Bucket: targetFile.bucket,
               Key: targetFile.key,
@@ -180,28 +199,40 @@ async function moveGranulesInCumulusDatastores(
   targetGranules: Array<ApiGranule>
 ): Promise<null> {
   // interface with API here to update granules in PG etc
-  console.log(sourceGranules, targetGranules);
+  console.log(
+    JSON.stringify(sourceGranules, null, 2),
+    JSON.stringify(targetGranules, null, 2),
+  );
   return null;
 }
 
-async function cleanupCMRMetadataFiles(sourceGranules: Array<ApiGranule>) {
-  await Promise.all(sourceGranules.map(async (sourceGranule) => {
-    if (!sourceGranule?.files) {
-      return null;
-    }
-    return Promise.all(sourceGranule.files.map(async (file) => {
-      if (!file || !isCMRMetadataFile(file)) {
+async function cleanupCMRMetadataFiles(sourceGranules: Array<ApiGranule>, targetGranules: Array<ApiGranule>) {
+  await Promise.all(
+    zip(sourceGranules, targetGranules).map(async ([sourceGranule, targetGranule]) => {
+      if (sourceGranule?.files === undefined || targetGranule?.files === undefined) {
         return null;
       }
-      if (!apiFileIsValid(file)) {
-        throw new AssertionError({ message: '' });
-      }
-      if (await S3.s3ObjectExists({ Bucket: file.bucket, Key: file.key })) {
-        return S3.deleteS3Object(file.bucket, file.key);
-      }
-      return null;
-    }));
-  }));
+      return Promise.all(zip(sourceGranule.files, targetGranule.files)
+        .map(async ([sourceFile, targetFile]) => {
+          if (!(sourceFile && targetFile)) {
+            return;
+          }
+          if(!isCMRMetadataFile(targetFile)) {
+            return;
+          }
+          if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
+            throw new AssertionError({ message: '' });
+          }
+          if(
+            moveRequested(sourceFile, targetFile) &&
+            await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key })
+          ){
+            return S3.deleteS3Object(sourceFile.bucket, sourceFile.key);
+          }
+          return;
+        }));
+    })
+  );
 }
 
 /**
@@ -225,7 +256,7 @@ async function moveFilesForAllGranules(
     sourceGranules, targetGranules
   );
   // because cmrMetadata files were *copied* and not deleted, delete them now
-  await cleanupCMRMetadataFiles(sourceGranules);
+  await cleanupCMRMetadataFiles(sourceGranules, targetGranules);
 }
 
 function updateFileMetadata(
@@ -350,10 +381,6 @@ async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
     granulesInput, targetGranules, chunkSize
   );
 
-  /*
-   to preserve idempotency, cmr metadata files were *copied* instead of moved
-   now that all records are up to date, old locatio cmr metadatafiles are cleaned up
-   */
   // await cleanupCMRMetadataFiles(granulesInput);
   return {
     granules: targetGranules,
