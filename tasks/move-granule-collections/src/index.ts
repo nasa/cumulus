@@ -15,7 +15,6 @@ import { S3 } from '@cumulus/aws-client';
 import { CMR } from '@cumulus/cmr-client';
 import {
   unversionFilename,
-  duplicateHandlingType,
 } from '@cumulus/ingest/granule';
 import {
   isCMRFile,
@@ -49,7 +48,6 @@ interface EventConfig {
     files: Array<CollectionFile>,
     duplicateHandling?: DuplicateHandling,
   },
-  duplicateHandling?: DuplicateHandling,
   buckets: BucketsConfigObject,
   s3MultipartChunksizeMb?: number,
 }
@@ -344,20 +342,16 @@ async function buildTargetGranules(
 
 async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
   const config = event.config;
-  const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
     ? config.s3MultipartChunksizeMb : Number(process.env.default_s3_multipart_chunksize_mb);
 
   const chunkSize = s3MultipartChunksizeMb ? s3MultipartChunksizeMb * MB : undefined;
-  const duplicateHandling = duplicateHandlingType(event);
   const granuleMetadataFileExtension: string = get(
     config,
     'collection.meta.granuleMetadataFileExtension'
   );
 
-  log.debug(`moveGranules config duplicateHandling: ${duplicateHandling}, `
-    + `moveStagedFiles: ${moveStagedFiles}, `
-    + `s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}, `
+  log.debug(`moveGranules config: s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}, `
     + `granuleMetadataFileExtension ${granuleMetadataFileExtension}`);
 
   const granulesInput = event.input.granules;
