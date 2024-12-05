@@ -41,6 +41,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
     new task deployment on terraform redeploy.   See docs for more details:
     https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
+- **CUMULUS-3941**
+  - Updated `SendPan` task to generate short pan with FAILED disposition.
 
 ### Fixed
 
