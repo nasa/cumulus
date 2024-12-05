@@ -68,16 +68,6 @@
         }
       }
     },
-    "moveStagedFiles": {
-      "type": "boolean",
-      "description": "Can set to false to skip moving files from the staging location. Defaults to true."
-    },
-    "duplicateHandling": {
-      "type": "string",
-      "description": "Specifies how duplicate filenames should be handled. `error` will throw an error that, if not caught, will fail the task/workflow execution. `version` will add a suffix to the existing filename to avoid a clash.",
-      "enum": ["replace", "version", "skip", "error"],
-      "default": "error"
-    },
     "s3MultipartChunksizeMb": {
       "type": ["number", "null"],
       "description": "S3 multipart upload chunk size in MB.  If none is specified, the default default_s3_multipart_chunksize_mb is used."
