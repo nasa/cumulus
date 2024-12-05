@@ -14,7 +14,9 @@ const {
   fakeGranuleRecordFactory,
   getUniqueGranuleByGranuleId,
   migrationDir,
-  updateGranuleAndFiles
+  updateGranuleAndFiles,
+  translatePostgresGranuleResultToApiGranule,
+  translatePostgresCollectionToApiCollection,
 } = require('../../dist');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
@@ -30,6 +32,7 @@ test.before(async (t) => {
   t.context.granulePgModel = new GranulePgModel();
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.filePgModel = new FilePgModel();
+
   // set up 2 collections
   t.context.collection = fakeCollectionRecordFactory();
   t.context.collection2 = fakeCollectionRecordFactory();
@@ -40,7 +43,7 @@ test.before(async (t) => {
   t.context.collectionId2 = constructCollectionId(
     t.context.collection2.name,
     t.context.collection2.version
-  )
+  );
   const collectionResponse = await t.context.collectionPgModel.create(
     t.context.knex,
     t.context.collection
@@ -51,40 +54,78 @@ test.before(async (t) => {
   );
   t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
   t.context.collectionCumulusId2 = collectionResponse2[0].cumulus_id;
+  t.context.apiCollection1 = translatePostgresCollectionToApiCollection(collectionResponse[0]);
+  t.context.apiCollection2 = translatePostgresCollectionToApiCollection(collectionResponse2[0]);
 
   // create 10 granules in one collection, 0 in the other
-  t.context.granuleIds = range(10).map(num => 'granuleId___' + num);
+  t.context.granuleIds = range(10).map((num) => 'granuleId___' + num);
 
   t.context.granulePgModel = new GranulePgModel();
+  t.context.granules = range(10).map((num) => fakeGranuleRecordFactory({
+    granule_id: t.context.granuleIds[num],
+    collection_cumulus_id: t.context.collectionCumulusId,
+    cumulus_id: num,
+  }));
   t.context.pgGranules = await t.context.granulePgModel.insert(
     knex,
-    range(10).map((num) => fakeGranuleRecordFactory({
-      granule_id: t.context.granuleIds[num],
-      collection_cumulus_id: t.context.collectionCumulusId
-    }))
+    t.context.granules
   );
-  t.context.pgFiles = [];
+
+  t.context.postMoveApiGranules = [];
+
+  t.context.files = [];
   // create fake files for each of the ten granules (3 per granule)
-  for(pgGranule of t.context.pgGranules){
-    t.context.pgFiles.push(
+  for (const pgGranule of t.context.granules) {
+    t.context.files.push(
       fakeFileRecordFactory({
         granule_cumulus_id: pgGranule.cumulus_id,
         file_name: pgGranule.granule_id + '.hdf',
         updated_at: new Date().toISOString(),
+        bucket: t.context.collectionId + '--bucket',
+        key: t.context.collectionId + pgGranule.granule_id + '/key-hdf.pem',
+        path: t.context.collectionId + '/' + pgGranule.granule_id,
       }),
       fakeFileRecordFactory({
         granule_cumulus_id: pgGranule.cumulus_id,
         file_name: pgGranule.granule_id + '.txt',
         updated_at: new Date().toISOString(),
+        bucket: t.context.collectionId + '--bucket',
+        key: t.context.collectionId + pgGranule.granule_id + '/key-txt.pem',
+        path: t.context.collectionId + '/' + pgGranule.granule_id,
       }),
       fakeFileRecordFactory({
         granule_cumulus_id: pgGranule.cumulus_id,
         file_name: pgGranule.granule_id + '.cmr',
         updated_at: new Date().toISOString(),
+        bucket: t.context.collectionId + '--bucket',
+        key: t.context.collectionId + pgGranule.granule_id + '/key-cmr.pem',
+        path: t.context.collectionId + '/' + pgGranule.granule_id,
       })
     );
   }
-  await t.context.filePgModel.insert(knex, t.context.pgFiles);
+
+  t.context.pgFiles = await t.context.filePgModel.insert(knex, t.context.files);
+
+  // this loop initiates the changes that the task would perform upon the records before updating PG
+  /* eslint-disable no-await-in-loop */
+  for (const granule of t.context.granules) {
+    const postMoveApiGranule = await translatePostgresGranuleResultToApiGranule(t.context.knex, {
+      ...granule,
+      collectionName: t.context.collection.name,
+      collectionVersion: t.context.collection.version,
+    });
+    postMoveApiGranule.collectionId = t.context.collectionId2;
+    postMoveApiGranule.updatedAt = Date.now();
+    postMoveApiGranule.lastUpdateDateTime = new Date().toISOString();
+    for (const apiFile of postMoveApiGranule.files) {
+      apiFile.bucket = apiFile.bucket.replace(t.context.collectionId, t.context.collectionId2);
+      apiFile.key = apiFile.key.replace(t.context.collectionId, t.context.collectionId2);
+      //apiFile.path = apiFile.path.replace(t.context.collectionId, t.context.collectionId2);
+      apiFile.updatedAt = Date.now();
+    }
+    t.context.postMoveApiGranules.push(postMoveApiGranule);
+  }
+  /* eslint-enable no-await-in-loop */
 });
 
 test.after.always(async (t) => {
@@ -96,30 +137,31 @@ test.after.always(async (t) => {
 
 test('updateGranuleAndFiles successfully updates a list of granules based on the collectionId change', async (t) => {
   const {
-    collectionCumulusId2,
-    collectionId2,
     granuleIds,
-    knex,
-    collectionPgModel,
     granulePgModel,
-    filePgModel,
-    pgFiles,
+    postMoveApiGranules,
+    collectionId2,
+    knex,
   } = t.context;
-  const granuleIdsSplit = granuleIds.slice(0,5);
-  await updateGranuleAndFiles(knex, collectionPgModel, granuleIdsSplit, collectionId2);
-  const returnedGranules = await Promise.all(granuleIdsSplit.map((id) => getUniqueGranuleByGranuleId(knex, id, granulePgModel)));
-  const collectionCumulusIds = returnedGranules.map(granule => granule.collection_cumulus_id);
-  t.deepEqual(collectionCumulusIds, Array(5).fill(collectionCumulusId2));
-  const returnedFiles = await Promise.all(returnedGranules.map((obj) => filePgModel.search(knex, {
-    granule_cumulus_id: obj.cumulus_id,
-  })));
-  let x = 0;
-  for(let i = 0; i < returnedFiles.length; i++){
-    for(let j = 0; j < returnedFiles[i].length && x < pgFiles.slice(0,15).length; j++){
-      t.true(new Date(returnedFiles[i][j].updated_at) > new Date(pgFiles[x].updated_at))
-      x++;
+  await updateGranuleAndFiles(knex, postMoveApiGranules);
+
+  const returnedGranules = await Promise.all(granuleIds.map((id) =>
+    getUniqueGranuleByGranuleId(knex, id, granulePgModel)));
+
+  /* eslint-disable no-await-in-loop */
+  for (const granule of returnedGranules) {
+    const apiGranule = await translatePostgresGranuleResultToApiGranule(t.context.knex, {
+      ...granule,
+      collectionName: t.context.collection2.name,
+      collectionVersion: t.context.collection2.version,
+    });
+    t.true(apiGranule.collectionId === collectionId2);
+    for (const file of apiGranule.files) {
+      t.true(file.key.includes(collectionId2));
+      t.true(file.bucket.includes(collectionId2));
     }
   }
+  /* eslint-enable no-await-in-loop */
 });
 
-// write some failure cases
+// need to write some failure cases (? if neccessary)

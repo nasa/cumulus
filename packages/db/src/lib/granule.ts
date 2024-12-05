@@ -9,12 +9,15 @@ import {
 import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
+import { ApiGranule } from '@cumulus/types/api/granules';
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
 import { UpdatedAtRange } from '../types/record';
+import { translateApiGranuleToPostgresGranule } from '../translate/granules';
+import { translateApiFiletoPostgresFile } from '../translate/file';
 const { deprecate } = require('@cumulus/common/util');
 
 const { TableNames } = require('../tables');
@@ -357,55 +360,40 @@ export const getGranulesByGranuleId = async (
 
 /**
  * Change a granules' PG record and its files' PG record based on collection move
- * 
+ *
  * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
  * @param {Object} [collectionPgModel] - Collection PG model class instance
  * @param {string[]} granuleIds - list of granules by granuleIds to change
  * @param {string} collectionId - collection ID
  * @returns {Promise<void>}
  */
- export const updateGranuleAndFiles = async (
+export const updateGranuleAndFiles = async (
   knexOrTransaction: Knex | Knex.Transaction,
-  collectionPgModel = new CollectionPgModel(),
-  granuleIds: string[],
-  collectionId: string,
-):Promise<void> =>  {
-  let pgCollection;
-  let notFoundError;
+  granules: Array<ApiGranule>
+):Promise<void> => {
   const {
     granules: granulesTable,
     files: filesTable,
   } = TableNames;
-  try {
-    pgCollection = await collectionPgModel.get(
-      knexOrTransaction, deconstructCollectionId(collectionId)
+  /* eslint-disable no-await-in-loop */
+  for (const granule of granules) {
+    const pgGranule = await translateApiGranuleToPostgresGranule({
+      dynamoRecord: granule,
+      knexOrTransaction,
+    });
+    await knexOrTransaction(granulesTable).where('granule_id', '=', pgGranule.granule_id).update(
+      pgGranule
     );
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      if (collectionId && pgCollection === undefined) {
-        notFoundError = `No collection found with collectionId ${collectionId}`;
-        throw new Error(notFoundError);
+
+    if (granule.files) {
+      for (const file of granule.files) {
+        const pgFile = translateApiFiletoPostgresFile({ ...file, granuleId: pgGranule.granule_id });
+
+        await knexOrTransaction(filesTable).where('file_name', '=', String(pgFile.file_name)).update(
+          pgFile
+        );
       }
-    } else {
-      throw error;
     }
   }
-  let newCollectionCumulusId = pgCollection?.cumulus_id;
-
-  await knexOrTransaction(granulesTable).whereIn('granule_id', granuleIds).update({
-    collection_cumulus_id: newCollectionCumulusId,
-    updated_at: knexOrTransaction.fn.now(),
-    last_update_date_time: new Date().toISOString(),
-  });
-
-  for(const granuleId of granuleIds) {
-    let granule = await getUniqueGranuleByGranuleId(knexOrTransaction, granuleId);
-    await knexOrTransaction(filesTable).where('granule_cumulus_id', '=', granule.cumulus_id).update({
-      updated_at: knexOrTransaction.fn.now(),
-      // need to decide how/what to do to change these:
-      // bucket: ''.
-      // key: '',
-      // path: '',
-    });
-  }
-}
+  /* eslint-enable no-await-in-loop */
+};
