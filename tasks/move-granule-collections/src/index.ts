@@ -111,15 +111,15 @@ function isCMRMetadataFile(file: ApiFile | Omit<ApiFile, 'granuleId'>): boolean 
 
 function moveRequested(
   sourceFile: ValidApiFile,
-  targetFile: ValidApiFile,
+  targetFile: ValidApiFile
 ): boolean {
-  return !((sourceFile.key === targetFile.key) && (sourceFile.bucket === targetFile.bucket))
+  return !((sourceFile.key === targetFile.key) && (sourceFile.bucket === targetFile.bucket));
 }
 
 async function s3MoveNeeded(
   sourceFile: ValidApiFile,
   targetFile: ValidApiFile,
-  isMetadataFile: boolean,
+  isMetadataFile: boolean
 ): Promise<boolean> {
   if (!moveRequested(sourceFile, targetFile)) {
     return false;
@@ -201,12 +201,15 @@ async function moveGranulesInCumulusDatastores(
   // interface with API here to update granules in PG etc
   console.log(
     JSON.stringify(sourceGranules, null, 2),
-    JSON.stringify(targetGranules, null, 2),
+    JSON.stringify(targetGranules, null, 2)
   );
   return null;
 }
 
-async function cleanupCMRMetadataFiles(sourceGranules: Array<ApiGranule>, targetGranules: Array<ApiGranule>) {
+async function cleanupCMRMetadataFiles(
+  sourceGranules: Array<ApiGranule>,
+  targetGranules: Array<ApiGranule>
+) {
   await Promise.all(
     zip(sourceGranules, targetGranules).map(async ([sourceGranule, targetGranule]) => {
       if (sourceGranule?.files === undefined || targetGranule?.files === undefined) {
@@ -217,19 +220,18 @@ async function cleanupCMRMetadataFiles(sourceGranules: Array<ApiGranule>, target
           if (!(sourceFile && targetFile)) {
             return;
           }
-          if(!isCMRMetadataFile(targetFile)) {
+          if (!isCMRMetadataFile(targetFile)) {
             return;
           }
           if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
             throw new AssertionError({ message: '' });
           }
-          if(
+          if (
             moveRequested(sourceFile, targetFile) &&
             await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key })
-          ){
-            return S3.deleteS3Object(sourceFile.bucket, sourceFile.key);
+          ) {
+            await S3.deleteS3Object(sourceFile.bucket, sourceFile.key);
           }
-          return;
         }));
     })
   );
