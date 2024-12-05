@@ -88,7 +88,6 @@ Move granule files and records in cumulus datastores from one collection to anot
 - Resources: [npm](https://npmjs.com/package/@cumulus/move-granule-collections) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/move-granule-collections)
 
 ---
-### [@cumulus/move-granule-collections] #TODO
 ### [@cumulus/orca-copy-to-archive-adapter](https://github.com/nasa/cumulus/tree/master/tasks/orca-copy-to-archive-adapter)
 
 Adapter to invoke orca copy-to-archive lambda
