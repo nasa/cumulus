@@ -11,7 +11,7 @@ import { Dictionary } from 'lodash';
 import path from 'path';
 import { MissingS3FileError, DuplicateFile, InvalidArgument } from '@cumulus/errors';
 import { S3 } from '@cumulus/aws-client';
-
+import { updateGranuleAndFiles, getKnexClient } from '@cumulus/db';
 import { CMR } from '@cumulus/cmr-client';
 import {
   unversionFilename,
@@ -193,15 +193,10 @@ async function moveGranulesInS3(
 }
 
 async function moveGranulesInCumulusDatastores(
-  sourceGranules: Array<ApiGranule>,
   targetGranules: Array<ApiGranule>
-): Promise<null> {
-  // interface with API here to update granules in PG etc
-  console.log(
-    JSON.stringify(sourceGranules, null, 2),
-    JSON.stringify(targetGranules, null, 2)
-  );
-  return null;
+): Promise<void> {
+  const knex = await getKnexClient();
+  await updateGranuleAndFiles(knex, targetGranules);
 }
 
 async function cleanupCMRMetadataFiles(
@@ -253,7 +248,7 @@ async function moveFilesForAllGranules(
   await moveGranulesInS3(sourceGranules, targetGranules, s3MultipartChunksizeMb);
   // update postgres (or other cumulus datastores if applicable)
   await moveGranulesInCumulusDatastores(
-    sourceGranules, targetGranules
+    targetGranules,
   );
   // because cmrMetadata files were *copied* and not deleted, delete them now
   await cleanupCMRMetadataFiles(sourceGranules, targetGranules);

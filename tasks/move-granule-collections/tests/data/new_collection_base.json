@@ -34,6 +34,7 @@
     ],
     "url_path": "example2/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/",
     "name": "MOD11A2",
+    "granuleIdExtraction": "(MOD11A1\\.(.*))\\.hdf",
     "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
     "dataType": "MOD11A2",
     "process": "modis",

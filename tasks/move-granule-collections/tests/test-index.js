@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
@@ -15,6 +16,17 @@ const {
 const {
   randomId, validateOutput,
 } = require('@cumulus/common/test-utils');
+const {
+  localStackConnectionEnv,
+  getKnexClient,
+  CollectionPgModel,
+  GranulePgModel,
+  translateApiCollectionToPostgresCollection,
+  translateApiGranuleToPostgresGranule,
+  migrationDir,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+} = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
 
@@ -40,9 +52,25 @@ async function uploadFiles(files) {
   }));
 }
 
+async function setupPGData(granules, targetCollection, knex) {
+  console.log(granules)
+  const granuleModel = new GranulePgModel();
+  const collectionModel = new CollectionPgModel();
+  const collectionPath = path.join(__dirname, 'data', 'original_collection.json');
+  const sourceCollection = JSON.parse(fs.readFileSync(collectionPath));
+  console.log(sourceCollection);
+  await collectionModel.create(knex, translateApiCollectionToPostgresCollection(sourceCollection));
+  await collectionModel.create(knex, translateApiCollectionToPostgresCollection(targetCollection));
+  await granuleModel.insert(knex, await Promise.all(granules.map(async (g) => {
+    console.log(g);
+    return await translateApiGranuleToPostgresGranule({dynamoRecord: g, knexOrTransaction: knex})
+  })));
+
+}
+
 function granulesToFileURIs(granules) {
   const files = granules.reduce((arr, g) => arr.concat(g.files), []);
-  return files.map((file) => buildS3Uri(file.bucket, file.key));
+  return files.map((file) => buildS3Uri(file.bucket, file.key)); 0
 }
 
 function buildPayload(t, collection) {
@@ -53,11 +81,22 @@ function buildPayload(t, collection) {
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.private.name = t.context.privateBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
+  newPayload.input.granules.forEach((granule) => granule.files.map(
+    (file) => file.fileName = file.key.split('/').pop())
+  );
 
   return newPayload;
 }
 
 test.beforeEach(async (t) => {
+
+  const testDbName = `move-granule-collections${cryptoRandomString({ length: 10 })}`;
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
   t.context.publicBucket = randomId('public');
   t.context.protectedBucket = randomId('protected');
   t.context.privateBucket = randomId('private');
@@ -76,6 +115,11 @@ test.beforeEach(async (t) => {
     s3().createBucket({ Bucket: t.context.privateBucket }),
     s3().createBucket({ Bucket: t.context.systemBucket }),
   ]);
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  }
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
   putJsonS3Object(
@@ -94,6 +138,11 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    tesetDbName: t.context.testDbName,
+  });
 });
 
 test('Should move files to final location.', async (t) => {
@@ -110,7 +159,7 @@ test('Should move files to final location.', async (t) => {
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-
+  await setupPGData(newPayload.input.granules, collection, t.context.knex);
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -142,6 +191,8 @@ test('handles partially moved files', async (t) => {
     .replaceAll('replaceme-private', t.context.privateBucket)
     .replaceAll('replaceme-protected', t.context.protectedBucket);
   t.context.payload = JSON.parse(rawPayload);
+
+  // a starting granule state that disagrees with the payload as some have already been moved
   const startingState = [{
     files: [
       {
@@ -177,6 +228,8 @@ test('handles partially moved files', async (t) => {
   const collectionPath = path.join(__dirname, 'data', 'new_collection_base.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
+
+  await setupPGData(newPayload.input.granules, collection, t.context.knex);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
 
   const output = await moveGranules(newPayload);
@@ -241,8 +294,9 @@ test('handles files that are pre-moved and misplaced w/r to postgres', async (t)
   const collectionPath = path.join(__dirname, 'data', 'new_collection_base.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
-  await uploadFiles(filesToUpload, t.context.bucketMapping);
 
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  await setupPGData(newPayload.input.granules, collection, t.context.knex);
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -277,6 +331,7 @@ test('handles files that need no move', async (t) => {
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
+  await setupPGData(newPayload.input.granules, collection, t.context.knex);
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
