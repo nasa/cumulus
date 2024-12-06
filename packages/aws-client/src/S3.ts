@@ -185,11 +185,11 @@ export const headObject = (
 /**
  * Test if an object exists in S3
  *
- * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
- * @returns {Promise<boolean>} a Promise that will resolve to a boolean indicating
+ * @param params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
+ * @returns a Promise that will resolve to a boolean indicating
  *                               if the object exists
  */
-export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
+export const s3ObjectExists = (params: { Bucket: string, Key: string }): Promise<boolean> =>
   headObject(params.Bucket, params.Key)
     .then(() => true)
     .catch((error) => {
@@ -1122,16 +1122,6 @@ export const multipartCopyObject = async (
 
 /**
  * Move an S3 object to another location in S3
- *
- * @param {Object} params
- * @param {string} params.sourceBucket
- * @param {string} params.sourceKey
- * @param {string} params.destinationBucket
- * @param {string} params.destinationKey
- * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
- * @param {boolean} [params.copyTags=false]
- * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
- * @returns {Promise<undefined>}
  */
 export const moveObject = async (
   params: {
