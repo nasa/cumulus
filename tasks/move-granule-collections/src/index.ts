@@ -248,7 +248,7 @@ async function moveFilesForAllGranules(
   await moveGranulesInS3(sourceGranules, targetGranules, s3MultipartChunksizeMb);
   // update postgres (or other cumulus datastores if applicable)
   await moveGranulesInCumulusDatastores(
-    targetGranules,
+    targetGranules
   );
   // because cmrMetadata files were *copied* and not deleted, delete them now
   await cleanupCMRMetadataFiles(sourceGranules, targetGranules);

@@ -18,7 +18,6 @@ const {
 } = require('@cumulus/common/test-utils');
 const {
   localStackConnectionEnv,
-  getKnexClient,
   CollectionPgModel,
   GranulePgModel,
   translateApiCollectionToPostgresCollection,
@@ -53,24 +52,20 @@ async function uploadFiles(files) {
 }
 
 async function setupPGData(granules, targetCollection, knex) {
-  console.log(granules)
   const granuleModel = new GranulePgModel();
   const collectionModel = new CollectionPgModel();
   const collectionPath = path.join(__dirname, 'data', 'original_collection.json');
   const sourceCollection = JSON.parse(fs.readFileSync(collectionPath));
-  console.log(sourceCollection);
   await collectionModel.create(knex, translateApiCollectionToPostgresCollection(sourceCollection));
   await collectionModel.create(knex, translateApiCollectionToPostgresCollection(targetCollection));
-  await granuleModel.insert(knex, await Promise.all(granules.map(async (g) => {
-    console.log(g);
-    return await translateApiGranuleToPostgresGranule({dynamoRecord: g, knexOrTransaction: knex})
-  })));
-
+  await granuleModel.insert(knex, await Promise.all(granules.map(async (g) => (
+    await translateApiGranuleToPostgresGranule({ dynamoRecord: g, knexOrTransaction: knex })
+  ))));
 }
 
 function granulesToFileURIs(granules) {
   const files = granules.reduce((arr, g) => arr.concat(g.files), []);
-  return files.map((file) => buildS3Uri(file.bucket, file.key)); 0
+  return files.map((file) => buildS3Uri(file.bucket, file.key));
 }
 
 function buildPayload(t, collection) {
@@ -81,15 +76,17 @@ function buildPayload(t, collection) {
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.private.name = t.context.privateBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
-  newPayload.input.granules.forEach((granule) => granule.files.map(
-    (file) => file.fileName = file.key.split('/').pop())
-  );
-
+  newPayload.input.granules.forEach((granule) => {
+    granule.files = granule.files?.forEach(
+      (file) => {
+        file.fileName = file.key.split('/').pop();
+      }
+    );
+  });
   return newPayload;
 }
 
 test.beforeEach(async (t) => {
-
   const testDbName = `move-granule-collections${cryptoRandomString({ length: 10 })}`;
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
@@ -119,7 +116,7 @@ test.beforeEach(async (t) => {
     ...process.env,
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
-  }
+  };
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
   putJsonS3Object(
