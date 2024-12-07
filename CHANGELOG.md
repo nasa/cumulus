@@ -41,6 +41,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
 - **CUMULUS-3941**
   - Updated `SendPan` task to generate short pan with FAILED disposition.
+- **CUMULUS-3936,CUMULUS-3948**
+  - Updated `tf-modules/cumulus/ecs_cluster_instance_autoscaling_cf_template.yml.tmpl`
+    user-data for compatibility with Amazon Linux 2023 AMI
+  - Fixed `tf-modules/cumulus` scripts to use Instance Metadata Service V2
+  - Updated `fake-provider-cf.yml` to work for Amazon Linux 2023 AMI
 
 ### Fixed
 
