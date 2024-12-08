@@ -1,8 +1,12 @@
 'use strict';
 
 //@ts-check
+const pSettle = require('p-settle');
 const log = require('@cumulus/common/log');
 
+const {
+  getEsClient,
+} = require('@cumulus/es-client/search');
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object, deleteS3Object } = require('@cumulus/aws-client/S3');
@@ -87,13 +91,17 @@ async function processDeadLetterArchive({
   path = `${process.env.stackName}/dead-letter-archive/sqs/`,
   writeRecordsFunction = writeRecords,
   batchSize = 1000,
+  concurrency = 10,
 }) {
   let listObjectsResponse;
   let continuationToken;
   let allSuccessKeys = [];
   const allFailedKeys = [];
+  const esClient = await getEsClient();
   /* eslint-disable no-await-in-loop */
   do {
+    // Refresh ES client to avoid credentials timeout for long running processes
+    esClient.refreshClient();
     listObjectsResponse = await s3().listObjectsV2({
       Bucket: bucket,
       Prefix: path,
@@ -102,25 +110,24 @@ async function processDeadLetterArchive({
     });
     continuationToken = listObjectsResponse.NextContinuationToken;
     const deadLetterObjects = listObjectsResponse.Contents || [];
-    const promises = await Promise.allSettled(deadLetterObjects.map(
-      async (deadLetterObject) => {
-        const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
-        const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
-        try {
-          await writeRecordsFunction({ cumulusMessage, knex });
-          return deadLetterObject.Key;
-        } catch (error) {
-          log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);
-          allFailedKeys.push(deadLetterObject.Key);
-          log.info('Transferring unprocessed message to new archive location');
-          await transferUnprocessedMessage(deadLetterObject.Key, bucket, deadLetterMessage);
-          throw error;
-        }
+    const promises = await pSettle(deadLetterObjects.map((deadLetterObject) => async () => {
+      const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
+      const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
+      try {
+        await writeRecordsFunction({ cumulusMessage, knex, esClient });
+        return deadLetterObject.Key;
+      } catch (error) {
+        log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);
+        allFailedKeys.push(deadLetterObject.Key);
+        log.info('Transferring unprocessed message to new archive location');
+        await transferUnprocessedMessage(deadLetterObject.Key, bucket, deadLetterMessage);
+        throw error;
       }
-    ));
+    }),
+    { concurrency });
 
     const successfullyProcessedKeys = promises.filter(
-      (prom) => prom.status === 'fulfilled'
+      (prom) => prom.isFulfilled
     ).map((prom) => prom.value);
     allSuccessKeys = allSuccessKeys.concat(successfullyProcessedKeys);
 
@@ -158,10 +165,12 @@ async function handler(event) {
     },
   });
   const {
+    batchSize = 1000,
+    concurrency = 20,
     bucket,
     path,
   } = event;
-  return processDeadLetterArchive({ knex, bucket, path });
+  return processDeadLetterArchive({ knex, bucket, path, batchSize, concurrency });
 }
 
 module.exports = {
