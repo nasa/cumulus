@@ -86,7 +86,9 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
   t.is(cluster, process.env.EcsCluster);
   t.is(description, 'Dead-Letter Processor ECS Run');
   t.deepEqual(payload, {
+    batchSize: 1000,
     bucket: archiveBucket,
+    concurrency: 10,
     path: archivePath,
   });
 });
@@ -113,7 +115,9 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
   t.is(cluster, process.env.EcsCluster);
   t.is(description, 'Dead-Letter Processor ECS Run');
   t.deepEqual(payload, {
+    batchSize: 1000,
     bucket: undefined,
+    concurrency: 10,
     path: undefined,
   });
 });
@@ -146,7 +150,9 @@ test.serial('postRecoverCumulusMessages() uses correct caller lambda function na
   t.is(cluster, process.env.EcsCluster);
   t.is(description, 'Dead-Letter Processor ECS Run');
   t.deepEqual(payload, {
+    batchSize: 1000,
     bucket: undefined,
+    concurrency: 10,
     path: undefined,
   });
 });
