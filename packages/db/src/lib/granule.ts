@@ -6,10 +6,10 @@ import {
   deconstructCollectionId,
 } from '@cumulus/message/Collections';
 
+import { ApiGranule } from '@cumulus/types/api/granules';
 import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
-import { ApiGranule } from '@cumulus/types/api/granules';
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
@@ -362,9 +362,7 @@ export const getGranulesByGranuleId = async (
  * Change a granules' PG record and its files' PG record based on collection move
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
- * @param {Object} [collectionPgModel] - Collection PG model class instance
- * @param {string[]} granuleIds - list of granules by granuleIds to change
- * @param {string} collectionId - collection ID
+ * @param {Array<ApiGranule>} [granules] - updated ApiGranule records
  * @returns {Promise<void>}
  */
 export const updateGranuleAndFiles = async (

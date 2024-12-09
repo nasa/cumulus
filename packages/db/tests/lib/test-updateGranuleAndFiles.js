@@ -6,23 +6,32 @@ const range = require('lodash/range');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
-  GranulePgModel,
   FilePgModel,
-  generateLocalTestDb,
+  GranulePgModel,
+  migrationDir,
   destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeFileRecordFactory,
   fakeGranuleRecordFactory,
+  generateLocalTestDb,
   getUniqueGranuleByGranuleId,
-  migrationDir,
-  updateGranuleAndFiles,
-  translatePostgresGranuleResultToApiGranule,
   translatePostgresCollectionToApiCollection,
+  translatePostgresGranuleResultToApiGranule,
+  updateGranuleAndFiles,
 } = require('../../dist');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
 
-// this function is used to simulate granule records post-collection-move for database updates
+/**
+ * Simulate granule records post-collection-move for database updates test
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+ * @param {Array<Object>} [granules] - granule records to update
+ * @param {Object} [collection] - current collection of granules used for translation
+ * @param {string} [collectionId] - collectionId of current granules
+ * @param {string} [collectionId2] - collectionId of collection that the granule is moving to
+ * @returns {Array<Object>} - list of updated apiGranules (moved to new collection)
+ */
 const simulateGranuleUpdate = async (knex, granules, collection, collectionId, collectionId2) => {
   const movedGranules = [];
   for (const granule of granules) {
