@@ -92,7 +92,7 @@ module "archive" {
   cleanup_non_running     = var.cleanup_non_running
 
   payload_timeout        = var.payload_timeout
-  
+
   es_index              = var.es_index
   update_limit          = var.update_limit
   background_queue_url = module.ingest.background_queue_url
@@ -110,6 +110,9 @@ module "archive" {
   rds_security_group = var.rds_security_group
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
+
+  dead_letter_recovery_cpu = var.dead_letter_recovery_cpu
+  dead_letter_recovery_memory = var.dead_letter_recovery_memory
 
   tags = var.tags
 

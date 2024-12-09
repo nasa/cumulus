@@ -14,7 +14,7 @@ async function postRecoverCumulusMessages(req, res) {
   const {
     bucket,
     path,
-    batchSize,
+    batchSize = 1000,
     concurrency = 10,
     maxDbPool = 50,
   } = req.body ?? {}; // TODO ZOD!  KNEEL BEFORE ZOD
@@ -22,7 +22,7 @@ async function postRecoverCumulusMessages(req, res) {
     cluster: process.env.EcsCluster,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.DeadLetterProcessingLambda,
-    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    asyncOperationTaskDefinition: process.env.DeadLetterRecoveryTaskDefinition,
     description: 'Dead-Letter Processor ECS Run',
     operationType: 'Dead-Letter Processing',
     payload: {
