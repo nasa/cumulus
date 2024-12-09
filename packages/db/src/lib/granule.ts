@@ -375,8 +375,7 @@ export const updateGranuleAndFiles = async (
     granules: granulesTable,
     files: filesTable,
   } = TableNames;
-  /* eslint-disable no-await-in-loop */
-  for (const granule of granules) {
+  await Promise.all(granules.map(async (granule) => {
     const pgGranule = await translateApiGranuleToPostgresGranule({
       dynamoRecord: granule,
       knexOrTransaction,
@@ -386,14 +385,13 @@ export const updateGranuleAndFiles = async (
     );
 
     if (granule.files) {
-      for (const file of granule.files) {
+      await Promise.all(granule.files.map(async (file) => {
         const pgFile = translateApiFiletoPostgresFile({ ...file, granuleId: pgGranule.granule_id });
 
         await knexOrTransaction(filesTable).where('file_name', '=', String(pgFile.file_name)).update(
           pgFile
         );
-      }
+      }));
     }
-  }
-  /* eslint-enable no-await-in-loop */
+  }));
 };
