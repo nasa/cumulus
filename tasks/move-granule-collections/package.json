@@ -20,16 +20,17 @@
   },
   "scripts": {
     "generate-task-schemas": "npx generate-task-schemas . files",
-    "build": "npm run tsc",
     "clean": "git clean -d -x -e node_modules -f",
-    "package": "npm run build && (node ../../bin/zip.js lambda.zip index.js schemas)",
+    "package": "npm run generate-task-schemas && ./bin/package.sh",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
-    "coverage": "python ../../scripts/coverage_handler/coverage.py"
+    "coverage": "python ../../scripts/coverage_handler/coverage.py",
+    "webpack": "../../node_modules/.bin/webpack"
   },
   "ava": {
     "files": [
