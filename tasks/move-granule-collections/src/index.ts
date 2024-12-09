@@ -25,6 +25,7 @@ import {
 import { BucketsConfig } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
 import { isFileExtensionMatched } from '@cumulus/message/utils';
+import { constructCollectionId } from '@cumulus/message/Collections';
 import { log } from '@cumulus/common';
 import { ApiGranule, DuplicateHandling } from '@cumulus/types';
 import { ApiFile } from '@cumulus/types/api/files';
@@ -47,6 +48,8 @@ interface EventConfig {
     url_path?: string,
     files: Array<CollectionFile>,
     duplicateHandling?: DuplicateHandling,
+    name: string,
+    version: string,
   },
   buckets: BucketsConfigObject,
   s3MultipartChunksizeMb?: number,
@@ -312,14 +315,13 @@ async function updateGranuleMetadata(
   const cmrMetadata = cmrFile ?
     await getCMRMetadata(cmrFile, granule.granuleId) :
     {};
-
   const newFiles = granule.files?.map(
     (file) => updateFileMetadata(file, granule, config, cmrMetadata, cmrFileNames)
   );
-
   return {
     ...cloneDeep(granule),
     files: newFiles,
+    collectionId: constructCollectionId(config.collection.name, config.collection.version),
   };
 }
 
