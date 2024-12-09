@@ -37,7 +37,6 @@ const simulateGranuleUpdate = async (knex, granules, collection, collectionId, c
     for (const apiFile of postMoveApiGranule.files) {
       apiFile.bucket = apiFile.bucket.replace(collectionId, collectionId2);
       apiFile.key = apiFile.key.replace(collectionId, collectionId2);
-      //apiFile.path = apiFile.path.replace(t.context.collectionId, t.context.collectionId2);
       apiFile.updatedAt = Date.now();
     }
     movedGranules.push(postMoveApiGranule);
