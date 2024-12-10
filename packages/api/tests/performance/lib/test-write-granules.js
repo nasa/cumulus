@@ -51,8 +51,8 @@ const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtil
 
 test.before(async (t) => {
   // Test configuration values
-  t.context.concurrency = 200;
-  process.env.maxDbPool = 200;
+  t.context.concurrency = 500;
+  process.env.maxDbPool = 500;
   t.context.totalGranules = 3000;
   t.context.granuleFiles = 10;
 
@@ -168,7 +168,7 @@ test.beforeEach(async (t) => {
   t.context.providerPdrId = pgPdr.cumulus_id;
 
   t.context.granules = Array.from({ length: t.context.totalGranules }, () => fakeGranuleFactoryV2({
-    files: new Array(t.context.granuleFiles).fill(0).map(() => fakeFileFactory({ bucket: 'cumulus-test-sandbox-internal' })),
+    files: new Array(t.context.granuleFiles).fill(0).map(() => fakeFileFactory({ bucket: 'cumulus-test-sandbox-internal', size: 0 })),
     provider: 'fake-provider',
   }));
 
