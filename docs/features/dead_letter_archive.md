@@ -35,9 +35,9 @@ The dead letter archive async operation environment can be configured to allow u
 - dead_letter_recovery_cpu
 - dead_letter_recovery_memory
 
-These values can be configured to increase according to configuration table in https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html if the process is failing due to memory errors with high concurrency/connection limits/faster performance is desired.
+These values can be configured to increase according to configuration table in [Fargate Services Documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html) if the process is failing due to memory errors with high concurrency/connection limits/faster performance is desired.
 
-See https://nasa.github.io/cumulus/docs/features/dead_letter_archive for more information on this feature.
+See (Cumulus DLA Documentation)[https://nasa.github.io/cumulus/docs/features/dead_letter_archive] for more information on this feature.
 
 ## Dead Letter Archive Message structure
 
