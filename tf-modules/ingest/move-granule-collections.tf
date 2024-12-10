@@ -1,6 +1,6 @@
 resource "aws_lambda_function" "move_granule_collections_task" {
   function_name    = "${var.prefix}-MoveGranuleCollections"
-  filename         = "${path.module}/../../tasks/move-granules/dist/lambda.zip"
+  filename         = "${path.module}/../../tasks/move-granule-collections/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/move-granule-collections/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
