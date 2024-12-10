@@ -57,16 +57,21 @@ async function setupPGData(granules, targetCollection, knex) {
   const collectionPath = path.join(__dirname, 'data', 'original_collection.json');
   const sourceCollection = JSON.parse(fs.readFileSync(collectionPath));
   const pgRecords = {};
-  [pgRecords.sourceCollection] = await collectionModel.create(knex, translateApiCollectionToPostgresCollection(sourceCollection));
-  [pgRecords.targetCollection] = await collectionModel.create(knex, translateApiCollectionToPostgresCollection(targetCollection));
+  await collectionModel.create(
+    knex,
+    translateApiCollectionToPostgresCollection(sourceCollection)
+  );
+  [pgRecords.targetCollection] = await collectionModel.create(
+    knex,
+    translateApiCollectionToPostgresCollection(targetCollection)
+  );
   pgRecords.granules = await granuleModel.insert(
     knex,
     await Promise.all(granules.map(async (g) => (
       await translateApiGranuleToPostgresGranule({ dynamoRecord: g, knexOrTransaction: knex })
-    ))),
-    ['granule_id', 'cumulus_id'],
+    )))
   );
-  return pgRecords
+  return pgRecords;
 }
 
 function granulesToFileURIs(granules) {
@@ -163,7 +168,7 @@ test('Should move files to final location and update pg data', async (t) => {
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const pgRecords = await setupPGData(newPayload.input.granules, collection, t.context.knex);
-  
+
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -184,10 +189,10 @@ test('Should move files to final location and update pg data', async (t) => {
   }));
   const granuleModel = new GranulePgModel();
   const finalPgGranule = await granuleModel.get(t.context.knex, {
-    cumulus_id: pgRecords.granules[0].cumulus_id
-  })
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id)
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id)
+    cumulus_id: pgRecords.granules[0].cumulus_id,
+  });
+  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
 test('handles partially moved files', async (t) => {
@@ -258,10 +263,10 @@ test('handles partially moved files', async (t) => {
   }));
   const granuleModel = new GranulePgModel();
   const finalPgGranule = await granuleModel.get(t.context.knex, {
-    cumulus_id: pgRecords.granules[0].cumulus_id
-  })
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id)
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id)
+    cumulus_id: pgRecords.granules[0].cumulus_id,
+  });
+  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
 test('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
@@ -329,10 +334,10 @@ test('handles files that are pre-moved and misplaced w/r to postgres', async (t)
   }));
   const granuleModel = new GranulePgModel();
   const finalPgGranule = await granuleModel.get(t.context.knex, {
-    cumulus_id: pgRecords.granules[0].cumulus_id
-  })
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id)
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id)
+    cumulus_id: pgRecords.granules[0].cumulus_id,
+  });
+  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
 test('handles files that need no move', async (t) => {
@@ -372,8 +377,8 @@ test('handles files that need no move', async (t) => {
 
   const granuleModel = new GranulePgModel();
   const finalPgGranule = await granuleModel.get(t.context.knex, {
-    cumulus_id: pgRecords.granules[0].cumulus_id
-  })
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id)
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id)
+    cumulus_id: pgRecords.granules[0].cumulus_id,
+  });
+  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
