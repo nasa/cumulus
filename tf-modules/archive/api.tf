@@ -25,6 +25,7 @@ locals {
       API_BASE_URL                     = local.api_uri
       ASSERT_ENDPOINT                  = var.saml_assertion_consumer_service
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
+      DeadLetterRecoveryTaskDefinition = aws_ecs_task_definition.dead_letter_recovery_operation.arn
       backgroundQueueUrl               = var.background_queue_url
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
       collection_sns_topic_arn         = aws_sns_topic.report_collections_topic.arn
