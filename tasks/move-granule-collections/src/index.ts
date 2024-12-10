@@ -374,7 +374,6 @@ async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
     granulesInput, targetGranules, chunkSize
   );
 
-  // await cleanupCMRMetadataFiles(granulesInput);
   return {
     granules: targetGranules,
   };

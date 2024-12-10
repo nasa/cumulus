@@ -131,6 +131,7 @@ describe('when moveGranulesCollection is called', () => {
           ],
         },
       };
+      // const cmaObject = {cma: { event: { payload }}}
       await Promise.all(payload.input.granules[0].files.map(async (file) => {
         let body;
         if (file.type === 'metadata') {
@@ -149,7 +150,13 @@ describe('when moveGranulesCollection is called', () => {
       const { $metadata } = await lambda().send(new InvokeCommand({
         FunctionName: `${stackName}-MoveGranuleCollections`,
         InvocationType: 'RequestResponse',
-        Payload: JSON.stringify(payload),
+        Payload: JSON.stringify({
+          cma: {
+            event: {
+              payload: payload.input,
+            }
+          }
+        }),
       }));
       if ($metadata.httpStatusCode >= 400) {
         console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
