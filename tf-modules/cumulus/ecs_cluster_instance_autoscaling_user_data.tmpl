@@ -1,30 +1,14 @@
-Resources:
-  LaunchConfiguration:
-    Type: AWS::AutoScaling::LaunchConfiguration
-    Properties:
-      SecurityGroups:
-%{ for s in security_group_ids ~}
-        - ${s}
-%{ endfor ~}
-      ImageId: ${image_id}
-      InstanceType: ${instance_type}
-      IamInstanceProfile: ${instance_profile}
-      BlockDeviceMappings:
-        - DeviceName: "/dev/xvdcz"
-          Ebs:
-            DeleteOnTermination: true
-            Encrypted: true
-            VolumeSize: ${docker_volume_size}
-%{ if key_name != null ~}
-      KeyName: ${key_name}
-%{ endif ~}
-      UserData:
-        Fn::Base64: |
           Content-Type: multipart/mixed; boundary="==BOUNDARY=="
           MIME-Version: 1.0
 
           --==BOUNDARY==
           Content-Type: text/cloud-boothook; charset="us-ascii"
+
+          #!/bin/bash
+
+          if ! rpm -q lvm2 >/dev/null 2>&1; then
+            yum install -y lvm2
+          fi
 
           vgcreate docker /dev/xvdcz
 
@@ -47,8 +31,10 @@ Resources:
           --==BOUNDARY==
           Content-Type: text/x-shellscript; charset="us-ascii"
 
+          #!/bin/bash
 %{ if efs_dns_name != null && efs_mount_point != null ~}
-          AZ=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone)
+          TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+          AZ=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
 
           if ! rpm -q nfs-utils >/dev/null 2>&1; then
             yum install -y nfs-utils
@@ -74,17 +60,15 @@ Resources:
 %{ endif ~}
           if ! which aws >/dev/null 2>&1; then
             yum install -y jq unzip
-            curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
-            unzip awscli-bundle.zip
-            ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
-            rm -rf ./awscli-bundle awscli-bundle.zip
+
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+            rm -rf ./aws awscliv2.zip
           fi
 
           aws s3 cp s3://${task_reaper_object.bucket}/${task_reaper_object.key} /usr/local/bin/task-reaper.sh
           chmod +x /usr/local/bin/task-reaper.sh
-          echo "$(echo '0,30 * * * * /usr/sbin/logrotate -v /etc/logrotate.conf' ; crontab -l)" | crontab -
-          sed -i 's/size.*/size 100M\n    dateformat -%Y%m%d%s\n    copytruncate/' /etc/logrotate.d/awslogs
-          sed -i 's/rotate 4/rotate 2/' /etc/logrotate.d/awslogs
           cat <<'EOF' >> /etc/cron.d/task-reaper
           PATH=/bin:/usr/local/bin
           AWS_DEFAULT_REGION=${region}
@@ -93,25 +77,3 @@ Resources:
           EOF
 
           --==BOUNDARY==--
-
-  AutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    UpdatePolicy:
-      AutoScalingRollingUpdate:
-        MinInstancesInService: ${min_size}
-    Properties:
-      VPCZoneIdentifier:
-%{ for s in subnet_ids ~}
-        - ${s}
-%{ endfor ~}
-      LaunchConfigurationName: !Ref LaunchConfiguration
-      MinSize: ${min_size}
-      DesiredCapacity: ${desired_capacity}
-      MaxSize: ${max_size}
-      Tags:
-        - Key: Name
-          Value: ${cluster_name}
-          PropagateAtLaunch: true
-Outputs:
-  AutoscalingGroupName:
-    Value: !Ref AutoScalingGroup
