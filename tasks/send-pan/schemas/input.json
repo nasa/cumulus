@@ -2,7 +2,7 @@
   "title": "SendPanInput",
   "description": "Describes the input expected by the send-pan task",
   "type": "object",
-  "required": ["pdr"],
+  "required": ["pdr", "running", "completed", "failed"],
   "properties": {
     "pdr": {
       "description": "Product Delivery Record",
@@ -11,6 +11,32 @@
       "properties": {
         "name": { "type": "string" },
         "path": { "type": "string" }
+      }
+    }
+  },
+  "running": {
+    "description": "List of execution arns which are queued or running",
+    "type": "array",
+    "items": {
+      "type": "string"
+    }
+  },
+  "completed": {
+    "description": "List of completed execution arns",
+    "type": "array",
+    "items": {
+      "type": "string"
+    }
+  },
+  "failed": {
+    "description": "List of failed execution arns with reason",
+    "type": "array",
+    "items": {
+      "type": "object",
+      "required": ["arn", "reason"],
+      "properties": {
+        "arn": { "type": "string" },
+        "reason": { "type": "string" }
       }
     }
   }

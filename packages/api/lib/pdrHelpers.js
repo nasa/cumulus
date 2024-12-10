@@ -3,15 +3,16 @@
 const pvl = require('@cumulus/pvl');
 
 /**
- * Generate PAN message
+ * Generate Short PAN message
  *
+ * @param {string} disposition - disposition message
  * @returns {string} the PAN message
  */
-function generatePAN() {
+function generateShortPAN(disposition) {
   return pvl.jsToPVL(
     new pvl.models.PVLRoot()
       .add('MESSAGE_TYPE', new pvl.models.PVLTextString('SHORTPAN'))
-      .add('DISPOSITION', new pvl.models.PVLTextString('SUCCESSFUL'))
+      .add('DISPOSITION', new pvl.models.PVLTextString(disposition))
       .add('TIME_STAMP', new pvl.models.PVLDateTime(new Date()))
   );
 }
@@ -31,6 +32,6 @@ function generatePDRD(err) {
 }
 
 module.exports = {
-  generatePAN,
+  generateShortPAN,
   generatePDRD,
 };
