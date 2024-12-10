@@ -4,7 +4,8 @@ set -e
 
 echo "$(date) Starting task-reaper.sh"
 
-INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
 
 CLUSTER=$(grep 'ECS_CLUSTER=' /etc/ecs/ecs.config | cut -d '=' -f 2)
 
@@ -14,11 +15,13 @@ CONTAINER_INSTANCE_ARN=$(
     --filter "ec2InstanceId == $INSTANCE_ID" |\
   jq -r '.containerInstanceArns[0]'
 )
+echo "containerInstanceArn ${CONTAINER_INSTANCE_ARN}"
+
 CONTAINER_INSTANCE_STATUS=$(
   aws ecs describe-container-instances \
     --cluster "$CLUSTER" \
     --container-instances "$CONTAINER_INSTANCE_ARN" |\
-  jq -r .containerInstances[0].status
+  jq -r '.containerInstances[0].status'
 )
 
 if [ "$CONTAINER_INSTANCE_STATUS" = 'ACTIVE' ]; then
