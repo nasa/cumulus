@@ -69,7 +69,8 @@ async function setupPGData(granules, targetCollection, knex) {
     knex,
     await Promise.all(granules.map(async (g) => (
       await translateApiGranuleToPostgresGranule({ dynamoRecord: g, knexOrTransaction: knex })
-    )))
+    ))),
+    ['cumulus_id', 'granule_id']
   );
   return pgRecords;
 }
@@ -168,7 +169,6 @@ test('Should move files to final location and update pg data', async (t) => {
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const pgRecords = await setupPGData(newPayload.input.granules, collection, t.context.knex);
-
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
