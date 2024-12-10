@@ -15,7 +15,7 @@ async function postRecoverCumulusMessages(req, res) {
     bucket,
     path,
     batchSize = 1000,
-    concurrency = 10,
+    concurrency = 30,
     maxDbPool = 50,
   } = req.body ?? {}; // TODO ZOD!  KNEEL BEFORE ZOD
   const asyncOperation = await asyncOperations.startAsyncOperation({
