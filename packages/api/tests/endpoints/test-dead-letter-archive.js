@@ -88,7 +88,7 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
   t.deepEqual(payload, {
     batchSize: 1000,
     bucket: archiveBucket,
-    concurrency: 10,
+    concurrency: 30,
     path: archivePath,
   });
 });
@@ -117,7 +117,7 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
   t.deepEqual(payload, {
     batchSize: 1000,
     bucket: undefined,
-    concurrency: 10,
+    concurrency: 30,
     path: undefined,
   });
 });
@@ -152,7 +152,7 @@ test.serial('postRecoverCumulusMessages() uses correct caller lambda function na
   t.deepEqual(payload, {
     batchSize: 1000,
     bucket: undefined,
-    concurrency: 10,
+    concurrency: 30,
     path: undefined,
   });
 });
