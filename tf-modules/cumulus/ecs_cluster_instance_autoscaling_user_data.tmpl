@@ -1,25 +1,3 @@
-Resources:
-  LaunchConfiguration:
-    Type: AWS::AutoScaling::LaunchConfiguration
-    Properties:
-      SecurityGroups:
-%{ for s in security_group_ids ~}
-        - ${s}
-%{ endfor ~}
-      ImageId: ${image_id}
-      InstanceType: ${instance_type}
-      IamInstanceProfile: ${instance_profile}
-      BlockDeviceMappings:
-        - DeviceName: "/dev/xvdcz"
-          Ebs:
-            DeleteOnTermination: true
-            Encrypted: true
-            VolumeSize: ${docker_volume_size}
-%{ if key_name != null ~}
-      KeyName: ${key_name}
-%{ endif ~}
-      UserData:
-        Fn::Base64: |
           Content-Type: multipart/mixed; boundary="==BOUNDARY=="
           MIME-Version: 1.0
 
@@ -99,25 +77,3 @@ Resources:
           EOF
 
           --==BOUNDARY==--
-
-  AutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    UpdatePolicy:
-      AutoScalingRollingUpdate:
-        MinInstancesInService: ${min_size}
-    Properties:
-      VPCZoneIdentifier:
-%{ for s in subnet_ids ~}
-        - ${s}
-%{ endfor ~}
-      LaunchConfigurationName: !Ref LaunchConfiguration
-      MinSize: ${min_size}
-      DesiredCapacity: ${desired_capacity}
-      MaxSize: ${max_size}
-      Tags:
-        - Key: Name
-          Value: ${cluster_name}
-          PropagateAtLaunch: true
-Outputs:
-  AutoscalingGroupName:
-    Value: !Ref AutoScalingGroup
