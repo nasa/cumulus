@@ -262,7 +262,7 @@ resource "aws_launch_template" "ecs_cluster_instance" {
     }
   }
 
-  user_data = filebase64(templatefile(
+  user_data = base64encode(templatefile(
     "${path.module}/ecs_cluster_instance_autoscaling_user_data.tmpl",
     local.ecs_instance_autoscaling_user_data_config
     ))
@@ -289,7 +289,7 @@ resource "aws_autoscaling_group" "ecs_cluster_instance" {
 
 resource "aws_autoscaling_lifecycle_hook" "ecs_instance_termination_hook" {
   name                   = "${aws_ecs_cluster.default.name}-ecs-termination-hook"
-  autoscaling_group_name = aws_autoscaling_group.ecs_cluster_instance.outputs.AutoscalingGroupName
+  autoscaling_group_name = aws_autoscaling_group.ecs_cluster_instance.name
   default_result         = "CONTINUE"
   heartbeat_timeout      = 150
   lifecycle_transition   = "autoscaling:EC2_INSTANCE_TERMINATING"
@@ -298,8 +298,8 @@ resource "aws_autoscaling_lifecycle_hook" "ecs_instance_termination_hook" {
 # Scale in config
 
 resource "aws_autoscaling_policy" "ecs_instance_autoscaling_group_scale_in" {
-  name                    = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.name}-scale-in"
-  autoscaling_group_name  = aws_cloudformation_stack.ecs_instance_autoscaling_group.name
+  name                    = "${aws_autoscaling_group.ecs_cluster_instance.name}-scale-in"
+  autoscaling_group_name  = aws_autoscaling_group.ecs_cluster_instance.name
   adjustment_type         = "PercentChangeInCapacity"
   metric_aggregation_type = "Average"
   policy_type             = "StepScaling"
@@ -311,7 +311,7 @@ resource "aws_autoscaling_policy" "ecs_instance_autoscaling_group_scale_in" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale_in_alarm" {
-  alarm_name          = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.name}-cpu-scale-in"
+  alarm_name          = "${aws_autoscaling_group.ecs_cluster_instance.name}-cpu-scale-in"
   comparison_operator = "LessThanThreshold"
   alarm_actions       = [aws_autoscaling_policy.ecs_instance_autoscaling_group_scale_in.arn]
   datapoints_to_alarm = 1
@@ -329,8 +329,8 @@ resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale
 # Scale out config
 
 resource "aws_autoscaling_policy" "ecs_instance_autoscaling_group_scale_out" {
-  name                    = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.name}-scale-out"
-  autoscaling_group_name  = aws_cloudformation_stack.ecs_instance_autoscaling_group.name
+  name                    = "${aws_autoscaling_group.ecs_cluster_instance.name}-scale-out"
+  autoscaling_group_name  = aws_autoscaling_group.ecs_cluster_instance.name
   adjustment_type         = "PercentChangeInCapacity"
   metric_aggregation_type = "Average"
   policy_type             = "StepScaling"
@@ -343,7 +343,7 @@ resource "aws_autoscaling_policy" "ecs_instance_autoscaling_group_scale_out" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale_out_alarm" {
-  alarm_name          = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.name}-cpu-scale-out"
+  alarm_name          = "${aws_autoscaling_group.ecs_cluster_instance.name}-cpu-scale-out"
   comparison_operator = "GreaterThanThreshold"
   alarm_actions       = [aws_autoscaling_policy.ecs_instance_autoscaling_group_scale_out.arn]
   datapoints_to_alarm = 1
