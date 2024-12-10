@@ -23,7 +23,7 @@
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "test": "../../node_modules/.bin/ava",
-    "test:ci": "../../scripts/run_package_ci_unit.sh",
+    "test:ci": "../../scripts/run_package_ci_unit.sh && ./performance_tests.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
@@ -35,7 +35,8 @@
       "!tests/endpoints/utils.js",
       "!tests/es/helpers/**/*.js",
       "!tests/endpoints/granules/helpers.js",
-      "!tests/helpers/**/*.js"
+      "!tests/helpers/**/*.js",
+      "!tests/performance_tests/**/*.js"
     ],
     "verbose": true,
     "timeout": "20m",
