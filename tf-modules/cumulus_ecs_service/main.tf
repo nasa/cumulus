@@ -41,6 +41,7 @@ resource "aws_ecs_task_definition" "default" {
         options = {
           awslogs-group  = aws_cloudwatch_log_group.default.name
           awslogs-region = data.aws_region.current.name
+          awslogs-stream-prefix = var.name
         }
       }
     }
