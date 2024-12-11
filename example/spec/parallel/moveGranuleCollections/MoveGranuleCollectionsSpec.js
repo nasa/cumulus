@@ -154,8 +154,8 @@ describe('when moveGranulesCollection is called', () => {
           cma: {
             event: {
               payload: payload.input,
-            }
-          }
+            },
+          },
         }),
       }));
       if ($metadata.httpStatusCode >= 400) {
