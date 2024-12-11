@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
@@ -8,18 +10,87 @@ const set = require('lodash/set');
 const moment = require('moment');
 const path = require('path');
 
+const {
+  getGranulesByApiPropertiesQuery,
+  QuerySearchClient,
+  getKnexClient,
+  FilePgModel,
+} = require('@cumulus/db');
 const { s3 } = require('@cumulus/aws-client/services');
-const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const Logger = require('@cumulus/logger');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { deconstructCollectionId, constructCollectionId } = require('@cumulus/message/Collections');
+const filePgModel = new FilePgModel();
 
 const {
-  convertToESCollectionSearchParams,
-  convertToESGranuleSearchParamsWithCreatedAtRange,
+  convertToDBGranuleSearchParams,
   convertToOrcaGranuleSearchParams,
   initialReportHeader,
 } = require('../../lib/reconciliationReport');
 const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
+
+// Typedefs
+/**
+ * @typedef {Object} ConflictFile
+ * @property {string} fileName
+ * @property {string} bucket
+ * @property {string} key
+ * @property {string} [orcaBucket]
+ * @property {string} reason
+ */
+
+/**
+ * @typedef { import('@cumulus/db').PostgresGranuleRecord } PostgresGranuleRecord
+ * @typedef {import('../../lib/types').EnhancedNormalizedRecReportParams }
+ * EnhancedNormalizedRecReportParams
+ */
+
+/**
+ * @typedef {Object} GranuleReport
+ * @property {boolean} ok
+ * @property {number} okFilesCount
+ * @property {number} cumulusFilesCount
+ * @property {number} orcaFilesCount
+ * @property {string} granuleId
+ * @property {string} collectionId
+ * @property {string} provider
+ * @property {number} createdAt
+ * @property {number} updatedAt
+ * @property {ConflictFile[]} conflictFiles
+ */
+/**
+ * @typedef {Object<string,
+ * { orca: { excludedFileExtensions: string[] } } | undefined>} CollectionConfig
+ */
+
+/** @typedef {import('@cumulus/db').PostgresFileRecord} PostgresFileRecord */
+
+/**
+   * @typedef {Object} OrcaReportGranuleObject
+   * @property {string} collectionId - The ID of the collection
+   * @property {string} collectionName - The name of the collection associated with the granule
+   * @property {string} collectionVersion - The version of
+   * the collection associated with the granule
+   * @property {string} providerName - The name of the provider associated with the granule
+   * @property {PostgresFileRecord[]} files - The files associated with the granule
+   */
+/**
+* @typedef {import('knex').Knex} Knex
+*/
+/**
+ * @typedef {Object} GranulesReport
+ * @property {number} okCount - The count of granules that are OK.
+ * @property {number} cumulusCount - The count of granules in Cumulus.
+ * @property {number} orcaCount - The count of granules in ORCA.
+ * @property {number} okFilesCount - The count of files that are OK.
+ * @property {number} cumulusFilesCount - The count of files in Cumulus.
+ * @property {number} orcaFilesCount - The count of files in ORCA.
+ * @property {number} conflictFilesCount - The count of files with conflicts.
+ * @property {Array<Object>} withConflicts - The list of granules with conflicts.
+ * @property {Array<Object>} onlyInCumulus - The list of granules only in Cumulus.
+ * @property {Array<Object>} onlyInOrca - The list of granules only in ORCA.
+ */
+
+/** @typedef {OrcaReportGranuleObject & PostgresGranuleRecord } CumulusGranule */
 
 const log = new Logger({ sender: '@api/lambdas/orca-backup-reconciliation-report' });
 
@@ -29,29 +100,43 @@ const fileConflictTypes = {
   onlyInOrca: 'onlyInOrca',
 };
 
-const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt'];
-
 /**
  * Fetch orca configuration for all or specified collections
  *
- * @param {Object} recReportParams - input report params
- * @param {Object} recReportParams.collectionIds - array of collectionIds
- * @returns {Promise<Array>} - list of { collectionId, orca configuration }
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - input report params
+ * @returns {Promise<CollectionConfig>} - list of { collectionId, orca configuration }
  */
 async function fetchCollectionsConfig(recReportParams) {
+  const knex = await getKnexClient();
+  /** @type {CollectionConfig} */
   const collectionsConfig = {};
-  const searchParams = convertToESCollectionSearchParams(pick(recReportParams, ['collectionIds']));
-  const esCollectionsIterator = new ESSearchQueue(
-    { ...searchParams, sort_key: ['name', 'version'] }, 'collection', process.env.ES_INDEX
-  );
-  let nextEsItem = await esCollectionsIterator.shift();
-  while (nextEsItem) {
-    const collectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
-    const excludedFileExtensions = get(nextEsItem, 'meta.orca.excludedFileExtensions');
-    if (excludedFileExtensions) set(collectionsConfig, `${collectionId}.orca.excludedFileExtensions`, excludedFileExtensions);
-    nextEsItem = await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+  const query = knex('collections')
+    .select('name', 'version', 'meta');
+  if (recReportParams.collectionIds) { //TODO typing
+    const collectionObjects = recReportParams.collectionIds.map((collectionId) =>
+      deconstructCollectionId(collectionId));
+    query.where((builder) => {
+      collectionObjects.forEach(({ name, version }) => {
+        builder.orWhere((qb) => {
+          qb.where('name', name).andWhere('version', version);
+        });
+      });
+    });
   }
 
+  const pgCollectionSearchClient = new QuerySearchClient(query, 100);
+
+  /** @type {{ name: string, version: string, meta: Object }} */
+  // @ts-ignore TODO: Ticket CUMULUS-3887 filed to resolve
+  let nextPgItem = await pgCollectionSearchClient.shift();
+  while (nextPgItem) {
+    const collectionId = constructCollectionId(nextPgItem.name, nextPgItem.version);
+    const excludedFileExtensions = get(nextPgItem, 'meta.orca.excludedFileExtensions');
+    if (excludedFileExtensions) set(collectionsConfig, `${collectionId}.orca.excludedFileExtensions`, excludedFileExtensions);
+    /** @type {{ name: string, version: string, meta: Object }} */
+    // @ts-ignore TODO: Ticket CUMULUS-3887 filed to resolve
+    nextPgItem = await pgCollectionSearchClient.shift(); // eslint-disable-line no-await-in-loop
+  }
   return collectionsConfig;
 }
 
@@ -72,18 +157,28 @@ function shouldFileBeExcludedFromOrca(collectionsConfig, collectionId, fileName)
  * compare cumulus granule with its orcaGranule if any, and generate report
  *
  * @param {Object} params
- * @param {Object} params.collectionsConfig - collections configuration
- * @param {Object} params.cumulusGranule - cumulus granule
+ * @param {CollectionConfig} params.collectionsConfig - collections configuration
+ * @param {CumulusGranule} params.cumulusGranule - cumulus granule
  * @param {Object} params.orcaGranule - orca granule
- * @returns {Object} - discrepency report of the granule
+ * @returns {GranuleReport} - discrepancy report of the granule
  */
 function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule }) {
+  /** @type {GranuleReport} */
   const granuleReport = {
     ok: false,
     okFilesCount: 0,
     cumulusFilesCount: 0,
     orcaFilesCount: 0,
-    ...pick(cumulusGranule, granuleFields),
+    ...{
+      granuleId: cumulusGranule.granule_id,
+      collectionId: constructCollectionId(
+        cumulusGranule.collectionName,
+        cumulusGranule.collectionVersion
+      ),
+      provider: cumulusGranule.providerName,
+      createdAt: cumulusGranule.created_at.getTime(),
+      updatedAt: cumulusGranule.updated_at.getTime(),
+    },
     conflictFiles: [],
   };
 
@@ -100,6 +195,11 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
   // if no granule file conflicts, set granuleReport.ok to true
 
   // reducer, key: fileName, value: file object with selected fields
+  /**
+   * @param {Object<string, {bucket: string, key: string} >} accumulator
+   * @param {PostgresFileRecord} currentValue
+   * @returns {Object<string, {bucket: string, key: string} >}
+   */
   const cumulusFileReducer = (accumulator, currentValue) => {
     const fileName = path.basename(currentValue.key);
     return ({
@@ -115,7 +215,9 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
     });
   };
 
-  const cumulusFiles = get(cumulusGranule, 'files', []).reduce(cumulusFileReducer, {});
+  const cumulusFilesArray = /** @type {PostgresFileRecord[]} */ (get(cumulusGranule, 'files', []));
+  const cumulusFiles = cumulusFilesArray.reduce(cumulusFileReducer, {});
+
   const orcaFiles = get(orcaGranule, 'files', []).reduce(orcaFileReducer, {});
   const allFileNames = Object.keys({ ...cumulusFiles, ...orcaFiles });
   allFileNames.forEach((fileName) => {
@@ -123,9 +225,19 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
       granuleReport.cumulusFilesCount += 1;
       granuleReport.orcaFilesCount += 1;
 
-      if (!shouldFileBeExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
+      if (
+        !shouldFileBeExcludedFromOrca(
+          collectionsConfig,
+          constructCollectionId(
+            cumulusGranule.collectionName,
+            cumulusGranule.collectionVersion
+          ),
+          fileName
+        )
+      ) {
         granuleReport.okFilesCount += 1;
       } else {
+        /** @type {ConflictFile} */
         const conflictFile = {
           fileName,
           ...cumulusFiles[fileName],
@@ -137,7 +249,16 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
     } else if (cumulusFiles[fileName] && orcaFiles[fileName] === undefined) {
       granuleReport.cumulusFilesCount += 1;
 
-      if (shouldFileBeExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
+      if (
+        shouldFileBeExcludedFromOrca(
+          collectionsConfig,
+          constructCollectionId(
+            cumulusGranule.collectionName,
+            cumulusGranule.collectionVersion
+          ),
+          fileName
+        )
+      ) {
         granuleReport.okFilesCount += 1;
       } else {
         const conflictFile = {
@@ -184,10 +305,39 @@ function constructOrcaOnlyGranuleForReport(orcaGranule) {
   return granule;
 }
 
-function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule, orcaGranule }) {
+/**
+ * Adds a granule to the reconciliation report object
+ *
+ * @param {Object} params - The parameters for the function.
+ * @param {GranulesReport} params.granulesReport - The report object to update.
+ * @param {CollectionConfig} params.collectionsConfig - The collections configuration.
+ * @param {CumulusGranule} params.cumulusGranule - The Cumulus granule to add to the report.
+ * @param {Object} [params.orcaGranule] - The ORCA granule to compare against (optional).
+ * @param {Knex} params.knex - The Knex database connection.
+ * @returns {Promise<Object>} The updated granules report.
+ * @throws {Error} If cumulusGranule is not defined.
+ */
+async function addGranuleToReport({
+  granulesReport,
+  collectionsConfig,
+  cumulusGranule,
+  orcaGranule,
+  knex,
+}) {
+  if (!cumulusGranule) {
+    throw new Error('cumulusGranule must be defined to add to the orca report');
+  }
+  const modifiedCumulusGranule = { ...cumulusGranule };
+
+  modifiedCumulusGranule.files = await filePgModel.search(knex, {
+    granule_cumulus_id: cumulusGranule.cumulus_id,
+  });
+
   /* eslint-disable no-param-reassign */
   const granReport = getReportForOneGranule({
-    collectionsConfig, cumulusGranule, orcaGranule,
+    collectionsConfig,
+    cumulusGranule: modifiedCumulusGranule,
+    orcaGranule,
   });
 
   if (granReport.ok) {
@@ -208,7 +358,7 @@ function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule,
 /**
  * Compare the granule holdings in Cumulus with ORCA
  *
- * @param {Object} recReportParams - lambda's input filtering parameters
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - input report params
  * @returns {Promise<Object>} an object with the okCount, onlyInCumulus, onlyInOrca
  * and withConfilcts
  */
@@ -221,6 +371,7 @@ async function orcaReconciliationReportForGranules(recReportParams) {
   //   Report granules only in cumulus
   //   Report granules only in orca
   log.info(`orcaReconciliationReportForGranules ${JSON.stringify(recReportParams)}`);
+  /** @type {GranulesReport} */
   const granulesReport = {
     okCount: 0,
     cumulusCount: 0,
@@ -235,17 +386,23 @@ async function orcaReconciliationReportForGranules(recReportParams) {
   };
 
   const collectionsConfig = await fetchCollectionsConfig(recReportParams);
-  log.debug(`fetchESCollections returned ${JSON.stringify(collectionsConfig)}`);
+  log.debug(`fetchCollections returned ${JSON.stringify(collectionsConfig)}`);
 
-  const esSearchParams = convertToESGranuleSearchParamsWithCreatedAtRange(recReportParams);
-  log.debug(`Create ES granule iterator with ${JSON.stringify(esSearchParams)}`);
-  const esGranulesIterator = new ESSearchQueue(
-    {
-      ...esSearchParams,
-      sort_key: ['granuleId', 'collectionId'],
-    },
-    'granule',
-    process.env.ES_INDEX
+  const knex = await getKnexClient();
+  const searchParams = convertToDBGranuleSearchParams(recReportParams);
+
+  const granulesSearchQuery = getGranulesByApiPropertiesQuery({
+    knex,
+    searchParams,
+    sortByFields: ['granule_id', 'collectionName', 'collectionVersion'],
+    temporalBoundByCreatedAt: true,
+  });
+
+  log.debug(`Create PG granule iterator with ${granulesSearchQuery}`);
+
+  const pgGranulesIterator = new QuerySearchClient(
+    granulesSearchQuery,
+    100 // arbitrary limit on how items are fetched at once
   );
 
   const orcaSearchParams = convertToOrcaGranuleSearchParams(recReportParams);
@@ -253,22 +410,30 @@ async function orcaReconciliationReportForGranules(recReportParams) {
   const orcaGranulesIterator = new ORCASearchCatalogQueue(orcaSearchParams);
 
   try {
+    /** @type {[CumulusGranule, any]} */
+    // @ts-ignore TODO: Ticket CUMULUS-3887 filed to resolve
     let [nextCumulusItem, nextOrcaItem] = await Promise.all(
-      [esGranulesIterator.peek(), orcaGranulesIterator.peek()]
+      [
+        /** @type CumulusGranule */
+        pgGranulesIterator.peek(),
+        orcaGranulesIterator.peek(),
+      ]
     );
 
     while (nextCumulusItem && nextOrcaItem) {
-      const nextCumulusId = `${nextCumulusItem.granuleId}:${nextCumulusItem.collectionId}`;
+      const nextCumulusId = `${nextCumulusItem.granule_id}:${constructCollectionId(nextCumulusItem.collectionName, nextCumulusItem.collectionVersion)}`;
       const nextOrcaId = `${nextOrcaItem.id}:${nextOrcaItem.collectionId}`;
       if (nextCumulusId < nextOrcaId) {
         // Found an item that is only in Cumulus and not in ORCA.
-        addGranuleToReport({
+        // eslint-disable-next-line no-await-in-loop
+        await addGranuleToReport({
           granulesReport,
           collectionsConfig,
           cumulusGranule: nextCumulusItem,
+          knex,
         });
         granulesReport.cumulusCount += 1;
-        await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+        await pgGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       } else if (nextCumulusId > nextOrcaId) {
         // Found an item that is only in ORCA and not in Cumulus
         granulesReport.onlyInOrca.push(constructOrcaOnlyGranuleForReport(nextOrcaItem));
@@ -277,29 +442,36 @@ async function orcaReconciliationReportForGranules(recReportParams) {
       } else {
         // Found an item that is in both ORCA and Cumulus database
         // Check if the granule (files) should be in orca, and act accordingly
-        addGranuleToReport({
+        // eslint-disable-next-line no-await-in-loop
+        await addGranuleToReport({
           granulesReport,
           collectionsConfig,
           cumulusGranule: nextCumulusItem,
           orcaGranule: nextOrcaItem,
+          knex,
         });
         granulesReport.cumulusCount += 1;
         granulesReport.orcaCount += 1;
-        await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+        await pgGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
         await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       }
-
-      [nextCumulusItem, nextOrcaItem] = await Promise.all([esGranulesIterator.peek(), orcaGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
+      /** @type {[CumulusGranule, any]} */
+      // @ts-ignore TODO: Ticket CUMULUS-3887 filed to resolve
+      [nextCumulusItem, nextOrcaItem] = await Promise.all([pgGranulesIterator.peek(), orcaGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
     }
 
     // Add any remaining cumulus items to the report
-    while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
-      const cumulusItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+    while (await pgGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+      /** @type {CumulusGranule} */
+      // @ts-ignore TODO: Ticket CUMULUS-3887 filed to resolve
+      const cumulusItem = await pgGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       // Found an item that is only in Cumulus database and not in ORCA.
-      addGranuleToReport({
+      // eslint-disable-next-line no-await-in-loop
+      await addGranuleToReport({
         granulesReport,
         collectionsConfig,
         cumulusGranule: cumulusItem,
+        knex,
       });
       granulesReport.cumulusCount += 1;
     }
@@ -327,18 +499,8 @@ async function orcaReconciliationReportForGranules(recReportParams) {
 /**
  * Create an ORCA Backup Reconciliation report and save it to S3
  *
- * @param {Object} recReportParams - params
- * @param {Object} recReportParams.collectionIds - array of collectionIds
- * @param {Object} recReportParams.providers - array of providers
- * @param {Object} recReportParams.granuleIds - array of granuleIds
- * @param {Object} recReportParams.reportType - the report type
- * @param {moment} recReportParams.createStartTime - when the report creation was begun
- * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
- * @param {string} recReportParams.reportKey - the s3 report key
- * @param {string} recReportParams.stackName - the name of the CUMULUS stack
- * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
- * @param {string} recReportParams.systemBucket - the name of the CUMULUS system bucket
- * @returns {Promise<null>} a Promise that resolves when the report has been
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - params
+ * @returns {Promise<void>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
 async function createOrcaBackupReconciliationReport(recReportParams) {
@@ -399,7 +561,7 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
   report.status = 'SUCCESS';
 
   // Write the full report to S3
-  return s3().putObject({
+  await s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report, undefined, 2),

@@ -43,7 +43,6 @@ class QuerySearchClient<RecordType extends BaseRecord> {
    *
    * This does not remove the object from the queue.
    *
-   * @returns {Promise<RecordType>} - record from PostgreSQL table
    */
   async peek() {
     if (this.records.length === 0) await this.fetchRecords();
@@ -53,7 +52,6 @@ class QuerySearchClient<RecordType extends BaseRecord> {
   /**
    * Remove and return the next item in the results
    *
-   * @returns {Promise<RecordType>} - record from PostgreSQL table
    */
   async shift() {
     if (this.records.length === 0) await this.fetchRecords();

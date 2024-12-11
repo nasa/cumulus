@@ -243,9 +243,10 @@ export const convertQueryStringToDbQueryParameters = (
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
-  dbQueryParameters.limit = Number.parseInt(limit ?? '10', 10);
-  dbQueryParameters.offset = (dbQueryParameters.page - 1) * dbQueryParameters.limit;
-
+  if (limit !== null) {
+    dbQueryParameters.limit = Number.parseInt(limit ?? '10', 10);
+    dbQueryParameters.offset = (dbQueryParameters.page - 1) * dbQueryParameters.limit;
+  }
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
@@ -262,7 +263,6 @@ export const convertQueryStringToDbQueryParameters = (
   // for each search strategy, get all parameters and convert them to db parameters
   Object.keys(regexes).forEach((k: string) => {
     const matchedFields = fieldsList.filter((f) => f.name.match(regexes[k]));
-
     if (matchedFields && matchedFields.length > 0 && convert[k]) {
       const queryParams = convert[k](type, matchedFields, regexes[k]);
       Object.assign(dbQueryParameters, queryParams);

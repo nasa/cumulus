@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const noop = require('lodash/noop');
@@ -16,10 +18,13 @@ const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
 const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
 
 /**
+ * @typedef {import('../../lib/types').EnhancedNormalizedRecReportParams}
+ * EnhancedNormalizedRecReportParams
+ */
+
+/**
  * Builds a CSV file of all granules in the Cumulus DB
- * @param {Object} recReportParams
- * @param {string} recReportParams.reportKey - s3 key to store report
- * @param {string} recReportParams.systemBucket - bucket to store report.
+ * @param {EnhancedNormalizedRecReportParams} recReportParams
  * @returns {Promise<null>} - promise of a report written to s3.
  */
 async function createGranuleInventoryReport(recReportParams) {
@@ -42,11 +47,11 @@ async function createGranuleInventoryReport(recReportParams) {
   const { reportKey, systemBucket } = recReportParams;
   const searchParams = convertToDBGranuleSearchParams(recReportParams);
 
-  const granulesSearchQuery = getGranulesByApiPropertiesQuery(
-    recReportParams.knex,
+  const granulesSearchQuery = getGranulesByApiPropertiesQuery({
+    knex: recReportParams.knex,
     searchParams,
-    ['collectionName', 'collectionVersion', 'granule_id']
-  );
+    sortByFields: ['collectionName', 'collectionVersion', 'granule_id'],
+  });
   const pgGranulesSearchClient = new QuerySearchClient(
     granulesSearchQuery,
     100 // arbitrary limit on how items are fetched at once
