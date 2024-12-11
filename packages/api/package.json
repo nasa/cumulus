@@ -36,7 +36,7 @@
       "!tests/es/helpers/**/*.js",
       "!tests/endpoints/granules/helpers.js",
       "!tests/helpers/**/*.js",
-      "!tests/performance_tests/**/*.js"
+      "!tests/performance/**/*.js"
     ],
     "verbose": true,
     "timeout": "20m",
