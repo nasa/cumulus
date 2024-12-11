@@ -1,23 +1,56 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
+const { z } = require('zod');
+const isError = require('lodash/isError');
+
 const asyncOperations = require('@cumulus/async-operations');
 
-const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
+const { zodParser } = require('../src/zod-utils');
 
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { getFunctionNameFromRequestContext } = require('../lib/request');
+const { returnCustomValidationErrors } = require('../lib/endpoints');
+
+const zodStringNumberUnion = z.union([
+  z.string().transform((val) => {
+    const num = Number(val);
+    if (Number.isNaN(num)) {
+      throw new TypeError('Invalid number');
+    }
+    return num;
+  }),
+  z.number(),
+]).pipe(z.number().int().positive().optional());
+
+const postRecoverCumulusMessagesSchema = z.object({
+  bucket: z.string().optional(),
+  path: z.string().optional(),
+  batchSize: zodStringNumberUnion.default(1000),
+  concurrency: zodStringNumberUnion.default(30),
+  maxDbPool: zodStringNumberUnion.default(60),
+}).passthrough();
+
+const parsePostRecoverCumulusMessagesPayload = zodParser('Post Recover Cumulus Message Payload', postRecoverCumulusMessagesSchema);
 
 async function postRecoverCumulusMessages(req, res) {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
 
+  const messageBody = parsePostRecoverCumulusMessagesPayload(req.body ?? {});
+  if (isError(messageBody)) {
+    return returnCustomValidationErrors(res, messageBody);
+  }
   const {
     bucket,
     path,
-    batchSize = 1000,
-    concurrency = 30,
-    maxDbPool = 50,
-  } = req.body ?? {}; // TODO ZOD!  KNEEL BEFORE ZOD
+    batchSize,
+    concurrency,
+    maxDbPool,
+  } = messageBody;
+
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
     callerLambdaName: getFunctionNameFromRequestContext(req),
