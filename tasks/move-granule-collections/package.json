@@ -28,7 +28,6 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py",
     "webpack": "../../node_modules/.bin/webpack"
   },

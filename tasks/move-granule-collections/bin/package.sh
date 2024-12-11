@@ -2,15 +2,15 @@
 
 set -e
 
-rm -rf webpack
+rm -rf dist/webpack
 
 npm run webpack
 
-cp -R schemas webpack
+cp -R schemas dist/webpack
 
 (
   set -e
 
-  cd webpack
-  rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js schemas
+  cd dist/webpack
+  rm -f lambda.zip && node ../../../../bin/zip.js lambda.zip index.js schemas
 )

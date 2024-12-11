@@ -29,7 +29,7 @@ const {
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
 
-const { moveGranules } = require('..');
+const { moveGranules } = require('../dist/src/');
 
 async function uploadFiles(files) {
   await Promise.all(files.map((file) => {

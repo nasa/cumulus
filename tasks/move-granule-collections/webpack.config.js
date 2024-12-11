@@ -4,12 +4,12 @@ const root = path.resolve(__dirname);
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
-  entry: './index.js',
+  entry: './dist/src/index.js',
   output: {
     chunkFormat: false,
     libraryTarget: 'commonjs2',
     filename: 'index.js',
-    path: path.resolve(__dirname, 'webpack'),
+    path: path.resolve(__dirname, 'dist', 'webpack'),
     devtoolModuleFilenameTemplate: (info) => {
       const relativePath = path.relative(root, info.absoluteResourcePath)
       return `webpack://${relativePath}`;
@@ -35,22 +35,7 @@ module.exports = {
       tedious: 'tedious'
     }
   ],
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              cacheDirectory: true
-            },
-          },
-        ],
-      },
-    ],
-  },
+  
   devtool: 'inline-source-map',
   target: 'node',
   optimization: {
