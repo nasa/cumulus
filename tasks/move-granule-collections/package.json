@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/move-granule-collections",
   "version": "19.1.0",
-  "description": "Move granule files from staging to final location",
+  "description": "Move granule files and postgres records to a new collection",
   "main": "index.js",
   "directories": {
     "test": "tests"

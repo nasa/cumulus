@@ -55,7 +55,7 @@ interface EventConfig {
   s3MultipartChunksizeMb?: number,
 }
 
-interface MoveGranulesEvent {
+interface MoveGranuleCollectionsEvent {
   config: EventConfig,
   cumulus_config?: {
     cumulus_context?: {
@@ -337,7 +337,7 @@ async function buildTargetGranules(
   ));
 }
 
-async function moveGranules(event: MoveGranulesEvent): Promise<Object> {
+async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object> {
   const config = event.config;
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
     ? config.s3MultipartChunksizeMb : Number(process.env.default_s3_multipart_chunksize_mb);
