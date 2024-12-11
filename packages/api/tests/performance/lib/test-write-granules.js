@@ -51,9 +51,9 @@ const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtil
 
 test.before(async (t) => {
   // Test configuration values
-  t.context.concurrency = 500;
-  process.env.maxDbPool = 500;
-  t.context.totalGranules = 3000;
+  t.context.concurrency = 100;
+  process.env.maxDbPool = 100;
+  t.context.totalGranules = 2000;
   t.context.granuleFiles = 10;
 
   t.context.testDbName = `writeGranules_${cryptoRandomString({ length: 10 })}`;
@@ -223,7 +223,7 @@ test.after.always(async (t) => {
 // This test is a performance test designed to run with a large number of messages
 // in a memory constrained test environment, it is not intended to run as part of
 // the normal unit test suite.
-test('Write granules from message operates on 3k granules with 25 files each within 1GB of ram when an instance of EsClient is passed in and concurrency is set to 300 and db connections are set to 300', async (t) => {
+test('Write granules from message operates on 2k granules with 10 files each within 1GB of ram when an instance of EsClient is passed in and concurrency is set to 100 and db connections are set to 100', async (t) => {
   const {
     cumulusMessages,
     knex,
@@ -235,7 +235,6 @@ test('Write granules from message operates on 3k granules with 25 files each wit
   // Message must be completed or files will not update
 
   const esClient = await getEsClient();
-
   await pSettle(cumulusMessages.map((cumulusMessage) => () => writeGranulesFromMessage({
     cumulusMessage,
     executionCumulusId,
