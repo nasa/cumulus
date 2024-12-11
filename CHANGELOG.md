@@ -93,6 +93,8 @@ each Cumulus version between your current version and v19.1.0 as normal.
 
 ### Changed
 
+- **CUMULUS-3678**
+  - sqs messages truncated to max sqs length if necessary
 - **CUMULUS-3928**
   - updated publish scripting to use cumulus.bot@gmail.com for user email
   - updated publish scripting to use esm over common import of latest-version
