@@ -223,7 +223,7 @@ test.after.always(async (t) => {
 // This test is a performance test designed to run with a large number of messages
 // in a memory constrained test environment, it is not intended to run as part of
 // the normal unit test suite.
-test('Write granules from message operates on 2k granules with 10 files each within 1GB of ram when an instance of EsClient is passed in and concurrency is set to 100 and db connections are set to 100', async (t) => {
+test('writeGranulesFromMessage operates on 2k granules with 10 files each within 1GB of ram when an instance of EsClient is passed in and concurrency is set to 100 and db connections are set to 100', async (t) => {
   const {
     cumulusMessages,
     knex,

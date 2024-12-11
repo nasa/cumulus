@@ -93,13 +93,19 @@ async function processDeadLetterArchive({
   batchSize = 1000,
   concurrency = 10,
 }) {
+  log.info(`Processing dead letter archive in bucket ${bucket} at path ${path}`);
+  log.info(`Concurrency set to ${concurrency}`);
+  log.info(`Batch size set to ${batchSize}`);
+
   let listObjectsResponse;
   let continuationToken;
   let allSuccessKeys = [];
   const allFailedKeys = [];
   const esClient = await getEsClient();
+  let batchNumber = 1;
   /* eslint-disable no-await-in-loop */
   do {
+    log.info(`Processing batch ${batchNumber}`);
     // Refresh ES client to avoid credentials timeout for long running processes
     esClient.refreshClient();
     listObjectsResponse = await s3().listObjectsV2({
@@ -140,7 +146,9 @@ async function processDeadLetterArchive({
         },
       });
     }
+    batchNumber += 1;
   } while (listObjectsResponse.IsTruncated);
+  log.info('Dead letter archive processing complete');
   /* eslint-enable no-await-in-loop */
   // Lambda run as an async operation must have a return
   return {
