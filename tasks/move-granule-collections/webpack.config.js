@@ -9,7 +9,7 @@ module.exports = {
     chunkFormat: false,
     libraryTarget: 'commonjs2',
     filename: 'index.js',
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'webpack'),
     devtoolModuleFilenameTemplate: (info) => {
       const relativePath = path.relative(root, info.absoluteResourcePath)
       return `webpack://${relativePath}`;
