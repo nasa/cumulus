@@ -12,24 +12,21 @@
     "url": "https://github.com/nasa/cumulus",
     "directory": "tasks/move-granule-collections"
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "engines": {
     "node": ">=20.12.2"
   },
   "scripts": {
-    "generate-task-schemas": "npx generate-task-schemas . files",
-    "clean": "git clean -d -x -e node_modules -f",
-    "package": "npm run generate-task-schemas && ./bin/package.sh",
-    "prepare": "npm run tsc",
+    "clean": "rm -rf dist",
+    "package": "./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "coverage": "python ../../scripts/coverage_handler/coverage.py",
-    "webpack": "../../node_modules/.bin/webpack"
+    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
+    "webpack": "../../node_modules/.bin/webpack",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "files": [
