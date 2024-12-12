@@ -16,10 +16,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-3931**
-  - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
-    new task deployment on terraform redeploy.   See docs for more details:
-    https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
 - **CUMULUS-3936,CUMULUS-3948**
   - Updated `tf-modules/cumulus/ecs_cluster_instance_autoscaling_cf_template.yml.tmpl`
     user-data for compatibility with Amazon Linux 2023 AMI
