@@ -3,6 +3,7 @@
   "version": "19.1.0",
   "description": "Move granule files and postgres records to a new collection",
   "main": "dist/index.js",
+  "private": true,
   "directories": {
     "test": "tests"
   },
@@ -33,7 +34,6 @@
       "tests/*.js"
     ],
     "failFast": true,
-    "serial": true,
     "verbose": true,
     "timeout": "15m"
   },
