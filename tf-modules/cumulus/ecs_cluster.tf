@@ -182,6 +182,11 @@ resource "aws_iam_role_policy_attachment" "NGAPProtAppInstanceMinimalPolicy" {
   role = aws_iam_role.ecs_cluster_instance.id
 }
 
+resource "aws_iam_role_policy_attachment" "ecs_cluster_container_service_policy" {
+  role       = aws_iam_role.ecs_cluster_instance.id
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
 resource "aws_iam_instance_profile" "ecs_cluster_instance" {
   name = "${var.prefix}_ecs_cluster_profile"
   role = aws_iam_role.ecs_cluster_instance.id
@@ -252,6 +257,9 @@ resource "aws_launch_template" "ecs_cluster_instance" {
   iam_instance_profile {
     arn = aws_iam_instance_profile.ecs_cluster_instance.arn
   }
+  monitoring {
+    enabled = true
+  }
 
   block_device_mappings {
     device_name = "/dev/xvdcz"
@@ -284,6 +292,20 @@ resource "aws_autoscaling_group" "ecs_cluster_instance" {
     key                 = "Name"
     value               = aws_ecs_cluster.default.name
     propagate_at_launch = true
+  }
+  tag {
+    key                 = "AmazonECSManaged"
+    value               = true
+    propagate_at_launch = true
+  }
+
+  dynamic "tag" {
+    for_each = var.tags
+    content {
+      key                 = tag.value.key
+      propagate_at_launch = true
+      value               = tag.value.value
+    }
   }
 }
 
