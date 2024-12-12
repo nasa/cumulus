@@ -57,7 +57,7 @@ async function setupPGData(granules, targetCollection, knex) {
   const collectionPath = path.join(__dirname, 'data', 'original_collection.json');
   const sourceCollection = JSON.parse(fs.readFileSync(collectionPath));
   const pgRecords = {};
-  await collectionModel.create(
+  [pgRecords.sourceCollection] = await collectionModel.create(
     knex,
     translateApiCollectionToPostgresCollection(sourceCollection)
   );
@@ -99,13 +99,15 @@ function buildPayload(t, collection) {
 }
 
 test.beforeEach(async (t) => {
+
+
   const testDbName = `move-granule-collections${cryptoRandomString({ length: 10 })}`;
-  const { knexAdmin, knex } = await generateLocalTestDb(
+  const dbOutput = await generateLocalTestDb(
     testDbName,
     migrationDir
   );
-  t.context.knexAdmin = knexAdmin;
-  t.context.knex = knex;
+  t.context.knex = dbOutput.knex;
+  t.context.knexAdmin = dbOutput.knexAdmin;
   t.context.publicBucket = randomId('public');
   t.context.protectedBucket = randomId('protected');
   t.context.privateBucket = randomId('private');
@@ -150,11 +152,11 @@ test.afterEach.always(async (t) => {
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
-    tesetDbName: t.context.testDbName,
+    testDbName: t.context.testDbName,
   });
 });
 
-test('Should move files to final location and update pg data', async (t) => {
+test.serial('Should move files to final location and update pg data', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
@@ -169,6 +171,7 @@ test('Should move files to final location and update pg data', async (t) => {
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const pgRecords = await setupPGData(newPayload.input.granules, collection, t.context.knex);
+  console.log(JSON.stringify(pgRecords, null, 2));
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -191,11 +194,12 @@ test('Should move files to final location and update pg data', async (t) => {
   const finalPgGranule = await granuleModel.get(t.context.knex, {
     cumulus_id: pgRecords.granules[0].cumulus_id,
   });
+  console.log(JSON.stringify(finalPgGranule, null, 2))
   t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
   t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
-test('handles partially moved files', async (t) => {
+test.serial('handles partially moved files', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.publicBucket)
@@ -241,6 +245,7 @@ test('handles partially moved files', async (t) => {
   const newPayload = buildPayload(t, collection);
 
   const pgRecords = await setupPGData(newPayload.input.granules, collection, t.context.knex);
+
   await uploadFiles(filesToUpload, t.context.bucketMapping);
 
   const output = await moveGranules(newPayload);
@@ -269,7 +274,7 @@ test('handles partially moved files', async (t) => {
   t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
-test('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
+test.serial('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
@@ -340,7 +345,7 @@ test('handles files that are pre-moved and misplaced w/r to postgres', async (t)
   t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
-test('handles files that need no move', async (t) => {
+test.serial('handles files that need no move', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)

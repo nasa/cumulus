@@ -310,6 +310,7 @@ async function updateGranuleMetadata(
   cmrFiles: { [key: string]: CMRFile },
   cmrFileNames: Array<string>
 ): Promise<ApiGranule> {
+  log.warn('and our granule is', JSON.stringify(granule, null, 2))
   const cmrFile = get(cmrFiles, granule.granuleId, null);
 
   const cmrMetadata = cmrFile ?
@@ -338,6 +339,7 @@ async function buildTargetGranules(
 }
 
 async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object> {
+  log.warn(JSON.stringify(event, null, 2));
   const config = event.config;
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
     ? config.s3MultipartChunksizeMb : Number(process.env.default_s3_multipart_chunksize_mb);
