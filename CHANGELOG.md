@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [v18.5.2] 2024-12-10
+## [v18.5.2] 2024-12-12
 
 ### Breaking Changes
 
@@ -20,7 +20,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
     new task deployment on terraform redeploy.   See docs for more details:
     https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
-<<<<<<< HEAD
 - **CUMULUS-3936,CUMULUS-3948**
   - Updated `tf-modules/cumulus/ecs_cluster_instance_autoscaling_cf_template.yml.tmpl`
     user-data for compatibility with Amazon Linux 2023 AMI
@@ -31,133 +30,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3955**
   - Removed `VACUUM` statements from db migrations. In cases where the PG database is very large, these queries
     can take a long time and exceed the Lambda timeout, causing failures on deployment.
-=======
 
 ### Fixed
 
-- **CUMULUS-3933**
-  - Update example/bamboo/integration-tests.sh to properly exit if lock-stack
-    errors/detects another stack lock
-- **CUMULUS-3876**
-  - Fixed `s3-replicator` lambda cross region write failure
-  - Added `target_region` variable to `tf-modules/s3-replicator` module
 - **Security Vulnerabilities**
   - Updated `@octokit/graphql` from 2.1.1 to ^2.3.0 to address [CVE-2024-21538]
     (https://github.com/advisories/GHSA-3xgq-45jj-v275)
-
-## [v19.1.0] 2024-10-07
-
-### Migration Notes
-
-This release contains changes listed here as well as changes listed in v19.0.0,
-despite v19.0.0 being deprecated. Please review Changelog entries and Migration Notes for
-each Cumulus version between your current version and v19.1.0 as normal.
-
-### Added
-
-- **CUMULUS-3020**
-  - Updated sfEventSqsToDbRecords to allow override of the default value
-   (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60)
-   via a key 'sfEventSqsToDbRecords' on `var.lambda_timeouts` on the main cumulus module/archive module
-
-  **Please note** - updating this configuration is for adavanced users only.  Value changes will modify the visibility
-  timeout on `sfEventSqsToDbRecordsDeadLetterQueue` and `sfEventSqsToDbRecordsInputQueue` and may lead to system
-  instability.
-
-- **CUMULUS-3756**
-  - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
-  - This is to allow files matching specified regex to be excluded when updating the Related URLs list
-  - Defaults to the current behavior of excluding no files.
-- **CUMULUS-3773**
-  - Added sftpFastDownload configuration to SyncGranule task.
-  - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
-  - Added sftp support to FakeProvider
-  - Added sftp integration test
-
-### Changed
-
-- **CUMULUS-3928**
-  - updated publish scripting to use cumulus.bot@gmail.com for user email
-  - updated publish scripting to use esm over common import of latest-version
-  - updated bigint testing to remove intermitted failure source.
-  - updated postgres dependency version
-- **CUMULUS-3838**
-  - Updated python dependencies to latest:
-    - cumulus-process-py 1.4.0
-    - cumulus-message-adapter-python 2.3.0
-- **CUMULUS-3906**
-  - Bumps example ORCA deployment to version v10.0.1.
-
-### Fixed
-
-- **CUMULUS-3904**
-  - Passed sqs_message_consumer_watcher_message_limit and sqs_message_consumer_watcher_time_limit through the cumulus terraform module to the ingest terraform module.
-- **CUMULUS-3902**
-  - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
-
-## [v19.0.0] 2024-08-28
-
-### Deprecated
-This release has been deprecated in favor of the 18.5->19.1 release series. The changes
-listed here are still valid and also contained in the v19.1.0 release and beyond.
-
-### Breaking Changes
-
-- This release includes `Replace ElasicSearch Phase 1` updates, we no longer save `collection/granule/execution` records to
-ElasticSearch, the `collections/granules/executions` API endpoints are updated to perform operations on the postgres database.
-
-### Migration Notes
-
-#### CUMULUS-3792 Add database indexes. Please follow the instructions before upgrading Cumulus
-
-- The updates in CUMULUS-3792 require a manual update to the postgres database in the production environment.
-  Please follow [Update Table Indexes for CUMULUS-3792]
-  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/update_table_indexes_CUMULUS_3792)
-
-### Replace ElasticSearch Phase 1
-
-- **CUMULUS-3238**
-  - Removed elasticsearch dependency from collections endpoint
-- **CUMULUS-3239**
-  - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
-- **CUMULUS-3240**
-  - Removed Elasticsearch dependency from `executions` endpoints
-- **CUMULUS-3639**
-  - Updated `/collections/active` endpoint to query postgres
-- **CUMULUS-3640**
-  - Removed elasticsearch dependency from granules endpoint
-- **CUMULUS-3641**
-  - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
-- **CUMULUS-3642**
-  - Adjusted queries to improve performance:
-    - Used count(*) over count(id) to count rows
-    - Estimated row count for large tables (granules and executions) by default for basic query
-  - Updated stats summary to default to the last day
-  - Updated ExecutionSearch to not include asyncOperationId by default
-- **CUMULUS-3688**
-  - Updated `stats` api endpoint to query postgres instead of elasticsearch
-- **CUMULUS-3689**
-  - Updated `stats/aggregate` api endpoint to query postgres instead of elasticsearch
-  - Created a new StatsSearch class for querying postgres with the stats endpoint
-- **CUMULUS-3692**
-  - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
-    support basic queries for granules
-  - Updated granules List endpoint to query postgres for basic queries
-- **CUMULUS-3693**
-  - Added functionality to `@cumulus/db/src/search` to support range queries
-- **CUMULUS-3694**
-  - Added functionality to `@cumulus/db/src/search` to support term queries
-  - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
-  - Updated granules List endpoint to search postgres
-- **CUMULUS-3695**
-  - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
-- **CUMULUS-3696**
-  - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
-- **CUMULUS-3699**
-  - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
-- **CUMULUS-3792**
-  - Added database indexes to improve search performance
->>>>>>> 6135a6c2f8 (Address audit issue and update integration test bucket (#3866))
 
 ## [v18.5.1] 2024-10-25
 
