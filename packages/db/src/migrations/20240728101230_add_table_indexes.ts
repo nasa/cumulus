@@ -24,15 +24,6 @@ export const up = async (knex: Knex): Promise<void> => {
   await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS providers_updated_at_index ON providers(updated_at)');
 
   await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS rules_updated_at_index ON rules(updated_at)');
-
-  await knex.raw('VACUUM (ANALYZE, VERBOSE) async_operations');
-  await knex.raw('VACUUM (ANALYZE, VERBOSE) collections');
-  await knex.raw('VACUUM (ANALYZE, VERBOSE) executions');
-  await knex.raw('VACUUM (ANALYZE, VERBOSE) files');
-  await knex.raw('VACUUM (ANALYZE, VERBOSE) granules');
-  await knex.raw('VACUUM (ANALYZE, VERBOSE) pdrs');
-  await knex.raw('VACUUM (ANALYZE, VERBOSE) providers');
-  await knex.raw('VACUUM (ANALYZE, VERBOSE) rules');
 };
 
 export const down = async (knex: Knex): Promise<void> => {
