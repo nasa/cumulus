@@ -365,7 +365,7 @@ export const getGranulesByGranuleId = async (
  * @param {Array<ApiGranule>} [granules] - updated ApiGranule records
  * @returns {Promise<void>}
  */
-export const updateGranuleAndFiles = async (
+export const updateGranulesAndFiles = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granules: Array<ApiGranule>
 ):Promise<void> => {

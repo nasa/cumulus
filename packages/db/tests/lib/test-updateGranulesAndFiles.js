@@ -17,7 +17,7 @@ const {
   getUniqueGranuleByGranuleId,
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleResultToApiGranule,
-  updateGranuleAndFiles,
+  updateGranulesAndFiles,
 } = require('../../dist');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
@@ -155,7 +155,7 @@ test.after.always(async (t) => {
   });
 });
 
-test.serial('updateGranuleAndFiles successfully updates a partial list of granules based on the collectionId change', async (t) => {
+test.serial('updateGranulesAndFiles successfully updates a partial list of granules based on the collectionId change', async (t) => {
   const {
     granuleIds,
     granulePgModel,
@@ -166,7 +166,7 @@ test.serial('updateGranuleAndFiles successfully updates a partial list of granul
     collection2,
     knex,
   } = t.context;
-  await updateGranuleAndFiles(knex, movedGranules);
+  await updateGranulesAndFiles(knex, movedGranules);
 
   const returnedGranules = await Promise.all(granuleIds.map((id) =>
     getUniqueGranuleByGranuleId(knex, id, granulePgModel)));
@@ -189,7 +189,7 @@ test.serial('updateGranuleAndFiles successfully updates a partial list of granul
   }
 });
 
-test.serial('updateGranuleAndFiles successfully updates a complete list of granules, 1/2 of which have already been moved', async (t) => {
+test.serial('updateGranulesAndFiles successfully updates a complete list of granules, 1/2 of which have already been moved', async (t) => {
   const {
     granuleIds,
     granulePgModel,
@@ -207,7 +207,7 @@ test.serial('updateGranuleAndFiles successfully updates a complete list of granu
     collectionId, collectionId2));
 
   const testPostMoveApiGranules = movedGranules.flat();
-  await updateGranuleAndFiles(knex, testPostMoveApiGranules);
+  await updateGranulesAndFiles(knex, testPostMoveApiGranules);
 
   const returnedGranules = await Promise.all(granuleIds.map((id) =>
     getUniqueGranuleByGranuleId(knex, id, granulePgModel)));
