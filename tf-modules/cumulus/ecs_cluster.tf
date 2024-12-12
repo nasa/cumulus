@@ -302,9 +302,9 @@ resource "aws_autoscaling_group" "ecs_cluster_instance" {
   dynamic "tag" {
     for_each = var.tags
     content {
-      key                 = tag.value.key
+      key                 = tag.key
       propagate_at_launch = true
-      value               = tag.value.value
+      value               = tag.value
     }
   }
 }
