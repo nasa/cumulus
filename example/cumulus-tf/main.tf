@@ -39,6 +39,7 @@ locals {
   protected_bucket_names          = [for k, v in var.buckets : v.name if v.type == "protected"]
   public_bucket_names             = [for k, v in var.buckets : v.name if v.type == "public"]
   rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
+  rds_security_group_id              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group_id", "")
   rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
 
   vpc_id     = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
@@ -92,6 +93,7 @@ module "cumulus" {
   lambda_memory_sizes = var.lambda_memory_sizes
 
   rds_security_group                     = local.rds_security_group
+  rds_security_group_id                  = local.rds_security_group_id
   rds_user_access_secret_arn             = local.rds_credentials_secret_arn
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
 
@@ -219,7 +221,6 @@ module "cumulus" {
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
 
-  rds_security_group_id          = var.rds_security_group_id
   tags = local.tags
 }
 
