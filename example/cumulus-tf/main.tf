@@ -219,6 +219,7 @@ module "cumulus" {
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
 
+  rds_security_group_id          = var.rds_security_group
   tags = local.tags
 }
 
