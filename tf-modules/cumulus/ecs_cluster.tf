@@ -237,14 +237,14 @@ locals {
     task_reaper_object        = aws_s3_bucket_object.task_reaper
   }
 
-  security_group_ids        = compact(concat(
-      [
-        aws_security_group.ecs_cluster_instance.id,
-        var.elasticsearch_security_group_id,
-        var.rds_security_group
-      ],
-      var.ecs_custom_sg_ids
-    ))
+  security_group_ids = compact(concat(
+    [
+      aws_security_group.ecs_cluster_instance.id,
+      var.elasticsearch_security_group_id,
+      var.rds_security_group
+    ],
+    var.ecs_custom_sg_ids
+  ))
 }
 
 resource "aws_launch_template" "ecs_cluster_instance" {
@@ -265,19 +265,19 @@ resource "aws_launch_template" "ecs_cluster_instance" {
     device_name = "/dev/xvdcz"
     ebs {
       delete_on_termination = true
-      encrypted = true
-      volume_size = var.ecs_cluster_instance_docker_volume_size
+      encrypted             = true
+      volume_size           = var.ecs_cluster_instance_docker_volume_size
     }
   }
 
   user_data = base64encode(templatefile(
     "${path.module}/ecs_cluster_instance_autoscaling_user_data.tmpl",
     local.ecs_instance_autoscaling_user_data_config
-    ))
+  ))
 }
 
 resource "aws_autoscaling_group" "ecs_cluster_instance" {
-  name                = aws_ecs_cluster.default.name
+  name_prefix         = aws_ecs_cluster.default.name
   vpc_zone_identifier = var.ecs_cluster_instance_subnet_ids
   desired_capacity    = var.ecs_cluster_desired_size
   max_size            = var.ecs_cluster_max_size
@@ -285,7 +285,10 @@ resource "aws_autoscaling_group" "ecs_cluster_instance" {
 
   launch_template {
     id      = aws_launch_template.ecs_cluster_instance.id
-    version = "$Latest"
+    version = aws_launch_template.ecs_cluster_instance.latest_version
+  }
+  lifecycle {
+    create_before_destroy = true
   }
 
   tag {
@@ -305,6 +308,13 @@ resource "aws_autoscaling_group" "ecs_cluster_instance" {
       key                 = tag.key
       propagate_at_launch = true
       value               = tag.value
+    }
+  }
+
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
     }
   }
 }
