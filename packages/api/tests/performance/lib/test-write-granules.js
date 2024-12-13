@@ -51,9 +51,9 @@ const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtil
 
 test.before(async (t) => {
   // Test configuration values
-  t.context.concurrency = 100;
-  process.env.maxDbPool = 100;
-  t.context.totalGranules = 2000;
+  t.context.concurrency = 2000;
+  process.env.dbMaxPool = 200;
+  t.context.totalGranules = 3000;
   t.context.granuleFiles = 10;
 
   t.context.testDbName = `writeGranules_${cryptoRandomString({ length: 10 })}`;
@@ -64,10 +64,13 @@ test.before(async (t) => {
 
   const { knexAdmin, knex } = await generateLocalTestDb(
     t.context.testDbName,
-    migrationDir
+    migrationDir,
+    { ...process.env }
   );
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
+
+  console.log(`Test DB max connection pool: ${t.context.knex.client.pool.max}`);
 
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;

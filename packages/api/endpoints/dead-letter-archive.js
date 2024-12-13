@@ -48,7 +48,7 @@ async function postRecoverCumulusMessages(req, res) {
     path,
     batchSize,
     concurrency,
-    maxDbPool,
+    dbMaxPool,
   } = messageBody;
 
   const asyncOperation = await asyncOperations.startAsyncOperation({
@@ -66,7 +66,7 @@ async function postRecoverCumulusMessages(req, res) {
     },
     stackName,
     systemBucket,
-    knexConfig: { ...process.env, maxDbPool },
+    knexConfig: { ...process.env, dbMaxPool },
     useLambdaEnvironmentVariables: true,
   });
   return res.status(202).send(asyncOperation);

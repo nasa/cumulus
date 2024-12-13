@@ -178,6 +178,12 @@ async function handler(event) {
     bucket,
     path,
   } = event;
+
+  log.info(`Processing dead letter archive in bucket ${bucket} at path ${path}`);
+  log.info(`Concurrency set to ${concurrency}`);
+  log.info(`Batch size set to ${batchSize}`);
+  log.info(`Test DB max connection pool: ${t.context.knex.client.pool.max}`);
+
   return processDeadLetterArchive({ knex, bucket, path, batchSize, concurrency });
 }
 

@@ -26,7 +26,7 @@ The DLA recovery endpoint takes the following configurations that help bound per
 
 - `batchSize` - specifies how many DLA objects to read from S3 and hold in memory.    Increasing this value will cause the tool to read and hold `batchSize` DLA objects in memory and iterate over them with `concurrency` operations in parallel.   Defaults to 1000.
 - `concurrency` - specifies how many messages to process from the batch in parallel.  Defaults to 30.
-- `maxDbPool` - specifies how many database connections to allow the process to utilize as part of it's connection pool.     This value will constrain database connections, but too low a value can cause performance issues or database write failures (Knex timeout errors) if the connection pool is not high enough to support the set concurrency.   Defaults to 60, value should target a minimum of (`concurrency` * expected granules per message).
+- `dbMaxPool` - specifies how many database connections to allow the process to utilize as part of it's connection pool.     This value will constrain database connections, but too low a value can cause performance issues or database write failures (Knex timeout errors) if the connection pool is not high enough to support the set concurrency.   Defaults to 60, value should target a minimum of (`concurrency` * expected granules per message).
 
 ### Dead Letter Archive Recovery Configuration
 
