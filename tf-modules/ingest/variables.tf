@@ -222,3 +222,7 @@ variable "rds_user_access_secret_arn" {
   description = "RDS User Database Login Credential Secret ID"
   type        = string
 }
+
+variable "rds_security_group_id" {
+  type = string
+}
