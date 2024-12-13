@@ -182,11 +182,6 @@ resource "aws_iam_role_policy_attachment" "NGAPProtAppInstanceMinimalPolicy" {
   role = aws_iam_role.ecs_cluster_instance.id
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_cluster_container_service_policy" {
-  role       = aws_iam_role.ecs_cluster_instance.id
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
 resource "aws_iam_instance_profile" "ecs_cluster_instance" {
   name = "${var.prefix}_ecs_cluster_profile"
   role = aws_iam_role.ecs_cluster_instance.id
