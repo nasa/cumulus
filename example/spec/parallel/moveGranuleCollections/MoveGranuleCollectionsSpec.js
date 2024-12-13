@@ -31,25 +31,7 @@ describe('when moveGranulesCollection is called', () => {
       const sourceUrlPrefix = `source_path/${uuidv4()}`;
       const targetUrlPrefix = `target_path/${uuidv4()}`;
       const payload = {
-        config: {
-          buckets: {
-            internal: {
-              type: 'cumulus-test-sandbox-internal',
-            },
-            private: {
-              name: 'cumulus-test-sandbox-private',
-              type: 'private',
-            },
-            protected: {
-              name: 'cumulus-test-sandbox-protected',
-              type: 'protected',
-            },
-            public: {
-              name: 'cumulus-test-sandbox-public',
-              type: 'public',
-            },
-          },
-          distribution_endpoint: 'https://something.api.us-east-1.amazonaws.com/',
+        meta: {
           collection: {
             files: [
               {
@@ -94,6 +76,28 @@ describe('when moveGranulesCollection is called', () => {
             sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
             id: 'MOD11A2',
           },
+          buckets: {
+            internal: {
+              type: 'cumulus-test-sandbox-internal',
+            },
+            private: {
+              name: 'cumulus-test-sandbox-private',
+              type: 'private',
+            },
+            protected: {
+              name: 'cumulus-test-sandbox-protected',
+              type: 'protected',
+            },
+            public: {
+              name: 'cumulus-test-sandbox-public',
+              type: 'public',
+            },
+          },
+        },
+        config: {
+          buckets: "{$.meta.buckets}",
+          distribution_endpoint: 'https://something.api.us-east-1.amazonaws.com/',
+          collection: "{$.meta.collection}",
         },
         input: {
           granules: [
@@ -148,16 +152,19 @@ describe('when moveGranulesCollection is called', () => {
         });
       }));
       const { $metadata } = await lambda().send(new InvokeCommand({
-        FunctionName: `${stackName}-MoveGranuleCollections`,
+        FunctionName: `ecarton-ci-tf-MoveGranuleCollections`,
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
           cma: {
+            meta: payload.meta,
+            task_config: payload.config,
             event: {
               payload: payload.input,
             },
           },
         }),
       }));
+      console.log($metadata.httpStatusCode);
       if ($metadata.httpStatusCode >= 400) {
         console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
         beforeAllFailed = true;

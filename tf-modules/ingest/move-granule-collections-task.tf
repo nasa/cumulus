@@ -16,6 +16,7 @@ resource "aws_lambda_function" "move_granule_collections_task" {
       default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
       stackName                         = var.prefix
       system_bucket                     = var.system_bucket
+      databaseCredentialSecretArn  = var.rds_user_access_secret_arn
     }
   }
 
@@ -24,9 +25,26 @@ resource "aws_lambda_function" "move_granule_collections_task" {
     content {
       subnet_ids = var.lambda_subnet_ids
       security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id
+        aws_security_group.no_ingress_all_egress[0].id,
+        var.rds_security_group_id
       ]
     }
+  }
+
+  tags = var.tags
+}
+
+resource "aws_security_group" "move_granule_collections_task" {
+  count = length(var.lambda_subnet_ids) == 0 ? 0 : 1
+
+  name   = "${var.prefix}-migration-helper-async-operation"
+  vpc_id = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = var.tags
