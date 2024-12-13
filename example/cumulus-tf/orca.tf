@@ -41,7 +41,7 @@ module "orca" {
   dlq_subscription_email    = var.orca_dlq_subscription_email
   orca_default_bucket       = var.orca_default_bucket
   orca_reports_bucket_name  = var.system_bucket
-  rds_security_group_id     = local.rds_security_group
+  rds_security_group_id     = var.rds_security_group_id
 
   ## OPTIONAL
   db_admin_username                                    = local.rds_admin_login.username
