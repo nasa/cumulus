@@ -50,6 +50,16 @@ resource "aws_security_group" "move_granule_collections_task" {
   tags = var.tags
 }
 
+data "aws_iam_policy_document" "move_granule_collections_task_assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
 resource "aws_iam_role" "move_granule_collections_task_role" {
   name                 = "${var.prefix}-move_granule_collections_task"
   assume_role_policy   = data.aws_iam_policy_document.move_granule_collections_task_assume_role_policy.json

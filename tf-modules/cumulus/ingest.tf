@@ -67,5 +67,5 @@ module "ingest" {
   # Cloudwatch log retention config
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
   default_log_retention_days = var.default_log_retention_days
-  rds_user_access_secret_arn = local.rds_user_access_secret_arn
+  rds_user_access_secret_arn = var.rds_user_access_secret_arn
 }
