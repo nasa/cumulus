@@ -485,7 +485,3 @@ variable "report_sns_topic_subscriber_arns" {
   type = list
   default = null
 }
-
-variable "rds_security_group_id" {
-  type = string
-}

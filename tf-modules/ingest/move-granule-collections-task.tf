@@ -26,7 +26,7 @@ resource "aws_lambda_function" "move_granule_collections_task" {
       subnet_ids = var.lambda_subnet_ids
       security_group_ids = [
         aws_security_group.no_ingress_all_egress[0].id,
-        var.rds_security_group_id
+        var.rds_security_group
       ]
     }
   }
