@@ -223,6 +223,6 @@ variable "rds_user_access_secret_arn" {
   type        = string
 }
 
-variable "rds_security_group_id" {
+variable "rds_security_group" {
   type = string
 }
