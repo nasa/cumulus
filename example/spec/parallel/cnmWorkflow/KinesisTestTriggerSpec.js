@@ -427,7 +427,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       badRecord = cloneDeep(record);
       badRecord.identifier = randomString();
       // bad record has a file which doesn't exist
-      badRecord.product.files[0].uri = 's3://not-exist-bucket/somepath/somekey';
+      badRecord.product.files[0].uri = `s3://${testConfig.bucket}/somepath/key-does-not-exist`;
 
       await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecord.identifier}.`);
