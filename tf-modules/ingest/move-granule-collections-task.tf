@@ -37,7 +37,7 @@ resource "aws_lambda_function" "move_granule_collections_task" {
 resource "aws_security_group" "move_granule_collections_task" {
   count = length(var.lambda_subnet_ids) == 0 ? 0 : 1
 
-  name   = "${var.prefix}-migration-helper-async-operation"
+  name   = "${var.prefix}-move_granule_collections_task"
   vpc_id = var.vpc_id
 
   egress {
@@ -48,4 +48,59 @@ resource "aws_security_group" "move_granule_collections_task" {
   }
 
   tags = var.tags
+}
+
+resource "aws_iam_role" "move_granule_collections_task_role" {
+  name                 = "${var.prefix}-move_granule_collections_task"
+  assume_role_policy   = data.aws_iam_policy_document.move_granule_collections_task_assume_role_policy.json
+  permissions_boundary = var.permissions_boundary_arn
+  tags                 = var.tags
+}
+
+data "aws_iam_policy_document" "move_granule_collections_task_policy" {
+  statement {
+    actions = [
+      "ecs:RunTask",
+      "ec2:CreateNetworkInterface",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "lambda:GetFunctionConfiguration",
+      "lambda:invokeFunction",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "s3:GetBucket*",
+    ]
+    resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
+  }
+
+  statement {
+    actions = [
+      "s3:AbortMultipartUpload",
+      "s3:GetObject*",
+      "s3:PutObject*",
+      "s3:ListMultipartUploadParts",
+    ]
+    resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
+  }
+
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      var.rds_user_access_secret_arn
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "move_granule_collections_task" {
+  name   = "${var.prefix}move_granule_collections_task"
+  role   = aws_iam_role.move_granule_collections_task_role.id
+  policy = data.aws_iam_policy_document.move_granule_collections_task_policy.json
 }
