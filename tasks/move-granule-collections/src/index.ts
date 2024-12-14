@@ -142,7 +142,7 @@ async function s3MoveNeeded(
   const sourceExists = await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key });
   if (targetExists && sourceExists) {
     // TODO should this use duplicateHandling?
-    throw new DuplicateFile(`target location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} already occupied`);
+    throw new DuplicateFile(`target location ${JSON.stringify({ Bucket: targetFile.bucket, Key: targetFile.key })} already occupied`);
   }
   if (sourceExists) {
     return true;
