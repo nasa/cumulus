@@ -189,6 +189,7 @@ async function moveGranulesInS3(
               destinationKey: targetFile.key,
               chunkSize: s3MultipartChunksizeMb,
             });
+            console.log('succesfully moved', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
           }
         }));
     })

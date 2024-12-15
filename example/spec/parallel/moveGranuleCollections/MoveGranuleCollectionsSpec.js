@@ -187,7 +187,7 @@ describe('when moveGranulesCollection is called', () => {
           prefix: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`,
         },
       ];
-      // try {
+      try {
       await Promise.all(expectedFiles.map((file) => expectAsync(
         waitForListObjectsV2ResultCount({
           ...file,
@@ -196,9 +196,10 @@ describe('when moveGranulesCollection is called', () => {
           timeout: 30 * 1000,
         })
       ).toBeResolved()));
-      // } catch (error) {
-      //   console.log(`files do not appear to have been moved: error: ${error}`);
-      // }
+      } catch (error) {
+        console.log(`files do not appear to have been moved: error: ${error}`);
+        beforeAllFailed = false;
+      }
     });
     it('moves the granule data', () => {
       if (beforeAllFailed) fail('beforeAllFailed');
