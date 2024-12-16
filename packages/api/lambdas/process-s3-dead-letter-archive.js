@@ -162,14 +162,15 @@ async function processDeadLetterArchive({
  *
  * @param {Object} event - Input payload object
  * @param {string} [event.bucket] - Bucket containing dead letter archive (default to system bucket)
- * @param {string} [event.key] - Dead letter archive path key
+ * @param {string} [event.path] - Dead letter archive path key
  * @returns {Promise<void>}
  */
 async function handler(event) {
+  log.info(`Incoming event: ${JSON.stringify(event)}`);
   const knex = await getKnexClient({
     env: {
       ...process.env,
-      ...event.env,
+      dbMaxPool: event.dbMaxPool ?? 20,
     },
   });
   const {
@@ -182,7 +183,7 @@ async function handler(event) {
   log.info(`Processing dead letter archive in bucket ${bucket} at path ${path}`);
   log.info(`Concurrency set to ${concurrency}`);
   log.info(`Batch size set to ${batchSize}`);
-  log.info(`Test DB max connection pool: ${t.context.knex.client.pool.max}`);
+  log.info(`DB max connection pool: ${knex.client.pool.max}`);
 
   return processDeadLetterArchive({ knex, bucket, path, batchSize, concurrency });
 }

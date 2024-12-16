@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `batchSize`, `concurrency` and `dbMaxPool` options to /endpoints/recoverCumulusMessage (note these values are correct at time of this release only):
     - `batchSize` - specifies how many DLA objects to read from S3 and hold in memory.  Defaults to 1000.
     - `concurrency` - specifies how many messages to process at the same time.  Defaults to 30.
-    - `dbMaxPool` - specifies how many database connections to allow the process to utilize.    Defaults to 60, value should target minimum(`concurrency` * expected granules per message)
+    - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
   - Add API memory-constrained performance test to test minimum functionality under default+ configuration
 
 ### Fixed

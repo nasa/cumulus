@@ -30,7 +30,7 @@ const postRecoverCumulusMessagesSchema = z.object({
   path: z.string().optional(),
   batchSize: zodStringNumberUnion.default(1000),
   concurrency: zodStringNumberUnion.default(30),
-  maxDbPool: zodStringNumberUnion.default(60),
+  dbMaxPool: zodStringNumberUnion.default(60),
 }).passthrough();
 
 const parsePostRecoverCumulusMessagesPayload = zodParser('Post Recover Cumulus Message Payload', postRecoverCumulusMessagesSchema);
@@ -63,10 +63,11 @@ async function postRecoverCumulusMessages(req, res) {
       bucket,
       concurrency,
       path,
+      dbMaxPool,
     },
     stackName,
     systemBucket,
-    knexConfig: { ...process.env, dbMaxPool },
+    knexConfig: { ...process.env },
     useLambdaEnvironmentVariables: true,
   });
   return res.status(202).send(asyncOperation);
