@@ -86,7 +86,7 @@ resource "aws_ecs_task_definition" "dead_letter_recovery_operation" {
       "options": {
         "awslogs-group": "${aws_cloudwatch_log_group.dead_letter_recovery.name}",
         "awslogs-region": "${data.aws_region.current.name}",
-        "awslogs-stream-prefix": "async-operation"
+        "awslogs-stream-prefix": "dead_letter_recovery"
       }
     }
   }
