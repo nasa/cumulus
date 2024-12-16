@@ -107,6 +107,8 @@ Resources:
           Fn::Sub: |
             #!/bin/bash -ex
 
+            TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+
             # Fetch the test data
             (cd / && mkdir cumulus && cd cumulus && git init && git remote add -f origin https://github.com/nasa/cumulus.git && git config core.sparseCheckout true && echo "packages/test-data" >> .git/info/sparse-checkout && git pull origin master)
 
@@ -121,13 +123,13 @@ Resources:
               <(echo "[req]";
                 echo distinguished_name=req;
                 echo "[san]";
-                echo "subjectAltName=IP:$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)";
+                echo "subjectAltName=IP:$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/local-ipv4)";
                 ) \
               -subj "/CN=`hostname`"
 
             cat >> /etc/httpd/conf/httpd.conf <<EOS
             Listen 4040
-            <VirtualHost $(curl -s http://169.254.169.254/latest/meta-data/local-ipv4):4040>
+            <VirtualHost $(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/local-ipv4):4040>
               SSLEngine on
               SSLCertificateFile "/etc/ssl/certs/cumulus.crt"
               SSLCertificateKeyFile "/etc/ssl/certs/cumulus.key"
@@ -136,6 +138,8 @@ Resources:
 
             # Start apache server
             service httpd start
+
+            yum install -y rsync
 
             # Stage http test data
             cp /cumulus/packages/test-data/index.html /var/www/html/
@@ -160,7 +164,6 @@ Resources:
             local_enable=YES
             local_umask=022
             pam_service_name=vsftpd
-            tcp_wrappers=YES
             userlist_deny=NO
             userlist_enable=YES
             write_enable=YES
@@ -217,7 +220,7 @@ Resources:
             chmod 0755 $(which aws)
 
             # Write the fake provider IP to S3
-            curl -s http://169.254.169.254/latest/meta-data/local-ipv4 |\
+            curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/local-ipv4 |\
               aws s3 cp - s3://${Bucket}/fake-provider-ip
 
             # Write the fake S3 provider buckets to S3
@@ -258,7 +261,7 @@ Resources:
               && curl -s -o /dev/null ftp://testuser:${FtpPassword}@localhost/granules/checksums.csv \
               || aws --region ${AWS::Region} \
                    autoscaling set-instance-health \
-                   --instance-id $(curl -s http://169.254.169.254/latest/meta-data/instance-id) \
+                   --instance-id $(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-id) \
                    --health-status Unhealthy
             EOS
 
