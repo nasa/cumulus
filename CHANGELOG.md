@@ -124,6 +124,9 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
 
 ### Changed
 
+- **CUMULUS-3955**
+  - Removed `VACUUM` statements from db migrations. In cases where the PG database is very large, these queries
+    can take a long time and exceed the Lambda timeout, causing failures on deployment.
 - **CUMULUS-3931**
   - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
     new task deployment on terraform redeploy.   See docs for more details:
