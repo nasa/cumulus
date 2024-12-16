@@ -3,7 +3,7 @@ resource "aws_lambda_function" "move_granule_collections_task" {
   filename         = "${path.module}/../../tasks/move-granule-collections/dist/webpack/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/move-granule-collections/dist/webpack/lambda.zip")
   handler          = "index.handler"
-  role             = var.lambda_processing_role_arn
+  role             = aws_iam_role.move_granule_collections_task_role.arn
   runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "MoveGranuleCollections", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "MoveGranuleCollections", 1024)
@@ -110,7 +110,7 @@ data "aws_iam_policy_document" "move_granule_collections_task_policy" {
 }
 
 resource "aws_iam_role_policy" "move_granule_collections_task" {
-  name   = "${var.prefix}move_granule_collections_task"
+  name   = "${var.prefix}_move_granule_collections_task"
   role   = aws_iam_role.move_granule_collections_task_role.id
   policy = data.aws_iam_policy_document.move_granule_collections_task_policy.json
 }
