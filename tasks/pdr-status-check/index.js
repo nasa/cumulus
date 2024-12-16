@@ -91,7 +91,7 @@ function buildOutput(event, groupedExecutions) {
 
   const parseFailedExecution = (execution) => {
     let reason = 'Workflow Failed';
-    if (execution.output) reason = JSON.parse(execution.output).exception;
+    if (execution.error) reason = execution.error;
     return { arn: execution.executionArn, reason };
   };
 

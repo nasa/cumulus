@@ -12,6 +12,11 @@
       "type": ["string", "null"],
       "description": "The path in the provider to upload the file to.",
       "default": "pans"
+    },
+    "panType": {
+      "type": ["string", "null"],
+      "description": "Determines which pan type to create: (shortPan, longPan, or longPanAlways)",
+      "default": "shortPan"
     }
   }
 }
