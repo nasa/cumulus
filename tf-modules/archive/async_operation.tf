@@ -64,7 +64,7 @@ resource "aws_ecs_task_definition" "dead_letter_recovery_operation" {
   container_definitions    = <<EOS
 [
   {
-    "name": "AsyncOperation",
+    "name": "DeadLetterRecovery",
     "essential": true,
     "environment": [
       {
