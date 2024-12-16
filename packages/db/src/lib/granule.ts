@@ -8,9 +8,9 @@ import {
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import { RecordDoesNotExist } from '@cumulus/errors';
-import { createRejectableTransaction } from '../database';
 import Logger from '@cumulus/logger';
 
+import { createRejectableTransaction } from '../database';
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
@@ -376,13 +376,14 @@ export const updateGranulesAndFiles = async (
     granules: granulesTable,
     files: filesTable,
   } = TableNames;
-  await Promise.all(granules.map(async (granule) => {
-    const pgGranule = await translateApiGranuleToPostgresGranule({
-      dynamoRecord: granule,
-      knexOrTransaction,
-    });
-    try {
-      await createRejectableTransaction(knexOrTransaction, async (trx) => {
+
+  try {
+    await createRejectableTransaction(knexOrTransaction, async (trx) => {
+      await Promise.all(granules.map(async (granule) => {
+        const pgGranule = await translateApiGranuleToPostgresGranule({
+          dynamoRecord: granule,
+          knexOrTransaction,
+        });
         await trx(granulesTable).where('granule_id', '=', pgGranule.granule_id).update(
           {
             collection_cumulus_id: pgGranule.collection_cumulus_id,
@@ -393,8 +394,13 @@ export const updateGranulesAndFiles = async (
         );
         if (granule.files) {
           await Promise.all(granule.files.map(async (file) => {
-            const pgFile = translateApiFiletoPostgresFile({ ...file, granuleId: pgGranule.granule_id });
-      
+            const pgFile = translateApiFiletoPostgresFile(
+              {
+                ...file,
+                granuleId: pgGranule.granule_id,
+              }
+            );
+
             await trx(filesTable).where('file_name', '=', String(pgFile.file_name)).update(
               {
                 updated_at: pgGranule.updated_at,
@@ -405,10 +411,10 @@ export const updateGranulesAndFiles = async (
             );
           }));
         }
-      });
-    } catch (thrownError) {
-      log.error(`Write Granule and Files failed: ${JSON.stringify(thrownError)}`);
-      throw thrownError;
-    }
-  }));
+      }));
+    });
+  } catch (thrownError) {
+    log.error(`Write Granule and Files failed: ${JSON.stringify(thrownError)}`);
+    throw thrownError;
+  }
 };
