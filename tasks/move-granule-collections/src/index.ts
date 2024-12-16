@@ -189,7 +189,7 @@ async function moveGranulesInS3(
               destinationKey: targetFile.key,
               chunkSize: s3MultipartChunksizeMb,
             });
-            console.log('succesfully moved', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
+            log.warn('succesfully moved', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
           }
         }));
     })
@@ -229,6 +229,7 @@ async function cleanupCMRMetadataFiles(
           ) {
             await S3.deleteS3Object(sourceFile.bucket, sourceFile.key);
           }
+          
         }));
     })
   );
@@ -250,12 +251,15 @@ async function moveFilesForAllGranules(
   */
   // move all non-cmrMetadata files and copy all cmrmetadata files
   await moveGranulesInS3(sourceGranules, targetGranules, s3MultipartChunksizeMb);
+  log.warn('moved in s3')
   // update postgres (or other cumulus datastores if applicable)
   await moveGranulesInCumulusDatastores(
     targetGranules
   );
+  log.warn('moved in pg')
   // because cmrMetadata files were *copied* and not deleted, delete them now
   await cleanupCMRMetadataFiles(sourceGranules, targetGranules);
+  log.warn('cleanedup')
 }
 
 function updateFileMetadata(
@@ -371,11 +375,13 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
   const targetGranules = await buildTargetGranules(
     granulesInput, config, cmrFilesByGranuleId
   );
+  log.warn('built targets');
 
   // Move files from staging location to final location
   await moveFilesForAllGranules(
     granulesInput, targetGranules, chunkSize
   );
+  log.warn('moved_files')
 
   return {
     granules: targetGranules,
