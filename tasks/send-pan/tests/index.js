@@ -9,6 +9,8 @@ const { sendPAN } = require('../dist/src');
 
 // eslint-disable-next-line max-len
 const regex = /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "SUCCESSFUL";\nTIME_STAMP = \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z;\n/;
+// eslint-disable-next-line max-len
+const failedRegex = /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "FAILED";\nTIME_STAMP = \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z;\n/;
 
 test.before(async (t) => {
   t.context.providerBucket = randomId('bucket');
@@ -43,6 +45,9 @@ test('SendPan task calls upload', async (t) => {
         name: `${fileNameBase}.pdr`,
         path: 'some-pdr-path',
       },
+      running: [],
+      completed: [],
+      failed: [],
     },
   };
 
@@ -78,6 +83,9 @@ test('SendPan task sends PAN to HTTP server', async (t) => {
         name: 'test-send-http-pdr.pdr',
         path: 'some-pdr-path',
       },
+      running: [],
+      completed: [],
+      failed: [],
     },
   };
 
@@ -111,6 +119,9 @@ test('SendPan task sends PAN to s3', async (t) => {
         name: `${fileNameBase}.pdr`,
         path: 'some-pdr-path',
       },
+      running: [],
+      completed: [],
+      failed: [],
     },
   };
 
@@ -144,6 +155,9 @@ test('SendPan task throws error when provider protocol is not supported', async 
         name: 'test-send-ftp-pdr.pdr',
         path: 'some-pdr-path',
       },
+      running: [],
+      completed: [],
+      failed: [],
     },
   };
 
@@ -177,6 +191,9 @@ test('SendPan task sends PAN to default location when remoteDir is null', async 
         name: `${fileNameBase}.pdr`,
         path: 'some-pdr-path',
       },
+      running: [],
+      completed: [],
+      failed: [],
     },
   };
 
@@ -184,9 +201,83 @@ test('SendPan task sends PAN to default location when remoteDir is null', async 
     await validateInput(t, event.input);
     await validateConfig(t, event.config);
     const output = await sendPAN(event);
+    t.log(output);
     await validateOutput(t, output);
     const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
     t.regex(text, regex);
+    t.is(output.pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
+  } catch (error) {
+    console.log(error);
+    t.fail();
+  }
+});
+
+test('SendPan task fails with executions still running', async (t) => {
+  const event = {
+    config: {
+      provider: {
+        id: randomId('s3Provider'),
+        globalConnectionLimit: 5,
+        protocol: 's3',
+        host: t.context.providerBucket,
+      },
+      remoteDir: null,
+    },
+    input: {
+      pdr: {
+        name: 'test.pdr',
+        path: 'some-pdr-path',
+      },
+      running: ['arn:running:execution'],
+      completed: [],
+      failed: [],
+    },
+  };
+
+  try {
+    await validateInput(t, event.input);
+    await validateConfig(t, event.config);
+    await sendPAN(event);
+    t.fail();
+  } catch (error) {
+    if (error.message.includes('Executions still running')) {
+      t.pass();
+    }
+  }
+});
+
+test('SendPan task sends failed PAN to s3', async (t) => {
+  const fileNameBase = 'test-failed-pan-path-pdr';
+  const uploadPath = `pans/${fileNameBase}.pan`;
+  const event = {
+    config: {
+      provider: {
+        id: randomId('s3Provider'),
+        globalConnectionLimit: 5,
+        protocol: 's3',
+        host: t.context.providerBucket,
+      },
+      remoteDir: null,
+    },
+    input: {
+      pdr: {
+        name: `${fileNameBase}.pdr`,
+        path: 'some-pdr-path',
+      },
+      running: [],
+      completed: ['arn:completed:execution', 'arn:completed:execution', 'arn:completed:execution'],
+      failed: [{ arn: 'arn:failed:execution', reason: 'Workflow Failed' }],
+    },
+  };
+
+  try {
+    await validateInput(t, event.input);
+    await validateConfig(t, event.config);
+    const output = await sendPAN(event);
+    t.log(output);
+    await validateOutput(t, output);
+    const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
+    t.regex(text, failedRegex);
     t.is(output.pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
   } catch (error) {
     console.log(error);
