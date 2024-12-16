@@ -53,7 +53,7 @@ EOS
 
 resource "aws_ecs_task_definition" "dead_letter_recovery_operation" {
   depends_on               = [aws_cloudwatch_log_group. dead_letter_recovery]
-  family                   = "${var.prefix}-AsyncOperationTaskDefinition"
+  family                   = "${var.prefix}-DeadLetterRecoveryTaskDefinition"
   tags                     = var.tags
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
