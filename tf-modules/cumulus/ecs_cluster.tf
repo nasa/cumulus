@@ -244,18 +244,10 @@ locals {
 
 resource "aws_launch_template" "ecs_cluster_instance" {
   name_prefix   = "${var.prefix}_ecs_cluster_template"
+  key_name               = var.key_name
   image_id      = var.ecs_cluster_instance_image_id
   instance_type = var.ecs_cluster_instance_type
-
-  key_name               = var.key_name
   vpc_security_group_ids = local.security_group_ids
-  iam_instance_profile {
-    arn = aws_iam_instance_profile.ecs_cluster_instance.arn
-  }
-  monitoring {
-    enabled = true
-  }
-
   block_device_mappings {
     device_name = "/dev/xvdcz"
     ebs {
@@ -263,6 +255,13 @@ resource "aws_launch_template" "ecs_cluster_instance" {
       encrypted             = true
       volume_size           = var.ecs_cluster_instance_docker_volume_size
     }
+  }
+
+  iam_instance_profile {
+    arn = aws_iam_instance_profile.ecs_cluster_instance.arn
+  }
+  monitoring {
+    enabled = true
   }
 
   user_data = base64encode(templatefile(
@@ -273,11 +272,17 @@ resource "aws_launch_template" "ecs_cluster_instance" {
 
 resource "aws_autoscaling_group" "ecs_cluster_instance" {
   name_prefix         = aws_ecs_cluster.default.name
-  vpc_zone_identifier = var.ecs_cluster_instance_subnet_ids
   desired_capacity    = var.ecs_cluster_desired_size
   max_size            = var.ecs_cluster_max_size
   min_size            = var.ecs_cluster_min_size
+  vpc_zone_identifier = var.ecs_cluster_instance_subnet_ids
 
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
+    }
+  }
   launch_template {
     id      = aws_launch_template.ecs_cluster_instance.id
     version = aws_launch_template.ecs_cluster_instance.latest_version
@@ -291,11 +296,6 @@ resource "aws_autoscaling_group" "ecs_cluster_instance" {
     value               = aws_ecs_cluster.default.name
     propagate_at_launch = true
   }
-  tag {
-    key                 = "AmazonECSManaged"
-    value               = true
-    propagate_at_launch = true
-  }
 
   dynamic "tag" {
     for_each = var.tags
@@ -303,13 +303,6 @@ resource "aws_autoscaling_group" "ecs_cluster_instance" {
       key                 = tag.key
       propagate_at_launch = true
       value               = tag.value
-    }
-  }
-
-  instance_refresh {
-    strategy = "Rolling"
-    preferences {
-      min_healthy_percentage = 50
     }
   }
 }
