@@ -97,6 +97,8 @@ data "aws_iam_policy_document" "move_granule_collections_task_policy" {
       "s3:GetObject*",
       "s3:PutObject*",
       "s3:ListMultipartUploadParts",
+      "s3:DeleteObject*",
+      "s3:GetBucket*",
     ]
     resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
   }
@@ -106,6 +108,8 @@ data "aws_iam_policy_document" "move_granule_collections_task_policy" {
       "s3:GetObject*",
       "s3:PutObject*",
       "s3:ListMultipartUploadParts",
+      "s3:DeleteObject*",
+      "s3:GetBucket*",
     ]
     resources = [for k, v in var.buckets :  "arn:aws:s3:::${v.name}/*" if v.type != "internal"]
   }
