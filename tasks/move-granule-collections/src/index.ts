@@ -175,6 +175,7 @@ async function moveGranulesInS3(
           if (!await s3MoveNeeded(sourceFile, targetFile, isMetadataFile)) {
             return;
           }
+          log.warn('attempting to do something with', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
           if (isMetadataFile) {
             await s3CopyObject({
               Bucket: targetFile.bucket,
