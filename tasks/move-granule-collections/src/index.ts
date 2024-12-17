@@ -125,7 +125,7 @@ async function s3MoveNeeded(
   if (!moveRequested(sourceFile, targetFile)) {
     return false;
   }
-
+  log.warn('going to check if source exists', { Bucket: targetFile.bucket, Key: targetFile.key })
   const targetExists = await S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key });
   /**
    * cmrmetadata file must skip duplicate behavior since it will
@@ -139,6 +139,7 @@ async function s3MoveNeeded(
     }
     return true;
   }
+  log.warn('going to check if target exists', { Bucket: sourceFile.bucket, Key: sourceFile.key })
   const sourceExists = await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key });
   if (targetExists && sourceExists) {
     // TODO should this use duplicateHandling?
@@ -185,7 +186,7 @@ async function moveGranulesInS3(
           } else {
             await S3.moveObject({
               sourceBucket: sourceFile.bucket,
-              sourceKey: sourceFile.key,
+              sourceKey: sourceFile. key,
               destinationBucket: targetFile.bucket,
               destinationKey: targetFile.key,
               chunkSize: s3MultipartChunksizeMb,
