@@ -51,7 +51,8 @@
     "@cumulus/ingest": "19.1.0",
     "@cumulus/message": "19.1.0",
     "@cumulus/types": "19.1.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "pg": "~8.13"
   },
   "devDependencies": {
     "@cumulus/schemas": "19.1.0"
