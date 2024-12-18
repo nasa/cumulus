@@ -7,29 +7,50 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 
+// const { getKnexClient, GranulePgModel } = require('@cumulus/db');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { loadConfig } = require('../../helpers/testUtils');
 describe('when moveGranulesCollection is called', () => {
   let stackName;
-
   beforeAll(async () => {
     const config = await loadConfig();
     stackName = config.stackName;
-    // systemBucket = config.bucket;
+    systemBucket = config.bucket;
   });
-  // afterAll(async () => {
-  //   await deleteS3Object(
-  //     systemBucket,
-  //     leftoverS3Key
-  //   );
-  // });
+
   describe('under normal circumstances', () => {
     let beforeAllFailed;
+    let finalFiles;
+    afterAll(async () => {
+      await Promise.all(finalFiles.map(async (fileObj) => deleteS3Object(
+        fileObj.bucket,
+        fileObj.key
+      )));
+    });
     beforeAll(async () => {
       const sourceUrlPrefix = `source_path/${uuidv4()}`;
       const targetUrlPrefix = `target_path/${uuidv4()}`;
+      finalFiles = [
+        {
+          bucket: 'cumulus-test-sandbox-protected',
+          prefix: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
+        },
+        {
+          bucket: 'cumulus-test-sandbox-public',
+          prefix: `${targetUrlPrefix}/jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
+        },
+        {
+          bucket: 'cumulus-test-sandbox-public',
+          prefix: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
+        },
+        {
+          bucket: 'cumulus-test-sandbox-public',
+          prefix: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`,
+        },
+      ];
+
       const payload = {
         meta: {
           collection: {
@@ -63,7 +84,7 @@ describe('when moveGranulesCollection is called', () => {
                 regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$',
                 sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
                 bucket: 'public',
-                url_path: 'jpg/example2/',
+                url_path: `${targetUrlPrefix}/jpg/example2/`,
               },
             ],
             url_path: targetUrlPrefix,
@@ -152,7 +173,7 @@ describe('when moveGranulesCollection is called', () => {
         });
       }));
       const { $metadata } = await lambda().send(new InvokeCommand({
-        FunctionName: `ecarton-ci-tf-MoveGranuleCollections`,
+        FunctionName: `${stackName}-MoveGranuleCollections`,
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
           cma: {
@@ -169,26 +190,9 @@ describe('when moveGranulesCollection is called', () => {
         console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
         beforeAllFailed = true;
       }
-      const expectedFiles = [
-        {
-          bucket: 'cumulus-test-sandbox-protected',
-          prefix: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
-        },
-        {
-          bucket: 'cumulus-test-sandbox-public',
-          prefix: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
-        },
-        {
-          bucket: 'cumulus-test-sandbox-public',
-          prefix: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
-        },
-        {
-          bucket: 'cumulus-test-sandbox-public',
-          prefix: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`,
-        },
-      ];
+      
       try {
-      await Promise.all(expectedFiles.map((file) => expectAsync(
+      await Promise.all(finalFiles.map((file) => expectAsync(
         waitForListObjectsV2ResultCount({
           ...file,
           desiredCount: 1,
@@ -200,9 +204,20 @@ describe('when moveGranulesCollection is called', () => {
         console.log(`files do not appear to have been moved: error: ${error}`);
         beforeAllFailed = false;
       }
+
     });
-    it('moves the granule data', () => {
+    it('moves the granule data in s3', () => {
       if (beforeAllFailed) fail('beforeAllFailed');
+    });
+    it('updates the granule data in postgres', async () => {
+      if (beforeAllFailed) fail('beforeAllFailed');
+      // const knex = await getKnexClient();
+      // const granuleModel = new GranulePgModel();
+      // const finalPgGranule = await granuleModel.get(knex, {
+      //   cumulus_id: pgRecords.granules[0].cumulus_id,
+      // });
+      // t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+      // t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
     });
   });
 });

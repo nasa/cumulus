@@ -169,14 +169,14 @@ async function moveGranulesInS3(
         const sourceFile = sourceGranule.files[i];
         const targetFile = targetGranule.files[i];
         if (!(sourceFile && targetFile)) {
-          return;
+          continue;
         }
         if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
           throw new AssertionError({ message: '' });
         }
         const isMetadataFile = isCMRMetadataFile(targetFile);
         if (!await s3MoveNeeded(sourceFile, targetFile, isMetadataFile)) {
-          return;
+          continue;
         }
         log.warn('attempting to do something with', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
         if (isMetadataFile) {
@@ -196,6 +196,7 @@ async function moveGranulesInS3(
           log.warn('succesfully moved', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
         }
       }
+      return;
       // return Promise.all(zip(sourceGranule.files, targetGranule.files)
       //   .map(async ([sourceFile, targetFile]) => {
       //     if (!(sourceFile && targetFile)) {
