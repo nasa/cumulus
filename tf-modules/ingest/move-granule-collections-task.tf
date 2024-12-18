@@ -103,13 +103,18 @@ data "aws_iam_policy_document" "move_granule_collections_task_policy" {
     resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
   }
   statement {
+    
     actions = [
-      "s3:AbortMultipartUpload",
-      "s3:GetObject*",
-      "s3:PutObject*",
-      "s3:ListMultipartUploadParts",
-      "s3:DeleteObject*",
+
+      "s3:PutReplicationConfiguration",
+      "s3:PutLifecycleConfiguration",
+      "s3:PutBucket*",
+      "s3:PutAccelerateConfiguration",
+      "s3:ListBucket*",
+      "s3:GetReplicationConfiguration",
+      "s3:GetLifecycleConfiguration",
       "s3:GetBucket*",
+      "s3:GetAccelerateConfiguration"
     ]
     resources = [for k, v in var.buckets :  "arn:aws:s3:::${v.name}/*" if v.type != "internal"]
   }
