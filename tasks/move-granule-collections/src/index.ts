@@ -161,39 +161,71 @@ async function moveGranulesInS3(
 ): Promise<void> {
   await Promise.all(
     zip(sourceGranules, targetGranules).map(async ([sourceGranule, targetGranule]) => {
-      if (sourceGranule?.files === undefined || targetGranule?.files === undefined) {
+      if (!sourceGranule?.files || !targetGranule?.files) {
         return null;
       }
-      return Promise.all(zip(sourceGranule.files, targetGranule.files)
-        .map(async ([sourceFile, targetFile]) => {
-          if (!(sourceFile && targetFile)) {
-            return;
-          }
-          if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
-            throw new AssertionError({ message: '' });
-          }
-          const isMetadataFile = isCMRMetadataFile(targetFile);
-          if (!await s3MoveNeeded(sourceFile, targetFile, isMetadataFile)) {
-            return;
-          }
-          log.warn('attempting to do something with', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
-          if (isMetadataFile) {
-            await s3CopyObject({
-              Bucket: targetFile.bucket,
-              Key: targetFile.key,
-              CopySource: `${sourceFile.bucket}/${sourceFile.key}`,
-            });
-          } else {
-            await S3.moveObject({
-              sourceBucket: sourceFile.bucket,
-              sourceKey: sourceFile. key,
-              destinationBucket: targetFile.bucket,
-              destinationKey: targetFile.key,
-              chunkSize: s3MultipartChunksizeMb,
-            });
-            log.warn('succesfully moved', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
-          }
-        }));
+    
+      for(let i = 0; i < sourceGranule.files.length; i += 1){
+        const sourceFile = sourceGranule.files[i];
+        const targetFile = targetGranule.files[i];
+        if (!(sourceFile && targetFile)) {
+          return;
+        }
+        if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
+          throw new AssertionError({ message: '' });
+        }
+        const isMetadataFile = isCMRMetadataFile(targetFile);
+        if (!await s3MoveNeeded(sourceFile, targetFile, isMetadataFile)) {
+          return;
+        }
+        log.warn('attempting to do something with', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
+        if (isMetadataFile) {
+          await s3CopyObject({
+            Bucket: targetFile.bucket,
+            Key: targetFile.key,
+            CopySource: `${sourceFile.bucket}/${sourceFile.key}`,
+          });
+        } else {
+          await S3.moveObject({
+            sourceBucket: sourceFile.bucket,
+            sourceKey: sourceFile. key,
+            destinationBucket: targetFile.bucket,
+            destinationKey: targetFile.key,
+            chunkSize: s3MultipartChunksizeMb,
+          });
+          log.warn('succesfully moved', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
+        }
+      }
+      // return Promise.all(zip(sourceGranule.files, targetGranule.files)
+      //   .map(async ([sourceFile, targetFile]) => {
+      //     if (!(sourceFile && targetFile)) {
+      //       return;
+      //     }
+      //     if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
+      //       throw new AssertionError({ message: '' });
+      //     }
+      //     const isMetadataFile = isCMRMetadataFile(targetFile);
+      //     if (!await s3MoveNeeded(sourceFile, targetFile, isMetadataFile)) {
+      //       return;
+      //     }
+      //     log.warn('attempting to do something with', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
+      //     if (isMetadataFile) {
+      //       await s3CopyObject({
+      //         Bucket: targetFile.bucket,
+      //         Key: targetFile.key,
+      //         CopySource: `${sourceFile.bucket}/${sourceFile.key}`,
+      //       });
+      //     } else {
+      //       await S3.moveObject({
+      //         sourceBucket: sourceFile.bucket,
+      //         sourceKey: sourceFile. key,
+      //         destinationBucket: targetFile.bucket,
+      //         destinationKey: targetFile.key,
+      //         chunkSize: s3MultipartChunksizeMb,
+      //       });
+      //       log.warn('succesfully moved', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
+      //     }
+      //   }));
     })
   );
 }
