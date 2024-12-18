@@ -115,7 +115,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
  * @param  {string} type     - Elasticsearch type
  * @returns {Promise} Elasticsearch response
  */
-async function updateExistingRecord(esClient, id, doc, index, type) {
+async function updateExistingRecord(esClient, id, doc, index, type, parent = undefined) {
   return await esClient.client.update({
     index,
     type,
@@ -127,6 +127,7 @@ async function updateExistingRecord(esClient, id, doc, index, type) {
       },
     },
     refresh: inTestMode(),
+    parent
   });
 }
 
@@ -142,6 +143,46 @@ async function updateExistingRecord(esClient, id, doc, index, type) {
  */
 function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, type = 'asyncOperation') {
   return updateExistingRecord(esClient, id, updates, index, type);
+}
+
+/**
+ * Updates a granule record in Elasticsearch
+ *
+ * @param  {Object} esClient - Elasticsearch Connection object
+ * @param  {Object} id - Record ID
+ * @param  {Object} granule - Document of updates to apply
+ * @param  {string} index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type - Elasticsearch type (default: asyncOperation)
+ * @returns {Promise} elasticsearch update response
+ */
+function updateGranule(esClient, id, granule, index = defaultIndexAlias, type = 'granule') {
+  return updateExistingRecord(esClient, id, granule, index, type, granule.collectionId);
+}
+
+/**
+ * Updates a file record in Elasticsearch
+ *
+ * @param  {Object} esClient - Elasticsearch Connection object
+ * @param  {Object} id - Record ID
+ * @param  {Object} file - Document of updates to apply
+ * @param  {string} index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type - Elasticsearch type (default: asyncOperation)
+ * @returns {Promise<void>} elasticsearch update response
+ */
+function updateFile(esClient, id, file, index = defaultIndexAlias, type = 'file') {
+  return updateExistingRecord(esClient, id, file, index, type);
+}
+/**
+ * Updates a granule record along with any associated file records in Elasticsearch
+ *
+ * @param  {Object} esClient - Elasticsearch Connection object
+ * @param  {Object} id - Record ID
+ * @param  {Object} granule - Document of updates to apply
+ * @param  {string} index - Elasticsearch index alias (default defined in search.js)
+ * @returns {Promise<void>} elasticsearch update response
+ */
+async function updateGranuleAndAssociatedFiles(esClient, id, granule, index = defaultIndexAlias) {
+  await updateGranule(esClient, id, granule, index);
 }
 
 const executionInvalidNullFields = [
@@ -818,6 +859,7 @@ module.exports = {
   indexReconciliationReport,
   indexRule,
   updateAsyncOperation,
+  updateGranuleAndAssociatedFiles,
   upsertExecution,
   upsertGranule,
   upsertPdr,

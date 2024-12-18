@@ -702,7 +702,7 @@ test.serial('Create new index - index already exists', async (t) => {
   await esClient.client.indices.delete({ index: newIndex });
 });
 
-test.serial('Create new index with number of shards env var set', async (t) => {
+test('Create new index with number of shards env var set', async (t) => {
   const { esClient } = t.context;
   const newIndex = randomId('esindex');
 
@@ -720,3 +720,54 @@ test.serial('Create new index with number of shards env var set', async (t) => {
     await esClient.client.indices.delete({ index: newIndex });
   }
 });
+
+test('updateGranulesAndFiles updates granule and associated files', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const granuleId = randomString();
+  const oldGranule = {
+    granuleId,
+    files: [{
+      bucket: 'a',
+      key: 'b',
+    }],
+    collectionId: 'ABC___123',
+    provider: 'provider',
+    createdAt: 123,
+  };
+  const updatedGranule = {
+    ...oldGranule,
+    files: [{
+      bucket: 'a/a',
+      bucket: 'a/b',
+    }],
+    collectionId: 'ABCD___123'
+  }
+  const { _id: es_id } = await indexer.indexGranule(esClient, oldGranule, esIndex);
+  console.log(es_id)
+
+  await esClient.client.indices.refresh();
+  const record = await esClient.client.get({
+    index: esIndex,
+    type: 'granule',
+    id: oldGranule.granuleId,
+    parent: oldGranule.collectionId
+  }).then((response) => response.body);
+  t.is(record._source.collectionId, 'ABC___123');
+
+  await indexer.updateGranuleAndAssociatedFiles(
+    esClient,
+    es_id,
+    updatedGranule,
+    esIndex
+  );
+
+  const finalGranule = await esClient.client.get({
+    index: esIndex,
+    type: 'granule',
+    id: updatedGranule.granuleId,
+    parent: updatedGranule.collectionId
+  }).then((response) => response.body);
+
+  t.is(finalGranule._source.collectionId, 'ABCD___123');
+})
