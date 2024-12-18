@@ -1,26 +1,53 @@
 /* eslint-disable no-await-in-loop */
 const test = require('ava');
-const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
 
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const cryptoRandomString = require('crypto-random-string');
 const {
   CollectionPgModel,
-  FilePgModel,
-  GranulePgModel,
-  migrationDir,
   destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeFileRecordFactory,
   fakeGranuleRecordFactory,
+  FilePgModel,
   generateLocalTestDb,
   getUniqueGranuleByGranuleId,
+  GranulePgModel,
+  localStackConnectionEnv,
+  migrationDir,
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleResultToApiGranule,
-  updateGranulesAndFiles,
-} = require('../../dist');
+} = require('@cumulus/db');
+const {
+  createBucket,
+  recursivelyDeleteS3Bucket,
+  s3PutObject,
+} = require('@cumulus/aws-client/S3');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+const models = require('../../models');
 
-const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
+const { request } = require('../helpers/request');
+
+// Dynamo mock data factories
+const {
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers,
+} = require('../../lib/testUtils');
+
+const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
+
+let accessTokenModel;
+let jwtAuthToken;
+
+process.env.AccessTokensTable = randomId('token');
+process.env.stackName = randomId('stackname');
+process.env.system_bucket = randomId('system-bucket');
+process.env.TOKEN_SECRET = randomId('secret');
+process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
+
+// import the express app after setting the env variables
+const { app } = require('../../app');
 
 /**
  * Simulate granule records post-collection-move for database updates test
@@ -58,6 +85,27 @@ test.before(async (t) => {
     testDbName,
     migrationDir
   );
+  process.env.CMR_ENVIRONMENT = 'SIT';
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  // create a fake bucket
+  await createBucket(process.env.system_bucket);
+
+  // create a workflow template file
+  const tKey = `${process.env.stackName}/workflow_template.json`;
+  await s3PutObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
+
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
 
@@ -149,13 +197,16 @@ test.before(async (t) => {
 });
 
 test.after.always(async (t) => {
+  await accessTokenModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
-    ...t.context,
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
     testDbName,
   });
 });
 
-test.serial('updateGranulesAndFiles successfully updates a partial list of granules based on the collectionId change', async (t) => {
+test.serial('PATCH successfully updates a partial list of granules based on the collectionId change ', async (t) => {
   const {
     granuleIds,
     granulePgModel,
@@ -166,8 +217,15 @@ test.serial('updateGranulesAndFiles successfully updates a partial list of granu
     collection2,
     knex,
   } = t.context;
-  await updateGranulesAndFiles(knex, movedGranules);
+  const response = await request(app)
+    .patch('/granules/')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(movedGranules)
+    .expect(200);
 
+  const body = response.body;
+  t.true(body.message.includes('Successfully updated granules'));
   const returnedGranules = await Promise.all(granuleIds.map((id) =>
     getUniqueGranuleByGranuleId(knex, id, granulePgModel)));
 
@@ -189,7 +247,7 @@ test.serial('updateGranulesAndFiles successfully updates a partial list of granu
   }
 });
 
-test.serial('updateGranulesAndFiles successfully updates a complete list of granules, 1/2 of which have already been moved', async (t) => {
+test.serial('PATCH successfully updates a complete list of granules, 1/2 of which have already been moved', async (t) => {
   const {
     granuleIds,
     granulePgModel,
@@ -201,14 +259,20 @@ test.serial('updateGranulesAndFiles successfully updates a complete list of gran
     collection2,
     knex,
   } = t.context;
-  // the remaining granules of movedGranules in collection 1 will need to be updated to collection 2
   movedGranules.splice(-5);
   movedGranules.push(await simulateGranuleUpdate(knex, granules.slice(5), collection,
     collectionId, collectionId2));
 
   const testPostMoveApiGranules = movedGranules.flat();
-  await updateGranulesAndFiles(knex, testPostMoveApiGranules);
+  const response = await request(app)
+    .patch('/granules/')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(testPostMoveApiGranules)
+    .expect(200);
 
+  const body = response.body;
+  t.true(body.message.includes('Successfully updated granules'));
   const returnedGranules = await Promise.all(granuleIds.map((id) =>
     getUniqueGranuleByGranuleId(knex, id, granulePgModel)));
 
