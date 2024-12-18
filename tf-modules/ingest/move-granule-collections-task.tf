@@ -105,7 +105,6 @@ data "aws_iam_policy_document" "move_granule_collections_task_policy" {
   statement {
     
     actions = [
-
       "s3:PutReplicationConfiguration",
       "s3:PutLifecycleConfiguration",
       "s3:PutBucket*",
@@ -114,11 +113,21 @@ data "aws_iam_policy_document" "move_granule_collections_task_policy" {
       "s3:GetReplicationConfiguration",
       "s3:GetLifecycleConfiguration",
       "s3:GetBucket*",
-      "s3:GetAccelerateConfiguration"
+      "s3:GetAccelerateConfiguration",
     ]
     resources = [for k, v in var.buckets :  "arn:aws:s3:::${v.name}/*" if v.type != "internal"]
   }
-
+  statement {
+    actions = [
+      "s3:PutObject*",
+      "s3:ListMultipartUploadParts",
+      "s3:GetObject*",
+      "s3:DeleteObjectVersion",
+      "s3:DeleteObject",
+      "s3:AbortMultipartUpload"
+    ]
+    resources = [for k, v in var.buckets :  "arn:aws:s3:::${v.name}/*" if v.type != "internal"]
+  }
   statement {
     actions = ["secretsmanager:GetSecretValue"]
     resources = [
