@@ -90,6 +90,45 @@ data "aws_iam_policy_document" "move_granule_collections_task_policy" {
     ]
     resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
   }
+  statement {
+    actions = [
+      "states:StopExecution",
+      "states:StartExecution",
+      "states:SendTaskSuccess",
+      "states:SendTaskFailure",
+      "states:ListStateMachines",
+      "states:GetExecutionHistory",
+      "states:GetActivityTask",
+      "states:DescribeExecution",
+      "states:DescribeActivity",
+      "sns:publish",
+      "sns:List*",
+      "s3:ListAllMyBuckets",
+      "logs:PutLogEvents",
+      "logs:DescribeLogStreams",
+      "logs:CreateLogStream",
+      "logs:CreateLogGroup",
+      "lambda:invokeFunction",
+      "lambda:GetFunction",
+      "kinesis:PutRecord",
+      "kinesis:ListStreams",
+      "kinesis:GetShardIterator",
+      "kinesis:GetRecords",
+      "kinesis:DescribeStream",
+      "events:PutRule",
+      "events:ListRules",
+      "events:EnableRule",
+      "events:DisableRule",
+      "events:DescribeRule",
+      "events:DeleteRule",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface",
+      "ec2:CreateNetworkInterface",
+      "dynamodb:ListTables",
+      "cloudformation:DescribeStacks"
+    ]
+    resources = [ "*" ]
+  }
 
   statement {
     actions = [
@@ -115,7 +154,7 @@ data "aws_iam_policy_document" "move_granule_collections_task_policy" {
       "s3:GetBucket*",
       "s3:GetAccelerateConfiguration",
     ]
-    resources = [for k, v in var.buckets :  "arn:aws:s3:::${v.name}/*" if v.type != "internal"]
+    resources = [for k, v in var.buckets :  "arn:aws:s3:::${v.name}" if v.type != "internal"]
   }
   statement {
     actions = [
