@@ -125,7 +125,6 @@ async function s3MoveNeeded(
   if (!moveRequested(sourceFile, targetFile)) {
     return false;
   }
-  log.warn('going to check if target exists', { Bucket: targetFile.bucket, Key: targetFile.key }, isMetadataFile)
   const targetExists = await S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key });
   /**
    * cmrmetadata file must skip duplicate behavior since it will
@@ -139,7 +138,6 @@ async function s3MoveNeeded(
     }
     return true;
   }
-  log.warn('going to check if source exists', { Bucket: sourceFile.bucket, Key: sourceFile.key }, isMetadataFile)
   const sourceExists = await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key });
   if (targetExists && sourceExists) {
     // TODO should this use duplicateHandling?
@@ -164,69 +162,34 @@ async function moveGranulesInS3(
       if (!sourceGranule?.files || !targetGranule?.files) {
         return null;
       }
-    
-      for(let i = 0; i < sourceGranule.files.length; i += 1){
-        const sourceFile = sourceGranule.files[i];
-        const targetFile = targetGranule.files[i];
-        if (!(sourceFile && targetFile)) {
-          continue;
-        }
-        if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
-          throw new AssertionError({ message: '' });
-        }
-        const isMetadataFile = isCMRMetadataFile(targetFile);
-        if (!await s3MoveNeeded(sourceFile, targetFile, isMetadataFile)) {
-          continue;
-        }
-        log.warn('attempting to do something with', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
-        if (isMetadataFile) {
-          await s3CopyObject({
-            Bucket: targetFile.bucket,
-            Key: targetFile.key,
-            CopySource: `${sourceFile.bucket}/${sourceFile.key}`,
-          });
-        } else {
-          await S3.moveObject({
-            sourceBucket: sourceFile.bucket,
-            sourceKey: sourceFile. key,
-            destinationBucket: targetFile.bucket,
-            destinationKey: targetFile.key,
-            chunkSize: s3MultipartChunksizeMb,
-          });
-          log.warn('succesfully moved', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
-        }
-      }
-      return;
-      // return Promise.all(zip(sourceGranule.files, targetGranule.files)
-      //   .map(async ([sourceFile, targetFile]) => {
-      //     if (!(sourceFile && targetFile)) {
-      //       return;
-      //     }
-      //     if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
-      //       throw new AssertionError({ message: '' });
-      //     }
-      //     const isMetadataFile = isCMRMetadataFile(targetFile);
-      //     if (!await s3MoveNeeded(sourceFile, targetFile, isMetadataFile)) {
-      //       return;
-      //     }
-      //     log.warn('attempting to do something with', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
-      //     if (isMetadataFile) {
-      //       await s3CopyObject({
-      //         Bucket: targetFile.bucket,
-      //         Key: targetFile.key,
-      //         CopySource: `${sourceFile.bucket}/${sourceFile.key}`,
-      //       });
-      //     } else {
-      //       await S3.moveObject({
-      //         sourceBucket: sourceFile.bucket,
-      //         sourceKey: sourceFile. key,
-      //         destinationBucket: targetFile.bucket,
-      //         destinationKey: targetFile.key,
-      //         chunkSize: s3MultipartChunksizeMb,
-      //       });
-      //       log.warn('succesfully moved', JSON.stringify(sourceFile, null, 2), JSON.stringify(targetFile, null, 2));
-      //     }
-      //   }));
+      return Promise.all(zip(sourceGranule.files, targetGranule.files)
+        .map(async ([sourceFile, targetFile]) => {
+          if (!(sourceFile && targetFile)) {
+            return;
+          }
+          if (!apiFileIsValid(sourceFile) || !apiFileIsValid(targetFile)) {
+            throw new AssertionError({ message: '' });
+          }
+          const isMetadataFile = isCMRMetadataFile(targetFile);
+          if (!await s3MoveNeeded(sourceFile, targetFile, isMetadataFile)) {
+            return;
+          }
+          if (isMetadataFile) {
+            await s3CopyObject({
+              Bucket: targetFile.bucket,
+              Key: targetFile.key,
+              CopySource: `${sourceFile.bucket}/${sourceFile.key}`,
+            });
+          } else {
+            await S3.moveObject({
+              sourceBucket: sourceFile.bucket,
+              sourceKey: sourceFile. key,
+              destinationBucket: targetFile.bucket,
+              destinationKey: targetFile.key,
+              chunkSize: s3MultipartChunksizeMb,
+            });
+          }
+        }));
     })
   );
 }
@@ -286,15 +249,12 @@ async function moveFilesForAllGranules(
   */
   // move all non-cmrMetadata files and copy all cmrmetadata files
   await moveGranulesInS3(sourceGranules, targetGranules, s3MultipartChunksizeMb);
-  log.warn('moved in s3')
   // update postgres (or other cumulus datastores if applicable)
   await moveGranulesInCumulusDatastores(
     targetGranules
   );
-  log.warn('moved in pg')
   // because cmrMetadata files were *copied* and not deleted, delete them now
   await cleanupCMRMetadataFiles(sourceGranules, targetGranules);
-  log.warn('cleanedup')
 }
 
 function updateFileMetadata(
@@ -350,7 +310,6 @@ async function updateGranuleMetadata(
   cmrFiles: { [key: string]: CMRFile },
   cmrFileNames: Array<string>
 ): Promise<ApiGranule> {
-  log.warn('and our granule is', JSON.stringify(granule, null, 2))
   const cmrFile = get(cmrFiles, granule.granuleId, null);
 
   const cmrMetadata = cmrFile ?
@@ -379,7 +338,6 @@ async function buildTargetGranules(
 }
 
 async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object> {
-  log.warn(JSON.stringify(event, null, 2));
   const config = event.config;
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
     ? config.s3MultipartChunksizeMb : Number(process.env.default_s3_multipart_chunksize_mb);
@@ -410,13 +368,11 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
   const targetGranules = await buildTargetGranules(
     granulesInput, config, cmrFilesByGranuleId
   );
-  log.warn('built targets');
 
   // Move files from staging location to final location
   await moveFilesForAllGranules(
     granulesInput, targetGranules, chunkSize
   );
-  log.warn('moved_files')
 
   return {
     granules: targetGranules,
