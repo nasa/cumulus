@@ -47,9 +47,6 @@ private_archive_api_gateway = true
 
 # LOG CONFIGURATION (optional)
 log_api_gateway_to_cloudwatch = true
-log_destination_arn = "arn:aws:logs:us-east-1:388742028941:destination:CumulusRecipient-LogDestination"
-# additional_log_groups_to_elk = {
-# }
 
 tea_distribution_url = "https://data.cumulus.sit.earthdata.nasa.gov"
 
