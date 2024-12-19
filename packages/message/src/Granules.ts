@@ -9,6 +9,7 @@
  */
 
 import isEmpty from 'lodash/isEmpty';
+import isNil from 'lodash/isNil';
 import isInteger from 'lodash/isInteger';
 import isUndefined from 'lodash/isUndefined';
 import mapValues from 'lodash/mapValues';
@@ -22,6 +23,7 @@ import {
   ApiGranule,
   GranuleStatus,
   GranuleTemporalInfo,
+  PartialGranuleTemporalInfo,
   MessageGranule,
 } from '@cumulus/types/api/granules';
 import { ApiFile } from '@cumulus/types/api/files';
@@ -133,13 +135,15 @@ function isProcessingTimeInfo(
 
 /**
  * ** Private **
- * Convert date string to standard ISO format, retaining null values if they exist
+ * Convert date string to standard ISO format, retaining null/undefined values if they exist
+ * and converting '' to null
  *
  * @param {string} date - Date string, possibly in multiple formats
  * @returns {string} Standardized ISO date string
  */
-const convertDateToISOStringPreservingNull = (date: string | null) => {
-  if (date === null) return null;
+const convertDateToISOStringSettingNull = (date: string | null | undefined) => {
+  if (isNil(date)) return date;
+  if (date === '') return null;
   return convertDateToISOString(date);
 };
 
@@ -159,7 +163,7 @@ export const getGranuleProcessingTimeInfo = (
     : {};
   return mapValues(
     updatedProcessingTimeInfo,
-    convertDateToISOStringPreservingNull
+    convertDateToISOStringSettingNull
   );
 };
 
@@ -193,12 +197,12 @@ export const getGranuleCmrTemporalInfo = async ({
   granule: MessageGranule,
   cmrTemporalInfo?: GranuleTemporalInfo,
   cmrUtils: CmrUtilsClass
-}): Promise<GranuleTemporalInfo | {}> => {
+}): Promise<PartialGranuleTemporalInfo | {}> => {
   // Get CMR temporalInfo (beginningDateTime, endingDateTime,
   // productionDateTime, lastUpdateDateTime)
   const temporalInfo = isGranuleTemporalInfo(cmrTemporalInfo)
     ? { ...cmrTemporalInfo }
-    : await cmrUtils.getGranuleTemporalInfo(granule);
+    : await cmrUtils.getGranuleTemporalInfo(granule) as PartialGranuleTemporalInfo;
 
   if (isEmpty(temporalInfo)) {
     return pick(granule, ['beginningDateTime', 'endingDateTime', 'productionDateTime', 'lastUpdateDateTime']);
@@ -206,7 +210,7 @@ export const getGranuleCmrTemporalInfo = async ({
 
   return mapValues(
     temporalInfo,
-    convertDateToISOStringPreservingNull
+    convertDateToISOStringSettingNull
   );
 };
 
