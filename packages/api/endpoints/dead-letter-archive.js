@@ -69,6 +69,7 @@ async function postRecoverCumulusMessages(req, res) {
     systemBucket,
     knexConfig: { ...process.env },
     useLambdaEnvironmentVariables: true,
+    containerName: 'DeadLetterRecovery',
   });
   return res.status(202).send(asyncOperation);
 }
