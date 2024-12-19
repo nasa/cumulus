@@ -199,16 +199,16 @@ module "cumulus" {
 
   # Thin Egress App settings. Uncomment to use TEA.
   # must match stage_name variable for thin-egress-app module
-  # tea_api_gateway_stage         = local.tea_stage_name
-  # tea_rest_api_id               = module.thin_egress_app.rest_api.id
-  # tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
-  # tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
-  # tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
+  tea_api_gateway_stage         = local.tea_stage_name
+  tea_rest_api_id               = module.thin_egress_app.rest_api.id
+  tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
+  tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
+  tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
 
   log_destination_arn = var.log_destination_arn
 
   # Cumulus Distribution settings. Remove/comment to use TEA
-  tea_external_api_endpoint = module.cumulus_distribution.api_uri
+  #tea_external_api_endpoint = module.cumulus_distribution.api_uri
 
   deploy_cumulus_distribution = var.deploy_cumulus_distribution
 
@@ -299,4 +299,16 @@ module "s3_access_test_lambda" {
   }
 
   tags = local.tags
+}
+
+module "s3-replicator" {
+  source = "../../tf-modules/s3-replicator"
+  prefix               = var.prefix
+  vpc_id               = var.vpc_id
+  subnet_ids           = var.lambda_subnet_ids
+  permissions_boundary = var.permissions_boundary_arn
+  source_bucket        = var.s3_replicator_config.source_bucket
+  source_prefix        = var.s3_replicator_config.source_prefix
+  target_bucket        = var.s3_replicator_config.target_bucket
+  target_prefix        = var.s3_replicator_config.target_prefix
 }
