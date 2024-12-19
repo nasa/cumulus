@@ -91,7 +91,7 @@ async function processDeadLetterArchive({
   path = `${process.env.stackName}/dead-letter-archive/sqs/`,
   writeRecordsFunction = writeRecords,
   batchSize = 1000,
-  concurrency = 10,
+  concurrency = 30,
 }) {
   log.info(`Processing dead letter archive in bucket ${bucket} at path ${path}`);
   log.info(`Concurrency set to ${concurrency}`);
@@ -170,12 +170,12 @@ async function handler(event) {
   const knex = await getKnexClient({
     env: {
       ...process.env,
-      dbMaxPool: event.dbMaxPool ?? 20,
+      dbMaxPool: event.dbMaxPool ?? 30,
     },
   });
   const {
     batchSize = 1000,
-    concurrency = 20,
+    concurrency = 30,
     bucket,
     path,
   } = event;
