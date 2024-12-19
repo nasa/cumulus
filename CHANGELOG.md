@@ -4,7 +4,6 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-
 ## Unreleased
 
 ### Changed
@@ -22,6 +21,35 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3940**
   - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
+
+## [v18.5.2] 2024-12-12
+
+### Breaking Changes
+
+- **CUMULUS-3934**
+  - Removed `ecs_cluster_instance_allow_ssh` resource.
+  - The `ecs_cluster_instance_allow_ssh` was implemented before SSM hosts were deployed
+    to NGAP accounts and allowed for SSHing into an instance from an SSH bastion, which no longer exists.
+  - Tunneling into an EC2 via SSM is still supported. Users relying solely on SSH will need to transition to SSM.
+
+### Changed
+
+- **CUMULUS-3936,CUMULUS-3948**
+  - Updated `tf-modules/cumulus/ecs_cluster_instance_autoscaling_cf_template.yml.tmpl`
+    user-data for compatibility with Amazon Linux 2023 AMI
+  - Fixed `tf-modules/cumulus` scripts to use Instance Metadata Service V2
+  - Updated `fake-provider-cf.yml` to work for Amazon Linux 2023 AMI
+- **CUMULUS-3941**
+  - Updated `SendPan` task to generate short pan with FAILED disposition.
+- **CUMULUS-3955**
+  - Removed `VACUUM` statements from db migrations. In cases where the PG database is very large, these queries
+    can take a long time and exceed the Lambda timeout, causing failures on deployment.
+
+### Fixed
+
+- **Security Vulnerabilities**
+  - Updated `@octokit/graphql` from 2.1.1 to ^2.3.0 to address [CVE-2024-21538]
+    (https://github.com/advisories/GHSA-3xgq-45jj-v275)
 
 ## [v18.5.1] 2024-10-25
 
@@ -8062,6 +8090,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
+[v18.5.2]: https://github.com/nasa/cumulus/compare/v18.5.1...v18.5.2
 [v18.5.1]: https://github.com/nasa/cumulus/compare/v18.5.0...v18.5.1
 [v18.5.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v18.5.0
 [v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.4.0
