@@ -1,7 +1,7 @@
 'use strict';
 
 import { Context } from 'aws-lambda';
-import cumulusMessageAdapter from '@cumulus/cumulus-message-adapter-js';
+import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import get from 'lodash/get';
 import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
@@ -385,7 +385,7 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
  * Lambda handler
  */
 async function handler(event: CumulusMessage, context: Context): Promise<Object> {
-  return await cumulusMessageAdapter.runCumulusTask(moveGranules, event, context);
+  return await runCumulusTask(moveGranules, event, context);
 }
 
 exports.handler = handler;
