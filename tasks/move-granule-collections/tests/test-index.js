@@ -1,6 +1,8 @@
 'use strict';
 
 const fs = require('fs');
+
+const proxyquire = require('proxyquire');
 const path = require('path');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
@@ -28,9 +30,9 @@ const {
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
+const { updateGranulesAndFiles } = require('@cumulus/db');
 
-const { moveGranules } = require('../dist/src');
-
+let moveGranules;
 async function uploadFiles(files) {
   await Promise.all(files.map((file) => {
     let body;
@@ -104,6 +106,16 @@ test.beforeEach(async (t) => {
     testDbName,
     migrationDir
   );
+  moveGranules = proxyquire(
+    '../dist/src',
+    {
+      '@cumulus/api-client/granules': {
+        updateGranules: (params) => (
+          updateGranulesAndFiles(knex, params.body)
+        )
+      },
+    },
+  ).moveGranules;
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
   t.context.publicBucket = randomId('public');
@@ -154,7 +166,7 @@ test.afterEach.always(async (t) => {
   });
 });
 
-test('Should move files to final location and update pg data', async (t) => {
+test.serial('Should move files to final location and update pg data', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
@@ -269,7 +281,7 @@ test('handles partially moved files', async (t) => {
   t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
-test('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
+test.serial('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
@@ -340,7 +352,7 @@ test('handles files that are pre-moved and misplaced w/r to postgres', async (t)
   t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
-test('handles files that need no move', async (t) => {
+test.serial('handles files that need no move', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)

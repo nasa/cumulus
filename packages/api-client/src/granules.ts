@@ -603,7 +603,7 @@ export const associateExecutionWithGranule = async (params: {
 };
 
 /**
- * Bulk operations on granules stored in cumulus
+ * Update granules to new details in cumulus
  * POST /granules/bulk
  *
  * @param params - params
@@ -634,7 +634,7 @@ export const updateGranules = async (params: {
     },
     expectedStatusCodes: 202,
   });
-}
+};
 
 /**
  * Bulk operations on granules stored in cumulus

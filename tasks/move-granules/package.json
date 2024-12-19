@@ -52,6 +52,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
+    "@cumulus/db": "19.1.0",
     "@cumulus/schemas": "19.1.0"
   }
 }

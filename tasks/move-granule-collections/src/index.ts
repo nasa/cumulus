@@ -11,7 +11,6 @@ import { Dictionary } from 'lodash';
 import path from 'path';
 import { MissingS3FileError, DuplicateFile, InvalidArgument } from '@cumulus/errors';
 import { S3 } from '@cumulus/aws-client';
-import { updateGranuleAndFiles, getKnexClient } from '@cumulus/db';
 import { CMR } from '@cumulus/cmr-client';
 import {
   unversionFilename,
@@ -37,6 +36,7 @@ import { BucketsConfigObject } from '@cumulus/common/types';
 import { getCmrSettings } from '@cumulus/cmrjs/cmr-utils';
 import { CMRConstructorParams } from '@cumulus/cmr-client/CMR';
 import { s3CopyObject } from '@cumulus/aws-client/S3';
+import { updateGranules } from '@cumulus/api-client/granules';
 
 const MB = 1024 * 1024;
 
@@ -198,8 +198,10 @@ async function moveGranulesInS3(
 async function moveGranulesInCumulusDatastores(
   targetGranules: Array<ApiGranule>
 ): Promise<void> {
-  const knex = await getKnexClient();
-  await updateGranuleAndFiles(knex, targetGranules);
+  await updateGranules({
+    prefix: process.env.STACKNAME || 'cumulus',
+    body: targetGranules,
+  });
 }
 
 async function cleanupCMRMetadataFiles(
