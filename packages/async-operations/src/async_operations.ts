@@ -74,6 +74,7 @@ export const startECSTask = async ({
   payloadBucket,
   payloadKey,
   useLambdaEnvironmentVariables,
+  containerName = 'AsyncOperation',
 }: {
   asyncOperationTaskDefinition: string,
   cluster: string,
@@ -83,6 +84,7 @@ export const startECSTask = async ({
   payloadBucket: string,
   payloadKey: string,
   useLambdaEnvironmentVariables?: boolean,
+  containerName ?: string
 }): StartEcsTaskReturnType => {
   const envVars = [
     { name: 'asyncOperationId', value: id },
@@ -113,7 +115,7 @@ export const startECSTask = async ({
     overrides: {
       containerOverrides: [
         {
-          name: 'AsyncOperation',
+          name: containerName,
           environment: taskVars,
         },
       ],
@@ -157,24 +159,26 @@ export const createAsyncOperation = async (
 /**
  * Start an AsyncOperation in ECS and store its associate record to DynamoDB
  *
- * @param {Object} params - params
- * @param {string} params.asyncOperationTaskDefinition - the name or ARN of the
+ * @param params - params
+ * @param params.asyncOperationId - the ID of the async operation
+ * @param params.asyncOperationTaskDefinition - the name or ARN of the
  *   async-operation ECS task definition
- * @param {string} params.cluster - the name of the ECS cluster
- * @param {string} params.description - the ECS task description
- * @param {Object} params.knexConfig - Object with Knex configuration keys
- * @param {string} params.callerLambdaName - the name of the Lambda initiating the ECS task
- * @param {string} params.lambdaName - the name of the Lambda task to be run
- * @param {string} params.operationType - the type of async operation to run
- * @param {Object|Array} params.payload - the event to be passed to the lambda task.
+ * @param params.cluster - the name of the ECS cluster
+ * @param params.description - the ECS task description
+ * @param params.knexConfig - Object with Knex configuration keys
+ * @param params.callerLambdaName - the name of the Lambda initiating the ECS task
+ * @param params.lambdaName - the name of the Lambda task to be run
+ * @param params.operationType - the type of async operation to run
+ * @param params.payload - the event to be passed to the lambda task.
  *   Must be a simple Object or Array which can be converted to JSON.
- * @param {string} params.stackName - the Cumulus stack name
- * @param {string} params.systemBucket - Cumulus system bucket to use for writing
+ * @param params.stackName - the Cumulus stack name
+ * @param params.systemBucket - Cumulus system bucket to use for writing
  * async payload objects
- * @param {string} params.useLambdaEnvironmentVariables -
+ * @param params.useLambdaEnvironmentVariables -
  * useLambdaEnvironmentVariables, set 'true' if async task
  * should import environment variables from the deployed lambda
- * @param {Object} params.startEcsTaskFunc - used for testing
+ * @param params.startEcsTaskFunc - used for testing
+ * @param params.containerName - the name of the container to run
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
@@ -192,6 +196,7 @@ export const startAsyncOperation = async (
     stackName: string,
     systemBucket: string,
     useLambdaEnvironmentVariables?: boolean,
+    containerName?: string,
     startEcsTaskFunc?: () => StartEcsTaskReturnType
   }
 ): Promise<Partial<ApiAsyncOperation>> => {
@@ -204,6 +209,7 @@ export const startAsyncOperation = async (
     callerLambdaName,
     knexConfig = process.env,
     startEcsTaskFunc = startECSTask,
+    containerName = 'AsyncOperation',
   } = params;
 
   if (!callerLambdaName) {
@@ -229,6 +235,7 @@ export const startAsyncOperation = async (
       id,
       payloadBucket,
       payloadKey,
+      containerName,
     });
 
     if (runTaskResponse?.failures && runTaskResponse.failures.length > 0) {
