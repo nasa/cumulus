@@ -112,9 +112,9 @@ test.beforeEach(async (t) => {
       '@cumulus/api-client/granules': {
         updateGranules: (params) => (
           updateGranulesAndFiles(knex, params.body)
-        )
+        ),
       },
-    },
+    }
   ).moveGranules;
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
