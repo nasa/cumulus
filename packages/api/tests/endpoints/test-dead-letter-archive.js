@@ -90,6 +90,7 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
     bucket: archiveBucket,
     concurrency: 30,
     path: archivePath,
+    dbMaxPool: 30,
   });
 });
 

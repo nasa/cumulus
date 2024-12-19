@@ -30,7 +30,7 @@ const postRecoverCumulusMessagesSchema = z.object({
   path: z.string().optional(),
   batchSize: zodStringNumberUnion.default(1000),
   concurrency: zodStringNumberUnion.default(30),
-  dbMaxPool: zodStringNumberUnion.default(60),
+  dbMaxPool: zodStringNumberUnion.default(30),
 }).passthrough();
 
 const parsePostRecoverCumulusMessagesPayload = zodParser('Post Recover Cumulus Message Payload', postRecoverCumulusMessagesSchema);
