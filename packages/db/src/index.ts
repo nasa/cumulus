@@ -134,7 +134,7 @@ export {
   getGranulesByApiPropertiesQuery,
   getGranulesByGranuleId,
   getGranuleAndCollection,
-  updateGranuleAndFiles,
+  updateGranulesAndFiles,
 } from './lib/granule';
 
 export {
