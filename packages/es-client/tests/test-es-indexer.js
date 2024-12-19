@@ -744,7 +744,6 @@ test('updateGranulesAndFiles updates granule and associated files', async (t) =>
     collectionId: 'ABCD___123'
   }
   const { _id: es_id } = await indexer.indexGranule(esClient, oldGranule, esIndex);
-  console.log(es_id)
 
   await esClient.client.indices.refresh();
   const record = await esClient.client.get({
