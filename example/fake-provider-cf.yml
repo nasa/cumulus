@@ -92,19 +92,21 @@ Resources:
           ToPort: 0
       VpcId: !Ref VpcId
 
-  LaunchConfiguration:
-    Type: AWS::AutoScaling::LaunchConfiguration
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
     Properties:
-      AssociatePublicIpAddress: false
-      IamInstanceProfile: !Ref InstanceProfile
-      ImageId: !Ref LatestAmiId
-      InstanceMonitoring: false
-      InstanceType: t3.small
-      SecurityGroups:
-        - !Ref SecurityGroup
-      UserData:
-        Fn::Base64:
-          Fn::Sub: |
+      LaunchTemplateName: "fake-provider-launch-template"
+      LaunchTemplateData:
+        IamInstanceProfile:
+          Arn: !GetAtt InstanceProfile.Arn
+        ImageId: !Ref LatestAmiId
+        Monitoring:
+          Enabled: false
+        InstanceType: t3.small
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        UserData:
+          Fn::Base64: !Sub |
             #!/bin/bash -ex
 
             TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
@@ -280,7 +282,9 @@ Resources:
         MinInstancesInService: 0
     DependsOn: S3ProviderBucket
     Properties:
-      LaunchConfigurationName: !Ref LaunchConfiguration
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
       MinSize: "1"
       DesiredCapacity: "1"
       MaxSize: "1"
