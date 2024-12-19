@@ -926,9 +926,8 @@ async function updateGranulesAndFilesCollectionRecords(req, res) {
   const payload = req.body;
   try {
     await updateGranulesAndFiles(knex, payload);
-    await Promise.all(payload.map( async (granule) =>
-      await updateEsGranule(esClient, granule.granuleId, granule, process.env.ES_INDEX)
-    ))
+    await Promise.all(payload.map(async (granule) =>
+      await updateEsGranule(esClient, granule.granuleId, granule, process.env.ES_INDEX)));
   } catch (error) {
     log.error(
       'failed to update granules:',

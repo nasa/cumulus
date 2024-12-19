@@ -739,24 +739,25 @@ test('updateGranule updates granule and associated files', async (t) => {
     ...oldGranule,
     files: [{
       bucket: 'a/a',
-      bucket: 'a/b',
+      key: 'a/b',
     }],
-    collectionId: 'ABCD___123'
-  }
-  const { _id: es_id } = await indexer.indexGranule(esClient, oldGranule, esIndex);
+    collectionId: 'ABCD___123',
+  };
+
+  const { _id: esId } = await indexer.indexGranule(esClient, oldGranule, esIndex);
 
   await esClient.client.indices.refresh();
   const record = await esClient.client.get({
     index: esIndex,
     type: 'granule',
     id: oldGranule.granuleId,
-    parent: oldGranule.collectionId
+    parent: oldGranule.collectionId,
   }).then((response) => response.body);
   t.is(record._source.collectionId, 'ABC___123');
 
   await indexer.updateGranule(
     esClient,
-    es_id,
+    esId,
     updatedGranule,
     esIndex
   );
@@ -765,8 +766,8 @@ test('updateGranule updates granule and associated files', async (t) => {
     index: esIndex,
     type: 'granule',
     id: updatedGranule.granuleId,
-    parent: updatedGranule.collectionId
+    parent: updatedGranule.collectionId,
   }).then((response) => response.body);
 
   t.is(finalGranule._source.collectionId, 'ABCD___123');
-})
+});

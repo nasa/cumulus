@@ -25,9 +25,9 @@ const {
 } = require('@cumulus/aws-client/S3');
 const indexer = require('@cumulus/es-client/indexer');
 const {
-    createTestIndex,
-    cleanupTestIndex,
-  } = require('@cumulus/es-client/testUtils');
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const models = require('../../models');
@@ -199,12 +199,12 @@ test.before(async (t) => {
 
   t.context.granules.map(async (granule) => {
     const newGranule = await translatePostgresGranuleResultToApiGranule(knex, {
-        ...granule,
-        collectionName: t.context.collection.name,
-        collectionVersion: t.context.collection.version,
-      });
+      ...granule,
+      collectionName: t.context.collection.name,
+      collectionVersion: t.context.collection.version,
+    });
     await indexer.indexGranule(esClient, newGranule, t.context.esIndex);
-  })
+  });
 
   t.context.pgFiles = await t.context.filePgModel.insert(knex, t.context.files);
   // update 1/2 of the granules to be moved to the new collection
@@ -268,7 +268,7 @@ test.serial('PATCH successfully updates a partial list of granules based on the 
       type: 'granule',
       id: granule.granule_id,
       parent: apiGranule.collectionId,
-    }).then((response) => response.body);
+    }).then((res) => res.body);
 
     // the movedGranules param only has 1/2 of the granules to be moved to collection 2
     // here we can check based on the granule's cumulus id which collection it should be a part of
@@ -325,7 +325,7 @@ test.serial('PATCH successfully updates a complete list of granules, 1/2 of whic
       type: 'granule',
       id: granule.granule_id,
       parent: apiGranule.collectionId,
-    }).then((response) => response.body);
+    }).then((res) => res.body);
     // now every granule should be part of collection 2
     t.true(apiGranule.collectionId === collectionId2);
     t.true(esGranule._source.collectionId === collectionId2);
