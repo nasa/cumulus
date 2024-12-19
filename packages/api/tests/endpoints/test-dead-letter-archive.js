@@ -65,6 +65,9 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
   const body = {
     bucket: archiveBucket,
     path: archivePath,
+    dbMaxPool: 50,
+    concurrency: 50,
+    batchSize: 50,
   };
 
   const response = await request(app)
@@ -86,11 +89,11 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
   t.is(cluster, process.env.EcsCluster);
   t.is(description, 'Dead-Letter Processor ECS Run');
   t.deepEqual(payload, {
-    batchSize: 1000,
+    batchSize: 50,
     bucket: archiveBucket,
-    concurrency: 30,
+    concurrency: 50,
     path: archivePath,
-    dbMaxPool: 30,
+    dbMaxPool: 50,
   });
 });
 
