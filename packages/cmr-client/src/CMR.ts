@@ -41,7 +41,7 @@ export interface CMRConstructorParams {
   passwordSecretName?: string
   provider: string,
   token?: string,
-  username: string,
+  username?: string,
   oauthProvider: string,
 }
 
@@ -67,11 +67,13 @@ export interface CMRConstructorParams {
   *  clientId: 'my-clientId',
   *  token: 'cmr_or_launchpad_token'
   * });
+  * TODO: this should be subclassed or refactored to a functional style
+  * due to branch logic/complexity in token vs password/username handling
  */
 export class CMR {
   clientId: string;
   provider: string;
-  username: string;
+  username?: string;
   oauthProvider: string;
   password?: string;
   passwordSecretName?: string;
@@ -79,17 +81,6 @@ export class CMR {
 
   /**
    * The constructor for the CMR class
-   *
-   * @param {Object} params
-   * @param {string} params.provider - the CMR provider id
-   * @param {string} params.clientId - the CMR clientId
-   * @param {string} params.username - CMR username, not used if token is provided
-   * @param {string} params.passwordSecretName - CMR password secret, not used if token is provided
-   * @param {string} params.password - CMR password, not used if token or
-   *  passwordSecretName is provided
-   * @param {string} params.token - CMR or Launchpad token,
-   * if not provided, CMR username and password are used to get a cmr token
-   * @param {string} params.oauthProvider - Oauth provider: earthdata or launchpad
    */
   constructor(params: CMRConstructorParams) {
     this.clientId = params.clientId;
@@ -131,6 +122,12 @@ export class CMR {
    * @returns {Promise.<string | undefined>} the token
    */
   async getToken(): Promise<string | undefined> {
+    if (this.oauthProvider === 'launchpad') {
+      return this.token;
+    }
+    if (!this.username) {
+      throw new Error('Username not specified for non-launchpad CMR client');
+    }
     return this.token
       ? this.token
       : updateToken(this.username, await this.getCmrPassword());

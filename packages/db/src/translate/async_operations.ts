@@ -1,3 +1,4 @@
+import omit from 'lodash/omit';
 import { toSnake } from 'snake-camel';
 import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
 import Logger from '@cumulus/logger';
@@ -38,7 +39,7 @@ export const translateApiAsyncOperationToPostgresAsyncOperation = (
   record: ApiAsyncOperation
 ): PostgresAsyncOperation => {
   // fix for old implementation of async-operation output assignment
-  const translatedRecord = <PostgresAsyncOperation>toSnake(record);
+  const translatedRecord = <PostgresAsyncOperation>toSnake(omit(record, 'timestamp'));
   if (record.output === 'none') {
     delete translatedRecord.output;
   } else if (record.output !== undefined) {

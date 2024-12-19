@@ -239,3 +239,31 @@ test('mapQueryStringFieldToDbField correctly converts all rule api fields to db 
   }, {});
   t.deepEqual(dbQueryParams, expectedDbParameters);
 });
+
+test('mapQueryStringFieldToDbField correctly converts all reconciliation report api fields to db fields', (t) => {
+  const queryStringParameters = {
+    name: 'some report name',
+    type: 'Granule Not Found',
+    status: 'Generated',
+    location: 's3://exampleBucket/examplePath',
+    createdAt: '1704100000000',
+    updatedAt: 1704100000000,
+  };
+
+  const expectedDbParameters = {
+    name: 'some report name',
+    type: 'Granule Not Found',
+    status: 'Generated',
+    location: 's3://exampleBucket/examplePath',
+    created_at: new Date(1704100000000),
+    updated_at: new Date(1704100000000),
+  };
+
+  const apiFieldsList = Object.entries(queryStringParameters)
+    .map(([name, value]) => ({ name, value }));
+  const dbQueryParams = apiFieldsList.reduce((acc, queryField) => {
+    const queryParam = mapQueryStringFieldToDbField('reconciliationReport', queryField);
+    return { ...acc, ...queryParam };
+  }, {});
+  t.deepEqual(dbQueryParams, expectedDbParameters);
+});

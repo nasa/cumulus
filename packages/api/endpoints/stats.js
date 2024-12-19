@@ -21,6 +21,7 @@ function getType(req) {
     logs: 'logs',
     providers: 'provider',
     executions: 'execution',
+    reconciliationReports: 'reconciliationReport',
   };
 
   const typeRequested = get(req, 'params.type') || get(req, 'query.type');
