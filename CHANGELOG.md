@@ -35,6 +35,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3759**
+  - Migrated `tf-modules/cumulus/ecs_cluster` ECS Autoscaling group from launch configurations to launch templates
 - **CUMULUS-3955**
   - Removed `VACUUM` statements from db migrations. In cases where the PG database is very large, these queries
     can take a long time and exceed the Lambda timeout, causing failures on deployment.
