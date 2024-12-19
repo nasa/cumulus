@@ -24,6 +24,7 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
   getGranuleAndCollection,
+  updateGranulesAndFiles,
 } = require('@cumulus/db');
 const {
   Search,
@@ -32,6 +33,7 @@ const {
   multipleRecordFoundString,
 } = require('@cumulus/es-client/search');
 const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
+// const { updateGranuleAndAssociatedFiles } = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
@@ -908,6 +910,36 @@ async function getByGranuleId(req, res) {
   return res.send({ ...result, recoveryStatus });
 }
 
+/**
+ * Based on a move-collections-task, will update a list of
+ * moved granules' records in PG and ES
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function updateGranulesAndFilesCollectionRecords(req, res) {
+  const {
+    knex = await getKnexClient(),
+    // esClient = await getEsClient(),
+  } = req.testContext || {};
+  const payload = req.body;
+  try {
+    await updateGranulesAndFiles(knex, payload);
+    // await payload.map((granule) =>
+    // updateGranuleAndAssociatedFiles(esClient, granule.granuleId, granule));
+  } catch (error) {
+    log.error(
+      'failed to update granules:',
+      error
+    );
+    return res.boom.badRequest(errorify(error));
+  }
+  return res.send({
+    message: 'Successfully updated granules',
+  });
+}
+
 async function bulkOperations(req, res) {
   const payload = req.body;
 
@@ -1073,6 +1105,7 @@ router.post('/', create);
 router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
 router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
 router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
+router.patch('/', updateGranulesAndFilesCollectionRecords);
 
 router.post(
   '/bulk',
@@ -1104,5 +1137,6 @@ module.exports = {
   put,
   patch,
   patchGranule,
+  updateGranulesAndFilesCollectionRecords,
   router,
 };

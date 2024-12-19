@@ -6,18 +6,24 @@ import {
   deconstructCollectionId,
 } from '@cumulus/message/Collections';
 
+import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
+import { createRejectableTransaction } from '../database';
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
 import { UpdatedAtRange } from '../types/record';
+import { translateApiGranuleToPostgresGranule } from '../translate/granules';
+import { translateApiFiletoPostgresFile } from '../translate/file';
 const { deprecate } = require('@cumulus/common/util');
 
 const { TableNames } = require('../tables');
+
+const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
 
 export const getGranuleCollectionId = async (
   knexOrTransaction: Knex,
@@ -353,4 +359,62 @@ export const getGranulesByGranuleId = async (
   const records: PostgresGranuleRecord[] = await knexOrTransaction(granulesTable)
     .where({ granule_id: granuleId });
   return records;
+};
+
+/**
+ * Change a granules' PG record and its files' PG record based on collection move
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+ * @param {Array<ApiGranuleRecord>} [granules] - updated ApiGranule records
+ * @returns {Promise<void>}
+ */
+export const updateGranulesAndFiles = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  granules: Array<ApiGranuleRecord>
+):Promise<void> => {
+  const {
+    granules: granulesTable,
+    files: filesTable,
+  } = TableNames;
+
+  try {
+    await createRejectableTransaction(knexOrTransaction, async (trx) => {
+      await Promise.all(granules.map(async (granule) => {
+        const pgGranule = await translateApiGranuleToPostgresGranule({
+          dynamoRecord: granule,
+          knexOrTransaction,
+        });
+        await trx(granulesTable).where('granule_id', '=', pgGranule.granule_id).update(
+          {
+            collection_cumulus_id: pgGranule.collection_cumulus_id,
+            updated_at: pgGranule.updated_at,
+            status: pgGranule.status,
+            last_update_date_time: pgGranule.last_update_date_time,
+          }
+        );
+        if (granule.files) {
+          await Promise.all(granule.files.map(async (file) => {
+            const pgFile = translateApiFiletoPostgresFile(
+              {
+                ...file,
+                granuleId: pgGranule.granule_id,
+              }
+            );
+
+            await trx(filesTable).where('file_name', '=', String(pgFile.file_name)).update(
+              {
+                updated_at: pgGranule.updated_at,
+                bucket: pgFile.bucket,
+                key: pgFile.key,
+                path: pgFile.path,
+              }
+            );
+          }));
+        }
+      }));
+    });
+  } catch (thrownError) {
+    log.error(`Write Granule and Files failed: ${JSON.stringify(thrownError)}`);
+    throw thrownError;
+  }
 };

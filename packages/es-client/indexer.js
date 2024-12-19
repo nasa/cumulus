@@ -127,7 +127,7 @@ async function updateExistingRecord(esClient, id, doc, index, type, parent = und
       },
     },
     refresh: inTestMode(),
-    parent
+    parent,
   });
 }
 
