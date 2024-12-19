@@ -1,0 +1,15 @@
+{
+  "comments": false,
+  "sourceMaps": "both",
+  "sourceType": "unambiguous",
+  "presets": [
+    ["@babel/preset-env", {
+      "targets": {
+        "node": "20.12.2"
+      }
+    }]
+  ],
+  "plugins": [
+    "source-map-support"
+  ]
+}
