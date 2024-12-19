@@ -119,6 +119,7 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
     batchSize: 1000,
     bucket: undefined,
     concurrency: 30,
+    dbMaxPool: 30,
     path: undefined,
   });
 });
@@ -155,5 +156,6 @@ test.serial('postRecoverCumulusMessages() uses correct caller lambda function na
     bucket: undefined,
     concurrency: 30,
     path: undefined,
+    dbMaxPool: 30,
   });
 });
