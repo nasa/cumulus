@@ -33,7 +33,7 @@ const {
   multipleRecordFoundString,
 } = require('@cumulus/es-client/search');
 const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
-const { updateGranuleAndAssociatedFiles } = require('@cumulus/es-client/indexer');
+const { updateGranule } = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
@@ -927,7 +927,7 @@ async function updateGranulesAndFilesCollectionRecords(req, res) {
   try {
     await updateGranulesAndFiles(knex, payload);
     await Promise.all(payload.map( async (granule) =>
-      await updateGranuleAndAssociatedFiles(esClient, granule.granuleId, granule, process.env.ES_INDEX)
+      await updateGranule(esClient, granule.granuleId, granule, process.env.ES_INDEX)
     ))
   } catch (error) {
     log.error(

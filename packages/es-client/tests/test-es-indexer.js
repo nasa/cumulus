@@ -721,7 +721,7 @@ test('Create new index with number of shards env var set', async (t) => {
   }
 });
 
-test('updateGranulesAndFiles updates granule and associated files', async (t) => {
+test('updateGranule updates granule and associated files', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const granuleId = randomString();
@@ -754,7 +754,7 @@ test('updateGranulesAndFiles updates granule and associated files', async (t) =>
   }).then((response) => response.body);
   t.is(record._source.collectionId, 'ABC___123');
 
-  await indexer.updateGranuleAndAssociatedFiles(
+  await indexer.updateGranule(
     esClient,
     es_id,
     updatedGranule,
