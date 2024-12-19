@@ -33,7 +33,7 @@ const {
   multipleRecordFoundString,
 } = require('@cumulus/es-client/search');
 const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
-// const { updateGranuleAndAssociatedFiles } = require('@cumulus/es-client/indexer');
+const { updateGranule: updateEsGranule } = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
@@ -921,13 +921,14 @@ async function getByGranuleId(req, res) {
 async function updateGranulesAndFilesCollectionRecords(req, res) {
   const {
     knex = await getKnexClient(),
-    // esClient = await getEsClient(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
   const payload = req.body;
   try {
     await updateGranulesAndFiles(knex, payload);
-    // await payload.map((granule) =>
-    // updateGranuleAndAssociatedFiles(esClient, granule.granuleId, granule));
+    await Promise.all(payload.map( async (granule) =>
+      await updateEsGranule(esClient, granule.granuleId, granule, process.env.ES_INDEX)
+    ))
   } catch (error) {
     log.error(
       'failed to update granules:',

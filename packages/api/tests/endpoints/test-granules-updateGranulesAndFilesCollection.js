@@ -23,11 +23,11 @@ const {
   recursivelyDeleteS3Bucket,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-// const indexer = require('@cumulus/es-client/indexer');
-// const {
-//     createTestIndex,
-//     cleanupTestIndex,
-//   } = require('@cumulus/es-client/testUtils');
+const indexer = require('@cumulus/es-client/indexer');
+const {
+    createTestIndex,
+    cleanupTestIndex,
+  } = require('@cumulus/es-client/testUtils');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const models = require('../../models');
@@ -97,11 +97,11 @@ test.before(async (t) => {
     PG_DATABASE: testDbName,
   };
 
-  // const { esIndex, esClient, searchClient } = await createTestIndex();
-  //t.context.esIndex = esIndex;
-  //t.context.esClient = esClient;
-  //t.context.searchClient = searchClient;
-  //process.env.ES_INDEX = esIndex;
+  const { esIndex, esClient, searchClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.searchClient = searchClient;
+  process.env.ES_INDEX = esIndex;
 
   // create a fake bucket
   await createBucket(process.env.system_bucket);
@@ -197,14 +197,14 @@ test.before(async (t) => {
     );
   }
 
-  /*t.context.granules.map(async (granule) => {
+  t.context.granules.map(async (granule) => {
     const newGranule = await translatePostgresGranuleResultToApiGranule(knex, {
         ...granule,
         collectionName: t.context.collection.name,
         collectionVersion: t.context.collection.version,
       });
     await indexer.indexGranule(esClient, newGranule, t.context.esIndex);
-  })*/
+  })
 
   t.context.pgFiles = await t.context.filePgModel.insert(knex, t.context.files);
   // update 1/2 of the granules to be moved to the new collection
@@ -221,7 +221,7 @@ test.before(async (t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  //await cleanupTestIndex(t.context);
+  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
@@ -238,10 +238,11 @@ test.serial('PATCH successfully updates a partial list of granules based on the 
     collectionId,
     collection,
     collection2,
-    // esIndex,
-    // esClient,
+    esIndex,
+    esClient,
     knex,
   } = t.context;
+
   const response = await request(app)
     .patch('/granules/')
     .set('Accept', 'application/json')
@@ -262,17 +263,18 @@ test.serial('PATCH successfully updates a partial list of granules based on the 
       collectionName: testCollection.name,
       collectionVersion: testCollection.version,
     });
-    // const esGranule = await esClient.client.get({
-    //   index: esIndex,
-    //   type: 'granule',
-    //   id: granule.granule_id,
-    //   parent: apiGranule.collectionId,
-    // }).then((response) => response.body);
+    const esGranule = await esClient.client.get({
+      index: esIndex,
+      type: 'granule',
+      id: granule.granule_id,
+      parent: apiGranule.collectionId,
+    }).then((response) => response.body);
 
     // the movedGranules param only has 1/2 of the granules to be moved to collection 2
     // here we can check based on the granule's cumulus id which collection it should be a part of
+
     t.true(apiGranule.collectionId === testCollectionId);
-    // t.true(esGranule.collectionId === testCollectionId);
+    t.true(esGranule._source.collectionId === testCollectionId);
     for (const file of apiGranule.files) {
       t.true(file.key.includes(testCollectionId));
       t.true(file.bucket.includes(testCollectionId));
@@ -291,8 +293,8 @@ test.serial('PATCH successfully updates a complete list of granules, 1/2 of whic
     collectionId,
     collection,
     collection2,
-    // esIndex,
-    // esClient,
+    esIndex,
+    esClient,
     knex,
   } = t.context;
   movedGranules.splice(-5);
@@ -318,15 +320,15 @@ test.serial('PATCH successfully updates a complete list of granules, 1/2 of whic
       collectionName: collection2.name,
       collectionVersion: collection2.version,
     });
-    // const esGranule = await esClient.client.get({
-    //   index: esIndex,
-    //   type: 'granule',
-    //   id: granule.granule_id,
-    //   parent: apiGranule.collectionId,
-    // }).then((response) => response.body);
+    const esGranule = await esClient.client.get({
+      index: esIndex,
+      type: 'granule',
+      id: granule.granule_id,
+      parent: apiGranule.collectionId,
+    }).then((response) => response.body);
     // now every granule should be part of collection 2
     t.true(apiGranule.collectionId === collectionId2);
-    // t.true(esGranule.collectionId === collectionId2);
+    t.true(esGranule._source.collectionId === collectionId2);
     for (const file of apiGranule.files) {
       t.true(file.key.includes(collectionId2));
       t.true(file.bucket.includes(collectionId2));
