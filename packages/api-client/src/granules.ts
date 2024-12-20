@@ -632,7 +632,7 @@ export const updateGranules = async (params: {
       path: '/granules/',
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 202,
+    expectedStatusCodes: 200,
   });
 };
 

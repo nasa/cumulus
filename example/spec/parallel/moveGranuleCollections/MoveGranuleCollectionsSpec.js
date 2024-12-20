@@ -7,18 +7,24 @@ const {
   deleteS3Object,
 } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
+const {
+  granules,
+  collections,
+  files,
+} = require('@cumulus/api-client');
 
-// const { getKnexClient, GranulePgModel } = require('@cumulus/db');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { loadConfig } = require('../../helpers/testUtils');
 describe('when moveGranulesCollection is called', () => {
   let stackName;
+  let knex
   // let systemBucket;
   beforeAll(async () => {
     const config = await loadConfig();
     stackName = config.stackName;
+    
     // systemBucket = config.bucket;
   });
 
@@ -158,42 +164,106 @@ describe('when moveGranulesCollection is called', () => {
           ],
         },
       };
-      // const cmaObject = {cma: { event: { payload }}}
-      await Promise.all(payload.input.granules[0].files.map(async (file) => {
-        let body;
-        if (file.type === 'metadata') {
-          body = fs.createReadStream(path.join(__dirname, 'data/meta.xml'));
-        } else {
-          body = file.key;
-        }
-        await promiseS3Upload({
-          params: {
-            Bucket: file.bucket,
-            Key: file.key,
-            Body: body,
+      const originalCollection = {
+        files: [
+          {
+            regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+            sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+            bucket: 'protected',
           },
-        });
-      }));
-      const { $metadata } = await lambda().send(new InvokeCommand({
-        FunctionName: `${stackName}-MoveGranuleCollections`,
-        InvocationType: 'RequestResponse',
-        Payload: JSON.stringify({
-          cma: {
-            meta: payload.meta,
-            task_config: payload.config,
-            event: {
-              payload: payload.input,
-            },
+          {
+            regex: '^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+            sampleFileName: 'BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+            bucket: 'private',
           },
-        }),
-      }));
-      console.log($metadata.httpStatusCode);
-      if ($metadata.httpStatusCode >= 400) {
-        console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
-        beforeAllFailed = true;
+          {
+            regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$',
+            sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met',
+            bucket: 'private',
+          },
+          {
+            regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$',
+            sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+            bucket: 'protected',
+          },
+          {
+            regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$',
+            sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+            bucket: 'public',
+          },
+          {
+            regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$',
+            sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+            bucket: 'private',
+          },
+        ],
+        url_path: targetUrlPrefix,
+        name: 'MOD11A1',
+        granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
+        granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
+        dataType: 'MOD11A1',
+        process: 'modis',
+        version: '006',
+        sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+        id: 'MOD11A1',
       }
-
+      //upload to pg
       try {
+        try {
+          await collections.createCollection({
+            prefix: stackName,
+            collection: originalCollection,
+          })
+        } catch {}
+        try {
+          await collections.createCollection({
+            prefix: stackName,
+            collection: payload.meta.collection,
+          })
+        } catch {}
+        Promise.all(payload.input.granules.map(async (granule) => {
+          try {
+            await granules.createGranule({
+              prefix: stackName,
+              body: granule,
+            })
+          } catch {}
+        }))
+        await Promise.all(payload.input.granules[0].files.map(async (file) => {
+          let body;
+          if (file.type === 'metadata') {
+            body = fs.createReadStream(path.join(__dirname, 'data/meta.xml'));
+          } else {
+            body = file.key;
+          }
+          console.log('about to use file', file)
+          await promiseS3Upload({
+            params: {
+              Bucket: file.bucket,
+              Key: file.key,
+              Body: body,
+            },
+          });
+        }));
+        const { $metadata } = await lambda().send(new InvokeCommand({
+          FunctionName: `${stackName}-MoveGranuleCollections`,
+          InvocationType: 'RequestResponse',
+          Payload: JSON.stringify({
+            cma: {
+              meta: payload.meta,
+              task_config: payload.config,
+              event: {
+                payload: payload.input,
+              },
+            },
+          }),
+        }));
+        console.log($metadata.httpStatusCode);
+        if ($metadata.httpStatusCode >= 400) {
+          console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
+          beforeAllFailed = true;
+        }
+
         await Promise.all(finalFiles.map((file) => expectAsync(
           waitForListObjectsV2ResultCount({
             ...file,
