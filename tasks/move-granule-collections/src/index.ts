@@ -37,6 +37,7 @@ import { getCmrSettings } from '@cumulus/cmrjs/cmr-utils';
 import { CMRConstructorParams } from '@cumulus/cmr-client/CMR';
 import { s3CopyObject } from '@cumulus/aws-client/S3';
 import { updateGranules } from '@cumulus/api-client/granules';
+import { getRequiredEnvVar } from '@cumulus/common/env';
 
 const MB = 1024 * 1024;
 
@@ -199,7 +200,7 @@ async function moveGranulesInCumulusDatastores(
   targetGranules: Array<ApiGranule>
 ): Promise<void> {
   await updateGranules({
-    prefix: process.env.STACKNAME || 'cumulus',
+    prefix: getRequiredEnvVar('stackName'),
     body: targetGranules,
   });
 }

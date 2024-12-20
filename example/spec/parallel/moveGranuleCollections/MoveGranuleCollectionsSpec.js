@@ -4,6 +4,7 @@ const { InvokeCommand } = require('@aws-sdk/client-lambda');
 const { lambda } = require('@cumulus/aws-client/services');
 const {
   promiseS3Upload,
+  deleteS3Object,
 } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 
@@ -14,17 +15,18 @@ const { v4: uuidv4 } = require('uuid');
 const { loadConfig } = require('../../helpers/testUtils');
 describe('when moveGranulesCollection is called', () => {
   let stackName;
+  // let systemBucket;
   beforeAll(async () => {
     const config = await loadConfig();
     stackName = config.stackName;
-    systemBucket = config.bucket;
+    // systemBucket = config.bucket;
   });
 
   describe('under normal circumstances', () => {
     let beforeAllFailed;
     let finalFiles;
     afterAll(async () => {
-      await Promise.all(finalFiles.map(async (fileObj) => deleteS3Object(
+      await Promise.all(finalFiles.map((fileObj) => deleteS3Object(
         fileObj.bucket,
         fileObj.key
       )));
@@ -116,9 +118,9 @@ describe('when moveGranulesCollection is called', () => {
           },
         },
         config: {
-          buckets: "{$.meta.buckets}",
+          buckets: '{$.meta.buckets}',
           distribution_endpoint: 'https://something.api.us-east-1.amazonaws.com/',
-          collection: "{$.meta.collection}",
+          collection: '{$.meta.collection}',
         },
         input: {
           granules: [
@@ -190,26 +192,25 @@ describe('when moveGranulesCollection is called', () => {
         console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
         beforeAllFailed = true;
       }
-      
+
       try {
-      await Promise.all(finalFiles.map((file) => expectAsync(
-        waitForListObjectsV2ResultCount({
-          ...file,
-          desiredCount: 1,
-          interval: 5 * 1000,
-          timeout: 30 * 1000,
-        })
-      ).toBeResolved()));
+        await Promise.all(finalFiles.map((file) => expectAsync(
+          waitForListObjectsV2ResultCount({
+            ...file,
+            desiredCount: 1,
+            interval: 5 * 1000,
+            timeout: 30 * 1000,
+          })
+        ).toBeResolved()));
       } catch (error) {
         console.log(`files do not appear to have been moved: error: ${error}`);
         beforeAllFailed = false;
       }
-
     });
     it('moves the granule data in s3', () => {
       if (beforeAllFailed) fail('beforeAllFailed');
     });
-    it('updates the granule data in postgres', async () => {
+    it('updates the granule data in postgres', () => {
       if (beforeAllFailed) fail('beforeAllFailed');
       // const knex = await getKnexClient();
       // const granuleModel = new GranulePgModel();
