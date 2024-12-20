@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+### Changed
+
+- **CUMULUS-3940**
+  - Added 'dead_letter_recovery_cpu' and 'dead_letter_recovery_memory' to `cumulus` and `archive` module configuration to allow configuration of the dead_letter_recovery_operation task definition to better allow configuration of the tool's operating environment.
+  - Updated the dead letter recovery tool to utilize it's own log group "${var.prefix}-DeadLetterRecoveryEcsLogs"
+  - Added `batchSize`, `concurrency` and `dbMaxPool` options to /endpoints/recoverCumulusMessage (note these values are correct at time of this release only):
+    - `batchSize` - specifies how many DLA objects to read from S3 and hold in memory.  Defaults to 1000.
+    - `concurrency` - specifies how many messages to process at the same time.  Defaults to 30.
+    - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
+  - Add API memory-constrained performance test to test minimum functionality under default+ configuration
+  - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
+
+### Fixed
+
+- **CUMULUS-3940**
+  - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
+
 ## [v18.5.2] 2024-12-12
 
 ### Breaking Changes
