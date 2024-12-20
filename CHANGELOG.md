@@ -27,13 +27,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     If the prior behavior is desired, please add `"useGranIdPath": false` to your
     task config in your workflow definitions that use `sync-granule`.
 
-
 ### Added
 
 - **CUMULUS-3919**
   - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 
 ### Changed
+
+- **CUMULUS-3940**
+  - Added 'dead_letter_recovery_cpu' and 'dead_letter_recovery_memory' to `cumulus` and `archive` module configuration to allow configuration of the dead_letter_recovery_operation task definition to better allow configuration of the tool's operating environment.
+  - Updated the dead letter recovery tool to utilize it's own log group "${var.prefix}-DeadLetterRecoveryEcsLogs"
+  - Added `batchSize`, `concurrency` and `dbMaxPool` options to /endpoints/recoverCumulusMessage (note these values are correct at time of this release only):
+    - `batchSize` - specifies how many DLA objects to read from S3 and hold in memory.  Defaults to 1000.
+    - `concurrency` - specifies how many messages to process at the same time.  Defaults to 30.
+    - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
+  - Add API memory-constrained performance test to test minimum functionality under default+ configuration
+  - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
 
 - **CUMULUS-3759**
   - Migrated `tf-modules/cumulus/ecs_cluster` ECS Autoscaling group from launch configurations to launch templates
@@ -109,6 +118,8 @@ each Cumulus version between your current version and v19.1.0 as normal.
 
 ### Fixed
 
+- **CUMULUS-3940**
+  - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
 - **CUMULUS-3904**
   - Passed sqs_message_consumer_watcher_message_limit and sqs_message_consumer_watcher_time_limit through the cumulus terraform module to the ingest terraform module.
 - **CUMULUS-3902**

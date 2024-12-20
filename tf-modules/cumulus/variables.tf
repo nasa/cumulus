@@ -647,3 +647,16 @@ variable "sqs_message_consumer_watcher_time_limit" {
     polling SQS. This value should be adjusted in conjunction with sqs_message_consumer_watcher_message_limit.
   EOF
 }
+
+## Dead Letter Recovery Configuration
+
+variable "dead_letter_recovery_cpu" {
+  type = number
+  default = 256
+  description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
+}
+variable "dead_letter_recovery_memory" {
+  type = number
+  default = 1024
+  description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
+}

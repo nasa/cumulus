@@ -207,6 +207,12 @@ module "cumulus" {
 
   log_destination_arn = var.log_destination_arn
 
+
+  # DLA Recovery Tool Task settings
+  dead_letter_recovery_cpu = var.dead_letter_recovery_cpu
+  dead_letter_recovery_memory = var.dead_letter_recovery_memory
+
+
   # Cumulus Distribution settings. Remove/comment to use TEA
   tea_external_api_endpoint = module.cumulus_distribution.api_uri
 
