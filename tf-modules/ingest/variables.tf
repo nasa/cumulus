@@ -217,3 +217,9 @@ variable "sqs_message_consumer_watcher_time_limit" {
     polling SQS. This value should be adjusted in conjunction with sqs_message_consumer_watcher_message_limit.
   EOF
 }
+
+variable "ecs_task_image_version" {
+  description = "docker image version to use for Cumulus hello world task"
+    type = string
+    default = "2.1.0"
+}
