@@ -3,7 +3,6 @@
   "description": "Describes the config used by the move-granule-collections task",
   "type": "object",
   "required": [
-    "bucket",
     "distribution_endpoint",
     "collection",
     "buckets"
