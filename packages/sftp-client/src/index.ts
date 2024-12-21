@@ -156,8 +156,8 @@ export class SftpClient {
       },
     });
 
-    sftpReadStream.destroy();
     log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
+    sftpReadStream.destroy();
 
     return { s3uri, etag: result.ETag };
   }
