@@ -47,7 +47,7 @@ module "move_granule_collections_service" {
   source      = "../cumulus_ecs_service"
   prefix      = var.prefix
   name        = "MoveGranuleCollections"
-  cluster_arn = var.ecs_cluster_arn
+  cluster_arn = local.ecs_cluster_arn
   image       = "${data.aws_ecr_repository.ecs_task_image.repository_url}:${var.ecs_task_image_version}"
 
   desired_count      = 1

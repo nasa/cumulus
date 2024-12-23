@@ -223,8 +223,3 @@ variable "ecs_task_image_version" {
     type = string
     default = "2.1.0"
 }
-
-variable "ecs_cluster_arn" {
-  description = "arn for the ecs cluster"
-  type = string
-}
