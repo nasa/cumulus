@@ -44,7 +44,7 @@ data "aws_ecr_repository" "ecs_task_image" {
 }
 
 module "move_granule_collections_service" {
-  source      = "../tf-modules/cumulus_ecs_service"
+  source      = "../cumulus_ecs_service"
   prefix      = var.prefix
   name        = "MoveGranuleCollections"
   cluster_arn = outputs.ecs_cluster_arn
