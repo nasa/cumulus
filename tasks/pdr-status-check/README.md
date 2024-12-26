@@ -3,6 +3,15 @@
 Lambda function handler for checking the status of a workflow (step function) execution. Expects a payload object which includes the name of a PDR.
 The concurrency of SFN API calls is set to 10 by default, and it's configurable by setting the Lambda environment variable CONCURRENCY.
 
+Make sure the line: `"ErrorPath": "$.exception.Cause"` is added to your workflow failed task inside your ingest granule workflow to ensure the error is properly propagated to this task
+```json
+"WorkflowFailed": {
+    "Type": "Fail",
+    "Cause": "Workflow failed",
+    "ErrorPath": "$.exception.Cause"
+},
+```
+
 ## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.

@@ -32,6 +32,7 @@ export type HandlerEvent = {
       host: string,
     },
     remoteDir: string | null,
+    panType: string | null
   },
   input: HandlerInput,
 };
