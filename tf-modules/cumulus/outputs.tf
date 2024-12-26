@@ -83,6 +83,11 @@ output "move_granules_task" {
   value = module.ingest.move_granules_task
 }
 
+
+output "move_granule_collections_task" {
+  value = module.ingest.move_granule_collections_task
+}
+
 output "orca_copy_to_archive_adapter_task" {
   value = module.ingest.orca_copy_to_archive_adapter_task
 }
@@ -181,3 +186,4 @@ output "ecs_cluster_name" {
 output "start_sf_queue_url" {
   value = module.ingest.start_sf_queue_url
 }
+
