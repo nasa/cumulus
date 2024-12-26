@@ -43,7 +43,7 @@ async function sendPAN(event: HandlerEvent): Promise<HandlerOutput> {
   const remoteDir = config.remoteDir || 'pans';
   const panType = config.panType || 'shortPan';
 
-  const panName = input.pdr.name.replace(/\.pdr/gi, '.pan');
+  const panName = input.pdr.name.replace(/\.pdr/gi, '.PAN');
   const uploadPath = path.join(remoteDir, panName);
 
   if (input.running.length !== 0) {
