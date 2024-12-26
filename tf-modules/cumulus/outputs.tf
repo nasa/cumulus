@@ -168,6 +168,9 @@ output "scaling_role_arn" {
 
 # ECS cluster
 
+output "ecs_cluster_arn" {
+  value = aws_ecs_cluster.default.arn
+}
 
 output "ecs_cluster_name" {
   value = aws_ecs_cluster.default.name
