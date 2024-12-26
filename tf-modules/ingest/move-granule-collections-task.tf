@@ -65,8 +65,8 @@ module "move_granule_collections_service" {
     "--activityArn",
     aws_sfn_activity.move_granule_collections_ecs_task.id,
     "--lambdaArn",
-    aws_lambda_function.move_granule_collections_task.task_arn,
+    move_granule_collections_task.task_arn,
     "--lastModified",
-    aws_lambda_function.move_granule_collections_task.last_modified_date
+    move_granule_collections_task.last_modified_date
   ]
 }
