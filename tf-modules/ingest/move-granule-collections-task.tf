@@ -35,7 +35,7 @@ resource "aws_lambda_function" "move_granule_collections_task" {
 }
 
 resource "aws_sfn_activity" "move_granule_collections_ecs_task" {
-  name = "${var.prefix}-MoveGranuleCollections"
+  name = "${var.prefix}-EcsTaskMoveGranuleCollections"
   tags = var.tags
 }
 
