@@ -1,4 +1,4 @@
-module "ecs_hello_world_workflow" {
+module "ecs_move_granule_collections" {
   source = "../../tf-modules/workflow"
 
   prefix          = var.prefix
@@ -9,7 +9,7 @@ module "ecs_hello_world_workflow" {
 
 
   state_machine_definition = templatefile(
-    "${path.module}/ecs_hello_world_workflow.asl.json",
+    "${path.module}/ecs_move_granule_collections.asl.json",
     {
       ecs_task_move_granule_collections: aws_sfn_activity.move_granule_collections_ecs_task.id
     }
