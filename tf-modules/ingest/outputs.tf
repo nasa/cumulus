@@ -218,3 +218,7 @@ output "move_granule_collections_task" {
     last_modified_date = aws_lambda_function.move_granule_collections_task.last_modified
   }
 }
+
+output "move_granule_collections_ecs_task_id" {
+  value = aws_sfn_activity.move_granule_collections_ecs_task.id
+}
