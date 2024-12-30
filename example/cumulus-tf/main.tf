@@ -53,6 +53,11 @@ data "terraform_remote_state" "data_persistence" {
   config    = var.data_persistence_remote_state_config
   workspace = terraform.workspace
 }
+data "terraform_remote_state" "data_persistence" {
+  backend   = "s3"
+  config    = var.ingest_remote_state_config
+  workspace = terraform.workspace
+}
 
 data "aws_lambda_function" "sts_credentials" {
   function_name = "gsfc-ngap-sh-s3-sts-get-keys"
