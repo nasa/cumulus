@@ -3,10 +3,6 @@ resource "aws_sfn_activity" "ecs_task_move_granule_collections" {
   tags = local.tags
 }
 
-data "aws_ecr_repository" "ecs_task_image" {
-  name = "cumulus-ecs-task"
-}
-
 module "moge_granule_collections_services" {
   source = "../../tf-modules/cumulus_ecs_service"
 
