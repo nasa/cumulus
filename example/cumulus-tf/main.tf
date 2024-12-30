@@ -53,7 +53,7 @@ data "terraform_remote_state" "data_persistence" {
   config    = var.data_persistence_remote_state_config
   workspace = terraform.workspace
 }
-data "terraform_remote_state" "data_persistence" {
+data "terraform_remote_state" "ingest" {
   backend   = "s3"
   config    = var.ingest_remote_state_config
   workspace = terraform.workspace
