@@ -1,9 +1,9 @@
 resource "aws_sfn_activity" "ecs_task_move_granule_collections" {
-  name = "${var.prefix}-EcsTaskHelloWorld"
+  name = "${var.prefix}-EcsTaskMoveGranuleCollections"
   tags = local.tags
 }
 
-module "moge_granule_collections_services" {
+module "move_granule_collections_services" {
   source = "../../tf-modules/cumulus_ecs_service"
 
   prefix = var.prefix
