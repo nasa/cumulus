@@ -27,9 +27,9 @@ module "moge_granule_collections_services" {
     "--activityArn",
     aws_sfn_activity.ecs_task_move_granule_collections.id,
     "--lambdaArn",
-    module.cumulus.move_granule_collections_task.task_arn,
+    module.ingest.move_granule_collections_task.task_arn,
     "--lastModified",
-    module.cumulus.move_granule_collections_task.last_modified_date
+    module.ingest.move_granule_collections_task.last_modified_date
   ]
 }
 
