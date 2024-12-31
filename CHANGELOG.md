@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v18.5.3] 2025-1-12
+
+### Added
+- **CUMULUS-3757**
+  - Added endpoints for updating a granules' records' collection and an endpoint for batch patching
+
 ## [v18.5.2] 2024-12-12
 
 ### Breaking Changes

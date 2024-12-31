@@ -4,6 +4,7 @@
 
 const { z } = require('zod');
 const isError = require('lodash/isError');
+const pMap = require('p-map');
 
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
@@ -24,6 +25,7 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
   getGranuleAndCollection,
+  updateBatchGranulesCollection,
 } = require('@cumulus/db');
 const {
   Search,
@@ -32,6 +34,7 @@ const {
   multipleRecordFoundString,
 } = require('@cumulus/es-client/search');
 const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
+const { updateGranule: updateEsGranule } = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
@@ -679,6 +682,60 @@ const associateExecution = async (req, res) => {
 };
 
 /**
+ * Update a batch of granule's collectionId to the new collectionId
+ * in PG and ES
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function patchBatchGranulesRecordCollection(req, res) {
+  const {
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+    esClient = await getEsClient(),
+  } = req.testContext || {};
+
+  const granules = req.body.apiGranules;
+  // any checks to be done for the granules or collections
+  // like if it exists etc.? to be done here?
+  const granuleIds = granules.map((granule) => granule.granuleId);
+  const newCollectionId = req.body.collectionId;
+  const collection = await collectionPgModel.get(
+    knex,
+    deconstructCollectionId(newCollectionId)
+  );
+  try {
+    // could also use pMap -> do the update by granuleId and then have a concurrency of x
+    await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
+    await Promise.all(granuleIds.map(async (id) =>
+      await updateEsGranule(esClient, id, newCollectionId, process.env.ES_INDEX)));
+  } catch (error) {
+    throw new Error(error);
+  }
+  return res.send({
+    message: `Successfully wrote granules with Granule Id: ${granuleIds}, Collection Id: ${newCollectionId}`,
+  });
+}
+
+/**
+ * Update a batch of granules
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function patchBatchGranules(req, res) {
+  const granules = req.body;
+  try {
+    // concurrency number TBD? or can be sent in, dont really know yet
+    await pMap(granules, (async (granule) =>
+      await patchGranule({ body: granule }, res)), { concurrency: granules.length });
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+/**
  * Delete a granule by granuleId
  *
  * DEPRECATED: use del() instead to delete granules by
@@ -1067,6 +1124,8 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleId', getByGranuleId);
 router.get('/:collectionId/:granuleId', get);
+router.patch('/batchRecords', patchBatchGranulesRecordCollection);
+router.patch('/batchPatch', patchBatchGranules);
 router.get('/', list);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
@@ -1104,5 +1163,7 @@ module.exports = {
   put,
   patch,
   patchGranule,
+  patchBatchGranules,
+  patchBatchGranulesRecordCollection,
   router,
 };

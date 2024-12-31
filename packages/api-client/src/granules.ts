@@ -15,6 +15,11 @@ type AssociateExecutionRequest = {
   executionArn: string
 };
 
+type BatchPatchRecords = {
+  apiGranules: ApiGranuleRecord[],
+  collectionId: string,
+};
+
 const encodeGranulesURIComponent = (
   granuleId: string,
   collectionId: string | undefined
@@ -599,6 +604,74 @@ export const associateExecutionWithGranule = async (params: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
+  });
+};
+
+/**
+ * Bulk operations on granules stored in cumulus
+ * POST /granules/bulk
+ *
+ * @param params - params
+ * @param params.prefix - the prefix configured for the stack
+ * @param params.body - body to pass the API lambda
+ * @param params.callback - async function to invoke the api lambda
+ *                          that takes a prefix / user payload.  Defaults
+ *                          to cumulusApiClient.invokeApifunction to invoke the
+ *                          api lambda
+ * @returns - the response from the callback
+ */
+export const batchUpdateGranuleRecordCollection = async (params: {
+  prefix: string,
+  body: BatchPatchRecords,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'PATCH',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/batchRecords',
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 202,
+  });
+};
+
+/**
+ * Bulk operations on granules stored in cumulus
+ * POST /granules/bulk
+ *
+ * @param params - params
+ * @param params.prefix - the prefix configured for the stack
+ * @param params.body - body to pass the API lambda
+ * @param params.callback - async function to invoke the api lambda
+ *                          that takes a prefix / user payload.  Defaults
+ *                          to cumulusApiClient.invokeApifunction to invoke the
+ *                          api lambda
+ * @returns - the response from the callback
+ */
+export const batchPatchGranules = async (params: {
+  prefix: string,
+  body: ApiGranule[],
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'PATCH',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/batchPatch',
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 202,
   });
 };
 
