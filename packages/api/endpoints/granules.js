@@ -34,7 +34,6 @@ const {
   multipleRecordFoundString,
 } = require('@cumulus/es-client/search');
 const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
-const { updateGranule: updateEsGranule } = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
@@ -693,12 +692,9 @@ async function patchBatchGranulesRecordCollection(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const granules = req.body.apiGranules;
-  // any checks to be done for the granules or collections
-  // like if it exists etc.? to be done here?
   const granuleIds = granules.map((granule) => granule.granuleId);
   const newCollectionId = req.body.collectionId;
   const collection = await collectionPgModel.get(
@@ -706,10 +702,7 @@ async function patchBatchGranulesRecordCollection(req, res) {
     deconstructCollectionId(newCollectionId)
   );
   try {
-    // could also use pMap -> do the update by granuleId and then have a concurrency of x
     await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
-    await Promise.all(granuleIds.map(async (id) =>
-      await updateEsGranule(esClient, id, newCollectionId, process.env.ES_INDEX)));
   } catch (error) {
     throw new Error(error);
   }

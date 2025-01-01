@@ -156,7 +156,7 @@ test.before(async (t) => {
   t.context.apiCollection1 = translatePostgresCollectionToApiCollection(collectionResponse[0]);
   t.context.apiCollection2 = translatePostgresCollectionToApiCollection(collectionResponse2[0]);
 
-  // create 10 granules in one collection, 0 in the other
+  // create n granules in one collection, 0 in the other
   t.context.granuleIds = range(50).map((num) => 'granuleId___' + num);
 
   t.context.granulePgModel = new GranulePgModel();
@@ -241,8 +241,6 @@ test.serial('BATCHRECORDS successfully updates granules to new collectionId in P
     collectionId2,
     collection2,
     collectionCumulusId2,
-    esIndex,
-    esClient,
     knex,
   } = t.context;
 
@@ -271,15 +269,7 @@ test.serial('BATCHRECORDS successfully updates granules to new collectionId in P
       collectionName: collection2.name,
       collectionVersion: collection2.version,
     });
-    const esGranule = await esClient.client.get({
-      index: esIndex,
-      type: 'granule',
-      id: granule.granule_id,
-      parent: apiGranule.collectionId,
-    }).then((res) => res.body);
-
     t.true(apiGranule.collectionId === testCollectionId);
-    t.true(esGranule._source.collectionId === testCollectionId);
   }
 });
 

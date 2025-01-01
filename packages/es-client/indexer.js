@@ -144,19 +144,6 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
   return updateExistingRecord(esClient, id, updates, index, type);
 }
 
-/**
- * Updates a granule record in Elasticsearch
- *
- * @param  {Object} esClient - Elasticsearch Connection object
- * @param  {Object} id - Record ID
- * @param  {string} index - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type - Elasticsearch type (default: asyncOperation)
- * @returns {Promise} elasticsearch update response
- */
-function updateGranule(esClient, id, collectionId, index = defaultIndexAlias, type = 'granule') {
-  return updateExistingRecord(esClient, id, { doc: { collectionId: collectionId } }, index, type);
-}
-
 const executionInvalidNullFields = [
   'arn',
   'name',
@@ -831,7 +818,6 @@ module.exports = {
   indexReconciliationReport,
   indexRule,
   updateAsyncOperation,
-  updateGranule,
   upsertExecution,
   upsertGranule,
   upsertPdr,
