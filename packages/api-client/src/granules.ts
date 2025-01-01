@@ -15,7 +15,7 @@ type AssociateExecutionRequest = {
   executionArn: string
 };
 
-type BatchPatchRecords = {
+type BatchUpdateGranules = {
   apiGranules: ApiGranuleRecord[],
   collectionId: string,
 };
@@ -622,7 +622,7 @@ export const associateExecutionWithGranule = async (params: {
  */
 export const batchUpdateGranuleRecordCollection = async (params: {
   prefix: string,
-  body: BatchPatchRecords,
+  body: BatchUpdateGranules,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
