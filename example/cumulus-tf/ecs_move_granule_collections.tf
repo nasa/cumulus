@@ -7,7 +7,7 @@ module "move_granule_collections_services" {
   source = "../../tf-modules/cumulus_ecs_service"
 
   prefix = var.prefix
-  name   = "moveGranuleCollections"
+  name   = "MoveGranuleCollections"
   tags   = local.tags
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
