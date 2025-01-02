@@ -9,6 +9,7 @@ import zip from 'lodash/zip';
 // eslint-disable-next-line lodash/import-scope
 import { Dictionary } from 'lodash';
 import path from 'path';
+import pMap from 'p-map';
 import { MissingS3FileError, DuplicateFile, InvalidArgument } from '@cumulus/errors';
 import { S3 } from '@cumulus/aws-client';
 import { CMR } from '@cumulus/cmr-client';
@@ -159,8 +160,9 @@ async function moveGranulesInS3(
   targetGranules: Array<ApiGranule>,
   s3MultipartChunksizeMb?: number
 ): Promise<void> {
-  await Promise.all(
-    zip(sourceGranules, targetGranules).map(async ([sourceGranule, targetGranule]) => {
+  await pMap(
+    zip(sourceGranules, targetGranules),
+    async ([sourceGranule, targetGranule]) => {
       if (sourceGranule?.files === undefined || targetGranule?.files === undefined) {
         return null;
       }
@@ -192,7 +194,8 @@ async function moveGranulesInS3(
             });
           }
         }));
-    })
+    },
+    { concurrency: Number(process.env.concurrency || 100) }
   );
 }
 
