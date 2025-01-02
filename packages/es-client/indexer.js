@@ -431,6 +431,8 @@ async function upsertGranule({
     }
   }
 
+  const files = JSON.stringify(upsertDoc.files);
+  upsertDoc.files = files;
   return await cumulusEsClient.update({
     index,
     type,
