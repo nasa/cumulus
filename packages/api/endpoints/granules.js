@@ -721,7 +721,6 @@ async function patchBatchGranulesRecordCollection(req, res) {
 async function patchBatchGranules(req, res) {
   const granules = req.body;
   try {
-    // concurrency number TBD? or can be sent in, dont really know yet
     await pMap(granules, (async (granule) =>
       await patchGranule({ body: granule }, res)), { concurrency: granules.length });
   } catch (error) {
