@@ -14,7 +14,7 @@
         }
       },
       "Type": "Task",
-      "Resource": "${ecs_task_move_granule_collections}",
+      "Resource": "${ecs_task_move_granule_collections_id}",
       "TimeoutSeconds": 60,
       "Retry": [
         {
