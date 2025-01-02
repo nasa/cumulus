@@ -9,8 +9,10 @@
 * Anthony Lukach
 * Anthony Ortega
 * Brian Tennity
+* Bryan Wexler
 * Charles Huang
 * Chuck Daniels
+* Curtis Banh
 * Dan Pilone
 * Danielle Peters
 * Drew Bollinger
