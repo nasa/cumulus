@@ -582,11 +582,16 @@ const _writeGranuleRecords = async (params) => {
         }
 
         // TODO: refactor to not need apiGranuleRecord, only need files and a few other fields
-        await upsertGranule({
-          esClient,
-          updates: apiGranuleRecord,
-          index: process.env.ES_INDEX,
-        }, writeConstraints);
+        try {
+          await upsertGranule({
+            esClient,
+            updates: apiGranuleRecord,
+            index: process.env.ES_INDEX,
+          }, writeConstraints);
+        } catch (error) {
+          console.log(JSON.stringify(error, null, 2));
+          throw error;
+        }
       }
     });
     if (writePgGranuleResult === undefined) {

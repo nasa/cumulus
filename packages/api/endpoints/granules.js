@@ -701,6 +701,8 @@ async function patchBatchGranulesRecordCollection(req, res) {
   // like if it exists etc.? to be done here?
   const granuleIds = granules.map((granule) => granule.granuleId);
   const newCollectionId = req.body.collectionId;
+  const oldCollectionId = req.body.oldCollectionId;
+  console.log('old vs new', oldCollectionId, newCollectionId);
   const collection = await collectionPgModel.get(
     knex,
     deconstructCollectionId(newCollectionId)
@@ -708,10 +710,11 @@ async function patchBatchGranulesRecordCollection(req, res) {
   try {
     // could also use pMap -> do the update by granuleId and then have a concurrency of x
     await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
-    await Promise.all(granuleIds.map(async (id) =>
-      await updateEsGranule(esClient, id, newCollectionId, process.env.ES_INDEX)));
+    await Promise.all(granules.map(async (granule) =>
+      await updateEsGranule(esClient, granule.granuleId, {collectionId: newCollectionId }, process.env.ES_INDEX, 'granule', oldCollectionId)));
   } catch (error) {
-    throw new Error(error);
+    console.log(JSON.stringify(error, null, 2));
+    throw error;
   }
   return res.send({
     message: `Successfully wrote granules with Granule Id: ${granuleIds}, Collection Id: ${newCollectionId}`,
