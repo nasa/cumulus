@@ -406,6 +406,7 @@ variable "dead_letter_recovery_cpu" {
   default = 256
   description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
 }
+
 variable "dead_letter_recovery_memory" {
   type = number
   default = 1024
