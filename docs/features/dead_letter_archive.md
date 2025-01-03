@@ -37,6 +37,8 @@ The dead letter archive async operation environment can be configured to allow u
 
 These values can be configured to increase according to configuration table in [Fargate Services Documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html) if the process is failing due to memory errors with high concurrency/connection limits/faster performance is desired.
 
+These values default to the values defined in the `cumulus` module: [variables.tf](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf)
+
 See [Cumulus DLA Documentation](https://nasa.github.io/cumulus/docs/features/dead_letter_archive) for more information on this feature.
 
 ## Dead Letter Archive Message structure
