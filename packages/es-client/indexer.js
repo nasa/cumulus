@@ -90,7 +90,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
     try {
       indexResponse = await actualEsClient.client.index(params);
     } catch (error) {
-      if (error.name === 'ResponseError' && error?.meta?.body?.message.includes('The security token included in the request is expired')) {
+      if (error.name === 'ResponseError' && error?.meta?.body?.message?.includes('The security token included in the request is expired')) {
         logger.warn(`genericRecordUpdate encountered a ResponseError ${JSON.stringify(error)}, updating credentials and retrying`);
         await actualEsClient.refreshClient();
         indexResponse = await actualEsClient.client.index(params);
@@ -115,7 +115,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
  * @param  {string} type     - Elasticsearch type
  * @returns {Promise} Elasticsearch response
  */
-async function updateExistingRecord(esClient, id, doc, index, type) {
+async function updateExistingRecord(esClient, id, doc, index, type, parent = undefined) {
   return await esClient.client.update({
     index,
     type,
@@ -127,6 +127,7 @@ async function updateExistingRecord(esClient, id, doc, index, type) {
       },
     },
     refresh: inTestMode(),
+    parent,
   });
 }
 
@@ -142,6 +143,25 @@ async function updateExistingRecord(esClient, id, doc, index, type) {
  */
 function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, type = 'asyncOperation') {
   return updateExistingRecord(esClient, id, updates, index, type);
+}
+
+/**
+ * Updates a granule record in Elasticsearch
+ *
+ * @param  {Object} esClient - Elasticsearch Connection object
+ * @param  {Object} id - Record ID
+ * @param  {string} index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type - Elasticsearch type (default: asyncOperation)
+ * @returns {Promise} elasticsearch update response
+ */
+function updateGranule(esClient, id, granule, index = defaultIndexAlias, type = 'granule', parent = undefined) {
+  let finalParent;
+  if (parent === undefined) {
+    finalParent = granule.collectionId;
+  } else {
+    finalParent = parent;
+  }
+  return updateExistingRecord(esClient, id, granule, index, type, finalParent);
 }
 
 const executionInvalidNullFields = [
@@ -821,4 +841,5 @@ module.exports = {
   upsertExecution,
   upsertGranule,
   upsertPdr,
+  updateGranule,
 };

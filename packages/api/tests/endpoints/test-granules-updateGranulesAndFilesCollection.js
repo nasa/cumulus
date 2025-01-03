@@ -131,8 +131,8 @@ test.before(async (t) => {
   t.context.filePgModel = new FilePgModel();
 
   // set up 2 collections
-  t.context.collection = fakeCollectionRecordFactory();
-  t.context.collection2 = fakeCollectionRecordFactory();
+  t.context.collection = fakeCollectionRecordFactory({ files: [] });
+  t.context.collection2 = fakeCollectionRecordFactory({ files: [] });
   t.context.collectionId = constructCollectionId(
     t.context.collection.name,
     t.context.collection.version
@@ -156,11 +156,11 @@ test.before(async (t) => {
   t.context.apiCollection1 = translatePostgresCollectionToApiCollection(collectionResponse[0]);
   t.context.apiCollection2 = translatePostgresCollectionToApiCollection(collectionResponse2[0]);
 
-  // create n granules in one collection, 0 in the other
-  t.context.granuleIds = range(50).map((num) => 'granuleId___' + num);
+  // create 10 granules in one collection, 0 in the other
+  t.context.granuleIds = range(2).map((num) => 'granuleId___' + num);
 
   t.context.granulePgModel = new GranulePgModel();
-  t.context.granules = range(50).map((num) => fakeGranuleRecordFactory({
+  t.context.granules = range(2).map((num) => fakeGranuleRecordFactory({
     granule_id: t.context.granuleIds[num],
     collection_cumulus_id: t.context.collectionCumulusId,
     cumulus_id: num,
@@ -203,8 +203,11 @@ test.before(async (t) => {
     );
   }
 
+  t.context.pgFiles = await t.context.filePgModel.insert(knex, t.context.files);
   t.context.apiGranules = [];
-  t.context.granules.map(async (granule) => {
+
+  await esClient.client.indices.refresh({ index: t.context.esIndex });
+  await Promise.all(t.context.granules.map(async (granule) => {
     const newGranule = await translatePostgresGranuleResultToApiGranule(knex, {
       ...granule,
       collectionName: t.context.collection.name,
@@ -212,9 +215,9 @@ test.before(async (t) => {
     });
     t.context.apiGranules.push(newGranule);
     await indexer.indexGranule(esClient, newGranule, t.context.esIndex);
-  });
+    await esClient.client.indices.refresh({ index: t.context.esIndex });
+  }));
 
-  t.context.pgFiles = await t.context.filePgModel.insert(knex, t.context.files);
   // update all of the granules to be moved to the new collection
   t.context.movedGranules.push(await simulateGranuleUpdate(knex, t.context.granules,
     t.context.collection, t.context.collectionId, t.context.collectionId2));
@@ -239,14 +242,18 @@ test.serial('BATCHRECORDS successfully updates granules to new collectionId in P
     granulePgModel,
     apiGranules,
     collectionId2,
+    collectionId,
     collection2,
     collectionCumulusId2,
+    esIndex,
+    esClient,
     knex,
   } = t.context;
 
   const params = {
     apiGranules: apiGranules,
     collectionId: collectionId2,
+    oldCollectionId: collectionId,
   };
 
   const response = await request(app)
@@ -269,7 +276,14 @@ test.serial('BATCHRECORDS successfully updates granules to new collectionId in P
       collectionName: collection2.name,
       collectionVersion: collection2.version,
     });
+    const esGranule = await esClient.client.get({
+      index: esIndex,
+      type: 'granule',
+      id: granule.granule_id,
+    }).then((res) => res.body);
+
     t.true(apiGranule.collectionId === testCollectionId);
+    t.true(esGranule._source.collectionId === testCollectionId);
   }
 });
 
@@ -306,7 +320,6 @@ test.serial('BATCHPATCH successfully updates a batch of granules', async (t) => 
       index: esIndex,
       type: 'granule',
       id: granule.granule_id,
-      parent: apiGranule.collectionId,
     }).then((res) => res.body);
 
     // now every granule should be part of collection 2
