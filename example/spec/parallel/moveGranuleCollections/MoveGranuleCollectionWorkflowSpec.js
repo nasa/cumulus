@@ -13,13 +13,58 @@ describe('The MoveGranuleCollection workflow using ECS', () => {
   let config;
 
   beforeAll(async () => {
+    try {
+      await collections.createCollection({
+        prefix: stackName,
+        collection: originalCollection,
+      });
+    } catch {
+      console.log(`collection ${constructCollectionId(y.name, originalCollection.version)} already exists`);
+    }
+    try {
+      await collections.createCollection({
+        prefix: stackName,
+        collection: targetCollection,
+      });
+    } catch {
+      console.log(`collection ${constructCollectionId(targetCollection.name, targetCollection.version)} already exists`);
+    }
+    try {
+      await granules.createGranule({
+        prefix: stackName,
+        body: processGranule,
+      });
+    } catch {
+      console.log(`granule ${processGranule.granuleId} already exists`);
+    }
+    await Promise.all(processGranule.files.map(async (file) => {
+      let body;
+      if (file.type === 'metadata') {
+        body = fs.createReadStream(path.join(__dirname, 'data/meta.xml'));
+      } else {
+        body = file.key;
+      }
+      await promiseS3Upload({
+        params: {
+          Bucket: file.bucket,
+          Key: file.key,
+          Body: body,
+        },
+      });
+    }));
+    
     config = await loadConfig();
+
+
+
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
       'ECSMoveGranuleCollectionsWorkflow'
     );
+
+    console.log(JSON.stringify(workflowExecution, null, 2))
   });
 
   afterAll(async () => {
@@ -38,6 +83,7 @@ describe('The MoveGranuleCollection workflow using ECS', () => {
         workflowExecution.executionArn,
         'EcsTaskMoveGranuleCollections'
       );
+      console.log(JSON.stringify(activityOutput, null, 2))
     });
 
     it('output is Hello World', () => {
