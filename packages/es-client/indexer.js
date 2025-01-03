@@ -115,7 +115,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
  * @param  {string} type     - Elasticsearch type
  * @returns {Promise} Elasticsearch response
  */
-async function updateExistingRecord(esClient, id, doc, index, type, parent = undefined) {
+async function updateExistingRecord(esClient, id, doc, index, type) {
   return await esClient.client.update({
     index,
     type,
@@ -127,7 +127,6 @@ async function updateExistingRecord(esClient, id, doc, index, type, parent = und
       },
     },
     refresh: inTestMode(),
-    parent,
   });
 }
 
@@ -154,14 +153,8 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
  * @param  {string} type - Elasticsearch type (default: asyncOperation)
  * @returns {Promise} elasticsearch update response
  */
-function updateGranule(esClient, id, granule, index = defaultIndexAlias, type = 'granule', parent = undefined) {
-  let finalParent;
-  if (parent === undefined) {
-    finalParent = granule.collectionId;
-  } else {
-    finalParent = parent;
-  }
-  return updateExistingRecord(esClient, id, granule, index, type, finalParent);
+function updateGranule(esClient, id, granule, index = defaultIndexAlias, type = 'granule') {
+  return updateExistingRecord(esClient, id, granule, index, type);
 }
 
 const executionInvalidNullFields = [
