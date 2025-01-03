@@ -849,7 +849,6 @@ const updateGranuleFromApi = async (granule, knex) => {
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database
- * @param {Object}  params.esClient - Elasticsearch client
  * @param {Object} params.testOverrides - Used only for test mocks
  * @returns {Promise<Object[] | undefined>}
  *  true if there are no granules on the message, otherwise
