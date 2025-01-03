@@ -1,8 +1,12 @@
 'use strict';
 
 //@ts-check
+const pSettle = require('p-settle');
 const log = require('@cumulus/common/log');
 
+const {
+  getEsClient,
+} = require('@cumulus/es-client/search');
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object, deleteS3Object } = require('@cumulus/aws-client/S3');
@@ -87,13 +91,23 @@ async function processDeadLetterArchive({
   path = `${process.env.stackName}/dead-letter-archive/sqs/`,
   writeRecordsFunction = writeRecords,
   batchSize = 1000,
+  concurrency = 30,
 }) {
+  log.info(`Processing dead letter archive in bucket ${bucket} at path ${path}`);
+  log.info(`Concurrency set to ${concurrency}`);
+  log.info(`Batch size set to ${batchSize}`);
+
   let listObjectsResponse;
   let continuationToken;
   let allSuccessKeys = [];
   const allFailedKeys = [];
+  const esClient = await getEsClient();
+  let batchNumber = 1;
   /* eslint-disable no-await-in-loop */
   do {
+    log.info(`Processing batch ${batchNumber}`);
+    // Refresh ES client to avoid credentials timeout for long running processes
+    esClient.refreshClient();
     listObjectsResponse = await s3().listObjectsV2({
       Bucket: bucket,
       Prefix: path,
@@ -102,25 +116,24 @@ async function processDeadLetterArchive({
     });
     continuationToken = listObjectsResponse.NextContinuationToken;
     const deadLetterObjects = listObjectsResponse.Contents || [];
-    const promises = await Promise.allSettled(deadLetterObjects.map(
-      async (deadLetterObject) => {
-        const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
-        const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
-        try {
-          await writeRecordsFunction({ cumulusMessage, knex });
-          return deadLetterObject.Key;
-        } catch (error) {
-          log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);
-          allFailedKeys.push(deadLetterObject.Key);
-          log.info('Transferring unprocessed message to new archive location');
-          await transferUnprocessedMessage(deadLetterObject.Key, bucket, deadLetterMessage);
-          throw error;
-        }
+    const promises = await pSettle(deadLetterObjects.map((deadLetterObject) => async () => {
+      const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
+      const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
+      try {
+        await writeRecordsFunction({ cumulusMessage, knex, esClient });
+        return deadLetterObject.Key;
+      } catch (error) {
+        log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);
+        allFailedKeys.push(deadLetterObject.Key);
+        log.info('Transferring unprocessed message to new archive location');
+        await transferUnprocessedMessage(deadLetterObject.Key, bucket, deadLetterMessage);
+        throw error;
       }
-    ));
+    }),
+    { concurrency });
 
     const successfullyProcessedKeys = promises.filter(
-      (prom) => prom.status === 'fulfilled'
+      (prom) => prom.isFulfilled
     ).map((prom) => prom.value);
     allSuccessKeys = allSuccessKeys.concat(successfullyProcessedKeys);
 
@@ -133,7 +146,9 @@ async function processDeadLetterArchive({
         },
       });
     }
+    batchNumber += 1;
   } while (listObjectsResponse.IsTruncated);
+  log.info('Dead letter archive processing complete');
   /* eslint-enable no-await-in-loop */
   // Lambda run as an async operation must have a return
   return {
@@ -147,21 +162,30 @@ async function processDeadLetterArchive({
  *
  * @param {Object} event - Input payload object
  * @param {string} [event.bucket] - Bucket containing dead letter archive (default to system bucket)
- * @param {string} [event.key] - Dead letter archive path key
+ * @param {string} [event.path] - Dead letter archive path key
  * @returns {Promise<void>}
  */
 async function handler(event) {
+  log.info(`Incoming event: ${JSON.stringify(event)}`);
   const knex = await getKnexClient({
     env: {
       ...process.env,
-      ...event.env,
+      dbMaxPool: event.dbMaxPool ?? 30,
     },
   });
   const {
+    batchSize = 1000,
+    concurrency = 30,
     bucket,
     path,
   } = event;
-  return processDeadLetterArchive({ knex, bucket, path });
+
+  log.info(`Processing dead letter archive in bucket ${bucket} at path ${path}`);
+  log.info(`Concurrency set to ${concurrency}`);
+  log.info(`Batch size set to ${batchSize}`);
+  log.info(`DB max connection pool: ${knex.client.pool.max}`);
+
+  return processDeadLetterArchive({ knex, bucket, path, batchSize, concurrency });
 }
 
 module.exports = {

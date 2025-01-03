@@ -149,6 +149,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
   const lambdaName = randomString();
   const payload = { x: randomString() };
   const stackName = randomString();
+  const containerName = randomString();
 
   const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition,
@@ -162,11 +163,13 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
     knexConfig: knexConfig,
     systemBucket,
     useLambdaEnvironmentVariables: true,
+    containerName,
   });
 
   t.is(stubbedEcsRunTaskParams.cluster, cluster);
   t.is(stubbedEcsRunTaskParams.taskDefinition, asyncOperationTaskDefinition);
   t.is(stubbedEcsRunTaskParams.launchType, 'FARGATE');
+  t.is(stubbedEcsRunTaskParams.overrides.containerOverrides[0].name, containerName);
 
   const environmentOverrides = {};
   stubbedEcsRunTaskParams.overrides.containerOverrides[0].environment.forEach((env) => {
