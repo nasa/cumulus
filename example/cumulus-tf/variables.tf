@@ -106,6 +106,11 @@ variable "data_persistence_remote_state_config" {
   type = object({ bucket = string, key = string, region = string })
 }
 
+variable "ingest_remote_state_config" {
+  type = object({ bucket = string, key = string, region = string })
+}
+
+
 variable "s3_replicator_config" {
   type        = object({ source_bucket = string, source_prefix = string, target_bucket = string, target_prefix = string, target_region = optional(string) })
   default     = null

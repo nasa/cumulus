@@ -211,3 +211,14 @@ output "update_granules_cmr_metadata_file_links_task" {
     last_modified_date = aws_lambda_function.update_granules_cmr_metadata_file_links_task.last_modified
   }
 }
+
+output "move_granule_collections_task" {
+  value = {
+    task_arn           = aws_lambda_function.move_granule_collections_task.arn
+    last_modified_date = aws_lambda_function.move_granule_collections_task.last_modified
+  }
+}
+
+output "move_granule_collections_ecs_task_id" {
+  value = aws_sfn_activity.move_granule_collections_ecs_task.id
+}
