@@ -568,7 +568,7 @@ test('bulkOperation calls the callback with the expected object', async (t) => {
   );
 });
 
-test('batchUpdateGranule calls the callback with the expected object', async (t) => {
+test('patchBatchGranulesRecordCollection calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -615,7 +615,7 @@ test('batchUpdateGranule calls the callback with the expected object', async (t)
   }));
 });
 
-test('batchPatch calls the callback with the expected object', async (t) => {
+test('patchBatchGranules calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {

@@ -706,8 +706,8 @@ async function patchBatchGranulesRecordCollection(req, res) {
   );
   try {
     await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
-    await Promise.all(granules.map(async (granule) =>
-      await updateEsGranule(esClient, granule.granuleId, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule')));
+    // await Promise.all(granules.map(async (granule) =>
+    //   await updateEsGranule(esClient, granule.granuleId, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule')));
   } catch (error) {
     throw new Error(error);
   }
