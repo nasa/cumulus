@@ -157,10 +157,10 @@ test.before(async (t) => {
   t.context.apiCollection2 = translatePostgresCollectionToApiCollection(collectionResponse2[0]);
 
   // create 10 granules in one collection, 0 in the other
-  t.context.granuleIds = range(2).map((num) => 'granuleId___' + num);
+  t.context.granuleIds = range(50).map((num) => 'granuleId___' + num);
 
   t.context.granulePgModel = new GranulePgModel();
-  t.context.granules = range(2).map((num) => fakeGranuleRecordFactory({
+  t.context.granules = range(50).map((num) => fakeGranuleRecordFactory({
     granule_id: t.context.granuleIds[num],
     collection_cumulus_id: t.context.collectionCumulusId,
     cumulus_id: num,
