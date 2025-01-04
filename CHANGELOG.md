@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3940**
   - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
 
+### Added
+- **CUMULUS-3757**
+  - Added endpoints for updating a granules' records' collection and an endpoint for batch patching
+
 ## [v18.5.2] 2024-12-12
 
 ### Breaking Changes
