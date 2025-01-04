@@ -155,7 +155,8 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
  * @returns {Promise} elasticsearch update response
  */
 function updateGranule(esClient, granule, updates, index = defaultIndexAlias, type = 'granule') {
-  return updateExistingRecord(esClient, granule.granuleId, updates, index, type, granule.collectionId);
+  const collectionId = granule.collectionId;
+  return updateExistingRecord(esClient, granule.granuleId, updates, index, type, collectionId);
 }
 
 const executionInvalidNullFields = [

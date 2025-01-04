@@ -242,7 +242,6 @@ test.serial('PATCH /granules/batchRecords successfully updates granules to new c
     granulePgModel,
     apiGranules,
     collectionId2,
-    collectionId,
     collection2,
     collectionCumulusId2,
     esIndex,
@@ -282,7 +281,7 @@ test.serial('PATCH /granules/batchRecords successfully updates granules to new c
     }).then((res) => res.body);
 
     t.is(apiGranule.collectionId, collectionId2);
-    t.is(esGranule._source.collectionId, collectionId2)
+    t.is(esGranule._source.collectionId, collectionId2);
   }
 });
 
@@ -306,8 +305,8 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
     .expect(200);
 
   const returnedGranules = await Promise.all(
-    granuleIds.map((id) => getUniqueGranuleByGranuleId(knex, id, granulePgModel)
-  ));
+    granuleIds.map((id) => getUniqueGranuleByGranuleId(knex, id, granulePgModel))
+  );
 
   for (const granule of returnedGranules) {
     t.is(granule.collection_cumulus_id, collectionCumulusId2);
@@ -316,7 +315,6 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
       collectionName: collection2.name,
       collectionVersion: collection2.version,
     });
-    // how I Am checking ES here below is wrong!!!!!!!!!!!!!!!!!!!
 
     const esGranule = await esClient.client.get({
       index: esIndex,
@@ -327,7 +325,7 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
 
     // now every granule should be part of collection 2
     t.is(apiGranule.collectionId, collectionId2);
-    t.is(esGranule._source.collectionId, collectionId2)
+    t.is(esGranule._source.collectionId, collectionId2);
     for (const file of apiGranule.files) {
       t.true(file.key.includes(collectionId2));
       t.true(file.bucket.includes(collectionId2));
