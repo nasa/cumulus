@@ -699,15 +699,14 @@ async function patchBatchGranulesRecordCollection(req, res) {
   const granules = req.body.apiGranules;
   const granuleIds = granules.map((granule) => granule.granuleId);
   const newCollectionId = req.body.collectionId;
-  const oldCollectionId = req.body.oldCollectionId;
   const collection = await collectionPgModel.get(
     knex,
     deconstructCollectionId(newCollectionId)
   );
   try {
     await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
-    // await Promise.all(granules.map(async (granule) =>
-    //   await updateEsGranule(esClient, granule.granuleId, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule')));
+    await Promise.all(granules.map(async (granule) =>
+       await updateEsGranule(esClient, granule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule')));
   } catch (error) {
     throw new Error(error);
   }

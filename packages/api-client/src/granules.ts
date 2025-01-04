@@ -18,7 +18,6 @@ type AssociateExecutionRequest = {
 type BatchUpdateGranules = {
   apiGranules: ApiGranuleRecord[],
   collectionId: string,
-  oldCollectionId: string,
 };
 
 const encodeGranulesURIComponent = (

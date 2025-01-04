@@ -253,7 +253,6 @@ test.serial('PATCH /granules/batchRecords successfully updates granules to new c
   const params = {
     apiGranules: apiGranules,
     collectionId: collectionId2,
-    oldCollectionId: collectionId,
   };
 
   const response = await request(app)
@@ -275,14 +274,15 @@ test.serial('PATCH /granules/batchRecords successfully updates granules to new c
       collectionName: collection2.name,
       collectionVersion: collection2.version,
     });
-    // const esGranule = await esClient.client.get({
-    //   index: esIndex,
-    //   type: 'granule',
-    //   id: granule.granule_id,
-    // }).then((res) => res.body);
+    const esGranule = await esClient.client.get({
+      index: esIndex,
+      type: 'granule',
+      id: granule.granule_id,
+      parent: apiGranule.collectionId,
+    }).then((res) => res.body);
 
     t.is(apiGranule.collectionId, collectionId2);
-    // t.is(esGranule._source.collectionId, collectionId2)
+    t.is(esGranule._source.collectionId, collectionId2)
   }
 });
 
@@ -316,15 +316,18 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
       collectionName: collection2.name,
       collectionVersion: collection2.version,
     });
-    // const esGranule = await esClient.client.get({
-    //   index: esIndex,
-    //   type: 'granule',
-    //   id: granule.granule_id,
-    // }).then((res) => res.body);
+    // how I Am checking ES here below is wrong!!!!!!!!!!!!!!!!!!!
+
+    const esGranule = await esClient.client.get({
+      index: esIndex,
+      type: 'granule',
+      id: granule.granule_id,
+      parent: apiGranule.collectionId,
+    }).then((res) => res.body);
 
     // now every granule should be part of collection 2
     t.is(apiGranule.collectionId, collectionId2);
-    // t.is(esGranule._source.collectionId, collectionId2)
+    t.is(esGranule._source.collectionId, collectionId2)
     for (const file of apiGranule.files) {
       t.true(file.key.includes(collectionId2));
       t.true(file.bucket.includes(collectionId2));
