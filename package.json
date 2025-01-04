@@ -33,7 +33,7 @@
     "bootstrap-no-build-no-scripts": "lerna bootstrap --no-ci --force-local --ignore-scripts",
     "bootstrap-no-build-no-concurrency": "lerna bootstrap --no-ci --force-local --concurrency 1",
     "bootstrap-no-build-quiet": "lerna bootstrap --no-ci --force-local --loglevel=error",
-    "ci:bootstrap": "lerna bootstrap --no-ci --force-local --ignore-scripts && lerna run prepublish",
+    "ci:bootstrap": "lerna bootstrap --no-ci --force-local && lerna run prepublish",
     "ci:bootstrap-no-scripts": "lerna bootstrap --no-ci --force-local --ignore-scripts",
     "ci:bootstrap-no-scripts-quiet": "lerna bootstrap --no-ci --force-local --ignore-scripts --loglevel=error",
     "update": "lerna version --exact --force-publish --no-git-tag-version --no-push",
