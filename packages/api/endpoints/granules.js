@@ -13,7 +13,6 @@ const { v4: uuidv4 } = require('uuid');
 const Logger = require('@cumulus/logger');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-
 const {
   CollectionPgModel,
   ExecutionPgModel,
@@ -681,6 +680,57 @@ const associateExecution = async (req, res) => {
   });
 };
 
+const ApiFileSchema = z.object({
+  bucket: z.string().nonempty(),
+  key: z.string().nonempty(),
+  checksum: z.string().nonempty().optional(),
+  createdAt: z.date().optional(),
+  fileName: z.string().nonempty().optional(),
+  filename: z.string().nonempty().optional(),
+  granuleId: z.string().nonempty().optional(),
+  name: z.string().nonempty().optional(),
+  path: z.string().nonempty().optional(),
+  size: z.number().positive().optional(),
+  source: z.string().nonempty().optional(),
+  type: z.string().nonempty().optional(),
+  updatedAt: z.number().positive().optional(),
+});
+
+const ApiGranuleRecordSchema = z.object({
+  granuleId: z.string().nonempty(),
+  collectionId: z.string().nonempty(),
+  status: z.string().nonempty().optional(),
+  updatedAt: z.number().positive().optional(),
+  createdAt: z.number().positive().optional(),
+  cmrLink: z.string().nonempty().optional(),
+  duration: z.number().positive().optional(),
+  error: z.object({}).optional(),
+  execution: z.string().nonempty().optional(),
+  files: z.array(ApiFileSchema).optional(),
+  pdrName: z.string().nonempty().optional(),
+  productVolume: z.string().nonempty().optional(),
+  provider: z.string().nonempty().optional(),
+  published: z.boolean().optional(),
+  timestamp: z.number().positive().optional(),
+  queryFields: z.unknown().optional(),
+  timetoArchive: z.number().positive().optional(),
+  timeToPreprocess: z.number().positive().optional(),
+});
+
+const PatchBatchGranulesRecordCollectionSchema = z.object({
+  apiGranules: z.array(ApiGranuleRecordSchema).nonempty(),
+  collectionId: z.string().nonempty(),
+}).catchall(z.unknown());
+
+const PatchBatchGranulesSchema = z.object({
+  apiGranules: z.array(ApiGranuleRecordSchema).nonempty(),
+  dbConcurrency: z.number().positive(),
+  dbMaxPool: z.number().positive(),
+}).catchall(z.unknown());
+
+const parseBatchGranulesRecordPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesRecordCollectionSchema);
+const parseBatchGranulesPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesSchema);
+
 /**
  * Update a batch of granule's collectionId to the new collectionId
  * in PG and ES
@@ -696,13 +746,19 @@ async function patchBatchGranulesRecordCollection(req, res) {
     esClient = await getEsClient(),
   } = req.testContext || {};
 
-  const granules = req.body.apiGranules;
+  const body = parseBatchGranulesRecordPayload(req.body);
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+
+  const granules = body.apiGranules;
   const granuleIds = granules.map((granule) => granule.granuleId);
-  const newCollectionId = req.body.collectionId;
+  const newCollectionId = body.collectionId;
   const collection = await collectionPgModel.get(
     knex,
     deconstructCollectionId(newCollectionId)
   );
+
   try {
     await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
     await Promise.all(granules.map(async (granule) =>
@@ -711,7 +767,7 @@ async function patchBatchGranulesRecordCollection(req, res) {
     throw new Error(error);
   }
   return res.send({
-    message: `Successfully wrote granules with Granule Id: ${granuleIds}, Collection Id: ${newCollectionId}`,
+    message: `Successfully wrote granules with Granule Id: ${granuleIds} to Collection Id: ${newCollectionId}`,
   });
 }
 
@@ -723,14 +779,41 @@ async function patchBatchGranulesRecordCollection(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function patchBatchGranules(req, res) {
-  const granules = req.body;
+  const concurrency = req.body.dbConcurrency ? req.body.dbConcurrency : 20;
+  const dbMaxPool = req.body.dbMaxPool ? req.body.dbMaxPool : 20;
+  req.body.dbConcurrency = concurrency;
+  req.body.dbMaxPool = dbMaxPool;
+  const body = parseBatchGranulesPayload(req.body);
+
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+
+  const granules = body.apiGranules;
+
   try {
-    await pMap(granules, (async (granule) =>
-      await patchGranule({ body: granule }, res)), { concurrency: granules.length });
+    await pMap(
+      granules,
+      async (granule) => {
+        try {
+          await patchGranule({ body: granule }, res);
+        } catch (error) {
+          if (!(error.code === 'ERR_HTTP_HEADERS_SENT')) {
+            throw new Error(error);
+          }
+        }
+      },
+      { concurrency: body.dbConcurrency }
+    );
   } catch (error) {
     throw new Error(error);
   }
+
+  return res.send({
+    message: 'Successfully patched Granules',
+  });
 }
+
 /**
  * Delete a granule by granuleId
  *

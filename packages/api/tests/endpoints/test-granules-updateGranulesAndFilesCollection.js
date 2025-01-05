@@ -297,11 +297,16 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
     esClient,
     knex,
   } = t.context;
+
+  const params = {
+    apiGranules: movedGranules,
+  };
+
   await request(app)
     .patch('/granules/batchPatch')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(movedGranules)
+    .send(params)
     .expect(200);
 
   const returnedGranules = await Promise.all(

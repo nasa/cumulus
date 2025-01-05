@@ -11,7 +11,6 @@ import Logger from '@cumulus/logger';
 
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
-import { createRejectableTransaction } from '../database';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
@@ -374,9 +373,7 @@ export const updateBatchGranulesCollection = async (
     granules: granulesTable,
   } = TableNames;
   try {
-    await createRejectableTransaction(knex, async (trx) => {
-      await trx(granulesTable).whereIn('granule_id', granuleIds).update({ collection_cumulus_id: collectionCumulusId });
-    });
+    await knex(granulesTable).whereIn('granule_id', granuleIds).update({ collection_cumulus_id: collectionCumulusId });
   } catch (thrownError) {
     log.error(`Write Granules failed: ${JSON.stringify(thrownError)}`);
     throw thrownError;
