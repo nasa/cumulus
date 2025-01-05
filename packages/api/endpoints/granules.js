@@ -808,10 +808,6 @@ async function patchBatchGranules(req, res) {
   } catch (error) {
     throw new Error(error);
   }
-
-  return res.send({
-    message: 'Successfully patched Granules',
-  });
 }
 
 /**
