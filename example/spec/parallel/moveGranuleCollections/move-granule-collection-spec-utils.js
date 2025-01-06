@@ -1,4 +1,14 @@
 
+const {
+  promiseS3Upload,
+} = require('@cumulus/aws-client/S3');
+const {
+  granules,
+  collections,
+} = require('@cumulus/api-client');
+
+const path = require('path');
+const fs = require('fs');
 const { constructCollectionId } = require('../../../../packages/message/Collections');
 const getSourceCollection = (sourceUrlPrefix) => {
 	return {
@@ -127,7 +137,7 @@ const getProcessGranule = (sourceUrlPrefix) => {
   };
 }
 
-const setupInitialState = async (sourceUrlPrefix, targetUrlPrefix) => {
+const setupInitialState = async (stackName, sourceUrlPrefix, targetUrlPrefix) => {
 	const sourceCollection = getSourceCollection(sourceUrlPrefix)
 	const targetCollection = getTargetCollection(targetUrlPrefix)
 	try {

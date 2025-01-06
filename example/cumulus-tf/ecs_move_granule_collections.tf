@@ -21,6 +21,7 @@ module "move_granule_collections_services" {
 
   environment = {
     AWS_DEFAULT_REGION = data.aws_region.current.name
+    stackName = var.prefix
   }
   command = [
     "cumulus-ecs-task",

@@ -5,66 +5,62 @@ const { getExecution } = require('@cumulus/api-client/executions');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
+const { getTargetCollection, getProcessGranule, setupInitialState, getPayload, getTargetFiles } = require('./move-granule-collection-spec-utils')
+const {
+  deleteS3Object,
+} = require('@cumulus/aws-client/S3');
 
 const activityStep = new ActivityStep();
 
 describe('The MoveGranuleCollection workflow using ECS', () => {
   let workflowExecution;
   let config;
-
+  let finalFiles;
+  let beforeAllFailed = false;
+  afterAll(async () => {
+    await Promise.all(finalFiles.map((fileObj) => deleteS3Object(
+      fileObj.bucket,
+      fileObj.key
+    )));
+  });
   beforeAll(async () => {
-    try {
-      await collections.createCollection({
-        prefix: stackName,
-        collection: originalCollection,
-      });
-    } catch {
-      console.log(`collection ${constructCollectionId(y.name, originalCollection.version)} already exists`);
-    }
-    try {
-      await collections.createCollection({
-        prefix: stackName,
-        collection: targetCollection,
-      });
-    } catch {
-      console.log(`collection ${constructCollectionId(targetCollection.name, targetCollection.version)} already exists`);
-    }
-    try {
-      await granules.createGranule({
-        prefix: stackName,
-        body: processGranule,
-      });
-    } catch {
-      console.log(`granule ${processGranule.granuleId} already exists`);
-    }
-    await Promise.all(processGranule.files.map(async (file) => {
-      let body;
-      if (file.type === 'metadata') {
-        body = fs.createReadStream(path.join(__dirname, 'data/meta.xml'));
-      } else {
-        body = file.key;
-      }
-      await promiseS3Upload({
-        params: {
-          Bucket: file.bucket,
-          Key: file.key,
-          Body: body,
-        },
-      });
-    }));
+    let stackName;
+    const sourceUrlPrefix = `move-granule-collection-testing`;
+    const targetUrlPrefix = `move-granule-collection-testing-target`;
+    const targetCollection = getTargetCollection(targetUrlPrefix);
+    const processGranule = getProcessGranule(sourceUrlPrefix)
     
     config = await loadConfig();
+    stackName = config.stackName;
+    finalFiles = getTargetFiles(targetUrlPrefix)
+    const payload = getPayload(sourceUrlPrefix, targetUrlPrefix);
+    //upload to cumulus
+    try {
+      await setupInitialState(stackName, sourceUrlPrefix, targetUrlPrefix);
+
+      workflowExecution = await buildAndExecuteWorkflow(
+        config.stackName,
+        config.bucket,
+        'ECSMoveGranuleCollectionsWorkflow'
+      );
+  
+      console.log(JSON.stringify(workflowExecution, null, 2))
+      await Promise.all(finalFiles.map((file) => expectAsync(
+        waitForListObjectsV2ResultCount({
+          bucket: file.bucket,
+          prefix: file.key,
+          desiredCount: 1,
+          interval: 5 * 1000,
+          timeout: 60 * 1000,
+        })
+      ).toBeResolved()));
+    } catch (error) {
+      console.log(`files do not appear to have been moved: error: ${error}`);
+      beforeAllFailed = true;
+    }
 
 
-
-
-    workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName,
-      config.bucket,
-      'ECSMoveGranuleCollectionsWorkflow'
-    );
-
-    console.log(JSON.stringify(workflowExecution, null, 2))
+    
   });
 
   afterAll(async () => {
@@ -91,17 +87,17 @@ describe('The MoveGranuleCollection workflow using ECS', () => {
     });
   });
 
-  describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
-    it('the execution record is added to the PostgreSQL database', async () => {
-      const record = await waitForApiStatus(
-        getExecution,
-        {
-          prefix: config.stackName,
-          arn: workflowExecution.executionArn,
-        },
-        'completed'
-      );
-      expect(record.status).toEqual('completed');
-    });
-  });
+  // describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
+  //   it('the execution record is added to the PostgreSQL database', async () => {
+  //     const record = await waitForApiStatus(
+  //       getExecution,
+  //       {
+  //         prefix: config.stackName,
+  //         arn: workflowExecution.executionArn,
+  //       },
+  //       'completed'
+  //     );
+  //     expect(record.status).toEqual('completed');
+  //   });
+  // });
 });

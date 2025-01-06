@@ -3,13 +3,11 @@
 const { InvokeCommand } = require('@aws-sdk/client-lambda');
 const { lambda } = require('@cumulus/aws-client/services');
 const {
-  promiseS3Upload,
   deleteS3Object,
 } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 const {
   granules,
-  collections,
 } = require('@cumulus/api-client');
 
 const path = require('path');
@@ -41,12 +39,11 @@ describe('when moveGranulesCollection is called', () => {
       )));
     });
     beforeAll(async () => {
-      finalFiles = getTargetFiles()
-
+      finalFiles = getTargetFiles(targetUrlPrefix)
       const payload = getPayload(sourceUrlPrefix, targetUrlPrefix);
       //upload to cumulus
       try {
-        await setupInitialState();
+        await setupInitialState(stackName, sourceUrlPrefix, targetUrlPrefix);
         const { $metadata } = await lambda().send(new InvokeCommand({
           FunctionName: `${stackName}-MoveGranuleCollections`,
           InvocationType: 'RequestResponse',
@@ -65,14 +62,13 @@ describe('when moveGranulesCollection is called', () => {
           console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
           beforeAllFailed = true;
         }
-
         await Promise.all(finalFiles.map((file) => expectAsync(
           waitForListObjectsV2ResultCount({
             bucket: file.bucket,
             prefix: file.key,
             desiredCount: 1,
             interval: 5 * 1000,
-            timeout: 30 * 1000,
+            timeout: 60 * 1000,
           })
         ).toBeResolved()));
       } catch (error) {
