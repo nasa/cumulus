@@ -157,10 +157,10 @@ test.before(async (t) => {
   t.context.apiCollection2 = translatePostgresCollectionToApiCollection(collectionResponse2[0]);
 
   // create 10 granules in one collection, 0 in the other
-  t.context.granuleIds = range(20).map((num) => 'granuleId___' + num);
+  t.context.granuleIds = range(10).map((num) => 'granuleId___' + num);
 
   t.context.granulePgModel = new GranulePgModel();
-  t.context.granules = range(20).map((num) => fakeGranuleRecordFactory({
+  t.context.granules = range(10).map((num) => fakeGranuleRecordFactory({
     granule_id: t.context.granuleIds[num],
     collection_cumulus_id: t.context.collectionCumulusId,
     cumulus_id: num,
@@ -313,8 +313,6 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
     granuleIds.map((id) => getUniqueGranuleByGranuleId(knex, id, granulePgModel))
   );
 
-  console.log("CHECK HERE AS WELL", returnedGranules.length,  "\n");
-
   for (const granule of returnedGranules) {
     t.is(granule.collection_cumulus_id, collectionCumulusId2);
     const apiGranule = await translatePostgresGranuleResultToApiGranule(knex, {
@@ -333,9 +331,7 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
     // now every granule should be part of collection 2
     t.is(apiGranule.collectionId, collectionId2);
     t.is(esGranule._source.collectionId, collectionId2);
-    console.log("CHECK HERE AS WELL AGAIN", apiGranule.files, apiGranule.files.length, "\n");
     for (const file of apiGranule.files) {
-      console.log("CHECK HERE", file.key.includes(collectionId2), file, collectionId2);
       t.true(file.key.includes(collectionId2));
       t.true(file.bucket.includes(collectionId2));
     }
