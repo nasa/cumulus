@@ -485,3 +485,17 @@ variable "report_sns_topic_subscriber_arns" {
   type = list
   default = null
 }
+
+## Dead Letter Recovery Configuration
+
+variable "dead_letter_recovery_cpu" {
+  type = number
+  default = 256
+  description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
+}
+
+variable "dead_letter_recovery_memory" {
+  type = number
+  default = 1024
+  description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
+}
