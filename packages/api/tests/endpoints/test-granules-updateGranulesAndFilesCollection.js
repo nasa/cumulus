@@ -332,6 +332,7 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
     t.is(apiGranule.collectionId, collectionId2);
     t.is(esGranule._source.collectionId, collectionId2);
     for (const file of apiGranule.files) {
+      console.log("CHECK HERE", file.key.includes(collectionId2), file, collectionId2);
       t.true(file.key.includes(collectionId2));
       t.true(file.bucket.includes(collectionId2));
     }
