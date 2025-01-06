@@ -215,20 +215,28 @@ const create = async (req, res) => {
  * Update existing granule *or* create new granule
  *
  * @param {Object} req - express request object
+ * @param {number} req.dbMaxPool - optional max pool size for knex
+ * @param {Object} req.testContext - test context for client requests
+ * @param {Object} req.body - request body for patching a granule
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
-const patchGranule = async (req, res) => {
+const patchGranuleMethod = async (req, res) => {
   const {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
-    knex = await getKnexClient(),
     esClient = await getEsClient(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
+  const dbMaxPool = req.dbMaxPool || undefined;
   let apiGranule = req.body || {};
   let pgCollection;
-
+  const knex = dbMaxPool ? await getKnexClient({
+    env: {
+      ...process.env,
+      dbMaxPool: dbMaxPool.toString(),
+    },
+  }) : await getKnexClient();
   if (!apiGranule.collectionId) {
     res.boom.badRequest('Granule update must include a valid CollectionId');
   }
@@ -293,7 +301,31 @@ const patchGranule = async (req, res) => {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
   }
-  return _returnPatchGranuleStatus(isNewRecord, apiGranule, res);
+  return [isNewRecord, apiGranule, res];
+};
+
+/**
+ * Update existing granule *or* create new granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const patchGranule = async (req, res) => {
+  let patchRes;
+  let patchGranuleMethodVals;
+  let isNewRecord = false;
+  let apiGranule = {};
+  try {
+    patchGranuleMethodVals = await patchGranuleMethod(req, res);
+    isNewRecord = patchGranuleMethodVals[0];
+    apiGranule = patchGranuleMethodVals[1];
+    patchRes = patchGranuleMethodVals[2];
+  } catch (error) {
+    log.error('failed to update granule', error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return _returnPatchGranuleStatus(isNewRecord, apiGranule, patchRes);
 };
 
 /**
@@ -680,50 +712,13 @@ const associateExecution = async (req, res) => {
   });
 };
 
-const ApiFileSchema = z.object({
-  bucket: z.string().nonempty(),
-  key: z.string().nonempty(),
-  checksum: z.string().nonempty().optional(),
-  createdAt: z.date().optional(),
-  fileName: z.string().nonempty().optional(),
-  filename: z.string().nonempty().optional(),
-  granuleId: z.string().nonempty().optional(),
-  name: z.string().nonempty().optional(),
-  path: z.string().nonempty().optional(),
-  size: z.number().positive().optional(),
-  source: z.string().nonempty().optional(),
-  type: z.string().nonempty().optional(),
-  updatedAt: z.number().positive().optional(),
-});
-
-const ApiGranuleRecordSchema = z.object({
-  granuleId: z.string().nonempty(),
-  collectionId: z.string().nonempty(),
-  status: z.string().nonempty().optional(),
-  updatedAt: z.number().positive().optional(),
-  createdAt: z.number().positive().optional(),
-  cmrLink: z.string().nonempty().optional(),
-  duration: z.number().positive().optional(),
-  error: z.object({}).optional(),
-  execution: z.string().nonempty().optional(),
-  files: z.array(ApiFileSchema).optional(),
-  pdrName: z.string().nonempty().optional(),
-  productVolume: z.string().nonempty().optional(),
-  provider: z.string().nonempty().optional(),
-  published: z.boolean().optional(),
-  timestamp: z.number().positive().optional(),
-  queryFields: z.unknown().optional(),
-  timetoArchive: z.number().positive().optional(),
-  timeToPreprocess: z.number().positive().optional(),
-});
-
 const PatchBatchGranulesRecordCollectionSchema = z.object({
-  apiGranules: z.array(ApiGranuleRecordSchema).nonempty(),
+  apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
   collectionId: z.string().nonempty(),
 }).catchall(z.unknown());
 
 const PatchBatchGranulesSchema = z.object({
-  apiGranules: z.array(ApiGranuleRecordSchema).nonempty(),
+  apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
   dbConcurrency: z.number().positive(),
   dbMaxPool: z.number().positive(),
 }).catchall(z.unknown());
@@ -788,19 +783,15 @@ async function patchBatchGranules(req, res) {
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
-
   const granules = body.apiGranules;
-
   try {
     await pMap(
       granules,
-      async (granule) => {
+      async (apiGranule) => {
         try {
-          await patchGranule({ body: granule }, res);
+          await patchGranuleMethod({ body: apiGranule, dbMaxPool }, res);
         } catch (error) {
-          if (!(error.code === 'ERR_HTTP_HEADERS_SENT')) {
-            throw new Error(error);
-          }
+          throw new Error(error);
         }
       },
       { concurrency: body.dbConcurrency }
