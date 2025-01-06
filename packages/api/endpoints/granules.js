@@ -779,7 +779,7 @@ async function patchBatchGranulesRecordCollection(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function patchBatchGranules(req, res) {
-  const concurrency = req.body.dbConcurrency ? req.body.dbConcurrency : 10;
+  const concurrency = req.body.dbConcurrency ? req.body.dbConcurrency : 5;
   const dbMaxPool = req.body.dbMaxPool ? req.body.dbMaxPool : 20;
   req.body.dbConcurrency = concurrency;
   req.body.dbMaxPool = dbMaxPool;

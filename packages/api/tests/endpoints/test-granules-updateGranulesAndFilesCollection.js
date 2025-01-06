@@ -313,6 +313,8 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
     granuleIds.map((id) => getUniqueGranuleByGranuleId(knex, id, granulePgModel))
   );
 
+  console.log("CHECK HERE AS WELL", returnedGranules.length,  "\n");
+
   for (const granule of returnedGranules) {
     t.is(granule.collection_cumulus_id, collectionCumulusId2);
     const apiGranule = await translatePostgresGranuleResultToApiGranule(knex, {
@@ -331,6 +333,7 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
     // now every granule should be part of collection 2
     t.is(apiGranule.collectionId, collectionId2);
     t.is(esGranule._source.collectionId, collectionId2);
+    console.log("CHECK HERE AS WELL AGAIN", apiGranule.files, apiGranule.files.length, "\n");
     for (const file of apiGranule.files) {
       console.log("CHECK HERE", file.key.includes(collectionId2), file, collectionId2);
       t.true(file.key.includes(collectionId2));
