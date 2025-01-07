@@ -305,7 +305,7 @@ const patchGranuleMethod = async (req, res) => {
     isNewRecord,
     apiGranule,
     patchRes: res,
-  }
+  };
 };
 
 /**
@@ -320,7 +320,7 @@ const patchGranule = async (req, res) => {
   let isNewRecord = false;
   let apiGranule = {};
   try {
-    ({isNewRecord, apiGranule, patchRes} = await patchGranuleMethod(req, res));
+    ({ isNewRecord, apiGranule, patchRes } = await patchGranuleMethod(req, res));
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
