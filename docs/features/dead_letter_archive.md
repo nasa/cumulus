@@ -20,6 +20,27 @@ Sending a POST request to this endpoint will trigger a Cumulus AsyncOperation th
 
 This endpoint may prove particularly useful when recovering from extended or unexpected database outage, where messages failed to process due to external outage and there is no essential malformation of each Cumulus message.
 
+### Configurable request parameters
+
+The DLA recovery endpoint takes the following configurations that help bound performance.
+
+- `batchSize` - specifies how many DLA objects to read from S3 and hold in memory.    Increasing this value will cause the tool to read and hold `batchSize` DLA objects in memory and iterate over them with `concurrency` operations in parallel.   Defaults to 1000.
+- `concurrency` - specifies how many messages to process from the batch in parallel.  Defaults to 30.
+- `dbMaxPool` - specifies how many database connections to allow the process to utilize as part of it's connection pool.     This value will constrain database connections, but too low a value can cause performance issues or database write failures (Knex timeout errors) if the connection pool is not high enough to support the set concurrency.   Defaults to 30, value should target at minimum the value set for `concurrency`.
+
+### Dead Letter Archive Recovery Configuration
+
+The dead letter archive async operation environment can be configured to allow use of more memory/CPU if increased performance/concurrency is desired via the following `cumulus` terraform variables:
+
+- dead_letter_recovery_cpu
+- dead_letter_recovery_memory
+
+These values can be configured to increase according to configuration table in [Fargate Services Documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html) if the process is failing due to memory errors with high concurrency/connection limits/faster performance is desired.
+
+These values default to the values defined in the `cumulus` module: [variables.tf](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf)
+
+See [Cumulus DLA Documentation](https://nasa.github.io/cumulus/docs/features/dead_letter_archive) for more information on this feature.
+
 ## Dead Letter Archive Message structure
 
 The Messages yielded to the dead letter archive have some inherent uncertainty to their structure due to their nature as failed messages that may have failed due to structural issues. However there is a standard format that they will overwhelmingly conform to. This follows, but adds attributes to the format documented at [SQSMessage](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_Message.html)
@@ -31,7 +52,7 @@ The Messages yielded to the dead letter archive have some inherent uncertainty t
     execution: [string | null], // execution ARN for the execution which created the originating sf event
     time: [string | null], // Zulu timestamp of of the originating sf event
     collection: [string | null], // collection the granule belongs to
-    granules: [Array[string | null] | null], // granules 
+    granules: [Array[string | null] | null], // granules
     stateMachine: [string | null], // ARN of the triggering workflow
     status: [string | null], status of triggering execution
     /* these following are standard, not built by cumulus */
@@ -41,7 +62,7 @@ The Messages yielded to the dead letter archive have some inherent uncertainty t
     messageId: [string], // uniqueID of the DLQ message
     receiptHandle: [string], // An identifier associated with the act of receiving the message. A new receipt handle is returned every time you receive a message.
     attributes: [Object], // A map of the attributes requested in ReceiveMessage to their respective values.
-    messageAttributes: [Object], // Each message attribute consists of a Name, Type, and Value. 
+    messageAttributes: [Object], // Each message attribute consists of a Name, Type, and Value.
 }
 ```
 
