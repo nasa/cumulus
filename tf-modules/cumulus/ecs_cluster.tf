@@ -260,6 +260,9 @@ resource "aws_launch_template" "ecs_cluster_instance" {
   iam_instance_profile {
     arn = aws_iam_instance_profile.ecs_cluster_instance.arn
   }
+  metadata_options {
+    http_tokens = "required"
+  }
   monitoring {
     enabled = true
   }

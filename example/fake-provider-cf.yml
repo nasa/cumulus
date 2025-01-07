@@ -99,6 +99,8 @@ Resources:
       LaunchTemplateData:
         IamInstanceProfile:
           Arn: !GetAtt InstanceProfile.Arn
+        MetadataOptions:
+          HttpTokens: required
         ImageId: !Ref LatestAmiId
         Monitoring:
           Enabled: false

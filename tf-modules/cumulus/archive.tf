@@ -110,6 +110,9 @@ module "archive" {
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
 
+  dead_letter_recovery_cpu = var.dead_letter_recovery_cpu
+  dead_letter_recovery_memory = var.dead_letter_recovery_memory
+
   tags = var.tags
 
   report_sns_topic_subscriber_arns = var.report_sns_topic_subscriber_arns
