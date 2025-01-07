@@ -10,19 +10,17 @@ const {
   granules,
 } = require('@cumulus/api-client');
 
-const path = require('path');
-const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { loadConfig } = require('../../helpers/testUtils');
 const { constructCollectionId } = require('../../../../packages/message/Collections');
-const { getTargetCollection, getProcessGranule, setupInitialState, getPayload, getTargetFiles } = require('./move-granule-collection-spec-utils')
+const { getTargetCollection, getProcessGranule, setupInitialState, getPayload, getTargetFiles } = require('./move-granule-collection-spec-utils');
 describe('when moveGranulesCollection is called', () => {
   let stackName;
   const sourceUrlPrefix = `source_path/${uuidv4()}`;
   const targetUrlPrefix = `target_path/${uuidv4()}`;
   const targetCollection = getTargetCollection(targetUrlPrefix);
-  const processGranule = getProcessGranule(sourceUrlPrefix)
-  
+  const processGranule = getProcessGranule(sourceUrlPrefix);
+
   // let systemBucket;
   beforeAll(async () => {
     const config = await loadConfig();
@@ -39,7 +37,7 @@ describe('when moveGranulesCollection is called', () => {
       )));
     });
     beforeAll(async () => {
-      finalFiles = getTargetFiles(targetUrlPrefix)
+      finalFiles = getTargetFiles(targetUrlPrefix);
       const payload = getPayload(sourceUrlPrefix, targetUrlPrefix);
       //upload to cumulus
       try {
