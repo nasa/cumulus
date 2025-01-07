@@ -6,7 +6,7 @@ resource "aws_lambda_function" "move_granule_collections_task" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "MoveGranuleCollections", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "MoveGranuleCollections", 600)
+  memory_size      = lookup(var.lambda_memory_sizes, "MoveGranuleCollections", 1024)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

@@ -21,7 +21,7 @@ module "python_test_ingest_processing_service" {
   image                                 = "${data.aws_ecr_repository.cumulus_test_ingest_process.repository_url}:${var.cumulus_test_ingest_image_version}"
 
   cpu                = 400
-  memory_reservation = 700
+  memory_reservation = 400
 
   environment = {
     AWS_DEFAULT_REGION = data.aws_region.current.name
