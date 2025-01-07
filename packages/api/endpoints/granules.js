@@ -301,7 +301,11 @@ const patchGranuleMethod = async (req, res) => {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
   }
-  return [isNewRecord, apiGranule, res];
+  return {
+    isNewRecord,
+    apiGranule,
+    patchRes: res,
+  }
 };
 
 /**
@@ -313,14 +317,10 @@ const patchGranuleMethod = async (req, res) => {
  */
 const patchGranule = async (req, res) => {
   let patchRes;
-  let patchGranuleMethodVals;
   let isNewRecord = false;
   let apiGranule = {};
   try {
-    patchGranuleMethodVals = await patchGranuleMethod(req, res);
-    isNewRecord = patchGranuleMethodVals[0];
-    apiGranule = patchGranuleMethodVals[1];
-    patchRes = patchGranuleMethodVals[2];
+    ({isNewRecord, apiGranule, patchRes} = await patchGranuleMethod(req, res));
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
