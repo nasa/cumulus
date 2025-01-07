@@ -15,9 +15,15 @@ type AssociateExecutionRequest = {
   executionArn: string
 };
 
-type BatchUpdateGranules = {
+type BatchPatchGranulesRecord = {
   apiGranules: ApiGranuleRecord[],
   collectionId: string,
+};
+
+type BatchPatchGranules = {
+  apiGranules: ApiGranuleRecord[],
+  dbConcurrency: number,
+  dbMaxPoolSize: number,
 };
 
 const encodeGranulesURIComponent = (
@@ -620,9 +626,9 @@ export const associateExecutionWithGranule = async (params: {
  *                          api lambda
  * @returns - the response from the callback
  */
-export const batchUpdateGranuleRecordCollection = async (params: {
+export const batchPatchGranulesRecordCollection = async (params: {
   prefix: string,
-  body: BatchUpdateGranules,
+  body: BatchPatchGranulesRecord,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
@@ -656,7 +662,7 @@ export const batchUpdateGranuleRecordCollection = async (params: {
  */
 export const batchPatchGranules = async (params: {
   prefix: string,
-  body: ApiGranule[],
+  body: BatchPatchGranules,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;

@@ -734,7 +734,7 @@ const parseBatchGranulesPayload = zodParser('PatchBatchGranulesRecordCollection 
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function patchBatchGranulesRecordCollection(req, res) {
+async function batchPatchGranulesRecordCollection(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
@@ -773,7 +773,7 @@ async function patchBatchGranulesRecordCollection(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function patchBatchGranules(req, res) {
+async function batchPatchGranules(req, res) {
   const concurrency = req.body.dbConcurrency ? req.body.dbConcurrency : 5;
   const dbMaxPool = req.body.dbMaxPool ? req.body.dbMaxPool : 20;
   req.body.dbConcurrency = concurrency;
@@ -1194,8 +1194,8 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleId', getByGranuleId);
 router.get('/:collectionId/:granuleId', get);
-router.patch('/batchRecords', patchBatchGranulesRecordCollection);
-router.patch('/batchPatch', patchBatchGranules);
+router.patch('/batchRecords', batchPatchGranulesRecordCollection);
+router.patch('/batchPatch', batchPatchGranules);
 router.get('/', list);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
@@ -1233,7 +1233,7 @@ module.exports = {
   put,
   patch,
   patchGranule,
-  patchBatchGranules,
-  patchBatchGranulesRecordCollection,
+  batchPatchGranules,
+  batchPatchGranulesRecordCollection,
   router,
 };

@@ -568,7 +568,7 @@ test('bulkOperation calls the callback with the expected object', async (t) => {
   );
 });
 
-test('patchBatchGranulesRecordCollection calls the callback with the expected object', async (t) => {
+test('batchPatchGranulesRecordCollection calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -602,7 +602,7 @@ test('patchBatchGranulesRecordCollection calls the callback with the expected ob
     });
   };
 
-  await t.notThrowsAsync(granulesApi.batchUpdateGranuleRecordCollection({
+  await t.notThrowsAsync(granulesApi.batchPatchGranulesRecordCollection({
     callback,
     prefix: t.context.testPrefix,
     body: {
@@ -615,7 +615,7 @@ test('patchBatchGranulesRecordCollection calls the callback with the expected ob
   }));
 });
 
-test('patchBatchGranules calls the callback with the expected object', async (t) => {
+test('batchPatchGranules calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -630,6 +630,8 @@ test('patchBatchGranules calls the callback with the expected object', async (t)
           granule_id: t.context.granuleId,
           collectionId: t.context.collectionId2,
         }],
+        dbConcurrency: 5,
+        dbMaxPoolSize: 10,
       }),
     },
     expectedStatusCodes: 202,
@@ -643,6 +645,8 @@ test('patchBatchGranules calls the callback with the expected object', async (t)
           granule_id: t.context.granuleId,
           collectionId: t.context.collectionId2,
         }],
+        dbConcurrency: 5,
+        dbMaxPoolSize: 10,
       }),
     });
   };
@@ -655,6 +659,8 @@ test('patchBatchGranules calls the callback with the expected object', async (t)
         granule_id: t.context.granuleId,
         collectionId: t.context.collectionId2,
       }],
+      dbConcurrency: 5,
+      dbMaxPoolSize: 10,
     },
   }));
 });
