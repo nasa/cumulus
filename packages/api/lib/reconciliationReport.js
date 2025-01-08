@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const isEqual = require('lodash/isEqual');
@@ -8,6 +10,14 @@ const { constructCollectionId, deconstructCollectionId } = require('@cumulus/mes
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
+
+/**
+ * @typedef {import('../lib/types').RecReportParams } RecReportParams
+ * @typedef {import('../lib/types').EnhancedNormalizedRecReportParams }
+ * EnhancedNormalizedRecReportParams
+ * @typedef {import('../lib/types').NormalizedRecReportParams } NormalizedRecReportParams
+ * @typedef {import('./reconciliationReport-types').ReportHeader } ReportHeader
+ */
 
 /**
  * Extra search params to add to the cmrGranules searchConceptQueue
@@ -24,19 +34,8 @@ function cmrGranuleSearchParams(recReportParams) {
 }
 
 /**
- * Prepare a list of collectionIds into an _id__in object
- *
- * @param {Array<string>} collectionIds - Array of collectionIds in the form 'name___ver'
- * @returns {Object} - object that will return the correct terms search when
- *                     passed to the query command.
- */
-function searchParamsForCollectionIdArray(collectionIds) {
-  return { _id__in: collectionIds.join(',') };
-}
-
-/**
  * @param {string} dateable - any input valid for a JS Date contstructor.
- * @returns {number} - primitive value of input date string or undefined, if
+ * @returns {number | undefined} - primitive value of input date string or undefined, if
  *                     input string not convertable.
  */
 function dateToValue(dateable) {
@@ -50,33 +49,15 @@ function dateStringToDateOrNull(dateable) {
 }
 
 /**
- *
- * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formatted for Elasticsearch collection search
- */
-function convertToESCollectionSearchParams(params) {
-  const { collectionIds, startTimestamp, endTimestamp } = params;
-  const idsIn = collectionIds
-    ? searchParamsForCollectionIdArray(collectionIds)
-    : undefined;
-  const searchParams = {
-    updatedAt__from: dateToValue(startTimestamp),
-    updatedAt__to: dateToValue(endTimestamp),
-    ...idsIn,
-  };
-  return removeNilProperties(searchParams);
-}
-
-/**
  * convertToDBCollectionSearchObject      - Creates Postgres search object from
  *                                          InternalRecReport Parameters
  * @param {Object} params                 - request params to convert to database params
- * @param {[Object]} params.collectionIds - List containing single Collection object
+ * @param {string[]} [params.collectionIds] - List containing single Collection object
  *                                          multiple or no collections will result in a
  *                                          search object without a collection object
- * @param {moment} params.endTimestamp    - ending report datetime ISO Timestamp
- * @param {moment} params.startTimestamp  - beginning report datetime ISO timestamp
- * @returns {[Object]}                    - array of objects of desired
+ * @param {string} [params.endTimestamp]    - ending report datetime ISO Timestamp
+ * @param {string} [params.startTimestamp]  - beginning report datetime ISO timestamp
+ * @returns {Object[]}                    - array of objects of desired
  *                                          parameters formatted for database collection
  *                                          search
  */
@@ -100,29 +81,10 @@ function convertToDBCollectionSearchObject(params) {
 }
 
 /**
- *
- * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for Elasticsearch.
- */
-function convertToESGranuleSearchParams(params) {
-  const { collectionIds, granuleIds, providers, startTimestamp, endTimestamp } = params;
-  const collectionIdIn = collectionIds ? collectionIds.join(',') : undefined;
-  const granuleIdIn = granuleIds ? granuleIds.join(',') : undefined;
-  const providerIn = providers ? providers.join(',') : undefined;
-  return removeNilProperties({
-    updatedAt__from: dateToValue(startTimestamp),
-    updatedAt__to: dateToValue(endTimestamp),
-    collectionId__in: collectionIdIn,
-    granuleId__in: granuleIdIn,
-    provider__in: providerIn,
-  });
-}
-
-/**
  * Convert reconciliation report parameters to PostgreSQL database search params.
  *
- * @param {Object} params - request params to convert to database params
- * @returns {Object} object of desired parameters formated for database granule search
+ * @param {EnhancedNormalizedRecReportParams} params - request params to convert to database params
+ * @returns object of desired parameters formatted for database granule search
  */
 function convertToDBGranuleSearchParams(params) {
   const {
@@ -149,25 +111,9 @@ function convertToDBGranuleSearchParams(params) {
 }
 
 /**
- * convert to es search parameters using createdAt for report time range
- *
- * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for Elasticsearch.
- */
-function convertToESGranuleSearchParamsWithCreatedAtRange(params) {
-  const searchParamsWithUpdatedAt = convertToESGranuleSearchParams(params);
-  const searchParamsWithCreatedAt = {
-    createdAt__from: searchParamsWithUpdatedAt.updatedAt__from,
-    createdAt__to: searchParamsWithUpdatedAt.updatedAt__to,
-    ...omit(searchParamsWithUpdatedAt, ['updatedAt__from', 'updatedAt__to']),
-  };
-  return removeNilProperties(searchParamsWithCreatedAt);
-}
-
-/**
  *
  * @param {Object} params - request params to convert to orca params
- * @returns {Object} object of desired parameters formated for orca
+ * @returns {Object} object of desired parameters formatted for orca
  */
 function convertToOrcaGranuleSearchParams(params) {
   const { collectionIds, granuleIds, providers, startTimestamp, endTimestamp } = params;
@@ -183,12 +129,8 @@ function convertToOrcaGranuleSearchParams(params) {
 /**
  * create initial report header
  *
- * @param {Object} recReportParams - params
- * @param {Object} recReportParams.reportType - the report type
- * @param {moment} recReportParams.createStartTime - when the report creation was begun
- * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
- * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
- * @returns {Object} report header
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - params
+ * @returns {ReportHeader} report header
  */
 function initialReportHeader(recReportParams) {
   const {
@@ -288,12 +230,8 @@ module.exports = {
   cmrGranuleSearchParams,
   convertToDBCollectionSearchObject,
   convertToDBGranuleSearchParams,
-  convertToESCollectionSearchParams,
-  convertToESGranuleSearchParams,
-  convertToESGranuleSearchParamsWithCreatedAtRange,
   convertToOrcaGranuleSearchParams,
   filterDBCollections,
   initialReportHeader,
-  searchParamsForCollectionIdArray,
   compareEsGranuleAndApiGranule,
 };

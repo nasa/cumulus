@@ -33,9 +33,9 @@ export class ExecutionSearch extends BaseSearch {
   }
 
   /**
-   * check if joined async_ops table search is needed
+   * check if joined async_operations table search is needed
    *
-   * @returns whether collection search is needed
+   * @returns whether async_operations search is needed
    */
   protected searchAsync(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
@@ -43,9 +43,9 @@ export class ExecutionSearch extends BaseSearch {
   }
 
   /**
-   * check if joined async_ops table search is needed
+   * check if joined parent execution table search is needed
    *
-   * @returns whether collection search is needed
+   * @returns whether parent execution search is needed
    */
   protected searchParent(): boolean {
     const { not, term, terms } = this.dbQueryParameters;
@@ -130,7 +130,7 @@ export class ExecutionSearch extends BaseSearch {
       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.arn`, `%${infix}%`));
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.arn`, `%${prefix}%`));
+      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.arn`, `${prefix}%`));
     }
   }
 
@@ -143,6 +143,7 @@ export class ExecutionSearch extends BaseSearch {
   protected translatePostgresRecordsToApiRecords(pgRecords: ExecutionRecord[])
     : Partial<ApiExecutionRecord>[] {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    const { fields } = this.dbQueryParameters;
     const apiRecords = pgRecords.map((executionRecord: ExecutionRecord) => {
       const { collectionName, collectionVersion, asyncOperationId, parentArn } = executionRecord;
       const collectionId = collectionName && collectionVersion
@@ -153,9 +154,7 @@ export class ExecutionSearch extends BaseSearch {
         asyncOperationId,
         parentArn,
       });
-      return this.dbQueryParameters.fields
-        ? pick(apiRecord, this.dbQueryParameters.fields)
-        : apiRecord;
+      return fields ? pick(apiRecord, fields) : apiRecord;
     });
     return apiRecords;
   }

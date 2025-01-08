@@ -87,7 +87,7 @@ test.serial('Writes a file containing all granules to S3.', async (t) => {
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportRecordName}.csv`;
   const systemBucket = t.context.systemBucket;
   const reportParams = {
-    ...normalizeEvent({ reportType: 'Granule Inventory' }),
+    ...normalizeEvent({ reportType: 'Granule Inventory', stackName: 'TestStack' }),
     reportKey,
     systemBucket,
     knex: t.context.knex,
@@ -165,6 +165,7 @@ test.serial('Writes a file containing a filtered set of granules to S3.', async 
       collectionId,
       status,
       granuleId: 'test',
+      stackName: 'testStack',
     }),
     reportKey,
     systemBucket,

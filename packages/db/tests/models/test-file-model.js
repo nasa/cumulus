@@ -1,6 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-
+const range = require('lodash/range');
 const {
   CollectionPgModel,
   GranulePgModel,
@@ -106,4 +106,137 @@ test('FilePgModel.upsert() overwrites a file record', async (t) => {
     }),
     updatedFile
   );
+});
+
+test('FilePgModel.searchByGranuleCumulusIds() returns relevant files', async (t) => {
+  const usedGranuleCumulusIds = await Promise.all(range(5).map(() => (
+    createFakeGranule(t.context.knex)
+  )));
+  const unUsedGranuleCumulusIds = await Promise.all(range(5).map(() => (
+    createFakeGranule(t.context.knex)
+  )));
+  const relevantFiles = await t.context.filePgModel.insert(
+    t.context.knex,
+    usedGranuleCumulusIds.map((granuleCumulusId) => (
+      fakeFileRecordFactory({
+        granule_cumulus_id: granuleCumulusId,
+      })
+    ))
+  );
+  const irrelevantFiles = await t.context.filePgModel.insert(
+    t.context.knex,
+    unUsedGranuleCumulusIds.map((granuleCumulusId) => (
+      fakeFileRecordFactory({
+        granule_cumulus_id: granuleCumulusId,
+      })
+    ))
+  );
+  const searched = await t.context.filePgModel.searchByGranuleCumulusIds(
+    t.context.knex,
+    usedGranuleCumulusIds
+  );
+
+  const foundFileCumulusIds = searched.map((file) => file.cumulus_id);
+  const foundGranuleCumulusIds = searched.map((file) => file.granule_cumulus_id);
+  relevantFiles.forEach((relevantFile) => {
+    t.true(foundFileCumulusIds.includes(relevantFile.cumulus_id));
+  });
+  irrelevantFiles.forEach((irrelevantFile) => {
+    t.false(foundFileCumulusIds.includes(irrelevantFile.cumulus_id));
+  });
+  usedGranuleCumulusIds.forEach((usedGranuleCumulusId) => {
+    t.true(foundGranuleCumulusIds.includes(usedGranuleCumulusId));
+  });
+  unUsedGranuleCumulusIds.forEach((unUsedGranuleCumulusId) => {
+    t.false(foundGranuleCumulusIds.includes(unUsedGranuleCumulusId));
+  });
+});
+
+test('FilePgModel.searchByGranuleCumulusIds() allows to specify desired columns', async (t) => {
+  const usedGranuleCumulusIds = await Promise.all(range(5).map(() => (
+    createFakeGranule(t.context.knex)
+  )));
+  const unUsedGranuleCumulusIds = await Promise.all(range(5).map(() => (
+    createFakeGranule(t.context.knex)
+  )));
+  const relevantFiles = await t.context.filePgModel.insert(
+    t.context.knex,
+    usedGranuleCumulusIds.map((granuleCumulusId) => (
+      fakeFileRecordFactory({
+        granule_cumulus_id: granuleCumulusId,
+      })
+    ))
+  );
+  const irrelevantFiles = await t.context.filePgModel.insert(
+    t.context.knex,
+    unUsedGranuleCumulusIds.map((granuleCumulusId) => (
+      fakeFileRecordFactory({
+        granule_cumulus_id: granuleCumulusId,
+      })
+    ))
+  );
+  let searched = await t.context.filePgModel.searchByGranuleCumulusIds(
+    t.context.knex,
+    usedGranuleCumulusIds,
+    'cumulus_id'
+  );
+
+  searched.forEach((file) => {
+    t.true(file.granule_cumulus_id === undefined);
+    t.true(file.created_at === undefined);
+    t.true(file.updated_at === undefined);
+    t.true(file.file_size === undefined);
+    t.true(file.bucket === undefined);
+    t.true(file.checksum_type === undefined);
+    t.true(file.checksum_value === undefined);
+    t.true(file.file_name === undefined);
+    t.true(file.key === undefined);
+    t.true(file.path === undefined);
+    t.true(file.source === undefined);
+    t.true(file.type === undefined);
+  });
+
+  let foundFileCumulusIds = searched.map((file) => file.cumulus_id);
+  relevantFiles.forEach((relevantFile) => {
+    t.true(foundFileCumulusIds.includes(relevantFile.cumulus_id));
+  });
+  irrelevantFiles.forEach((irrelevantFile) => {
+    t.false(foundFileCumulusIds.includes(irrelevantFile.cumulus_id));
+  });
+
+  searched = await t.context.filePgModel.searchByGranuleCumulusIds(
+    t.context.knex,
+    usedGranuleCumulusIds,
+    ['cumulus_id', 'granule_cumulus_id']
+  );
+
+  searched.forEach((file) => {
+    t.true(file.created_at === undefined);
+    t.true(file.updated_at === undefined);
+    t.true(file.file_size === undefined);
+    t.true(file.bucket === undefined);
+    t.true(file.checksum_type === undefined);
+    t.true(file.checksum_value === undefined);
+    t.true(file.file_name === undefined);
+    t.true(file.key === undefined);
+    t.true(file.path === undefined);
+    t.true(file.source === undefined);
+    t.true(file.type === undefined);
+  });
+
+  foundFileCumulusIds = searched.map((file) => file.cumulus_id);
+  const foundGranuleCumulusIds = searched.map((file) => file.granule_cumulus_id);
+  relevantFiles.forEach((relevantFile) => {
+    t.true(foundFileCumulusIds.includes(relevantFile.cumulus_id));
+  });
+  irrelevantFiles.forEach((irrelevantFile) => {
+    t.false(foundFileCumulusIds.includes(irrelevantFile.cumulus_id));
+  });
+
+  usedGranuleCumulusIds.forEach((usedGranuleCumulusId) => {
+    t.true(foundGranuleCumulusIds.includes(usedGranuleCumulusId));
+  });
+  unUsedGranuleCumulusIds.forEach((unUsedGranuleCumulusId) => {
+    t.false(foundGranuleCumulusIds.includes(unUsedGranuleCumulusId));
+  });
 });
