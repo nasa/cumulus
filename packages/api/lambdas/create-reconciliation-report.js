@@ -29,8 +29,6 @@ const {
   translatePostgresFileToApiFile,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
-const { getEsClient } = require('@cumulus/es-client/search');
-const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
 
 const {
   ReconciliationReportPgModel,
@@ -54,7 +52,6 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
 /**
  * @typedef {typeof process.env } ProcessEnv
  * @typedef {import('knex').Knex} Knex
- * @typedef {import('@cumulus/es-client/search').EsClient} EsClient
  * @typedef {import('../lib/types').NormalizedRecReportParams } NormalizedRecReportParams
  * @typedef {import('../lib/types').EnhancedNormalizedRecReportParams}
  * EnhancedNormalizedRecReportParams
@@ -870,7 +867,6 @@ async function createReconciliationReport(recReportParams) {
  * @param {string} params.reportName - the name of the report
  * @param {Env} params.env - the environment variables
  * @param {Knex} params.knex - Optional Instance of a Knex client for testing
- * @param {EsClient} params.esClient - Optional Instance of an Elasticsearch client for testing
  * @returns {Promise<Object>} report record saved to the database
  */
 async function processRequest(params) {
@@ -882,7 +878,6 @@ async function processRequest(params) {
     systemBucket,
     stackName,
     knex = await getKnexClient({ env }),
-    esClient = await getEsClient(),
   } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName
@@ -900,9 +895,7 @@ async function processRequest(params) {
     location: buildS3Uri(systemBucket, reportKey),
   };
   let [reportPgRecord] = await reconciliationReportPgModel.create(knex, builtReportRecord);
-  let reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
-  await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
-  log.info(`Report added to database as pending: ${JSON.stringify(reportApiRecord)}.`);
+  log.info(`Report added to database as pending: ${JSON.stringify(reportPgRecord)}.`);
 
   const concurrency = env.CONCURRENCY || '3';
 
@@ -936,8 +929,6 @@ async function processRequest(params) {
       status: 'Generated',
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, generatedRecord);
-    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
-    await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   } catch (error) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`); // eslint-disable-line max-len
     const erroredRecord = {
@@ -950,12 +941,6 @@ async function processRequest(params) {
       },
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, erroredRecord);
-    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
-    await indexReconciliationReport(
-      esClient,
-      reportApiRecord,
-      process.env.ES_INDEX
-    );
     throw error;
   }
 

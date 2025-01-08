@@ -61,7 +61,7 @@ test.before(async (t) => {
   t.context.functionConfig = {
     Environment: {
       Variables: {
-        ES_HOST: 'es-host',
+        Timeout: 300
       },
     },
   };
@@ -80,7 +80,7 @@ test.beforeEach((t) => {
     status: 'RUNNING',
     taskArn: cryptoRandomString({ length: 5 }),
     description: 'testing',
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -110,7 +110,7 @@ test.serial('startAsyncOperation uploads the payload to S3', async (t) => {
     callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload,
     stackName,
     knexConfig: knexConfig,
@@ -141,7 +141,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
     lambdaName,
     callerLambdaName,
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload,
     stackName,
     knexConfig: knexConfig,
@@ -185,7 +185,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the asyncOp
     lambdaName,
     callerLambdaName,
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload,
     stackName,
     knexConfig: knexConfig,
@@ -222,7 +222,7 @@ test.serial('The startAsyncOperation method throws error and calls createAsyncOp
     callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload: {},
     stackName: randomString(),
     knexConfig: knexConfig,
@@ -260,7 +260,7 @@ test.serial('The startAsyncOperation method throws error and calls createAsyncOp
 test('The startAsyncOperation writes records to the database', async (t) => {
   const description = randomString();
   const stackName = randomString();
-  const operationType = 'ES Index';
+  const operationType = 'Reconciliation Report';
   const taskArn = randomString();
 
   stubbedEcsRunTaskResult = {
@@ -288,7 +288,7 @@ test('The startAsyncOperation writes records to the database', async (t) => {
   const expected = {
     description,
     id,
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     status: 'RUNNING',
     taskArn,
   };
@@ -314,7 +314,7 @@ test.serial('The startAsyncOperation method returns the newly-generated record',
     callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload: {},
     stackName,
     knexConfig: knexConfig,
@@ -337,7 +337,7 @@ test.serial('The startAsyncOperation method throws error if callerLambdaName par
       cluster: randomString,
       lambdaName: randomString,
       description: randomString(),
-      operationType: 'ES Index',
+      operationType: 'Reconciliation Report',
       payload: { x: randomString() },
       stackName: randomString,
       knexConfig: knexConfig,
@@ -357,7 +357,7 @@ test('getLambdaEnvironmentVariables returns expected environment variables', (t)
   const vars = getLambdaEnvironmentVariables(t.context.functionConfig);
 
   t.deepEqual(new Set(vars), new Set([
-    { name: 'ES_HOST', value: 'es-host' },
+    { name: 'Timeout', value: 300 },
   ]));
 });
 
@@ -375,7 +375,7 @@ test.serial('ECS task params contain lambda environment variables when useLambda
     callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload: {},
     useLambdaEnvironmentVariables: true,
     stackName,
@@ -388,7 +388,7 @@ test.serial('ECS task params contain lambda environment variables when useLambda
     environmentOverrides[env.name] = env.value;
   });
 
-  t.is(environmentOverrides.ES_HOST, 'es-host');
+  t.is(environmentOverrides.Timeout, 300);
 });
 
 test.serial('createAsyncOperation throws if stackName is not provided', async (t) => {

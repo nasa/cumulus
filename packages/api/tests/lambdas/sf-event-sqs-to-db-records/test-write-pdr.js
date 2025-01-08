@@ -17,7 +17,6 @@ const {
   translatePostgresPdrToApiPdr,
   migrationDir,
 } = require('@cumulus/db');
-const { Search } = require('@cumulus/es-client/search');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
@@ -25,10 +24,6 @@ const {
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
 const { ReceiveMessageCommand } = require('@aws-sdk/client-sqs');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 
 const {
   generatePdrRecord,
@@ -45,15 +40,6 @@ test.before(async (t) => {
   );
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
-
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esPdrClient = new Search(
-    {},
-    'pdr',
-    t.context.esIndex
-  );
 });
 
 test.beforeEach(async (t) => {
@@ -166,7 +152,6 @@ test.after.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
   });
-  await cleanupTestIndex(t.context);
 });
 
 test('generatePdrRecord() generates correct PDR record', (t) => {
@@ -320,17 +305,12 @@ test.serial('writePdr() does not update PDR record if update is from an older ex
   });
 
   const pgRecord = await pdrPgModel.get(knex, { name: pdr.name });
-  const esRecord = await t.context.esPdrClient.get(pdr.name);
 
   const stats = {
     processing: 0,
     total: 1,
   };
   t.like(pgRecord, {
-    status: 'completed',
-    stats,
-  });
-  t.like(esRecord, {
     status: 'completed',
     stats,
   });
@@ -349,18 +329,13 @@ test.serial('writePdr() does not update PDR record if update is from an older ex
   });
 
   const updatedPgRecord = await pdrPgModel.get(knex, { name: pdr.name });
-  const updatedEsRecord = await t.context.esPdrClient.get(pdr.name);
   t.like(updatedPgRecord, {
-    status: 'completed',
-    stats,
-  });
-  t.like(updatedEsRecord, {
     status: 'completed',
     stats,
   });
 });
 
-test.serial('writePdr() saves a PDR record to PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
+test.serial('writePdr() saves a PDR record to PostgreSQL if PostgreSQL write is enabled', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -380,35 +355,9 @@ test.serial('writePdr() saves a PDR record to PostgreSQL/Elasticsearch if Postgr
   });
 
   t.true(await pdrPgModel.exists(knex, { name: pdr.name }));
-  t.true(await t.context.esPdrClient.exists(pdr.name));
 });
 
-test.serial('writePdr() saves a PDR record to PostgreSQL/Elasticsearch with same timestamps', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    collectionCumulusId,
-    providerCumulusId,
-    executionCumulusId,
-    pdr,
-    pdrPgModel,
-  } = t.context;
-
-  await writePdr({
-    cumulusMessage,
-    collectionCumulusId,
-    providerCumulusId,
-    executionCumulusId: executionCumulusId,
-    knex,
-  });
-
-  const pgRecord = await pdrPgModel.get(knex, { name: pdr.name });
-  const esRecord = await t.context.esPdrClient.get(pdr.name);
-  t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
-  t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
-});
-
-test.serial('writePdr() does not write to PostgreSQL/Elasticsearch if PostgreSQL write fails', async (t) => {
+test.serial('writePdr() does not write to PostgreSQL if PostgreSQL write fails', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -450,51 +399,6 @@ test.serial('writePdr() does not write to PostgreSQL/Elasticsearch if PostgreSQL
   );
 
   t.false(await pdrPgModel.exists(knex, { name: pdr.name }));
-  t.false(await t.context.esPdrClient.exists(pdr.name));
-});
-
-test.serial('writePdr() does not write to PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    collectionCumulusId,
-    providerCumulusId,
-    pdrPgModel,
-  } = t.context;
-
-  const pdr = {
-    name: cryptoRandomString({ length: 5 }),
-    PANSent: false,
-    PANmessage: 'test',
-  };
-  cumulusMessage.payload = {
-    pdr,
-  };
-
-  cumulusMessage.meta.status = 'completed';
-
-  const fakeEsClient = {
-    initializeEsClient: () => Promise.resolve(),
-    client: {
-      update: () => {
-        throw new Error('PDR ES error');
-      },
-    },
-  };
-
-  await t.throwsAsync(
-    writePdr({
-      cumulusMessage,
-      collectionCumulusId,
-      providerCumulusId,
-      knex,
-      esClient: fakeEsClient,
-    }),
-    { message: 'PDR ES error' }
-  );
-
-  t.false(await pdrPgModel.exists(knex, { name: pdr.name }));
-  t.false(await t.context.esPdrClient.exists(pdr.name));
 });
 
 test.serial('writePdr() successfully publishes an SNS message', async (t) => {

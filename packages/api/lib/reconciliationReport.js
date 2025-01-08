@@ -183,49 +183,6 @@ function filterDBCollections(collections, recReportParams) {
   return collections;
 }
 
-/**
- * Compare granules from Elasticsearch and API for deep equality.
- *
- * @param {Object} esGranule - Granule from Elasticsearch
- * @param {Object} apiGranule - API Granule (translated from PostgreSQL)
- * @returns {boolean}
- */
-function compareEsGranuleAndApiGranule(esGranule, apiGranule) {
-  // Ignore files in initial comparison so we can ignore file order
-  // in comparison
-  const fieldsIgnored = ['timestamp', 'updatedAt', 'files'];
-  // "dataType" and "version" fields do not exist in the PostgreSQL database
-  // granules table which is now the source of truth
-  const esFieldsIgnored = [...fieldsIgnored, 'dataType', 'version'];
-  const granulesAreEqual = isEqual(
-    omit(esGranule, esFieldsIgnored),
-    omit(apiGranule, fieldsIgnored)
-  );
-
-  if (granulesAreEqual === false) return granulesAreEqual;
-
-  const esGranulesHasFiles = esGranule.files !== undefined;
-  const apiGranuleHasFiles = apiGranule.files.length !== 0;
-
-  // If neither granule has files, then return the previous equality result
-  if (!esGranulesHasFiles && !apiGranuleHasFiles) return granulesAreEqual;
-  // If either ES or PG granule does not have files, but the other granule does
-  // have files, then the granules don't match, so return false
-  if ((esGranulesHasFiles && !apiGranuleHasFiles)
-      || (!esGranulesHasFiles && apiGranuleHasFiles)) {
-    return false;
-  }
-
-  // Compare files one-by-one to ignore sort order for comparison
-  return esGranule.files.every((esFile) => {
-    const matchingFile = apiGranule.files.find(
-      (apiFile) => apiFile.bucket === esFile.bucket && apiFile.key === esFile.key
-    );
-    if (!matchingFile) return false;
-    return isEqual(esFile, matchingFile);
-  });
-}
-
 module.exports = {
   cmrGranuleSearchParams,
   convertToDBCollectionSearchObject,
@@ -233,5 +190,4 @@ module.exports = {
   convertToOrcaGranuleSearchParams,
   filterDBCollections,
   initialReportHeader,
-  compareEsGranuleAndApiGranule,
 };

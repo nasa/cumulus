@@ -5,7 +5,6 @@
 /**
  * @typedef {Object} Env
  * @property {string} [CONCURRENCY] - The concurrency level for processing.
- * @property {string} [ES_INDEX] - The Elasticsearch index.
  * @property {string} [AWS_REGION] - The AWS region.
  * @property {string} [AWS_ACCESS_KEY_ID] - The AWS access key ID.
  * @property {string} [AWS_SECRET_ACCESS_KEY] - The AWS secret access key.
