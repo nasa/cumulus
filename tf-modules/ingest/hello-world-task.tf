@@ -6,7 +6,7 @@ resource "aws_lambda_function" "hello_world_task" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "HelloWorld", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "HelloWorld", 512)
+  memory_size      = lookup(var.lambda_memory_sizes, "HelloWorld", 400)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 
