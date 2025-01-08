@@ -1,4 +1,4 @@
-/*.js
+dist/
+node_modules/
 /*.d.ts
 lambda.zip
-webpack
