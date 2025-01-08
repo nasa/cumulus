@@ -25,7 +25,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - **CUMULUS-3757**
-  - Added endpoints for updating a granules' records' collection and an endpoint for batch patching
+  - Added an endpoint `PATCH/batchRecords` which updates a batch of granule records collectionId to a new collectionId. This endpoint takes a list of granules and a collectionId, updating the granules' to the collectionId passed with the payload in both postgres and elasticsearch.
+  - Added an endpoint `PATCH/batchPatch` which applies PATCH to a list of granules. For its payload, this endpoint takes a list of granules (the updates to be made to the granule, similar to the pre-existing `PATCH`), a `dbConcurrency` and `dbMaxPool` variables for configuring concurrency and database thoroughput to tailor to your performance and database needs.
 
 ## [v18.5.2] 2024-12-12
 

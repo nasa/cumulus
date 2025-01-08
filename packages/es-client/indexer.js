@@ -26,6 +26,10 @@ const mappings = require('./config/mappings.json');
 
 const logger = new Logger({ sender: '@cumulus/es-client/indexer' });
 
+/**
+ * @typedef {import('@cumulus/types').ApiGranule} ApiGranule
+ */
+
 async function createIndex(esClient, indexName) {
   const indexExists = await esClient.client.indices.exists({ index: indexName })
     .then((response) => response.body);
@@ -108,14 +112,15 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 /**
  * Updates a given record for the Elasticsearch index and type
  *
- * @param  {Object} esClient - Elasticsearch Connection object
- * @param  {string} id       - the record id
- * @param  {Object} doc      - the record
- * @param  {string} index    - Elasticsearch index alias
- * @param  {string} type     - Elasticsearch type
+ * @param  {Object}             esClient - Elasticsearch Connection object
+ * @param  {string}             id       - the record id
+ * @param  {Object}             doc      - the record
+ * @param  {string}             index    - Elasticsearch index alias
+ * @param  {string}             type     - Elasticsearch type
+ * @param  {string | undefined} parent   - parent identifier if applicable
  * @returns {Promise} Elasticsearch response
  */
-async function updateExistingRecord(esClient, id, doc, index, type, parent = undefined) {
+async function updateExistingRecord(esClient, id, doc, index, type, parent) {
   return await esClient.client.update({
     index,
     type,
@@ -142,16 +147,18 @@ async function updateExistingRecord(esClient, id, doc, index, type, parent = und
  * @returns {Promise} elasticsearch update response
  */
 function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, type = 'asyncOperation') {
-  return updateExistingRecord(esClient, id, updates, index, type);
+  const parent = undefined;
+  return updateExistingRecord(esClient, id, updates, index, type, parent);
 }
 
 /**
  * Updates a granule record in Elasticsearch
  *
- * @param  {Object} esClient - Elasticsearch Connection object
- * @param  {Object} granule - Api Granule
- * @param  {string} index - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type - Elasticsearch type (default: asyncOperation)
+ * @param  {Object}     esClient - Elasticsearch Connection object
+ * @param  {ApiGranule} granule - Api Granule to update
+ * @param  {Object}     updates - Updates to make to granule in Elasticsearch
+ * @param  {string}     index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string}     type - Elasticsearch type (default: granule)
  * @returns {Promise} elasticsearch update response
  */
 function updateGranule(esClient, granule, updates, index = defaultIndexAlias, type = 'granule') {
