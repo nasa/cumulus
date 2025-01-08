@@ -52,7 +52,7 @@ test('SendPan task calls upload', async (t) => {
   };
 
   const url = `http://${event.config.provider.host}:${port}`;
-  const remotePath = path.join(event.config.remoteDir, `${fileNameBase}.pan`);
+  const remotePath = path.join(event.config.remoteDir, `${fileNameBase}.PAN`);
   // Message should look like this:
   // MESSAGE_TYPE = "SHORTPAN";
   // DISPOSITION = "SUCCESSFUL";
@@ -103,7 +103,7 @@ test('SendPan task sends PAN to HTTP server', async (t) => {
 test('SendPan task sends PAN to s3', async (t) => {
   const remoteDir = 'pan/remote-dir';
   const fileNameBase = 'test-send-s3-pdr';
-  const uploadPath = path.join(remoteDir, `${fileNameBase}.pan`);
+  const uploadPath = path.join(remoteDir, `${fileNameBase}.PAN`);
   const event = {
     config: {
       provider: {
@@ -175,7 +175,7 @@ test('SendPan task throws error when provider protocol is not supported', async 
 
 test('SendPan task sends PAN to default location when remoteDir is null', async (t) => {
   const fileNameBase = 'test-default-pan-path-pdr';
-  const uploadPath = `pans/${fileNameBase}.pan`;
+  const uploadPath = `pans/${fileNameBase}.PAN`;
   const event = {
     config: {
       provider: {
@@ -248,7 +248,7 @@ test('SendPan task fails with executions still running', async (t) => {
 
 test('SendPan task sends failed PAN to s3', async (t) => {
   const fileNameBase = 'test-failed-pan-path-pdr';
-  const uploadPath = `pans/${fileNameBase}.pan`;
+  const uploadPath = `pans/${fileNameBase}.PAN`;
   const event = {
     config: {
       provider: {
