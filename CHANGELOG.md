@@ -92,6 +92,8 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
   - Updated `@cumulus/api/bin/serveUtils` to no longer add records to ElasticSearch
   - Removed ElasticSearch from local API server code
   - Updated CollectionSearch to filter granule fields in addition to time frame for active collections
+- **CUMULUS-3847**
+  - list changes here
 
 ## [Unreleased]
 
