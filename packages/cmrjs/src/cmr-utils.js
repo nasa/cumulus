@@ -32,7 +32,9 @@ const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
 } = require('./utils');
-
+/**
+ * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams
+ */
 const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
 function getS3KeyOfFile(file) {
@@ -126,13 +128,17 @@ function granuleToCmrFileObject({ granuleId, files = [] }, filterFunc = isCMRFil
 }
 
 /**
+ * @typedef {import('./types').CMRFile} CMRFile
+ */
+
+/**
  * Reduce granule object array to CMR files array
  *
  * @param {Array<Object>} granules - granule objects array
  * @param {Function} filterFunc - function to determine if the given file object is a
       CMR file; defaults to `isCMRFile`
  *
- * @returns {Array<Object>} - CMR file object array: { etag, bucket, key, granuleId }
+ * @returns {Array<CMRFile>} - CMR file object array: { etag, bucket, key, granuleId }
  */
 function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
   return granules.flatMap((granule) => granuleToCmrFileObject(granule, filterFunc));
@@ -218,18 +224,16 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
  * @param {string} cmrRevisionId - Optional CMR Revision ID
  * if not provided, CMR username and password are used to get a cmr token
  */
-async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
+function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
   const cmrFileName = getFilename(cmrPublishObject);
-
   // choose xml or json and do the things.
   if (isECHO10Filename(cmrFileName)) {
-    return await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    return publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
   if (isUMMGFilename(cmrFileName)) {
-    return await publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
-
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
 }
 
@@ -749,7 +753,7 @@ async function updateUMMGMetadata({
  * @param {string} cmrConfig.certificate - Launchpad certificate
  * @param {string} cmrConfig.username - EDL username
  * @param {string} cmrConfig.passwordSecretName - CMR password secret name
- * @returns {Promise<Object>} object to create CMR instance - contains the
+ * @returns {Promise<CMRConstructorParams>} object to create CMR instance - contains the
  *    provider, clientId, and either launchpad token or EDL username and
  *    password
 */
