@@ -21,7 +21,7 @@ module "hello_world_service" {
   image                                 = "${data.aws_ecr_repository.ecs_task_image.repository_url}:${var.ecs_task_image_version}"
 
   cpu                = 400
-  memory_reservation = 700
+  memory_reservation = 400
   default_log_retention_days                     = var.default_log_retention_days
   cloudwatch_log_retention_periods               = var.cloudwatch_log_retention_periods
 
