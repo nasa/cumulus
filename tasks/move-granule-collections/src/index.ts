@@ -256,6 +256,7 @@ async function moveFilesForAllGranules(
   // move all non-cmrMetadata files and copy all cmrmetadata files
   await moveGranulesInS3(sourceGranules, targetGranules, s3MultipartChunksizeMb);
   // update postgres (or other cumulus datastores if applicable)
+  // because postgres will (might) be our source of ground truth in the future, it must be updated *last*
   await moveGranulesInCumulusDatastores(
     targetGranules
   );
