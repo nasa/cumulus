@@ -4,7 +4,7 @@
  * It helps:
  *  - adding ElasticSearch index mapping when a new index is created
  */
-
+// is this needed for CloudMetrics?
 'use strict';
 
 const log = require('@cumulus/common/log');
