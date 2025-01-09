@@ -335,7 +335,7 @@ test.serial('writePdr() does not update PDR record if update is from an older ex
   });
 });
 
-test.serial('writePdr() saves a PDR record to PostgreSQL if PostgreSQL write is enabled', async (t) => {
+test.serial('writePdr() saves a PDR record to PostgreSQL', async (t) => {
   const {
     cumulusMessage,
     knex,

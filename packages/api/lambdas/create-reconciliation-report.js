@@ -955,9 +955,9 @@ async function handler(event) {
 
   //TODO: Remove irrelevant env vars from terraform after ES reports are removed
   // can this be changed now?
-  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE', 'ES_SCROLL', 'ES_SCROLL_SIZE'];
+  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE'];
   const envsToLog = pickBy(process.env, (value, key) => varsToLog.includes(key));
-  log.info(`CMR and ES Environment variables: ${JSON.stringify(envsToLog)}`);
+  log.info(`CMR Environment variables: ${JSON.stringify(envsToLog)}`);
 
   return await processRequest(event);
 }

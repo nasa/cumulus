@@ -188,28 +188,6 @@ test('ec2() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-// can this test be removed or is it needed for the granule CloudMetrics queries?
-test('es() service defaults to localstack in test mode', async (t) => {
-  const es = services.es();
-  const {
-    credentials,
-    endpoint,
-  } = localStackAwsClientOptions(ElasticsearchService);
-  t.like(
-    await es.config.credentials(),
-    credentials
-  );
-  const esEndpoint = await es.config.endpoint();
-  const localSatckEndpoint = new URL(endpoint);
-  t.like(
-    esEndpoint,
-    {
-      hostname: localSatckEndpoint.hostname,
-      port: Number.parseInt(localSatckEndpoint.port, 10),
-    }
-  );
-});
-
 test('kinesis() service defaults to localstack in test mode', async (t) => {
   const kinesis = services.kinesis();
   const {
