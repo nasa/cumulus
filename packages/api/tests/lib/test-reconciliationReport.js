@@ -1,5 +1,4 @@
 const test = require('ava');
-const cryptoRandomString = require('crypto-random-string');
 const rewire = require('rewire');
 const range = require('lodash/range');
 

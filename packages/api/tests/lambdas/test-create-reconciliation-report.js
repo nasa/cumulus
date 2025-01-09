@@ -60,9 +60,6 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 // Call normalize event on all input events before calling the handler.
 const handler = (event) => unwrappedHandler(normalizeEvent(event));
 
-let esAlias;
-let esIndex;
-
 const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket });
 const requiredStaticCollectionFields = {
   granuleIdExtraction: randomString(),

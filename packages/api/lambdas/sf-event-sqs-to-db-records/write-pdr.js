@@ -12,7 +12,6 @@ const {
   getMessagePdrPANSent,
   getMessagePdrPANMessage,
   getPdrPercentCompletion,
-  generatePdrApiRecordFromMessage,
 } = require('@cumulus/message/PDRs');
 const {
   getMetaStatus,
@@ -92,7 +91,6 @@ const writePdr = async ({
   executionCumulusId,
   knex,
   updatedAt = Date.now(),
-  esClient,
 }) => {
   let pgPdr;
   // If there is no PDR in the message, then there's nothing to do here, which is fine

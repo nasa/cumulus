@@ -61,7 +61,7 @@ test.before(async (t) => {
   t.context.functionConfig = {
     Environment: {
       Variables: {
-        Timeout: 300
+        Timeout: 300,
       },
     },
   };

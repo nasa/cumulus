@@ -2,9 +2,6 @@
 
 'use strict';
 
-const isEqual = require('lodash/isEqual');
-const omit = require('lodash/omit');
-
 const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const Logger = require('@cumulus/logger');

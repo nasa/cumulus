@@ -49,7 +49,7 @@ const esSearchStub = sandbox.stub();
 const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
-
+// is this es-client stuff still needed b/c granules and metrics?
 const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
   '../lib/granules': proxyquire('../../lib/granules', {
     '@cumulus/es-client/search': {
