@@ -215,28 +215,22 @@ const create = async (req, res) => {
  * Update existing granule *or* create new granule
  *
  * @param {Object} req - express request object
- * @param {number} req.dbMaxPool - optional max pool size for knex
+ * @param {Knex} req.knex - knex instance to use for patching granule
  * @param {Object} req.testContext - test context for client requests
  * @param {Object} req.body - request body for patching a granule
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
-const patchGranuleMethod = async (req, res) => {
+const patchGranule = async (req, res) => {
   const {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     esClient = await getEsClient(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
-  const dbMaxPool = req.dbMaxPool || undefined;
+  const knex = req.knex ?? await getKnexClient();
   let apiGranule = req.body || {};
   let pgCollection;
-  const knex = dbMaxPool ? await getKnexClient({
-    env: {
-      ...process.env,
-      dbMaxPool: dbMaxPool.toString(),
-    },
-  }) : await getKnexClient();
   if (!apiGranule.collectionId) {
     res.boom.badRequest('Granule update must include a valid CollectionId');
   }
@@ -309,18 +303,18 @@ const patchGranuleMethod = async (req, res) => {
 };
 
 /**
- * Update existing granule *or* create new granule
+ * Update existing granule *or* create new granule and return its status
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
-const patchGranule = async (req, res) => {
+const patchGranuleAndReturnStatus = async (req, res) => {
   let patchRes;
   let isNewRecord = false;
   let apiGranule = {};
   try {
-    ({ isNewRecord, apiGranule, patchRes } = await patchGranuleMethod(req, res));
+    ({ isNewRecord, apiGranule, patchRes } = await patchGranule(req, res));
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
@@ -384,7 +378,7 @@ async function put(req, res) {
   }
   req.body = body;
   //Then patch new granule with nulls applied
-  return await patchGranule(req, res);
+  return await patchGranuleAndReturnStatus(req, res);
 }
 
 const _handleUpdateAction = async (
@@ -543,7 +537,7 @@ async function patchByGranuleId(req, res) {
 
   if (!action) {
     if (req.body.granuleId === req.params.granuleId) {
-      return patchGranule(req, res);
+      return patchGranuleAndReturnStatus(req, res);
     }
     return res.boom.badRequest(
       `input :granuleId (${req.params.granuleId}) must match body's granuleId (${req.body.granuleId})`
@@ -586,7 +580,7 @@ async function patch(req, res) {
 
   if (!action) {
     if (_granulePayloadMatchesQueryParams(body, req)) {
-      return patchGranule(req, res);
+      return patchGranuleAndReturnStatus(req, res);
     }
     return res.boom.badRequest(
       `inputs :granuleId and :collectionId (${req.params.granuleId} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`
@@ -715,6 +709,7 @@ const associateExecution = async (req, res) => {
 const PatchBatchGranulesRecordCollectionSchema = z.object({
   apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
   collectionId: z.string().nonempty(),
+  esConcurrency: z.number().positive(),
 }).catchall(z.unknown());
 
 const PatchBatchGranulesSchema = z.object({
@@ -723,11 +718,11 @@ const PatchBatchGranulesSchema = z.object({
   dbMaxPool: z.number().positive(),
 }).catchall(z.unknown());
 
-const parseBatchGranulesRecordPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesRecordCollectionSchema);
+const parseBatchGranulesRecordCollectionPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesRecordCollectionSchema);
 const parseBatchGranulesPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesSchema);
 
 /**
- * Update a batch of granule's collectionId to the new collectionId
+ * Update a batch of granules to change collectionId to a new collectionId
  * in PG and ES
  *
  * @param {Object} req - express request object
@@ -740,24 +735,30 @@ async function batchPatchGranulesRecordCollection(req, res) {
     knex = await getKnexClient(),
     esClient = await getEsClient(),
   } = req.testContext || {};
-
-  const body = parseBatchGranulesRecordPayload(req.body);
+  const concurrency = req.body.esConcurrency ?? 5;
+  req.body.esConcurrency = concurrency;
+  const body = parseBatchGranulesRecordCollectionPayload(req.body);
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
 
-  const granules = body.apiGranules;
+  const granules = req.body.apiGranules;
   const granuleIds = granules.map((granule) => granule.granuleId);
-  const newCollectionId = body.collectionId;
+  const newCollectionId = req.body.collectionId;
   const collection = await collectionPgModel.get(
     knex,
     deconstructCollectionId(newCollectionId)
   );
 
   try {
+    await pMap(
+      granules,
+      async (apiGranule) => {
+        await updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule');
+      },
+      { concurrency: body.esConcurrency }
+    );
     await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
-    await Promise.all(granules.map(async (granule) =>
-      await updateEsGranule(esClient, granule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule')));
   } catch (error) {
     throw new Error(error);
   }
@@ -784,12 +785,19 @@ async function batchPatchGranules(req, res) {
     return returnCustomValidationErrors(res, body);
   }
   const granules = body.apiGranules;
+  const knex = await getKnexClient({
+    env: {
+      ...process.env,
+      dbMaxPool,
+    },
+  });
+
   try {
     await pMap(
       granules,
       async (apiGranule) => {
         try {
-          await patchGranuleMethod({ body: apiGranule, dbMaxPool }, res);
+          await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
         } catch (error) {
           throw new Error(error);
         }
@@ -1194,8 +1202,8 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleId', getByGranuleId);
 router.get('/:collectionId/:granuleId', get);
-router.patch('/batchRecords', batchPatchGranulesRecordCollection);
-router.patch('/batchPatch', batchPatchGranules);
+router.patch('/batchPatchGranulesRecordCollection', batchPatchGranulesRecordCollection);
+router.patch('/batchPatchGranules', batchPatchGranules);
 router.get('/', list);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
@@ -1232,7 +1240,7 @@ module.exports = {
   create,
   put,
   patch,
-  patchGranule,
+  patchGranuleAndReturnStatus,
   batchPatchGranules,
   batchPatchGranulesRecordCollection,
   router,

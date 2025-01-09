@@ -577,13 +577,14 @@ test('batchPatchGranulesRecordCollection calls the callback with the expected ob
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/granules/batchRecords',
+      path: '/granules/batchPatchGranulesRecordCollection',
       body: JSON.stringify({
         apiGranules: [{
           granule_id: t.context.granuleId,
           collectionId: t.context.collectionId,
         }],
         collectionId: t.context.collectionId2,
+        esConcurrency: 10,
       }),
     },
     expectedStatusCodes: 202,
@@ -598,6 +599,7 @@ test('batchPatchGranulesRecordCollection calls the callback with the expected ob
           collectionId: t.context.collectionId,
         }],
         collectionId: t.context.collectionId2,
+        esConcurrency: 10,
       }),
     });
   };
@@ -611,6 +613,7 @@ test('batchPatchGranulesRecordCollection calls the callback with the expected ob
         collectionId: t.context.collectionId,
       }],
       collectionId: t.context.collectionId2,
+      esConcurrency: 10,
     },
   }));
 });
@@ -624,7 +627,7 @@ test('batchPatchGranules calls the callback with the expected object', async (t)
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/granules/batchPatch',
+      path: '/granules/batchPatchGranules',
       body: JSON.stringify({
         apiGranules: [{
           granule_id: t.context.granuleId,

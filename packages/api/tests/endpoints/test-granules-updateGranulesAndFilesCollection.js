@@ -56,16 +56,20 @@ process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 const { app } = require('../../app');
 
 /**
- * Simulate granule records post-collection-move for database updates test
+ * Update granule records in which they have been moved to another collection for the datastores
+ * update tests later in this file. The granules' records are being changed in a way such that
+ * each granule in the list has been moved from its original collection to a new collection passed
+ * in as a parameter. This function is meant to simulate the changes the post-move-collection task
+ * will have on granule records.
  *
- * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+ * @param {Knex} knex - DB client or transaction
  * @param {Array<Object>} [granules] - granule records to update
  * @param {Object} [collection] - current collection of granules used for translation
  * @param {string} [collectionId] - collectionId of current granules
  * @param {string} [collectionId2] - collectionId of collection that the granule is moving to
  * @returns {Array<Object>} - list of updated apiGranules (moved to new collection)
  */
-const simulateGranuleUpdate = async (knex, granules, collection, collectionId, collectionId2) => {
+const granuleRecordMoveUpdate = async (knex, granules, collection, collectionId, collectionId2) => {
   const movedGranules = [];
   for (const granule of granules) {
     const postMoveApiGranule = await translatePostgresGranuleResultToApiGranule(knex, {
@@ -91,7 +95,7 @@ test.before(async (t) => {
     testDbName,
     migrationDir
   );
-  process.env.CMR_ENVIRONMENT = 'SIT';
+
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
@@ -101,7 +105,6 @@ test.before(async (t) => {
   const topicName = randomString();
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
-  t.context.TopicArn = TopicArn;
 
   const { esIndex, esClient, searchClient } = await createTestIndex();
   t.context.esIndex = esIndex;
@@ -156,7 +159,7 @@ test.before(async (t) => {
   t.context.apiCollection1 = translatePostgresCollectionToApiCollection(collectionResponse[0]);
   t.context.apiCollection2 = translatePostgresCollectionToApiCollection(collectionResponse2[0]);
 
-  // create 10 granules in one collection, 0 in the other
+  // create 50 granules in one collection, 0 in the other
   t.context.granuleIds = range(50).map((num) => 'granuleId___' + num);
 
   t.context.granulePgModel = new GranulePgModel();
@@ -219,7 +222,7 @@ test.before(async (t) => {
   }));
 
   // update all of the granules to be moved to the new collection
-  t.context.movedGranules.push(await simulateGranuleUpdate(knex, t.context.granules,
+  t.context.movedGranules.push(await granuleRecordMoveUpdate(knex, t.context.granules,
     t.context.collection, t.context.collectionId, t.context.collectionId2));
 
   t.context.movedGranules = t.context.movedGranules.flat();
@@ -255,7 +258,7 @@ test.serial('PATCH /granules/batchRecords successfully updates granules to new c
   };
 
   const response = await request(app)
-    .patch('/granules/batchRecords')
+    .patch('/granules/batchPatchGranulesRecordCollection')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(params)
@@ -303,7 +306,7 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
   };
 
   await request(app)
-    .patch('/granules/batchPatch')
+    .patch('/granules/batchPatchGranules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(params)

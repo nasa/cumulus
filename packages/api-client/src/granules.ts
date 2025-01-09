@@ -15,15 +15,16 @@ type AssociateExecutionRequest = {
   executionArn: string
 };
 
-type BatchPatchGranulesRecord = {
+type BatchPatchGranulesRecordCollection = {
   apiGranules: ApiGranuleRecord[],
   collectionId: string,
+  esConcurrency: number,
 };
 
 type BatchPatchGranules = {
   apiGranules: ApiGranuleRecord[],
   dbConcurrency: number,
-  dbMaxPoolSize: number,
+  dbMaxPool: number,
 };
 
 const encodeGranulesURIComponent = (
@@ -662,7 +663,7 @@ export const associateExecutionWithGranule = async (params: {
  */
 export const batchPatchGranulesRecordCollection = async (params: {
   prefix: string,
-  body: BatchPatchGranulesRecord,
+  body: BatchPatchGranulesRecordCollection,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
@@ -674,7 +675,7 @@ export const batchPatchGranulesRecordCollection = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/granules/batchRecords',
+      path: '/granules/batchPatchGranulesRecordCollection',
       body: JSON.stringify(body),
     },
     expectedStatusCodes: 202,
@@ -708,7 +709,7 @@ export const batchPatchGranules = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/granules/batchPatch',
+      path: '/granules/batchPatchGranules',
       body: JSON.stringify(body),
     },
     expectedStatusCodes: 202,
