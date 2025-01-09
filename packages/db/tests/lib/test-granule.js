@@ -25,6 +25,7 @@ const {
   migrationDir,
   getGranulesByApiPropertiesQuery,
   createRejectableTransaction,
+  updateBatchGranulesCollection,
 } = require('../../dist');
 
 const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
@@ -42,15 +43,25 @@ test.before(async (t) => {
 
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory();
+  t.context.collection2 = fakeCollectionRecordFactory();
   t.context.collectionId = constructCollectionId(
     t.context.collection.name,
     t.context.collection.version
+  );
+  t.context.collectionId2 = constructCollectionId(
+    t.context.collection2.name,
+    t.context.collection2.version
   );
   const collectionResponse = await t.context.collectionPgModel.create(
     t.context.knex,
     t.context.collection
   );
+  const collection2Response = await t.context.collectionPgModel.create(
+    t.context.knex,
+    t.context.collection2
+  );
   t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
+  t.context.collection2CumulusId = collection2Response[0].cumulus_id;
 
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.providerPgModel = new ProviderPgModel();
@@ -1115,4 +1126,41 @@ test('getGranulesByGranuleId() returns empty list when called with a granuleId t
   );
   const records = await getGranulesByGranuleId(knex, granuleId);
   t.deepEqual(records, []);
+});
+
+test('updateBatchGranulesCollection() sucessfully updates granules to the new collection_cumulus_id', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    collection2CumulusId,
+  } = t.context;
+  const granuleIds = ['fakeGranuleId1', 'fakeGranuleId2', 'fakeGranuleId3'];
+  const granules = [];
+  for (const granuleId of granuleIds) {
+    granules.push(fakeGranuleRecordFactory({
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }));
+  }
+
+  // create 3 granules in the original collection
+  await granulePgModel.insert(
+    knex,
+    granules
+  );
+
+  // throws an error when the collection with the passed in collection_cumulus_id isn't in postgres
+  await t.throwsAsync(updateBatchGranulesCollection(knex, granuleIds, 10));
+  // does not throw an error since collection2CumulusId belongs to an existing collection
+  await t.notThrowsAsync(updateBatchGranulesCollection(knex, granuleIds, collection2CumulusId));
+
+  const records = [];
+  await Promise.all(granuleIds.map(async (id) => {
+    records.push(await getGranulesByGranuleId(knex, id));
+  }));
+
+  for (const record of records) {
+    t.is(record[0].collection_cumulus_id, collection2CumulusId);
+  }
 });

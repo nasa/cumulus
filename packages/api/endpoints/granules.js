@@ -721,7 +721,7 @@ const parseBatchGranulesRecordPayload = zodParser('PatchBatchGranulesRecordColle
 const parseBatchGranulesPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesSchema);
 
 /**
- * Update a batch of granule's collectionId to the new collectionId
+ * Update a batch of granules to change collectionId to a new collectionId
  * in PG and ES
  *
  * @param {Object} req - express request object
