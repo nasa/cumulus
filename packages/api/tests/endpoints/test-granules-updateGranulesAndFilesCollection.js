@@ -258,7 +258,7 @@ test.serial('PATCH /granules/batchRecords successfully updates granules to new c
   };
 
   const response = await request(app)
-    .patch('/granules/batchRecords')
+    .patch('/granules/batchPatchGranulesRecordCollection')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(params)
@@ -306,7 +306,7 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
   };
 
   await request(app)
-    .patch('/granules/batchPatch')
+    .patch('/granules/batchPatchGranules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(params)

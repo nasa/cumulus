@@ -1150,8 +1150,6 @@ test('updateBatchGranulesCollection() sucessfully updates granules to the new co
     granules
   );
 
-  // throws an error when the collection with the passed in collection_cumulus_id isn't in postgres
-  await t.throwsAsync(updateBatchGranulesCollection(knex, granuleIds, 10));
   // does not throw an error since collection2CumulusId belongs to an existing collection
   await t.notThrowsAsync(updateBatchGranulesCollection(knex, granuleIds, collection2CumulusId));
 
@@ -1163,4 +1161,28 @@ test('updateBatchGranulesCollection() sucessfully updates granules to the new co
   for (const record of records) {
     t.is(record[0].collection_cumulus_id, collection2CumulusId);
   }
+});
+
+test('updateBatchGranulesCollection() fails updating granules to the new collection_cumulus_id if the collection is not in PG', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+  } = t.context;
+  const granuleIds = ['fakeGranuleId4', 'fakeGranuleId5', 'fakeGranuleId6'];
+  const granules = [];
+  for (const granuleId of granuleIds) {
+    granules.push(fakeGranuleRecordFactory({
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }));
+  }
+
+  await granulePgModel.insert(
+    knex,
+    granules
+  );
+
+  // throws an error when the collection with the passed in collection_cumulus_id isn't in postgres
+  await t.throwsAsync(updateBatchGranulesCollection(knex, granuleIds, 10));
 });

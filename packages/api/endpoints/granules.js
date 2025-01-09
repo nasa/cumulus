@@ -709,6 +709,7 @@ const associateExecution = async (req, res) => {
 const PatchBatchGranulesRecordCollectionSchema = z.object({
   apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
   collectionId: z.string().nonempty(),
+  esConcurrency: z.number().positive(),
 }).catchall(z.unknown());
 
 const PatchBatchGranulesSchema = z.object({
@@ -717,7 +718,7 @@ const PatchBatchGranulesSchema = z.object({
   dbMaxPool: z.number().positive(),
 }).catchall(z.unknown());
 
-const parseBatchGranulesRecordPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesRecordCollectionSchema);
+const parseBatchGranulesRecordCollectionPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesRecordCollectionSchema);
 const parseBatchGranulesPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesSchema);
 
 /**
@@ -734,8 +735,9 @@ async function batchPatchGranulesRecordCollection(req, res) {
     knex = await getKnexClient(),
     esClient = await getEsClient(),
   } = req.testContext || {};
-
-  const body = parseBatchGranulesRecordPayload(req.body);
+  const concurrency = req.body.esConcurrency ?? 5;
+  req.body.esConcurrency = concurrency;
+  const body = parseBatchGranulesRecordCollectionPayload(req.body);
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
@@ -749,9 +751,14 @@ async function batchPatchGranulesRecordCollection(req, res) {
   );
 
   try {
+    await pMap(
+      granules,
+      async (apiGranule) => {
+        await updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule');
+      },
+      { concurrency: body.esConcurrency }
+    );
     await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
-    await Promise.all(granules.map(async (granule) =>
-      await updateEsGranule(esClient, granule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule')));
   } catch (error) {
     throw new Error(error);
   }
@@ -1195,8 +1202,8 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleId', getByGranuleId);
 router.get('/:collectionId/:granuleId', get);
-router.patch('/batchRecords', batchPatchGranulesRecordCollection);
-router.patch('/batchPatch', batchPatchGranules);
+router.patch('/batchPatchGranulesRecordCollection', batchPatchGranulesRecordCollection);
+router.patch('/batchPatchGranules', batchPatchGranules);
 router.get('/', list);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
