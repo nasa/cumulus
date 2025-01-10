@@ -40,6 +40,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/api": "18.5.2",
     "@cumulus/api-client": "18.5.2",
     "@cumulus/aws-client": "18.5.2",
     "@cumulus/cmr-client": "18.5.2",
@@ -55,6 +56,9 @@
   },
   "devDependencies": {
     "@cumulus/db": "^18.5.2",
-    "@cumulus/schemas": "18.5.2"
+    "@cumulus/es-client": "18.5.2",
+    "@cumulus/schemas": "18.5.2",
+    "express": "^4.21.2",
+    "jest": "^29.7.0"
   }
 }

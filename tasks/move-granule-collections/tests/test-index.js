@@ -5,6 +5,7 @@ const fs = require('fs');
 const proxyquire = require('proxyquire');
 const path = require('path');
 const test = require('ava');
+const pMap = require('p-map');
 const cryptoRandomString = require('crypto-random-string');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
@@ -27,10 +28,14 @@ const {
   migrationDir,
   generateLocalTestDb,
   destroyLocalTestDb,
+  updateBatchGranulesCollection,
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
-const { updateGranulesAndFiles } = require('@cumulus/db');
+const { batchPatchGranulesRecordCollection, batchPatchGranules } = require('@cumulus/api/endpoints/granules');
+const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
+const indexer = require('@cumulus/es-client/indexer');
+const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
 let moveGranules;
 async function uploadFiles(files) {
@@ -53,7 +58,7 @@ async function uploadFiles(files) {
   }));
 }
 
-async function setupPGData(granules, targetCollection, knex) {
+async function setupDataStoreData(granules, targetCollection, knex, esClient, esIndex) {
   const granuleModel = new GranulePgModel();
   const collectionModel = new CollectionPgModel();
   const collectionPath = path.join(__dirname, 'data', 'original_collection.json');
@@ -63,17 +68,34 @@ async function setupPGData(granules, targetCollection, knex) {
     knex,
     translateApiCollectionToPostgresCollection(sourceCollection)
   );
+  await indexer.indexCollection(
+    esClient,
+    sourceCollection,
+    esIndex,
+  );
   [pgRecords.targetCollection] = await collectionModel.create(
     knex,
     translateApiCollectionToPostgresCollection(targetCollection)
   );
+  await indexer.indexCollection(
+    esClient,
+    targetCollection,
+    esIndex
+  )
   pgRecords.granules = await granuleModel.insert(
     knex,
     await Promise.all(granules.map(async (g) => (
       await translateApiGranuleToPostgresGranule({ dynamoRecord: g, knexOrTransaction: knex })
     ))),
     ['cumulus_id', 'granule_id']
-  );
+  )
+
+  await Promise.all(granules.map(async (g) => indexer.indexGranule(
+    esClient,
+    g,
+    esIndex,
+  )));
+
   return pgRecords;
 }
 
@@ -106,16 +128,64 @@ test.beforeEach(async (t) => {
     testDbName,
     migrationDir
   );
+
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+
+  //a pared down mockup of the batchPatchGranuleCollections function in api/endpoints/granules
+  const patchGranuleCollections = async (params) => {
+
+    const collectionPgModel = new CollectionPgModel();
+    const granules = params.body.apiGranules;
+    const granuleIds = granules.map((granule) => granule.granuleId);
+    const newCollectionId = params.body.collectionId;
+    const collection = await collectionPgModel.get(
+      knex,
+      deconstructCollectionId(newCollectionId)
+    );
+    await pMap(
+      granules,
+      async (apiGranule) => {
+        await indexer.updateGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule');
+      },
+      { concurrency: params.body.esConcurrency }
+    );
+    await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
+  }
+
+  const batchPatchGranules = async (params) => {
+
+    const granules = params.body.apiGranules;
+  
+    await pMap(
+      granules,
+      async (apiGranule) => {
+        await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
+      },
+      { concurrency: params.body.dbConcurrency }
+    );
+  
+    return res.send({
+      message: 'Successfully patched Granules',
+    });
+  }
+  
+
   moveGranules = proxyquire(
     '../dist/src',
     {
       '@cumulus/api-client/granules': {
-        updateGranules: (params) => (
-          updateGranulesAndFiles(knex, params.body)
+        batchPatchGranulesRecordCollection: (params) => (
+          patchGranuleCollections(params)
         ),
+        batchPatchGranules: (params) => (
+          batchPatchGranules(params)
+        )
       },
     }
   ).moveGranules;
+
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
   t.context.publicBucket = randomId('public');
@@ -180,7 +250,7 @@ test.serial('Should move files to final location and update pg data', async (t) 
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const pgRecords = await setupPGData(newPayload.input.granules, collection, t.context.knex);
+  const pgRecords = await setupDataStoreData(newPayload.input.granules, collection, t.context.knex, t.context.esClient, t.context.esIndex);
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -252,7 +322,7 @@ test('handles partially moved files', async (t) => {
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
 
-  const pgRecords = await setupPGData(newPayload.input.granules, collection, t.context.knex);
+  const pgRecords = await setupDataStoreData(newPayload.input.granules, collection, t.context.knex, t.context.esClient, t.context.esIndex);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
 
   const output = await moveGranules(newPayload);
@@ -325,7 +395,7 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
   const newPayload = buildPayload(t, collection);
 
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const pgRecords = await setupPGData(newPayload.input.granules, collection, t.context.knex);
+  const pgRecords = await setupDataStoreData(newPayload.input.granules, collection, t.context.knex, t.context.esClient, t.context.esIndex);
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -366,7 +436,7 @@ test.serial('handles files that need no move', async (t) => {
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const pgRecords = await setupPGData(newPayload.input.granules, collection, t.context.knex);
+  const pgRecords = await setupDataStoreData(newPayload.input.granules, collection, t.context.knex);
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
