@@ -80,7 +80,7 @@ async function setupDataStoreData(granules, targetCollection, knex, esClient, es
   await indexer.indexCollection(
     esClient,
     sourceCollection,
-    esIndex,
+    esIndex
   );
   [pgRecords.targetCollection] = await collectionModel.create(
     knex,
@@ -90,21 +90,20 @@ async function setupDataStoreData(granules, targetCollection, knex, esClient, es
     esClient,
     targetCollection,
     esIndex
-  )
+  );
   pgRecords.granules = await granuleModel.insert(
     knex,
     await Promise.all(granules.map(async (g) => (
       await translateApiGranuleToPostgresGranule({ dynamoRecord: g, knexOrTransaction: knex })
     ))),
     ['cumulus_id', 'granule_id']
-  )
+  );
 
-  await Promise.all(granules.map(async (g) => indexer.indexGranule(
+  await Promise.all(granules.map((g) => indexer.indexGranule(
     esClient,
     g,
-    esIndex,
+    esIndex
   )));
-
   return pgRecords;
 }
 
@@ -149,7 +148,7 @@ test.beforeEach(async (t) => {
         ),
         batchPatchGranules: (params) => (
           batchPatchGranules(params, mockResponse())
-        )
+        ),
       },
     }
   ).moveGranules;
@@ -201,7 +200,7 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
   await destroyLocalTestDb(t.context);
-  await cleanupTestIndex(t.context)
+  await cleanupTestIndex(t.context);
 });
 
 test.serial('Should move files to final location and update pg data', async (t) => {
@@ -218,7 +217,13 @@ test.serial('Should move files to final location and update pg data', async (t) 
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const pgRecords = await setupDataStoreData(newPayload.input.granules, collection, t.context.knex, t.context.esClient, t.context.esIndex);
+  const pgRecords = await setupDataStoreData(
+    newPayload.input.granules,
+    collection,
+    t.context.knex,
+    t.context.esClient,
+    t.context.esIndex
+  );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -290,7 +295,13 @@ test('handles partially moved files', async (t) => {
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
 
-  const pgRecords = await setupDataStoreData(newPayload.input.granules, collection, t.context.knex, t.context.esClient, t.context.esIndex);
+  const pgRecords = await setupDataStoreData(
+    newPayload.input.granules,
+    collection,
+    t.context.knex,
+    t.context.esClient,
+    t.context.esIndex
+  );
   await uploadFiles(filesToUpload, t.context.bucketMapping);
 
   const output = await moveGranules(newPayload);
@@ -363,7 +374,13 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
   const newPayload = buildPayload(t, collection);
 
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const pgRecords = await setupDataStoreData(newPayload.input.granules, collection, t.context.knex, t.context.esClient, t.context.esIndex);
+  const pgRecords = await setupDataStoreData(
+    newPayload.input.granules,
+    collection,
+    t.context.knex,
+    t.context.esClient,
+    t.context.esIndex
+  );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -404,7 +421,13 @@ test.serial('handles files that need no move', async (t) => {
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const pgRecords = await setupDataStoreData(newPayload.input.granules, collection, t.context.knex, t.context.esClient, t.context.esIndex);
+  const pgRecords = await setupDataStoreData(
+    newPayload.input.granules,
+    collection,
+    t.context.knex,
+    t.context.esClient,
+    t.context.esIndex
+  );
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
