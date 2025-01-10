@@ -294,7 +294,7 @@ const patchGranule = async (req, res) => {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
- const patchGranuleAndReturnStatus = async (req, res) => {
+const patchGranuleAndReturnStatus = async (req, res) => {
   let patchRes;
   let isNewRecord = false;
   let apiGranule = {};

@@ -626,7 +626,7 @@ export const associateExecutionWithGranule = async (params: {
  *                          api lambda
  * @returns - the response from the callback
  */
- export const bulkPatchGranuleCollection = async (params: {
+export const bulkPatchGranuleCollection = async (params: {
   prefix: string,
   body: BulkPatchGranuleCollection,
   callback?: InvokeApiFunction

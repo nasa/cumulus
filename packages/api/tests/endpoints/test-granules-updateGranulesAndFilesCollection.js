@@ -232,8 +232,6 @@ test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates gra
     collectionId2,
     collection2,
     collectionCumulusId2,
-    esIndex,
-    esClient,
     knex,
   } = t.context;
 
@@ -285,8 +283,6 @@ test.serial('PATCH /granules/bulkPatchGranuleCollection correctly passes in the 
 
   const response = buildFakeExpressResponse();
   await granuleFunctions.bulkPatchGranuleCollection(expressRequest, response);
-
-  const args = mapStub.getCall(0).args;
   t.is(mapStub.calledOnce, true);
 });
 
@@ -298,8 +294,6 @@ test.serial('PATCH /granules/bulkPatch successfully updates a batch of granules'
     collectionId2,
     collection2,
     collectionCumulusId2,
-    esIndex,
-    esClient,
     knex,
   } = t.context;
 

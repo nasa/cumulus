@@ -364,7 +364,7 @@ export const getGranulesByGranuleId = async (
  * @param {string} granuleId - Granule ID
  * @returns {Promise<PostgresGranuleRecord[]>} The returned list of records
  */
- export const updateBatchGranulesCollection = async (
+export const updateBatchGranulesCollection = async (
   knex: Knex,
   granuleIds: Array<String>,
   collectionCumulusId: number
