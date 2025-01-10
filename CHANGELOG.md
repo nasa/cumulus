@@ -24,6 +24,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
 
 ### Added
+
+- **CUMULUS-3751**
+  - Added a task to move granules between collections during a workflow/
+    - expects a list of granules along with a new (target) collection
+    - transfers those granules to that collection in cumulus data stores
+    - moves those granule files in S3 according to pathing of target collection
 - **CUMULUS-3757**
   - Added an endpoint `PATCH/batchPatchGranulesRecordCollection` which updates a batch of granule records collectionId to a new collectionId. This endpoint takes a list of granules, a collectionId, and an `esConcurrency` variable, updating the granules' to the collectionId passed with the payload in both postgres and elasticsearch, while providing concurrency for updating elasticsearch to tailor for performance and database needs.
   - Added an endpoint `PATCH/batchPatchGranules` which applies PATCH to a list of granules. For its payload, this endpoint takes a list of granules (the updates to be made to the granule, similar to the pre-existing `PATCH`), a `dbConcurrency` and `dbMaxPool` variables for configuring concurrency and database thoroughput for postgres to tailor to performance and database needs.
