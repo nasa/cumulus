@@ -3,6 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const cloneDeep = require('lodash/cloneDeep');
+const mapValues = require('lodash/mapValues');
 
 const {
   getGranuleQueryFields,
@@ -335,6 +336,55 @@ test('getGranuleCmrTemporalInfo() handles empty return from CMR and gets tempora
   t.deepEqual(updatedCmrTemporalInfo, t.context.fakeCmrMetadata);
 });
 
+test('getGranuleCmrTemporalInfo() returns null for null values', async (t) => {
+  const granule = {
+    beginningDateTime: null,
+    endingDateTime: null,
+    productionDateTime: null,
+    lastUpdateDateTime: null,
+  };
+  const cmrUtils = {
+    getGranuleTemporalInfo: () => Promise.resolve(granule),
+  };
+
+  const result = await getGranuleCmrTemporalInfo({ cmrTemporalInfo: {}, granule, cmrUtils });
+  t.deepEqual(result, granule);
+});
+
+test('getGranuleCmrTemporalInfo() returns null for empty string', async (t) => {
+  const granule = {
+    beginningDateTime: '',
+    endingDateTime: '',
+    productionDateTime: '',
+    lastUpdateDateTime: '',
+  };
+  const cmrUtils = {
+    getGranuleTemporalInfo: () => Promise.resolve(granule),
+  };
+
+  const expected = mapValues(granule, () => null);
+
+  const result = await getGranuleCmrTemporalInfo({ cmrTemporalInfo: {}, granule, cmrUtils });
+  t.deepEqual(result, expected);
+});
+
+test('getGranuleCmrTemporalInfo() returns undefined for explicitly defined undefined keys', async (t) => {
+  const granule = {
+    beginningDateTime: undefined,
+    endingDateTime: undefined,
+    productionDateTime: undefined,
+    lastUpdateDateTime: undefined,
+  };
+  const cmrUtils = {
+    getGranuleTemporalInfo: () => Promise.resolve(granule),
+  };
+
+  const expected = mapValues(granule, () => undefined);
+
+  const result = await getGranuleCmrTemporalInfo({ cmrTemporalInfo: {}, granule, cmrUtils });
+  t.deepEqual(result, expected);
+});
+
 test('getGranuleProcessingTimeInfo() converts input timestamps to standardized format', (t) => {
   const { timestampExtraPrecision } = t.context;
 
@@ -348,6 +398,48 @@ test('getGranuleProcessingTimeInfo() converts input timestamps to standardized f
   t.deepEqual(updatedProcessingTimeInfo, {
     processingStartDateTime: new Date(timestampExtraPrecision).toISOString(),
     processingEndDateTime: new Date(timestampExtraPrecision).toISOString(),
+  });
+});
+
+test('(getGranuleProcessingTimeInfo() returns null for missing beginningDateTime', (t) => {
+  const granule = {
+    processingEndDateTime: '2023-01-01T01:00:00.000Z',
+    processingStartDateTime: null,
+  };
+  const result = getGranuleProcessingTimeInfo(granule);
+  t.deepEqual(result, granule);
+});
+
+test('getGranuleProcessingTimeInfo() returns null for missing endingDateTime', (t) => {
+  const granule = {
+    processingEndDateTime: null,
+    processingStartDateTime: '2023-01-01T01:00:00.000Z',
+  };
+  const result = getGranuleProcessingTimeInfo(granule);
+  t.deepEqual(result, granule);
+});
+
+test('(getGranuleProcessingTimeInfo() returns null for empty string endingDateTime', (t) => {
+  const granule = {
+    processingEndDateTime: '',
+    processingStartDateTime: '2023-01-01T01:00:00.000Z',
+  };
+  const result = getGranuleProcessingTimeInfo(granule);
+  t.deepEqual(result, {
+    processingEndDateTime: null,
+    processingStartDateTime: granule.processingStartDateTime,
+  });
+});
+
+test('getGranuleProcessingTimeInfo() returns null for empty beginningDateTime', (t) => {
+  const granule = {
+    processingStartDateTime: '',
+    processingEndDateTime: '2023-01-01T01:00:00.000Z',
+  };
+  const result = getGranuleProcessingTimeInfo(granule);
+  t.deepEqual(result, {
+    processingStartDateTime: null,
+    processingEndDateTime: granule.processingEndDateTime,
   });
 });
 
