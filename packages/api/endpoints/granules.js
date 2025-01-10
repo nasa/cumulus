@@ -750,18 +750,15 @@ async function batchPatchGranulesRecordCollection(req, res) {
     deconstructCollectionId(newCollectionId)
   );
 
-  try {
-    await pMap(
-      granules,
-      async (apiGranule) => {
-        await updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule');
-      },
-      { concurrency: body.esConcurrency }
-    );
-    await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
-  } catch (error) {
-    throw new Error(error);
-  }
+  await pMap(
+    granules,
+    async (apiGranule) => {
+      await updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule');
+    },
+    { concurrency: body.esConcurrency }
+  );
+  await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
+
   return res.send({
     message: `Successfully wrote granules with Granule Id: ${granuleIds} to Collection Id: ${newCollectionId}`,
   });
@@ -792,21 +789,13 @@ async function batchPatchGranules(req, res) {
     },
   });
 
-  try {
-    await pMap(
-      granules,
-      async (apiGranule) => {
-        try {
-          await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
-        } catch (error) {
-          throw new Error(error);
-        }
-      },
-      { concurrency: body.dbConcurrency }
-    );
-  } catch (error) {
-    throw new Error(error);
-  }
+  await pMap(
+    granules,
+    async (apiGranule) => {
+      await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
+    },
+    { concurrency: body.dbConcurrency }
+  );
 
   return res.send({
     message: 'Successfully patched Granules',
