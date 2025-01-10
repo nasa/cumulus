@@ -615,8 +615,8 @@ export const associateExecutionWithGranule = async (params: {
 };
 
 /**
- * Bulk operations on granules stored in cumulus
- * POST /granules/bulk
+ * Update a list of granules' to a new collectionId in postgres and elasticsearch
+ * PATCH /granules/bulkPatchGranuleCollection
  *
  * @param params - params
  * @param params.prefix - the prefix configured for the stack
@@ -649,8 +649,8 @@ export const bulkPatchGranuleCollection = async (params: {
 };
 
 /**
- * Bulk operations on granules stored in cumulus
- * POST /granules/bulk
+ * Applies PATCH to a list of granules
+ * PATCH /granules/bulkPatch
  *
  * @param params - params
  * @param params.prefix - the prefix configured for the stack
