@@ -6,7 +6,6 @@ const { CloudFormation } = require('@aws-sdk/client-cloudformation');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { ECS } = require('@aws-sdk/client-ecs');
 const { EC2 } = require('@aws-sdk/client-ec2');
-const { ElasticsearchService } = require('@aws-sdk/client-elasticsearch-service');
 const { Kinesis } = require('@aws-sdk/client-kinesis');
 const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
