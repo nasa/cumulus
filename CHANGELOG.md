@@ -27,7 +27,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     If the prior behavior is desired, please add `"useGranIdPath": false` to your
     task config in your workflow definitions that use `sync-granule`.
 
-
 ### Added
 
 - **CUMULUS-3919**
@@ -35,10 +34,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3940**
+  - Added 'dead_letter_recovery_cpu' and 'dead_letter_recovery_memory' to `cumulus` and `archive` module configuration to allow configuration of the dead_letter_recovery_operation task definition to better allow configuration of the tool's operating environment.
+  - Updated the dead letter recovery tool to utilize it's own log group "${var.prefix}-DeadLetterRecoveryEcsLogs"
+  - Added `batchSize`, `concurrency` and `dbMaxPool` options to /endpoints/recoverCumulusMessage (note these values are correct at time of this release only):
+    - `batchSize` - specifies how many DLA objects to read from S3 and hold in memory.  Defaults to 1000.
+    - `concurrency` - specifies how many messages to process at the same time.  Defaults to 30.
+    - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
+  - Add API memory-constrained performance test to test minimum functionality under default+ configuration
+  - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
+
+- **CUMULUS-3759**
+  - Migrated `tf-modules/cumulus/ecs_cluster` ECS Autoscaling group from launch configurations to launch templates
+- **CUMULUS-3955**
+  - Removed `VACUUM` statements from db migrations. In cases where the PG database is very large, these queries
+    can take a long time and exceed the Lambda timeout, causing failures on deployment.
 - **CUMULUS-3931**
   - Add `force_new_deployment` to `cumulus_ecs_service` to allow users to force
     new task deployment on terraform redeploy.   See docs for more details:
     https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
+- **CUMULUS-3941**
+  - Updated `SendPan` task to generate short pan with FAILED disposition.
+- **CUMULUS-3936,CUMULUS-3948**
+  - Updated `tf-modules/cumulus/ecs_cluster_instance_autoscaling_cf_template.yml.tmpl`
+    user-data for compatibility with Amazon Linux 2023 AMI
+  - Fixed `tf-modules/cumulus` scripts to use Instance Metadata Service V2
+  - Updated `fake-provider-cf.yml` to work for Amazon Linux 2023 AMI
+- **CUMULUS-3965**
+  - Updated `tf-modules/cumulus/ecs_cluster` and `fake-provider-cf.yml` launch templates to require IMDSv2 
 
 ### Fixed
 
@@ -97,6 +120,8 @@ each Cumulus version between your current version and v19.1.0 as normal.
 
 ### Fixed
 
+- **CUMULUS-3940**
+  - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
 - **CUMULUS-3904**
   - Passed sqs_message_consumer_watcher_message_limit and sqs_message_consumer_watcher_time_limit through the cumulus terraform module to the ingest terraform module.
 - **CUMULUS-3902**
@@ -164,6 +189,35 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
   - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
+
+## [v18.5.2] 2024-12-12
+
+### Breaking Changes
+
+- **CUMULUS-3934**
+  - Removed `ecs_cluster_instance_allow_ssh` resource.
+  - The `ecs_cluster_instance_allow_ssh` was implemented before SSM hosts were deployed
+    to NGAP accounts and allowed for SSHing into an instance from an SSH bastion, which no longer exists.
+  - Tunneling into an EC2 via SSM is still supported. Users relying solely on SSH will need to transition to SSM.
+
+### Changed
+
+- **CUMULUS-3936,CUMULUS-3948**
+  - Updated `tf-modules/cumulus/ecs_cluster_instance_autoscaling_cf_template.yml.tmpl`
+    user-data for compatibility with Amazon Linux 2023 AMI
+  - Fixed `tf-modules/cumulus` scripts to use Instance Metadata Service V2
+  - Updated `fake-provider-cf.yml` to work for Amazon Linux 2023 AMI
+- **CUMULUS-3941**
+  - Updated `SendPan` task to generate short pan with FAILED disposition.
+- **CUMULUS-3955**
+  - Removed `VACUUM` statements from db migrations. In cases where the PG database is very large, these queries
+    can take a long time and exceed the Lambda timeout, causing failures on deployment.
+
+### Fixed
+
+- **Security Vulnerabilities**
+  - Updated `@octokit/graphql` from 2.1.1 to ^2.3.0 to address [CVE-2024-21538]
+    (https://github.com/advisories/GHSA-3xgq-45jj-v275)
 
 ## [v18.5.1] 2024-10-25
 

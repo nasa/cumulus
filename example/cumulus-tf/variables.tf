@@ -107,7 +107,7 @@ variable "data_persistence_remote_state_config" {
 }
 
 variable "s3_replicator_config" {
-  type        = object({ source_bucket = string, source_prefix = string, target_bucket = string, target_prefix = string, target_region = string })
+  type        = object({ source_bucket = string, source_prefix = string, target_bucket = string, target_prefix = string, target_region = optional(string) })
   default     = null
   description = "Configuration for the s3-replicator module. Items with prefix of source_prefix in the source_bucket will be replicated to the target_bucket with target_prefix."
 }
@@ -484,4 +484,18 @@ variable "default_log_retention_days" {
 variable "report_sns_topic_subscriber_arns" {
   type = list
   default = null
+}
+
+## Dead Letter Recovery Configuration
+
+variable "dead_letter_recovery_cpu" {
+  type = number
+  default = 256
+  description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
+}
+
+variable "dead_letter_recovery_memory" {
+  type = number
+  default = 1024
+  description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
