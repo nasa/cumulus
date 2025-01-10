@@ -233,7 +233,7 @@ function fakeAsyncOperationFactory(params = {}) {
     taskArn: randomId('arn'),
     id: uuidv4(),
     description: randomId('description'),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     status: 'SUCCEEDED',
     createdAt: Date.now() - 180.5 * 1000,
     updatedAt: Date.now(),

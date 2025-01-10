@@ -1,5 +1,4 @@
 const test = require('ava');
-const cryptoRandomString = require('crypto-random-string');
 const rewire = require('rewire');
 const range = require('lodash/range');
 
@@ -10,7 +9,6 @@ const {
   convertToDBCollectionSearchObject,
   convertToOrcaGranuleSearchParams,
   filterDBCollections,
-  compareEsGranuleAndApiGranule,
 } = require('../../lib/reconciliationReport');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
 
@@ -145,91 +143,4 @@ test("filterDBCollections filters collections by recReportParams's collectionIds
   const actual = filterDBCollections(collections, reportParams);
 
   t.deepEqual(actual, expected);
-});
-
-test('compareEsGranuleAndApiGranule returns true for matching granules', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-  };
-  const granule2 = { ...granule, files: [] };
-  t.true(compareEsGranuleAndApiGranule(granule, granule2));
-});
-
-test('compareEsGranuleAndApiGranule returns false for granules with different values', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-  };
-  const granule2 = { ...granule, foo: 'bar' };
-  t.false(compareEsGranuleAndApiGranule(granule, granule2));
-});
-
-test('compareEsGranuleAndApiGranule returns false if one granule has files and other does not', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-  };
-  const granule2 = {
-    ...granule,
-    files: [{
-      bucket: 'bucket',
-      key: 'key',
-    }],
-  };
-  t.false(compareEsGranuleAndApiGranule(granule, granule2));
-});
-
-test('compareEsGranuleAndApiGranule returns false if granule file is missing from second granule', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-    files: [{
-      bucket: 'bucket',
-      key: 'key',
-    }],
-  };
-  const granule2 = {
-    ...granule,
-    files: [{
-      bucket: 'bucket',
-      key: 'key2',
-    }],
-  };
-  t.false(compareEsGranuleAndApiGranule(granule, granule2));
-});
-
-test('compareEsGranuleAndApiGranule returns false if granule files have different properties', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-    files: [{
-      bucket: 'bucket',
-      key: 'key',
-    }],
-  };
-  const granule2 = {
-    ...granule,
-    files: [{
-      bucket: 'bucket',
-      key: 'key',
-      size: 5,
-    }],
-  };
-  t.false(compareEsGranuleAndApiGranule(granule, granule2));
-});
-
-test('compareEsGranuleAndApiGranule returns false if granule files have different values for same property', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-    files: [{
-      bucket: 'bucket',
-      key: 'key',
-      size: 1,
-    }],
-  };
-  const granule2 = {
-    ...granule,
-    files: [{
-      bucket: 'bucket',
-      key: 'key',
-      size: 5,
-    }],
-  };
-  t.false(compareEsGranuleAndApiGranule(granule, granule2));
 });

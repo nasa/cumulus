@@ -18,7 +18,7 @@ class ReconciliationReportPgModel extends BasePgModel<PostgresReconciliationRepo
   create(
     knexOrTransaction: Knex | Knex.Transaction,
     item: PostgresReconciliationReport
-  ) {
+  ): Promise<PostgresReconciliationReportRecord[]> {
     return super.create(knexOrTransaction, item, '*') as Promise<PostgresReconciliationReportRecord[]>;
   }
 

@@ -50,7 +50,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
 
       const asyncOperationObject = {
         description: 'Some description',
-        operationType: 'ES Index',
+        operationType: 'Bulk Granules',
         id: asyncOperationId,
         taskArn: randomString(),
         status: 'RUNNING',

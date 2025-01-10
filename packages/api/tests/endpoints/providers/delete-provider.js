@@ -133,28 +133,6 @@ test('Deleting a provider removes the provider from postgres', async (t) => {
   t.false(await providerPgModel.exists(t.context.testKnex, { name }));
 });
 
-test('Deleting a provider that exists in PostgreSQL and not Elasticsearch succeeds', async (t) => {
-  const testPgProvider = fakeProviderRecordFactory();
-  await t.context.providerPgModel
-    .create(
-      t.context.testKnex,
-      testPgProvider
-    );
-
-  await request(app)
-    .delete(`/providers/${testPgProvider.name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  t.false(
-    await t.context.providerPgModel.exists(
-      t.context.testKnex,
-      { name: testPgProvider.name }
-    )
-  );
-});
-
 test('Deleting a provider that does not exist in PostgreSQL returns a 404', async (t) => {
   const { status } = await request(app)
     .delete(`/providers/${randomString}`)
