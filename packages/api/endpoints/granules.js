@@ -729,11 +729,8 @@ async function bulkPatchGranuleCollection(req, res) {
     deconstructCollectionId(newCollectionId)
   );
 
-  try {
-    await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
-  } catch (error) {
-    throw new Error(error);
-  }
+  await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
+
   return res.send({
     message: `Successfully wrote granules with Granule Id: ${granuleIds} to Collection Id: ${newCollectionId}`,
   });
@@ -743,6 +740,8 @@ async function bulkPatchGranuleCollection(req, res) {
  * Update a batch of granules
  *
  * @param {Object} req - express request object
+ * @param {Object} req.testContext - test context for client requests
+ * @param {Object} req.body - request body for patching a granule
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
@@ -766,21 +765,13 @@ async function bulkPatch(req, res) {
     },
   });
 
-  try {
-    await mappingFunction(
-      granules,
-      async (apiGranule) => {
-        try {
-          await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
-        } catch (error) {
-          throw new Error(error);
-        }
-      },
-      { concurrency: body.dbConcurrency }
-    );
-  } catch (error) {
-    throw new Error(error);
-  }
+  await mappingFunction(
+    granules,
+    async (apiGranule) => {
+      await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
+    },
+    { concurrency: body.dbConcurrency }
+  );
 
   return res.send({
     message: 'Successfully patched Granules',
@@ -1130,13 +1121,13 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleId', getByGranuleId);
 router.get('/:collectionId/:granuleId', get);
+router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
+router.patch('/bulkPatch', bulkPatch);
 router.get('/', list);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
 router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
 router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
-router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
-router.patch('/bulkPatch', bulkPatch);
 router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 
 router.post(
