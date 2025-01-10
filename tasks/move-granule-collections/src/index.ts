@@ -206,15 +206,15 @@ async function moveGranulesInS3(
 async function moveGranulesInCumulusDatastores(
   sourceGranules: Array<ApiGranuleRecord>,
   targetGranules: Array<ApiGranuleRecord>,
-  targetCollectionId: string,
+  targetCollectionId: string
 ): Promise<void> {
   await batchPatchGranulesRecordCollection({
     prefix: getRequiredEnvVar('stackName'),
     body: {
       apiGranules: sourceGranules,
       collectionId: targetCollectionId,
-      esConcurrency: getConcurrency()
-    }
+      esConcurrency: getConcurrency(),
+    },
   });
   await batchPatchGranules({
     prefix: getRequiredEnvVar('stackName'),
@@ -222,12 +222,8 @@ async function moveGranulesInCumulusDatastores(
       apiGranules: targetGranules,
       dbConcurrency: getConcurrency(),
       dbMaxPool: getConcurrency(),
-    }
-  })
-  // await updateGranules({
-  //   prefix: getRequiredEnvVar('stackName'),
-  //   body: targetGranules,
-  // });
+    },
+  });
 }
 
 async function cleanupCMRMetadataFiles(
@@ -279,9 +275,11 @@ async function moveFilesForAllGranules(
   // move all non-cmrMetadata files and copy all cmrmetadata files
   await moveGranulesInS3(sourceGranules, targetGranules, s3MultipartChunksizeMb);
   // update postgres (or other cumulus datastores if applicable)
-  // because postgres will (might) be our source of ground truth in the future, it must be updated *last*
+  // because postgres might be our source of ground truth in the future, it must be updated *last*
   await moveGranulesInCumulusDatastores(
-    sourceGranules, targetGranules, targetCollectionId,
+    sourceGranules,
+    targetGranules,
+    targetCollectionId
   );
   // because cmrMetadata files were *copied* and not deleted, delete them now
   await cleanupCMRMetadataFiles(sourceGranules, targetGranules);

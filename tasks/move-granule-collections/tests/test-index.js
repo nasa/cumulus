@@ -200,11 +200,8 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
-  await destroyLocalTestDb({
-    knex: t.context.knex,
-    knexAdmin: t.context.knexAdmin,
-    tesetDbName: t.context.testDbName,
-  });
+  await destroyLocalTestDb(t.context);
+  await cleanupTestIndex(t.context)
 });
 
 test.serial('Should move files to final location and update pg data', async (t) => {
