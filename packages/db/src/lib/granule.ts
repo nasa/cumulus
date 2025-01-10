@@ -19,6 +19,8 @@ const { deprecate } = require('@cumulus/common/util');
 
 const { TableNames } = require('../tables');
 
+const log = new Logger({ sender: '@cumulus/db/lib/granules' });
+
 export const getGranuleCollectionId = async (
   knexOrTransaction: Knex,
   granule: { collection_cumulus_id: number }
@@ -353,4 +355,27 @@ export const getGranulesByGranuleId = async (
   const records: PostgresGranuleRecord[] = await knexOrTransaction(granulesTable)
     .where({ granule_id: granuleId });
   return records;
+};
+
+/**
+ * Get granules from table where granule_id matches provided granuleId
+ *
+ * @param {Knex} knex - DB client or transaction
+ * @param {string} granuleId - Granule ID
+ * @returns {Promise<PostgresGranuleRecord[]>} The returned list of records
+ */
+ export const updateBatchGranulesCollection = async (
+  knex: Knex,
+  granuleIds: Array<String>,
+  collectionCumulusId: number
+): Promise<void> => {
+  const {
+    granules: granulesTable,
+  } = TableNames;
+  try {
+    await knex(granulesTable).whereIn('granule_id', granuleIds).update({ collection_cumulus_id: collectionCumulusId });
+  } catch (thrownError) {
+    log.error(`Write Granules failed: ${JSON.stringify(thrownError)}`);
+    throw thrownError;
+  }
 };
