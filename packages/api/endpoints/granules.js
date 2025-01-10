@@ -706,20 +706,20 @@ const associateExecution = async (req, res) => {
   });
 };
 
-const PatchBatchGranulesRecordCollectionSchema = z.object({
+const BulkPatchGranuleCollectionSchema = z.object({
   apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
   collectionId: z.string().nonempty(),
   esConcurrency: z.number().positive(),
 }).catchall(z.unknown());
 
-const PatchBatchGranulesSchema = z.object({
+const BulkPatchSchema = z.object({
   apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
   dbConcurrency: z.number().positive(),
   dbMaxPool: z.number().positive(),
 }).catchall(z.unknown());
 
-const parseBatchGranulesRecordCollectionPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesRecordCollectionSchema);
-const parseBatchGranulesPayload = zodParser('PatchBatchGranulesRecordCollection payload', PatchBatchGranulesSchema);
+const parseBulkPatchGranuleCollectionPayload = zodParser('BulkPatchGranuleCollection payload', BulkPatchGranuleCollectionSchema);
+const parseBulkPatchPayload = zodParser('BulkPatchSchema payload', BulkPatchSchema);
 
 /**
  * Update a batch of granules to change collectionId to a new collectionId
@@ -729,15 +729,15 @@ const parseBatchGranulesPayload = zodParser('PatchBatchGranulesRecordCollection 
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function batchPatchGranulesRecordCollection(req, res) {
+async function bulkPatchGranuleCollection(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await getEsClient(),
+    mappingFunction = pMap,
   } = req.testContext || {};
-  const concurrency = req.body.esConcurrency ?? 5;
-  req.body.esConcurrency = concurrency;
-  const body = parseBatchGranulesRecordCollectionPayload(req.body);
+  req.body.esConcurrency = req.body.esConcurrency ?? 5;
+  const body = parseBulkPatchGranuleCollectionPayload(req.body);
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
@@ -751,7 +751,7 @@ async function batchPatchGranulesRecordCollection(req, res) {
   );
 
   try {
-    await pMap(
+    await mappingFunction(
       granules,
       async (apiGranule) => {
         await updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule');
@@ -774,26 +774,28 @@ async function batchPatchGranulesRecordCollection(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function batchPatchGranules(req, res) {
-  const concurrency = req.body.dbConcurrency ? req.body.dbConcurrency : 5;
-  const dbMaxPool = req.body.dbMaxPool ? req.body.dbMaxPool : 20;
-  req.body.dbConcurrency = concurrency;
-  req.body.dbMaxPool = dbMaxPool;
-  const body = parseBatchGranulesPayload(req.body);
+async function bulkPatch(req, res) {
+  const {
+    mappingFunction = pMap,
+    getKnexClientMethod = getKnexClient,
+  } = req.testContext || {};
+  req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
+  req.body.dbMaxPool = req.body.dbMaxPool ?? 20;
+  const body = parseBulkPatchPayload(req.body);
 
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
   const granules = body.apiGranules;
-  const knex = await getKnexClient({
+  const knex = await getKnexClientMethod({
     env: {
       ...process.env,
-      dbMaxPool,
+      dbMaxPool: body.dbMaxPool.toString(),
     },
   });
 
   try {
-    await pMap(
+    await mappingFunction(
       granules,
       async (apiGranule) => {
         try {
@@ -1202,8 +1204,8 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleId', getByGranuleId);
 router.get('/:collectionId/:granuleId', get);
-router.patch('/batchPatchGranulesRecordCollection', batchPatchGranulesRecordCollection);
-router.patch('/batchPatchGranules', batchPatchGranules);
+router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
+router.patch('/bulkPatch', bulkPatch);
 router.get('/', list);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
@@ -1241,7 +1243,7 @@ module.exports = {
   put,
   patch,
   patchGranuleAndReturnStatus,
-  batchPatchGranules,
-  batchPatchGranulesRecordCollection,
+  bulkPatch,
+  bulkPatchGranuleCollection,
   router,
 };
