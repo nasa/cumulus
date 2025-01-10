@@ -8,6 +8,7 @@ test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.granuleId = randomId('gran/a-b-c-123');
   t.context.collectionId = `fakeName___${randomId('col/e-f-g-456')}`;
+  t.context.collectionId2 = `fakeName2___${randomId('col/e-f-g-456')}`;
   t.context.status = 'queued';
 });
 
@@ -565,4 +566,101 @@ test('bulkOperation calls the callback with the expected object', async (t) => {
       workflowName,
     })
   );
+});
+
+test('bulkPatchGranuleCollection calls the callback with the expected object', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PATCH',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulkPatchGranuleCollection',
+      body: JSON.stringify({
+        apiGranules: [{
+          granule_id: t.context.granuleId,
+          collectionId: t.context.collectionId,
+        }],
+        collectionId: t.context.collectionId2,
+      }),
+    },
+    expectedStatusCodes: 202,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        apiGranules: [{
+          granule_id: t.context.granuleId,
+          collectionId: t.context.collectionId,
+        }],
+        collectionId: t.context.collectionId2,
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.bulkPatchGranuleCollection({
+    callback,
+    prefix: t.context.testPrefix,
+    body: {
+      apiGranules: [{
+        granule_id: t.context.granuleId,
+        collectionId: t.context.collectionId,
+      }],
+      collectionId: t.context.collectionId2,
+    },
+  }));
+});
+
+test('bulkPatch calls the callback with the expected object', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PATCH',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulkPatch',
+      body: JSON.stringify({
+        apiGranules: [{
+          granule_id: t.context.granuleId,
+          collectionId: t.context.collectionId2,
+        }],
+        dbConcurrency: 5,
+        dbMaxPool: 10,
+      }),
+    },
+    expectedStatusCodes: 202,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        apiGranules: [{
+          granule_id: t.context.granuleId,
+          collectionId: t.context.collectionId2,
+        }],
+        dbConcurrency: 5,
+        dbMaxPool: 10,
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.bulkPatch({
+    callback,
+    prefix: t.context.testPrefix,
+    body: {
+      apiGranules: [{
+        granule_id: t.context.granuleId,
+        collectionId: t.context.collectionId2,
+      }],
+      dbConcurrency: 5,
+      dbMaxPool: 10,
+    },
+  }));
 });

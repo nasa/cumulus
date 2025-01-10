@@ -4,6 +4,7 @@
 
 const { z } = require('zod');
 const isError = require('lodash/isError');
+const pMap = require('p-map');
 
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
@@ -25,6 +26,7 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
   getGranuleAndCollection,
+  updateBatchGranulesCollection,
 } = require('@cumulus/db');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
@@ -198,6 +200,9 @@ const create = async (req, res) => {
  * Update existing granule *or* create new granule
  *
  * @param {Object} req - express request object
+ * @param {Knex} req.knex - knex instance to use for patching granule
+ * @param {Object} req.testContext - test context for client requests
+ * @param {Object} req.body - request body for patching a granule
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
@@ -205,9 +210,9 @@ const patchGranule = async (req, res) => {
   const {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
-    knex = await getKnexClient(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
+  const knex = req.knex ?? await getKnexClient();
   let apiGranule = req.body || {};
   let pgCollection;
 
@@ -275,7 +280,31 @@ const patchGranule = async (req, res) => {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
   }
-  return _returnPatchGranuleStatus(isNewRecord, apiGranule, res);
+  return {
+    isNewRecord,
+    apiGranule,
+    patchRes: res,
+  };
+};
+
+/**
+ * Update existing granule *or* create new granule and return its status
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const patchGranuleAndReturnStatus = async (req, res) => {
+  let patchRes;
+  let isNewRecord = false;
+  let apiGranule = {};
+  try {
+    ({ isNewRecord, apiGranule, patchRes } = await patchGranule(req, res));
+  } catch (error) {
+    log.error('failed to update granule', error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return _returnPatchGranuleStatus(isNewRecord, apiGranule, patchRes);
 };
 
 /**
@@ -334,7 +363,7 @@ async function put(req, res) {
   }
   req.body = body;
   //Then patch new granule with nulls applied
-  return await patchGranule(req, res);
+  return await patchGranuleAndReturnStatus(req, res);
 }
 
 const _handleUpdateAction = async (
@@ -492,7 +521,7 @@ async function patchByGranuleId(req, res) {
 
   if (!action) {
     if (req.body.granuleId === req.params.granuleId) {
-      return patchGranule(req, res);
+      return patchGranuleAndReturnStatus(req, res);
     }
     return res.boom.badRequest(
       `input :granuleId (${req.params.granuleId}) must match body's granuleId (${req.body.granuleId})`
@@ -534,7 +563,7 @@ async function patch(req, res) {
   const action = body.action;
   if (!action) {
     if (_granulePayloadMatchesQueryParams(body, req)) {
-      return patchGranule(req, res);
+      return patchGranuleAndReturnStatus(req, res);
     }
     return res.boom.badRequest(
       `inputs :granuleId and :collectionId (${req.params.granuleId} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`
@@ -658,6 +687,96 @@ const associateExecution = async (req, res) => {
     message: `Successfully associated execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`,
   });
 };
+
+const BulkPatchGranuleCollectionSchema = z.object({
+  apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
+  collectionId: z.string().nonempty(),
+}).catchall(z.unknown());
+
+const BulkPatchSchema = z.object({
+  apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
+  dbConcurrency: z.number().positive(),
+  dbMaxPool: z.number().positive(),
+}).catchall(z.unknown());
+
+const parseBulkPatchGranuleCollectionPayload = zodParser('BulkPatchGranuleCollection payload', BulkPatchGranuleCollectionSchema);
+const parseBulkPatchPayload = zodParser('BulkPatchSchema payload', BulkPatchSchema);
+
+/**
+ * Update a batch of granules to change collectionId to a new collectionId
+ * in PG
+ *
+ * @param {Object} req - express request object
+ * @param {Object} req.testContext - test context for client requests
+ * @param {Object} req.body - request body for patching a granule
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function bulkPatchGranuleCollection(req, res) {
+  const {
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+  const body = parseBulkPatchGranuleCollectionPayload(req.body);
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+  const granules = req.body.apiGranules;
+  const granuleIds = granules.map((granule) => granule.granuleId);
+  const newCollectionId = req.body.collectionId;
+  const collection = await collectionPgModel.get(
+    knex,
+    deconstructCollectionId(newCollectionId)
+  );
+
+  await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
+
+  return res.send({
+    message: `Successfully wrote granules with Granule Id: ${granuleIds} to Collection Id: ${newCollectionId}`,
+  });
+}
+
+/**
+ * Update a batch of granules
+ *
+ * @param {Object} req - express request object
+ * @param {Object} req.testContext - test context for client requests
+ * @param {Object} req.body - request body for patching a granule
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function bulkPatch(req, res) {
+  const {
+    mappingFunction = pMap,
+    getKnexClientMethod = getKnexClient,
+  } = req.testContext || {};
+  req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
+  req.body.dbMaxPool = req.body.dbMaxPool ?? 20;
+  const body = parseBulkPatchPayload(req.body);
+
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+  const granules = body.apiGranules;
+  const knex = await getKnexClientMethod({
+    env: {
+      ...process.env,
+      dbMaxPool: body.dbMaxPool.toString(),
+    },
+  });
+
+  await mappingFunction(
+    granules,
+    async (apiGranule) => {
+      await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
+    },
+    { concurrency: body.dbConcurrency }
+  );
+
+  return res.send({
+    message: 'Successfully patched Granules',
+  });
+}
 
 /**
  * Delete a granule by granuleId
@@ -1002,6 +1121,8 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleId', getByGranuleId);
 router.get('/:collectionId/:granuleId', get);
+router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
+router.patch('/bulkPatch', bulkPatch);
 router.get('/', list);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
@@ -1038,6 +1159,8 @@ module.exports = {
   create,
   put,
   patch,
-  patchGranule,
+  patchGranuleAndReturnStatus,
+  bulkPatch,
+  bulkPatchGranuleCollection,
   router,
 };
