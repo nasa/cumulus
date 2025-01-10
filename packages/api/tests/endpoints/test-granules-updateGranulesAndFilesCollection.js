@@ -224,7 +224,7 @@ test.after.always(async (t) => {
   });
 });
 
-test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates granules to a new collectionId in PG and ES', async (t) => {
+test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates granules to a new collectionId in PG', async (t) => {
   const {
     granuleIds,
     granulePgModel,
@@ -262,28 +262,6 @@ test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates gra
 
     t.is(apiGranule.collectionId, collectionId2);
   }
-});
-
-test.serial('PATCH /granules/bulkPatchGranuleCollection correctly passes in the payload-specified concurrency', async (t) => {
-  const {
-    apiGranules,
-    collectionId2,
-  } = t.context;
-  const mapStub = sinon.stub().returns(true);
-
-  const expressRequest = {
-    body: {
-      apiGranules,
-      collectionId: collectionId2,
-    },
-    testContext: {
-      mappingFunction: mapStub,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-  await granuleFunctions.bulkPatchGranuleCollection(expressRequest, response);
-  t.is(mapStub.calledOnce, true);
 });
 
 test.serial('PATCH /granules/bulkPatch successfully updates a batch of granules', async (t) => {

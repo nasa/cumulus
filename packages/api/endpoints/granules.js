@@ -704,10 +704,12 @@ const parseBulkPatchPayload = zodParser('BulkPatchSchema payload', BulkPatchSche
 
 /**
  * Update a batch of granules to change collectionId to a new collectionId
- * in PG and ES
+ * in PG
  *
  * @param {Object} req - express request object
-  * @param {Object} res - express response object
+ * @param {Object} req.testContext - test context for client requests
+ * @param {Object} req.body - request body for patching a granule
+ * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
 async function bulkPatchGranuleCollection(req, res) {
@@ -719,7 +721,6 @@ async function bulkPatchGranuleCollection(req, res) {
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
-
   const granules = req.body.apiGranules;
   const granuleIds = granules.map((granule) => granule.granuleId);
   const newCollectionId = req.body.collectionId;
