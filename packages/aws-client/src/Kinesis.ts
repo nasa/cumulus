@@ -25,7 +25,7 @@ export const describeStream = (
       try {
         return await kinesis().describeStream(params);
       } catch (error) {
-        if (error instanceof ResourceNotFoundException) throw error;
+        if error.name === 'ResourceNotFoundException' throw error;
         throw new pRetry.AbortError(error);
       }
     },
