@@ -43,6 +43,8 @@ variable "elasticsearch_config" {
     version        = string
     volume_size    = number
     volume_type    = string
+    iops           = optional(number)
+    throughput     = optional(number)
   })
   default = {
     domain_name    = "es"
