@@ -15,13 +15,13 @@ type AssociateExecutionRequest = {
   executionArn: string
 };
 
-type BatchPatchGranulesRecordCollection = {
+type BulkPatchGranuleCollection = {
   apiGranules: ApiGranuleRecord[],
   collectionId: string,
   esConcurrency: number,
 };
 
-type BatchPatchGranules = {
+type BulkPatch = {
   apiGranules: ApiGranuleRecord[],
   dbConcurrency: number,
   dbMaxPool: number,
@@ -649,8 +649,8 @@ export const associateExecutionWithGranule = async (params: {
 };
 
 /**
- * Bulk operations on granules stored in cumulus
- * POST /granules/bulk
+ * Update a list of granules' to a new collectionId in postgres and elasticsearch
+ * PATCH /granules/bulkPatchGranuleCollection
  *
  * @param params - params
  * @param params.prefix - the prefix configured for the stack
@@ -661,9 +661,9 @@ export const associateExecutionWithGranule = async (params: {
  *                          api lambda
  * @returns - the response from the callback
  */
-export const batchPatchGranulesRecordCollection = async (params: {
+export const bulkPatchGranuleCollection = async (params: {
   prefix: string,
-  body: BatchPatchGranulesRecordCollection,
+  body: BulkPatchGranuleCollection,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
@@ -675,7 +675,7 @@ export const batchPatchGranulesRecordCollection = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/granules/batchPatchGranulesRecordCollection',
+      path: '/granules/bulkPatchGranuleCollection',
       body: JSON.stringify(body),
     },
     expectedStatusCodes: 202,
@@ -683,8 +683,8 @@ export const batchPatchGranulesRecordCollection = async (params: {
 };
 
 /**
- * Bulk operations on granules stored in cumulus
- * POST /granules/bulk
+ * Applies PATCH to a list of granules
+ * PATCH /granules/bulkPatch
  *
  * @param params - params
  * @param params.prefix - the prefix configured for the stack
@@ -695,9 +695,9 @@ export const batchPatchGranulesRecordCollection = async (params: {
  *                          api lambda
  * @returns - the response from the callback
  */
-export const batchPatchGranules = async (params: {
+export const bulkPatch = async (params: {
   prefix: string,
-  body: BatchPatchGranules,
+  body: BulkPatch,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
@@ -709,7 +709,7 @@ export const batchPatchGranules = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/granules/batchPatchGranules',
+      path: '/granules/bulkPatch',
       body: JSON.stringify(body),
     },
     expectedStatusCodes: 202,

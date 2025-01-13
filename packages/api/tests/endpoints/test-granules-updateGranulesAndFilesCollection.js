@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 const test = require('ava');
 const range = require('lodash/range');
+const sinon = require('sinon');
 
 const cryptoRandomString = require('crypto-random-string');
 const {
@@ -32,9 +33,10 @@ const {
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const models = require('../../models');
+const granuleFunctions = require('../../endpoints/granules');
 
 const { request } = require('../helpers/request');
-
+const { buildFakeExpressResponse } = require('./utils');
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
@@ -239,7 +241,7 @@ test.after.always(async (t) => {
   });
 });
 
-test.serial('PATCH /granules/batchRecords successfully updates granules to new collectionId in PG and ES', async (t) => {
+test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates granules to a new collectionId in PG and ES', async (t) => {
   const {
     granuleIds,
     granulePgModel,
@@ -253,12 +255,12 @@ test.serial('PATCH /granules/batchRecords successfully updates granules to new c
   } = t.context;
 
   const params = {
-    apiGranules: apiGranules,
+    apiGranules,
     collectionId: collectionId2,
   };
 
   const response = await request(app)
-    .patch('/granules/batchPatchGranulesRecordCollection')
+    .patch('/granules/bulkPatchGranuleCollection')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(params)
@@ -288,7 +290,33 @@ test.serial('PATCH /granules/batchRecords successfully updates granules to new c
   }
 });
 
-test.serial('PATCH /granules/batchPatch successfully updates a batch of granules', async (t) => {
+test.serial('PATCH /granules/bulkPatchGranuleCollection correctly passes in the payload-specified concurrency', async (t) => {
+  const {
+    apiGranules,
+    collectionId2,
+  } = t.context;
+  const mapStub = sinon.stub().returns(true);
+
+  const expressRequest = {
+    body: {
+      apiGranules,
+      collectionId: collectionId2,
+      esConcurrency: 10,
+    },
+    testContext: {
+      mappingFunction: mapStub,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+  await granuleFunctions.bulkPatchGranuleCollection(expressRequest, response);
+
+  const args = mapStub.getCall(0).args;
+  t.is(mapStub.calledOnce, true);
+  t.is(args[2].concurrency, 10);
+});
+
+test.serial('PATCH /granules/bulkPatch successfully updates a batch of granules', async (t) => {
   const {
     granuleIds,
     granulePgModel,
@@ -306,7 +334,7 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
   };
 
   await request(app)
-    .patch('/granules/batchPatchGranules')
+    .patch('/granules/bulkPatch')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(params)
@@ -339,4 +367,38 @@ test.serial('PATCH /granules/batchPatch successfully updates a batch of granules
       t.true(file.bucket.includes(collectionId2));
     }
   }
+});
+
+test.serial('PATCH /granules/bulkPatch correctly passes in the payload-specified concurrency and db connection controls', async (t) => {
+  const {
+    apiGranules,
+  } = t.context;
+  const mapStub = sinon.stub().returns(true);
+  const knexStub = sinon.stub().returns(true);
+
+  const expressRequest = {
+    body: {
+      apiGranules,
+      dbConcurrency: 10,
+      dbMaxPool: 20,
+    },
+    testContext: {
+      mappingFunction: mapStub,
+      getKnexClientMethod: knexStub,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+  try {
+    await granuleFunctions.bulkPatch(expressRequest, response);
+  } catch (err) {
+    console.error('Skipping caught error for stubbed bulkPatchGranules test');
+  }
+
+  const mapArgs = mapStub.getCall(0).args;
+  const knexArgs = knexStub.getCall(0).args;
+  t.is(mapStub.calledOnce, true);
+  t.is(knexStub.calledOnce, true);
+  t.is(knexArgs[0].env.dbMaxPool, '20');
+  t.is(mapArgs[2].concurrency, 10);
 });

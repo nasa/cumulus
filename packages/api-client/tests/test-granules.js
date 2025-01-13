@@ -568,7 +568,7 @@ test('bulkOperation calls the callback with the expected object', async (t) => {
   );
 });
 
-test('batchPatchGranulesRecordCollection calls the callback with the expected object', async (t) => {
+test('bulkPatchGranuleCollection calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -577,7 +577,7 @@ test('batchPatchGranulesRecordCollection calls the callback with the expected ob
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/granules/batchPatchGranulesRecordCollection',
+      path: '/granules/bulkPatchGranuleCollection',
       body: JSON.stringify({
         apiGranules: [{
           granule_id: t.context.granuleId,
@@ -604,7 +604,7 @@ test('batchPatchGranulesRecordCollection calls the callback with the expected ob
     });
   };
 
-  await t.notThrowsAsync(granulesApi.batchPatchGranulesRecordCollection({
+  await t.notThrowsAsync(granulesApi.bulkPatchGranuleCollection({
     callback,
     prefix: t.context.testPrefix,
     body: {
@@ -618,7 +618,7 @@ test('batchPatchGranulesRecordCollection calls the callback with the expected ob
   }));
 });
 
-test('batchPatchGranules calls the callback with the expected object', async (t) => {
+test('bulkPatch calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -627,14 +627,14 @@ test('batchPatchGranules calls the callback with the expected object', async (t)
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/granules/batchPatchGranules',
+      path: '/granules/bulkPatch',
       body: JSON.stringify({
         apiGranules: [{
           granule_id: t.context.granuleId,
           collectionId: t.context.collectionId2,
         }],
         dbConcurrency: 5,
-        dbMaxPoolSize: 10,
+        dbMaxPool: 10,
       }),
     },
     expectedStatusCodes: 202,
@@ -649,12 +649,12 @@ test('batchPatchGranules calls the callback with the expected object', async (t)
           collectionId: t.context.collectionId2,
         }],
         dbConcurrency: 5,
-        dbMaxPoolSize: 10,
+        dbMaxPool: 10,
       }),
     });
   };
 
-  await t.notThrowsAsync(granulesApi.batchPatchGranules({
+  await t.notThrowsAsync(granulesApi.bulkPatch({
     callback,
     prefix: t.context.testPrefix,
     body: {
@@ -663,7 +663,7 @@ test('batchPatchGranules calls the callback with the expected object', async (t)
         collectionId: t.context.collectionId2,
       }],
       dbConcurrency: 5,
-      dbMaxPoolSize: 10,
+      dbMaxPool: 10,
     },
   }));
 });
