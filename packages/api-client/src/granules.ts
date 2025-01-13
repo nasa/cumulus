@@ -614,7 +614,7 @@ export const associateExecutionWithGranule = async (params: {
 };
 
 /**
- * Bulk update granules' collectionId to a payload-specified collectionId in postgres
+ * Update a list of granules' to a new collectionId in postgres and elasticsearch
  * PATCH /granules/bulkPatchGranuleCollection
  *
  * @param params - params

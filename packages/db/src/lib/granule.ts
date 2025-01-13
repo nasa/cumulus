@@ -358,11 +358,12 @@ export const getGranulesByGranuleId = async (
 };
 
 /**
- * Get granules from table where granule_id matches provided granuleId
+ * Update a list of granuleIds to a new collection_cumulus_id in postgres
  *
  * @param {Knex} knex - DB client or transaction
- * @param {string} granuleId - Granule ID
- * @returns {Promise<PostgresGranuleRecord[]>} The returned list of records
+ * @param {Array<String>} granuleIds - list of Granule IDs
+ * @param {number} collectionCumulusId - collection_cumulus_id to update to
+ * @returns {Promise<void>}
  */
 export const updateBatchGranulesCollection = async (
   knex: Knex,
