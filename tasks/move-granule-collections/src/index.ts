@@ -37,7 +37,7 @@ import { BucketsConfigObject } from '@cumulus/common/types';
 import { getCmrSettings } from '@cumulus/cmrjs/cmr-utils';
 import { CMRConstructorParams } from '@cumulus/cmr-client/CMR';
 import { s3CopyObject } from '@cumulus/aws-client/S3';
-import { batchPatchGranules, batchPatchGranulesRecordCollection } from '@cumulus/api-client/granules';
+import { bulkPatch, bulkPatchGranuleCollection } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 
 const MB = 1024 * 1024;
@@ -208,7 +208,7 @@ async function moveGranulesInCumulusDatastores(
   targetGranules: Array<ApiGranuleRecord>,
   targetCollectionId: string
 ): Promise<void> {
-  await batchPatchGranulesRecordCollection({
+  await bulkPatchGranuleCollection({
     prefix: getRequiredEnvVar('stackName'),
     body: {
       apiGranules: sourceGranules,
@@ -216,7 +216,7 @@ async function moveGranulesInCumulusDatastores(
       esConcurrency: getConcurrency(),
     },
   });
-  await batchPatchGranules({
+  await bulkPatch({
     prefix: getRequiredEnvVar('stackName'),
     body: {
       apiGranules: targetGranules,

@@ -31,7 +31,7 @@ const {
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
-const { batchPatchGranulesRecordCollection, batchPatchGranules } = require('@cumulus/api/endpoints/granules');
+const { bulkPatchGranuleCollection, bulkPatch } = require('@cumulus/api/endpoints/granules');
 const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
 const indexer = require('@cumulus/es-client/indexer');
 // const jest = require('jest');
@@ -143,11 +143,11 @@ test.beforeEach(async (t) => {
     '../dist/src',
     {
       '@cumulus/api-client/granules': {
-        batchPatchGranulesRecordCollection: (params) => (
-          batchPatchGranulesRecordCollection(params, mockResponse())
+        bulkPatchGranuleCollection: (params) => (
+          bulkPatchGranuleCollection(params, mockResponse())
         ),
-        batchPatchGranules: (params) => (
-          batchPatchGranules(params, mockResponse())
+        bulkPatch: (params) => (
+          bulkPatch(params, mockResponse())
         ),
       },
     }
