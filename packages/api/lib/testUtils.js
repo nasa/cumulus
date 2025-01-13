@@ -620,15 +620,6 @@ const createAsyncOperationTestRecords = async (context) => {
   };
 };
 
-// this doesn't look like it's being used anywhere, should I remove it?
-const cleanupExecutionTestRecords = async (context, { arn }) => {
-  const {
-    knex,
-    executionPgModel,
-  } = context;
-
-  await executionPgModel.delete(knex, { arn });
-};
 
 module.exports = {
   createFakeJwtAuthToken,
@@ -660,6 +651,5 @@ module.exports = {
   createRuleTestRecords,
   createPdrTestRecords,
   createExecutionTestRecords,
-  cleanupExecutionTestRecords,
   createAsyncOperationTestRecords,
 };

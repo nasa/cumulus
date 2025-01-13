@@ -1,8 +1,8 @@
+/* eslint-disable max-len */
 //@ts-check
 
 'use strict';
 
-/* eslint-disable max-len */
 /**
  * This lambda has been commented out because it needs to be rewritten for PG instead of running
  * in ElasticSearch. This will be done in CUMULUS-XXXX.
@@ -147,7 +147,7 @@ const parseEnvironment = () => {
  *
  * @returns {Promise<void>}
  */
-async function cleanExecutionPayloads() {
+function cleanExecutionPayloads() {
   const envConfig = parseEnvironment();
   // log.info(`running cleanExecutions with configuration ${JSON.stringify(envConfig)}`);
   // const {
