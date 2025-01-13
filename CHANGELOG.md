@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3940**
   - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
+- **CUMULUS-3981**
+  - Added required $metadata field when creating new instance of ServiceException.
 
 ### Added
 - **CUMULUS-3757**

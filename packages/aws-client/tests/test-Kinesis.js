@@ -37,7 +37,7 @@ test.serial('describeStream returns stream on retry', async (t) => {
   const describeStreamStub = sinon.stub(kinesis(), 'describeStream').callsFake(() => {
     if (retryCount < maxRetries) {
       retryCount += 1;
-      throw new ResourceNotFoundException({ message: 'not found' });
+      throw new ResourceNotFoundException({ message: 'not found', $metadata: {} });
     } else {
       return { StreamDescription: {} };
     }
