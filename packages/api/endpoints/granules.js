@@ -722,7 +722,7 @@ const parseBulkPatchGranuleCollectionPayload = zodParser('BulkPatchGranuleCollec
 const parseBulkPatchPayload = zodParser('BulkPatchSchema payload', BulkPatchSchema);
 
 /**
- * Update a batch of granules to change collectionId to a new collectionId
+ * Update a batch of granules to change the collectionId to a new collectionId
  * in PG and ES
  *
  * @param {Object} req - express request object
