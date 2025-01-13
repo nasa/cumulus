@@ -362,6 +362,7 @@ export const getGranulesByGranuleId = async (
  *
  * @param {Knex} knex - DB client or transaction
  * @param {Array<String>} granuleIds - list of Granule IDs
+ * @param {number} collectionCumulusId - collection_cumulus_id to be update to
  * @returns {Promise<void>}
  */
 export const updateBatchGranulesCollection = async (
