@@ -55,7 +55,6 @@ locals {
       execution_sns_topic_arn          = aws_sns_topic.report_executions_topic.arn
       idleTimeoutMillis                = var.rds_connection_timing_configuration.idleTimeoutMillis
       IDP_LOGIN                        = var.saml_idp_login
-      IndexFromDatabaseLambda          = aws_lambda_function.index_from_database.arn
       invoke                           = var.schedule_sf_function_arn
       invokeArn                        = var.schedule_sf_function_arn
       invokeReconcileLambda            = aws_lambda_function.create_reconciliation_report.arn
