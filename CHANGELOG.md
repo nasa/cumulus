@@ -71,6 +71,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3876**
   - Fixed `s3-replicator` lambda cross region write failure
   - Added `target_region` variable to `tf-modules/s3-replicator` module
+- **CUMULUS-3981**
+  - Added required $metadata field when creating new instance of ServiceException.
 - **Security Vulnerabilities**
   - Updated `@octokit/graphql` from 2.1.1 to ^2.3.0 to address [CVE-2024-21538]
     (https://github.com/advisories/GHSA-3xgq-45jj-v275)
