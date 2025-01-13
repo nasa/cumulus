@@ -91,7 +91,7 @@ test.serial('returns the correct results in the nominal case', async (t) => {
   try {
     sfn.describeExecution = ({ executionArn }) => {
       if (!executionStatuses[executionArn]) {
-        const error = new StepFunctions.ExecutionDoesNotExist();
+        const error = new StepFunctions.ExecutionDoesNotExist({ $metadata: {} });
         return Promise.reject(error);
       }
       return Promise.resolve({
