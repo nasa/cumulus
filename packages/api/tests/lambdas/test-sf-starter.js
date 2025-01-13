@@ -197,7 +197,7 @@ test.serial('handleEvent deletes message if execution already exists', async (t)
 
   const stubSFNThrowError = () => ({
     startExecution: () => {
-      throw new ExecutionAlreadyExists();
+      throw new ExecutionAlreadyExists({ $metadata: {} });
     },
   });
   const revert = sfStarter.__set__('sfn', stubSFNThrowError);
@@ -297,7 +297,7 @@ test.serial('handleThrottledEvent logs error and deletes message when execution 
       promise: async () => {
         const response = await semaphore.get(queueUrl);
         t.is(response.semvalue, 1);
-        throw new ExecutionAlreadyExists();
+        throw new ExecutionAlreadyExists({ $metadata: {} });
       },
     }),
   });
@@ -406,7 +406,7 @@ test.serial('handleSourceMappingEvent calls dispatch on messages in an EventSour
   };
   const stubSFNThrowError = () => ({
     startExecution: () => {
-      throw new ExecutionAlreadyExists();
+      throw new ExecutionAlreadyExists({ $metadata: {} });
     },
   });
   const stubSFNRandomThrowError = () => ({

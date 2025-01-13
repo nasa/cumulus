@@ -28,6 +28,8 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 
 - **CUMULUS-3940**
   - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
+- **CUMULUS-3981**
+  - Added required $metadata field when creating new instance of ServiceException.
 
 ## [v18.5.2] 2024-12-12
 
