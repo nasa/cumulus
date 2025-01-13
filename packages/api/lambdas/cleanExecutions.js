@@ -2,9 +2,11 @@
 
 'use strict';
 
+/* eslint-disable max-len */
 /**
  * This lambda has been commented out because it needs to be rewritten for PG instead of running
- * in ElasticSearch. This will be done in CUMULUS-XXXX
+ * in ElasticSearch. This will be done in CUMULUS-XXXX.
+ * When this is being rewritten, also remove the eslint-disable max-len above
  */
 
 // const { getEsClient, esConfig } = require('@cumulus/es-client/search');
@@ -108,37 +110,37 @@ const log = new Logger({
 //   } while (taskStatus?.body.completed === false);
 //   log.info(`elasticsearch task completed with status ${JSON.stringify(taskStatus?.body.task.status)}`);
 // };
-// /**
-//  * parse out environment variable configuration
-//  * @returns {{
-//  *   cleanupNonRunning: boolean,
-//  *   cleanupRunning: boolean,
-//  *   payloadTimeout: number
-//  *   esIndex: string,
-//  *   updateLimit: number,
-//  * }}
-//  */
-// const parseEnvironment = () => {
-//   const cleanupNonRunning = JSON.parse(process.env.CLEANUP_NON_RUNNING || 'true');
-//   const cleanupRunning = JSON.parse(process.env.CLEANUP_RUNNING || 'false');
-//   if (!cleanupRunning && !cleanupNonRunning) throw new Error('running and non-running executions configured to be skipped, nothing to do');
+/**
+ * parse out environment variable configuration
+ * @returns {{
+ *   cleanupNonRunning: boolean,
+ *   cleanupRunning: boolean,
+ *   payloadTimeout: number
+ *   esIndex: string,
+ *   updateLimit: number,
+ * }}
+ */
+const parseEnvironment = () => {
+  const cleanupNonRunning = JSON.parse(process.env.CLEANUP_NON_RUNNING || 'true');
+  const cleanupRunning = JSON.parse(process.env.CLEANUP_RUNNING || 'false');
+  if (!cleanupRunning && !cleanupNonRunning) throw new Error('running and non-running executions configured to be skipped, nothing to do');
 
-//   const _payloadTimeout = process.env.PAYLOAD_TIMEOUT || '10';
-//   const payloadTimeout = Number.parseInt(_payloadTimeout, 10);
-//   if (!Number.isInteger(payloadTimeout)) {
-//     throw new TypeError(`Invalid number of days specified in configuration for payloadTimeout: ${_payloadTimeout}`);
-//   }
-//   const esIndex = process.env.ES_INDEX || 'cumulus';
+  const _payloadTimeout = process.env.PAYLOAD_TIMEOUT || '10';
+  const payloadTimeout = Number.parseInt(_payloadTimeout, 10);
+  if (!Number.isInteger(payloadTimeout)) {
+    throw new TypeError(`Invalid number of days specified in configuration for payloadTimeout: ${_payloadTimeout}`);
+  }
+  const esIndex = process.env.ES_INDEX || 'cumulus';
 
-//   const updateLimit = Number(process.env.UPDATE_LIMIT || 10000);
-//   return {
-//     cleanupRunning,
-//     cleanupNonRunning,
-//     payloadTimeout,
-//     esIndex,
-//     updateLimit,
-//   };
-// };
+  const updateLimit = Number(process.env.UPDATE_LIMIT || 10000);
+  return {
+    cleanupRunning,
+    cleanupNonRunning,
+    payloadTimeout,
+    esIndex,
+    updateLimit,
+  };
+};
 
 /**
  * parse environment variables to extract configuration and run cleanup of ES executions

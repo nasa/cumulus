@@ -620,20 +620,14 @@ const createAsyncOperationTestRecords = async (context) => {
   };
 };
 
+// this doesn't look like it's being used anywhere, should I remove it?
 const cleanupExecutionTestRecords = async (context, { arn }) => {
   const {
     knex,
     executionPgModel,
-    esClient,
-    esIndex,
   } = context;
 
   await executionPgModel.delete(knex, { arn });
-  await deleteExecution({
-    esClient,
-    arn,
-    index: esIndex,
-  });
 };
 
 module.exports = {

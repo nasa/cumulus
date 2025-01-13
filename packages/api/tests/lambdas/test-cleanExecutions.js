@@ -1,6 +1,8 @@
+/* eslint-disable max-len */
 /**
  * Tests are commented out as the are for the old cleanExecutions lambda written for ElasticSearch.
  * This test file should be redone when the lambda is rewritten for PG, in CUMULUS-XXXX
+ * When this is being redone, also remove the eslint-disable max-len above
  */
 
 /* eslint-disable no-await-in-loop */
