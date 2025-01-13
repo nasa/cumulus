@@ -165,7 +165,7 @@ const stepFunctionMock = {
 const executionExistsMock = (arn) => {
   if ((arn.executionArn === expiredExecutionArn)
       || (arn.executionArn === expiredMissingExecutionArn)) {
-    const error = new StepFunctions.ExecutionDoesNotExist();
+    const error = new StepFunctions.ExecutionDoesNotExist({ $metadata: {} });
     return Promise.reject(error);
   }
 

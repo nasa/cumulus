@@ -120,6 +120,9 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
 
 - **CUMULUS-3919**
   - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
+- **CUMULUS-3978**
+  - Added `iops` and `throughput` options to `elasticsearch_config` variable
+    in `tf-modules/data-persistence`; These two options are necessary for gp3 EBS volume type.
 
 ### Changed
 
@@ -160,6 +163,8 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
 - **CUMULUS-3876**
   - Fixed `s3-replicator` lambda cross region write failure
   - Added `target_region` variable to `tf-modules/s3-replicator` module
+- **CUMULUS-3981**
+  - Added required $metadata field when creating new instance of ServiceException.
 - **Security Vulnerabilities**
   - Updated `@octokit/graphql` from 2.1.1 to ^2.3.0 to address [CVE-2024-21538]
     (https://github.com/advisories/GHSA-3xgq-45jj-v275)
