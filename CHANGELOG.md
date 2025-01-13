@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 is a backport/patch release on the v18.5.x series of releases.  Updates that are
 included in the future will have a corresponding CHANGELOG entry in future releases.
 
+### Added
+
+- **CUMULUS-3978**
+  - Added `iops` and `throughput` options to `elasticsearch_config` variable
+    in `tf-modules/data-persistence`; These two options are necessary for gp3 EBS volume type.
+
 ### Changed
 
 - **CUMULUS-3940**
