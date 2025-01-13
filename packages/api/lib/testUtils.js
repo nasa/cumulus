@@ -617,7 +617,6 @@ const createAsyncOperationTestRecords = async (context) => {
   };
 };
 
-
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
