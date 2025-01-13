@@ -33,7 +33,8 @@ const {
   ummVersionToMetadataFormat,
 } = require('./utils');
 /**
- * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams
+ * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams/**
+ * @typedef {import('./types').CMRFile} CMRFile
  */
 const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
@@ -126,10 +127,6 @@ function granuleToCmrFileObject({ granuleId, files = [] }, filterFunc = isCMRFil
       };
     });
 }
-
-/**
- * @typedef {import('./types').CMRFile} CMRFile
- */
 
 /**
  * Reduce granule object array to CMR files array
