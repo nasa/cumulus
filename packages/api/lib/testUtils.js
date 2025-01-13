@@ -22,9 +22,6 @@ const {
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
-  deleteExecution,
-} = require('@cumulus/es-client/indexer');
-const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
 const {
