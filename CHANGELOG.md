@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking Changes
+
+- **CUMULUS-3934**
+  - Removed `ecs_cluster_instance_allow_ssh` resource.
+  - The `ecs_cluster_instance_allow_ssh` was implemented before SSM hosts were deployed
+    to NGAP accounts and allowed for SSHing into an instance from an SSH bastion, which no longer exists.
+  - Tunneling into an EC2 via SSM is still supported. Users relying solely on SSH will need to transition to SSM.
+
+- **CUMULUS-2564**
+  - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
+    This modifies the task behavior to stage granules to
+    `<staging_path>/<collection_id>/<md5_granuleIdHash>` to allow for better S3
+    partitioning/performance for large collections.
+    Because of this benefit
+    the default has been set to `true`, however as sync-granules relies on
+    object name collision, this configuration changes the duplicate collision
+    behavior of sync-granules to be per-granule-id instead of per-collection
+    when active.
+    If the prior behavior is desired, please add `"useGranIdPath": false` to your
+    task config in your workflow definitions that use `sync-granule`.
+
+### Added
+
+- **CUMULUS-3919**
+  - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
+- **CUMULUS-3978**
+  - Added `iops` and `throughput` options to `elasticsearch_config` variable
+    in `tf-modules/data-persistence`; These two options are necessary for gp3 EBS volume type.
+
 ### Changed
 
 - **CUMULUS-3940**
@@ -17,6 +46,63 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
   - Add API memory-constrained performance test to test minimum functionality under default+ configuration
   - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
+
+### Fixed
+
+- **CUMULUS-3933**
+  - Update example/bamboo/integration-tests.sh to properly exit if lock-stack
+    errors/detects another stack lock
+- **CUMULUS-3876**
+  - Fixed `s3-replicator` lambda cross region write failure
+  - Added `target_region` variable to `tf-modules/s3-replicator` module
+- **CUMULUS-3981**
+  - Added required $metadata field when creating new instance of ServiceException.
+- **Security Vulnerabilities**
+  - Updated `@octokit/graphql` from 2.1.1 to ^2.3.0 to address [CVE-2024-21538]
+    (https://github.com/advisories/GHSA-3xgq-45jj-v275)
+
+## [v19.1.0] 2024-10-07
+
+### Migration Notes
+
+This release contains changes listed here as well as changes listed in v19.0.0,
+despite v19.0.0 being deprecated. Please review Changelog entries and Migration Notes for
+each Cumulus version between your current version and v19.1.0 as normal.
+
+### Added
+
+- **CUMULUS-3020**
+  - Updated sfEventSqsToDbRecords to allow override of the default value
+   (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60)
+   via a key 'sfEventSqsToDbRecords' on `var.lambda_timeouts` on the main cumulus module/archive module
+
+  **Please note** - updating this configuration is for adavanced users only.  Value changes will modify the visibility
+  timeout on `sfEventSqsToDbRecordsDeadLetterQueue` and `sfEventSqsToDbRecordsInputQueue` and may lead to system
+  instability.
+
+- **CUMULUS-3756**
+  - Added excludeFileRegex configuration to UpdateGranulesCmrMetadataFileLinks
+  - This is to allow files matching specified regex to be excluded when updating the Related URLs list
+  - Defaults to the current behavior of excluding no files.
+- **CUMULUS-3773**
+  - Added sftpFastDownload configuration to SyncGranule task.
+  - Updated `@cumulus/sftp-client` and `@cumulus/ingest/SftpProviderClient` to support both regular and fastDownload.
+  - Added sftp support to FakeProvider
+  - Added sftp integration test
+
+### Changed
+
+- **CUMULUS-3928**
+  - updated publish scripting to use cumulus.bot@gmail.com for user email
+  - updated publish scripting to use esm over common import of latest-version
+  - updated bigint testing to remove intermitted failure source.
+  - updated postgres dependency version
+- **CUMULUS-3838**
+  - Updated python dependencies to latest:
+    - cumulus-process-py 1.4.0
+    - cumulus-message-adapter-python 2.3.0
+- **CUMULUS-3906**
+  - Bumps example ORCA deployment to version v10.0.1.
 
 ### Fixed
 
