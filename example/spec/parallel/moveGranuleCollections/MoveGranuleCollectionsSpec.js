@@ -55,7 +55,6 @@ describe('when moveGranulesCollection is called', () => {
             },
           }),
         }));
-        console.log($metadata.httpStatusCode);
         if ($metadata.httpStatusCode >= 400) {
           console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
           beforeAllFailed = true;
