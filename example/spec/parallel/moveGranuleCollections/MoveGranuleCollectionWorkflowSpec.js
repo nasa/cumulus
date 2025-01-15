@@ -25,10 +25,11 @@ describe('The MoveGranuleCollection workflow using ECS', () => {
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
   });
   beforeAll(async () => {
-    const stackName = config.stackName;
     const sourceUrlPrefix = 'move-granule-collection-testing';
     const targetUrlPrefix = 'move-granule-collection-testing-target';
     config = await loadConfig();
+
+    const stackName = config.stackName;
     finalFiles = getTargetFiles(targetUrlPrefix);
     //upload to cumulus
     try {

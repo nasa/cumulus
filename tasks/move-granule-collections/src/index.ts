@@ -380,8 +380,6 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
     + `granuleMetadataFileExtension ${granuleMetadataFileExtension}`);
 
   const granulesInput = event.input.granules;
-  log.debug('granulesInput: ', JSON.stringify(granulesInput, null, 2));
-  log.debug('config: ', JSON.stringify(config, null, 2));
   let filterFunc;
   if (granuleMetadataFileExtension) {
     filterFunc = (fileobject: ApiFile) => isFileExtensionMatched(
