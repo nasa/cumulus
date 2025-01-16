@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v18.5.3] 2025-01-09
 
-**Please note** changes in v18.5.1 may not yet be released in future versions, as this
+**Please note** changes in v18.5.3 may not yet be released in future versions, as this
 is a backport/patch release on the v18.5.x series of releases.  Updates that are
 included in the future will have a corresponding CHANGELOG entry in future releases.
 
