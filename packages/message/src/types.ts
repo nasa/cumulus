@@ -1,5 +1,5 @@
 import { Message } from '@cumulus/types';
-import { GranuleTemporalInfo, MessageGranule } from '@cumulus/types/api/granules';
+import { PartialGranuleProcessingInfo, MessageGranule } from '@cumulus/types/api/granules';
 
 export interface WorkflowMessageTemplateCumulusMeta {
   queueExecutionLimits: Message.QueueExecutionLimits
@@ -18,5 +18,5 @@ export interface Workflow {
 }
 
 export interface CmrUtilsClass {
-  getGranuleTemporalInfo(granule: MessageGranule): Promise<GranuleTemporalInfo | {}>
+  getGranuleTemporalInfo(granule: MessageGranule): Promise<PartialGranuleProcessingInfo | {}>
 }
