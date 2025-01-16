@@ -30,7 +30,7 @@ const {
   destroyLocalTestDb,
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
-const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
+const { isECHO10Filename, isISOFilename, isUMMGFilename } = require('@cumulus/cmrjs/cmr-utils');
 const { bulkPatchGranuleCollection, bulkPatch } = require('@cumulus/api/endpoints/granules');
 const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
 const indexer = require('@cumulus/es-client/indexer');
@@ -51,9 +51,11 @@ async function uploadFiles(files) {
   await Promise.all(files.map((file) => {
     let body;
     if (isECHO10Filename(file)) {
-      body = fs.createReadStream('tests/data/meta.xml');
+      body = fs.createReadStream('tests/data/meta.cmr.xml');
     } else if (isISOFilename(file)) {
-      body = fs.createReadStream('tests/data/meta.iso.xml');
+      body = fs.createReadStream('tests/data/meta.iso.cmr.xml');
+    } else if (isUMMGFilename(file)) {
+      body = fs.createReadStream('tests/data/ummg-meta.cmr.json');
     } else {
       body = parseS3Uri(file).Key;
     }
@@ -203,8 +205,8 @@ test.afterEach.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('Should move files to final location and update pg data', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+test.serial('Should move files to final location and update pg data with cmr xml file', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
     .replaceAll('replaceme-private', t.context.bucketMapping.private)
@@ -250,8 +252,102 @@ test.serial('Should move files to final location and update pg data', async (t) 
   t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
+test.serial('Should move files to final location and update pg data with cmr iso xml file', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_iso_xml.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8')
+    .replaceAll('replaceme-public', t.context.bucketMapping.public)
+    .replaceAll('replaceme-private', t.context.bucketMapping.private)
+    .replaceAll('replaceme-protected', t.context.bucketMapping.protected);
+  t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(
+    t.context.payload.input.granules
+  );
+  const collectionPath = path.join(__dirname, 'data', 'new_collection_iso_cmr.json');
+  const collection = JSON.parse(fs.readFileSync(collectionPath));
+  const newPayload = buildPayload(t, collection);
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  const pgRecords = await setupDataStoreData(
+    newPayload.input.granules,
+    collection,
+    t.context.knex,
+    t.context.esClient,
+    t.context.esIndex
+  );
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+  t.true(await s3ObjectExists({
+    Bucket: t.context.protectedBucket,
+    Key: 'example2/2018/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+  }));
+  t.true(await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+  }));
+  t.true(await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'example2/2018/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+  }));
+  t.true(await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'example2/2018/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml',
+  }));
+  const granuleModel = new GranulePgModel();
+  const finalPgGranule = await granuleModel.get(t.context.knex, {
+    cumulus_id: pgRecords.granules[0].cumulus_id,
+  });
+  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+});
+
+test.serial('Should move files to final location and update pg data with cmr umm json file', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8')
+    .replaceAll('replaceme-public', t.context.bucketMapping.public)
+    .replaceAll('replaceme-private', t.context.bucketMapping.private)
+    .replaceAll('replaceme-protected', t.context.bucketMapping.protected);
+  t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(
+    t.context.payload.input.granules
+  );
+  const collectionPath = path.join(__dirname, 'data', 'new_collection_ummg_cmr.json');
+  const collection = JSON.parse(fs.readFileSync(collectionPath));
+  const newPayload = buildPayload(t, collection);
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  const pgRecords = await setupDataStoreData(
+    newPayload.input.granules,
+    collection,
+    t.context.knex,
+    t.context.esClient,
+    t.context.esIndex
+  );
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+  t.true(await s3ObjectExists({
+    Bucket: t.context.protectedBucket,
+    Key: 'example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+  }));
+  t.true(await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+  }));
+  t.true(await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+  }));
+  t.true(await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json',
+  }));
+  const granuleModel = new GranulePgModel();
+  const finalPgGranule = await granuleModel.get(t.context.knex, {
+    cumulus_id: pgRecords.granules[0].cumulus_id,
+  });
+  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+});
+
 test('handles partially moved files', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.publicBucket)
     .replaceAll('replaceme-private', t.context.privateBucket)
@@ -331,7 +427,7 @@ test('handles partially moved files', async (t) => {
 });
 
 test.serial('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
     .replaceAll('replaceme-private', t.context.bucketMapping.private)
@@ -408,7 +504,7 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
 });
 
 test.serial('handles files that need no move', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8')
     .replaceAll('replaceme-public', t.context.bucketMapping.public)
     .replaceAll('replaceme-private', t.context.bucketMapping.private)
