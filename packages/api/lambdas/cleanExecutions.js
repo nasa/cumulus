@@ -45,7 +45,7 @@ const parseEnvironment = () => {
   };
 };
 
-async function handler(_event) {
+function handler(_event) {
   const envConfig = parseEnvironment();
   log.info(`running empty (to be updated) cleanExecutions with configuration ${JSON.stringify(envConfig)}`);
 }
