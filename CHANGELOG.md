@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-3751**
-  - Added a task to move granules between collections during a workflow/
+  - Added `move-granule-collections` to move granules to a different collection.
     - expects a list of granules along with a new (target) collection
     - transfers those granules to that collection in cumulus data stores
     - moves those granule files in S3 according to pathing of target collection
