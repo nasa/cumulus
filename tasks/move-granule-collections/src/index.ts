@@ -208,20 +208,20 @@ async function moveGranulesInCumulusDatastores(
   targetGranules: Array<ApiGranuleRecord>,
   targetCollectionId: string
 ): Promise<void> {
-  await bulkPatchGranuleCollection({
-    prefix: getRequiredEnvVar('stackName'),
-    body: {
-      apiGranules: sourceGranules,
-      collectionId: targetCollectionId,
-      esConcurrency: getConcurrency(),
-    },
-  });
   await bulkPatch({
     prefix: getRequiredEnvVar('stackName'),
     body: {
       apiGranules: targetGranules,
       dbConcurrency: getConcurrency(),
       dbMaxPool: getConcurrency(),
+    },
+  });
+  await bulkPatchGranuleCollection({
+    prefix: getRequiredEnvVar('stackName'),
+    body: {
+      apiGranules: sourceGranules,
+      collectionId: targetCollectionId,
+      esConcurrency: getConcurrency(),
     },
   });
 }
@@ -293,7 +293,7 @@ function updateFileMetadata(
   cmrFileNames: Array<string>
 ): Omit<ApiFile, 'granuleId'> {
   if (file.key === undefined) {
-    throw new AssertionError({ message: 'damn' });
+    throw new AssertionError();
   }
   const bucketsConfig = new BucketsConfig(config.buckets);
 
