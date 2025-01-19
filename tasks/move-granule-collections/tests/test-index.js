@@ -53,7 +53,7 @@ async function uploadFiles(files) {
     if (isECHO10Filename(file)) {
       body = fs.createReadStream('tests/data/meta.cmr.xml');
     } else if (isISOFilename(file)) {
-      body = fs.createReadStream('tests/data/meta.iso.cmr.xml');
+      body = fs.createReadStream('tests/data/meta.cmr.iso.xml');
     } else if (isUMMGFilename(file)) {
       body = fs.createReadStream('tests/data/ummg-meta.cmr.json');
     } else {
