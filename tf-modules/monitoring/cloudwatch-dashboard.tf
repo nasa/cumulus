@@ -17,18 +17,9 @@ resource "aws_cloudwatch_dashboard" "cloudwatch_dashboard" {
         "width": 24,
         "height": 1,
         "properties": {
-          "markdown": "# Elasticsearch Service"
-        }
-      },
-      {
-        "type": "text",
-        "width": 24,
-        "height": 1,
-        "properties": {
           "markdown": "## Alarms"
         }
       }
-      %{for alarm in var.elasticsearch_alarms}
       ,
       {
         "type":"metric",

@@ -12,8 +12,6 @@ resource "aws_lambda_function" "index_from_database" {
       CMR_ENVIRONMENT             = var.cmr_environment
       CMR_HOST                    = var.cmr_custom_host
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
-      ES_CONCURRENCY              = var.es_request_concurrency
-      ES_HOST                     = var.elasticsearch_hostname
       ReconciliationReportsTable  = var.dynamo_tables.reconciliation_reports.name
       stackName                   = var.prefix
     }

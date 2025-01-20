@@ -154,28 +154,6 @@ resource "aws_iam_role_policy" "ecs_cluster_instance" {
   policy = data.aws_iam_policy_document.ecs_cluster_instance_policy.json
 }
 
-# Give ECS permission to access ES, if necessary
-data "aws_iam_policy_document" "ecs_cluster_access_es_document" {
-  count = var.elasticsearch_domain_arn != null ? 1 : 0
-  statement {
-    actions = [
-      "es:ESHttpDelete",
-      "es:ESHttpGet",
-      "es:ESHttpHead",
-      "es:ESHttpPost",
-      "es:ESHttpPut"
-    ]
-    resources = [var.elasticsearch_domain_arn]
-  }
-}
-
-resource "aws_iam_role_policy" "ecs_cluster_access_es_policy" {
-  name   = "${var.prefix}_ecs_cluster_access_es_policy"
-  count = var.elasticsearch_domain_arn != null ? 1 : 0
-  role   = aws_iam_role.ecs_cluster_instance.id
-  policy = data.aws_iam_policy_document.ecs_cluster_access_es_document[0].json
-}
-
 resource "aws_iam_role_policy_attachment" "NGAPProtAppInstanceMinimalPolicy" {
   count = var.deploy_to_ngap ? 1 : 0
   policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/NGAPProtAppInstanceMinimalPolicy"
@@ -235,7 +213,6 @@ locals {
   security_group_ids = compact(concat(
     [
       aws_security_group.ecs_cluster_instance.id,
-      var.elasticsearch_security_group_id,
       var.rds_security_group
     ],
     var.ecs_custom_sg_ids

@@ -11,7 +11,6 @@ resource "aws_lambda_function" "custom_bootstrap" {
     variables = {
       stackName                     = var.prefix
       system_bucket                 = var.system_bucket
-      ES_INDEX_SHARDS               = var.es_index_shards
     }
   }
 
@@ -24,17 +23,4 @@ resource "aws_lambda_function" "custom_bootstrap" {
       security_group_ids = local.lambda_security_group_ids
     }
   }
-}
-
-data "aws_lambda_invocation" "custom_bootstrap" {
-  count = var.elasticsearch_hostname != null ? 1 : 0
-  depends_on = [aws_lambda_function.custom_bootstrap]
-  function_name = aws_lambda_function.custom_bootstrap.function_name
-
-  input = jsonencode(
-    {
-      elasticsearchHostname = var.elasticsearch_hostname
-      removeAliasConflict = var.elasticsearch_remove_index_alias_conflict
-      replacementTrigger = timestamp()
-    })
 }
