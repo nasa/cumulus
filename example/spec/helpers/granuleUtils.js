@@ -238,8 +238,6 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
       'beginningDateTime',
       'endingDateTime',
       'error',
-      'execution', // TODO remove after CUMULUS-3698
-      'files', // TODO -2714 this should be removed
       'lastUpdateDateTime',
       'productionDateTime',
       'updatedAt',
@@ -255,7 +253,8 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
     });
     const results = JSON.parse(resp.body).results;
     if (results && results.length === 1) {
-      // TODO - CUMULUS-2714 key sort both files objects for comparison
+      results[0].files.sort((a, b) => a.cumulus_id - b.cumulus_id);
+      granule.files.sort((a, b) => a.cumulus_id - b.cumulus_id);
       const granuleMatches = isEqual(omit(results[0], fieldsIgnored), omit(granule, fieldsIgnored));
 
       if (!granuleMatches) {

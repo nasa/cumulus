@@ -282,8 +282,10 @@ async function updateGranuleFile(prefix, granule, regex, replacement) {
 const waitForCollectionRecordsInList = async (stackName, collectionIds, additionalQueryParams = {}) => await pWaitFor(
   async () => {
     // Verify the collection is returned when listing collections
-    const collsResp = await getCollections({ prefix: stackName,
-      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
+    const collsResp = await getCollections({
+      prefix: stackName,
+      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 },
+    });
     const results = get(JSON.parse(collsResp.body), 'results', []);
     const ids = results.map((c) => constructCollectionId(c.name, c.version));
     return isEqual(ids.sort(), collectionIds.sort());
@@ -357,7 +359,9 @@ describe('When there are granule differences and granule reconciliation is run',
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
-
+      const apiParams = {
+        includeFullRecord: 'true',
+      };
       console.log('XXX Waiting for setupCollectionAndTestData');
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
       console.log('XXX Completed setupCollectionAndTestData');
@@ -405,8 +409,12 @@ describe('When there are granule differences and granule reconciliation is run',
         granuleId: publishedGranuleId,
         collectionId,
       });
-      console.log('XXXXX Completed getGranule()');
-      await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
+      console.log('XXXXX Completed for getGranule()');
+      await waitForGranuleRecordUpdatedInList(
+        config.stackName,
+        granuleBeforeUpdate,
+        apiParams
+      );
       console.log(`XXXXX Waiting for updateGranuleFile(${publishedGranuleId})`);
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(
         config.stackName,
@@ -422,8 +430,16 @@ describe('When there are granule differences and granule reconciliation is run',
       ]);
       console.log('XXXX Waiting for granules updated in list');
       await Promise.all([
-        waitForGranuleRecordUpdatedInList(config.stackName, dbGranule),
-        waitForGranuleRecordUpdatedInList(config.stackName, granuleAfterUpdate),
+        waitForGranuleRecordUpdatedInList(
+          config.stackName,
+          dbGranule,
+          apiParams
+        ),
+        waitForGranuleRecordUpdatedInList(
+          config.stackName,
+          granuleAfterUpdate,
+          apiParams
+        ),
       ]);
       console.log('XXXX Completed granules updated in list');
     } catch (error) {
