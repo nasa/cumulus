@@ -39,7 +39,7 @@ const findISOCollectionAttributePath = (cmrObject: Object, identifierString: str
 
 const updateCMRISOCollectionValue = (
   cmrObject: Object,
-  collection: CollectionRecord,
+  collection: CollectionRecord
 ) => {
   const defaultNamePath = 'gmd:DS_Series.gmd:composedOf.gmd:DS_DataSet.gmd:has.gmi:MI_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:citation.gmd:CI_Citation.gmd:identifier.1.gmd:MD_Identifier.gmd:code.gco:CharacterString';
   const fullNamePath = findISOCollectionAttributePath(cmrObject, 'The ECS Short Name') || defaultNamePath;
@@ -54,12 +54,12 @@ const updateCMRCollectionValue = (
   cmrObject: Object,
   identifierPath: string,
   value: string,
-  defaultPath: string | null = null,
+  defaultPath: string | null = null
 ) => {
   const backupPath = defaultPath || identifierPath;
   const fullPath = findCollectionAttributePath(cmrObject, identifierPath) || backupPath;
   set(cmrObject, fullPath, value);
-}
+};
 
 export const updateCmrFileCollections = (
   collection: CollectionRecord,
@@ -77,7 +77,7 @@ export const updateCmrFileCollections = (
   } else {
     throw new AssertionError({ message: 'not good' });
   }
-}
+};
 
 function groupChildren(obj: { [key: string]: any }) {
   if (typeof (obj) === 'object') {
