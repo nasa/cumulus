@@ -37,7 +37,7 @@ import { BucketsConfigObject } from '@cumulus/common/types';
 import { getCmrSettings } from '@cumulus/cmrjs/cmr-utils';
 import { CMRConstructorParams } from '@cumulus/cmr-client/CMR';
 import { s3CopyObject } from '@cumulus/aws-client/S3';
-import { bulkPatch, bulkPatchGranuleCollection } from '@cumulus/api-client/granules';
+import { bulkPatch, bulkPatchGranuleCollection, getGranule } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 
 const MB = 1024 * 1024;
@@ -65,7 +65,7 @@ interface MoveGranuleCollectionsEvent {
     }
   },
   input: {
-    granules: Array<ApiGranuleRecord>,
+    granules: Array<string>,
   }
 }
 
@@ -208,20 +208,20 @@ async function moveGranulesInCumulusDatastores(
   targetGranules: Array<ApiGranuleRecord>,
   targetCollectionId: string
 ): Promise<void> {
-  await bulkPatch({
-    prefix: getRequiredEnvVar('stackName'),
-    body: {
-      apiGranules: targetGranules,
-      dbConcurrency: getConcurrency(),
-      dbMaxPool: getConcurrency(),
-    },
-  });
   await bulkPatchGranuleCollection({
     prefix: getRequiredEnvVar('stackName'),
     body: {
       apiGranules: sourceGranules,
       collectionId: targetCollectionId,
       esConcurrency: getConcurrency(),
+    },
+  });
+  await bulkPatch({
+    prefix: getRequiredEnvVar('stackName'),
+    body: {
+      apiGranules: targetGranules,
+      dbConcurrency: getConcurrency(),
+      dbMaxPool: getConcurrency(),
     },
   });
 }
@@ -379,7 +379,11 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
   log.debug(`moveGranules config: s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}, `
     + `granuleMetadataFileExtension ${granuleMetadataFileExtension}`);
 
-  const granulesInput = event.input.granules;
+  const granuleIds = event.input.granules;
+  const granulesInput = await Promise.all(granuleIds.map((granuleId) => getGranule({
+    prefix: getRequiredEnvVar('stackName'),
+    granuleId
+  })));
   let filterFunc;
   if (granuleMetadataFileExtension) {
     filterFunc = (fileobject: ApiFile) => isFileExtensionMatched(
