@@ -69,7 +69,13 @@ async function uploadFiles(files) {
   }));
 }
 
-async function setupDataStoreData(granules, targetCollection, knex, esClient, esIndex) {
+async function setupDataStoreData(granuleIds, targetCollection, t) {
+  const {
+    knex,
+    esClient,
+    esIndex
+  } = t.context;
+  const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
   const granuleModel = new GranulePgModel();
   const collectionModel = new CollectionPgModel();
   const collectionPath = path.join(__dirname, 'data', 'original_collection.json');
@@ -109,7 +115,8 @@ async function setupDataStoreData(granules, targetCollection, knex, esClient, es
   return pgRecords;
 }
 
-function granulesToFileURIs(granules) {
+function granulesToFileURIs(granuleIds, t) {
+  const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t))
   const files = granules.reduce((arr, g) => arr.concat(g.files), []);
   return files.map((file) => buildS3Uri(file.bucket, file.key));
 }
@@ -122,14 +129,99 @@ function buildPayload(t, collection) {
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.private.name = t.context.privateBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
-  newPayload.input.granules.forEach((granule) => {
-    granule.files?.forEach(
-      (file) => {
-        file.fileName = file.key.split('/').pop();
-      }
-    );
-  });
   return newPayload;
+}
+
+function dummyGetGranule(granuleId, t){
+  return {
+    "base_iso_xml_granule": {
+      "status": "completed",
+      "collectionId": "MOD11A1___006",
+      "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+      "files": [
+        
+        {
+          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "bucket": t.context.protectedBucket,
+          "type": "data"
+        },
+        {
+          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+          "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+          "bucket": t.context.privateBucket,
+          "type": "browse"
+        },
+        {
+          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+          "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+          "bucket": t.context.publicBucket,
+          "type": "browse"
+        },
+        {
+          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml",
+          "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml",
+          "bucket": t.context.protectedBucket,
+          "type": "metadata"
+        }
+      ]
+    },
+    "base_xml_granule": {
+      "status": "completed",
+      "collectionId": "MOD11A1___006",
+      "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+      "files": [
+        {
+          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "bucket": t.context.protectedBucket,
+          "type": "data"
+        },
+        {
+          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+          "bucket": t.context.privateBucket,
+          "type": "browse"
+        },
+        {
+          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+          "bucket": t.context.publicBucket,
+          "type": "browse"
+        },
+        {
+          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+          "bucket": t.context.protectedBucket,
+          "type": "metadata"
+        }
+      ]
+    },
+    "base_umm_granule": {
+      "status": "completed",
+        "collectionId": "MOD11A1___006",
+        "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+        "files": [
+          
+          {
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "bucket": t.context.protectedBucket,
+            "type": "data"
+          },
+          {
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "bucket": t.context.privateBucket,
+            "type": "browse"
+          },
+          {
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "bucket": t.context.publicBucket,
+            "type": "browse"
+          },
+          {
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json",
+            "bucket": t.context.protectedBucket,
+            "type": "metadata"
+          }
+        ]
+    }
+  }[granuleId];
 }
 
 test.beforeEach(async (t) => {
@@ -151,6 +243,7 @@ test.beforeEach(async (t) => {
         bulkPatch: (params) => (
           bulkPatch(params, mockResponse())
         ),
+        getGranule: (params) => dummyGetGranule(params.granuleId, t)
       },
     }
   ).moveGranules;
@@ -207,13 +300,9 @@ test.afterEach.always(async (t) => {
 
 test.serial('Should move files to final location and update pg data with cmr xml file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
-  const rawPayload = fs.readFileSync(payloadPath, 'utf8')
-    .replaceAll('replaceme-public', t.context.bucketMapping.public)
-    .replaceAll('replaceme-private', t.context.bucketMapping.private)
-    .replaceAll('replaceme-protected', t.context.bucketMapping.protected);
-  t.context.payload = JSON.parse(rawPayload);
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules
+    t.context.payload.input.granules, t
   );
   const collectionPath = path.join(__dirname, 'data', 'new_collection_base.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
@@ -222,9 +311,7 @@ test.serial('Should move files to final location and update pg data with cmr xml
   const pgRecords = await setupDataStoreData(
     newPayload.input.granules,
     collection,
-    t.context.knex,
-    t.context.esClient,
-    t.context.esIndex
+    t
   );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
@@ -254,14 +341,12 @@ test.serial('Should move files to final location and update pg data with cmr xml
 
 test.serial('Should move files to final location and update pg data with cmr iso xml file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_iso_xml.json');
-  const rawPayload = fs.readFileSync(payloadPath, 'utf8')
-    .replaceAll('replaceme-public', t.context.bucketMapping.public)
-    .replaceAll('replaceme-private', t.context.bucketMapping.private)
-    .replaceAll('replaceme-protected', t.context.bucketMapping.protected);
-  t.context.payload = JSON.parse(rawPayload);
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+  
   const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules
+    t.context.payload.input.granules, t
   );
+  
   const collectionPath = path.join(__dirname, 'data', 'new_collection_iso_cmr.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
@@ -269,9 +354,7 @@ test.serial('Should move files to final location and update pg data with cmr iso
   const pgRecords = await setupDataStoreData(
     newPayload.input.granules,
     collection,
-    t.context.knex,
-    t.context.esClient,
-    t.context.esIndex
+    t
   );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
@@ -301,13 +384,9 @@ test.serial('Should move files to final location and update pg data with cmr iso
 
 test.serial('Should move files to final location and update pg data with cmr umm json file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
-  const rawPayload = fs.readFileSync(payloadPath, 'utf8')
-    .replaceAll('replaceme-public', t.context.bucketMapping.public)
-    .replaceAll('replaceme-private', t.context.bucketMapping.private)
-    .replaceAll('replaceme-protected', t.context.bucketMapping.protected);
-  t.context.payload = JSON.parse(rawPayload);
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules
+    t.context.payload.input.granules, t
   );
   const collectionPath = path.join(__dirname, 'data', 'new_collection_ummg_cmr.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
@@ -316,9 +395,7 @@ test.serial('Should move files to final location and update pg data with cmr umm
   const pgRecords = await setupDataStoreData(
     newPayload.input.granules,
     collection,
-    t.context.knex,
-    t.context.esClient,
-    t.context.esIndex
+    t
   );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
@@ -348,45 +425,42 @@ test.serial('Should move files to final location and update pg data with cmr umm
 
 test('handles partially moved files', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
-  const rawPayload = fs.readFileSync(payloadPath, 'utf8')
-    .replaceAll('replaceme-public', t.context.publicBucket)
-    .replaceAll('replaceme-private', t.context.privateBucket)
-    .replaceAll('replaceme-protected', t.context.protectedBucket);
-  t.context.payload = JSON.parse(rawPayload);
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
 
   // a starting granule state that disagrees with the payload as some have already been moved
-  const startingState = [{
-    files: [
-      {
-        key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-        bucket: t.context.protectedBucket,
-        type: 'data',
-      },
-      {
-        key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-        bucket: t.context.publicBucket,
-        type: 'browse',
-      },
-      {
-        key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-        bucket: t.context.publicBucket,
-        type: 'browse',
-      },
-      {
-        key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-        bucket: t.context.publicBucket,
-        type: 'metadata ',
-      },
-      {
-        key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-        bucket: t.context.protectedBucket,
-        type: 'metadata',
-      },
-    ],
-  }];
-  const filesToUpload = granulesToFileURIs(
-    startingState
-  );
+  const startingFiles = [
+    {
+      key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+      fileName: "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+      bucket: t.context.protectedBucket,
+      type: 'data',
+    },
+    {
+      key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+      fileName: "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+      bucket: t.context.publicBucket,
+      type: 'browse',
+    },
+    {
+      key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+      fileName: "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+      bucket: t.context.publicBucket,
+      type: 'browse',
+    },
+    {
+      key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+      fileName: "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+      bucket: t.context.publicBucket,
+      type: 'metadata ',
+    },
+    {
+      key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+      fileName: "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+      bucket: t.context.protectedBucket,
+      type: 'metadata',
+    },
+  ];
+  const filesToUpload = startingFiles.map((file) => buildS3Uri(file.bucket, file.key));
   const collectionPath = path.join(__dirname, 'data', 'new_collection_base.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
@@ -394,9 +468,7 @@ test('handles partially moved files', async (t) => {
   const pgRecords = await setupDataStoreData(
     newPayload.input.granules,
     collection,
-    t.context.knex,
-    t.context.esClient,
-    t.context.esIndex
+    t
   );
   await uploadFiles(filesToUpload, t.context.bucketMapping);
 
@@ -428,43 +500,35 @@ test('handles partially moved files', async (t) => {
 
 test.serial('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
-  const rawPayload = fs.readFileSync(payloadPath, 'utf8')
-    .replaceAll('replaceme-public', t.context.bucketMapping.public)
-    .replaceAll('replaceme-private', t.context.bucketMapping.private)
-    .replaceAll('replaceme-protected', t.context.bucketMapping.protected);
-  t.context.payload = JSON.parse(rawPayload);
-  const startingState = [{
-    files: [
-      {
-        key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-        bucket: t.context.protectedBucket,
-        type: 'data',
-      },
-      {
-        key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-        bucket: t.context.publicBucket,
-        type: 'browse',
-      },
-      {
-        key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-        bucket: t.context.publicBucket,
-        type: 'browse',
-      },
-      {
-        key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-        bucket: t.context.publicBucket,
-        type: 'metadata ',
-      },
-      {
-        key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-        bucket: t.context.bucketMapping.protected,
-        type: 'metadata',
-      },
-    ],
-  }];
-  const filesToUpload = granulesToFileURIs(
-    startingState
-  );
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+  const startingFiles = [
+    {
+      key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+      bucket: t.context.protectedBucket,
+      type: 'data',
+    },
+    {
+      key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+      bucket: t.context.publicBucket,
+      type: 'browse',
+    },
+    {
+      key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+      bucket: t.context.publicBucket,
+      type: 'browse',
+    },
+    {
+      key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+      bucket: t.context.publicBucket,
+      type: 'metadata ',
+    },
+    {
+      key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+      bucket: t.context.bucketMapping.protected,
+      type: 'metadata',
+    },
+  ];
+  const filesToUpload = startingFiles.map((file) => buildS3Uri(file.bucket, file.key));
   const collectionPath = path.join(__dirname, 'data', 'new_collection_base.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
@@ -473,9 +537,7 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
   const pgRecords = await setupDataStoreData(
     newPayload.input.granules,
     collection,
-    t.context.knex,
-    t.context.esClient,
-    t.context.esIndex
+    t
   );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
@@ -505,13 +567,10 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
 
 test.serial('handles files that need no move', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
-  const rawPayload = fs.readFileSync(payloadPath, 'utf8')
-    .replaceAll('replaceme-public', t.context.bucketMapping.public)
-    .replaceAll('replaceme-private', t.context.bucketMapping.private)
-    .replaceAll('replaceme-protected', t.context.bucketMapping.protected);
-  t.context.payload = JSON.parse(rawPayload);
+
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules
+    t.context.payload.input.granules, t
   );
   const collectionPath = path.join(__dirname, 'data', 'no_move_collection.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
@@ -520,9 +579,7 @@ test.serial('handles files that need no move', async (t) => {
   const pgRecords = await setupDataStoreData(
     newPayload.input.granules,
     collection,
-    t.context.knex,
-    t.context.esClient,
-    t.context.esIndex
+    t
   );
 
   const output = await moveGranules(newPayload);
