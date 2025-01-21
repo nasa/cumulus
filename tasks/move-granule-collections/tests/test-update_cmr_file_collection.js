@@ -98,5 +98,5 @@ test.only('update_cmr_file_collections updates iso', async (t) => {
 
   t.is(get(cmrObject, 'gmd:DS_Series.gmd:composedOf.gmd:DS_DataSet.gmd:has.gmi:MI_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:citation.gmd:CI_Citation.gmd:identifier.0.gmd:MD_Identifier.gmd:code.gco:CharacterString'), 'a');
   t.is(get(cmrObject, 'gmd:DS_Series.gmd:composedOf.gmd:DS_DataSet.gmd:has.gmi:MI_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:citation.gmd:CI_Citation.gmd:identifier.1.gmd:MD_Identifier.gmd:code.gco:CharacterString'), 'b');
-  console.log(convertJSON2XML(cmrObject))
+  // console.log(convertJSON2XML(cmrObject))
 })
