@@ -7,6 +7,7 @@ const {
   granulesToCmrFileObjects,
   metadataObjectFromCMRFile,
   publish2CMR,
+  removeFromCMR,
   removeEtagsFromFileObjects,
 } = require('@cumulus/cmrjs');
 const { getCmrSettings, getS3UrlOfFile } = require('@cumulus/cmrjs/cmr-utils');
@@ -108,7 +109,20 @@ function checkForMetadata(granules, cmrFiles) {
  */
 async function postToCMR(event) {
   const { cmrRevisionId, granules } = event.input;
-  const { etags = {} } = event.config;
+  const { etags = {}, republish = false } = event.config;
+
+  const cmrSettings = await getCmrSettings({
+    ...event.config.cmr,
+    ...event.config.launchpad,
+  });
+
+  // if republish is true, unpublish granules which are public
+  const granulesToUnpublish = republish ? granules.filter((granule) => granule.cmrLink) : [];
+  await Promise.all(granulesToUnpublish.map((granule) => removeFromCMR(granule.granuleId)));
+
+  if (granulesToUnpublish.length > 0) {
+    log.info(`Removing ${granulesToUnpublish.length} out of ${granules.length} granules from CMR for republishing`);
+  }
 
   granules.forEach((granule) => addEtagsToFileObjects(granule, etags));
 
@@ -122,14 +136,9 @@ async function postToCMR(event) {
 
   const startTime = Date.now();
 
-  const cmrSettings = await getCmrSettings({
-    ...event.config.cmr,
-    ...event.config.launchpad,
-  });
-
   // post all meta files to CMR
   const results = await Promise.all(
-    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId))
+    updatedCMRFiles.map((cmrFile) => removeFromCMR(cmrFile, cmrSettings, cmrRevisionId))
   );
 
   const endTime = Date.now();

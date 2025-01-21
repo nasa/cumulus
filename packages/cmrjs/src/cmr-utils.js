@@ -233,6 +233,11 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
 }
 
+async function removeFromCMR(granuleUR, creds) {
+  const cmrClient = new CMR(creds);
+  return await cmrClient.deleteGranule(granuleUR);
+}
+
 /**
  * Returns the S3 object identified by the specified S3 URI and (optional)
  * entity tag, retrying up to 5 times, if necessary.
@@ -1249,6 +1254,7 @@ module.exports = {
   publish2CMR,
   reconcileCMRMetadata,
   removeEtagsFromFileObjects,
+  removeFromCMR,
   updateCMRMetadata,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
