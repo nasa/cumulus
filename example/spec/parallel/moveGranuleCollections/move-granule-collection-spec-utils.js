@@ -212,7 +212,8 @@ const setupInitialState = async (stackName, sourceUrlPrefix, targetUrlPrefix) =>
 
 const getPayload = (sourceUrlPrefix, targetUrlPrefix) => ({
   meta: {
-    collection: getTargetCollection(targetUrlPrefix),
+    targetCollection: getTargetCollection(targetUrlPrefix),
+    sourceCollection: getSourceCollection(sourceUrlPrefix),
     buckets: {
       internal: {
         type: 'cumulus-test-sandbox-internal',
@@ -234,11 +235,12 @@ const getPayload = (sourceUrlPrefix, targetUrlPrefix) => ({
   config: {
     buckets: '{$.meta.buckets}',
     distribution_endpoint: 'https://something.api.us-east-1.amazonaws.com/',
-    collection: '{$.meta.collection}',
+    sourceCollection: '{$.meta.sourceCollection}',
+    targetCollection: '{$.meta.targetCollection}',
   },
   input: {
     granules: [
-      getProcessGranule(sourceUrlPrefix),
+      getProcessGranule(sourceUrlPrefix).granuleId,
     ],
   },
 });
