@@ -64,7 +64,7 @@
     "@aws-sdk/client-sqs": "^3.621.0",
     "@aws-sdk/client-sts": "^3.621.0",
     "@aws-sdk/lib-dynamodb": "^3.621.0",
-    "@aws-sdk/lib-storage": "^3.621.0",
+    "@aws-sdk/lib-storage": "3.726.0",
     "@aws-sdk/s3-request-presigner": "^3.621.0",
     "@aws-sdk/signature-v4-crt": "^3.621.0",
     "@aws-sdk/types": "^3.609.0",
