@@ -43,7 +43,7 @@ import { getRequiredEnvVar } from '@cumulus/common/env';
 const MB = 1024 * 1024;
 
 interface EventConfig {
-  collection: { //TODO rename this to targetCollection and follow up with assoc. configs
+  targetCollection: {
     meta: {
       granuleMetadataFileExtension: string,
     },
@@ -221,10 +221,9 @@ async function moveGranulesInCumulusDatastores(
 ): Promise<void> {
   const updatedBodyGranules = targetGranules.map((targetGranule) => ({
     ...targetGranule,
-    collectionId: sourceCollectionId
+    collectionId: sourceCollectionId,
   }));
-  
-  
+
   await bulkPatch({
     prefix: getRequiredEnvVar('stackName'),
     body: {
@@ -322,8 +321,8 @@ function updateFileMetadata(
     cmrFileTypeObject.type = 'metadata';
   }
 
-  const match = identifyFileMatch(bucketsConfig, fileName, config.collection.files);
-  const URLPathTemplate = match.url_path || config.collection.url_path || '';
+  const match = identifyFileMatch(bucketsConfig, fileName, config.targetCollection.files);
+  const URLPathTemplate = match.url_path || config.targetCollection.url_path || '';
   const urlPath = urlPathTemplate(URLPathTemplate, {
     file,
     granule: granule,
@@ -368,7 +367,10 @@ async function updateGranuleMetadata(
   return {
     ...cloneDeep(granule),
     files: newFiles,
-    collectionId: constructCollectionId(config.collection.name, config.collection.version),
+    collectionId: constructCollectionId(
+      config.targetCollection.name,
+      config.targetCollection.version
+    ),
   };
 }
 
@@ -392,7 +394,7 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
   const chunkSize = s3MultipartChunksizeMb ? s3MultipartChunksizeMb * MB : undefined;
   const granuleMetadataFileExtension: string = get(
     config,
-    'collection.meta.granuleMetadataFileExtension'
+    'targetCollection.meta.granuleMetadataFileExtension'
   );
 
   log.debug(`moveGranules config: s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}, `
@@ -401,7 +403,7 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
   const granuleIds = event.input.granules;
   const granulesInput = await Promise.all(granuleIds.map((granuleId) => getGranule({
     prefix: getRequiredEnvVar('stackName'),
-    granuleId
+    granuleId,
   })));
   let filterFunc;
   if (granuleMetadataFileExtension) {
@@ -424,7 +426,7 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
     granulesInput,
     targetGranules,
     constructCollectionId(config.sourceCollection.name, config.sourceCollection.version),
-    constructCollectionId(config.collection.name, config.collection.version),
+    constructCollectionId(config.targetCollection.name, config.targetCollection.version),
     chunkSize
   );
 

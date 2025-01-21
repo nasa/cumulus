@@ -69,6 +69,105 @@ async function uploadFiles(files) {
   }));
 }
 
+function dummyGetGranule(granuleId, t) {
+  return {
+    base_iso_xml_granule: {
+      status: 'completed',
+      collectionId: 'MOD11A1___006',
+      granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
+      files: [
+
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: t.context.protectedBucket,
+          type: 'data',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          bucket: t.context.privateBucket,
+          type: 'browse',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          bucket: t.context.publicBucket,
+          type: 'browse',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml',
+          bucket: t.context.protectedBucket,
+          type: 'metadata',
+        },
+      ],
+    },
+    base_xml_granule: {
+      status: 'completed',
+      collectionId: 'MOD11A1___006',
+      granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
+      files: [
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: t.context.protectedBucket,
+          type: 'data',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          bucket: t.context.privateBucket,
+          type: 'browse',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          bucket: t.context.publicBucket,
+          type: 'browse',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+          bucket: t.context.protectedBucket,
+          type: 'metadata',
+        },
+      ],
+    },
+    base_umm_granule: {
+      status: 'completed',
+      collectionId: 'MOD11A1___006',
+      granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
+      files: [
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: t.context.protectedBucket,
+          type: 'data',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          bucket: t.context.privateBucket,
+          type: 'browse',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          bucket: t.context.publicBucket,
+          type: 'browse',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json',
+          bucket: t.context.protectedBucket,
+          type: 'metadata',
+        },
+      ],
+    },
+  }[granuleId];
+}
+
 function getOriginalCollection() {
   return JSON.parse(fs.readFileSync(
     path.join(
@@ -83,7 +182,7 @@ async function setupDataStoreData(granuleIds, targetCollection, t) {
   const {
     knex,
     esClient,
-    esIndex
+    esIndex,
   } = t.context;
   const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
   const granuleModel = new GranulePgModel();
@@ -125,14 +224,14 @@ async function setupDataStoreData(granuleIds, targetCollection, t) {
 }
 
 function granulesToFileURIs(granuleIds, t) {
-  const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t))
+  const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
   const files = granules.reduce((arr, g) => arr.concat(g.files), []);
   return files.map((file) => buildS3Uri(file.bucket, file.key));
 }
 
 function buildPayload(t, collection) {
   const newPayload = t.context.payload;
-  newPayload.config.collection = collection;
+  newPayload.config.targetCollection = collection;
   newPayload.config.sourceCollection = getOriginalCollection();
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
@@ -140,98 +239,6 @@ function buildPayload(t, collection) {
   newPayload.config.buckets.private.name = t.context.privateBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
   return newPayload;
-}
-
-function dummyGetGranule(granuleId, t){
-  return {
-    "base_iso_xml_granule": {
-      "status": "completed",
-      "collectionId": "MOD11A1___006",
-      "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
-      "files": [
-        
-        {
-          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-          "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-          "bucket": t.context.protectedBucket,
-          "type": "data"
-        },
-        {
-          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-          "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-          "bucket": t.context.privateBucket,
-          "type": "browse"
-        },
-        {
-          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
-          "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
-          "bucket": t.context.publicBucket,
-          "type": "browse"
-        },
-        {
-          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml",
-          "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml",
-          "bucket": t.context.protectedBucket,
-          "type": "metadata"
-        }
-      ]
-    },
-    "base_xml_granule": {
-      "status": "completed",
-      "collectionId": "MOD11A1___006",
-      "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
-      "files": [
-        {
-          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-          "bucket": t.context.protectedBucket,
-          "type": "data"
-        },
-        {
-          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-          "bucket": t.context.privateBucket,
-          "type": "browse"
-        },
-        {
-          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
-          "bucket": t.context.publicBucket,
-          "type": "browse"
-        },
-        {
-          "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
-          "bucket": t.context.protectedBucket,
-          "type": "metadata"
-        }
-      ]
-    },
-    "base_umm_granule": {
-      "status": "completed",
-        "collectionId": "MOD11A1___006",
-        "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
-        "files": [
-          
-          {
-            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-            "bucket": t.context.protectedBucket,
-            "type": "data"
-          },
-          {
-            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-            "bucket": t.context.privateBucket,
-            "type": "browse"
-          },
-          {
-            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
-            "bucket": t.context.publicBucket,
-            "type": "browse"
-          },
-          {
-            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json",
-            "bucket": t.context.protectedBucket,
-            "type": "metadata"
-          }
-        ]
-    }
-  }[granuleId];
 }
 
 test.beforeEach(async (t) => {
@@ -253,7 +260,7 @@ test.beforeEach(async (t) => {
         bulkPatch: (params) => (
           bulkPatch(params, mockResponse())
         ),
-        getGranule: (params) => dummyGetGranule(params.granuleId, t)
+        getGranule: (params) => dummyGetGranule(params.granuleId, t),
       },
     }
   ).moveGranules;
@@ -352,11 +359,11 @@ test.serial('Should move files to final location and update pg data with cmr xml
 test.serial('Should move files to final location and update pg data with cmr iso xml file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_iso_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-  
+
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granules, t
   );
-  
+
   const collectionPath = path.join(__dirname, 'data', 'new_collection_iso_cmr.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
@@ -441,31 +448,31 @@ test('handles partially moved files', async (t) => {
   const startingFiles = [
     {
       key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-      fileName: "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
       bucket: t.context.protectedBucket,
       type: 'data',
     },
     {
       key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-      fileName: "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
       bucket: t.context.publicBucket,
       type: 'browse',
     },
     {
       key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-      fileName: "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
       bucket: t.context.publicBucket,
       type: 'browse',
     },
     {
       key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      fileName: "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
       bucket: t.context.publicBucket,
       type: 'metadata ',
     },
     {
       key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      fileName: "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
       bucket: t.context.protectedBucket,
       type: 'metadata',
     },
