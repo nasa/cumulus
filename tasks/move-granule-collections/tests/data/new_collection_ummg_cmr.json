@@ -1,44 +1,44 @@
 {
-    "files": [
-      {
-        "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
-        "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-        "bucket": "protected"
-      },
-      {
-        "regex": "^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
-        "sampleFileName": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-        "bucket": "private"
-      },
-      {
-        "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
-        "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
-        "bucket": "private"
-      },
-      {
-        "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.ummg\\.cmr\\.json$",
-        "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml",
-        "bucket": "public"
-      },
-      {
-        "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$",
-        "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
-        "bucket": "public"
-      },
-      {
-        "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
-        "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-        "bucket": "public",
-        "url_path": "jpg/example2/"
-      }
-    ],
-    "url_path": "example2/{extractYear(cmrMetadata.TemporalExtent.RangeDateTime.BeginningDateTime)}/",
-    "name": "MOD11A2",
-    "granuleIdExtraction": "(MOD11A1\\.(.*))\\.hdf",
-    "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
-    "dataType": "MOD11A2",
-    "process": "modis",
-    "version": "006",
-    "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-    "id": "MOD11A2"
-  }
+  "files": [
+    {
+      "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+      "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+      "bucket": "protected"
+    },
+    {
+      "regex": "^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+      "sampleFileName": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+      "bucket": "private"
+    },
+    {
+      "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+      "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
+      "bucket": "private"
+    },
+    {
+      "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.ummg\\.cmr\\.json$",
+      "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml",
+      "bucket": "public"
+    },
+    {
+      "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$",
+      "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+      "bucket": "public"
+    },
+    {
+      "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
+      "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+      "bucket": "public",
+      "url_path": "jpg/example2/"
+    }
+  ],
+  "url_path": "example2/{extractYear(cmrMetadata.TemporalExtent.RangeDateTime.BeginningDateTime)}/",
+  "name": "MOD11A2",
+  "granuleIdExtraction": "(MOD11A1\\.(.*))\\.hdf",
+  "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+  "dataType": "MOD11A2",
+  "process": "modis",
+  "version": "006",
+  "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+  "id": "MOD11A2"
+}
