@@ -27,6 +27,7 @@ Configuration variables are shown in [`terraform.tfvars.example`](./terraform.tf
 
 - `prefix` - prefix to use for naming created resources
 - `enable_point_in_time_tables` - Names of DynamoDB tables that should have point in time recovery enabled. Any of the table names [listed above](#included-resources) are valid (use the table name without the prefix).
+- `subnet_ids` - Subnet IDs that should be used when deploying Elasticsearch inside of a VPC. **If no subnet IDs are provided, Elasticsearch will not be deployed inside of a VPC.**
 - `tags` - tags to be assigned to all managed resources which support tags
 
 ## Example

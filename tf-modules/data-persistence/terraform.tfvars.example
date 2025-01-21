@@ -4,4 +4,5 @@ prefix               = "myprefix"
 
 # Optional
 
-enable_point_in_time_tables = []
+subnet_ids                       = ["subnet-123456"]
+enable_point_in_time_tables      = []

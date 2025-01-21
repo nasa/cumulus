@@ -22,20 +22,6 @@ resource "aws_cloudwatch_dashboard" "cloudwatch_dashboard" {
       }
       ,
       {
-        "type":"metric",
-        "width":6,
-        "height":3,
-        "properties": {
-          "title": "${alarm.name}",
-          "annotations": {
-            "alarms": ["${alarm.arn}"]
-          },
-          "view": "singleValue"
-        }
-      }
-      %{endfor}
-      ,
-      {
         "type": "text",
         "width": 24,
         "height": 1,

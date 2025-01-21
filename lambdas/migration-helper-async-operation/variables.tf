@@ -14,14 +14,6 @@ variable "ecs_cluster_name" {
   type = string
 }
 
-variable "elasticsearch_hostname" {
-  type = string
-}
-
-variable "elasticsearch_security_group_id" {
-  description = "Security Group ID For Elasticsearch (OpenSearch)"
-}
-
 variable "ecs_execution_role_arn" {
   description = "ARN of IAM role for initializing ECS tasks"
   type = string

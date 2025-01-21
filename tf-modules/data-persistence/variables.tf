@@ -19,6 +19,12 @@ variable "enable_point_in_time_tables" {
   ]
 }
 
+variable "subnet_ids" {
+  description = "Subnet IDs that should be used when using a Postgres database inside of a VPC"
+  type        = list(string)
+  default     = []
+}
+
 variable "tags" {
   description = "Tags to be applied to managed resources"
   type        = map(string)
