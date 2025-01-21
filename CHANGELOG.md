@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v18.5.3] 2025-01-09
+## [v18.5.3] 2025-01-21
 
 **Please note** changes in v18.5.3 may not yet be released in future versions, as this
 is a backport/patch release on the v18.5.x series of releases.  Updates that are
@@ -19,6 +19,9 @@ included in the future will have a corresponding CHANGELOG entry in future relea
     in `tf-modules/data-persistence`; These two options are necessary for gp3 EBS volume type.
 
 ### Changed
+
+- **CUMULUS-3967**
+  - Pinned @aws-sdk/client-s3 in @cumulus/aws-client to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
 
 - **CUMULUS-3940**
   - Added 'dead_letter_recovery_cpu' and 'dead_letter_recovery_memory' to `cumulus` and `archive` module configuration to allow configuration of the dead_letter_recovery_operation task definition to better allow configuration of the tool's operating environment.
