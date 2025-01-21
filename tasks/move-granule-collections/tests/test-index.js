@@ -69,6 +69,16 @@ async function uploadFiles(files) {
   }));
 }
 
+function getOriginalCollection() {
+  return JSON.parse(fs.readFileSync(
+    path.join(
+      __dirname,
+      'data',
+      'original_collection.json'
+    )
+  ));
+}
+
 async function setupDataStoreData(granuleIds, targetCollection, t) {
   const {
     knex,
@@ -78,8 +88,7 @@ async function setupDataStoreData(granuleIds, targetCollection, t) {
   const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
   const granuleModel = new GranulePgModel();
   const collectionModel = new CollectionPgModel();
-  const collectionPath = path.join(__dirname, 'data', 'original_collection.json');
-  const sourceCollection = JSON.parse(fs.readFileSync(collectionPath));
+  const sourceCollection = getOriginalCollection();
   const pgRecords = {};
   await collectionModel.create(
     knex,
@@ -124,6 +133,7 @@ function granulesToFileURIs(granuleIds, t) {
 function buildPayload(t, collection) {
   const newPayload = t.context.payload;
   newPayload.config.collection = collection;
+  newPayload.config.sourceCollection = getOriginalCollection();
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
   newPayload.config.buckets.public.name = t.context.publicBucket;

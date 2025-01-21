@@ -43,7 +43,17 @@ import { getRequiredEnvVar } from '@cumulus/common/env';
 const MB = 1024 * 1024;
 
 interface EventConfig {
-  collection: {
+  collection: { //TODO rename this to targetCollection and follow up with assoc. configs
+    meta: {
+      granuleMetadataFileExtension: string,
+    },
+    url_path?: string,
+    files: Array<CollectionFile>,
+    duplicateHandling?: DuplicateHandling,
+    name: string,
+    version: string,
+  },
+  sourceCollection: {
     meta: {
       granuleMetadataFileExtension: string,
     },
@@ -206,22 +216,29 @@ async function moveGranulesInS3(
 async function moveGranulesInCumulusDatastores(
   sourceGranules: Array<ApiGranuleRecord>,
   targetGranules: Array<ApiGranuleRecord>,
+  sourceCollectionId: string,
   targetCollectionId: string
 ): Promise<void> {
+  const updatedBodyGranules = targetGranules.map((targetGranule) => ({
+    ...targetGranule,
+    collectionId: sourceCollectionId
+  }));
+  
+  
+  await bulkPatch({
+    prefix: getRequiredEnvVar('stackName'),
+    body: {
+      apiGranules: updatedBodyGranules,
+      dbConcurrency: getConcurrency(),
+      dbMaxPool: getConcurrency(),
+    },
+  });
   await bulkPatchGranuleCollection({
     prefix: getRequiredEnvVar('stackName'),
     body: {
       apiGranules: sourceGranules,
       collectionId: targetCollectionId,
       esConcurrency: getConcurrency(),
-    },
-  });
-  await bulkPatch({
-    prefix: getRequiredEnvVar('stackName'),
-    body: {
-      apiGranules: targetGranules,
-      dbConcurrency: getConcurrency(),
-      dbMaxPool: getConcurrency(),
     },
   });
 }
@@ -264,6 +281,7 @@ async function cleanupCMRMetadataFiles(
 async function moveFilesForAllGranules(
   sourceGranules: Array<ApiGranuleRecord>,
   targetGranules: Array<ApiGranuleRecord>,
+  sourceCollectionId: string,
   targetCollectionId: string,
   s3MultipartChunksizeMb?: number
 ): Promise<void> {
@@ -279,6 +297,7 @@ async function moveFilesForAllGranules(
   await moveGranulesInCumulusDatastores(
     sourceGranules,
     targetGranules,
+    sourceCollectionId,
     targetCollectionId
   );
   // because cmrMetadata files were *copied* and not deleted, delete them now
@@ -404,6 +423,7 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
   await moveFilesForAllGranules(
     granulesInput,
     targetGranules,
+    constructCollectionId(config.sourceCollection.name, config.sourceCollection.version),
     constructCollectionId(config.collection.name, config.collection.version),
     chunkSize
   );
