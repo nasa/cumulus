@@ -5,8 +5,7 @@
     "EcsTaskMoveGranuleCollections": {
       "Parameters": {
         "cma": {
-          "event": {
-          },
+          "event.$": "$",
           "task_config": {
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
