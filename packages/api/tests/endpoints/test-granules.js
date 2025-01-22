@@ -2423,7 +2423,7 @@ test.serial('PATCH() does not write to DynamoDB/SNS if writing to PostgreSQL fai
       WaitTimeSeconds: 10,
     });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if writing to Postgres fails', async (t) => {
@@ -2469,7 +2469,7 @@ test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if wr
       WaitTimeSeconds: 10,
     });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('PATCH adds granule if it does not exist and returns a 201 status', async (t) => {

@@ -357,7 +357,7 @@ test.serial('writeExecutionRecordFromMessage() does not publish an SNS messagee 
   t.false(await executionPgModel.exists(knex, { arn: executionArn }));
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('writeExecutionRecordFromMessage() correctly sets both original_payload and final_payload in postgres when execution records are run in sequence', async (t) => {
