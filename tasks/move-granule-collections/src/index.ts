@@ -399,7 +399,8 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
 
   log.debug(`moveGranules config: s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}, `
     + `granuleMetadataFileExtension ${granuleMetadataFileExtension}, `
-    + `granuleIds ${event.input.granules}`);
+    + `granuleIds ${event.input.granules}, `
+    + `meta ${event.config}`);
 
   const granuleIds = event.input.granules;
   const granulesInput = await Promise.all(granuleIds.map((granuleId) => getGranule({
