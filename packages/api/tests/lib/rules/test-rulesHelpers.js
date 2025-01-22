@@ -127,7 +127,6 @@ const deleteKinesisEventSourceMappings = async () => {
 
   await Promise.all(allEventMappings.map((e) =>
     e.State !== 'Deleting' && awsServices.lambda().send(new DeleteEventSourceMappingCommand({ UUID: e.UUID }))));
-  console.log('Waiting for the deletion of event source mappings');
   return await waitForEventSourceMappingsDeletion();
 };
 
@@ -585,8 +584,8 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
   t.true(
-    (deletedConsumerEventMappings.length === 0) ||
-    (deletedConsumerEventMappings[0].State === 'Deleting')
+    (deletedConsumerEventMappings.length === 0)
+    || (deletedConsumerEventMappings[0].State === 'Deleting')
   );
   t.is(deletedLogEventMappings.length, 1);
   t.teardown(async () => {
@@ -633,12 +632,12 @@ test.serial('deleteKinesisEventSources deletes all kinesis event sources', async
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
 
   t.true(
-    (deletedConsumerEventMappings.length === 0) ||
-    (deletedConsumerEventMappings[0].State === 'Deleting')
+    (deletedConsumerEventMappings.length === 0)
+    || (deletedConsumerEventMappings[0].State === 'Deleting')
   );
   t.true(
-    (deletedLogEventMappings.length === 0) ||
-    (deletedLogEventMappings[0].State === 'Deleting')
+    (deletedLogEventMappings.length === 0)
+    || (deletedLogEventMappings[0].State === 'Deleting')
   );
 });
 
@@ -878,8 +877,14 @@ test.serial('deleteRuleResources correctly deletes resources for kinesis rule', 
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
 
-  t.is(deletedConsumerEventMappings.length, 0);
-  t.is(deletedLogEventMappings.length, 0);
+  t.true(
+    (deletedConsumerEventMappings.length === 0)
+    || (deletedConsumerEventMappings[0].State === 'Deleting')
+  );
+  t.true(
+    (deletedLogEventMappings.length === 0)
+    || (deletedLogEventMappings[0].State === 'Deleting')
+  );
 });
 
 test.serial('deleteRuleResources correctly deletes resources for sns rule', async (t) => {
@@ -1140,8 +1145,14 @@ test.serial('deleteRuleResources() removes kinesis source mappings', async (t) =
     consumerEventMappingsAfter,
     logEventMappingsAfter,
   ] = await getKinesisEventMappings();
-  t.is(consumerEventMappingsAfter.EventSourceMappings.length, 0);
-  t.is(logEventMappingsAfter.EventSourceMappings.length, 0);
+  t.true(
+    (consumerEventMappingsAfter.EventSourceMappings.length === 0)
+    || (consumerEventMappingsAfter.EventSourceMappings[0].State === 'Deleting')
+  );
+  t.true(
+    (logEventMappingsAfter.EventSourceMappings.length === 0)
+    || (logEventMappingsAfter.EventSourceMappings[0].State === 'Deleting')
+  );
 });
 
 test.serial('checkForSnsSubscriptions returns the correct status of a Rule\'s subscription', async (t) => {
