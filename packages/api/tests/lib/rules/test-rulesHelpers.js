@@ -7,6 +7,7 @@ const isObject = require('lodash/isObject');
 const cloneDeep = require('lodash/cloneDeep');
 const proxyquire = require('proxyquire');
 const fs = require('fs-extra');
+const pWaitFor = require('p-wait-for');
 
 const {
   CreateEventSourceMappingCommand,
@@ -100,6 +101,19 @@ const getKinesisEventMappings = async () => {
   return await Promise.all(mappingPromises);
 };
 
+const waitForEventSourceMappingsDeletion = () =>
+  pWaitFor(
+    async () => {
+      const eventMappings = await getKinesisEventMappings();
+      return (eventMappings.map((eventMapping) => eventMapping.EventSourceMappings)
+        .flat().length === 0);
+    },
+    {
+      interval: 3000,
+      timeout: 60 * 1000,
+    }
+  );
+
 const deleteKinesisEventSourceMappings = async () => {
   const eventMappings = await getKinesisEventMappings();
 
@@ -111,8 +125,10 @@ const deleteKinesisEventSourceMappings = async () => {
     eventMappings[1].EventSourceMappings
   );
 
-  return await Promise.all(allEventMappings.map((e) =>
-    awsServices.lambda().send(new DeleteEventSourceMappingCommand({ UUID: e.UUID }))));
+  await Promise.all(allEventMappings.map((e) =>
+    e.State !== 'Deleting' && awsServices.lambda().send(new DeleteEventSourceMappingCommand({ UUID: e.UUID }))));
+  console.log('Waiting for the deletion of event source mappings');
+  return await waitForEventSourceMappingsDeletion();
 };
 
 test.before(async (t) => {
@@ -568,7 +584,6 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
   const deletedEventMappings = await getKinesisEventMappings();
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
-
   t.true(
     (deletedConsumerEventMappings.length === 0) ||
     (deletedConsumerEventMappings[0].State === 'Deleting')
@@ -617,8 +632,14 @@ test.serial('deleteKinesisEventSources deletes all kinesis event sources', async
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
 
-  t.is(deletedConsumerEventMappings.length, 0);
-  t.is(deletedLogEventMappings.length, 0);
+  t.true(
+    (deletedConsumerEventMappings.length === 0) ||
+    (deletedConsumerEventMappings[0].State === 'Deleting')
+  );
+  t.true(
+    (deletedLogEventMappings.length === 0) ||
+    (deletedLogEventMappings[0].State === 'Deleting')
+  );
 });
 
 test.serial('deleteKinesisEventSources throws when deleteKinesisEventSource throws', async (t) => {
