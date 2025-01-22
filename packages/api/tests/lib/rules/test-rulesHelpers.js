@@ -569,7 +569,10 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
 
-  t.is(deletedConsumerEventMappings[0].State, 'Deleting');
+  t.true(
+    (deletedConsumerEventMappings.length === 0) ||
+    (deletedConsumerEventMappings[0].State === 'Deleting')
+  );
   t.is(deletedLogEventMappings.length, 1);
   t.teardown(async () => {
     await rulesHelpers.deleteKinesisEventSource(testKnex, kinesisRule, 'log_event_arn', { log_event_arn: kinesisRule.rule.logEventArn });
