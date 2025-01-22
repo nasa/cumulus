@@ -18,7 +18,7 @@ fi
 
 DATA_PERSISTENCE_KEY="$DEPLOYMENT/data-persistence/terraform.tfstate"
 
-cd ../cumulus-tf
+cd cumulus-tf
 # Ensure remote state is configured for the deployment
 echo "terraform {
   backend \"s3\" {
@@ -61,7 +61,7 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
   -var "orca_db_user_password=$ORCA_DATABASE_USER_PASSWORD" \
 
-cd data-persistence-tf
+cd ../data-persistence-tf
 # Ensure remote state is configured for the deployment
 echo "terraform {
   backend \"s3\" {
