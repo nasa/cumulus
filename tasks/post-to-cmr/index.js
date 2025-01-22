@@ -138,7 +138,7 @@ async function postToCMR(event) {
 
   // post all meta files to CMR
   const results = await Promise.all(
-    updatedCMRFiles.map((cmrFile) => removeFromCMR(cmrFile, cmrSettings, cmrRevisionId))
+    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId))
   );
 
   const endTime = Date.now();
