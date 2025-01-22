@@ -6,7 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v18.5.3] 2025-01-21
+
+**Please note** changes in v18.5.3 may not yet be released in future versions, as this
+is a backport/patch release on the v18.5.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-3757**
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules-collectionId) `PATCH/bulkPatchGranuleCollection` which updates a batch of granule records collectionId to a new collectionId. This endpoint takes a list of granules, a collectionId, and an `esConcurrency` variable, updating the granules' to the collectionId passed with the payload in both postgres and elasticsearch, while providing concurrency for updating elasticsearch to tailor for performance and database needs.
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules) `PATCH/bulkPatch` which applies PATCH to a list of granules. For its payload, this endpoint takes a list of granules (the updates to be made to the granule, similar to the pre-existing `PATCH`), a `dbConcurrency` and `dbMaxPool` variables for configuring concurrency and database thoroughput for postgres to tailor to performance and database needs.
+- **CUMULUS-3978**
+  - Added `iops` and `throughput` options to `elasticsearch_config` variable
+    in `tf-modules/data-persistence`; These two options are necessary for gp3 EBS volume type.
+
 ### Changed
+
+- **CUMULUS-3967**
+  - Pinned @aws-sdk/client-s3 in @cumulus/aws-client to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
+  - Pinned @aws-sdk/client-s3 in @cumulus/lib-storage to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
 
 - **CUMULUS-3940**
   - Added 'dead_letter_recovery_cpu' and 'dead_letter_recovery_memory' to `cumulus` and `archive` module configuration to allow configuration of the dead_letter_recovery_operation task definition to better allow configuration of the tool's operating environment.
@@ -24,11 +43,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
 - **CUMULUS-3981**
   - Added required $metadata field when creating new instance of ServiceException.
-
-### Added
-- **CUMULUS-3757**
-  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules-collectionId) `PATCH/bulkPatchGranuleCollection` which updates a batch of granule records collectionId to a new collectionId. This endpoint takes a list of granules, a collectionId, and an `esConcurrency` variable, updating the granules' to the collectionId passed with the payload in both postgres and elasticsearch, while providing concurrency for updating elasticsearch to tailor for performance and database needs.
-  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules) `PATCH/bulkPatch` which applies PATCH to a list of granules. For its payload, this endpoint takes a list of granules (the updates to be made to the granule, similar to the pre-existing `PATCH`), a `dbConcurrency` and `dbMaxPool` variables for configuring concurrency and database thoroughput for postgres to tailor to performance and database needs.
 
 ## [v18.5.2] 2024-12-12
 
@@ -8098,6 +8112,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
+[v18.5.3]: https://github.com/nasa/cumulus/compare/v18.5.2...v18.5.3
 [v18.5.2]: https://github.com/nasa/cumulus/compare/v18.5.1...v18.5.2
 [v18.5.1]: https://github.com/nasa/cumulus/compare/v18.5.0...v18.5.1
 [v18.5.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v18.5.0
