@@ -117,7 +117,9 @@ async function postToCMR(event) {
   });
 
   // if republish is true, unpublish granules which are public
-  const granulesToUnpublish = republish ? granules.filter((granule) => granule.cmrLink) : [];
+  const granulesToUnpublish = republish
+    ? granules.filter((granule) => granule.published || !!granule.cmrLink)
+    : [];
   await Promise.all(granulesToUnpublish.map((granule) => removeFromCMR(granule.granuleId)));
 
   if (granulesToUnpublish.length > 0) {
