@@ -71,7 +71,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `fake-provider-cf.yml` to work for Amazon Linux 2023 AMI
 - **CUMULUS-3965**
   - Updated `tf-modules/cumulus/ecs_cluster` and `fake-provider-cf.yml` launch templates to require IMDSv2 
-- **CUMULUS-3991**
+- **CUMULUS-3990**
   - Upgraded localstack from 3.0.0 to 4.0.3
 
 ### Fixed
