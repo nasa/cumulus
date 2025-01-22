@@ -58,7 +58,7 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { create, patch, patchGranule } = require('../../endpoints/granules');
+const { create, patch, patchGranuleAndReturnStatus } = require('../../endpoints/granules');
 const { sortFilesByKey } = require('../helpers/sort');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
@@ -2348,7 +2348,7 @@ test.serial("patch() sets a default createdAt value for new granule if it's not 
     },
   };
   const response = buildFakeExpressResponse();
-  await patchGranule(expressRequest, response);
+  await patchGranuleAndReturnStatus(expressRequest, response);
 
   t.truthy(updateGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
 });
