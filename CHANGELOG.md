@@ -93,7 +93,7 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
   - Removed ElasticSearch from local API server code
   - Updated CollectionSearch to filter granule fields in addition to time frame for active collections
 - **CUMULUS-3983**
-  - Removed elasticsearch references used in in `tf-modules`
+  - Removed elasticsearch references used in in cumulus `tf-modules`
 
 ## [Unreleased]
 
