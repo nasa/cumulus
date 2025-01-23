@@ -97,7 +97,6 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
   - for asyncOperations test data, change any ES related values to other options
   - remove code from `@cumulus/api/lambdas/cleanExecutions` leaving a dummy handler, as the code worked with ES. lambda will be rewritten with CUMULUS-3982
   - remove `@cumulus/api/endpoints/elasticsearch`, `@cumulus/api/lambdas/bootstrap`, and `@cumulus/api/lambdas/index-from-database`
-  - clarify in comments that ES functionality remaining in `@cumulus/api/lib/granules` is for working with CloudMetrics
 
 ## [Unreleased]
 

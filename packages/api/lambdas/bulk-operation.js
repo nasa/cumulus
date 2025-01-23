@@ -93,8 +93,8 @@ async function applyWorkflowToGranules({
  *   Defaults to `concurrency`
  * @param {number} [payload.concurrency]
  *   granule concurrency for the bulk deletion operation.  Defaults to 10
- * @param {Object} [payload.query] - Optional parameter of query to send to ES
- * @param {string} [payload.index] - Optional parameter of ES index (metrics) to query.
+ * @param {Object} [payload.query] - Optional parameter of query to send to ES (Cloud Metrics)
+ * @param {string} [payload.index] - Optional parameter of ES index to query (Cloud Metrics).
  * Must exist if payload.query exists.
  * @param {Object} [payload.granules] - Optional list of granule unique IDs to bulk operate on
  * e.g. { granuleId: xxx, collectionID: xxx }
@@ -178,8 +178,8 @@ async function bulkGranuleDelete(
  * @param {string} payload.workflowName - name of the workflow that will be applied to each granule.
  * @param {Object} [payload.meta] - Optional meta to add to workflow input
  * @param {string} [payload.queueUrl] - Optional name of queue that will be used to start workflows
- * @param {Object} [payload.query] - Optional parameter of query to send to ES
- * @param {string} [payload.index] - Optional parameter of ES index (metrics) to query.
+ * @param {Object} [payload.query] - Optional parameter of query to send to ES (Cloud Metrics)
+ * @param {string} [payload.index] - Optional parameter of ES index to query (Cloud Metrics).
  * Must exist if payload.query exists.
  * @param {Object} [payload.granules] - Optional list of granule unique IDs to bulk operate on
  * e.g. { granuleId: xxx, collectionID: xxx }

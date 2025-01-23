@@ -895,7 +895,9 @@ async function processRequest(params) {
     location: buildS3Uri(systemBucket, reportKey),
   };
   let [reportPgRecord] = await reconciliationReportPgModel.create(knex, builtReportRecord);
-  log.info(`Report added to database as pending: ${JSON.stringify(reportPgRecord)}.`);
+  // api format was being logged prior to ES removal, so keeping format for consistency
+  let reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+  log.info(`Report added to database as Pending: ${JSON.stringify(reportApiRecord)}.`);
 
   const concurrency = env.CONCURRENCY || '3';
 
@@ -941,19 +943,21 @@ async function processRequest(params) {
       },
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, erroredRecord);
+    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+    log.error(`Report updated in database as Failed including error: ${JSON.stringify(reportApiRecord)}`);
     throw error;
   }
 
   reportPgRecord = await reconciliationReportPgModel.get(knex, { name: builtReportRecord.name });
-  return translatePostgresReconReportToApiReconReport(reportPgRecord);
+  reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+  log.info(`Report updated in database as Generated: ${JSON.stringify(reportApiRecord)}.`);
+  return reportApiRecord;
 }
 
 async function handler(event) {
   // increase the limit of search result from CMR.searchCollections/searchGranules
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || '5000';
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || '200';
-
-  //TODO: Remove irrelevant env vars from terraform after ES reports are removed
 
   const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE'];
   const envsToLog = pickBy(process.env, (value, key) => varsToLog.includes(key));
