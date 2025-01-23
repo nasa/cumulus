@@ -36,5 +36,3 @@ _book/**
 /packages/object-store/*.js
 /packages/lzards-api-client/*.d.ts
 /packages/lzards-api-client/*.js
-/tasks/move-granule-collections/*.js
-/tasks/move-granule-collections/*.d.ts
