@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3751**
+  - lowered memory reservation of python_processing_workflow and hello_world_workflow to share resources with ecs_move_granule_collections workflow
 - **CUMULUS-3967**
   - Pinned @aws-sdk/client-s3 in @cumulus/aws-client to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
   - Pinned @aws-sdk/client-s3 in @cumulus/lib-storage to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
