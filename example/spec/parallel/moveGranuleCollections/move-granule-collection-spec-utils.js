@@ -11,21 +11,21 @@ const path = require('path');
 const fs = require('fs');
 const { constructCollectionId } = require('../../../../packages/message/Collections');
 
-const getTargetFiles = (targetUrlPrefix) => [
+const getTargetFiles = (targetUrlPrefix, config) => [
   {
-    bucket: 'cumulus-test-sandbox-protected',
+    bucket: config.buckets.protected.name,
     key: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
   },
   {
-    bucket: 'cumulus-test-sandbox-public',
+    bucket: config.buckets.public.name,
     key: `${targetUrlPrefix}/jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
   },
   {
-    bucket: 'cumulus-test-sandbox-public',
+    bucket: config.buckets.public.name,
     key: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
   },
   {
-    bucket: 'cumulus-test-sandbox-public',
+    bucket: config.buckets.public.name,
     key: `${targetUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`,
   },
 ];
@@ -121,39 +121,39 @@ const getTargetCollection = (targetUrlPrefix) => ({
   id: 'MOD11A2',
 });
 
-const getProcessGranule = (sourceUrlPrefix) => ({
+const getProcessGranule = (sourceUrlPrefix, config) => ({
   status: 'completed',
   collectionId: 'MOD11A1___006',
   granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
   files: [
     {
       key: `${sourceUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
-      bucket: 'cumulus-test-sandbox-protected',
+      bucket: config.buckets.protected.name,
       type: 'data',
       fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
     },
     {
       key: `${sourceUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
-      bucket: 'cumulus-test-sandbox-private',
+      bucket: config.buckets.private.name,
       type: 'browse',
       fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
     },
     {
       key: `${sourceUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
-      bucket: 'cumulus-test-sandbox-public',
+      bucket: config.buckets.public.name,
       type: 'browse',
       fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
     },
     {
       key: `${sourceUrlPrefix}/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`,
-      bucket: 'cumulus-test-sandbox-protected',
+      bucket: config.buckets.protected.name,
       type: 'metadata',
       fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
     },
   ],
 });
 
-const setupInitialState = async (stackName, sourceUrlPrefix, targetUrlPrefix) => {
+const setupInitialState = async (stackName, sourceUrlPrefix, targetUrlPrefix, config) => {
   const sourceCollection = getSourceCollection(sourceUrlPrefix);
   const targetCollection = getTargetCollection(targetUrlPrefix);
   try {
@@ -172,7 +172,7 @@ const setupInitialState = async (stackName, sourceUrlPrefix, targetUrlPrefix) =>
   } catch {
     console.log(`collection ${constructCollectionId(targetCollection.name, targetCollection.version)} already exists`);
   }
-  const processGranule = getProcessGranule(sourceUrlPrefix);
+  const processGranule = getProcessGranule(sourceUrlPrefix, config);
   try {
     await granules.createGranule({
       prefix: stackName,
@@ -196,7 +196,7 @@ const setupInitialState = async (stackName, sourceUrlPrefix, targetUrlPrefix) =>
       },
     });
   }));
-  const finalFiles = getTargetFiles(targetUrlPrefix);
+  const finalFiles = getTargetFiles(targetUrlPrefix, config);
   await Promise.all(finalFiles.map((fileObj) => {
     try {
       return deleteS3Object(
@@ -210,27 +210,11 @@ const setupInitialState = async (stackName, sourceUrlPrefix, targetUrlPrefix) =>
   }));
 };
 
-const getPayload = (sourceUrlPrefix, targetUrlPrefix) => ({
+const getPayload = (sourceUrlPrefix, targetUrlPrefix, config) => ({
   meta: {
     targetCollection: getTargetCollection(targetUrlPrefix),
     sourceCollection: getSourceCollection(sourceUrlPrefix),
-    buckets: {
-      internal: {
-        type: 'cumulus-test-sandbox-internal',
-      },
-      private: {
-        name: 'cumulus-test-sandbox-private',
-        type: 'private',
-      },
-      protected: {
-        name: 'cumulus-test-sandbox-protected',
-        type: 'protected',
-      },
-      public: {
-        name: 'cumulus-test-sandbox-public',
-        type: 'public',
-      },
-    },
+    buckets: config.buckets
   },
   config: {
     buckets: '{$.meta.buckets}',
@@ -240,7 +224,7 @@ const getPayload = (sourceUrlPrefix, targetUrlPrefix) => ({
   },
   input: {
     granules: [
-      getProcessGranule(sourceUrlPrefix).granuleId,
+      getProcessGranule(sourceUrlPrefix, config).granuleId,
     ],
   },
 });

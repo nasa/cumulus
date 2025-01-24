@@ -19,12 +19,13 @@ describe('when moveGranulesCollection is called', () => {
   const sourceUrlPrefix = `source_path/${uuidv4()}`;
   const targetUrlPrefix = `target_path/${uuidv4()}`;
   const targetCollection = getTargetCollection(targetUrlPrefix);
-  const processGranule = getProcessGranule(sourceUrlPrefix);
-
+  let processGranule;
+  let config;
   // let systemBucket;
   beforeAll(async () => {
-    const config = await loadConfig();
+    config = await loadConfig();
     stackName = config.stackName;
+    processGranule = getProcessGranule(sourceUrlPrefix, config);
   });
 
   describe('under normal circumstances', () => {
@@ -37,11 +38,11 @@ describe('when moveGranulesCollection is called', () => {
       )));
     });
     beforeAll(async () => {
-      finalFiles = getTargetFiles(targetUrlPrefix);
-      const payload = getPayload(sourceUrlPrefix, targetUrlPrefix);
+      finalFiles = getTargetFiles(targetUrlPrefix, config);
+      const payload = getPayload(sourceUrlPrefix, targetUrlPrefix, config);
       //upload to cumulus
       try {
-        await setupInitialState(stackName, sourceUrlPrefix, targetUrlPrefix);
+        await setupInitialState(stackName, sourceUrlPrefix, targetUrlPrefix, config);
         const { $metadata } = await lambda().send(new InvokeCommand({
           FunctionName: `${stackName}-MoveGranuleCollections`,
           InvocationType: 'RequestResponse',
