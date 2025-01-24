@@ -42,7 +42,8 @@
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/errors": "19.1.0",
     "@cumulus/launchpad-auth": "19.1.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "p-map": "^4.0.0"
   },
   "devDependencies": {
     "@cumulus/cmr-client": "19.1.0",
