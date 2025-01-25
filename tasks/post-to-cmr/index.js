@@ -90,11 +90,12 @@ function checkForMetadata(granules, cmrFiles) {
 /**
  * Remove granules from CMR
  *
- * @param {Array} granules - granules to remove
- * @param {number} concurrency - Maximum concurrency of requests to CMR
+ * @param {object} params - parameter object
+ * @param {Array<object>} params.granules - granules to remove
+ * @param {number} params.concurrency - Maximum concurrency of requests to CMR
  * @throws {AggregateError} - Errors from CMR requests
  */
-async function removeGranuleFromCmr(granules, concurrency) {
+async function removeGranuleFromCmr({ granules, concurrency }) {
   const granulesToUnpublish = granules.filter((granule) => granule.published || !!granule.cmrLink);
   const unpublishResults = await pMap(
     granulesToUnpublish,
@@ -119,8 +120,11 @@ async function removeGranuleFromCmr(granules, concurrency) {
 /**
  * Ingest granules to CMR
  *
- * @param {Array<Object>} cmrFiles - CMR file object array: { etag, bucket, key, granuleId }
- * @param {number} concurrency - Maximum concurrency of requests to CMR
+ * @param {object} params - parameter object
+ * @param {Array<object>} params.cmrFiles - CMR file object array: { etag, bucket, key, granuleId }
+ * @param {Array<object>} params.cmrSettings - object to create CMR instance getCmrSettings
+ * @param {Array<object>} params.cmrRevisionId - - CMR Revision ID
+ * @param {number} params.concurrency - Maximum concurrency of requests to CMR
  * @throws {AggregateError} - Errors from CMR requests
  */
 async function ingestGranuleToCmr({ cmrFiles, cmrSettings, cmrRevisionId, concurrency }) {
@@ -190,7 +194,7 @@ async function postToCMR(event) {
 
   // post all meta files to CMR
   const results = await ingestGranuleToCmr({
-    updatedCMRFiles, cmrSettings, cmrRevisionId, concurrency });
+    cmrFiles: updatedCMRFiles, cmrSettings, cmrRevisionId, concurrency });
 
   const endTime = Date.now();
 
