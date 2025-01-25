@@ -92,57 +92,21 @@ function checkForMetadata(granules, cmrFiles) {
  *
  * @param {object} params - parameter object
  * @param {Array<object>} params.granules - granules to remove
+ * @param {Array<object>} params.cmrSettings - object to create CMR instance
  * @param {number} params.concurrency - Maximum concurrency of requests to CMR
  * @throws {AggregateError} - Errors from CMR requests
  */
-async function removeGranuleFromCmr({ granules, concurrency }) {
+async function removeGranuleFromCmr({ granules, cmrSettings, concurrency }) {
   const granulesToUnpublish = granules.filter((granule) => granule.published || !!granule.cmrLink);
-  const unpublishResults = await pMap(
+  await pMap(
     granulesToUnpublish,
-    (granule) => removeFromCMR(granule.granuleId),
-    {
-      stopOnError: false,
-      concurrency,
-    }
+    (granule) => removeFromCMR(granule.granuleId, cmrSettings),
+    { concurrency }
   );
-  const failures = unpublishResults.filter((result) => result.status === 'rejected').map((result) => result.reason);
-  if (failures.length > 0) {
-    const aggregateError = new AggregateError(failures);
-    log.error('Failed remove some granules from CMR', aggregateError);
-    throw aggregateError;
-  }
 
   if (granulesToUnpublish.length > 0) {
     log.info(`Removing ${granulesToUnpublish.length} out of ${granules.length} granules from CMR for republishing`);
   }
-}
-
-/**
- * Ingest granules to CMR
- *
- * @param {object} params - parameter object
- * @param {Array<object>} params.cmrFiles - CMR file object array: { etag, bucket, key, granuleId }
- * @param {Array<object>} params.cmrSettings - object to create CMR instance getCmrSettings
- * @param {Array<object>} params.cmrRevisionId - - CMR Revision ID
- * @param {number} params.concurrency - Maximum concurrency of requests to CMR
- * @throws {AggregateError} - Errors from CMR requests
- */
-async function ingestGranuleToCmr({ cmrFiles, cmrSettings, cmrRevisionId, concurrency }) {
-  const publishResults = await pMap(
-    cmrFiles,
-    (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
-    {
-      stopOnError: false,
-      concurrency,
-    }
-  );
-  const publishFailures = publishResults.filter((result) => result.status === 'rejected').map((result) => result.reason);
-  if (publishFailures.length > 0) {
-    const aggregateError = new AggregateError(publishFailures);
-    log.error('Failed publishing some granules to CMR', aggregateError);
-    throw aggregateError;
-  }
-  return publishResults.filter((result) => result.status === 'fulfilled').map((result) => result.value).flat();
 }
 
 /**
@@ -193,8 +157,11 @@ async function postToCMR(event) {
   const startTime = Date.now();
 
   // post all meta files to CMR
-  const results = await ingestGranuleToCmr({
-    cmrFiles: updatedCMRFiles, cmrSettings, cmrRevisionId, concurrency });
+  const results = await pMap(
+    updatedCMRFiles,
+    (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
+    { concurrency }
+  );
 
   const endTime = Date.now();
 

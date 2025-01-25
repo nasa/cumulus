@@ -62,7 +62,6 @@ module.exports = {
   },
   globals: {
     JSX: true,
-    AggregateError: false,
   },
   rules: {
     'import/no-unresolved': [

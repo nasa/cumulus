@@ -233,6 +233,12 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
 }
 
+/**
+ * Remove granule from CMR.
+ *
+ * @param {string} granuleUR - the granuleUR
+ * @param {omitbject} creds - credentials needed to post to CMR service
+ */
 async function removeFromCMR(granuleUR, creds) {
   const cmrClient = new CMR(creds);
   return await cmrClient.deleteGranule(granuleUR);
