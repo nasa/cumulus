@@ -33,8 +33,7 @@ const {
   ummVersionToMetadataFormat,
 } = require('./utils');
 /**
- * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams/**
- * @typedef {import('./types').CMRFile} CMRFile
+ * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams
  */
 const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
