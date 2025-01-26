@@ -1,0 +1,31 @@
+{
+  "Comment": "Moves granules across collections",
+  "StartAt": "EcsTaskMoveGranuleCollections",
+  "States": {
+    "EcsTaskMoveGranuleCollections": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "sourceCollection": "{$.meta.sourceCollection}",
+            "targetCollection": "{$.meta.targetCollection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${ecs_task_move_granule_collections_id}",
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "MaxAttempts": 1
+        }
+      ],
+      "End": true
+    }
+  }
+}

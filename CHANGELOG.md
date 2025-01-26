@@ -23,6 +23,8 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 
 ### Changed
 
+- **CUMULUS-3751**
+  - lowered memory reservation of python_processing_workflow and hello_world_workflow to share resources with ecs_move_granule_collections workflow
 - **CUMULUS-3967**
   - Pinned @aws-sdk/client-s3 in @cumulus/aws-client to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
   - Pinned @aws-sdk/client-s3 in @cumulus/lib-storage to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
@@ -43,6 +45,17 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
 - **CUMULUS-3981**
   - Added required $metadata field when creating new instance of ServiceException.
+
+### Added
+
+- **CUMULUS-3751**
+  - Added `move-granule-collections` to move granules to a different collection.
+    - expects a list of granules along with a new (target) collection
+    - transfers those granules to that collection in cumulus data stores
+    - moves those granule files in S3 according to pathing of target collection
+- **CUMULUS-3757**
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules-collectionId) `PATCH/bulkPatchGranuleCollection` which updates a batch of granule records collectionId to a new collectionId. This endpoint takes a list of granules, a collectionId, and an `esConcurrency` variable, updating the granules' to the collectionId passed with the payload in both postgres and elasticsearch, while providing concurrency for updating elasticsearch to tailor for performance and database needs.
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules) `PATCH/bulkPatch` which applies PATCH to a list of granules. For its payload, this endpoint takes a list of granules (the updates to be made to the granule, similar to the pre-existing `PATCH`), a `dbConcurrency` and `dbMaxPool` variables for configuring concurrency and database thoroughput for postgres to tailor to performance and database needs.
 
 ## [v18.5.2] 2024-12-12
 
