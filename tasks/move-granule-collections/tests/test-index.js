@@ -30,7 +30,7 @@ const {
   destroyLocalTestDb,
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
-const { isECHO10Filename, isISOFilename, isUMMGFilename } = require('@cumulus/cmrjs/cmr-utils');
+const { isECHO10Filename, isISOFilename, isUMMGFilename, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const { bulkPatchGranuleCollection, bulkPatch } = require('@cumulus/api/endpoints/granules');
 const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
 const indexer = require('@cumulus/es-client/indexer');
@@ -232,7 +232,7 @@ function granulesToFileURIs(granuleIds, t) {
 function buildPayload(t, collection) {
   const newPayload = t.context.payload;
   newPayload.config.targetCollection = collection;
-  newPayload.config.sourceCollection = getOriginalCollection();
+  newPayload.config.collection = getOriginalCollection();
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
   newPayload.config.buckets.public.name = t.context.publicBucket;
@@ -399,7 +399,7 @@ test.serial('Should move files to final location and update pg data with cmr iso
   t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
-test.serial('Should move files to final location and update pg data with cmr umm json file', async (t) => {
+test.only('Should move files to final location and update pg data with cmr umm json file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
@@ -438,6 +438,8 @@ test.serial('Should move files to final location and update pg data with cmr umm
   });
   t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
   t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+  const s3File = await metadataObjectFromCMRFile(`s3://${t.context.publicBucket}/example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json`)
+  console.log(s3File);
 });
 
 test('handles partially moved files', async (t) => {
