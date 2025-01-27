@@ -92,6 +92,11 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
   - Updated `@cumulus/api/bin/serveUtils` to no longer add records to ElasticSearch
   - Removed ElasticSearch from local API server code
   - Updated CollectionSearch to filter granule fields in addition to time frame for active collections
+- **CUMULUS-3847**
+  - remove remaining ES indexing in code and tests
+  - for asyncOperations test data, change any ES related values to other options
+  - remove code from `@cumulus/api/lambdas/cleanExecutions` leaving a dummy handler, as the code worked with ES. lambda will be rewritten with CUMULUS-3982
+  - remove `@cumulus/api/endpoints/elasticsearch`, `@cumulus/api/lambdas/bootstrap`, and `@cumulus/api/lambdas/index-from-database`
 
 ## [Unreleased]
 
@@ -118,6 +123,9 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
 
 ### Added
 
+- **CUMULUS-3757**
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules-collectionId) `PATCH/bulkPatchGranuleCollection` which updates a batch of granule records collectionId to a new collectionId. This endpoint takes a list of granules and a collectionId, updating the granules' to the collectionId passed with the payload in postgres.
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules) `PATCH/bulkPatch` which applies PATCH to a list of granules. For its payload, this endpoint takes a list of granules (the updates to be made to the granule, similar to the pre-existing `PATCH`), a `dbConcurrency` and `dbMaxPool` variables for configuring concurrency and database thoroughput for postgres to tailor to performance and database needs.
 - **CUMULUS-3919**
   - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
 - **CUMULUS-3978**
@@ -125,6 +133,10 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
     in `tf-modules/data-persistence`; These two options are necessary for gp3 EBS volume type.
 
 ### Changed
+
+- **CUMULUS-3967**
+  - Pinned @aws-sdk/client-s3 in @cumulus/aws-client to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
+  - Pinned @aws-sdk/client-s3 in @cumulus/lib-storage to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
 
 - **CUMULUS-3940**
   - Added 'dead_letter_recovery_cpu' and 'dead_letter_recovery_memory' to `cumulus` and `archive` module configuration to allow configuration of the dead_letter_recovery_operation task definition to better allow configuration of the tool's operating environment.

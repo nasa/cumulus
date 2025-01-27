@@ -13,11 +13,7 @@ const {
 } = require('@cumulus/db');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
-const { Search } = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
+
 const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
   SubscribeCommand,
@@ -44,11 +40,6 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
-
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esGranulesClient = new Search({}, 'granule', t.context.esIndex);
 });
 
 test.beforeEach(async (t) => {
@@ -87,7 +78,6 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
-  await cleanupTestIndex(t.context);
 });
 
 test('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
@@ -163,17 +153,6 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
     t.context.knex,
     { granule_id: pgGranuleId2, collection_cumulus_id: pgCollectionCumulusId2 }
   ));
-
-  t.false(
-    await t.context.esGranulesClient.exists(
-      pgGranuleId1
-    )
-  );
-  t.false(
-    await t.context.esGranulesClient.exists(
-      pgGranuleId2
-    )
-  );
 
   const s3Buckets = granules[0].s3Buckets;
   t.teardown(() => deleteS3Buckets([
