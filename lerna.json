@@ -9,7 +9,7 @@
     "packages/*",
     "packages/api/ecs/async-operation",
     "tasks/*",
-    "tasks/change-granule-collection-s3s/*",
+    "tasks/change-granule-collection-s3/*",
     "tf-modules/*",
     "tf-modules/internal/*",
     "scripts/unit-error-analysis/*",

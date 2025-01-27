@@ -1,4 +1,4 @@
-# @cumulus/change-granule-collection-s3s
+# @cumulus/change-granule-collection-s3
 
 This lambda function moves granules between collections in s3 and in postgres
 

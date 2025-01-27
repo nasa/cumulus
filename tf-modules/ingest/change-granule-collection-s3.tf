@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "change_granule_collection_s3_task" {
   function_name    = "${var.prefix}-ChangeGranuleCollectionS3s"
-  filename         = "${path.module}/../../tasks/change-granule-collection-s3s/dist/webpack/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../tasks/change-granule-collection-s3s/dist/webpack/lambda.zip")
+  filename         = "${path.module}/../../tasks/change-granule-collection-s3/dist/webpack/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../tasks/change-granule-collection-s3/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"

@@ -182,7 +182,7 @@ test.beforeEach(async (t) => {
   const topicName = randomString();
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
-  const testDbName = `change-granule-collection-s3s/change-collections-s3${cryptoRandomString({ length: 10 })}`;
+  const testDbName = `change-granule-collection-s3/change-collections-s3${cryptoRandomString({ length: 10 })}`;
   moveGranules = proxyquire(
     '../dist/src',
     {
