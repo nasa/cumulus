@@ -4,7 +4,6 @@ import {
   generateEcho10XMLString,
   getCmrSettings,
   isECHO10Filename,
-  isISOFilename,
   isUMMGFilename,
   metadataObjectFromCMRFile,
   updateEcho10XMLMetadataObject,
@@ -34,11 +33,11 @@ function apiFileIsValid(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is Val
 }
 
 export function apiGranuleRecordIsValid(granule: ApiGranuleRecord): granule is ValidGranuleRecord {
-  if(!granule.files) {
+  if (!granule.files) {
     return true;
   }
   let filesAreValid = true;
-  granule.files.forEach((file) => {if(!apiFileIsValid(file)) filesAreValid = false})
+  granule.files.forEach((file) => { if (!apiFileIsValid(file)) filesAreValid = false; });
   return filesAreValid;
 }
 
@@ -58,35 +57,6 @@ const findCollectionAttributePath = (cmrObject: Object, attributePath: string) =
   return output;
 };
 
-const findISOCollectionAttributePath = (cmrObject: Object, identifierString: string) => {
-  if (get(cmrObject, 'gmd:description.gco:CharacterString') === identifierString) {
-    return 'gmd:code.gco:CharacterString';
-  }
-  let output = null;
-  Object.entries(cmrObject).forEach(([key, value]) => {
-    if (typeof (value) === 'object') {
-      const path = findISOCollectionAttributePath(value, identifierString);
-      if (path !== null) {
-        output = key + '.' + path;
-      }
-    }
-  });
-  return output;
-};
-
-const updateCMRISOCollectionValue = (
-  cmrObject: Object,
-  collection: CollectionRecord
-) => {
-  const defaultNamePath = 'gmd:DS_Series.gmd:composedOf.gmd:DS_DataSet.gmd:has.gmi:MI_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:citation.gmd:CI_Citation.gmd:identifier.1.gmd:MD_Identifier.gmd:code.gco:CharacterString';
-  const fullNamePath = findISOCollectionAttributePath(cmrObject, 'The ECS Short Name') || defaultNamePath;
-  set(cmrObject, fullNamePath, collection.name);
-
-  const defaultIdPath = 'gmd:DS_Series.gmd:composedOf.gmd:DS_DataSet.gmd:has.gmi:MI_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:citation.gmd:CI_Citation.gmd:identifier.1.gmd:MD_Identifier.gmd:code.gco:CharacterString';
-  const fullIdPath = findISOCollectionAttributePath(cmrObject, 'The ECS Version ID') || defaultIdPath;
-  set(cmrObject, fullIdPath, collection.version);
-};
-
 const updateCMRCollectionValue = (
   cmrObject: Object,
   identifierPath: string,
@@ -103,14 +73,14 @@ export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cm
   if (isUMMGFilename(cmrFile.name || cmrFile.key)) {
     cmrFileString = JSON.stringify(cmrObject, undefined, 2);
   } else {
-    cmrFileString = generateEcho10XMLString(cmrObject)
+    cmrFileString = generateEcho10XMLString(cmrObject);
   }
   await s3PutObject({
     Bucket: cmrFile.bucket,
     Key: cmrFile.key,
     Body: cmrFileString,
-  })
-}
+  });
+};
 
 export const updateCmrFileCollections = ({
   collection,
@@ -130,28 +100,24 @@ export const updateCmrFileCollections = ({
   bucketTypes: Object,
   cmrGranuleUrlType: string
   distributionBucketMap: Object
-}
-) => {
-  
-  const cmrObjectCopy = cloneDeep(cmrObject)
+}) => {
+  const cmrObjectCopy = cloneDeep(cmrObject);
   const params = {
     metadataObject: cmrObjectCopy,
     files,
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
-    distributionBucketMap
-  }
+    distributionBucketMap,
+  };
   if (isECHO10Filename(cmrFileName)) {
     updateCMRCollectionValue(cmrObjectCopy, 'Collection.ShortName', collection.name, 'Granule.Collection.ShortName');
     updateCMRCollectionValue(cmrObjectCopy, 'Collection.VersionId', collection.version, 'Granule.Collection.VersionId');
-    updateEcho10XMLMetadataObject(params)
-  } else if (isISOFilename(cmrFileName)) {
-    updateCMRISOCollectionValue(cmrObjectCopy, collection);
+    updateEcho10XMLMetadataObject(params);
   } else if (isUMMGFilename(cmrFileName)) {
     updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.ShortName', collection.name);
     updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.VersionId', collection.version);
-    updateUMMGMetadataObject(params)
+    updateUMMGMetadataObject(params);
   } else {
     throw new AssertionError({ message: 'cmr file in unknown format' });
   }
@@ -167,7 +133,7 @@ export const getCMRMetadata = async (cmrFile: ValidApiFile, granuleId: string): 
     const [granulesOutput] = await cmr.searchGranules({ granuleId }) as Array<Object>;
     return granulesOutput;
   }
-}
+};
 export function isCMRMetadataFile(file: ApiFile | Omit<ApiFile, 'granuleId'>): boolean {
   return file.type === 'metadata';
 }

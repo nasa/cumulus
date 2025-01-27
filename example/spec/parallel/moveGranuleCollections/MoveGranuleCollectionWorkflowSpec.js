@@ -29,7 +29,7 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
       console.log('no need to delete s3 objects');
     }
     try {
-      await Promise.all(granuleIds.map((granuleId) => deleteGranule({ prefix: config.stackName, granuleId})));
+      await Promise.all(granuleIds.map((granuleId) => deleteGranule({ prefix: config.stackName, granuleId })));
     } catch {
       console.log('no need to delete granules');
     }
@@ -41,7 +41,6 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
     }
   });
   beforeAll(async () => {
-    
     const sourceUrlPrefix = 'change-granule-collection-s3-testing';
     const targetUrlPrefix = 'change-granule-collection-s3-testing-target';
     config = await loadConfig();
@@ -57,7 +56,7 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
       id: provider.id,
       host: config.bucket,
     };
-    await createProvider({ prefix: config.stackName, provider: providerData })
+    await createProvider({ prefix: config.stackName, provider: providerData });
 
     finalFiles = getTargetFiles(targetUrlPrefix, config);
     //upload to cumulus
@@ -75,7 +74,7 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
         {
           targetCollection: getTargetCollection(targetUrlPrefix),
           sourceCollection: getSourceCollection(sourceUrlPrefix),
-          buckets: config.buckets
+          buckets: config.buckets,
         }
       );
       await Promise.all(finalFiles.map((file) => expectAsync(

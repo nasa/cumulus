@@ -1120,7 +1120,6 @@ export const multipartCopyObject = async (
   }
 };
 
-
 /**
  * Copy an S3 object to another location in S3
  *
@@ -1174,8 +1173,8 @@ export const CopyObject = async (
         `ETag could not be determined for copy of ${buildS3Uri(sourceBucket, sourceKey)} to ${s3uri}`
       );
     } else {
-      return { etag: CopyObjectResult.ETag}
-      }
+      return { etag: CopyObjectResult.ETag };
+    }
   } else {
     return await multipartCopyObject({
       sourceBucket: sourceBucket,
@@ -1189,8 +1188,6 @@ export const CopyObject = async (
     });
   }
 };
-
-
 
 /**
  * Move an S3 object to another location in S3

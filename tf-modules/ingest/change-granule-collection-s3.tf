@@ -1,4 +1,4 @@
-resource "aws_lambda_function" "move_granule_collections_task" {
+resource "aws_lambda_function" "change_granule_collection_s3_task" {
   function_name    = "${var.prefix}-ChangeGranuleCollectionS3s"
   filename         = "${path.module}/../../tasks/change-granule-collection-s3s/dist/webpack/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/change-granule-collection-s3s/dist/webpack/lambda.zip")

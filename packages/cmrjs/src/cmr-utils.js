@@ -748,8 +748,8 @@ async function updateUMMGMetadata({
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
-    distributionBucketMap
-  })
+    distributionBucketMap,
+  });
   const { ETag: etag } = await uploadUMMGJSONCMRFile(metadataObject, cmrFile);
   return { metadataObject, etag };
 }
@@ -905,7 +905,10 @@ function updateEcho10XMLMetadataObject({
   set(updatedGranule, 'OnlineResources.OnlineResource', mergedOnlineResources);
   set(updatedGranule, 'AssociatedBrowseImageUrls.ProviderBrowseUrl', mergedAssociatedBrowse);
 
-  metadataObject.Granule = updatedGranule;
+  return {
+    ...metadataObject,
+    Granule: updatedGranule,
+  };
 }
 
 /**
@@ -934,8 +937,8 @@ async function updateEcho10XMLMetadata({
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRXMLFile(filename);
-  
-  updateEcho10XMLMetadataObject({
+
+  const updatedMetadataObject = updateEcho10XMLMetadataObject({
     metadataObject,
     files,
     distEndpoint,
@@ -943,10 +946,10 @@ async function updateEcho10XMLMetadata({
     s3CredsEndpoint,
     cmrGranuleUrlType,
     distributionBucketMap,
-  })
-  const xml = generateEcho10XMLString(metadataObject.Granule);
+  });
+  const xml = generateEcho10XMLString(updatedMetadataObject.Granule);
   const { ETag: etag } = await uploadEcho10CMRFile(xml, cmrFile);
-  return { metadataObject, etag };
+  return { updatedMetadataObject, etag };
 }
 
 /**

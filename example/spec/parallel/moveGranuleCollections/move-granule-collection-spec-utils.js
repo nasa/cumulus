@@ -214,7 +214,7 @@ const getPayload = (sourceUrlPrefix, targetUrlPrefix, config) => ({
   meta: {
     targetCollection: getTargetCollection(targetUrlPrefix),
     sourceCollection: getSourceCollection(sourceUrlPrefix),
-    buckets: config.buckets
+    buckets: config.buckets,
   },
   config: {
     buckets: '{$.meta.buckets}',
