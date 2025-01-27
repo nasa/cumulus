@@ -183,6 +183,7 @@ const sidebars = {
         'troubleshooting/troubleshooting-deployment',
         'troubleshooting/rerunning-workflow-executions',
         'troubleshooting/reindex-elasticsearch',
+        'troubleshooting/troubleshooting-database-migrations'
       ],
     },
     {
