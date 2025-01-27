@@ -1120,6 +1120,78 @@ export const multipartCopyObject = async (
   }
 };
 
+
+/**
+ * Copy an S3 object to another location in S3
+ *
+ * @param {Object} params
+ * @param {string} params.sourceBucket
+ * @param {string} params.sourceKey
+ * @param {string} params.destinationBucket
+ * @param {string} params.destinationKey
+ * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
+ * @param {boolean} [params.copyTags=false]
+ * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
+ */
+export const CopyObject = async (
+  params: {
+    sourceBucket: string,
+    sourceKey: string,
+    destinationBucket: string,
+    destinationKey: string,
+    ACL?: string,
+    copyTags?: boolean,
+    chunkSize?: number
+  }
+): Promise<{ etag: string }> => {
+  const {
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey,
+    ACL,
+    copyTags,
+    chunkSize,
+  } = params;
+
+  const sourceObject = await headObject(sourceBucket, sourceKey);
+
+  if (sourceObject.ContentLength === 0) {
+    // 0 byte files cannot be copied with multipart upload,
+    // so use a regular S3 PUT
+    const s3uri = buildS3Uri(destinationBucket, destinationKey);
+
+    const { CopyObjectResult } = await s3CopyObject({
+      CopySource: path.join(sourceBucket, sourceKey),
+      Bucket: destinationBucket,
+      Key: destinationKey,
+    });
+    // This error should never actually be reached in practice. It's a
+    // necessary workaround for bad typings in the AWS SDK.
+    // https://github.com/aws/aws-sdk-js/issues/1719
+    if (!CopyObjectResult?.ETag) {
+      throw new Error(
+        `ETag could not be determined for copy of ${buildS3Uri(sourceBucket, sourceKey)} to ${s3uri}`
+      );
+    } else {
+      return { etag: CopyObjectResult.ETag}
+      }
+  } else {
+    return await multipartCopyObject({
+      sourceBucket: sourceBucket,
+      sourceKey: sourceKey,
+      destinationBucket: destinationBucket,
+      destinationKey: destinationKey,
+      sourceObject: sourceObject,
+      ACL: <ObjectCannedACL>ACL,
+      copyTags: isBoolean(copyTags) ? copyTags : true,
+      chunkSize: chunkSize,
+    });
+  }
+};
+
+
+
 /**
  * Move an S3 object to another location in S3
  *
@@ -1147,45 +1219,9 @@ export const moveObject = async (
   const {
     sourceBucket,
     sourceKey,
-    destinationBucket,
-    destinationKey,
-    ACL,
-    copyTags,
-    chunkSize,
   } = params;
 
-  const sourceObject = await headObject(sourceBucket, sourceKey);
-
-  if (sourceObject.ContentLength === 0) {
-    // 0 byte files cannot be copied with multipart upload,
-    // so use a regular S3 PUT
-    const s3uri = buildS3Uri(destinationBucket, destinationKey);
-
-    const { CopyObjectResult } = await s3CopyObject({
-      CopySource: path.join(sourceBucket, sourceKey),
-      Bucket: destinationBucket,
-      Key: destinationKey,
-    });
-    // This error should never actually be reached in practice. It's a
-    // necessary workaround for bad typings in the AWS SDK.
-    // https://github.com/aws/aws-sdk-js/issues/1719
-    if (!CopyObjectResult || !CopyObjectResult.ETag) {
-      throw new Error(
-        `ETag could not be determined for copy of ${buildS3Uri(sourceBucket, sourceKey)} to ${s3uri}`
-      );
-    }
-  } else {
-    await multipartCopyObject({
-      sourceBucket: sourceBucket,
-      sourceKey: sourceKey,
-      destinationBucket: destinationBucket,
-      destinationKey: destinationKey,
-      sourceObject: sourceObject,
-      ACL: <ObjectCannedACL>ACL,
-      copyTags: isBoolean(copyTags) ? copyTags : true,
-      chunkSize: chunkSize,
-    });
-  }
+  await CopyObject(params);
   const deleteS3ObjRes = await deleteS3Object(sourceBucket, sourceKey);
   return deleteS3ObjRes;
 };

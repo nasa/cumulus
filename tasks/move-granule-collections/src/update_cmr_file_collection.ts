@@ -132,15 +132,16 @@ export const updateCmrFileCollections = ({
   distributionBucketMap: Object
 }
 ) => {
+  
+  const cmrObjectCopy = cloneDeep(cmrObject)
   const params = {
-    metadataObject: cmrObject,
+    metadataObject: cmrObjectCopy,
     files,
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
     distributionBucketMap
   }
-  const cmrObjectCopy = cloneDeep(cmrObject)
   if (isECHO10Filename(cmrFileName)) {
     updateCMRCollectionValue(cmrObjectCopy, 'Collection.ShortName', collection.name, 'Granule.Collection.ShortName');
     updateCMRCollectionValue(cmrObjectCopy, 'Collection.VersionId', collection.version, 'Granule.Collection.VersionId');

@@ -19,16 +19,6 @@ const {
   randomId, validateOutput,
   randomString,
 } = require('@cumulus/common/test-utils');
-const {
-  localStackConnectionEnv,
-  CollectionPgModel,
-  GranulePgModel,
-  translateApiCollectionToPostgresCollection,
-  translateApiGranuleToPostgresGranule,
-  migrationDir,
-  generateLocalTestDb,
-  destroyLocalTestDb,
-} = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isISOFilename, isUMMGFilename, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const { bulkPatchGranuleCollection, bulkPatch } = require('@cumulus/api/endpoints/granules');
@@ -180,39 +170,21 @@ function getOriginalCollection() {
 
 async function setupDataStoreData(granuleIds, targetCollection, t) {
   const {
-    knex,
     esClient,
     esIndex,
   } = t.context;
   const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
-  const granuleModel = new GranulePgModel();
-  const collectionModel = new CollectionPgModel();
   const sourceCollection = getOriginalCollection();
-  const pgRecords = {};
-  await collectionModel.create(
-    knex,
-    translateApiCollectionToPostgresCollection(sourceCollection)
-  );
+  
   await indexer.indexCollection(
     esClient,
     sourceCollection,
     esIndex
   );
-  [pgRecords.targetCollection] = await collectionModel.create(
-    knex,
-    translateApiCollectionToPostgresCollection(targetCollection)
-  );
   await indexer.indexCollection(
     esClient,
     targetCollection,
     esIndex
-  );
-  pgRecords.granules = await granuleModel.insert(
-    knex,
-    await Promise.all(granules.map(async (g) => (
-      await translateApiGranuleToPostgresGranule({ dynamoRecord: g, knexOrTransaction: knex })
-    ))),
-    ['cumulus_id', 'granule_id']
   );
 
   await Promise.all(granules.map((g) => indexer.indexGranule(
@@ -220,7 +192,6 @@ async function setupDataStoreData(granuleIds, targetCollection, t) {
     g,
     esIndex
   )));
-  return pgRecords;
 }
 
 function granulesToFileURIs(granuleIds, t) {
@@ -245,11 +216,7 @@ test.beforeEach(async (t) => {
   const topicName = randomString();
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
-  const testDbName = `move-granule-collections${cryptoRandomString({ length: 10 })}`;
-  const { knexAdmin, knex } = await generateLocalTestDb(
-    testDbName,
-    migrationDir
-  );
+  const testDbName = `move-granule-collections/change-collections-s3${cryptoRandomString({ length: 10 })}`;
   moveGranules = proxyquire(
     '../dist/src',
     {
@@ -268,8 +235,6 @@ test.beforeEach(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
 
-  t.context.knexAdmin = knexAdmin;
-  t.context.knex = knex;
   t.context.publicBucket = randomId('public');
   t.context.protectedBucket = randomId('protected');
   t.context.privateBucket = randomId('private');
@@ -279,7 +244,7 @@ test.beforeEach(async (t) => {
     public: t.context.publicBucket,
     protected: t.context.protectedBucket,
     private: t.context.privateBucket,
-
+    system: t.context.systemBucket,
   };
   t.context.bucketMapping = bucketMapping;
   await Promise.all([
@@ -290,7 +255,6 @@ test.beforeEach(async (t) => {
   ]);
   process.env = {
     ...process.env,
-    ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
   process.env.system_bucket = t.context.systemBucket;
@@ -311,7 +275,6 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
-  await destroyLocalTestDb(t.context);
   await cleanupTestIndex(t.context);
 });
 
@@ -325,7 +288,7 @@ test.serial('Should move files to final location and update pg data with cmr xml
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const pgRecords = await setupDataStoreData(
+  await setupDataStoreData(
     newPayload.input.granules,
     collection,
     t
@@ -348,12 +311,6 @@ test.serial('Should move files to final location and update pg data with cmr xml
     Bucket: t.context.publicBucket,
     Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
-  const granuleModel = new GranulePgModel();
-  const finalPgGranule = await granuleModel.get(t.context.knex, {
-    cumulus_id: pgRecords.granules[0].cumulus_id,
-  });
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
 test.serial('Should move files to final location and update pg data with cmr iso xml file', async (t) => {
@@ -391,12 +348,6 @@ test.serial('Should move files to final location and update pg data with cmr iso
     Bucket: t.context.publicBucket,
     Key: 'example2/2018/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml',
   }));
-  const granuleModel = new GranulePgModel();
-  const finalPgGranule = await granuleModel.get(t.context.knex, {
-    cumulus_id: pgRecords.granules[0].cumulus_id,
-  });
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
 test.only('Should move files to final location and update pg data with cmr umm json file', async (t) => {
@@ -409,11 +360,12 @@ test.only('Should move files to final location and update pg data with cmr umm j
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const pgRecords = await setupDataStoreData(
+  await setupDataStoreData(
     newPayload.input.granules,
     collection,
     t
   );
+  const cmrFile = await metadataObjectFromCMRFile(`s3://${t.context.protectedBucket}/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json`)
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -432,14 +384,58 @@ test.only('Should move files to final location and update pg data with cmr umm j
     Bucket: t.context.publicBucket,
     Key: 'example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json',
   }));
-  const granuleModel = new GranulePgModel();
-  const finalPgGranule = await granuleModel.get(t.context.knex, {
-    cumulus_id: pgRecords.granules[0].cumulus_id,
-  });
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
-  const s3File = await metadataObjectFromCMRFile(`s3://${t.context.publicBucket}/example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json`)
-  console.log(s3File);
+  const UMM = await metadataObjectFromCMRFile(`s3://${t.context.publicBucket}/example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json`)
+  const relatedURLS = UMM.RelatedUrls.map((urlObject) => urlObject.URL);
+  console.log(relatedURLS)
+  t.true(relatedURLS.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.protectedBucket}` +
+    '/example2/2016/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ))
+  t.true(relatedURLS.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/jpg/example2/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  ))
+  t.true(relatedURLS.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/example2/2016/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ))
+  t.true(relatedURLS.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/example2/2016/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json'
+  ))
+
+  t.true(relatedURLS.includes(
+    's3://' +
+    `${t.context.protectedBucket}` +
+    '/example2/2016/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ))
+  t.true(relatedURLS.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/jpg/example2/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  ))
+  t.true(relatedURLS.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/example2/2016/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ))
+  t.true(relatedURLS.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/example2/2016/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json'
+  ))
 });
 
 test('handles partially moved files', async (t) => {
@@ -484,7 +480,7 @@ test('handles partially moved files', async (t) => {
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
 
-  const pgRecords = await setupDataStoreData(
+  await setupDataStoreData(
     newPayload.input.granules,
     collection,
     t
@@ -509,12 +505,6 @@ test('handles partially moved files', async (t) => {
     Bucket: t.context.publicBucket,
     Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
-  const granuleModel = new GranulePgModel();
-  const finalPgGranule = await granuleModel.get(t.context.knex, {
-    cumulus_id: pgRecords.granules[0].cumulus_id,
-  });
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
 test.serial('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
@@ -553,7 +543,7 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
   const newPayload = buildPayload(t, collection);
 
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const pgRecords = await setupDataStoreData(
+  await setupDataStoreData(
     newPayload.input.granules,
     collection,
     t
@@ -576,12 +566,6 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
     Bucket: t.context.publicBucket,
     Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
-  const granuleModel = new GranulePgModel();
-  const finalPgGranule = await granuleModel.get(t.context.knex, {
-    cumulus_id: pgRecords.granules[0].cumulus_id,
-  });
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
 test.serial('handles files that need no move', async (t) => {
@@ -595,7 +579,7 @@ test.serial('handles files that need no move', async (t) => {
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const pgRecords = await setupDataStoreData(
+  await setupDataStoreData(
     newPayload.input.granules,
     collection,
     t
@@ -619,11 +603,4 @@ test.serial('handles files that need no move', async (t) => {
     Bucket: t.context.protectedBucket,
     Key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
-
-  const granuleModel = new GranulePgModel();
-  const finalPgGranule = await granuleModel.get(t.context.knex, {
-    cumulus_id: pgRecords.granules[0].cumulus_id,
-  });
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/move-granule-collections",
-  "version": "18.5.2",
+  "version": "18.5.3",
   "description": "Move granule files and postgres records to a new collection",
   "main": "dist/index.js",
   "directories": {
@@ -40,24 +40,24 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "18.5.2",
-    "@cumulus/api-client": "18.5.2",
-    "@cumulus/aws-client": "18.5.2",
-    "@cumulus/cmr-client": "18.5.2",
-    "@cumulus/cmrjs": "18.5.2",
-    "@cumulus/common": "18.5.2",
+    "@cumulus/api": "18.5.3",
+    "@cumulus/api-client": "18.5.3",
+    "@cumulus/aws-client": "18.5.3",
+    "@cumulus/cmr-client": "18.5.3",
+    "@cumulus/cmrjs": "18.5.3",
+    "@cumulus/common": "18.5.3",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
-    "@cumulus/distribution-utils": "18.5.2",
-    "@cumulus/errors": "18.5.2",
-    "@cumulus/ingest": "18.5.2",
-    "@cumulus/message": "18.5.2",
-    "@cumulus/types": "18.5.2",
+    "@cumulus/distribution-utils": "18.5.3",
+    "@cumulus/errors": "18.5.3",
+    "@cumulus/ingest": "18.5.3",
+    "@cumulus/message": "18.5.3",
+    "@cumulus/types": "18.5.3",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@cumulus/db": "^18.5.2",
-    "@cumulus/es-client": "18.5.2",
-    "@cumulus/schemas": "18.5.2",
+    "@cumulus/db": "^18.5.3",
+    "@cumulus/es-client": "18.5.3",
+    "@cumulus/schemas": "18.5.3",
     "express": "^4.21.2",
     "jest": "^29.7.0"
   }

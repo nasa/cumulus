@@ -701,7 +701,6 @@ function updateUMMGMetadataObject({
 }) {
   const useDirectS3Type = shouldUseDirectS3Type(metadataObject);
 
-  console.log(distEndpoint)
   const newURLs = constructRelatedUrls({
     files,
     distEndpoint,
@@ -741,7 +740,6 @@ async function updateUMMGMetadata({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
-  console.log(distEndpoint)
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRJSONFile(filename);
   updateUMMGMetadataObject({
