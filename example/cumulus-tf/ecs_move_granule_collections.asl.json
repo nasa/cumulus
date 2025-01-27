@@ -1,8 +1,8 @@
 {
   "Comment": "Moves granules across collections",
-  "StartAt": "EcsTaskMoveGranuleCollections",
+  "StartAt": "EcsTaskChangeGranuleCollectionS3s",
   "States": {
-    "EcsTaskMoveGranuleCollections": {
+    "EcsTaskChangeGranuleCollectionS3s": {
       "Parameters": {
         "cma": {
           "event.$": "$",

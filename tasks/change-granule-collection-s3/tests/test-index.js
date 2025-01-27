@@ -216,7 +216,7 @@ test.beforeEach(async (t) => {
   const topicName = randomString();
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
-  const testDbName = `move-granule-collections/change-collections-s3${cryptoRandomString({ length: 10 })}`;
+  const testDbName = `change-granule-collection-s3s/change-collections-s3${cryptoRandomString({ length: 10 })}`;
   moveGranules = proxyquire(
     '../dist/src',
     {
@@ -386,7 +386,7 @@ test.only('Should move files to final location and update pg data with cmr umm j
   }));
   const UMM = await metadataObjectFromCMRFile(`s3://${t.context.publicBucket}/example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json`)
   const relatedURLS = UMM.RelatedUrls.map((urlObject) => urlObject.URL);
-  console.log(relatedURLS)
+
   t.true(relatedURLS.includes(
     'https://something.api.us-east-1.amazonaws.com/' +
     `${t.context.protectedBucket}` +

@@ -1,6 +1,6 @@
 {
-  "title": "MoveGranuleCollectionsConfig",
-  "description": "Describes the config used by the move-granule-collections task",
+  "title": "ChangeGranuleCollectionS3sConfig",
+  "description": "Describes the config used by the change-granule-collection-s3s task",
   "type": "object",
   "required": [
     "distribution_endpoint",

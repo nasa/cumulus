@@ -9,11 +9,11 @@ const { createProvider } = require('@cumulus/api-client/providers');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTestSuffix, createTimestampedTestId } = require('../../helpers/testUtils');
-const { setupInitialState, getTargetFiles, getTargetCollection, getSourceCollection } = require('./move-granule-collection-spec-utils');
+const { setupInitialState, getTargetFiles, getTargetCollection, getSourceCollection } = require('./change-granule-collection-s3-spec-utils');
 
 const activityStep = new ActivityStep();
 
-describe('The MoveGranuleCollection workflow using ECS', () => {
+describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
   let workflowExecutionArn;
   let config;
   let finalFiles;
@@ -42,12 +42,12 @@ describe('The MoveGranuleCollection workflow using ECS', () => {
   });
   beforeAll(async () => {
     
-    const sourceUrlPrefix = 'move-granule-collection-testing';
-    const targetUrlPrefix = 'move-granule-collection-testing-target';
+    const sourceUrlPrefix = 'change-granule-collection-s3-testing';
+    const targetUrlPrefix = 'change-granule-collection-s3-testing-target';
     config = await loadConfig();
     const providersDir = './data/providers/s3/';
     const stackName = config.stackName;
-    const testId = createTimestampedTestId(config.stackName, 'MoveGranuleCollections');
+    const testId = createTimestampedTestId(config.stackName, 'ChangeGranuleCollectionS3s');
     const testSuffix = createTestSuffix(testId);
     const provider = { id: `s3_provider${testSuffix}` };
 
@@ -68,7 +68,7 @@ describe('The MoveGranuleCollection workflow using ECS', () => {
       workflowExecutionArn = await buildAndStartWorkflow(
         config.stackName,
         config.bucket,
-        'ECSMoveGranuleCollectionsWorkflow',
+        'ECSChangeGranuleCollectionS3sWorkflow',
         getSourceCollection(sourceUrlPrefix),
         provider,
         { granules: ['MOD11A1.A2017200.h19v04.006.2017201090724'] },
@@ -101,29 +101,29 @@ describe('The MoveGranuleCollection workflow using ECS', () => {
     expect(beforeAllFailed).toEqual(false);
     const activityOutput = await activityStep.getStepOutput(
       workflowExecutionArn,
-      'EcsTaskMoveGranuleCollections'
+      'EcsTaskChangeGranuleCollectionS3s'
     );
     expect(activityOutput.payload.granules[0].files).toEqual([
       {
-        key: 'move-granule-collection-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+        key: 'change-granule-collection-s3-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
         bucket: config.buckets.protected.name,
         type: 'data',
         fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
       },
       {
-        key: 'move-granule-collection-testing-target/jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+        key: 'change-granule-collection-s3-testing-target/jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
         bucket: config.buckets.public.name,
         type: 'browse',
         fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
       },
       {
-        key: 'move-granule-collection-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+        key: 'change-granule-collection-s3-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
         bucket: config.buckets.public.name,
         type: 'browse',
         fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
       },
       {
-        key: 'move-granule-collection-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+        key: 'change-granule-collection-s3-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
         bucket: config.buckets.public.name,
         type: 'metadata',
         fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',

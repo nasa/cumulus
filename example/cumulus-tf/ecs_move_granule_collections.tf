@@ -1,5 +1,5 @@
 resource "aws_sfn_activity" "ecs_task_move_granule_collections" {
-  name = "${var.prefix}-EcsTaskMoveGranuleCollections"
+  name = "${var.prefix}-EcsTaskChangeGranuleCollectionS3s"
   tags = local.tags
 }
 
@@ -7,7 +7,7 @@ module "move_granule_collections_services" {
   source = "../../tf-modules/cumulus_ecs_service"
 
   prefix = var.prefix
-  name   = "MoveGranuleCollections"
+  name   = "ChangeGranuleCollectionS3s"
   tags   = local.tags
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
@@ -39,7 +39,7 @@ module "ecs_move_granule_collections" {
   source = "../../tf-modules/workflow"
 
   prefix          = var.prefix
-  name            = "ECSMoveGranuleCollectionsWorkflow"
+  name            = "ECSChangeGranuleCollectionS3sWorkflow"
   workflow_config = module.cumulus.workflow_config
   system_bucket   = var.system_bucket
   tags            = local.tags

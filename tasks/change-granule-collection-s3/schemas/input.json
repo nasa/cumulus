@@ -1,5 +1,5 @@
 {
-  "title": "MoveGranuleCollectionsInput",
+  "title": "ChangeGranuleCollectionS3sInput",
   "description": "Describes the input expected by the move-granules task",
   "type": "object",
   "required": [
@@ -8,9 +8,10 @@
   "properties": {
     "granules": {
       "type": "array",
-      "description": "Array of all granules",
+      "description": "Array of all granule IDs",
       "items": {
         "type": "string",
+        "description": "ID of a granule to be moved"
       }
     }
   }

@@ -13,7 +13,7 @@ const {
 const { v4: uuidv4 } = require('uuid');
 const { loadConfig } = require('../../helpers/testUtils');
 const { constructCollectionId } = require('../../../../packages/message/Collections');
-const { getTargetCollection, getProcessGranule, setupInitialState, getPayload, getTargetFiles } = require('./move-granule-collection-spec-utils');
+const { getTargetCollection, getProcessGranule, setupInitialState, getPayload, getTargetFiles } = require('./change-granule-collection-s3-spec-utils');
 describe('when moveGranulesCollection is called', () => {
   let stackName;
   const sourceUrlPrefix = `source_path/${uuidv4()}`;
@@ -44,7 +44,7 @@ describe('when moveGranulesCollection is called', () => {
       try {
         await setupInitialState(stackName, sourceUrlPrefix, targetUrlPrefix, config);
         const { $metadata } = await lambda().send(new InvokeCommand({
-          FunctionName: `${stackName}-MoveGranuleCollections`,
+          FunctionName: `${stackName}-ChangeGranuleCollectionS3s`,
           InvocationType: 'RequestResponse',
           Payload: JSON.stringify({
             cma: {

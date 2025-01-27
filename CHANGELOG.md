@@ -49,7 +49,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 ### Added
 
 - **CUMULUS-3751**
-  - Added `move-granule-collections` to move granules to a different collection.
+  - Added `change-granule-collection-s3s` to move granules to a different collection.
     - expects a list of granules along with a new (target) collection
     - transfers those granules to that collection in cumulus data stores
     - moves those granule files in S3 according to pathing of target collection
