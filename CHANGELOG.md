@@ -42,11 +42,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3947**
   - Bump @cumulus/cumulus-message-adapter-js to version 2.3.0. This will explicitly put the Python cumulus-message-adapter spawn into UTF-8 mode. See https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v2.3.0
-
 - **CUMULUS-3967**
   - Pinned @aws-sdk/client-s3 in @cumulus/aws-client to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
   - Pinned @aws-sdk/client-s3 in @cumulus/lib-storage to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
-
 - **CUMULUS-3940**
   - Added 'dead_letter_recovery_cpu' and 'dead_letter_recovery_memory' to `cumulus` and `archive` module configuration to allow configuration of the dead_letter_recovery_operation task definition to better allow configuration of the tool's operating environment.
   - Updated the dead letter recovery tool to utilize it's own log group "${var.prefix}-DeadLetterRecoveryEcsLogs"
@@ -56,7 +54,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
   - Add API memory-constrained performance test to test minimum functionality under default+ configuration
   - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
-
 - **CUMULUS-3759**
   - Migrated `tf-modules/cumulus/ecs_cluster` ECS Autoscaling group from launch configurations to launch templates
 - **CUMULUS-3955**
@@ -75,6 +72,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `fake-provider-cf.yml` to work for Amazon Linux 2023 AMI
 - **CUMULUS-3965**
   - Updated `tf-modules/cumulus/ecs_cluster` and `fake-provider-cf.yml` launch templates to require IMDSv2
+- **CUMULUS-3990**
+  - Upgraded localstack from 3.0.0 to 4.0.3
 
 ### Fixed
 
