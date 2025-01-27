@@ -23,9 +23,6 @@ const {
   getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
 const {
-  createTestIndex,
-} = require('@cumulus/es-client/testUtils');
-const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
 } = require('../../lib/testUtils');
@@ -37,11 +34,6 @@ const {
 
 const testDbName = randomString(12);
 const sandbox = sinon.createSandbox();
-const FakeEsClient = sandbox.stub();
-const esSearchStub = sandbox.stub();
-const esScrollStub = sandbox.stub();
-FakeEsClient.prototype.scroll = esScrollStub;
-FakeEsClient.prototype.search = esSearchStub;
 
 let fakeExecution;
 let testCumulusMessage;
@@ -63,10 +55,6 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
   t.context.granuleId = randomString();
-
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
 
   const { TopicArn } = await createSnsTopic(randomString());
   t.context.granules_sns_topic_arn = TopicArn;

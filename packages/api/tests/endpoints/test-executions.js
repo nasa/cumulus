@@ -233,7 +233,7 @@ test.beforeEach(async (t) => {
   ];
 
   // create fake Postgres granule records
-  // es records are for Metrics search
+  // es records are for Cloud Metrics search
   t.context.fakePGGranules = await Promise.all(t.context.fakeGranules.map(async (fakeGranule) => {
     await indexer.indexGranule(esClient, fakeGranule, esIndex);
     const granulePgRecord = await translateApiGranuleToPostgresGranule({

@@ -22,9 +22,6 @@ const {
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
-  deleteExecution,
-} = require('@cumulus/es-client/indexer');
-const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
 const {
@@ -233,7 +230,7 @@ function fakeAsyncOperationFactory(params = {}) {
     taskArn: randomId('arn'),
     id: uuidv4(),
     description: randomId('description'),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     status: 'SUCCEEDED',
     createdAt: Date.now() - 180.5 * 1000,
     updatedAt: Date.now(),
@@ -620,22 +617,6 @@ const createAsyncOperationTestRecords = async (context) => {
   };
 };
 
-const cleanupExecutionTestRecords = async (context, { arn }) => {
-  const {
-    knex,
-    executionPgModel,
-    esClient,
-    esIndex,
-  } = context;
-
-  await executionPgModel.delete(knex, { arn });
-  await deleteExecution({
-    esClient,
-    arn,
-    index: esIndex,
-  });
-};
-
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -666,6 +647,5 @@ module.exports = {
   createRuleTestRecords,
   createPdrTestRecords,
   createExecutionTestRecords,
-  cleanupExecutionTestRecords,
   createAsyncOperationTestRecords,
 };

@@ -32,7 +32,7 @@ test.beforeEach(async (t) => {
   t.context.testAsyncOperation = {
     id: t.context.asyncOperationId,
     description: 'test description',
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     status: 'RUNNING',
     createdAt: Date.now(),
   };

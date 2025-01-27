@@ -138,7 +138,7 @@ export const fakeAsyncOperationRecordFactory = (
 ): PostgresAsyncOperation => ({
   id: uuidv4(),
   description: cryptoRandomString({ length: 10 }),
-  operation_type: 'ES Index',
+  operation_type: 'Reconciliation Report',
   status: 'RUNNING',
   output: { test: 'output' },
   task_arn: cryptoRandomString({ length: 3 }),

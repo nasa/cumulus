@@ -29,8 +29,6 @@ const {
   translatePostgresFileToApiFile,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
-const { getEsClient } = require('@cumulus/es-client/search');
-const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
 
 const {
   ReconciliationReportPgModel,
@@ -54,7 +52,6 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
 /**
  * @typedef {typeof process.env } ProcessEnv
  * @typedef {import('knex').Knex} Knex
- * @typedef {import('@cumulus/es-client/search').EsClient} EsClient
  * @typedef {import('../lib/types').NormalizedRecReportParams } NormalizedRecReportParams
  * @typedef {import('../lib/types').EnhancedNormalizedRecReportParams}
  * EnhancedNormalizedRecReportParams
@@ -870,7 +867,6 @@ async function createReconciliationReport(recReportParams) {
  * @param {string} params.reportName - the name of the report
  * @param {Env} params.env - the environment variables
  * @param {Knex} params.knex - Optional Instance of a Knex client for testing
- * @param {EsClient} params.esClient - Optional Instance of an Elasticsearch client for testing
  * @returns {Promise<Object>} report record saved to the database
  */
 async function processRequest(params) {
@@ -882,7 +878,6 @@ async function processRequest(params) {
     systemBucket,
     stackName,
     knex = await getKnexClient({ env }),
-    esClient = await getEsClient(),
   } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName
@@ -900,9 +895,9 @@ async function processRequest(params) {
     location: buildS3Uri(systemBucket, reportKey),
   };
   let [reportPgRecord] = await reconciliationReportPgModel.create(knex, builtReportRecord);
+  // api format was being logged prior to ES removal, so keeping format for consistency
   let reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
-  await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
-  log.info(`Report added to database as pending: ${JSON.stringify(reportApiRecord)}.`);
+  log.info(`Report added to database as Pending: ${JSON.stringify(reportApiRecord)}.`);
 
   const concurrency = env.CONCURRENCY || '3';
 
@@ -936,8 +931,6 @@ async function processRequest(params) {
       status: 'Generated',
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, generatedRecord);
-    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
-    await indexReconciliationReport(esClient, reportApiRecord, process.env.ES_INDEX);
   } catch (error) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`); // eslint-disable-line max-len
     const erroredRecord = {
@@ -951,16 +944,14 @@ async function processRequest(params) {
     };
     [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, erroredRecord);
     reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
-    await indexReconciliationReport(
-      esClient,
-      reportApiRecord,
-      process.env.ES_INDEX
-    );
+    log.error(`Report updated in database as Failed including error: ${JSON.stringify(reportApiRecord)}`);
     throw error;
   }
 
   reportPgRecord = await reconciliationReportPgModel.get(knex, { name: builtReportRecord.name });
-  return translatePostgresReconReportToApiReconReport(reportPgRecord);
+  reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+  log.info(`Report updated in database as Generated: ${JSON.stringify(reportApiRecord)}.`);
+  return reportApiRecord;
 }
 
 async function handler(event) {
@@ -968,10 +959,9 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || '5000';
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || '200';
 
-  //TODO: Remove irrelevant env vars from terraform after ES reports are removed
-  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE', 'ES_SCROLL', 'ES_SCROLL_SIZE'];
+  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE'];
   const envsToLog = pickBy(process.env, (value, key) => varsToLog.includes(key));
-  log.info(`CMR and ES Environment variables: ${JSON.stringify(envsToLog)}`);
+  log.info(`CMR Environment variables: ${JSON.stringify(envsToLog)}`);
 
   return await processRequest(event);
 }
