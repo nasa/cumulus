@@ -29,16 +29,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-3959**
-  - Added documentation to help DAACs troubleshoot database migration issues.
+- **CUMULUS-3757**
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules-collectionId) `PATCH/bulkPatchGranuleCollection` which updates a batch of granule records collectionId to a new collectionId. This endpoint takes a list of granules and a collectionId, updating the granules' to the collectionId passed with the payload in postgres.
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules) `PATCH/bulkPatch` which applies PATCH to a list of granules. For its payload, this endpoint takes a list of granules (the updates to be made to the granule, similar to the pre-existing `PATCH`), a `dbConcurrency` and `dbMaxPool` variables for configuring concurrency and database thoroughput for postgres to tailor to performance and database needs.
 - **CUMULUS-3919**
   - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
+- **CUMULUS-3959**
+  - Added documentation to help DAACs troubleshoot database migration issues.
 - **CUMULUS-3978**
   - Added `iops` and `throughput` options to `elasticsearch_config` variable
     in `tf-modules/data-persistence`; These two options are necessary for gp3 EBS volume type.
 
 ### Changed
 
+- **CUMULUS-3947**
+  - Bump @cumulus/cumulus-message-adapter-js to version 2.3.0. This will explicitly put the Python cumulus-message-adapter spawn into UTF-8 mode. See https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v2.3.0
+- **CUMULUS-3967**
+  - Pinned @aws-sdk/client-s3 in @cumulus/aws-client to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
+  - Pinned @aws-sdk/client-s3 in @cumulus/lib-storage to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
 - **CUMULUS-3940**
   - Added 'dead_letter_recovery_cpu' and 'dead_letter_recovery_memory' to `cumulus` and `archive` module configuration to allow configuration of the dead_letter_recovery_operation task definition to better allow configuration of the tool's operating environment.
   - Updated the dead letter recovery tool to utilize it's own log group "${var.prefix}-DeadLetterRecoveryEcsLogs"
@@ -48,7 +56,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
   - Add API memory-constrained performance test to test minimum functionality under default+ configuration
   - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
-
 - **CUMULUS-3759**
   - Migrated `tf-modules/cumulus/ecs_cluster` ECS Autoscaling group from launch configurations to launch templates
 - **CUMULUS-3955**
@@ -66,7 +73,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed `tf-modules/cumulus` scripts to use Instance Metadata Service V2
   - Updated `fake-provider-cf.yml` to work for Amazon Linux 2023 AMI
 - **CUMULUS-3965**
-  - Updated `tf-modules/cumulus/ecs_cluster` and `fake-provider-cf.yml` launch templates to require IMDSv2 
+  - Updated `tf-modules/cumulus/ecs_cluster` and `fake-provider-cf.yml` launch templates to require IMDSv2
+- **CUMULUS-3990**
+  - Upgraded localstack from 3.0.0 to 4.0.3
 
 ### Fixed
 

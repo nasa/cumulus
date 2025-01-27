@@ -190,7 +190,7 @@ test.serial('del() does not publish an SNS message if removing from PostgreSQL f
     WaitTimeSeconds: 10,
   });
 
-  t.is(Messages.length, 0);
+  t.is(Messages, undefined);
 });
 
 test('Attempting to delete a collection with an invalid access token returns an unauthorized response', async (t) => {
