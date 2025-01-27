@@ -40,6 +40,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3947**
+  - Bump @cumulus/cumulus-message-adapter-js to version 2.3.0. This will explicitly put the Python cumulus-message-adapter spawn into UTF-8 mode. See https://github.com/nasa/cumulus-message-adapter-js/releases/tag/v2.3.0
+
 - **CUMULUS-3967**
   - Pinned @aws-sdk/client-s3 in @cumulus/aws-client to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
   - Pinned @aws-sdk/client-s3 in @cumulus/lib-storage to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
@@ -71,7 +74,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed `tf-modules/cumulus` scripts to use Instance Metadata Service V2
   - Updated `fake-provider-cf.yml` to work for Amazon Linux 2023 AMI
 - **CUMULUS-3965**
-  - Updated `tf-modules/cumulus/ecs_cluster` and `fake-provider-cf.yml` launch templates to require IMDSv2 
+  - Updated `tf-modules/cumulus/ecs_cluster` and `fake-provider-cf.yml` launch templates to require IMDSv2
 
 ### Fixed
 
