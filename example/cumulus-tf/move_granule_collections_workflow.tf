@@ -9,9 +9,9 @@ module "move_granule_collections_workflow" {
 
 
   state_machine_definition = templatefile(
-    "${path.module}/ecs_move_granule_collections.asl.json",
+    "${path.module}/move_granule_collections_workflow.asl.json",
     {
-      change_granule_collection_s3_task_arn: module.ingest.change_granule_collection_s3.task_arn
+      change_granule_collection_s3_task_arn: module.ingest.change_granule_collection_s3_task.task_arn
     }
   )
 }
