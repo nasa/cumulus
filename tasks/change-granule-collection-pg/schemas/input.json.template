@@ -1,0 +1,17 @@
+{
+  "title": "ChangeGranuleCollectionPGsInput",
+  "description": "Describes the input expected by the move-granules task",
+  "type": "object",
+  "required": [
+    "granules"
+  ],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "Array of all granules",
+      "items": {
+        "type": "string",
+      }
+    }
+  }
+}

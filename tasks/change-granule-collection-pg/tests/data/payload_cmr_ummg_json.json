@@ -1,0 +1,29 @@
+{
+  "config": {
+    "bucket": "cumulus-internal",
+    "buckets": {
+      "internal": {
+        "name": "cumulus-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-public",
+        "type": "public"
+      }
+    },
+    "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/"
+  },
+  "input": {
+    "granules": [
+      "base_umm_granule"
+    ]
+  }
+}
