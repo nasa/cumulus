@@ -29,7 +29,7 @@ When you discover which migration(s) are missing from the `Migrations Table`. Th
 
 ### Other potential issues
 
-Migration Lambda timeouts (or other related timeouts) may be caused by `VACUUM` statements in the migration. If you find your deployment not completing despite the migration table and the migrations being consistent, this may be the issue. In v18.5.2, some `VACUUM` statements have been removed to tailor for this issue. If you find yourself struggling with v18.5.1 despite completing the above steps, plese upgrade to v18.5.2 and try for this issue. If you find yourself struggling with v18.5.1 despite completing the above steps, plese upgrade to v18.5.2 and try deployment again. The removal of potentially long-running migrations may resolve the issue.
+Migration Lambda timeouts (or other related timeouts) may be caused by `VACUUM` statements in the migration. If you find your deployment not completing despite the migration table and the migrations being consistent, this may be the issue. In v18.5.2, some `VACUUM` statements have been removed to tailor for this issue. If you find yourself struggling with v18.5.1 despite completing the above steps, please upgrade to v18.5.2 and try deployment again. The removal of potentially long-running migrations may resolve the issue.
 
 ### Miscellaneous
 
