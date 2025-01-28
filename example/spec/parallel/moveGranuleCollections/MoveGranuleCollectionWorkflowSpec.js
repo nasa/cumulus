@@ -67,7 +67,7 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
       workflowExecutionArn = await buildAndStartWorkflow(
         config.stackName,
         config.bucket,
-        'ECSMoveGranuleCollectionsWorkflow',
+        'MoveGranuleCollectionsWorkflow',
         getSourceCollection(sourceUrlPrefix),
         provider,
         { granules: ['MOD11A1.A2017200.h19v04.006.2017201090724'] },
