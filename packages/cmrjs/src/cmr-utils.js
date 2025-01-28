@@ -714,7 +714,7 @@ function updateUMMGMetadataObject({
   const originalURLs = get(metadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   set(metadataObject, 'RelatedUrls', mergedURLs);
-  return metadataObject
+  return metadataObject;
 }
 
 /**
@@ -903,11 +903,10 @@ function updateEcho10XMLMetadataObject({
   set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
   set(updatedGranule, 'OnlineResources.OnlineResource', mergedOnlineResources);
   set(updatedGranule, 'AssociatedBrowseImageUrls.ProviderBrowseUrl', mergedAssociatedBrowse);
-  const out =  {
+  return {
     ...metadataObject,
     Granule: updatedGranule,
   };
-  return out;
 }
 
 /**

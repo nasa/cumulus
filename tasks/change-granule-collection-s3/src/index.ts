@@ -82,7 +82,7 @@ function moveRequested(
 
 async function s3MoveNeeded(
   sourceFile: Omit<ValidApiFile, 'granuleId'>,
-  targetFile: Omit<ValidApiFile, 'granuleId'>,
+  targetFile: Omit<ValidApiFile, 'granuleId'>
 ): Promise<boolean> {
   if (!moveRequested(sourceFile, targetFile)) {
     return false;
@@ -150,7 +150,8 @@ async function moveGranulesInS3({
           }
           const isMetadataFile = isCMRMetadataFile(targetFile);
           if (isMetadataFile && cmrObject) {
-            return await uploadCMRFile(targetFile, cmrObject);
+            await uploadCMRFile(targetFile, cmrObject);
+            return;
           }
           if (!await s3MoveNeeded(sourceFile, targetFile)) {
             return;
@@ -376,12 +377,10 @@ async function moveGranules(event: ChangeCollectionsS3Event): Promise<Object> {
   } = await buildTargetGranules(
     granulesInput, config, cmrFilesByGranuleId
   );
-  console.log(JSON.stringify(cmrObjects, null, 2))
   const updatedCMRObjects = await updateCMRData(
     targetGranules, cmrObjects, cmrFilesByGranuleId,
     config
   );
-  console.log(JSON.stringify(updatedCMRObjects, null, 2))
   // Move files from staging location to final location
   await moveFilesForAllGranules({
     sourceGranules: granulesInput,

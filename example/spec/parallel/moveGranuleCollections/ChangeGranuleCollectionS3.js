@@ -7,9 +7,6 @@ const {
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
-const {
-  granules,
-} = require('@cumulus/api-client');
 
 const { v4: uuidv4 } = require('uuid');
 const { loadConfig } = require('../../helpers/testUtils');
@@ -80,13 +77,13 @@ describe('when moveGranulesCollection is called', () => {
 
       finalFiles = getTargetFiles(targetUrlPrefix, config);
       await Promise.all(finalFiles.map(async (file) => {
-        expect(await s3ObjectExists({Bucket: file.bucket, Key: file.key})).toEqual(true)
+        expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
       }));
-    })
+    });
     it('keeps old s3 files as well', async () => {
       if (beforeAllFailed) fail('beforeAllFailed');
       await Promise.all(processGranule.files.map(async (file) => {
-        expect(await s3ObjectExists({Bucket: file.bucket, Key: file.key})).toEqual(true)
+        expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
       }));
     });
   });

@@ -48,7 +48,7 @@ module "ecs_move_granule_collections" {
   state_machine_definition = templatefile(
     "${path.module}/ecs_move_granule_collections.asl.json",
     {
-      ecs_task_change_granule_collection_s3_id: aws_sfn_activity.ecs_task_change_granule_collection_s3.id
+      change_granule_collection_s3_task_arn: module.cumulus.change_granule_collection_s3.task_arn
     }
   )
 }

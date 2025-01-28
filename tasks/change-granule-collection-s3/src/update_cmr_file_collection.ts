@@ -114,15 +114,16 @@ export const updateCmrFileCollections = ({
     updateCMRCollectionValue(cmrObjectCopy, 'Collection.ShortName', collection.name, 'Granule.Collection.ShortName');
     updateCMRCollectionValue(cmrObjectCopy, 'Collection.VersionId', collection.version, 'Granule.Collection.VersionId');
     const out = updateEcho10XMLMetadataObject(params);
-    // our xml stringify function packages the metadata in "Granule", resulting in possible nested Granule object
+    // our xml stringify function packages the metadata in "Granule",
+    // resulting in possible nested Granule object
     return out.Granule || out;
-  } else if (isUMMGFilename(cmrFileName)) {
+  }
+  if (isUMMGFilename(cmrFileName)) {
     updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.ShortName', collection.name);
     updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.VersionId', collection.version);
     return updateUMMGMetadataObject(params);
-  } else {
-    throw new AssertionError({ message: 'cmr file in unknown format' });
   }
+  throw new AssertionError({ message: 'cmr file in unknown format' });
 };
 
 export const getCMRMetadata = async (cmrFile: ValidApiFile, granuleId: string): Promise<Object> => {
@@ -135,6 +136,7 @@ export const getCMRMetadata = async (cmrFile: ValidApiFile, granuleId: string): 
     return granulesOutput;
   }
 };
+
 export function isCMRMetadataFile(file: ApiFile | Omit<ApiFile, 'granuleId'>): boolean {
   return file.type === 'metadata';
 }
