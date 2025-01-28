@@ -141,7 +141,7 @@ async function postToCMR(event) {
 
   // if republish is true, unpublish granules which are public
   if (republish) {
-    await removeGranuleFromCmr(granules, concurrency);
+    await removeGranuleFromCmr({ granules, cmrSettings, concurrency });
   }
 
   granules.forEach((granule) => addEtagsToFileObjects(granule, etags));

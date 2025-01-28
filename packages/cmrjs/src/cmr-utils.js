@@ -237,7 +237,7 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
  * Remove granule from CMR.
  *
  * @param {string} granuleUR - the granuleUR
- * @param {omitbject} creds - credentials needed to post to CMR service
+ * @param {object} creds - credentials needed to post to CMR service
  */
 async function removeFromCMR(granuleUR, creds) {
   const cmrClient = new CMR(creds);
