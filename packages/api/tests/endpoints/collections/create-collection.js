@@ -523,5 +523,5 @@ test.serial('POST does not write to SNS if writing to PostgreSQL fails', async (
     WaitTimeSeconds: 10,
   });
 
-  t.is(Messages.length, 0);
+  t.is(Messages, undefined);
 });

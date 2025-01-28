@@ -459,5 +459,5 @@ test.serial('writePdr() does not publish an SNS message if pdr_sns_topic_arn is 
   const { Messages } = await sqs().send(
     new ReceiveMessageCommand({ QueueUrl, WaitTimeSeconds: 10 })
   );
-  t.is(Messages.length, 0);
+  t.is(Messages, undefined);
 });
