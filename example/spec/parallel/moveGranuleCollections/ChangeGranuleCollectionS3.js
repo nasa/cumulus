@@ -4,6 +4,7 @@ const { InvokeCommand } = require('@aws-sdk/client-lambda');
 const { lambda } = require('@cumulus/aws-client/services');
 const {
   deleteS3Object,
+  s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 const {
@@ -12,16 +13,13 @@ const {
 
 const { v4: uuidv4 } = require('uuid');
 const { loadConfig } = require('../../helpers/testUtils');
-const { constructCollectionId } = require('../../../../packages/message/Collections');
-const { getTargetCollection, getProcessGranule, setupInitialState, getPayload, getTargetFiles } = require('./change-granule-collection-s3-spec-utils');
+const { getProcessGranule, setupInitialState, getPayload, getTargetFiles } = require('./move-granule-collection-spec-utils');
 describe('when moveGranulesCollection is called', () => {
   let stackName;
   const sourceUrlPrefix = `source_path/${uuidv4()}`;
   const targetUrlPrefix = `target_path/${uuidv4()}`;
-  const targetCollection = getTargetCollection(targetUrlPrefix);
   let processGranule;
   let config;
-  // let systemBucket;
   beforeAll(async () => {
     config = await loadConfig();
     stackName = config.stackName;
@@ -77,14 +75,19 @@ describe('when moveGranulesCollection is called', () => {
     it('moves the granule data in s3', () => {
       if (beforeAllFailed) fail('beforeAllFailed');
     });
-    it('updates the granule data in cumulus', async () => {
+    it('updates the granule data in s3', async () => {
       if (beforeAllFailed) fail('beforeAllFailed');
-      const cumulusGranule = await granules.getGranule({
-        prefix: stackName,
-        granuleId: processGranule.granuleId,
-      });
-      expect(cumulusGranule.granuleId).toEqual(processGranule.granuleId);
-      expect(cumulusGranule.collectionId).toEqual(constructCollectionId(targetCollection.name, targetCollection.version));
+
+      finalFiles = getTargetFiles(targetUrlPrefix, config);
+      await Promise.all(finalFiles.map(async (file) => {
+        expect(await s3ObjectExists({Bucket: file.bucket, Key: file.key})).toEqual(true)
+      }));
+    })
+    it('keeps old s3 files as well', async () => {
+      if (beforeAllFailed) fail('beforeAllFailed');
+      await Promise.all(processGranule.files.map(async (file) => {
+        expect(await s3ObjectExists({Bucket: file.bucket, Key: file.key})).toEqual(true)
+      }));
     });
   });
 });
