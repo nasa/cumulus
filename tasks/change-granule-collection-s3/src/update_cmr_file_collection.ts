@@ -70,7 +70,7 @@ const updateCMRCollectionValue = (
 
 export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cmrObject: Object) => {
   let cmrFileString;
-  if (isUMMGFilename(cmrFile.name || cmrFile.key)) {
+  if (isUMMGFilename(cmrFile.fileName || cmrFile.key)) {
     cmrFileString = JSON.stringify(cmrObject, undefined, 2);
   } else {
     cmrFileString = generateEcho10XMLString(cmrObject);
@@ -113,15 +113,16 @@ export const updateCmrFileCollections = ({
   if (isECHO10Filename(cmrFileName)) {
     updateCMRCollectionValue(cmrObjectCopy, 'Collection.ShortName', collection.name, 'Granule.Collection.ShortName');
     updateCMRCollectionValue(cmrObjectCopy, 'Collection.VersionId', collection.version, 'Granule.Collection.VersionId');
-    updateEcho10XMLMetadataObject(params);
+    const out = updateEcho10XMLMetadataObject(params);
+    // our xml stringify function packages the metadata in "Granule", resulting in possible nested Granule object
+    return out.Granule || out;
   } else if (isUMMGFilename(cmrFileName)) {
     updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.ShortName', collection.name);
     updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.VersionId', collection.version);
-    updateUMMGMetadataObject(params);
+    return updateUMMGMetadataObject(params);
   } else {
     throw new AssertionError({ message: 'cmr file in unknown format' });
   }
-  return cmrObjectCopy;
 };
 
 export const getCMRMetadata = async (cmrFile: ValidApiFile, granuleId: string): Promise<Object> => {

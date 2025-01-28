@@ -714,6 +714,7 @@ function updateUMMGMetadataObject({
   const originalURLs = get(metadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   set(metadataObject, 'RelatedUrls', mergedURLs);
+  return metadataObject
 }
 
 /**
@@ -892,23 +893,21 @@ function updateEcho10XMLMetadataObject({
     distributionBucketMap,
   });
   newURLs.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
-
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
     removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
   const mergedOnlineAccessURLs = buildMergedEchoURLObject(newURLs, originalOnlineAccessURLs,
     removedURLs, ['GET DATA', 'GET DATA VIA DIRECT ACCESS'], ['Type', 'Description']);
   const mergedAssociatedBrowse = buildMergedEchoURLObject(newURLs, originalAssociatedBrowseURLs,
     removedURLs, ['GET RELATED VISUALIZATION'], ['URLDescription', 'Type']);
-
   // Update the Granule with the updated/merged lists
   set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
   set(updatedGranule, 'OnlineResources.OnlineResource', mergedOnlineResources);
   set(updatedGranule, 'AssociatedBrowseImageUrls.ProviderBrowseUrl', mergedAssociatedBrowse);
-
-  return {
+  const out =  {
     ...metadataObject,
     Granule: updatedGranule,
   };
+  return out;
 }
 
 /**

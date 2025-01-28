@@ -277,6 +277,61 @@ test.serial('Should move files to final location and update pg data with cmr xml
     Bucket: t.context.publicBucket,
     Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
+  const UMM = await metadataObjectFromCMRFile(`s3://${t.context.publicBucket}/example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`);
+  const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map((urlObject) => urlObject.URL);
+  const browseUrls = UMM.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map((urlObject) => urlObject.URL);
+  const onlineAccessURLs = UMM.Granule.OnlineAccessURLs.OnlineAccessURL.map((urlObject) => urlObject.URL);
+
+  t.true(onlineAccessURLs.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.protectedBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ));
+  t.true(browseUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/jpg/example2/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  ));
+  t.true(browseUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ));
+  t.true(onlineResourceUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  ));
+
+  t.true(onlineAccessURLs.includes(
+    's3://' +
+    `${t.context.protectedBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ));
+  t.true(browseUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/jpg/example2/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  ));
+  t.true(browseUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ));
+  t.true(onlineResourceUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  ));
+
 });
 
 test.serial('Should move files to final location and update pg data with cmr umm json file', async (t) => {
@@ -366,7 +421,7 @@ test.serial('Should move files to final location and update pg data with cmr umm
   ));
 });
 
-test('handles partially moved files', async (t) => {
+test.serial('handles partially moved files', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
 
@@ -433,6 +488,60 @@ test('handles partially moved files', async (t) => {
     Bucket: t.context.publicBucket,
     Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
+  const UMM = await metadataObjectFromCMRFile(`s3://${t.context.publicBucket}/example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`);
+  const onlineAccessURLs = UMM.Granule.OnlineAccessURLs.OnlineAccessURL.map((urlObject) => urlObject.URL);
+  const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map((urlObject) => urlObject.URL);
+  const browseUrls = UMM.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map((urlObject) => urlObject.URL);
+
+  t.true(onlineAccessURLs.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.protectedBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ));
+  t.true(browseUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/jpg/example2/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  ));
+  t.true(browseUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ));
+  t.true(onlineResourceUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  ));
+
+  t.true(onlineAccessURLs.includes(
+    's3://' +
+    `${t.context.protectedBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ));
+  t.true(browseUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/jpg/example2/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  ));
+  t.true(browseUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ));
+  t.true(onlineResourceUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  ));
 });
 
 test.serial('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
@@ -494,9 +603,64 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
     Bucket: t.context.publicBucket,
     Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
+
+  const UMM = await metadataObjectFromCMRFile(`s3://${t.context.publicBucket}/example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`);
+  const onlineAccessURLs = UMM.Granule.OnlineAccessURLs.OnlineAccessURL.map((urlObject) => urlObject.URL);
+  const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map((urlObject) => urlObject.URL);
+  const browseUrls = UMM.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map((urlObject) => urlObject.URL);
+
+  t.true(onlineAccessURLs.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.protectedBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ));
+  t.true(browseUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/jpg/example2/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  ));
+  t.true(browseUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ));
+  t.true(onlineResourceUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  ));
+
+  t.true(onlineAccessURLs.includes(
+    's3://' +
+    `${t.context.protectedBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ));
+  t.true(browseUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/jpg/example2/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  ));
+  t.true(browseUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ));
+  t.true(onlineResourceUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  ));
 });
 
-test.serial('handles files that need no move', async (t) => {
+test.only('handles files that need no move', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
 
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
@@ -531,4 +695,46 @@ test.serial('handles files that need no move', async (t) => {
     Bucket: t.context.protectedBucket,
     Key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
+  const UMM = await metadataObjectFromCMRFile(`s3://${t.context.protectedBucket}/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`);
+  const onlineAccessURLs = UMM.Granule.OnlineAccessURLs.OnlineAccessURL.map((urlObject) => urlObject.URL);
+  const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map((urlObject) => urlObject.URL);
+  const browseUrls = UMM.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map((urlObject) => urlObject.URL);
+  // this is not adding the _1.jpg file to the cmr file because these are private
+  t.true(onlineAccessURLs.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.protectedBucket}` +
+    '/file-staging/subdir/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ));
+  t.true(browseUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/file-staging/subdir/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ));
+  t.true(onlineResourceUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.protectedBucket}` +
+    '/file-staging/subdir/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  ));
+
+  t.true(onlineAccessURLs.includes(
+    's3://' +
+    `${t.context.protectedBucket}` +
+    '/file-staging/subdir/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ));
+  t.true(browseUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/file-staging/subdir/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ));
+  t.true(onlineResourceUrls.includes(
+    's3://' +
+    `${t.context.protectedBucket}` +
+    '/file-staging/subdir/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  ));
 });

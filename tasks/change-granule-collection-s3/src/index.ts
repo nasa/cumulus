@@ -10,7 +10,7 @@ import zip from 'lodash/zip';
 import { Dictionary } from 'lodash';
 import path from 'path';
 import pMap from 'p-map';
-import { MissingS3FileError, DuplicateFile, InvalidArgument } from '@cumulus/errors';
+import { MissingS3FileError, InvalidArgument } from '@cumulus/errors';
 import { S3 } from '@cumulus/aws-client';
 import {
   unversionFilename,
@@ -83,35 +83,19 @@ function moveRequested(
 async function s3MoveNeeded(
   sourceFile: Omit<ValidApiFile, 'granuleId'>,
   targetFile: Omit<ValidApiFile, 'granuleId'>,
-  isMetadataFile: boolean
 ): Promise<boolean> {
   if (!moveRequested(sourceFile, targetFile)) {
     return false;
   }
 
   const targetExists = await S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key });
-  /**
-   * cmrmetadata file must skip duplicate behavior since it will
-   * intentionally be duplicated during first move. It should be impossible to get here with
-   * target and *not* source existing, but this is not a normal duplicate situation.
-   * this is because old cmrfile won't be deleted until after postgres record is updated
-  */
-  if (isMetadataFile) {
-    if (targetExists) {
-      return false;
-    }
-    return true;
-  }
-  const sourceExists = await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key });
-  if (targetExists && sourceExists) {
-    // TODO should this use duplicateHandling?
-    throw new DuplicateFile(`target location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} already occupied`);
-  }
-  if (sourceExists) {
-    return true;
-  }
   if (targetExists) {
     return false;
+  }
+
+  const sourceExists = await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key });
+  if (sourceExists) {
+    return true;
   }
   throw new MissingS3FileError(`source location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} doesn't exist`);
 }
@@ -165,12 +149,13 @@ async function moveGranulesInS3({
             return;
           }
           const isMetadataFile = isCMRMetadataFile(targetFile);
-          if (!await s3MoveNeeded(sourceFile, targetFile, isMetadataFile)) {
+          if (isMetadataFile && cmrObject) {
+            return await uploadCMRFile(targetFile, cmrObject);
+          }
+          if (!await s3MoveNeeded(sourceFile, targetFile)) {
             return;
           }
-          if (isMetadataFile && cmrObject) {
-            await uploadCMRFile(targetFile, cmrObject);
-          } else {
+          if (!isMetadataFile) {
             await CopyObject({
               sourceBucket: sourceFile.bucket,
               sourceKey: sourceFile.key,
@@ -391,16 +376,12 @@ async function moveGranules(event: ChangeCollectionsS3Event): Promise<Object> {
   } = await buildTargetGranules(
     granulesInput, config, cmrFilesByGranuleId
   );
+  console.log(JSON.stringify(cmrObjects, null, 2))
   const updatedCMRObjects = await updateCMRData(
     targetGranules, cmrObjects, cmrFilesByGranuleId,
     config
   );
-
-  // const distributionEndpoint = config.distribution_endpoint;
-  // const distributionBucketMap = fetchDistributionBucketMap();
-  // const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
-
-  // const updatedCmrMetadata = updateCMRMetadata()
+  console.log(JSON.stringify(updatedCMRObjects, null, 2))
   // Move files from staging location to final location
   await moveFilesForAllGranules({
     sourceGranules: granulesInput,
