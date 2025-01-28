@@ -1,5 +1,5 @@
 {
-  "title": "ChangeGranuleCollectionS3sConfig",
+  "title": "ChangeGranuleCollectionS3Config",
   "description": "Describes the config used by the change-granule-collection-s3 task",
   "type": "object",
   "required": [
