@@ -137,6 +137,7 @@ test.serial('postToCMR fails to republish granules when CMR is down', async (t) 
   sinon.stub(cmrClient.CMR.prototype, 'getToken');
   const newPayload = cloneDeep(t.context.payload);
   newPayload.config.republish = true;
+  newPayload.config.concurrency = 2;
   newPayload.input.granules[0].published = true;
   newPayload.input.granules[0].cmrLink = randomString;
 
@@ -213,6 +214,7 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
 test.serial('postToCMR successfully republishes granules with correct payload', async (t) => {
   const { bucket, payload } = t.context;
   const newPayload = cloneDeep(payload);
+  newPayload.config.concurrency = 2;
   newPayload.config.republish = true;
   newPayload.input.granules[0].published = true;
   newPayload.input.granules[0].cmrLink = randomString;

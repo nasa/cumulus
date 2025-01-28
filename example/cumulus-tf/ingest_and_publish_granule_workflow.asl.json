@@ -341,10 +341,8 @@
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
-            "concurrency": 20,
             "launchpad": "{$.meta.launchpad}",
-            "etags": "{$.meta.file_etags}",
-            "republish": false
+            "etags": "{$.meta.file_etags}"
           }
         }
       },
