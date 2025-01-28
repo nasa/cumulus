@@ -9,10 +9,15 @@ const pMap = require('p-map');
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
+const {
+  getWorkflowFileKey,
+} = require('@cumulus/common/workflows');
 
 const Logger = require('@cumulus/logger');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
+
 const {
   CollectionPgModel,
   ExecutionPgModel,
@@ -32,9 +37,11 @@ const {
   recordNotFoundString,
   multipleRecordFoundString,
 } = require('@cumulus/es-client/search');
+const { sfn } = require('@cumulus/aws-client/services');
+
 const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
 const { updateGranule: updateEsGranule } = require('@cumulus/es-client/indexer');
-
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
 
@@ -64,6 +71,7 @@ const {
   getFunctionNameFromRequestContext,
 } = require('../lib/request');
 
+const { buildPayload } = require('../lib/rulesHelpers');
 const schemas = require('../lib/schemas.js');
 
 /**
@@ -940,6 +948,127 @@ async function del(req, res) {
   return res.send({ detail: 'Record deleted', ...deletionDetails });
 }
 
+const bulkMoveCollectionSchema = z.object({
+  sourceCollectionId: z.string().nonempty('sourceCollectionId is required'),
+  targetCollectionId: z.string().nonempty('targetCollectionId is required'),
+  batchSize: z.number().positive().optional().default(100),
+  concurrency: z.number().positive().optional().default(100),
+  invalidBehavior: z.enum(['error', 'skip']).default('error'),
+  s3MultipartChunkSize: z.number().optional(),
+  executionName: z.string().optional(),
+});
+const parseBulkMoveCollectionPayload = zodParser('BulkMoveCollection payload', bulkMoveCollectionSchema);
+
+async function bulkMoveCollection(req, res) {
+  const {
+    knex = await getKnexClient(),
+    sfnMethod = sfn,
+    workflow = 'HelloWorldWorkflow',
+  } = req.testContext || {};
+
+  const collectionPgModel = new CollectionPgModel();
+  const granulePgModel = new GranulePgModel();
+
+  const body = parseBulkMoveCollectionPayload(req.body);
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+
+  if (!process.env.system_bucket) {
+    return res.boom.badRequest('API is misconfigured, system_bucket must be defined in the env variables');
+  }
+  if (!process.env.stackName) {
+    return res.boom.badRequest('API is misconfigured, stackName must be defined in the env variables');
+  }
+  //get collection
+  const pgCollection = await collectionPgModel.get(
+    knex,
+    deconstructCollectionId(body.sourceCollectionId)
+  );
+  // check collection returned
+  if (pgCollection === undefined) {
+    return res.boom.notFound(
+      `Collection not found for ${body.sourceCollectionId}`
+    );
+  }
+
+  const query = granulePgModel.queryBuilderSearch(knex, {
+    collection_cumulus_id: pgCollection.cumulus_id,
+  });
+  query.select('granule_id');
+  query.limit(body.batchSize);
+  const granules = await query;
+  if (granules.length === 0) {
+    return res.boom.notFound(
+      `No granules found for collection ${body.sourceCollectionId}`
+    );
+  }
+
+  const { name, version } = deconstructCollectionId(body.sourceCollectionId);
+  const executionName = body.executionName || uuidv4();
+
+  // TODO - bring in state machine arn/name from TF variable
+  // in the API config keystore
+  let stateMachineArn;
+  try {
+    const workflowArnObject = await getJsonS3Object(
+      process.env.system_bucket,
+      getWorkflowFileKey(process.env.stackName, workflow)
+    );
+    stateMachineArn = workflowArnObject.arn;
+  } catch (error) {
+    return res.boom.badRequest(
+      `Unable to find state machine ARN for workflow ${workflow}`
+    );
+  }
+  const input = await buildPayload({
+    workflow,
+    cumulus_meta: {
+      workflow_start_time: Date.now(),
+      execution_name: executionName,
+      state_machine: stateMachineArn,
+      system_bucket: process.env.system_bucket,
+    },
+    meta: {
+      bulkMoveCollection: {
+        batchSize: body.batchSize,
+        concurrency: body.concurrency,
+        invalidBehavior: body.invalidBehavior,
+        s3MultipartChunkSize: body.s3MultipartChunkSize,
+        targetCollection: deconstructCollectionId(body.targetCollectionId),
+      },
+    },
+    payload: {
+      granuleIds: granules.map((granule) => granule.granule_id),
+    },
+    collection: {
+      name,
+      version,
+    },
+  });
+
+  input.cumulus_meta = { ...input?.template.cumulus_meta, ...input.cumulus_meta };
+  input.meta = { ...input.template?.meta, ...input.meta };
+
+  let startExecutionResult;
+  try {
+    startExecutionResult = await sfnMethod().startExecution({
+      stateMachineArn,
+      input: JSON.stringify(input),
+      name: executionName,
+    });
+  } catch (error) {
+    if (error instanceof ExecutionAlreadyExists) {
+      return res.boom.badRequest(`Execution ${executionName} already exists for state machine ${stateMachineArn}`);
+    }
+    throw error;
+  }
+  return res.send({
+    execution: startExecutionResult.executionArn,
+    message: `Successfully submitted bulk granule move collection with ${granules.length} granules`,
+  });
+}
+
 /**
  * Query a single granule by granuleId + collectionId.
  *
@@ -1206,6 +1335,7 @@ router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
 router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
 router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 
+router.post('/bulkMoveCollection', bulkMoveCollection);
 router.post(
   '/bulk',
   validateBulkGranulesRequest,
@@ -1229,6 +1359,7 @@ router.delete('/:collectionId/:granuleId', del);
 
 module.exports = {
   bulkDelete,
+  bulkMoveCollection,
   bulkOperations,
   bulkReingest,
   del,

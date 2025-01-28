@@ -54,7 +54,15 @@ test.before(async (t) => {
 
   // create a workflow template file
   const tKey = `${process.env.stackName}/workflow_template.json`;
-  await s3PutObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: tKey,
+    Body: JSON.stringify({
+      cumulus_meta: {
+        cumulus_version: 'fakeVersion',
+      },
+    }),
+  });
 
   // create a workflowKey
   // TODO use actual workflow name
@@ -241,7 +249,7 @@ test.serial('bulkMoveCollection generates the proper payload and calls startExec
   const expectedPayload = {
     cumulus_meta: {
       state_machine: workflowArn,
-      cumulus_version: process.env.CUMULUS_VERSION,
+      cumulus_version: 'fakeVersion',
     },
     meta: {
       bulkMoveCollection: {
