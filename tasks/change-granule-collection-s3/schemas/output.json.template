@@ -1,5 +1,5 @@
 {
-  "title": "ChangeGranuleCollectionS3sOutput",
+  "title": "ChangeGranuleCollectionS3Output",
   "description": "Describes the output produced by the move-granules task",
   "type": "object",
   "properties": {

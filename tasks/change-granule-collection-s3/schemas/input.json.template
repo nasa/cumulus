@@ -1,5 +1,5 @@
 {
-  "title": "ChangeGranuleCollectionS3sInput",
+  "title": "ChangeGranuleCollectionS3Input",
   "description": "Describes the input expected by the move-granules task",
   "type": "object",
   "required": [
