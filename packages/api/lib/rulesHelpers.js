@@ -45,7 +45,9 @@ const { recordIsValid } = require('./schema');
 const ruleSchema = require('./schemas').rule;
 
 /**
+ * @typedef {import('@cumulus/types/api/rules').PayloadRuleRecord} PayloadRuleRecord
  * @typedef {import('@cumulus/types/api/rules').RuleRecord} RuleRecord
+
  * @typedef {import('knex').Knex} Knex
  */
 
@@ -141,15 +143,15 @@ function lookupCollectionInEvent(eventObject) {
 /**
  * Build payload from rule for lambda invocation
  *
- * @param {RuleRecord} rule           - API rule
+ * @param {PayloadRuleRecord} rule - API rule with possible cumulus_metadata object
  *
- * @returns {Promise<unknown>} lambda invocation payload
+ * @returns lambda invocation payload
  */
 async function buildPayload(rule) {
   // makes sure the workflow exists
   const bucket = getRequiredEnvVar('system_bucket');
   const stack = getRequiredEnvVar('stackName');
-  const workflowFileKey = workflows.getWorkflowFileKey(stack, rule.workflow);
+  const workflowFileKey = workflows.getWorkflowFileKey(stack, rule.workflow || '');
 
   const exists = await s3Utils.fileExists(bucket, workflowFileKey);
   if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${rule.name}`);

@@ -25,6 +25,7 @@ export {
   ExecutionAlreadyExists,
   HistoryEvent,
   StateMachineDoesNotExist,
+  StartExecutionCommandOutput,
 } from '@aws-sdk/client-sfn';
 
 // Utility functions
