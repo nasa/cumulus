@@ -75,7 +75,6 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
           targetCollection: getTargetCollection(targetUrlPrefix),
           collection: getSourceCollection(sourceUrlPrefix),
           buckets: config.buckets,
-          distribution_endpoint: 'https://a.b.c'
         }
       );
       await Promise.all(finalFiles.map((file) => expectAsync(

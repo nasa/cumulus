@@ -22,6 +22,7 @@ import {
 import { BucketsConfig } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
 import { constructCollectionId } from '@cumulus/message/Collections';
+import { getCollection } from '@cumulus/api-client/collections';
 import { log } from '@cumulus/common';
 import { CollectionRecord } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
@@ -32,7 +33,6 @@ import { getGranule } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
 import { apiGranuleRecordIsValid, getCMRMetadata, isCMRMetadataFile, updateCmrFileCollections, uploadCMRFile, ValidApiFile, ValidGranuleRecord } from './update_cmr_file_collection';
-import { getCollection } from '@cumulus/api-client/collections';
 
 const MB = 1024 * 1024;
 
@@ -41,10 +41,6 @@ interface EventConfig {
     name: string,
     version: string,
   }
-  collection: {
-    name: string,
-    version: string
-  },
   buckets: BucketsConfigObject,
   s3MultipartChunksizeMb?: number,
   distribution_endpoint: string,
@@ -231,7 +227,7 @@ async function updateGranuleMetadata(
   bucketsConfig: BucketsConfig,
   cmrFiles: { [key: string]: ValidApiFile },
   cmrFileNames: Array<string>,
-  targetCollection: CollectionRecord,
+  targetCollection: CollectionRecord
 ): Promise<{
     targetGranule: ValidGranuleRecord,
     cmrObject: Object
@@ -242,7 +238,14 @@ async function updateGranuleMetadata(
     await getCMRMetadata(cmrFile, granule.granuleId) :
     {};
   const newFiles = granule.files?.map(
-    (file) => updateFileMetadata(file, granule, bucketsConfig, cmrMetadata, cmrFileNames, targetCollection)
+    (file) => updateFileMetadata(
+      file,
+      granule,
+      bucketsConfig,
+      cmrMetadata,
+      cmrFileNames,
+      targetCollection
+    )
   );
   return {
     targetGranule: {
@@ -286,17 +289,23 @@ async function buildTargetGranules(
   granules: Array<ValidGranuleRecord>,
   config: EventConfig,
   cmrFiles: { [key: string]: ValidApiFile },
-  targetCollection: CollectionRecord,
+  targetCollection: CollectionRecord
 ): Promise<{
     targetGranules: Array<ValidGranuleRecord>,
     cmrObjects: Array<Object>,
   }> {
-  const bucketsConfig = new BucketsConfig(config.buckets)
+  const bucketsConfig = new BucketsConfig(config.buckets);
   const cmrFileNames = Object.values(cmrFiles).map((f) => path.basename(f.key));
   const targetGranules: Array<ValidGranuleRecord> = [];
   const cmrObjects: Array<Object> = [];
   const granulesAndMetadata = await Promise.all(granules.map(
-    async (granule) => updateGranuleMetadata(granule, bucketsConfig, cmrFiles, cmrFileNames, targetCollection)
+    async (granule) => updateGranuleMetadata(
+      granule,
+      bucketsConfig,
+      cmrFiles,
+      cmrFileNames,
+      targetCollection
+    )
   ));
   granulesAndMetadata.forEach(({ targetGranule, cmrObject }) => {
     targetGranules.push(targetGranule);
@@ -320,7 +329,6 @@ async function moveGranules(event: ChangeCollectionsS3Event): Promise<Object> {
     collectionName: config.targetCollection.name,
     collectionVersion: config.targetCollection.version,
   });
-
 
   log.debug(`change-granule-collection-s3 config: ${config}`);
 

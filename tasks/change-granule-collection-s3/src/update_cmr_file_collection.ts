@@ -9,7 +9,7 @@ import {
   updateEcho10XMLMetadataObject,
   updateUMMGMetadataObject,
 } from '@cumulus/cmrjs/cmr-utils';
-import { ApiFile, ApiGranuleRecord, CollectionRecord } from '@cumulus/types';
+import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
 import { AssertionError } from 'assert';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
