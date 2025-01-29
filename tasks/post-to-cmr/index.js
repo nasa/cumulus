@@ -92,9 +92,9 @@ function checkForMetadata(granules, cmrFiles) {
  *
  * @param {object} params - parameter object
  * @param {Array<object>} params.granules - granules to remove
- * @param {Array<object>} params.cmrSettings - object to create CMR instance
+ * @param {object} params.cmrSettings - CMR credentials
  * @param {number} params.concurrency - Maximum concurrency of requests to CMR
- * @throws {AggregateError} - Errors from CMR requests
+ * @throws {Error} - Error from CMR request
  */
 async function removeGranuleFromCmr({ granules, cmrSettings, concurrency }) {
   const granulesToUnpublish = granules.filter((granule) => granule.published || !!granule.cmrLink);
@@ -164,7 +164,6 @@ async function postToCMR(event) {
   );
 
   const endTime = Date.now();
-
   const outputGranules = buildOutput(
     results,
     granules
