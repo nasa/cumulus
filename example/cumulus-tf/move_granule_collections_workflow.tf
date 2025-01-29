@@ -11,7 +11,7 @@ module "move_granule_collections_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/move_granule_collections_workflow.asl.json",
     {
-      change_granule_collection_s3_task_arn: module.ingest.change_granule_collection_s3_task.task_arn
+      change_granule_collection_s3_task_arn: module.cumulus.change_granule_collection_s3_task.task_arn
     }
   )
 }

@@ -4,7 +4,7 @@
   "type": "object",
   "required": [
     "distribution_endpoint",
-    "sourceCollection",
+    "collection",
     "targetCollection",
     "buckets"
   ],
@@ -68,7 +68,7 @@
         }
       }
     },
-    "sourceCollection": {
+    "collection": {
       "type": "object",
       "description": "collection to move granules from",
       "required": [

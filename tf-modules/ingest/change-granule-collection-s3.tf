@@ -14,6 +14,7 @@ resource "aws_lambda_function" "change_granule_collection_s3_task" {
     variables = {
       CMR_ENVIRONMENT                   = var.cmr_environment
       CMR_HOST                          = var.cmr_custom_host
+      DISTRIBUTION_ENDPOINT             = var.distribution_url
       CUMULUS_MESSAGE_ADAPTER_DIR       = "/opt/"
       default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
       stackName                         = var.prefix

@@ -46,7 +46,7 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
     config = await loadConfig();
     const providersDir = './data/providers/s3/';
     const stackName = config.stackName;
-    const testId = createTimestampedTestId(config.stackName, 'ChangeGranuleCollectionS3s');
+    const testId = createTimestampedTestId(config.stackName, 'ChangeGranuleCollectionS3');
     const testSuffix = createTestSuffix(testId);
     const provider = { id: `s3_provider${testSuffix}` };
 
@@ -67,14 +67,15 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
       workflowExecutionArn = await buildAndStartWorkflow(
         config.stackName,
         config.bucket,
-        'ECSMoveGranuleCollectionsWorkflow',
+        'MoveGranuleCollectionsWorkflow',
         getSourceCollection(sourceUrlPrefix),
         provider,
-        { granules: ['MOD11A1.A2017200.h19v04.006.2017201090724'] },
+        { granuleIds: ['MOD11A1.A2017200.h19v04.006.2017201090724'] },
         {
           targetCollection: getTargetCollection(targetUrlPrefix),
-          sourceCollection: getSourceCollection(sourceUrlPrefix),
+          collection: getSourceCollection(sourceUrlPrefix),
           buckets: config.buckets,
+          distribution_endpoint: 'https://a.b.c'
         }
       );
       await Promise.all(finalFiles.map((file) => expectAsync(
