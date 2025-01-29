@@ -67,12 +67,11 @@ function getOriginalCollection() {
   ));
 }
 
-async function setupDataStoreData(granuleIds, targetCollection, t) {
+async function setupDataStoreData(granules, targetCollection, t) {
   const {
     esClient,
     esIndex,
   } = t.context;
-  const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
   const sourceCollection = getOriginalCollection();
 
   await indexer.indexCollection(
@@ -93,8 +92,7 @@ async function setupDataStoreData(granuleIds, targetCollection, t) {
   )));
 }
 
-function granulesToFileURIs(granuleIds, t) {
-  const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
+function granulesToFileURIs(granules, t) {
   const files = granules.reduce((arr, g) => arr.concat(g.files), []);
   return files.map((file) => buildS3Uri(file.bucket, file.key));
 }
@@ -177,14 +175,14 @@ test.afterEach.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('Should move files to final location and update pg data with cmr umm json file', async (t) => {
+test.only('Should move files to final location and update pg data with cmr umm json file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
-  const payloadString = fs.readFileSync(payloadPath, 'utf8');
-  payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
-  payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
-  payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
-  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-
+  let payloadString = fs.readFileSync(payloadPath, 'utf8');
+  payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
+  payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
+  payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
+  t.context.payload = JSON.parse(payloadString);
+  console.log(JSON.stringify(t.context.payload, null, 2))
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granules, t
   );
@@ -529,8 +527,8 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
   ));
 });
 
-test.only('handles files that need no move', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
+test.serial('handles files that need no move', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
 
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(

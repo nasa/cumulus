@@ -10,7 +10,7 @@ import { CumulusMessage } from '@cumulus/types/message';
 import { CollectionFile } from '@cumulus/types';
 import { BucketsConfigObject } from '@cumulus/common/types';
 // import { s3CopyObject, s3PutObject } from '@cumulus/aws-client/S3';
-import { bulkPatch, bulkPatchGranuleCollection, getGranule } from '@cumulus/api-client/granules';
+import { bulkPatch, bulkPatchGranuleCollection } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 
 
