@@ -23,7 +23,37 @@
   },
   "input": {
     "granules": [
-      "base_umm_granule"
+      {
+        "status": "completed",
+        "collectionId": "MOD11A1___006",
+        "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+        "files": [
+          {
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "bucket": "replaceme-protectedBucket",
+            "type": "data"
+          },
+          {
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "bucket": "replaceme-privateBucket",
+            "type": "browse"
+          },
+          {
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "bucket": "replaceme-publicBucket",
+            "type": "browse"
+          },
+          {
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json",
+            "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json",
+            "bucket": "replaceme-protectedBucket",
+            "type": "metadata"
+          }
+        ]
+      }
     ]
   }
 }
