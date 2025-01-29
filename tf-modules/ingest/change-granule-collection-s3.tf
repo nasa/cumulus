@@ -1,12 +1,12 @@
 resource "aws_lambda_function" "change_granule_collection_s3_task" {
-  function_name    = "${var.prefix}-ChangeGranuleCollectionS3s"
+  function_name    = "${var.prefix}-ChangeGranuleCollectionS3"
   filename         = "${path.module}/../../tasks/change-granule-collection-s3/dist/webpack/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/change-granule-collection-s3/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"
-  timeout          = lookup(var.lambda_timeouts, "ChangeGranuleCollectionS3s", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "ChangeGranuleCollectionS3s", 700)
+  timeout          = lookup(var.lambda_timeouts, "ChangeGranuleCollectionS3", 900)
+  memory_size      = lookup(var.lambda_memory_sizes, "ChangeGranuleCollectionS3", 1000)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

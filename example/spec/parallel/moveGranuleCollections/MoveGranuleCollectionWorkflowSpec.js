@@ -100,7 +100,7 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
     expect(beforeAllFailed).toEqual(false);
     const activityOutput = await activityStep.getStepOutput(
       workflowExecutionArn,
-      'EcsTaskChangeGranuleCollectionS3s'
+      'EcsTaskChangeGranuleCollectionS3'
     );
     expect(activityOutput.payload.granules[0].files).toEqual([
       {

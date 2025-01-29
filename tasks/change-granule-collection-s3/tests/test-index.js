@@ -21,8 +21,6 @@ const {
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isUMMGFilename, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
-const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
-const indexer = require('@cumulus/es-client/indexer');
 // const jest = require('jest');
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
@@ -251,32 +249,6 @@ function getOriginalCollection() {
   ));
 }
 
-async function setupDataStoreData(granuleIds, targetCollection, t) {
-  const {
-    esClient,
-    esIndex,
-  } = t.context;
-  const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
-  const sourceCollection = getOriginalCollection();
-
-  await indexer.indexCollection(
-    esClient,
-    sourceCollection,
-    esIndex
-  );
-  await indexer.indexCollection(
-    esClient,
-    targetCollection,
-    esIndex
-  );
-
-  await Promise.all(granules.map((g) => indexer.indexGranule(
-    esClient,
-    g,
-    esIndex
-  )));
-}
-
 function granulesToFileURIs(granuleIds, t) {
   const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
   const files = granules.reduce((arr, g) => arr.concat(g.files), []);
@@ -312,9 +284,6 @@ test.beforeEach(async (t) => {
       },
     }
   ).moveGranules;
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
 
   t.context.publicBucket = randomId('public');
   t.context.protectedBucket = randomId('protected');
@@ -357,7 +326,6 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
-  await cleanupTestIndex(t.context);
 });
 
 test.serial('Should move files to final location and update pg data with cmr xml file', async (t) => {
@@ -369,11 +337,6 @@ test.serial('Should move files to final location and update pg data with cmr xml
   const collection = { name: 'MOD11A1', version: '001' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  await setupDataStoreData(
-    newPayload.input.granules,
-    collection,
-    t
-  );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -466,11 +429,6 @@ test.serial('Should move files to final location and update pg data with cmr umm
   const collection = { name: 'MOD11A1UMMG', version: '001' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  await setupDataStoreData(
-    newPayload.input.granules,
-    collection,
-    t
-  );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -555,11 +513,6 @@ test.serial('should update cmr data to hold extra urls but remove out-dated urls
   const collection = { name: 'MOD11A1UMMG', version: '001' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  await setupDataStoreData(
-    newPayload.input.granules,
-    collection,
-    t
-  );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   
@@ -616,11 +569,6 @@ test.serial('handles partially moved files', async (t) => {
   const collection = { name: 'MOD11A1', version: '001' };
   const newPayload = buildPayload(t, collection);
 
-  await setupDataStoreData(
-    newPayload.input.granules,
-    collection,
-    t
-  );
   await uploadFiles(filesToUpload, t.context.bucketMapping);
 
   const output = await moveGranules(newPayload);
@@ -741,11 +689,6 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
   const newPayload = buildPayload(t, collection);
 
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  await setupDataStoreData(
-    newPayload.input.granules,
-    collection,
-    t
-  );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -840,12 +783,6 @@ test.serial('handles files that need no move', async (t) => {
   const collection = { name: 'MOD11ANOMOVE', version: '001' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  await setupDataStoreData(
-    newPayload.input.granules,
-    collection,
-    t
-  );
-
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({

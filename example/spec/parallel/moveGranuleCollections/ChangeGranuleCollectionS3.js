@@ -39,7 +39,7 @@ describe('when moveGranulesCollection is called', () => {
       try {
         await setupInitialState(stackName, sourceUrlPrefix, targetUrlPrefix, config);
         const { $metadata } = await lambda().send(new InvokeCommand({
-          FunctionName: `${stackName}-ChangeGranuleCollectionS3s`,
+          FunctionName: `${stackName}-ChangeGranuleCollectionS3`,
           InvocationType: 'RequestResponse',
           Payload: JSON.stringify({
             cma: {
