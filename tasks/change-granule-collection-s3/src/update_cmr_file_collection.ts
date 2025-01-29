@@ -92,7 +92,7 @@ export const updateCmrFileCollections = ({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }: {
-  collection: CollectionRecord,
+  collection: { name: string, version: string },
   cmrFileName: string,
   cmrObject: Object
   files: Array<Omit<ValidApiFile, 'granuleId'>>,
