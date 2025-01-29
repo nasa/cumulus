@@ -546,6 +546,35 @@ test.serial('Should move files to final location and update pg data with cmr umm
   ));
 });
 
+test.serial('should update cmr data to hold extra urls but remove out-dated urls', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+  const filesToUpload = granulesToFileURIs(
+    t.context.payload.input.granules, t
+  );
+  const collection = { name: 'MOD11A1UMMG', version: '001' };
+  const newPayload = buildPayload(t, collection);
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  await setupDataStoreData(
+    newPayload.input.granules,
+    collection,
+    t
+  );
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+  
+  const UMM = await metadataObjectFromCMRFile(
+    `s3://${t.context.publicBucket}/example2/2016/` +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json'
+  );
+  const URLDescriptions = UMM.RelatedUrls.map((urlObject) => urlObject.Description);
+  // urls that should have been moved are tagged thusly in their description
+  t.false(URLDescriptions.includes('this should be gone by the end'))
+
+  // urls that shouldn't have been changed are tagged thsuly in their description
+  t.true(URLDescriptions.includes("This should be held onto as it doesn't follow the pattern of tea/s3 url"))
+});
+
 test.serial('handles partially moved files', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
