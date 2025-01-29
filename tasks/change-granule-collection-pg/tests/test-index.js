@@ -8,19 +8,14 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  buildS3Uri,
   recursivelyDeleteS3Bucket,
   putJsonS3Object,
-  s3ObjectExists,
-  promiseS3Upload,
-  parseS3Uri,
 } = require('@cumulus/aws-client/S3');
 const {
   randomId, validateOutput,
   randomString,
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
-const { isECHO10Filename, isUMMGFilename, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const { bulkPatchGranuleCollection, bulkPatch } = require('@cumulus/api/endpoints/granules');
 const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
 const indexer = require('@cumulus/es-client/indexer');
@@ -28,6 +23,7 @@ const indexer = require('@cumulus/es-client/indexer');
 
 const sinon = require('sinon');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
+const { generateLocalTestDb, migrationDir, GranulePgModel, CollectionPgModel, translateApiCollectionToPostgresCollection, translateApiGranuleToPostgresGranule, localStackConnectionEnv } = require('@cumulus/db');
 
 const mockResponse = () => {
   const res = {};
@@ -37,25 +33,6 @@ const mockResponse = () => {
 };
 
 let moveGranules;
-async function uploadFiles(files) {
-  await Promise.all(files.map((file) => {
-    let body;
-    if (isECHO10Filename(file)) {
-      body = fs.createReadStream('tests/data/meta.cmr.xml');
-    } else if (isUMMGFilename(file)) {
-      body = fs.createReadStream('tests/data/ummg-meta.cmr.json');
-    } else {
-      body = parseS3Uri(file).Key;
-    }
-    return promiseS3Upload({
-      params: {
-        Bucket: parseS3Uri(file).Bucket,
-        Key: parseS3Uri(file).Key,
-        Body: body,
-      },
-    });
-  }));
-}
 
 function getOriginalCollection() {
   return JSON.parse(fs.readFileSync(
@@ -69,20 +46,38 @@ function getOriginalCollection() {
 
 async function setupDataStoreData(granules, targetCollection, t) {
   const {
+    knex,
     esClient,
     esIndex,
   } = t.context;
+  const granuleModel = new GranulePgModel();
+  const collectionModel = new CollectionPgModel();
   const sourceCollection = getOriginalCollection();
-
+  const pgRecords = {};
+  await collectionModel.create(
+    knex,
+    translateApiCollectionToPostgresCollection(sourceCollection)
+  );
   await indexer.indexCollection(
     esClient,
     sourceCollection,
     esIndex
   );
+  [pgRecords.targetCollection] = await collectionModel.create(
+    knex,
+    translateApiCollectionToPostgresCollection(targetCollection)
+  );
   await indexer.indexCollection(
     esClient,
     targetCollection,
     esIndex
+  );
+  pgRecords.granules = await granuleModel.insert(
+    knex,
+    await Promise.all(granules.map(async (g) => (
+      await translateApiGranuleToPostgresGranule({ dynamoRecord: g, knexOrTransaction: knex })
+    ))),
+    ['cumulus_id', 'granule_id']
   );
 
   await Promise.all(granules.map((g) => indexer.indexGranule(
@@ -90,11 +85,7 @@ async function setupDataStoreData(granules, targetCollection, t) {
     g,
     esIndex
   )));
-}
-
-function granulesToFileURIs(granules, t) {
-  const files = granules.reduce((arr, g) => arr.concat(g.files), []);
-  return files.map((file) => buildS3Uri(file.bucket, file.key));
+  return pgRecords;
 }
 
 function buildPayload(t, collection) {
@@ -124,14 +115,19 @@ test.beforeEach(async (t) => {
         bulkPatch: (params) => (
           bulkPatch(params, mockResponse())
         ),
-        getGranule: (params) => dummyGetGranule(params.granuleId, t),
       },
     }
   ).moveGranules;
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
 
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
   t.context.publicBucket = randomId('public');
   t.context.protectedBucket = randomId('protected');
   t.context.privateBucket = randomId('private');
@@ -152,6 +148,7 @@ test.beforeEach(async (t) => {
   ]);
   process.env = {
     ...process.env,
+    ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
   process.env.system_bucket = t.context.systemBucket;
@@ -169,376 +166,44 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await recursivelyDeleteS3Bucket(t.context.publicBucket);
-  await recursivelyDeleteS3Bucket(t.context.protectedBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
   await cleanupTestIndex(t.context);
 });
 
-test.only('Should move files to final location and update pg data with cmr umm json file', async (t) => {
+test.serial('Should move files to final location and update pg data with cmr umm json file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
   let payloadString = fs.readFileSync(payloadPath, 'utf8');
   payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
   payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
   payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
   t.context.payload = JSON.parse(payloadString);
-  console.log(JSON.stringify(t.context.payload, null, 2))
-  const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules, t
-  );
   const collectionPath = path.join(__dirname, 'data', 'new_collection_ummg_cmr.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
-  await uploadFiles(filesToUpload, t.context.bucketMapping);
-  await setupDataStoreData(
+  const pgRecords = await setupDataStoreData(
     newPayload.input.granules,
     collection,
     t
   );
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
-  t.true(await s3ObjectExists({
-    Bucket: t.context.protectedBucket,
-    Key: 'example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'example2/2016/MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json',
-  }));
-  const UMM = await metadataObjectFromCMRFile(
-    `s3://${t.context.publicBucket}/example2/2016/` +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json'
-  );
-  const relatedURLS = UMM.RelatedUrls.map((urlObject) => urlObject.URL);
-
-  t.true(relatedURLS.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.protectedBucket}` +
-    '/example2/2016/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
-  ));
-  t.true(relatedURLS.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/jpg/example2/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
-  ));
-  t.true(relatedURLS.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/example2/2016/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
-  ));
-  t.true(relatedURLS.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/example2/2016/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json'
-  ));
-
-  t.true(relatedURLS.includes(
-    's3://' +
-    `${t.context.protectedBucket}` +
-    '/example2/2016/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
-  ));
-  t.true(relatedURLS.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/jpg/example2/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
-  ));
-  t.true(relatedURLS.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/example2/2016/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
-  ));
-  t.true(relatedURLS.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/example2/2016/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json'
-  ));
+  const granuleModel = new GranulePgModel();
+  const finalPgGranule = await granuleModel.get(t.context.knex, {
+    cumulus_id: pgRecords.granules[0].cumulus_id,
+  });
+  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
-test.serial('handles partially moved files', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
-  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-
-  // a starting granule state that disagrees with the payload as some have already been moved
-  const startingFiles = [
-    {
-      key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-      bucket: t.context.protectedBucket,
-      type: 'data',
-    },
-    {
-      key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-      bucket: t.context.publicBucket,
-      type: 'browse',
-    },
-    {
-      key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-      bucket: t.context.publicBucket,
-      type: 'browse',
-    },
-    {
-      key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      bucket: t.context.publicBucket,
-      type: 'metadata ',
-    },
-    {
-      key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      bucket: t.context.protectedBucket,
-      type: 'metadata',
-    },
-  ];
-  const filesToUpload = startingFiles.map((file) => buildS3Uri(file.bucket, file.key));
-  const collectionPath = path.join(__dirname, 'data', 'new_collection_base.json');
-  const collection = JSON.parse(fs.readFileSync(collectionPath));
-  const newPayload = buildPayload(t, collection);
-
-  await setupDataStoreData(
-    newPayload.input.granules,
-    collection,
-    t
-  );
-  await uploadFiles(filesToUpload, t.context.bucketMapping);
-
-  const output = await moveGranules(newPayload);
-  await validateOutput(t, output);
-  t.true(await s3ObjectExists({
-    Bucket: t.context.protectedBucket,
-    Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-  }));
-  const UMM = await metadataObjectFromCMRFile(
-    `s3://${t.context.publicBucket}/example2/2003/` +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  );
-  const onlineAccessURLs = UMM.Granule.OnlineAccessURLs.OnlineAccessURL.map(
-    (urlObject) => urlObject.URL
-  );
-  const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map(
-    (urlObject) => urlObject.URL
-  );
-  const browseUrls = UMM.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map(
-    (urlObject) => urlObject.URL
-  );
-
-  t.true(onlineAccessURLs.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.protectedBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
-  ));
-  t.true(browseUrls.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/jpg/example2/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
-  ));
-  t.true(browseUrls.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
-  ));
-  t.true(onlineResourceUrls.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  ));
-
-  t.true(onlineAccessURLs.includes(
-    's3://' +
-    `${t.context.protectedBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
-  ));
-  t.true(browseUrls.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/jpg/example2/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
-  ));
-  t.true(browseUrls.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
-  ));
-  t.true(onlineResourceUrls.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  ));
-});
-
-test.serial('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
-  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-  const startingFiles = [
-    {
-      key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-      bucket: t.context.protectedBucket,
-      type: 'data',
-    },
-    {
-      key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-      bucket: t.context.publicBucket,
-      type: 'browse',
-    },
-    {
-      key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-      bucket: t.context.publicBucket,
-      type: 'browse',
-    },
-    {
-      key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      bucket: t.context.publicBucket,
-      type: 'metadata ',
-    },
-    {
-      key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      bucket: t.context.bucketMapping.protected,
-      type: 'metadata',
-    },
-  ];
-  const filesToUpload = startingFiles.map((file) => buildS3Uri(file.bucket, file.key));
-  const collectionPath = path.join(__dirname, 'data', 'new_collection_base.json');
-  const collection = JSON.parse(fs.readFileSync(collectionPath));
-  const newPayload = buildPayload(t, collection);
-
-  await uploadFiles(filesToUpload, t.context.bucketMapping);
-  await setupDataStoreData(
-    newPayload.input.granules,
-    collection,
-    t
-  );
-  const output = await moveGranules(newPayload);
-  await validateOutput(t, output);
-  t.true(await s3ObjectExists({
-    Bucket: t.context.protectedBucket,
-    Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-  }));
-
-  const UMM = await metadataObjectFromCMRFile(
-    `s3://${t.context.publicBucket}/example2/2003/` +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  );
-  const onlineAccessURLs = UMM.Granule.OnlineAccessURLs.OnlineAccessURL.map(
-    (urlObject) => urlObject.URL
-  );
-  const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map(
-    (urlObject) => urlObject.URL
-  );
-  const browseUrls = UMM.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map(
-    (urlObject) => urlObject.URL
-  );
-
-  t.true(onlineAccessURLs.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.protectedBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
-  ));
-  t.true(browseUrls.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/jpg/example2/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
-  ));
-  t.true(browseUrls.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
-  ));
-  t.true(onlineResourceUrls.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  ));
-
-  t.true(onlineAccessURLs.includes(
-    's3://' +
-    `${t.context.protectedBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
-  ));
-  t.true(browseUrls.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/jpg/example2/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
-  ));
-  t.true(browseUrls.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
-  ));
-  t.true(onlineResourceUrls.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/example2/2003/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  ));
-});
 
 test.serial('handles files that need no move', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
 
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-  const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules, t
-  );
   const collectionPath = path.join(__dirname, 'data', 'no_move_collection.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
-  await uploadFiles(filesToUpload, t.context.bucketMapping);
-  await setupDataStoreData(
+  const pgRecords = await setupDataStoreData(
     newPayload.input.granules,
     collection,
     t
@@ -546,71 +211,11 @@ test.serial('handles files that need no move', async (t) => {
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
-  t.true(await s3ObjectExists({
-    Bucket: t.context.protectedBucket,
-    Key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.privateBucket,
-    Key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-  }));
-  t.true(await s3ObjectExists({
-    Bucket: t.context.protectedBucket,
-    Key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-  }));
-  const UMM = await metadataObjectFromCMRFile(
-    `s3://${t.context.protectedBucket}/` +
-    'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  );
-  const onlineAccessURLs = UMM.Granule.OnlineAccessURLs.OnlineAccessURL.map(
-    (urlObject) => urlObject.URL
-  );
-  const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map(
-    (urlObject) => urlObject.URL
-  );
-  const browseUrls = UMM.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map(
-    (urlObject) => urlObject.URL
-  );
-  // this is not adding the _1.jpg file to the cmr file because these are private
-  t.true(onlineAccessURLs.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.protectedBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
-  ));
-  t.true(browseUrls.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
-  ));
-  t.true(onlineResourceUrls.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.protectedBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  ));
-
-  t.true(onlineAccessURLs.includes(
-    's3://' +
-    `${t.context.protectedBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
-  ));
-  t.true(browseUrls.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
-  ));
-  t.true(onlineResourceUrls.includes(
-    's3://' +
-    `${t.context.protectedBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  ));
+  
+  const granuleModel = new GranulePgModel();
+  const finalPgGranule = await granuleModel.get(t.context.knex, {
+    cumulus_id: pgRecords.granules[0].cumulus_id,
+  });
+  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
