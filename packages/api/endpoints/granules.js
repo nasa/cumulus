@@ -5,7 +5,6 @@
 const { z } = require('zod');
 const isError = require('lodash/isError');
 const pMap = require('p-map');
-
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
@@ -78,12 +77,14 @@ const schemas = require('../lib/schemas.js');
  * @typedef {import('express').Request} Request
  * @typedef {import('express').Response} Response
  * @typedef {import('../src/zod-utils').BetterZodError} BetterZodError
+ * @typedef {import('knex').Knex} Knex
  */
 
 const log = new Logger({ sender: '@cumulus/api/granules' });
 
 /**
  * 200/201 helper method for .put update/create messages
+ *
  * @param {boolean} isNewRecord - Boolean variable representing if the granule is a new record
  * @param {Object} granule   - API Granule being written
  * @param {Object} res        - express response object
@@ -954,11 +955,29 @@ const bulkMoveCollectionSchema = z.object({
   batchSize: z.number().positive().optional().default(100),
   concurrency: z.number().positive().optional().default(100),
   invalidBehavior: z.enum(['error', 'skip']).default('error'),
+  cmrGranuleUrlType: z.enum(['http', 's3', 'both']).default('both'),
   s3MultipartChunkSize: z.number().optional(),
   executionName: z.string().optional(),
 });
 const parseBulkMoveCollectionPayload = zodParser('BulkMoveCollection payload', bulkMoveCollectionSchema);
 
+/**
+ * Bulk move granules to a new collection.
+ *
+ * @param {object} req - The request object.
+ * @param {object} req.body - The request payload.
+ * @param {string} req.body.sourceCollectionId - The source collection ID.
+ * @param {string} req.body.targetCollectionId - The target collection ID.
+ * @param {number} [req.body.batchSize=100] - The batch size for processing granules.
+ * @param {number} [req.body.concurrency=100] - The concurrency level for processing granules.
+ * @param {string} [req.body.invalidBehavior='error'] - The behavior for invalid granules
+ * ('error' or 'skip').
+ * @param {number} [req.body.s3MultipartChunkSize] - The S3 multipart chunk size.
+ * @param {string} [req.body.executionName] - The execution name.
+ * @param {object} testContext - The test context object
+ * @param {object} res - The response object.
+ * @returns {Promise<Object>} The response object with the execution ARN and message.
+ */
 async function bulkMoveCollection(req, res) {
   const {
     knex = await getKnexClient(),
@@ -1032,6 +1051,7 @@ async function bulkMoveCollection(req, res) {
     meta: {
       bulkMoveCollection: {
         batchSize: body.batchSize,
+        cmrGranuleUrlType: body.cmrGranuleUrlType,
         concurrency: body.concurrency,
         invalidBehavior: body.invalidBehavior,
         s3MultipartChunkSize: body.s3MultipartChunkSize,
