@@ -271,10 +271,7 @@ async function updateCMRData(
   cmrFilesByGranuleId: Dictionary<ValidApiFile>,
   config: EventConfig
 ) {
-  const {
-    distribution_endpoint: distEndpoint,
-  } = config;
-
+  const distEndpoint = config.distribution_endpoint || getRequiredEnvVar('DISTRIBUTION_ENDPOINT');
   const bucketTypes = Object.fromEntries(Object.values(config.buckets)
     .map(({ name, type }) => [name, type]));
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
