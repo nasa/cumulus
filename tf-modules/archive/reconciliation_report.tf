@@ -14,7 +14,6 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       CMR_ENVIRONMENT                  = var.cmr_environment
       CMR_HOST                         = var.cmr_custom_host
       DISTRIBUTION_ENDPOINT            = var.distribution_url
-      ES_HOST                          = var.elasticsearch_hostname
       stackName                        = var.prefix
       system_bucket                    = var.system_bucket
       cmr_client_id                    = var.cmr_client_id
