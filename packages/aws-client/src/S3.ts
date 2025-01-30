@@ -1132,7 +1132,7 @@ export const multipartCopyObject = async (
  * @param {boolean} [params.copyTags=false]
  * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
  */
-export const CopyObject = async (
+export const copyObject = async (
   params: {
     sourceBucket: string,
     sourceKey: string,
