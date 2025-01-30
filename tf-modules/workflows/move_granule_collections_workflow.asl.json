@@ -9,6 +9,7 @@
           "task_config": {
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
             "targetCollection": "{$.meta.targetCollection}"
           }
         }
