@@ -28,7 +28,7 @@ import { CollectionRecord } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { CollectionFile } from '@cumulus/types';
 import { BucketsConfigObject } from '@cumulus/common/types';
-import { CopyObject } from '@cumulus/aws-client/S3';
+import { copyObject } from '@cumulus/aws-client/S3';
 import { getGranule } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
@@ -148,7 +148,7 @@ async function moveGranulesInS3({
             return;
           }
           if (!isMetadataFile) {
-            await CopyObject({
+            await copyObject({
               sourceBucket: sourceFile.bucket,
               sourceKey: sourceFile.key,
               destinationBucket: targetFile.bucket,

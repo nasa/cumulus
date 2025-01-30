@@ -1218,7 +1218,7 @@ export const moveObject = async (
     sourceKey,
   } = params;
 
-  await CopyObject(params);
+  await copyObject(params);
   const deleteS3ObjRes = await deleteS3Object(sourceBucket, sourceKey);
   return deleteS3ObjRes;
 };
