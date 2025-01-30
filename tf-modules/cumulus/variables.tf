@@ -640,3 +640,9 @@ variable "dead_letter_recovery_memory" {
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
+
+variable "deploy_cumulus_workflows" {
+  type = bool
+  default = true
+  description = "If true, deploys Cumulus post-processing workflows"
+}
