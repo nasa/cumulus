@@ -40,7 +40,7 @@ describe('when when change-granule-collection-pg is called', () => {
       try {
         await setupInitialState(stackName, sourceUrlPrefix, targetUrlPrefix, config);
         const { $metadata } = await lambda().send(new InvokeCommand({
-          FunctionName: `${stackName}-MoveGranuleCollections`,
+          FunctionName: `${stackName}-ChangeGranuleCollectionPG`,
           InvocationType: 'RequestResponse',
           Payload: JSON.stringify({
             cma: {
