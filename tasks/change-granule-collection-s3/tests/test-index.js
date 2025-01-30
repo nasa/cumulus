@@ -322,7 +322,7 @@ test.serial('Should move files to final location and update pg data with cmr xml
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules, t
+    t.context.payload.input.granuleIds, t
   );
   const collection = { name: 'MOD11A1', version: '001' };
   const newPayload = buildPayload(t, collection);
@@ -414,7 +414,7 @@ test.serial('Should move files to final location and update pg data with cmr umm
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules, t
+    t.context.payload.input.granuleIds, t
   );
   const collection = { name: 'MOD11A1UMMG', version: '001' };
   const newPayload = buildPayload(t, collection);
@@ -498,7 +498,7 @@ test.serial('should update cmr data to hold extra urls but remove out-dated urls
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules, t
+    t.context.payload.input.granuleIds, t
   );
   const collection = { name: 'MOD11A1UMMG', version: '001' };
   const newPayload = buildPayload(t, collection);
@@ -768,7 +768,7 @@ test.serial('handles files that need no move', async (t) => {
 
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
-    t.context.payload.input.granules, t
+    t.context.payload.input.granuleIds, t
   );
   const collection = { name: 'MOD11ANOMOVE', version: '001' };
   const newPayload = buildPayload(t, collection);

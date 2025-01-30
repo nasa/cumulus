@@ -22,7 +22,7 @@
     "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/"
   },
   "input": {
-    "granules": [
+    "granuleIds": [
       {
         "status": "completed",
         "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",

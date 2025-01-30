@@ -22,7 +22,7 @@
     "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/"
   },
   "input": {
-    "granules": [
+    "granuleIds": [
       "base_umm_granule"
     ]
   }
