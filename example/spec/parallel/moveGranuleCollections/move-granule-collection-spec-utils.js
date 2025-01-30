@@ -218,7 +218,6 @@ const getPayload = (sourceUrlPrefix, targetUrlPrefix, config) => ({
   },
   config: {
     buckets: '{$.meta.buckets}',
-    distribution_endpoint: 'https://something.api.us-east-1.amazonaws.com/',
     collection: '{$.meta.collection}',
     targetCollection: '{$.meta.targetCollection}',
   },
