@@ -2,30 +2,20 @@
 
 import { Context } from 'aws-lambda';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
-import get from 'lodash/get';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { log } from '@cumulus/common';
-import { ApiGranuleRecord, CollectionRecord, DuplicateHandling } from '@cumulus/types';
+import { ApiGranuleRecord, CollectionRecord } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
-import { CollectionFile } from '@cumulus/types';
 import { BucketsConfigObject } from '@cumulus/common/types';
-// import { s3CopyObject, s3PutObject } from '@cumulus/aws-client/S3';
 import { bulkPatch, bulkPatchGranuleCollection } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-
 
 interface EventConfig {
   targetCollection: CollectionRecord
   collection: {
-    meta: {
-      granuleMetadataFileExtension: string,
-    },
-    url_path?: string,
-    files: Array<CollectionFile>,
-    duplicateHandling?: DuplicateHandling,
     name: string,
     version: string,
-  },
+  }
   buckets: BucketsConfigObject,
 }
 
@@ -75,16 +65,9 @@ async function moveGranulesInCumulusDatastores(
 
 async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object> {
   const config = event.config;
-  const granuleMetadataFileExtension: string = get(
-    config,
-    'collection.meta.granuleMetadataFileExtension'
-  );
-
-  log.debug(`moveGranules config: s3MultipartChunksizeMb, `
-    + `granuleMetadataFileExtension ${granuleMetadataFileExtension}, `);
 
   const targetGranules = event.input.granules;
-
+  log.debug(`change-granule-collection-pg run with config ${config}`)
   await moveGranulesInCumulusDatastores(
     targetGranules,
     constructCollectionId(config.collection.name, config.collection.version),
