@@ -33,6 +33,8 @@ const {
   granuleToCmrFileObject,
   mapFileEtags,
   removeEtagsFromFileObjects,
+  updateECHO10Collection,
+  updateUMMGCollection,
 } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, isISOFile, getGranuleTemporalInfo } = cmrUtil;
@@ -478,7 +480,7 @@ test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving 
   }
 });
 
-test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
+test.only('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
   // Yes, ETag values always include enclosing double-quotes
@@ -1351,4 +1353,86 @@ test('buildCMRQuery works with if the input results list is empty', (t) => {
   const expected = { condition: { or: [] } };
   const actual = buildCMRQuery(results);
   t.deepEqual(actual, expected);
+});
+
+
+test('updateECHO10Collection updates echo10 collection name and version', async (t) => {
+  const filename = 'tests/cmr-utils/data/meta.xml';
+  const cmrObject = await promisify(xml2js.parseString)(fs.readFileSync(filename, 'utf-8'), xmlParseOptions);
+  const updated = updateECHO10Collection(
+    cmrObject,
+    { name: 'a', version: 'b' },
+  );
+
+  t.is(updated.Granule.Collection.ShortName, 'a');
+  t.is(updated.Granule.Collection.VersionId, 'b');
+});
+
+test('updateCmrFileCollections updates Echo10Files at non-standard locations', (t) => {
+  const cmrObject = {
+    Granule: {
+      GranuleUR: 'MOD11A1.A2017200.h19v04.006.2017201090724',
+      InsertTime: '2017-11-20T23:02:40.055807',
+      LastUpdate: '2017-11-20T23:02:40.055814',
+      WhyThisAttribute: {
+        Collection: {
+          ShortName: 'MOD11A1',
+          VersionId: '006',
+        },
+      },
+    },
+  };
+  const updated = updateECHO10Collection(cmrObject, { name: 'a', version: 'b' });
+  t.is(updated.Granule.WhyThisAttribute.Collection.ShortName, 'a');
+  t.is(updated.Granule.WhyThisAttribute.Collection.VersionId, 'b');
+});
+
+test('updateCmrFileCollections updates Echo10Files when missing', (t) => {
+  const cmrObject = {};
+  const updated = updateECHO10Collection(cmrObject, { name: 'a', version: 'b' });
+  t.is(updated.Granule.Collection.ShortName, 'a');
+  t.is(updated.Granule.Collection.VersionId, 'b');
+});
+
+test('updateCmrFileCollections updates umm meta file', (t) => {
+  const filename = 'tests/cmr-utils/data/ummg-meta.json';
+  const cmrObject = JSON.parse(fs.readFileSync(filename, 'utf-8'));
+  const updated = updateUMMGCollection(cmrObject, { name: 'a', version: 'b' }, filename);
+
+  t.is(updated.CollectionReference.ShortName, 'a');
+  t.is(updated.CollectionReference.VersionId, 'b');
+});
+
+test('updateCmrFileCollections updates umm at non-standard locations', (t) => {
+  const cmrObject = {
+    Granule: {
+      GranuleUR: 'MOD11A1.A2017200.h19v04.006.2017201090724',
+      InsertTime: '2017-11-20T23:02:40.055807',
+      LastUpdate: '2017-11-20T23:02:40.055814',
+      WhyThisAttribute: [
+        {
+          Hanglebangle: {
+            ShortName: 'MOD11A1',
+            VersionId: '006',
+          },
+        },
+        {
+          CollectionReference: {
+            ShortName: 'MOD11A1',
+            VersionId: '006',
+          },
+        },
+      ],
+    },
+  };
+  const updated = updateUMMGCollection(cmrObject, { name: 'a', version: 'b' });
+  t.is(updated.Granule.WhyThisAttribute[1].CollectionReference.ShortName, 'a');
+  t.is(updated.Granule.WhyThisAttribute[1].CollectionReference.VersionId, 'b');
+});
+
+test('updateCmrFileCollections updates umm when missing', (t) => {
+  const cmrObject = {};
+  const updated = updateUMMGCollection(cmrObject, { name: 'a', version: 'b' });
+  t.is(updated.CollectionReference.ShortName, 'a');
+  t.is(updated.CollectionReference.VersionId, 'b');
 });

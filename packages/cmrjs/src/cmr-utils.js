@@ -904,6 +904,7 @@ function updateEcho10XMLMetadataObject({
   set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
   set(updatedGranule, 'OnlineResources.OnlineResource', mergedOnlineResources);
   set(updatedGranule, 'AssociatedBrowseImageUrls.ProviderBrowseUrl', mergedAssociatedBrowse);
+
   return {
     ...metadataObject,
     Granule: updatedGranule,
@@ -948,7 +949,7 @@ async function updateEcho10XMLMetadata({
   });
   const xml = generateEcho10XMLString(updatedMetadataObject.Granule);
   const { ETag: etag } = await uploadEcho10CMRFile(xml, cmrFile);
-  return { updatedMetadataObject, etag };
+  return { metadataObject: updatedMetadataObject, etag };
 }
 
 /**
