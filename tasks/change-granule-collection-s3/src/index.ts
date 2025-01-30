@@ -330,7 +330,7 @@ async function moveGranules(event: ChangeCollectionsS3Event): Promise<Object> {
     collectionVersion: config.targetCollection.version,
   });
 
-  log.debug(`change-granule-collection-s3 config: ${config}`);
+  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}`);
 
   const granuleIds = event.input.granules;
   const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranule({
