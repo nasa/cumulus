@@ -3,7 +3,6 @@
   "description": "Describes the config used by the change-granule-collection-s3 task",
   "type": "object",
   "required": [
-    "distribution_endpoint",
     "collection",
     "targetCollection",
     "buckets"
@@ -28,10 +27,6 @@
           }
         }
       }
-    },
-    "distribution_endpoint": {
-      "type": "string",
-      "description": "The api distribution endpoint"
     },
     "targetCollection": {
       "type": "object",
