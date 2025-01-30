@@ -9,7 +9,7 @@ const { createProvider } = require('@cumulus/api-client/providers');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTestSuffix, createTimestampedTestId } = require('../../helpers/testUtils');
-const { setupInitialState, getTargetFiles, getTargetCollection, getSourceCollection } = require('./move-granule-collection-spec-utils');
+const { setupInitialState, getTargetFiles, getTargetCollection, getSourceCollection, getPayload } = require('./move-granule-collection-spec-utils');
 
 const activityStep = new ActivityStep();
 
@@ -70,12 +70,8 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
         'MoveGranuleCollectionsWorkflow',
         getSourceCollection(sourceUrlPrefix),
         provider,
-        { granuleIds: ['MOD11A1.A2017200.h19v04.006.2017201090724'] },
-        {
-          targetCollection: getTargetCollection(targetUrlPrefix),
-          collection: getSourceCollection(sourceUrlPrefix),
-          buckets: config.buckets,
-        }
+        getPayload(sourceUrlPrefix, targetUrlPrefix, config).input,
+        getPayload(sourceUrlPrefix, targetUrlPrefix, config).meta
       );
       await Promise.all(finalFiles.map((file) => expectAsync(
         waitForListObjectsV2ResultCount({
