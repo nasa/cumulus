@@ -56,7 +56,7 @@ type ChangeCollectionsS3Event = {
     }
   },
   input: {
-    granules: Array<string>,
+    granuleIds: Array<string>,
   }
 };
 
@@ -330,14 +330,14 @@ async function moveGranules(event: ChangeCollectionsS3Event): Promise<Object> {
     collectionVersion: config.targetCollection.version,
   });
 
-  log.debug(`change-granule-collection-s3 config: ${config}`);
+  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(event)}`);
 
-  const granuleIds = event.input.granules;
+  const granuleIds = event.input.granuleIds;
   const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranule({
     prefix: getRequiredEnvVar('stackName'),
     granuleId,
   })));
-  const invalidBehavior = config.invalidBehavior;
+  const invalidBehavior = config.invalidBehavior || 'skip';
   let granulesInput: Array<ValidGranuleRecord>;
   if (invalidBehavior === 'skip') {
     granulesInput = tempGranulesInput.filter((granule) => {

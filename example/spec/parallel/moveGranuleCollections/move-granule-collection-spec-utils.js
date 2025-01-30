@@ -213,17 +213,17 @@ const setupInitialState = async (stackName, sourceUrlPrefix, targetUrlPrefix, co
 const getPayload = (sourceUrlPrefix, targetUrlPrefix, config) => ({
   meta: {
     targetCollection: getTargetCollection(targetUrlPrefix),
-    sourceCollection: getSourceCollection(sourceUrlPrefix),
+    collection: getSourceCollection(sourceUrlPrefix),
     buckets: config.buckets,
   },
   config: {
     buckets: '{$.meta.buckets}',
     distribution_endpoint: 'https://something.api.us-east-1.amazonaws.com/',
-    sourceCollection: '{$.meta.sourceCollection}',
+    collection: '{$.meta.collection}',
     targetCollection: '{$.meta.targetCollection}',
   },
   input: {
-    granules: [
+    granuleIds: [
       getProcessGranule(sourceUrlPrefix, config).granuleId,
     ],
   },
