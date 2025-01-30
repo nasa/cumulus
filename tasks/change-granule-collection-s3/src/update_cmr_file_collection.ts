@@ -16,14 +16,14 @@ import get from 'lodash/get';
 import set from 'lodash/set';
 // import xml2js from 'xml2js';
 
-export interface ValidApiFile extends ApiFile {
+export type ValidApiFile = {
   bucket: string,
   key: string
-}
+} & ApiFile;
 
-export interface ValidGranuleRecord extends ApiGranuleRecord {
+export type ValidGranuleRecord = {
   files: Omit<ValidApiFile, 'granuleId'>[]
-}
+} & ApiGranuleRecord;
 
 function apiFileIsValid(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
   if (file.bucket === undefined || file.key === undefined) {

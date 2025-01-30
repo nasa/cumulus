@@ -36,7 +36,7 @@ import { apiGranuleRecordIsValid, getCMRMetadata, isCMRMetadataFile, updateCmrFi
 
 const MB = 1024 * 1024;
 
-interface EventConfig {
+type EventConfig = {
   targetCollection: {
     name: string,
     version: string,
@@ -46,9 +46,9 @@ interface EventConfig {
   distribution_endpoint: string,
   cmrGranuleUrlType: string,
   invalidBehavior: string,
-}
+};
 
-interface ChangeCollectionsS3Event {
+type ChangeCollectionsS3Event = {
   config: EventConfig,
   cumulus_config?: {
     cumulus_context?: {
@@ -58,7 +58,7 @@ interface ChangeCollectionsS3Event {
   input: {
     granules: Array<string>,
   }
-}
+};
 
 function getConcurrency() {
   return Number(process.env.concurrency || 100);
