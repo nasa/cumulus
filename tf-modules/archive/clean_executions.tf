@@ -22,13 +22,9 @@ source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/clea
   environment {
     variables = {
       stackName             = var.prefix
-      ES_HOST               = var.elasticsearch_hostname
-      CLEANUP_RUNNING        = var.cleanup_running
-      CLEANUP_NON_RUNNING     = var.cleanup_non_running
-
-      PAYLOAD_TIMEOUT        = var.payload_timeout
-      
-      ES_INDEX              = var.es_index
+      CLEANUP_RUNNING       = var.cleanup_running
+      CLEANUP_NON_RUNNING   = var.cleanup_non_running
+      PAYLOAD_TIMEOUT       = var.payload_timeout
       UPDATE_LIMIT          = var.update_limit
     }
   }

@@ -46,8 +46,6 @@ const {
   translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
-const { Search } = require('@cumulus/es-client/search');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
 const {
   fakeGranuleFactoryV2,
@@ -61,9 +59,6 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 
 // Call normalize event on all input events before calling the handler.
 const handler = (event) => unwrappedHandler(normalizeEvent(event));
-
-let esAlias;
-let esIndex;
 
 const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket });
 const requiredStaticCollectionFields = {
@@ -253,16 +248,16 @@ const randomBetween = (a, b) => Math.floor(Math.random() * (b - a + 1) + a);
 const randomTimeBetween = (t1, t2) => randomBetween(t1, t2);
 
 /**
- * Prepares localstack with a number of active granules.  Sets up ES with
+ * Prepares localstack with a number of active granules.  Sets up pg with
  * random collections where some fall within the start and end timestamps.
- * Also creates a number that are only in ES, as well as some that are only
+ * Also creates a number that are only in pg, as well as some that are only
  * "returned by CMR" (as a stubbed function)
  *
  * @param t.t
  * @param {object} t - AVA test context.
  * @param t.params
  * @returns {object} setupVars - Object with information about the current
- * state of elasticsearch and CMR mock.
+ * state of pg and CMR mock.
  * The object returned has:
  *  + startTimestamp - beginning of matching timerange
  *  + endTimestamp - end of matching timerange
@@ -270,11 +265,11 @@ const randomTimeBetween = (t1, t2) => randomBetween(t1, t2);
  *      timestamps and included in the CMR mock
  *  + matchingCollectionsOutsiderange - active collections dated not between the
  *      start and end timestamps and included in the CMR mock
- *  + extraESCollections - collections within the timestamp range, but excluded
- *      from CMR mock. (only in ES)
- *  + extraESCollectionsOutOfRange - collections outside the timestamp range and
- *      excluded from CMR mock. (only in ES out of range)
- *  + extraCmrCollections - collections not in ES but returned by the CMR mock.
+ *  + extraPgCollections - collections within the timestamp range, but excluded
+ *      from CMR mock
+ *  + extraPgCollectionsOutOfRange - collections outside the timestamp range and
+ *      excluded from CMR mock
+ *  + extraCmrCollections - collections not in pg but returned by the CMR mock
  */
 const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
   const dataBuckets = range(2).map(() => randomId('bucket'));
@@ -294,8 +289,8 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
   const {
     numMatchingCollections = randomBetween(10, 15),
     numMatchingCollectionsOutOfRange = randomBetween(5, 10),
-    numExtraESCollections = randomBetween(5, 10),
-    numExtraESCollectionsOutOfRange = randomBetween(5, 10),
+    numExtraPgCollections = randomBetween(5, 10),
+    numExtraPgCollectionsOutOfRange = randomBetween(5, 10),
     numExtraCmrCollections = randomBetween(5, 10),
   } = params;
 
@@ -304,31 +299,31 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
   const endTimestamp = new Date('2020-07-01T00:00:00.000Z').getTime();
   const monthLater = moment(endTimestamp).add(1, 'month').valueOf();
 
-  // Create collections that are in sync ES/CMR during the time period
+  // Create collections that are in sync pg/CMR during the time period
   const matchingCollections = range(numMatchingCollections).map((r) => ({
     ...requiredStaticCollectionFields,
     name: randomId(`name${r}-`),
     version: randomId('vers'),
     updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
-  // Create collections in sync ES/CMR outside of the timestamps range
+  // Create collections in sync pg/CMR outside of the timestamps range
   const matchingCollectionsOutsideRange = range(numMatchingCollectionsOutOfRange).map((r) => ({
     ...requiredStaticCollectionFields,
     name: randomId(`name${r}-`),
     version: randomId('vers'),
     updatedAt: randomTimeBetween(monthEarlier, startTimestamp - 1),
   }));
-  // Create collections in ES only within the timestamp range
-  const extraESCollections = range(numExtraESCollections).map((r) => ({
+  // Create collections in pg only within the timestamp range
+  const extraPgCollections = range(numExtraPgCollections).map((r) => ({
     ...requiredStaticCollectionFields,
-    name: randomId(`extraES${r}-`),
+    name: randomId(`extraPg${r}-`),
     version: randomId('vers'),
     updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
-  // Create collections in ES only outside of the timestamp range
-  const extraESCollectionsOutOfRange = range(numExtraESCollectionsOutOfRange).map((r) => ({
+  // Create collections in pg only outside of the timestamp range
+  const extraPgCollectionsOutOfRange = range(numExtraPgCollectionsOutOfRange).map((r) => ({
     ...requiredStaticCollectionFields,
-    name: randomId(`extraES${r}-`),
+    name: randomId(`extraPg${r}-`),
     version: randomId('vers'),
     updatedAt: randomTimeBetween(endTimestamp + 1, monthLater),
   }));
@@ -360,8 +355,8 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     await storeCollectionsWithGranuleToPostgres(
       matchingCollections
         .concat(matchingCollectionsOutsideRange)
-        .concat(extraESCollections)
-        .concat(extraESCollectionsOutOfRange),
+        .concat(extraPgCollections)
+        .concat(extraPgCollectionsOutOfRange),
       t.context
     );
 
@@ -376,8 +371,8 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     endTimestamp,
     matchingCollections,
     matchingCollectionsOutsideRange,
-    extraESCollections,
-    extraESCollectionsOutOfRange,
+    extraPgCollections,
+    extraPgCollectionsOutOfRange,
     extraCmrCollections,
     collectionGranules,
     mappedProviders,
@@ -420,20 +415,6 @@ test.beforeEach(async (t) => {
   const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
   cmrSearchStub.withArgs('collections').resolves([]);
   cmrSearchStub.withArgs('granules').resolves([]);
-
-  esAlias = randomId('esalias');
-  esIndex = randomId('esindex');
-  process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch({
-    host: 'fakehost',
-    index: esIndex,
-    alias: esAlias,
-  });
-  t.context.esReportClient = new Search(
-    {},
-    'reconciliationReport',
-    process.env.ES_INDEX
-  );
 
   // write 4 providers to the database
   t.context.providers = await Promise.all(new Array(4).fill().map(async () => {
@@ -514,12 +495,8 @@ test.serial('Generates valid reconciliation report for no buckets', async (t) =>
   t.true(createStartTime <= createEndTime);
   t.is(report.reportStartTime, (new Date(startTimestamp)).toISOString());
   t.is(report.reportEndTime, (new Date(endTimestamp)).toISOString());
-
-  const esRecord = await t.context.esReportClient.get(reportRecord.name);
-  t.like(esRecord, reportRecord);
 });
 
-// TODO - use this to make generic the data to PG
 test.serial('Generates valid GNF reconciliation report when everything is in sync', async (t) => {
   const { files, matchingColls } = await generateRandomGranules(t);
   const event = {
@@ -554,9 +531,6 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
   t.true(createStartTime <= createEndTime);
-
-  const esRecord = await t.context.esReportClient.get(reportRecord.name);
-  t.like(esRecord, reportRecord);
 });
 
 test.serial('Generates a valid Inventory reconciliation report when everything is in sync', async (t) => {
@@ -787,7 +761,7 @@ test.serial('Generates valid reconciliation report when internally, there are bo
 test.serial('Generates valid reconciliation report when there are both extra postGres and CMR collections', async (t) => {
   const params = {
     numMatchingCollectionsOutOfRange: 0,
-    numExtraESCollectionsOutOfRange: 0,
+    numExtraPgCollectionsOutOfRange: 0,
   };
 
   const setupVars = await setupDatabaseAndCMRForTests({ t, params });
@@ -807,8 +781,8 @@ test.serial('Generates valid reconciliation report when there are both extra pos
   t.is(report.error, undefined);
   t.is(collectionsInCumulusCmr.okCount, setupVars.matchingCollections.length);
 
-  t.is(collectionsInCumulusCmr.onlyInCumulus.length, setupVars.extraESCollections.length);
-  setupVars.extraESCollections.map((collection) =>
+  t.is(collectionsInCumulusCmr.onlyInCumulus.length, setupVars.extraPgCollections.length);
+  setupVars.extraPgCollections.map((collection) =>
     t.true(collectionsInCumulusCmr.onlyInCumulus
       .includes(constructCollectionId(collection.name, collection.version))));
 
@@ -843,14 +817,14 @@ test.serial(
     t.is(report.error, undefined);
     t.is(collectionsInCumulusCmr.okCount, setupVars.matchingCollections.length);
 
-    t.is(collectionsInCumulusCmr.onlyInCumulus.length, setupVars.extraESCollections.length);
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, setupVars.extraPgCollections.length);
     // Each extra collection in timerange is included
-    setupVars.extraESCollections.map((collection) =>
+    setupVars.extraPgCollections.map((collection) =>
       t.true(collectionsInCumulusCmr.onlyInCumulus
         .includes(constructCollectionId(collection.name, collection.version))));
 
     // No collections that were out of timestamp are included
-    setupVars.extraESCollectionsOutOfRange.map((collection) =>
+    setupVars.extraPgCollectionsOutOfRange.map((collection) =>
       t.false(collectionsInCumulusCmr.onlyInCumulus
         .includes(constructCollectionId(collection.name, collection.version))));
 
@@ -949,7 +923,7 @@ test.serial(
   async (t) => {
     const params = {
       numMatchingCollectionsOutOfRange: 0,
-      numExtraESCollectionsOutOfRange: 0,
+      numExtraPgCollectionsOutOfRange: 0,
     };
 
     const setupVars = await setupDatabaseAndCMRForTests({ t, params });
@@ -970,8 +944,8 @@ test.serial(
     t.is(collectionsInCumulusCmr.okCount, setupVars.matchingCollections.length);
     t.is(report.filesInCumulus.okCount, 0);
 
-    t.is(collectionsInCumulusCmr.onlyInCumulus.length, setupVars.extraESCollections.length);
-    setupVars.extraESCollections.map((collection) =>
+    t.is(collectionsInCumulusCmr.onlyInCumulus.length, setupVars.extraPgCollections.length);
+    setupVars.extraPgCollections.map((collection) =>
       t.true(collectionsInCumulusCmr.onlyInCumulus
         .includes(constructCollectionId(collection.name, collection.version))));
 
@@ -1009,12 +983,12 @@ test.serial(
     // all extra DB collections are found
     t.is(
       collectionsInCumulusCmr.onlyInCumulus.length,
-      setupVars.extraESCollections.length + setupVars.extraESCollectionsOutOfRange.length
+      setupVars.extraPgCollections.length + setupVars.extraPgCollectionsOutOfRange.length
     );
-    setupVars.extraESCollections.map((collection) =>
+    setupVars.extraPgCollections.map((collection) =>
       t.true(collectionsInCumulusCmr.onlyInCumulus
         .includes(constructCollectionId(collection.name, collection.version))));
-    setupVars.extraESCollectionsOutOfRange.map((collection) =>
+    setupVars.extraPgCollectionsOutOfRange.map((collection) =>
       t.true(collectionsInCumulusCmr.onlyInCumulus
         .includes(constructCollectionId(collection.name, collection.version))));
 
@@ -1037,8 +1011,8 @@ test.serial(
     const testCollection = [
       setupVars.matchingCollections[3],
       setupVars.extraCmrCollections[1],
-      setupVars.extraESCollections[1],
-      setupVars.extraESCollectionsOutOfRange[0],
+      setupVars.extraPgCollections[1],
+      setupVars.extraPgCollectionsOutOfRange[0],
     ];
     const collectionId = testCollection.map((c) => constructCollectionId(c.name, c.version));
 
@@ -1120,7 +1094,7 @@ test.serial(
     const testCollection = [
       setupVars.extraCmrCollections[3],
       setupVars.matchingCollections[2],
-      setupVars.extraESCollections[1],
+      setupVars.extraPgCollections[1],
     ];
     const collectionId = testCollection.map((c) => constructCollectionId(c.name, c.version));
     console.log(`testCollection: ${JSON.stringify(collectionId)}`);
@@ -1155,7 +1129,7 @@ test.serial(
   async (t) => {
     const setupVars = await setupDatabaseAndCMRForTests({ t });
 
-    const testCollection = setupVars.extraESCollections[3];
+    const testCollection = setupVars.extraPgCollections[3];
     console.log(`testCollection: ${JSON.stringify(testCollection)}`);
 
     const event = {
@@ -1187,15 +1161,15 @@ test.serial(
 );
 
 test.serial(
-  'Generates valid ONE WAY reconciliation report with time params and filters by granuleIds when there are extra cumulus/ES and CMR collections',
+  'Generates valid ONE WAY reconciliation report with time params and filters by granuleIds when there are extra cumulus/pg and CMR collections',
   async (t) => {
     const { startTimestamp, endTimestamp, ...setupVars } = await setupDatabaseAndCMRForTests({ t });
 
     const testCollection = [
       setupVars.matchingCollections[3],
       setupVars.extraCmrCollections[1],
-      setupVars.extraESCollections[1],
-      setupVars.extraESCollectionsOutOfRange[0],
+      setupVars.extraPgCollections[1],
+      setupVars.extraPgCollectionsOutOfRange[0],
     ];
 
     const testCollectionIds = testCollection.map((c) => constructCollectionId(c.name, c.version));
@@ -1251,7 +1225,7 @@ test.serial(
     const testCollection = [
       setupVars.extraCmrCollections[3],
       setupVars.matchingCollections[2],
-      setupVars.extraESCollections[1],
+      setupVars.extraPgCollections[1],
     ];
 
     const testCollectionIds = testCollection.map((c) => constructCollectionId(c.name, c.version));
@@ -1296,7 +1270,7 @@ test.serial(
     const testCollection = [
       setupVars.extraCmrCollections[3],
       setupVars.matchingCollections[2],
-      setupVars.extraESCollections[1],
+      setupVars.extraPgCollections[1],
     ];
 
     const testCollectionIds = testCollection.map((c) => constructCollectionId(c.name, c.version));
@@ -1765,7 +1739,7 @@ test.serial('When report creation fails, reconciliation report status is set to 
     t.context.knex, { name: reportName }
   );
   // reconciliation report lambda outputs the translated API version, not the PG version, so
-  // it should be translated for comparison, at least for the comparison with the ES (API) version
+  // it should be translated for comparison
   const reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
   t.is(reportApiRecord.status, 'Failed');
   t.is(reportApiRecord.type, 'Inventory');
@@ -1774,9 +1748,6 @@ test.serial('When report creation fails, reconciliation report status is set to 
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
   t.is(report.status, 'Failed');
   t.truthy(report.error);
-
-  const esRecord = await t.context.esReportClient.get(reportName);
-  t.like(esRecord, reportApiRecord);
 });
 
 test.serial('Creates a valid Granule Inventory report', async (t) => {
@@ -1824,9 +1795,6 @@ test.serial('Creates a valid Granule Inventory report', async (t) => {
   const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published","provider"';
   t.is(reportHeader, header);
   t.is(reportRows.length, 10);
-
-  const esRecord = await t.context.esReportClient.get(reportRecord.name);
-  t.like(esRecord, reportRecord);
 });
 
 test.serial('A valid ORCA Backup reconciliation report is generated', async (t) => {
@@ -1920,9 +1888,6 @@ test.serial('A valid ORCA Backup reconciliation report is generated', async (t) 
   t.is(report.granules.onlyInCumulus.length, 0);
   t.is(report.granules.onlyInOrca.length, 0);
   t.is(report.granules.withConflicts.length, 0);
-
-  const esRecord = await t.context.esReportClient.get(reportRecord.name);
-  t.like(esRecord, reportRecord);
 });
 
 test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
@@ -2022,7 +1987,7 @@ test.serial('When there is an error for an ORCA backup report, it throws', async
     t.context.knex, { name: reportName }
   );
   // reconciliation report lambda outputs the translated API version, not the PG version, so
-  // it should be translated for comparison, at least for the comparison with the ES (API) version
+  // it should be translated for comparison
   const reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
   t.is(reportApiRecord.status, 'Failed');
   t.is(reportApiRecord.type, event.reportType);
@@ -2031,9 +1996,6 @@ test.serial('When there is an error for an ORCA backup report, it throws', async
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
   t.is(report.status, 'Failed');
   t.is(report.reportType, event.reportType);
-
-  const esRecord = await t.context.esReportClient.get(reportName);
-  t.like(esRecord, reportApiRecord);
 });
 
 test.serial('Internal reconciliation report type throws an error', async (t) => {

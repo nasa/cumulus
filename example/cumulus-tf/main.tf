@@ -32,10 +32,6 @@ provider "aws" {
 
 locals {
   tags                            = merge(var.tags, { Deployment = var.prefix })
-  elasticsearch_alarms            = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_alarms", [])
-  elasticsearch_domain_arn        = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_domain_arn", null)
-  elasticsearch_hostname          = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_hostname", null)
-  elasticsearch_security_group_id = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_security_group_id", "")
   protected_bucket_names          = [for k, v in var.buckets : v.name if v.type == "protected"]
   public_bucket_names             = [for k, v in var.buckets : v.name if v.type == "public"]
   rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
@@ -110,8 +106,6 @@ module "cumulus" {
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
 
-  es_request_concurrency = var.es_request_concurrency
-
   metrics_es_host     = var.metrics_es_host
   metrics_es_password = var.metrics_es_password
   metrics_es_username = var.metrics_es_username
@@ -157,13 +151,6 @@ module "cumulus" {
   system_bucket = var.system_bucket
   buckets       = var.buckets
 
-  elasticsearch_remove_index_alias_conflict = var.elasticsearch_remove_index_alias_conflict
-  elasticsearch_alarms                      = local.elasticsearch_alarms
-  elasticsearch_domain_arn                  = local.elasticsearch_domain_arn
-  elasticsearch_hostname                    = local.elasticsearch_hostname
-  elasticsearch_security_group_id           = local.elasticsearch_security_group_id
-  es_index_shards                           = var.es_index_shards
-
   dynamo_tables = merge(data.terraform_remote_state.data_persistence.outputs.dynamo_tables, var.optional_dynamo_tables)
   default_log_retention_days = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
@@ -194,8 +181,6 @@ module "cumulus" {
   private_archive_api_gateway = var.private_archive_api_gateway
   api_gateway_stage           = var.api_gateway_stage
   archive_api_reserved_concurrency = var.api_reserved_concurrency
-
-  elasticsearch_client_config = var.elasticsearch_client_config
 
   # Thin Egress App settings. Uncomment to use TEA.
   # must match stage_name variable for thin-egress-app module

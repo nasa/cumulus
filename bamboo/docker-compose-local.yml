@@ -24,7 +24,7 @@ services:
       - 127.0.0.1:8080:8080
       - 127.0.0.1:9200:9200
   localstack:
-    image: localstack/localstack:3.0.0
+    image: localstack/localstack:4.0.3
   elasticsearch:
     image: elasticsearch:5.3
   http:

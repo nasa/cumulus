@@ -52,14 +52,12 @@ const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-record
  * @param {Object} params
  * @param {Object} params.cumulusMessage - Cumulus workflow message
  * @param {Knex} params.knex - Knex client
- * @param {EsClient} params.esClient - Elasticsearch client
  * @param {Object} [params.testOverrides]
  *   Optional override/mock object used for testing
  */
 const writeRecords = async ({
   cumulusMessage,
   knex,
-  esClient,
   testOverrides = {},
 }) => {
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
@@ -103,7 +101,6 @@ const writeRecords = async ({
     asyncOperationCumulusId,
     parentExecutionCumulusId,
     knex,
-    esClient,
   });
 
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
@@ -114,13 +111,11 @@ const writeRecords = async ({
     providerCumulusId,
     knex,
     executionCumulusId,
-    esClient,
   });
 
   return writeGranulesFromMessage({
     cumulusMessage,
     executionCumulusId,
-    esClient,
     knex,
     testOverrides,
   });

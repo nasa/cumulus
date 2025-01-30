@@ -4,9 +4,6 @@
 const pSettle = require('p-settle');
 const log = require('@cumulus/common/log');
 
-const {
-  getEsClient,
-} = require('@cumulus/es-client/search');
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object, deleteS3Object } = require('@cumulus/aws-client/S3');
@@ -101,13 +98,10 @@ async function processDeadLetterArchive({
   let continuationToken;
   let allSuccessKeys = [];
   const allFailedKeys = [];
-  const esClient = await getEsClient();
   let batchNumber = 1;
   /* eslint-disable no-await-in-loop */
   do {
     log.info(`Processing batch ${batchNumber}`);
-    // Refresh ES client to avoid credentials timeout for long running processes
-    esClient.refreshClient();
     listObjectsResponse = await s3().listObjectsV2({
       Bucket: bucket,
       Prefix: path,
@@ -120,7 +114,7 @@ async function processDeadLetterArchive({
       const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
       const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
       try {
-        await writeRecordsFunction({ cumulusMessage, knex, esClient });
+        await writeRecordsFunction({ cumulusMessage, knex });
         return deadLetterObject.Key;
       } catch (error) {
         log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);

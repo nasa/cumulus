@@ -1,17 +1,6 @@
 # Required
 prefix     = "myprefix"
 
-elasticsearch_alarms = [
-  {
-    "arn" = "es-alarm1-arn"
-    "name" = "es-alarm1"
-  },
-  {
-    "arn" = "alarm2-arn"
-    "name" = "alarm2"
-  }
-]
-
 ecs_service_alarms = [
   {
     "arn" = "ecs-alarm1-arn"
