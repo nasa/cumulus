@@ -239,16 +239,6 @@ function dummyGetGranule(granuleId, t) {
   }[granuleId];
 }
 
-function getOriginalCollection() {
-  return JSON.parse(fs.readFileSync(
-    path.join(
-      __dirname,
-      'data',
-      'original_collection.json'
-    )
-  ));
-}
-
 function granulesToFileURIs(granuleIds, t) {
   const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
   const files = granules.reduce((arr, g) => arr.concat(g.files), []);
@@ -515,17 +505,17 @@ test.serial('should update cmr data to hold extra urls but remove out-dated urls
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
-  
+
   const UMM = await metadataObjectFromCMRFile(
     `s3://${t.context.publicBucket}/example2/2016/` +
     'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json'
   );
   const URLDescriptions = UMM.RelatedUrls.map((urlObject) => urlObject.Description);
   // urls that should have been moved are tagged thusly in their description
-  t.false(URLDescriptions.includes('this should be gone by the end'))
+  t.false(URLDescriptions.includes('this should be gone by the end'));
 
   // urls that shouldn't have been changed are tagged thsuly in their description
-  t.true(URLDescriptions.includes("This should be held onto as it doesn't follow the pattern of tea/s3 url"))
+  t.true(URLDescriptions.includes("This should be held onto as it doesn't follow the pattern of tea/s3 url"));
 });
 
 test.serial('handles partially moved files', async (t) => {

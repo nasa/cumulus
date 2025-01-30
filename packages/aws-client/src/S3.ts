@@ -1132,7 +1132,7 @@ export const multipartCopyObject = async (
  * @param {boolean} [params.copyTags=false]
  * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
  */
-export const CopyObject = async (
+export const copyObject = async (
   params: {
     sourceBucket: string,
     sourceKey: string,
@@ -1218,7 +1218,7 @@ export const moveObject = async (
     sourceKey,
   } = params;
 
-  await CopyObject(params);
+  await copyObject(params);
   const deleteS3ObjRes = await deleteS3Object(sourceBucket, sourceKey);
   return deleteS3ObjRes;
 };
