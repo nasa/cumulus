@@ -69,13 +69,8 @@ describe('when moveGranulesCollection is called', () => {
         beforeAllFailed = true;
       }
     });
-    it('moves the granule data in s3', () => {
-      if (beforeAllFailed) fail('beforeAllFailed');
-    });
     it('updates the granule data in s3', async () => {
       if (beforeAllFailed) fail('beforeAllFailed');
-
-      finalFiles = getTargetFiles(targetUrlPrefix, config);
       await Promise.all(finalFiles.map(async (file) => {
         expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
       }));
