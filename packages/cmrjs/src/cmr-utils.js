@@ -35,6 +35,16 @@ const {
 
 const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
+/**
+ * @typedef {{
+ *   provider: string,
+ *   clientId: string,
+ *   username?: string,
+ *   password?: string,
+ *   token?: string
+ * }} CmrCredentials
+ */
+
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
   if (file.filepath) return file.filepath;
@@ -231,6 +241,17 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   }
 
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
+}
+
+/**
+ * Remove granule from CMR.
+ *
+ * @param {string} granuleUR - the granuleUR
+ * @param {CmrCredentials} creds - credentials needed to post to CMR service
+ */
+async function removeFromCMR(granuleUR, creds) {
+  const cmrClient = new CMR(creds);
+  return await cmrClient.deleteGranule(granuleUR);
 }
 
 /**
@@ -1249,6 +1270,7 @@ module.exports = {
   publish2CMR,
   reconcileCMRMetadata,
   removeEtagsFromFileObjects,
+  removeFromCMR,
   updateCMRMetadata,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,

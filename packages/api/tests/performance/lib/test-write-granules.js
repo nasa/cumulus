@@ -257,7 +257,7 @@ test('writeGranulesFromMessage operates on 2k granules with 10 files each within
       WaitTimeSeconds: 10,
       MaxNumberOfMessages: 10,
     });
-    if (Messages.length === 0) {
+    if (Messages === undefined) {
       notEmpty = false;
     } else {
       allMessages.push(...Messages);
