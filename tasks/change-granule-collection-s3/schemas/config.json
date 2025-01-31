@@ -73,7 +73,7 @@
       ],
       "properties": {
         "name": { "type": "string" },
-        "version": { "type": "version" },
+        "version": { "type": "string" },
         "process": { "type": "string" },
         "url_path": { "type": "string" },
         "duplicateHandling": { "type": "string" },

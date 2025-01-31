@@ -133,7 +133,7 @@ describe('when moveGranulesCollection is called', () => {
           console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
           beforeAllFailed = true;
         }
-        await Promise.all(inputPayload.granules[0].files.FunctionNamemap((file) => expectAsync(
+        await Promise.all(inputPayload.granules[0].files.map((file) => expectAsync(
           waitForListObjectsV2ResultCount({
             bucket: file.bucket,
             prefix: file.key,
