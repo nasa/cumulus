@@ -1,12 +1,14 @@
 'use strict';
 
 const keyBy = require('lodash/keyBy');
+const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const {
   addEtagsToFileObjects,
   granulesToCmrFileObjects,
   metadataObjectFromCMRFile,
   publish2CMR,
+  removeFromCMR,
   removeEtagsFromFileObjects,
 } = require('@cumulus/cmrjs');
 const { getCmrSettings, getS3UrlOfFile } = require('@cumulus/cmrjs/cmr-utils');
@@ -86,6 +88,28 @@ function checkForMetadata(granules, cmrFiles) {
 }
 
 /**
+ * Remove granules from CMR
+ *
+ * @param {object} params - parameter object
+ * @param {Array<object>} params.granules - granules to remove
+ * @param {object} params.cmrSettings - CMR credentials
+ * @param {number} params.concurrency - Maximum concurrency of requests to CMR
+ * @throws {Error} - Error from CMR request
+ */
+async function removeGranuleFromCmr({ granules, cmrSettings, concurrency }) {
+  const granulesToUnpublish = granules.filter((granule) => granule.published || !!granule.cmrLink);
+  await pMap(
+    granulesToUnpublish,
+    (granule) => removeFromCMR(granule.granuleId, cmrSettings),
+    { concurrency }
+  );
+
+  if (granulesToUnpublish.length > 0) {
+    log.info(`Removing ${granulesToUnpublish.length} out of ${granules.length} granules from CMR for republishing`);
+  }
+}
+
+/**
  * Post to CMR
  *
  * See the schemas directory for detailed input and output schemas
@@ -108,7 +132,17 @@ function checkForMetadata(granules, cmrFiles) {
  */
 async function postToCMR(event) {
   const { cmrRevisionId, granules } = event.input;
-  const { etags = {} } = event.config;
+  const { etags = {}, republish = false, concurrency = 20 } = event.config;
+
+  const cmrSettings = await getCmrSettings({
+    ...event.config.cmr,
+    ...event.config.launchpad,
+  });
+
+  // if republish is true, unpublish granules which are public
+  if (republish) {
+    await removeGranuleFromCmr({ granules, cmrSettings, concurrency });
+  }
 
   granules.forEach((granule) => addEtagsToFileObjects(granule, etags));
 
@@ -122,18 +156,14 @@ async function postToCMR(event) {
 
   const startTime = Date.now();
 
-  const cmrSettings = await getCmrSettings({
-    ...event.config.cmr,
-    ...event.config.launchpad,
-  });
-
   // post all meta files to CMR
-  const results = await Promise.all(
-    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId))
+  const results = await pMap(
+    updatedCMRFiles,
+    (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
+    { concurrency }
   );
 
   const endTime = Date.now();
-
   const outputGranules = buildOutput(
     results,
     granules
