@@ -4,6 +4,7 @@ const fs = require('fs');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 const {
   deleteS3Object,
+  s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { createProvider } = require('@cumulus/api-client/providers');
 const { deleteGranule } = require('@cumulus/api-client/granules');
@@ -11,7 +12,6 @@ const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTestSuffix, createTimestampedTestId } = require('../../helpers/testUtils');
 const { setupInitialState, getTargetFiles, getTargetCollection, getSourceCollection, getPayload } = require('./move-granule-collection-spec-utils');
 
-const activityStep = new ActivityStep();
 
 describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
   let workflowExecutionArn;
@@ -88,16 +88,24 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
     }
   });
 
-  it('executes successfully', () => {
-    expect(beforeAllFailed).toEqual(false);
+  it('updates the granule data in s3', async () => {
+    if (beforeAllFailed) fail('beforeAllFailed');
+    await Promise.all(finalFiles.map(async (file) => {
+      expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
+    }));
   });
 
   it('outputs the updated granules', async () => {
     expect(beforeAllFailed).toEqual(false);
+
+    const activityStep = new ActivityStep();
     const activityOutput = await activityStep.getStepOutput(
       workflowExecutionArn,
-      'EcsTaskChangeGranuleCollectionS3'
+      'ChangeGranuleCollectionS3'
     );
+    console.log('arn = ', workflowExecutionArn)
+    console.log('activity_output:', activityOutput);
+    console.log(activityOutput.payload.granules[0].files)
     expect(activityOutput.payload.granules[0].files).toEqual([
       {
         key: 'change-granule-collection-s3-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
@@ -113,7 +121,7 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
       },
       {
         key: 'change-granule-collection-s3-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-        bucket: config.buckets.public.name,
+        bucket: config.buckets.puaablic.name,
         type: 'browse',
         fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
       },
