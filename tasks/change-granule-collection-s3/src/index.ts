@@ -329,9 +329,9 @@ async function moveGranules(event: ChangeCollectionsS3Event): Promise<Object> {
     collectionName: config.targetCollection.name,
     collectionVersion: config.targetCollection.version,
   });
-
-  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(event)}`);
-
+  
+  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(event.config)}`);
+  
   const granuleIds = event.input.granuleIds;
   const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranule({
     prefix: getRequiredEnvVar('stackName'),
@@ -372,6 +372,7 @@ async function moveGranules(event: ChangeCollectionsS3Event): Promise<Object> {
     targetGranules, cmrObjects, cmrFilesByGranuleId,
     config
   );
+  log.debug('targetGranules', targetGranules)
   // Move files from staging location to final location
   await moveFilesForAllGranules({
     sourceGranules: granulesInput,
