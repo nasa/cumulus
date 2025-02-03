@@ -13,7 +13,6 @@ import {
 } from '@cumulus/cmrjs/cmr-utils';
 import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
 import { AssertionError } from 'assert';
-// import xml2js from 'xml2js';
 
 export type ValidApiFile = {
   bucket: string,
@@ -40,12 +39,15 @@ export function apiGranuleRecordIsValid(granule: ApiGranuleRecord): granule is V
   return filesAreValid;
 }
 
-export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cmrObject: Object) => {
+export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cmrObject: { Granule?: object }) => {
   let cmrFileString;
   if (isUMMGFilename(cmrFile.fileName || cmrFile.key)) {
     cmrFileString = JSON.stringify(cmrObject, undefined, 2);
   } else {
-    cmrFileString = generateEcho10XMLString(cmrObject);
+
+    // our xml stringify function packages the metadata in "Granule",
+    // resulting in possible nested Granule object
+    cmrFileString = generateEcho10XMLString(cmrObject.Granule || cmrObject);
   }
   await s3PutObject({
     Bucket: cmrFile.bucket,
@@ -81,14 +83,11 @@ export const updateCmrFileCollections = ({
     distributionBucketMap,
   };
   if (isECHO10Filename(cmrFileName)) {
-    let updatedObject: { Granule?: object } = updateECHO10Collection(cmrObject, collection);
-    updatedObject = updateEcho10XMLMetadataObject({
+    const updatedObject = updateECHO10Collection(cmrObject, collection);
+    return updateEcho10XMLMetadataObject({
       ...params,
       metadataObject: updatedObject,
-    }) as { Granule?: object };
-    // our xml stringify function packages the metadata in "Granule",
-    // resulting in possible nested Granule object
-    return updatedObject.Granule || updatedObject;
+    });
   }
   if (isUMMGFilename(cmrFileName)) {
     const updatedObject = updateUMMGCollection(cmrObject, collection);

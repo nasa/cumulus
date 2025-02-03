@@ -26,7 +26,7 @@ const { isECHO10Filename, isUMMGFilename, metadataObjectFromCMRFile } = require(
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { constructCollectionId } = require('../../../packages/message/Collections');
 
-let moveGranules;
+let changeGranuleCollectionS3;
 async function uploadFiles(files) {
   await Promise.all(files.map((file) => {
     let body;
@@ -261,7 +261,7 @@ test.beforeEach(async (t) => {
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   const testDbName = `change-granule-collection-s3/change-collections-s3${cryptoRandomString({ length: 10 })}`;
-  moveGranules = proxyquire(
+  changeGranuleCollectionS3 = proxyquire(
     '../dist/src',
     {
       '@cumulus/api-client/granules': {
@@ -273,13 +273,13 @@ test.beforeEach(async (t) => {
         ),
       },
     }
-  ).moveGranules;
+  ).changeGranuleCollectionS3;
 
   t.context.publicBucket = randomId('public');
   t.context.protectedBucket = randomId('protected');
   t.context.privateBucket = randomId('private');
   t.context.systemBucket = randomId('system');
-  t.context.stackName = 'moveGranulesTestStack';
+  t.context.stackName = 'changeGranuleCollectionS3TestStack';
   const bucketMapping = {
     public: t.context.publicBucket,
     protected: t.context.protectedBucket,
@@ -327,7 +327,7 @@ test.serial('Should move files to final location and update pg data with cmr xml
   const collection = { name: 'MOD11A1', version: '001' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
     Bucket: t.context.protectedBucket,
@@ -419,7 +419,7 @@ test.serial('Should move files to final location and update pg data with cmr umm
   const collection = { name: 'MOD11A1UMMG', version: '001' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
     Bucket: t.context.protectedBucket,
@@ -503,7 +503,7 @@ test.serial('should update cmr data to hold extra urls but remove out-dated urls
   const collection = { name: 'MOD11A1UMMG', version: '001' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
 
   const UMM = await metadataObjectFromCMRFile(
@@ -561,7 +561,7 @@ test.serial('handles partially moved files', async (t) => {
 
   await uploadFiles(filesToUpload, t.context.bucketMapping);
 
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
     Bucket: t.context.protectedBucket,
@@ -679,7 +679,7 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
   const newPayload = buildPayload(t, collection);
 
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
     Bucket: t.context.protectedBucket,
@@ -773,7 +773,7 @@ test.serial('handles files that need no move', async (t) => {
   const collection = { name: 'MOD11ANOMOVE', version: '001' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
     Bucket: t.context.protectedBucket,
