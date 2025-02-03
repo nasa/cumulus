@@ -81,20 +81,20 @@ export const updateCmrFileCollections = ({
     distributionBucketMap,
   };
   if (isECHO10Filename(cmrFileName)) {
-    let updatedObject: { Granule?: object } = updateECHO10Collection(cmrObject, collection)
+    let updatedObject: { Granule?: object } = updateECHO10Collection(cmrObject, collection);
     updatedObject = updateEcho10XMLMetadataObject({
       ...params,
-      metadataObject: updatedObject
+      metadataObject: updatedObject,
     }) as { Granule?: object };
     // our xml stringify function packages the metadata in "Granule",
     // resulting in possible nested Granule object
     return updatedObject.Granule || updatedObject;
   }
   if (isUMMGFilename(cmrFileName)) {
-    let updatedObject = updateUMMGCollection(cmrObject, collection);
+    const updatedObject = updateUMMGCollection(cmrObject, collection);
     return updateUMMGMetadataObject({
       ...params,
-      metadataObject: updatedObject
+      metadataObject: updatedObject,
     });
   }
   throw new AssertionError({ message: 'cmr file in unknown format' });

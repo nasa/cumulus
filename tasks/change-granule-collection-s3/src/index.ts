@@ -228,10 +228,7 @@ async function updateGranuleMetadata(
   cmrFiles: { [key: string]: ValidApiFile },
   cmrFileNames: Array<string>,
   targetCollection: CollectionRecord
-): Promise<{
-    targetGranule: ValidGranuleRecord,
-    cmrObject: Object
-  }> {
+): Promise<{ targetGranule: ValidGranuleRecord, cmrObject: Object }> {
   const cmrFile = get(cmrFiles, granule.granuleId, null);
 
   const cmrMetadata = cmrFile ?
@@ -290,10 +287,7 @@ async function buildTargetGranules(
   config: EventConfig,
   cmrFiles: { [key: string]: ValidApiFile },
   targetCollection: CollectionRecord
-): Promise<{
-    targetGranules: Array<ValidGranuleRecord>,
-    cmrObjects: Array<Object>,
-  }> {
+): Promise<{ targetGranules: Array<ValidGranuleRecord>, cmrObjects: Array<Object> }> {
   const bucketsConfig = new BucketsConfig(config.buckets);
   const cmrFileNames = Object.values(cmrFiles).map((f) => path.basename(f.key));
   const targetGranules: Array<ValidGranuleRecord> = [];
@@ -329,9 +323,9 @@ async function moveGranules(event: ChangeCollectionsS3Event): Promise<Object> {
     collectionName: config.targetCollection.name,
     collectionVersion: config.targetCollection.version,
   });
-  
+
   log.debug(`change-granule-collection-s3 config: ${JSON.stringify(event.config)}`);
-  
+
   const granuleIds = event.input.granuleIds;
   const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranule({
     prefix: getRequiredEnvVar('stackName'),
@@ -372,7 +366,6 @@ async function moveGranules(event: ChangeCollectionsS3Event): Promise<Object> {
     targetGranules, cmrObjects, cmrFilesByGranuleId,
     config
   );
-  log.debug('targetGranules', JSON.stringify(targetGranules))
   // Move files from staging location to final location
   await moveFilesForAllGranules({
     sourceGranules: granulesInput,

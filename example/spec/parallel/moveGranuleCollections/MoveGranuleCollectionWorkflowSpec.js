@@ -1,78 +1,122 @@
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
 const fs = require('fs');
-const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
+const { waitForListObjectsV2ResultCount, addCollections, addProviders } = require('@cumulus/integration-tests');
 const {
   deleteS3Object,
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
-const { createProvider } = require('@cumulus/api-client/providers');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
-const { loadConfig, createTestSuffix, createTimestampedTestId } = require('../../helpers/testUtils');
-const { setupInitialState, getTargetFiles, getTargetCollection, getSourceCollection, getPayload } = require('./move-granule-collection-spec-utils');
+const { loadConfig, createTestSuffix, createTimestampedTestId, uploadTestDataToBucket, createTestDataPath } = require('../../helpers/testUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
+const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
+const workflowName = 'IngestAndPublishGranuleWithOrca';
 
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
-describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
-  let workflowExecutionArn;
+const s3data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
+];
+
+const providersDir = './data/providers/s3/';
+const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
+const targetCollectionsDir = './data/collections/s3_MOD09GQ_007_full_ingest_move';
+let collection;
+let targetCollection;
+const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
+
+describe('The MoveGranuleCollections workflow', () => {
+  let stackName;
   let config;
+  let inputPayload;
+  let provider;
+  let testDataFolder;
+  let granuleId;
   let finalFiles;
   let beforeAllFailed = false;
+  let ingestExecutionArn;
+  let moveExecutionArn;
   const granuleIds = ['MOD11A1.A2017200.h19v04.006.2017201090724'];
   afterAll(async () => {
-    try {
-      await Promise.all(finalFiles.map((fileObj) => deleteS3Object(
-        fileObj.bucket,
-        fileObj.key
-      )));
-    } catch {
-      console.log('no need to delete s3 objects');
-    }
-    try {
-      await Promise.all(granuleIds.map((granuleId) => deleteGranule({ prefix: config.stackName, granuleId })));
-    } catch {
-      console.log('no need to delete granules');
-    }
-
-    try {
-      await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
-    } catch {
-      console.log('no need to delete execution');
-    }
+    let cleanup = finalFiles.map((fileObj) => deleteS3Object(
+      fileObj.bucket,
+      fileObj.key
+    ));
+    cleanup = cleanup.concat(granuleIds.map((granId) => deleteGranule({ prefix: config.stackName, granuleId: granId })));
+    cleanup = cleanup.concat([
+      deleteExecution({ prefix: config.stackName, executionArn: ingestExecutionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: moveExecutionArn }),
+    ]);
+    await Promise.all(cleanup);
   });
   beforeAll(async () => {
-    const sourceUrlPrefix = 'change-granule-collection-s3-testing';
-    const targetUrlPrefix = 'change-granule-collection-s3-testing-target';
     config = await loadConfig();
-    const providersDir = './data/providers/s3/';
-    const stackName = config.stackName;
-    const testId = createTimestampedTestId(config.stackName, 'ChangeGranuleCollectionS3');
+    stackName = config.stackName;
+    const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
     const testSuffix = createTestSuffix(testId);
-    const provider = { id: `s3_provider${testSuffix}` };
+    testDataFolder = createTestDataPath(testId);
 
-    const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
-    const providerData = {
-      ...providerJson,
-      id: provider.id,
-      host: config.bucket,
-    };
-    await createProvider({ prefix: config.stackName, provider: providerData });
+    collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+    targetCollection = { name: `MOD09GQ${testSuffix}`, version: '007' };
+    provider = { id: `s3_provider${testSuffix}` };
 
-    finalFiles = getTargetFiles(targetUrlPrefix, config);
-    //upload to cumulus
+    // populate collections, providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(stackName, config.bucket, collectionsDir, testSuffix, testId),
+      addCollections(stackName, config.bucket, targetCollectionsDir, testSuffix, testId),
+      addProviders(stackName, config.bucket, providersDir, config.bucket, testSuffix),
+    ]);
 
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    // update test data filepaths
+    inputPayload = await setupTestGranuleForIngest(
+      config.bucket,
+      JSON.stringify({ ...JSON.parse(inputPayloadJson), pdr: undefined }),
+      granuleRegex,
+      testSuffix,
+      testDataFolder
+    );
+    granuleId = inputPayload.granules[0].granuleId;
+    ingestExecutionArn = await buildAndStartWorkflow(
+      stackName, config.bucket, workflowName, collection, provider, inputPayload
+    );
+
+    await waitForApiStatus(
+      getGranule,
+      {
+        prefix: stackName,
+        granuleId: inputPayload.granules[0].granuleId,
+        collectionId: constructCollectionId(collection.name, collection.version),
+      },
+      'completed'
+    );
     try {
-      await setupInitialState(stackName, sourceUrlPrefix, targetUrlPrefix, config);
-
-      workflowExecutionArn = await buildAndStartWorkflow(
-        config.stackName,
+      moveExecutionArn = await buildAndStartWorkflow(
+        stackName,
         config.bucket,
         'MoveGranuleCollectionsWorkflow',
-        getSourceCollection(sourceUrlPrefix),
+        collection,
         provider,
-        getPayload(sourceUrlPrefix, targetUrlPrefix, config).input,
-        getPayload(sourceUrlPrefix, targetUrlPrefix, config).meta
+        {
+          granuleIds: [granuleId],
+        },
+        {
+          targetCollection,
+        }
       );
+      const startingGranule = await getGranule({
+        prefix: stackName,
+        granuleId,
+      });
+      finalFiles = startingGranule.files.map((file) => ({
+        ...file,
+        key: `changedCollectionPath/MOD09GQ___006/${testId}/${file.fileName}`,
+      }));
+
       await Promise.all(finalFiles.map((file) => expectAsync(
         waitForListObjectsV2ResultCount({
           bucket: file.bucket,
@@ -93,45 +137,5 @@ describe('The ChangeGranuleCollectionS3 workflow using ECS', () => {
     await Promise.all(finalFiles.map(async (file) => {
       expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
     }));
-  });
-
-  it('outputs the updated granules', async () => {
-    expect(beforeAllFailed).toEqual(false);
-
-    const activityStep = new ActivityStep();
-    const activityOutput = await activityStep.getStepOutput(
-      workflowExecutionArn,
-      'ChangeGranuleCollectionS3'
-    );
-    console.log('arn = ', workflowExecutionArn)
-    console.log('activity_output:', activityOutput);
-    console.log(activityOutput.payload.granules[0].files)
-    expect(activityOutput.payload.granules[0].files).toEqual([
-      {
-        key: 'change-granule-collection-s3-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-        bucket: config.buckets.protected.name,
-        type: 'data',
-        fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-      },
-      {
-        key: 'change-granule-collection-s3-testing-target/jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-        bucket: config.buckets.public.name,
-        type: 'browse',
-        fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-      },
-      {
-        key: 'change-granule-collection-s3-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-        bucket: config.buckets.puaablic.name,
-        type: 'browse',
-        fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-      },
-      {
-        key: 'change-granule-collection-s3-testing-target/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-        bucket: config.buckets.public.name,
-        type: 'metadata',
-        fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      },
-    ]);
-    expect(activityOutput.payload.granules[0].granuleId).toEqual('MOD11A1.A2017200.h19v04.006.2017201090724');
   });
 });

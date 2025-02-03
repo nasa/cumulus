@@ -4,6 +4,7 @@ const got = require('got');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
 const set = require('lodash/set');
+const cloneDeep = require('lodash/cloneDeep');
 const { promisify } = require('util');
 const js2xmlParser = require('js2xmlparser');
 const path = require('path');
@@ -32,7 +33,6 @@ const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
 } = require('./utils');
-const cloneDeep = require('lodash/cloneDeep');
 /**
  * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams
  */
@@ -1264,7 +1264,7 @@ async function getGranuleTemporalInfo(granule) {
 
 /**
  * Search recursively for the location of a sub-object in the cmr object
- * 
+ *
  * @param {object} cmrObject - cmr metadata object
  * @param {string} attributePath - subObject path to seek
  * @returns {string | null}
@@ -1275,10 +1275,10 @@ const findCollectionAttributePath = (cmrObject, attributePath) => {
   }
   let output = null;
   Object.entries(cmrObject).forEach(([key, value]) => {
-    if (typeof (value) === 'object') {
-      const path = findCollectionAttributePath(value, attributePath);
-      if (path !== null) {
-        output = key + '.' + path;
+    if (value.isObject()) {
+      const foundPath = findCollectionAttributePath(value, attributePath);
+      if (foundPath !== null) {
+        output = key + '.' + foundPath;
       }
     }
   });
@@ -1305,7 +1305,7 @@ const updateCMRCollectionValue = (
 
 /**
  * Update collection in an ECHO10 cmr metadata object
- * 
+ *
  * @param {object} cmrObject - CMR metadata object
  * @param {{ name: string, version: string }} collection - collection name and version to update to
  * @returns {object}
@@ -1317,12 +1317,12 @@ const updateECHO10Collection = (
   const cmrObjectCopy = cloneDeep(cmrObject);
   updateCMRCollectionValue(cmrObjectCopy, 'Collection.ShortName', collection.name, 'Granule.Collection.ShortName');
   updateCMRCollectionValue(cmrObjectCopy, 'Collection.VersionId', collection.version, 'Granule.Collection.VersionId');
-  return cmrObjectCopy
-}
+  return cmrObjectCopy;
+};
 
 /**
  * Update collection in an UMMG cmr metadata object
- * 
+ *
  * @param {object} cmrObject - CMR metadata object
  * @param {{ name: string, version: string }} collection - collection name and version to update to
  * @returns {object}
@@ -1334,8 +1334,8 @@ const updateUMMGCollection = (
   const cmrObjectCopy = cloneDeep(cmrObject);
   updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.ShortName', collection.name);
   updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.VersionId', collection.version);
-  return cmrObjectCopy
-}
+  return cmrObjectCopy;
+};
 
 module.exports = {
   addEtagsToFileObjects,

@@ -1142,7 +1142,7 @@ export const copyObject = async (
     copyTags?: boolean,
     chunkSize?: number
   }
-): Promise<void>=> {
+): Promise<void> => {
   const {
     sourceBucket,
     sourceKey,

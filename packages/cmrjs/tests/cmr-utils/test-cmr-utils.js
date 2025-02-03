@@ -1355,13 +1355,12 @@ test('buildCMRQuery works with if the input results list is empty', (t) => {
   t.deepEqual(actual, expected);
 });
 
-
 test('updateECHO10Collection updates echo10 collection name and version', async (t) => {
   const filename = 'tests/cmr-utils/data/meta.xml';
   const cmrObject = await promisify(xml2js.parseString)(fs.readFileSync(filename, 'utf-8'), xmlParseOptions);
   const updated = updateECHO10Collection(
     cmrObject,
-    { name: 'a', version: 'b' },
+    { name: 'a', version: 'b' }
   );
 
   t.is(updated.Granule.Collection.ShortName, 'a');
