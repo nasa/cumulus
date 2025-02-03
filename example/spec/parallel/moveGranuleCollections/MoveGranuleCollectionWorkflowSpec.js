@@ -114,7 +114,7 @@ describe('The MoveGranuleCollections workflow', () => {
       });
       finalFiles = startingGranule.files.map((file) => ({
         ...file,
-        key: `changedCollectionPath/MOD09GQ___006/${testId}/${file.fileName}`,
+        key: `changedCollectionPath/MOD09GQ___007/${testId}/${file.fileName}`,
       }));
 
       await Promise.all(finalFiles.map((file) => expectAsync(

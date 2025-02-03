@@ -44,7 +44,6 @@ export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cm
   if (isUMMGFilename(cmrFile.fileName || cmrFile.key)) {
     cmrFileString = JSON.stringify(cmrObject, undefined, 2);
   } else {
-
     // our xml stringify function packages the metadata in "Granule",
     // resulting in possible nested Granule object
     cmrFileString = generateEcho10XMLString(cmrObject.Granule || cmrObject);

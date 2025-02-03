@@ -85,7 +85,7 @@ async function s3MoveNeeded(
   sourceFile: Omit<ValidApiFile, 'granuleId'>,
   targetFile: Omit<ValidApiFile, 'granuleId'>
 ): Promise<boolean> {
-  // this check is strictly redundant to the next "targetExists" but avoids costly S3 query if possible
+  // this check is strictly redundant to the next "targetExists" but avoids S3 query if possible
   if (!moveRequested(sourceFile, targetFile)) {
     return false;
   }
@@ -190,7 +190,6 @@ function updateFileMetadata(
   targetCollection: CollectionRecord
 ): Omit<ValidApiFile, 'granuleId'> {
   const fileName = path.basename(file.key);
-  console.log(cmrMetadata)
   const match = identifyFileMatch(bucketsConfig, fileName, targetCollection.files);
   const URLPathTemplate = match.url_path || targetCollection.url_path || '';
   const urlPath = urlPathTemplate(URLPathTemplate, {
@@ -217,7 +216,7 @@ async function updateGranuleMetadata(
   cmrObjects: { [key: string]: Object },
   targetCollection: CollectionRecord
 ): Promise<ValidGranuleRecord> {
-  const cmrMetadata = get(cmrObjects, granule.granuleId, {})
+  const cmrMetadata = get(cmrObjects, granule.granuleId, {});
   const newFiles = granule.files?.map(
     (file) => updateFileMetadata(
       file,
@@ -227,7 +226,7 @@ async function updateGranuleMetadata(
       targetCollection
     )
   );
-  return  {
+  return {
     ...cloneDeep(granule),
     files: newFiles,
     collectionId: constructCollectionId(
@@ -252,26 +251,24 @@ async function updateCMRData(
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
   const distributionBucketMap = await fetchDistributionBucketMap();
   const outputObjects: { [key: string]: Object } = {};
-  targetGranules.forEach(
-    (targetGranule) => {
-      const cmrFile = cmrFilesByGranuleId[targetGranule.granuleId]
-      const cmrObject = cmrObjectsByGranuleId[targetGranule.granuleId]
-      if (!(cmrFile && cmrObject)) {
-        outputObjects[targetGranule.granuleId] = {};
-      }
-      outputObjects[targetGranule.granuleId] = updateCmrFileCollections({
-        collection: config.targetCollection,
-        cmrFileName: cmrFile.key,
-        cmrObject,
-        files: (targetGranule as ValidGranuleRecord).files,
-        distEndpoint,
-        bucketTypes,
-        cmrGranuleUrlType,
-        distributionBucketMap,
-      })
+  targetGranules.forEach((targetGranule) => {
+    const cmrFile = cmrFilesByGranuleId[targetGranule.granuleId];
+    const cmrObject = cmrObjectsByGranuleId[targetGranule.granuleId];
+    if (!(cmrFile && cmrObject)) {
+      outputObjects[targetGranule.granuleId] = {};
     }
-  );
-  return outputObjects
+    outputObjects[targetGranule.granuleId] = updateCmrFileCollections({
+      collection: config.targetCollection,
+      cmrFileName: cmrFile.key,
+      cmrObject,
+      files: (targetGranule as ValidGranuleRecord).files,
+      distEndpoint,
+      bucketTypes,
+      cmrGranuleUrlType,
+      distributionBucketMap,
+    });
+  });
+  return outputObjects;
 }
 
 /**
@@ -299,10 +296,8 @@ async function buildTargetGranules(
   granulesAndMetadata.forEach((targetGranule) => {
     targetGranules.push(targetGranule);
   });
-  return  targetGranules
+  return targetGranules;
 }
-
-
 
 async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promise<Object> {
   const config = event.config;
@@ -348,9 +343,9 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     isCMRFile
   ) as ValidApiFile[];
   const cmrFilesByGranuleId: Dictionary<ValidApiFile> = keyBy(cmrFiles, 'granuleId');
-  const firstCMRObjectsByGranuleId: { [key: string]: Object } = {}
+  const firstCMRObjectsByGranuleId: { [key: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
-    firstCMRObjectsByGranuleId[cmrFile.granuleId] = await getCMRMetadata(cmrFile, cmrFile.granuleId)
+    firstCMRObjectsByGranuleId[cmrFile.granuleId] = await getCMRMetadata(cmrFile, cmrFile.granuleId);
   }));
   const collectionUpdatedCMRMetadata = await updateCMRData(
     granulesInput, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
