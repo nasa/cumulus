@@ -372,7 +372,7 @@ async function moveGranules(event: ChangeCollectionsS3Event): Promise<Object> {
     targetGranules, cmrObjects, cmrFilesByGranuleId,
     config
   );
-  log.debug('targetGranules', targetGranules)
+  log.debug('targetGranules', JSON.stringify(targetGranules))
   // Move files from staging location to final location
   await moveFilesForAllGranules({
     sourceGranules: granulesInput,
