@@ -215,24 +215,6 @@ variable "ecs_include_docker_cleanup_cronjob" {
   default = false
 }
 
-variable "elasticsearch_client_config" {
-  description = "Configuration parameters for Elasticsearch client for cumulus tasks"
-  type        = map(string)
-  default     = {}
-}
-
-variable "elasticsearch_remove_index_alias_conflict" {
-  type = bool
-  default = true
-  description = "NOTE -- THIS SHOULD NEVER BE SET TO TRUE BY DEFAULT IN PRODUCTION SITUATIONS, we've set it to true here for dev only -- Set to false to not allow cumulus deployment bootstrap lambda to remove existing ES index named 'cumulus-alias'."
-}
-
-variable "es_request_concurrency" {
-  type = number
-  default = 10
-  description = "Maximum number of concurrent requests to send to Elasticsearch. Used in index-from-database operation"
-}
-
 variable "key_name" {
   type    = string
   default = null
@@ -318,12 +300,6 @@ variable "tags" {
   default     = {}
 }
 
-variable "es_index_shards" {
-  description = "The number of shards for the Elasticsearch index"
-  type        = number
-  default     = 2
-}
-
 variable "pdr_node_name_provider_bucket" {
   type = string
   description = "The name of the common bucket used as an S3 provider for PDR NODE_NAME tests"
@@ -350,7 +326,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "52"
+  default = "53"
 }
 
 variable "cumulus_process_activity_version" {

@@ -49,7 +49,6 @@ const esSearchStub = sandbox.stub();
 const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
-
 const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
   '../lib/granules': proxyquire('../../lib/granules', {
     '@cumulus/es-client/search': {
@@ -392,6 +391,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granules returned b
   });
   await verifyGranulesQueuedStatus(t);
 });
+
 test.serial('applyWorkflowToGranules sets the granules status to queued', async (t) => {
   await setUpExistingDatabaseRecords(t);
   const workflowName = 'test-workflow';

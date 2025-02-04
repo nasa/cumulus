@@ -8,9 +8,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { getEsClient } = require('@cumulus/es-client/search');
-const indexer = require('@cumulus/es-client/indexer');
 
 const {
   ProviderPgModel,
@@ -35,9 +32,6 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-const esIndex = randomString();
-let esClient;
-
 let jwtAuthToken;
 let accessTokenModel;
 
@@ -48,18 +42,7 @@ test.before(async (t) => {
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
-
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-
-  await Promise.all([
-    accessTokenModel.createTable(),
-    bootstrapElasticSearch({
-      host: 'fakehost',
-      index: esIndex,
-      alias: esAlias,
-    }),
-  ]);
+  await accessTokenModel.createTable();
 
   t.context.testDbName = `test_providers_${cryptoRandomString({ length: 10 })}`;
 
@@ -74,13 +57,17 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
-  esClient = await getEsClient('fakehost');
+  t.context.testProvider = fakeProviderRecordFactory();
+  t.context.providerPgModel = new ProviderPgModel();
+  await t.context.providerPgModel.insert(
+    t.context.knex,
+    t.context.testProvider
+  );
 });
 
 test.after.always((t) => Promise.all([
   recursivelyDeleteS3Bucket(process.env.system_bucket),
   accessTokenModel.deleteTable(),
-  esClient.client.indices.delete({ index: esIndex }),
   destroyLocalTestDb({
     ...t.context,
   }),
@@ -108,12 +95,6 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
 test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('default returns list of providers', async (t) => {
-  const testProvider = fakeProviderRecordFactory();
-  const providerPgModel = new ProviderPgModel();
-  const [provider] = await providerPgModel.create(t.context.knex, testProvider);
-  const pgProvider = await providerPgModel.get(t.context.knex, { cumulus_id: provider.cumulus_id });
-  await indexer.indexProvider(esClient, pgProvider, esIndex);
-
   const response = await request(app)
     .get('/providers')
     .set('Accept', 'application/json')
@@ -121,5 +102,5 @@ test('default returns list of providers', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  t.truthy(results.find((r) => r.id === testProvider.id));
+  t.truthy(results.find((r) => r.id === t.context.testProvider.name));
 });

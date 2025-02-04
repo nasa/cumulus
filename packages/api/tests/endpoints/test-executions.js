@@ -78,8 +78,6 @@ process.env.TOKEN_SECRET = randomId('secret');
 test.before(async (t) => {
   process.env = {
     ...process.env,
-    ...localStackConnectionEnv,
-    PG_DATABASE: testDbName,
     METRICS_ES_HOST: 'fakehost',
     METRICS_ES_USER: randomId('metricsUser'),
     METRICS_ES_PASS: randomId('metricsPass'),
@@ -235,7 +233,7 @@ test.beforeEach(async (t) => {
   ];
 
   // create fake Postgres granule records
-  // es records are for Metrics search
+  // es records are for Cloud Metrics search
   t.context.fakePGGranules = await Promise.all(t.context.fakeGranules.map(async (fakeGranule) => {
     await indexer.indexGranule(esClient, fakeGranule, esIndex);
     const granulePgRecord = await translateApiGranuleToPostgresGranule({

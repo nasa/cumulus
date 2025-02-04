@@ -43,7 +43,7 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
         id: asyncOperationId,
         taskArn: randomString(),
         description: 'Some description',
-        operationType: 'ES Index',
+        operationType: 'Bulk Granules',
         status: 'RUNNING',
       };
 

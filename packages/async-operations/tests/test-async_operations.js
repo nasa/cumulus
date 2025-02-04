@@ -23,11 +23,6 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 const { EcsStartTaskError, MissingRequiredArgument } = require('@cumulus/errors');
-const { Search } = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 const {
   getLambdaConfiguration,
   getLambdaEnvironmentVariables,
@@ -55,15 +50,6 @@ test.before(async (t) => {
   systemBucket = randomString();
   await s3().createBucket({ Bucket: systemBucket });
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esAsyncOperationsClient = new Search(
-    {},
-    'asyncOperation',
-    t.context.esIndex
-  );
-
   // Set up the mock ECS client
   ecsClient = ecs();
   ecsClient.runTask = (params) => {
@@ -75,7 +61,7 @@ test.before(async (t) => {
   t.context.functionConfig = {
     Environment: {
       Variables: {
-        ES_HOST: 'es-host',
+        Timeout: 300,
       },
     },
   };
@@ -94,7 +80,7 @@ test.beforeEach((t) => {
     status: 'RUNNING',
     taskArn: cryptoRandomString({ length: 5 }),
     description: 'testing',
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -103,7 +89,6 @@ test.beforeEach((t) => {
 test.after.always(async (t) => {
   sinon.restore();
   await recursivelyDeleteS3Bucket(systemBucket);
-  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -125,7 +110,7 @@ test.serial('startAsyncOperation uploads the payload to S3', async (t) => {
     callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload,
     stackName,
     knexConfig: knexConfig,
@@ -157,7 +142,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
     lambdaName,
     callerLambdaName,
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload,
     stackName,
     knexConfig: knexConfig,
@@ -203,7 +188,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the asyncOp
     lambdaName,
     callerLambdaName,
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload,
     stackName,
     knexConfig: knexConfig,
@@ -240,7 +225,7 @@ test.serial('The startAsyncOperation method throws error and calls createAsyncOp
     callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload: {},
     stackName: randomString(),
     knexConfig: knexConfig,
@@ -275,10 +260,10 @@ test.serial('The startAsyncOperation method throws error and calls createAsyncOp
   );
 });
 
-test('The startAsyncOperation writes records to all data stores', async (t) => {
+test('The startAsyncOperation writes records to the database', async (t) => {
   const description = randomString();
   const stackName = randomString();
-  const operationType = 'ES Index';
+  const operationType = 'Reconciliation Report';
   const taskArn = randomString();
 
   stubbedEcsRunTaskResult = {
@@ -306,7 +291,7 @@ test('The startAsyncOperation writes records to all data stores', async (t) => {
   const expected = {
     description,
     id,
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     status: 'RUNNING',
     taskArn,
   };
@@ -315,51 +300,6 @@ test('The startAsyncOperation writes records to all data stores', async (t) => {
     omit(asyncOperationPgRecord, omitList),
     translateApiAsyncOperationToPostgresAsyncOperation(omit(expected, omitList))
   );
-  const esRecord = await t.context.esAsyncOperationsClient.get(id);
-  t.deepEqual(
-    await t.context.esAsyncOperationsClient.get(id),
-    {
-      ...expected,
-      _id: esRecord._id,
-      timestamp: esRecord.timestamp,
-      updatedAt: esRecord.updatedAt,
-      createdAt: esRecord.createdAt,
-    }
-  );
-});
-
-test.serial('The startAsyncOperation writes records with correct timestamps', async (t) => {
-  const description = randomString();
-  const stackName = randomString();
-  const operationType = 'ES Index';
-  const taskArn = randomString();
-
-  stubbedEcsRunTaskResult = {
-    tasks: [{ taskArn }],
-    failures: [],
-  };
-
-  const { id } = await startAsyncOperation({
-    asyncOperationTaskDefinition: randomString(),
-    cluster: randomString(),
-    callerLambdaName: randomString(),
-    lambdaName: randomString(),
-    description,
-    operationType,
-    payload: {},
-    stackName,
-    knexConfig: knexConfig,
-    systemBucket,
-  });
-
-  const asyncOperationPgRecord = await t.context.asyncOperationPgModel.get(
-    t.context.testKnex,
-    { id }
-  );
-
-  const esRecord = await t.context.esAsyncOperationsClient.get(id);
-  t.is(asyncOperationPgRecord.created_at.getTime(), esRecord.createdAt);
-  t.is(asyncOperationPgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
 test.serial('The startAsyncOperation method returns the newly-generated record', async (t) => {
@@ -377,7 +317,7 @@ test.serial('The startAsyncOperation method returns the newly-generated record',
     callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload: {},
     stackName,
     knexConfig: knexConfig,
@@ -400,7 +340,7 @@ test.serial('The startAsyncOperation method throws error if callerLambdaName par
       cluster: randomString,
       lambdaName: randomString,
       description: randomString(),
-      operationType: 'ES Index',
+      operationType: 'Reconciliation Report',
       payload: { x: randomString() },
       stackName: randomString,
       knexConfig: knexConfig,
@@ -420,7 +360,7 @@ test('getLambdaEnvironmentVariables returns expected environment variables', (t)
   const vars = getLambdaEnvironmentVariables(t.context.functionConfig);
 
   t.deepEqual(new Set(vars), new Set([
-    { name: 'ES_HOST', value: 'es-host' },
+    { name: 'Timeout', value: 300 },
   ]));
 });
 
@@ -438,7 +378,7 @@ test.serial('ECS task params contain lambda environment variables when useLambda
     callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     payload: {},
     useLambdaEnvironmentVariables: true,
     stackName,
@@ -451,7 +391,7 @@ test.serial('ECS task params contain lambda environment variables when useLambda
     environmentOverrides[env.name] = env.value;
   });
 
-  t.is(environmentOverrides.ES_HOST, 'es-host');
+  t.is(environmentOverrides.Timeout, 300);
 });
 
 test.serial('createAsyncOperation throws if stackName is not provided', async (t) => {
@@ -494,64 +434,4 @@ test('createAsyncOperation throws if systemBucket is not provided', async (t) =>
     createAsyncOperation(createParams),
     { name: 'TypeError' }
   );
-});
-
-test.serial('createAsyncOperation() does not write to Elasticsearch if writing to PostgreSQL fails', async (t) => {
-  const { id, createObject } = t.context;
-
-  const fakeAsyncOpPgModel = {
-    create: () => {
-      throw new Error('something bad');
-    },
-  };
-
-  const createParams = {
-    knex: t.context.testKnex,
-    asyncOperationPgModel: fakeAsyncOpPgModel,
-    createObject,
-    stackName: 'FakeStack',
-    systemBucket: 'FakeBucket',
-  };
-  await t.throwsAsync(
-    createAsyncOperation(createParams),
-    { message: 'something bad' }
-  );
-
-  const dbRecords = await t.context.asyncOperationPgModel
-    .search(t.context.testKnex, { id });
-  t.is(dbRecords.length, 0);
-  t.false(await t.context.esAsyncOperationsClient.exists(
-    id
-  ));
-});
-
-test.serial('createAsyncOperation() does not write to PostgreSQL if writing to Elasticsearch fails', async (t) => {
-  const { id, createObject } = t.context;
-  const fakeEsClient = {
-    initializeEsClient: () => Promise.resolve(),
-    client: {
-      index: () => {
-        throw new Error('ES something bad');
-      },
-    },
-  };
-
-  const createParams = {
-    knex: t.context.testKnex,
-    createObject,
-    esClient: fakeEsClient,
-    stackName: 'FakeStack',
-    systemBucket: 'FakeBucket',
-  };
-  await t.throwsAsync(
-    createAsyncOperation(createParams),
-    { message: 'ES something bad' }
-  );
-
-  const dbRecords = await t.context.asyncOperationPgModel
-    .search(t.context.testKnex, { id });
-  t.is(dbRecords.length, 0);
-  t.false(await t.context.esAsyncOperationsClient.exists(
-    id
-  ));
 });
