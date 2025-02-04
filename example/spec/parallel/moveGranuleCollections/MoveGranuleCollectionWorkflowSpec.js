@@ -6,7 +6,7 @@ const {
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTestSuffix, createTimestampedTestId, uploadTestDataToBucket, createTestDataPath } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
@@ -38,8 +38,23 @@ describe('The MoveGranuleCollections workflow', () => {
   let finalFiles;
   let beforeAllFailed = false;
   let ingestExecutionArn;
+  let cleanupCollectionId;
   let moveExecutionArn;
   afterAll(async () => {
+    try {
+      await removePublishedGranule({
+        prefix: config.stackName,
+        granuleId,
+        collectionId: cleanupCollectionId,
+      });
+    } catch (error) {
+      console.log("ERROR IS: ", JSON.stringify(error, null, 2), error)
+      if (error.statusCode !== 404 &&
+        // remove from CMR throws a 400 when granule is missing
+        !error.apiMessage.includes('No record found')) {
+        throw error;
+      }
+    }
     let cleanup = finalFiles.map((fileObj) => deleteS3Object(
       fileObj.bucket,
       fileObj.key
@@ -60,6 +75,7 @@ describe('The MoveGranuleCollections workflow', () => {
 
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     targetCollection = { name: `MOD09GQ${testSuffix}`, version: '007' };
+    cleanupCollectionId = constructCollectionId(collection.name, collection.version)
     provider = { id: `s3_provider${testSuffix}` };
 
     // populate collections, providers and test data
