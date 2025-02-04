@@ -5,6 +5,7 @@ const get = require('lodash/get');
 const pick = require('lodash/pick');
 const set = require('lodash/set');
 const cloneDeep = require('lodash/cloneDeep');
+const isObject = require('lodash/isObject');
 const { promisify } = require('util');
 const js2xmlParser = require('js2xmlparser');
 const path = require('path');
@@ -1275,7 +1276,7 @@ const findCollectionAttributePath = (cmrObject, attributePath) => {
   }
   let output = null;
   Object.entries(cmrObject).forEach(([key, value]) => {
-    if (value.isObject()) {
+    if (isObject(value)) {
       const foundPath = findCollectionAttributePath(value, attributePath);
       if (foundPath !== null) {
         output = key + '.' + foundPath;

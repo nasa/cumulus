@@ -18,6 +18,7 @@ import {
 import {
   isCMRFile,
   granulesToCmrFileObjects,
+  metadataObjectFromCMRFile,
 } from '@cumulus/cmrjs';
 import { BucketsConfig } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
@@ -32,7 +33,7 @@ import { copyObject } from '@cumulus/aws-client/S3';
 import { getGranule } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
-import { apiGranuleRecordIsValid, getCMRMetadata, isCMRMetadataFile, updateCmrFileCollections, uploadCMRFile, ValidApiFile, ValidGranuleRecord } from './update_cmr_file_collection';
+import { apiGranuleRecordIsValid, isCMRMetadataFile, updateCmrFileCollections, uploadCMRFile, ValidApiFile, ValidGranuleRecord } from './update_cmr_file_collection';
 
 const MB = 1024 * 1024;
 
@@ -345,9 +346,8 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const cmrFilesByGranuleId: Dictionary<ValidApiFile> = keyBy(cmrFiles, 'granuleId');
   const firstCMRObjectsByGranuleId: { [key: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
-    firstCMRObjectsByGranuleId[cmrFile.granuleId] = await getCMRMetadata(
-      cmrFile,
-      cmrFile.granuleId
+    firstCMRObjectsByGranuleId[cmrFile.granuleId] = await metadataObjectFromCMRFile(
+      `s3://${cmrFile.bucket}/${cmrFile.key}`
     );
   }));
   const collectionUpdatedCMRMetadata = await updateCMRData(

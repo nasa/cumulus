@@ -1,11 +1,8 @@
 import { s3PutObject } from '@cumulus/aws-client/S3';
-import { CMR, CMRConstructorParams } from '@cumulus/cmr-client/CMR';
 import {
   generateEcho10XMLString,
-  getCmrSettings,
   isECHO10Filename,
   isUMMGFilename,
-  metadataObjectFromCMRFile,
   updateECHO10Collection,
   updateEcho10XMLMetadataObject,
   updateUMMGCollection,
@@ -96,17 +93,6 @@ export const updateCmrFileCollections = ({
     });
   }
   throw new AssertionError({ message: 'cmr file in unknown format' });
-};
-
-export const getCMRMetadata = async (cmrFile: ValidApiFile, granuleId: string): Promise<Object> => {
-  try {
-    return metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`);
-  } catch {
-    const cmrSettings: CMRConstructorParams = await getCmrSettings();
-    const cmr = new CMR(cmrSettings);
-    const [granulesOutput] = await cmr.searchGranules({ granuleId }) as Array<Object>;
-    return granulesOutput;
-  }
 };
 
 export function isCMRMetadataFile(file: ApiFile | Omit<ApiFile, 'granuleId'>): boolean {
