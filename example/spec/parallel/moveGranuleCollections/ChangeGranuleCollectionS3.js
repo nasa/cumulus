@@ -9,8 +9,9 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount, addCollections, addProviders } = require('@cumulus/integration-tests');
 
-const { getGranule } = require('@cumulus/api-client/granules');
+const { getGranule, deleteGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
@@ -24,9 +25,36 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
   let testDataFolder;
   let granuleId;
   let startingFiles;
-
+  let finalFiles;
   let collection;
   let targetCollection;
+  let ingestExecutionArn;
+  let cleanupCollectionId;
+  afterAll(async () => {
+    try {
+      await removePublishedGranule({
+        prefix: config.stackName,
+        granuleId,
+        collectionId: cleanupCollectionId,
+      });
+      let cleanup = finalFiles.map((fileObj) => deleteS3Object(
+        fileObj.bucket,
+        fileObj.key
+      ));
+      cleanup.concat(startingFiles.map((fileObj) => deleteS3Object(
+        fileObj.bucket,
+        fileObj.key
+      )));
+      cleanup = cleanup.concat([
+        deleteExecution({ prefix: config.stackName, executionArn: ingestExecutionArn }),
+        deleteGranule({ prefix: config.stackName, granuleId: granuleId }),
+      ]);
+
+      await Promise.all(cleanup);
+    } catch (error) {
+      console.log('cleanup failed with error', error);
+    }
+  });
   beforeAll(async () => {
     const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
     const providersDir = './data/providers/s3/';
@@ -68,7 +96,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
     );
     granuleId = inputPayload.granules[0].granuleId;
 
-    await buildAndStartWorkflow(
+    ingestExecutionArn = await buildAndStartWorkflow(
       stackName,
       config.bucket,
       'IngestAndPublishGranuleWithOrca',
@@ -90,17 +118,6 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
 
   describe('under normal circumstances', () => {
     let beforeAllFailed = false;
-    let finalFiles;
-    afterAll(async () => {
-      await Promise.all(startingFiles.map((fileObj) => deleteS3Object(
-        fileObj.bucket,
-        fileObj.key
-      )));
-      await Promise.all(finalFiles.map((fileObj) => deleteS3Object(
-        fileObj.bucket,
-        fileObj.key
-      )));
-    });
     beforeAll(async () => {
       startingFiles = (await getGranule({
         prefix: stackName,

@@ -472,7 +472,7 @@ test.serial('Should move files to final location with cmr xml file', async (t) =
   );
 
   const CollectionInformation = UMM.Granule.Collection;
-  t.deepEqual(CollectionInformation, { ShortName: "MOD11A1", "VersionId": "002" })
+  t.deepEqual(CollectionInformation, { ShortName: 'MOD11A1', VersionId: '002' });
 
   const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map(
     (urlObject) => urlObject.URL
@@ -566,7 +566,7 @@ test.serial('Should move files to final location and update pg data with cmr umm
     `s3://${t.context.publicBucket}/example2/2016/` +
     'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json'
   );
-  t.deepEqual(UMM.CollectionReference, { ShortName: "MOD11A1UMMG", Version: "002" })
+  t.deepEqual(UMM.CollectionReference, { ShortName: 'MOD11A1UMMG', Version: '002' });
   const relatedURLS = UMM.RelatedUrls.map((urlObject) => urlObject.URL);
 
   t.true(relatedURLS.includes(

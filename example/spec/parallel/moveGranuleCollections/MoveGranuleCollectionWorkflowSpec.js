@@ -47,24 +47,19 @@ describe('The MoveGranuleCollections workflow', () => {
         granuleId,
         collectionId: cleanupCollectionId,
       });
+      let cleanup = finalFiles.map((fileObj) => deleteS3Object(
+        fileObj.bucket,
+        fileObj.key
+      ));
+      cleanup = cleanup.concat([
+        deleteExecution({ prefix: config.stackName, executionArn: ingestExecutionArn }),
+        deleteExecution({ prefix: config.stackName, executionArn: moveExecutionArn }),
+        deleteGranule({ prefix: config.stackName, granuleId: granuleId }),
+      ]);
+      await Promise.all(cleanup);
     } catch (error) {
-      console.log("ERROR IS: ", JSON.stringify(error, null, 2), error)
-      if (error.statusCode !== 404 &&
-        // remove from CMR throws a 400 when granule is missing
-        !error.apiMessage.includes('No record found')) {
-        throw error;
-      }
+      console.log('cleanup failed with error', error);
     }
-    let cleanup = finalFiles.map((fileObj) => deleteS3Object(
-      fileObj.bucket,
-      fileObj.key
-    ));
-    cleanup = cleanup.concat([
-      deleteExecution({ prefix: config.stackName, executionArn: ingestExecutionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: moveExecutionArn }),
-      deleteGranule({ prefix: config.stackName, granuleId: granuleId })
-    ]);
-    await Promise.all(cleanup);
   });
   beforeAll(async () => {
     config = await loadConfig();
@@ -75,7 +70,7 @@ describe('The MoveGranuleCollections workflow', () => {
 
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     targetCollection = { name: `MOD09GQ${testSuffix}`, version: '007' };
-    cleanupCollectionId = constructCollectionId(collection.name, collection.version)
+    cleanupCollectionId = constructCollectionId(collection.name, collection.version);
     provider = { id: `s3_provider${testSuffix}` };
 
     // populate collections, providers and test data
