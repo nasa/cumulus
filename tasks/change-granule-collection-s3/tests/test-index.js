@@ -36,16 +36,16 @@ async function uploadFiles(files) {
     } else {
       body = parseS3Uri(file).Key;
     }
-    if (!parseS3Uri(file).Bucket || !parseS3Uri(file).Key) {
-      return;
+    if (parseS3Uri(file).Bucket && parseS3Uri(file).Key) {
+      return promiseS3Upload({
+        params: {
+          Bucket: parseS3Uri(file).Bucket,
+          Key: parseS3Uri(file).Key,
+          Body: body,
+        },
+      });
     }
-    return promiseS3Upload({
-      params: {
-        Bucket: parseS3Uri(file).Bucket,
-        Key: parseS3Uri(file).Key,
-        Body: body,
-      },
-    });
+    return null;
   }));
 }
 function dummyGetCollection(collectionName, collectionVersion) {
@@ -885,7 +885,10 @@ test('ignores invalid granules when set to skip', async (t) => {
   const collection = { name: 'MOD11A1', version: '001' };
   const newPayload = buildPayload(t, collection);
   const output = await changeGranuleCollectionS3(newPayload);
-  t.deepEqual(output, { granules: [] })
+  t.deepEqual(output, {
+    granules: [],
+    oldGranules: [],
+  });
 });
 
 test('errors on invalid granules when set to error', async (t) => {
@@ -897,8 +900,8 @@ test('errors on invalid granules when set to error', async (t) => {
   newPayload.config.invalidBehavior = 'error';
   try {
     await changeGranuleCollectionS3(newPayload);
-    t.fail()
+    t.fail();
   } catch (error) {
-    t.pass()
+    t.pass();
   }
 });

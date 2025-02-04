@@ -33,6 +33,7 @@ import { copyObject } from '@cumulus/aws-client/S3';
 import { getGranule } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
+import { AssertionError } from 'assert';
 import { apiGranuleRecordIsValid, isCMRMetadataFile, updateCmrFileCollections, uploadCMRFile, ValidApiFile, ValidGranuleRecord } from './update_cmr_file_collection';
 
 const MB = 1024 * 1024;
@@ -150,12 +151,14 @@ async function copyGranulesInS3({
     zip(sourceGranules, targetGranules),
     async ([sourceGranule, targetGranule]) => {
       if (!sourceGranule?.files || !targetGranule?.files) {
-        return;
+        throw new AssertionError({ message: 'size mismatch between target and source granules' });
       }
       return Promise.all(zip(sourceGranule.files, targetGranule.files)
         .map(async ([sourceFile, targetFile]) => {
           if (!(sourceFile && targetFile)) {
-            return;
+            throw new AssertionError({
+              message: 'size mismatch between target and source granule files',
+            });
           }
           const isMetadataFile = isCMRMetadataFile(targetFile);
           if (isMetadataFile) {
@@ -371,6 +374,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
 
   return {
     granules: targetGranules,
+    oldGranules: granulesInput,
   };
 }
 
