@@ -1399,7 +1399,7 @@ test('updateCmrFileCollections updates umm meta file', (t) => {
   const updated = updateUMMGCollection(cmrObject, { name: 'a', version: 'b' }, filename);
 
   t.is(updated.CollectionReference.ShortName, 'a');
-  t.is(updated.CollectionReference.VersionId, 'b');
+  t.is(updated.CollectionReference.Version, 'b');
 });
 
 test('updateCmrFileCollections updates umm at non-standard locations', (t) => {
@@ -1412,13 +1412,13 @@ test('updateCmrFileCollections updates umm at non-standard locations', (t) => {
         {
           Hanglebangle: {
             ShortName: 'MOD11A1',
-            VersionId: '006',
+            Version: '006',
           },
         },
         {
           CollectionReference: {
             ShortName: 'MOD11A1',
-            VersionId: '006',
+            Version: '006',
           },
         },
       ],
@@ -1426,12 +1426,12 @@ test('updateCmrFileCollections updates umm at non-standard locations', (t) => {
   };
   const updated = updateUMMGCollection(cmrObject, { name: 'a', version: 'b' });
   t.is(updated.Granule.WhyThisAttribute[1].CollectionReference.ShortName, 'a');
-  t.is(updated.Granule.WhyThisAttribute[1].CollectionReference.VersionId, 'b');
+  t.is(updated.Granule.WhyThisAttribute[1].CollectionReference.Version, 'b');
 });
 
 test('updateCmrFileCollections updates umm when missing', (t) => {
   const cmrObject = {};
   const updated = updateUMMGCollection(cmrObject, { name: 'a', version: 'b' });
   t.is(updated.CollectionReference.ShortName, 'a');
-  t.is(updated.CollectionReference.VersionId, 'b');
+  t.is(updated.CollectionReference.Version, 'b');
 });
