@@ -16,7 +16,7 @@ const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix, createTestDataPath, uploadTestDataToBucket } = require('../../helpers/testUtils');
 
-describe('when moveGranulesCollection is called', () => {
+describe('when ChangeGranuleCollectionS3 is called', () => {
   let stackName;
   let config;
   let inputPayload;

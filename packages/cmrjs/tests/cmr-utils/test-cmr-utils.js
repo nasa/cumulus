@@ -480,7 +480,7 @@ test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving 
   }
 });
 
-test.only('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
+test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
   // Yes, ETag values always include enclosing double-quotes

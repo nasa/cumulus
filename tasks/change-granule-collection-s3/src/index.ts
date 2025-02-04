@@ -345,7 +345,10 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const cmrFilesByGranuleId: Dictionary<ValidApiFile> = keyBy(cmrFiles, 'granuleId');
   const firstCMRObjectsByGranuleId: { [key: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
-    firstCMRObjectsByGranuleId[cmrFile.granuleId] = await getCMRMetadata(cmrFile, cmrFile.granuleId);
+    firstCMRObjectsByGranuleId[cmrFile.granuleId] = await getCMRMetadata(
+      cmrFile,
+      cmrFile.granuleId
+    );
   }));
   const collectionUpdatedCMRMetadata = await updateCMRData(
     granulesInput, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
