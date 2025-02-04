@@ -308,7 +308,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
     ? config.s3MultipartChunksizeMb : Number(process.env.default_s3_multipart_chunksize_mb);
 
-  const chunkSize = s3MultipartChunksizeMb ? s3MultipartChunksizeMb * MB : undefined;\
+  const chunkSize = s3MultipartChunksizeMb ? s3MultipartChunksizeMb * MB : undefined;
   const targetCollection = await getCollection({
     prefix: getRequiredEnvVar('stackName'),
     collectionName: config.targetCollection.name,
@@ -355,7 +355,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     granulesInput, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
     config
   );
-  log.debug('checking the weird? state of collectionUpdatedCMRMetadata', JSON.stringify(collectionUpdatedCMRMetadata))
+
   const targetGranules = await buildTargetGranules(
     granulesInput, config, collectionUpdatedCMRMetadata, targetCollection
   );
