@@ -150,7 +150,7 @@ async function copyGranulesInS3({
     zip(sourceGranules, targetGranules),
     async ([sourceGranule, targetGranule]) => {
       if (!sourceGranule?.files || !targetGranule?.files) {
-        return null;
+        return;
       }
       return Promise.all(zip(sourceGranule.files, targetGranule.files)
         .map(async ([sourceFile, targetFile]) => {
@@ -338,7 +338,6 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     });
     granulesInput = tempGranulesInput as ValidGranuleRecord[];
   }
-
   const cmrFiles: Array<ValidApiFile> = granulesToCmrFileObjects(
     granulesInput,
     isCMRFile

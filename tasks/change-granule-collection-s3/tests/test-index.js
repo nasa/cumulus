@@ -21,7 +21,6 @@ const {
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isUMMGFilename, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
-// const jest = require('jest');
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { constructCollectionId } = require('../../../packages/message/Collections');
@@ -36,6 +35,9 @@ async function uploadFiles(files) {
       body = fs.createReadStream('tests/data/ummg-meta.cmr.json');
     } else {
       body = parseS3Uri(file).Key;
+    }
+    if (!parseS3Uri(file).Bucket || !parseS3Uri(file).Key) {
+      return;
     }
     return promiseS3Upload({
       params: {
@@ -236,6 +238,36 @@ function dummyGetGranule(granuleId, t) {
         },
       ],
     },
+    bad_granule: {
+      status: 'completed',
+      collectionId: 'MOD11A1___006',
+      granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
+      files: [
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          type: 'data',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          bucket: t.context.privateBucket,
+          type: 'browse',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          bucket: t.context.publicBucket,
+          type: 'browse',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+          bucket: t.context.protectedBucket,
+          type: 'metadata',
+        },
+      ],
+    },
   }[granuleId];
 }
 
@@ -300,7 +332,7 @@ test.beforeEach(async (t) => {
     system_bucket: t.context.systemBucket,
     stackName: t.context.stackName,
   };
-  putJsonS3Object(
+  await putJsonS3Object(
     t.context.systemBucket,
     getDistributionBucketMapKey(t.context.stackName),
     {
@@ -313,12 +345,13 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
+  await recursivelyDeleteS3Bucket(t.context.privateBucket);
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
 
-test.serial('Should move files to final location and update pg data with cmr xml file', async (t) => {
+test.serial('Should move files to final location with cmr xml file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
@@ -772,6 +805,7 @@ test.serial('handles files that need no move', async (t) => {
   );
   const collection = { name: 'MOD11ANOMOVE', version: '001' };
   const newPayload = buildPayload(t, collection);
+  newPayload.config.invalidBehavior = 'error';
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
@@ -842,4 +876,29 @@ test.serial('handles files that need no move', async (t) => {
     '/file-staging/subdir/' +
     'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
   ));
+});
+
+test('ignores invalid granules when set to skip', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'bad_payload_cmr_xml.json');
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+
+  const collection = { name: 'MOD11A1', version: '001' };
+  const newPayload = buildPayload(t, collection);
+  const output = await changeGranuleCollectionS3(newPayload);
+  t.deepEqual(output, { granules: [] })
+});
+
+test('errors on invalid granules when set to error', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'bad_payload_cmr_xml.json');
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+
+  const collection = { name: 'MOD11A1', version: '001' };
+  const newPayload = buildPayload(t, collection);
+  newPayload.config.invalidBehavior = 'error';
+  try {
+    await changeGranuleCollectionS3(newPayload);
+    t.fail()
+  } catch (error) {
+    t.pass()
+  }
 });
