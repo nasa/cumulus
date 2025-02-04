@@ -39,16 +39,15 @@ describe('The MoveGranuleCollections workflow', () => {
   let beforeAllFailed = false;
   let ingestExecutionArn;
   let moveExecutionArn;
-  const granuleIds = ['MOD11A1.A2017200.h19v04.006.2017201090724'];
   afterAll(async () => {
     let cleanup = finalFiles.map((fileObj) => deleteS3Object(
       fileObj.bucket,
       fileObj.key
     ));
-    cleanup = cleanup.concat(granuleIds.map((granId) => deleteGranule({ prefix: config.stackName, granuleId: granId })));
     cleanup = cleanup.concat([
       deleteExecution({ prefix: config.stackName, executionArn: ingestExecutionArn }),
       deleteExecution({ prefix: config.stackName, executionArn: moveExecutionArn }),
+      deleteGranule({ prefix: config.stackName, granuleId: granuleId })
     ]);
     await Promise.all(cleanup);
   });
@@ -114,7 +113,7 @@ describe('The MoveGranuleCollections workflow', () => {
       });
       finalFiles = startingGranule.files.map((file) => ({
         ...file,
-        key: `changedCollectionPath/MOD09GQ___007/${testId}/${file.fileName}`,
+        key: `changedCollectionPath/MOD09GQ${testSuffix}___007/${testId}/${file.fileName}`,
       }));
 
       await Promise.all(finalFiles.map((file) => expectAsync(
