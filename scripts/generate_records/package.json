@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/generate_records",
-  "version": "19.1.0",
+  "version": "20.0.0",
   "author": "Cumulus Authors",
   "description": "compile errors",
   "license": "Apache-2.0",
@@ -22,12 +22,12 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test"
   },
   "dependencies": {
-    "@cumulus/api-client": "19.1.0",
-    "@cumulus/common": "19.1.0",
-    "@cumulus/db": "19.1.0",
-    "@cumulus/errors": "19.1.0",
-    "@cumulus/integration-tests": "19.1.0",
-    "@cumulus/logger": "19.1.0",
+    "@cumulus/api-client": "20.0.0",
+    "@cumulus/common": "20.0.0",
+    "@cumulus/db": "20.0.0",
+    "@cumulus/errors": "20.0.0",
+    "@cumulus/integration-tests": "20.0.0",
+    "@cumulus/logger": "20.0.0",
     "@types/minimist": "^1.2.5",
     "cli-progress": "^3.12.0",
     "crypto-js": "^4.2.0",
