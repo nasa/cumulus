@@ -168,6 +168,8 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
     user-data for compatibility with Amazon Linux 2023 AMI
   - Fixed `tf-modules/cumulus` scripts to use Instance Metadata Service V2
   - Updated `fake-provider-cf.yml` to work for Amazon Linux 2023 AMI
+- **CUMULUS-3960**
+  - Updated `PostToCmr` task to be able to `republish` granules
 - **CUMULUS-3965**
   - Updated `tf-modules/cumulus/ecs_cluster` and `fake-provider-cf.yml` launch templates to require IMDSv2
 - **CUMULUS-3990**
