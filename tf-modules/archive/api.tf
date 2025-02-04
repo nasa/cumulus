@@ -3,7 +3,6 @@ resource "aws_ssm_parameter" "dynamo_table_names" {
   type = "String"
   value = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
-    ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
   })
 }
 locals {
@@ -13,7 +12,6 @@ locals {
   api_redirect_uri          = "${local.api_uri}token"
   dynamo_table_namestring   = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
-    ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
   })
   api_env_variables = {
         auth_mode                      = "public"

@@ -85,6 +85,8 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
   - Created api types for `reconciliation_reports` in `@cumulus/types/api`
   - Updated reconciliation reports lambda to write to new RDS table instead of Dynamo
   - Updated `@cumulus/api/endpoints/reconciliation-reports` `getReport` and `deleteReport` to work with the new RDS table instead of Dynamo
+- **CUMULUS-3842**
+  - Remove reconciliationReports DynamoDB table
 - **CUMULUS-3718**
   - Updated `reconciliation_reports` list api endpoint and added `ReconciliationReportSearch` class to query postgres
   - Added `reconciliationReports` type to stats endpoint, so `aggregate` query will work for reconciliation reports
