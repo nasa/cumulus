@@ -309,7 +309,6 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     ? config.s3MultipartChunksizeMb : Number(process.env.default_s3_multipart_chunksize_mb);
 
   const chunkSize = s3MultipartChunksizeMb ? s3MultipartChunksizeMb * MB : undefined;
-
   const targetCollection = await getCollection({
     prefix: getRequiredEnvVar('stackName'),
     collectionName: config.targetCollection.name,

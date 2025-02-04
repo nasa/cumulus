@@ -1334,7 +1334,7 @@ const updateUMMGCollection = (
 ) => {
   const cmrObjectCopy = cloneDeep(cmrObject);
   updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.ShortName', collection.name);
-  updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.VersionId', collection.version);
+  updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.Version', collection.version);
   return cmrObjectCopy;
 };
 

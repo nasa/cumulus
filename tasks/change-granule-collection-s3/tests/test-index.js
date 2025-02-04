@@ -85,14 +85,58 @@ function dummyGetCollection(collectionName, collectionVersion) {
         },
       ],
       url_path: 'example2/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/',
-      name: 'MOD11A2',
+      name: 'MOD11A1',
       granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
       granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
-      dataType: 'MOD11A2',
+      dataType: 'MOD11A1',
       process: 'modis',
-      version: '006',
+      version: '001',
       sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
       id: 'MOD11A2',
+    },
+    MOD11A1___002: {
+      files: [
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: 'protected',
+        },
+        {
+          regex: '^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+          sampleFileName: 'BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: 'private',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met',
+          bucket: 'private',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+          bucket: 'public',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          bucket: 'public',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          bucket: 'public',
+          url_path: 'jpg/example2/',
+        },
+      ],
+      url_path: 'example2/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/',
+      name: 'MOD11A1',
+      granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
+      granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
+      dataType: 'MOD11A1',
+      process: 'modis',
+      version: '002',
+      sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+      id: 'MOD11A1',
     },
     MOD11A1UMMG___001: {
       files: [
@@ -129,14 +173,58 @@ function dummyGetCollection(collectionName, collectionVersion) {
         },
       ],
       url_path: 'example2/{extractYear(cmrMetadata.TemporalExtent.RangeDateTime.BeginningDateTime)}/',
-      name: 'MOD11A2',
+      name: 'MOD11A1',
       granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
       granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
-      dataType: 'MOD11A2',
+      dataType: 'MOD11A1',
       process: 'modis',
-      version: '006',
+      version: '001',
       sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-      id: 'MOD11A2',
+      id: 'MOD11A1',
+    },
+    MOD11A1UMMG___002: {
+      files: [
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: 'protected',
+        },
+        {
+          regex: '^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+          sampleFileName: 'BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: 'private',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met',
+          bucket: 'private',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.ummg\\.cmr\\.json$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml',
+          bucket: 'public',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          bucket: 'public',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          bucket: 'public',
+          url_path: 'jpg/example2/',
+        },
+      ],
+      url_path: 'example2/{extractYear(cmrMetadata.TemporalExtent.RangeDateTime.BeginningDateTime)}/',
+      name: 'MOD11A1',
+      granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
+      granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
+      dataType: 'MOD11A1',
+      process: 'modis',
+      version: '002',
+      sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+      id: 'MOD11A1',
     },
     MOD11ANOMOVE___001: {
       files: [
@@ -162,14 +250,14 @@ function dummyGetCollection(collectionName, collectionVersion) {
         },
       ],
       url_path: 'file-staging/subdir/',
-      name: 'MOD11A2',
+      name: 'MOD11A1',
       granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
       granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
-      dataType: 'MOD11A2',
+      dataType: 'MOD11A1',
       process: 'modis',
-      version: '006',
+      version: '001',
       sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-      id: 'MOD11A2',
+      id: 'MOD11A1',
     },
   }[constructCollectionId(collectionName, collectionVersion)];
 }
@@ -357,7 +445,7 @@ test.serial('Should move files to final location with cmr xml file', async (t) =
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granuleIds, t
   );
-  const collection = { name: 'MOD11A1', version: '001' };
+  const collection = { name: 'MOD11A1', version: '002' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const output = await changeGranuleCollectionS3(newPayload);
@@ -382,6 +470,10 @@ test.serial('Should move files to final location with cmr xml file', async (t) =
     `s3://${t.context.publicBucket}/example2/2003/` +
     'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
   );
+
+  const CollectionInformation = UMM.Granule.Collection;
+  t.deepEqual(CollectionInformation, { ShortName: "MOD11A1", "VersionId": "002" })
+
   const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map(
     (urlObject) => urlObject.URL
   );
@@ -449,7 +541,7 @@ test.serial('Should move files to final location and update pg data with cmr umm
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granuleIds, t
   );
-  const collection = { name: 'MOD11A1UMMG', version: '001' };
+  const collection = { name: 'MOD11A1UMMG', version: '002' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const output = await changeGranuleCollectionS3(newPayload);
@@ -474,6 +566,7 @@ test.serial('Should move files to final location and update pg data with cmr umm
     `s3://${t.context.publicBucket}/example2/2016/` +
     'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json'
   );
+  t.deepEqual(UMM.CollectionReference, { ShortName: "MOD11A1UMMG", Version: "002" })
   const relatedURLS = UMM.RelatedUrls.map((urlObject) => urlObject.URL);
 
   t.true(relatedURLS.includes(
