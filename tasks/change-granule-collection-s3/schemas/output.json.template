@@ -5,7 +5,21 @@
   "properties": {
     "granules": {
       "type": "array",
-      "description": "Array of all granules",
+      "description": "array of modified target granules",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": "{{files}}"
+        }
+      }
+    },
+    "oldGranules": {
+      "type": "array",
+      "description": "Array of original granules",
       "items": {
         "type": "object",
         "required": ["granuleId", "files"],

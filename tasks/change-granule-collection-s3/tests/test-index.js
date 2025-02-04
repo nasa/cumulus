@@ -535,7 +535,7 @@ test.serial('Should move files to final location with cmr xml file', async (t) =
   ));
 });
 
-test.serial('Should move files to final location and update pg data with cmr umm json file', async (t) => {
+test.serial('Should move files to final location with cmr umm json file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
