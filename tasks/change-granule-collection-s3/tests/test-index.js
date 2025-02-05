@@ -21,12 +21,11 @@ const {
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isUMMGFilename, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
-// const jest = require('jest');
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { constructCollectionId } = require('../../../packages/message/Collections');
 
-let moveGranules;
+let changeGranuleCollectionS3;
 async function uploadFiles(files) {
   await Promise.all(files.map((file) => {
     let body;
@@ -37,13 +36,16 @@ async function uploadFiles(files) {
     } else {
       body = parseS3Uri(file).Key;
     }
-    return promiseS3Upload({
-      params: {
-        Bucket: parseS3Uri(file).Bucket,
-        Key: parseS3Uri(file).Key,
-        Body: body,
-      },
-    });
+    if (parseS3Uri(file).Bucket && parseS3Uri(file).Key) {
+      return promiseS3Upload({
+        params: {
+          Bucket: parseS3Uri(file).Bucket,
+          Key: parseS3Uri(file).Key,
+          Body: body,
+        },
+      });
+    }
+    return null;
   }));
 }
 function dummyGetCollection(collectionName, collectionVersion) {
@@ -83,14 +85,58 @@ function dummyGetCollection(collectionName, collectionVersion) {
         },
       ],
       url_path: 'example2/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/',
-      name: 'MOD11A2',
+      name: 'MOD11A1',
       granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
       granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
-      dataType: 'MOD11A2',
+      dataType: 'MOD11A1',
       process: 'modis',
-      version: '006',
+      version: '001',
       sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
       id: 'MOD11A2',
+    },
+    MOD11A1___002: {
+      files: [
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: 'protected',
+        },
+        {
+          regex: '^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+          sampleFileName: 'BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: 'private',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met',
+          bucket: 'private',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+          bucket: 'public',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          bucket: 'public',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          bucket: 'public',
+          url_path: 'jpg/example2/',
+        },
+      ],
+      url_path: 'example2/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/',
+      name: 'MOD11A1',
+      granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
+      granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
+      dataType: 'MOD11A1',
+      process: 'modis',
+      version: '002',
+      sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+      id: 'MOD11A1',
     },
     MOD11A1UMMG___001: {
       files: [
@@ -127,14 +173,58 @@ function dummyGetCollection(collectionName, collectionVersion) {
         },
       ],
       url_path: 'example2/{extractYear(cmrMetadata.TemporalExtent.RangeDateTime.BeginningDateTime)}/',
-      name: 'MOD11A2',
+      name: 'MOD11A1',
       granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
       granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
-      dataType: 'MOD11A2',
+      dataType: 'MOD11A1',
       process: 'modis',
-      version: '006',
+      version: '001',
       sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-      id: 'MOD11A2',
+      id: 'MOD11A1',
+    },
+    MOD11A1UMMG___002: {
+      files: [
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: 'protected',
+        },
+        {
+          regex: '^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$',
+          sampleFileName: 'BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          bucket: 'private',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met',
+          bucket: 'private',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.ummg\\.cmr\\.json$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.iso.xml',
+          bucket: 'public',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          bucket: 'public',
+        },
+        {
+          regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$',
+          sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          bucket: 'public',
+          url_path: 'jpg/example2/',
+        },
+      ],
+      url_path: 'example2/{extractYear(cmrMetadata.TemporalExtent.RangeDateTime.BeginningDateTime)}/',
+      name: 'MOD11A1',
+      granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
+      granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
+      dataType: 'MOD11A1',
+      process: 'modis',
+      version: '002',
+      sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+      id: 'MOD11A1',
     },
     MOD11ANOMOVE___001: {
       files: [
@@ -160,14 +250,14 @@ function dummyGetCollection(collectionName, collectionVersion) {
         },
       ],
       url_path: 'file-staging/subdir/',
-      name: 'MOD11A2',
+      name: 'MOD11A1',
       granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
       granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
-      dataType: 'MOD11A2',
+      dataType: 'MOD11A1',
       process: 'modis',
-      version: '006',
+      version: '001',
       sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-      id: 'MOD11A2',
+      id: 'MOD11A1',
     },
   }[constructCollectionId(collectionName, collectionVersion)];
 }
@@ -236,6 +326,36 @@ function dummyGetGranule(granuleId, t) {
         },
       ],
     },
+    bad_granule: {
+      status: 'completed',
+      collectionId: 'MOD11A1___006',
+      granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
+      files: [
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+          type: 'data',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+          bucket: t.context.privateBucket,
+          type: 'browse',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+          bucket: t.context.publicBucket,
+          type: 'browse',
+        },
+        {
+          key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+          fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+          bucket: t.context.protectedBucket,
+          type: 'metadata',
+        },
+      ],
+    },
   }[granuleId];
 }
 
@@ -261,7 +381,7 @@ test.beforeEach(async (t) => {
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   const testDbName = `change-granule-collection-s3/change-collections-s3${cryptoRandomString({ length: 10 })}`;
-  moveGranules = proxyquire(
+  changeGranuleCollectionS3 = proxyquire(
     '../dist/src',
     {
       '@cumulus/api-client/granules': {
@@ -273,13 +393,13 @@ test.beforeEach(async (t) => {
         ),
       },
     }
-  ).moveGranules;
+  ).changeGranuleCollectionS3;
 
   t.context.publicBucket = randomId('public');
   t.context.protectedBucket = randomId('protected');
   t.context.privateBucket = randomId('private');
   t.context.systemBucket = randomId('system');
-  t.context.stackName = 'moveGranulesTestStack';
+  t.context.stackName = 'changeGranuleCollectionS3TestStack';
   const bucketMapping = {
     public: t.context.publicBucket,
     protected: t.context.protectedBucket,
@@ -300,7 +420,7 @@ test.beforeEach(async (t) => {
     system_bucket: t.context.systemBucket,
     stackName: t.context.stackName,
   };
-  putJsonS3Object(
+  await putJsonS3Object(
     t.context.systemBucket,
     getDistributionBucketMapKey(t.context.stackName),
     {
@@ -313,21 +433,22 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
+  await recursivelyDeleteS3Bucket(t.context.privateBucket);
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
 
-test.serial('Should move files to final location and update pg data with cmr xml file', async (t) => {
+test.serial('Should move files to final location with cmr xml file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granuleIds, t
   );
-  const collection = { name: 'MOD11A1', version: '001' };
+  const collection = { name: 'MOD11A1', version: '002' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
     Bucket: t.context.protectedBucket,
@@ -349,6 +470,10 @@ test.serial('Should move files to final location and update pg data with cmr xml
     `s3://${t.context.publicBucket}/example2/2003/` +
     'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
   );
+
+  const CollectionInformation = UMM.Granule.Collection;
+  t.deepEqual(CollectionInformation, { ShortName: 'MOD11A1', VersionId: '002' });
+
   const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map(
     (urlObject) => urlObject.URL
   );
@@ -410,16 +535,16 @@ test.serial('Should move files to final location and update pg data with cmr xml
   ));
 });
 
-test.serial('Should move files to final location and update pg data with cmr umm json file', async (t) => {
+test.serial('Should move files to final location with cmr umm json file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granuleIds, t
   );
-  const collection = { name: 'MOD11A1UMMG', version: '001' };
+  const collection = { name: 'MOD11A1UMMG', version: '002' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
     Bucket: t.context.protectedBucket,
@@ -441,6 +566,7 @@ test.serial('Should move files to final location and update pg data with cmr umm
     `s3://${t.context.publicBucket}/example2/2016/` +
     'MOD11A1.A2017200.h19v04.006.2017201090724.ummg.cmr.json'
   );
+  t.deepEqual(UMM.CollectionReference, { ShortName: 'MOD11A1UMMG', Version: '002' });
   const relatedURLS = UMM.RelatedUrls.map((urlObject) => urlObject.URL);
 
   t.true(relatedURLS.includes(
@@ -503,7 +629,7 @@ test.serial('should update cmr data to hold extra urls but remove out-dated urls
   const collection = { name: 'MOD11A1UMMG', version: '001' };
   const newPayload = buildPayload(t, collection);
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
 
   const UMM = await metadataObjectFromCMRFile(
@@ -561,7 +687,7 @@ test.serial('handles partially moved files', async (t) => {
 
   await uploadFiles(filesToUpload, t.context.bucketMapping);
 
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
     Bucket: t.context.protectedBucket,
@@ -679,7 +805,7 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
   const newPayload = buildPayload(t, collection);
 
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
     Bucket: t.context.protectedBucket,
@@ -772,8 +898,9 @@ test.serial('handles files that need no move', async (t) => {
   );
   const collection = { name: 'MOD11ANOMOVE', version: '001' };
   const newPayload = buildPayload(t, collection);
+  newPayload.config.invalidBehavior = 'error';
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
     Bucket: t.context.protectedBucket,
@@ -842,4 +969,32 @@ test.serial('handles files that need no move', async (t) => {
     '/file-staging/subdir/' +
     'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
   ));
+});
+
+test('ignores invalid granules when set to skip', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'bad_payload_cmr_xml.json');
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+
+  const collection = { name: 'MOD11A1', version: '001' };
+  const newPayload = buildPayload(t, collection);
+  const output = await changeGranuleCollectionS3(newPayload);
+  t.deepEqual(output, {
+    granules: [],
+    oldGranules: [],
+  });
+});
+
+test('errors on invalid granules when set to error', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'bad_payload_cmr_xml.json');
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+
+  const collection = { name: 'MOD11A1', version: '001' };
+  const newPayload = buildPayload(t, collection);
+  newPayload.config.invalidBehavior = 'error';
+  try {
+    await changeGranuleCollectionS3(newPayload);
+    t.fail();
+  } catch (error) {
+    t.pass();
+  }
 });

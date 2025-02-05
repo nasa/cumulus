@@ -1142,7 +1142,7 @@ export const copyObject = async (
     copyTags?: boolean,
     chunkSize?: number
   }
-): Promise<{ etag: string }> => {
+): Promise<void> => {
   const {
     sourceBucket,
     sourceKey,
@@ -1172,11 +1172,9 @@ export const copyObject = async (
       throw new Error(
         `ETag could not be determined for copy of ${buildS3Uri(sourceBucket, sourceKey)} to ${s3uri}`
       );
-    } else {
-      return { etag: CopyObjectResult.ETag };
     }
   } else {
-    return await multipartCopyObject({
+    await multipartCopyObject({
       sourceBucket: sourceBucket,
       sourceKey: sourceKey,
       destinationBucket: destinationBucket,

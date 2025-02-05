@@ -32,11 +32,12 @@
       "type": "object",
       "description": "collection to move granules over to",
       "required": [
-        "files",
+        "version",
         "name"
       ],
       "properties": {
         "name": { "type": "string" },
+        "version": { "type": "string" },
         "process": { "type": "string" },
         "url_path": { "type": "string" },
         "duplicateHandling": { "type": "string" },
@@ -67,11 +68,12 @@
       "type": "object",
       "description": "collection to move granules from",
       "required": [
-        "files",
+        "version",
         "name"
       ],
       "properties": {
         "name": { "type": "string" },
+        "version": { "type": "string" },
         "process": { "type": "string" },
         "url_path": { "type": "string" },
         "duplicateHandling": { "type": "string" },
