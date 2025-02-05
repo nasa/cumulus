@@ -4,14 +4,17 @@ import { Context } from 'aws-lambda';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { log } from '@cumulus/common';
-import { ApiGranuleRecord, CollectionRecord } from '@cumulus/types';
+import { ApiGranuleRecord } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { BucketsConfigObject } from '@cumulus/common/types';
 import { bulkPatch, bulkPatchGranuleCollection } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 
 interface EventConfig {
-  targetCollection: CollectionRecord
+  targetCollection: {
+    name: string,
+    version: string,
+  }
   collection: {
     name: string,
     version: string,

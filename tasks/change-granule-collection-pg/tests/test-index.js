@@ -170,8 +170,8 @@ test.afterEach.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('Should move files to final location and update pg data with cmr umm json file', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
+test.serial('Should move files to final and pg status', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_base.json');
   let payloadString = fs.readFileSync(payloadPath, 'utf8');
   payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
   payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
@@ -195,9 +195,33 @@ test.serial('Should move files to final location and update pg data with cmr umm
   t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
 });
 
+test.serial('Should move files to final and pg status when granules have already been partly moved', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_partly_moved.json');
+  let payloadString = fs.readFileSync(payloadPath, 'utf8');
+  payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
+  payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
+  payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
+  t.context.payload = JSON.parse(payloadString);
+  const collectionPath = path.join(__dirname, 'data', 'new_collection_ummg_cmr.json');
+  const collection = JSON.parse(fs.readFileSync(collectionPath));
+  const newPayload = buildPayload(t, collection);
+  const pgRecords = await setupDataStoreData(
+    newPayload.input.granules,
+    collection,
+    t
+  );
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+  const granuleModel = new GranulePgModel();
+  const finalPgGranule = await granuleModel.get(t.context.knex, {
+    cumulus_id: pgRecords.granules[0].cumulus_id,
+  });
+  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+});
 
 test.serial('handles files that need no move', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
+  const payloadPath = path.join(__dirname, 'data', 'payload_base.json');
 
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const collectionPath = path.join(__dirname, 'data', 'no_move_collection.json');
