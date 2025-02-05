@@ -1,5 +1,7 @@
 'use strict';
 
+//@ts-check
+
 const got = require('got');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
@@ -38,6 +40,8 @@ const {
  * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams
  */
 const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
+
+const s3CredsEndpoint = 's3credentials';
 
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
@@ -136,7 +140,7 @@ function granuleToCmrFileObject({ granuleId, files = [] }, filterFunc = isCMRFil
  * @param {Function} filterFunc - function to determine if the given file object is a
       CMR file; defaults to `isCMRFile`
  *
- * @returns {Array<ApiFile>} - CMR file object array: { etag, bucket, key, granuleId }
+ * @returns {Array<Object>} - CMR file object array: { etag, bucket, key, granuleId }
  */
 function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
   return granules.flatMap((granule) => granuleToCmrFileObject(granule, filterFunc));
@@ -550,7 +554,6 @@ function constructOnlineAccessUrls({
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
- * @param {string} params.s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
  * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
@@ -562,7 +565,6 @@ function constructRelatedUrls({
   files,
   distEndpoint,
   bucketTypes,
-  s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
   useDirectS3Type = false,
@@ -693,12 +695,23 @@ function shouldUseDirectS3Type(metadataObject) {
   return false;
 }
 
+/**
+ *
+ * @param {Object} params
+ * @param {Object} params.metadataObject - ummg cmr metadata object
+ * @param {Array<Object>} params.files - files with which to update the cmr metadata
+ * @param {Object} params.bucketTypes - map of bucket names to bucket types
+ * @param {string} params.cmrGranuleUrlType
+ * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ *    mapping for all distribution buckets
+ * @returns {Object}
+ */
 function updateUMMGMetadataObject({
   metadataObject,
   files,
   distEndpoint,
   bucketTypes,
-  cmrGranuleUrlType,
+  cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
   const useDirectS3Type = shouldUseDirectS3Type(metadataObject);
@@ -867,12 +880,22 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
   return mergeURLs(originalURLlist, filteredURLObjectList, removedURLs);
 }
 
+/**
+ *
+ * @param {Object} params
+ * @param {Object} params.metadataObject - xml cmr metadata object
+ * @param {Array<Object>} params.files - files with which to update the cmr metadata
+ * @param {Object} params.bucketTypes - map of bucket names to bucket types
+ * @param {string} params.cmrGranuleUrlType
+ * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ *    mapping for all distribution buckets
+ * @returns {Object}
+ */
 function updateEcho10XMLMetadataObject({
   metadataObject,
   files,
   distEndpoint,
   bucketTypes,
-  s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
@@ -931,7 +954,6 @@ async function updateEcho10XMLMetadata({
   files,
   distEndpoint,
   bucketTypes,
-  s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
@@ -944,7 +966,6 @@ async function updateEcho10XMLMetadata({
     files,
     distEndpoint,
     bucketTypes,
-    s3CredsEndpoint,
     cmrGranuleUrlType,
     distributionBucketMap,
   });
