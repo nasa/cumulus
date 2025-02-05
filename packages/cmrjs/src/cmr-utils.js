@@ -138,7 +138,7 @@ function granuleToCmrFileObject({ granuleId, files = [] }, filterFunc = isCMRFil
  * @param {Function} filterFunc - function to determine if the given file object is a
       CMR file; defaults to `isCMRFile`
  *
- * @returns {Array<ApiFile>} - CMR file object array: { etag, bucket, key, granuleId }
+ * @returns {Array<Object>} - CMR file object array: { etag, bucket, key, granuleId }
  */
 function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
   return granules.flatMap((granule) => granuleToCmrFileObject(granule, filterFunc));
