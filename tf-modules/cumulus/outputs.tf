@@ -83,10 +83,6 @@ output "move_granules_task" {
   value = module.ingest.move_granules_task
 }
 
-output "change_granule_collection_s3_task" {
-  value = module.ingest.change_granule_collection_s3_task
-}
-
 output "orca_copy_to_archive_adapter_task" {
   value = module.ingest.orca_copy_to_archive_adapter_task
 }
