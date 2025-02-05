@@ -41,6 +41,8 @@ const {
  */
 const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
+const s3CredsEndpoint = 's3credentials';
+
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
   if (file.filepath) return file.filepath;
@@ -552,7 +554,6 @@ function constructOnlineAccessUrls({
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
- * @param {string} params.s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
  * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
@@ -564,7 +565,6 @@ function constructRelatedUrls({
   files,
   distEndpoint,
   bucketTypes,
-  s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
   useDirectS3Type = false,
@@ -886,7 +886,6 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
  * @param {Object} params.metadataObject - xml cmr metadata object
  * @param {Array<Object>} params.files - files with which to update the cmr metadata
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
- * @param {string} params.s3CredsEndpoint - where to get s3 credentials from
  * @param {string} params.cmrGranuleUrlType
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
@@ -897,7 +896,6 @@ function updateEcho10XMLMetadataObject({
   files,
   distEndpoint,
   bucketTypes,
-  s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
@@ -946,7 +944,6 @@ function updateEcho10XMLMetadataObject({
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
- * @param {string} params.s3CredsEndpoint - where to get s3 credentials from
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
  * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
@@ -957,7 +954,6 @@ async function updateEcho10XMLMetadata({
   files,
   distEndpoint,
   bucketTypes,
-  s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
@@ -970,7 +966,6 @@ async function updateEcho10XMLMetadata({
     files,
     distEndpoint,
     bucketTypes,
-    s3CredsEndpoint,
     cmrGranuleUrlType,
     distributionBucketMap,
   });
