@@ -3,7 +3,7 @@
   "description": "Describes the config used by the change-granule-collection-pg task",
   "type": "object",
   "required": [
-    "sourceCollection",
+    "collection",
     "targetCollection",
     "buckets"
   ],
@@ -63,7 +63,7 @@
         }
       }
     },
-    "sourceCollection": {
+    "collection": {
       "type": "object",
       "description": "collection to move granules from",
       "required": [
