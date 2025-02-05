@@ -1,5 +1,7 @@
 'use strict';
 
+//@ts-check
+
 const got = require('got');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
@@ -693,12 +695,23 @@ function shouldUseDirectS3Type(metadataObject) {
   return false;
 }
 
+/**
+ *
+ * @param {Object} params
+ * @param {Object} params.metadataObject - ummg cmr metadata object
+ * @param {Array<Object>} params.files - files with which to update the cmr metadata
+ * @param {Object} params.bucketTypes - map of bucket names to bucket types
+ * @param {string} params.cmrGranuleUrlType
+ * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ *    mapping for all distribution buckets
+ * @returns {Object}
+ */
 function updateUMMGMetadataObject({
   metadataObject,
   files,
   distEndpoint,
   bucketTypes,
-  cmrGranuleUrlType,
+  cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
   const useDirectS3Type = shouldUseDirectS3Type(metadataObject);
@@ -867,6 +880,18 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
   return mergeURLs(originalURLlist, filteredURLObjectList, removedURLs);
 }
 
+/**
+ *
+ * @param {Object} params
+ * @param {Object} params.metadataObject - xml cmr metadata object
+ * @param {Array<Object>} params.files - files with which to update the cmr metadata
+ * @param {Object} params.bucketTypes - map of bucket names to bucket types
+ * @param {string} params.s3CredsEndpoint - where to get s3 credentials from
+ * @param {string} params.cmrGranuleUrlType
+ * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ *    mapping for all distribution buckets
+ * @returns {Object}
+ */
 function updateEcho10XMLMetadataObject({
   metadataObject,
   files,
@@ -921,6 +946,7 @@ function updateEcho10XMLMetadataObject({
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
+ * @param {string} params.s3CredsEndpoint - where to get s3 credentials from
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
  * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
