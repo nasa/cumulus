@@ -16,7 +16,7 @@ const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix, createTestDataPath, uploadTestDataToBucket } = require('../../helpers/testUtils');
 
-describe('when ChangeGranuleCollectionS3 is called', () => {
+describe('when ChangeGranuleCollectionPG is called', () => {
   let stackName;
   let config;
   let inputPayload;
@@ -152,7 +152,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
         finalFiles = outputGranule.files;
 
         const { $metadata: metadata2_electric_boogaloo } = await lambda().send(new InvokeCommand({
-          FunctionName: `${stackName}-ChangeGranuleCollectionPg`,
+          FunctionName: `${stackName}-ChangeGranuleCollectionPG`,
           InvocationType: 'RequestResponse',
           Payload: JSON.stringify({
             cma: {
@@ -167,7 +167,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
                 targetCollection: '{$.meta.targetCollection}',
               },
               event: {
-                payload: { granuleIds: [granuleId] },
+                payload: { granules: [outputGranule] },
               },
             },
           }),
