@@ -53,6 +53,6 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@cumulus/schemas": "18.5.3"
+    "@cumulus/api": "18.5.3"
   }
 }
