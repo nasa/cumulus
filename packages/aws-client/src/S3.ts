@@ -1124,26 +1124,23 @@ export const multipartCopyObject = async (
 /**
  * Copy an S3 object to another location in S3
  */
-export const copyObject = async (
-  params: {
-    sourceBucket: string,
-    sourceKey: string,
-    destinationBucket: string,
-    destinationKey: string,
-    ACL?: string,
-    copyTags?: boolean,
-    chunkSize?: number
-  }
-): Promise<void> => {
-  const {
-    sourceBucket,
-    sourceKey,
-    destinationBucket,
-    destinationKey,
-    ACL,
-    copyTags,
-    chunkSize,
-  } = params;
+export const copyObject = async ({
+  sourceBucket,
+  sourceKey,
+  destinationBucket,
+  destinationKey,
+  ACL,
+  copyTags,
+  chunkSize
+}: {
+  sourceBucket: string,
+  sourceKey: string,
+  destinationBucket: string,
+  destinationKey: string,
+  ACL?: string,
+  copyTags?: boolean,
+  chunkSize?: number
+}): Promise<void> => {
 
   const sourceObject = await headObject(sourceBucket, sourceKey);
 
