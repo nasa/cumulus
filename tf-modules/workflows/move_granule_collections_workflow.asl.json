@@ -24,6 +24,30 @@
           ],
           "MaxAttempts": 1
         }
+      ]
+    },
+    "ChangeGranuleCollectionPG": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "targetCollection": "{$.meta.targetCollection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${change_granule_collection_pg_task_arn}",
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "MaxAttempts": 1
+        }
       ],
       "End": true
     }
