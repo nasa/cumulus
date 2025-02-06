@@ -714,7 +714,8 @@ function updateUMMGMetadataObject({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
-  const useDirectS3Type = shouldUseDirectS3Type(metadataObject);
+  const updatemetadataObject = cloneDeep(metadataObject)
+  const useDirectS3Type = shouldUseDirectS3Type(updatemetadataObject);
 
   const newURLs = constructRelatedUrls({
     files,
@@ -726,10 +727,10 @@ function updateUMMGMetadataObject({
   });
 
   const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
-  const originalURLs = get(metadataObject, 'RelatedUrls', []);
+  const originalURLs = get(updatemetadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
-  set(metadataObject, 'RelatedUrls', mergedURLs);
-  return metadataObject;
+  set(updatemetadataObject, 'RelatedUrls', mergedURLs);
+  return updatemetadataObject;
 }
 
 /**
@@ -758,7 +759,7 @@ async function updateUMMGMetadata({
 }) {
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRJSONFile(filename);
-  updateUMMGMetadataObject({
+  const updatedMetadataObject = updateUMMGMetadataObject({
     metadataObject,
     files,
     distEndpoint,
@@ -766,8 +767,8 @@ async function updateUMMGMetadata({
     cmrGranuleUrlType,
     distributionBucketMap,
   });
-  const { ETag: etag } = await uploadUMMGJSONCMRFile(metadataObject, cmrFile);
-  return { metadataObject, etag };
+  const { ETag: etag } = await uploadUMMGJSONCMRFile(updatedMetadataObject, cmrFile);
+  return { updatedMetadataObject, etag };
 }
 
 /**
