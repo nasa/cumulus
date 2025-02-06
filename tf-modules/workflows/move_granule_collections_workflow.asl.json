@@ -24,7 +24,8 @@
           ],
           "MaxAttempts": 1
         }
-      ]
+      ],
+      "Next": "ChangeGranuleCollectionPG"
     },
     "ChangeGranuleCollectionPG": {
       "Parameters": {
