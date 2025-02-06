@@ -1299,7 +1299,7 @@ const updateECHO10Collection = (
   set(cmrObject, 'Granule.Collection', {
     ShortName: collection.name,
     Version: collection.version,
-  })
+  });
   return cmrObjectCopy;
 };
 
@@ -1318,7 +1318,7 @@ const updateUMMGCollection = (
   set(cmrObject, 'CollectionReference', {
     ShortName: collection.name,
     Version: collection.version,
-  })
+  });
   return cmrObjectCopy;
 };
 
