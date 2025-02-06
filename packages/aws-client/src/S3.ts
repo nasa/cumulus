@@ -31,6 +31,11 @@ import {
   Tag,
   Tagging,
   ListObjectsCommandOutput,
+  DeleteObjectCommandOutput,
+  PutObjectCommandOutput,
+  CopyObjectCommandOutput,
+  CompleteMultipartUploadCommandOutput,
+  GetObjectTaggingCommandOutput,
 } from '@aws-sdk/client-s3';
 import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage';
 
@@ -185,9 +190,7 @@ export const headObject = (
 /**
  * Test if an object exists in S3
  *
- * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
- * @returns {Promise<boolean>} a Promise that will resolve to a boolean indicating
- *                               if the object exists
+ * @param params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
  */
 export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
   headObject(params.Bucket, params.Key)
@@ -199,13 +202,6 @@ export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
 
 /**
  * Wait for an object to exist in S3
- *
- * @param {Object} params
- * @param {string} params.bucket
- * @param {string} params.key
- * @param {number} [params.interval=1000] - interval before retries, in ms
- * @param {number} [params.timeout=30000] - timeout, in ms
- * @returns {Promise<undefined>}
  */
 export const waitForObjectToExist = async (params: {
   bucket: string,
@@ -238,34 +234,32 @@ export const waitForObjectToExist = async (params: {
 /**
 * Put an object on S3
 *
-* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
-* promise of the object being put
-* @returns {Promise}
+* @param params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 **/
-export const s3PutObject = (params: PutObjectCommandInput) => s3().putObject(params);
+export const s3PutObject = (
+  params: PutObjectCommandInput
+): Promise<PutObjectCommandOutput> => s3().putObject(params);
 
 /**
  * Upload a file to S3
  *
- * @param {string} bucket - the destination S3 bucket
- * @param {string} key - the destination S3 key
- * @param {filename} filename - the local file to be uploaded
- * @returns {Promise}
  */
-export const putFile = (bucket: string, key: string, filename: string) =>
-  s3PutObject({
-    Bucket: bucket,
-    Key: key,
-    Body: fs.createReadStream(filename),
-  });
+export const putFile = (
+  bucket: string,
+  key: string,
+  filename: string
+): Promise<PutObjectCommandOutput> => s3PutObject({
+  Bucket: bucket,
+  Key: key,
+  Body: fs.createReadStream(filename),
+});
 
 /**
 * Copy an object from one location on S3 to another
-*
-* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
-* @returns {Promise} promise of the object being copied
 **/
-export const s3CopyObject = (params: CopyObjectCommandInput) => s3().copyObject({
+export const s3CopyObject = (
+  params: CopyObjectCommandInput
+): Promise<CopyObjectCommandOutput> => s3().copyObject({
   TaggingDirective: 'COPY',
   ...params,
 });
@@ -274,9 +268,6 @@ export const s3CopyObject = (params: CopyObjectCommandInput) => s3().copyObject(
  * Upload data to S3
  *
  * see https://github.com/aws/aws-sdk-js-v3/tree/main/lib/lib-storage
- *
- * @param {UploadOptions} params
- * @returns {Promise}
  */
 export const promiseS3Upload = async (
   params: Omit<UploadOptions, 'client'>
@@ -296,15 +287,11 @@ export const promiseS3Upload = async (
 
 /**
  * Upload data to S3 using a stream
- *
- * @param {Readable} uploadStream - Stream of data to upload
- * @param {Object} uploadParams
- * @returns {Promise}
  */
 export const streamS3Upload = (
   uploadStream: Readable,
   uploadParams: UploadOptions
-) => {
+): Promise<CompleteMultipartUploadCommandOutput> => {
   const parallelUploads3 = new Upload({
     ...uploadParams,
     params: {
@@ -323,12 +310,6 @@ export const streamS3Upload = (
 
 /**
  * Get a readable stream for an S3 object
- *
- * @param {Object} params
- * @param {S3} params.s3 - an S3 instance
- * @param {string} params.bucket - the bucket of the requested object
- * @param {string} params.key - the key of the requested object
- * @returns {Promise<Readable>}
  */
 export const getObjectReadStream = async (params: {
   s3: { getObject: GetObjectMethod },
@@ -351,10 +332,6 @@ export const getObjectReadStream = async (params: {
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
- *
- * @param {Object} s3Obj - The parameters to send to S3 getObject call
- * @param {string} filepath - The filepath of the file that is downloaded
- * @returns {Promise<string>} returns filename if successful
  */
 export const downloadS3File = async (
   s3Obj: GetObjectCommandInput,
@@ -382,12 +359,6 @@ export const downloadS3File = async (
 
 /**
  * Get the size of an S3 object
- *
- * @param {Object} params
- * @param {string} params.bucket
- * @param {string} params.key
- * @param {S3} params.s3 - an S3 client instance
- * @returns {Promise<number|undefined>} object size, in bytes
  */
 export const getObjectSize = async (
   params: {
@@ -395,7 +366,7 @@ export const getObjectSize = async (
     bucket: string,
     key: string
   }
-) => {
+): Promise<number | undefined> => {
   // eslint-disable-next-line no-shadow
   const { s3: s3Client, bucket, key } = params;
 
@@ -409,13 +380,10 @@ export const getObjectSize = async (
 
 /**
 * Get object Tagging from S3
-*
-* @param {string} bucket - name of bucket
-* @param {string} key - key for object (filepath + filename)
-* @returns {Promise<GetObjectTaggingOutput>} the promised response from `S3.getObjectTagging`
 **/
-export const s3GetObjectTagging = (bucket: string, key: string) =>
-  s3().getObjectTagging({ Bucket: bucket, Key: key });
+export const s3GetObjectTagging = (
+  bucket: string, key: string
+): Promise<GetObjectTaggingCommandOutput> => s3().getObjectTagging({ Bucket: bucket, Key: key });
 
 const getObjectTags = async (bucket: string, key: string) => {
   const taggingResponse = await s3GetObjectTagging(bucket, key);
@@ -431,7 +399,7 @@ const getObjectTags = async (bucket: string, key: string) => {
   );
 };
 
-const getObjectTaggingString = async (bucket: string, key: string) => {
+const getObjectTaggingString = async (bucket: string, key: string): Promise<string> => {
   const tags = await getObjectTags(bucket, key);
 
   return querystring.stringify(tags);
@@ -440,13 +408,12 @@ const getObjectTaggingString = async (bucket: string, key: string) => {
 /**
 * Puts object Tagging in S3
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property
-*
-* @param {string} Bucket - name of bucket
-* @param {string} Key - key for object (filepath + filename)
-* @param {Object} ObjectTagging - tagging object
-* @returns {Promise} returns response from `S3.getObjectTagging` as a promise
 **/
-export const s3PutObjectTagging = (Bucket: string, Key: string, ObjectTagging: Tagging) =>
+export const s3PutObjectTagging = (
+  Bucket: string,
+  Key: string,
+  ObjectTagging: Tagging
+): Promise<PutObjectCommandOutput> =>
   s3().putObjectTagging({
     Bucket,
     Key,
@@ -455,15 +422,6 @@ export const s3PutObjectTagging = (Bucket: string, Key: string, ObjectTagging: T
 
 /**
  * Gets an object from S3.
- *
- * @example
- * const obj = await getObject(s3(), { Bucket: 'b', Key: 'k' })
- *
- * @param {S3} s3Client - an `S3` instance
- * @param {GetObjectCommandInput} params - parameters object to pass through
- *   to `S3.getObject()`
- * @returns {Promise<GetObjectOutput>} response from `S3.getObject()`
- *   as a Promise
  */
 export const getObject = (
   s3Client: S3,
@@ -473,11 +431,6 @@ export const getObject = (
 /**
  * Get an object from S3, waiting for it to exist and, if specified, have the
  * correct ETag.
- *
- * @param {S3} s3Client
- * @param {GetObjectCommandInput} params
- * @param {pRetry.Options} [retryOptions={}]
- * @returns {Promise<GetObjectOutput>}
  */
 export const waitForObject = (
   s3Client: S3,
@@ -504,14 +457,6 @@ export const waitForObject = (
 
 /**
  * Gets an object from S3.
- *
- * @param {string} Bucket - name of bucket
- * @param {string} Key - key for object (filepath + filename)
- * @param {Object} retryOptions - options to control retry behavior when an
- *   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
- *   By default, retries will not be performed
- * @returns {Promise} returns response from `S3.getObject` as a promise
- *
  * @deprecated
  */
 export const getS3Object = deprecate(
@@ -553,9 +498,6 @@ export const getObjectStreamBuffers = (
 
 /**
  * Transform streaming response from S3 object to text content
- *
- * @param {Readable} objectReadStream - Readable stream of S3 object
- * @returns {Promise<string>} the contents of the S3 object
  */
 export const getObjectStreamContents = async (
   objectReadStream: Readable
@@ -566,10 +508,6 @@ export const getObjectStreamContents = async (
 
 /**
  * Fetch the contents of an S3 object
- *
- * @param {string} bucket - the S3 object's bucket
- * @param {string} key - the S3 object's key
- * @returns {Promise<string>} the contents of the S3 object
  */
 export const getTextObject = (bucket: string, key: string): Promise<string> =>
   getObjectReadStream({ s3: s3(), bucket, key })
@@ -577,9 +515,6 @@ export const getTextObject = (bucket: string, key: string): Promise<string> =>
 
 /**
  * Fetch JSON stored in an S3 object
- * @param {string} bucket - the S3 object's bucket
- * @param {string} key - the S3 object's key
- * @returns {Promise<*>} the contents of the S3 object, parsed as JSON
  */
 export const getJsonS3Object = (bucket: string, key: string) =>
   getTextObject(bucket, key)
@@ -588,21 +523,20 @@ export const getJsonS3Object = (bucket: string, key: string) =>
       return JSON.parse(text);
     });
 
-export const putJsonS3Object = (bucket: string, key: string, data: any) =>
-  s3PutObject({
-    Bucket: bucket,
-    Key: key,
-    Body: JSON.stringify(data),
-  });
+export const putJsonS3Object = (
+  bucket: string,
+  key: string,
+  data: any
+): Promise<PutObjectCommandOutput> => s3PutObject({
+  Bucket: bucket,
+  Key: key,
+  Body: JSON.stringify(data),
+});
 
 /**
 * Check if a file exists in an S3 object
-*
-* @param {string} bucket - name of the S3 bucket
-* @param {string} key - key of the file in the S3 bucket
-* @returns {Promise} returns the response from `S3.headObject` as a promise
 **/
-export const fileExists = async (bucket: string, key: string) => {
+export const fileExists = async (bucket: string, key: string): Promise<HeadObjectOutput | false> => {
   try {
     return await s3().headObject({ Key: key, Bucket: bucket });
   } catch (error) {
@@ -617,11 +551,11 @@ export const fileExists = async (bucket: string, key: string) => {
 /**
  * Delete files from S3
  *
- * @param {Array} s3Objs - An array of objects containing keys 'Bucket' and 'Key'
- * @returns {Promise} A promise that resolves to an Array of the data returned
- *   from the deletion operations
+ * @param s3Objs - An array of objects containing keys 'Bucket' and 'Key'
  */
-export const deleteS3Files = async (s3Objs: DeleteObjectRequest[]) => await pMap(
+export const deleteS3Files = async (
+  s3Objs: DeleteObjectRequest[]
+): Promise<DeleteObjectCommandOutput[]> => await pMap(
   s3Objs,
   (s3Obj) => s3().deleteObject(s3Obj),
   { concurrency: S3_RATE_LIMIT }
@@ -1122,37 +1056,24 @@ export const multipartCopyObject = async (
 
 /**
  * Copy an S3 object to another location in S3
- *
- * @param {Object} params
- * @param {string} params.sourceBucket
- * @param {string} params.sourceKey
- * @param {string} params.destinationBucket
- * @param {string} params.destinationKey
- * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
- * @param {boolean} [params.copyTags=false]
- * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
  */
-export const copyObject = async (
-  params: {
-    sourceBucket: string,
-    sourceKey: string,
-    destinationBucket: string,
-    destinationKey: string,
-    ACL?: string,
-    copyTags?: boolean,
-    chunkSize?: number
-  }
-): Promise<void> => {
-  const {
-    sourceBucket,
-    sourceKey,
-    destinationBucket,
-    destinationKey,
-    ACL,
-    copyTags,
-    chunkSize,
-  } = params;
-
+export const copyObject = async ({
+  sourceBucket,
+  sourceKey,
+  destinationBucket,
+  destinationKey,
+  ACL,
+  copyTags,
+  chunkSize,
+}: {
+  sourceBucket: string,
+  sourceKey: string,
+  destinationBucket: string,
+  destinationKey: string,
+  ACL?: string,
+  copyTags?: boolean,
+  chunkSize?: number
+}): Promise<void> => {
   const sourceObject = await headObject(sourceBucket, sourceKey);
 
   if (sourceObject.ContentLength === 0) {
@@ -1189,16 +1110,6 @@ export const copyObject = async (
 
 /**
  * Move an S3 object to another location in S3
- *
- * @param {Object} params
- * @param {string} params.sourceBucket
- * @param {string} params.sourceKey
- * @param {string} params.destinationBucket
- * @param {string} params.destinationKey
- * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
- * @param {boolean} [params.copyTags=false]
- * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
- * @returns {Promise<undefined>}
  */
 export const moveObject = async (
   params: {
@@ -1210,7 +1121,7 @@ export const moveObject = async (
     copyTags?: boolean,
     chunkSize?: number
   }
-) => {
+): Promise<DeleteObjectCommandOutput> => {
   const {
     sourceBucket,
     sourceKey,
