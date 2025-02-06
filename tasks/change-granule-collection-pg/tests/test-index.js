@@ -19,7 +19,6 @@ const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { bulkPatchGranuleCollection, bulkPatch } = require('@cumulus/api/endpoints/granules');
 const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
 const indexer = require('@cumulus/es-client/indexer');
-// const jest = require('jest');
 
 const sinon = require('sinon');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
