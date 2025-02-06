@@ -1285,47 +1285,6 @@ async function getGranuleTemporalInfo(granule) {
 }
 
 /**
- * Search recursively for the location of a sub-object in the cmr object
- *
- * @param {object} cmrObject - cmr metadata object
- * @param {string} attributePath - subObject path to seek
- * @returns {string | null}
-*/
-const findCollectionAttributePath = (cmrObject, attributePath) => {
-  if (get(cmrObject, attributePath)) {
-    return attributePath;
-  }
-  let output = null;
-  Object.entries(cmrObject).forEach(([key, value]) => {
-    if (isObject(value)) {
-      const foundPath = findCollectionAttributePath(value, attributePath);
-      if (foundPath !== null) {
-        output = key + '.' + foundPath;
-      }
-    }
-  });
-  return output;
-};
-
-/**
- *
- * @param {object} cmrObject - CMR metadata object
- * @param {string} identifierPath - path to identify this field by
- * @param {string} value - value to set this identifier to
- * @param {string | null} defaultPath - where to put value if identifier can't be found
- */
-const updateCMRCollectionValue = (
-  cmrObject,
-  identifierPath,
-  value,
-  defaultPath = null
-) => {
-  const backupPath = defaultPath || identifierPath;
-  const fullPath = findCollectionAttributePath(cmrObject, identifierPath) || backupPath;
-  set(cmrObject, fullPath, value);
-};
-
-/**
  * Update collection in an ECHO10 cmr metadata object
  *
  * @param {object} cmrObject - CMR metadata object
@@ -1337,8 +1296,10 @@ const updateECHO10Collection = (
   collection
 ) => {
   const cmrObjectCopy = cloneDeep(cmrObject);
-  updateCMRCollectionValue(cmrObjectCopy, 'Collection.ShortName', collection.name, 'Granule.Collection.ShortName');
-  updateCMRCollectionValue(cmrObjectCopy, 'Collection.VersionId', collection.version, 'Granule.Collection.VersionId');
+  set(cmrObject, 'Granule.Collection', {
+    ShortName: collection.name,
+    Version: collection.version,
+  })
   return cmrObjectCopy;
 };
 
@@ -1354,8 +1315,10 @@ const updateUMMGCollection = (
   collection
 ) => {
   const cmrObjectCopy = cloneDeep(cmrObject);
-  updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.ShortName', collection.name);
-  updateCMRCollectionValue(cmrObjectCopy, 'CollectionReference.Version', collection.version);
+  set(cmrObject, 'CollectionReference', {
+    ShortName: collection.name,
+    Version: collection.version,
+  })
   return cmrObjectCopy;
 };
 
