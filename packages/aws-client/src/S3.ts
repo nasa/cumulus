@@ -31,6 +31,7 @@ import {
   Tag,
   Tagging,
   ListObjectsCommandOutput,
+  DeleteObjectCommandOutput,
 } from '@aws-sdk/client-s3';
 import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage';
 
@@ -1122,15 +1123,6 @@ export const multipartCopyObject = async (
 
 /**
  * Copy an S3 object to another location in S3
- *
- * @param {Object} params
- * @param {string} params.sourceBucket
- * @param {string} params.sourceKey
- * @param {string} params.destinationBucket
- * @param {string} params.destinationKey
- * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
- * @param {boolean} [params.copyTags=false]
- * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
  */
 export const copyObject = async (
   params: {
@@ -1189,16 +1181,6 @@ export const copyObject = async (
 
 /**
  * Move an S3 object to another location in S3
- *
- * @param {Object} params
- * @param {string} params.sourceBucket
- * @param {string} params.sourceKey
- * @param {string} params.destinationBucket
- * @param {string} params.destinationKey
- * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
- * @param {boolean} [params.copyTags=false]
- * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
- * @returns {Promise<undefined>}
  */
 export const moveObject = async (
   params: {
@@ -1210,7 +1192,7 @@ export const moveObject = async (
     copyTags?: boolean,
     chunkSize?: number
   }
-) => {
+): Promise<DeleteObjectCommandOutput> => {
   const {
     sourceBucket,
     sourceKey,
