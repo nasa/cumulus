@@ -184,7 +184,7 @@ async function copyGranulesInS3({
 }
 
 /**
- * Create new file object updated to new collection data
+ * Create new ApiFile object updated to new collection data
  */
 function updateFileMetadata(
   file: Omit<ValidApiFile, 'granuleId'>,
