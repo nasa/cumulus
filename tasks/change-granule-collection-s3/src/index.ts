@@ -1,18 +1,18 @@
 'use strict';
 
 import { Context } from 'aws-lambda';
-import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import get from 'lodash/get';
 import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
+import { AssertionError } from 'assert';
 import zip from 'lodash/zip';
-import pRetry from 'p-retry';
 // eslint-disable-next-line lodash/import-scope
 import { Dictionary } from 'lodash';
+import pRetry from 'p-retry';
 import path from 'path';
 import pMap from 'p-map';
+
 import { InvalidArgument, DuplicateFile } from '@cumulus/errors';
-import { S3 } from '@cumulus/aws-client';
 import {
   unversionFilename,
 } from '@cumulus/ingest/granule';
@@ -21,23 +21,28 @@ import {
   granulesToCmrFileObjects,
   metadataObjectFromCMRFile,
 } from '@cumulus/cmrjs';
-
+import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { s3 } from '@cumulus/aws-client/services';
 import { BucketsConfig } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { getCollection } from '@cumulus/api-client/collections';
 import { log } from '@cumulus/common';
-import { CollectionRecord } from '@cumulus/types';
+import { CollectionRecord, CollectionFile } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
-import { CollectionFile } from '@cumulus/types';
 import { BucketsConfigObject } from '@cumulus/common/types';
-import { calculateObjectHash, copyObject } from '@cumulus/aws-client/S3';
-import { getGranule } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
+import { calculateObjectHash, copyObject, s3Join, s3ObjectExists} from '@cumulus/aws-client/S3';
+import { getGranule } from '@cumulus/api-client/granules';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
-import { AssertionError } from 'assert';
-import { apiGranuleRecordIsValid, isCMRMetadataFile, updateCmrFileCollections, uploadCMRFile, ValidApiFile, ValidGranuleRecord } from './update_cmr_file_collection';
+import {
+  apiGranuleRecordIsValid,
+  isCMRMetadataFile,
+  updateCmrFileCollections,
+  uploadCMRFile,
+  ValidApiFile,
+  ValidGranuleRecord
+} from './update_cmr_file_collection';
 
 const MB = 1024 * 1024;
 
@@ -64,10 +69,6 @@ type ChangeCollectionsS3Event = {
     granuleIds: Array<string>,
   }
 };
-
-function getConcurrency() {
-  return Number(process.env.concurrency || 100);
-}
 
 /**
  * Is this move a "real" move, or is target location identical to source
@@ -117,11 +118,11 @@ async function s3MoveNeeded(
     targetExists,
   ] = await Promise.all([
     pRetry(
-      async () => S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
+      async () => s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
       { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
     ),
     pRetry(
-      async () => S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
+      async () => s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
       { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
     ),
   ]);
@@ -223,7 +224,7 @@ async function copyGranulesInS3({
           }
         }));
     },
-    { concurrency: getConcurrency() }
+    { concurrency: Number(process.env.concurrency || 100) }
   );
 }
 
@@ -246,7 +247,7 @@ function updateFileMetadata(
     cmrMetadata,
   });
   const updatedBucket = bucketsConfig.nameByKey(match.bucket);
-  const updatedKey = S3.s3Join(urlPath, fileName);
+  const updatedKey = s3Join(urlPath, fileName);
   return {
     ...file,
     bucket: updatedBucket,
