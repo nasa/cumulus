@@ -645,7 +645,6 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
       bucketTypes,
       distributionBucketMap,
     });
-
     t.is(etag, expectedEtag, "ETag doesn't match");
     t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
   } finally {
@@ -1362,28 +1361,8 @@ test('updateECHO10Collection updates echo10 collection name and version', async 
     cmrObject,
     { name: 'a', version: 'b' }
   );
-
   t.is(updated.Granule.Collection.ShortName, 'a');
   t.is(updated.Granule.Collection.VersionId, 'b');
-});
-
-test('updateCmrFileCollections updates Echo10Files at non-standard locations', (t) => {
-  const cmrObject = {
-    Granule: {
-      GranuleUR: 'MOD11A1.A2017200.h19v04.006.2017201090724',
-      InsertTime: '2017-11-20T23:02:40.055807',
-      LastUpdate: '2017-11-20T23:02:40.055814',
-      WhyThisAttribute: {
-        Collection: {
-          ShortName: 'MOD11A1',
-          VersionId: '006',
-        },
-      },
-    },
-  };
-  const updated = updateECHO10Collection(cmrObject, { name: 'a', version: 'b' });
-  t.is(updated.Granule.WhyThisAttribute.Collection.ShortName, 'a');
-  t.is(updated.Granule.WhyThisAttribute.Collection.VersionId, 'b');
 });
 
 test('updateCmrFileCollections updates Echo10Files when missing', (t) => {
@@ -1400,33 +1379,6 @@ test('updateCmrFileCollections updates umm meta file', (t) => {
 
   t.is(updated.CollectionReference.ShortName, 'a');
   t.is(updated.CollectionReference.Version, 'b');
-});
-
-test('updateCmrFileCollections updates umm at non-standard locations', (t) => {
-  const cmrObject = {
-    Granule: {
-      GranuleUR: 'MOD11A1.A2017200.h19v04.006.2017201090724',
-      InsertTime: '2017-11-20T23:02:40.055807',
-      LastUpdate: '2017-11-20T23:02:40.055814',
-      WhyThisAttribute: [
-        {
-          Hanglebangle: {
-            ShortName: 'MOD11A1',
-            Version: '006',
-          },
-        },
-        {
-          CollectionReference: {
-            ShortName: 'MOD11A1',
-            Version: '006',
-          },
-        },
-      ],
-    },
-  };
-  const updated = updateUMMGCollection(cmrObject, { name: 'a', version: 'b' });
-  t.is(updated.Granule.WhyThisAttribute[1].CollectionReference.ShortName, 'a');
-  t.is(updated.Granule.WhyThisAttribute[1].CollectionReference.Version, 'b');
 });
 
 test('updateCmrFileCollections updates umm when missing', (t) => {

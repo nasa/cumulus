@@ -769,7 +769,7 @@ async function updateUMMGMetadata({
     distributionBucketMap,
   });
   const { ETag: etag } = await uploadUMMGJSONCMRFile(updatedMetadataObject, cmrFile);
-  return { updatedMetadataObject, etag };
+  return { metadataObject: updatedMetadataObject, etag };
 }
 
 /**
@@ -1298,9 +1298,9 @@ const updateECHO10Collection = (
   collection
 ) => {
   const cmrObjectCopy = cloneDeep(cmrObject);
-  set(cmrObject, 'Granule.Collection', {
+  set(cmrObjectCopy, 'Granule.Collection', {
     ShortName: collection.name,
-    Version: collection.version,
+    VersionId: collection.version,
   });
   return cmrObjectCopy;
 };
@@ -1317,7 +1317,7 @@ const updateUMMGCollection = (
   collection
 ) => {
   const cmrObjectCopy = cloneDeep(cmrObject);
-  set(cmrObject, 'CollectionReference', {
+  set(cmrObjectCopy, 'CollectionReference', {
     ShortName: collection.name,
     Version: collection.version,
   });
