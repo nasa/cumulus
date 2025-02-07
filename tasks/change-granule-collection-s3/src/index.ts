@@ -204,7 +204,7 @@ function updateFileMetadata(
   const updatedBucket = bucketsConfig.nameByKey(match.bucket);
   const updatedKey = S3.s3Join(urlPath, fileName);
   return {
-    ...cloneDeep(file),
+    ...file,
     bucket: updatedBucket,
     key: updatedKey,
   };
