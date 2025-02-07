@@ -129,7 +129,7 @@ describe('The MoveGranuleCollections workflow', () => {
       ]);
       await Promise.all(cleanup);
     } catch (error) {
-      console.log('cleanup failed with error', error);
+      // eslint-disable-line no-empty
     }
   });
   it('updates the granule data in s3', async () => {
