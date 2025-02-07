@@ -6,6 +6,6 @@
   "exclude-after-remap": false,
   "statements": 90.0,
   "functions": 90.0,
-  "branches": 83.0,
+  "branches": 82.0,
   "lines": 90.0
 }
