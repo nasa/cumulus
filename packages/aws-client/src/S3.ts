@@ -536,7 +536,10 @@ export const putJsonS3Object = (
 /**
 * Check if a file exists in an S3 object
 **/
-export const fileExists = async (bucket: string, key: string): Promise<HeadObjectOutput | false> => {
+export const fileExists = async (
+  bucket: string,
+  key: string
+): Promise<HeadObjectOutput | false> => {
   try {
     return await s3().headObject({ Key: key, Bucket: bucket });
   } catch (error) {

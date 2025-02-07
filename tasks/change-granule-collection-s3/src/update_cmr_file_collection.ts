@@ -1,5 +1,6 @@
 import { s3PutObject } from '@cumulus/aws-client/S3';
 import {
+  DistributionBucketMap,
   generateEcho10XMLString,
   isECHO10Filename,
   isUMMGFilename,
@@ -67,9 +68,9 @@ export const updateCmrFileCollections = ({
   cmrObject: Object
   files: Array<Omit<ValidApiFile, 'granuleId'>>,
   distEndpoint: string,
-  bucketTypes: Object,
+  bucketTypes: { [key: string]: string },
   cmrGranuleUrlType: string
-  distributionBucketMap: Object
+  distributionBucketMap: DistributionBucketMap
 }) => {
   const params = {
     files,
