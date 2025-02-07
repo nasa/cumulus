@@ -697,6 +697,7 @@ function shouldUseDirectS3Type(metadataObject) {
 }
 
 /**
+ * Update the UMMG cmr metadata object to have corrected urls
  *
  * @param {Object} params.metadataObject - ummg cmr metadata object
  * @param {Array<ApiFile>} params.files - files with which to update the cmr metadata
@@ -882,8 +883,8 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
 }
 
 /**
+ * Update the Echo10 cmr metadata object to have corrected urls
  *
- * @param {Object} params
  * @param {Object} params.metadataObject - xml cmr metadata object
  * @param {Array<Object>} params.files - files with which to update the cmr metadata
  * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
