@@ -1,6 +1,6 @@
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const fs = require('fs');
-const { waitForListObjectsV2ResultCount, addCollections, addProviders } = require('@cumulus/integration-tests');
+const { addCollections, addProviders } = require('@cumulus/integration-tests');
 const {
   deleteS3Object,
   s3ObjectExists,
@@ -105,7 +105,7 @@ describe('The MoveGranuleCollections workflow', () => {
         {
           targetCollection,
         }
-      )
+      );
     } catch (error) {
       console.log(`files do not appear to have been moved: error: ${error}`);
       beforeAllFailed = true;
@@ -142,7 +142,7 @@ describe('The MoveGranuleCollections workflow', () => {
     if (beforeAllFailed) fail('beforeAllFailed');
     const pgGranule = await getGranule({
       prefix: stackName,
-      granuleId
+      granuleId,
     });
     expect(pgGranule.collectionId).toEqual(
       constructCollectionId(targetCollection.name, targetCollection.version)
@@ -150,8 +150,8 @@ describe('The MoveGranuleCollections workflow', () => {
     const finalKeys = finalFiles.map((file) => file.key);
     const finalBuckets = finalFiles.map((file) => file.bucket);
     pgGranule.files.forEach((file) => {
-      expect(finalKeys.includes(file.key)).toBeTrue()
-      expect(finalBuckets.includes(file.bucket)).toBeTrue()
-    })
+      expect(finalKeys.includes(file.key)).toBeTrue();
+      expect(finalBuckets.includes(file.bucket)).toBeTrue();
+    });
   });
 });
