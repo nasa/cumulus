@@ -151,7 +151,7 @@ describe('when ChangeGranuleCollectionPG is called', () => {
         }
         finalFiles = outputGranule.files;
 
-        const { $metadata: metadata2_electric_boogaloo } = await lambda().send(new InvokeCommand({
+        const { $metadata: PGmetadata } = await lambda().send(new InvokeCommand({
           FunctionName: `${stackName}-ChangeGranuleCollectionPG`,
           InvocationType: 'RequestResponse',
           Payload: JSON.stringify({
@@ -172,8 +172,8 @@ describe('when ChangeGranuleCollectionPG is called', () => {
             },
           }),
         }));
-        if (metadata2_electric_boogaloo.httpStatusCode >= 400) {
-          console.log(`lambda invocation to set up failed, code ${metadata2_electric_boogaloo.httpStatusCode}`);
+        if (PGmetadata.httpStatusCode >= 400) {
+          console.log(`lambda invocation to set up failed, code ${PGmetadata.httpStatusCode}`);
         }
         await Promise.all(finalFiles.map((file) => expectAsync(
           waitForListObjectsV2ResultCount({
@@ -196,12 +196,13 @@ describe('when ChangeGranuleCollectionPG is called', () => {
         granuleId,
       });
       expect(granuleRecord.collectionId).toEqual(constructCollectionId(targetCollection.name, targetCollection.version));
-      const finalKeys = finalFiles.map((file)=> file.key);
+      const finalKeys = finalFiles.map((file) => file.key);
       const finalBuckets = finalFiles.map((file) => file.bucket);
 
       granuleRecord.files.map((file) => {
         expect(finalBuckets.includes(file.bucket)).toBe(true);
         expect(finalKeys.includes(file.key)).toBe(true);
+        return null;
       });
     });
   });

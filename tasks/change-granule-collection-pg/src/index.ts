@@ -70,14 +70,14 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
   const config = event.config;
 
   const targetGranules = event.input.granules;
-  log.debug(`change-granule-collection-pg run with config ${config}`)
+  log.debug(`change-granule-collection-pg run with config ${config}`);
   await moveGranulesInCumulusDatastores(
     targetGranules,
     constructCollectionId(config.collection.name, config.collection.version),
     constructCollectionId(
       config.targetCollection.name,
       config.targetCollection.version
-    ),
+    )
   );
 
   return {

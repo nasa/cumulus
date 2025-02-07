@@ -234,7 +234,7 @@ test.serial('handles files that need no move', async (t) => {
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
-  
+
   const granuleModel = new GranulePgModel();
   const finalPgGranule = await granuleModel.get(t.context.knex, {
     cumulus_id: pgRecords.granules[0].cumulus_id,
