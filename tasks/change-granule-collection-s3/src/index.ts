@@ -10,7 +10,7 @@ import zip from 'lodash/zip';
 import { Dictionary } from 'lodash';
 import path from 'path';
 import pMap from 'p-map';
-import { MissingS3FileError, InvalidArgument } from '@cumulus/errors';
+import { InvalidArgument, DuplicateFile } from '@cumulus/errors';
 import { S3 } from '@cumulus/aws-client';
 import {
   unversionFilename,
@@ -20,6 +20,8 @@ import {
   granulesToCmrFileObjects,
   metadataObjectFromCMRFile,
 } from '@cumulus/cmrjs';
+
+import { s3 } from '@cumulus/aws-client/services';
 import { BucketsConfig } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
 import { constructCollectionId } from '@cumulus/message/Collections';
@@ -29,7 +31,7 @@ import { CollectionRecord } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { CollectionFile } from '@cumulus/types';
 import { BucketsConfigObject } from '@cumulus/common/types';
-import { copyObject } from '@cumulus/aws-client/S3';
+import { calculateObjectHash, copyObject } from '@cumulus/aws-client/S3';
 import { getGranule } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
@@ -76,6 +78,17 @@ function moveRequested(
   return !((sourceFile.key === targetFile.key) && (sourceFile.bucket === targetFile.bucket));
 }
 
+async function checkSumsMatch(
+  sourceFile: Omit<ValidApiFile, 'granuleId'>,
+  targetFile: Omit<ValidApiFile, 'granuleId'>
+): Promise<boolean> {
+  const [sourceHash, targetHash] = await Promise.all([
+    calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...sourceFile }),
+    calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...targetFile }),
+  ]);
+  return sourceHash === targetHash;
+}
+
 /**
  * Identify if a file move is needed.
  * File does not need move *if*
@@ -87,21 +100,38 @@ async function s3MoveNeeded(
   sourceFile: Omit<ValidApiFile, 'granuleId'>,
   targetFile: Omit<ValidApiFile, 'granuleId'>
 ): Promise<boolean> {
-  // this check is strictly redundant to the next "targetExists" but avoids S3 query if possible
+  // this check is strictly redundant, but allows us to skip some s3 calculations if possible
   if (!moveRequested(sourceFile, targetFile)) {
     return false;
   }
-
-  const targetExists = await S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key });
-  if (targetExists) {
-    return false;
-  }
-
-  const sourceExists = await S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key });
-  if (sourceExists) {
+  const [
+    sourceExists,
+    targetExists,
+  ] = await Promise.all([
+    S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
+    S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
+  ])
+  //this is the normal happy path
+  if (sourceExists && !targetExists) {
     return true;
   }
-  throw new MissingS3FileError(`source location ${{ Bucket: targetFile.bucket, Key: targetFile.key }} doesn't exist`);
+  // either this granule is being reprocessed *or* there's a file collision between collections
+  if (sourceExists && targetExists) {
+    if (await checkSumsMatch(sourceFile, targetFile)) {
+      // this file was already moved, but is being reprocessed
+      // presumably because of a failure elsewhere in the workflow
+      return false;
+    }
+    throw new DuplicateFile(
+      `file ${targetFile} already exists.` + 
+     'cannot copy over without deleting existing data'
+    );
+  }
+  log.warn(
+    `source location ${{ Bucket: sourceFile.bucket, Key: sourceFile.key }}` +
+    "doesn't exist, has this file already been moved?"
+  );
+  return false;
 }
 
 /**
