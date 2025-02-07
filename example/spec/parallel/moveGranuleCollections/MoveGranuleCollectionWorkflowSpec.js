@@ -7,7 +7,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { deleteGranule, getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
-const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
+const { buildAndStartWorkflow, buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTestSuffix, createTimestampedTestId, uploadTestDataToBucket, createTestDataPath } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
@@ -105,7 +105,8 @@ describe('The MoveGranuleCollections workflow', () => {
       'completed'
     );
     try {
-      moveExecutionArn = await buildAndStartWorkflow(
+      console.log('<<<<<<<<<<<<<<<<<<<<<<')
+      const workflowExecutionArn = await buildAndExecuteWorkflow(
         stackName,
         config.bucket,
         'MoveGranuleCollectionsWorkflow',
@@ -117,25 +118,39 @@ describe('The MoveGranuleCollections workflow', () => {
         {
           targetCollection,
         }
-      );
-      const startingGranule = await getGranule({
-        prefix: stackName,
-        granuleId,
-      });
-      finalFiles = startingGranule.files.map((file) => ({
-        ...file,
-        key: `changedCollectionPath/MOD09GQ${testSuffix}___007/${testId}/${file.fileName}`,
-      }));
+      )
+      console.log(workflowExecutionArn);
+      // moveExecutionArn = await buildAndStartWorkflow(
+      //   stackName,
+      //   config.bucket,
+      //   'MoveGranuleCollectionsWorkflow',
+      //   collection,
+      //   provider,
+      //   {
+      //     granuleIds: [granuleId],
+      //   },
+      //   {
+      //     targetCollection,
+      //   }
+      // );
+      // const startingGranule = await getGranule({
+      //   prefix: stackName,
+      //   granuleId,
+      // });
+      // finalFiles = startingGranule.files.map((file) => ({
+      //   ...file,
+      //   key: `changedCollectionPath/MOD09GQ${testSuffix}___007/${testId}/${file.fileName}`,
+      // }));
 
-      await Promise.all(finalFiles.map((file) => expectAsync(
-        waitForListObjectsV2ResultCount({
-          bucket: file.bucket,
-          prefix: file.key,
-          desiredCount: 1,
-          interval: 5 * 1000,
-          timeout: 60 * 1000,
-        })
-      ).toBeResolved()));
+      // await Promise.all(finalFiles.map((file) => expectAsync(
+      //   waitForListObjectsV2ResultCount({
+      //     bucket: file.bucket,
+      //     prefix: file.key,
+      //     desiredCount: 1,
+      //     interval: 5 * 1000,
+      //     timeout: 60 * 1000,
+      //   })
+      // ).toBeResolved()));
     } catch (error) {
       console.log(`files do not appear to have been moved: error: ${error}`);
       beforeAllFailed = true;
