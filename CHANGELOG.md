@@ -4,10 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+## [v20.0.0] 2025-02-04
+
 ## Phase 2 Release
 
 ### Breaking Changes
 
+- **CUMULUS-3934**
+  - Removed `ecs_cluster_instance_allow_ssh` resource.
+  - The `ecs_cluster_instance_allow_ssh` was implemented before SSM hosts were deployed
+    to NGAP accounts and allowed for SSHing into an instance from an SSH bastion, which no longer exists.
+  - Tunneling into an EC2 via SSM is still supported. Users relying solely on SSH will need to transition to SSM.
+- **CUMULUS-2564**
+  - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
+    This modifies the task behavior to stage granules to
+    `<staging_path>/<collection_id>/<md5_granuleIdHash>` to allow for better S3
+    partitioning/performance for large collections.
+    Because of this benefit
+    the default has been set to `true`, however as sync-granules relies on
+    object name collision, this configuration changes the duplicate collision
+    behavior of sync-granules to be per-granule-id instead of per-collection
+    when active.
+    If the prior behavior is desired, please add `"useGranIdPath": false` to your
+    task config in your workflow definitions that use `sync-granule`.
 - **CUMULUS-3698**
   - GranuleSearch retrieving files/execution is toggled
       by setting "includeFullRecord" field to 'true' in relevant api endpoint params
@@ -99,29 +120,6 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
   - remove `@cumulus/api/endpoints/elasticsearch`, `@cumulus/api/lambdas/bootstrap`, and `@cumulus/api/lambdas/index-from-database`
 - **CUMULUS-3983**
   - Removed elasticsearch references used in in cumulus `tf-modules`
-
-## [Unreleased]
-
-### Breaking Changes
-
-- **CUMULUS-3934**
-  - Removed `ecs_cluster_instance_allow_ssh` resource.
-  - The `ecs_cluster_instance_allow_ssh` was implemented before SSM hosts were deployed
-    to NGAP accounts and allowed for SSHing into an instance from an SSH bastion, which no longer exists.
-  - Tunneling into an EC2 via SSM is still supported. Users relying solely on SSH will need to transition to SSM.
-
-- **CUMULUS-2564**
-  - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
-    This modifies the task behavior to stage granules to
-    `<staging_path>/<collection_id>/<md5_granuleIdHash>` to allow for better S3
-    partitioning/performance for large collections.
-    Because of this benefit
-    the default has been set to `true`, however as sync-granules relies on
-    object name collision, this configuration changes the duplicate collision
-    behavior of sync-granules to be per-granule-id instead of per-collection
-    when active.
-    If the prior behavior is desired, please add `"useGranIdPath": false` to your
-    task config in your workflow definitions that use `sync-granule`.
 
 ### Added
 
@@ -8385,7 +8383,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v19.1.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.0.0...HEAD
+[v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
 [v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
 [v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.0...v19.0.0
 [v18.5.1]: https://github.com/nasa/cumulus/compare/v18.5.0...v18.5.1
