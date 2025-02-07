@@ -6,6 +6,7 @@ import get from 'lodash/get';
 import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
 import zip from 'lodash/zip';
+import pRetry from 'p-retry';
 // eslint-disable-next-line lodash/import-scope
 import { Dictionary } from 'lodash';
 import path from 'path';
@@ -83,8 +84,14 @@ async function checkSumsMatch(
   targetFile: Omit<ValidApiFile, 'granuleId'>
 ): Promise<boolean> {
   const [sourceHash, targetHash] = await Promise.all([
-    calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...sourceFile }),
-    calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...targetFile }),
+    pRetry(
+      async () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...sourceFile }),
+      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+    ),
+    pRetry(
+      async () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...targetFile }),
+      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+    ),
   ]);
   return sourceHash === targetHash;
 }
@@ -95,6 +102,7 @@ async function checkSumsMatch(
  *   - The target bucket/key is the same as source bucket/key
  *   - The target file is already in its expected location
  * Otherwise it needs to be moved
+ * this throws an error if there is a file in the target location but *not* a copy of source
  */
 async function s3MoveNeeded(
   sourceFile: Omit<ValidApiFile, 'granuleId'>,
@@ -108,9 +116,15 @@ async function s3MoveNeeded(
     sourceExists,
     targetExists,
   ] = await Promise.all([
-    S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
-    S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
-  ])
+    pRetry(
+      async () => S3.s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
+      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+    ),
+    pRetry(
+      async () => S3.s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
+      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+    ),
+  ]);
   //this is the normal happy path
   if (sourceExists && !targetExists) {
     return true;
@@ -123,7 +137,7 @@ async function s3MoveNeeded(
       return false;
     }
     throw new DuplicateFile(
-      `file ${targetFile} already exists.` + 
+      `file ${targetFile} already exists.` +
      'cannot copy over without deleting existing data'
     );
   }
