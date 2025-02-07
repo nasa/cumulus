@@ -258,12 +258,12 @@ function updateFileMetadata(
  * Create new granule object with updated details including updated files
  * all according to the given target collection
  */
-async function updateGranuleMetadata(
+function updateGranuleMetadata(
   granule: ValidGranuleRecord,
   bucketsConfig: BucketsConfig,
   cmrObjects: { [key: string]: Object },
   targetCollection: CollectionRecord
-): Promise<ValidGranuleRecord> {
+): ValidGranuleRecord {
   const cmrMetadata = get(cmrObjects, granule.granuleId, {});
   const newFiles = granule.files?.map(
     (file) => updateFileMetadata(
@@ -325,22 +325,22 @@ async function updateCMRData(
  * files for new granules are updated according to new collection url_path
  * file names are *not* updated
  */
-async function buildTargetGranules(
+function buildTargetGranules(
   granules: Array<ValidGranuleRecord>,
   config: EventConfig,
   cmrObjects: { [key: string]: Object },
   targetCollection: CollectionRecord
-): Promise<Array<ValidGranuleRecord>> {
+): Array<ValidGranuleRecord> {
   const bucketsConfig = new BucketsConfig(config.buckets);
   const targetGranules: Array<ValidGranuleRecord> = [];
-  const granulesAndMetadata = await Promise.all(granules.map(
+  const granulesAndMetadata = granules.map(
     async (granule) => updateGranuleMetadata(
       granule,
       bucketsConfig,
       cmrObjects,
       targetCollection
     )
-  ));
+  );
   granulesAndMetadata.forEach((targetGranule) => {
     targetGranules.push(targetGranule);
   });
