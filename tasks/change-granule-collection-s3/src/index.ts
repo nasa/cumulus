@@ -408,7 +408,8 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   } else {
     tempGranulesInput.forEach((granule) => {
       if (!apiGranuleRecordIsValid(granule)) {
-        throw new Error(`granule has unparseable file details ${granule}`);
+        throw new Error(`granule ${granule} has validation errors.` + 
+        'files must have key and bucket');
       }
     });
     granulesInput = tempGranulesInput as ValidGranuleRecord[];
