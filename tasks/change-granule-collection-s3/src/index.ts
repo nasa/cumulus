@@ -395,9 +395,9 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     prefix: getRequiredEnvVar('stackName'),
     granuleId,
   })));
-  const invalidBehavior = config.invalidBehavior || 'skip';
+  const invalidGranuleBehavior = config.invalidGranuleBehavior || 'skip';
   let granulesInput: Array<ValidGranuleRecord>;
-  if (invalidBehavior === 'skip') {
+  if (invalidGranuleBehavior === 'skip') {
     granulesInput = tempGranulesInput.filter((granule) => {
       if (!apiGranuleRecordIsValid(granule)) {
         log.warn(`granule has unparseable file details ${granule}`);
@@ -408,7 +408,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   } else {
     tempGranulesInput.forEach((granule) => {
       if (!apiGranuleRecordIsValid(granule)) {
-        throw new Error(`granule ${granule} has validation errors.` + 
+        throw new Error(`granule ${granule} has validation errors.` +
         'files must have key and bucket');
       }
     });

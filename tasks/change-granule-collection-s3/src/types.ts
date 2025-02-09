@@ -19,7 +19,7 @@ export type EventConfig = {
   s3MultipartChunksizeMb?: number,
   distribution_endpoint: string,
   cmrGranuleUrlType: string,
-  invalidBehavior: string,
+  invalidGranuleBehavior: string,
   // this last is not a valid member of production cofiguration
   testApiClientMethods?: TestApiClientMethods
 };

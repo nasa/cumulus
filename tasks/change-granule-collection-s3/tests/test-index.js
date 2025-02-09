@@ -934,7 +934,7 @@ test.serial('handles files that need no move', async (t) => {
   );
   const collection = { name: 'MOD11ANOMOVE', version: '001' };
   const newPayload = buildPayload(t, collection);
-  newPayload.config.invalidBehavior = 'error';
+  newPayload.config.invalidGranuleBehavior = 'error';
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const targetFile = {
     key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
@@ -995,7 +995,7 @@ test('errors on invalid granules when set to error', async (t) => {
 
   const collection = { name: 'MOD11A1', version: '001' };
   const newPayload = buildPayload(t, collection);
-  newPayload.config.invalidBehavior = 'error';
+  newPayload.config.invalidGranuleBehavior = 'error';
   try {
     await changeGranuleCollectionS3(newPayload);
     t.fail();
