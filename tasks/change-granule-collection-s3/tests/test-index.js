@@ -681,7 +681,7 @@ test.serial('handles partially moved files', async (t) => {
     },
   ];
 
-  // this is a special case that needs to be in place in massaged form 
+  // this is a special case that needs to be in place in massaged form
   // to be identified as "not an error"
   const targetFile = {
     key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',

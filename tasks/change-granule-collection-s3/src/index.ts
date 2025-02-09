@@ -50,8 +50,6 @@ import {
   uploadCMRFile,
 } from './update_cmr_file_collection';
 
-
-
 /**
  * Is this move a "real" move, or is target location identical to source
  */
@@ -417,7 +415,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     granulesInput,
     isCMRFile
   ) as ValidApiFile[];
-  const cmrFilesByGranuleId:  { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
+  const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const firstCMRObjectsByGranuleId: { [granuleId: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
     firstCMRObjectsByGranuleId[cmrFile.granuleId] = await metadataObjectFromCMRFile(

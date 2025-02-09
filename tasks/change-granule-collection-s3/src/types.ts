@@ -1,5 +1,5 @@
-import { BucketsConfigObject } from "@cumulus/common/types";
-import { ApiFile, ApiGranuleRecord } from "@cumulus/types";
+import { BucketsConfigObject } from '@cumulus/common/types';
+import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
 export const MB = 1024 * 1024;
 
 export type EventConfig = {
@@ -27,11 +27,11 @@ export type ChangeCollectionsS3Event = {
 };
 
 export type ValidApiFile = {
-    bucket: string,
-    key: string
-  } & ApiFile;
-  
-  export type ValidApiGranuleFile = Omit<ValidApiFile, 'granuleId'>;
-  export type ValidGranuleRecord = {
-    files: ValidApiGranuleFile[]
-  } & ApiGranuleRecord;
+  bucket: string,
+  key: string
+} & ApiFile;
+
+export type ValidApiGranuleFile = Omit<ValidApiFile, 'granuleId'>;
+export type ValidGranuleRecord = {
+  files: ValidApiGranuleFile[]
+} & ApiGranuleRecord;
