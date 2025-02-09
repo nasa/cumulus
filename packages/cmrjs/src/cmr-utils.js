@@ -31,6 +31,7 @@ const errors = require('@cumulus/errors');
 const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
 const { constructDistributionUrl } = require('@cumulus/distribution-utils');
 const { getBucketAccessUrl } = require('@cumulus/cmr-client/getUrl');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
@@ -1324,6 +1325,28 @@ const updateUMMGCollection = (
   return cmrObjectCopy;
 };
 
+/**
+ * Get collectionId from cmr metadata
+ * @param {object} cmrObject - cmr metadata object
+ * @param {string} cmrFileName - used to know how to parse this object
+ * @returns {string}
+ */
+const getCMRCollectionId = (
+  cmrObject,
+  cmrFileName
+) => {
+  if (isECHO10Filename(cmrFileName)) {
+    return constructCollectionId(
+      get(cmrObject, 'CollectionReference.ShortName'),
+      get(cmrObject, 'CollectionReference.Version')
+    );
+  }
+  return constructCollectionId(
+    get(cmrObject, 'Granule.Collection.ShortName'),
+    get(cmrObject, 'Granule.Collection.VersionId')
+  );
+};
+
 module.exports = {
   addEtagsToFileObjects,
   constructCmrConceptLink,
@@ -1333,6 +1356,7 @@ module.exports = {
   generateFileUrl,
   granuleToCmrFileObject,
   getCmrSettings,
+  getCMRCollectionId,
   getFileDescription,
   getFilename,
   getGranuleTemporalInfo,

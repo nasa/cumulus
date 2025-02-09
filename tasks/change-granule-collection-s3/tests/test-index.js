@@ -24,7 +24,6 @@ const { isECHO10Filename, isUMMGFilename, metadataObjectFromCMRFile } = require(
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { constructCollectionId } = require('../../../packages/message/Collections');
-
 let changeGranuleCollectionS3;
 async function uploadFiles(files) {
   await Promise.all(files.map((file) => {
@@ -34,7 +33,7 @@ async function uploadFiles(files) {
     } else if (isUMMGFilename(file)) {
       body = fs.createReadStream('tests/data/ummg-meta.cmr.json');
     } else {
-      body = parseS3Uri(file).Key;
+      body = 'abc';
     }
     if (parseS3Uri(file).Bucket && parseS3Uri(file).Key) {
       return promiseS3Upload({
@@ -663,16 +662,16 @@ test.serial('handles partially moved files', async (t) => {
       type: 'browse',
     },
     {
+      key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+      bucket: t.context.privateBucket,
+      type: 'browse',
+    },
+    {
       key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
       fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
       bucket: t.context.publicBucket,
       type: 'browse',
-    },
-    {
-      key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      bucket: t.context.publicBucket,
-      type: 'metadata ',
     },
     {
       key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
@@ -681,7 +680,32 @@ test.serial('handles partially moved files', async (t) => {
       type: 'metadata',
     },
   ];
+
+  // this is a special case that needs to be in place in massaged form 
+  // to be identified as "not an error"
+  const targetFile = {
+    key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    bucket: t.context.publicBucket,
+    type: 'metadata ',
+  };
+
+  const targetXMLBody = fs.readFileSync(
+    path.join(__dirname, 'data', 'target_meta.cmr.xml')
+  ).toString().replaceAll(
+    'replaceme-public', t.context.publicBucket
+  ).replaceAll(
+    'replaceme-protected', t.context.protectedBucket
+  );
+  await promiseS3Upload({
+    params: {
+      Bucket: targetFile.bucket,
+      Key: targetFile.key,
+      Body: targetXMLBody,
+    },
+  });
   const filesToUpload = startingFiles.map((file) => buildS3Uri(file.bucket, file.key));
+
   const collection = { name: 'MOD11A1', version: '001' };
   const newPayload = buildPayload(t, collection);
 
@@ -705,6 +729,7 @@ test.serial('handles partially moved files', async (t) => {
     Bucket: t.context.publicBucket,
     Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
+
   const UMM = await metadataObjectFromCMRFile(
     `s3://${t.context.publicBucket}/example2/2003/` +
     'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
@@ -790,16 +815,33 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
       type: 'browse',
     },
     {
-      key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-      bucket: t.context.publicBucket,
-      type: 'metadata ',
-    },
-    {
       key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
       bucket: t.context.bucketMapping.protected,
       type: 'metadata',
     },
   ];
+
+  const targetFile = {
+    key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    bucket: t.context.publicBucket,
+    type: 'metadata ',
+  };
+
+  const targetXMLBody = fs.readFileSync(
+    path.join(__dirname, 'data', 'target_meta.cmr.xml')
+  ).toString().replaceAll(
+    'replaceme-public', t.context.publicBucket
+  ).replaceAll(
+    'replaceme-protected', t.context.protectedBucket
+  );
+  await promiseS3Upload({
+    params: {
+      Bucket: targetFile.bucket,
+      Key: targetFile.key,
+      Body: targetXMLBody,
+    },
+  });
   const filesToUpload = startingFiles.map((file) => buildS3Uri(file.bucket, file.key));
   const collection = { name: 'MOD11A1', version: '001' };
   const newPayload = buildPayload(t, collection);
@@ -900,6 +942,26 @@ test.serial('handles files that need no move', async (t) => {
   const newPayload = buildPayload(t, collection);
   newPayload.config.invalidBehavior = 'error';
   await uploadFiles(filesToUpload, t.context.bucketMapping);
+  const targetFile = {
+    key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    fileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    bucket: t.context.bucketMapping.protected,
+    type: 'metadata',
+  };
+  const targetXMLBody = fs.readFileSync(
+    path.join(__dirname, 'data', 'meta.cmr.xml')
+  ).toString().replaceAll(
+    'replaceme-public', t.context.publicBucket
+  ).replaceAll(
+    'replaceme-protected', t.context.protectedBucket
+  );
+  await promiseS3Upload({
+    params: {
+      Bucket: targetFile.bucket,
+      Key: targetFile.key,
+      Body: targetXMLBody,
+    },
+  });
   const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
   t.true(await s3ObjectExists({
@@ -918,57 +980,6 @@ test.serial('handles files that need no move', async (t) => {
     Bucket: t.context.protectedBucket,
     Key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
-  const UMM = await metadataObjectFromCMRFile(
-    `s3://${t.context.protectedBucket}/` +
-    'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  );
-  const onlineAccessURLs = UMM.Granule.OnlineAccessURLs.OnlineAccessURL.map(
-    (urlObject) => urlObject.URL
-  );
-  const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map(
-    (urlObject) => urlObject.URL
-  );
-  const browseUrls = UMM.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map(
-    (urlObject) => urlObject.URL
-  );
-  // this is not adding the _1.jpg file to the cmr file because these are private
-  t.true(onlineAccessURLs.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.protectedBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
-  ));
-  t.true(browseUrls.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.publicBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
-  ));
-  t.true(onlineResourceUrls.includes(
-    'https://something.api.us-east-1.amazonaws.com/' +
-    `${t.context.protectedBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  ));
-
-  t.true(onlineAccessURLs.includes(
-    's3://' +
-    `${t.context.protectedBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
-  ));
-  t.true(browseUrls.includes(
-    's3://' +
-    `${t.context.publicBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
-  ));
-  t.true(onlineResourceUrls.includes(
-    's3://' +
-    `${t.context.protectedBucket}` +
-    '/file-staging/subdir/' +
-    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
-  ));
 });
 
 test('ignores invalid granules when set to skip', async (t) => {

@@ -37,15 +37,19 @@ export function apiGranuleRecordIsValid(granule: ApiGranuleRecord): granule is V
   return filesAreValid;
 }
 
-export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cmrObject: { Granule?: object }) => {
-  let cmrFileString;
+export const CMRObjectToString = (
+  cmrFile: Omit<ValidApiFile, 'granuleId'>,
+  cmrObject: { Granule?: object }
+): string => {
   if (isUMMGFilename(cmrFile.fileName || cmrFile.key)) {
-    cmrFileString = JSON.stringify(cmrObject, undefined, 2);
-  } else {
-    // our xml stringify function packages the metadata in "Granule",
-    // resulting in possible nested Granule object
-    cmrFileString = generateEcho10XMLString(cmrObject.Granule || cmrObject);
+    return JSON.stringify(cmrObject, undefined, 2);
   }
+  // our xml stringify function packages the metadata in "Granule",
+  // resulting in possible nested Granule object
+  return generateEcho10XMLString(cmrObject.Granule || cmrObject);
+};
+
+export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cmrFileString: string) => {
   await s3PutObject({
     Bucket: cmrFile.bucket,
     Key: cmrFile.key,

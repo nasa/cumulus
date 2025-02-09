@@ -7,7 +7,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { AssertionError } from 'assert';
 import zip from 'lodash/zip';
 // eslint-disable-next-line lodash/import-scope
-import { Dictionary } from 'lodash';
+import { Dictionary, flatten } from 'lodash';
 import pRetry from 'p-retry';
 import path from 'path';
 import pMap from 'p-map';
@@ -27,21 +27,23 @@ import { BucketsConfig } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { getCollection } from '@cumulus/api-client/collections';
-import { log } from '@cumulus/common';
+import { getGranule } from '@cumulus/api-client/granules';
 import { CollectionRecord, CollectionFile } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { BucketsConfigObject } from '@cumulus/common/types';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-import { calculateObjectHash, copyObject, s3Join, s3ObjectExists} from '@cumulus/aws-client/S3';
-import { getGranule } from '@cumulus/api-client/granules';
+import { log } from '@cumulus/common';
+import { calculateObjectHash, copyObject, s3Join, s3ObjectExists } from '@cumulus/aws-client/S3';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
+import { getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
 import {
   apiGranuleRecordIsValid,
+  CMRObjectToString,
   isCMRMetadataFile,
   updateCmrFileCollections,
   uploadCMRFile,
   ValidApiFile,
-  ValidGranuleRecord
+  ValidGranuleRecord,
 } from './update_cmr_file_collection';
 
 const MB = 1024 * 1024;
@@ -73,17 +75,38 @@ type ChangeCollectionsS3Event = {
 /**
  * Is this move a "real" move, or is target location identical to source
  */
-function moveRequested(
+function objectSourceAndTargetSame(
   sourceFile: Omit<ValidApiFile, 'granuleId'>,
   targetFile: Omit<ValidApiFile, 'granuleId'>
 ): boolean {
   return !((sourceFile.key === targetFile.key) && (sourceFile.bucket === targetFile.bucket));
 }
 
+async function metadataCheckSumsMatch(
+  targetFile: Omit<ValidApiFile, 'granuleId'>,
+  metadataObject: Object
+): Promise<boolean> {
+  // const targetString = await getTextObject(targetFile.bucket, targetFile.key);
+  const existingGranuleMetadata = await metadataObjectFromCMRFile(
+    `s3://${targetFile.bucket}/${targetFile.key}`
+  );
+  const sourceCollection = getCMRCollectionId(metadataObject, targetFile.key);
+  const targetCollection = getCMRCollectionId(existingGranuleMetadata, targetFile.key);
+  return sourceCollection === targetCollection;
+}
+
 async function checkSumsMatch(
   sourceFile: Omit<ValidApiFile, 'granuleId'>,
-  targetFile: Omit<ValidApiFile, 'granuleId'>
+  targetFile: Omit<ValidApiFile, 'granuleId'>,
+  isMetadata: boolean,
+  metadataObject: Object
 ): Promise<boolean> {
+  if (isMetadata) {
+    return await metadataCheckSumsMatch(
+      targetFile,
+      metadataObject
+    );
+  }
   const [sourceHash, targetHash] = await Promise.all([
     pRetry(
       async () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...sourceFile }),
@@ -94,6 +117,7 @@ async function checkSumsMatch(
       { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
     ),
   ]);
+
   return sourceHash === targetHash;
 }
 
@@ -107,15 +131,17 @@ async function checkSumsMatch(
  */
 async function s3MoveNeeded(
   sourceFile: Omit<ValidApiFile, 'granuleId'>,
-  targetFile: Omit<ValidApiFile, 'granuleId'>
+  targetFile: Omit<ValidApiFile, 'granuleId'>,
+  isMetadata: boolean,
+  metadataObject: Object
 ): Promise<boolean> {
   // this check is strictly redundant, but allows us to skip some s3 calculations if possible
-  if (!moveRequested(sourceFile, targetFile)) {
+  if (!objectSourceAndTargetSame(sourceFile, targetFile)) {
     return false;
   }
   const [
-    sourceExists,
     targetExists,
+    sourceExists,
   ] = await Promise.all([
     pRetry(
       async () => s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
@@ -132,18 +158,18 @@ async function s3MoveNeeded(
   }
   // either this granule is being reprocessed *or* there's a file collision between collections
   if (sourceExists && targetExists) {
-    if (await checkSumsMatch(sourceFile, targetFile)) {
+    if (await checkSumsMatch(sourceFile, targetFile, isMetadata, metadataObject)) {
       // this file was already moved, but is being reprocessed
       // presumably because of a failure elsewhere in the workflow
       return false;
     }
     throw new DuplicateFile(
-      `file ${targetFile} already exists.` +
-     'cannot copy over without deleting existing data'
+      `file Bucket: ${targetFile.bucket}, Key: ${targetFile.key} already exists.` +
+      'cannot copy over without deleting existing data'
     );
   }
   log.warn(
-    `source location ${{ Bucket: sourceFile.bucket, Key: sourceFile.key }}` +
+    `source location Bucket: ${sourceFile.bucket}, Key: ${sourceFile.key}` +
     "doesn't exist, has this file already been moved?"
   );
   return false;
@@ -176,6 +202,34 @@ function identifyFileMatch(
   return match;
 }
 
+async function copyFileInS3({
+  sourceFile,
+  targetFile,
+  cmrObject,
+  s3MultipartChunksizeMb,
+}: {
+  sourceFile: Omit<ValidApiFile, 'granuleId'>,
+  targetFile: Omit<ValidApiFile, 'granuleId'>,
+  cmrObject: Object,
+  s3MultipartChunksizeMb?: number,
+}): Promise<void> {
+  const isMetadata = isCMRMetadataFile(targetFile);
+  if (!await s3MoveNeeded(sourceFile, targetFile, isMetadata, cmrObject)) {
+    return;
+  }
+  if (isMetadata) {
+    const metadataString = CMRObjectToString(targetFile, cmrObject);
+    await uploadCMRFile(targetFile, metadataString);
+    return;
+  }
+  await copyObject({
+    sourceBucket: sourceFile.bucket,
+    sourceKey: sourceFile.key,
+    destinationBucket: targetFile.bucket,
+    destinationKey: targetFile.key,
+    chunkSize: s3MultipartChunksizeMb,
+  });
+}
 /**
  * Copy granule files in s3.
  * Any CMRfile will not truly be "copied" but pushed up to new location with new metadata contents
@@ -192,39 +246,33 @@ async function copyGranulesInS3({
   cmrObjects: { [key: string]: Object },
   s3MultipartChunksizeMb?: number,
 }): Promise<void> {
-  await pMap(
-    zip(sourceGranules, targetGranules),
-    async ([sourceGranule, targetGranule]) => {
-      if (!sourceGranule?.files || !targetGranule?.files) {
-        throw new AssertionError({ message: 'size mismatch between target and source granules' });
+  const copyOperations = flatten(await Promise.all(
+    zip(sourceGranules, targetGranules).map(
+      async ([sourceGranule, targetGranule]) => {
+        if (!sourceGranule?.files || !targetGranule?.files) {
+          throw new AssertionError({ message: 'size mismatch between target and source granules' });
+        }
+        return Promise.all(zip(sourceGranule.files, targetGranule.files)
+          .map(async ([sourceFile, targetFile]) => {
+            if (!(sourceFile && targetFile)) {
+              throw new AssertionError({
+                message: 'size mismatch between target and source granule files',
+              });
+            }
+            return () => copyFileInS3({
+              sourceFile,
+              targetFile,
+              cmrObject: cmrObjects[targetGranule.granuleId],
+              s3MultipartChunksizeMb,
+            });
+          }));
       }
-      return Promise.all(zip(sourceGranule.files, targetGranule.files)
-        .map(async ([sourceFile, targetFile]) => {
-          if (!(sourceFile && targetFile)) {
-            throw new AssertionError({
-              message: 'size mismatch between target and source granule files',
-            });
-          }
-          const isMetadataFile = isCMRMetadataFile(targetFile);
-          if (isMetadataFile) {
-            await uploadCMRFile(targetFile, cmrObjects[targetGranule.granuleId]);
-            return;
-          }
-          if (!await s3MoveNeeded(sourceFile, targetFile)) {
-            return;
-          }
-          if (!isMetadataFile) {
-            await copyObject({
-              sourceBucket: sourceFile.bucket,
-              sourceKey: sourceFile.key,
-              destinationBucket: targetFile.bucket,
-              destinationKey: targetFile.key,
-              chunkSize: s3MultipartChunksizeMb,
-            });
-          }
-        }));
-    },
-    { concurrency: Number(process.env.concurrency || 100) }
+    )
+  ));
+  await pMap(
+    copyOperations,
+    (operation) => operation(),
+    { concurrency: 1 }
   );
 }
 
@@ -288,7 +336,7 @@ function updateGranuleMetadata(
 /**
  * Update the cmr objects to contain data adherant to the target granules they reflect
  */
-async function updateCMRData(
+export async function updateCMRData(
   targetGranules: Array<ValidGranuleRecord>,
   cmrObjectsByGranuleId: { [key: string]: Object },
   cmrFilesByGranuleId: Dictionary<ValidApiFile>,
@@ -335,7 +383,7 @@ function buildTargetGranules(
   const bucketsConfig = new BucketsConfig(config.buckets);
   const targetGranules: Array<ValidGranuleRecord> = [];
   const granulesAndMetadata = granules.map(
-    async (granule) => updateGranuleMetadata(
+    (granule) => updateGranuleMetadata(
       granule,
       bucketsConfig,
       cmrObjects,
