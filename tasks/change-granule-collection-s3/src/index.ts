@@ -29,48 +29,28 @@ import { getCollection } from '@cumulus/api-client/collections';
 import { getGranule } from '@cumulus/api-client/granules';
 import { CollectionRecord, CollectionFile } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
-import { BucketsConfigObject } from '@cumulus/common/types';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { log } from '@cumulus/common';
 import { calculateObjectHash, copyObject, s3Join, s3ObjectExists } from '@cumulus/aws-client/S3';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
 import { getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
 import {
+  MB,
+  EventConfig,
+  ChangeCollectionsS3Event,
+  ValidApiFile,
+  ValidApiGranuleFile,
+  ValidGranuleRecord,
+} from './types';
+import {
   apiGranuleRecordIsValid,
   CMRObjectToString,
   isCMRMetadataFile,
   updateCmrFileCollections,
   uploadCMRFile,
-  ValidApiFile,
-  ValidApiGranuleFile,
-  ValidGranuleRecord,
 } from './update_cmr_file_collection';
 
-const MB = 1024 * 1024;
 
-type EventConfig = {
-  targetCollection: {
-    name: string,
-    version: string,
-  }
-  buckets: BucketsConfigObject,
-  s3MultipartChunksizeMb?: number,
-  distribution_endpoint: string,
-  cmrGranuleUrlType: string,
-  invalidBehavior: string,
-};
-
-type ChangeCollectionsS3Event = {
-  config: EventConfig,
-  cumulus_config?: {
-    cumulus_context?: {
-      forceDuplicateOverwrite?: boolean,
-    }
-  },
-  input: {
-    granuleIds: Array<string>,
-  }
-};
 
 /**
  * Is this move a "real" move, or is target location identical to source

@@ -11,16 +11,10 @@ import {
 } from '@cumulus/cmrjs/cmr-utils';
 import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
 import { AssertionError } from 'assert';
-
-export type ValidApiFile = {
-  bucket: string,
-  key: string
-} & ApiFile;
-
-export type ValidApiGranuleFile = Omit<ValidApiFile, 'granuleId'>;
-export type ValidGranuleRecord = {
-  files: ValidApiGranuleFile[]
-} & ApiGranuleRecord;
+import {
+  ValidApiFile,
+  ValidGranuleRecord,
+} from './types';
 
 function apiFileIsValid(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
   if (file.bucket === undefined || file.key === undefined) {
