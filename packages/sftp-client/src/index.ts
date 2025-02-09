@@ -145,7 +145,7 @@ export class SftpClient {
 
     log.info(`Copying ${remoteUrl} to ${s3uri}`);
 
-    const sftpReadStream = await this.sftp.createReadStream(remotePath);
+    const sftpReadStream = await this.sftp.createReadStream(remotePath, { autoClose: false });
 
     const result = await S3.promiseS3Upload({
       params: {
@@ -157,6 +157,7 @@ export class SftpClient {
     });
 
     log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
+    sftpReadStream.destroy();
 
     return { s3uri, etag: result.ETag };
   }

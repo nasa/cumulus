@@ -186,6 +186,7 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
 - **Security Vulnerabilities**
   - Updated `@octokit/graphql` from 2.1.1 to ^2.3.0 to address [CVE-2024-21538]
     (https://github.com/advisories/GHSA-3xgq-45jj-v275)
+- **Unit tests**
 
 ## [v19.1.0] 2024-10-07
 
