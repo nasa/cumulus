@@ -412,7 +412,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
         'files must have key and bucket');
       }
     });
-    granulesInput = tempGranulesInput as ValidGranuleRecord[];
+    granulesInput = tempGranulesInput.filter(apiGranuleRecordIsValid);
   }
   const cmrFiles: Array<ValidApiFile> = granulesToCmrFileObjects(
     granulesInput,
