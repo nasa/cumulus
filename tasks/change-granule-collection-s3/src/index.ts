@@ -411,7 +411,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
         throw new Error(`granule has unparseable file details ${granule}`);
       }
     });
-    granulesInput = tempGranulesInput as ValidGranuleRecord[];
+    granulesInput = tempGranulesInput.filter(apiGranuleRecordIsValid);
   }
   const cmrFiles: Array<ValidApiFile> = granulesToCmrFileObjects(
     granulesInput,
