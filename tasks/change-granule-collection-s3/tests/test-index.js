@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 
-const proxyquire = require('proxyquire');
 const path = require('path');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
@@ -24,7 +23,8 @@ const { isECHO10Filename, isUMMGFilename, metadataObjectFromCMRFile } = require(
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { constructCollectionId } = require('../../../packages/message/Collections');
-let changeGranuleCollectionS3;
+const { changeGranuleCollectionS3 } = require('../dist/src');
+
 async function uploadFiles(files) {
   await Promise.all(files.map((file) => {
     let body;
@@ -372,6 +372,7 @@ function buildPayload(t, collection) {
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.private.name = t.context.privateBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
+  newPayload.config.testApiClientMethods = t.context.testApiClientMethods;
   return newPayload;
 }
 
@@ -380,19 +381,12 @@ test.beforeEach(async (t) => {
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   const testDbName = `change-granule-collection-s3/change-collections-s3${cryptoRandomString({ length: 10 })}`;
-  changeGranuleCollectionS3 = proxyquire(
-    '../dist/src',
-    {
-      '@cumulus/api-client/granules': {
-        getGranule: (params) => dummyGetGranule(params.granuleId, t),
-      },
-      '@cumulus/api-client/collections': {
-        getCollection: (params) => (
-          dummyGetCollection(params.collectionName, params.collectionVersion)
-        ),
-      },
-    }
-  ).changeGranuleCollectionS3;
+  t.context.testApiClientMethods = {
+    getGranuleMethod: (params) => dummyGetGranule(params.granuleId, t),
+    getCollectionMethod: (params) => (
+      dummyGetCollection(params.collectionName, params.collectionVersion)
+    ),
+  };
 
   t.context.publicBucket = randomId('public');
   t.context.protectedBucket = randomId('protected');

@@ -376,11 +376,13 @@ function buildTargetGranules(
 
 async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promise<Object> {
   const config = event.config;
+  const getGranuleMethod = config.testApiClientMethods?.getGranuleMethod || getGranule;
+  const getCollectionMethod = config.testApiClientMethods?.getCollectionMethod || getCollection;
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
     ? config.s3MultipartChunksizeMb : Number(process.env.default_s3_multipart_chunksize_mb);
 
   const chunkSize = s3MultipartChunksizeMb ? s3MultipartChunksizeMb * MB : undefined;
-  const targetCollection = await getCollection({
+  const targetCollection = await getCollectionMethod({
     prefix: getRequiredEnvVar('stackName'),
     collectionName: config.targetCollection.name,
     collectionVersion: config.targetCollection.version,
@@ -389,7 +391,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   log.debug(`change-granule-collection-s3 config: ${JSON.stringify(event.config)}`);
 
   const granuleIds = event.input.granuleIds;
-  const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranule({
+  const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranuleMethod({
     prefix: getRequiredEnvVar('stackName'),
     granuleId,
   })));
