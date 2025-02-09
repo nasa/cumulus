@@ -6,8 +6,7 @@ import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
 import { AssertionError } from 'assert';
 import zip from 'lodash/zip';
-// eslint-disable-next-line lodash/import-scope
-import { Dictionary, flatten } from 'lodash';
+import flatten from 'lodash/flatten';
 import pRetry from 'p-retry';
 import path from 'path';
 import pMap from 'p-map';
@@ -243,7 +242,7 @@ async function copyGranulesInS3({
 }: {
   sourceGranules: Array<ValidGranuleRecord>,
   targetGranules: Array<ValidGranuleRecord>,
-  cmrObjects: { [key: string]: Object },
+  cmrObjects: { [granuleId: string]: Object },
   s3MultipartChunksizeMb?: number,
 }): Promise<void> {
   const copyOperations = flatten(await Promise.all(
@@ -310,7 +309,7 @@ function updateFileMetadata(
 function updateGranuleMetadata(
   granule: ValidGranuleRecord,
   bucketsConfig: BucketsConfig,
-  cmrObjects: { [key: string]: Object },
+  cmrObjects: { [granuleId: string]: Object },
   targetCollection: CollectionRecord
 ): ValidGranuleRecord {
   const cmrMetadata = get(cmrObjects, granule.granuleId, {});
@@ -338,16 +337,16 @@ function updateGranuleMetadata(
  */
 export async function updateCMRData(
   targetGranules: Array<ValidGranuleRecord>,
-  cmrObjectsByGranuleId: { [key: string]: Object },
-  cmrFilesByGranuleId: Dictionary<ValidApiFile>,
+  cmrObjectsByGranuleId: { [granuleId: string]: Object },
+  cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
   config: EventConfig
-): Promise<{ [key: string]: Object }> {
+): Promise<{ [granuleId: string]: Object }> {
   const distEndpoint = getRequiredEnvVar('DISTRIBUTION_ENDPOINT');
   const bucketTypes = Object.fromEntries(Object.values(config.buckets)
     .map(({ name, type }) => [name, type]));
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
   const distributionBucketMap = await fetchDistributionBucketMap();
-  const outputObjects: { [key: string]: Object } = {};
+  const outputObjects: { [granuleId: string]: Object } = {};
   targetGranules.forEach((targetGranule) => {
     const cmrFile = cmrFilesByGranuleId[targetGranule.granuleId];
     const cmrObject = cmrObjectsByGranuleId[targetGranule.granuleId];
@@ -377,7 +376,7 @@ export async function updateCMRData(
 function buildTargetGranules(
   granules: Array<ValidGranuleRecord>,
   config: EventConfig,
-  cmrObjects: { [key: string]: Object },
+  cmrObjects: { [granuleId: string]: Object },
   targetCollection: CollectionRecord
 ): Array<ValidGranuleRecord> {
   const bucketsConfig = new BucketsConfig(config.buckets);
@@ -437,8 +436,8 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     granulesInput,
     isCMRFile
   ) as ValidApiFile[];
-  const cmrFilesByGranuleId: Dictionary<ValidApiFile> = keyBy(cmrFiles, 'granuleId');
-  const firstCMRObjectsByGranuleId: { [key: string]: Object } = {};
+  const cmrFilesByGranuleId:  { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
+  const firstCMRObjectsByGranuleId: { [granuleId: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
     firstCMRObjectsByGranuleId[cmrFile.granuleId] = await metadataObjectFromCMRFile(
       `s3://${cmrFile.bucket}/${cmrFile.key}`
