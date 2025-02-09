@@ -42,6 +42,7 @@ import {
   updateCmrFileCollections,
   uploadCMRFile,
   ValidApiFile,
+  ValidApiGranuleFile,
   ValidGranuleRecord,
 } from './update_cmr_file_collection';
 
@@ -75,14 +76,14 @@ type ChangeCollectionsS3Event = {
  * Is this move a "real" move, or is target location identical to source
  */
 function objectSourceAndTargetSame(
-  sourceFile: Omit<ValidApiFile, 'granuleId'>,
-  targetFile: Omit<ValidApiFile, 'granuleId'>
+  sourceFile: ValidApiGranuleFile,
+  targetFile: ValidApiGranuleFile
 ): boolean {
   return !((sourceFile.key === targetFile.key) && (sourceFile.bucket === targetFile.bucket));
 }
 
 async function metadataCheckSumsMatch(
-  targetFile: Omit<ValidApiFile, 'granuleId'>,
+  targetFile: ValidApiGranuleFile,
   metadataObject: Object
 ): Promise<boolean> {
   // const targetString = await getTextObject(targetFile.bucket, targetFile.key);
@@ -95,8 +96,8 @@ async function metadataCheckSumsMatch(
 }
 
 async function checkSumsMatch(
-  sourceFile: Omit<ValidApiFile, 'granuleId'>,
-  targetFile: Omit<ValidApiFile, 'granuleId'>,
+  sourceFile: ValidApiGranuleFile,
+  targetFile: ValidApiGranuleFile,
   isMetadata: boolean,
   metadataObject: Object
 ): Promise<boolean> {
@@ -129,8 +130,8 @@ async function checkSumsMatch(
  * this throws an error if there is a file in the target location but *not* a copy of source
  */
 async function s3MoveNeeded(
-  sourceFile: Omit<ValidApiFile, 'granuleId'>,
-  targetFile: Omit<ValidApiFile, 'granuleId'>,
+  sourceFile: ValidApiGranuleFile,
+  targetFile: ValidApiGranuleFile,
   isMetadata: boolean,
   metadataObject: Object
 ): Promise<boolean> {
@@ -207,8 +208,8 @@ async function copyFileInS3({
   cmrObject,
   s3MultipartChunksizeMb,
 }: {
-  sourceFile: Omit<ValidApiFile, 'granuleId'>,
-  targetFile: Omit<ValidApiFile, 'granuleId'>,
+  sourceFile: ValidApiGranuleFile,
+  targetFile: ValidApiGranuleFile,
   cmrObject: Object,
   s3MultipartChunksizeMb?: number,
 }): Promise<void> {
@@ -279,12 +280,12 @@ async function copyGranulesInS3({
  * Create new ApiFile object updated to new collection data
  */
 function updateFileMetadata(
-  file: Omit<ValidApiFile, 'granuleId'>,
+  file: ValidApiGranuleFile,
   granule: ValidGranuleRecord,
   bucketsConfig: BucketsConfig,
   cmrMetadata: Object,
   targetCollection: CollectionRecord
-): Omit<ValidApiFile, 'granuleId'> {
+): ValidApiGranuleFile {
   const fileName = path.basename(file.key);
   const match = identifyFileMatch(bucketsConfig, fileName, targetCollection.files);
   const URLPathTemplate = match.url_path || targetCollection.url_path || '';

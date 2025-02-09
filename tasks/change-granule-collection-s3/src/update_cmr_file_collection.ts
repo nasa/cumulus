@@ -17,8 +17,9 @@ export type ValidApiFile = {
   key: string
 } & ApiFile;
 
+export type ValidApiGranuleFile = Omit<ValidApiFile, 'granuleId'>;
 export type ValidGranuleRecord = {
-  files: Omit<ValidApiFile, 'granuleId'>[]
+  files: ValidApiGranuleFile[]
 } & ApiGranuleRecord;
 
 function apiFileIsValid(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
