@@ -398,7 +398,7 @@ async function getAndValidateGranules(
     tempGranulesInput.forEach((granule) => {
       if (!apiGranuleRecordIsValid(granule)) {
         throw new Error(`granule ${granule} has validation errors.` +
-        'files must have key and bucket');
+          'files must have key and bucket');
       }
     });
     granulesInput = tempGranulesInput.filter(apiGranuleRecordIsValid);
@@ -417,7 +417,7 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
     collectionName: config.targetCollection.name,
     collectionVersion: config.targetCollection.version,
   });
-  
+
   return {
     ...config,
     chunkSize,
@@ -435,7 +435,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   )
 
   log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}`);
-  
+
   const cmrFiles: Array<ValidApiFile> = granulesToCmrFileObjects(
     sourceGranules,
     isCMRFile
