@@ -115,7 +115,7 @@ async function s3MoveNeeded(
   metadataObject: Object
 ): Promise<boolean> {
   // this check is strictly redundant, but allows us to skip some s3 calculations if possible
-  if (!objectSourceAndTargetSame(sourceFile, targetFile)) {
+  if (!objectSourceAndTargetSame(sourceFile, targetFile) && !isMetadata) {
     return false;
   }
   const [
