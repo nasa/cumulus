@@ -251,7 +251,7 @@ async function copyGranulesInS3({
   await pMap(
     copyOperations,
     (operation) => operation(),
-    { concurrency: 1 }
+    { concurrency: Number(process.env.concurrency || 100) }
   );
 }
 
