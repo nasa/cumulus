@@ -52,7 +52,7 @@ import {
 } from './update_cmr_file_collection';
 
 /**
- * Is this move a "real" move, or is target location identical to source
+ * Boolean does this collection change represent a move
  */
 function objectSourceAndTargetSame(
   sourceFile: ValidApiGranuleFile,
