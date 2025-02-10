@@ -285,6 +285,9 @@ function updateFileMetadata(
 /**
  * Create new granule object with updated details including updated files
  * all according to the given target collection
+ *   - update granuleId
+ *   - update bucket for each file
+ *   - update url prefix for each file
  */
 function updateGranuleMetadata(
   granule: ValidGranuleRecord,
@@ -426,7 +429,7 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
 
 async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promise<Object> {
   const config = await getParsedConfigValues(event.config);
-  const granulesInput = await getAndValidateGranules(
+  const sourceGranules = await getAndValidateGranules(
     event.input.granuleIds,
     config,
   )
@@ -434,22 +437,23 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}`);
   
   const cmrFiles: Array<ValidApiFile> = granulesToCmrFileObjects(
-    granulesInput,
+    sourceGranules,
     isCMRFile
   ) as ValidApiFile[];
   const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const firstCMRObjectsByGranuleId: { [granuleId: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
-    firstCMRObjectsByGranuleId[cmrFile.granuleId] = await metadataObjectFromCMRFile(
-      `s3://${cmrFile.bucket}/${cmrFile.key}`
+    firstCMRObjectsByGranuleId[cmrFile.granuleId] = await pRetry(
+      async () => metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
+      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
     );
   }));
   const collectionUpdatedCMRMetadata = await updateCMRData(
-    granulesInput, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
+    sourceGranules, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
     config
   );
   const targetGranules = await buildTargetGranules(
-    granulesInput, config, collectionUpdatedCMRMetadata
+    sourceGranules, config, collectionUpdatedCMRMetadata
   );
   const updatedCMRObjects = await updateCMRData(
     targetGranules, collectionUpdatedCMRMetadata, cmrFilesByGranuleId,
@@ -457,7 +461,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   );
   // Move files from staging location to final location
   await copyGranulesInS3({
-    sourceGranules: granulesInput,
+    sourceGranules: sourceGranules,
     targetGranules,
     cmrObjects: updatedCMRObjects,
     s3MultipartChunksizeMb: config.chunkSize,
@@ -465,7 +469,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
 
   return {
     granules: targetGranules,
-    oldGranules: granulesInput,
+    oldGranules: sourceGranules,
   };
 }
 
