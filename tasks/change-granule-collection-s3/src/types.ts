@@ -17,9 +17,9 @@ export type EventConfig = {
   }
   buckets: BucketsConfigObject,
   s3MultipartChunksizeMb?: number,
-  distribution_endpoint: string,
-  cmrGranuleUrlType: string,
-  invalidGranuleBehavior: string,
+  distribution_endpoint?: string,
+  cmrGranuleUrlType?: string,
+  invalidGranuleBehavior?: string,
   // this last is not a valid member of production cofiguration
   testApiClientMethods?: TestApiClientMethods
 };
@@ -45,3 +45,10 @@ export type ValidApiGranuleFile = Omit<ValidApiFile, 'granuleId'>;
 export type ValidGranuleRecord = {
   files: ValidApiGranuleFile[]
 } & ApiGranuleRecord;
+
+export type MassagedEventConfig = {
+  targetCollection: CollectionRecord,
+  chunkSize?: number,
+  cmrGranuleUrlType: string,
+  invalidGranuleBehavior: string
+} & EventConfig

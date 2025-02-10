@@ -41,6 +41,7 @@ import {
   ValidApiFile,
   ValidApiGranuleFile,
   ValidGranuleRecord,
+  MassagedEventConfig,
 } from './types';
 import {
   apiGranuleRecordIsValid,
@@ -318,12 +319,11 @@ export async function updateCMRData(
   targetGranules: Array<ValidGranuleRecord>,
   cmrObjectsByGranuleId: { [granuleId: string]: Object },
   cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
-  config: EventConfig
+  config: MassagedEventConfig
 ): Promise<{ [granuleId: string]: Object }> {
-  const distEndpoint = getRequiredEnvVar('DISTRIBUTION_ENDPOINT');
+  const distEndpoint = config.distribution_endpoint || getRequiredEnvVar('DISTRIBUTION_ENDPOINT');
   const bucketTypes = Object.fromEntries(Object.values(config.buckets)
     .map(({ name, type }) => [name, type]));
-  const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
   const distributionBucketMap = await fetchDistributionBucketMap();
   const outputObjects: { [granuleId: string]: Object } = {};
   targetGranules.forEach((targetGranule) => {
@@ -339,7 +339,7 @@ export async function updateCMRData(
       files: (targetGranule as ValidGranuleRecord).files,
       distEndpoint,
       bucketTypes,
-      cmrGranuleUrlType,
+      cmrGranuleUrlType: config.cmrGranuleUrlType,
       distributionBucketMap,
     });
   });
@@ -354,9 +354,8 @@ export async function updateCMRData(
  */
 function buildTargetGranules(
   granules: Array<ValidGranuleRecord>,
-  config: EventConfig,
+  config: MassagedEventConfig,
   cmrObjects: { [granuleId: string]: Object },
-  targetCollection: CollectionRecord
 ): Array<ValidGranuleRecord> {
   const bucketsConfig = new BucketsConfig(config.buckets);
   const targetGranules: Array<ValidGranuleRecord> = [];
@@ -365,7 +364,7 @@ function buildTargetGranules(
       granule,
       bucketsConfig,
       cmrObjects,
-      targetCollection
+      config.targetCollection
     )
   );
   granulesAndMetadata.forEach((targetGranule) => {
@@ -374,30 +373,17 @@ function buildTargetGranules(
   return targetGranules;
 }
 
-async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promise<Object> {
-  const config = event.config;
+async function getAndValidateGranules(
+  granuleIds: Array<string>,
+  config: MassagedEventConfig
+): Promise<Array<ValidGranuleRecord>> {
   const getGranuleMethod = config.testApiClientMethods?.getGranuleMethod || getGranule;
-  const getCollectionMethod = config.testApiClientMethods?.getCollectionMethod || getCollection;
-  const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
-    ? config.s3MultipartChunksizeMb : Number(process.env.default_s3_multipart_chunksize_mb);
-
-  const chunkSize = s3MultipartChunksizeMb ? s3MultipartChunksizeMb * MB : undefined;
-  const targetCollection = await getCollectionMethod({
-    prefix: getRequiredEnvVar('stackName'),
-    collectionName: config.targetCollection.name,
-    collectionVersion: config.targetCollection.version,
-  });
-
-  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(event.config)}`);
-
-  const granuleIds = event.input.granuleIds;
   const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranuleMethod({
     prefix: getRequiredEnvVar('stackName'),
     granuleId,
   })));
-  const invalidGranuleBehavior = config.invalidGranuleBehavior || 'skip';
   let granulesInput: Array<ValidGranuleRecord>;
-  if (invalidGranuleBehavior === 'skip') {
+  if (config.invalidGranuleBehavior === 'skip') {
     granulesInput = tempGranulesInput.filter((granule) => {
       if (!apiGranuleRecordIsValid(granule)) {
         log.warn(`granule has unparseable file details ${granule}`);
@@ -414,6 +400,39 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     });
     granulesInput = tempGranulesInput.filter(apiGranuleRecordIsValid);
   }
+  return granulesInput;
+}
+
+async function getParsedConfigValues(config: EventConfig): Promise<MassagedEventConfig> {
+  const getCollectionMethod = config.testApiClientMethods?.getCollectionMethod || getCollection;
+  const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb || Number(
+    process.env.default_s3_multipart_chunksize_mb
+  );
+  const chunkSize = s3MultipartChunksizeMb ? s3MultipartChunksizeMb * MB : undefined;
+  const targetCollection = await getCollectionMethod({
+    prefix: getRequiredEnvVar('stackName'),
+    collectionName: config.targetCollection.name,
+    collectionVersion: config.targetCollection.version,
+  });
+  
+  return {
+    ...config,
+    chunkSize,
+    targetCollection,
+    cmrGranuleUrlType: config.cmrGranuleUrlType || 'both',
+    invalidGranuleBehavior: config.invalidGranuleBehavior || 'skip',
+  }
+}
+
+async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promise<Object> {
+  const config = await getParsedConfigValues(event.config);
+  const granulesInput = await getAndValidateGranules(
+    event.input.granuleIds,
+    config,
+  )
+
+  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}`);
+  
   const cmrFiles: Array<ValidApiFile> = granulesToCmrFileObjects(
     granulesInput,
     isCMRFile
@@ -429,9 +448,8 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     granulesInput, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
     config
   );
-
   const targetGranules = await buildTargetGranules(
-    granulesInput, config, collectionUpdatedCMRMetadata, targetCollection
+    granulesInput, config, collectionUpdatedCMRMetadata
   );
   const updatedCMRObjects = await updateCMRData(
     targetGranules, collectionUpdatedCMRMetadata, cmrFilesByGranuleId,
@@ -442,7 +460,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     sourceGranules: granulesInput,
     targetGranules,
     cmrObjects: updatedCMRObjects,
-    s3MultipartChunksizeMb: chunkSize,
+    s3MultipartChunksizeMb: config.chunkSize,
   });
 
   return {
