@@ -11,13 +11,15 @@ import {
 } from '@cumulus/cmrjs/cmr-utils';
 import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
 import { AssertionError } from 'assert';
+import { log } from '@cumulus/common';
 import {
   ValidApiFile,
   ValidGranuleRecord,
 } from './types';
 
-function apiFileIsValid(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
+export function apiFileIsValid(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
   if (file.bucket === undefined || file.key === undefined) {
+    log.warn(`file ${file} is missing necessary key or bucket`);
     return false;
   }
   return true;

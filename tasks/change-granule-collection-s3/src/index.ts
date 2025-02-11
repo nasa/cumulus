@@ -33,7 +33,7 @@ import { getRequiredEnvVar } from '@cumulus/common/env';
 import { log } from '@cumulus/common';
 import { calculateObjectHash, copyObject, s3Join, s3ObjectExists } from '@cumulus/aws-client/S3';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
-import { getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
+import { ApiFile, getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
 import {
   MB,
   EventConfig,
@@ -44,6 +44,7 @@ import {
   MassagedEventConfig,
 } from './types';
 import {
+  apiFileIsValid,
   apiGranuleRecordIsValid,
   CMRObjectToString,
   isCMRMetadataFile,
@@ -75,7 +76,7 @@ async function metadataCheckSumsMatch(
 
 async function checkSumsMatch(
   sourceFile: ValidApiGranuleFile,
-  targetFile: ValidApiGranuleFile,
+  targetFile: ValidApiGranuleFile
 ): Promise<boolean> {
   const [sourceHash, targetHash] = await Promise.all([
     pRetry(
@@ -101,7 +102,7 @@ async function checkSumsMatch(
  */
 export async function s3CopyNeeded(
   sourceFile: ValidApiGranuleFile,
-  targetFile: ValidApiGranuleFile,
+  targetFile: ValidApiGranuleFile
 ): Promise<boolean> {
   // this check is strictly redundant, but allows us to skip some s3 calculations if possible
   if (objectSourceAndTargetSame(sourceFile, targetFile)) {
@@ -173,7 +174,7 @@ function identifyFileMatch(
 async function cmrUpdateNeeded(
   sourceFile: ValidApiGranuleFile,
   targetFile: ValidApiGranuleFile,
-  cmrObject: Object,
+  cmrObject: Object
 ) {
   // if these are the same, we need to *update* that metadata
   if (objectSourceAndTargetSame(sourceFile, targetFile)) {
@@ -186,7 +187,10 @@ async function cmrUpdateNeeded(
     return true;
   }
   if (!await metadataCheckSumsMatch(targetFile, cmrObject)) {
-    throw new DuplicateFile(`yelling`)
+    throw new DuplicateFile(
+      `metadata file Bucket: ${targetFile.bucket}, Key: ${targetFile.key} already exists.` +
+      'and does not appear to belong to the collection being moved'
+    );
   }
   return false;
 }
@@ -218,8 +222,6 @@ async function copyFileInS3({
       chunkSize: s3MultipartChunksizeMb,
     });
   }
-  return
-  
 }
 /**
  * Copy granule files in s3.
@@ -263,8 +265,7 @@ async function copyGranulesInS3({
   await pMap(
     copyOperations,
     (operation) => operation(),
-    // { concurrency: Number(process.env.concurrency || 100) }
-    { concurrency: 1 }
+    { concurrency: Number(process.env.concurrency || 100) }
   );
 }
 
@@ -371,7 +372,7 @@ export async function updateCMRData(
 function buildTargetGranules(
   granules: Array<ValidGranuleRecord>,
   config: MassagedEventConfig,
-  cmrObjects: { [granuleId: string]: Object },
+  cmrObjects: { [granuleId: string]: Object }
 ): Array<ValidGranuleRecord> {
   const bucketsConfig = new BucketsConfig(config.buckets);
   const targetGranules: Array<ValidGranuleRecord> = [];
@@ -389,6 +390,10 @@ function buildTargetGranules(
   return targetGranules;
 }
 
+/**
+ * convert granule IDs into full granules, validating that each granule is moveable
+ * and acting as configured with any that arenot moveable
+ */
 async function getAndValidateGranules(
   granuleIds: Array<string>,
   config: MassagedEventConfig
@@ -419,6 +424,9 @@ async function getAndValidateGranules(
   return granulesInput;
 }
 
+/**
+ * Do math, environment parsing, and api calls to flesh out config with full values
+ */
 async function getParsedConfigValues(config: EventConfig): Promise<MassagedEventConfig> {
   const getCollectionMethod = config.testApiClientMethods?.getCollectionMethod || getCollection;
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb || Number(
@@ -437,22 +445,28 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
     targetCollection,
     cmrGranuleUrlType: config.cmrGranuleUrlType || 'both',
     invalidGranuleBehavior: config.invalidGranuleBehavior || 'skip',
-  }
+  };
 }
 
 async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promise<Object> {
   const config = await getParsedConfigValues(event.config);
   const sourceGranules = await getAndValidateGranules(
     event.input.granuleIds,
-    config,
-  )
+    config
+  );
 
   log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}`);
 
-  const cmrFiles: Array<ValidApiFile> = granulesToCmrFileObjects(
+  const unValidatedCMRFiles = granulesToCmrFileObjects(
     sourceGranules,
     isCMRFile
-  ) as ValidApiFile[];
+  ) as ApiFile[];
+  const cmrFiles = unValidatedCMRFiles.map((unvalidatedFile) => {
+    if (apiFileIsValid(unvalidatedFile)) {
+      return unvalidatedFile;
+    }
+    throw new AssertionError({ message: "getting here with an invalid file shouldn't have been possible" });
+  });
   const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const firstCMRObjectsByGranuleId: { [granuleId: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
@@ -465,7 +479,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     sourceGranules, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
     config
   );
-  const targetGranules = await buildTargetGranules(
+  const targetGranules = buildTargetGranules(
     sourceGranules, config, collectionUpdatedCMRMetadata
   );
   const updatedCMRObjects = await updateCMRData(

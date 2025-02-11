@@ -51,4 +51,4 @@ export type MassagedEventConfig = {
   chunkSize?: number,
   cmrGranuleUrlType: string,
   invalidGranuleBehavior: string
-} & EventConfig
+} & EventConfig;
