@@ -53,7 +53,7 @@ import {
 } from './update_cmr_file_collection';
 
 /**
- * Boolean does this collection change represent a move
+ * Boolean are these files in the same location
  */
 function objectSourceAndTargetSame(
   sourceFile: ValidApiGranuleFile,
