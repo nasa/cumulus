@@ -58,14 +58,13 @@ function objectSourceAndTargetSame(
   sourceFile: ValidApiGranuleFile,
   targetFile: ValidApiGranuleFile
 ): boolean {
-  return !((sourceFile.key === targetFile.key) && (sourceFile.bucket === targetFile.bucket));
+  return ((sourceFile.key === targetFile.key) && (sourceFile.bucket === targetFile.bucket));
 }
 
 async function metadataCheckSumsMatch(
   targetFile: ValidApiGranuleFile,
   metadataObject: Object
 ): Promise<boolean> {
-  // const targetString = await getTextObject(targetFile.bucket, targetFile.key);
   const existingGranuleMetadata = await metadataObjectFromCMRFile(
     `s3://${targetFile.bucket}/${targetFile.key}`
   );
@@ -77,15 +76,7 @@ async function metadataCheckSumsMatch(
 async function checkSumsMatch(
   sourceFile: ValidApiGranuleFile,
   targetFile: ValidApiGranuleFile,
-  isMetadata: boolean,
-  metadataObject: Object
 ): Promise<boolean> {
-  if (isMetadata) {
-    return await metadataCheckSumsMatch(
-      targetFile,
-      metadataObject
-    );
-  }
   const [sourceHash, targetHash] = await Promise.all([
     pRetry(
       async () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...sourceFile }),
@@ -101,21 +92,19 @@ async function checkSumsMatch(
 }
 
 /**
- * Identify if a file move is needed.
+ * Identify if an s3 file needs to be copied.
  * File does not need move *if*
  *   - The target bucket/key is the same as source bucket/key
  *   - The target file is already in its expected location
  * Otherwise it needs to be moved
  * this throws an error if there is a file in the target location but *not* a copy of source
  */
-async function s3MoveNeeded(
+export async function s3CopyNeeded(
   sourceFile: ValidApiGranuleFile,
   targetFile: ValidApiGranuleFile,
-  isMetadata: boolean,
-  metadataObject: Object
 ): Promise<boolean> {
   // this check is strictly redundant, but allows us to skip some s3 calculations if possible
-  if (!objectSourceAndTargetSame(sourceFile, targetFile) && !isMetadata) {
+  if (objectSourceAndTargetSame(sourceFile, targetFile)) {
     return false;
   }
   const [
@@ -137,7 +126,7 @@ async function s3MoveNeeded(
   }
   // either this granule is being reprocessed *or* there's a file collision between collections
   if (sourceExists && targetExists) {
-    if (await checkSumsMatch(sourceFile, targetFile, isMetadata, metadataObject)) {
+    if (await checkSumsMatch(sourceFile, targetFile)) {
       // this file was already moved, but is being reprocessed
       // presumably because of a failure elsewhere in the workflow
       return false;
@@ -181,6 +170,27 @@ function identifyFileMatch(
   return match;
 }
 
+async function cmrUpdateNeeded(
+  sourceFile: ValidApiGranuleFile,
+  targetFile: ValidApiGranuleFile,
+  cmrObject: Object,
+) {
+  // if these are the same, we need to *update* that metadata
+  if (objectSourceAndTargetSame(sourceFile, targetFile)) {
+    return true;
+  }
+  if (!await s3ObjectExists({
+    Bucket: targetFile.bucket,
+    Key: targetFile.key,
+  })) {
+    return true;
+  }
+  if (!await metadataCheckSumsMatch(targetFile, cmrObject)) {
+    throw new DuplicateFile(`yelling`)
+  }
+  return false;
+}
+
 async function copyFileInS3({
   sourceFile,
   targetFile,
@@ -192,22 +202,24 @@ async function copyFileInS3({
   cmrObject: Object,
   s3MultipartChunksizeMb?: number,
 }): Promise<void> {
-  const isMetadata = isCMRMetadataFile(targetFile);
-  if (!await s3MoveNeeded(sourceFile, targetFile, isMetadata, cmrObject)) {
+  if (isCMRMetadataFile(targetFile)) {
+    if (await cmrUpdateNeeded(sourceFile, targetFile, cmrObject)) {
+      const metadataString = CMRObjectToString(targetFile, cmrObject);
+      await uploadCMRFile(targetFile, metadataString);
+    }
     return;
   }
-  if (isMetadata) {
-    const metadataString = CMRObjectToString(targetFile, cmrObject);
-    await uploadCMRFile(targetFile, metadataString);
-    return;
+  if (await s3CopyNeeded(sourceFile, targetFile)) {
+    await copyObject({
+      sourceBucket: sourceFile.bucket,
+      sourceKey: sourceFile.key,
+      destinationBucket: targetFile.bucket,
+      destinationKey: targetFile.key,
+      chunkSize: s3MultipartChunksizeMb,
+    });
   }
-  await copyObject({
-    sourceBucket: sourceFile.bucket,
-    sourceKey: sourceFile.key,
-    destinationBucket: targetFile.bucket,
-    destinationKey: targetFile.key,
-    chunkSize: s3MultipartChunksizeMb,
-  });
+  return
+  
 }
 /**
  * Copy granule files in s3.
@@ -251,7 +263,8 @@ async function copyGranulesInS3({
   await pMap(
     copyOperations,
     (operation) => operation(),
-    { concurrency: Number(process.env.concurrency || 100) }
+    // { concurrency: Number(process.env.concurrency || 100) }
+    { concurrency: 1 }
   );
 }
 

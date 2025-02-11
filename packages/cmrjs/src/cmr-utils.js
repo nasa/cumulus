@@ -1335,7 +1335,7 @@ const getCMRCollectionId = (
   cmrObject,
   cmrFileName
 ) => {
-  if (isECHO10Filename(cmrFileName)) {
+  if (isUMMGFilename(cmrFileName)) {
     return constructCollectionId(
       get(cmrObject, 'CollectionReference.ShortName'),
       get(cmrObject, 'CollectionReference.Version')
