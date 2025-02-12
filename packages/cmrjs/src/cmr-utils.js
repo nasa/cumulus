@@ -1294,7 +1294,7 @@ async function getGranuleTemporalInfo(granule) {
  * @param {{ name: string, version: string }} collection - collection name and version to update to
  * @returns {object}
  */
-const updateECHO10Collection = (
+const setECHO10Collection = (
   cmrObject,
   collection
 ) => {
@@ -1313,7 +1313,7 @@ const updateECHO10Collection = (
  * @param {{ name: string, version: string }} collection - collection name and version to update to
  * @returns {object}
  */
-const updateUMMGCollection = (
+const setUMMGCollection = (
   cmrObject,
   collection
 ) => {
@@ -1379,8 +1379,8 @@ module.exports = {
   updateCMRMetadata,
   updateEcho10XMLMetadataObject,
   updateUMMGMetadataObject,
-  updateECHO10Collection,
-  updateUMMGCollection,
+  setECHO10Collection,
+  setUMMGCollection,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
 };

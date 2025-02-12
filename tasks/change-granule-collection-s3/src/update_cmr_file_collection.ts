@@ -4,9 +4,9 @@ import {
   generateEcho10XMLString,
   isECHO10Filename,
   isUMMGFilename,
-  updateECHO10Collection,
+  setECHO10Collection,
   updateEcho10XMLMetadataObject,
-  updateUMMGCollection,
+  setUMMGCollection,
   updateUMMGMetadataObject,
 } from '@cumulus/cmrjs/cmr-utils';
 import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
@@ -81,14 +81,14 @@ export const updateCmrFileCollections = ({
     distributionBucketMap,
   };
   if (isECHO10Filename(cmrFileName)) {
-    const updatedObject = updateECHO10Collection(cmrObject, collection);
+    const updatedObject = setECHO10Collection(cmrObject, collection);
     return updateEcho10XMLMetadataObject({
       ...params,
       metadataObject: updatedObject,
     });
   }
   if (isUMMGFilename(cmrFileName)) {
-    const updatedObject = updateUMMGCollection(cmrObject, collection);
+    const updatedObject = setUMMGCollection(cmrObject, collection);
     return updateUMMGMetadataObject({
       ...params,
       metadataObject: updatedObject,
