@@ -11,12 +11,12 @@
       "Description": "This should be held onto as it doesn't follow the pattern of tea/s3 url"
     },
     {
-      "URL": "s3://something.api.us-est-1.amazon.aws.com/public/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+      "URL": "s3://something.api.us-est-1.amazon.aws.com/public/MOD11A1.A2017200.h19v04.006.2017201090725_1.jpg",
       "Type": "GET DATA",
       "Description": "this should be gone by the end"
     },
     {
-      "URL": "https://something.api.us-est-1.amazon.aws.com/public/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+      "URL": "https://something.api.us-est-1.amazon.aws.com/public/MOD11A1.A2017200.h19v04.006.2017201090725_1.jpg",
       "Type": "GET DATA",
       "Description": "this should be gone by the end"
     }

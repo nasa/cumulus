@@ -4,25 +4,22 @@ import {
   generateEcho10XMLString,
   isECHO10Filename,
   isUMMGFilename,
-  updateECHO10Collection,
+  setECHO10Collection,
   updateEcho10XMLMetadataObject,
-  updateUMMGCollection,
+  setUMMGCollection,
   updateUMMGMetadataObject,
 } from '@cumulus/cmrjs/cmr-utils';
 import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
 import { AssertionError } from 'assert';
+import { log } from '@cumulus/common';
+import {
+  ValidApiFile,
+  ValidGranuleRecord,
+} from './types';
 
-export type ValidApiFile = {
-  bucket: string,
-  key: string
-} & ApiFile;
-
-export type ValidGranuleRecord = {
-  files: Omit<ValidApiFile, 'granuleId'>[]
-} & ApiGranuleRecord;
-
-function apiFileIsValid(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
+export function apiFileIsValid(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
   if (file.bucket === undefined || file.key === undefined) {
+    log.warn(`file ${file} is missing necessary key or bucket`);
     return false;
   }
   return true;
@@ -37,15 +34,19 @@ export function apiGranuleRecordIsValid(granule: ApiGranuleRecord): granule is V
   return filesAreValid;
 }
 
-export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cmrObject: { Granule?: object }) => {
-  let cmrFileString;
+export const CMRObjectToString = (
+  cmrFile: Omit<ValidApiFile, 'granuleId'>,
+  cmrObject: { Granule?: object }
+): string => {
   if (isUMMGFilename(cmrFile.fileName || cmrFile.key)) {
-    cmrFileString = JSON.stringify(cmrObject, undefined, 2);
-  } else {
-    // our xml stringify function packages the metadata in "Granule",
-    // resulting in possible nested Granule object
-    cmrFileString = generateEcho10XMLString(cmrObject.Granule || cmrObject);
+    return JSON.stringify(cmrObject, undefined, 2);
   }
+  // our xml stringify function packages the metadata in "Granule",
+  // resulting in possible nested Granule object
+  return generateEcho10XMLString(cmrObject.Granule || cmrObject);
+};
+
+export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cmrFileString: string) => {
   await s3PutObject({
     Bucket: cmrFile.bucket,
     Key: cmrFile.key,
@@ -80,14 +81,14 @@ export const updateCmrFileCollections = ({
     distributionBucketMap,
   };
   if (isECHO10Filename(cmrFileName)) {
-    const updatedObject = updateECHO10Collection(cmrObject, collection);
+    const updatedObject = setECHO10Collection(cmrObject, collection);
     return updateEcho10XMLMetadataObject({
       ...params,
       metadataObject: updatedObject,
     });
   }
   if (isUMMGFilename(cmrFileName)) {
-    const updatedObject = updateUMMGCollection(cmrObject, collection);
+    const updatedObject = setUMMGCollection(cmrObject, collection);
     return updateUMMGMetadataObject({
       ...params,
       metadataObject: updatedObject,

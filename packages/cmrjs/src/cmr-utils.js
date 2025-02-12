@@ -31,6 +31,7 @@ const errors = require('@cumulus/errors');
 const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
 const { constructDistributionUrl } = require('@cumulus/distribution-utils');
 const { getBucketAccessUrl } = require('@cumulus/cmr-client/getUrl');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
@@ -1293,7 +1294,7 @@ async function getGranuleTemporalInfo(granule) {
  * @param {{ name: string, version: string }} collection - collection name and version to update to
  * @returns {object}
  */
-const updateECHO10Collection = (
+const setECHO10Collection = (
   cmrObject,
   collection
 ) => {
@@ -1312,7 +1313,7 @@ const updateECHO10Collection = (
  * @param {{ name: string, version: string }} collection - collection name and version to update to
  * @returns {object}
  */
-const updateUMMGCollection = (
+const setUMMGCollection = (
   cmrObject,
   collection
 ) => {
@@ -1324,6 +1325,28 @@ const updateUMMGCollection = (
   return cmrObjectCopy;
 };
 
+/**
+ * Get collectionId from cmr metadata
+ * @param {object} cmrObject - cmr metadata object
+ * @param {string} cmrFileName - used to know how to parse this object
+ * @returns {string}
+ */
+const getCMRCollectionId = (
+  cmrObject,
+  cmrFileName
+) => {
+  if (isUMMGFilename(cmrFileName)) {
+    return constructCollectionId(
+      get(cmrObject, 'CollectionReference.ShortName'),
+      get(cmrObject, 'CollectionReference.Version')
+    );
+  }
+  return constructCollectionId(
+    get(cmrObject, 'Granule.Collection.ShortName'),
+    get(cmrObject, 'Granule.Collection.VersionId')
+  );
+};
+
 module.exports = {
   addEtagsToFileObjects,
   constructCmrConceptLink,
@@ -1333,6 +1356,7 @@ module.exports = {
   generateFileUrl,
   granuleToCmrFileObject,
   getCmrSettings,
+  getCMRCollectionId,
   getFileDescription,
   getFilename,
   getGranuleTemporalInfo,
@@ -1355,8 +1379,8 @@ module.exports = {
   updateCMRMetadata,
   updateEcho10XMLMetadataObject,
   updateUMMGMetadataObject,
-  updateECHO10Collection,
-  updateUMMGCollection,
+  setECHO10Collection,
+  setUMMGCollection,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
 };

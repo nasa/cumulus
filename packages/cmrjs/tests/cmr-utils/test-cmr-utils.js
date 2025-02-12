@@ -33,8 +33,8 @@ const {
   granuleToCmrFileObject,
   mapFileEtags,
   removeEtagsFromFileObjects,
-  updateECHO10Collection,
-  updateUMMGCollection,
+  setECHO10Collection,
+  setUMMGCollection,
 } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, isISOFile, getGranuleTemporalInfo } = cmrUtil;
@@ -1354,10 +1354,10 @@ test('buildCMRQuery works with if the input results list is empty', (t) => {
   t.deepEqual(actual, expected);
 });
 
-test('updateECHO10Collection updates echo10 collection name and version', async (t) => {
+test('setECHO10Collection updates echo10 collection name and version', async (t) => {
   const filename = 'tests/cmr-utils/data/meta.xml';
   const cmrObject = await promisify(xml2js.parseString)(fs.readFileSync(filename, 'utf-8'), xmlParseOptions);
-  const updated = updateECHO10Collection(
+  const updated = setECHO10Collection(
     cmrObject,
     { name: 'a', version: 'b' }
   );
@@ -1367,7 +1367,7 @@ test('updateECHO10Collection updates echo10 collection name and version', async 
 
 test('updateCmrFileCollections updates Echo10Files when missing', (t) => {
   const cmrObject = {};
-  const updated = updateECHO10Collection(cmrObject, { name: 'a', version: 'b' });
+  const updated = setECHO10Collection(cmrObject, { name: 'a', version: 'b' });
   t.is(updated.Granule.Collection.ShortName, 'a');
   t.is(updated.Granule.Collection.VersionId, 'b');
 });
@@ -1375,7 +1375,7 @@ test('updateCmrFileCollections updates Echo10Files when missing', (t) => {
 test('updateCmrFileCollections updates umm meta file', (t) => {
   const filename = 'tests/cmr-utils/data/ummg-meta.json';
   const cmrObject = JSON.parse(fs.readFileSync(filename, 'utf-8'));
-  const updated = updateUMMGCollection(cmrObject, { name: 'a', version: 'b' }, filename);
+  const updated = setUMMGCollection(cmrObject, { name: 'a', version: 'b' }, filename);
 
   t.is(updated.CollectionReference.ShortName, 'a');
   t.is(updated.CollectionReference.Version, 'b');
@@ -1383,7 +1383,7 @@ test('updateCmrFileCollections updates umm meta file', (t) => {
 
 test('updateCmrFileCollections updates umm when missing', (t) => {
   const cmrObject = {};
-  const updated = updateUMMGCollection(cmrObject, { name: 'a', version: 'b' });
+  const updated = setUMMGCollection(cmrObject, { name: 'a', version: 'b' });
   t.is(updated.CollectionReference.ShortName, 'a');
   t.is(updated.CollectionReference.Version, 'b');
 });
