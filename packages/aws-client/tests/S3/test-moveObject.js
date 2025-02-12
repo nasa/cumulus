@@ -11,6 +11,9 @@ const {
   s3ObjectExists,
   s3PutObject,
   getObjectStreamContents,
+  copyObject,
+  getJsonS3Object,
+  getTextObject,
 } = require('../../S3');
 
 const MB = 1024 * 1024;
@@ -31,7 +34,7 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.destinationBucket);
 });
 
-test('moveObject() copies the source file to the destination', async (t) => {
+test('moveObject() moves the source file to the destination', async (t) => {
   const { sourceBucket, destinationBucket } = t.context;
 
   const sourceKey = randomId('source-key');
@@ -51,9 +54,11 @@ test('moveObject() copies the source file to the destination', async (t) => {
     chunkSize: 5 * MB,
   });
 
-  const copiedObject = await getS3Object(destinationBucket, destinationKey);
 
-  t.is(await getObjectStreamContents(copiedObject.Body), 'asdf');
+
+  t.is(await getTextObject(destinationBucket, destinationKey), 'asdf');
+
+  t.false(await s3ObjectExists({ Bucket: sourceBucket, Key: sourceKey }));
 });
 
 test('moveObject() deletes the source file', async (t) => {
@@ -116,4 +121,30 @@ test('moveObject() moves a 0 byte file', async (t) => {
 
   const copiedObject = await getS3Object(destinationBucket, destinationKey);
   t.is(await getObjectStreamContents(copiedObject.Body), '');
+});
+
+test('copyObject() copies the source file to the destination', async (t) => {
+  const { sourceBucket, destinationBucket } = t.context;
+
+  const sourceKey = randomId('source-key');
+  const destinationKey = randomId('destination-key');
+
+  await s3PutObject({
+    Bucket: sourceBucket,
+    Key: sourceKey,
+    Body: 'asdf',
+  });
+
+  await copyObject({
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey,
+    chunkSize: 5 * MB,
+  });
+
+
+  t.is(await getTextObject(destinationBucket, destinationKey), 'asdf');
+
+  t.is(await getTextObject(sourceBucket, sourceKey), 'asdf');
 });
