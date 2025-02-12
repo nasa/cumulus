@@ -134,7 +134,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
       await createGranule({ prefix: config.stackName,
         body: granuleObject.body });
     } catch (error) {
-      console.log('setup test failed with ', error)
+      console.log('setup test failed with', error);
       testSetupFailed = true;
     }
   });
