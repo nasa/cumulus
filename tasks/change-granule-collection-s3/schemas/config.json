@@ -1,0 +1,112 @@
+{
+  "title": "ChangeGranuleCollectionS3Config",
+  "description": "Describes the config used by the change-granule-collection-s3 task",
+  "type": "object",
+  "required": [
+    "collection",
+    "targetCollection",
+    "buckets"
+  ],
+  "properties": {
+    "buckets": {
+      "type": "object",
+      "description": "aws s3 buckets used by this task",
+      "patternProperties": {
+        "\\S*": {
+          "description": "bucket configuration for the key'd bucket",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "name of the S3 bucket"
+            },
+            "type": {
+              "type": "string",
+              "description": "the type of bucket - i.e. internal, public, private, protected"
+            }
+          }
+        }
+      }
+    },
+    "targetCollection": {
+      "type": "object",
+      "description": "collection to move granules over to",
+      "required": [
+        "version",
+        "name"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "process": { "type": "string" },
+        "url_path": { "type": "string" },
+        "duplicateHandling": { "type": "string" },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["regex", "bucket"],
+            "properties": {
+              "regex": { "type": "string" },
+              "bucket": { "type": "string" },
+              "url_path": { "type": "string" }
+            }
+          }
+        },
+        "meta": {
+          "title": "Optional Metadata for the Collection",
+          "type": "object",
+          "additionalProperties": true,
+          "granuleMetadataFileExtension": {
+            "description": "Set to the file extension for task to look for the granule metadata information. If none is specified, the granule CMR metadata or ISO metadata file is used",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "collection": {
+      "type": "object",
+      "description": "collection to move granules from",
+      "required": [
+        "version",
+        "name"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "process": { "type": "string" },
+        "url_path": { "type": "string" },
+        "duplicateHandling": { "type": "string" },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["regex", "bucket"],
+            "properties": {
+              "regex": { "type": "string" },
+              "bucket": { "type": "string" },
+              "url_path": { "type": "string" }
+            }
+          }
+        },
+        "meta": {
+          "title": "Optional Metadata for the Collection",
+          "type": "object",
+          "additionalProperties": true,
+          "granuleMetadataFileExtension": {
+            "description": "Set to the file extension for task to look for the granule metadata information. If none is specified, the granule CMR metadata or ISO metadata file is used",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "s3MultipartChunksizeMb": {
+      "type": ["number", "null"],
+      "description": "S3 multipart upload chunk size in MB.  If none is specified, the default default_s3_multipart_chunksize_mb is used."
+    },
+    "invalidGranuleBehavior": {
+      "type": ["string", "null"],
+      "description": "what to do if a granule without valid details (file buckets and keys) is ingested."
+    }
+  }
+}

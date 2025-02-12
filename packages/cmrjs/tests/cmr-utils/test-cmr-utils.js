@@ -33,6 +33,8 @@ const {
   granuleToCmrFileObject,
   mapFileEtags,
   removeEtagsFromFileObjects,
+  setECHO10Collection,
+  setUMMGCollection,
 } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, isISOFile, getGranuleTemporalInfo } = cmrUtil;
@@ -643,7 +645,6 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
       bucketTypes,
       distributionBucketMap,
     });
-
     t.is(etag, expectedEtag, "ETag doesn't match");
     t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
   } finally {
@@ -1351,4 +1352,38 @@ test('buildCMRQuery works with if the input results list is empty', (t) => {
   const expected = { condition: { or: [] } };
   const actual = buildCMRQuery(results);
   t.deepEqual(actual, expected);
+});
+
+test('setECHO10Collection updates echo10 collection name and version', async (t) => {
+  const filename = 'tests/cmr-utils/data/meta.xml';
+  const cmrObject = await promisify(xml2js.parseString)(fs.readFileSync(filename, 'utf-8'), xmlParseOptions);
+  const updated = setECHO10Collection(
+    cmrObject,
+    { name: 'a', version: 'b' }
+  );
+  t.is(updated.Granule.Collection.ShortName, 'a');
+  t.is(updated.Granule.Collection.VersionId, 'b');
+});
+
+test('updateCmrFileCollections updates Echo10Files when missing', (t) => {
+  const cmrObject = {};
+  const updated = setECHO10Collection(cmrObject, { name: 'a', version: 'b' });
+  t.is(updated.Granule.Collection.ShortName, 'a');
+  t.is(updated.Granule.Collection.VersionId, 'b');
+});
+
+test('updateCmrFileCollections updates umm meta file', (t) => {
+  const filename = 'tests/cmr-utils/data/ummg-meta.json';
+  const cmrObject = JSON.parse(fs.readFileSync(filename, 'utf-8'));
+  const updated = setUMMGCollection(cmrObject, { name: 'a', version: 'b' }, filename);
+
+  t.is(updated.CollectionReference.ShortName, 'a');
+  t.is(updated.CollectionReference.Version, 'b');
+});
+
+test('updateCmrFileCollections updates umm when missing', (t) => {
+  const cmrObject = {};
+  const updated = setUMMGCollection(cmrObject, { name: 'a', version: 'b' });
+  t.is(updated.CollectionReference.ShortName, 'a');
+  t.is(updated.CollectionReference.Version, 'b');
 });

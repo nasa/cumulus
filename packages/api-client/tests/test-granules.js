@@ -587,7 +587,7 @@ test('bulkPatchGranuleCollection calls the callback with the expected object', a
         esConcurrency: 10,
       }),
     },
-    expectedStatusCodes: 202,
+    expectedStatusCodes: 200,
   };
 
   const callback = (configObject) => {
@@ -637,7 +637,7 @@ test('bulkPatch calls the callback with the expected object', async (t) => {
         dbMaxPool: 10,
       }),
     },
-    expectedStatusCodes: 202,
+    expectedStatusCodes: 200,
   };
 
   const callback = (configObject) => {
