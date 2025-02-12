@@ -1060,25 +1060,23 @@ test('changeGranuleCollectionS3 handles large group of granules', async (t) => {
   t.assert(output.granules.length === 200);
   t.assert(output.oldGranules.length === 200);
   // verify that ll these files are in new location
-  await Promise.all(output.granules.map((granule) => {
-    return Promise.all(granule.files.map(async (file) => {
+  await Promise.all(output.granules.map((granule) => (
+    Promise.all(granule.files.map(async (file) => (
       t.assert(await s3ObjectExists({
         Bucket: file.bucket,
         Key: file.key,
-      }));
-      return;
-    }));
-  }));
+      }))
+    )))
+  )));
   // and have not been deleted from original location
-  await Promise.all(output.oldGranules.map((granule) => {
-    return Promise.all(granule.files.map(async (file) => {
+  await Promise.all(output.oldGranules.map((granule) => (
+    Promise.all(granule.files.map(async (file) => (
       t.assert(await s3ObjectExists({
         Bucket: file.bucket,
         Key: file.key,
-      }));
-      return;
-    }));
-  }));
+      }))
+    )))
+  )));
 });
 
 test('s3MoveNeeded checks regular files that arent identical', async (t) => {
