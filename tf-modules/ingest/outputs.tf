@@ -218,3 +218,10 @@ output "change_granule_collection_s3_task" {
     last_modified_date = aws_lambda_function.change_granule_collection_s3_task.last_modified
   }
 }
+
+output "change_granule_collection_pg_task" {
+  value = {
+    task_arn           = aws_lambda_function.change_granule_collection_pg_task.arn
+    last_modified_date = aws_lambda_function.change_granule_collection_pg_task.last_modified
+  }
+}

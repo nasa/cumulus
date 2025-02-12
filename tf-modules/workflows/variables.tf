@@ -1,6 +1,9 @@
 variable "change_granule_collection_s3_task_arn" {
   type = string
 }
+variable "change_granule_collection_pg_task_arn" {
+  type = string
+}
 variable "prefix" {
   description = "The unique prefix for your deployment resources"
   type        = string
