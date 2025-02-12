@@ -11,7 +11,7 @@ import pRetry from 'p-retry';
 import path from 'path';
 import pMap from 'p-map';
 
-import { InvalidArgument, DuplicateFile } from '@cumulus/errors';
+import { InvalidArgument, DuplicateFile, ValidationError } from '@cumulus/errors';
 import {
   unversionFilename,
 } from '@cumulus/ingest/granule';
@@ -348,17 +348,18 @@ export async function updateCMRData(
     const cmrObject = cmrObjectsByGranuleId[targetGranule.granuleId];
     if (!(cmrFile && cmrObject)) {
       outputObjects[targetGranule.granuleId] = {};
+    } else {
+      outputObjects[targetGranule.granuleId] = updateCmrFileCollections({
+        collection: config.targetCollection,
+        cmrFileName: cmrFile.key,
+        cmrObject,
+        files: (targetGranule as ValidGranuleRecord).files,
+        distEndpoint,
+        bucketTypes,
+        cmrGranuleUrlType: config.cmrGranuleUrlType,
+        distributionBucketMap,
+      });
     }
-    outputObjects[targetGranule.granuleId] = updateCmrFileCollections({
-      collection: config.targetCollection,
-      cmrFileName: cmrFile.key,
-      cmrObject,
-      files: (targetGranule as ValidGranuleRecord).files,
-      distEndpoint,
-      bucketTypes,
-      cmrGranuleUrlType: config.cmrGranuleUrlType,
-      distributionBucketMap,
-    });
   });
   return outputObjects;
 }
@@ -415,7 +416,7 @@ async function getAndValidateGranules(
   } else {
     tempGranulesInput.forEach((granule) => {
       if (!apiGranuleRecordIsValid(granule)) {
-        throw new Error(`granule ${granule} has validation errors.` +
+        throw new ValidationError(`granule ${granule} has validation errors.` +
           'files must have key and bucket');
       }
     });
@@ -479,9 +480,11 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     sourceGranules, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
     config
   );
+
   const targetGranules = buildTargetGranules(
     sourceGranules, config, collectionUpdatedCMRMetadata
   );
+
   const updatedCMRObjects = await updateCMRData(
     targetGranules, collectionUpdatedCMRMetadata, cmrFilesByGranuleId,
     config
