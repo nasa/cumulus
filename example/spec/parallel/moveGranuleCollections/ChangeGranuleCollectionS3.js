@@ -134,6 +134,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
       await createGranule({ prefix: config.stackName,
         body: granuleObject.body });
     } catch (error) {
+      console.log('setup test failed with ', error)
       testSetupFailed = true;
     }
   });
@@ -190,12 +191,14 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
     });
     it('updates the granule data in s3', async () => {
       if (beforeAllFailed) fail('beforeAllFailed');
+      if (testSetupFailed) fail('testSetupFailed');
       await Promise.all(finalFiles.map(async (file) => {
         expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
       }));
     });
     it('keeps old s3 files as well', async () => {
       if (beforeAllFailed) fail('beforeAllFailed');
+      if (testSetupFailed) fail('testSetupFailed');
       await Promise.all(startingFiles.map(async (file) => {
         expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
       }));
