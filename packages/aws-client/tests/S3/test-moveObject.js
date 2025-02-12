@@ -12,7 +12,6 @@ const {
   s3PutObject,
   getObjectStreamContents,
   copyObject,
-  getJsonS3Object,
   getTextObject,
 } = require('../../S3');
 
@@ -53,8 +52,6 @@ test('moveObject() moves the source file to the destination', async (t) => {
     destinationKey,
     chunkSize: 5 * MB,
   });
-
-
 
   t.is(await getTextObject(destinationBucket, destinationKey), 'asdf');
 
@@ -142,7 +139,6 @@ test('copyObject() copies the source file to the destination', async (t) => {
     destinationKey,
     chunkSize: 5 * MB,
   });
-
 
   t.is(await getTextObject(destinationBucket, destinationKey), 'asdf');
 

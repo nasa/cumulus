@@ -7,7 +7,7 @@ const test = require('ava');
 const keyBy = require('lodash/keyBy');
 const range = require('lodash/range');
 const cryptoRandomString = require('crypto-random-string');
-const { s3 } = require('@cumulus/aws-client/services');
+const { s3, sns } = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
   recursivelyDeleteS3Bucket,
@@ -20,6 +20,9 @@ const {
   randomId, validateOutput,
   randomString,
 } = require('@cumulus/common/test-utils');
+const {
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { isECHO10Filename, isUMMGFilename, metadataObjectFromCMRFile, granulesToCmrFileObjects, isCMRFile, getCMRCollectionId } = require('@cumulus/cmrjs/cmr-utils');
 
@@ -363,15 +366,13 @@ function dummyGetGranule(granuleId, t) {
       granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
       files: [],
     },
-  }
-
-  range(20).forEach((i) => {
+  };
+  range(200).forEach((i) => {
     const baseGranuleString = JSON.stringify(
       granuleSet.base_xml_granule
-    ).replaceAll('90724', `${('0000' + i).slice(-5)}`)
-    granuleSet[`xml_granule${i}`] = JSON.parse(baseGranuleString)
-  })
-
+    ).replaceAll('90724', `${('0000' + i).slice(-5)}`);
+    granuleSet[`xml_granule${i}`] = JSON.parse(baseGranuleString);
+  });
   return granuleSet[granuleId];
 }
 
@@ -441,15 +442,15 @@ test.beforeEach(async (t) => {
     }
   );
 });
-
 test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.privateBucket);
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
+  sns().send(new DeleteTopicCommand({ TopicArn: process.env.granule_sns_topic_arn }));
 });
 
-test.serial('Should move files to final location with cmr xml file', async (t) => {
+test.serial('changeGranuleCollectionS3 should copy files to final location with cmr xml file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
@@ -545,7 +546,7 @@ test.serial('Should move files to final location with cmr xml file', async (t) =
   ));
 });
 
-test.serial('Should move files to final location with cmr umm json file', async (t) => {
+test.serial('changeGranuleCollectionS3 should copy files to final location with cmr umm json file', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
@@ -630,7 +631,7 @@ test.serial('Should move files to final location with cmr umm json file', async 
   ));
 });
 
-test.serial('should update cmr data to hold extra urls but remove out-dated urls', async (t) => {
+test.serial('changeGranuleCollectionS3 should update cmr data to hold extra urls but remove out-dated urls', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_ummg_json.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
@@ -654,7 +655,7 @@ test.serial('should update cmr data to hold extra urls but remove out-dated urls
   t.assert(URLDescriptions.includes("This should be held onto as it doesn't follow the pattern of tea/s3 url"));
 });
 
-test.serial('handles partially moved files', async (t) => {
+test.serial('changeGranuleCollectionS3 handles partially moved files', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
 
@@ -806,7 +807,7 @@ test.serial('handles partially moved files', async (t) => {
   ));
 });
 
-test.serial('handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
+test.serial('changeGranuleCollectionS3 handles files that are pre-moved and misplaced w/r to postgres', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const startingFiles = [
@@ -942,7 +943,7 @@ test.serial('handles files that are pre-moved and misplaced w/r to postgres', as
   ));
 });
 
-test.serial('handles files that need no move', async (t) => {
+test.serial('changeGranuleCollectionS3 handles files that need no move', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
 
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
@@ -993,7 +994,7 @@ test.serial('handles files that need no move', async (t) => {
   }));
 });
 
-test('handles empty fileless granule without issue', async (t) => {
+test('changeGranuleCollectionS3 handles empty fileless granule without issue', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'empty_payload.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
@@ -1016,13 +1017,13 @@ test('handles empty fileless granule without issue', async (t) => {
   t.assert(output.oldGranules[0].files.length === 0);
 });
 
-test('ignores invalid granules when set to skip', async (t) => {
+test('changeGranuleCollectionS3 ignores invalid granules when set to skip', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'bad_payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
 
   const collection = { name: 'MOD11A1', version: '001' };
   const newPayload = buildPayload(t, collection);
-  newPayload.config.invalidGranuleBehavior = 'skip'
+  newPayload.config.invalidGranuleBehavior = 'skip';
   const output = await changeGranuleCollectionS3(newPayload);
   t.deepEqual(output, {
     granules: [],
@@ -1030,25 +1031,24 @@ test('ignores invalid granules when set to skip', async (t) => {
   });
 });
 
-test('throws on invalid granules when set to error', async (t) => {
+test('changeGranuleCollectionS3 throws on invalid granules when set to error', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'bad_payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
 
   const collection = { name: 'MOD11A1', version: '001' };
   const newPayload = buildPayload(t, collection);
-  newPayload.config.invalidGranuleBehavior = 'error'
+  newPayload.config.invalidGranuleBehavior = 'error';
   // await changeGranuleCollectionS3(newPayload)
   await t.throwsAsync(
     changeGranuleCollectionS3(newPayload),
-    { name: "ValidationError" }
-  )
-
+    { name: 'ValidationError' }
+  );
 });
 
-test('handles large group of granules', async (t) => {
+test('changeGranuleCollectionS3 handles large group of granules', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'empty_payload.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-  t.context.payload.input.granuleIds = range(20).map((i) => `xml_granule${i}`)
+  t.context.payload.input.granuleIds = range(200).map((i) => `xml_granule${i}`);
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granuleIds, t
   );
@@ -1057,27 +1057,29 @@ test('handles large group of granules', async (t) => {
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
-  t.assert(output.granules.length === 20)
-  t.assert(output.oldGranules.length === 20)
+  t.assert(output.granules.length === 200);
+  t.assert(output.oldGranules.length === 200);
   // verify that ll these files are in new location
   await Promise.all(output.granules.map((granule) => {
-    Promise.all(granule.files.map(async (file) => {
+    return Promise.all(granule.files.map(async (file) => {
       t.assert(await s3ObjectExists({
         Bucket: file.bucket,
         Key: file.key,
-      }))
-    }))
-  }))
+      }));
+      return;
+    }));
+  }));
   // and have not been deleted from original location
   await Promise.all(output.oldGranules.map((granule) => {
-    Promise.all(granule.files.map(async (file) => {
+    return Promise.all(granule.files.map(async (file) => {
       t.assert(await s3ObjectExists({
         Bucket: file.bucket,
         Key: file.key,
-      }))
-    }))
-  }))
-})
+      }));
+      return;
+    }));
+  }));
+});
 
 test('s3MoveNeeded checks regular files that arent identical', async (t) => {
   const sourceFile = {
