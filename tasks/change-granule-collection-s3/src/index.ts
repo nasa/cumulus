@@ -426,7 +426,7 @@ async function getAndValidateGranules(
   if (config.invalidGranuleBehavior === 'skip') {
     granulesInput = tempGranulesInput.filter((granule) => {
       if (!apiGranuleRecordIsValid(granule)) {
-        log.warn(`granule has unparseable file details ${granule}`);
+        log.warn(`granule ${granule.granuleId} has at least one invalid file (missing key or bucket) `);
         return false;
       }
       return true;
@@ -434,7 +434,7 @@ async function getAndValidateGranules(
   } else {
     tempGranulesInput.forEach((granule) => {
       if (!apiGranuleRecordIsValid(granule)) {
-        throw new ValidationError(`granule ${granule} has validation errors.` +
+        throw new ValidationError(`granule ${granule.granuleId} has validation errors.` +
           'files must have key and bucket');
       }
     });
