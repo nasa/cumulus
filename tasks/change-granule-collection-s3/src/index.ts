@@ -385,7 +385,8 @@ export async function updateCMRData(
  * Build a set of granules according to new collection
  * New granules reference new collectionId as their collectionId
  * files for new granules are updated according to new collection url_path
- * file names are *not* updated
+ * updates bucket and key
+ * fileName is *not* updated
  */
 function buildTargetGranules(
   granules: Array<ValidGranuleRecord>,
@@ -466,7 +467,10 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
   };
 }
 
-async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promise<Object> {
+async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promise<{
+  oldGranules: Array<ValidGranuleRecord>,
+  granules: Array<ValidGranuleRecord>
+}> {
   const config = await getParsedConfigValues(event.config);
   const sourceGranules = await getAndValidateGranules(
     event.input.granuleIds,
