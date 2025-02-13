@@ -1,3 +1,4 @@
+import { AssertionError } from 'assert';
 import { s3PutObject } from '@cumulus/aws-client/S3';
 import {
   DistributionBucketMap,
@@ -10,8 +11,8 @@ import {
   updateUMMGMetadataObject,
 } from '@cumulus/cmrjs/cmr-utils';
 import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
-import { AssertionError } from 'assert';
 import { log } from '@cumulus/common';
+import { ValidationError } from '@cumulus/errors';
 import {
   ValidApiFile,
   ValidGranuleRecord,
@@ -36,14 +37,19 @@ export function apiGranuleRecordIsValid(granule: ApiGranuleRecord): granule is V
 
 export const CMRObjectToString = (
   cmrFile: Omit<ValidApiFile, 'granuleId'>,
-  cmrObject: { Granule?: object }
+  cmrObject: { Granule: object } | object
 ): string => {
   if (isUMMGFilename(cmrFile.fileName || cmrFile.key)) {
     return JSON.stringify(cmrObject, undefined, 2);
   }
   // our xml stringify function packages the metadata in "Granule",
   // resulting in possible nested Granule object
-  return generateEcho10XMLString(cmrObject.Granule || cmrObject);
+  if (!('Granule' in cmrObject)) {
+    throw new ValidationError(
+      `invalid ECHO10 cmr metadata ${JSON.stringify(cmrObject)}, must have granule tag`
+    );
+  }
+  return generateEcho10XMLString(cmrObject.Granule);
 };
 
 export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cmrFileString: string) => {

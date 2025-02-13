@@ -1299,10 +1299,15 @@ const setECHO10Collection = (
   collection
 ) => {
   const cmrObjectCopy = cloneDeep(cmrObject);
-  set(cmrObjectCopy, 'Granule.Collection', {
+  if (!cmrObjectCopy.Granule) {
+    throw new errors.ValidationError(
+      `invalid ECHO10 cmr metadata ${JSON.stringify(cmrObjectCopy)}, must have granule tag`
+    );
+  }
+  cmrObjectCopy.Granule.Collection = {
     ShortName: collection.name,
     VersionId: collection.version,
-  });
+  };
   return cmrObjectCopy;
 };
 

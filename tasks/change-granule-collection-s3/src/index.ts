@@ -63,7 +63,7 @@ function objectSourceAndTargetSame(
   return ((sourceFile.key === targetFile.key) && (sourceFile.bucket === targetFile.bucket));
 }
 
-async function metadataCheckSumsMatch(
+async function metadataCollisionsMatch(
   targetFile: ValidApiGranuleFile,
   metadataObject: Object
 ): Promise<boolean> {
@@ -172,22 +172,22 @@ function identifyFileMatch(
   return match;
 }
 
-async function cmrUpdateNeeded(
+async function cmrFileCollision(
   sourceFile: ValidApiGranuleFile,
   targetFile: ValidApiGranuleFile,
   cmrObject: Object
 ) {
   // if these are the same, we need to *update* that metadata
   if (objectSourceAndTargetSame(sourceFile, targetFile)) {
-    return true;
+    return false;
   }
   if (!await s3ObjectExists({
     Bucket: targetFile.bucket,
     Key: targetFile.key,
   })) {
-    return true;
+    return false;
   }
-  if (!await metadataCheckSumsMatch(targetFile, cmrObject)) {
+  if (!await metadataCollisionsMatch(targetFile, cmrObject)) {
     throw new DuplicateFile(
       `metadata file Bucket: ${targetFile.bucket}, Key: ${targetFile.key} already exists.` +
       'and does not appear to belong to the collection being moved'
@@ -208,7 +208,7 @@ async function copyFileInS3({
   s3MultipartChunksizeMb?: number,
 }): Promise<void> {
   if (isCMRMetadataFile(targetFile)) {
-    if (await cmrUpdateNeeded(sourceFile, targetFile, cmrObject)) {
+    if (!(await cmrFileCollision(sourceFile, targetFile, cmrObject))) {
       const metadataString = CMRObjectToString(targetFile, cmrObject);
       await uploadCMRFile(targetFile, metadataString);
     }
