@@ -137,21 +137,34 @@ test.serial('changeGranuleCollectionS3 should copy files to final location with 
     Bucket: t.context.publicBucket,
     Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
-  const UMM = await metadataObjectFromCMRFile(
+  const metadata = await metadataObjectFromCMRFile(
     `s3://${t.context.publicBucket}/example2/2003/` +
     'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
   );
-
-  const CollectionInformation = UMM.Granule.Collection;
+  const oldMetadata = await metadataObjectFromCMRFile(
+    `s3://${t.context.protectedBucket}/file-staging/subdir/` +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  );
+  t.deepEqual(metadata, {
+    ...oldMetadata,
+    Granule: {
+      ...oldMetadata.Granule,
+      Collection: metadata.Granule.Collection,
+      OnlineResources: metadata.Granule.OnlineResources,
+      AssociatedBrowseImageUrls: metadata.Granule.AssociatedBrowseImageUrls,
+      OnlineAccessURLs: metadata.Granule.OnlineAccessURLs,
+    }
+  })
+  const CollectionInformation = metadata.Granule.Collection;
   t.deepEqual(CollectionInformation, { ShortName: 'MOD11A1', VersionId: '002' });
 
-  const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map(
+  const onlineResourceUrls = metadata.Granule.OnlineResources.OnlineResource.map(
     (urlObject) => urlObject.URL
   );
-  const browseUrls = UMM.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map(
+  const browseUrls = metadata.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map(
     (urlObject) => urlObject.URL
   );
-  const onlineAccessURLs = UMM.Granule.OnlineAccessURLs.OnlineAccessURL.map(
+  const onlineAccessURLs = metadata.Granule.OnlineAccessURLs.OnlineAccessURL.map(
     (urlObject) => urlObject.URL
   );
 
@@ -233,12 +246,23 @@ test.serial('changeGranuleCollectionS3 should copy files to final location with 
     Bucket: t.context.publicBucket,
     Key: 'example2/2016/MOD11A1.A2017200.h19v04.006.2017201090725.ummg.cmr.json',
   }));
-  const UMM = await metadataObjectFromCMRFile(
+
+  const oldMetadata = await metadataObjectFromCMRFile(
+    `s3://${t.context.protectedBucket}/file-staging/subdir/` +
+    'MOD11A1.A2017200.h19v04.006.2017201090725.ummg.cmr.json'
+  );
+  const metadata = await metadataObjectFromCMRFile(
     `s3://${t.context.publicBucket}/example2/2016/` +
     'MOD11A1.A2017200.h19v04.006.2017201090725.ummg.cmr.json'
   );
-  t.deepEqual(UMM.CollectionReference, { ShortName: 'MOD11A1', Version: '002' });
-  const relatedURLS = UMM.RelatedUrls.map((urlObject) => urlObject.URL);
+  t.deepEqual(metadata, {
+    ...oldMetadata,
+    CollectionReference: metadata.CollectionReference,
+    RelatedUrls: metadata.RelatedUrls
+  })
+
+  t.deepEqual(metadata.CollectionReference, { ShortName: 'MOD11A1', Version: '002' });
+  const relatedURLS = metadata.RelatedUrls.map((urlObject) => urlObject.URL);
 
   t.assert(relatedURLS.includes(
     'https://something.api.us-east-1.amazonaws.com/' +
