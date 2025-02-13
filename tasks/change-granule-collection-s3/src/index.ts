@@ -67,8 +67,11 @@ async function metadataCollisionsMatch(
   targetFile: ValidApiGranuleFile,
   metadataObject: Object
 ): Promise<boolean> {
-  const existingGranuleMetadata = await metadataObjectFromCMRFile(
-    `s3://${targetFile.bucket}/${targetFile.key}`
+  const existingGranuleMetadata = await pRetry(
+    () => metadataObjectFromCMRFile(
+      `s3://${targetFile.bucket}/${targetFile.key}`
+    ),
+    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
   );
   const sourceCollection = getCMRCollectionId(metadataObject, targetFile.key);
   const targetCollection = getCMRCollectionId(existingGranuleMetadata, targetFile.key);
@@ -82,11 +85,11 @@ async function checkSumsMatch(
   const [sourceHash, targetHash] = await Promise.all([
     pRetry(
       async () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...sourceFile }),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
     ),
     pRetry(
       async () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...targetFile }),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
     ),
   ]);
 
@@ -115,11 +118,11 @@ export async function s3CopyNeeded(
   ] = await Promise.all([
     pRetry(
       async () => s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
     ),
     pRetry(
       async () => s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
     ),
   ]);
   //this is the normal happy path
@@ -181,10 +184,13 @@ async function cmrFileCollision(
   if (objectSourceAndTargetSame(sourceFile, targetFile)) {
     return false;
   }
-  if (!await s3ObjectExists({
-    Bucket: targetFile.bucket,
-    Key: targetFile.key,
-  })) {
+  if (!await pRetry(
+      () => s3ObjectExists({
+        Bucket: targetFile.bucket,
+        Key: targetFile.key,
+      }),
+      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+    )) {
     return false;
   }
   if (!await metadataCollisionsMatch(targetFile, cmrObject)) {
@@ -210,18 +216,24 @@ async function copyFileInS3({
   if (isCMRMetadataFile(targetFile)) {
     if (!(await cmrFileCollision(sourceFile, targetFile, cmrObject))) {
       const metadataString = CMRObjectToString(targetFile, cmrObject);
-      await uploadCMRFile(targetFile, metadataString);
+      await pRetry(
+        () => uploadCMRFile(targetFile, metadataString),
+        { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      );
     }
     return;
   }
   if (await s3CopyNeeded(sourceFile, targetFile)) {
-    await copyObject({
-      sourceBucket: sourceFile.bucket,
-      sourceKey: sourceFile.key,
-      destinationBucket: targetFile.bucket,
-      destinationKey: targetFile.key,
-      chunkSize: s3MultipartChunksizeMb,
-    });
+    await pRetry(
+      () => copyObject({
+        sourceBucket: sourceFile.bucket,
+        sourceKey: sourceFile.key,
+        destinationBucket: targetFile.bucket,
+        destinationKey: targetFile.key,
+        chunkSize: s3MultipartChunksizeMb,
+      }),
+      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+    );
   }
 }
 /**
