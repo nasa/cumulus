@@ -5,7 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const keyBy = require('lodash/keyBy');
-const noop = require('lodash/noop');
 const range = require('lodash/range');
 const cryptoRandomString = require('crypto-random-string');
 const { s3, sns } = require('@cumulus/aws-client/services');
