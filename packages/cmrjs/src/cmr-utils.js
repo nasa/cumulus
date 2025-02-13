@@ -717,7 +717,7 @@ function updateUMMGMetadataObject({
   distributionBucketMap,
 }) {
   const updatedMetadataObject = cloneDeep(metadataObject);
-  const useDirectS3Type = shouldUseDirectS3Type(updatemetadataObject);
+  const useDirectS3Type = shouldUseDirectS3Type(updatedMetadataObject);
 
   const newURLs = constructRelatedUrls({
     files,
@@ -729,7 +729,7 @@ function updateUMMGMetadataObject({
   });
 
   const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
-  const originalURLs = get(updatemetadataObject, 'RelatedUrls', []);
+  const originalURLs = get(updatedMetadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   set(updatedMetadataObject, 'RelatedUrls', mergedURLs);
   return updatedMetadataObject;

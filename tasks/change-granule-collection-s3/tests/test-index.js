@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const keyBy = require('lodash/keyBy');
+const noop = require('lodash/noop');
 const range = require('lodash/range');
 const cryptoRandomString = require('crypto-random-string');
 const { s3, sns } = require('@cumulus/aws-client/services');
@@ -38,7 +39,7 @@ const { dummyGetCollection, dummyGetGranule, uploadFiles } = require('./_helpers
 
 function granulesToFileURIs(granuleIds, t) {
   const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
-  const files = granules.reduce((arr, g) => arr.concat(g.files), []);
+  const files = granules.reduce((arr, g) => (g.files ? arr.concat(g.files) : noop()), []);
   return files.map((file) => buildS3Uri(file.bucket, file.key));
 }
 
@@ -670,11 +671,36 @@ test('changeGranuleCollectionS3 handles empty fileless granule without issue', a
     output.granules[0].collectionId === constructCollectionId(collection.name, collection.version)
   );
   t.assert(output.granules[0].files.length === 0);
+  t.deepEqual(output.granules[0].files, []);
   t.assert(output.oldGranules.length === 1);
   t.assert(
     output.oldGranules[0].collectionId === 'MOD11A1___006'
   );
   t.assert(output.oldGranules[0].files.length === 0);
+  t.deepEqual(output.oldGranules[0].files, []);
+});
+
+test('changeGranuleCollectionS3 handles empty undefined files granule without issue', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'empty_payload.json');
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+  t.context.payload.input.granuleIds = ['undef_files_xml_granule'];
+  const filesToUpload = granulesToFileURIs(
+    t.context.payload.input.granuleIds, t
+  );
+  const collection = { name: 'MOD11A1', version: '002' };
+  const newPayload = buildPayload(t, collection);
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  const output = await changeGranuleCollectionS3(newPayload);
+  t.assert(output.granules.length === 1);
+  t.assert(
+    output.granules[0].collectionId === constructCollectionId(collection.name, collection.version)
+  );
+  t.assert(output.granules[0].files === undefined);
+  t.assert(output.oldGranules.length === 1);
+  t.assert(
+    output.oldGranules[0].collectionId === 'MOD11A1___006'
+  );
+  t.assert(output.oldGranules[0].files === undefined);
 });
 
 test('changeGranuleCollectionS3 ignores invalid granules when set to skip', async (t) => {

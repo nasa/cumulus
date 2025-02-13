@@ -4,6 +4,7 @@ import { Context } from 'aws-lambda';
 import get from 'lodash/get';
 import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
+import noop from 'lodash/noop';
 import { AssertionError } from 'assert';
 import zip from 'lodash/zip';
 import flatten from 'lodash/flatten';
@@ -145,7 +146,7 @@ export async function s3CopyNeeded(
 }
 
 /**
- * Validates the file matched only one collection and has a valid bucket
+ * Validates the file matched only one file in collection configuration and has a valid bucket
  * config.
  */
 function identifyFileMatch(
@@ -242,8 +243,12 @@ async function copyGranulesInS3({
   const copyOperations = flatten(await Promise.all(
     zip(sourceGranules, targetGranules).map(
       async ([sourceGranule, targetGranule]) => {
-        if (!sourceGranule?.files || !targetGranule?.files) {
+        if (!sourceGranule || !targetGranule) {
           throw new AssertionError({ message: 'size mismatch between target and source granules' });
+        }
+        if (!sourceGranule.files || !sourceGranule.files) {
+          // this needs to be callable for later pmap, but do nothing
+          return noop;
         }
         return Promise.all(zip(sourceGranule.files, targetGranule.files)
           .map(async ([sourceFile, targetFile]) => {
@@ -455,7 +460,6 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     event.input.granuleIds,
     config
   );
-
   log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}`);
 
   const unValidatedCMRFiles = granulesToCmrFileObjects(
@@ -476,6 +480,9 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
       { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
     );
   }));
+
+  // by using sourceGranules here we update *just* the collection
+  // this is because we need that to parse the target file location
   const collectionUpdatedCMRMetadata = await updateCMRData(
     sourceGranules, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
     config
@@ -485,6 +492,8 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     sourceGranules, config, collectionUpdatedCMRMetadata
   );
 
+  // now we re-call updateCMRData with our targetGranules to update
+  // the cmr file links
   const updatedCMRObjects = await updateCMRData(
     targetGranules, collectionUpdatedCMRMetadata, cmrFilesByGranuleId,
     config
