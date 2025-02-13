@@ -39,7 +39,7 @@ const { dummyGetCollection, dummyGetGranule, uploadFiles } = require('./_helpers
 
 function granulesToFileURIs(granuleIds, t) {
   const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
-  const files = granules.reduce((arr, g) => (g.files ? arr.concat(g.files) : noop()), []);
+  const files = granules.reduce((arr, g) => (g.files ? arr.concat(g.files) : arr), []);
   return files.map((file) => buildS3Uri(file.bucket, file.key));
 }
 
