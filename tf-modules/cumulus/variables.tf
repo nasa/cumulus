@@ -642,7 +642,7 @@ variable "dead_letter_recovery_memory" {
 }
 
 variable "deploy_cumulus_workflows" {
-  type = bool
-  default = true
-  description = "If true, deploys Cumulus post-processing workflows"
+  type = map(string)
+  default = { deploy_move_granule_collections: true }
+  description = "for each workflow, if true deploy that workflow"
 }
