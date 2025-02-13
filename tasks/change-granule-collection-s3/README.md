@@ -1,6 +1,6 @@
 # @cumulus/change-granule-collection-s3
 
-This lambda function movcopieses granules between collections in s3
+This lambda function copies granules between collections in s3 and updates cmr metadata
 
 ## Message Configuration
 
