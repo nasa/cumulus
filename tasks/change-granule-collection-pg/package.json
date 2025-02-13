@@ -41,6 +41,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/api-client": "18.5.3",
+    "@cumulus/aws-client": "18.5.3",
     "@cumulus/common": "18.5.3",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/message": "18.5.3",
@@ -48,7 +49,6 @@
   },
   "devDependencies": {
     "@cumulus/api": "18.5.3",
-    "@cumulus/aws-client": "18.5.3",
     "@cumulus/db": "^18.5.3",
     "@cumulus/distribution-utils": "18.5.3",
     "@cumulus/es-client": "18.5.3"
