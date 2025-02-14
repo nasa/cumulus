@@ -11,31 +11,39 @@ import {
   updateUMMGMetadataObject,
 } from '@cumulus/cmrjs/cmr-utils';
 import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
-import { log } from '@cumulus/common';
 import { ValidationError } from '@cumulus/errors';
 import {
   ValidApiFile,
   ValidGranuleRecord,
 } from './types';
 
-export function apiFileIsValid(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
+export function validateApiFile(file: Omit<ApiFile, 'granuleId'> | ApiFile): ValidApiFile {
   if (file.bucket === undefined || file.key === undefined) {
-    log.warn(`file ${JSON.stringify(file)} is missing necessary key, bucket`);
-    return false;
+    throw new ValidationError(`file ${JSON.stringify(file)} is missing necessary key, bucket`);
   }
-  if(!file.fileName) {
-    file.fileName = file.key.split('/').pop();
+  if (!file.fileName) {
+    const fileName = file.key.split('/').pop();
+    if (!fileName) {
+      throw new ValidationError(
+        `file ${JSON.stringify(file)} has no fileName and fileName cannot be parsed from key`
+      );
+    }
+    return {
+      ...file,
+      fileName,
+    } as ValidApiFile;
   }
-  return true;
+  return file as ValidApiFile;
 }
 
-export function apiGranuleRecordIsValid(granule: ApiGranuleRecord): granule is ValidGranuleRecord {
+export function validateApiGranuleRecord(granule: ApiGranuleRecord): ValidGranuleRecord {
   if (!granule.files) {
-    return true;
+    return granule as ValidGranuleRecord;
   }
-  let filesAreValid = true;
-  granule.files.forEach((file) => { if (!apiFileIsValid(file)) filesAreValid = false; });
-  return filesAreValid;
+  return {
+    ...granule,
+    files: granule.files.map(validateApiFile),
+  };
 }
 
 export const CMRObjectToString = (

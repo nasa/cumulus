@@ -11,7 +11,7 @@ import pRetry from 'p-retry';
 import path from 'path';
 import pMap from 'p-map';
 
-import { InvalidArgument, DuplicateFile, ValidationError } from '@cumulus/errors';
+import { InvalidArgument, DuplicateFile } from '@cumulus/errors';
 import {
   unversionFilename,
 } from '@cumulus/ingest/granule';
@@ -43,12 +43,12 @@ import {
   ValidApiFile,
 } from './types';
 import {
-  apiFileIsValid,
-  apiGranuleRecordIsValid,
+  validateApiGranuleRecord,
   CMRObjectToString,
   isCMRMetadataFile,
   updateCmrFileCollections,
   uploadCMRFile,
+  validateApiFile,
 } from './update_cmr_file_collection';
 
 /**
@@ -426,21 +426,23 @@ async function getAndValidateGranules(
   })));
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
-    granulesInput = tempGranulesInput.filter((granule) => {
-      if (!apiGranuleRecordIsValid(granule)) {
-        log.warn(`granule ${granule.granuleId} has at least one invalid file (missing key or bucket) `);
-        return false;
+    granulesInput = tempGranulesInput.map((granule) => {
+      try {
+        return validateApiGranuleRecord(granule);
+      } catch (error) {
+        log.warn(`invalid granule ${granule.granuleId} skipped because ${error}`);
+        return undefined;
       }
-      return true;
-    }) as ValidGranuleRecord[];
+    }).filter(Boolean) as Array<ValidGranuleRecord>;
   } else {
-    tempGranulesInput.forEach((granule) => {
-      if (!apiGranuleRecordIsValid(granule)) {
-        throw new ValidationError(`granule ${granule.granuleId} has validation errors.` +
-          'files must have key and bucket');
+    granulesInput = tempGranulesInput.map((granule) => {
+      try {
+        return validateApiGranuleRecord(granule);
+      } catch (error) {
+        log.warn(`invalid granule ${granule.granuleId} skipped because ${error}`);
+        throw error;
       }
     });
-    granulesInput = tempGranulesInput.filter(apiGranuleRecordIsValid);
   }
   return granulesInput;
 }
@@ -482,12 +484,7 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
       granuleId: granule.granuleId,
     }));
   });
-  const cmrFiles = unValidatedCMRFiles.map((unvalidatedFile) => {
-    if (apiFileIsValid(unvalidatedFile)) {
-      return unvalidatedFile;
-    }
-    throw new AssertionError({ message: "getting here with an invalid file shouldn't have been possible" });
-  });
+  const cmrFiles = unValidatedCMRFiles.map(validateApiFile);
 
   const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const cmrObjectsByGranuleId: { [granuleId: string]: Object } = {};
