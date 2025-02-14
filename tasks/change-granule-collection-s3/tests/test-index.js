@@ -787,7 +787,7 @@ test('changeGranuleCollectionS3 handles large group of granules', async (t) => {
   await validateOutput(t, output);
   t.assert(output.granules.length === 200);
   t.assert(output.oldGranules.length === 200);
-  // verify that ll these files are in new location
+  // verify that all these files are in new location
   await Promise.all(output.granules.map((granule) => (
     Promise.all(granule.files.map(async (file) => (
       t.assert(await s3ObjectExists({
