@@ -251,32 +251,31 @@ async function copyGranulesInS3({
   const sourceGranulesById = keyBy(sourceGranules, 'granuleId');
 
   const copyOperations = flatten(targetGranules.map(
-      (targetGranule) => {
-        const sourceGranule = sourceGranulesById[targetGranule.granuleId];
-        if (!sourceGranule) {
-          throw new AssertionError({ message: 'no source granule for your target granule by ID' });
-        }
-        if (!sourceGranule.files || !targetGranule.files) {
-          return [];
-        }
-        const sourceFilesByFileName = keyBy(sourceGranule.files, 'fileName');
-        return targetGranule.files.map((targetFile) => {
-          const sourceFile = sourceFilesByFileName[targetFile.fileName];
-          if (!sourceFile) {
-            throw new AssertionError({
-              message: 'size mismatch between target and source granule files',
-            });
-          }
-          return () => copyFileInS3({
-            sourceFile,
-            targetFile,
-            cmrObject: cmrObjects[targetGranule.granuleId],
-            s3MultipartChunksizeMb,
-          });
-        });
+    (targetGranule) => {
+      const sourceGranule = sourceGranulesById[targetGranule.granuleId];
+      if (!sourceGranule) {
+        throw new AssertionError({ message: 'no source granule for your target granule by ID' });
       }
-    )
-  );
+      if (!sourceGranule.files || !targetGranule.files) {
+        return [];
+      }
+      const sourceFilesByFileName = keyBy(sourceGranule.files, 'fileName');
+      return targetGranule.files.map((targetFile) => {
+        const sourceFile = sourceFilesByFileName[targetFile.fileName];
+        if (!sourceFile) {
+          throw new AssertionError({
+            message: 'size mismatch between target and source granule files',
+          });
+        }
+        return () => copyFileInS3({
+          sourceFile,
+          targetFile,
+          cmrObject: cmrObjects[targetGranule.granuleId],
+          s3MultipartChunksizeMb,
+        });
+      });
+    }
+  ));
   await pMap(
     copyOperations,
     (operation) => operation(),
