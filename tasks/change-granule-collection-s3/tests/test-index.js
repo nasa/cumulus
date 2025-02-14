@@ -1049,11 +1049,10 @@ test('updateCMRData', async (t) => {
   ));
 });
 
-
 test.serial('changeGranuleCollectionS3 should parse fileName if not given in files', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-  t.context.payload.granuleIds = ['missing_fileName']
+  t.context.payload.granuleIds = ['missing_fileName'];
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granuleIds, t
   );

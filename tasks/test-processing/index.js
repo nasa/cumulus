@@ -56,7 +56,7 @@ async function fakeProcessing(event) {
     collection,
     bucket: event.config.bucket,
     cmrMetadataFormat: event.config.cmrMetadataFormat,
-    additionalUrls: event.config.additionalUrls
+    additionalUrls: event.config.additionalUrls,
   });
   return { files: outputFiles, granules: input.granules };
 }
