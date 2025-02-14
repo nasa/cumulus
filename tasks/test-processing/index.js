@@ -40,7 +40,6 @@ async function uploadFakeBrowse(input) {
  */
 
 async function fakeProcessing(event) {
-  console.log('but somehow we end up here with no granule?', JSON.stringify(event));
   const input = event.input;
   const collection = event.config.collection;
   if (collection.name.includes('_test')) {
@@ -52,13 +51,13 @@ async function fakeProcessing(event) {
     input.granules = await uploadFakeBrowse(input);
   }
 
-  const outputFiles = await generateCmrFilesForGranules(
-    input.granules,
+  const outputFiles = await generateCmrFilesForGranules({
+    granules: input.granules,
     collection,
-    event.config.bucket,
-    event.config.cmrMetadataFormat,
-    event.config.additionalUrls
-  );
+    bucket: event.config.bucket,
+    cmrMetadataFormat: event.config.cmrMetadataFormat,
+    additionalUrls: event.config.additionalUrls
+  });
   return { files: outputFiles, granules: input.granules };
 }
 
