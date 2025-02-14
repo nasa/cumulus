@@ -153,8 +153,8 @@ test.serial('changeGranuleCollectionS3 should copy files to final location with 
       OnlineResources: metadata.Granule.OnlineResources,
       AssociatedBrowseImageUrls: metadata.Granule.AssociatedBrowseImageUrls,
       OnlineAccessURLs: metadata.Granule.OnlineAccessURLs,
-    }
-  })
+    },
+  });
   const CollectionInformation = metadata.Granule.Collection;
   t.deepEqual(CollectionInformation, { ShortName: 'MOD11A1', VersionId: '002' });
 
@@ -258,8 +258,8 @@ test.serial('changeGranuleCollectionS3 should copy files to final location with 
   t.deepEqual(metadata, {
     ...oldMetadata,
     CollectionReference: metadata.CollectionReference,
-    RelatedUrls: metadata.RelatedUrls
-  })
+    RelatedUrls: metadata.RelatedUrls,
+  });
 
   t.deepEqual(metadata.CollectionReference, { ShortName: 'MOD11A1', Version: '002' });
   const relatedURLS = metadata.RelatedUrls.map((urlObject) => urlObject.URL);

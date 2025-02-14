@@ -19,8 +19,8 @@ import {
 } from './types';
 
 export function apiFileIsValid(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
-  if (file.bucket === undefined || file.key === undefined || file.fileName) {
-    log.warn(`file ${file} is missing necessary key, bucket, or fileName`);
+  if (file.bucket === undefined || file.key === undefined || file.fileName === undefined) {
+    log.warn(`file ${JSON.stringify(file)} is missing necessary key, bucket, or fileName`);
     return false;
   }
   return true;
