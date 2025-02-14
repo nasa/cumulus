@@ -34,7 +34,7 @@ const {
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { constructCollectionId } = require('../../../packages/message/Collections');
-const { changeGranuleCollectionS3, s3CopyNeeded, updateCMRData } = require('../dist/src');
+const { changeGranuleCollectionS3, s3CopyNeeded, updateCMRData, updateCMRCollections } = require('../dist/src');
 const { dummyGetCollection, dummyGetGranule, uploadFiles } = require('./_helpers');
 
 function granulesToFileURIs(granuleIds, t) {
@@ -880,6 +880,58 @@ test('s3MoveNeeded throws if file copy is requested to a location already occupi
   );
 });
 
+test('updateCMRCollections', async (t) => {
+  const granules = [
+    dummyGetGranule('base_xml_granule', t),
+    dummyGetGranule('base_umm_granule', t),
+  ];
+
+  const cmrFiles = granulesToCmrFileObjects(granules, isCMRFile);
+  await Promise.all([
+    promiseS3Upload({
+      params: {
+        Bucket: cmrFiles[0].bucket,
+        Key: cmrFiles[0].key,
+        Body: isECHO10Filename(cmrFiles[0].key) ? fs.createReadStream('tests/data/meta.cmr.xml') :
+          fs.createReadStream('tests/data/ummg-meta.cmr.json'),
+      },
+    }),
+    promiseS3Upload({
+      params: {
+        Bucket: cmrFiles[1].bucket,
+        Key: cmrFiles[1].key,
+        Body: isECHO10Filename(cmrFiles[1].key) ? fs.createReadStream('tests/data/meta.cmr.xml') :
+          fs.createReadStream('tests/data/ummg-meta.cmr.json'),
+      },
+    }),
+  ]);
+  const cmrFilesByGranuleid = keyBy(cmrFiles, 'granuleId');
+  const CMRObjectsByGranuleId = {};
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    CMRObjectsByGranuleId[cmrFile.granuleId] = await metadataObjectFromCMRFile(
+      `s3://${cmrFile.bucket}/${cmrFile.key}`
+    );
+  }));
+  const updatedCMRData = await updateCMRCollections(
+    CMRObjectsByGranuleId,
+    cmrFilesByGranuleid,
+    {
+      targetCollection: {
+        name: 'abc',
+        version: '003',
+      },
+    }
+  );
+  t.assert(getCMRCollectionId(
+    updatedCMRData[granules[0].granuleId],
+    cmrFilesByGranuleid[granules[0].granuleId].key
+  ) === 'abc___003');
+  t.assert(getCMRCollectionId(
+    updatedCMRData[granules[1].granuleId],
+    cmrFilesByGranuleid[granules[1].granuleId].key
+  ) === 'abc___003');
+});
+
 test('updateCMRData', async (t) => {
   const granules = [
     dummyGetGranule('base_xml_granule', t),
@@ -917,10 +969,6 @@ test('updateCMRData', async (t) => {
     CMRObjectsByGranuleId,
     cmrFilesByGranuleid,
     {
-      targetCollection: {
-        name: 'abc',
-        version: '003',
-      },
       cmrGranuleUrlType: 'both',
       buckets: {
         internal: {
@@ -943,14 +991,6 @@ test('updateCMRData', async (t) => {
       distribution_endpoint: 'https://something.api.us-east-1.amazonaws.com',
     }
   );
-  t.assert(getCMRCollectionId(
-    updatedCMRData[granules[0].granuleId],
-    cmrFilesByGranuleid[granules[0].granuleId].key
-  ) === 'abc___003');
-  t.assert(getCMRCollectionId(
-    updatedCMRData[granules[1].granuleId],
-    cmrFilesByGranuleid[granules[1].granuleId].key
-  ) === 'abc___003');
 
   const onlineAccessURLs = updatedCMRData[
     'MOD11A1.A2017200.h19v04.006.2017201090724'

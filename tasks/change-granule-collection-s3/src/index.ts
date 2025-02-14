@@ -44,7 +44,8 @@ import {
   validateApiGranuleRecord,
   CMRObjectToString,
   isCMRMetadataFile,
-  updateCmrFileCollections,
+  updateCmrFileCollection,
+  updateCmrFileLinks,
   uploadCMRFile,
   validateApiFile,
 } from './update_cmr_file_collection';
@@ -363,8 +364,7 @@ export async function updateCMRData(
     if (!(cmrFile && cmrObject)) {
       outputObjects[targetGranule.granuleId] = {};
     } else {
-      outputObjects[targetGranule.granuleId] = updateCmrFileCollections({
-        collection: config.targetCollection,
+      outputObjects[targetGranule.granuleId] = updateCmrFileLinks({
         cmrFileName: cmrFile.key,
         cmrObject,
         files: (targetGranule as ValidGranuleRecord).files,
@@ -374,6 +374,24 @@ export async function updateCMRData(
         distributionBucketMap,
       });
     }
+  });
+  return outputObjects;
+}
+
+export function updateCMRCollections(
+  cmrObjectsByGranuleId: { [granuleId: string]: Object },
+  cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
+  config: MassagedEventConfig
+): { [granuleId: string]: Object } {
+  const outputObjects: { [granuleId: string]: Object } = {};
+  Object.keys(cmrObjectsByGranuleId).forEach((granuleId) => {
+    const cmrFile = cmrFilesByGranuleId[granuleId];
+    const cmrObject = cmrObjectsByGranuleId[granuleId];
+    outputObjects[granuleId] = updateCmrFileCollection({
+      collection: config.targetCollection,
+      cmrFileName: cmrFile.key,
+      cmrObject,
+    });
   });
   return outputObjects;
 }
@@ -510,9 +528,16 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,
   } = await getCMRObjectsByFileId(sourceGranules);
 
-  // by using sourceGranules here we update *just* the collection
+  //  here we update *just* the collection
   // this is because we need that to parse the target file location
-  const collectionUpdatedCMRMetadata = await updateCMRData(
+
+  const collectionUpdatedCMRMetadata = updateCMRCollections(
+    firstCMRObjectsByGranuleId,
+    cmrFilesByGranuleId,
+    config
+  );
+
+  await updateCMRData(
     sourceGranules, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
     config
   );
@@ -521,7 +546,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     sourceGranules, config, collectionUpdatedCMRMetadata
   );
 
-  // now we re-call updateCMRData with our targetGranules to update
+  // now we call updateCMRData with our targetGranules to update
   // the cmr file links
   const updatedCMRObjects = await updateCMRData(
     targetGranules, collectionUpdatedCMRMetadata, cmrFilesByGranuleId,

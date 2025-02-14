@@ -70,9 +70,7 @@ export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cm
     Body: cmrFileString,
   });
 };
-
-export const updateCmrFileCollections = ({
-  collection,
+export const updateCmrFileLinks = ({
   cmrFileName,
   cmrObject,
   files,
@@ -81,7 +79,6 @@ export const updateCmrFileCollections = ({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }: {
-  collection: { name: string, version: string },
   cmrFileName: string,
   cmrObject: Object
   files: Array<Omit<ValidApiFile, 'granuleId'>>,
@@ -98,18 +95,33 @@ export const updateCmrFileCollections = ({
     distributionBucketMap,
   };
   if (isECHO10Filename(cmrFileName)) {
-    const updatedObject = setECHO10Collection(cmrObject, collection);
     return updateEcho10XMLMetadataObject({
       ...params,
-      metadataObject: updatedObject,
+      metadataObject: cmrObject,
     });
   }
   if (isUMMGFilename(cmrFileName)) {
-    const updatedObject = setUMMGCollection(cmrObject, collection);
     return updateUMMGMetadataObject({
       ...params,
-      metadataObject: updatedObject,
+      metadataObject: cmrObject,
     });
+  }
+  throw new AssertionError({ message: 'cmr file in unknown format' });
+};
+export const updateCmrFileCollection = ({
+  collection,
+  cmrFileName,
+  cmrObject,
+}: {
+  collection: { name: string, version: string },
+  cmrFileName: string,
+  cmrObject: Object
+}) => {
+  if (isECHO10Filename(cmrFileName)) {
+    return setECHO10Collection(cmrObject, collection);
+  }
+  if (isUMMGFilename(cmrFileName)) {
+    return setUMMGCollection(cmrObject, collection);
   }
   throw new AssertionError({ message: 'cmr file in unknown format' });
 };
