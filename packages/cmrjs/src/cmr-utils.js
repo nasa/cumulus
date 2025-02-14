@@ -1345,7 +1345,8 @@ const getCMRCollectionId = (
     const collectionVersion = cmrObject.CollectionReference?.Version;
     if (!(collectionName && collectionVersion)) {
       throw new errors.ValidationError(
-        `UMMG metadata file has invalid collection configuration ${cmrObject.CollectionReference}`
+        'UMMG metadata file has invalid collection configuration' +
+        ` ${JSON.stringify(cmrObject.CollectionReference)}`
       );
     }
     return constructCollectionId(
@@ -1357,7 +1358,8 @@ const getCMRCollectionId = (
   const collectionVersion = cmrObject.Granule?.Collection?.VersionId;
   if (!(collectionName && collectionVersion)) {
     throw new errors.ValidationError(
-      `ECHO10 metadata file has invalid collection configuration ${cmrObject.Granule?.Collection}`
+      'ECHO10 metadata file has invalid collection configuration' +
+      ` ${JSON.stringify(cmrObject.Granule?.Collection)}`
     );
   }
   return constructCollectionId(

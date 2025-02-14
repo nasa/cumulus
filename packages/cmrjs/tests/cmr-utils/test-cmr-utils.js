@@ -35,6 +35,7 @@ const {
   removeEtagsFromFileObjects,
   setECHO10Collection,
   setUMMGCollection,
+  getCMRCollectionId,
 } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, isISOFile, getGranuleTemporalInfo } = cmrUtil;
@@ -1399,4 +1400,54 @@ test('setUMMGCollection updates umm collection when missing', (t) => {
   const updated = setUMMGCollection(cmrObject, { name: 'a', version: 'b' });
   t.is(updated.CollectionReference.ShortName, 'a');
   t.is(updated.CollectionReference.Version, 'b');
+});
+
+test('getCMRCollectionId gets umm collection', (t) => {
+  const cmrObject = {
+    CollectionReference: {
+      ShortName: 'a',
+      Version: '001',
+    },
+  };
+  t.is(getCMRCollectionId(cmrObject, 'a.cmr.json'), 'a___001');
+});
+
+test('getCMRCollectionId throws on invalid umm metadata', (t) => {
+  const cmrObject = {
+    CollectionReference: {
+      Version: '001',
+    },
+  };
+  t.throws(
+    () => getCMRCollectionId(cmrObject, 'a.cmr.json'),
+    {
+      message: 'UMMG metadata file has invalid collection configuration {"Version":"001"}',
+    }
+  );
+});
+
+test('getCMRCollectionId gets xml collection', (t) => {
+  const cmrObject = {
+    Granule: {
+      Collection: {
+        ShortName: 'a',
+        VersionId: '001',
+      },
+    },
+  };
+  t.is(getCMRCollectionId(cmrObject, 'a.cmr.xml'), 'a___001');
+});
+
+test('getCMRCollectionId throws on invalid xml metadata', (t) => {
+  const cmrObject = {
+    CollectionReference: {
+      Version: '001',
+    },
+  };
+  t.throws(
+    () => getCMRCollectionId(cmrObject, 'a.cmr.xml'),
+    {
+      message: 'ECHO10 metadata file has invalid collection configuration undefined',
+    }
+  );
 });
