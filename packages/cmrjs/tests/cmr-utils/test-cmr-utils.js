@@ -1369,14 +1369,23 @@ test('setECHO10Collection updates echo10 collection name and version', async (t)
   t.is(updated.Granule.Collection.VersionId, 'b');
 });
 
-test('updateCmrFileCollections updates Echo10Files when missing', (t) => {
+test('setECHO10Collection fails when Echo10Files has no Granule field', (t) => {
   const cmrObject = {};
   t.throws(() => setECHO10Collection(cmrObject), {
     message: 'invalid ECHO10 cmr metadata {}, must have granule tag',
   });
 });
 
-test('updateCmrFileCollections updates umm meta file', (t) => {
+test('setECHO10Collection adds collection if missing when Echo10Files has Granule object field', (t) => {
+  const cmrObject = { Granule: {} };
+  const updated = setECHO10Collection(
+    cmrObject, { name: 'a', version: 'b' }
+  );
+  t.is(updated.Granule.Collection.ShortName, 'a');
+  t.is(updated.Granule.Collection.VersionId, 'b');
+});
+
+test('setUMMGCollection updates umm meta object', (t) => {
   const filename = 'tests/cmr-utils/data/ummg-meta.json';
   const cmrObject = JSON.parse(fs.readFileSync(filename, 'utf-8'));
   const updated = setUMMGCollection(cmrObject, { name: 'a', version: 'b' }, filename);
@@ -1385,7 +1394,7 @@ test('updateCmrFileCollections updates umm meta file', (t) => {
   t.is(updated.CollectionReference.Version, 'b');
 });
 
-test('updateCmrFileCollections updates umm when missing', (t) => {
+test('setUMMGCollection updates umm collection when missing', (t) => {
   const cmrObject = {};
   const updated = setUMMGCollection(cmrObject, { name: 'a', version: 'b' });
   t.is(updated.CollectionReference.ShortName, 'a');

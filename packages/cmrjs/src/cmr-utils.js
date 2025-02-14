@@ -1341,14 +1341,28 @@ const getCMRCollectionId = (
   cmrFileName
 ) => {
   if (isUMMGFilename(cmrFileName)) {
+    const collectionName = cmrObject.CollectionReference?.ShortName;
+    const collectionVersion = cmrObject.CollectionReference?.Version;
+    if (!(collectionName && collectionVersion)) {
+      throw new errors.ValidationError(
+        `UMMG metadata file has invalid collection configuration ${cmrObject.CollectionReference}`
+      );
+    }
     return constructCollectionId(
-      get(cmrObject, 'CollectionReference.ShortName'),
-      get(cmrObject, 'CollectionReference.Version')
+      collectionName,
+      collectionVersion
+    );
+  }
+  const collectionName = cmrObject.Granule?.Collection?.ShortName;
+  const collectionVersion = cmrObject.Granule?.Collection?.VersionId;
+  if (!(collectionName && collectionVersion)) {
+    throw new errors.ValidationError(
+      `ECHO10 metadata file has invalid collection configuration ${cmrObject.Granule?.Collection}`
     );
   }
   return constructCollectionId(
-    get(cmrObject, 'Granule.Collection.ShortName'),
-    get(cmrObject, 'Granule.Collection.VersionId')
+    collectionName,
+    collectionVersion
   );
 };
 
