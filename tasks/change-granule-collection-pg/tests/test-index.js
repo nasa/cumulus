@@ -31,7 +31,7 @@ const mockResponse = () => {
   return res;
 };
 
-let moveGranules;
+let changeGranuleCollectionsPG;
 
 function getOriginalCollection() {
   return JSON.parse(fs.readFileSync(
@@ -104,7 +104,7 @@ test.beforeEach(async (t) => {
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   const testDbName = `change-granule-collection-pg/change-collections-s3${cryptoRandomString({ length: 10 })}`;
-  moveGranules = proxyquire(
+  changeGranuleCollectionsPG = proxyquire(
     '../dist/src',
     {
       '@cumulus/api-client/granules': {
@@ -116,7 +116,7 @@ test.beforeEach(async (t) => {
         ),
       },
     }
-  ).moveGranules;
+  ).changeGranuleCollectionsPG;
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
     migrationDir
@@ -131,7 +131,7 @@ test.beforeEach(async (t) => {
   t.context.protectedBucket = randomId('protected');
   t.context.privateBucket = randomId('private');
   t.context.systemBucket = randomId('system');
-  t.context.stackName = 'moveGranulesTestStack';
+  t.context.stackName = 'changeGranuleCollectionsPGTestStack';
   const bucketMapping = {
     public: t.context.publicBucket,
     protected: t.context.protectedBucket,
@@ -184,7 +184,7 @@ test.serial('Should move files to final and pg status', async (t) => {
     collection,
     t
   );
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionsPG(newPayload);
   await validateOutput(t, output);
   const granuleModel = new GranulePgModel();
   const finalPgGranule = await granuleModel.get(t.context.knex, {
@@ -209,7 +209,7 @@ test.serial('Should move files to final and pg status when granules have already
     collection,
     t
   );
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionsPG(newPayload);
   await validateOutput(t, output);
   const granuleModel = new GranulePgModel();
   const finalPgGranule = await granuleModel.get(t.context.knex, {
@@ -232,7 +232,7 @@ test.serial('handles files that need no move', async (t) => {
     t
   );
 
-  const output = await moveGranules(newPayload);
+  const output = await changeGranuleCollectionsPG(newPayload);
   await validateOutput(t, output);
 
   const granuleModel = new GranulePgModel();

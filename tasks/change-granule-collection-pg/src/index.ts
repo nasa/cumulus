@@ -9,7 +9,7 @@ import { CumulusMessage } from '@cumulus/types/message';
 import { BucketsConfigObject } from '@cumulus/common/types';
 import { bulkPatch, bulkPatchGranuleCollection, getGranule } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-import { keyBy, range } from 'lodash';
+import { Dictionary, keyBy, noop, range } from 'lodash';
 import { deleteS3Object } from '@cumulus/aws-client/S3';
 import { ValidationError } from '@cumulus/errors/dist';
 
@@ -44,6 +44,7 @@ interface MoveGranuleCollectionsEvent {
   },
   input: {
     granules: Array<ApiGranuleRecord>,
+    oldGranules: Array<ApiGranuleRecord>,
   }
 }
 
@@ -112,8 +113,15 @@ async function cleanupS3File(newFile: ValidApiGranuleFile, oldFile: ValidApiGran
   await deleteS3Object(oldFile.bucket, oldFile.key);
 }
 
-async function cleanupInS3(newGranules: ValidGranuleRecord[], oldGranules: ValidGranuleRecord[]) {
-  const newGranulesDict = keyBy(newGranules, "granuleId");
+async function cleanupInS3(newGranules: ValidGranuleRecord[], oldGranules: Dictionary<ValidGranuleRecord>) {
+  await newGranules.flatMap((newGranule) => {
+    const oldGranule = oldGranules[newGranule.granuleId];
+    if (!oldGranule) {
+      return [];
+    }
+    return 
+    return oldGranule;
+  }));
   await Promise.all(oldGranules.map((oldGranule) => {
     const newGranule = newGranulesDict[oldGranule.granuleId]
     if (!newGranule) {
@@ -135,20 +143,13 @@ function chunkGranules(granules: ValidGranuleRecord[]) {
     granules.slice(i*chunkSize, (i+1)*chunkSize)
   )
 }
-async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object> {
+async function changeGranuleCollectionsPG(event: MoveGranuleCollectionsEvent): Promise<Object> {
   const config = event.config;
 
-  const targetGranules = event.input.granules;
-  const validatedGranules = targetGranules.map(validateGranule);
-
+  const targetGranules = event.input.granules.map(validateGranule);
+  const oldGranulesByID: Dictionary<ValidGranuleRecord> = keyBy(event.input.oldGranules.map(validateGranule), 'granuleId');
   log.debug(`change-granule-collection-pg run with config ${config}`);
-  for (const granuleChunk of chunkGranules(validatedGranules)) {
-    const oldGranules = await Promise.all(granuleChunk.map((granule) => (
-      getGranule({
-        prefix: getRequiredEnvVar('stackName'),
-        granuleId: granule.granuleId
-      })
-    )))
+  for (const granuleChunk of chunkGranules(targetGranules)) {
     await moveGranulesInCumulusDatastores(
       granuleChunk,
       constructCollectionId(config.collection.name, config.collection.version),
@@ -157,8 +158,7 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
         config.targetCollection.version
       )
     );
-    const validatedOldGranules = oldGranules.map(validateGranule);
-    await cleanupInS3(granuleChunk, validatedOldGranules);
+    await cleanupInS3(granuleChunk, oldGranulesByID);
   }
   
 
@@ -171,8 +171,8 @@ async function moveGranules(event: MoveGranuleCollectionsEvent): Promise<Object>
  * Lambda handler
  */
 async function handler(event: CumulusMessage, context: Context): Promise<Object> {
-  return await runCumulusTask(moveGranules, event, context);
+  return await runCumulusTask(changeGranuleCollectionsPG, event, context);
 }
 
 exports.handler = handler;
-exports.moveGranules = moveGranules;
+exports.changeGranuleCollectionsPG = changeGranuleCollectionsPG;
