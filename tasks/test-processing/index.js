@@ -40,6 +40,7 @@ async function uploadFakeBrowse(input) {
  */
 
 async function fakeProcessing(event) {
+  console.log('but somehow we end up here with no granule?', JSON.stringify(event));
   const input = event.input;
   const collection = event.config.collection;
   if (collection.name.includes('_test')) {
