@@ -14,17 +14,17 @@ const { isECHO10Filename, isUMMGFilename } = require('@cumulus/cmrjs/cmr-utils')
 const { constructCollectionId } = require('../../../packages/message/Collections');
 
 async function uploadFiles(files) {
-  await Promise.all(files.map((file) => {
+  await Promise.all(files?.map((file) => {
     let body;
+    const parsedFile = parseS3Uri(file);
     if (isECHO10Filename(file)) {
       body = fs.createReadStream('tests/data/meta.cmr.xml');
     } else if (isUMMGFilename(file)) {
       body = fs.createReadStream('tests/data/ummg-meta.cmr.json');
     } else {
-      body = 'abc';
+      body = parsedFile.Key.split('/').pop();
     }
-    const parsedFile = parseS3Uri(file);
-    if (parsedFile.Bucket !== 'undefined' && parsedFile.Key !== 'undefindd') {
+    if (parsedFile.Bucket !== 'undefined' && parsedFile.Key !== 'undefined') {
       return promiseS3Upload({
         params: {
           ...parsedFile,
@@ -348,6 +348,11 @@ const granuleSet = {
     granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
     files: [],
   },
+  undef_files_xml_granule: {
+    status: 'completed',
+    collectionId: 'MOD11A1___006',
+    granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
+  },
 };
 range(200).forEach((i) => {
   const baseGranuleString = JSON.stringify(
@@ -358,7 +363,7 @@ range(200).forEach((i) => {
 
 function dummyGetGranule(granuleId, t) {
   const granuleOut = clone(granuleSet[granuleId]);
-  granuleOut.files = granuleOut.files.map((file) => ({
+  granuleOut.files = granuleOut.files?.map((file) => ({
     ...file,
     bucket: t.context.bucketMapping[file.bucket],
   }));

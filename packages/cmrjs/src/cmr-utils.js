@@ -716,8 +716,8 @@ function updateUMMGMetadataObject({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
-  const updatemetadataObject = cloneDeep(metadataObject);
-  const useDirectS3Type = shouldUseDirectS3Type(updatemetadataObject);
+  const updatedMetadataObject = cloneDeep(metadataObject);
+  const useDirectS3Type = shouldUseDirectS3Type(updatedMetadataObject);
 
   const newURLs = constructRelatedUrls({
     files,
@@ -729,10 +729,10 @@ function updateUMMGMetadataObject({
   });
 
   const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
-  const originalURLs = get(updatemetadataObject, 'RelatedUrls', []);
+  const originalURLs = get(updatedMetadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
-  set(updatemetadataObject, 'RelatedUrls', mergedURLs);
-  return updatemetadataObject;
+  set(updatedMetadataObject, 'RelatedUrls', mergedURLs);
+  return updatedMetadataObject;
 }
 
 /**
@@ -1299,10 +1299,15 @@ const setECHO10Collection = (
   collection
 ) => {
   const cmrObjectCopy = cloneDeep(cmrObject);
-  set(cmrObjectCopy, 'Granule.Collection', {
+  if (!cmrObjectCopy.Granule) {
+    throw new errors.ValidationError(
+      `invalid ECHO10 cmr metadata ${JSON.stringify(cmrObjectCopy)}, must have granule tag`
+    );
+  }
+  cmrObjectCopy.Granule.Collection = {
     ShortName: collection.name,
     VersionId: collection.version,
-  });
+  };
   return cmrObjectCopy;
 };
 

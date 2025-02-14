@@ -14,6 +14,7 @@ const {
   putJsonS3Object,
   s3ObjectExists,
   promiseS3Upload,
+  getTextObject,
 } = require('@cumulus/aws-client/S3');
 const {
   randomId, validateOutput,
@@ -38,7 +39,7 @@ const { dummyGetCollection, dummyGetGranule, uploadFiles } = require('./_helpers
 
 function granulesToFileURIs(granuleIds, t) {
   const granules = granuleIds.map((granuleId) => dummyGetGranule(granuleId, t));
-  const files = granules.reduce((arr, g) => arr.concat(g.files), []);
+  const files = granules.reduce((arr, g) => (g.files ? arr.concat(g.files) : arr), []);
   return files.map((file) => buildS3Uri(file.bucket, file.key));
 }
 
@@ -137,21 +138,44 @@ test.serial('changeGranuleCollectionS3 should copy files to final location with 
     Bucket: t.context.publicBucket,
     Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   }));
-  const UMM = await metadataObjectFromCMRFile(
+  const metadata = await metadataObjectFromCMRFile(
     `s3://${t.context.publicBucket}/example2/2003/` +
     'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
   );
+  const oldMetadata = await metadataObjectFromCMRFile(
+    `s3://${t.context.protectedBucket}/file-staging/subdir/` +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  );
 
-  const CollectionInformation = UMM.Granule.Collection;
+  await Promise.all(output.granules.map((gran) => Promise.all(gran.files.map(async (file) => {
+    // cmrFiles don't follow the same pattern, and will be content tested below
+    if (!isCMRFile(file)) {
+      // non-cmr files have been filled with their own name to confirm that they've been moved
+      // correctly and not mixed around. fileName remains constant in moving
+      t.assert(await getTextObject(file.bucket, file.key) === file.fileName);
+    }
+  }))));
+
+  t.deepEqual(metadata, {
+    ...oldMetadata,
+    Granule: {
+      ...oldMetadata.Granule,
+      Collection: metadata.Granule.Collection,
+      OnlineResources: metadata.Granule.OnlineResources,
+      AssociatedBrowseImageUrls: metadata.Granule.AssociatedBrowseImageUrls,
+      OnlineAccessURLs: metadata.Granule.OnlineAccessURLs,
+    },
+  });
+  const CollectionInformation = metadata.Granule.Collection;
   t.deepEqual(CollectionInformation, { ShortName: 'MOD11A1', VersionId: '002' });
 
-  const onlineResourceUrls = UMM.Granule.OnlineResources.OnlineResource.map(
+  const onlineResourceUrls = metadata.Granule.OnlineResources.OnlineResource.map(
     (urlObject) => urlObject.URL
   );
-  const browseUrls = UMM.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map(
+  const browseUrls = metadata.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map(
     (urlObject) => urlObject.URL
   );
-  const onlineAccessURLs = UMM.Granule.OnlineAccessURLs.OnlineAccessURL.map(
+  const onlineAccessURLs = metadata.Granule.OnlineAccessURLs.OnlineAccessURL.map(
     (urlObject) => urlObject.URL
   );
 
@@ -233,12 +257,31 @@ test.serial('changeGranuleCollectionS3 should copy files to final location with 
     Bucket: t.context.publicBucket,
     Key: 'example2/2016/MOD11A1.A2017200.h19v04.006.2017201090725.ummg.cmr.json',
   }));
-  const UMM = await metadataObjectFromCMRFile(
+  await Promise.all(output.granules.map((gran) => Promise.all(gran.files.map(async (file) => {
+    // cmrFiles don't follow the same pattern, and will be content tested below
+    if (!isCMRFile(file)) {
+      // non-cmr files have been filled with their own name to confirm that they've been moved
+      // correctly and not mixed around. fileName remains constant in moving
+      t.assert(await getTextObject(file.bucket, file.key) === file.fileName);
+    }
+  }))));
+
+  const oldMetadata = await metadataObjectFromCMRFile(
+    `s3://${t.context.protectedBucket}/file-staging/subdir/` +
+    'MOD11A1.A2017200.h19v04.006.2017201090725.ummg.cmr.json'
+  );
+  const metadata = await metadataObjectFromCMRFile(
     `s3://${t.context.publicBucket}/example2/2016/` +
     'MOD11A1.A2017200.h19v04.006.2017201090725.ummg.cmr.json'
   );
-  t.deepEqual(UMM.CollectionReference, { ShortName: 'MOD11A1', Version: '002' });
-  const relatedURLS = UMM.RelatedUrls.map((urlObject) => urlObject.URL);
+  t.deepEqual(metadata, {
+    ...oldMetadata,
+    CollectionReference: metadata.CollectionReference,
+    RelatedUrls: metadata.RelatedUrls,
+  });
+
+  t.deepEqual(metadata.CollectionReference, { ShortName: 'MOD11A1', Version: '002' });
+  const relatedURLS = metadata.RelatedUrls.map((urlObject) => urlObject.URL);
 
   t.assert(relatedURLS.includes(
     'https://something.api.us-east-1.amazonaws.com/' +
@@ -670,11 +713,36 @@ test('changeGranuleCollectionS3 handles empty fileless granule without issue', a
     output.granules[0].collectionId === constructCollectionId(collection.name, collection.version)
   );
   t.assert(output.granules[0].files.length === 0);
+  t.deepEqual(output.granules[0].files, []);
   t.assert(output.oldGranules.length === 1);
   t.assert(
     output.oldGranules[0].collectionId === 'MOD11A1___006'
   );
   t.assert(output.oldGranules[0].files.length === 0);
+  t.deepEqual(output.oldGranules[0].files, []);
+});
+
+test('changeGranuleCollectionS3 handles empty undefined files granule without issue', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'empty_payload.json');
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+  t.context.payload.input.granuleIds = ['undef_files_xml_granule'];
+  const filesToUpload = granulesToFileURIs(
+    t.context.payload.input.granuleIds, t
+  );
+  const collection = { name: 'MOD11A1', version: '002' };
+  const newPayload = buildPayload(t, collection);
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  const output = await changeGranuleCollectionS3(newPayload);
+  t.assert(output.granules.length === 1);
+  t.assert(
+    output.granules[0].collectionId === constructCollectionId(collection.name, collection.version)
+  );
+  t.assert(output.granules[0].files === undefined);
+  t.assert(output.oldGranules.length === 1);
+  t.assert(
+    output.oldGranules[0].collectionId === 'MOD11A1___006'
+  );
+  t.assert(output.oldGranules[0].files === undefined);
 });
 
 test('changeGranuleCollectionS3 ignores invalid granules when set to skip', async (t) => {
@@ -719,7 +787,7 @@ test('changeGranuleCollectionS3 handles large group of granules', async (t) => {
   await validateOutput(t, output);
   t.assert(output.granules.length === 200);
   t.assert(output.oldGranules.length === 200);
-  // verify that ll these files are in new location
+  // verify that all these files are in new location
   await Promise.all(output.granules.map((granule) => (
     Promise.all(granule.files.map(async (file) => (
       t.assert(await s3ObjectExists({

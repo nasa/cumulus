@@ -1,5 +1,5 @@
 module "move_granule_collections_workflow" {
-  count = var.deploy_cumulus_workflows ? 1 : 0
+  count = var.deploy_cumulus_workflows.move_granule_collections_workflow ? 1 : 0
   source = "../workflows"
 
   prefix          = var.prefix

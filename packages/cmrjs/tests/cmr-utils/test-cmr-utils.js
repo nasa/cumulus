@@ -1336,11 +1336,15 @@ test(
       { short_name: 'sn2', version: '2' },
       { short_name: 'sn3', version: '3' },
     ];
-    const expected = { condition: { or: [
-      { and: [{ short_name: 'sn1' }, { version: '1' }] },
-      { and: [{ short_name: 'sn2' }, { version: '2' }] },
-      { and: [{ short_name: 'sn3' }, { version: '3' }] },
-    ] } };
+    const expected = {
+      condition: {
+        or: [
+          { and: [{ short_name: 'sn1' }, { version: '1' }] },
+          { and: [{ short_name: 'sn2' }, { version: '2' }] },
+          { and: [{ short_name: 'sn3' }, { version: '3' }] },
+        ],
+      },
+    };
 
     const actual = buildCMRQuery(results);
     t.deepEqual(actual, expected);
@@ -1367,9 +1371,9 @@ test('setECHO10Collection updates echo10 collection name and version', async (t)
 
 test('updateCmrFileCollections updates Echo10Files when missing', (t) => {
   const cmrObject = {};
-  const updated = setECHO10Collection(cmrObject, { name: 'a', version: 'b' });
-  t.is(updated.Granule.Collection.ShortName, 'a');
-  t.is(updated.Granule.Collection.VersionId, 'b');
+  t.throws(() => setECHO10Collection(cmrObject), {
+    message: 'invalid ECHO10 cmr metadata {}, must have granule tag',
+  });
 });
 
 test('updateCmrFileCollections updates umm meta file', (t) => {

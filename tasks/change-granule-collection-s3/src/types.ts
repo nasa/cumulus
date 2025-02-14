@@ -38,7 +38,8 @@ export type ChangeCollectionsS3Event = {
 
 export type ValidApiFile = {
   bucket: string,
-  key: string
+  key: string,
+  fileName: string,
 } & ApiFile;
 
 export type ValidApiGranuleFile = Omit<ValidApiFile, 'granuleId'>;
