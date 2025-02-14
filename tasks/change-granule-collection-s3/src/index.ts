@@ -4,7 +4,6 @@ import { Context } from 'aws-lambda';
 import get from 'lodash/get';
 import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
-import noop from 'lodash/noop';
 import { AssertionError } from 'assert';
 import flatten from 'lodash/flatten';
 import pRetry from 'p-retry';
@@ -21,7 +20,7 @@ import {
 } from '@cumulus/cmrjs';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { s3 } from '@cumulus/aws-client/services';
-import { BucketsConfig } from '@cumulus/common';
+import { BucketsConfig, log } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { getCollection } from '@cumulus/api-client/collections';
@@ -29,7 +28,6 @@ import { getGranule } from '@cumulus/api-client/granules';
 import { CollectionRecord, CollectionFile } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-import { log } from '@cumulus/common';
 import { calculateObjectHash, copyObject, s3Join, s3ObjectExists } from '@cumulus/aws-client/S3';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
 import { getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
@@ -252,19 +250,17 @@ async function copyGranulesInS3({
 }): Promise<void> {
   const sourceGranulesById = keyBy(sourceGranules, 'granuleId');
 
-  const copyOperations = flatten(await Promise.all(
-    targetGranules.map(
-      async (targetGranule) => {
+  const copyOperations = flatten(targetGranules.map(
+      (targetGranule) => {
         const sourceGranule = sourceGranulesById[targetGranule.granuleId];
         if (!sourceGranule) {
           throw new AssertionError({ message: 'no source granule for your target granule by ID' });
         }
         if (!sourceGranule.files || !targetGranule.files) {
-          // this needs to be callable for later pmap, but do nothing
-          return noop;
+          return [];
         }
         const sourceFilesByFileName = keyBy(sourceGranule.files, 'fileName');
-        return Promise.all(targetGranule.files.map(async (targetFile) => {
+        return targetGranule.files.map((targetFile) => {
           const sourceFile = sourceFilesByFileName[targetFile.fileName];
           if (!sourceFile) {
             throw new AssertionError({
@@ -277,10 +273,10 @@ async function copyGranulesInS3({
             cmrObject: cmrObjects[targetGranule.granuleId],
             s3MultipartChunksizeMb,
           });
-        }));
+        });
       }
     )
-  ));
+  );
   await pMap(
     copyOperations,
     (operation) => operation(),
