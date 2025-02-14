@@ -108,17 +108,41 @@ export async function s3CopyNeeded(
   if (objectSourceAndTargetSame(sourceFile, targetFile)) {
     return false;
   }
-  const [
-    targetExists,
-    sourceExists,
-  ] = await Promise.all([
+
+  const [targetExists, sourceExists] = await Promise.all([
     pRetry(
-      async () => s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
-      { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
+      async () =>
+        s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
+      {
+        retries: 3,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(
+            `Error when checking for object ${{
+              Bucket: targetFile.bucket,
+              Key: targetFile.key,
+            }} :: ${error}, retrying`
+          );
+        },
+      }
     ),
     pRetry(
-      async () => s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
-      { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
+      async () =>
+        s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
+      {
+        retries: 3,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(
+            `Error when checking for object ${{
+              Bucket: sourceFile.bucket,
+              Key: sourceFile.key,
+            }} :: ${error}, retrying`
+          );
+        },
+      }
     ),
   ]);
   //this is the normal happy path
@@ -180,13 +204,23 @@ async function cmrFileCollision(
   if (objectSourceAndTargetSame(sourceFile, targetFile)) {
     return false;
   }
-  if (!await pRetry(
-    () => s3ObjectExists({
-      Bucket: targetFile.bucket,
-      Key: targetFile.key,
-    }),
-    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-  )) {
+  if (
+    !(await pRetry(
+      () =>
+        s3ObjectExists({
+          Bucket: targetFile.bucket,
+          Key: targetFile.key,
+        }),
+      {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(`failed attempt to check for target collision when moving CMR file ${targetFile.bucket}/${targetFile.key} :: ${error}, retrying`);
+        },
+      }
+    ))
+  ) {
     return false;
   }
   if (!await metadataCollisionsMatch(targetFile, cmrObject)) {
@@ -212,23 +246,39 @@ async function copyFileInS3({
   if (isCMRMetadataFile(targetFile)) {
     if (!(await cmrFileCollision(sourceFile, targetFile, cmrObject))) {
       const metadataString = CMRObjectToString(targetFile, cmrObject);
-      await pRetry(
-        () => uploadCMRFile(targetFile, metadataString),
-        { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-      );
+      await pRetry(() => uploadCMRFile(targetFile, metadataString), {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(
+            `failed attempt to check for target collision when moving CMR file ${targetFile.bucket}/${targetFile.key} ::  ${error}, retrying`
+          );
+        },
+      });
     }
     return;
   }
   if (await s3CopyNeeded(sourceFile, targetFile)) {
     await pRetry(
-      () => copyObject({
-        sourceBucket: sourceFile.bucket,
-        sourceKey: sourceFile.key,
-        destinationBucket: targetFile.bucket,
-        destinationKey: targetFile.key,
-        chunkSize: s3MultipartChunksizeMb,
-      }),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      () =>
+        copyObject({
+          sourceBucket: sourceFile.bucket,
+          sourceKey: sourceFile.key,
+          destinationBucket: targetFile.bucket,
+          destinationKey: targetFile.key,
+          chunkSize: s3MultipartChunksizeMb,
+        }),
+      {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(
+            `Error when copying object ${sourceFile.bucket}/${sourceFile.key} to target ${targetFile.bucket}/${targetFile.key} ::  ${error}, retrying`
+          );
+        },
+      }
     );
   }
 }
@@ -251,32 +301,31 @@ async function copyGranulesInS3({
   const sourceGranulesById = keyBy(sourceGranules, 'granuleId');
 
   const copyOperations = flatten(targetGranules.map(
-      (targetGranule) => {
-        const sourceGranule = sourceGranulesById[targetGranule.granuleId];
-        if (!sourceGranule) {
-          throw new AssertionError({ message: 'no source granule for your target granule by ID' });
-        }
-        if (!sourceGranule.files || !targetGranule.files) {
-          return [];
-        }
-        const sourceFilesByFileName = keyBy(sourceGranule.files, 'fileName');
-        return targetGranule.files.map((targetFile) => {
-          const sourceFile = sourceFilesByFileName[targetFile.fileName];
-          if (!sourceFile) {
-            throw new AssertionError({
-              message: 'size mismatch between target and source granule files',
-            });
-          }
-          return () => copyFileInS3({
-            sourceFile,
-            targetFile,
-            cmrObject: cmrObjects[targetGranule.granuleId],
-            s3MultipartChunksizeMb,
-          });
-        });
+    (targetGranule) => {
+      const sourceGranule = sourceGranulesById[targetGranule.granuleId];
+      if (!sourceGranule) {
+        throw new AssertionError({ message: 'no source granule for your target granule by ID' });
       }
-    )
-  );
+      if (!sourceGranule.files || !targetGranule.files) {
+        return [];
+      }
+      const sourceFilesByFileName = keyBy(sourceGranule.files, 'fileName');
+      return targetGranule.files.map((targetFile) => {
+        const sourceFile = sourceFilesByFileName[targetFile.fileName];
+        if (!sourceFile) {
+          throw new AssertionError({
+            message: 'size mismatch between target and source granule files',
+          });
+        }
+        return () => copyFileInS3({
+          sourceFile,
+          targetFile,
+          cmrObject: cmrObjects[targetGranule.granuleId],
+          s3MultipartChunksizeMb,
+        });
+      });
+    }
+  ));
   await pMap(
     copyOperations,
     (operation) => operation(),
@@ -486,8 +535,18 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
   const cmrObjectsByGranuleId: { [granuleId: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
     cmrObjectsByGranuleId[cmrFile.granuleId] = await pRetry(
-      async () => metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      async () =>
+        metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
+      {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(
+            `Error on reading CMR object ${cmrFile.bucket}/${cmrFile.key} :: ${error}, retrying`
+          );
+        },
+      }
     );
   }));
   return {
