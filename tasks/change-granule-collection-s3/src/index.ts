@@ -6,7 +6,6 @@ import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
 import noop from 'lodash/noop';
 import { AssertionError } from 'assert';
-import zip from 'lodash/zip';
 import flatten from 'lodash/flatten';
 import pRetry from 'p-retry';
 import path from 'path';
@@ -18,7 +17,6 @@ import {
 } from '@cumulus/ingest/granule';
 import {
   isCMRFile,
-  granulesToCmrFileObjects,
   metadataObjectFromCMRFile,
 } from '@cumulus/cmrjs';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
@@ -34,15 +32,15 @@ import { getRequiredEnvVar } from '@cumulus/common/env';
 import { log } from '@cumulus/common';
 import { calculateObjectHash, copyObject, s3Join, s3ObjectExists } from '@cumulus/aws-client/S3';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
-import { ApiFile, getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
+import { getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
 import {
   MB,
   EventConfig,
   ChangeCollectionsS3Event,
-  ValidApiFile,
   ValidApiGranuleFile,
   ValidGranuleRecord,
   MassagedEventConfig,
+  ValidApiFile,
 } from './types';
 import {
   apiFileIsValid,
@@ -185,12 +183,12 @@ async function cmrFileCollision(
     return false;
   }
   if (!await pRetry(
-      () => s3ObjectExists({
-        Bucket: targetFile.bucket,
-        Key: targetFile.key,
-      }),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-    )) {
+    () => s3ObjectExists({
+      Bucket: targetFile.bucket,
+      Key: targetFile.key,
+    }),
+    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+  )) {
     return false;
   }
   if (!await metadataCollisionsMatch(targetFile, cmrObject)) {
@@ -252,30 +250,34 @@ async function copyGranulesInS3({
   cmrObjects: { [granuleId: string]: Object },
   s3MultipartChunksizeMb?: number,
 }): Promise<void> {
+  const sourceGranulesById = keyBy(sourceGranules, 'granuleId');
+
   const copyOperations = flatten(await Promise.all(
-    zip(sourceGranules, targetGranules).map(
-      async ([sourceGranule, targetGranule]) => {
-        if (!sourceGranule || !targetGranule) {
-          throw new AssertionError({ message: 'size mismatch between target and source granules' });
+    targetGranules.map(
+      async (targetGranule) => {
+        const sourceGranule = sourceGranulesById[targetGranule.granuleId];
+        if (!sourceGranule) {
+          throw new AssertionError({ message: 'no source granule for your target granule by ID' });
         }
-        if (!sourceGranule.files || !sourceGranule.files) {
+        if (!sourceGranule.files || !targetGranule.files) {
           // this needs to be callable for later pmap, but do nothing
           return noop;
         }
-        return Promise.all(zip(sourceGranule.files, targetGranule.files)
-          .map(async ([sourceFile, targetFile]) => {
-            if (!(sourceFile && targetFile)) {
-              throw new AssertionError({
-                message: 'size mismatch between target and source granule files',
-              });
-            }
-            return () => copyFileInS3({
-              sourceFile,
-              targetFile,
-              cmrObject: cmrObjects[targetGranule.granuleId],
-              s3MultipartChunksizeMb,
+        const sourceFilesByFileName = keyBy(sourceGranule.files, 'fileName');
+        return Promise.all(targetGranule.files.map(async (targetFile) => {
+          const sourceFile = sourceFilesByFileName[targetFile.fileName];
+          if (!sourceFile) {
+            throw new AssertionError({
+              message: 'size mismatch between target and source granule files',
             });
-          }));
+          }
+          return () => copyFileInS3({
+            sourceFile,
+            targetFile,
+            cmrObject: cmrObjects[targetGranule.granuleId],
+            s3MultipartChunksizeMb,
+          });
+        }));
       }
     )
   ));
@@ -467,6 +469,40 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
   };
 }
 
+async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promise<{
+  cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
+  cmrObjectsByGranuleId: { [granuleId: string]: Object },
+}> {
+  const unValidatedCMRFiles = granules.flatMap((granule) => {
+    if (!granule.files) {
+      return [];
+    }
+    return granule.files?.filter(isCMRFile).map((file) => ({
+      ...file,
+      granuleId: granule.granuleId,
+    }));
+  });
+  const cmrFiles = unValidatedCMRFiles.map((unvalidatedFile) => {
+    if (apiFileIsValid(unvalidatedFile)) {
+      return unvalidatedFile;
+    }
+    throw new AssertionError({ message: "getting here with an invalid file shouldn't have been possible" });
+  });
+
+  const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
+  const cmrObjectsByGranuleId: { [granuleId: string]: Object } = {};
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    cmrObjectsByGranuleId[cmrFile.granuleId] = await pRetry(
+      async () => metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
+      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+    );
+  }));
+  return {
+    cmrFilesByGranuleId,
+    cmrObjectsByGranuleId,
+  };
+}
+
 async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promise<{
   oldGranules: Array<ValidGranuleRecord>,
   granules: Array<ValidGranuleRecord>
@@ -477,25 +513,10 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     config
   );
   log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}`);
-
-  const unValidatedCMRFiles = granulesToCmrFileObjects(
-    sourceGranules,
-    isCMRFile
-  ) as ApiFile[];
-  const cmrFiles = unValidatedCMRFiles.map((unvalidatedFile) => {
-    if (apiFileIsValid(unvalidatedFile)) {
-      return unvalidatedFile;
-    }
-    throw new AssertionError({ message: "getting here with an invalid file shouldn't have been possible" });
-  });
-  const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
-  const firstCMRObjectsByGranuleId: { [granuleId: string]: Object } = {};
-  await Promise.all(cmrFiles.map(async (cmrFile) => {
-    firstCMRObjectsByGranuleId[cmrFile.granuleId] = await pRetry(
-      async () => metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-    );
-  }));
+  const {
+    cmrFilesByGranuleId,
+    cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,
+  } = await getCMRObjectsByFileId(sourceGranules);
 
   // by using sourceGranules here we update *just* the collection
   // this is because we need that to parse the target file location
