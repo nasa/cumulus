@@ -120,8 +120,8 @@ export async function s3CopyNeeded(
         onFailedAttempt: (error) => {
           log.warn(
             `Error when checking for object ${{
-              Bucket: targetFile.bucket,
-              Key: targetFile.key,
+              Bucket: targetFile?.bucket,
+              Key: targetFile?.key,
             }} :: ${error}, retrying`
           );
         },
@@ -137,8 +137,8 @@ export async function s3CopyNeeded(
         onFailedAttempt: (error) => {
           log.warn(
             `Error when checking for object ${{
-              Bucket: sourceFile.bucket,
-              Key: sourceFile.key,
+              Bucket: sourceFile?.bucket,
+              Key: sourceFile?.key,
             }} :: ${error}, retrying`
           );
         },
@@ -157,12 +157,12 @@ export async function s3CopyNeeded(
       return false;
     }
     throw new DuplicateFile(
-      `file Bucket: ${targetFile.bucket}, Key: ${targetFile.key} already exists.` +
+      `file Bucket: ${targetFile?.bucket}, Key: ${targetFile?.key} already exists.` +
       'cannot copy over without deleting existing data'
     );
   }
   log.warn(
-    `source location Bucket: ${sourceFile.bucket}, Key: ${sourceFile.key}` +
+    `source location Bucket: ${sourceFile?.bucket}, Key: ${sourceFile?.key}` +
     "doesn't exist, has this file already been moved?"
   );
   return false;
@@ -216,7 +216,7 @@ async function cmrFileCollision(
         minTimeout: 2000,
         maxTimeout: 2000,
         onFailedAttempt: (error) => {
-          log.warn(`failed attempt to check for target collision when moving CMR file ${targetFile.bucket}/${targetFile.key} :: ${error}, retrying`);
+          log.warn(`failed attempt to check for target collision when moving CMR file ${targetFile?.bucket}/${targetFile?.key} :: ${error}, retrying`);
         },
       }
     ))
@@ -225,7 +225,7 @@ async function cmrFileCollision(
   }
   if (!await metadataCollisionsMatch(targetFile, cmrObject)) {
     throw new DuplicateFile(
-      `metadata file Bucket: ${targetFile.bucket}, Key: ${targetFile.key} already exists.` +
+      `metadata file Bucket: ${targetFile?.bucket}, Key: ${targetFile?.key} already exists.` +
       'and does not appear to belong to the collection being moved'
     );
   }
@@ -252,7 +252,7 @@ async function copyFileInS3({
         maxTimeout: 2000,
         onFailedAttempt: (error) => {
           log.warn(
-            `failed attempt to check for target collision when moving CMR file ${targetFile.bucket}/${targetFile.key} ::  ${error}, retrying`
+            `failed attempt to check for target collision when moving CMR file ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
           );
         },
       });
@@ -275,7 +275,7 @@ async function copyFileInS3({
         maxTimeout: 2000,
         onFailedAttempt: (error) => {
           log.warn(
-            `Error when copying object ${sourceFile.bucket}/${sourceFile.key} to target ${targetFile.bucket}/${targetFile.key} ::  ${error}, retrying`
+            `Error when copying object ${sourceFile?.bucket}/${sourceFile?.key} to target ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
           );
         },
       }
@@ -475,7 +475,7 @@ async function getAndValidateGranules(
       try {
         return validateApiGranuleRecord(granule);
       } catch (error) {
-        log.warn(`invalid granule ${granule.granuleId} skipped because ${error}`);
+        log.warn(`invalid granule ${granule?.granuleId} skipped because ${error}`);
         return undefined;
       }
     }).filter(Boolean) as Array<ValidGranuleRecord>;
@@ -484,7 +484,7 @@ async function getAndValidateGranules(
       try {
         return validateApiGranuleRecord(granule);
       } catch (error) {
-        log.warn(`invalid granule ${granule.granuleId} skipped because ${error}`);
+        log.warn(`invalid granule ${granule?.granuleId} skipped because ${error}`);
         throw error;
       }
     });
@@ -543,7 +543,7 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
         maxTimeout: 2000,
         onFailedAttempt: (error) => {
           log.warn(
-            `Error on reading CMR object ${cmrFile.bucket}/${cmrFile.key} :: ${error}, retrying`
+            `Error on reading CMR object ${cmrFile?.bucket}/${cmrFile?.key} :: ${error}, retrying`
           );
         },
       }
