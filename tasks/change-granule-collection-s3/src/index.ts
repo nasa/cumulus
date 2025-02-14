@@ -345,7 +345,7 @@ function updateGranuleMetadata(
 }
 
 /**
- * Update the cmr objects to contain data adherant to the target granules they reflect
+ * Update the cmr objects to contain data adherent to the target granules they reflect
  */
 export async function updateCMRData(
   targetGranules: Array<ValidGranuleRecord>,
