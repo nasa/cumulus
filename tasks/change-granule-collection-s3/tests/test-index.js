@@ -14,6 +14,7 @@ const {
   putJsonS3Object,
   s3ObjectExists,
   promiseS3Upload,
+  getTextObject,
 } = require('@cumulus/aws-client/S3');
 const {
   randomId, validateOutput,
@@ -145,6 +146,16 @@ test.serial('changeGranuleCollectionS3 should copy files to final location with 
     `s3://${t.context.protectedBucket}/file-staging/subdir/` +
     'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
   );
+
+  await Promise.all(output.granules.map((gran) => Promise.all(gran.files.map(async (file) => {
+    // cmrFiles don't follow the same pattern, and will be content tested below
+    if (!isCMRFile(file)) {
+      // non-cmr files have been filled with their own name to confirm that they've been moved
+      // correctly and not mixed around. fileName remains constant in moving
+      t.assert(await getTextObject(file.bucket, file.key) === file.fileName);
+    }
+  }))));
+
   t.deepEqual(metadata, {
     ...oldMetadata,
     Granule: {
@@ -246,6 +257,14 @@ test.serial('changeGranuleCollectionS3 should copy files to final location with 
     Bucket: t.context.publicBucket,
     Key: 'example2/2016/MOD11A1.A2017200.h19v04.006.2017201090725.ummg.cmr.json',
   }));
+  await Promise.all(output.granules.map((gran) => Promise.all(gran.files.map(async (file) => {
+    // cmrFiles don't follow the same pattern, and will be content tested below
+    if (!isCMRFile(file)) {
+      // non-cmr files have been filled with their own name to confirm that they've been moved
+      // correctly and not mixed around. fileName remains constant in moving
+      t.assert(await getTextObject(file.bucket, file.key) === file.fileName);
+    }
+  }))));
 
   const oldMetadata = await metadataObjectFromCMRFile(
     `s3://${t.context.protectedBucket}/file-staging/subdir/` +

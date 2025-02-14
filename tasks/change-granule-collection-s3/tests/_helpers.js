@@ -16,15 +16,15 @@ const { constructCollectionId } = require('../../../packages/message/Collections
 async function uploadFiles(files) {
   await Promise.all(files?.map((file) => {
     let body;
+    const parsedFile = parseS3Uri(file);
     if (isECHO10Filename(file)) {
       body = fs.createReadStream('tests/data/meta.cmr.xml');
     } else if (isUMMGFilename(file)) {
       body = fs.createReadStream('tests/data/ummg-meta.cmr.json');
     } else {
-      body = 'abc';
+      body = parsedFile.Key.split('/').pop();
     }
-    const parsedFile = parseS3Uri(file);
-    if (parsedFile.Bucket !== 'undefined' && parsedFile.Key !== 'undefindd') {
+    if (parsedFile.Bucket !== 'undefined' && parsedFile.Key !== 'undefined') {
       return promiseS3Upload({
         params: {
           ...parsedFile,
