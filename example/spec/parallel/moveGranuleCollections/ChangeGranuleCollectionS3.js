@@ -63,9 +63,9 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
       const inputPayloadFilename = './data/payloads/IngestGranule.input.payload.json';
       const providersDir = './data/providers/s3/';
       const s3data = [
-        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
+        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104607.hdf.met',
+        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104607.hdf',
+        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104607_ndvi.jpg',
       ];
 
       const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
