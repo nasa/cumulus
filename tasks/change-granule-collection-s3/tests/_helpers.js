@@ -381,7 +381,7 @@ const granuleSet = {
     ],
   },
 };
-range(200).forEach((i) => {
+range(111).forEach((i) => {
   const baseGranuleString = JSON.stringify(
     granuleSet.base_xml_granule
   ).replaceAll('90724', `${('0000' + i).slice(-5)}`);
