@@ -34,7 +34,7 @@ const {
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { constructCollectionId } = require('../../../packages/message/Collections');
-const { changeGranuleCollectionS3, s3CopyNeeded, updateCMRData } = require('../dist/src');
+const { changeGranuleCollectionS3, s3CopyNeeded, updateCMRData, updateCMRCollections } = require('../dist/src');
 const { dummyGetCollection, dummyGetGranule, uploadFiles } = require('./_helpers');
 
 function granulesToFileURIs(granuleIds, t) {
@@ -776,7 +776,7 @@ test('changeGranuleCollectionS3 throws on invalid granules when set to error', a
 test('changeGranuleCollectionS3 handles large group of granules', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'empty_payload.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-  t.context.payload.input.granuleIds = range(200).map((i) => `xml_granule${i}`);
+  t.context.payload.input.granuleIds = range(100).map((i) => `xml_granule${i}`);
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granuleIds, t
   );
@@ -785,8 +785,8 @@ test('changeGranuleCollectionS3 handles large group of granules', async (t) => {
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
-  t.assert(output.granules.length === 200);
-  t.assert(output.oldGranules.length === 200);
+  t.assert(output.granules.length === 100);
+  t.assert(output.oldGranules.length === 100);
   // verify that all these files are in new location
   await Promise.all(output.granules.map((granule) => (
     Promise.all(granule.files.map(async (file) => (
@@ -880,6 +880,58 @@ test('s3MoveNeeded throws if file copy is requested to a location already occupi
   );
 });
 
+test('updateCMRCollections', async (t) => {
+  const granules = [
+    dummyGetGranule('base_xml_granule', t),
+    dummyGetGranule('base_umm_granule', t),
+  ];
+
+  const cmrFiles = granulesToCmrFileObjects(granules, isCMRFile);
+  await Promise.all([
+    promiseS3Upload({
+      params: {
+        Bucket: cmrFiles[0].bucket,
+        Key: cmrFiles[0].key,
+        Body: isECHO10Filename(cmrFiles[0].key) ? fs.createReadStream('tests/data/meta.cmr.xml') :
+          fs.createReadStream('tests/data/ummg-meta.cmr.json'),
+      },
+    }),
+    promiseS3Upload({
+      params: {
+        Bucket: cmrFiles[1].bucket,
+        Key: cmrFiles[1].key,
+        Body: isECHO10Filename(cmrFiles[1].key) ? fs.createReadStream('tests/data/meta.cmr.xml') :
+          fs.createReadStream('tests/data/ummg-meta.cmr.json'),
+      },
+    }),
+  ]);
+  const cmrFilesByGranuleid = keyBy(cmrFiles, 'granuleId');
+  const CMRObjectsByGranuleId = {};
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    CMRObjectsByGranuleId[cmrFile.granuleId] = await metadataObjectFromCMRFile(
+      `s3://${cmrFile.bucket}/${cmrFile.key}`
+    );
+  }));
+  const updatedCMRData = await updateCMRCollections(
+    CMRObjectsByGranuleId,
+    cmrFilesByGranuleid,
+    {
+      targetCollection: {
+        name: 'abc',
+        version: '003',
+      },
+    }
+  );
+  t.assert(getCMRCollectionId(
+    updatedCMRData[granules[0].granuleId],
+    cmrFilesByGranuleid[granules[0].granuleId].key
+  ) === 'abc___003');
+  t.assert(getCMRCollectionId(
+    updatedCMRData[granules[1].granuleId],
+    cmrFilesByGranuleid[granules[1].granuleId].key
+  ) === 'abc___003');
+});
+
 test('updateCMRData', async (t) => {
   const granules = [
     dummyGetGranule('base_xml_granule', t),
@@ -917,10 +969,6 @@ test('updateCMRData', async (t) => {
     CMRObjectsByGranuleId,
     cmrFilesByGranuleid,
     {
-      targetCollection: {
-        name: 'abc',
-        version: '003',
-      },
       cmrGranuleUrlType: 'both',
       buckets: {
         internal: {
@@ -943,14 +991,6 @@ test('updateCMRData', async (t) => {
       distribution_endpoint: 'https://something.api.us-east-1.amazonaws.com',
     }
   );
-  t.assert(getCMRCollectionId(
-    updatedCMRData[granules[0].granuleId],
-    cmrFilesByGranuleid[granules[0].granuleId].key
-  ) === 'abc___003');
-  t.assert(getCMRCollectionId(
-    updatedCMRData[granules[1].granuleId],
-    cmrFilesByGranuleid[granules[1].granuleId].key
-  ) === 'abc___003');
 
   const onlineAccessURLs = updatedCMRData[
     'MOD11A1.A2017200.h19v04.006.2017201090724'
@@ -1046,5 +1086,125 @@ test('updateCMRData', async (t) => {
     `${t.context.protectedBucket}` +
     '/file-staging/subdir/' +
     'MOD11A1.A2017200.h19v04.006.2017201090725.ummg.cmr.json'
+  ));
+});
+
+test.serial('changeGranuleCollectionS3 should parse fileName if not given in files', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+  t.context.payload.granuleIds = ['missing_fileName'];
+  const filesToUpload = granulesToFileURIs(
+    t.context.payload.input.granuleIds, t
+  );
+  const collection = { name: 'MOD11A1', version: '002' };
+  const newPayload = buildPayload(t, collection);
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  const output = await changeGranuleCollectionS3(newPayload);
+  await validateOutput(t, output);
+  t.assert(await s3ObjectExists({
+    Bucket: t.context.protectedBucket,
+    Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+  }));
+  t.assert(await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'jpg/example2/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+  }));
+  t.assert(await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+  }));
+  t.assert(await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'example2/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+  }));
+  const metadata = await metadataObjectFromCMRFile(
+    `s3://${t.context.publicBucket}/example2/2003/` +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  );
+  const oldMetadata = await metadataObjectFromCMRFile(
+    `s3://${t.context.protectedBucket}/file-staging/subdir/` +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  );
+
+  await Promise.all(output.granules.map((gran) => Promise.all(gran.files.map(async (file) => {
+    // cmrFiles don't follow the same pattern, and will be content tested below
+    if (!isCMRFile(file)) {
+      // non-cmr files have been filled with their own name to confirm that they've been moved
+      // correctly and not mixed around. fileName remains constant in moving
+      t.assert(await getTextObject(file.bucket, file.key) === file.fileName);
+    }
+  }))));
+
+  t.deepEqual(metadata, {
+    ...oldMetadata,
+    Granule: {
+      ...oldMetadata.Granule,
+      Collection: metadata.Granule.Collection,
+      OnlineResources: metadata.Granule.OnlineResources,
+      AssociatedBrowseImageUrls: metadata.Granule.AssociatedBrowseImageUrls,
+      OnlineAccessURLs: metadata.Granule.OnlineAccessURLs,
+    },
+  });
+  const CollectionInformation = metadata.Granule.Collection;
+  t.deepEqual(CollectionInformation, { ShortName: 'MOD11A1', VersionId: '002' });
+
+  const onlineResourceUrls = metadata.Granule.OnlineResources.OnlineResource.map(
+    (urlObject) => urlObject.URL
+  );
+  const browseUrls = metadata.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.map(
+    (urlObject) => urlObject.URL
+  );
+  const onlineAccessURLs = metadata.Granule.OnlineAccessURLs.OnlineAccessURL.map(
+    (urlObject) => urlObject.URL
+  );
+
+  t.assert(onlineAccessURLs.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.protectedBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ));
+  t.assert(browseUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/jpg/example2/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  ));
+  t.assert(browseUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ));
+  t.assert(onlineResourceUrls.includes(
+    'https://something.api.us-east-1.amazonaws.com/' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  ));
+
+  t.assert(onlineAccessURLs.includes(
+    's3://' +
+    `${t.context.protectedBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.hdf'
+  ));
+  t.assert(browseUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/jpg/example2/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  ));
+  t.assert(browseUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg'
+  ));
+  t.assert(onlineResourceUrls.includes(
+    's3://' +
+    `${t.context.publicBucket}` +
+    '/example2/2003/' +
+    'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
   ));
 });

@@ -32,8 +32,8 @@ Output object fields:
 
 | field name | type | description |
 | ---------- | ---- | ----------- |
-granules | array\<object\> | List of granule objects with updated S3 location information |
-oldGranules | array\<object\> | List of original granules with original state |
+| granules | array\<object\> | List of granule objects with updated S3 location information |
+| oldGranules | array\<object\> | List of original granules with original state |
 
 ## About Cumulus
 

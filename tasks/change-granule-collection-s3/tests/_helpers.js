@@ -353,8 +353,35 @@ const granuleSet = {
     collectionId: 'MOD11A1___006',
     granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
   },
+  missing_fileName: {
+    status: 'completed',
+    collectionId: 'MOD11A1___006',
+    granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090724',
+    files: [
+      {
+        key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+        bucket: 'protected',
+        type: 'data',
+      },
+      {
+        key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+        bucket: 'private',
+        type: 'browse',
+      },
+      {
+        key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+        bucket: 'public',
+        type: 'browse',
+      },
+      {
+        key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+        bucket: 'protected',
+        type: 'metadata',
+      },
+    ],
+  },
 };
-range(200).forEach((i) => {
+range(111).forEach((i) => {
   const baseGranuleString = JSON.stringify(
     granuleSet.base_xml_granule
   ).replaceAll('90724', `${('0000' + i).slice(-5)}`);

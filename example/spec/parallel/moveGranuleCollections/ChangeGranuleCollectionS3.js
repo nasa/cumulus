@@ -17,11 +17,16 @@ const {
   createGranule,
   getGranule,
   deleteGranule,
-  removePublishedGranule,
 } = require('@cumulus/api-client/granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
-const { loadConfig, createTimestampedTestId, createTestSuffix, uploadTestDataToBucket } = require('../../helpers/testUtils');
+const {
+  loadConfig,
+  createTimestampedTestId,
+  createTestSuffix,
+  uploadTestDataToBucket,
+  deleteFolder,
+} = require('../../helpers/testUtils');
 
 describe('when ChangeGranuleCollectionS3 is called', () => {
   let testSetupFailed;
@@ -33,39 +38,31 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
   let finalFiles;
   let collection;
   let targetCollection;
-  let cleanupCollectionId;
-  afterAll(async () => {
-    try {
-      await removePublishedGranule({
-        prefix: config.stackName,
-        granuleId,
-        collectionId: cleanupCollectionId,
-      });
-      let cleanup = finalFiles.map((fileObj) => deleteS3Object(
-        fileObj.bucket,
-        fileObj.key
-      ));
-      cleanup.concat(startingFiles.map((fileObj) => deleteS3Object(
-        fileObj.bucket,
-        fileObj.key
-      )));
-      cleanup = cleanup.concat([
-        deleteGranule({ prefix: config.stackName, granuleId: granuleId }),
-      ]);
+  let sourceGranulePath;
+  let granuleObject;
 
-      await Promise.all(cleanup);
-    } catch (error) {
-      console.log('cleanup failed with error', error);
-    }
+  afterAll(async () => {
+    // Remove all the setup data - all keys at s3://${config.bucket}/sourceGranulePath
+    let cleanup = [];
+    cleanup.concat([
+      Promise.all(granuleObject.body.files.map((file) => deleteS3Object(file.bucket, file.key))),
+    ]);
+    cleanup.concat([
+      deleteFolder(config.bucket, sourceGranulePath),
+    ]);
+    cleanup = cleanup.concat([
+      deleteGranule({ prefix: config.stackName, granuleId: granuleId }),
+    ]);
+    await Promise.all(cleanup);
   });
   beforeAll(async () => {
     try {
       const inputPayloadFilename = './data/payloads/IngestGranule.input.payload.json';
       const providersDir = './data/providers/s3/';
       const s3data = [
-        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
+        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104607.hdf.met',
+        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104607.hdf',
+        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104607_ndvi.jpg',
       ];
 
       const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
@@ -78,7 +75,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
       targetCollection = { name: `MOD09GQ${testSuffix}`, version: '007' };
-      const sourceGranulePath = `${stackName}/${testSuffix}/${testId}/`;
+      sourceGranulePath = `${stackName}/${testSuffix}/${testId}`;
 
       // populate collections, providers and test data
       await Promise.all([
@@ -102,7 +99,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
       granuleId = inputPayload.granules[0].granuleId;
 
       // Write granule to DB via API
-      const granuleObject = {
+      granuleObject = {
         prefix: stackName,
         body: {
           ...(pick(inputPayload.granules[0], ['granuleId', 'files'])),

@@ -4,14 +4,13 @@ import { Context } from 'aws-lambda';
 import get from 'lodash/get';
 import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
-import noop from 'lodash/noop';
 import { AssertionError } from 'assert';
 import flatten from 'lodash/flatten';
 import pRetry from 'p-retry';
 import path from 'path';
 import pMap from 'p-map';
 
-import { InvalidArgument, DuplicateFile, ValidationError } from '@cumulus/errors';
+import { InvalidArgument, DuplicateFile } from '@cumulus/errors';
 import {
   unversionFilename,
 } from '@cumulus/ingest/granule';
@@ -21,7 +20,7 @@ import {
 } from '@cumulus/cmrjs';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { s3 } from '@cumulus/aws-client/services';
-import { BucketsConfig } from '@cumulus/common';
+import { BucketsConfig, log } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { getCollection } from '@cumulus/api-client/collections';
@@ -29,7 +28,6 @@ import { getGranule } from '@cumulus/api-client/granules';
 import { CollectionRecord, CollectionFile } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-import { log } from '@cumulus/common';
 import { calculateObjectHash, copyObject, s3Join, s3ObjectExists } from '@cumulus/aws-client/S3';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
 import { getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
@@ -43,12 +41,13 @@ import {
   ValidApiFile,
 } from './types';
 import {
-  apiFileIsValid,
-  apiGranuleRecordIsValid,
+  validateApiGranuleRecord,
   CMRObjectToString,
   isCMRMetadataFile,
-  updateCmrFileCollections,
+  updateCmrFileCollection,
+  updateCmrFileLinks,
   uploadCMRFile,
+  validateApiFile,
 } from './update_cmr_file_collection';
 
 /**
@@ -110,17 +109,41 @@ export async function s3CopyNeeded(
   if (objectSourceAndTargetSame(sourceFile, targetFile)) {
     return false;
   }
-  const [
-    targetExists,
-    sourceExists,
-  ] = await Promise.all([
+
+  const [targetExists, sourceExists] = await Promise.all([
     pRetry(
-      async () => s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
-      { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
+      async () =>
+        s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
+      {
+        retries: 3,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(
+            `Error when checking for object ${{
+              Bucket: targetFile?.bucket,
+              Key: targetFile?.key,
+            }} :: ${error}, retrying`
+          );
+        },
+      }
     ),
     pRetry(
-      async () => s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
-      { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
+      async () =>
+        s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
+      {
+        retries: 3,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(
+            `Error when checking for object ${{
+              Bucket: sourceFile?.bucket,
+              Key: sourceFile?.key,
+            }} :: ${error}, retrying`
+          );
+        },
+      }
     ),
   ]);
   //this is the normal happy path
@@ -135,12 +158,12 @@ export async function s3CopyNeeded(
       return false;
     }
     throw new DuplicateFile(
-      `file Bucket: ${targetFile.bucket}, Key: ${targetFile.key} already exists.` +
+      `file Bucket: ${targetFile?.bucket}, Key: ${targetFile?.key} already exists.` +
       'cannot copy over without deleting existing data'
     );
   }
   log.warn(
-    `source location Bucket: ${sourceFile.bucket}, Key: ${sourceFile.key}` +
+    `source location Bucket: ${sourceFile?.bucket}, Key: ${sourceFile?.key}` +
     "doesn't exist, has this file already been moved?"
   );
   return false;
@@ -182,18 +205,28 @@ async function cmrFileCollision(
   if (objectSourceAndTargetSame(sourceFile, targetFile)) {
     return false;
   }
-  if (!await pRetry(
-    () => s3ObjectExists({
-      Bucket: targetFile.bucket,
-      Key: targetFile.key,
-    }),
-    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-  )) {
+  if (
+    !(await pRetry(
+      () =>
+        s3ObjectExists({
+          Bucket: targetFile.bucket,
+          Key: targetFile.key,
+        }),
+      {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(`failed attempt to check for target collision when moving CMR file ${targetFile?.bucket}/${targetFile?.key} :: ${error}, retrying`);
+        },
+      }
+    ))
+  ) {
     return false;
   }
   if (!await metadataCollisionsMatch(targetFile, cmrObject)) {
     throw new DuplicateFile(
-      `metadata file Bucket: ${targetFile.bucket}, Key: ${targetFile.key} already exists.` +
+      `metadata file Bucket: ${targetFile?.bucket}, Key: ${targetFile?.key} already exists.` +
       'and does not appear to belong to the collection being moved'
     );
   }
@@ -214,23 +247,39 @@ async function copyFileInS3({
   if (isCMRMetadataFile(targetFile)) {
     if (!(await cmrFileCollision(sourceFile, targetFile, cmrObject))) {
       const metadataString = CMRObjectToString(targetFile, cmrObject);
-      await pRetry(
-        () => uploadCMRFile(targetFile, metadataString),
-        { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-      );
+      await pRetry(() => uploadCMRFile(targetFile, metadataString), {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(
+            `failed attempt to check for target collision when moving CMR file ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
+          );
+        },
+      });
     }
     return;
   }
   if (await s3CopyNeeded(sourceFile, targetFile)) {
     await pRetry(
-      () => copyObject({
-        sourceBucket: sourceFile.bucket,
-        sourceKey: sourceFile.key,
-        destinationBucket: targetFile.bucket,
-        destinationKey: targetFile.key,
-        chunkSize: s3MultipartChunksizeMb,
-      }),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      () =>
+        copyObject({
+          sourceBucket: sourceFile.bucket,
+          sourceKey: sourceFile.key,
+          destinationBucket: targetFile.bucket,
+          destinationKey: targetFile.key,
+          chunkSize: s3MultipartChunksizeMb,
+        }),
+      {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(
+            `Error when copying object ${sourceFile?.bucket}/${sourceFile?.key} to target ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
+          );
+        },
+      }
     );
   }
 }
@@ -252,34 +301,31 @@ async function copyGranulesInS3({
 }): Promise<void> {
   const sourceGranulesById = keyBy(sourceGranules, 'granuleId');
 
-  const copyOperations = flatten(await Promise.all(
-    targetGranules.map(
-      async (targetGranule) => {
-        const sourceGranule = sourceGranulesById[targetGranule.granuleId];
-        if (!sourceGranule) {
-          throw new AssertionError({ message: 'no source granule for your target granule by ID' });
-        }
-        if (!sourceGranule.files || !targetGranule.files) {
-          // this needs to be callable for later pmap, but do nothing
-          return noop;
-        }
-        const sourceFilesByFileName = keyBy(sourceGranule.files, 'fileName');
-        return Promise.all(targetGranule.files.map(async (targetFile) => {
-          const sourceFile = sourceFilesByFileName[targetFile.fileName];
-          if (!sourceFile) {
-            throw new AssertionError({
-              message: 'size mismatch between target and source granule files',
-            });
-          }
-          return () => copyFileInS3({
-            sourceFile,
-            targetFile,
-            cmrObject: cmrObjects[targetGranule.granuleId],
-            s3MultipartChunksizeMb,
-          });
-        }));
+  const copyOperations = flatten(targetGranules.map(
+    (targetGranule) => {
+      const sourceGranule = sourceGranulesById[targetGranule.granuleId];
+      if (!sourceGranule) {
+        throw new AssertionError({ message: 'no source granule for your target granule by ID' });
       }
-    )
+      if (!sourceGranule.files || !targetGranule.files) {
+        return [];
+      }
+      const sourceFilesByFileName = keyBy(sourceGranule.files, 'fileName');
+      return targetGranule.files.map((targetFile) => {
+        const sourceFile = sourceFilesByFileName[targetFile.fileName];
+        if (!sourceFile) {
+          throw new AssertionError({
+            message: 'size mismatch between target and source granule files',
+          });
+        }
+        return () => copyFileInS3({
+          sourceFile,
+          targetFile,
+          cmrObject: cmrObjects[targetGranule.granuleId],
+          s3MultipartChunksizeMb,
+        });
+      });
+    }
   ));
   await pMap(
     copyOperations,
@@ -349,7 +395,7 @@ function updateGranuleMetadata(
 }
 
 /**
- * Update the cmr objects to contain data adherant to the target granules they reflect
+ * Update the cmr objects to contain data adherent to the target granules they reflect
  */
 export async function updateCMRData(
   targetGranules: Array<ValidGranuleRecord>,
@@ -368,8 +414,7 @@ export async function updateCMRData(
     if (!(cmrFile && cmrObject)) {
       outputObjects[targetGranule.granuleId] = {};
     } else {
-      outputObjects[targetGranule.granuleId] = updateCmrFileCollections({
-        collection: config.targetCollection,
+      outputObjects[targetGranule.granuleId] = updateCmrFileLinks({
         cmrFileName: cmrFile.key,
         cmrObject,
         files: (targetGranule as ValidGranuleRecord).files,
@@ -379,6 +424,24 @@ export async function updateCMRData(
         distributionBucketMap,
       });
     }
+  });
+  return outputObjects;
+}
+
+export function updateCMRCollections(
+  cmrObjectsByGranuleId: { [granuleId: string]: Object },
+  cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
+  config: MassagedEventConfig
+): { [granuleId: string]: Object } {
+  const outputObjects: { [granuleId: string]: Object } = {};
+  Object.keys(cmrObjectsByGranuleId).forEach((granuleId) => {
+    const cmrFile = cmrFilesByGranuleId[granuleId];
+    const cmrObject = cmrObjectsByGranuleId[granuleId];
+    outputObjects[granuleId] = updateCmrFileCollection({
+      collection: config.targetCollection,
+      cmrFileName: cmrFile.key,
+      cmrObject,
+    });
   });
   return outputObjects;
 }
@@ -426,21 +489,23 @@ async function getAndValidateGranules(
   })));
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
-    granulesInput = tempGranulesInput.filter((granule) => {
-      if (!apiGranuleRecordIsValid(granule)) {
-        log.warn(`granule ${granule.granuleId} has at least one invalid file (missing key or bucket) `);
-        return false;
+    granulesInput = tempGranulesInput.map((granule) => {
+      try {
+        return validateApiGranuleRecord(granule);
+      } catch (error) {
+        log.warn(`invalid granule ${granule?.granuleId} skipped because ${error}`);
+        return undefined;
       }
-      return true;
-    }) as ValidGranuleRecord[];
+    }).filter(Boolean) as Array<ValidGranuleRecord>;
   } else {
-    tempGranulesInput.forEach((granule) => {
-      if (!apiGranuleRecordIsValid(granule)) {
-        throw new ValidationError(`granule ${granule.granuleId} has validation errors.` +
-          'files must have key and bucket');
+    granulesInput = tempGranulesInput.map((granule) => {
+      try {
+        return validateApiGranuleRecord(granule);
+      } catch (error) {
+        log.warn(`invalid granule ${granule?.granuleId} skipped because ${error}`);
+        throw error;
       }
     });
-    granulesInput = tempGranulesInput.filter(apiGranuleRecordIsValid);
   }
   return granulesInput;
 }
@@ -482,19 +547,24 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
       granuleId: granule.granuleId,
     }));
   });
-  const cmrFiles = unValidatedCMRFiles.map((unvalidatedFile) => {
-    if (apiFileIsValid(unvalidatedFile)) {
-      return unvalidatedFile;
-    }
-    throw new AssertionError({ message: "getting here with an invalid file shouldn't have been possible" });
-  });
+  const cmrFiles = unValidatedCMRFiles.map(validateApiFile);
 
   const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const cmrObjectsByGranuleId: { [granuleId: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
     cmrObjectsByGranuleId[cmrFile.granuleId] = await pRetry(
-      async () => metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      async () =>
+        metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
+      {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 2000,
+        onFailedAttempt: (error) => {
+          log.warn(
+            `Error on reading CMR object ${cmrFile?.bucket}/${cmrFile?.key} :: ${error}, retrying`
+          );
+        },
+      }
     );
   }));
   return {
@@ -518,9 +588,16 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,
   } = await getCMRObjectsByFileId(sourceGranules);
 
-  // by using sourceGranules here we update *just* the collection
+  //  here we update *just* the collection
   // this is because we need that to parse the target file location
-  const collectionUpdatedCMRMetadata = await updateCMRData(
+
+  const collectionUpdatedCMRMetadata = updateCMRCollections(
+    firstCMRObjectsByGranuleId,
+    cmrFilesByGranuleId,
+    config
+  );
+
+  await updateCMRData(
     sourceGranules, firstCMRObjectsByGranuleId, cmrFilesByGranuleId,
     config
   );
@@ -529,7 +606,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     sourceGranules, config, collectionUpdatedCMRMetadata
   );
 
-  // now we re-call updateCMRData with our targetGranules to update
+  // now we call updateCMRData with our targetGranules to update
   // the cmr file links
   const updatedCMRObjects = await updateCMRData(
     targetGranules, collectionUpdatedCMRMetadata, cmrFilesByGranuleId,
