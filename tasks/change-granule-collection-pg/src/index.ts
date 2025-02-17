@@ -1,6 +1,8 @@
 'use strict';
 
 import { Context } from 'aws-lambda';
+import pMap from 'p-map';
+import { AssertionError } from 'assert';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { log } from '@cumulus/common';
@@ -114,27 +116,30 @@ async function cleanupS3File(newFile: ValidApiGranuleFile, oldFile: ValidApiGran
 }
 
 async function cleanupInS3(newGranules: ValidGranuleRecord[], oldGranules: Dictionary<ValidGranuleRecord>) {
-  await newGranules.flatMap((newGranule) => {
+  const operations = newGranules.flatMap((newGranule) => {
     const oldGranule = oldGranules[newGranule.granuleId];
     if (!oldGranule) {
       return [];
     }
-    return 
-    return oldGranule;
-  }));
-  await Promise.all(oldGranules.map((oldGranule) => {
-    const newGranule = newGranulesDict[oldGranule.granuleId]
-    if (!newGranule) {
-      return;
+    if(!oldGranule.files || !oldGranule.files) {
+      return [];
     }
-    const newFilesByName = keyBy(newGranule.files, 'fileName');
-
-    return Promise.all(oldGranule.files.map((oldFile) => {
-      const newFile = newFilesByName[oldFile.fileName]
-      if(!newFile) return;
-      return cleanupS3File(newFile, oldFile);
-    }))
-  }))
+    const oldFilesByName = keyBy(oldGranule.files, 'fileName');
+    return newGranule.files.map((newFile) => {
+      const oldFile = oldFilesByName[newFile.fileName];
+      if (!oldFile) {
+        throw new AssertionError({
+          message: 'mismatch between target and source granule files',
+        });
+      }
+      return () => cleanupS3File(newFile, oldFile);
+    })
+  });
+  pMap(
+    operations,
+    (operation) => operation(),
+    { concurrency: Number(process.env.concurrency || 100) }
+  )
 }
 
 function chunkGranules(granules: ValidGranuleRecord[]) {
