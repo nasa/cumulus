@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-3751**
+  - Added `change-granule-collection-s3` to move granules to a different collection.
+    - expects a list of granuleIds along with a new (target) collection
+    - moves those granule files in S3 according to pathing of target collection
+    - update CMR metadata file according to new collection information
+
 ## [v18.5.3] 2025-01-21
 
 **Please note** changes in v18.5.3 may not yet be released in future versions, as this

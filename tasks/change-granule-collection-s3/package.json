@@ -1,0 +1,59 @@
+{
+  "name": "@cumulus/change-granule-collection-s3",
+  "version": "18.5.3",
+  "description": "Move granule files and postgres records to a new collection",
+  "main": "dist/index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-s3",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "tasks/change-granule-collection-s3"
+  },
+  "engines": {
+    "node": ">=20.12.2"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "package": "./bin/package.sh",
+    "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "prepare": "npm run tsc",
+    "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
+    "webpack": "../../node_modules/.bin/webpack",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
+  },
+  "ava": {
+    "files": [
+      "tests/*.js"
+    ],
+    "failFast": true,
+    "serial": true,
+    "verbose": true,
+    "timeout": "15m"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/api-client": "18.5.3",
+    "@cumulus/aws-client": "18.5.3",
+    "@cumulus/cmrjs": "18.5.3",
+    "@cumulus/common": "18.5.3",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
+    "@cumulus/distribution-utils": "18.5.3",
+    "@cumulus/errors": "18.5.3",
+    "@cumulus/ingest": "18.5.3",
+    "@cumulus/message": "18.5.3",
+    "@cumulus/types": "18.5.3",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@cumulus/api": "18.5.3",
+    "@aws-sdk/client-sns": "^3.621.0"
+  }
+}

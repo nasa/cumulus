@@ -644,7 +644,7 @@ export const bulkPatchGranuleCollection = async (params: {
       path: '/granules/bulkPatchGranuleCollection',
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 202,
+    expectedStatusCodes: 200,
   });
 };
 
@@ -678,7 +678,7 @@ export const bulkPatch = async (params: {
       path: '/granules/bulkPatch',
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 202,
+    expectedStatusCodes: 200,
   });
 };
 
