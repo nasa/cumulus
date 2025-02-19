@@ -10,6 +10,8 @@ const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
   putJsonS3Object,
+  s3PutObject,
+  s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const {
   randomId, validateOutput,
@@ -41,6 +43,16 @@ function getOriginalCollection() {
       'original_collection.json'
     )
   ));
+}
+
+async function setupS3Data(granules) {
+  await Promise.all(granules.map((granule) => Promise.all(
+    granule.files.map((file) => s3PutObject({
+      Bucket: file.bucket,
+      Key: file.key,
+      Body: 'abc',
+    }))
+  )));
 }
 
 async function setupDataStoreData(granules, targetCollection, t) {
@@ -165,22 +177,27 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
+  await recursivelyDeleteS3Bucket(t.context.protectedBucket);
+  await recursivelyDeleteS3Bucket(t.context.publicBucket);
+  await recursivelyDeleteS3Bucket(t.context.privateBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
   await cleanupTestIndex(t.context);
 });
 
-test.serial('Should move files to final and pg status', async (t) => {
+test.serial('changeGranuleCollectionsPG Should update pg status and cleanup in s3', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_base.json');
   let payloadString = fs.readFileSync(payloadPath, 'utf8');
   payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
   payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
   payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
   t.context.payload = JSON.parse(payloadString);
-  const collectionPath = path.join(__dirname, 'data', 'new_collection_ummg_cmr.json');
+  await setupS3Data(t.context.payload.input.granules);
+  await setupS3Data(t.context.payload.input.oldGranules);
+  const collectionPath = path.join(__dirname, 'data', 'new_collection.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   const pgRecords = await setupDataStoreData(
-    newPayload.input.granules,
+    newPayload.input.oldGranules,
     collection,
     t
   );
@@ -190,22 +207,46 @@ test.serial('Should move files to final and pg status', async (t) => {
   const finalPgGranule = await granuleModel.get(t.context.knex, {
     cumulus_id: pgRecords.granules[0].cumulus_id,
   });
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+  t.assert(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+  //ensure old files have been cleaned up
+
+  await Promise.all(newPayload.input.oldGranules.map((granule) => Promise.all(
+    granule.files.map(async (file) => {
+      t.assert(!await s3ObjectExists({
+        Bucket: file.bucket,
+        Key: file.key,
+      }));
+    })
+  )));
+  await Promise.all(newPayload.input.granules.map((granule) => Promise.all(
+    granule.files.map(async (file) => {
+      t.assert(await s3ObjectExists({
+        Bucket: file.bucket,
+        Key: file.key,
+      }));
+    })
+  )));
 });
 
-test.serial('Should move files to final and pg status when granules have already been partly moved', async (t) => {
-  const payloadPath = path.join(__dirname, 'data', 'payload_partly_moved.json');
+test.serial('changeGranuleCollectionsPG should handle change where only some files are being moved', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_base.json');
   let payloadString = fs.readFileSync(payloadPath, 'utf8');
   payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
   payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
   payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
   t.context.payload = JSON.parse(payloadString);
-  const collectionPath = path.join(__dirname, 'data', 'new_collection_ummg_cmr.json');
+
+  t.context.payload.input.oldGranules[0].files[0] = t.context.payload.input.granules[0].files[0];
+  t.context.payload.input.oldGranules[0].files[1] = t.context.payload.input.granules[0].files[1];
+
+  await setupS3Data(t.context.payload.input.granules);
+  await setupS3Data(t.context.payload.input.oldGranules);
+  const collectionPath = path.join(__dirname, 'data', 'new_collection.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   const pgRecords = await setupDataStoreData(
-    newPayload.input.granules,
+    newPayload.input.oldGranules,
     collection,
     t
   );
@@ -215,30 +256,63 @@ test.serial('Should move files to final and pg status when granules have already
   const finalPgGranule = await granuleModel.get(t.context.knex, {
     cumulus_id: pgRecords.granules[0].cumulus_id,
   });
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+  t.assert(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+  //ensure old files have been cleaned up
+
+  await Promise.all(newPayload.input.oldGranules.slice(2).map((granule) => Promise.all(
+    granule.files.map(async (file) => {
+      t.assert(!await s3ObjectExists({
+        Bucket: file.bucket,
+        Key: file.key,
+      }));
+    })
+  )));
+  await Promise.all(newPayload.input.granules.map((granule) => Promise.all(
+    granule.files.map(async (file) => {
+      t.assert(await s3ObjectExists({
+        Bucket: file.bucket,
+        Key: file.key,
+      }));
+    })
+  )));
 });
 
-test.serial('handles files that need no move', async (t) => {
+test.serial('changeGranuleCollectionsPG should handle change where no files are being moved', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_base.json');
+  let payloadString = fs.readFileSync(payloadPath, 'utf8');
+  payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
+  payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
+  payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
+  t.context.payload = JSON.parse(payloadString);
 
-  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-  const collectionPath = path.join(__dirname, 'data', 'no_move_collection.json');
+  t.context.payload.input.oldGranules[0].files = t.context.payload.input.granules[0].files;
+  await setupS3Data(t.context.payload.input.granules);
+  await setupS3Data(t.context.payload.input.oldGranules);
+  const collectionPath = path.join(__dirname, 'data', 'new_collection.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   const pgRecords = await setupDataStoreData(
-    newPayload.input.granules,
+    newPayload.input.oldGranules,
     collection,
     t
   );
-
   const output = await changeGranuleCollectionsPG(newPayload);
   await validateOutput(t, output);
-
   const granuleModel = new GranulePgModel();
   const finalPgGranule = await granuleModel.get(t.context.knex, {
     cumulus_id: pgRecords.granules[0].cumulus_id,
   });
-  t.true(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-  t.true(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+  t.assert(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+  //nothing should have been cleaned up
+
+  await Promise.all(newPayload.input.granules.map((granule) => Promise.all(
+    granule.files.map(async (file) => {
+      t.assert(await s3ObjectExists({
+        Bucket: file.bucket,
+        Key: file.key,
+      }));
+    })
+  )));
 });

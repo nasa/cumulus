@@ -9,9 +9,11 @@ import { log } from '@cumulus/common';
 import { ApiGranuleRecord, ApiFile } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { BucketsConfigObject } from '@cumulus/common/types';
-import { bulkPatch, bulkPatchGranuleCollection, getGranule } from '@cumulus/api-client/granules';
+import { bulkPatch, bulkPatchGranuleCollection } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-import { Dictionary, keyBy, noop, range } from 'lodash';
+
+import keyBy from 'lodash/keyBy';
+import range from 'lodash/range';
 import { deleteS3Object } from '@cumulus/aws-client/S3';
 import { ValidationError } from '@cumulus/errors/dist';
 
@@ -19,7 +21,7 @@ type ValidApiFile = {
   bucket: string,
   key: string,
   fileName: string,
-} & ApiFile
+} & ApiFile;
 
 export type ValidApiGranuleFile = Omit<ValidApiFile, 'granuleId'>;
 export type ValidGranuleRecord = {
@@ -50,24 +52,30 @@ interface MoveGranuleCollectionsEvent {
   }
 }
 
-function validateFile(file: Omit<ApiFile, 'granuleId'>): file is ValidApiGranuleFile {
+function validateFile(file: Omit<ApiFile, 'granuleId'>): ValidApiGranuleFile {
   if (!file.key || !file.bucket) {
-    throw new ValidationError(`file ${file} must contain key and bucket`)
+    throw new ValidationError(`file ${file} must contain key and bucket`);
   }
   if (file.fileName) {
-    return true;
+    return file as ValidApiGranuleFile;
   }
-  file.fileName = file.fileName || file.key.split('/').pop();
-  return true
+  return {
+    ...file,
+    fileName: file.fileName || file.key.split('/').pop(),
+  } as ValidApiGranuleFile;
 }
 
 function validateGranule(granule: ApiGranuleRecord): ValidGranuleRecord {
   if (!granule.files) {
-    granule.files = []
-    return granule as ValidGranuleRecord;
+    return {
+      ...granule,
+      files: [],
+    } as ValidGranuleRecord;
   }
-  granule.files.forEach(validateFile);
-  return granule as ValidGranuleRecord;
+  return {
+    ...granule,
+    files: granule.files.map(validateFile),
+  } as ValidGranuleRecord;
 }
 
 function getConcurrency() {
@@ -102,10 +110,13 @@ async function moveGranulesInCumulusDatastores(
   });
 }
 
-async function cleanupS3File(newFile: ValidApiGranuleFile, oldFile: ValidApiGranuleFile): Promise<void>{
+async function cleanupS3File(
+  newFile: ValidApiGranuleFile,
+  oldFile: ValidApiGranuleFile
+): Promise<void> {
   if (
-    newFile.bucket == oldFile.bucket &&
-    newFile.key == oldFile.key
+    newFile.bucket === oldFile.bucket &&
+    newFile.key === oldFile.key
   ) {
     return;
   }
@@ -115,13 +126,16 @@ async function cleanupS3File(newFile: ValidApiGranuleFile, oldFile: ValidApiGran
   await deleteS3Object(oldFile.bucket, oldFile.key);
 }
 
-async function cleanupInS3(newGranules: ValidGranuleRecord[], oldGranules: Dictionary<ValidGranuleRecord>) {
+async function cleanupInS3(
+  newGranules: ValidGranuleRecord[],
+  oldGranules: { [granuleId: string]: ValidGranuleRecord }
+) {
   const operations = newGranules.flatMap((newGranule) => {
     const oldGranule = oldGranules[newGranule.granuleId];
     if (!oldGranule) {
       return [];
     }
-    if(!oldGranule.files || !oldGranule.files) {
+    if (!oldGranule.files || !oldGranule.files) {
       return [];
     }
     const oldFilesByName = keyBy(oldGranule.files, 'fileName');
@@ -132,29 +146,34 @@ async function cleanupInS3(newGranules: ValidGranuleRecord[], oldGranules: Dicti
           message: 'mismatch between target and source granule files',
         });
       }
-      return () => cleanupS3File(newFile, oldFile);
-    })
+      return async () => await cleanupS3File(newFile, oldFile);
+    });
   });
   pMap(
     operations,
-    (operation) => operation(),
+    async (operation) => await operation(),
     { concurrency: Number(process.env.concurrency || 100) }
-  )
+  );
 }
 
 function chunkGranules(granules: ValidGranuleRecord[]) {
-  const chunkSize = getConcurrency()
-  return range(granules.length/chunkSize).map((i) =>
-    granules.slice(i*chunkSize, (i+1)*chunkSize)
-  )
+  const chunkSize = getConcurrency();
+  return range(granules.length / chunkSize).map((i) => granules.slice(
+    i * chunkSize,
+    (i + 1) * chunkSize
+  ));
 }
-async function changeGranuleCollectionsPG(event: MoveGranuleCollectionsEvent): Promise<Object> {
+
+async function changeGranuleCollectionsPG(
+  event: MoveGranuleCollectionsEvent
+): Promise<Object> {
   const config = event.config;
 
   const targetGranules = event.input.granules.map(validateGranule);
-  const oldGranulesByID: Dictionary<ValidGranuleRecord> = keyBy(event.input.oldGranules.map(validateGranule), 'granuleId');
+  const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(event.input.oldGranules.map(validateGranule), 'granuleId');
   log.debug(`change-granule-collection-pg run with config ${config}`);
   for (const granuleChunk of chunkGranules(targetGranules)) {
+    //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(
       granuleChunk,
       constructCollectionId(config.collection.name, config.collection.version),
@@ -163,9 +182,9 @@ async function changeGranuleCollectionsPG(event: MoveGranuleCollectionsEvent): P
         config.targetCollection.version
       )
     );
+    //eslint-disable-next-line no-await-in-loop
     await cleanupInS3(granuleChunk, oldGranulesByID);
   }
-  
 
   return {
     granules: targetGranules,
