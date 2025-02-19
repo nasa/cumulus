@@ -16,6 +16,7 @@ import keyBy from 'lodash/keyBy';
 import range from 'lodash/range';
 import { deleteS3Object } from '@cumulus/aws-client/S3';
 import { ValidationError } from '@cumulus/errors/dist';
+import pRetry from 'p-retry';
 
 type ValidApiFile = {
   bucket: string,
@@ -123,7 +124,11 @@ async function cleanupS3File(
   if (!(oldFile.bucket && oldFile.key)) {
     return;
   }
-  await deleteS3Object(oldFile.bucket, oldFile.key);
+  await pRetry(
+    async () => deleteS3Object(oldFile.bucket, oldFile.key),
+    { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
+  );
+
 }
 
 async function cleanupInS3(
