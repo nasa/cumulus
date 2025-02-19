@@ -92,7 +92,7 @@ async function moveGranulesInCumulusDatastores(
     ...targetGranule,
     collectionId: sourceCollectionId,
   }));
-
+  log.warn(`updating body for ${targetGranules[0].granuleId} to ${sourceCollectionId}`)
   await bulkPatch({
     prefix: getRequiredEnvVar('stackName'),
     body: {
@@ -101,6 +101,7 @@ async function moveGranulesInCumulusDatastores(
       dbMaxPool: getConcurrency(),
     },
   });
+  log.warn(`updating collection for ${targetGranules[0].granuleId} to ${targetCollectionId}`)
   await bulkPatchGranuleCollection({
     prefix: getRequiredEnvVar('stackName'),
     body: {
@@ -124,6 +125,7 @@ async function cleanupS3File(
   if (!(oldFile.bucket && oldFile.key)) {
     return;
   }
+  log.warn(`attempting to delete`, JSON.stringify(oldFile));
   await pRetry(
     async () => deleteS3Object(oldFile.bucket, oldFile.key),
     { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
@@ -176,7 +178,7 @@ async function changeGranuleCollectionsPG(
 
   const targetGranules = event.input.granules.map(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(event.input.oldGranules.map(validateGranule), 'granuleId');
-  log.debug(`change-granule-collection-pg run with config ${config}`);
+  log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
   for (const granuleChunk of chunkGranules(targetGranules)) {
     //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(
