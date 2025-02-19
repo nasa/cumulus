@@ -15,7 +15,7 @@ import { getRequiredEnvVar } from '@cumulus/common/env';
 import keyBy from 'lodash/keyBy';
 import range from 'lodash/range';
 import { deleteS3Object } from '@cumulus/aws-client/S3';
-import { ValidationError } from '@cumulus/errors/dist';
+import { ValidationError } from '@cumulus/errors';
 import pRetry from 'p-retry';
 
 type ValidApiFile = {
