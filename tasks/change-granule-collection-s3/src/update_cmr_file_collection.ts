@@ -1,0 +1,131 @@
+import { AssertionError } from 'assert';
+import { s3PutObject } from '@cumulus/aws-client/S3';
+import {
+  DistributionBucketMap,
+  generateEcho10XMLString,
+  isECHO10Filename,
+  isUMMGFilename,
+  setECHO10Collection,
+  updateEcho10XMLMetadataObject,
+  setUMMGCollection,
+  updateUMMGMetadataObject,
+} from '@cumulus/cmrjs/cmr-utils';
+import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
+import { ValidationError } from '@cumulus/errors';
+import {
+  ValidApiFile,
+  ValidGranuleRecord,
+} from './types';
+
+export function validateApiFile(file: Omit<ApiFile, 'granuleId'> | ApiFile): ValidApiFile {
+  if (file.bucket === undefined || file.key === undefined) {
+    throw new ValidationError(`file ${JSON.stringify(file)} is missing necessary key, bucket`);
+  }
+  if (!file.fileName) {
+    const fileName = file.key.split('/').pop();
+    if (!fileName) {
+      throw new ValidationError(
+        `file ${JSON.stringify(file)} has no fileName and fileName cannot be parsed from key`
+      );
+    }
+    return {
+      ...file,
+      fileName,
+    } as ValidApiFile;
+  }
+  return file as ValidApiFile;
+}
+
+export function validateApiGranuleRecord(granule: ApiGranuleRecord): ValidGranuleRecord {
+  if (!granule.files) {
+    return granule as ValidGranuleRecord;
+  }
+  return {
+    ...granule,
+    files: granule.files.map(validateApiFile),
+  };
+}
+
+export const CMRObjectToString = (
+  cmrFile: Omit<ValidApiFile, 'granuleId'>,
+  cmrObject: { Granule: object } | object
+): string => {
+  if (isUMMGFilename(cmrFile.fileName || cmrFile.key)) {
+    return JSON.stringify(cmrObject, undefined, 2);
+  }
+  // our xml stringify function packages the metadata in "Granule",
+  // resulting in possible nested Granule object
+  if (!('Granule' in cmrObject)) {
+    throw new ValidationError(
+      `invalid ECHO10 cmr metadata ${JSON.stringify(cmrObject)}, must have granule tag`
+    );
+  }
+  return generateEcho10XMLString(cmrObject.Granule);
+};
+
+export const uploadCMRFile = async (cmrFile: Omit<ValidApiFile, 'granuleId'>, cmrFileString: string) => {
+  await s3PutObject({
+    Bucket: cmrFile.bucket,
+    Key: cmrFile.key,
+    Body: cmrFileString,
+  });
+};
+export const updateCmrFileLinks = ({
+  cmrFileName,
+  cmrObject,
+  files,
+  distEndpoint,
+  bucketTypes,
+  cmrGranuleUrlType = 'both',
+  distributionBucketMap,
+}: {
+  cmrFileName: string,
+  cmrObject: Object
+  files: Array<Omit<ValidApiFile, 'granuleId'>>,
+  distEndpoint: string,
+  bucketTypes: { [key: string]: string },
+  cmrGranuleUrlType: string
+  distributionBucketMap: DistributionBucketMap
+}) => {
+  const params = {
+    files,
+    distEndpoint,
+    bucketTypes,
+    cmrGranuleUrlType,
+    distributionBucketMap,
+  };
+  if (isECHO10Filename(cmrFileName)) {
+    return updateEcho10XMLMetadataObject({
+      ...params,
+      metadataObject: cmrObject,
+    });
+  }
+  if (isUMMGFilename(cmrFileName)) {
+    return updateUMMGMetadataObject({
+      ...params,
+      metadataObject: cmrObject,
+    });
+  }
+  throw new AssertionError({ message: 'cmr file in unknown format' });
+};
+export const updateCmrFileCollection = ({
+  collection,
+  cmrFileName,
+  cmrObject,
+}: {
+  collection: { name: string, version: string },
+  cmrFileName: string,
+  cmrObject: Object
+}) => {
+  if (isECHO10Filename(cmrFileName)) {
+    return setECHO10Collection(cmrObject, collection);
+  }
+  if (isUMMGFilename(cmrFileName)) {
+    return setUMMGCollection(cmrObject, collection);
+  }
+  throw new AssertionError({ message: 'cmr file in unknown format' });
+};
+
+export function isCMRMetadataFile(file: ApiFile | Omit<ApiFile, 'granuleId'>): boolean {
+  return file.type === 'metadata';
+}
