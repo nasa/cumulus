@@ -293,11 +293,13 @@ async function copyGranulesInS3({
   targetGranules,
   cmrObjects,
   s3MultipartChunksizeMb,
+  concurrency,
 }: {
   sourceGranules: Array<ValidGranuleRecord>,
   targetGranules: Array<ValidGranuleRecord>,
   cmrObjects: { [granuleId: string]: Object },
   s3MultipartChunksizeMb?: number,
+  concurrency?: number,
 }): Promise<void> {
   const sourceGranulesById = keyBy(sourceGranules, 'granuleId');
 
@@ -330,7 +332,7 @@ async function copyGranulesInS3({
   await pMap(
     copyOperations,
     (operation) => operation(),
-    { concurrency: Number(process.env.concurrency || 100) }
+    { concurrency: Number(concurrency || process?.env.concurrency || 100) }
   );
 }
 
@@ -612,12 +614,13 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     targetGranules, collectionUpdatedCMRMetadata, cmrFilesByGranuleId,
     config
   );
-  // Move files from staging location to final location
+  // Copy files from staging location to final location
   await copyGranulesInS3({
     sourceGranules: sourceGranules,
     targetGranules,
     cmrObjects: updatedCMRObjects,
     s3MultipartChunksizeMb: config.chunkSize,
+    concurrency: config.concurrency,
   });
 
   return {

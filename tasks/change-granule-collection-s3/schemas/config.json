@@ -107,6 +107,10 @@
     "invalidGranuleBehavior": {
       "type": ["string", "null"],
       "description": "what to do if a granule without valid details (file buckets and keys) is ingested."
+    },
+    "cmrGranuleUrlType": {
+      "type": ["string", "null"],
+      "description": "The type of URL to use for granule links in CMR metadata `(['http', 's3', 'both'])`.   Defaults to `both`."
     }
   }
 }
