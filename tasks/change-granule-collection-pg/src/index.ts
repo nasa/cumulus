@@ -126,14 +126,11 @@ async function cleanupS3File(
     return;
   }
   log.warn(`attempting to delete`, JSON.stringify(oldFile));
-  await pRetry(
-    async () => {
-      const output = await deleteS3Object(oldFile.bucket, oldFile.key);
-      log.warn(`output from delete is ${JSON.stringify(output)}`)
-    },
+  const logOutput = await pRetry(
+    async () => await deleteS3Object(oldFile.bucket, oldFile.key),
     { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
   );
-
+  log.warn(`got logoutput of ${logOutput}`)
 }
 
 async function cleanupInS3(
