@@ -956,7 +956,7 @@ const bulkMoveCollectionSchema = z.object({
   concurrency: z.number().positive().optional().default(100),
   invalidBehavior: z.enum(['error', 'skip']).default('error'),
   cmrGranuleUrlType: z.enum(['http', 's3', 'both']).default('both'),
-  s3MultipartChunkSize: z.number().optional(),
+  s3MultipartChunkSizeMb: z.number().optional(),
   executionName: z.string().optional(),
 });
 const parseBulkMoveCollectionPayload = zodParser('BulkMoveCollection payload', bulkMoveCollectionSchema);
@@ -969,12 +969,13 @@ const parseBulkMoveCollectionPayload = zodParser('BulkMoveCollection payload', b
  * @param {string} req.body.sourceCollectionId - The source collection ID.
  * @param {string} req.body.targetCollectionId - The target collection ID.
  * @param {number} [req.body.batchSize=100] - The batch size for processing granules.
- * @param {number} [req.body.concurrency=100] - The concurrency level for processing granules.
+ * @param {number} [req.body.concurrency=100] - The per-file concurrency level for processing
+ * granules and granule records
  * @param {string} [req.body.invalidBehavior='error'] - The behavior for invalid granules
  * ('error' or 'skip').
- * @param {number} [req.body.s3MultipartChunkSize] - The S3 multipart chunk size.
- * @param {string} [req.body.executionName] - The execution name.
- * @param {object} testContext - The test context object
+ * @param {number} [req.body.s3MultipartChunkSizeMb] - The S3 multipart chunk size in MB
+ * @param {string} [req.body.executionName] - Override to allow specifying an execution 'name'
+ * @param {object} req.testContext - The test context object
  * @param {object} res - The response object.
  * @returns {Promise<Object>} The response object with the execution ARN and message.
  */
@@ -982,7 +983,7 @@ async function bulkMoveCollection(req, res) {
   const {
     knex = await getKnexClient(),
     sfnMethod = sfn,
-    workflow = 'HelloWorldWorkflow',
+    workflow = 'MoveGranuleCollectionsWorkflow',
   } = req.testContext || {};
 
   const collectionPgModel = new CollectionPgModel();
@@ -1049,21 +1050,21 @@ async function bulkMoveCollection(req, res) {
       system_bucket: process.env.system_bucket,
     },
     meta: {
+      collection: {
+        name,
+        version,
+      },
       bulkMoveCollection: {
         batchSize: body.batchSize,
         cmrGranuleUrlType: body.cmrGranuleUrlType,
         concurrency: body.concurrency,
         invalidBehavior: body.invalidBehavior,
-        s3MultipartChunkSize: body.s3MultipartChunkSize,
+        s3MultipartChunkSizeMb: body.s3MultipartChunkSizeMb,
         targetCollection: deconstructCollectionId(body.targetCollectionId),
       },
     },
     payload: {
       granuleIds: granules.map((granule) => granule.granule_id),
-    },
-    collection: {
-      name,
-      version,
     },
   });
 
