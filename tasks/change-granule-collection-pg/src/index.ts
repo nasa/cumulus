@@ -92,7 +92,6 @@ async function moveGranulesInCumulusDatastores(
     ...targetGranule,
     collectionId: sourceCollectionId,
   }));
-  log.warn(`updating body for ${targetGranules[0].granuleId} to ${sourceCollectionId}`)
   await bulkPatch({
     prefix: getRequiredEnvVar('stackName'),
     body: {
@@ -101,7 +100,6 @@ async function moveGranulesInCumulusDatastores(
       dbMaxPool: getConcurrency(),
     },
   });
-  log.warn(`updating collection for ${targetGranules[0].granuleId} to ${targetCollectionId}`)
   await bulkPatchGranuleCollection({
     prefix: getRequiredEnvVar('stackName'),
     body: {
@@ -125,12 +123,10 @@ async function cleanupS3File(
   if (!(oldFile.bucket && oldFile.key)) {
     return;
   }
-  log.warn(`attempting to delete`, JSON.stringify(oldFile));
-  const logOutput = await pRetry(
+  await pRetry(
     async () => await deleteS3Object(oldFile.bucket, oldFile.key),
     { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
   );
-  log.warn(`got logoutput of ${logOutput}`)
 }
 
 async function cleanupInS3(
