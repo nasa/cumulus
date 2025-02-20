@@ -11,13 +11,13 @@ const {
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 
-const { waitForListObjectsV2ResultCount, addCollections, addProviders, generateCmrFilesForGranules } = require('@cumulus/integration-tests');
+const { addCollections, addProviders, generateCmrFilesForGranules } = require('@cumulus/integration-tests');
 
 const {
   createGranule,
   getGranule,
   deleteGranule,
-  waitForGranule
+  waitForGranule,
 } = require('@cumulus/api-client/granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
@@ -28,7 +28,6 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
 } = require('../../helpers/testUtils');
-const { sleep } = require('@cumulus/common');
 
 describe('when ChangeGranuleCollectionPG is called', () => {
   let testSetupFailed;
@@ -146,45 +145,24 @@ describe('when ChangeGranuleCollectionPG is called', () => {
         prefix: stackName,
         granuleId: granuleId,
       })).files;
-      //upload to cumulus
       try {
-        const { $metadata, Payload } = await lambda().send(new InvokeCommand({
-          FunctionName: `${stackName}-ChangeGranuleCollectionS3`,
-          InvocationType: 'RequestResponse',
-          Payload: JSON.stringify({
-            cma: {
-              meta: {
-                targetCollection,
-                collection,
-                buckets: config.buckets,
-              },
-              task_config: {
-                buckets: '{$.meta.buckets}',
-                collection: '{$.meta.collection}',
-                targetCollection: '{$.meta.targetCollection}',
-              },
-              event: {
-                payload: { granuleIds: [granuleId] },
-              },
-            },
-          }),
-        }));
-        const outputGranule = JSON.parse(new TextDecoder('utf-8').decode(Payload)).payload.granules[0];
-        if ($metadata.httpStatusCode >= 400) {
-          console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
-        }
-        finalFiles = outputGranule.files;
-        await Promise.all(finalFiles.map((file) => expectAsync(
-          waitForListObjectsV2ResultCount({
-            bucket: file.bucket,
-            prefix: file.key,
-            desiredCount: 1,
-            interval: 5 * 1000,
-            timeout: 60 * 1000,
-          })
-        ).toBeResolved()));
-        const parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(Payload)).payload;
-        const { $metadata: pgTaskMetadata, Payload: pgPayload } = await lambda().send(new InvokeCommand({
+        const oldGranule = await getGranule({
+          prefix: stackName,
+          granuleId,
+        });
+        const bucketNames = Object.keys(config.buckets);
+        // build new granule
+        const newGranule = {
+          ...oldGranule,
+          collectionID: constructCollectionId(targetCollection.name, targetCollection.version),
+          files: oldGranule.files.map((file) => ({
+            ...file,
+            bucket: config.buckets[bucketNames[Math.floor(bucketNames.length * Math.random())]].name,
+            key: `anewprefix/${file.key.split('/').pop()}`,
+          })),
+        };
+        finalFiles = newGranule.files;
+        const { $metadata } = await lambda().send(new InvokeCommand({
           FunctionName: `${stackName}-ChangeGranuleCollectionPG`,
           InvocationType: 'RequestResponse',
           Payload: JSON.stringify({
@@ -200,18 +178,20 @@ describe('when ChangeGranuleCollectionPG is called', () => {
                 targetCollection: '{$.meta.targetCollection}',
               },
               event: {
-                payload: parsedPayload,
+                payload: {
+                  granules: [newGranule],
+                  oldGranules: [oldGranule],
+                },
               },
             },
           }),
         }));
-        if (pgTaskMetadata.httpStatusCode >= 400) {
-          console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
+        if ($metadata.httpStatusCode >= 400) {
+          throw new Error(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
         }
-        const goneFiles =  JSON.parse(new TextDecoder('utf-8').decode(Payload)).payload.oldGranules[0].files;
         await expectAsync(waitForGranule({
           prefix: stackName,
-          granuleId: parsedPayload.granules[0].granuleId,
+          granuleId,
           collectionId: constructCollectionId(targetCollection.name, targetCollection.version),
           pRetryOptions: {
             interval: 5 * 1000,
@@ -229,14 +209,14 @@ describe('when ChangeGranuleCollectionPG is called', () => {
       const updatedGranule = await getGranule({
         prefix: stackName,
         granuleId,
-        collectionId: constructCollectionId(targetCollection.name, targetCollection.version)
-      })
+        collectionId: constructCollectionId(targetCollection.name, targetCollection.version),
+      });
       expect(updatedGranule.granuleId).toEqual(granuleId);
       expect(updatedGranule.collectionId).toEqual(
         constructCollectionId(targetCollection.name, targetCollection.version)
       );
-      finalFiles.sort()
-      updatedGranule.files.sort()
+      finalFiles.sort();
+      updatedGranule.files.sort();
       expect(updatedGranule.files).toEqual(finalFiles);
     });
     it('keeps old s3 files as well', async () => {

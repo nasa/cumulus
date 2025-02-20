@@ -81,11 +81,11 @@ async function checkSumsMatch(
 ): Promise<boolean> {
   const [sourceHash, targetHash] = await Promise.all([
     pRetry(
-      async () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...sourceFile }),
+      () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...sourceFile }),
       { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
     ),
     pRetry(
-      async () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...targetFile }),
+      () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...targetFile }),
       { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
     ),
   ]);
@@ -112,7 +112,7 @@ export async function s3CopyNeeded(
 
   const [targetExists, sourceExists] = await Promise.all([
     pRetry(
-      async () =>
+      () =>
         s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
       {
         retries: 3,
@@ -310,9 +310,9 @@ async function copyGranulesInS3({
       if (!sourceGranule.files || !targetGranule.files) {
         return [];
       }
-      const sourceFilesByFileName = keyBy(sourceGranule.files, 'fileName');
+      const sourceFilesByFileName = keyBy(sourceGranule.files, (file) => path.basename(file.key));
       return targetGranule.files.map((targetFile) => {
-        const sourceFile = sourceFilesByFileName[targetFile.fileName];
+        const sourceFile = sourceFilesByFileName[path.basename(targetFile.key)];
         if (!sourceFile) {
           throw new AssertionError({
             message: 'size mismatch between target and source granule files',
@@ -489,23 +489,16 @@ async function getAndValidateGranules(
   })));
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
-    granulesInput = tempGranulesInput.map((granule) => {
+    granulesInput = tempGranulesInput.filter((granule) => {
       try {
         return validateApiGranuleRecord(granule);
       } catch (error) {
         log.warn(`invalid granule ${granule?.granuleId} skipped because ${error}`);
-        return undefined;
+        return false;
       }
     }).filter(Boolean) as Array<ValidGranuleRecord>;
   } else {
-    granulesInput = tempGranulesInput.map((granule) => {
-      try {
-        return validateApiGranuleRecord(granule);
-      } catch (error) {
-        log.warn(`invalid granule ${granule?.granuleId} skipped because ${error}`);
-        throw error;
-      }
-    });
+    granulesInput = tempGranulesInput.filter(validateApiGranuleRecord);
   }
   return granulesInput;
 }
@@ -547,7 +540,7 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
       granuleId: granule.granuleId,
     }));
   });
-  const cmrFiles = unValidatedCMRFiles.map(validateApiFile);
+  const cmrFiles = unValidatedCMRFiles.filter(validateApiFile);
 
   const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const cmrObjectsByGranuleId: { [granuleId: string]: Object } = {};

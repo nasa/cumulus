@@ -2,6 +2,7 @@
 
 import { Context } from 'aws-lambda';
 import pMap from 'p-map';
+import path from 'path';
 import { AssertionError } from 'assert';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { constructCollectionId } from '@cumulus/message/Collections';
@@ -21,7 +22,6 @@ import pRetry from 'p-retry';
 type ValidApiFile = {
   bucket: string,
   key: string,
-  fileName: string,
 } & ApiFile;
 
 export type ValidApiGranuleFile = Omit<ValidApiFile, 'granuleId'>;
@@ -53,30 +53,19 @@ interface MoveGranuleCollectionsEvent {
   }
 }
 
-function validateFile(file: Omit<ApiFile, 'granuleId'>): ValidApiGranuleFile {
+function validateFile(file: Omit<ApiFile, 'granuleId'>): file is ValidApiGranuleFile {
   if (!file.key || !file.bucket) {
     throw new ValidationError(`file ${file} must contain key and bucket`);
   }
-  if (file.fileName) {
-    return file as ValidApiGranuleFile;
-  }
-  return {
-    ...file,
-    fileName: file.fileName || file.key.split('/').pop(),
-  } as ValidApiGranuleFile;
+  return true;
 }
 
-function validateGranule(granule: ApiGranuleRecord): ValidGranuleRecord {
+function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleRecord {
   if (!granule.files) {
-    return {
-      ...granule,
-      files: [],
-    } as ValidGranuleRecord;
+    return true;
   }
-  return {
-    ...granule,
-    files: granule.files.map(validateFile),
-  } as ValidGranuleRecord;
+  granule.files.forEach(validateFile);
+  return true;
 }
 
 function getConcurrency() {
@@ -141,9 +130,10 @@ async function cleanupInS3(
     if (!oldGranule.files || !oldGranule.files) {
       return [];
     }
-    const oldFilesByName = keyBy(oldGranule.files, 'fileName');
+    const oldFilesByName = keyBy(oldGranule.files, (file) => path.basename(file.key));
     return newGranule.files.map((newFile) => {
-      const oldFile = oldFilesByName[newFile.fileName];
+      const fileName = path.basename(newFile.key);
+      const oldFile = oldFilesByName[fileName];
       if (!oldFile) {
         throw new AssertionError({
           message: 'mismatch between target and source granule files',
@@ -172,8 +162,8 @@ async function changeGranuleCollectionsPG(
 ): Promise<Object> {
   const config = event.config;
 
-  const targetGranules = event.input.granules.map(validateGranule);
-  const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(event.input.oldGranules.map(validateGranule), 'granuleId');
+  const targetGranules = event.input.granules.filter(validateGranule);
+  const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(event.input.oldGranules.filter(validateGranule), 'granuleId');
   log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
   for (const granuleChunk of chunkGranules(targetGranules)) {
     //eslint-disable-next-line no-await-in-loop
