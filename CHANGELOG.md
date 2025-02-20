@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-3994**
+  - Removed references to elasticsearch in data-persistence
 ## [v20.0.0] 2025-02-04
 
 ## Phase 2 Release
