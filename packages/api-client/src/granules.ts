@@ -809,3 +809,37 @@ export const bulkOperation = async (params: {
     expectedStatusCodes: 202,
   });
 };
+
+/**
+ * Bulk Granule Operations
+ * POST /granules/bulkMoveCollection
+ */
+export const bulkMoveCollection = async (params: {
+  prefix: string,
+  body: {
+    sourceCollectionId: string,
+    targetCollectionId: string,
+    batchSize: number,
+    concurrency: number,
+    invalidBehavior: string, // TODO enum
+    cmrGranuleUrlType: string, // TODO enum
+    s3MultipartChunkSizeMb: number,
+    executionName: string,
+  },
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/granules/bulkMoveCollection/',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 200,
+  });
+};
