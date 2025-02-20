@@ -156,7 +156,7 @@ async function cleanupInS3(
       return async () => await cleanupS3File(newFile, oldFile);
     });
   });
-  pMap(
+  await pMap(
     operations,
     async (operation) => await operation(),
     { concurrency: Number(process.env.concurrency || 100) }
