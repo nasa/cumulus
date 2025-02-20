@@ -184,7 +184,6 @@ describe('when ChangeGranuleCollectionPG is called', () => {
           })
         ).toBeResolved()));
         const parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(Payload)).payload;
-        console.log(JSON.stringify(parsedPayload, null, 2))
         const { $metadata: pgTaskMetadata, Payload: pgPayload } = await lambda().send(new InvokeCommand({
           FunctionName: `${stackName}-ChangeGranuleCollectionPG`,
           InvocationType: 'RequestResponse',
@@ -206,7 +205,6 @@ describe('when ChangeGranuleCollectionPG is called', () => {
             },
           }),
         }));
-        console.log(JSON.stringify(pgTaskMetadata))
         if (pgTaskMetadata.httpStatusCode >= 400) {
           console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
         }
@@ -239,16 +237,12 @@ describe('when ChangeGranuleCollectionPG is called', () => {
       );
       finalFiles.sort()
       updatedGranule.files.sort()
-      console.log(finalFiles)
-      console.log(updatedGranule.files)
       expect(updatedGranule.files).toEqual(finalFiles);
-
     });
     it('keeps old s3 files as well', async () => {
       if (beforeAllFailed) fail('beforeAllFailed');
       if (testSetupFailed) fail('testSetupFailed');
       await Promise.all(startingFiles.map(async (file) => {
-        console.log(file, await s3ObjectExists({ Bucket: file.bucket, Key: file.key }))
         expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(false);
       }));
     });
