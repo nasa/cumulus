@@ -10,7 +10,11 @@
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
-            "targetCollection": "{$.meta.targetCollection}"
+            "targetCollection": "{$.meta.bulkMoveCollection.targetCollection}",
+            "s3MultipartChunksizeMb": "{$.meta.bulkMoveCollection.s3MultipartChunksizeMb}",
+            "invalidGranuleBehavior": "{$.meta.bulkMoveCollection.invalidGranuleBehavior}",
+            "cmrGranuleUrlType": "{$.meta.bulkMoveCollection.cmrGranuleUrlType}",
+            "concurrency": "{$.meta.bulkMoveCollection.concurrency}"
           }
         }
       },

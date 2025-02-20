@@ -115,7 +115,7 @@ describe('The MoveGranuleCollections workflow', () => {
           granuleIds: [granuleId],
         },
         {
-          targetCollection,
+          bulkMoveCollection: { targetCollection },
         }
       );
       const startingGranule = await getGranule({
