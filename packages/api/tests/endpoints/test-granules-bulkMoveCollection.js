@@ -85,10 +85,6 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-
   t.context.esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX);
   t.context.collectionName = 'fakeCollection';
   t.context.collectionVersion = 'v1';
@@ -123,6 +119,11 @@ test.before(async (t) => {
 
   t.context.collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
   t.context.collectionId2 = constructCollectionId(pgCollection2.name, pgCollection2.version);
+
+  // Remove on merge to main
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
 });
 
 test.beforeEach(async (t) => {
@@ -177,6 +178,9 @@ test.beforeEach(async (t) => {
       }))
   );
   t.context.insertedPgGranules = t.context.fakePGGranuleRecords.flat();
+
+  // index PG Granules into ES
+  // Remove on merge to main
   const insertedApiGranuleTranslations = await Promise.all(
     t.context.insertedPgGranules.map((granule) =>
       translatePostgresGranuleToApiGranule({
@@ -184,7 +188,6 @@ test.beforeEach(async (t) => {
         granulePgRecord: granule,
       }))
   );
-  // index PG Granules into ES
   await Promise.all(
     insertedApiGranuleTranslations.map((granule) =>
       indexer.indexGranule(t.context.esClient, granule, t.context.esIndex))
@@ -199,6 +202,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
+  // Remove on merge to main
   await cleanupTestIndex(t.context);
 });
 
