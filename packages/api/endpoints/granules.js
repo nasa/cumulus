@@ -989,17 +989,18 @@ async function bulkChangeCollection(req, res) {
   const collectionPgModel = new CollectionPgModel();
   const granulePgModel = new GranulePgModel();
 
-  const body = parsebulkChangeCollectionPayload(req.body);
-  if (isError(body)) {
-    return returnCustomValidationErrors(res, body);
-  }
-
   if (!process.env.system_bucket) {
     return res.boom.badRequest('API is misconfigured, system_bucket must be defined in the env variables');
   }
   if (!process.env.stackName) {
     return res.boom.badRequest('API is misconfigured, stackName must be defined in the env variables');
   }
+
+  const body = parsebulkChangeCollectionPayload(req.body);
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+
   //get collection
   const pgCollection = await collectionPgModel.get(
     knex,
