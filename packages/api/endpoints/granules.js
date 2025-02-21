@@ -1060,7 +1060,7 @@ async function bulkChangeCollection(req, res) {
     },
   });
 
-  input.cumulus_meta = { ...input?.template.cumulus_meta, ...input.cumulus_meta };
+  input.cumulus_meta = { ...input.template?.cumulus_meta, ...input.cumulus_meta };
   input.meta = { ...input.template?.meta, ...input.meta };
 
   let startExecutionResult;
