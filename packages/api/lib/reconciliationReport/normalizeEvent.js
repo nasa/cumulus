@@ -1,15 +1,22 @@
+//@ts-check
+
 'use strict';
 
 /*eslint prefer-const: ["error", {"destructuring": "all"}]*/
 const isString = require('lodash/isString');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { InvalidArgument } = require('@cumulus/errors');
+const { InvalidArgument, MissingRequiredArgument } = require('@cumulus/errors');
+
+/**
+ * @typedef {import('../types').RecReportParams } RecReportParams
+ * @typedef {import('../types').NormalizedRecReportParams } NormalizedRecReportParams
+ */
 
 /**
  * ensures input reportType can be handled by the lambda code.
  *
  * @param {string} reportType
- * @returns {undefined} - if reportType is valid
+ * @returns {void} - if reportType is valid
  * @throws {InvalidArgument} - otherwise
  */
 function validateReportType(reportType) {
@@ -31,7 +38,7 @@ function validateReportType(reportType) {
 /**
  * Convert input to an ISO timestamp.
  * @param {any} dateable - any type convertable to JS Date
- * @returns {string} - date formated as ISO timestamp;
+ * @returns {string | undefined} - date formated as ISO timestamp;
  */
 function isoTimestamp(dateable) {
   if (dateable) {
@@ -45,26 +52,19 @@ function isoTimestamp(dateable) {
 }
 
 /**
- * Transforms input granuleId into correct parameters for use in the
- * Reconciliation Report lambda.
- * @param {Array<string>|string} granuleId - list of granule Ids
- * @param {Object} modifiedEvent - input event
- * @returns {Object} updated input even with correct granuleId and granuleIds values.
+ * Normalizes the input into an array of granule IDs.
+ *
+ * @param {string|string[]|undefined} granuleId - The granule ID or an array of granule IDs.
+ * @returns {string[]|undefined} An array of granule IDs, or undefined if no granule ID is provided.
  */
-function updateGranuleIds(granuleId, modifiedEvent) {
-  let returnEvent = { ...modifiedEvent };
-  if (granuleId) {
-    // transform input granuleId into an array on granuleIds
-    const granuleIds = isString(granuleId) ? [granuleId] : granuleId;
-    returnEvent = { ...modifiedEvent, granuleIds };
-  }
-  return returnEvent;
+function generateGranuleIds(granuleId) {
+  return granuleId ? (isString(granuleId) ? [granuleId] : granuleId) : undefined;
 }
 
 /**
  * Transforms input collectionId into correct parameters for use in the
  * Reconciliation Report lambda.
- * @param {Array<string>|string} collectionId - list of collection Ids
+ * @param {string[]|string | undefined} collectionId - list of collection Ids
  * @param {Object} modifiedEvent - input event
  * @returns {Object} updated input even with correct collectionId and collectionIds values.
  */
@@ -78,26 +78,32 @@ function updateCollectionIds(collectionId, modifiedEvent) {
   return returnEvent;
 }
 
-function updateProviders(provider, modifiedEvent) {
-  let returnEvent = { ...modifiedEvent };
-  if (provider) {
-    // transform input provider into an array on providers
-    const providers = isString(provider) ? [provider] : provider;
-    returnEvent = { ...modifiedEvent, providers };
-  }
-  return returnEvent;
+/**
+ * Normalizes the input provider into an array of providers.
+ *
+ * @param {string|string[]|undefined} provider - The provider or list of providers.
+ * @returns {string[]|undefined} An array of providers, or undefined if no provider is provided.
+ */
+function generateProviders(provider) {
+  return provider ? (isString(provider) ? [provider] : provider) : undefined;
 }
 
 /**
  * Converts input parameters to normalized versions to pass on to the report
  * functions.  Ensures any input dates are formatted as ISO strings.
  *
- * @param {Object} event - input payload
- * @returns {Object} - Object with normalized parameters
+ * @param {RecReportParams} event - input payload
+ * @returns {NormalizedRecReportParams} - Object with normalized parameters
  */
 function normalizeEvent(event) {
   const systemBucket = event.systemBucket || process.env.system_bucket;
+  if (!systemBucket) {
+    throw new MissingRequiredArgument('systemBucket is required.');
+  }
   const stackName = event.stackName || process.env.stackName;
+  if (!stackName) {
+    throw new MissingRequiredArgument('stackName is required.');
+  }
   const startTimestamp = isoTimestamp(event.startTimestamp);
   const endTimestamp = isoTimestamp(event.endTimestamp);
 
@@ -105,7 +111,11 @@ function normalizeEvent(event) {
   validateReportType(reportType);
 
   let {
-    collectionIds: anyCollectionIds, collectionId, granuleId, provider, ...modifiedEvent
+    collectionIds: anyCollectionIds,
+    collectionId = undefined,
+    granuleId = undefined,
+    provider = undefined,
+    ...modifiedEvent
   } = { ...event };
   if (anyCollectionIds) {
     throw new InvalidArgument('`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.');
@@ -120,16 +130,16 @@ function normalizeEvent(event) {
     throw new InvalidArgument(`${reportType} reports cannot be launched with more than one input (granuleId, collectionId, or provider).`);
   }
   modifiedEvent = updateCollectionIds(collectionId, modifiedEvent);
-  modifiedEvent = updateGranuleIds(granuleId, modifiedEvent);
-  modifiedEvent = updateProviders(provider, modifiedEvent);
 
-  return removeNilProperties({
+  return (removeNilProperties({
     ...modifiedEvent,
     systemBucket,
     stackName,
     startTimestamp,
     endTimestamp,
     reportType,
-  });
+    granuleIds: generateGranuleIds(granuleId),
+    providers: generateProviders(provider),
+  }));
 }
 exports.normalizeEvent = normalizeEvent;

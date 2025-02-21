@@ -35,6 +35,16 @@ const {
 
 const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
+/**
+ * @typedef {{
+ *   provider: string,
+ *   clientId: string,
+ *   username?: string,
+ *   password?: string,
+ *   token?: string
+ * }} CmrCredentials
+ */
+
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
   if (file.filepath) return file.filepath;
@@ -231,6 +241,17 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   }
 
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
+}
+
+/**
+ * Remove granule from CMR.
+ *
+ * @param {string} granuleUR - the granuleUR
+ * @param {CmrCredentials} creds - credentials needed to post to CMR service
+ */
+async function removeFromCMR(granuleUR, creds) {
+  const cmrClient = new CMR(creds);
+  return await cmrClient.deleteGranule(granuleUR);
 }
 
 /**
@@ -449,6 +470,14 @@ function generateFileUrl({
 }
 
 /**
+ * @typedef {Object} OnlineAccessUrl
+ * @property {string} URL - The generated file URL.
+ * @property {string} URLDescription - The description of the URL (used by ECHO10).
+ * @property {string} Description - The description of the URL (used by UMMG).
+ * @property {string} Type - The type of the URL (used by ECHO10/UMMG).
+ */
+
+/**
  * Construct online access url for a given file and a url type.
  *
  * @param {Object} params - input parameters
@@ -458,8 +487,8 @@ function generateFileUrl({
  * @param {Object} params.urlType - url type, distribution or s3
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution bucketss
- * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
- * @returns {(Object | undefined)} online access url object, undefined if no URL exists
+ * @param {boolean} [params.useDirectS3Type] - indicate if direct s3 access type is used
+ * @returns {(OnlineAccessUrl | undefined)} online access url object, undefined if no URL exists
  */
 function constructOnlineAccessUrl({
   file,
@@ -741,15 +770,17 @@ async function updateUMMGMetadata({
  * Helper to build an CMR settings object, used to initialize CMR.
  *
  * @param {Object} cmrConfig - CMR configuration object
- * @param {string} cmrConfig.oauthProvider - Oauth provider: launchpad or earthdata
- * @param {string} cmrConfig.provider - the CMR provider
- * @param {string} cmrConfig.clientId - Client id for CMR requests
- * @param {string} cmrConfig.passphraseSecretName - Launchpad passphrase secret name
- * @param {string} cmrConfig.api - Launchpad api
- * @param {string} cmrConfig.certificate - Launchpad certificate
- * @param {string} cmrConfig.username - EDL username
- * @param {string} cmrConfig.passwordSecretName - CMR password secret name
- * @returns {Promise<Object>} object to create CMR instance - contains the
+ * @param {string} [cmrConfig.oauthProvider] - Oauth provider: launchpad or earthdata
+ * @param {string} [cmrConfig.provider] - the CMR provider
+ * @param {string} [cmrConfig.clientId] - Client id for CMR requests
+ * @param {string} [cmrConfig.passphraseSecretName] - Launchpad passphrase secret name
+ * @param {string} [cmrConfig.api] - Launchpad api
+ * @param {string} [cmrConfig.certificate] - Launchpad certificate
+ * @param {string} [cmrConfig.username] - EDL username
+ * @param {string} [cmrConfig.passwordSecretName] - CMR password secret name
+ * @returns {Promise<import('@cumulus/cmr-client/CMR').CMRConstructorParams>}
+ * object to
+ * create CMR instance - contains the
  *    provider, clientId, and either launchpad token or EDL username and
  *    password
 */
@@ -1249,6 +1280,7 @@ module.exports = {
   publish2CMR,
   reconcileCMRMetadata,
   removeEtagsFromFileObjects,
+  removeFromCMR,
   updateCMRMetadata,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,

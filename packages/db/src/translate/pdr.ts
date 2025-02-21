@@ -9,6 +9,8 @@ import { CollectionPgModel } from '../models/collection';
 import { ExecutionPgModel } from '../models/execution';
 import { ProviderPgModel } from '../models/provider';
 import { PostgresPdr, PostgresPdrRecord } from '../types/pdr';
+import { PostgresCollectionRecord } from '../types/collection';
+import { PostgresProviderRecord } from '../types/provider';
 
 /**
  * Generate a Postgres PDR record from a DynamoDB record.
@@ -58,6 +60,45 @@ export const translateApiPdrToPostgresPdr = async (
 };
 
 /**
+ * Generate an API PDR object from the PDR and associated Postgres objects without
+ * querying the database
+ *
+ * @param params - params
+ * @param params.pdrPgRecord - PDR from Postgres
+ * @param params.collectionPgRecord - Collection from Postgres
+ * @param [params.executionArn] - executionUrl from Postgres
+ * @param [params.providerPgRecord] - provider from Postgres
+ * @returns An API PDR
+ */
+export const translatePostgresPdrToApiPdrWithoutDbQuery = ({
+  pdrPgRecord,
+  collectionPgRecord,
+  executionArn,
+  providerPgRecord,
+}: {
+  pdrPgRecord: PostgresPdrRecord,
+  collectionPgRecord: Pick<PostgresCollectionRecord, 'cumulus_id' | 'name' | 'version'>,
+  executionArn?: string,
+  providerPgRecord: Pick<PostgresProviderRecord, 'name'>,
+}): ApiPdr => removeNilProperties({
+  pdrName: pdrPgRecord.name,
+  provider: providerPgRecord?.name,
+  collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
+  status: pdrPgRecord.status,
+  createdAt: pdrPgRecord.created_at.getTime(),
+  progress: pdrPgRecord.progress,
+  execution: executionArn ? getExecutionUrlFromArn(executionArn) : undefined,
+  PANSent: pdrPgRecord.pan_sent,
+  PANmessage: pdrPgRecord.pan_message,
+  stats: pdrPgRecord.stats,
+  address: pdrPgRecord.address,
+  originalUrl: pdrPgRecord.original_url,
+  timestamp: (pdrPgRecord.timestamp ? pdrPgRecord.timestamp.getTime() : undefined),
+  duration: pdrPgRecord.duration,
+  updatedAt: pdrPgRecord.updated_at.getTime(),
+});
+
+/**
  * Generate a Postgres PDR record from a DynamoDB record.
  *
  * @param {Object} postgresPDR - A Postgres PDR record
@@ -85,23 +126,10 @@ export const translatePostgresPdrToApiPdr = async (
     cumulus_id: postgresPDR.execution_cumulus_id,
   }) : undefined;
 
-  const apiPdr: ApiPdr = {
-    pdrName: postgresPDR.name,
-    provider: provider.name,
-    collectionId: constructCollectionId(collection.name, collection.version),
-    status: postgresPDR.status,
-    createdAt: postgresPDR.created_at.getTime(),
-    progress: postgresPDR.progress,
-    execution: execution ? getExecutionUrlFromArn(execution.arn) : undefined,
-    PANSent: postgresPDR.pan_sent,
-    PANmessage: postgresPDR.pan_message,
-    stats: postgresPDR.stats,
-    address: postgresPDR.address,
-    originalUrl: postgresPDR.original_url,
-    timestamp: (postgresPDR.timestamp ? postgresPDR.timestamp.getTime() : undefined),
-    duration: postgresPDR.duration,
-    updatedAt: postgresPDR.updated_at.getTime(),
-  };
-
-  return <ApiPdr>removeNilProperties(apiPdr);
+  return translatePostgresPdrToApiPdrWithoutDbQuery({
+    pdrPgRecord: postgresPDR,
+    collectionPgRecord: collection,
+    executionArn: execution?.arn,
+    providerPgRecord: provider,
+  });
 };

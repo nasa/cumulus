@@ -52,7 +52,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
         id: asyncOperationId,
         taskArn: randomString(),
         description: 'Some description',
-        operationType: 'ES Index',
+        operationType: 'Kinesis Replay',
         status: 'RUNNING',
       };
 

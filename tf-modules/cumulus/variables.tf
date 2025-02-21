@@ -82,30 +82,6 @@ variable "ecs_cluster_min_size" {
   type        = number
 }
 
-variable "elasticsearch_remove_index_alias_conflict" {
-  type = bool
-  default = false
-  description = "Set to true to allow cumulus deployment bootstrap lambda to remove existing ES index named 'cumulus-alias' if it exists.  Setting to false will cause deployment to fail on existing index"
-}
-
-variable "elasticsearch_domain_arn" {
-  description = "The ARN of an Elasticsearch domain to use for storing data"
-  type        = string
-  default     = null
-}
-
-variable "elasticsearch_hostname" {
-  description = "The hostname of an Elasticsearch domain to use for storing data"
-  type        = string
-  default     = null
-}
-
-variable "elasticsearch_security_group_id" {
-  description = "The ID of the security group for the Elasticsearch domain specified by `elasticsearch_domain_arn`"
-  type        = string
-  default     = ""
-}
-
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
   type = map(number)
@@ -177,12 +153,6 @@ variable "api_gateway_stage" {
 
 variable "cmr_search_client_config" {
   description = "Configuration parameters for CMR search client for cumulus tasks"
-  type        = map(string)
-  default     = {}
-}
-
-variable "elasticsearch_client_config" {
-  description = "Configuration parameters for Elasticsearch client"
   type        = map(string)
   default     = {}
 }
@@ -319,18 +289,6 @@ variable "ecs_service_alarms" {
   description = "List of Cloudwatch alarms monitoring ECS instances"
   type        = list(object({ name = string, arn = string }))
   default     = []
-}
-
-variable "elasticsearch_alarms" {
-  description = "List of Cloudwatch alarms monitoring Elasticsearch domain"
-  type        = list(object({ name = string, arn = string }))
-  default     = []
-}
-
-variable "es_request_concurrency" {
-  type = number
-  default = 10
-  description = "Maximum number of concurrent requests to send to Elasticsearch. Used in index-from-database operation"
 }
 
 variable "key_name" {
@@ -568,12 +526,6 @@ variable "payload_timeout" {
   description = "Number of days to retain execution payload records in the database"
 }
 
-variable "es_index" {
-  type = string
-  default = "cumulus"
-  description = "elasticsearch index to be affected"
-}
-
 variable "update_limit" {
   type = number
   default = 10000
@@ -590,12 +542,6 @@ variable "additional_log_groups_to_elk" {
   description = "Map of Cloudwatch Log Groups. The key is a descriptor and the value is the log group"
   type = map(string)
   default = {}
-}
-
-variable "es_index_shards" {
-  description = "The number of shards for the Elasticsearch index"
-  type        = number
-  default     = 2
 }
 
 variable "ecs_custom_sg_ids" {
@@ -646,4 +592,18 @@ variable "sqs_message_consumer_watcher_time_limit" {
     should be less than the overall Lambda invocation timeout or else the Lambda may be terminated while still actively
     polling SQS. This value should be adjusted in conjunction with sqs_message_consumer_watcher_message_limit.
   EOF
+}
+
+## Dead Letter Recovery Configuration
+
+variable "dead_letter_recovery_cpu" {
+  type = number
+  default = 256
+  description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
+}
+
+variable "dead_letter_recovery_memory" {
+  type = number
+  default = 1024
+  description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }

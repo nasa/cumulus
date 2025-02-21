@@ -5,27 +5,21 @@ import { RuleRecord, Rule } from '@cumulus/types/api/rules';
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';
 import { PostgresRule, PostgresRuleRecord } from '../types/rule';
+import { PostgresProviderRecord } from '../types/provider';
+import { PostgresCollectionRecord } from '../types/collection';
 
-export const translatePostgresRuleToApiRule = async (
+export const translatePostgresRuleToApiRuleWithoutDbQuery = async (
   pgRule: PostgresRuleRecord,
-  knex: Knex | Knex.Transaction,
-  collectionPgModel = new CollectionPgModel(),
-  providerPgModel = new ProviderPgModel()
+  collectionPgRecord?: Pick<PostgresCollectionRecord, 'name' | 'version'>,
+  providerPgRecord?: Partial<PostgresProviderRecord>
 ): Promise<RuleRecord> => {
-  const provider = pgRule.provider_cumulus_id
-    ? await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id })
-    : undefined;
-  const collection = pgRule.collection_cumulus_id
-    ? await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id })
-    : undefined;
-
   const apiRule: RuleRecord = {
     name: pgRule.name,
     workflow: pgRule.workflow,
-    provider: provider ? provider.name : undefined,
-    collection: collection ? {
-      name: collection.name,
-      version: collection.version,
+    provider: providerPgRecord ? providerPgRecord.name : undefined,
+    collection: collectionPgRecord ? {
+      name: collectionPgRecord.name,
+      version: collectionPgRecord.version,
     } : undefined,
     rule: <Rule>removeNilProperties({
       type: pgRule.type,
@@ -43,6 +37,26 @@ export const translatePostgresRuleToApiRule = async (
     updatedAt: pgRule.updated_at.getTime(),
   };
   return <RuleRecord>removeNilProperties(apiRule);
+};
+
+export const translatePostgresRuleToApiRule = async (
+  pgRule: PostgresRuleRecord,
+  knex: Knex | Knex.Transaction,
+  collectionPgModel = new CollectionPgModel(),
+  providerPgModel = new ProviderPgModel()
+): Promise<RuleRecord> => {
+  const providerPgRecord = pgRule.provider_cumulus_id
+    ? await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id })
+    : undefined;
+  const collectionPgRecord = pgRule.collection_cumulus_id
+    ? await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id })
+    : undefined;
+
+  return translatePostgresRuleToApiRuleWithoutDbQuery(
+    pgRule,
+    collectionPgRecord,
+    providerPgRecord
+  );
 };
 
 /**

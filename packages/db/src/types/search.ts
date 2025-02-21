@@ -2,14 +2,14 @@ export type QueryStringParameters = {
   field?: string,
   fields?: string,
   infix?: string,
-  limit?: string,
+  limit?: string | null,
   page?: string,
   order?: string,
   prefix?: string,
   includeFullRecord?: string,
   sort_by?: string,
   sort_key?: string[],
-  [key: string]: string | string[] | undefined,
+  [key: string]: string | string[] | undefined | null,
 };
 
 export type QueryEvent = {
@@ -29,6 +29,7 @@ export type SortType = {
 };
 
 export type DbQueryParameters = {
+  collate?: string,
   fields?: string[],
   infix?: string,
   limit?: number,

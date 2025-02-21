@@ -17,6 +17,7 @@ const {
   granulesToCmrFileObjects,
   reconcileCMRMetadata,
   removeEtagsFromFileObjects,
+  removeFromCMR,
   updateCMRMetadata,
 } = require('./cmr-utils');
 
@@ -34,6 +35,7 @@ module.exports = {
   publish2CMR,
   reconcileCMRMetadata,
   removeEtagsFromFileObjects,
+  removeFromCMR,
   granulesToCmrFileObjects,
   updateCMRMetadata,
 };
