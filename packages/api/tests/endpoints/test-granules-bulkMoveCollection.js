@@ -66,7 +66,7 @@ test.before(async (t) => {
 
   // create a workflowKey
   // TODO use actual workflow name
-  const workflowKey = `${process.env.stackName}/workflows/HelloWorldWorkflow.json`;
+  const workflowKey = `${process.env.stackName}/workflows/MoveGranuleCollectionsWorkflow.json`;
 
   t.context.workflowArn = 'fakeWorkflow';
   await s3PutObject({
@@ -228,7 +228,7 @@ test.serial('bulkMoveCollection generates the proper payload and calls startExec
 
   const testBodyValues = {
     invalidBehavior: 'error',
-    s3MultipartChunkSize: 500,
+    s3MultipartChunkSizeMb: 500,
     batchSize: 200,
     concurrency: 50,
   };
@@ -259,10 +259,6 @@ test.serial('bulkMoveCollection generates the proper payload and calls startExec
     },
     payload: {
       granuleIds: granuleIds.sort(),
-    },
-    collection: {
-      name: t.context.collectionName,
-      version: t.context.collectionVersion,
     },
   };
 
