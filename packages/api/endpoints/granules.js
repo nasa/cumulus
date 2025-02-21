@@ -1006,13 +1006,6 @@ async function bulkChangeCollection(req, res) {
     knex,
     deconstructCollectionId(body.sourceCollectionId)
   );
-  // check collection returned
-  if (pgCollection === undefined) {
-    return res.boom.notFound(
-      `Collection not found for ${body.sourceCollectionId}`
-    );
-  }
-
   const query = granulePgModel.queryBuilderSearch(knex, {
     collection_cumulus_id: pgCollection.cumulus_id,
   });
