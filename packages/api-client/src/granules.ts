@@ -27,6 +27,9 @@ type BulkPatch = {
   dbMaxPool: number,
 };
 
+type InvalidBehavior = 'error' | 'skip';
+type CmrGranuleUrlType = 'http' | 's3' | 'both';
+
 const encodeGranulesURIComponent = (
   granuleId: string,
   collectionId: string | undefined
@@ -821,8 +824,8 @@ export const bulkMoveCollection = async (params: {
     targetCollectionId: string,
     batchSize?: number,
     concurrency?: number,
-    invalidBehavior?: string, // TODO enum
-    cmrGranuleUrlType?: string, // TODO enum
+    invalidBehavior?: InvalidBehavior,
+    cmrGranuleUrlType?: CmrGranuleUrlType,
     s3MultipartChunkSizeMb?: number,
     executionName?: string,
   },
