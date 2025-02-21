@@ -27,7 +27,7 @@ const { Search } = require('@cumulus/es-client/search');
 const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 
-const { bulkMoveCollection } = require('../../endpoints/granules');
+const { bulkChangeCollection } = require('../../endpoints/granules');
 
 const { buildFakeExpressResponse } = require('./utils');
 
@@ -218,7 +218,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('bulkMoveCollection generates the proper payload and calls startExecution with it', async (t) => {
+test.serial('bulkChangeCollection generates the proper payload and calls startExecution with it', async (t) => {
   process.env.CUMULUS_VERSION = 'v0.0.0';
   const { collectionPgModel, knex, workflowArn } = t.context;
   const newCollection = fakeCollectionRecordFactory();
@@ -249,7 +249,7 @@ test.serial('bulkMoveCollection generates the proper payload and calls startExec
     concurrency: 50,
   };
 
-  await bulkMoveCollection({
+  await bulkChangeCollection({
     testContext: { knex, sfnMethod },
     body: {
       sourceCollectionId: t.context.collectionId,
@@ -268,7 +268,7 @@ test.serial('bulkMoveCollection generates the proper payload and calls startExec
       cumulus_version: process.env.CUMULUS_VERSION,
     },
     meta: {
-      bulkMoveCollection: {
+      bulkChangeCollection: {
         ...testBodyValues,
         targetCollection: deconstructCollectionId(t.context.collectionId2),
       },
@@ -285,7 +285,7 @@ test.serial('bulkMoveCollection generates the proper payload and calls startExec
   t.deepEqual(response.send.getCall(0).args[0], expected, 'Endpoint response should match');
 });
 
-test.serial('bulkMoveCollection handles ExecutionAlreadyExists error correctly', async (t) => {
+test.serial('bulkChangeCollection handles ExecutionAlreadyExists error correctly', async (t) => {
   const { knex, workflowArn } = t.context;
   const req = {
     body: {
@@ -310,11 +310,11 @@ test.serial('bulkMoveCollection handles ExecutionAlreadyExists error correctly',
     send: sinon.stub(),
   };
 
-  await bulkMoveCollection(req, res);
+  await bulkChangeCollection(req, res);
   t.true(res.boom.badRequest.firstCall.args[0].includes(`already exists for state machine ${workflowArn}`));
 });
 
-test.serial('bulkMoveCollection handles a missing workflow configuration file correctly', async (t) => {
+test.serial('bulkChangeCollection handles a missing workflow configuration file correctly', async (t) => {
   const { knex } = t.context;
   const startExecutionStub = sinon.stub();
   startExecutionStub.returns({
@@ -343,11 +343,11 @@ test.serial('bulkMoveCollection handles a missing workflow configuration file co
     },
     send: sinon.stub(),
   };
-  await bulkMoveCollection(req, res);
+  await bulkChangeCollection(req, res);
   t.is('Unable to find state machine ARN for workflow someFakeWorkflow', res.boom.badRequest.firstCall.args[0], 'Error message should match catch for getJsonS3Object');
 });
 
-test.serial('bulkMoveCollection handles a collection with zero granules correctly', async (t) => {
+test.serial('bulkChangeCollection handles a collection with zero granules correctly', async (t) => {
   const { knex } = t.context;
   const startExecutionStub = sinon.stub();
   startExecutionStub.returns({
@@ -375,6 +375,6 @@ test.serial('bulkMoveCollection handles a collection with zero granules correctl
     },
     send: sinon.stub(),
   };
-  await bulkMoveCollection(req, res);
+  await bulkChangeCollection(req, res);
   t.is(`No granules found for collection ${t.context.collectionId3}`, res.boom.notFound.firstCall.args[0], 'Error message should match catch for getJsonS3Object');
 });

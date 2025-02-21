@@ -10,11 +10,11 @@
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
-            "targetCollection": "{$.meta.bulkMoveCollection.targetCollection}",
-            "s3MultipartChunksizeMb": "{$.meta.bulkMoveCollection.s3MultipartChunksizeMb}",
-            "invalidGranuleBehavior": "{$.meta.bulkMoveCollection.invalidGranuleBehavior}",
-            "cmrGranuleUrlType": "{$.meta.bulkMoveCollection.cmrGranuleUrlType}",
-            "concurrency": "{$.meta.bulkMoveCollection.concurrency}"
+            "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}",
+            "s3MultipartChunksizeMb": "{$.meta.bulkChangeCollection.s3MultipartChunksizeMb}",
+            "invalidGranuleBehavior": "{$.meta.bulkChangeCollection.invalidGranuleBehavior}",
+            "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}"
           }
         }
       },

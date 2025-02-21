@@ -949,7 +949,7 @@ async function del(req, res) {
   return res.send({ detail: 'Record deleted', ...deletionDetails });
 }
 
-const bulkMoveCollectionSchema = z.object({
+const bulkChangeCollectionSchema = z.object({
   sourceCollectionId: z.string().nonempty('sourceCollectionId is required'),
   targetCollectionId: z.string().nonempty('targetCollectionId is required'),
   batchSize: z.number().positive().optional().default(100),
@@ -959,7 +959,7 @@ const bulkMoveCollectionSchema = z.object({
   s3MultipartChunkSizeMb: z.number().optional(),
   executionName: z.string().optional(),
 });
-const parseBulkMoveCollectionPayload = zodParser('BulkMoveCollection payload', bulkMoveCollectionSchema);
+const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload', bulkChangeCollectionSchema);
 
 /**
  * Bulk move granules to a new collection.
@@ -979,7 +979,7 @@ const parseBulkMoveCollectionPayload = zodParser('BulkMoveCollection payload', b
  * @param {object} res - The response object.
  * @returns {Promise<Object>} The response object with the execution ARN and message.
  */
-async function bulkMoveCollection(req, res) {
+async function bulkChangeCollection(req, res) {
   const {
     knex = await getKnexClient(),
     sfnMethod = sfn,
@@ -989,7 +989,7 @@ async function bulkMoveCollection(req, res) {
   const collectionPgModel = new CollectionPgModel();
   const granulePgModel = new GranulePgModel();
 
-  const body = parseBulkMoveCollectionPayload(req.body);
+  const body = parsebulkChangeCollectionPayload(req.body);
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
@@ -1052,7 +1052,7 @@ async function bulkMoveCollection(req, res) {
         name,
         version,
       },
-      bulkMoveCollection: {
+      bulkChangeCollection: {
         batchSize: body.batchSize,
         cmrGranuleUrlType: body.cmrGranuleUrlType,
         concurrency: body.concurrency,
@@ -1354,7 +1354,7 @@ router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
 router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
 router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 
-router.post('/bulkMoveCollection', bulkMoveCollection);
+router.post('/bulkChangeCollection', bulkChangeCollection);
 router.post(
   '/bulk',
   validateBulkGranulesRequest,
@@ -1378,7 +1378,7 @@ router.delete('/:collectionId/:granuleId', del);
 
 module.exports = {
   bulkDelete,
-  bulkMoveCollection,
+  bulkChangeCollection,
   bulkOperations,
   bulkReingest,
   del,

@@ -668,7 +668,7 @@ test('bulkPatch calls the callback with the expected object', async (t) => {
   }));
 });
 
-test('bulkMoveCollection calls the callback with the expected object', async (t) => {
+test('bulkChangeCollection calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -677,7 +677,7 @@ test('bulkMoveCollection calls the callback with the expected object', async (t)
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/granules/bulkMoveCollection/',
+      path: '/granules/bulkChangeCollection/',
       body: JSON.stringify({
         sourceCollectionId: t.context.collectionId,
         targetCollectionId: t.context.collectionId2,
@@ -688,7 +688,7 @@ test('bulkMoveCollection calls the callback with the expected object', async (t)
   const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
-  await t.notThrowsAsync(granulesApi.bulkMoveCollection({
+  await t.notThrowsAsync(granulesApi.bulkChangeCollection({
     callback,
     prefix: t.context.testPrefix,
     body: {

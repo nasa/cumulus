@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-3992**
-  - Update `@cumulus/api-client` to add bulkMoveCollection endpoint
+  - Update `@cumulus/api-client` to add bulkChangeCollection endpoint
   - Update `@cumulus/api` to add api endpoint to allow trigger of `MoveGranuleCollectionsWorkflow`
   - Update MoveGranuleCollections integration test to use endpoint to trigger test instead of direct step function invocation
 - **CUMULUS-3751**

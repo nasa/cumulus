@@ -13,7 +13,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   getGranule,
   removePublishedGranule,
-  bulkMoveCollection,
+  bulkChangeCollection,
 } = require('@cumulus/api-client/granules');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
@@ -122,7 +122,7 @@ describe('The MoveGranuleCollections workflow', () => {
       'completed'
     );
     try {
-      const bulkMoveResponse = await bulkMoveCollection({
+      const bulkMoveResponse = await bulkChangeCollection({
         prefix: stackName,
         body: {
           sourceCollectionId: cleanupCollectionId,

@@ -815,9 +815,9 @@ export const bulkOperation = async (params: {
 
 /**
  * Bulk Granule Operations
- * POST /granules/bulkMoveCollection
+ * POST /granules/bulkChangeCollection
  */
-export const bulkMoveCollection = async (params: {
+export const bulkChangeCollection = async (params: {
   prefix: string,
   body: {
     sourceCollectionId: string,
@@ -837,7 +837,7 @@ export const bulkMoveCollection = async (params: {
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: '/granules/bulkMoveCollection/',
+      path: '/granules/bulkChangeCollection/',
       headers: {
         'Content-Type': 'application/json',
       },

@@ -177,7 +177,7 @@ resource "aws_lambda_function" "api" {
   runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "ApiEndpoints", 100)
   environment {
-    variables = merge(local.api_env_variables, {"auth_mode"="public"})
+    variables = merge(local.api_env_variables, {"auth_mode"="private"})
   }
   memory_size = lookup(var.lambda_memory_sizes, "ApiEndpoints", 1280)
   tags        = var.tags
