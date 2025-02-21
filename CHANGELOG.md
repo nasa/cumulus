@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-3992**
+  - Update `@cumulus/api-client` to add bulkMoveCollection endpoint
+  - Update `@cumulus/api` to add api endpoint to allow trigger of `MoveGranuleCollectionsWorkflow`
 - **CUMULUS-3751**
   - Added `change-granule-collection-s3` to move granules to a different collection.
     - expects a list of granuleIds along with a new (target) collection
