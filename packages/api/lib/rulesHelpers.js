@@ -151,7 +151,10 @@ async function buildPayload(rule) {
   // makes sure the workflow exists
   const bucket = getRequiredEnvVar('system_bucket');
   const stack = getRequiredEnvVar('stackName');
-  const workflowFileKey = workflows.getWorkflowFileKey(stack, rule.workflow || '');
+  if (!rule?.workflow) {
+    throw new Error(`Rule ${rule} does not have a workflow defined, and cannot generate a workflow payload`);
+  }
+  const workflowFileKey = workflows.getWorkflowFileKey(stack, rule.workflow);
 
   const exists = await s3Utils.fileExists(bucket, workflowFileKey);
   if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${rule.name}`);
