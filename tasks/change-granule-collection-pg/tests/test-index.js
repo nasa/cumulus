@@ -165,9 +165,6 @@ test.beforeEach(async (t) => {
     PG_DATABASE: testDbName,
     system_bucket: t.context.systemBucket,
     stackName: t.context.stackName,
-    AccessTokensTable: randomId('token'),
-    TOKEN_SECRET: randomId('secret'),
-    backgroundQueueUrl: randomId('backgroundQueueUrl'),
   };
   putJsonS3Object(
     t.context.systemBucket,
