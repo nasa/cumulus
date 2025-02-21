@@ -819,12 +819,12 @@ export const bulkMoveCollection = async (params: {
   body: {
     sourceCollectionId: string,
     targetCollectionId: string,
-    batchSize: number,
-    concurrency: number,
-    invalidBehavior: string, // TODO enum
-    cmrGranuleUrlType: string, // TODO enum
-    s3MultipartChunkSizeMb: number,
-    executionName: string,
+    batchSize?: number,
+    concurrency?: number,
+    invalidBehavior?: string, // TODO enum
+    cmrGranuleUrlType?: string, // TODO enum
+    s3MultipartChunkSizeMb?: number,
+    executionName?: string,
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {

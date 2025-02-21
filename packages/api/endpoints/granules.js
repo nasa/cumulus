@@ -1027,8 +1027,6 @@ async function bulkMoveCollection(req, res) {
   const { name, version } = deconstructCollectionId(body.sourceCollectionId);
   const executionName = body.executionName || uuidv4();
 
-  // TODO - bring in state machine arn/name from TF variable
-  // in the API config keystore
   let stateMachineArn;
   try {
     const workflowArnObject = await getJsonS3Object(

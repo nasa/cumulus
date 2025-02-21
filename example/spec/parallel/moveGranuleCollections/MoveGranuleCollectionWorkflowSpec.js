@@ -1,15 +1,29 @@
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const fs = require('fs');
-const { waitForListObjectsV2ResultCount, addCollections, addProviders } = require('@cumulus/integration-tests');
+const {
+  waitForListObjectsV2ResultCount,
+  addCollections,
+  addProviders,
+} = require('@cumulus/integration-tests');
 const {
   deleteS3Object,
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const {
+  getGranule,
+  removePublishedGranule,
+  bulkMoveCollection,
+} = require('@cumulus/api-client/granules');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
-const { loadConfig, createTestSuffix, createTimestampedTestId, uploadTestDataToBucket, createTestDataPath } = require('../../helpers/testUtils');
+const {
+  loadConfig,
+  createTestSuffix,
+  createTimestampedTestId,
+  uploadTestDataToBucket,
+  createTestDataPath,
+} = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 const workflowName = 'IngestAndPublishGranuleWithOrca';
@@ -40,6 +54,7 @@ describe('The MoveGranuleCollections workflow', () => {
   let beforeAllFailed = false;
   let ingestExecutionArn;
   let cleanupCollectionId;
+  let targetCollectionId;
   let moveExecutionArn;
   afterAll(async () => {
     try {
@@ -72,6 +87,7 @@ describe('The MoveGranuleCollections workflow', () => {
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     targetCollection = { name: `MOD09GQ${testSuffix}`, version: '007' };
     cleanupCollectionId = constructCollectionId(collection.name, collection.version);
+    targetCollectionId = constructCollectionId(targetCollection.name, targetCollection.version);
     provider = { id: `s3_provider${testSuffix}` };
 
     // populate collections, providers and test data
@@ -106,19 +122,14 @@ describe('The MoveGranuleCollections workflow', () => {
       'completed'
     );
     try {
-      moveExecutionArn = await buildAndStartWorkflow(
-        stackName,
-        config.bucket,
-        'MoveGranuleCollectionsWorkflow',
-        collection,
-        provider,
-        {
-          granuleIds: [granuleId],
+      const bulkMoveResponse = await bulkMoveCollection({
+        prefix: stackName,
+        body: {
+          sourceCollectionId: cleanupCollectionId,
+          targetCollectionId: targetCollectionId,
         },
-        {
-          bulkMoveCollection: { targetCollection },
-        }
-      );
+      });
+      moveExecutionArn = JSON.parse(bulkMoveResponse.body).execution;
       const startingGranule = await getGranule({
         prefix: stackName,
         granuleId,
