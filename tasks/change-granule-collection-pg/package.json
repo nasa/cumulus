@@ -16,6 +16,7 @@
     "node": ">=20.12.2"
   },
   "scripts": {
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && npm run prepare && npm run package",
     "clean": "rm -rf dist",
     "package": "./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
