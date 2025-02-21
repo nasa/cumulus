@@ -65,7 +65,6 @@ test.before(async (t) => {
   });
 
   // create a workflowKey
-  // TODO use actual workflow name
   const workflowKey = `${process.env.stackName}/workflows/MoveGranuleCollectionsWorkflow.json`;
 
   t.context.workflowArn = 'fakeWorkflow';
@@ -85,12 +84,21 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
+  // Remove on merge to main
   t.context.esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX);
-  t.context.collectionName = 'fakeCollection';
-  t.context.collectionVersion = 'v1';
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+});
 
-  const collectionName2 = 'fakeCollection2';
+test.beforeEach(async (t) => {
+  t.context.collectionName = `fakeCollection${cryptoRandomString({ length: 6 })}`;
+  t.context.collectionVersion = 'v1';
+  const collectionName2 = `fakeCollection2${cryptoRandomString({ length: 6 })}`;
   const collectionVersion2 = 'v2';
+
+  const collectionName3 = `fakeCollection3${cryptoRandomString({ length: 6 })}`;
+  const collectionVersion3 = 'v3';
 
   t.context.collectionId = constructCollectionId(
     t.context.collectionName,
@@ -105,6 +113,11 @@ test.before(async (t) => {
     name: collectionName2,
     version: collectionVersion2,
   });
+  t.context.testPgCollection3 = fakeCollectionRecordFactory({
+    name: collectionName3,
+    version: collectionVersion3,
+  });
+
   t.context.collectionPgModel = new CollectionPgModel();
   const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
@@ -114,19 +127,18 @@ test.before(async (t) => {
     t.context.knex,
     t.context.testPgCollection2
   );
+  const [pgCollection3] = await t.context.collectionPgModel.create(
+    t.context.knex,
+    t.context.testPgCollection3
+  );
+
   t.context.collectionCumulusId = pgCollection.cumulus_id;
   t.context.collectionCumulusId2 = pgCollection2.cumulus_id;
 
   t.context.collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
   t.context.collectionId2 = constructCollectionId(pgCollection2.name, pgCollection2.version);
+  t.context.collectionId3 = constructCollectionId(pgCollection3.name, pgCollection3.version);
 
-  // Remove on merge to main
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-});
-
-test.beforeEach(async (t) => {
   t.context.createGranuleId = () => `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
   const granuleId1 = t.context.createGranuleId();
   const granuleId2 = t.context.createGranuleId();
@@ -322,7 +334,7 @@ test.serial('bulkMoveCollection handles a missing workflow configuration file co
     testContext: {
       knex,
       sfnMethod,
-      workflow: 'someDumbWorkflow',
+      workflow: 'someFakeWorkflow',
     },
   };
   const res = {
@@ -332,5 +344,37 @@ test.serial('bulkMoveCollection handles a missing workflow configuration file co
     send: sinon.stub(),
   };
   await bulkMoveCollection(req, res);
-  t.is('Unable to find state machine ARN for workflow someDumbWorkflow', res.boom.badRequest.firstCall.args[0], 'Error message should match catch for getJsonS3Object');
+  t.is('Unable to find state machine ARN for workflow someFakeWorkflow', res.boom.badRequest.firstCall.args[0], 'Error message should match catch for getJsonS3Object');
+});
+
+test.serial('bulkMoveCollection handles a collection with zero granules correctly', async (t) => {
+  const { knex } = t.context;
+  const startExecutionStub = sinon.stub();
+  startExecutionStub.returns({
+    executionArn: 'fakeArn',
+  });
+  const sfnMethod = () => ({
+    startExecution: startExecutionStub,
+  });
+  const req = {
+    body: {
+      batchSize: 100,
+      concurrency: 10,
+      invalidBehavior: 'error',
+      sourceCollectionId: t.context.collectionId3,
+      targetCollectionId: t.context.collectionId,
+    },
+    testContext: {
+      knex,
+      sfnMethod,
+    },
+  };
+  const res = {
+    boom: {
+      notFound: sinon.stub(),
+    },
+    send: sinon.stub(),
+  };
+  await bulkMoveCollection(req, res);
+  t.is(`No granules found for collection ${t.context.collectionId3}`, res.boom.notFound.firstCall.args[0], 'Error message should match catch for getJsonS3Object');
 });
