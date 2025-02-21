@@ -15,6 +15,22 @@ module.exports = {
       return `webpack://${relativePath}`;
     }
   },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true
+            },
+          },
+        ],
+      },
+    ],
+  },
   externals: [
     /@aws-sdk\//,
     'electron',
