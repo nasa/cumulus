@@ -88,7 +88,7 @@ async function setupDataStoreData(granules, targetCollection, t) {
     await Promise.all(granules.map(async (granule) => (
       await translateApiGranuleToPostgresGranule({
         dynamoRecord: granule,
-        knexOrTransaction: knex
+        knexOrTransaction: knex,
       })
     ))),
     ['cumulus_id', 'granule_id']
@@ -106,7 +106,6 @@ function buildPayload(t, collection) {
   const newPayload = t.context.payload;
   newPayload.config.targetCollection = collection;
   newPayload.config.collection = getOriginalCollection();
-  newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.private.name = t.context.privateBucket;
