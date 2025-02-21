@@ -59,7 +59,7 @@ test.before(async (t) => {
     Key: tKey,
     Body: JSON.stringify({
       cumulus_meta: {
-        cumulus_version: 'fakeVersion',
+        cumulus_version: 'v0.0.0',
       },
     }),
   });
@@ -207,7 +207,7 @@ test.after.always(async (t) => {
 });
 
 test.serial('bulkMoveCollection generates the proper payload and calls startExecution with it', async (t) => {
-  process.env.CUMULUS_VERSION = 'fakeVersion';
+  process.env.CUMULUS_VERSION = 'v0.0.0';
   const { collectionPgModel, knex, workflowArn } = t.context;
   const newCollection = fakeCollectionRecordFactory();
   await collectionPgModel.create(knex, newCollection);
@@ -253,7 +253,7 @@ test.serial('bulkMoveCollection generates the proper payload and calls startExec
   const expectedPayload = {
     cumulus_meta: {
       state_machine: workflowArn,
-      cumulus_version: 'fakeVersion',
+      cumulus_version: process.env.CUMULUS_VERSION,
     },
     meta: {
       bulkMoveCollection: {
