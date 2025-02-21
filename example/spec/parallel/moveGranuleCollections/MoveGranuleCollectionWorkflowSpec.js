@@ -41,6 +41,7 @@ describe('The MoveGranuleCollections workflow', () => {
   let moveExecutionArn;
   let collection;
   let targetCollection;
+  let startingGranule;
   beforeAll(async () => {
     config = await loadConfig();
     stackName = config.stackName;
@@ -84,7 +85,7 @@ describe('The MoveGranuleCollections workflow', () => {
       },
       'completed'
     );
-    const startingGranule = await getGranule({
+    startingGranule = await getGranule({
       prefix: stackName,
       granuleId,
     });
@@ -153,5 +154,12 @@ describe('The MoveGranuleCollections workflow', () => {
       expect(finalKeys.includes(file.key)).toBeTrue();
       expect(finalBuckets.includes(file.bucket)).toBeTrue();
     });
+  });
+
+  it('cleans up old files in s3', async () => {
+    if (beforeAllFailed) fail('beforeAllFailed');
+    await Promise.all(startingGranule.files.map(async (file) => {
+      expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(false);
+    }));
   });
 });
