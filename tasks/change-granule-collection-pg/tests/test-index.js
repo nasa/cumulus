@@ -85,15 +85,18 @@ async function setupDataStoreData(granules, targetCollection, t) {
   );
   pgRecords.granules = await granuleModel.insert(
     knex,
-    await Promise.all(granules.map(async (g) => (
-      await translateApiGranuleToPostgresGranule({ dynamoRecord: g, knexOrTransaction: knex })
+    await Promise.all(granules.map(async (granule) => (
+      await translateApiGranuleToPostgresGranule({
+        dynamoRecord: granule,
+        knexOrTransaction: knex
+      })
     ))),
     ['cumulus_id', 'granule_id']
   );
 
-  await Promise.all(granules.map((g) => indexer.indexGranule(
+  await Promise.all(granules.map((granule) => indexer.indexGranule(
     esClient,
-    g,
+    granule,
     esIndex
   )));
   return pgRecords;
@@ -143,7 +146,7 @@ test.beforeEach(async (t) => {
   t.context.protectedBucket = randomId('protected');
   t.context.privateBucket = randomId('private');
   t.context.systemBucket = randomId('system');
-  t.context.stackName = 'changeGranuleCollectionsPGTestStack';
+  t.context.stackName = randomId('changeGranuleCollectionsPGTestStack');
   const bucketMapping = {
     public: t.context.publicBucket,
     protected: t.context.protectedBucket,
@@ -161,9 +164,12 @@ test.beforeEach(async (t) => {
     ...process.env,
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
+    system_bucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    AccessTokensTable: randomId('token'),
+    TOKEN_SECRET: randomId('secret'),
+    backgroundQueueUrl: randomId('backgroundQueueUrl'),
   };
-  process.env.system_bucket = t.context.systemBucket;
-  process.env.stackName = t.context.stackName;
   putJsonS3Object(
     t.context.systemBucket,
     getDistributionBucketMapKey(t.context.stackName),
