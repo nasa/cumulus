@@ -6,7 +6,8 @@ const {
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { deleteGranule, getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { deleteCollection } = require('@cumulus/api-client/collections');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTestSuffix, createTimestampedTestId, uploadTestDataToBucket, createTestDataPath } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
@@ -54,7 +55,7 @@ describe('The MoveGranuleCollections workflow', () => {
       cleanup = cleanup.concat([
         deleteExecution({ prefix: config.stackName, executionArn: ingestExecutionArn }),
         deleteExecution({ prefix: config.stackName, executionArn: moveExecutionArn }),
-        deleteGranule({ prefix: config.stackName, granuleId: granuleId }),
+        deleteCollection({ prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version }),
       ]);
       await Promise.all(cleanup);
     } catch (error) {
