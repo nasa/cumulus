@@ -53,6 +53,7 @@
     "@cumulus/api": "18.5.3",
     "@cumulus/db": "^18.5.3",
     "@cumulus/distribution-utils": "18.5.3",
-    "@cumulus/es-client": "18.5.3"
+    "@cumulus/es-client": "18.5.3",
+    "lodash": "^4.17.21"
   }
 }

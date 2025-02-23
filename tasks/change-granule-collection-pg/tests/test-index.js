@@ -24,7 +24,17 @@ const indexer = require('@cumulus/es-client/indexer');
 
 const sinon = require('sinon');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
-const { generateLocalTestDb, migrationDir, GranulePgModel, CollectionPgModel, translateApiCollectionToPostgresCollection, translateApiGranuleToPostgresGranule, localStackConnectionEnv } = require('@cumulus/db');
+const {
+  generateLocalTestDb,
+  migrationDir,
+  GranulePgModel,
+  CollectionPgModel,
+  translateApiCollectionToPostgresCollection,
+  translateApiGranuleToPostgresGranule,
+  localStackConnectionEnv,
+} = require('@cumulus/db');
+const range = require('lodash/range');
+const { constructCollectionId } = require('../../../packages/message/Collections');
 
 const mockResponse = () => {
   const res = {};
@@ -309,6 +319,83 @@ test.serial('changeGranuleCollectionsPG should handle change where no files are 
   t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
   //nothing should have been cleaned up
 
+  await Promise.all(newPayload.input.granules.map((granule) => Promise.all(
+    granule.files.map(async (file) => {
+      t.assert(await s3ObjectExists({
+        Bucket: file.bucket,
+        Key: file.key,
+      }));
+    })
+  )));
+});
+
+test.serial('changeGranuleCollectionsPG Should work correctly for a large batch', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_base.json');
+  let payloadString = fs.readFileSync(payloadPath, 'utf8');
+  payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
+  payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
+  payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
+  t.context.payload = JSON.parse(payloadString);
+
+  const collectionPath = path.join(__dirname, 'data', 'new_collection.json');
+  const collection = JSON.parse(fs.readFileSync(collectionPath));
+  const newPayload = buildPayload(t, collection);
+
+  const bucketNames = Object.values(
+    newPayload.config.buckets
+  ).map((bucket) => bucket.name).filter(Boolean);
+  const oldGranules = range(200).map((_) => ({
+    granuleId: cryptoRandomString({ length: 5 }),
+    status: 'completed',
+    collectionId: constructCollectionId(
+      t.context.payload.config.collection.name,
+      t.context.payload.config.collection.version
+    ),
+    files: range(5).map((__) => ({
+      key: `${cryptoRandomString({ length: 12 })}`,
+      bucket: bucketNames[Math.floor(bucketNames.length * Math.random())],
+    })),
+  }));
+  const newGranules = oldGranules.map((oldGranule) => ({
+    ...oldGranule,
+    collectionId: constructCollectionId(
+      t.context.payload.config.targetCollection.name,
+      t.context.payload.config.targetCollection.version
+    ),
+    files: oldGranule.files.map((oldFile) => ({
+      ...oldFile,
+      bucket: bucketNames[Math.floor(bucketNames.length * Math.random())],
+      key: `anotherPrefixprefix/${oldFile.key}`,
+    })),
+  }));
+
+  newPayload.input.granules = newGranules;
+  newPayload.input.oldGranules = oldGranules;
+  await setupS3Data(t.context.payload.input.granules);
+  await setupS3Data(t.context.payload.input.oldGranules);
+  const pgRecords = await setupDataStoreData(
+    newPayload.input.oldGranules,
+    collection,
+    t
+  );
+  const output = await changeGranuleCollectionsPG(newPayload);
+  await validateOutput(t, output);
+  const granuleModel = new GranulePgModel();
+  const finalPgGranule = await granuleModel.get(t.context.knex, {
+    cumulus_id: pgRecords.granules[0].cumulus_id,
+  });
+  t.assert(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
+  t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
+  //ensure old files have been cleaned up
+
+  await Promise.all(newPayload.input.oldGranules.map((granule) => Promise.all(
+    granule.files.map(async (file) => {
+      t.assert(!await s3ObjectExists({
+        Bucket: file.bucket,
+        Key: file.key,
+      }));
+    })
+  )));
   await Promise.all(newPayload.input.granules.map((granule) => Promise.all(
     granule.files.map(async (file) => {
       t.assert(await s3ObjectExists({
