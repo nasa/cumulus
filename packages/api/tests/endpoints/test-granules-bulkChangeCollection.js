@@ -329,7 +329,7 @@ test.serial('bulkChangeCollection handles ExecutionAlreadyExists error correctly
   t.true(res.boom.badRequest.firstCall.args[0].includes(`already exists for state machine ${workflowArn}`));
 });
 
-test.serial('bulkChangeCollection handles a missing workflow configuration file correctly', async (t) => {
+test.serial('bulkChangeCollection errors correctly when workflow configuration file is missing', async (t) => {
   const { knex } = t.context;
   const startExecutionStub = sinon.stub();
   startExecutionStub.returns({
