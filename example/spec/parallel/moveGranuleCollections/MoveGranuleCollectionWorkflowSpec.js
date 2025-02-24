@@ -129,7 +129,7 @@ describe('The MoveGranuleCollections workflow', () => {
           targetCollectionId: targetCollectionId,
         },
       });
-      moveExecutionArn = JSON.parse(bulkMoveResponse.body).execution;
+      moveExecutionArn = JSON.parse(bulkChangeCollectionResponse.body).execution;
       const startingGranule = await getGranule({
         prefix: stackName,
         granuleId,
