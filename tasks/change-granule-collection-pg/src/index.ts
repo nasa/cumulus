@@ -38,7 +38,14 @@ interface EventConfig {
     version: string,
   }
   buckets: BucketsConfigObject,
+  concurrency: number | undefined,
+  dbMaxPool: number | undefined,
 }
+
+type ValidEventConfig = {
+  concurrency: number,
+  dbMaxPool: number
+} & EventConfig;
 
 interface MoveGranuleCollectionsEvent {
   config: EventConfig,
@@ -68,14 +75,18 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
   return true;
 }
 
-function getConcurrency() {
-  return Number(process.env.concurrency || 100);
+function validateConfig(config: EventConfig): ValidEventConfig {
+  const newConfig = config;
+  newConfig.concurrency = config.concurrency || 100;
+  newConfig.concurrency = config.concurrency || 100;
+  return newConfig as ValidEventConfig;
 }
 
 async function moveGranulesInCumulusDatastores(
   targetGranules: Array<ApiGranuleRecord>,
   sourceCollectionId: string,
-  targetCollectionId: string
+  targetCollectionId: string,
+  config: ValidEventConfig,
 ): Promise<void> {
   const updatedBodyGranules = targetGranules.map((targetGranule) => ({
     ...targetGranule,
@@ -85,8 +96,8 @@ async function moveGranulesInCumulusDatastores(
     prefix: getRequiredEnvVar('stackName'),
     body: {
       apiGranules: updatedBodyGranules,
-      dbConcurrency: getConcurrency(),
-      dbMaxPool: getConcurrency(),
+      dbConcurrency: config.concurrency,
+      dbMaxPool: config.dbMaxPool,
     },
   });
   await bulkPatchGranuleCollection({
@@ -94,7 +105,7 @@ async function moveGranulesInCumulusDatastores(
     body: {
       apiGranules: updatedBodyGranules,
       collectionId: targetCollectionId,
-      esConcurrency: getConcurrency(),
+      esConcurrency: config.concurrency,
     },
   });
 }
@@ -120,7 +131,8 @@ async function cleanupS3File(
 
 async function cleanupInS3(
   newGranules: ValidGranuleRecord[],
-  oldGranules: { [granuleId: string]: ValidGranuleRecord }
+  oldGranules: { [granuleId: string]: ValidGranuleRecord },
+  config: ValidEventConfig
 ) {
   const operations = newGranules.flatMap((newGranule) => {
     const oldGranule = oldGranules[newGranule.granuleId];
@@ -145,12 +157,12 @@ async function cleanupInS3(
   await pMap(
     operations,
     async (operation) => await operation(),
-    { concurrency: Number(process.env.concurrency || 100) }
+    { concurrency: config.concurrency }
   );
 }
 
-function chunkGranules(granules: ValidGranuleRecord[]) {
-  const chunkSize = getConcurrency();
+function chunkGranules(granules: ValidGranuleRecord[], concurrency: number) {
+  const chunkSize = concurrency;
   return range(granules.length / chunkSize).map((i) => granules.slice(
     i * chunkSize,
     (i + 1) * chunkSize
@@ -160,12 +172,12 @@ function chunkGranules(granules: ValidGranuleRecord[]) {
 async function changeGranuleCollectionsPG(
   event: MoveGranuleCollectionsEvent
 ): Promise<Object> {
-  const config = event.config;
+  const config = validateConfig(event.config);
 
   const targetGranules = event.input.granules.filter(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(event.input.oldGranules.filter(validateGranule), 'granuleId');
   log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
-  for (const granuleChunk of chunkGranules(targetGranules)) {
+  for (const granuleChunk of chunkGranules(targetGranules, config.concurrency)) {
     //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(
       granuleChunk,
@@ -173,10 +185,11 @@ async function changeGranuleCollectionsPG(
       constructCollectionId(
         config.targetCollection.name,
         config.targetCollection.version
-      )
+      ),
+      config
     );
     //eslint-disable-next-line no-await-in-loop
-    await cleanupInS3(granuleChunk, oldGranulesByID);
+    await cleanupInS3(granuleChunk, oldGranulesByID, config);
   }
 
   return {
