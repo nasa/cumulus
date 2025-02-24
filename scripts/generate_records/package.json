@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@cumulus/api-client": "18.5.3",
+    "@cumulus/aws-client": "18.5.3",
     "@cumulus/common": "18.5.3",
     "@cumulus/db": "18.5.3",
     "@cumulus/errors": "18.5.3",
