@@ -42,6 +42,7 @@ describe('The MoveGranuleCollections workflow', () => {
   let collection;
   let targetCollection;
   let startingGranule;
+
   beforeAll(async () => {
     config = await loadConfig();
     stackName = config.stackName;
@@ -112,6 +113,7 @@ describe('The MoveGranuleCollections workflow', () => {
       beforeAllFailed = true;
     }
   });
+
   afterAll(async () => {
     try {
       await removePublishedGranule({
@@ -133,12 +135,14 @@ describe('The MoveGranuleCollections workflow', () => {
       // eslint-disable-line no-empty
     }
   });
+
   it('updates the granule data in s3', async () => {
     if (beforeAllFailed) fail('beforeAllFailed');
     await Promise.all(finalFiles.map(async (file) => {
       expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
     }));
   });
+
   it('updates the granule data in pg', async () => {
     if (beforeAllFailed) fail('beforeAllFailed');
     const pgGranule = await getGranule({
