@@ -1002,10 +1002,12 @@ async function bulkChangeCollection(req, res) {
     return returnCustomValidationErrors(res, body);
   }
 
+  const { name, version } = deconstructCollectionId(body.sourceCollectionId);
+
   //get collection
   const pgCollection = await collectionPgModel.get(
     knex,
-    deconstructCollectionId(body.sourceCollectionId)
+    { name, version }
   );
   const query = granulePgModel.queryBuilderSearch(knex, {
     collection_cumulus_id: pgCollection.cumulus_id,
@@ -1019,7 +1021,6 @@ async function bulkChangeCollection(req, res) {
     );
   }
 
-  const { name, version } = deconstructCollectionId(body.sourceCollectionId);
   const executionName = body.executionName || uuidv4();
 
   let stateMachineArn;
