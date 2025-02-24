@@ -380,7 +380,12 @@ module "cumulus" {
 }
 ```
 
-### 15. Merge base branch back to master
+### 15. Publish async_operations image to Docker Hub and AWS ECR
+
+If ____, then a [new docker image for async_operations should be created and published](https://github.com/nasa/cumulus/blob/master/packages/api/ecs/async-operation/README.md).
+The changelog should also be updated to reflect this update.
+
+### 16. Merge base branch back to master
 
 Finally, you need to reproduce the version update changes back to master.
 
