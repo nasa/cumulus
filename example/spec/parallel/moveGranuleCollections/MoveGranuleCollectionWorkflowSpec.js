@@ -122,7 +122,7 @@ describe('The MoveGranuleCollections workflow', () => {
       'completed'
     );
     try {
-      const bulkMoveResponse = await bulkChangeCollection({
+      const bulkChangeCollectionResponse = await bulkChangeCollection({
         prefix: stackName,
         body: {
           sourceCollectionId: cleanupCollectionId,
