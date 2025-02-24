@@ -11,12 +11,13 @@ const {
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 
-const { waitForListObjectsV2ResultCount, addCollections, addProviders, generateCmrFilesForGranules } = require('@cumulus/integration-tests');
+const { addCollections, addProviders, generateCmrFilesForGranules } = require('@cumulus/integration-tests');
 
 const {
   createGranule,
   getGranule,
   deleteGranule,
+  waitForGranule,
 } = require('@cumulus/api-client/granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
@@ -28,7 +29,7 @@ const {
   deleteFolder,
 } = require('../../helpers/testUtils');
 
-describe('when ChangeGranuleCollectionS3 is called', () => {
+describe('when ChangeGranuleCollectionPG is called', () => {
   let testSetupFailed;
   let stackName;
   let config;
@@ -55,6 +56,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
     ]);
     await Promise.all(cleanup);
   });
+
   beforeAll(async () => {
     try {
       const inputPayloadFilename = './data/payloads/IngestGranule.input.payload.json';
@@ -70,7 +72,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
       const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
       config = await loadConfig();
       stackName = config.stackName;
-      const testId = createTimestampedTestId(stackName, 'ChangeGranuleCollectionS3');
+      const testId = createTimestampedTestId(stackName, 'changeGranuleCollectionPg');
       const testSuffix = createTestSuffix(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
@@ -128,8 +130,10 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
         key: cmrKey.slice(1),
       });
 
-      await createGranule({ prefix: config.stackName,
-        body: granuleObject.body });
+      await createGranule({
+        prefix: config.stackName,
+        body: granuleObject.body,
+      });
     } catch (error) {
       console.log('setup test failed with', error);
       testSetupFailed = true;
@@ -138,16 +142,32 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
 
   describe('The lambda, when invoked with an expected payload', () => {
     let beforeAllFailed = false;
+
     beforeAll(async () => {
       if (testSetupFailed) fail('test setup failed');
       startingFiles = (await getGranule({
         prefix: stackName,
         granuleId: granuleId,
       })).files;
-      //upload to cumulus
       try {
-        const { $metadata, Payload } = await lambda().send(new InvokeCommand({
-          FunctionName: `${stackName}-ChangeGranuleCollectionS3`,
+        const oldGranule = await getGranule({
+          prefix: stackName,
+          granuleId,
+        });
+        const bucketNames = Object.keys(config.buckets);
+        // build new granule
+        const newGranule = {
+          ...oldGranule,
+          collectionID: constructCollectionId(targetCollection.name, targetCollection.version),
+          files: oldGranule.files.map((file) => ({
+            ...file,
+            bucket: config.buckets[bucketNames[Math.floor(bucketNames.length * Math.random())]].name,
+            key: `anewprefix/${file.key.split('/').pop()}`,
+          })),
+        };
+        finalFiles = newGranule.files;
+        const { $metadata } = await lambda().send(new InvokeCommand({
+          FunctionName: `${stackName}-ChangeGranuleCollectionPG`,
           InvocationType: 'RequestResponse',
           Payload: JSON.stringify({
             cma: {
@@ -162,42 +182,54 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
                 targetCollection: '{$.meta.targetCollection}',
               },
               event: {
-                payload: { granuleIds: [granuleId] },
+                payload: {
+                  granules: [newGranule],
+                  oldGranules: [oldGranule],
+                },
               },
             },
           }),
         }));
-        const outputGranule = JSON.parse(new TextDecoder('utf-8').decode(Payload)).payload.granules[0];
         if ($metadata.httpStatusCode >= 400) {
-          console.log(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
+          throw new Error(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
         }
-        finalFiles = outputGranule.files;
-        await Promise.all(finalFiles.map((file) => expectAsync(
-          waitForListObjectsV2ResultCount({
-            bucket: file.bucket,
-            prefix: file.key,
-            desiredCount: 1,
+        await expectAsync(waitForGranule({
+          prefix: stackName,
+          granuleId,
+          collectionId: constructCollectionId(targetCollection.name, targetCollection.version),
+          pRetryOptions: {
             interval: 5 * 1000,
-            timeout: 60 * 1000,
-          })
-        ).toBeResolved()));
+            timeout: 30 * 1000,
+          },
+        })).toBeResolved();
       } catch (error) {
         console.log(`files do not appear to have been moved: error: ${error}`);
         beforeAllFailed = true;
       }
     });
-    it('updates the granule data in s3', async () => {
+
+    it('updates the granule data in pg', async () => {
       if (beforeAllFailed) fail('beforeAllFailed');
       if (testSetupFailed) fail('testSetupFailed');
-      await Promise.all(finalFiles.map(async (file) => {
-        expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
-      }));
+      const updatedGranule = await getGranule({
+        prefix: stackName,
+        granuleId,
+        collectionId: constructCollectionId(targetCollection.name, targetCollection.version),
+      });
+      expect(updatedGranule.granuleId).toEqual(granuleId);
+      expect(updatedGranule.collectionId).toEqual(
+        constructCollectionId(targetCollection.name, targetCollection.version)
+      );
+      finalFiles.sort();
+      updatedGranule.files.sort();
+      expect(updatedGranule.files).toEqual(finalFiles);
     });
-    it('keeps old s3 files as well', async () => {
+
+    it('removes old s3 files as well', async () => {
       if (beforeAllFailed) fail('beforeAllFailed');
       if (testSetupFailed) fail('testSetupFailed');
       await Promise.all(startingFiles.map(async (file) => {
-        expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
+        expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(false);
       }));
     });
   });

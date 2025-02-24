@@ -12,6 +12,7 @@ module "move_granule_collections_workflow" {
     "${path.module}/move_granule_collections_workflow.asl.json",
     {
       change_granule_collection_s3_task_arn: var.change_granule_collection_s3_task_arn
+      change_granule_collection_pg_task_arn: var.change_granule_collection_pg_task_arn
     }
   )
 }

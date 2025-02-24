@@ -1,6 +1,6 @@
 {
-  "title": "ChangeGranuleCollectionS3Config",
-  "description": "Describes the config used by the change-granule-collection-s3 task",
+  "title": "ChangeGranuleCollectionPGConfig",
+  "description": "Describes the config used by the change-granule-collection-pg task",
   "type": "object",
   "required": [
     "collection",
@@ -37,7 +37,6 @@
       ],
       "properties": {
         "name": { "type": "string" },
-        "version": { "type": "string" },
         "process": { "type": "string" },
         "url_path": { "type": "string" },
         "duplicateHandling": { "type": "string" },
@@ -73,7 +72,6 @@
       ],
       "properties": {
         "name": { "type": "string" },
-        "version": { "type": "string" },
         "process": { "type": "string" },
         "url_path": { "type": "string" },
         "duplicateHandling": { "type": "string" },
@@ -103,10 +101,6 @@
     "s3MultipartChunksizeMb": {
       "type": ["number", "null"],
       "description": "S3 multipart upload chunk size in MB.  If none is specified, the default default_s3_multipart_chunksize_mb is used."
-    },
-    "invalidGranuleBehavior": {
-      "type": ["string", "null"],
-      "description": "what to do if a granule without valid details (file buckets and keys) is ingested."
     }
   }
 }
