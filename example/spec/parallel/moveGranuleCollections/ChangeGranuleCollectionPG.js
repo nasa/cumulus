@@ -132,7 +132,7 @@ describe('when ChangeGranuleCollectionPG is called', () => {
 
       await createGranule({
         prefix: config.stackName,
-        body: granuleObject.body
+        body: granuleObject.body,
       });
     } catch (error) {
       console.log('setup test failed with', error);
