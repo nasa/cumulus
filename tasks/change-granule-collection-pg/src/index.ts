@@ -78,7 +78,6 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
 function validateConfig(config: EventConfig): ValidEventConfig {
   const newConfig = config;
   newConfig.concurrency = config.concurrency || 100;
-  newConfig.concurrency = config.concurrency || 100;
   return newConfig as ValidEventConfig;
 }
 
