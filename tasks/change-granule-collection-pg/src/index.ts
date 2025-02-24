@@ -85,7 +85,7 @@ async function moveGranulesInCumulusDatastores(
   targetGranules: Array<ApiGranuleRecord>,
   sourceCollectionId: string,
   targetCollectionId: string,
-  config: ValidEventConfig,
+  config: ValidEventConfig
 ): Promise<void> {
   const updatedBodyGranules = targetGranules.map((targetGranule) => ({
     ...targetGranule,
