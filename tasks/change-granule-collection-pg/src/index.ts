@@ -28,6 +28,7 @@ export type ValidApiGranuleFile = Omit<ValidApiFile, 'granuleId'>;
 export type ValidGranuleRecord = {
   files: ValidApiGranuleFile[]
 } & ApiGranuleRecord;
+
 interface EventConfig {
   targetCollection: {
     name: string,

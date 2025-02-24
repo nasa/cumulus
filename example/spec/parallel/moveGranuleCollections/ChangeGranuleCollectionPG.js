@@ -56,6 +56,7 @@ describe('when ChangeGranuleCollectionPG is called', () => {
     ]);
     await Promise.all(cleanup);
   });
+
   beforeAll(async () => {
     try {
       const inputPayloadFilename = './data/payloads/IngestGranule.input.payload.json';
@@ -129,8 +130,10 @@ describe('when ChangeGranuleCollectionPG is called', () => {
         key: cmrKey.slice(1),
       });
 
-      await createGranule({ prefix: config.stackName,
-        body: granuleObject.body });
+      await createGranule({
+        prefix: config.stackName,
+        body: granuleObject.body
+      });
     } catch (error) {
       console.log('setup test failed with', error);
       testSetupFailed = true;
@@ -139,6 +142,7 @@ describe('when ChangeGranuleCollectionPG is called', () => {
 
   describe('The lambda, when invoked with an expected payload', () => {
     let beforeAllFailed = false;
+
     beforeAll(async () => {
       if (testSetupFailed) fail('test setup failed');
       startingFiles = (await getGranule({
@@ -203,6 +207,7 @@ describe('when ChangeGranuleCollectionPG is called', () => {
         beforeAllFailed = true;
       }
     });
+
     it('updates the granule data in pg', async () => {
       if (beforeAllFailed) fail('beforeAllFailed');
       if (testSetupFailed) fail('testSetupFailed');
@@ -219,7 +224,8 @@ describe('when ChangeGranuleCollectionPG is called', () => {
       updatedGranule.files.sort();
       expect(updatedGranule.files).toEqual(finalFiles);
     });
-    it('keeps old s3 files as well', async () => {
+
+    it('removes old s3 files as well', async () => {
       if (beforeAllFailed) fail('beforeAllFailed');
       if (testSetupFailed) fail('testSetupFailed');
       await Promise.all(startingFiles.map(async (file) => {
