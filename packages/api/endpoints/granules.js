@@ -1098,7 +1098,7 @@ async function bulkChangeCollection(req, res) {
   }
   return res.send({
     execution: startExecutionResult.executionArn,
-    message: `Successfully submitted bulk granule move collection with ${granules.length} granules`,
+    message: `Successfully submitted bulk granule change collection with ${granules.length} granules`,
   });
 }
 
