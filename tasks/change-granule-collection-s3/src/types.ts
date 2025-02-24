@@ -51,6 +51,6 @@ export type ValidGranuleRecord = {
 export type MassagedEventConfig = {
   chunkSize?: number,
   cmrGranuleUrlType: string,
-  invalidGranuleBehavior: string
+  invalidGranuleBehavior: string,
   targetCollection: CollectionRecord,
 } & EventConfig;
