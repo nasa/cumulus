@@ -3,6 +3,8 @@
 const sinon = require('sinon');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { v4: uuidv4 } = require('uuid');
+
 const {
   CollectionPgModel,
   destroyLocalTestDb,
@@ -21,6 +23,7 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
   s3PutObject,
+  getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
@@ -233,6 +236,7 @@ test.serial('bulkChangeCollection generates the proper payload and calls startEx
   }).filter((g) => g !== undefined);
 
   const response = buildFakeExpressResponse();
+  const executionName = uuidv4();
 
   const startExecutionStub = sinon.stub();
   startExecutionStub.returns({
@@ -254,6 +258,7 @@ test.serial('bulkChangeCollection generates the proper payload and calls startEx
     body: {
       sourceCollectionId: t.context.collectionId,
       targetCollectionId: t.context.collectionId2,
+      executionName,
       ...testBodyValues,
     },
   }, response);
@@ -273,10 +278,20 @@ test.serial('bulkChangeCollection generates the proper payload and calls startEx
         targetCollection: deconstructCollectionId(t.context.collectionId2),
       },
     },
-    payload: {
-      granuleIds: granuleIds.sort(),
+    payload: {},
+    replace: {
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/bulkGranuleMoveRequests/${executionName}.json`,
+      TargetPath: '$.payload',
     },
   };
+
+  const remoteS3Object = await getJsonS3Object(
+    process.env.system_bucket,
+    `${process.env.stackName}/bulkGranuleMoveRequests/${executionName}.json`
+  );
+
+  t.deepEqual(remoteS3Object, { granuleIds: granuleIds.sort() });
 
   const actualPayload = JSON.parse(startExecutionStub.getCall(0).args[0].input);
   t.like(actualPayload, expectedPayload, 'StartExecution should match');

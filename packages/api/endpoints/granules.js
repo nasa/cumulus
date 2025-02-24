@@ -40,7 +40,7 @@ const { sfn } = require('@cumulus/aws-client/services');
 
 const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
 const { updateGranule: updateEsGranule } = require('@cumulus/es-client/indexer');
-const { getJsonS3Object } = require('@cumulus/aws-client/S3');
+const { getJsonS3Object, promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
 
@@ -958,6 +958,7 @@ const bulkChangeCollectionSchema = z.object({
   cmrGranuleUrlType: z.enum(['http', 's3', 'both']).default('both'),
   s3MultipartChunkSizeMb: z.number().optional(),
   executionName: z.string().optional(),
+  dbMaxPool: z.number().positive().optional().default(100),
 });
 const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload', bulkChangeCollectionSchema);
 
@@ -1033,6 +1034,22 @@ async function bulkChangeCollection(req, res) {
       `Unable to find state machine ARN for workflow ${workflow}`
     );
   }
+
+  // Upload payload to S3 due to size concerns
+  const remoteObjectKey = {
+    Bucket: process.env.system_bucket,
+    Key: `${process.env.stackName}/bulkGranuleMoveRequests/${executionName}.json`,
+  };
+
+  await promiseS3Upload({
+    params: {
+      ...remoteObjectKey,
+      Body: JSON.stringify({
+        granuleIds: granules.map((granule) => granule.granule_id),
+      }),
+    },
+  });
+
   const input = await buildPayload({
     workflow,
     cumulus_meta: {
@@ -1050,18 +1067,21 @@ async function bulkChangeCollection(req, res) {
         batchSize: body.batchSize,
         cmrGranuleUrlType: body.cmrGranuleUrlType,
         concurrency: body.concurrency,
+        dbMaxPool: body.dbMaxPool,
         invalidBehavior: body.invalidBehavior,
         s3MultipartChunkSizeMb: body.s3MultipartChunkSizeMb,
         targetCollection: deconstructCollectionId(body.targetCollectionId),
       },
     },
-    payload: {
-      granuleIds: granules.map((granule) => granule.granule_id),
-    },
+    payload: {},
   });
 
   input.cumulus_meta = { ...input.template?.cumulus_meta, ...input.cumulus_meta };
   input.meta = { ...input.template?.meta, ...input.meta };
+  input.replace = {
+    TargetPath: '$.payload',
+    ...remoteObjectKey,
+  };
 
   let startExecutionResult;
   try {
