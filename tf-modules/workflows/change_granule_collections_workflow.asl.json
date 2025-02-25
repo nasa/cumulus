@@ -1,5 +1,5 @@
 {
-  "Comment": "Moves granules across collections",
+  "Comment": "Changes granules from their original collection to a new collection including updating CMR metadata, s3 files and db records",
   "StartAt": "ChangeGranuleCollectionS3",
   "States": {
     "ChangeGranuleCollectionS3": {

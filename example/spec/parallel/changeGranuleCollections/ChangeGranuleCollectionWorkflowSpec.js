@@ -40,7 +40,7 @@ const targetCollectionsDir =
 const inputPayloadFilename =
   './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 
-describe('The MoveGranuleCollections workflow', () => {
+describe('The ChangeGranuleCollections workflow', () => {
   let stackName;
   let config;
   let inputPayload;

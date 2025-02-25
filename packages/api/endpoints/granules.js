@@ -984,7 +984,7 @@ async function bulkChangeCollection(req, res) {
   const {
     knex = await getKnexClient(),
     sfnMethod = sfn,
-    workflow = 'MoveGranuleCollectionsWorkflow',
+    workflow = 'ChangeGranuleCollectionsWorkflow',
   } = req.testContext || {};
 
   const collectionPgModel = new CollectionPgModel();
