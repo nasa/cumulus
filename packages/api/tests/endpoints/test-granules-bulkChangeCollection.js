@@ -68,7 +68,7 @@ test.before(async (t) => {
   });
 
   // create a workflowKey
-  const workflowKey = `${process.env.stackName}/workflows/MoveGranuleCollectionsWorkflow.json`;
+  const workflowKey = `${process.env.stackName}/workflows/ChangeGranuleCollectionsWorkflow.json`;
 
   t.context.workflowArn = 'fakeWorkflow';
   await s3PutObject({
