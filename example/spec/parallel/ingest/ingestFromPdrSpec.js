@@ -410,14 +410,6 @@ describe('Ingesting from PDR', () => {
           }
         });
 
-        afterAll(async () => {
-          // cleanup
-          await Promise.all(
-            queueGranulesOutput.payload.running
-              .map((arn) => waitForCompletedExecution(arn))
-          );
-        });
-
         it('executes successfully', () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           else {
@@ -455,14 +447,6 @@ describe('Ingesting from PDR', () => {
           } catch (error) {
             beforeAllFailed = error;
           }
-        });
-
-        afterAll(async () => {
-          // cleanup
-          await Promise.all(
-            queueGranulesOutput.payload.running
-              .map((arn) => waitForCompletedExecution(arn))
-          );
         });
 
         it('executes but fails', () => {
