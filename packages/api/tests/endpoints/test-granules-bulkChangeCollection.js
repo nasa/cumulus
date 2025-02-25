@@ -264,7 +264,7 @@ test.serial('bulkChangeCollection generates the proper payload and calls startEx
   }, response);
   const expected = {
     execution: 'fakeArn',
-    message: `Successfully submitted bulk granule move collection with ${granuleIds.length} granules`,
+    message: `Successfully submitted bulk granule change collection with ${granuleIds.length} granules`,
   };
 
   const expectedPayload = {
