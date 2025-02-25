@@ -1,5 +1,5 @@
 {
-  "Comment": "Moves granules across collections",
+  "Comment": "Changes granules from their original collection to a new collection including updating CMR metadata, s3 files and db records",
   "StartAt": "ChangeGranuleCollectionS3",
   "States": {
     "ChangeGranuleCollectionS3": {
@@ -10,7 +10,11 @@
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
-            "targetCollection": "{$.meta.targetCollection}"
+            "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}",
+            "s3MultipartChunksizeMb": "{$.meta.bulkChangeCollection.s3MultipartChunksizeMb}",
+            "invalidGranuleBehavior": "{$.meta.bulkChangeCollection.invalidGranuleBehavior}",
+            "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}"
           }
         }
       },
@@ -35,7 +39,7 @@
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
-            "targetCollection": "{$.meta.targetCollection}"
+            "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}"
           }
         }
       },
