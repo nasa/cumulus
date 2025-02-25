@@ -4,13 +4,13 @@ const test = require('ava');
 const proxyquire = require('proxyquire');
 
 const fakeExecutionModule = {
-  getExecution: () => Promise.resolve({
+  getExecution: ({ arn }) => Promise.resolve({
     originalPayload: {
       granules: [
         {
           files: [
             {
-              name: 'test_id.nc',
+              name: `${arn.split('-').pop()}_id.nc`,
               path: 'test',
             },
           ],
@@ -36,23 +36,23 @@ const longPanRegex = new RegExp(
   'MESSAGE_TYPE = "LONGPAN";\\n' +
   'NO_OF_FILES = 5;\\n' +
   'FILE_DIRECTORY = "test";\\n' +
-  'FILE_NAME = "test_id.nc";\\n' +
+  'FILE_NAME = "testA_id.nc";\\n' +
   'DISPOSITION = "FAILED A";\\n' +
   'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n' +
   'FILE_DIRECTORY = "test";\\n' +
-  'FILE_NAME = "test_id.nc";\\n' +
+  'FILE_NAME = "testB_id.nc";\\n' +
   'DISPOSITION = "FAILED B";\\n' +
   'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n' +
   'FILE_DIRECTORY = "test";\\n' +
-  'FILE_NAME = "test_id.nc";\\n' +
+  'FILE_NAME = "testC_id.nc";\\n' +
   'DISPOSITION = "FAILED C";\\n' +
   'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n' +
   'FILE_DIRECTORY = "test";\\n' +
-  'FILE_NAME = "test_id.nc";\\n' +
+  'FILE_NAME = "testD_id.nc";\\n' +
   'DISPOSITION = "SUCCESSFUL";\\n' +
   'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n' +
   'FILE_DIRECTORY = "test";\\n' +
-  'FILE_NAME = "test_id.nc";\\n' +
+  'FILE_NAME = "testE_id.nc";\\n' +
   'DISPOSITION = "SUCCESSFUL";\\n' +
   'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n'
 );
@@ -71,11 +71,11 @@ test('generateShortPAN with an empty disposition', (t) => {
 
 test('generateLongPAN', async (t) => {
   const executions = [
-    { arn: 'arn:failed:execution', reason: 'FAILED A' },
-    { arn: 'arn:failed:execution', reason: 'FAILED B' },
-    { arn: 'arn:failed:execution', reason: 'FAILED C' },
-    'arn:completed:execution',
-    'arn:completed:execution',
+    { arn: 'arn:failed:execution-testA', reason: 'FAILED A' },
+    { arn: 'arn:failed:execution-testB', reason: 'FAILED B' },
+    { arn: 'arn:failed:execution-testC', reason: 'FAILED C' },
+    'arn:completed:execution-testD',
+    'arn:completed:execution-testE',
   ];
   const pan = await pdrHelpers.generateLongPAN(executions);
   t.regex(pan, longPanRegex);
