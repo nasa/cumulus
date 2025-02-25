@@ -51,10 +51,11 @@ async function sendPAN(event: HandlerEvent): Promise<HandlerOutput> {
   }
   let pan;
   switch (panType) {
-    case 'longPanAlways':
+    case 'longPanAlways': {
       pan = await pdrHelpers.generateLongPAN([...input.completed, ...input.failed]);
       log.debug('Created long PAN');
       break;
+    }
     case 'shortPan': {
       const disposition = (input.failed.length > 0) ? 'FAILED' : 'SUCCESSFUL';
       pan = pdrHelpers.generateShortPAN(disposition);
@@ -72,8 +73,9 @@ async function sendPAN(event: HandlerEvent): Promise<HandlerOutput> {
       }
       break;
     }
-    default:
+    default: {
       throw new Error(`Unknown panType: ${panType}, must be shortPan, longPan, or longPanAlways`);
+    }
   }
 
   const localPath = path.join(tmpdir(), panName);

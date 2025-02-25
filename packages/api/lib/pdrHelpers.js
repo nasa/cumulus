@@ -18,12 +18,22 @@ function generateShortPAN(disposition) {
   );
 }
 
-async function getGranuleFromExecution(executionArn) {
-  const excObj = await getExecution({
-    prefix: process.env.stackName,
-    arn: executionArn,
-  });
-  return excObj.originalPayload.granules[0];
+async function getExecutionObjs(executions) {
+  const excObjs = await Promise.all(
+    executions.map(async (exc) => {
+      const excObj = await getExecution({ prefix: process.env.stackName, arn: exc.arn || exc });
+      return {
+        ...excObj,
+        reason: exc.reason,
+      };
+    })
+  );
+  const granules = excObjs.reduce((arr, exc) => arr.concat(exc.originalPayload.granules), []);
+  const fileCount = granules.reduce((total, granule) => total + granule.files.length, 0);
+  return {
+    excObjs: excObjs,
+    fileCount: fileCount,
+  };
 }
 
 /**
@@ -35,18 +45,21 @@ async function getGranuleFromExecution(executionArn) {
 async function generateLongPAN(executions) {
   const timeStamp = new Date();
 
+  const { excObjs, fileCount } = await getExecutionObjs(executions);
   const longPan = new pvl.models.PVLRoot()
     .add('MESSAGE_TYPE', new pvl.models.PVLTextString('LONGPAN'))
-    .add('NO_OF_FILES', new pvl.models.PVLNumeric(executions.length));
-  /* eslint-disable no-await-in-loop */
-  for (const exc of executions) {
-    const granule = await getGranuleFromExecution(exc.arn || exc);
-    longPan.add('FILE_DIRECTORY', new pvl.models.PVLTextString(granule.files[0].path));
-    longPan.add('FILE_NAME', new pvl.models.PVLTextString(granule.granuleId));
-    longPan.add('DISPOSITION', new pvl.models.PVLTextString(exc.reason || 'SUCCESSFUL'));
-    longPan.add('TIME_STAMP', new pvl.models.PVLDateTime(timeStamp));
+    .add('NO_OF_FILES', new pvl.models.PVLNumeric(fileCount));
+
+  for (const exc of excObjs) {
+    for (const granule of exc.originalPayload.granules) {
+      for (const file of granule.files) {
+        longPan.add('FILE_DIRECTORY', new pvl.models.PVLTextString(file.path));
+        longPan.add('FILE_NAME', new pvl.models.PVLTextString(file.name));
+        longPan.add('DISPOSITION', new pvl.models.PVLTextString(exc.reason || 'SUCCESSFUL'));
+        longPan.add('TIME_STAMP', new pvl.models.PVLDateTime(timeStamp));
+      }
+    }
   }
-  /* eslint-enable no-await-in-loop */
   return pvl.jsToPVL(longPan);
 }
 
@@ -68,5 +81,5 @@ module.exports = {
   generateShortPAN,
   generateLongPAN,
   generatePDRD,
-  getGranuleFromExecution,
+  getExecutionObjs,
 };
