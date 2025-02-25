@@ -382,8 +382,9 @@ module "cumulus" {
 
 ### 15. Publish async_operations image to Docker Hub and AWS ECR
 
-If ____, then a [new docker image for async_operations should be created and published](https://github.com/nasa/cumulus/blob/master/packages/api/ecs/async-operation/README.md).
-The changelog should also be updated to reflect this update.
+If there were any changes that modify the functionality of the async-operations image *or* patch underlying packages for security reasons,
+a [new docker image for async_operations should be created and published](https://github.com/nasa/cumulus/blob/master/packages/api/ecs/async-operation/README.md).
+The changelog should also be updated accordingly.
 
 ### 16. Merge base branch back to master
 
