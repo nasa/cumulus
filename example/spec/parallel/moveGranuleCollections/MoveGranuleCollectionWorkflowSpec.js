@@ -39,8 +39,7 @@ const s3data = [
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
 const targetCollectionsDir = './data/collections/s3_MOD09GQ_007_full_ingest_move';
-let collection;
-let targetCollection;
+
 const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 
 describe('The MoveGranuleCollections workflow', () => {
@@ -56,6 +55,10 @@ describe('The MoveGranuleCollections workflow', () => {
   let cleanupCollectionId;
   let targetCollectionId;
   let moveExecutionArn;
+  let collection;
+  let targetCollection;
+  let startingGranule;
+
   afterAll(async () => {
     try {
       await removePublishedGranule({
@@ -77,6 +80,7 @@ describe('The MoveGranuleCollections workflow', () => {
       console.log('cleanup failed with error', error);
     }
   });
+
   beforeAll(async () => {
     config = await loadConfig();
     stackName = config.stackName;
@@ -121,6 +125,14 @@ describe('The MoveGranuleCollections workflow', () => {
       },
       'completed'
     );
+    startingGranule = await getGranule({
+      prefix: stackName,
+      granuleId,
+    });
+    finalFiles = startingGranule.files.map((file) => ({
+      ...file,
+      key: `changedCollectionPath/MOD09GQ${testSuffix}___007/${testId}/${file.fileName}`,
+    }));
     try {
       const bulkChangeCollectionResponse = await bulkChangeCollection({
         prefix: stackName,
@@ -130,10 +142,7 @@ describe('The MoveGranuleCollections workflow', () => {
         },
       });
       moveExecutionArn = JSON.parse(bulkChangeCollectionResponse.body).execution;
-      const startingGranule = await getGranule({
-        prefix: stackName,
-        granuleId,
-      });
+
       finalFiles = startingGranule.files.map((file) => ({
         ...file,
         key: `changedCollectionPath/MOD09GQ${testSuffix}___007/${testId}/${file.fileName}`,
@@ -154,10 +163,55 @@ describe('The MoveGranuleCollections workflow', () => {
     }
   });
 
+  afterAll(async () => {
+    try {
+      await removePublishedGranule({
+        prefix: stackName,
+        granuleId,
+        collectionId: cleanupCollectionId,
+      });
+      let cleanup = finalFiles.map((fileObj) => deleteS3Object(
+        fileObj.bucket,
+        fileObj.key
+      ));
+      cleanup = cleanup.concat([
+        deleteExecution({ prefix: stackName, executionArn: ingestExecutionArn }),
+        deleteExecution({ prefix: stackName, executionArn: moveExecutionArn }),
+      ]);
+      await Promise.all(cleanup);
+    } catch (error) {
+      // eslint-disable-line no-empty
+    }
+  });
+
   it('updates the granule data in s3', async () => {
     if (beforeAllFailed) fail('beforeAllFailed');
     await Promise.all(finalFiles.map(async (file) => {
       expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(true);
+    }));
+  });
+
+  it('updates the granule data in pg', async () => {
+    if (beforeAllFailed) fail('beforeAllFailed');
+    const pgGranule = await getGranule({
+      prefix: stackName,
+      granuleId,
+    });
+    expect(pgGranule.collectionId).toEqual(
+      constructCollectionId(targetCollection.name, targetCollection.version)
+    );
+    const finalKeys = finalFiles.map((file) => file.key);
+    const finalBuckets = finalFiles.map((file) => file.bucket);
+    pgGranule.files.forEach((file) => {
+      expect(finalKeys.includes(file.key)).toBeTrue();
+      expect(finalBuckets.includes(file.bucket)).toBeTrue();
+    });
+  });
+
+  it('cleans up old files in s3', async () => {
+    if (beforeAllFailed) fail('beforeAllFailed');
+    await Promise.all(startingGranule.files.map(async (file) => {
+      expect(await s3ObjectExists({ Bucket: file.bucket, Key: file.key })).toEqual(false);
     }));
   });
 });
