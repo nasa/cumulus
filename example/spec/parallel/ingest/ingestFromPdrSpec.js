@@ -14,11 +14,15 @@
  * pdr status check
  * This will kick off 2 ingest workflows
  *
- * Ingest workflow:
+ * Ingest successful workflow:
  * runs sync granule - saves file to file staging location
  * performs the fake processing step - generates CMR metadata
  * Moves the file to the final location
  * Does not post to CMR (that is in a separate test)
+ *
+ * Ingest failed workflow:
+ * runs sync granule - failed due to missing file
+ *
  */
 
 const flatten = require('lodash/flatten');
@@ -386,12 +390,13 @@ describe('Ingesting from PDR', () => {
       });
 
       /**
-       * The parse pdr workflow kicks off a granule ingest workflow, so check that the
-       * granule ingest workflow completes successfully. Above, we checked that there is
+       * The parse pdr workflow kicks off two granule ingest workflows, one is successful, one is failed.
+       *
+       * Check one granule ingest workflow completes successfully. Above, we checked that there is
        * one running task, which is the sync granule workflow. The payload has the arn of the
        * running workflow, so use that to get the status.
        */
-      describe('IngestGranule workflow', () => {
+      describe('IngestGranule successful workflow', () => {
         let ingestGranuleExecutionStatus;
 
         beforeAll(async () => {
@@ -437,7 +442,48 @@ describe('Ingesting from PDR', () => {
         });
       });
 
-      /** This test relies on the previous 'IngestGranule workflow' to complete */
+      describe('IngestGranule failed workflow', () => {
+        let ingestGranuleExecutionStatus;
+        let failedIngestGranuleWorkflowArn;
+
+        beforeAll(async () => {
+          try {
+            // wait for IngestGranule execution to complete
+            failedIngestGranuleWorkflowArn = queueGranulesOutput.payload.running[1];
+            console.log(`Waiting for workflow to complete: ${failedIngestGranuleWorkflowArn}`);
+            ingestGranuleExecutionStatus = await waitForCompletedExecution(failedIngestGranuleWorkflowArn);
+          } catch (error) {
+            beforeAllFailed = error;
+          }
+        });
+
+        afterAll(async () => {
+          // cleanup
+          await Promise.all(
+            queueGranulesOutput.payload.running
+              .map((arn) => waitForCompletedExecution(arn))
+          );
+        });
+
+        it('executes but fails', () => {
+          if (beforeAllFailed) fail(beforeAllFailed);
+          else {
+            expect(ingestGranuleExecutionStatus).toEqual('FAILED');
+          }
+        });
+
+        it('outputs the error', async () => {
+          if (beforeAllFailed) fail(beforeAllFailed);
+          else {
+            const syncGranuleLambdaOutput = await lambdaStep.getStepOutput(failedIngestGranuleWorkflowArn, 'SyncGranule', 'failure');
+
+            expect(syncGranuleLambdaOutput.error).toEqual('FileNotFound');
+            expect(syncGranuleLambdaOutput.cause).toMatch(/.+Source file not found.+/);
+          }
+        });
+      });
+
+      /** This test relies on the previous 'IngestGranule successful workflow' to complete */
       describe('When accessing an execution via the API that was triggered from a parent step function', () => {
         it('displays a link to the parent', async () => {
           if (beforeAllFailed) fail(beforeAllFailed);
@@ -551,7 +597,7 @@ describe('Ingesting from PDR', () => {
           }
         });
 
-        it('has expected pan output', async () => {
+        it('has expected long pan output', async () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           const panName = lambdaOutput.payload.pdr.name.replace(/\.pdr/gi, '.PAN');
           const panKey = path.join(addedCollections[0].meta.panPath, panName);
@@ -563,7 +609,9 @@ describe('Ingesting from PDR', () => {
           });
           expect(panExists).toEqual(true);
           const panText = await getTextObject(config.bucket, panKey);
-          console.log(`Generated PAN ${lambdaOutput.payload.pan.uri}:\n ${panText}`);
+          console.log(`Generated PAN ${lambdaOutput.payload.pan.uri}:\n${panText}`);
+          expect(panText).toMatch(/MESSAGE_TYPE = "LONGPAN"/);
+          expect(panText).toMatch(/NO_OF_FILES = 5/);
           await deleteS3Object(config.bucket, panKey);
         });
       });

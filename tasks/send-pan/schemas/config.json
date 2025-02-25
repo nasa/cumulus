@@ -9,13 +9,14 @@
       "description": "A provider object to send the PAN response to.  The PAN response will be sent via the same protocol and authentication method to the host configured in the provider."
     },
     "remoteDir": {
-      "type": ["string", "null"],
+      "type": "string",
       "description": "The path in the provider to upload the file to.",
       "default": "pans"
     },
     "panType": {
-      "type": ["string", "null"],
-      "description": "Determines which pan type to create: (shortPan, longPan, or longPanAlways)",
+      "type": "string",
+      "description": "Specifies which pan type to create: (shortPan, longPan, or longPanAlways). shortPan: Always creates short PANs, longPan: Only creates long PANs when there's more than one granule, else just a short pan, longPanAlways: Always creates long PANs",
+      "enum": ["shortPan", "longPan", "longPanAlways"],
       "default": "shortPan"
     }
   }

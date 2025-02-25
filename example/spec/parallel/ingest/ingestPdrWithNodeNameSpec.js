@@ -22,6 +22,8 @@
  * Does not post to CMR (that is in a separate test)
  */
 
+const path = require('path');
+
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -544,6 +546,35 @@ describe('Ingesting from PDR', () => {
             }
             expect(choiceVerified).toBeTrue();
           }
+        });
+      });
+
+      describe('SendPan lambda function', () => {
+        let lambdaOutput;
+        beforeAll(async () => {
+          try {
+            lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SendPan');
+          } catch (error) {
+            beforeAllFailed = error;
+          }
+        });
+
+        it('has expected short pan output', async () => {
+          if (beforeAllFailed) fail(beforeAllFailed);
+          const panName = lambdaOutput.payload.pdr.name.replace(/\.pdr/gi, '.PAN');
+          const panKey = path.join(addedCollection.meta.panPath, panName);
+          const expectedPanUri = S3.buildS3Uri(config.bucket, panKey);
+          expect(lambdaOutput.payload.pan.uri).toEqual(expectedPanUri);
+          const panExists = await S3.s3ObjectExists({
+            Bucket: config.bucket,
+            Key: panKey,
+          });
+          expect(panExists).toEqual(true);
+          const panText = await S3.getTextObject(config.bucket, panKey);
+          console.log(`Generated PAN ${lambdaOutput.payload.pan.uri}:\n${panText}`);
+          expect(panText).toMatch(/MESSAGE_TYPE = "SHORTPAN"/);
+          expect(panText).not.toMatch(/NO_OF_FILES/);
+          await S3.deleteS3Object(config.bucket, panKey);
         });
       });
     });

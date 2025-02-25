@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-3993**
+  - Added long PAN functionality to `SendPan` task.
+  - Updated example workflow configuration to better handle error exceptions,
+    see [Workflow Configuration](https://nasa.github.io/cumulus/docs/next/data-cookbooks/error-handling)
+
 ## [v20.0.0] 2025-02-04
 
 ## Phase 2 Release
