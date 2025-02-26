@@ -11,6 +11,7 @@ const {
   GranulesExecutionsPgModel,
   FilePgModel,
   getKnexClient,
+  CollectionPgModel,
 } = require('@cumulus/db');
 const {
   loadCollection,
@@ -369,6 +370,9 @@ const main = async () => {
   process.env.dbMaxPool = concurrency.toString();
   const knex = await getKnexClient();
   for (let collectionNumber = 0; collectionNumber < collections; collectionNumber += 1) {
+    const collectionModel = new CollectionPgModel();
+    const coll = await collectionModel.get(knex, {cumulus_id: 1});
+    console.log(coll)
     await uploadDBGranules(
       knex,
       collectionNumber,
