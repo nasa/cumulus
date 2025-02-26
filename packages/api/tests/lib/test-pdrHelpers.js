@@ -32,29 +32,30 @@ const pdrHelpers = proxyquire(
 const regex = /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "SUCCESSFUL";\nTIME_STAMP = \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z;\n/;
 // eslint-disable-next-line max-len
 const emptyRegex = /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "";\nTIME_STAMP = \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z;\n/;
+const TimeStampRegex = 'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n';
 const longPanRegex = new RegExp(
-  'MESSAGE_TYPE = "LONGPAN";\\n' +
-  'NO_OF_FILES = 5;\\n' +
-  'FILE_DIRECTORY = "test";\\n' +
-  'FILE_NAME = "testA_id.nc";\\n' +
-  'DISPOSITION = "FAILED A";\\n' +
-  'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n' +
-  'FILE_DIRECTORY = "test";\\n' +
-  'FILE_NAME = "testB_id.nc";\\n' +
-  'DISPOSITION = "FAILED B";\\n' +
-  'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n' +
-  'FILE_DIRECTORY = "test";\\n' +
-  'FILE_NAME = "testC_id.nc";\\n' +
-  'DISPOSITION = "FAILED C";\\n' +
-  'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n' +
-  'FILE_DIRECTORY = "test";\\n' +
-  'FILE_NAME = "testD_id.nc";\\n' +
-  'DISPOSITION = "SUCCESSFUL";\\n' +
-  'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n' +
-  'FILE_DIRECTORY = "test";\\n' +
-  'FILE_NAME = "testE_id.nc";\\n' +
-  'DISPOSITION = "SUCCESSFUL";\\n' +
-  'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n'
+  'MESSAGE_TYPE = "LONGPAN";\\n'
+  + 'NO_OF_FILES = 5;\\n'
+  + 'FILE_DIRECTORY = "test";\\n'
+  + 'FILE_NAME = "testA_id.nc";\\n'
+  + 'DISPOSITION = "FAILED A";\\n'
+  + `${TimeStampRegex}`
+  + 'FILE_DIRECTORY = "test";\\n'
+  + 'FILE_NAME = "testB_id.nc";\\n'
+  + 'DISPOSITION = "FAILED B";\\n'
+  + `${TimeStampRegex}`
+  + 'FILE_DIRECTORY = "test";\\n'
+  + 'FILE_NAME = "testC_id.nc";\\n'
+  + 'DISPOSITION = "FAILED C";\\n'
+  + `${TimeStampRegex}`
+  + 'FILE_DIRECTORY = "test";\\n'
+  + 'FILE_NAME = "testD_id.nc";\\n'
+  + 'DISPOSITION = "SUCCESSFUL";\\n'
+  + `${TimeStampRegex}`
+  + 'FILE_DIRECTORY = "test";\\n'
+  + 'FILE_NAME = "testE_id.nc";\\n'
+  + 'DISPOSITION = "SUCCESSFUL";\\n'
+  + `${TimeStampRegex}`
 );
 
 test('generateShortPAN with a disposition', (t) => {

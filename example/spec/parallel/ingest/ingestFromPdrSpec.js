@@ -583,6 +583,15 @@ describe('Ingesting from PDR', () => {
 
         it('has expected long pan output', async () => {
           if (beforeAllFailed) fail(beforeAllFailed);
+
+          const granuleFileNames = [
+            `${testDataGranuleId}.hdf`,
+            `${testDataGranuleId}.hdf.met`,
+            `${testDataGranuleId2}.hdf`,
+            `${testDataGranuleId2}.hdf.met`,
+            `${testDataGranuleId2}_ndvi.jpg`,
+          ];
+
           const panName = lambdaOutput.payload.pdr.name.replace(/\.pdr/gi, '.PAN');
           const panKey = path.join(addedCollections[0].meta.panPath, panName);
           const expectedPanUri = buildS3Uri(config.bucket, panKey);
@@ -592,10 +601,14 @@ describe('Ingesting from PDR', () => {
             Key: panKey,
           });
           expect(panExists).toEqual(true);
+
           const panText = await getTextObject(config.bucket, panKey);
           console.log(`Generated PAN ${lambdaOutput.payload.pan.uri}:\n${panText}`);
           expect(panText).toMatch(/MESSAGE_TYPE = "LONGPAN"/);
           expect(panText).toMatch(/NO_OF_FILES = 5/);
+          for (const fileName of granuleFileNames) {
+            expect(panText.includes(fileName)).toBe(true);
+          }
           await deleteS3Object(config.bucket, panKey);
         });
       });
