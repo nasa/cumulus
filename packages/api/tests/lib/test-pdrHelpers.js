@@ -105,7 +105,7 @@ const regex = /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "SUCCESSFUL";\nTIME_STA
 const emptyRegex = /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "";\nTIME_STAMP = \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z;\n/;
 const TimeStampRegex = 'TIME_STAMP = \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z;\\n';
 const longPanRegex = new RegExp(
-  + 'MESSAGE_TYPE = "LONGPAN";\\n'
+  'MESSAGE_TYPE = "LONGPAN";\\n'
   + 'NO_OF_FILES = 10;\\n'
   + 'FILE_DIRECTORY = "test";\\n'
   + 'FILE_NAME = "test_A_id_failed.nc";\\n'
@@ -163,8 +163,8 @@ test('generateShortPAN with an empty disposition', (t) => {
 
 test('generateLongPAN', async (t) => {
   const executions = [
-    { arn: 'arn:failed:executionA', reason: 'FAILED A' },
-    { arn: 'arn:failed:executionB', reason: 'FAILED B' },
+    { arn: 'arn:failed:execution-A', reason: 'FAILED A' },
+    { arn: 'arn:failed:execution-B', reason: 'FAILED B' },
     'arn:completed:execution',
     'arn:completed:multiple:granules:execution',
   ];
