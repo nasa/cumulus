@@ -173,7 +173,7 @@ test('SendPan task throws error when provider protocol is not supported', async 
   }
 });
 
-test('SendPan task sends PAN to default location when remoteDir is null', async (t) => {
+test('SendPan task sends PAN to default location when remoteDir is undefined', async (t) => {
   const fileNameBase = 'test-default-pan-path-pdr';
   const uploadPath = `pans/${fileNameBase}.PAN`;
   const event = {
@@ -184,7 +184,7 @@ test('SendPan task sends PAN to default location when remoteDir is null', async 
         protocol: 's3',
         host: t.context.providerBucket,
       },
-      remoteDir: null,
+      remoteDir: undefined,
     },
     input: {
       pdr: {
@@ -221,7 +221,6 @@ test('SendPan task fails with executions still running', async (t) => {
         protocol: 's3',
         host: t.context.providerBucket,
       },
-      remoteDir: null,
     },
     input: {
       pdr: {
@@ -257,7 +256,6 @@ test('SendPan task sends failed PAN to s3', async (t) => {
         protocol: 's3',
         host: t.context.providerBucket,
       },
-      remoteDir: null,
     },
     input: {
       pdr: {

@@ -18,40 +18,49 @@ function generateShortPAN(disposition) {
   );
 }
 
-async function getExecutionObjs(executions) {
-  const excObjs = await Promise.all(
-    executions.map(async (exc) => {
-      const excObj = await getExecution({ prefix: process.env.stackName, arn: exc.arn || exc });
-      return {
-        ...excObj,
-        reason: exc.reason,
-      };
-    })
-  );
-  const granules = excObjs.reduce((arr, exc) => arr.concat(exc.originalPayload.granules), []);
-  const fileCount = granules.reduce((total, granule) => total + granule.files.length, 0);
-  return {
-    excObjs: excObjs,
-    fileCount: fileCount,
-  };
+/**
+ * Get list of input granules from execution
+ *
+ * @param {string} executionArn - execution arn
+ * @returns {object[]} list of granules
+ */
+async function getGranulesFromExecution(executionArn) {
+  const excObj = await getExecution({
+    prefix: process.env.stackName,
+    arn: executionArn,
+  });
+  return excObj.originalPayload.granules;
 }
+
+const granulesFileCount = (granules) => granules.reduce((sum, { files }) => sum + files.length, 0);
 
 /**
  * Generate Long PAN message
  *
- * @param {Object|string[]} executions - List of workflow executions
+ * @param {object[]} executions - List of workflow executions
  * @returns {string} the PAN message
  */
 async function generateLongPAN(executions) {
   const timeStamp = new Date();
 
-  const { excObjs, fileCount } = await getExecutionObjs(executions);
-  const longPan = new pvl.models.PVLRoot()
-    .add('MESSAGE_TYPE', new pvl.models.PVLTextString('LONGPAN'))
-    .add('NO_OF_FILES', new pvl.models.PVLNumeric(fileCount));
+  const executionsWithGranules = [];
+  /* eslint-disable no-await-in-loop */
+  for (const exc of executions) {
+    const arn = exc.arn || exc;
+    const granules = await getGranulesFromExecution(arn);
+    executionsWithGranules.push({ arn, granules, reason: exc.reason });
+  }
+  /* eslint-enable no-await-in-loop */
 
-  for (const exc of excObjs) {
-    for (const granule of exc.originalPayload.granules) {
+  const fileCount = executionsWithGranules
+    .reduce((sum, { granules }) => sum + granulesFileCount(granules), 0);
+
+  const longPan = new pvl.models.PVLRoot()
+    .add('MESSAGE_TYPE', new pvl.models.PVLTextString('LONGPAN'));
+  longPan.add('NO_OF_FILES', new pvl.models.PVLNumeric(fileCount));
+
+  for (const exc of executionsWithGranules) {
+    for (const granule of exc.granules) {
       for (const file of granule.files) {
         longPan.add('FILE_DIRECTORY', new pvl.models.PVLTextString(file.path));
         longPan.add('FILE_NAME', new pvl.models.PVLTextString(file.name));
@@ -60,6 +69,7 @@ async function generateLongPAN(executions) {
       }
     }
   }
+
   return pvl.jsToPVL(longPan);
 }
 
@@ -81,5 +91,5 @@ module.exports = {
   generateShortPAN,
   generateLongPAN,
   generatePDRD,
-  getExecutionObjs,
+  getGranulesFromExecution,
 };
