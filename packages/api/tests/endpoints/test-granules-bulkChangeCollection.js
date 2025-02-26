@@ -247,7 +247,7 @@ test.serial('bulkChangeCollection generates the proper payload and calls startEx
   });
 
   const testBodyValues = {
-    invalidBehavior: 'error',
+    invalidGranuleBehavior: 'error',
     s3MultipartChunkSizeMb: 500,
     batchSize: 200,
     concurrency: 50,
@@ -306,7 +306,7 @@ test.serial('bulkChangeCollection handles ExecutionAlreadyExists error correctly
     body: {
       batchSize: 100,
       concurrency: 10,
-      invalidBehavior: 'error',
+      invalidGranuleBehavior: 'error',
       sourceCollectionId: t.context.collectionId,
       targetCollectionId: t.context.collectionId2,
     },
@@ -342,7 +342,7 @@ test.serial('bulkChangeCollection errors correctly when workflow configuration f
     body: {
       batchSize: 100,
       concurrency: 10,
-      invalidBehavior: 'error',
+      invalidGranuleBehavior: 'error',
       sourceCollectionId: t.context.collectionId,
       targetCollectionId: t.context.collectionId2,
     },
@@ -375,7 +375,7 @@ test.serial('bulkChangeCollection handles a collection with zero granules correc
     body: {
       batchSize: 100,
       concurrency: 10,
-      invalidBehavior: 'error',
+      invalidGranuleBehavior: 'error',
       sourceCollectionId: t.context.collectionId3,
       targetCollectionId: t.context.collectionId,
     },
