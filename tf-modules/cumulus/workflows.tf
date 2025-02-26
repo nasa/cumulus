@@ -7,4 +7,5 @@ module "move_granule_collections_workflow" {
   tags            = var.tags
   workflow_config = local.workflow_config
   change_granule_collection_s3_task_arn = module.ingest.change_granule_collection_s3_task.task_arn
+  change_granule_collection_pg_task_arn = module.ingest.change_granule_collection_pg_task.task_arn
 }

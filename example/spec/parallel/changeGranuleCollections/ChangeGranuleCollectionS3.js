@@ -70,7 +70,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
       const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
       config = await loadConfig();
       stackName = config.stackName;
-      const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
+      const testId = createTimestampedTestId(stackName, 'ChangeGranuleCollectionS3');
       const testSuffix = createTestSuffix(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };

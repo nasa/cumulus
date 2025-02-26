@@ -17,40 +17,28 @@ import {
   ValidGranuleRecord,
 } from './types';
 
-export function validateApiFile(file: Omit<ApiFile, 'granuleId'> | ApiFile): ValidApiFile {
+export function validateApiFile(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
   if (file.bucket === undefined || file.key === undefined) {
     throw new ValidationError(`file ${JSON.stringify(file)} is missing necessary key, bucket`);
   }
-  if (!file.fileName) {
-    const fileName = file.key.split('/').pop();
-    if (!fileName) {
-      throw new ValidationError(
-        `file ${JSON.stringify(file)} has no fileName and fileName cannot be parsed from key`
-      );
-    }
-    return {
-      ...file,
-      fileName,
-    } as ValidApiFile;
-  }
-  return file as ValidApiFile;
+
+  return true;
 }
 
-export function validateApiGranuleRecord(granule: ApiGranuleRecord): ValidGranuleRecord {
+export function validateApiGranuleRecord(granule: ApiGranuleRecord): granule is ValidGranuleRecord {
   if (!granule.files) {
-    return granule as ValidGranuleRecord;
+    return true;
   }
-  return {
-    ...granule,
-    files: granule.files.map(validateApiFile),
-  };
+  // this will throw if something is invalid
+  granule.files.forEach(validateApiFile);
+  return true;
 }
 
 export const CMRObjectToString = (
   cmrFile: Omit<ValidApiFile, 'granuleId'>,
   cmrObject: { Granule: object } | object
 ): string => {
-  if (isUMMGFilename(cmrFile.fileName || cmrFile.key)) {
+  if (isUMMGFilename(cmrFile.key)) {
     return JSON.stringify(cmrObject, undefined, 2);
   }
   // our xml stringify function packages the metadata in "Granule",
