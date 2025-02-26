@@ -63,8 +63,8 @@ async function sendPAN(event: HandlerEvent): Promise<HandlerOutput> {
       break;
     }
     case 'longPan': {
-      // This assumes one granule per ingest workflow
-      if (input.failed.length + input.completed.length <= 1) {
+      const executionCount = input.failed.length + input.completed.length;
+      if (input.failed.length === executionCount || input.completed.length === executionCount) {
         const disposition = (input.failed.length > 0) ? 'FAILED' : 'SUCCESSFUL';
         pan = pdrHelpers.generateShortPAN(disposition);
         log.debug('Created short PAN');

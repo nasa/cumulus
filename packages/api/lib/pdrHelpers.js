@@ -37,7 +37,7 @@ const granulesFileCount = (granules) => granules.reduce((sum, { files }) => sum 
 /**
  * Generate Long PAN message
  *
- * @param {object[]} executions - List of workflow executions
+ * @param {object|string[]} executions - List of workflow executions
  * @returns {string} the PAN message
  */
 async function generateLongPAN(executions) {
