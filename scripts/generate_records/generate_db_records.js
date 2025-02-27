@@ -72,7 +72,7 @@ const uploadDataBatch = async ({
   executionsPerBatch,
   models,
 }) => {
-  const granuleCumulusIds = await loadGranules(
+  const granules = await loadGranules(
     knex,
     collectionCumulusId,
     providerCumulusId,
@@ -80,9 +80,9 @@ const uploadDataBatch = async ({
     models.granuleModel
   );
   const fileCumulusIds = [];
-  for (const granuleCumulusId of granuleCumulusIds) {
+  for (const granule of granules) {
     fileCumulusIds.push(
-      await loadFiles(knex, granuleCumulusId, filesPerGranule, models.fileModel)
+      await loadFiles(knex, granule.cumulus_id, filesPerGranule, models.fileModel, granule.granule_id)
     );
   }
   const executionCumulusIds = await loadExecutions(
@@ -91,6 +91,7 @@ const uploadDataBatch = async ({
     executionsPerBatch,
     models.executionModel
   );
+  const granuleCumulusIds = granules.map((g) => g.cumulus_id)
   await loadGranulesExecutions(
     knex,
     granuleCumulusIds,
@@ -365,14 +366,10 @@ const main = async () => {
     variance,
     concurrency,
     swallowErrors,
-    uploadS3Files
   } = parseArgs();
   process.env.dbMaxPool = concurrency.toString();
   const knex = await getKnexClient();
   for (let collectionNumber = 0; collectionNumber < collections; collectionNumber += 1) {
-    const collectionModel = new CollectionPgModel();
-    const coll = await collectionModel.get(knex, {cumulus_id: 1});
-    console.log(coll)
     await uploadDBGranules(
       knex,
       collectionNumber,

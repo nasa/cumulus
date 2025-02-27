@@ -1,25 +1,5 @@
 {
   "RelatedUrls": [
-    {
-      "URL": "https://8n7ovu33kh.execute-api.us-west-2.amazonaws.com/dev/podaac-dev-cumulus-protected/L0A_RAD_RAW_product_0017-of-0020.h5",
-      "Type": "GET DATA",
-      "Description": "This should be held onto as it doesn't follow the pattern of tea/s3 url"
-    },
-    {
-      "URL": "https://podaac-dev-cumulus-public.s3.amazonaws.com/L0A_RAD_RAW_product_0017-of-0020.cmr.xml",
-      "Type": "GET DATA",
-      "Description": "This should be held onto as it doesn't follow the pattern of tea/s3 url"
-    },
-    {
-      "URL": "s3://something.api.us-est-1.amazon.aws.com/public/MOD11A1.A2017200.h19v04.006.2017201090725_1.jpg",
-      "Type": "GET DATA",
-      "Description": "this should be gone by the end"
-    },
-    {
-      "URL": "https://something.api.us-est-1.amazon.aws.com/public/MOD11A1.A2017200.h19v04.006.2017201090725_1.jpg",
-      "Type": "GET DATA",
-      "Description": "this should be gone by the end"
-    }
   ],
   "SpatialExtent": {
     "HorizontalSpatialDomain": {
@@ -46,8 +26,8 @@
     }
   ],
   "CollectionReference": {
-    "ShortName": "TEST",
-    "Version": "1"
+    "ShortName": "replaceme-collectionname",
+    "Version": "replaceme-collectionversion"
   },
   "DataGranule": {
     "DayNightFlag": "Unspecified",

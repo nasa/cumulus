@@ -1,5 +1,6 @@
 // @ts-check
-
+const fs = require('fs');
+const path = require('path');
 const {
   CollectionPgModel,
   ProviderPgModel,
@@ -112,7 +113,7 @@ const loadGranulesExecutions = async (
  * @param {number} granuleCount
  * @param {GranulePgModel} model
  * @param {Partial<PostgresGranule>} params
- * @returns {Promise<Array<number>>} - cumulusId for each successfully uploaded granule
+ * @returns {Promise<Array<{cumulus_id: number, granule_id: string}>>} - cumulusId for each successfully uploaded granule
  */
 const loadGranules = async (
   knex,
@@ -128,16 +129,19 @@ const loadGranules = async (
   let granuleOutputs = [];
   const granules = range(granuleCount).map(() => /** @type {PostgresGranule} */(
     fakeGranuleRecordFactory({
-      granule_id: randomString(7),
+      granule_id: `MOD11A1.A2017200.h19v04.006.${randomString(13)}`,
       collection_cumulus_id: collectionCumulusId,
       provider_cumulus_id: providerCumulusId,
       status: /** @type {GranuleStatus} */(['completed', 'failed', 'running', 'queued'][randomInt(4)]),
       ...params,
     })
   ));
-  granuleOutputs = await model.insert(knex, granules);
+  granuleOutputs =  await model.insert(knex, granules, ['granule_id', 'cumulus_id']);
 
-  return granuleOutputs.map((g) => g.cumulus_id);
+  return granuleOutputs.map((g) => ({
+    cumulus_id: g.cumulus_id,
+    granule_id: g.granule_id
+  }));
 };
 
 /**
@@ -148,6 +152,7 @@ const loadGranules = async (
  * @param {number} fileCount
  * @param {FilePgModel} model
  * @param {Partial<PostgresFile>} params
+ * @param {string | null} granuleId
  * @returns {Promise<Array<number>>}
  */
 const loadFiles = async (
@@ -155,17 +160,34 @@ const loadFiles = async (
   granuleCumulusId,
   fileCount,
   model,
+  granuleId = null,
   params = {}
 ) => {
   if (fileCount === 0) {
     return [];
   }
-  const files = range(fileCount).map((i) => /** @type {PostgresFile} */(fakeFileRecordFactory({
-    bucket: `${i}`,
-    granule_cumulus_id: granuleCumulusId,
-    key: randomString(8),
-    ...params,
-  })));
+  let granId;
+  if (granuleId === null) {
+    granId = randomString(13);
+  } else {
+    granId = granuleId;
+  }
+  const files = [
+    {
+      granule_cumulus_id: granuleCumulusId,
+      'key': `aprefix/${granuleId}.cmr.json`,
+      'bucket': 'cumulus-test-sandbox-public',
+      ...params
+    }
+  ]
+  range(fileCount-1).forEach((i) => {
+    files.push({
+      granule_cumulus_id: granuleCumulusId,
+      key: `aprefix/${granuleId}_${i}.jpg`,
+      bucket: 'cumulus-test-sandbox-public',
+      ...params
+    })
+  })
   let uploadedFiles = [];
   uploadedFiles = await model.insert(knex, files);
 
@@ -199,19 +221,43 @@ const loadProvider = async (knex, params = {}) => {
  * @returns {Promise<number>}
  */
 const loadCollection = async (knex, files, collectionNumber = null, params = {}) => {
-  const collectionJson = fakeCollectionRecordFactory({
-    files: JSON.stringify((range(files)).map((i) => (
-      {
-        bucket: `${i}`,
-        regex: `^.*${i}$`,
-        sampleFileName: `538.${i}`,
-      }
-    ))),
-    ...params,
-  });
+  let collectionJson;
   if (collectionNumber !== null) {
-    collectionJson.name = `DUMMY_${collectionNumber.toString().padStart(3, '0')}`;
+    collectionJson = JSON.parse(fs.readFileSync(path.join(
+      path.dirname(__filename),
+      'data',
+      'collection-template.json'
+    )).toString());
+    collectionJson.version = (collectionNumber).toString().padStart(3, '0');
+    if (files > 2) {
+      const jpgTemplate = collectionJson.files[1];
+      range(files - 2).forEach((i) => {
+        const regex = jpgTemplate.regex.replace('_0', `{_${i+1}}`);
+        const sampleFileName = jpgTemplate.sampleFileName.replace('_0', `{_${i+1}}`);
+        collectionJson.files.push({
+          ...jpgTemplate,
+          regex,
+          sampleFileName,
+        })
+      });
+    } else {
+      collectionJson.files = collectionJson.files.slice(0, files);
+    }
+    collectionJson.url_path = `prefix${collectionNumber}/`;
+    collectionJson.files = JSON.stringify(files)
+  } else {
+    collectionJson = fakeCollectionRecordFactory({
+      files: JSON.stringify((range(files)).map((i) => (
+        {
+          bucket: `${i}`,
+          regex: `^.*${i}$`,
+          sampleFileName: `538.${i}`,
+        }
+      ))),
+      ...params,
+    });
   }
+  console.log(collectionJson)
   const collectionModel = new CollectionPgModel();
   const [{ cumulus_id: cumulusId }] = await collectionModel.upsert(
     knex,
