@@ -20,6 +20,8 @@
  * performs the fake processing step - generates CMR metadata
  * Moves the file to the final location
  * Does not post to CMR (that is in a separate test)
+ *
+ * send pan
  */
 
 const path = require('path');
@@ -549,8 +551,9 @@ describe('Ingesting from PDR', () => {
         });
       });
 
-      describe('SendPan lambda function', () => {
+      describe('When SendPan lambda is configured to have longPan panType', () => {
         let lambdaOutput;
+        let panKey;
         beforeAll(async () => {
           try {
             lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SendPan');
@@ -559,22 +562,28 @@ describe('Ingesting from PDR', () => {
           }
         });
 
-        it('has expected short pan output', async () => {
+        afterAll(async () => {
+          await S3.deleteS3Object(config.bucket, panKey);
+        });
+
+        it('has expected short pan output when the files are successful', async () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           const panName = lambdaOutput.payload.pdr.name.replace(/\.pdr/gi, '.PAN');
-          const panKey = path.join(addedCollection.meta.panPath, panName);
+          panKey = path.join(addedCollection.meta.panPath, panName);
           const expectedPanUri = S3.buildS3Uri(config.bucket, panKey);
-          expect(lambdaOutput.payload.pan.uri).toEqual(expectedPanUri);
           const panExists = await S3.s3ObjectExists({
             Bucket: config.bucket,
             Key: panKey,
           });
+          expect(lambdaOutput.payload.pan.uri).toEqual(expectedPanUri);
           expect(panExists).toEqual(true);
+
           const panText = await S3.getTextObject(config.bucket, panKey);
           console.log(`Generated PAN ${lambdaOutput.payload.pan.uri}:\n${panText}`);
           expect(panText).toMatch(/MESSAGE_TYPE = "SHORTPAN"/);
+          expect(panText).toMatch(/DISPOSITION = "SUCCESSFUL"/);
+          // has no long pan property
           expect(panText).not.toMatch(/NO_OF_FILES/);
-          await S3.deleteS3Object(config.bucket, panKey);
         });
       });
     });

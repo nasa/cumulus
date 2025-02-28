@@ -14,15 +14,16 @@
  * pdr status check
  * This will kick off 2 ingest workflows
  *
- * Ingest successful workflow:
+ * - IngestGranule successful workflow:
  * runs sync granule - saves file to file staging location
  * performs the fake processing step - generates CMR metadata
  * Moves the file to the final location
  * Does not post to CMR (that is in a separate test)
  *
- * Ingest failed workflow:
+ * - IngestGranule failed workflow:
  * runs sync granule - failed due to missing file
  *
+ * send pan
  */
 
 const flatten = require('lodash/flatten');
@@ -71,7 +72,7 @@ const origPdrFilename = 'MOD09GQ-multi-granule-missing-file.PDR';
 const granuleDateString = '2016360104606';
 const granule2DateString = '2017227165029';
 const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
-const granuleId2Replacement = cryptoRandomString({ length: 13, type: 'numeric' });
+const granule2IdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
 
 const s3data = [
   '@cumulus/test-data/pdrs/MOD09GQ-multi-granule-missing-file.PDR',
@@ -84,7 +85,7 @@ const unmodifiedS3Data = [
   '@cumulus/test-data/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
 ];
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606'.replace(granuleDateString, granuleIdReplacement);
-const testDataGranuleId2 = 'MOD09GQ.A2017224.h27v08.006.2017227165029'.replace(granule2DateString, granuleId2Replacement);
+const testDataGranule2Id = 'MOD09GQ.A2017224.h27v08.006.2017227165029'.replace(granule2DateString, granule2IdReplacement);
 
 describe('Ingesting from PDR', () => {
   const providersDir = './data/providers/s3/';
@@ -113,7 +114,7 @@ describe('Ingesting from PDR', () => {
 
       provider = { id: `s3_provider${testSuffix}` };
 
-      console.log(`granules to ingest: ${testDataGranuleId}, ${testDataGranuleId2}`);
+      console.log(`granules to ingest: ${testDataGranuleId}, ${testDataGranule2Id}`);
 
       // populate collections, providers and test data
       [addedCollections] = await Promise.all(
@@ -127,7 +128,7 @@ describe('Ingesting from PDR', () => {
               { old: 'cumulus-test-data/pdrs', new: testDataFolder },
               { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` },
               { old: granuleDateString, new: granuleIdReplacement },
-              { old: granule2DateString, new: granuleId2Replacement },
+              { old: granule2DateString, new: granule2IdReplacement },
             ]
           ),
           unmodifiedS3Data.slice(0, 2).map((file) => updateAndUploadTestFileToBucket({
@@ -142,7 +143,7 @@ describe('Ingesting from PDR', () => {
             bucket: config.bucket,
             prefix: testDataFolder,
             targetReplacementRegex: granule2DateString,
-            targetReplacementString: granuleId2Replacement,
+            targetReplacementString: granule2IdReplacement,
           })),
           addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
         ])
@@ -172,7 +173,7 @@ describe('Ingesting from PDR', () => {
     );
     await waitForGranuleAndDelete(
       config.stackName,
-      testDataGranuleId2,
+      testDataGranule2Id,
       collectionId,
       'failed'
     );
@@ -284,10 +285,10 @@ describe('Ingesting from PDR', () => {
           expectedParsePdrOutput.granules[1].granuleId =
             expectedParsePdrOutput.granules[1].granuleId.replace(
               testDataGranuleId,
-              testDataGranuleId2
+              testDataGranule2Id
             );
           expectedParsePdrOutput.granules[1].files = expectedParsePdrOutput.granules[1].files.map((file) => {
-            file.name = file.name.replace(testDataGranuleId, testDataGranuleId2);
+            file.name = file.name.replace(testDataGranuleId, testDataGranule2Id);
             return file;
           });
 
@@ -391,7 +392,9 @@ describe('Ingesting from PDR', () => {
 
       /**
        * The parse pdr workflow kicks off two granule ingest workflows, one is successful, one is failed.
-       *
+       */
+
+      /**
        * Check one granule ingest workflow completes successfully. Above, we checked that there is
        * one running task, which is the sync granule workflow. The payload has the arn of the
        * running workflow, so use that to get the status.
@@ -571,8 +574,9 @@ describe('Ingesting from PDR', () => {
         });
       });
 
-      describe('SendPan lambda function', () => {
+      describe('When SendPan lambda is configured to have longPan panType', () => {
         let lambdaOutput;
+        let panKey;
         beforeAll(async () => {
           try {
             lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SendPan');
@@ -581,25 +585,29 @@ describe('Ingesting from PDR', () => {
           }
         });
 
-        it('has expected long pan output', async () => {
+        afterAll(async () => {
+          await deleteS3Object(config.bucket, panKey);
+        });
+
+        it('has expected long pan output when the files have different dispositions', async () => {
           if (beforeAllFailed) fail(beforeAllFailed);
 
           const granuleFileNames = [
             `${testDataGranuleId}.hdf`,
             `${testDataGranuleId}.hdf.met`,
-            `${testDataGranuleId2}.hdf`,
-            `${testDataGranuleId2}.hdf.met`,
-            `${testDataGranuleId2}_ndvi.jpg`,
+            `${testDataGranule2Id}.hdf`,
+            `${testDataGranule2Id}.hdf.met`,
+            `${testDataGranule2Id}_ndvi.jpg`,
           ];
 
           const panName = lambdaOutput.payload.pdr.name.replace(/\.pdr/gi, '.PAN');
-          const panKey = path.join(addedCollections[0].meta.panPath, panName);
+          panKey = path.join(addedCollections[0].meta.panPath, panName);
           const expectedPanUri = buildS3Uri(config.bucket, panKey);
-          expect(lambdaOutput.payload.pan.uri).toEqual(expectedPanUri);
           const panExists = await s3ObjectExists({
             Bucket: config.bucket,
             Key: panKey,
           });
+          expect(lambdaOutput.payload.pan.uri).toEqual(expectedPanUri);
           expect(panExists).toEqual(true);
 
           const panText = await getTextObject(config.bucket, panKey);
@@ -609,7 +617,8 @@ describe('Ingesting from PDR', () => {
           for (const fileName of granuleFileNames) {
             expect(panText.includes(fileName)).toBe(true);
           }
-          await deleteS3Object(config.bucket, panKey);
+
+          expect(panText.match(new RegExp('DISPOSITION = "FileNotFound"', 'g'))?.length).toBe(3);
         });
       });
     });
