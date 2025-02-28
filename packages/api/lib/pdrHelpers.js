@@ -7,13 +7,13 @@ const pvl = require('@cumulus/pvl');
 const { getExecution } = require('@cumulus/api-client/executions');
 
 /**
- * @typedef {object} FailedExecutionType
+ * @typedef {object} FailedExecution
  * @property {string} arn
  * @property {string} reason
  */
 
 /**
- * @typedef {FailedExecutionType | string } ExecutionType
+ * @typedef {FailedExecution | string } Execution
  */
 
 /**
@@ -36,7 +36,7 @@ const granulesFileCount = (granules) => granules.reduce((sum, { files }) => sum 
 /**
  * Generate Long PAN message
  *
- * @param {ExecutionType[]} executions - List of workflow executions
+ * @param {Execution[]} executions - List of workflow executions
  * @param {Function|undefined} getExecutionFunction - function for testing. Defaults to getExecution
  * @returns {Promise<string>} the PAN message
  */
