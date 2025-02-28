@@ -5,6 +5,8 @@
 const { z } = require('zod');
 const isError = require('lodash/isError');
 const pMap = require('p-map');
+
+const pRetry = require('p-retry');
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
@@ -764,11 +766,17 @@ async function bulkPatchGranuleCollection(req, res) {
   await mappingFunction(
     granules,
     async (apiGranule) => {
-      await updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule');
+      await pRetry(
+        () =>  updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule'),
+        { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      )
     },
     { concurrency: body.esConcurrency }
   );
-  await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
+  await pRetry(
+    () => updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id),
+    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+  )
 
   return res.send({
     message: `Successfully wrote granules with Granule Id: ${granuleIds} to Collection Id: ${newCollectionId}`,
@@ -807,7 +815,10 @@ async function bulkPatch(req, res) {
   await mappingFunction(
     granules,
     async (apiGranule) => {
-      await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
+      await pRetry(
+        () => patchGranule({ body: apiGranule, knex, testContext: {} }, res),
+        { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+      )
     },
     { concurrency: body.dbConcurrency }
   );
