@@ -20,7 +20,7 @@
       },
       "Type": "Task",
       "Resource": "${change_granule_collection_s3_task_arn}",
-      "TimeoutSeconds": 60,
+      "TimeoutSeconds": 900,
       "Retry": [
         {
           "ErrorEquals": [
@@ -45,7 +45,7 @@
       },
       "Type": "Task",
       "Resource": "${change_granule_collection_pg_task_arn}",
-      "TimeoutSeconds": 60,
+      "TimeoutSeconds": 900,
       "Retry": [
         {
           "ErrorEquals": [
