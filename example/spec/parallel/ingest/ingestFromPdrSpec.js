@@ -165,17 +165,14 @@ describe('Ingesting from PDR', () => {
   afterAll(async () => {
     // clean up stack state added by test
     const collectionId = constructCollectionId(addedCollections[0].name, addedCollections[0].version);
-    await waitForGranuleAndDelete(
-      config.stackName,
-      testDataGranuleId,
-      collectionId,
-      'completed'
-    );
-    await waitForGranuleAndDelete(
-      config.stackName,
-      testDataGranule2Id,
-      collectionId,
-      'failed'
+    await Promise.all(
+      [testDataGranuleId, testDataGranule2Id].map((granuleId) =>
+        waitForGranuleAndDelete(
+          config.stackName,
+          granuleId,
+          collectionId,
+          ['completed', 'failed']
+        ))
     );
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
