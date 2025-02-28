@@ -21,9 +21,13 @@ The built image is deployed to
 
 Logs will be output to `${stackName}-${OperationName}EcsLogs`
 
+## Development
+If you are making changes to this section of the repo, including security patches, you will need to follow the steps to
+build the Docker image, push the image to ECR, update the [example deployment](../../../../example/cumulus-tf/), and run your changes in Bamboo.
+
 ## Building and pushing Docker images
 
-For the following commands, replace `<build-number>` with the next build number. You can
+This step should be done as part of the release process. For the following commands, replace `<build-number>` with the next build number. You can
 find the latest build number at <https://hub.docker.com/r/cumuluss/async-operation/tags>.
 Currently we are using a regular number as the build number (e.g. `41`) and not a semantic
 versioning string (e.g. `1.0.0`).
@@ -44,7 +48,8 @@ Then you can push the new image to Dockerhub:
 
 We also keep a copy of this Docker image in the AWS ECR service for all of our Cumulus
 testing accounts in order to work around limits on how many times an image can be pulled
-from DockerHub.
+from DockerHub. This step may be done as part of the release process, but more likely should
+be done as part of development and testing of a change or update.
 
 **IMPORTANT: You must follow these steps to push the image to ECR in both the Cumulus sandbox and SIT accounts.**
 
@@ -63,9 +68,9 @@ Lastly, you can push the image to ECR in the AWS account:
 docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/async_operations:<build-number>
 ```
 
-## Updating Cumulus deployment configuration
+## Updating the Cumulus deployment configuration
 
-Once you have built a new image, you should configure the Cumulus Terraform module to use that new image by updating the `async_operation_image` variable in the
+This step should also be done as part of the release process. Once you have built a new image, you should configure the Cumulus Terraform module to use that new image by updating the `async_operation_image` variable in the
 [`variables.tf` file for the `cumulus` module](../../../../tf-modules/cumulus/variables.tf)
 to match the new `<build-number>`.
 

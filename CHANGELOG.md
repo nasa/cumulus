@@ -65,8 +65,7 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
 
 #### CUMULUS-4006
 
-The async_operation_image property of the cumulus module should be updated to pull the ECR image
-for cumuluss/async-operation:53.
+The async_operation_image property of the cumulus module should be [updated to pull the ECR image for cumuluss/async-operation:53](./packages/api/ecs/async-operation/README.md).
 This version of the image will be made the default in the next release.
 
 ### Replace ElasticSearch Phase 2

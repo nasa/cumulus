@@ -170,17 +170,22 @@ If there is exists a PR in the cumulus-dashboard repo with a name containing: "V
 - There will be a placeholder `change-me` value that should be replaced with the Cumulus Core to-be-released-version.
 - Mark that PR as ready to be reviewed.
 
-### 4. Update CHANGELOG.md
+### 4. Publish async_operations image to Docker Hub and AWS ECR
+
+For consistency and security reasons, a [new docker image for async_operations should be created and published](../../packages/api/ecs/async-operation/README.md)
+for each release. Make sure to follow the instructions for *Updating the Cumulus deployment configuration*
+
+### 5. Update CHANGELOG.md
 
 Update the `CHANGELOG.md`. Put a header under the `Unreleased` section with the new version number and the date.
 
-Add a link reference for the github "compare" view at the bottom of the `CHANGELOG.md`, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
+Add a notice for the new async_operations image. Add a link reference for the github "compare" view at the bottom of the `CHANGELOG.md`, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
 
-### 5. Update DATA\_MODEL\_CHANGELOG.md
+### 6. Update DATA\_MODEL\_CHANGELOG.md
 
 Similar to #4, make sure the DATA\_MODEL\_CHANGELOG is updated if there are data model changes in the release, and the link reference at the end of the document is updated as appropriate.
 
-### 6. Update CONTRIBUTORS.md
+### 7. Update CONTRIBUTORS.md
 
 ```bash
 ./bin/update-contributors.sh
@@ -189,7 +194,7 @@ git add CONTRIBUTORS.md
 
 Commit and push these changes, if any.
 
-### 7. Update Cumulus package API documentation
+### 8. Update Cumulus package API documentation
 
 Update auto-generated API documentation for any Cumulus packages that have it:
 
@@ -199,7 +204,7 @@ npm run docs-build-packages
 
 Commit and push these changes, if any.
 
-### 8. Cut new version of Cumulus Documentation
+### 9. Cut new version of Cumulus Documentation
 
 Docusaurus v2 uses snapshot approach for [documentation versioning](https://docusaurus.io/docs/versioning). Every versioned docs
 does not depends on other version.
@@ -230,7 +235,7 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Commit and push these changes.
 
-### 9. Create a pull request against the minor version branch
+### 10. Create a pull request against the minor version branch
 
 1. Push the release branch (e.g. `release-1.2.3`) to GitHub.
 2. Create a PR against the minor version base branch (e.g. `release-1.2.x`).
@@ -251,7 +256,7 @@ Commit and push these changes.
     - It **is safe** to do a squash merge in this instance, but not required
 5. You may delete your release branch (`release-1.2.3`) after merging to the base branch.
 
-### 10. Create a git tag for the release
+### 11. Create a git tag for the release
 
 Check out the minor version base branch (`release-1.2.x`) now that your changes are merged in and do a `git pull`.
 
@@ -268,7 +273,7 @@ e.g.:
     git push origin v9.1.0
 ```
 
-### 11. Publishing the release
+### 12. Publishing the release
 
 Publishing of new releases is handled by a custom Bamboo branch plan and is manually triggered.
 
@@ -323,7 +328,7 @@ If this is a new minor version branch, then you will need to create a new Bamboo
 
 Bamboo will build and run lint and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
-### 12. Create a new Cumulus release on github
+### 13. Create a new Cumulus release on github
 
 The CI release scripts will automatically create a GitHub release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
@@ -352,13 +357,13 @@ The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM)
 
 :::
 
-### 13. Update Cumulus API document
+### 14. Update Cumulus API document
 
 There may be unreleased changes in the [Cumulus API document](https://github.com/nasa/cumulus-api) that are waiting on the Cumulus Core release.
 If there are unrelease changes in the cumulus-api repo, follow the release instruction to create the release, the release version should match
 the Cumulus Core release.
 
-### 14. Update Cumulus Template Deploy
+### 15. Update Cumulus Template Deploy
 
 Users are encouraged to use our [Cumulus Template Deploy Project](https://github.com/nasa/cumulus-template-deploy) for deployments. The Cumulus Core version should be updated in this repo when a new Cumulus Core version is released.
 
@@ -379,12 +384,6 @@ module "cumulus" {
   ...
 }
 ```
-
-### 15. Publish async_operations image to Docker Hub and AWS ECR
-
-If there were any changes that modify the functionality of the async-operations image *or* patch underlying packages for security reasons,
-a [new docker image for async_operations should be created and published](https://github.com/nasa/cumulus/blob/master/packages/api/ecs/async-operation/README.md).
-The changelog should also be updated accordingly.
 
 ### 16. Merge base branch back to master
 
