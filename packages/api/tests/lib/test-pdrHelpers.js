@@ -1,103 +1,94 @@
 'use strict';
 
 const test = require('ava');
-const proxyquire = require('proxyquire');
 const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError');
+const pdrHelpers = require('../../lib/pdrHelpers');
 
-const fakeExecutionModule = {
-  getExecution: ({ arn }) => {
-    switch (arn) {
-    case 'arn:completed:execution': {
-      return Promise.resolve({
-        originalPayload: {
-          granules: [
-            {
-              files: [
-                {
-                  name: 'test_completed_id.nc',
-                  path: 'test',
-                },
-                {
-                  name: 'test_completed_id.nc.met',
-                  path: 'test',
-                },
-              ],
-              granuleId: 'test_id',
-            },
-          ],
-        },
-      });
-    }
-    case 'arn:completed:multiple:granules:execution': {
-      return Promise.resolve({
-        originalPayload: {
-          granules: [
-            {
-              files: [
-                {
-                  name: 'test_multiple_id.nc',
-                  path: 'test',
-                },
-                {
-                  name: 'test_multiple_id.nc.met',
-                  path: 'test',
-                },
-              ],
-              granuleId: 'test_id',
-            },
-            {
-              files: [
-                {
-                  name: 'test_multiple_id_1.nc',
-                  path: 'test',
-                },
-                {
-                  name: 'test_multiple_id_1.nc.met',
-                  path: 'test',
-                },
-              ],
-              granuleId: 'test_id_1',
-            },
-          ],
-        },
-      });
-    }
-    case 'arn:failed:execution-A':
-    case 'arn:failed:execution-B': {
-      const testCase = arn.split('-').pop();
-      return Promise.resolve({
-        originalPayload: {
-          granules: [
-            {
-              files: [
-                {
-                  name: `test_${testCase}_id_failed.nc`,
-                  path: 'test',
-                },
-                {
-                  name: `test_${testCase}_id_failed.nc.met`,
-                  path: 'test',
-                },
-              ],
-              granuleId: `test_${testCase}_id_failed`,
-            },
-          ],
-        },
-      });
-    }
-    default: {
-      throw new CumulusApiClientError('Test Error');
-    }
-    }
-  },
-};
-
-const pdrHelpers = proxyquire(
-  '../../lib/pdrHelpers',
-  {
-    '@cumulus/api-client/executions': fakeExecutionModule,
+const getExecutionFunction = ({ arn }) => {
+  switch (arn) {
+  case 'arn:completed:execution': {
+    return Promise.resolve({
+      originalPayload: {
+        granules: [
+          {
+            files: [
+              {
+                name: 'test_completed_id.nc',
+                path: 'test',
+              },
+              {
+                name: 'test_completed_id.nc.met',
+                path: 'test',
+              },
+            ],
+            granuleId: 'test_id',
+          },
+        ],
+      },
+    });
   }
-);
+  case 'arn:completed:multiple:granules:execution': {
+    return Promise.resolve({
+      originalPayload: {
+        granules: [
+          {
+            files: [
+              {
+                name: 'test_multiple_id.nc',
+                path: 'test',
+              },
+              {
+                name: 'test_multiple_id.nc.met',
+                path: 'test',
+              },
+            ],
+            granuleId: 'test_id',
+          },
+          {
+            files: [
+              {
+                name: 'test_multiple_id_1.nc',
+                path: 'test',
+              },
+              {
+                name: 'test_multiple_id_1.nc.met',
+                path: 'test',
+              },
+            ],
+            granuleId: 'test_id_1',
+          },
+        ],
+      },
+    });
+  }
+  case 'arn:failed:execution-A':
+  case 'arn:failed:execution-B': {
+    const testCase = arn.split('-').pop();
+    return Promise.resolve({
+      originalPayload: {
+        granules: [
+          {
+            files: [
+              {
+                name: `test_${testCase}_id_failed.nc`,
+                path: 'test',
+              },
+              {
+                name: `test_${testCase}_id_failed.nc.met`,
+                path: 'test',
+              },
+            ],
+            granuleId: `test_${testCase}_id_failed`,
+          },
+        ],
+      },
+    });
+  }
+  default: {
+    throw new CumulusApiClientError('Test Error');
+  }
+  }
+};
 
 // eslint-disable-next-line max-len
 const regex = /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "SUCCESSFUL";\nTIME_STAMP = \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z;\n/;
@@ -168,6 +159,6 @@ test('generateLongPAN', async (t) => {
     'arn:completed:execution',
     'arn:completed:multiple:granules:execution',
   ];
-  const pan = await pdrHelpers.generateLongPAN(executions);
+  const pan = await pdrHelpers.generateLongPAN(executions, getExecutionFunction);
   t.regex(pan, longPanRegex);
 });

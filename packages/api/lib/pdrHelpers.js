@@ -18,39 +18,29 @@ function generateShortPAN(disposition) {
   );
 }
 
-/**
- * Get list of input granules from execution
- *
- * @param {string} executionArn - execution arn
- * @returns {object[]} list of granules
- */
-async function getGranulesFromExecution(executionArn) {
-  const excObj = await getExecution({
-    prefix: process.env.stackName,
-    arn: executionArn,
-  });
-  return excObj.originalPayload.granules;
-}
-
 const granulesFileCount = (granules) => granules.reduce((sum, { files }) => sum + files.length, 0);
 
 /**
  * Generate Long PAN message
  *
- * @param {object|string[]} executions - List of workflow executions
- * @returns {string} the PAN message
+ * @param {object[]|string[]} executions - List of workflow executions
+ * @param {Function|undefined} getExecutionFunction - function for testing. Defaults to getExecution
+ * @returns {Promise<string>} the PAN message
  */
-async function generateLongPAN(executions) {
+async function generateLongPAN(executions, getExecutionFunction = getExecution) {
   const timeStamp = new Date();
 
-  const executionsWithGranules = [];
-  /* eslint-disable no-await-in-loop */
-  for (const exc of executions) {
-    const arn = exc.arn || exc;
-    const granules = await getGranulesFromExecution(arn);
-    executionsWithGranules.push({ arn, granules, reason: exc.reason });
-  }
-  /* eslint-enable no-await-in-loop */
+  const executionsWithGranules = await Promise.all(
+    executions.map(async (exc) => {
+      const arn = exc.arn || exc;
+      const excObj = await getExecutionFunction({
+        prefix: process.env.stackName,
+        arn,
+      });
+      const granules = excObj.originalPayload?.granules || [];
+      return { arn, granules, reason: exc.reason };
+    })
+  );
 
   const fileCount = executionsWithGranules
     .reduce((sum, { granules }) => sum + granulesFileCount(granules), 0);
@@ -91,5 +81,4 @@ module.exports = {
   generateShortPAN,
   generateLongPAN,
   generatePDRD,
-  getGranulesFromExecution,
 };

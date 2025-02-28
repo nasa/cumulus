@@ -2,25 +2,18 @@
 
 const test = require('ava');
 const path = require('path');
-const proxyquire = require('proxyquire');
+const sinon = require('sinon');
 const urljoin = require('url-join');
 const { pdrHelpers } = require('@cumulus/api');
 const { randomId, validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
 const S3 = require('@cumulus/aws-client/S3');
 
+const { sendPAN } = require('../dist/src');
+
 // eslint-disable-next-line max-len
 const regex = /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "SUCCESSFUL";\nTIME_STAMP = \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z;\n/;
 // eslint-disable-next-line max-len
 const failedRegex = /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "FAILED";\nTIME_STAMP = \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z;\n/;
-
-const { sendPAN } = proxyquire('../dist/src', {
-  '@cumulus/api': {
-    pdrHelpers: {
-      ...pdrHelpers,
-      generateLongPAN: () => Promise.resolve('MESSAGE_TYPE = "LONGPAN"...'),
-    },
-  },
-});
 
 test.before(async (t) => {
   t.context.providerBucket = randomId('bucket');
@@ -28,11 +21,15 @@ test.before(async (t) => {
   await Promise.all([
     S3.createBucket(t.context.providerBucket),
   ]);
+  sinon.stub(pdrHelpers, 'generateLongPAN').resolves('MESSAGE_TYPE = "LONGPAN"...');
 });
 
-test.after.always(async (t) => await Promise.all([
-  S3.recursivelyDeleteS3Bucket(t.context.providerBucket),
-]));
+test.after.always(async (t) => {
+  await Promise.all([
+    S3.recursivelyDeleteS3Bucket(t.context.providerBucket),
+  ]);
+  sinon.reset();
+});
 
 test('SendPan task calls upload', async (t) => {
   const fileNameBase = 'test-uploadcall-pdr';
