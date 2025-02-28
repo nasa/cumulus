@@ -245,6 +245,7 @@ async function copyFileInS3({
   s3MultipartChunksizeMb?: number,
 }): Promise<void> {
   if (isCMRMetadataFile(targetFile)) {
+    log.warn('took as cmrfile:', targetFile, JSON.stringify(cmrObject));
     if (!(await cmrFileCollision(sourceFile, targetFile, cmrObject))) {
       const metadataString = CMRObjectToString(targetFile, cmrObject);
       await pRetry(() => uploadCMRFile(targetFile, metadataString), {
@@ -542,8 +543,9 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
       granuleId: granule.granuleId,
     }));
   });
-  const cmrFiles = unValidatedCMRFiles.filter(validateApiFile);
 
+  const cmrFiles = unValidatedCMRFiles.filter(validateApiFile);
+  log.warn('using cmr files:', JSON.stringify(cmrFiles))
   const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const cmrObjectsByGranuleId: { [granuleId: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
@@ -607,6 +609,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     targetGranules, collectionUpdatedCMRMetadata, cmrFilesByGranuleId,
     config
   );
+  log.warn('my massaged cmrObjects are', JSON.stringify(updatedCMRObjects));
   // Copy files from staging location to final location
   await copyGranulesInS3({
     sourceGranules: sourceGranules,
