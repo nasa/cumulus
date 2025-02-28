@@ -113,7 +113,3 @@ export const updateCmrFileCollection = ({
   }
   throw new AssertionError({ message: 'cmr file in unknown format' });
 };
-
-export function isCMRMetadataFile(file: ApiFile | Omit<ApiFile, 'granuleId'>): boolean {
-  return file.type === 'metadata';
-}
