@@ -1,7 +1,20 @@
+//@ts-check
+
 'use strict';
 
+const isObject = require('lodash/isObject');
 const pvl = require('@cumulus/pvl');
 const { getExecution } = require('@cumulus/api-client/executions');
+
+/**
+ * @typedef {object} FailedExecutionType
+ * @property {string} arn
+ * @property {string} reason
+ */
+
+/**
+ * @typedef {FailedExecutionType | string } ExecutionType
+ */
 
 /**
  * Generate Short PAN message
@@ -23,7 +36,7 @@ const granulesFileCount = (granules) => granules.reduce((sum, { files }) => sum 
 /**
  * Generate Long PAN message
  *
- * @param {object[]|string[]} executions - List of workflow executions
+ * @param {ExecutionType[]} executions - List of workflow executions
  * @param {Function|undefined} getExecutionFunction - function for testing. Defaults to getExecution
  * @returns {Promise<string>} the PAN message
  */
@@ -32,13 +45,15 @@ async function generateLongPAN(executions, getExecutionFunction = getExecution) 
 
   const executionsWithGranules = await Promise.all(
     executions.map(async (exc) => {
-      const arn = exc.arn || exc;
+      const isFailedExecObj = isObject(exc);
+      const arn = isFailedExecObj ? exc.arn : exc;
+      const reason = isFailedExecObj ? exc.reason : undefined;
       const excObj = await getExecutionFunction({
         prefix: process.env.stackName,
         arn,
       });
       const granules = excObj.originalPayload?.granules || [];
-      return { arn, granules, reason: exc.reason };
+      return { arn, granules, reason };
     })
   );
 
