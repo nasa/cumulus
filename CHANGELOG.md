@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable Changes
+
+- The async_operation_image property of the cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:53
+
+### Fixed
+
+- **CUMULUS-4006**
+  - Created docker image from v20.0.0, and published new tag [`53` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/53/images/sha256-6e1b26f5933bc6685861a7cb31fbbace01c3a0090b1e41c26e313b15620762cc?context=explore)
 - **CUMULUS-4018**
   - Fixed API list endpoints pagination missing records issue by sorting on unique cumulus_id column
 
@@ -55,6 +64,11 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 #### CUMULUS-3967
 
 External tooling making use of `searchContext` in the `GET` `/granules/` endpoint will need to update to make use of standard pagination via `limit` and `page` scrolling, as `searchContext` is no longer supported/is an ES specific feature.
+
+#### CUMULUS-4006
+
+The async_operation_image property of the cumulus module should be [updated to pull the ECR image for cumuluss/async-operation:53](./packages/api/ecs/async-operation/README.md).
+This version of the image will be made the default in the next release.
 
 ### Replace ElasticSearch Phase 2
 
