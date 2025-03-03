@@ -202,6 +202,7 @@
           },
           "task_config": {
             "provider": "{$.meta.provider}",
+            "panType": "longPan",
             "remoteDir": "{$.meta.collection.meta.panPath}"
           }
         }
