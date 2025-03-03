@@ -32,6 +32,46 @@
           "MaxAttempts": 1
         }
       ],
+      "Next": "CmrStep"
+    },
+    "CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}",
+            "input_granules": "{$.meta.input_granules}",
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}",
+            "etags": "{$.meta.file_etags}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${post_to_cmr_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
       "Next": "ChangeGranuleCollectionPG"
     },
     "ChangeGranuleCollectionPG": {
