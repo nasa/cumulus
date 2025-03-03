@@ -11,6 +11,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The async_operation_image property of the cumulus module should be updated to pull
   the ECR image for cumuluss/async-operation:53
 
+### Added
+
+- **CUMULUS-3993**
+  - Added long PAN functionality and `panType` configuration option to `SendPan` task
+  - Updated example workflow configuration to better handle error exceptions,
+    see [Workflow Configuration](https://nasa.github.io/cumulus/docs/next/data-cookbooks/error-handling)
+  - Updated `PdrStatusCheck` task to properly propagate workflow execution error.
+
 ### Fixed
 
 - **CUMULUS-4006**
