@@ -4,7 +4,7 @@
  * End to end ingest from discovering a PDR
  *
  * Kick off discover and queue pdrs which:
- * Discovers 1 PDR
+ * Discovers 1 PDR which has 2 file groups
  * Queues that PDR
  * Kicks off the ParsePDR workflow
  *
@@ -23,7 +23,8 @@
  * - IngestGranule failed workflow:
  * runs sync granule - failed due to missing file
  *
- * send pan
+ * send pan task: panType is configured to longPan, so long pan
+ * should be generated with 1 successful granule and 1 failed granule
  */
 
 const flatten = require('lodash/flatten');

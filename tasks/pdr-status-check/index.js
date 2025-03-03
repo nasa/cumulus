@@ -127,7 +127,7 @@ function buildOutput(event, groupedExecutions) {
 }
 
 /**
- * check the status of a step funciton execution
+ * check the status of a step function execution
  *
  * @param {string} executionArn - step function execution arn
  * @returns {Promise.<Object>} - an object describing the status of the exection

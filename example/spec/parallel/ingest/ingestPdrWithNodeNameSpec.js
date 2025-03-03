@@ -5,7 +5,7 @@
  * granule's provider using NODE_NAME
  *
  * Kick off discover and queue pdrs which:
- * Discovers 1 PDR
+ * Discovers 1 PDR with 1 file group
  * Queues that PDR
  * Kicks off the ParsePDR workflow
  *
@@ -21,7 +21,8 @@
  * Moves the file to the final location
  * Does not post to CMR (that is in a separate test)
  *
- * send pan
+ * send pan: panType is configured to longPan, so a short pan should be created
+ * when all granules (1 granule in this test) are successful
  */
 
 const path = require('path');
