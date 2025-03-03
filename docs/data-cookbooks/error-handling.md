@@ -53,6 +53,8 @@ Some best practices for error handling in Cumulus Workflows are:
   Service Exception. See
   [this documentation](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html)
   on configuring your workflow to handle transient lambda errors.
+- [Fail workflow state](https://docs.aws.amazon.com/step-functions/latest/dg/state-fail.html) can have `CausePath` and `ErrorPath`
+  to ensure the error properly propagated.
 
 **Example `state machine definition`:**
 
@@ -250,7 +252,8 @@ Some best practices for error handling in Cumulus Workflows are:
     },
     "WorkflowFailed": {
       "Type": "Fail",
-      "Cause": "Workflow failed"
+      "CausePath": "$.exception.Cause",
+      "ErrorPath": "$.exception.Error"
     }
   }
 }

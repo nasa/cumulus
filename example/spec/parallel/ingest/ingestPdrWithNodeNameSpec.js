@@ -5,7 +5,7 @@
  * granule's provider using NODE_NAME
  *
  * Kick off discover and queue pdrs which:
- * Discovers 1 PDR
+ * Discovers 1 PDR with 1 file group
  * Queues that PDR
  * Kicks off the ParsePDR workflow
  *
@@ -20,7 +20,12 @@
  * performs the fake processing step - generates CMR metadata
  * Moves the file to the final location
  * Does not post to CMR (that is in a separate test)
+ *
+ * send pan: panType is configured to longPan, so a short pan should be created
+ * when all granules (1 granule in this test) are successful
  */
+
+const path = require('path');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -544,6 +549,42 @@ describe('Ingesting from PDR', () => {
             }
             expect(choiceVerified).toBeTrue();
           }
+        });
+      });
+
+      describe('When SendPan lambda is configured to have longPan panType', () => {
+        let lambdaOutput;
+        let panKey;
+        beforeAll(async () => {
+          try {
+            lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SendPan');
+          } catch (error) {
+            beforeAllFailed = error;
+          }
+        });
+
+        afterAll(async () => {
+          await S3.deleteS3Object(config.bucket, panKey);
+        });
+
+        it('has expected short pan output when the files are successful', async () => {
+          if (beforeAllFailed) fail(beforeAllFailed);
+          const panName = lambdaOutput.payload.pdr.name.replace(/\.pdr/gi, '.PAN');
+          panKey = path.join(addedCollection.meta.panPath, panName);
+          const expectedPanUri = S3.buildS3Uri(config.bucket, panKey);
+          const panExists = await S3.s3ObjectExists({
+            Bucket: config.bucket,
+            Key: panKey,
+          });
+          expect(lambdaOutput.payload.pan.uri).toEqual(expectedPanUri);
+          expect(panExists).toEqual(true);
+
+          const panText = await S3.getTextObject(config.bucket, panKey);
+          console.log(`Generated PAN ${lambdaOutput.payload.pan.uri}:\n${panText}`);
+          expect(panText).toMatch(/MESSAGE_TYPE = "SHORTPAN"/);
+          expect(panText).toMatch(/DISPOSITION = "SUCCESSFUL"/);
+          // has no long pan property
+          expect(panText).not.toMatch(/NO_OF_FILES/);
         });
       });
     });
