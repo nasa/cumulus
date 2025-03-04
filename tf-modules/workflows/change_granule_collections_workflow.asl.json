@@ -50,15 +50,6 @@
       "Type": "Task",
       "Resource": "${post_to_cmr_task_arn}",
       "Next": "ChangeGranuleCollectionPG",
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "CnmResponseFail",
-          "ResultPath": "$.exception"
-        }
-      ],
       "Retry": [
         {
           "BackoffRate": 2,
