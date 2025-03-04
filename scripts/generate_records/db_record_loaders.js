@@ -129,13 +129,14 @@ const loadGranules = async (
   let granuleOutputs = [];
   const granules = range(granuleCount).map(() => /** @type {PostgresGranule} */(
     fakeGranuleRecordFactory({
-      granule_id: `MOD11A1.A2017200.h19v04.006.${randomString(13)}`,
+      granule_id: `MOD11A1.A2017200.h19v04.006.${randomString(7)}`,
       collection_cumulus_id: collectionCumulusId,
       provider_cumulus_id: providerCumulusId,
       status: /** @type {GranuleStatus} */(['completed', 'failed', 'running', 'queued'][randomInt(4)]),
       ...params,
     })
   ));
+  console.log('uploading granules', granules)
   granuleOutputs =  await model.insert(knex, granules, ['granule_id', 'cumulus_id']);
 
   return granuleOutputs.map((g) => ({
@@ -232,8 +233,8 @@ const loadCollection = async (knex, files, collectionNumber = null, params = {})
     if (files > 2) {
       const jpgTemplate = collectionJson.files[1];
       range(files - 2).forEach((i) => {
-        const regex = jpgTemplate.regex.replace('_0', `{_${i+1}}`);
-        const sampleFileName = jpgTemplate.sampleFileName.replace('_0', `{_${i+1}}`);
+        const regex = jpgTemplate.regex.replace('_0', `_${i+1}`);
+        const sampleFileName = jpgTemplate.sampleFileName.replace('_0', `_${i+1}`);
         collectionJson.files.push({
           ...jpgTemplate,
           regex,
@@ -244,7 +245,7 @@ const loadCollection = async (knex, files, collectionNumber = null, params = {})
       collectionJson.files = collectionJson.files.slice(0, files);
     }
     collectionJson.url_path = `prefix${collectionNumber}/`;
-    collectionJson.files = JSON.stringify(files)
+    collectionJson.files = JSON.stringify(collectionJson.files)
   } else {
     collectionJson = fakeCollectionRecordFactory({
       files: JSON.stringify((range(files)).map((i) => (
@@ -263,6 +264,7 @@ const loadCollection = async (knex, files, collectionNumber = null, params = {})
     knex,
     collectionJson
   );
+  console.log(cumulusId, await collectionModel.get(knex, {cumulus_id: cumulusId}))
   return cumulusId;
 };
 

@@ -25,7 +25,7 @@ const {
 } = require('./db_record_loaders');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('../../packages/aws-client/services');
-const { s3PutObject } = require('../../packages/aws-client/S3');
+const { s3PutObject, deleteS3Object } = require('../../packages/aws-client/S3');
 const { keyBy } = require('lodash');
 const { BucketsConfig } = require('../../packages/common');
 
@@ -35,33 +35,32 @@ const cmrTemplate = fs.readFileSync(path.join(
   'data',
   'ummg-meta.cmr.json'
 )).toString();
-const putUpFiles = async (
+const deleteFiles = async (
   knex,
   granule,
   collection,
 ) => {
+  const granuleModel = new GranulePgModel();
+  const fileModel = new FilePgModel();
   const files = await knex('files').where({granule_cumulus_id: granule.cumulus_id})
-  await Promise.all(files.map((file) => {
-    if (file.key.endsWith('cmr.json')) {
-      const cmrString = cmrTemplate
-        .replace('replaceme-collectionname', collection.name)
-        .replace('replaceme-collectionversion', collection.version);
-      console.log('putting up cmr', file, JSON.stringify(cmrString, null, 2));
-      return s3PutObject({
-        Key: file.key,
-        Bucket: file.bucket,
-        Body: cmrString,
-      })
-    } else {
-      console.log('putting up regular file', file)
-      return s3PutObject({
-        Key: file.key,
-        Bucket: file.bucket,
-        Body: 'a'
-      })
+  await Promise.all(files.map(async (file) => {
+    try {
+      await deleteS3Object(file.bucket, file.key);
+    } catch (error) {
+      console.log(error)
+    }
+    try {
+      await fileModel.delete(knex, {cumulus_id: file.cumulus_id});
+    } catch (error) {
+      console.log(error)
     }
     
-  }))
+  }));
+  try {
+    await granuleModel.delete(knex, {cumulus_id: granule.cumulus_id});
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 const getGranuleBatch = async (
@@ -141,7 +140,8 @@ const main = async () => {
       collection.cumulus_id,
       cursor, concurrency
     );
-    await Promise.all(granules.map(async (granule) => putUpFiles(knex, granule, collection)));
+    console.log(granules)
+    await Promise.all(granules.map(async (granule) => deleteFiles(knex, granule, collection)));
 
     cursor = granules.length ? granules[granules.length-1].cumulus_id : 0
   } while (granules.length);
