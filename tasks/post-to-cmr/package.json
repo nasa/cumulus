@@ -43,6 +43,7 @@
     "@cumulus/errors": "18.5.3",
     "@cumulus/launchpad-auth": "18.5.3",
     "lodash": "^4.17.21"
+    "p-map": "^4.0.0"
   },
   "devDependencies": {
     "@cumulus/cmr-client": "18.5.3",
