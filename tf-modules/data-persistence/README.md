@@ -1,6 +1,6 @@
 # Data Persistence
 
-This module deploys data persistence resources, including DynamoDB tables, RDS database and tables, and an Elasticsearch instance (which is optional).
+This module deploys data persistence resources, including DynamoDB tables, RDS database and tables.
 
 ## Included resources
 
