@@ -226,7 +226,8 @@
     },
     "WorkflowFailed": {
       "Type": "Fail",
-      "Cause": "Workflow failed"
+      "CausePath": "$.exception.Cause",
+      "ErrorPath": "$.exception.Error"
     },
     "WorkflowSucceeded": {
       "Type": "Succeed"

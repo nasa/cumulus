@@ -1,0 +1,60 @@
+{
+  "filesCount": 5,
+  "totalSize": 2293616,
+  "granulesCount": 2,
+  "pdr": {
+    "path": "replace-me-path",
+    "size": 1565,
+    "name": "MOD09GQ-multi-granule-missing-file.PDR"
+  },
+  "granules": [
+    {
+      "dataType": "MOD09GQ",
+      "files": [
+        {
+          "path": "replace-me-path",
+          "size": 1098034,
+          "name": "replace-me-granuleId.hdf",
+          "type": "data"
+        },
+        {
+          "path": "replace-me-path",
+          "size": 21708,
+          "name": "replace-me-granuleId.hdf.met",
+          "type": "metadata"
+        }
+      ],
+      "version": "006",
+      "granuleSize": 1119742,
+      "granuleId": "replace-me-granuleId"
+    },
+    {
+      "dataType": "MOD09GQ",
+      "files": [
+        {
+          "path": "replace-me-path",
+          "size": 1098034,
+          "name": "replace-me-granuleId.hdf",
+          "type": "data",
+          "checksumType": "MD5",
+          "checksum": "8d1ec5c0463e59d26adee87cdbbee816"
+        },
+        {
+          "path": "replace-me-path",
+          "size": 20165,
+          "name": "replace-me-granuleId.hdf.met",
+          "type": "metadata"
+        },
+        {
+          "path": "replace-me-path",
+          "size": 55675,
+          "name": "replace-me-granuleId_ndvi.jpg",
+          "type": "browse"
+        }
+      ],
+      "version": "006",
+      "granuleSize": 1173874,
+      "granuleId": "replace-me-granuleId"
+    }
+  ]
+}

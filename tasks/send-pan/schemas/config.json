@@ -2,16 +2,22 @@
   "title": "SendPANConfig",
   "description": "Describes the configuration the send-pan task",
   "type": "object",
-  "required": ["provider", "remoteDir"],
+  "required": ["provider"],
   "properties": {
     "provider": {
       "type": "object",
       "description": "A provider object to send the PAN response to.  The PAN response will be sent via the same protocol and authentication method to the host configured in the provider."
     },
     "remoteDir": {
-      "type": ["string", "null"],
+      "type": "string",
       "description": "The path in the provider to upload the file to.",
       "default": "pans"
+    },
+    "panType": {
+      "type": "string",
+      "description": "Specifies which pan type to create: (shortPan, longPan, or longPanAlways). shortPan: Always creates short PANs, longPan: Only creates long PANs when all files in a PDR do not have the same disposition, else just a short pan, longPanAlways: Always creates long PANs",
+      "enum": ["shortPan", "longPan", "longPanAlways"],
+      "default": "shortPan"
     }
   }
 }

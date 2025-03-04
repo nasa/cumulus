@@ -2,9 +2,12 @@
 
 const test = require('ava');
 const path = require('path');
+const sinon = require('sinon');
 const urljoin = require('url-join');
+const { pdrHelpers } = require('@cumulus/api');
 const { randomId, validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
 const S3 = require('@cumulus/aws-client/S3');
+
 const { sendPAN } = require('../dist/src');
 
 // eslint-disable-next-line max-len
@@ -18,11 +21,15 @@ test.before(async (t) => {
   await Promise.all([
     S3.createBucket(t.context.providerBucket),
   ]);
+  sinon.stub(pdrHelpers, 'generateLongPAN').resolves('MESSAGE_TYPE = "LONGPAN"...');
 });
 
-test.after.always(async (t) => await Promise.all([
-  S3.recursivelyDeleteS3Bucket(t.context.providerBucket),
-]));
+test.after.always(async (t) => {
+  await Promise.all([
+    S3.recursivelyDeleteS3Bucket(t.context.providerBucket),
+  ]);
+  sinon.reset();
+});
 
 test('SendPan task calls upload', async (t) => {
   const fileNameBase = 'test-uploadcall-pdr';
@@ -52,7 +59,7 @@ test('SendPan task calls upload', async (t) => {
   };
 
   const url = `http://${event.config.provider.host}:${port}`;
-  const remotePath = path.join(event.config.remoteDir, `${fileNameBase}.pan`);
+  const remotePath = path.join(event.config.remoteDir, `${fileNameBase}.PAN`);
   // Message should look like this:
   // MESSAGE_TYPE = "SHORTPAN";
   // DISPOSITION = "SUCCESSFUL";
@@ -100,10 +107,10 @@ test('SendPan task sends PAN to HTTP server', async (t) => {
   }
 });
 
-test('SendPan task sends PAN to s3', async (t) => {
+test.serial('SendPan task sends PAN to s3', async (t) => {
   const remoteDir = 'pan/remote-dir';
   const fileNameBase = 'test-send-s3-pdr';
-  const uploadPath = path.join(remoteDir, `${fileNameBase}.pan`);
+  const uploadPath = path.join(remoteDir, `${fileNameBase}.PAN`);
   const event = {
     config: {
       provider: {
@@ -173,9 +180,9 @@ test('SendPan task throws error when provider protocol is not supported', async 
   }
 });
 
-test('SendPan task sends PAN to default location when remoteDir is null', async (t) => {
+test.serial('SendPan task sends PAN to default location when remoteDir is undefined', async (t) => {
   const fileNameBase = 'test-default-pan-path-pdr';
-  const uploadPath = `pans/${fileNameBase}.pan`;
+  const uploadPath = `pans/${fileNameBase}.PAN`;
   const event = {
     config: {
       provider: {
@@ -184,7 +191,7 @@ test('SendPan task sends PAN to default location when remoteDir is null', async 
         protocol: 's3',
         host: t.context.providerBucket,
       },
-      remoteDir: null,
+      remoteDir: undefined,
     },
     input: {
       pdr: {
@@ -221,7 +228,6 @@ test('SendPan task fails with executions still running', async (t) => {
         protocol: 's3',
         host: t.context.providerBucket,
       },
-      remoteDir: null,
     },
     input: {
       pdr: {
@@ -246,9 +252,9 @@ test('SendPan task fails with executions still running', async (t) => {
   }
 });
 
-test('SendPan task sends failed PAN to s3', async (t) => {
+test.serial('SendPan task sends failed PAN to s3', async (t) => {
   const fileNameBase = 'test-failed-pan-path-pdr';
-  const uploadPath = `pans/${fileNameBase}.pan`;
+  const uploadPath = `pans/${fileNameBase}.PAN`;
   const event = {
     config: {
       provider: {
@@ -257,7 +263,6 @@ test('SendPan task sends failed PAN to s3', async (t) => {
         protocol: 's3',
         host: t.context.providerBucket,
       },
-      remoteDir: null,
     },
     input: {
       pdr: {
@@ -278,6 +283,165 @@ test('SendPan task sends failed PAN to s3', async (t) => {
     await validateOutput(t, output);
     const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
     t.regex(text, failedRegex);
+    t.is(output.pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
+  } catch (error) {
+    console.log(error);
+    t.fail();
+  }
+});
+
+test.serial('SendPan task sends long PAN to s3 when panType is longPan and all files do not have the same disposition ', async (t) => {
+  const fileNameBase = 'test-failed-pan-path-pdr';
+  const uploadPath = `pans/${fileNameBase}.PAN`;
+  const event = {
+    config: {
+      provider: {
+        id: randomId('s3Provider'),
+        globalConnectionLimit: 5,
+        protocol: 's3',
+        host: t.context.providerBucket,
+      },
+      panType: 'longPan',
+    },
+    input: {
+      pdr: {
+        name: `${fileNameBase}.pdr`,
+        path: 'some-pdr-path',
+      },
+      running: [],
+      completed: ['arn:completed:execution', 'arn:completed:execution', 'arn:completed:execution'],
+      failed: [{ arn: 'arn:failed:execution', reason: 'Workflow Failed' }],
+    },
+  };
+
+  try {
+    await validateInput(t, event.input);
+    await validateConfig(t, event.config);
+    const output = await sendPAN(event);
+    t.log(output);
+    await validateOutput(t, output);
+    const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
+    t.regex(text, /MESSAGE_TYPE = "LONGPAN"/);
+    t.is(output.pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
+  } catch (error) {
+    console.log(error);
+    t.fail();
+  }
+});
+
+test.serial('SendPan task sends failed short PAN to s3 when panType is longPan and all files have failed disposition', async (t) => {
+  const fileNameBase = 'test-failed-pan-path-pdr';
+  const uploadPath = `pans/${fileNameBase}.PAN`;
+  const event = {
+    config: {
+      provider: {
+        id: randomId('s3Provider'),
+        globalConnectionLimit: 5,
+        protocol: 's3',
+        host: t.context.providerBucket,
+      },
+      panType: 'longPan',
+    },
+    input: {
+      pdr: {
+        name: `${fileNameBase}.pdr`,
+        path: 'some-pdr-path',
+      },
+      running: [],
+      completed: [],
+      failed: [
+        { arn: 'arn:failed:execution', reason: 'Workflow Failed' },
+        { arn: 'arn:failed:execution2', reason: 'Workflow Failed 2' },
+      ],
+    },
+  };
+
+  try {
+    await validateInput(t, event.input);
+    await validateConfig(t, event.config);
+    const output = await sendPAN(event);
+    t.log(output);
+    await validateOutput(t, output);
+    const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
+    t.regex(text, failedRegex);
+    t.is(output.pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
+  } catch (error) {
+    console.log(error);
+    t.fail();
+  }
+});
+
+test.serial('SendPan task sends short PAN to s3 when panType is longPan and all files have completed disposition ', async (t) => {
+  const fileNameBase = 'test-failed-pan-path-pdr';
+  const uploadPath = `pans/${fileNameBase}.PAN`;
+  const event = {
+    config: {
+      provider: {
+        id: randomId('s3Provider'),
+        globalConnectionLimit: 5,
+        protocol: 's3',
+        host: t.context.providerBucket,
+      },
+      panType: 'longPan',
+    },
+    input: {
+      pdr: {
+        name: `${fileNameBase}.pdr`,
+        path: 'some-pdr-path',
+      },
+      running: [],
+      completed: ['arn:completed:execution', 'arn:completed:execution2', 'arn:completed:execution3'],
+      failed: [],
+    },
+  };
+
+  try {
+    await validateInput(t, event.input);
+    await validateConfig(t, event.config);
+    const output = await sendPAN(event);
+    t.log(output);
+    await validateOutput(t, output);
+    const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
+    t.regex(text, regex);
+    t.is(output.pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
+  } catch (error) {
+    console.log(error);
+    t.fail();
+  }
+});
+
+test.serial('SendPan task sends long PAN to s3 when panType is longPanAlways', async (t) => {
+  const fileNameBase = 'test-failed-pan-path-pdr';
+  const uploadPath = `pans/${fileNameBase}.PAN`;
+  const event = {
+    config: {
+      provider: {
+        id: randomId('s3Provider'),
+        globalConnectionLimit: 5,
+        protocol: 's3',
+        host: t.context.providerBucket,
+      },
+      panType: 'longPanAlways',
+    },
+    input: {
+      pdr: {
+        name: `${fileNameBase}.pdr`,
+        path: 'some-pdr-path',
+      },
+      running: [],
+      completed: ['arn:completed:execution', 'arn:completed:execution2', 'arn:completed:execution3'],
+      failed: [],
+    },
+  };
+
+  try {
+    await validateInput(t, event.input);
+    await validateConfig(t, event.config);
+    const output = await sendPAN(event);
+    t.log(output);
+    await validateOutput(t, output);
+    const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
+    t.regex(text, /MESSAGE_TYPE = "LONGPAN"/);
     t.is(output.pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
   } catch (error) {
     console.log(error);
