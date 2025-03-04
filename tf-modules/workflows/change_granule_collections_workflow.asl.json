@@ -42,8 +42,7 @@
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
-            "launchpad": "{$.meta.launchpad}",
-            "etags": "{$.meta.file_etags}"
+            "launchpad": "{$.meta.launchpad}"
           }
         }
       },
