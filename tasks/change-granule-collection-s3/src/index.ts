@@ -43,7 +43,6 @@ import {
 import {
   validateApiGranuleRecord,
   CMRObjectToString,
-  isCMRMetadataFile,
   updateCmrFileCollection,
   updateCmrFileLinks,
   uploadCMRFile,
@@ -244,7 +243,7 @@ async function copyFileInS3({
   cmrObject: Object,
   s3MultipartChunksizeMb?: number,
 }): Promise<void> {
-  if (isCMRMetadataFile(targetFile)) {
+  if (isCMRFile(targetFile)) {
     if (!(await cmrFileCollision(sourceFile, targetFile, cmrObject))) {
       const metadataString = CMRObjectToString(targetFile, cmrObject);
       await pRetry(() => uploadCMRFile(targetFile, metadataString), {
@@ -543,7 +542,6 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
     }));
   });
   const cmrFiles = unValidatedCMRFiles.filter(validateApiFile);
-
   const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const cmrObjectsByGranuleId: { [granuleId: string]: Object } = {};
   await Promise.all(cmrFiles.map(async (cmrFile) => {
