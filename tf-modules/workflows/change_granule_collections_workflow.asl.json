@@ -42,7 +42,8 @@
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
-            "launchpad": "{$.meta.launchpad}"
+            "launchpad": "{$.meta.launchpad}",
+            "republish": true
           }
         }
       },
