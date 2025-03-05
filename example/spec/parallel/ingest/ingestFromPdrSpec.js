@@ -315,13 +315,15 @@ describe('Ingesting from PDR', () => {
       describe('ParsePdr lambda function', () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          it('successfully parses a granule from the PDR', async () => {
+          it('successfully parses granules from the PDR', async () => {
             parseLambdaOutput = await lambdaStep.getStepOutput(
               parsePdrExecutionArn,
               'ParsePdr'
             );
             expect(parseLambdaOutput.payload.granules).toEqual(expectedParsePdrOutput.granules);
             expectedParsePdrOutput.pdr.time = parseLambdaOutput.payload?.pdr?.time;
+            // size is different due to the DIRECTORY_ID updates in PDR
+            expectedParsePdrOutput.pdr.size = parseLambdaOutput.payload?.pdr?.size;
             expect(parseLambdaOutput.payload).toEqual(expectedParsePdrOutput);
           });
         }
