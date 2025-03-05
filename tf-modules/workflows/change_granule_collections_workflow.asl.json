@@ -14,7 +14,16 @@
             "s3MultipartChunksizeMb": "{$.meta.bulkChangeCollection.s3MultipartChunksizeMb}",
             "invalidGranuleBehavior": "{$.meta.bulkChangeCollection.invalidGranuleBehavior}",
             "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
-            "concurrency": "{$.meta.bulkChangeCollection.concurrency}"
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "cumulus_message": {
+              "input": "{$.payload}",
+              "outputs": [
+                {
+                  "source": "{$.oldGranules}",
+                  "destination": "{$.meta.oldGranules}"
+                }
+              ]
+            }
           }
         }
       },
@@ -43,6 +52,7 @@
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
             "launchpad": "{$.meta.launchpad}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
             "republish": true
           }
         }
@@ -68,6 +78,7 @@
         "cma": {
           "event.$": "$",
           "task_config": {
+            "oldGranules": "{$.meta.oldGranules}",
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",

@@ -30,6 +30,7 @@ export type ValidGranuleRecord = {
 } & ApiGranuleRecord;
 
 interface EventConfig {
+  oldGranules: Array<ApiGranuleRecord>
   targetCollection: {
     name: string,
     version: string,
@@ -57,7 +58,6 @@ interface MoveGranuleCollectionsEvent {
   },
   input: {
     granules: Array<ApiGranuleRecord>,
-    oldGranules: Array<ApiGranuleRecord>,
   }
 }
 
@@ -172,10 +172,11 @@ function chunkGranules(granules: ValidGranuleRecord[], concurrency: number) {
 async function changeGranuleCollectionsPG(
   event: MoveGranuleCollectionsEvent
 ): Promise<Object> {
+  const oldGranules = event.config.oldGranules;
   const config = validateConfig(event.config);
 
   const targetGranules = event.input.granules.filter(validateGranule);
-  const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(event.input.oldGranules.filter(validateGranule), 'granuleId');
+  const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(oldGranules.filter(validateGranule), 'granuleId');
   log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
   for (const granuleChunk of chunkGranules(targetGranules, config.concurrency)) {
     //eslint-disable-next-line no-await-in-loop
