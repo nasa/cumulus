@@ -34,28 +34,6 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
-variable "elasticsearch_config" {
-  description = "Configuration object for Elasticsearch"
-  type = object({
-    domain_name    = string
-    instance_count = number
-    instance_type  = string
-    version        = string
-    volume_size    = number
-    volume_type    = string
-    iops           = optional(number)
-    throughput     = optional(number)
-  })
-  default = {
-    domain_name    = "es"
-    instance_count = 1
-    instance_type  = "t2.small.elasticsearch"
-    version        = "5.3"
-    volume_size    = 10
-    volume_type    = "gp2"
-  }
-}
-
 variable "enable_point_in_time_tables" {
   description = "DynamoDB table names that should have point in time recovery enabled"
   type        = list(string)
