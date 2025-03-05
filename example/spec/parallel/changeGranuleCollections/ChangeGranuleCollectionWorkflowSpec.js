@@ -59,7 +59,7 @@ describe('The ChangeGranuleCollections workflow', () => {
   beforeAll(async () => {
     config = await loadConfig();
     stackName = config.stackName;
-    const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');
+    const testId = createTimestampedTestId(stackName, 'ChangeGranuleCollection');
     const testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
 
