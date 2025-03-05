@@ -68,18 +68,19 @@ Pre-release testing steps:
 1. [Create a branch for the new release](#1-create-a-branch-for-the-new-release)
 2. [Update the Cumulus version number](#2-update-the-cumulus-version-number)
 3. [Check Cumulus Dashboard PRs for Version Bump](#3-check-cumulus-dashboard-prs-for-version-bump)
-4. [Update CHANGELOG.md](#4-update-changelogmd)
-5. [Update DATA\_MODEL\_CHANGELOG.md](#5-update-data_model_changelogmd)
-6. [Update CONTRIBUTORS.md](#6-update-contributorsmd)
-7. [Update Cumulus package API documentation](#7-update-cumulus-package-api-documentation)
-8. [Cut new version of Cumulus Documentation](#8-cut-new-version-of-cumulus-documentation)
-9. [Create a pull request against the minor version branch](#9-create-a-pull-request-against-the-minor-version-branch)
-10. [Create a git tag for the release](#10-create-a-git-tag-for-the-release)
-11. [Publishing the release](#11-publishing-the-release)
-12. [Create a new Cumulus release on github](#12-create-a-new-cumulus-release-on-github)
-13. [Update Cumulus API document](#13-update-cumulus-api-document)
-14. [Update Cumulus Template Deploy](#14-update-cumulus-template-deploy)
-15. [Merge base branch back to master](#15-merge-base-branch-back-to-master)
+4. [Publish async_operations image to Docker Hub](#4-publish-async_operations-image-to-docker-hub)
+5. [Update CHANGELOG.md](#5-update-changelogmd)
+6. [Update DATA\_MODEL\_CHANGELOG.md](#6-update-data_model_changelogmd)
+7. [Update CONTRIBUTORS.md](#7-update-contributorsmd)
+8. [Update Cumulus package API documentation](#8-update-cumulus-package-api-documentation)
+9. [Cut new version of Cumulus Documentation](#9-cut-new-version-of-cumulus-documentation)
+10. [Create a pull request against the minor version branch](#10-create-a-pull-request-against-the-minor-version-branch)
+11. [Create a git tag for the release](#11-create-a-git-tag-for-the-release)
+12. [Publishing the release](#12-publishing-the-release)
+13. [Create a new Cumulus release on github](#13-create-a-new-cumulus-release-on-github)
+14. [Update Cumulus API document](#14-update-cumulus-api-document)
+15. [Update Cumulus Template Deploy](#15-update-cumulus-template-deploy)
+16. [Merge base branch back to master](#16-merge-base-branch-back-to-master)
 
 ### 1. Create a branch for the new release
 
@@ -170,10 +171,9 @@ If there is exists a PR in the cumulus-dashboard repo with a name containing: "V
 - There will be a placeholder `change-me` value that should be replaced with the Cumulus Core to-be-released-version.
 - Mark that PR as ready to be reviewed.
 
-### 4. Publish async_operations image to Docker Hub and AWS ECR
+### 4. Publish async_operations image to Docker Hub
 
-For consistency and security reasons, a [new docker image for async_operations should be created and published](../../packages/api/ecs/async-operation/README.md)
-for each release. Make sure to follow the instructions for **Updating the Cumulus deployment configuration**
+For consistency and security reasons, a [new docker image for async_operations should be created and published](../../packages/api/ecs/async-operation/README.md) for each release and pushed to Docker Hub and possibly AWS ECR. Make sure to follow the instructions for **Updating the Cumulus deployment configuration**
 
 ### 5. Update CHANGELOG.md
 
