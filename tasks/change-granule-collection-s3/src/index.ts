@@ -253,7 +253,7 @@ async function copyFileInS3({
         maxTimeout: 2000,
         onFailedAttempt: (error) => {
           log.warn(
-            `failed attempt to check for target collision when moving CMR file ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
+            `failed attempt to upload CMR file ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
           );
         },
       });
@@ -281,6 +281,7 @@ async function copyFileInS3({
         },
       }
     );
+    console.log('and actually posted', JSON.stringify(targetFile));
   }
 }
 /**
