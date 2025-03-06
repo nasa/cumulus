@@ -3,7 +3,7 @@
   "description": "Describes the input expected by the move-granules task",
   "type": "object",
   "required": [
-    "granules",
+    "granules"
   ],
   "properties": {
     "granules": {
