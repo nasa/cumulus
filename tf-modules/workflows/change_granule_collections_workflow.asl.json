@@ -21,7 +21,11 @@
                 {
                   "source": "{$.oldGranules}",
                   "destination": "{$.meta.oldGranules}"
-                }
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                },
               ]
             }
           }
