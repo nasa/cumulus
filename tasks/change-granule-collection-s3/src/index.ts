@@ -243,6 +243,7 @@ async function copyFileInS3({
   cmrObject: Object,
   s3MultipartChunksizeMb?: number,
 }): Promise<void> {
+  log.warn('getting ready to post', JSON.stringify(sourceFile), JSON.stringify(targetFile));
   if (isCMRFile(targetFile)) {
     if (!(await cmrFileCollision(sourceFile, targetFile, cmrObject))) {
       const metadataString = CMRObjectToString(targetFile, cmrObject);

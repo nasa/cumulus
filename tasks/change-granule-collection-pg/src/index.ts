@@ -100,6 +100,7 @@ async function moveGranulesInCumulusDatastores(
       dbMaxPool: config.dbMaxPool,
     },
   });
+  log.warn('moving granule to collection', targetCollectionId)
   await bulkPatchGranuleCollection({
     prefix: getRequiredEnvVar('stackName'),
     body: {
