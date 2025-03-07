@@ -7,9 +7,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Changed
-
+ 
 - **CUMULUS-3994**
-  - Removed references to elasticsearch in data-persistence
+  - Removed references to elasticsearch in data-persistence Terraform module and example.
+  - Running `terraform apply` on this change will **permanently delete** the elasticsearch domain and all of the the data it contains.
+  - Ensure that the elasticsearch domain is not longer needed before applying this update.
   
 ### Notable Changes
 
