@@ -66,7 +66,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
       ];
 
       const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
-      const targetCollectionsDir = './data/collections/s3_MOD09GQ_007_full_ingest_move';
+      const targetCollectionsDir = './data/collections//s3_MOD09GQ-AZ_006_full_ingest_move/';
       const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
       config = await loadConfig();
       stackName = config.stackName;
@@ -74,7 +74,7 @@ describe('when ChangeGranuleCollectionS3 is called', () => {
       const testSuffix = createTestSuffix(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-      targetCollection = { name: `MOD09GQ${testSuffix}`, version: '007' };
+      targetCollection = { name: `MOD09GQ-AZ${testSuffix}`, version: '006' };
       sourceGranulePath = `${stackName}/${testSuffix}/${testId}`;
 
       // populate collections, providers and test data
