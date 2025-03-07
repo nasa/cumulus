@@ -1,6 +1,6 @@
 {
-  "name": "MOD09GQ",
-  "version": "007",
+  "name": "MOD09GQ-AZ",
+  "version": "006",
   "dataType": "MOD09GQ",
   "process": "modis",
   "duplicateHandling": "replace",
