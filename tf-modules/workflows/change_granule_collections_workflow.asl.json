@@ -17,7 +17,20 @@
             "s3MultipartChunksizeMb": "{$.meta.bulkChangeCollection.s3MultipartChunksizeMb}",
             "invalidGranuleBehavior": "{$.meta.bulkChangeCollection.invalidGranuleBehavior}",
             "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
-            "concurrency": "{$.meta.bulkChangeCollection.concurrency}"
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "cumulus_message": {
+              "input": "{$.payload}",
+              "outputs": [
+                {
+                  "source": "{$.oldGranules}",
+                  "destination": "{$.meta.oldGranules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
           }
         }
       },
@@ -38,41 +51,34 @@
       "Parameters": {
         "cma": {
           "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
           "task_config": {
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
             "launchpad": "{$.meta.launchpad}",
-            "input_granules": "{$.meta.input_granules}",
-            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}",
-            "etags": "{$.meta.file_etags}"
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "republish": true
           }
         }
       },
       "Type": "Task",
       "Resource": "${post_to_cmr_task_arn}",
+      "Next": "ChangeGranuleCollectionPG",
       "Retry": [
         {
+          "BackoffRate": 2,
           "ErrorEquals": [
             "Lambda.ServiceException",
             "Lambda.AWSLambdaException",
             "Lambda.SdkClientException"
           ],
           "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
+          "MaxAttempts": 6
         }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.exception",
-          "Next": "WorkflowFailed"
-        }
-      ],
-      "Next": "ChangeGranuleCollectionPG"
+      ]
     },
     "ChangeGranuleCollectionPG": {
       "Parameters": {
@@ -82,6 +88,7 @@
             "FullMessage": true
           },
           "task_config": {
+            "oldGranules": "{$.meta.oldGranules}",
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",

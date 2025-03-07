@@ -965,7 +965,7 @@ const bulkChangeCollectionSchema = z.object({
   targetCollectionId: z.string().nonempty('targetCollectionId is required'),
   batchSize: z.number().positive().optional().default(100),
   concurrency: z.number().positive().optional().default(100),
-  invalidBehavior: z.enum(['error', 'skip']).default('error'),
+  invalidGranuleBehavior: z.enum(['error', 'skip']).default('error'),
   cmrGranuleUrlType: z.enum(['http', 's3', 'both']).default('both'),
   s3MultipartChunkSizeMb: z.number().optional(),
   executionName: z.string().optional(),
@@ -983,7 +983,7 @@ const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload
  * @param {number} [req.body.batchSize=100] - The batch size for processing granules.
  * @param {number} [req.body.concurrency=100] - The per-file concurrency level for processing
  * granules and granule records
- * @param {string} [req.body.invalidBehavior='error'] - The behavior for invalid granules
+ * @param {string} [req.body.invalidGranuleBehavior='error'] - The behavior for invalid granules
  * ('error' or 'skip').
  * @param {number} [req.body.s3MultipartChunkSizeMb] - The S3 multipart chunk size in MB
  * @param {string} [req.body.executionName] - Override to allow specifying an execution 'name'
@@ -1080,7 +1080,7 @@ async function bulkChangeCollection(req, res) {
         cmrGranuleUrlType: body.cmrGranuleUrlType,
         concurrency: body.concurrency,
         dbMaxPool: body.dbMaxPool,
-        invalidBehavior: body.invalidBehavior,
+        invalidGranuleBehavior: body.invalidGranuleBehavior,
         s3MultipartChunkSizeMb: body.s3MultipartChunkSizeMb,
         targetCollection: deconstructCollectionId(body.targetCollectionId),
       },
