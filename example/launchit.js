@@ -15,7 +15,7 @@ const getGranuleBatch = async (
     .limit(batchSize);
 }
 const main = async () => {
-  bulkChangeCollection({
+  await bulkChangeCollection({
     prefix: 'ecarton-ci-tf',
     body: {
       sourceCollectionId: 'MOD11A1___000',
