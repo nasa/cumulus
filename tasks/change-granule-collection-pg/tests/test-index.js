@@ -204,12 +204,12 @@ test.serial('changeGranuleCollectionsPG Should update pg status and cleanup in s
   payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
   t.context.payload = JSON.parse(payloadString);
   await setupS3Data(t.context.payload.input.granules);
-  await setupS3Data(t.context.payload.input.oldGranules);
+  await setupS3Data(t.context.payload.config.oldGranules);
   const collectionPath = path.join(__dirname, 'data', 'new_collection.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   const pgRecords = await setupDataStoreData(
-    newPayload.input.oldGranules,
+    newPayload.config.oldGranules,
     collection,
     t
   );
@@ -223,7 +223,7 @@ test.serial('changeGranuleCollectionsPG Should update pg status and cleanup in s
   t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
   //ensure old files have been cleaned up
 
-  await Promise.all(newPayload.input.oldGranules.map((granule) => Promise.all(
+  await Promise.all(newPayload.config.oldGranules.map((granule) => Promise.all(
     granule.files.map(async (file) => {
       t.assert(!await s3ObjectExists({
         Bucket: file.bucket,
@@ -249,16 +249,16 @@ test.serial('changeGranuleCollectionsPG should handle change where only some fil
   payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
   t.context.payload = JSON.parse(payloadString);
 
-  t.context.payload.input.oldGranules[0].files[0] = t.context.payload.input.granules[0].files[0];
-  t.context.payload.input.oldGranules[0].files[1] = t.context.payload.input.granules[0].files[1];
+  t.context.payload.config.oldGranules[0].files[0] = t.context.payload.input.granules[0].files[0];
+  t.context.payload.config.oldGranules[0].files[1] = t.context.payload.input.granules[0].files[1];
 
   await setupS3Data(t.context.payload.input.granules);
-  await setupS3Data(t.context.payload.input.oldGranules);
+  await setupS3Data(t.context.payload.config.oldGranules);
   const collectionPath = path.join(__dirname, 'data', 'new_collection.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   const pgRecords = await setupDataStoreData(
-    newPayload.input.oldGranules,
+    newPayload.config.oldGranules,
     collection,
     t
   );
@@ -272,7 +272,7 @@ test.serial('changeGranuleCollectionsPG should handle change where only some fil
   t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
   //ensure old files have been cleaned up
 
-  await Promise.all(newPayload.input.oldGranules.slice(2).map((granule) => Promise.all(
+  await Promise.all(newPayload.config.oldGranules.slice(2).map((granule) => Promise.all(
     granule.files.map(async (file) => {
       t.assert(!await s3ObjectExists({
         Bucket: file.bucket,
@@ -298,14 +298,14 @@ test.serial('changeGranuleCollectionsPG should handle change where no files are 
   payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
   t.context.payload = JSON.parse(payloadString);
 
-  t.context.payload.input.oldGranules[0].files = t.context.payload.input.granules[0].files;
+  t.context.payload.config.oldGranules[0].files = t.context.payload.input.granules[0].files;
   await setupS3Data(t.context.payload.input.granules);
-  await setupS3Data(t.context.payload.input.oldGranules);
+  await setupS3Data(t.context.payload.config.oldGranules);
   const collectionPath = path.join(__dirname, 'data', 'new_collection.json');
   const collection = JSON.parse(fs.readFileSync(collectionPath));
   const newPayload = buildPayload(t, collection);
   const pgRecords = await setupDataStoreData(
-    newPayload.input.oldGranules,
+    newPayload.config.oldGranules,
     collection,
     t
   );
@@ -370,11 +370,11 @@ test.serial('changeGranuleCollectionsPG Should work correctly for a large batch'
   }));
 
   newPayload.input.granules = newGranules;
-  newPayload.input.oldGranules = oldGranules;
+  newPayload.config.oldGranules = oldGranules;
   await setupS3Data(t.context.payload.input.granules);
-  await setupS3Data(t.context.payload.input.oldGranules);
+  await setupS3Data(t.context.payload.config.oldGranules);
   const pgRecords = await setupDataStoreData(
-    newPayload.input.oldGranules,
+    newPayload.config.oldGranules,
     collection,
     t
   );
@@ -388,7 +388,7 @@ test.serial('changeGranuleCollectionsPG Should work correctly for a large batch'
   t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
   //ensure old files have been cleaned up
 
-  await Promise.all(newPayload.input.oldGranules.map((granule) => Promise.all(
+  await Promise.all(newPayload.config.oldGranules.map((granule) => Promise.all(
     granule.files.map(async (file) => {
       t.assert(!await s3ObjectExists({
         Bucket: file.bucket,

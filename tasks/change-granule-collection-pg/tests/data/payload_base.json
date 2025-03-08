@@ -19,9 +19,7 @@
         "type": "public"
       }
     },
-    "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/"
-  },
-  "input": {
+    "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/",
     "oldGranules": [
       {
         "status": "completed",
@@ -54,7 +52,9 @@
           }
         ]
       }
-    ],
+    ]
+  },
+  "input": {
     "granules": [
       {
         "status": "completed",

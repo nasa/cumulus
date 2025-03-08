@@ -14,7 +14,20 @@
             "s3MultipartChunksizeMb": "{$.meta.bulkChangeCollection.s3MultipartChunksizeMb}",
             "invalidGranuleBehavior": "{$.meta.bulkChangeCollection.invalidGranuleBehavior}",
             "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
-            "concurrency": "{$.meta.bulkChangeCollection.concurrency}"
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "cumulus_message": {
+              "input": "{$.payload}",
+              "outputs": [
+                {
+                  "source": "{$.oldGranules}",
+                  "destination": "{$.meta.oldGranules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
           }
         }
       },
@@ -29,13 +42,47 @@
           "MaxAttempts": 1
         }
       ],
-      "Next": "ChangeGranuleCollectionPG"
+      "Next": "CmrStep"
+    },
+    "CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "republish": true
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${post_to_cmr_task_arn}",
+      "Next": "ChangeGranuleCollectionPG",
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
     },
     "ChangeGranuleCollectionPG": {
       "Parameters": {
         "cma": {
           "event.$": "$",
           "task_config": {
+            "oldGranules": "{$.meta.oldGranules}",
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
