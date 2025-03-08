@@ -9,24 +9,22 @@ const {
   bulkChangeCollection,
 } = require('@cumulus/api-client/granules');
 const { getExecution } = require('@cumulus/api-client/executions');
-
+const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const { CMR } = require('@cumulus/cmr-client');
+const { lambda } = require('@cumulus/aws-client/services');
+const { GetFunctionConfigurationCommand } = require('@aws-sdk/client-lambda');
 const {
   buildAndStartWorkflow,
 } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
-  createTestSuffix,
   createTimestampedTestId,
   uploadTestDataToBucket,
   createTestDataPath,
 } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
-const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
-const { CMR } = require('@cumulus/cmr-client');
-const { lambda } = require('@cumulus/aws-client/services');
-const { GetFunctionConfigurationCommand } = require('@aws-sdk/client-lambda');
-const workflowName = 'IngestAndPublishGranuleWithOrca';
+const workflowName = 'IngestAndPublishGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -75,12 +73,11 @@ describe('The ChangeGranuleCollections workflow', () => {
     config = await loadConfig();
     cmrClient = await getCMRClient(config);
     stackName = config.stackName;
-    const testId = '';
-    const testSuffix = '';
+    const testId = createTimestampedTestId(stackName, 'changeGranuleCollectionWorkflow');
     testDataFolder = createTestDataPath(testId);
 
-    collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-    targetCollection = { name: `MOD09GQ-AZ${testSuffix}`, version: '006' };
+    collection = { name: 'MOD09GQ', version: '006' };
+    targetCollection = { name: 'MOD09GQ-AZ', version: '006' };
     sourceCollectionId = constructCollectionId(
       collection.name,
       collection.version
@@ -89,36 +86,31 @@ describe('The ChangeGranuleCollections workflow', () => {
       targetCollection.name,
       targetCollection.version
     );
-    provider = { id: `s3_provider${testSuffix}` };
+    provider = { id: 's3_provider' };
 
     // populate collections, providers and test data
-    try{
+    try {
       await Promise.allSettled([
         uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
         addCollections(
           stackName,
           config.bucket,
-          collectionsDir,
-          testSuffix,
-          testId
+          collectionsDir
         ),
         addCollections(
           stackName,
           config.bucket,
-          targetCollectionsDir,
-          testSuffix,
-          testId
+          targetCollectionsDir
         ),
         addProviders(
           stackName,
           config.bucket,
           providersDir,
-          config.bucket,
-          testSuffix
+          config.bucket
         ),
       ]);
     } catch (error) {
-      console.log('error thrown in data setup', error)
+      console.log('error thrown in data setup', error);
     }
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -127,7 +119,7 @@ describe('The ChangeGranuleCollections workflow', () => {
       config.bucket,
       JSON.stringify({ ...JSON.parse(inputPayloadJson), pdr: undefined }),
       granuleRegex,
-      testSuffix,
+      '',
       testDataFolder
     );
     granuleId = inputPayload.granules[0].granuleId;
@@ -153,25 +145,21 @@ describe('The ChangeGranuleCollections workflow', () => {
       'completed'
     );
     const { cmrLink } = await getGranule({
-        prefix: stackName,
-        granuleId: inputPayload.granules[0].granuleId
-    })
-    console.log('gonnag et my starting colleciton Id', )
-    try {
-      startingCollectionConceptId = (await cmrClient.getGranuleMetadata(cmrLink)).collection_concept_id;
-    } catch (error) {
-      console.log('this is my error', error)
-    }
-      console.log('got my starting colleciton Id', startingCollectionConceptId)
+      prefix: stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
+    const cmrGranule = await cmrClient.getGranuleMetadata(cmrLink);
+    startingCollectionConceptId = cmrGranule.collection_concept_id;
     startingGranuleFiles = (
       await getGranule({
         prefix: stackName,
         granuleId,
       })
     ).files;
+
     finalFiles = startingGranuleFiles.map((file) => ({
       ...file,
-      key: `changedCollectionPath/MOD09GQ-AZ${testSuffix}___006/${file.fileName}`,
+      key: `changedCollectionPath/MOD09GQ-AZ___006/${file.fileName}`,
     }));
 
     try {
@@ -255,17 +243,14 @@ describe('The ChangeGranuleCollections workflow', () => {
       granuleId,
     });
     const cmrMetadata = await cmrClient.getGranuleMetadata(pgGranule.cmrLink);
-    expect(cmrMetadata.collection_concept_id == startingCollectionConceptId).toBeFalse();
+    expect(cmrMetadata.collection_concept_id === startingCollectionConceptId).toBeFalse();
     const metadataLinks = cmrMetadata.links.map((linkObj) => linkObj.href);
-    console.log(metadataLinks);
-    console.log(finalFiles)
-    finalFiles.map((finalFile) => {
-      if (finalFile.bucket.includes('private')) return;
-      console.log('fheckin', finalFile)
-      expect(metadataLinks).toContain(`s3://${finalFile.bucket}/${finalFile.key}`);
-    })
-
-  })
+    finalFiles.forEach((finalFile) => {
+      if (!finalFile.bucket.includes('private')) {
+        expect(metadataLinks).toContain(`s3://${finalFile.bucket}/${finalFile.key}`);
+      }
+    });
+  });
   it('cleans up old files in s3', async () => {
     if (beforeAllFailed) fail('beforeAllFailed');
     await Promise.all(

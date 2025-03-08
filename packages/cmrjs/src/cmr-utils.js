@@ -244,10 +244,6 @@ function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
   const cmrFileName = getFilename(cmrPublishObject);
   // choose xml or json and do the things.
-  log.warn(`publishing to collection: ${getCMRCollectionId(
-    cmrPublishObject.metadataObject,
-    cmrFileName
-  )}`);
   if (isECHO10Filename(cmrFileName)) {
     return publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
