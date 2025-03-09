@@ -43,7 +43,7 @@ const inputPayloadFilename =
   './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 
 async function getCMRClient(config) {
-  const lambdaFunction = `${config.stackName}-PostToCmr`;
+  const lambdaFunction = `${config.stackName}-CreateReconciliationReport`;
   const lambdaConfig = await lambda().send(new GetFunctionConfigurationCommand({ FunctionName: lambdaFunction }));
   Object.entries(lambdaConfig.Environment.Variables).forEach(([key, value]) => {
     process.env[key] = value;
