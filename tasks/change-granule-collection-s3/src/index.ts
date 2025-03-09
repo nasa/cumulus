@@ -280,7 +280,6 @@ async function copyFileInS3({
         },
       }
     );
-    console.log('and actually posted', JSON.stringify(targetFile));
   }
 }
 /**
