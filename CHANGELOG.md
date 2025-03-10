@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-3994**
+  - Removed references to elasticsearch in data-persistence
+  
 ### Notable Changes
 
 - The async_operation_image property of the cumulus module should be updated to pull
