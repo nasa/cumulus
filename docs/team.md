@@ -6,7 +6,7 @@ hide_title: false
 
 ### Cumulus Core Team
 
-- Allen Yu ([@acyu](https://github.com/acyu))
+- Allan Yu ([@acyu](https://github.com/acyu))
 - Bryan Wexler ([@BWex-NASA](https://github.com/BWex-NASA))
 - Charles Huang ([@charleshuang80](https://github.com/charleshuang80))
 - Curtis Banh ([@cqbanh](https://github.com/cqbanh))
