@@ -10,7 +10,7 @@ hide_title: false
 - Bryan Wexler ([@BWex-NASA](https://github.com/BWex-NASA))
 - Charles Huang ([@charleshuang80](https://github.com/charleshuang80))
 - Curtis Banh ([@cqbanh](https://github.com/cqbanh))
-- Ethan Carton [@etccart](https://github.com/etcart)
+- Ethan Carton [@etcart](https://github.com/etcart)
 - Jenny Liu ([@jennyhliu](https://github.com/jennyhliu))
 - Jonathan Kovarik ([@jkovarik](https://github.com/Jkovarik))
 - Juanisa McCoy ([@jjmccoy](https://github.com/jjmccoy))
