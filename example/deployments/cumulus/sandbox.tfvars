@@ -45,11 +45,6 @@ csdap_host_url = "https://auth.csdap.uat.earthdatacloud.nasa.gov"
 
 default_s3_multipart_chunksize_mb = 128
 
-elasticsearch_client_config = {
-  create_reconciliation_report_es_scroll_duration = "8m"
-  create_reconciliation_report_es_scroll_size = 1500
-}
-
 launchpad_api = "https://api.launchpad.nasa.gov/icam/api/sm/v1"
 launchpad_certificate = "launchpad.pfx"
 

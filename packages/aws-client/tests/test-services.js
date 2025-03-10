@@ -6,7 +6,6 @@ const { CloudFormation } = require('@aws-sdk/client-cloudformation');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { ECS } = require('@aws-sdk/client-ecs');
 const { EC2 } = require('@aws-sdk/client-ec2');
-const { ElasticsearchService } = require('@aws-sdk/client-elasticsearch-service');
 const { Kinesis } = require('@aws-sdk/client-kinesis');
 const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
@@ -184,27 +183,6 @@ test('ec2() service defaults to localstack in test mode', async (t) => {
     {
       hostname: localStackEndpoint.hostname,
       port: Number.parseInt(localStackEndpoint.port, 10),
-    }
-  );
-});
-
-test('es() service defaults to localstack in test mode', async (t) => {
-  const es = services.es();
-  const {
-    credentials,
-    endpoint,
-  } = localStackAwsClientOptions(ElasticsearchService);
-  t.like(
-    await es.config.credentials(),
-    credentials
-  );
-  const esEndpoint = await es.config.endpoint();
-  const localSatckEndpoint = new URL(endpoint);
-  t.like(
-    esEndpoint,
-    {
-      hostname: localSatckEndpoint.hostname,
-      port: Number.parseInt(localSatckEndpoint.port, 10),
     }
   );
 });

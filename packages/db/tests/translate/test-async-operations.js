@@ -14,7 +14,7 @@ test('translateApiAsyncOperationToPostgresAsyncOperation converts a camelCase re
     status: 'RUNNING',
     taskArn: 'aws:arn:ecs:task:someTask',
     description: 'dummy operation',
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
   };
 
   const expected = {
@@ -38,7 +38,7 @@ test('translateApiAsyncOperationToPostgresAsyncOperation parses output from JSON
     status: 'SUCCEEDED',
     taskArn: 'aws:arn:ecs:task:someTask',
     description: 'dummy operation',
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     output: JSON.stringify(operationOutput),
   };
 
@@ -60,7 +60,7 @@ test('translateApiAsyncOperationToPostgresAsyncOperation parses output from JSON
     status: 'SUCCEEDED',
     taskArn: 'aws:arn:ecs:task:someTask',
     description: 'dummy operation',
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     output: operationOutput,
   };
 
@@ -83,7 +83,7 @@ test('translateApiAsyncOperationToPostgresAsyncOperation parses output from stri
     status: 'SUCCEEDED',
     taskArn: 'aws:arn:ecs:task:someTask',
     description: 'dummy operation',
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     output: operationOutput,
   };
 
@@ -106,7 +106,7 @@ test('translateApiAsyncOperationToPostgresAsyncOperation parses output from JSON
     status: 'SUCCEEDED',
     taskArn: 'aws:arn:ecs:task:someTask',
     description: 'dummy operation',
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     output: operationOutput,
   };
 
@@ -127,7 +127,7 @@ test('translateApiAsyncOperationToPostgresAsyncOperation discards \'none\' outpu
     status: 'SUCCEEDED',
     taskArn: 'aws:arn:ecs:task:someTask',
     description: 'dummy operation',
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     output: 'none',
   };
 
@@ -162,7 +162,7 @@ test('translatePostgresAsyncOperationToApiAsyncOperation translates PostgreSQL r
     status: 'RUNNING',
     taskArn,
     description,
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     output: JSON.stringify({ test: 'output' }),
     createdAt: createdAt.getTime(),
     updatedAt: updatedAt.getTime(),

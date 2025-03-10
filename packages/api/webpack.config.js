@@ -24,12 +24,10 @@ module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: {
     app: './app/index.js',
-    bootstrap: './lambdas/bootstrap.js',
     bulkOperation: './lambdas/bulk-operation.js',
     cleanExecutions: './lambdas/cleanExecutions.js',
     createReconciliationReport: './lambdas/create-reconciliation-report.js',
     distribution: './app/distribution.js',
-    indexFromDatabase: './lambdas/index-from-database.js',
     manualConsumer: './lambdas/manual-consumer.js',
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',

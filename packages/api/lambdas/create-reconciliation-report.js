@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
@@ -11,38 +13,64 @@ const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue')
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
+const { removeNilProperties } = require('@cumulus/common/util');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const {
+  CollectionSearch,
   getFilesAndGranuleInfoQuery,
+  getGranulesByApiPropertiesQuery,
   getKnexClient,
+  getUniqueCollectionsByGranuleFilter,
   QuerySearchClient,
+  translatePostgresFileToApiFile,
 } = require('@cumulus/db');
-const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
-const Collection = require('@cumulus/es-client/collections');
-const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
-const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 
-const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
+const {
+  ReconciliationReportPgModel,
+  translatePostgresReconReportToApiReconReport,
+} = require('@cumulus/db');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
-const { ReconciliationReport } = require('../models');
 const { errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
-  convertToESCollectionSearchParams,
-  convertToESGranuleSearchParams,
+  convertToDBGranuleSearchParams,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
 const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
+
+// Typescript annotations
+
+/**
+ * @typedef {typeof process.env } ProcessEnv
+ * @typedef {import('knex').Knex} Knex
+ * @typedef {import('../lib/types').NormalizedRecReportParams } NormalizedRecReportParams
+ * @typedef {import('../lib/types').EnhancedNormalizedRecReportParams}
+ * EnhancedNormalizedRecReportParams
+ * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRSettings
+ * @typedef {import('@cumulus/db').PostgresReconciliationReportRecord}
+ * PostgresReconciliationReportRecord
+ * @typedef {import('@cumulus/types/api/reconciliation_reports').ReconciliationReportStatus}
+ * ReconciliationReportStatus
+ * @typedef {import('@cumulus/types/api/reconciliation_reports').ReconciliationReportType}
+ * ReconciliationReportType
+ * @typedef {import('@cumulus/types/api/files').ApiFile} ApiFile
+ * @typedef {import('@cumulus/db').PostgresGranuleRecord} PostgresGranuleRecord
+ * @typedef {import('./create-reconciliation-report-types').Env } Env
+ * @typedef {import('./create-reconciliation-report-types').CMRCollectionItem } CMRCollectionItem
+ * @typedef {import('./create-reconciliation-report-types').CMRItem } CMRItem
+ * @typedef {import('./create-reconciliation-report-types').FilesReport } FilesReport
+ * @typedef {import('./create-reconciliation-report-types').GranulesReport } GranulesReport
+ * @typedef {import('./create-reconciliation-report-types').FilesInCumulus } FilesInCumulus
+ */
 
 /**
  *
@@ -99,41 +127,32 @@ function isOneWayGranuleReport(reportParams) {
 }
 
 /**
- * Checks to see if the searchParams have any value that would require a
- * filtered search in ES
- * @param {Object} searchParams
- * @returns {boolean} returns true if searchParams contain a key that causes filtering to occur.
- */
-function shouldAggregateGranulesForCollections(searchParams) {
-  return [
-    'updatedAt__from',
-    'updatedAt__to',
-    'granuleId__in',
-    'provider__in',
-  ].some((e) => !!searchParams[e]);
-}
-
-/**
- * fetch CMR collections and filter the returned UMM CMR collections by the desired collectionIds
+ * Fetches collections from the CMR (Common Metadata Repository) and returns their IDs.
  *
- * @param {Object} recReportParams - input report params
- * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
- * @returns {Array<string>} filtered list of collectionIds returned from CMR
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - The parameters for the function.
+ * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
+ *
+ * @example
+ * await fetchCMRCollections({ collectionIds: ['COLLECTION_1', 'COLLECTION_2'] });
  */
 async function fetchCMRCollections({ collectionIds }) {
   const cmrSettings = await getCmrSettings();
-  const cmrCollectionsIterator = new CMRSearchConceptQueue({
-    cmrSettings,
-    type: 'collections',
-    format: 'umm_json',
-  });
+  const cmrCollectionsIterator = /** @type {CMRSearchConceptQueue<CMRCollectionItem>} */(
+    new CMRSearchConceptQueue({
+      cmrSettings,
+      type: 'collections',
+      format: 'umm_json',
+    }));
 
   const allCmrCollectionIds = [];
   let nextCmrItem = await cmrCollectionsIterator.shift();
   while (nextCmrItem) {
-    allCmrCollectionIds
-      .push(constructCollectionId(nextCmrItem.umm.ShortName, nextCmrItem.umm.Version));
-    nextCmrItem = await cmrCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+    allCmrCollectionIds.push(
+      constructCollectionId(nextCmrItem.umm.ShortName, nextCmrItem.umm.Version)
+    );
+    nextCmrItem
+      // eslint-disable-next-line no-await-in-loop
+      = /** @type {CMRCollectionItem | null} */ (await cmrCollectionsIterator.shift());
   }
 
   const cmrCollectionIds = allCmrCollectionIds.sort();
@@ -143,31 +162,42 @@ async function fetchCMRCollections({ collectionIds }) {
 }
 
 /**
- * Fetch collections in Elasticsearch.
- * @param {Object} recReportParams - input report params.
- * @returns {Promise<Array>} - list of collectionIds that match input paramaters
+ * Fetches collections from the database based on the provided parameters.
+ *
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - The reconciliation
+ * report parameters.
+ * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs.
  */
-async function fetchESCollections(recReportParams) {
-  const esCollectionSearchParams = convertToESCollectionSearchParams(recReportParams);
-  const esGranuleSearchParams = convertToESGranuleSearchParams(recReportParams);
-  let esCollectionIds;
-  // [MHS, 09/02/2020] We are doing these two because we can't use
-  // aggregations on scrolls yet until we update elasticsearch version.
-  if (shouldAggregateGranulesForCollections(esGranuleSearchParams)) {
-    // Build an ESCollection and call the aggregateGranuleCollections to
-    // get list of collection ids that have granules that have been updated
-    const esCollection = new Collection({ queryStringParameters: esGranuleSearchParams }, 'collection', process.env.ES_INDEX);
-    const esCollectionItems = await esCollection.aggregateGranuleCollections();
-    esCollectionIds = esCollectionItems.sort();
-  } else {
-    // return all ES collections
-    const esCollection = new ESSearchQueue(esCollectionSearchParams, 'collection', process.env.ES_INDEX);
-    const esCollectionItems = await esCollection.empty();
-    esCollectionIds = esCollectionItems.map(
-      (item) => constructCollectionId(item.name, item.version)
-    ).sort();
+async function fetchDbCollections(recReportParams) {
+  const {
+    collectionIds,
+    endTimestamp,
+    granuleIds,
+    knex,
+    providers,
+    startTimestamp,
+  } = recReportParams;
+  if (providers || granuleIds || startTimestamp || endTimestamp) {
+    const filteredDbCollections = await getUniqueCollectionsByGranuleFilter({
+      ...recReportParams,
+    });
+    return filteredDbCollections.map((collection) =>
+      constructCollectionId(collection.name, collection.version));
   }
-  return esCollectionIds;
+
+  const queryStringParameters = removeNilProperties({
+    _id__in: collectionIds ? collectionIds.join(',') : undefined,
+    timestamp__from: startTimestamp,
+    timestamp__to: endTimestamp,
+    sort_key: ['name', 'version'],
+    collate: 'C',
+  });
+  const searchResponse = await new CollectionSearch({
+    queryStringParameters: { ...queryStringParameters, limit: null },
+  }).query(knex);
+  const dbCollections = searchResponse.results;
+  return dbCollections.map((collection) =>
+    constructCollectionId(collection.name, collection.version));
 }
 
 /**
@@ -175,7 +205,7 @@ async function fetchESCollections(recReportParams) {
  * PostgreSQL, and that there are no extras in either S3 or PostgreSQL
  *
  * @param {string} Bucket - the bucket containing files to be reconciled
- * @param {Object} recReportParams - input report params.
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - input report params.
  * @returns {Promise<Object>} a report
  */
 async function createReconciliationReportForBucket(Bucket, recReportParams) {
@@ -279,8 +309,8 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
 /**
  * Compare the collection holdings in CMR with Cumulus
  *
- * @param {Object} recReportParams - lambda's input filtering parameters to
- *                                   narrow limit of report.
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - lambda's input filtering
+ * parameters to narrow limit of report.
  * @returns {Promise<Object>} an object with the okCollections, onlyInCumulus and
  * onlyInCmr
  */
@@ -302,17 +332,20 @@ async function reconciliationReportForCollections(recReportParams) {
     // get all collections from CMR and sort them, since CMR query doesn't support
     // 'Version' as sort_key
     log.debug('Fetching collections from CMR.');
-    const cmrCollectionIds = await fetchCMRCollections(recReportParams);
-    const esCollectionIds = await fetchESCollections(recReportParams);
-    log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${esCollectionIds.length} Elasticsearch collections`);
+    const cmrCollectionIds = (await fetchCMRCollections(recReportParams)).sort();
+    const dbCollectionIds = (await fetchDbCollections(recReportParams)).sort();
 
-    let nextDbCollectionId = esCollectionIds[0];
+    log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${dbCollectionIds.length} PostgreSQL collections`);
+
+    /** @type {string | undefined } */
+    let nextDbCollectionId = dbCollectionIds[0];
+    /** @type {string | undefined } */
     let nextCmrCollectionId = cmrCollectionIds[0];
 
     while (nextDbCollectionId && nextCmrCollectionId) {
       if (nextDbCollectionId < nextCmrCollectionId) {
         // Found an item that is only in Cumulus database and not in cmr
-        esCollectionIds.shift();
+        dbCollectionIds.shift();
         collectionsOnlyInCumulus.push(nextDbCollectionId);
       } else if (nextDbCollectionId > nextCmrCollectionId) {
         // Found an item that is only in cmr and not in Cumulus database
@@ -321,16 +354,16 @@ async function reconciliationReportForCollections(recReportParams) {
       } else {
         // Found an item that is in both cmr and database
         okCollections.push(nextDbCollectionId);
-        esCollectionIds.shift();
+        dbCollectionIds.shift();
         cmrCollectionIds.shift();
       }
 
-      nextDbCollectionId = (esCollectionIds.length !== 0) ? esCollectionIds[0] : undefined;
+      nextDbCollectionId = (dbCollectionIds.length !== 0) ? dbCollectionIds[0] : undefined;
       nextCmrCollectionId = (cmrCollectionIds.length !== 0) ? cmrCollectionIds[0] : undefined;
     }
 
     // Add any remaining database items to the report
-    collectionsOnlyInCumulus = collectionsOnlyInCumulus.concat(esCollectionIds);
+    collectionsOnlyInCumulus = collectionsOnlyInCumulus.concat(dbCollectionIds);
 
     // Add any remaining CMR items to the report
     if (!oneWayReport) collectionsOnlyInCmr = collectionsOnlyInCmr.concat(cmrCollectionIds);
@@ -358,6 +391,10 @@ async function reconciliationReportForCollections(recReportParams) {
  * @returns {Promise<Object>}    - an object with the okCount, onlyInCumulus, onlyInCmr
  */
 async function reconciliationReportForGranuleFiles(params) {
+  if (!process.env.DISTRIBUTION_ENDPOINT) {
+    throw new Error('DISTRIBUTION_ENDPOINT is not defined in function environment variables, but is required');
+  }
+  const distEndpoint = process.env.DISTRIBUTION_ENDPOINT;
   const { granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap } = params;
   let okCount = 0;
   const onlyInCumulus = [];
@@ -387,7 +424,7 @@ async function reconciliationReportForGranuleFiles(params) {
           // not all files should be in CMR
           const distributionAccessUrl = await constructOnlineAccessUrl({
             file: granuleFiles[urlFileName],
-            distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
+            distEndpoint,
             bucketTypes,
             urlType: 'distribution',
             distributionBucketMap,
@@ -395,7 +432,7 @@ async function reconciliationReportForGranuleFiles(params) {
 
           const s3AccessUrl = await constructOnlineAccessUrl({
             file: granuleFiles[urlFileName],
-            distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
+            distEndpoint,
             bucketTypes,
             urlType: 's3',
             distributionBucketMap,
@@ -462,14 +499,17 @@ exports.reconciliationReportForGranuleFiles = reconciliationReportForGranuleFile
 /**
  * Compare the granule holdings in CMR with Cumulus for a given collection
  *
- * @param {Object} params                        - parameters
- * @param {string} params.collectionId           - the collection which has the granules to be
- *                                                 reconciled
- * @param {Object} params.bucketsConfig          - bucket configuration object
- * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
- *                                                 (e.g. { bucket: distribution path })
- * @param {Object} params.recReportParams        - Lambda report paramaters for narrowing focus
- * @returns {Promise<Object>}                    - an object with the granulesReport and filesReport
+ * @param {Object} params                          - parameters
+ * @param {string} params.collectionId             - the collection which has the granules to be
+ *                                                   reconciled
+ * @param {Object} params.bucketsConfig            - bucket configuration object
+ * @param {Object} params.distributionBucketMap    - mapping of bucket->distirubtion path values
+ *                                                   (e.g. { bucket: distribution path })
+ * @param {EnhancedNormalizedRecReportParams} params.recReportParams - Lambda report paramaters for
+ * narrowing focus database
+ * @returns {Promise<{ granulesReport: GranulesReport, filesReport: FilesReport }>}
+ *  - an object with the granulesReport and
+ *                                                   filesReport
  */
 async function reconciliationReportForGranules(params) {
   // compare granule holdings:
@@ -479,41 +519,56 @@ async function reconciliationReportForGranules(params) {
   //   Report granules only in CUMULUS
   log.info(`reconciliationReportForGranules(${params.collectionId})`);
   const { collectionId, bucketsConfig, distributionBucketMap, recReportParams } = params;
+  const { knex } = recReportParams;
   const { name, version } = deconstructCollectionId(collectionId);
+
+  /** @type {GranulesReport} */
   const granulesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
+  /** @type {FilesReport} */
   const filesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
   try {
-    const cmrSettings = await getCmrSettings();
-    const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: ['granule_ur'] });
+    const cmrSettings = /** @type CMRSettings */(await getCmrSettings());
+    const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: 'granule_ur' });
     cmrGranuleSearchParams(recReportParams).forEach(([paramName, paramValue]) => {
       searchParams.append(paramName, paramValue);
     });
 
     log.debug(`fetch CMRSearchConceptQueue(${collectionId}) with searchParams: ${JSON.stringify(searchParams)}`);
-    const cmrGranulesIterator = new CMRSearchConceptQueue({
+    const cmrGranulesIterator
+    = /** @type {CMRSearchConceptQueue<CMRItem>} */(new CMRSearchConceptQueue({
       cmrSettings,
       type: 'granules',
       searchParams,
       format: 'umm_json',
+    }));
+
+    const dbSearchParams = convertToDBGranuleSearchParams({
+      ...recReportParams,
+      collectionIds: [collectionId],
+    });
+    const granulesSearchQuery = getGranulesByApiPropertiesQuery({
+      knex,
+      searchParams: { ...dbSearchParams, collate: 'C' },
+      sortByFields: 'granules.granule_id',
     });
 
-    const esGranuleSearchParamsByCollectionId = convertToESGranuleSearchParams(
-      { ...recReportParams, collectionIds: [collectionId] }
-    );
+    const pgGranulesIterator =
+      /** @type {QuerySearchClient<PostgresGranuleRecord>} */ (
+        new QuerySearchClient(
+          granulesSearchQuery,
+          100 // arbitrary limit on how items are fetched at once
+        )
+      );
 
-    log.debug(`Create ES granule iterator with ${JSON.stringify(esGranuleSearchParamsByCollectionId)}`);
-    const esGranulesIterator = new ESCollectionGranuleQueue(
-      esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
-    );
     const oneWay = isOneWayGranuleReport(recReportParams);
     log.debug(`is oneWay granule report: ${collectionId}, ${oneWay}`);
 
     let [nextDbItem, nextCmrItem] = await Promise.all(
-      [esGranulesIterator.peek(), cmrGranulesIterator.peek()]
+      [(pgGranulesIterator.peek()), cmrGranulesIterator.peek()]
     );
 
     while (nextDbItem && nextCmrItem) {
-      const nextDbGranuleId = nextDbItem.granuleId;
+      const nextDbGranuleId = nextDbItem.granule_id;
       const nextCmrGranuleId = nextCmrItem.umm.GranuleUR;
 
       if (nextDbGranuleId < nextCmrGranuleId) {
@@ -522,7 +577,7 @@ async function reconciliationReportForGranules(params) {
           granuleId: nextDbGranuleId,
           collectionId: collectionId,
         });
-        await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+        await pgGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       } else if (nextDbGranuleId > nextCmrGranuleId) {
         // Found an item that is only in CMR and not in Cumulus database
         if (!oneWay) {
@@ -536,10 +591,16 @@ async function reconciliationReportForGranules(params) {
       } else {
         // Found an item that is in both CMR and Cumulus database
         granulesReport.okCount += 1;
+        // eslint-disable-next-line no-await-in-loop
+        const postgresGranuleFiles = await getFilesAndGranuleInfoQuery({
+          knex,
+          searchParams: { granule_cumulus_id: nextDbItem.cumulus_id },
+          sortColumns: ['key'],
+        });
         const granuleInDb = {
           granuleId: nextDbGranuleId,
           collectionId: collectionId,
-          files: nextDbItem.files,
+          files: postgresGranuleFiles.map((f) => translatePostgresFileToApiFile(f)),
         };
         const granuleInCmr = {
           GranuleUR: nextCmrGranuleId,
@@ -547,7 +608,7 @@ async function reconciliationReportForGranules(params) {
           Version: nextCmrItem.umm.CollectionReference.Version,
           RelatedUrls: nextCmrItem.umm.RelatedUrls,
         };
-        await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+        await pgGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
         await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
 
         // compare the files now to avoid keeping the granules' information in memory
@@ -560,14 +621,17 @@ async function reconciliationReportForGranules(params) {
         filesReport.onlyInCmr = filesReport.onlyInCmr.concat(fileReport.onlyInCmr);
       }
 
-      [nextDbItem, nextCmrItem] = await Promise.all([esGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
+      [nextDbItem, nextCmrItem] = await Promise.all([pgGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
     }
 
-    // Add any remaining ES/PostgreSQL items to the report
-    while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
-      const dbItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+    // Add any remaining PostgreSQL items to the report
+    while (await pgGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+      const dbItem = await pgGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+      if (!dbItem) {
+        throw new Error('database returned item is null in reconciliationReportForGranules');
+      }
       granulesReport.onlyInCumulus.push({
-        granuleId: dbItem.granuleId,
+        granuleId: dbItem.granule_id,
         collectionId: collectionId,
       });
     }
@@ -576,6 +640,9 @@ async function reconciliationReportForGranules(params) {
     if (!oneWay) {
       while (await cmrGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
         const cmrItem = await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+        if (!cmrItem) {
+          throw new Error('CMR returned item is null in reconciliationReportForGranules');
+        }
         granulesReport.onlyInCmr.push({
           GranuleUR: cmrItem.umm.GranuleUR,
           ShortName: nextCmrItem.umm.CollectionReference.ShortName,
@@ -605,20 +672,21 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
 /**
  * Compare the holdings in CMR with Cumulus' internal data store, report any discrepancies
  *
- * @param {Object} params .                      - parameters
- * @param {Object} params.bucketsConfig          - bucket configuration object
- * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
+ * @param {Object} params .                        - parameters
+ * @param {Object} params.bucketsConfig            - bucket configuration object
+ * @param {Object} params.distributionBucketMap    - mapping of bucket->distirubtion path values
  *                                                 (e.g. { bucket: distribution path })
- * @param {Object} [params.recReportParams]      - optional Lambda endpoint's input params to
- *                                                 narrow report focus
- * @param {number} [params.recReportParams.StartTimestamp]
- * @param {number} [params.recReportParams.EndTimestamp]
- * @param {string} [params.recReportparams.collectionIds]
- * @returns {Promise<Object>}                    - a reconciliation report
+ * @param {EnhancedNormalizedRecReportParams} params.recReportParams - Lambda endpoint's input
+ * params to narrow focus of report
+ * @returns {Promise<Object>}                      - a reconciliation report
  */
 async function reconciliationReportForCumulusCMR(params) {
   log.info(`reconciliationReportForCumulusCMR with params ${JSON.stringify(params)}`);
-  const { bucketsConfig, distributionBucketMap, recReportParams } = params;
+  const {
+    bucketsConfig,
+    distributionBucketMap,
+    recReportParams,
+  } = params;
   const collectionReport = await reconciliationReportForCollections(recReportParams);
   const collectionsInCumulusCmr = {
     okCount: collectionReport.okCollections.length,
@@ -666,7 +734,7 @@ async function reconciliationReportForCumulusCMR(params) {
  * @param {Object} report       - report to upload
  * @param {string} systemBucket - system bucket
  * @param {string} reportKey    - report key
- * @returns {Promise<null>}
+ * @returns - A promise that resolves with the status of the return object
  */
 function _uploadReportToS3(report, systemBucket, reportKey) {
   return s3().putObject({
@@ -679,17 +747,8 @@ function _uploadReportToS3(report, systemBucket, reportKey) {
 /**
  * Create a Reconciliation report and save it to S3
  *
- * @param {Object} recReportParams - params
- * @param {Object} recReportParams.reportType - the report type
- * @param {moment} recReportParams.createStartTime - when the report creation was begun
- * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
- * @param {string} recReportParams.location - location to inventory for report
- * @param {string} recReportParams.reportKey - the s3 report key
- * @param {string} recReportParams.stackName - the name of the CUMULUS stack
- * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
- * @param {string} recReportParams.systemBucket - the name of the CUMULUS system bucket
- * @param {Knex} recReportParams.knex - Database client for interacting with PostgreSQL database
- * @returns {Promise<null>} a Promise that resolves when the report has been
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - params
+ * @returns - a Promise that resolves when the report has been
  *   uploaded to S3
  */
 async function createReconciliationReport(recReportParams) {
@@ -698,7 +757,6 @@ async function createReconciliationReport(recReportParams) {
     stackName,
     systemBucket,
     location,
-    knex,
   } = recReportParams;
   log.info(`createReconciliationReport (${JSON.stringify(recReportParams)})`);
   // Fetch the bucket names to reconcile
@@ -711,6 +769,7 @@ async function createReconciliationReport(recReportParams) {
   const bucketsConfig = new BucketsConfig(bucketsConfigJson);
 
   // Write an initial report to S3
+  /** @type {FilesInCumulus} */
   const filesInCumulus = {
     okCount: 0,
     okCountByGranule: {},
@@ -723,6 +782,7 @@ async function createReconciliationReport(recReportParams) {
     onlyInCumulus: [],
     onlyInCmr: [],
   };
+
   let report = {
     ...initialReportHeader(recReportParams),
     filesInCumulus,
@@ -740,7 +800,7 @@ async function createReconciliationReport(recReportParams) {
       // Create a report for each bucket
 
       const promisedBucketReports = dataBuckets.map(
-        (bucket) => createReconciliationReportForBucket(bucket, recReportParams, knex)
+        (bucket) => createReconciliationReportForBucket(bucket, recReportParams)
       );
 
       const bucketReports = await Promise.all(promisedBucketReports);
@@ -748,7 +808,9 @@ async function createReconciliationReport(recReportParams) {
 
       bucketReports.forEach((bucketReport) => {
         report.filesInCumulus.okCount += bucketReport.okCount;
-        report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3); // eslint-disable-line max-len
+        report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(
+          bucketReport.onlyInS3
+        );
         report.filesInCumulus.onlyInDb = report.filesInCumulus.onlyInDb.concat(
           bucketReport.onlyInDb
         );
@@ -762,7 +824,7 @@ async function createReconciliationReport(recReportParams) {
               + bucketGranuleCount;
           });
         } else {
-          delete report.filesInCumulus.okCountByGranule;
+          report.filesInCumulus.okCountByGranule = {};
         }
       });
     }
@@ -801,10 +863,11 @@ async function createReconciliationReport(recReportParams) {
  * @param {Object} params - params
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @param {string} params.stackName - the name of the CUMULUS stack
- * @param {string} params.reportType - the type of reconciliation report
+ * @param {ReconciliationReportType} params.reportType - the type of reconciliation report
  * @param {string} params.reportName - the name of the report
+ * @param {Env} params.env - the environment variables
  * @param {Knex} params.knex - Optional Instance of a Knex client for testing
- * @returns {Object} report record saved to the database
+ * @returns {Promise<Object>} report record saved to the database
  */
 async function processRequest(params) {
   log.info(`processing reconciliation report request with params: ${JSON.stringify(params)}`);
@@ -814,8 +877,7 @@ async function processRequest(params) {
     reportName,
     systemBucket,
     stackName,
-    esClient = await getEsClient(),
-    knex = await getKnexClient(env),
+    knex = await getKnexClient({ env }),
   } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName
@@ -824,18 +886,20 @@ async function processRequest(params) {
   if (reportType === 'Granule Inventory') reportKey = reportKey.replace('.json', '.csv');
 
   // add request to database
-  const reconciliationReportModel = new ReconciliationReport();
-  const reportRecord = {
+  const reconciliationReportPgModel = new ReconciliationReportPgModel();
+  const builtReportRecord = {
     name: reportRecordName,
     type: reportType,
+    /** @type ReconciliationReportStatus */
     status: 'Pending',
     location: buildS3Uri(systemBucket, reportKey),
   };
-  let apiRecord = await reconciliationReportModel.create(reportRecord);
-  await indexReconciliationReport(esClient, apiRecord, process.env.ES_INDEX);
-  log.info(`Report added to database as pending: ${JSON.stringify(apiRecord)}.`);
+  let [reportPgRecord] = await reconciliationReportPgModel.create(knex, builtReportRecord);
+  // api format was being logged prior to ES removal, so keeping format for consistency
+  let reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+  log.info(`Report added to database as Pending: ${JSON.stringify(reportApiRecord)}.`);
 
-  const concurrency = env.CONCURRENCY || 3;
+  const concurrency = env.CONCURRENCY || '3';
 
   try {
     const recReportParams = {
@@ -848,46 +912,56 @@ async function processRequest(params) {
     };
     log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
     if (reportType === 'Internal') {
-      await createInternalReconciliationReport(recReportParams);
+      log.error(
+        'Internal Reconciliation Reports are no longer valid, as Cumulus is no longer utilizing Elasticsearch'
+      );
+      throw new Error('Internal Reconciliation Reports are no longer valid');
     } else if (reportType === 'Granule Inventory') {
       await createGranuleInventoryReport(recReportParams);
     } else if (reportType === 'ORCA Backup') {
       await createOrcaBackupReconciliationReport(recReportParams);
-    } else {
+    } else if (['Inventory', 'Granule Not Found'].includes(reportType)) {
       // reportType is in ['Inventory', 'Granule Not Found']
       await createReconciliationReport(recReportParams);
     }
-    apiRecord = await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
-    await indexReconciliationReport(esClient, { ...apiRecord, status: 'Generated' }, process.env.ES_INDEX);
+
+    const generatedRecord = {
+      ...reportPgRecord,
+      /** @type ReconciliationReportStatus */
+      status: 'Generated',
+    };
+    [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, generatedRecord);
   } catch (error) {
-    log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`);
-    const updates = {
+    log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`); // eslint-disable-line max-len
+    const erroredRecord = {
+      ...reportPgRecord,
+      /** @type ReconciliationReportStatus */
       status: 'Failed',
       error: {
         Error: error.message,
         Cause: errorify(error),
       },
     };
-    apiRecord = await reconciliationReportModel.update({ name: reportRecord.name }, updates);
-    await indexReconciliationReport(
-      esClient,
-      { ...apiRecord, ...updates },
-      process.env.ES_INDEX
-    );
+    [reportPgRecord] = await reconciliationReportPgModel.upsert(knex, erroredRecord);
+    reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+    log.error(`Report updated in database as Failed including error: ${JSON.stringify(reportApiRecord)}`);
     throw error;
   }
 
-  return reconciliationReportModel.get({ name: reportRecord.name });
+  reportPgRecord = await reconciliationReportPgModel.get(knex, { name: builtReportRecord.name });
+  reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
+  log.info(`Report updated in database as Generated: ${JSON.stringify(reportApiRecord)}.`);
+  return reportApiRecord;
 }
 
 async function handler(event) {
   // increase the limit of search result from CMR.searchCollections/searchGranules
-  process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
-  process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
+  process.env.CMR_LIMIT = process.env.CMR_LIMIT || '5000';
+  process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || '200';
 
-  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE', 'ES_SCROLL', 'ES_SCROLL_SIZE'];
+  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE'];
   const envsToLog = pickBy(process.env, (value, key) => varsToLog.includes(key));
-  log.info(`CMR and ES Environment variables: ${JSON.stringify(envsToLog)}`);
+  log.info(`CMR Environment variables: ${JSON.stringify(envsToLog)}`);
 
   return await processRequest(event);
 }

@@ -19,16 +19,8 @@ const {
   translateApiExecutionToPostgresExecution,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRuleRaw,
-  translatePostgresPdrToApiPdr,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
-const {
-  indexProvider,
-  indexRule,
-  indexPdr,
-  indexAsyncOperation,
-  deleteExecution,
-} = require('@cumulus/es-client/indexer');
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
@@ -238,7 +230,7 @@ function fakeAsyncOperationFactory(params = {}) {
     taskArn: randomId('arn'),
     id: uuidv4(),
     description: randomId('description'),
-    operationType: 'ES Index',
+    operationType: 'Reconciliation Report',
     status: 'SUCCEEDED',
     createdAt: Date.now() - 180.5 * 1000,
     updatedAt: Date.now(),
@@ -510,8 +502,6 @@ const createProviderTestRecords = async (context, providerParams) => {
   const {
     testKnex,
     providerPgModel,
-    esClient,
-    esProviderClient,
   } = context;
   const originalProvider = fakeProviderFactory(providerParams);
 
@@ -520,14 +510,9 @@ const createProviderTestRecords = async (context, providerParams) => {
   const originalPgRecord = await providerPgModel.get(
     testKnex, { cumulus_id: pgProvider.cumulus_id }
   );
-  await indexProvider(esClient, originalProvider, process.env.ES_INDEX);
-  const originalEsRecord = await esProviderClient.get(
-    originalProvider.id
-  );
   return {
     originalProvider,
     originalPgRecord,
-    originalEsRecord,
   };
 };
 
@@ -538,14 +523,12 @@ const createProviderTestRecords = async (context, providerParams) => {
  * @param {PostgresRule} - Postgres Rule parameters
  *
  * @returns {Object}
- *   Returns new object consisting of `originalApiRule`, `originalPgRecord, and `originalEsRecord`
+ *   Returns new object consisting of `originalApiRule` and `originalPgRecord`
  */
 const createRuleTestRecords = async (context, ruleParams) => {
   const {
     testKnex,
     rulePgModel,
-    esClient,
-    esRulesClient,
   } = context;
 
   const originalRule = fakeRuleRecordFactory(ruleParams);
@@ -556,14 +539,10 @@ const createRuleTestRecords = async (context, ruleParams) => {
 
   const [originalPgRecord] = await rulePgModel.create(testKnex, pgRuleWithTrigger, '*');
   const originalApiRule = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
-  await indexRule(esClient, originalApiRule, process.env.ES_INDEX);
-  const originalEsRecord = await esRulesClient.get(
-    originalRule.name
-  );
+
   return {
     originalApiRule,
     originalPgRecord,
-    originalEsRecord,
   };
 };
 
@@ -571,8 +550,6 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   const {
     knex,
     pdrPgModel,
-    esClient,
-    esPdrsClient,
     collectionCumulusId,
     providerCumulusId,
   } = context;
@@ -594,14 +571,8 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pgPdr.cumulus_id }
   );
-  const originalPdr = await translatePostgresPdrToApiPdr(originalPgRecord, knex);
-  await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
-  const originalEsRecord = await esPdrsClient.get(
-    originalPdr.pdrName
-  );
   return {
     originalPgRecord,
-    originalEsRecord,
   };
 };
 
@@ -627,8 +598,6 @@ const createAsyncOperationTestRecords = async (context) => {
   const {
     knex,
     asyncOperationPgModel,
-    esClient,
-    esAsyncOperationClient,
   } = context;
 
   const originalAsyncOperation = fakeAsyncOperationFactory();
@@ -643,30 +612,9 @@ const createAsyncOperationTestRecords = async (context) => {
   const originalPgRecord = await asyncOperationPgModel.get(
     knex, { cumulus_id: pgAsyncOperation.cumulus_id }
   );
-  await indexAsyncOperation(esClient, originalAsyncOperation, process.env.ES_INDEX);
-  const originalEsRecord = await esAsyncOperationClient.get(
-    originalAsyncOperation.id
-  );
   return {
     originalPgRecord,
-    originalEsRecord,
   };
-};
-
-const cleanupExecutionTestRecords = async (context, { arn }) => {
-  const {
-    knex,
-    executionPgModel,
-    esClient,
-    esIndex,
-  } = context;
-
-  await executionPgModel.delete(knex, { arn });
-  await deleteExecution({
-    esClient,
-    arn,
-    index: esIndex,
-  });
 };
 
 module.exports = {
@@ -699,6 +647,5 @@ module.exports = {
   createRuleTestRecords,
   createPdrTestRecords,
   createExecutionTestRecords,
-  cleanupExecutionTestRecords,
   createAsyncOperationTestRecords,
 };

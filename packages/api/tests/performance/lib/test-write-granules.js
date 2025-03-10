@@ -6,10 +6,6 @@ const pSettle = require('p-settle');
 const cryptoRandomString = require('crypto-random-string');
 const cloneDeep = require('lodash/cloneDeep');
 
-const {
-  getEsClient,
-  Search,
-} = require('@cumulus/es-client/search');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 
@@ -39,10 +35,6 @@ const {
 const {
   getExecutionUrlFromArn,
 } = require('@cumulus/message/Executions');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 
 const {
   writeGranulesFromMessage,
@@ -71,15 +63,6 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   console.log(`Test DB max connection pool: ${t.context.knex.client.pool.max}`);
-
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.esGranulesClient = new Search(
-    {},
-    'granule',
-    t.context.esIndex
-  );
 });
 
 test.beforeEach(async (t) => {
@@ -220,13 +203,12 @@ test.after.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
   });
-  await cleanupTestIndex(t.context);
 });
 
 // This test is a performance test designed to run with a large number of messages
 // in a memory constrained test environment, it is not intended to run as part of
 // the normal unit test suite.
-test('writeGranulesFromMessage operates on 2k granules with 10 files each within 1GB of ram when an instance of EsClient is passed in and concurrency is set to 60 and db connections are set to 60', async (t) => {
+test('writeGranulesFromMessage operates on 2k granules with 10 files each within 1GB of ram when concurrency is set to 60 and db connections are set to 60', async (t) => {
   const {
     cumulusMessages,
     knex,
@@ -237,13 +219,11 @@ test('writeGranulesFromMessage operates on 2k granules with 10 files each within
 
   // Message must be completed or files will not update
 
-  const esClient = await getEsClient();
   await pSettle(cumulusMessages.map((cumulusMessage) => () => writeGranulesFromMessage({
     cumulusMessage,
     executionCumulusId,
     providerCumulusId,
     knex,
-    esClient,
     testOverrides: { stepFunctionUtils },
   })), { concurrency: t.context.concurrency });
 
@@ -257,7 +237,7 @@ test('writeGranulesFromMessage operates on 2k granules with 10 files each within
       WaitTimeSeconds: 10,
       MaxNumberOfMessages: 10,
     });
-    if (Messages.length === 0) {
+    if (Messages === undefined) {
       notEmpty = false;
     } else {
       allMessages.push(...Messages);

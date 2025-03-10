@@ -234,10 +234,10 @@ function getTotalHits(bodyHits) {
 }
 
 /**
- * Returns an array of granules from ElasticSearch query
+ * Returns an array of granules from an ElasticSearch query
  *
  * @param {Object} payload
- * @param {string} [payload.index] - ES index to query
+ * @param {string} [payload.index] - ES index to query (Cloud Metrics)
  * @param {string} [payload.query] - ES query
  * @param {Object} [payload.source] - List of IDs to operate on
  * @param {Object} [payload.testBodyHits] - Optional body.hits for testing.
@@ -284,12 +284,12 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
 
 /**
  * Return a unique list of granules based on the provided list or the response from the
- * query to ES using the provided query and index.
+ * query to ES (Cloud Metrics) using the provided query and index.
  *
  * @param {Object} payload
  * @param {Object} [payload.granules] - Optional list of granules with granuleId and collectionId
- * @param {Object} [payload.query] - Optional parameter of query to send to ES
- * @param {string} [payload.index] - Optional parameter of ES index to query.
+ * @param {Object} [payload.query] - Optional parameter of query to send to ES (Cloud Metrics)
+ * @param {string} [payload.index] - Optional parameter of ES index to query (Cloud Metrics).
  * Must exist if payload.query exists.
  * @returns {Promise<Array<ApiGranule>>}
  */
@@ -297,7 +297,7 @@ async function getGranulesForPayload(payload) {
   const { granules, index, query } = payload;
   const queryGranules = granules || [];
 
-  // query ElasticSearch if needed
+  // query ElasticSearch (Cloud Metrics) if needed
   if (queryGranules.length === 0 && query) {
     log.info('No granules detected. Searching for granules in ElasticSearch.');
 
