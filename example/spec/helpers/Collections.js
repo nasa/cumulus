@@ -37,7 +37,7 @@ const collectionExists = async (stackName, collection) => {
         }
         throw error;
       }
-      if (response.statusCode === 200) {
+      if (response.name && response.version) {
         return true;
       }
       return false;
@@ -126,4 +126,7 @@ const removeCollectionAndAllDependencies = async (params) => {
   }
 };
 
-module.exports = { removeCollectionAndAllDependencies };
+module.exports = {
+  collectionExists,
+  removeCollectionAndAllDependencies
+};
