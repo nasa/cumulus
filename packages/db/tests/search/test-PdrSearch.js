@@ -136,6 +136,7 @@ test.before(async (t) => {
 
 test('PdrSearch returns 10 PDR records by default', async (t) => {
   const { knex } = t.context;
+  const execution = `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${t.context.execution.arn}`;
   const dbSearch = new PdrSearch();
   const response = await dbSearch.query(knex);
 
@@ -146,7 +147,7 @@ test('PdrSearch returns 10 PDR records by default', async (t) => {
   const validatedRecords = apiPdrs.filter((pdr) => (
     [t.context.collectionId, t.context.collectionId2].includes(pdr.collectionId)
     && (pdr.provider === t.context.provider.name)
-    && (!pdr.execution || pdr.execution === t.context.execution.arn)));
+    && (!pdr.execution || pdr.execution === execution)));
   t.is(validatedRecords.length, apiPdrs.length);
 });
 
