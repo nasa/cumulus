@@ -1,4 +1,5 @@
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteCollection } = require('@cumulus/api-client/collections');
 const fs = require('fs');
 const { addCollections, addProviders } = require('@cumulus/integration-tests');
 const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
@@ -21,9 +22,11 @@ const {
   createTimestampedTestId,
   uploadTestDataToBucket,
   createTestDataPath,
+  createTestSuffix,
 } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
+const { collectionExists } = require('../../helpers/Collections');
 const workflowName = 'IngestAndPublishGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -43,7 +46,7 @@ const inputPayloadFilename =
   './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 
 async function getCMRClient(config) {
-  const lambdaFunction = `${config.stackName}-PostToCmr`;
+  const lambdaFunction = `${config.stackName}-CreateReconciliationReport`;
   const lambdaConfig = await lambda().send(new GetFunctionConfigurationCommand({ FunctionName: lambdaFunction }));
   Object.entries(lambdaConfig.Environment.Variables).forEach(([key, value]) => {
     process.env[key] = value;
@@ -74,6 +77,7 @@ describe('The ChangeGranuleCollections workflow', () => {
     cmrClient = await getCMRClient(config);
     stackName = config.stackName;
     const testId = createTimestampedTestId(stackName, 'changeGranuleCollectionWorkflow');
+    const testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
 
     collection = { name: 'MOD09GQ', version: '006' };
@@ -86,32 +90,33 @@ describe('The ChangeGranuleCollections workflow', () => {
       targetCollection.name,
       targetCollection.version
     );
-    provider = { id: 's3_provider' };
-
-    // populate collections, providers and test data
-    try {
-      await Promise.all([
-        uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-        addCollections(
-          stackName,
-          config.bucket,
-          collectionsDir
-        ),
-        addCollections(
-          stackName,
-          config.bucket,
-          targetCollectionsDir
-        ),
-        addProviders(
-          stackName,
-          config.bucket,
-          providersDir,
-          config.bucket
-        ),
-      ]);
-    } catch (error) {
-      console.log('error thrown in data setup', error);
+    provider = { id: `s3_provider${testSuffix}` };
+    // populate collections if necessary
+    if (!(await collectionExists(stackName, collection))) {
+      await addCollections(
+        stackName,
+        config.bucket,
+        collectionsDir
+      );
     }
+    if (!(await collectionExists(stackName, targetCollection))) {
+      await addCollections(
+        stackName,
+        config.bucket,
+        targetCollectionsDir
+      );
+    }
+    // providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addProviders(
+        stackName,
+        config.bucket,
+        providersDir,
+        config.bucket,
+        testSuffix
+      ),
+    ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
@@ -202,7 +207,17 @@ describe('The ChangeGranuleCollections workflow', () => {
     cleanup = cleanup.concat([
       deleteExecution({ prefix: stackName, executionArn: ingestExecutionArn }),
       deleteExecution({ prefix: stackName, executionArn: moveExecutionArn }),
-      await removePublishedGranule({
+      deleteCollection({
+        prefix: stackName,
+        collectionName: collection.name,
+        collectioNVersion: collection.version,
+      }),
+      deleteCollection({
+        prefix: stackName,
+        collectionName: targetCollection.name,
+        collectioNVersion: targetCollection.version,
+      }),
+      removePublishedGranule({
         prefix: stackName,
         granuleId,
       }),
