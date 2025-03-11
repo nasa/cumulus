@@ -1,5 +1,5 @@
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { collectionExists } = require('../../helpers/Collections');
+const { deleteCollection } = require('@cumulus/api-client/collections');
 const fs = require('fs');
 const { addCollections, addProviders } = require('@cumulus/integration-tests');
 const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
@@ -26,7 +26,7 @@ const {
 } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
-const { deleteCollection } = require('@cumulus/api-client/collections');
+const { collectionExists } = require('../../helpers/Collections');
 const workflowName = 'IngestAndPublishGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -103,7 +103,7 @@ describe('The ChangeGranuleCollections workflow', () => {
       await addCollections(
         stackName,
         config.bucket,
-        collectionsDir
+        targetCollectionsDir
       );
     }
     // providers and test data
@@ -117,7 +117,6 @@ describe('The ChangeGranuleCollections workflow', () => {
         testSuffix
       ),
     ]);
-
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
@@ -211,12 +210,12 @@ describe('The ChangeGranuleCollections workflow', () => {
       deleteCollection({
         prefix: stackName,
         collectionName: collection.name,
-        collectioNVersion: collection.version
+        collectioNVersion: collection.version,
       }),
       deleteCollection({
         prefix: stackName,
         collectionName: targetCollection.name,
-        collectioNVersion: targetCollection.version
+        collectioNVersion: targetCollection.version,
       }),
       removePublishedGranule({
         prefix: stackName,

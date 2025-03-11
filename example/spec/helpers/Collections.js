@@ -128,5 +128,5 @@ const removeCollectionAndAllDependencies = async (params) => {
 
 module.exports = {
   collectionExists,
-  removeCollectionAndAllDependencies
+  removeCollectionAndAllDependencies,
 };
