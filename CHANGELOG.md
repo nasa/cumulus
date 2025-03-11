@@ -332,6 +332,59 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
 
+## [v18.5.5] 2025-03-04
+
+**Please note** changes in v18.5.5 may not yet be released in future versions, as this
+is a backport/patch release on the v18.5.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-3993**
+  - Added long PAN functionality and `panType` configuration option to `SendPan` task
+  - Updated example workflow configuration to better handle error exceptions,
+    see [Workflow Configuration](https://nasa.github.io/cumulus/docs/next/data-cookbooks/error-handling)
+  - Updated `PdrStatusCheck` task to properly propagate workflow execution error.
+
+## [v18.5.3] 2025-01-21
+
+**Please note** changes in v18.5.3 may not yet be released in future versions, as this
+is a backport/patch release on the v18.5.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-3757**
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules-collectionId) `PATCH/bulkPatchGranuleCollection` which updates a batch of granule records collectionId to a new collectionId. This endpoint takes a list of granules, a collectionId, and an `esConcurrency` variable, updating the granules' to the collectionId passed with the payload in both postgres and elasticsearch, while providing concurrency for updating elasticsearch to tailor for performance and database needs.
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules) `PATCH/bulkPatch` which applies PATCH to a list of granules. For its payload, this endpoint takes a list of granules (the updates to be made to the granule, similar to the pre-existing `PATCH`), a `dbConcurrency` and `dbMaxPool` variables for configuring concurrency and database thoroughput for postgres to tailor to performance and database needs.
+- **CUMULUS-3978**
+  - Added `iops` and `throughput` options to `elasticsearch_config` variable
+    in `tf-modules/data-persistence`; These two options are necessary for gp3 EBS volume type.
+
+### Changed
+
+- **CUMULUS-3967**
+  - Pinned @aws-sdk/client-s3 in @cumulus/aws-client to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
+  - Pinned @aws-sdk/client-s3 in @cumulus/lib-storage to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
+
+- **CUMULUS-3940**
+  - Added 'dead_letter_recovery_cpu' and 'dead_letter_recovery_memory' to `cumulus` and `archive` module configuration to allow configuration of the dead_letter_recovery_operation task definition to better allow configuration of the tool's operating environment.
+  - Updated the dead letter recovery tool to utilize it's own log group "${var.prefix}-DeadLetterRecoveryEcsLogs"
+  - Added `batchSize`, `concurrency` and `dbMaxPool` options to /endpoints/recoverCumulusMessage (note these values are correct at time of this release only):
+    - `batchSize` - specifies how many DLA objects to read from S3 and hold in memory.  Defaults to 1000.
+    - `concurrency` - specifies how many messages to process at the same time.  Defaults to 30.
+    - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
+  - Add API memory-constrained performance test to test minimum functionality under default+ configuration
+  - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
+
+### Fixed
+
+- **CUMULUS-3940**
+  - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
+- **CUMULUS-3981**
+  - Added required $metadata field when creating new instance of ServiceException.
+
+
 ## [v18.5.2] 2024-12-12
 
 ### Breaking Changes
@@ -8416,7 +8469,10 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [Unreleased]: https://github.com/nasa/cumulus/compare/v20.0.0...HEAD
 [v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
 [v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
-[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.0...v19.0.0
+[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.5...v19.0.0
+[v18.5.5]: https://github.com/nasa/cumulus/compare/v18.5.3...v18.5.5
+[v18.5.3]: https://github.com/nasa/cumulus/compare/v18.5.2...v18.5.3
+[v18.5.2]: https://github.com/nasa/cumulus/compare/v18.5.1...v18.5.2
 [v18.5.1]: https://github.com/nasa/cumulus/compare/v18.5.0...v18.5.1
 [v18.5.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v18.5.0
 [v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.4...v18.4.0
