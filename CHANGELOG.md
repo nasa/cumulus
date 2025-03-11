@@ -12,7 +12,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed references to elasticsearch in data-persistence Terraform module and example.
   - Running `terraform apply` on this change will **permanently delete** the elasticsearch domain and all of the the data it contains.
   - Ensure that the elasticsearch domain is not longer needed before applying this update.
-  
+
+- **CUMULUS-3842**
+  - Removed references to the DynamoDB table named `{prefix}-ReconciliationReportsTable` in data-persistence Terraform module.
+  - Running `terraform apply` on this change will **permanently delete** the DynamoDB table named `{prefix}-ReconciliationReportsTable` and all of the the data it contains.
+  - Ensure that this DynamoDB table named `{prefix}-ReconciliationReportsTable` is not longer needed before applying this update.
+
 ### Notable Changes
 
 - The async_operation_image property of the cumulus module should be updated to pull
