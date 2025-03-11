@@ -210,12 +210,12 @@ describe('The ChangeGranuleCollections workflow', () => {
       deleteCollection({
         prefix: stackName,
         collectionName: collection.name,
-        collectioNVersion: collection.version,
+        collectionVersion: collection.version,
       }),
       deleteCollection({
         prefix: stackName,
         collectionName: targetCollection.name,
-        collectioNVersion: targetCollection.version,
+        collectionVersion: targetCollection.version,
       }),
       removePublishedGranule({
         prefix: stackName,
