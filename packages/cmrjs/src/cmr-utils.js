@@ -1,9 +1,12 @@
 'use strict';
 
+//@ts-check
+
 const got = require('got');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
 const set = require('lodash/set');
+const cloneDeep = require('lodash/cloneDeep');
 const { promisify } = require('util');
 const js2xmlParser = require('js2xmlparser');
 const path = require('path');
@@ -28,11 +31,18 @@ const errors = require('@cumulus/errors');
 const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
 const { constructDistributionUrl } = require('@cumulus/distribution-utils');
 const { getBucketAccessUrl } = require('@cumulus/cmr-client/getUrl');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
 } = require('./utils');
-
+/* eslint-disable max-len */
+/**
+ * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams
+ * @typedef {import('@cumulus/distribution-utils/dist/types').DistributionBucketMap} DistributionBucketMap
+ * @typedef {import('@cumulus/types').ApiFile} ApiFile
+ */
+/* eslint-enable max-len */
 const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
 /**
@@ -44,6 +54,8 @@ const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
  *   token?: string
  * }} CmrCredentials
  */
+
+const s3CredsEndpoint = 's3credentials';
 
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
@@ -228,18 +240,16 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
  * @param {string} cmrRevisionId - Optional CMR Revision ID
  * if not provided, CMR username and password are used to get a cmr token
  */
-async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
+function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
   const cmrFileName = getFilename(cmrPublishObject);
-
   // choose xml or json and do the things.
   if (isECHO10Filename(cmrFileName)) {
-    return await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    return publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
   if (isUMMGFilename(cmrFileName)) {
-    return await publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
-
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
 }
 
@@ -480,10 +490,9 @@ function generateFileUrl({
 /**
  * Construct online access url for a given file and a url type.
  *
- * @param {Object} params - input parameters
  * @param {Object} params.file - file object
  * @param {string} params.distEndpoint - distribution endpoint from config
- * @param {Object} params.bucketTypes - map of bucket name to bucket type
+ * @param {{ [key: string]: string }} params.bucketTypes - map of bucket name to bucket type
  * @param {Object} params.urlType - url type, distribution or s3
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution bucketss
@@ -518,10 +527,9 @@ function constructOnlineAccessUrl({
 /**
  * Construct a list of online access urls grouped by link type.
  *
- * @param {Object} params - input parameters
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
- * @param {Object} params.bucketTypes - map of bucket name to bucket type
+ * @param {{ [key: string]: string }} params.bucketTypes - map of bucket name to bucket type
  * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution bucketss
@@ -576,10 +584,9 @@ function constructOnlineAccessUrls({
  * @param {Object} params - input parameters
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
- * @param {Object} params.bucketTypes - map of bucket names to bucket types
- * @param {string} params.s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
+ * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
- * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ * @param {DistributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
  * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
  * @returns {Promise<[{URL: string, string, Description: string, Type: string}]>}
@@ -589,7 +596,6 @@ function constructRelatedUrls({
   files,
   distEndpoint,
   bucketTypes,
-  s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
   useDirectS3Type = false,
@@ -612,7 +618,7 @@ function constructRelatedUrls({
 /**
  * Create a list of URL objects that should not appear under onlineAccess in the CMR metadata.
  * @param {Array<Object>} files - array of updated file objects
- * @param {Object} bucketTypes - map of buckets name to bucket types
+ * @param {{ [key: string]: string }} bucketTypes - map of buckets name to bucket types
  * @returns {Array<Object>} array of files to be omitted in cmr's OnlineAccessURLs
  */
 function onlineAccessURLsToRemove(files, bucketTypes) {
@@ -721,6 +727,44 @@ function shouldUseDirectS3Type(metadataObject) {
 }
 
 /**
+ * Update the UMMG cmr metadata object to have corrected urls
+ *
+ * @param {Object} params.metadataObject - ummg cmr metadata object
+ * @param {Array<ApiFile>} params.files - files with which to update the cmr metadata
+ * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
+ * @param {string} params.cmrGranuleUrlType
+ * @param {DistributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path
+ *    mapping for all distribution buckets
+ * @returns {Object}
+ */
+function updateUMMGMetadataObject({
+  metadataObject,
+  files,
+  distEndpoint,
+  bucketTypes,
+  cmrGranuleUrlType = 'both',
+  distributionBucketMap,
+}) {
+  const updatedMetadataObject = cloneDeep(metadataObject);
+  const useDirectS3Type = shouldUseDirectS3Type(updatedMetadataObject);
+
+  const newURLs = constructRelatedUrls({
+    files,
+    distEndpoint,
+    bucketTypes,
+    cmrGranuleUrlType,
+    distributionBucketMap,
+    useDirectS3Type,
+  });
+
+  const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
+  const originalURLs = get(updatedMetadataObject, 'RelatedUrls', []);
+  const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
+  set(updatedMetadataObject, 'RelatedUrls', mergedURLs);
+  return updatedMetadataObject;
+}
+
+/**
  * After files are moved, create new online access URLs and then update the S3
  * UMMG cmr.json file with this information.
  *
@@ -728,9 +772,9 @@ function shouldUseDirectS3Type(metadataObject) {
  * @param {Object} params.cmrFile - cmr.json file whose contents will be updated.
  * @param {Array<Object>} params.files - array of moved file objects.
  * @param {string} params.distEndpoint - distribution endpoint form config.
- * @param {Object} params.bucketTypes - map of bucket names to bucket types
+ * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
- * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ * @param {DistributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
  * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
  *    containing a `metadataObject` (the updated UMMG metadata object) and the
@@ -746,24 +790,16 @@ async function updateUMMGMetadata({
 }) {
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRJSONFile(filename);
-  const useDirectS3Type = shouldUseDirectS3Type(metadataObject);
-
-  const newURLs = constructRelatedUrls({
+  const updatedMetadataObject = updateUMMGMetadataObject({
+    metadataObject,
     files,
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
     distributionBucketMap,
-    useDirectS3Type,
   });
-
-  const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
-  const originalURLs = get(metadataObject, 'RelatedUrls', []);
-  const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
-  set(metadataObject, 'RelatedUrls', mergedURLs);
-
-  const { ETag: etag } = await uploadUMMGJSONCMRFile(metadataObject, cmrFile);
-  return { metadataObject, etag };
+  const { ETag: etag } = await uploadUMMGJSONCMRFile(updatedMetadataObject, cmrFile);
+  return { metadataObject: updatedMetadataObject, etag };
 }
 
 /**
@@ -879,31 +915,24 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
 }
 
 /**
- * After files are moved, creates new online access URLs and then updates
- * the S3 ECHO10 CMR XML file with this information.
+ * Update the Echo10 cmr metadata object to have corrected urls
  *
- * @param {Object} params - parameter object
- * @param {Object} params.cmrFile - cmr xml file object to be updated
- * @param {Array<Object>} params.files - array of file objects
- * @param {string} params.distEndpoint - distribution endpoint from config
- * @param {Object} params.bucketTypes - map of bucket names to bucket types
- * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ * @param {Object} params.metadataObject - xml cmr metadata object
+ * @param {Array<Object>} params.files - files with which to update the cmr metadata
+ * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
+ * @param {string} params.cmrGranuleUrlType
+ * @param {DistributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
- * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
- *    containing a `metadataObject` and the `etag` of the uploaded CMR file
+ * @returns {Object}
  */
-async function updateEcho10XMLMetadata({
-  cmrFile,
+function updateEcho10XMLMetadataObject({
+  metadataObject,
   files,
   distEndpoint,
   bucketTypes,
-  s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
-  // add/replace the OnlineAccessUrls
-  const filename = getS3UrlOfFile(cmrFile);
-  const metadataObject = await metadataObjectFromCMRXMLFile(filename);
   const metadataGranule = metadataObject.Granule;
   const updatedGranule = { ...metadataGranule };
 
@@ -923,23 +952,60 @@ async function updateEcho10XMLMetadata({
     distributionBucketMap,
   });
   newURLs.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
-
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
     removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
   const mergedOnlineAccessURLs = buildMergedEchoURLObject(newURLs, originalOnlineAccessURLs,
     removedURLs, ['GET DATA', 'GET DATA VIA DIRECT ACCESS'], ['Type', 'Description']);
   const mergedAssociatedBrowse = buildMergedEchoURLObject(newURLs, originalAssociatedBrowseURLs,
     removedURLs, ['GET RELATED VISUALIZATION'], ['URLDescription', 'Type']);
-
   // Update the Granule with the updated/merged lists
   set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
   set(updatedGranule, 'OnlineResources.OnlineResource', mergedOnlineResources);
   set(updatedGranule, 'AssociatedBrowseImageUrls.ProviderBrowseUrl', mergedAssociatedBrowse);
 
-  metadataObject.Granule = updatedGranule;
-  const xml = generateEcho10XMLString(updatedGranule);
+  return {
+    ...metadataObject,
+    Granule: updatedGranule,
+  };
+}
+
+/**
+ * After files are moved, creates new online access URLs and then updates
+ * the S3 ECHO10 CMR XML file with this information.
+ *
+ * @param {Object} params - parameter object
+ * @param {Object} params.cmrFile - cmr xml file object to be updated
+ * @param {Array<Object>} params.files - array of file objects
+ * @param {string} params.distEndpoint - distribution endpoint from config
+ * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
+ * @param {DistributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path
+ *    mapping for all distribution buckets
+ * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
+ *    containing a `metadataObject` and the `etag` of the uploaded CMR file
+ */
+async function updateEcho10XMLMetadata({
+  cmrFile,
+  files,
+  distEndpoint,
+  bucketTypes,
+  cmrGranuleUrlType = 'both',
+  distributionBucketMap,
+}) {
+  // add/replace the OnlineAccessUrls
+  const filename = getS3UrlOfFile(cmrFile);
+  const metadataObject = await metadataObjectFromCMRXMLFile(filename);
+
+  const updatedMetadataObject = updateEcho10XMLMetadataObject({
+    metadataObject,
+    files,
+    distEndpoint,
+    bucketTypes,
+    cmrGranuleUrlType,
+    distributionBucketMap,
+  });
+  const xml = generateEcho10XMLString(updatedMetadataObject.Granule);
   const { ETag: etag } = await uploadEcho10CMRFile(xml, cmrFile);
-  return { metadataObject, etag };
+  return { metadataObject: updatedMetadataObject, etag };
 }
 
 /**
@@ -948,12 +1014,12 @@ async function updateEcho10XMLMetadata({
  * @param {Object} params - parameter object
  * @param {string} params.granuleId - granuleId
  * @param {Object} params.cmrFile - cmr xml file to be updated
- * @param {Array<Object>} params.files - array of file objects
+ * @param {Array<ApiFile>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution enpoint from config
  * @param {boolean} params.published - indicate if publish is needed
- * @param {Object} params.bucketTypes - map of bucket names to bucket types
+ * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
- * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
+ * @param {DistributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
  * @returns {Promise<Object>} CMR file object with the `etag` of the newly
  *    updated metadata file
@@ -1016,7 +1082,7 @@ async function updateCMRMetadata({
  * @param {string} params.distEndpoint - distribution endpoint URL
  * @param {boolean} params.published - boolean true if the data should be published to
  *   the CMR service.
- * @param {Object} params.bucketTypes - map of bucket names to bucket types
+ * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution buckets
@@ -1252,6 +1318,87 @@ async function getGranuleTemporalInfo(granule) {
   return {};
 }
 
+/**
+ * Update collection in an ECHO10 cmr metadata object
+ *
+ * @param {object} cmrObject - CMR metadata object
+ * @param {{ name: string, version: string }} collection - collection name and version to update to
+ * @returns {object}
+ */
+const setECHO10Collection = (
+  cmrObject,
+  collection
+) => {
+  const cmrObjectCopy = cloneDeep(cmrObject);
+  if (!cmrObjectCopy.Granule) {
+    throw new errors.ValidationError(
+      `invalid ECHO10 cmr metadata ${JSON.stringify(cmrObjectCopy)}, must have granule tag`
+    );
+  }
+  cmrObjectCopy.Granule.Collection = {
+    ShortName: collection.name,
+    VersionId: collection.version,
+  };
+  return cmrObjectCopy;
+};
+
+/**
+ * Update collection in an UMMG cmr metadata object
+ *
+ * @param {object} cmrObject - CMR metadata object
+ * @param {{ name: string, version: string }} collection - collection name and version to update to
+ * @returns {object}
+ */
+const setUMMGCollection = (
+  cmrObject,
+  collection
+) => {
+  const cmrObjectCopy = cloneDeep(cmrObject);
+  set(cmrObjectCopy, 'CollectionReference', {
+    ShortName: collection.name,
+    Version: collection.version,
+  });
+  return cmrObjectCopy;
+};
+
+/**
+ * Get collectionId from cmr metadata
+ * @param {object} cmrObject - cmr metadata object
+ * @param {string} cmrFileName - used to know how to parse this object
+ * @returns {string}
+ */
+const getCMRCollectionId = (
+  cmrObject,
+  cmrFileName
+) => {
+  if (isUMMGFilename(cmrFileName)) {
+    const collectionName = cmrObject.CollectionReference?.ShortName;
+    const collectionVersion = cmrObject.CollectionReference?.Version;
+    if (!(collectionName && collectionVersion)) {
+      throw new errors.ValidationError(
+        'UMMG metadata file has invalid collection configuration' +
+        ` ${JSON.stringify(cmrObject.CollectionReference)}`
+      );
+    }
+    return constructCollectionId(
+      collectionName,
+      collectionVersion
+    );
+  }
+  const collectionName = cmrObject.Granule?.Collection?.ShortName;
+  const collectionVersion = cmrObject.Granule?.Collection?.VersionId;
+  if (!(collectionName && collectionVersion)) {
+    throw new errors.ValidationError(
+      'ECHO10 metadata file has invalid collection configuration' +
+      ` ${JSON.stringify(cmrObject.Granule?.Collection)}`
+    );
+  }
+  return constructCollectionId(
+    collectionName,
+    collectionVersion
+  );
+};
+
 module.exports = {
   addEtagsToFileObjects,
   constructCmrConceptLink,
@@ -1261,6 +1408,7 @@ module.exports = {
   generateFileUrl,
   granuleToCmrFileObject,
   getCmrSettings,
+  getCMRCollectionId,
   getFileDescription,
   getFilename,
   getGranuleTemporalInfo,
@@ -1282,6 +1430,10 @@ module.exports = {
   removeEtagsFromFileObjects,
   removeFromCMR,
   updateCMRMetadata,
+  updateEcho10XMLMetadataObject,
+  updateUMMGMetadataObject,
+  setECHO10Collection,
+  setUMMGCollection,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
 };
