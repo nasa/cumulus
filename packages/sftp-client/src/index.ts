@@ -60,6 +60,7 @@ export class SftpClient {
     if (config.privateKey) this.clientOptions.privateKey = config.privateKey;
 
     this.sftpClient = new Client();
+    this.connect();
   }
 
   async connect(): Promise<void> {
