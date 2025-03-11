@@ -26,6 +26,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4018**
   - Fixed API list endpoints pagination missing records issue by sorting on unique cumulus_id column
 
+- **CUMULUS-4018**
+  - Fixed API list endpoints pagination missing records issue by sorting on unique cumulus_id column
+
 ## [v20.0.0] 2025-02-04
 
 ## Phase 2 Release
