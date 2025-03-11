@@ -49,6 +49,10 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     {
       column: 'updated_at',
       order: 'asc',
+    },
+    {
+      column: 'cumulus_id',
+      order: 'asc',
     }],
     range: {
       duration: {
@@ -102,6 +106,10 @@ test('convertQueryStringToDbQueryParameters correctly converts sortby error para
     sort: [
       {
         column: 'error.Error',
+        order: 'asc',
+      },
+      {
+        column: 'cumulus_id',
         order: 'asc',
       },
     ],

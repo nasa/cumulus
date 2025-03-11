@@ -33,6 +33,14 @@ const regexes: { [key: string]: RegExp } = {
 };
 
 /**
+ * Based on PostgreSQL documentation, when using LIMIT, it is important to use
+ * an ORDER BY clause that constrains the result rows into a unique order.
+ * The following is the default sort column and order for the pagination.
+ */
+const defaultSortColumn = 'cumulus_id';
+const defaultSortOrder = 'asc';
+
+/**
  * Convert 'exists' query fields to db query parameters from api query string fields
  *
  * @param type - query record type
@@ -192,7 +200,7 @@ const convertSort = (
   queryStringParameters: QueryStringParameters
 ): SortType[] => {
   const sortArray: SortType[] = [];
-  const { sort_by: sortBy, sort_key: sortKey } = queryStringParameters;
+  const { sort_by: sortBy, sort_key: sortKey, limit } = queryStringParameters;
   let { order } = queryStringParameters;
   if (sortBy) {
     order = order ?? 'asc';
@@ -205,6 +213,11 @@ const convertSort = (
       return Object.keys(queryParam ?? {}).map((key) => sortArray.push({ column: key, order }));
     });
   }
+
+  if (limit !== null) {
+    sortArray.push({ column: defaultSortColumn, order: defaultSortOrder });
+  }
+
   return sortArray;
 };
 
