@@ -4,10 +4,54 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Changed
+
+- **CUMULUS-3994**
+  - Removed references to elasticsearch in data-persistence
+  
+### Notable Changes
+
+- The async_operation_image property of the cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:53
+
+### Added
+
+- **CUMULUS-3993**
+  - Added long PAN functionality and `panType` configuration option to `SendPan` task
+  - Updated example workflow configuration to better handle error exceptions,
+    see [Workflow Configuration](https://nasa.github.io/cumulus/docs/next/data-cookbooks/error-handling)
+  - Updated `PdrStatusCheck` task to properly propagate workflow execution error.
+
+### Fixed
+
+- **CUMULUS-4006**
+  - Created docker image from v20.0.0, and published new tag [`53` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/53/images/sha256-6e1b26f5933bc6685861a7cb31fbbace01c3a0090b1e41c26e313b15620762cc?context=explore)
+
+## [v20.0.0] 2025-02-04
+
 ## Phase 2 Release
 
 ### Breaking Changes
 
+- **CUMULUS-3934**
+  - Removed `ecs_cluster_instance_allow_ssh` resource.
+  - The `ecs_cluster_instance_allow_ssh` was implemented before SSM hosts were deployed
+    to NGAP accounts and allowed for SSHing into an instance from an SSH bastion, which no longer exists.
+  - Tunneling into an EC2 via SSM is still supported. Users relying solely on SSH will need to transition to SSM.
+- **CUMULUS-2564**
+  - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
+    This modifies the task behavior to stage granules to
+    `<staging_path>/<collection_id>/<md5_granuleIdHash>` to allow for better S3
+    partitioning/performance for large collections.
+    Because of this benefit
+    the default has been set to `true`, however as sync-granules relies on
+    object name collision, this configuration changes the duplicate collision
+    behavior of sync-granules to be per-granule-id instead of per-collection
+    when active.
+    If the prior behavior is desired, please add `"useGranIdPath": false` to your
+    task config in your workflow definitions that use `sync-granule`.
 - **CUMULUS-3698**
   - GranuleSearch retrieving files/execution is toggled
       by setting "includeFullRecord" field to 'true' in relevant api endpoint params
@@ -31,6 +75,11 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 #### CUMULUS-3967
 
 External tooling making use of `searchContext` in the `GET` `/granules/` endpoint will need to update to make use of standard pagination via `limit` and `page` scrolling, as `searchContext` is no longer supported/is an ES specific feature.
+
+#### CUMULUS-4006
+
+The async_operation_image property of the cumulus module should be [updated to pull the ECR image for cumuluss/async-operation:53](./packages/api/ecs/async-operation/README.md).
+This version of the image will be made the default in the next release.
 
 ### Replace ElasticSearch Phase 2
 
@@ -99,29 +148,8 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
   - for asyncOperations test data, change any ES related values to other options
   - remove code from `@cumulus/api/lambdas/cleanExecutions` leaving a dummy handler, as the code worked with ES. lambda will be rewritten with CUMULUS-3982
   - remove `@cumulus/api/endpoints/elasticsearch`, `@cumulus/api/lambdas/bootstrap`, and `@cumulus/api/lambdas/index-from-database`
-
-## [Unreleased]
-
-### Breaking Changes
-
-- **CUMULUS-3934**
-  - Removed `ecs_cluster_instance_allow_ssh` resource.
-  - The `ecs_cluster_instance_allow_ssh` was implemented before SSM hosts were deployed
-    to NGAP accounts and allowed for SSHing into an instance from an SSH bastion, which no longer exists.
-  - Tunneling into an EC2 via SSM is still supported. Users relying solely on SSH will need to transition to SSM.
-
-- **CUMULUS-2564**
-  - Updated `sync-granule` task to add `useGranIdPath` as a configuration flag.
-    This modifies the task behavior to stage granules to
-    `<staging_path>/<collection_id>/<md5_granuleIdHash>` to allow for better S3
-    partitioning/performance for large collections.
-    Because of this benefit
-    the default has been set to `true`, however as sync-granules relies on
-    object name collision, this configuration changes the duplicate collision
-    behavior of sync-granules to be per-granule-id instead of per-collection
-    when active.
-    If the prior behavior is desired, please add `"useGranIdPath": false` to your
-    task config in your workflow definitions that use `sync-granule`.
+- **CUMULUS-3983**
+  - Removed elasticsearch references used in in cumulus `tf-modules`
 
 ### Added
 
@@ -130,6 +158,8 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
   - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules) `PATCH/bulkPatch` which applies PATCH to a list of granules. For its payload, this endpoint takes a list of granules (the updates to be made to the granule, similar to the pre-existing `PATCH`), a `dbConcurrency` and `dbMaxPool` variables for configuring concurrency and database thoroughput for postgres to tailor to performance and database needs.
 - **CUMULUS-3919**
   - Added terraform variables `disableSSL` and `rejectUnauthorized` to `tf-modules/cumulus-rds-tf` module.
+- **CUMULUS-3959**
+  - Added documentation to help DAACs troubleshoot database migration issues.
 - **CUMULUS-3978**
   - Added `iops` and `throughput` options to `elasticsearch_config` variable
     in `tf-modules/data-persistence`; These two options are necessary for gp3 EBS volume type.
@@ -166,6 +196,8 @@ External tooling making use of `searchContext` in the `GET` `/granules/` endpoin
     user-data for compatibility with Amazon Linux 2023 AMI
   - Fixed `tf-modules/cumulus` scripts to use Instance Metadata Service V2
   - Updated `fake-provider-cf.yml` to work for Amazon Linux 2023 AMI
+- **CUMULUS-3960**
+  - Updated `PostToCmr` task to be able to `republish` granules
 - **CUMULUS-3965**
   - Updated `tf-modules/cumulus/ecs_cluster` and `fake-provider-cf.yml` launch templates to require IMDSv2
 - **CUMULUS-3990**
@@ -299,6 +331,59 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
   - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
+
+## [v18.5.5] 2025-03-04
+
+**Please note** changes in v18.5.5 may not yet be released in future versions, as this
+is a backport/patch release on the v18.5.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-3993**
+  - Added long PAN functionality and `panType` configuration option to `SendPan` task
+  - Updated example workflow configuration to better handle error exceptions,
+    see [Workflow Configuration](https://nasa.github.io/cumulus/docs/next/data-cookbooks/error-handling)
+  - Updated `PdrStatusCheck` task to properly propagate workflow execution error.
+
+## [v18.5.3] 2025-01-21
+
+**Please note** changes in v18.5.3 may not yet be released in future versions, as this
+is a backport/patch release on the v18.5.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-3757**
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules-collectionId) `PATCH/bulkPatchGranuleCollection` which updates a batch of granule records collectionId to a new collectionId. This endpoint takes a list of granules, a collectionId, and an `esConcurrency` variable, updating the granules' to the collectionId passed with the payload in both postgres and elasticsearch, while providing concurrency for updating elasticsearch to tailor for performance and database needs.
+  - Added a `/granules` [endpoint](https://nasa.github.io/cumulus-api/#bulk-update-granules) `PATCH/bulkPatch` which applies PATCH to a list of granules. For its payload, this endpoint takes a list of granules (the updates to be made to the granule, similar to the pre-existing `PATCH`), a `dbConcurrency` and `dbMaxPool` variables for configuring concurrency and database thoroughput for postgres to tailor to performance and database needs.
+- **CUMULUS-3978**
+  - Added `iops` and `throughput` options to `elasticsearch_config` variable
+    in `tf-modules/data-persistence`; These two options are necessary for gp3 EBS volume type.
+
+### Changed
+
+- **CUMULUS-3967**
+  - Pinned @aws-sdk/client-s3 in @cumulus/aws-client to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
+  - Pinned @aws-sdk/client-s3 in @cumulus/lib-storage to 3.726.0 to address breaking changes/incompatibility in releases > 3.726.0
+
+- **CUMULUS-3940**
+  - Added 'dead_letter_recovery_cpu' and 'dead_letter_recovery_memory' to `cumulus` and `archive` module configuration to allow configuration of the dead_letter_recovery_operation task definition to better allow configuration of the tool's operating environment.
+  - Updated the dead letter recovery tool to utilize it's own log group "${var.prefix}-DeadLetterRecoveryEcsLogs"
+  - Added `batchSize`, `concurrency` and `dbMaxPool` options to /endpoints/recoverCumulusMessage (note these values are correct at time of this release only):
+    - `batchSize` - specifies how many DLA objects to read from S3 and hold in memory.  Defaults to 1000.
+    - `concurrency` - specifies how many messages to process at the same time.  Defaults to 30.
+    - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
+  - Add API memory-constrained performance test to test minimum functionality under default+ configuration
+  - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
+
+### Fixed
+
+- **CUMULUS-3940**
+  - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
+- **CUMULUS-3981**
+  - Added required $metadata field when creating new instance of ServiceException.
+
 
 ## [v18.5.2] 2024-12-12
 
@@ -8381,9 +8466,13 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v19.1.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.0.0...HEAD
+[v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
 [v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
-[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.0...v19.0.0
+[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.5...v19.0.0
+[v18.5.5]: https://github.com/nasa/cumulus/compare/v18.5.3...v18.5.5
+[v18.5.3]: https://github.com/nasa/cumulus/compare/v18.5.2...v18.5.3
+[v18.5.2]: https://github.com/nasa/cumulus/compare/v18.5.1...v18.5.2
 [v18.5.1]: https://github.com/nasa/cumulus/compare/v18.5.0...v18.5.1
 [v18.5.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v18.5.0
 [v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.4...v18.4.0

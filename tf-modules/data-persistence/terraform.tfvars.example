@@ -4,17 +4,6 @@ prefix               = "myprefix"
 
 # Optional
 
-es_trusted_role_arns = ["arn:aws:iam::12345678:role/role-name"]
-elasticsearch_config = {
-  domain_name    = "es"
-  instance_count = 1
-  instance_type  = "t2.small.elasticsearch"
-  version        = "5.3"
-  volume_size    = 10
-}
 enable_point_in_time_tables = [
-]
-include_elasticsearch            = true
+]          = true
 subnet_ids                       = ["subnet-123456"]
-elasticsearch_security_group_ids = ["sg-123456"]
-custom_domain_name               = "es-domain-name"
