@@ -37,7 +37,7 @@ const collectionExists = async (stackName, collection) => {
         }
         throw error;
       }
-      if (response.name === collection.name && response.version == collection.version) {
+      if (response.name === collection.name && response.version === collection.version) {
         return true;
       }
       return false;
