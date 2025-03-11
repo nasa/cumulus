@@ -91,6 +91,24 @@ test('convertQueryStringToDbQueryParameters does not include limit/offset parame
   t.is(dbQueryParams.offset, undefined);
 });
 
+test('convertQueryStringToDbQueryParameters adds limt and sorting on cumulus_id to db query parameters by default', (t) => {
+  const expectedDbQueryParameters = {
+    estimateTableRowCount: false,
+    limit: 10,
+    offset: 0,
+    page: 1,
+    includeFullRecord: false,
+    sort: [
+      {
+        column: 'cumulus_id',
+        order: 'asc',
+      },
+    ],
+  };
+  const dbQueryParams = convertQueryStringToDbQueryParameters('granule', {});
+  t.deepEqual(dbQueryParams, expectedDbQueryParameters);
+});
+
 test('convertQueryStringToDbQueryParameters correctly converts sortby error parameter to db query parameters', (t) => {
   const queryStringParameters = {
     sort_by: 'error.Error.keyword',
