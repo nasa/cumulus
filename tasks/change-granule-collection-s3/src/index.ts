@@ -541,7 +541,6 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
       granuleId: granule.granuleId,
     }));
   });
-
   const cmrFiles = unValidatedCMRFiles.filter(validateApiFile);
   const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const cmrObjectsByGranuleId: { [granuleId: string]: Object } = {};
