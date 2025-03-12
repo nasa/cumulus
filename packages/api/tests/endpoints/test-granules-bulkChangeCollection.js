@@ -291,7 +291,7 @@ test.serial('bulkChangeCollection generates the proper payload and calls startEx
     `${process.env.stackName}/bulkGranuleMoveRequests/${executionName}.json`
   );
 
-  t.deepEqual(remoteS3Object, { granuleIds: granuleIds.sort() });
+  t.deepEqual(remoteS3Object.sort(), { granuleIds: granuleIds.sort() });
 
   const actualPayload = JSON.parse(startExecutionStub.getCall(0).args[0].input);
   t.like(actualPayload, expectedPayload, 'StartExecution should match');
