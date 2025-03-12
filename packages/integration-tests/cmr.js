@@ -223,11 +223,9 @@ function generateCmrXml(granule, collection, additionalUrls) {
  * @returns {Promise<Array<string>>} - Promise of a list of granule files including the created
  * CMR xml files
  */
-async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls) {
+async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls, stagingDir = 'file-staging') {
   const xml = generateCmrXml(granule, collection, additionalUrls);
   const granuleFiles = granule.files.map((f) => `s3://${f.bucket}/${f.key}`);
-
-  const stagingDir = 'file-staging';
 
   const fileKey = `${stagingDir}/${granule.granuleId}.cmr.xml`;
 
@@ -357,7 +355,8 @@ async function generateAndStoreCmrUmmJson(
   collection,
   bucket,
   additionalUrls,
-  cmrMetadataFormat
+  cmrMetadataFormat,
+  stagingDir = 'file-staging'
 ) {
   const versionString = metadataFormatToVersion(cmrMetadataFormat);
   const jsonObject = sampleUmmGranule;
@@ -384,8 +383,6 @@ async function generateAndStoreCmrUmmJson(
       Version: versionString,
     };
   }
-
-  const stagingDir = 'file-staging';
 
   const fileKey = `${stagingDir}/${granule.granuleId}.cmr.json`;
 
@@ -419,26 +416,40 @@ async function generateAndStoreCmrUmmJson(
  * @param {Array<string>} additionalUrls - URLs to convert to online resources or related urls
  * @returns {Array<string>} list of S3 locations for CMR xml files
  */
-async function generateCmrFilesForGranules(
+async function generateCmrFilesForGranules({
   granules,
   collection,
   bucket,
   cmrMetadataFormat,
-  additionalUrls
-) {
+  additionalUrls,
+  stagingDir,
+}) {
   let files;
 
   log.info(`Generating fake CMR file with type ${cmrMetadataFormat}`);
 
   if (isUMMGMetadataFormat(cmrMetadataFormat)) {
     files = await Promise.all(
-      granules.map(
-        (g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrMetadataFormat)
-      )
+      granules.map((g) =>
+        generateAndStoreCmrUmmJson(
+          g,
+          collection,
+          bucket,
+          additionalUrls,
+          cmrMetadataFormat,
+          stagingDir
+        ))
     );
   } else {
     files = await Promise.all(
-      granules.map((g) => generateAndStoreCmrXml(g, collection, bucket, additionalUrls))
+      granules.map((g) =>
+        generateAndStoreCmrXml(
+          g,
+          collection,
+          bucket,
+          additionalUrls,
+          stagingDir
+        ))
     );
   }
 
