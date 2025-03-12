@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3994**
   - Removed references to elasticsearch in data-persistence
+
+- **CUMULUS-4019**
+  - Made checksum type name comparison case-insensitive in lzards-backup
   
 ### Notable Changes
 
