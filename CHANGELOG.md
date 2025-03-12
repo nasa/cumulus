@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v20.0.1] 2025-03-12
+
+### Notable Changes
+
+- The async_operation_image property of the cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:53
+
+### Added
+
+- **CUMULUS-3993**
+  - Added long PAN functionality and `panType` configuration option to `SendPan` task
+  - Updated example workflow configuration to better handle error exceptions,
+    see [Workflow Configuration](https://nasa.github.io/cumulus/docs/next/data-cookbooks/error-handling)
+  - Updated `PdrStatusCheck` task to properly propagate workflow execution error.
+
+### Fixed
+
+- **CUMULUS-4006**
+  - Created docker image from v20.0.0, and published new tag [`53` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/53/images/sha256-6e1b26f5933bc6685861a7cb31fbbace01c3a0090b1e41c26e313b15620762cc?context=explore)
+- **CUMULUS-4018**
+  - Fixed API list endpoints pagination missing records issue by sorting on unique cumulus_id column
+
 ## [v20.0.0] 2025-02-04
 
 ## Phase 2 Release
@@ -52,6 +74,11 @@ aws lambda invoke --function-name $PREFIX-ReconciliationReportMigration $OUTFILE
 #### CUMULUS-3967
 
 External tooling making use of `searchContext` in the `GET` `/granules/` endpoint will need to update to make use of standard pagination via `limit` and `page` scrolling, as `searchContext` is no longer supported/is an ES specific feature.
+
+#### CUMULUS-4006
+
+The async_operation_image property of the cumulus module should be [updated to pull the ECR image for cumuluss/async-operation:53](./packages/api/ecs/async-operation/README.md).
+This version of the image will be made the default in the next release.
 
 ### Replace ElasticSearch Phase 2
 
@@ -8383,7 +8410,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.0.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.0.1...HEAD
+[v20.0.1]: https://github.com/nasa/cumulus/compare/v20.0.0...v20.0.1
 [v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
 [v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
 [v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.0...v19.0.0
