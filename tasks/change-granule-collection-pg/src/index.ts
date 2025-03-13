@@ -10,7 +10,7 @@ import { log } from '@cumulus/common';
 import { ApiGranuleRecord, ApiFile } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { BucketsConfigObject } from '@cumulus/common/types';
-import { bulkPatch, bulkPatchGranuleCollection } from '@cumulus/api-client/granules';
+import { bulkPatch, bulkPatchGranuleCollection, updateGranule } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 
 import keyBy from 'lodash/keyBy';
@@ -92,14 +92,20 @@ async function moveGranulesInCumulusDatastores(
     ...targetGranule,
     collectionId: sourceCollectionId,
   }));
-  await bulkPatch({
-    prefix: getRequiredEnvVar('stackName'),
-    body: {
-      apiGranules: updatedBodyGranules,
-      dbConcurrency: config.concurrency,
-      dbMaxPool: config.dbMaxPool,
-    },
-  });
+  await Promise.all(updatedBodyGranules.map((g) => updateGranule({
+    prefix: 'ecarton-ci-tf',
+    body: g,
+    granuleId: g.granuleId
+  })
+))
+  // await bulkPatch({
+  //   prefix: getRequiredEnvVar('stackName'),
+  //   body: {
+  //     apiGranules: updatedBodyGranules,
+  //     dbConcurrency: config.concurrency,
+  //     dbMaxPool: config.dbMaxPool,
+  //   },
+  // });
   await bulkPatchGranuleCollection({
     prefix: getRequiredEnvVar('stackName'),
     body: {
