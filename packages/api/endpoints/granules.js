@@ -815,10 +815,11 @@ async function bulkPatch(req, res) {
   await mappingFunction(
     granules,
     async (apiGranule) => {
-      await pRetry(
-        () => patchGranule({ body: apiGranule, knex, testContext: {} }, res),
-        { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-      )
+      try {
+        patchGranule({ body: apiGranule, knex, testContext: {} }, res);
+      } catch (error) {
+        log.error(`granule patch failed for granule ${JSON.stringify}, with ${error}`);
+      }
     },
     { concurrency: body.dbConcurrency }
   );
