@@ -10,7 +10,7 @@ import { log } from '@cumulus/common';
 import { ApiGranuleRecord, ApiFile } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { BucketsConfigObject } from '@cumulus/common/types';
-import { bulkPatch, bulkPatchGranuleCollection, updateGranule } from '@cumulus/api-client/granules';
+import { bulkPatchGranuleCollection, updateGranule } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 
 import keyBy from 'lodash/keyBy';
