@@ -766,17 +766,17 @@ async function bulkPatchGranuleCollection(req, res) {
   await mappingFunction(
     granules,
     async (apiGranule) => {
-      await pRetry(
-        () =>  updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule'),
+      pRetry(
+        () => updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule'),
         { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-      )
+      );
     },
     { concurrency: body.esConcurrency }
   );
   await pRetry(
     () => updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id),
     { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-  )
+  );
 
   return res.send({
     message: `Successfully wrote granules with Granule Id: ${granuleIds} to Collection Id: ${newCollectionId}`,
@@ -814,7 +814,7 @@ async function bulkPatch(req, res) {
 
   await mappingFunction(
     granules,
-    async (apiGranule) => patchGranule({ body: apiGranule, knex, testContext: {} }, res),
+    (apiGranule) => patchGranule({ body: apiGranule, knex, testContext: {} }, res),
     { concurrency: body.dbConcurrency }
   );
 
