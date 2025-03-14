@@ -49,8 +49,6 @@ module "data_persistence" {
   subnet_ids                     = var.subnet_ids != null ? var.subnet_ids : data.aws_subnets.subnet_ids[0].ids
   enable_point_in_time_tables    = var.enable_point_in_time_tables
 
-  elasticsearch_config           = var.elasticsearch_config
-
   rds_security_group_id          = var.rds_security_group
   rds_user_access_secret_arn     = module.provision_database.database_credentials_secret_arn
   permissions_boundary_arn       = var.permissions_boundary_arn
