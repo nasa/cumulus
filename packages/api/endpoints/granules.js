@@ -811,16 +811,10 @@ async function bulkPatch(req, res) {
       dbMaxPool: body.dbMaxPool.toString(),
     },
   });
-
+  const esClient = await getEsClient();
   await mappingFunction(
     granules,
-    async (apiGranule) => {
-      try {
-        await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
-      } catch (error) {
-        log.error(`granule patch failed for granule ${JSON.stringify}, with ${error}`);
-      }
-    },
+    (apiGranule) => patchGranule({ body: apiGranule, knex, testContext: {esClient} }, res),
     { concurrency: body.dbConcurrency }
   );
 
