@@ -6,6 +6,9 @@
       "Parameters": {
         "cma": {
           "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
           "task_config": {
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
@@ -14,13 +17,26 @@
             "s3MultipartChunksizeMb": "{$.meta.bulkChangeCollection.s3MultipartChunksizeMb}",
             "invalidGranuleBehavior": "{$.meta.bulkChangeCollection.invalidGranuleBehavior}",
             "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
-            "concurrency": "{$.meta.bulkChangeCollection.concurrency}"
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "cumulus_message": {
+              "input": "{$.payload}",
+              "outputs": [
+                {
+                  "source": "{$.oldGranules}",
+                  "destination": "{$.meta.oldGranules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
           }
         }
       },
       "Type": "Task",
       "Resource": "${change_granule_collection_s3_task_arn}",
-      "TimeoutSeconds": 60,
+      "TimeoutSeconds": 900,
       "Retry": [
         {
           "ErrorEquals": [
@@ -35,7 +51,11 @@
       "Parameters": {
         "cma": {
           "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
           "task_config": {
+            "oldGranules": "{$.meta.oldGranules}",
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
@@ -45,7 +65,7 @@
       },
       "Type": "Task",
       "Resource": "${change_granule_collection_pg_task_arn}",
-      "TimeoutSeconds": 60,
+      "TimeoutSeconds": 900,
       "Retry": [
         {
           "ErrorEquals": [

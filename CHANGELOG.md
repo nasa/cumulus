@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## [v18.5.6] 2025-03-14
 
 ### Added
 
@@ -76,6 +76,8 @@ included in the future will have a corresponding CHANGELOG entry in future relea
     - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
   - Add API memory-constrained performance test to test minimum functionality under default+ configuration
   - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
+- **CUMULUS-3960**
+  - Updated `PostToCmr` task to be able to `republish` granules
 
 ### Fixed
 
