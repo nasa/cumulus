@@ -214,7 +214,7 @@ const convertSort = (
     });
   }
 
-  if (limit !== null) {
+  if (limit !== 'null') {
     sortArray.push({ column: defaultSortColumn, order: defaultSortOrder });
   }
 
@@ -256,7 +256,7 @@ export const convertQueryStringToDbQueryParameters = (
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
-  if (limit !== null) {
+  if (limit !== 'null') {
     dbQueryParameters.limit = Number.parseInt(limit ?? '10', 10);
     dbQueryParameters.offset = (dbQueryParameters.page - 1) * dbQueryParameters.limit;
   }
