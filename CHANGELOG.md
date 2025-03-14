@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3994**
   - Removed references to elasticsearch in data-persistence
+
+### Fixed
+
+- **CUMULUS-4018**
+  - Updated `@cumulus/db/search` to correctly handle string parameter when limit is `null`
   
 ### Notable Changes
 
