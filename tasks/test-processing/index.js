@@ -51,13 +51,13 @@ async function fakeProcessing(event) {
     input.granules = await uploadFakeBrowse(input);
   }
 
-  const outputFiles = await generateCmrFilesForGranules(
-    input.granules,
+  const outputFiles = await generateCmrFilesForGranules({
+    granules: input.granules,
     collection,
-    event.config.bucket,
-    event.config.cmrMetadataFormat,
-    event.config.additionalUrls
-  );
+    bucket: event.config.bucket,
+    cmrMetadataFormat: event.config.cmrMetadataFormat,
+    additionalUrls: event.config.additionalUrls,
+  });
   return { files: outputFiles, granules: input.granules };
 }
 

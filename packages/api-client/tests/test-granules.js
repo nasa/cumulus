@@ -587,7 +587,7 @@ test('bulkPatchGranuleCollection calls the callback with the expected object', a
         esConcurrency: 10,
       }),
     },
-    expectedStatusCodes: 202,
+    expectedStatusCodes: 200,
   };
 
   const callback = (configObject) => {
@@ -637,7 +637,7 @@ test('bulkPatch calls the callback with the expected object', async (t) => {
         dbMaxPool: 10,
       }),
     },
-    expectedStatusCodes: 202,
+    expectedStatusCodes: 200,
   };
 
   const callback = (configObject) => {
@@ -664,6 +664,36 @@ test('bulkPatch calls the callback with the expected object', async (t) => {
       }],
       dbConcurrency: 5,
       dbMaxPool: 10,
+    },
+  }));
+});
+
+test('bulkChangeCollection calls the callback with the expected object', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulkChangeCollection/',
+      body: JSON.stringify({
+        sourceCollectionId: t.context.collectionId,
+        targetCollectionId: t.context.collectionId2,
+      }),
+    },
+    expectedStatusCodes: 200,
+  };
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+  await t.notThrowsAsync(granulesApi.bulkChangeCollection({
+    callback,
+    prefix: t.context.testPrefix,
+    body: {
+      sourceCollectionId: t.context.collectionId,
+      targetCollectionId: t.context.collectionId2,
     },
   }));
 });
