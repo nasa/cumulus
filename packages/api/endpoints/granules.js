@@ -816,7 +816,7 @@ async function bulkPatch(req, res) {
     granules,
     async (apiGranule) => {
       try {
-        patchGranule({ body: apiGranule, knex, testContext: {} }, res);
+        await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
       } catch (error) {
         log.error(`granule patch failed for granule ${JSON.stringify}, with ${error}`);
       }
