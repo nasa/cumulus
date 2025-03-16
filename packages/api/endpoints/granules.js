@@ -814,7 +814,14 @@ async function bulkPatch(req, res) {
   const esClient = await getEsClient();
   await mappingFunction(
     granules,
-    (apiGranule) => patchGranule({ body: apiGranule, knex, testContext: {esClient} }, res),
+    async (apiGranule) => {
+      try {
+        await patchGranule({ body: apiGranule, knex, testContext: {esClient} }, res);
+      } catch (error) {
+        log.error(JSON.stringify(error));
+        throw error;
+      }
+    },
     { concurrency: body.dbConcurrency }
   );
 
