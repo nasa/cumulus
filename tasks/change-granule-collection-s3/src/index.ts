@@ -484,10 +484,14 @@ async function getAndValidateGranules(
   config: MassagedEventConfig
 ): Promise<Array<ValidGranuleRecord>> {
   const getGranuleMethod = config.testApiClientMethods?.getGranuleMethod || getGranule;
-  const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranuleMethod({
-    prefix: getRequiredEnvVar('stackName'),
-    granuleId,
-  })));
+  const tempGranulesInput = await pMap(
+    granuleIds,
+    (granuleId) => getGranuleMethod({
+      prefix: getRequiredEnvVar('stackName'),
+      granuleId,
+    }),
+    { concurrency: config.concurrency },
+  )
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
     granulesInput = tempGranulesInput.filter((granule) => {
