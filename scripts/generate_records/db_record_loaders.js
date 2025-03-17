@@ -176,7 +176,7 @@ const loadFiles = async (
   const files = [
     {
       granule_cumulus_id: granuleCumulusId,
-      'key': `aprefix/${granuleId}.cmr.json`,
+      'key': `prefix1/${granuleId}.cmr.json`,
       'bucket': 'cumulus-test-sandbox-public',
       ...params
     }
@@ -184,7 +184,7 @@ const loadFiles = async (
   range(fileCount-1).forEach((i) => {
     files.push({
       granule_cumulus_id: granuleCumulusId,
-      key: `aprefix/${granuleId}_${i}.jpg`,
+      key: `prefix1/${granuleId}_${i}.jpg`,
       bucket: 'cumulus-test-sandbox-public',
       ...params
     })
