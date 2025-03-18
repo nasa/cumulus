@@ -148,6 +148,8 @@ export const MissingRequiredEnvVar = createErrorType('MissingRequiredEnvVar');
 
 export const MissingRequiredEnvVarError = createErrorType('MissingRequiredEnvVarError');
 
+export const MissingS3FileError = createErrorType('MissingS3FileError');
+
 export const PDRParsingError = createErrorType('PDRParsingError');
 
 export const ProviderNotFound = createErrorType('ProviderNotFound');

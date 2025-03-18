@@ -44,3 +44,7 @@ export interface RuleRecord extends NewRuleRecord {
   createdAt: number,
   updatedAt: number
 }
+
+export interface PayloadRuleRecord extends PartialRuleRecord {
+  cumulus_meta?: Object,
+}
