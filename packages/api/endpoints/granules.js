@@ -766,13 +766,13 @@ async function bulkPatchGranuleCollection(req, res) {
   await mappingFunction(
     granules,
     async (apiGranule) => pRetry(
-      () => updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule'),
+      async () => await updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule'),
       { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
     ),
     { concurrency: body.esConcurrency }
   );
   await pRetry(
-    () => updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id),
+    async () => await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id),
     { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
   )
 
