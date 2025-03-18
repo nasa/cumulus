@@ -1193,7 +1193,7 @@ async function bulkGet(req, res) {
   }
   const granuleIds = body.granuleIds;
   const collectionId = body.collectionId;
-
+  log.warn(granuleIds, collectionId);
   let granules;
   let pgCollection;
   try {
@@ -1203,7 +1203,6 @@ async function bulkGet(req, res) {
     );
 
     granules = await knex('granules')
-      .where('collection_cumulus_id', pgCollection.cumulus_id)
       .whereIn('granule_id', granuleIds);
     console.log(granules);
   } catch (error) {
