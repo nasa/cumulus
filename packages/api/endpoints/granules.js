@@ -1164,6 +1164,73 @@ async function get(req, res) {
   return res.send({ ...result, recoveryStatus });
 }
 
+const BulkGetSchema = z.object({
+  granuleIds: z.array(z.string().nonempty()).nonempty(),
+  collectionId: z.string().nonempty(),
+  dbConcurrency: z.number().positive(),
+  dbMaxPool: z.number().positive(),
+}).catchall(z.unknown());
+
+const parseBulkGetPayload = zodParser('bulkGetSchema payload', BulkGetSchema);
+/**
+ * Query a batch of granules by granuleId + collectionId.
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function bulkGet(req, res) {
+  const {
+    knex = await getKnexClient(),
+    collectionPgModel = new CollectionPgModel(),
+  } = req.testContext || {};
+
+  req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
+  req.body.dbMaxPool = req.body.dbMaxPool ?? 20;
+  const body = parseBulkGetPayload(req.body);
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+  const granuleIds = body.granuleIds;
+  const collectionId = body.collectionId;
+
+  let granules;
+  let pgCollection;
+  try {
+    pgCollection = await collectionPgModel.get(
+      knex,
+      deconstructCollectionId(collectionId)
+    );
+
+    granules = await knex('granules')
+      .where('collection_cumulus_id', pgCollection.cumulus_id)
+      .whereIn('granule_id', granuleIds);
+    console.log(granules);
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (collectionId && pgCollection === undefined) {
+        return res.boom.notFound(
+          `No collection found for collectionId ${collectionId}`
+        );
+      }
+      if (granules === undefined) {
+        return res.boom.notFound('Granule not found');
+      }
+    }
+
+    throw error;
+  }
+
+  // Get related files, execution ARNs, provider, PDR, and collection and format
+  const result = await Promise.all(granules.map((granule) => translatePostgresGranuleToApiGranule({
+    granulePgRecord: granule,
+    collectionPgRecord: pgCollection,
+    knexOrTransaction: knex,
+  })));
+  console.log(result);
+  return res.send(result);
+}
+
 /**
  * Query a single granule by granuleId only.
  * DEPRECATED: use get() instead to fetch granules by
@@ -1366,6 +1433,7 @@ router.get('/:granuleId', getByGranuleId);
 router.get('/:collectionId/:granuleId', get);
 router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
 router.patch('/bulkPatch', bulkPatch);
+router.get('/bulkGet', bulkGet);
 router.get('/', list);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
@@ -1398,6 +1466,7 @@ router.delete('/:collectionId/:granuleId', del);
 module.exports = {
   bulkDelete,
   bulkChangeCollection,
+  bulkGet,
   bulkOperations,
   bulkReingest,
   del,

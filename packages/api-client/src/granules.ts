@@ -27,6 +27,13 @@ type BulkPatch = {
   dbMaxPool: number,
 };
 
+type BulkGet = {
+  granuleIds: string[],
+  collectionId: string,
+  dbConcurrency?: number,
+  dbMaxPool?: number,
+};
+
 type InvalidBehavior = 'error' | 'skip';
 type CmrGranuleUrlType = 'http' | 's3' | 'both';
 
@@ -684,6 +691,42 @@ export const bulkPatch = async (params: {
     expectedStatusCodes: 200,
   });
 };
+
+/**
+ * Applies PATCH to a list of granules
+ * PATCH /granules/bulkGet
+ *
+ * @param params - params
+ * @param params.prefix - the prefix configured for the stack
+ * @param params.body - body to pass the API lambda
+ * @param params.callback - async function to invoke the api lambda
+ *                          that takes a prefix / user payload.  Defaults
+ *                          to cumulusApiClient.invokeApifunction to invoke the
+ *                          api lambda
+ * @returns - the response from the callback
+ */
+export const bulkGet = async (params: {
+  prefix: string,
+  body: BulkGet,
+  callback?: InvokeApiFunction
+}): Promise<ApiGranuleRecord[]> => {
+  const { prefix, body, callback = invokeApi } = params;
+  const response = await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulkGet',
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 200,
+  });
+  return JSON.parse(response.body);
+};
+
 
 /**
  * Bulk operations on granules stored in cumulus

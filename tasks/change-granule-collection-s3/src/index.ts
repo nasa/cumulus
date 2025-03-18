@@ -24,7 +24,7 @@ import { BucketsConfig, log } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { getCollection } from '@cumulus/api-client/collections';
-import { getGranule } from '@cumulus/api-client/granules';
+import { bulkGet } from '@cumulus/api-client/granules';
 import { CollectionRecord, CollectionFile } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { getRequiredEnvVar } from '@cumulus/common/env';
@@ -483,11 +483,14 @@ async function getAndValidateGranules(
   granuleIds: Array<string>,
   config: MassagedEventConfig
 ): Promise<Array<ValidGranuleRecord>> {
-  const getGranuleMethod = config.testApiClientMethods?.getGranuleMethod || getGranule;
-  const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranuleMethod({
+  const getGranuleMethod = config.testApiClientMethods?.getGranuleMethod || bulkGet;
+  const tempGranulesInput = await getGranuleMethod({
     prefix: getRequiredEnvVar('stackName'),
-    granuleId,
-  })));
+    body: {
+      granuleIds,
+      collectionId: constructCollectionId(config.collection.name, config.collection.version),
+    }
+  });
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
     granulesInput = tempGranulesInput.filter((granule) => {
