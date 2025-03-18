@@ -19,8 +19,6 @@ const {
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { ReconciliationReport } = require('../models');
-
 const testUtils = require('../lib/testUtils');
 const serveUtils = require('./serveUtils');
 const {
@@ -209,24 +207,6 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
     process.env.stackName = stackName;
 
     checkEnvVariablesAreSet(requiredEnvVars);
-
-    // Create reconciliation report table
-    const reconciliationReportTableName = `${stackName}-ReconciliationReportsTable`;
-    process.env.ReconciliationReportsTable = reconciliationReportTableName;
-    const reconciliationReportModel = new ReconciliationReport({
-      tableName: reconciliationReportTableName,
-      stackName: process.env.stackName,
-      systemBucket: process.env.system_bucket,
-    });
-    try {
-      await reconciliationReportModel.createTable();
-    } catch (error) {
-      if (error && error.name && error.name === 'ResourceInUseException') {
-        console.log(`${reconciliationReportTableName} is already created`);
-      } else {
-        throw error;
-      }
-    }
 
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
