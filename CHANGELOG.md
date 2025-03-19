@@ -9,7 +9,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-3994**
-  - Removed references to elasticsearch in data-persistence
+  - Removed references to the Elasticsearch domain named `{prefix}-es-vpc` in the data-persistence Terraform module and example.
+  - Running `terraform apply` on this change will **permanently delete** the Elasticsearch domain named `{prefix}-es-vpc` and all of the the data it contains.
+  - Ensure that the Elasticsearch domain named `{prefix}-es-vpc` is no longer needed before applying this update.
+
+- **CUMULUS-3842**
+  - Removed references to the DynamoDB table named `{prefix}-ReconciliationReportsTable` in the data-persistence Terraform module.
+  - Running `terraform apply` on this change will **permanently delete** the DynamoDB table named `{prefix}-ReconciliationReportsTable` and all of the the data it contains.
+  - Ensure that the DynamoDB table named `{prefix}-ReconciliationReportsTable` is no longer needed before applying this update.
   
 ### Notable Changes
 
@@ -30,6 +37,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/messages/Granules/convertDateToISOStringSettingNull` to handle empty string as null to address CMR metadata compatibility concern
 - **CUMULUS-4006**
   - Created docker image from v20.0.0, and published new tag [`53` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/53/images/sha256-6e1b26f5933bc6685861a7cb31fbbace01c3a0090b1e41c26e313b15620762cc?context=explore)
+
+- **CUMULUS-4018**
+  - Fixed API list endpoints pagination missing records issue by sorting on unique cumulus_id column
 
 ## [v20.0.0] 2025-02-04
 
@@ -136,6 +146,8 @@ This version of the image will be made the default in the next release.
   - Created api types for `reconciliation_reports` in `@cumulus/types/api`
   - Updated reconciliation reports lambda to write to new RDS table instead of Dynamo
   - Updated `@cumulus/api/endpoints/reconciliation-reports` `getReport` and `deleteReport` to work with the new RDS table instead of Dynamo
+- **CUMULUS-3842**
+  - Remove reconciliationReports DynamoDB table
 - **CUMULUS-3718**
   - Updated `reconciliation_reports` list api endpoint and added `ReconciliationReportSearch` class to query postgres
   - Added `reconciliationReports` type to stats endpoint, so `aggregate` query will work for reconciliation reports

@@ -70,9 +70,8 @@ class StatsSearch extends BaseSearch {
 
   constructor(event: QueryEvent, type: string) {
     const { field, ...queryStringParameters } = event.queryStringParameters || {};
-    super({ queryStringParameters }, type);
+    super({ queryStringParameters: { ...queryStringParameters, limit: null } }, type);
     this.field = field ?? 'status';
-    this.dbQueryParameters = omit(this.dbQueryParameters, ['limit', 'offset']);
   }
 
   /**
