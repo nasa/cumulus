@@ -9,7 +9,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-3994**
-  - Removed references to elasticsearch in data-persistence
   - Removed references to the Elasticsearch domain named `{prefix}-es-vpc` in the data-persistence Terraform module and example.
   - Running `terraform apply` on this change will **permanently delete** the Elasticsearch domain named `{prefix}-es-vpc` and all of the the data it contains.
   - Ensure that the Elasticsearch domain named `{prefix}-es-vpc` is no longer needed before applying this update.
