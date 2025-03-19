@@ -765,7 +765,7 @@ async function bulkPatchGranuleCollection(req, res) {
 
   await mappingFunction(
     granules,
-    async (apiGranule) => pRetry(
+    (apiGranule) => pRetry(
       () => updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule'),
       { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
     ),
@@ -1180,31 +1180,35 @@ const parseBulkGetPayload = zodParser('bulkGetSchema payload', BulkGetSchema);
  * @returns {Promise<Object>} the promise of express response object
  */
 async function bulkGet(req, res) {
-  const {
-    knex = await getKnexClient(),
-    collectionPgModel = new CollectionPgModel(),
-  } = req.testContext || {};
-
   req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
   req.body.dbMaxPool = req.body.dbMaxPool ?? 20;
   const body = parseBulkGetPayload(req.body);
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
+  const {
+    knex = await getKnexClient({
+      env: {
+        ...process.env,
+        dbMaxPool: body.dbMaxPool.toString(),
+      }
+    }),
+    collectionPgModel = new CollectionPgModel(),
+    granulePgModel = new GranulePgModel(),
+  } = req.testContext || {};
   const granuleIds = body.granuleIds;
   const collectionId = body.collectionId;
   log.warn(granuleIds, collectionId);
   let granules;
   let pgCollection;
   try {
-    pgCollection = await collectionPgModel.get(
-      knex,
-      deconstructCollectionId(collectionId)
-    );
-
-    granules = await knex('granules')
-      .whereIn('granule_id', granuleIds);
-    console.log(granules);
+    granules = await pMap(
+      granuleIds,
+      async (granuleId) => await granulePgModel.get(knex, {
+        granule_id: granuleId,
+      }),
+      { concurrency: body.dbConcurrency }
+    )
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       if (collectionId && pgCollection === undefined) {
