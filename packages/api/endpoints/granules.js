@@ -795,6 +795,7 @@ async function bulkPatch(req, res) {
     mappingFunction = pMap,
     getKnexClientMethod = getKnexClient,
   } = req.testContext || {};
+  log.warn('this should show up in logs somewhere');
   req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
   req.body.dbMaxPool = req.body.dbMaxPool ?? 20;
   const body = parseBulkPatchPayload(req.body);
@@ -813,12 +814,7 @@ async function bulkPatch(req, res) {
   await mappingFunction(
     granules,
     async (apiGranule) => {
-      try {
-        await patchGranule({ body: apiGranule, knex, testContext: {esClient} }, res);
-      } catch (error) {
-        log.error(JSON.stringify(error));
-        throw error;
-      }
+      await patchGranule({ body: apiGranule, knex, testContext: {esClient} }, res);
     },
     { concurrency: body.dbConcurrency }
   );
