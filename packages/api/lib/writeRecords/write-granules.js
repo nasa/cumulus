@@ -236,11 +236,6 @@ const _writePostgresGranuleViaTransaction = async ({
     return { status: 'dropped', pgGranule };
   }
 
-  log.info(`
-  Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
-  to granule record with cumulus_id ${pgGranule.cumulus_id} in PostgreSQL
-  `);
-
   return { status: 'success', pgGranule };
 };
 
@@ -339,13 +334,6 @@ const _updateGranule = async ({
       throw writeError;
     }
   });
-
-  log.info(
-    `
-    Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${updatedPgGranule.cumulus_id}.
-    `,
-    updatedPgGranule
-  );
 
   await _publishPostgresGranuleUpdateToSns({
     snsEventType,
@@ -589,10 +577,6 @@ const _writeGranuleRecords = async (params) => {
     if (writePgGranuleResult.status === 'dropped') {
       return writePgGranuleResult;
     }
-    log.info(
-      `Completed write operation to PostgreSQL for granule %j. Record cumulus_id in PostgreSQL: ${writePgGranuleResult.pgGranule.cumulus_id}.`,
-      postgresGranuleRecord
-    );
     return writePgGranuleResult;
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
