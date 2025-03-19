@@ -490,7 +490,7 @@ async function getAndValidateGranules(
       prefix: getRequiredEnvVar('stackName'),
       granuleId,
     }),
-    { concurrency: config.concurrency },
+    { concurrency: 40 },
   )
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
