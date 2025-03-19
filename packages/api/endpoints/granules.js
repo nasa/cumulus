@@ -1217,7 +1217,7 @@ async function bulkGet(req, res) {
         );
       }
       if (granules === undefined) {
-        return res.boom.notFound('Granule not found');
+        return res.boom.notFound(`not found: ${error.toString()}`);
       }
     }
 
