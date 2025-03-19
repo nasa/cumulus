@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3994**
   - Removed references to elasticsearch in data-persistence
+  - Removed references to the Elasticsearch domain named `{prefix}-es-vpc` in the data-persistence Terraform module and example.
+  - Running `terraform apply` on this change will **permanently delete** the Elasticsearch domain named `{prefix}-es-vpc` and all of the the data it contains.
+  - Ensure that the Elasticsearch domain named `{prefix}-es-vpc` is no longer needed before applying this update.
+
+- **CUMULUS-3842**
+  - Removed references to the DynamoDB table named `{prefix}-ReconciliationReportsTable` in the data-persistence Terraform module.
+  - Running `terraform apply` on this change will **permanently delete** the DynamoDB table named `{prefix}-ReconciliationReportsTable` and all of the the data it contains.
+  - Ensure that the DynamoDB table named `{prefix}-ReconciliationReportsTable` is no longer needed before applying this update.
 
 ## [v20.0.1] 2025-03-12
 
@@ -138,6 +146,8 @@ This version of the image will be made the default in the next release.
   - Created api types for `reconciliation_reports` in `@cumulus/types/api`
   - Updated reconciliation reports lambda to write to new RDS table instead of Dynamo
   - Updated `@cumulus/api/endpoints/reconciliation-reports` `getReport` and `deleteReport` to work with the new RDS table instead of Dynamo
+- **CUMULUS-3842**
+  - Remove reconciliationReports DynamoDB table
 - **CUMULUS-3718**
   - Updated `reconciliation_reports` list api endpoint and added `ReconciliationReportSearch` class to query postgres
   - Added `reconciliationReports` type to stats endpoint, so `aggregate` query will work for reconciliation reports
