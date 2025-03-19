@@ -41,7 +41,6 @@ const publishSnsMessageByDataType = async (record, dataType, eventType) => {
   const topicArn = envUtils.getRequiredEnvVar(`${dataType}_sns_topic_arn`, process.env);
   let messageTypeInfo = dataType;
   messageTypeInfo += eventType ? ` with event type ${eventType}` : '';
-  logger.info(`About to publish SNS message for ${messageTypeInfo} to topic ARN ${topicArn}: ${JSON.stringify(record)}`);
   if (dataType === 'collection') {
     const messageToPublish = constructCollectionSnsMessage(record, eventType);
     await publishSnsMessageWithRetry(topicArn, messageToPublish);

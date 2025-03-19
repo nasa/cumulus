@@ -150,9 +150,7 @@ const _writeFiles = async ({
 }) => await pMap(
   fileRecords,
   async (fileRecord) => {
-    log.info('About to write file record to PostgreSQL: %j', fileRecord);
     const [upsertedRecord] = await filePgModel.upsert(knex, fileRecord);
-    log.info('Successfully wrote file record to PostgreSQL: %j', fileRecord);
     return upsertedRecord;
   },
   { stopOnError: false }
@@ -285,8 +283,7 @@ const _publishPostgresGranuleUpdateToSns = async ({
     knexOrTransaction: knex,
   });
   await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
-  log.info('Successfully wrote granule %j to SNS topic', granuletoPublish);
-};
+  };
 
 /**
  * Update granule record status in PostgreSQL Elasticsearch.
@@ -328,7 +325,6 @@ const _updateGranule = async ({
       pgFieldUpdates,
       ['*']
     );
-    log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
     try {
       await upsertGranule({
         esClient,
@@ -338,7 +334,6 @@ const _updateGranule = async ({
         },
         index: process.env.ES_INDEX,
       });
-      log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
     } catch (writeError) {
       log.error(`Write to Elasticsearch failed for ${granuleId}`, writeError);
       throw writeError;
@@ -539,8 +534,6 @@ const _writeGranuleRecords = async (params) => {
    * @type { { status: string, pgGranule: PostgresGranuleRecord } | undefined }
    */
   let writePgGranuleResult;
-
-  log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   try {
     await createRejectableTransaction(knex, async (trx) => {
       // Validate API schema using lib method
