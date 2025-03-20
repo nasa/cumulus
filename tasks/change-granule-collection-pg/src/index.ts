@@ -178,7 +178,7 @@ async function changeGranuleCollectionsPG(
   const targetGranules = event.input.granules.filter(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(oldGranules.filter(validateGranule), 'granuleId');
   log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
-  for (const granuleChunk of chunkGranules(targetGranules, config.concurrency)) {
+  for (const granuleChunk of chunkGranules(targetGranules, config.concurrency*4)) {
     //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(
       granuleChunk,

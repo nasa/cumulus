@@ -795,7 +795,6 @@ async function bulkPatch(req, res) {
     mappingFunction = pMap,
     getKnexClientMethod = getKnexClient,
   } = req.testContext || {};
-  log.warn('this should show up in logs somewhere');
   req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
   req.body.dbMaxPool = req.body.dbMaxPool ?? 20;
   const body = parseBulkPatchPayload(req.body);
