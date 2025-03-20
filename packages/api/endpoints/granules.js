@@ -765,7 +765,7 @@ async function bulkPatchGranuleCollection(req, res) {
 
   await mappingFunction(
     granules,
-    async (apiGranule) => pRetry(
+    async (apiGranule) => await pRetry(
       async () => await updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule'),
       { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
     ),

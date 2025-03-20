@@ -633,9 +633,10 @@ export const associateExecutionWithGranule = async (params: {
 export const bulkPatchGranuleCollection = async (params: {
   prefix: string,
   body: BulkPatchGranuleCollection,
+  pRetryOptions: pRetry.Options,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, body, callback = invokeApi } = params;
+  const { prefix, body, pRetryOptions, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
     payload: {
@@ -648,6 +649,7 @@ export const bulkPatchGranuleCollection = async (params: {
       body: JSON.stringify(body),
     },
     expectedStatusCodes: 200,
+    pRetryOptions,
   });
 };
 
@@ -667,9 +669,10 @@ export const bulkPatchGranuleCollection = async (params: {
 export const bulkPatch = async (params: {
   prefix: string,
   body: BulkPatch,
+  pRetryOptions: pRetry.Options,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, body, callback = invokeApi } = params;
+  const { prefix, body, callback = invokeApi, pRetryOptions } = params;
   return await callback({
     prefix: prefix,
     payload: {
@@ -682,6 +685,7 @@ export const bulkPatch = async (params: {
       body: JSON.stringify(body),
     },
     expectedStatusCodes: 200,
+    pRetryOptions,
   });
 };
 

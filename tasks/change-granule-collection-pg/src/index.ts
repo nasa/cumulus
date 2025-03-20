@@ -98,6 +98,7 @@ async function moveGranulesInCumulusDatastores(
       dbConcurrency: config.concurrency,
       dbMaxPool: config.dbMaxPool,
     },
+    pRetryOptions: { retries: 3, minTimeout: 2000, maxTimeout: 600000 },
   });
   await bulkPatchGranuleCollection({
     prefix: getRequiredEnvVar('stackName'),
@@ -106,6 +107,7 @@ async function moveGranulesInCumulusDatastores(
       collectionId: targetCollectionId,
       esConcurrency: config.concurrency,
     },
+    pRetryOptions: { retries: 3, minTimeout: 2000, maxTimeout: 600000 },
   });
 }
 
