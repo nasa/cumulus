@@ -292,7 +292,6 @@ async function copyGranulesInS3({
   targetGranules,
   cmrObjects,
   s3MultipartChunksizeMb,
-  concurrency,
 }: {
   sourceGranules: Array<ValidGranuleRecord>,
   targetGranules: Array<ValidGranuleRecord>,
@@ -331,7 +330,7 @@ async function copyGranulesInS3({
   await pMap(
     copyOperations,
     (operation) => operation(),
-    { concurrency: Number(concurrency || process?.env.concurrency || 100) }
+    { concurrency: 50 }
   );
 }
 
@@ -484,10 +483,14 @@ async function getAndValidateGranules(
   config: MassagedEventConfig
 ): Promise<Array<ValidGranuleRecord>> {
   const getGranuleMethod = config.testApiClientMethods?.getGranuleMethod || getGranule;
-  const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranuleMethod({
-    prefix: getRequiredEnvVar('stackName'),
-    granuleId,
-  })));
+  const tempGranulesInput = await pMap(
+    granuleIds,
+    (granuleId) => getGranuleMethod({
+      prefix: getRequiredEnvVar('stackName'),
+      granuleId,
+    }),
+    { concurrency: config.concurrency },
+  );
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
     granulesInput = tempGranulesInput.filter((granule) => {
@@ -562,7 +565,7 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
         }
       );
     },
-    { concurrency: 50}
+    { concurrency: 50 }
   );
   return {
     cmrFilesByGranuleId,

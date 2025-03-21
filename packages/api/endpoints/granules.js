@@ -963,6 +963,7 @@ const bulkChangeCollectionSchema = z.object({
   s3MultipartChunkSizeMb: z.number().optional(),
   executionName: z.string().optional(),
   dbMaxPool: z.number().positive().optional().default(100),
+  maxRequestGranules: z.number().positive().optional().default(10000),
 });
 const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload', bulkChangeCollectionSchema);
 
@@ -976,6 +977,8 @@ const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload
  * @param {number} [req.body.batchSize=100] - The batch size for processing granules.
  * @param {number} [req.body.concurrency=100] - The per-file concurrency level for processing
  * granules and granule records
+ * @param {number} [req.body.maxRequestGranules=10000] - the maximum number of granules to send
+ * in an api request
  * @param {string} [req.body.invalidGranuleBehavior='error'] - The behavior for invalid granules
  * ('error' or 'skip').
  * @param {number} [req.body.s3MultipartChunkSizeMb] - The S3 multipart chunk size in MB
@@ -1076,6 +1079,7 @@ async function bulkChangeCollection(req, res) {
         invalidGranuleBehavior: body.invalidGranuleBehavior,
         s3MultipartChunkSizeMb: body.s3MultipartChunkSizeMb,
         targetCollection: deconstructCollectionId(body.targetCollectionId),
+        maxRequestGranules: body.maxRequestGranules,
       },
     },
     payload: {},

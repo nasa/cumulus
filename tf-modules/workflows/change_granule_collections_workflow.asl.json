@@ -18,6 +18,7 @@
             "invalidGranuleBehavior": "{$.meta.bulkChangeCollection.invalidGranuleBehavior}",
             "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
             "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}",
             "cumulus_message": {
               "input": "{$.payload}",
               "outputs": [
@@ -90,7 +91,10 @@
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
-            "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}"
+            "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "dbMaxPool": "{$.meta.bulkChangeCollection.dbMaxPool}",
+            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}",
           }
         }
       },
