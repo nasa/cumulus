@@ -35,6 +35,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3862**
+  - Updated `@cumulus/messages/Granules/convertDateToISOStringSettingNull` to handle empty string as null to address CMR metadata compatibility concern
 - **CUMULUS-4006**
   - Created docker image from v20.0.0, and published new tag [`53` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/53/images/sha256-6e1b26f5933bc6685861a7cb31fbbace01c3a0090b1e41c26e313b15620762cc?context=explore)
 - **CUMULUS-4018**
