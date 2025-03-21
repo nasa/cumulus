@@ -14,6 +14,7 @@ import { bulkPatchGranuleCollection, bulkPatch } from '@cumulus/api-client/granu
 import { getRequiredEnvVar } from '@cumulus/common/env';
 
 import keyBy from 'lodash/keyBy';
+import range from 'lodash/range';
 import { deleteS3Object } from '@cumulus/aws-client/S3';
 import { ValidationError } from '@cumulus/errors';
 import pRetry from 'p-retry';
@@ -162,6 +163,14 @@ async function cleanupInS3(
   );
 }
 
+function chunkGranules(granules: ValidGranuleRecord[], concurrency: number) {
+  const chunkSize = concurrency;
+  return range(granules.length / chunkSize).map((i) => granules.slice(
+    i * chunkSize,
+    (i + 1) * chunkSize
+  ));
+}
+
 async function changeGranuleCollectionsPG(
   event: MoveGranuleCollectionsEvent
 ): Promise<Object> {
@@ -171,18 +180,20 @@ async function changeGranuleCollectionsPG(
   const targetGranules = event.input.granules.filter(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(oldGranules.filter(validateGranule), 'granuleId');
   log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
-  
-  await moveGranulesInCumulusDatastores(
-    targetGranules,
-    constructCollectionId(config.collection.name, config.collection.version),
-    constructCollectionId(
-      config.targetCollection.name,
-      config.targetCollection.version
-    ),
-    config
-  );
-  //eslint-disable-next-line no-await-in-loop
-  await cleanupInS3(targetGranules, oldGranulesByID, config);
+  for (const granuleChunk of chunkGranules(targetGranules, config.concurrency*4)) {
+    //eslint-disable-next-line no-await-in-loop
+    await moveGranulesInCumulusDatastores(
+      granuleChunk,
+      constructCollectionId(config.collection.name, config.collection.version),
+      constructCollectionId(
+        config.targetCollection.name,
+        config.targetCollection.version
+      ),
+      config
+    );
+    //eslint-disable-next-line no-await-in-loop
+    await cleanupInS3(granuleChunk, oldGranulesByID, config);
+  }
 
   return {
     granules: targetGranules,
