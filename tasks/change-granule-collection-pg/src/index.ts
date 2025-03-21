@@ -42,11 +42,13 @@ interface EventConfig {
   buckets: BucketsConfigObject,
   concurrency: number | undefined,
   dbMaxPool: number | undefined,
+  maxRequestGranules: number | undefined,
 }
 
 type ValidEventConfig = {
   concurrency: number,
-  dbMaxPool: number
+  dbMaxPool: number,
+  maxRequestGranules: number,
 } & EventConfig;
 
 interface MoveGranuleCollectionsEvent {
@@ -79,6 +81,7 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
 function validateConfig(config: EventConfig): ValidEventConfig {
   const newConfig = config;
   newConfig.concurrency = config.concurrency || 100;
+  newConfig.maxRequestGranules = config.maxRequestGranules || 10000;
   return newConfig as ValidEventConfig;
 }
 
@@ -180,7 +183,7 @@ async function changeGranuleCollectionsPG(
   const targetGranules = event.input.granules.filter(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(oldGranules.filter(validateGranule), 'granuleId');
   log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
-  for (const granuleChunk of chunkGranules(targetGranules, config.concurrency*4)) {
+  for (const granuleChunk of chunkGranules(targetGranules, config.maxRequestGranules)) {
     //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(
       granuleChunk,
