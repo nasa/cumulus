@@ -18,6 +18,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Running `terraform apply` on this change will **permanently delete** the DynamoDB table named `{prefix}-ReconciliationReportsTable` and all of the the data it contains.
   - Ensure that the DynamoDB table named `{prefix}-ReconciliationReportsTable` is no longer needed before applying this update.
 
+### Fixed
+
+- **CUMULUS-4018**
+  - Updated `@cumulus/db/search` to correctly handle string parameter when limit is `null`
+  
 ## [v20.0.1] 2025-03-12
 
 ### Notable Changes
