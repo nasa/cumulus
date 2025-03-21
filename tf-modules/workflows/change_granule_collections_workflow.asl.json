@@ -63,7 +63,7 @@
             "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}",
             "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
             "dbMaxPool": "{$.meta.bulkChangeCollection.dbMaxPool}",
-            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}",
+            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}"
           }
         }
       },
