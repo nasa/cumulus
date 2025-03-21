@@ -292,7 +292,6 @@ async function copyGranulesInS3({
   targetGranules,
   cmrObjects,
   s3MultipartChunksizeMb,
-  concurrency,
 }: {
   sourceGranules: Array<ValidGranuleRecord>,
   targetGranules: Array<ValidGranuleRecord>,
@@ -331,7 +330,7 @@ async function copyGranulesInS3({
   await pMap(
     copyOperations,
     (operation) => operation(),
-    { concurrency: Number(concurrency || process?.env.concurrency || 100) }
+    { concurrency: 50 }
   );
 }
 
@@ -484,10 +483,14 @@ async function getAndValidateGranules(
   config: MassagedEventConfig
 ): Promise<Array<ValidGranuleRecord>> {
   const getGranuleMethod = config.testApiClientMethods?.getGranuleMethod || getGranule;
-  const tempGranulesInput = await Promise.all(granuleIds.map((granuleId) => getGranuleMethod({
-    prefix: getRequiredEnvVar('stackName'),
-    granuleId,
-  })));
+  const tempGranulesInput = await pMap(
+    granuleIds,
+    (granuleId) => getGranuleMethod({
+      prefix: getRequiredEnvVar('stackName'),
+      granuleId,
+    }),
+    { concurrency: config.concurrency }
+  );
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
     granulesInput = tempGranulesInput.filter((granule) => {
@@ -544,22 +547,26 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
   const cmrFiles = unValidatedCMRFiles.filter(validateApiFile);
   const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const cmrObjectsByGranuleId: { [granuleId: string]: Object } = {};
-  await Promise.all(cmrFiles.map(async (cmrFile) => {
-    cmrObjectsByGranuleId[cmrFile.granuleId] = await pRetry(
-      async () =>
-        metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
-      {
-        retries: 5,
-        minTimeout: 2000,
-        maxTimeout: 2000,
-        onFailedAttempt: (error) => {
-          log.warn(
-            `Error on reading CMR object ${cmrFile?.bucket}/${cmrFile?.key} :: ${error}, retrying`
-          );
-        },
-      }
-    );
-  }));
+  await pMap(
+    cmrFiles,
+    async (cmrFile) => {
+      cmrObjectsByGranuleId[cmrFile.granuleId] = await pRetry(
+        async () =>
+          metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
+        {
+          retries: 5,
+          minTimeout: 2000,
+          maxTimeout: 2000,
+          onFailedAttempt: (error) => {
+            log.warn(
+              `Error on reading CMR object ${cmrFile?.bucket}/${cmrFile?.key} :: ${error}, retrying`
+            );
+          },
+        }
+      );
+    },
+    { concurrency: 50 }
+  );
   return {
     cmrFilesByGranuleId,
     cmrObjectsByGranuleId,
