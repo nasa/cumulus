@@ -30,7 +30,7 @@ export type ValidGranuleRecord = {
 } & ApiGranuleRecord;
 
 interface EventConfig {
-  oldGranules: Array<ApiGranuleRecord>
+  oldGranules?: Array<ApiGranuleRecord>
   targetCollection: {
     name: string,
     version: string,
@@ -49,6 +49,7 @@ type ValidEventConfig = {
   concurrency: number,
   dbMaxPool: number,
   maxRequestGranules: number,
+  oldGranules?: Array<ApiGranuleRecord>
 } & EventConfig;
 
 interface MoveGranuleCollectionsEvent {
@@ -79,10 +80,11 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
 }
 
 function validateConfig(config: EventConfig): ValidEventConfig {
-  const newConfig = config;
+  const newConfig = config as ValidEventConfig;
   newConfig.concurrency = config.concurrency || 100;
   newConfig.maxRequestGranules = config.maxRequestGranules || 10000;
-  return newConfig as ValidEventConfig;
+  delete newConfig.oldGranules;
+  return newConfig;
 }
 
 async function moveGranulesInCumulusDatastores(
@@ -177,11 +179,12 @@ function chunkGranules(granules: ValidGranuleRecord[], concurrency: number) {
 async function changeGranuleCollectionsPG(
   event: MoveGranuleCollectionsEvent
 ): Promise<Object> {
-  const oldGranules = event.config.oldGranules;
+  const oldGranules = event.config.oldGranules as Array<ApiGranuleRecord>;
   const config = validateConfig(event.config);
 
   const targetGranules = event.input.granules.filter(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(oldGranules.filter(validateGranule), 'granuleId');
+  
   log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
   for (const granuleChunk of chunkGranules(targetGranules, config.maxRequestGranules)) {
     //eslint-disable-next-line no-await-in-loop
