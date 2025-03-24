@@ -182,7 +182,7 @@ async function changeGranuleCollectionsPG(
 
   const targetGranules = event.input.granules.filter(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(oldGranules.filter(validateGranule), 'granuleId');
-  
+
   log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
   for (const granuleChunk of chunkGranules(targetGranules, config.maxRequestGranules)) {
     //eslint-disable-next-line no-await-in-loop
