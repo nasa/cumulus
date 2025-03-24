@@ -46,7 +46,41 @@
           "MaxAttempts": 1
         }
       ],
-      "Next": "ChangeGranuleCollectionPG"
+      "Next": "CmrStep"
+    },
+    "CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "republish": true
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${post_to_cmr_task_arn}",
+      "Next": "ChangeGranuleCollectionPG",
+      "TimeoutSeconds": 900,
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
     },
     "ChangeGranuleCollectionPG": {
       "Parameters": {
