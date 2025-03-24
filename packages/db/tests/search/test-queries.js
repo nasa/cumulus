@@ -5,11 +5,11 @@ const {
 
 test('convertQueryStringToDbQueryParameters correctly converts api query string parameters to db query parameters', (t) => {
   const queryStringParameters = {
-    duration__from: 25,
+    duration__from: '25',
     fields: 'granuleId,collectionId,status,updatedAt',
     infix: 'A1657416',
-    limit: 20,
-    page: 3,
+    limit: '20',
+    page: '3',
     prefix: 'MO',
     sort_key: ['-productVolume', '+timestamp'],
     published: 'true',
@@ -56,7 +56,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     }],
     range: {
       duration: {
-        gte: queryStringParameters.duration__from,
+        gte: Number(queryStringParameters.duration__from),
       },
       updated_at: {
         gte: new Date(Number(queryStringParameters.timestamp__from)),
@@ -83,8 +83,8 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
 
 test('convertQueryStringToDbQueryParameters does not include limit/offset parameters if limit is explicitly set to null', (t) => {
   const queryStringParameters = {
-    limit: null,
-    offset: 3,
+    limit: 'null',
+    offset: '3',
   };
   const dbQueryParams = convertQueryStringToDbQueryParameters('granule', queryStringParameters);
   t.is(dbQueryParams.limit, undefined);
@@ -148,7 +148,7 @@ test('convertQueryStringToDbQueryParameters adds sorting on cumulus_id to db que
 
 test('convertQueryStringToDbQueryParameters does not add sorting on cumulus_id to db query parameters if limit is set to null and sort_key is provided', (t) => {
   const queryStringParameters = {
-    limit: null,
+    limit: 'null',
     sort_key: ['-productVolume'],
   };
   const expectedSortParameter = [
@@ -163,7 +163,7 @@ test('convertQueryStringToDbQueryParameters does not add sorting on cumulus_id t
 
 test('convertQueryStringToDbQueryParameters does not add sorting on cumulus_id to db query parameters if limit is set to null and sort_by is provided', (t) => {
   const queryStringParameters = {
-    limit: null,
+    limit: 'null',
     sort_by: 'productVolume',
     order: 'desc',
   };
