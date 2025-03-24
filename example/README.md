@@ -6,7 +6,7 @@ example is tested with the latest release of the Cumulus project.
 The Cumulus deployment is broken into two
 [Terraform root modules](https://www.terraform.io/docs/configuration/modules.html),
 `data-persistence-tf` and `cumulus-tf`. The `data-persistence-tf` module should
-be deployed first, and creates the Elasticsearch domain and Dynamo tables. The
+be deployed first, and creates the Dynamo tables. The
 `cumulus-tf` module deploys the rest of Cumulus: distribution, API, ingest,
 workflows, etc. The `cumulus-tf` module depends on the resources created in the
 `data-persistence-tf` deployment.

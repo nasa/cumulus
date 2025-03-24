@@ -49,6 +49,10 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     {
       column: 'updated_at',
       order: 'asc',
+    },
+    {
+      column: 'cumulus_id',
+      order: 'asc',
     }],
     range: {
       duration: {
@@ -87,6 +91,92 @@ test('convertQueryStringToDbQueryParameters does not include limit/offset parame
   t.is(dbQueryParams.offset, undefined);
 });
 
+test('convertQueryStringToDbQueryParameters adds limit and sorting on cumulus_id to db query parameters by default', (t) => {
+  const expectedDbQueryParameters = {
+    estimateTableRowCount: false,
+    limit: 10,
+    offset: 0,
+    page: 1,
+    includeFullRecord: false,
+    sort: [
+      {
+        column: 'cumulus_id',
+        order: 'asc',
+      },
+    ],
+  };
+  const dbQueryParams = convertQueryStringToDbQueryParameters('granule', {});
+  t.deepEqual(dbQueryParams, expectedDbQueryParameters);
+});
+
+test('convertQueryStringToDbQueryParameters adds sorting on cumulus_id to db query parameters if limit is not set to null and sort_key is provided', (t) => {
+  const queryStringParameters = {
+    sort_key: ['-productVolume'],
+  };
+  const expectedSortParameter = [
+    {
+      column: 'product_volume',
+      order: 'desc',
+    },
+    {
+      column: 'cumulus_id',
+      order: 'asc',
+    },
+  ];
+  const dbQueryParams = convertQueryStringToDbQueryParameters('granule', queryStringParameters);
+  t.deepEqual(dbQueryParams.sort, expectedSortParameter);
+});
+
+test('convertQueryStringToDbQueryParameters adds sorting on cumulus_id to db query parameters if limit is not set to null and sort_by is provided', (t) => {
+  const queryStringParameters = {
+    sort_by: 'productVolume',
+    order: 'desc',
+  };
+  const expectedSortParameter = [
+    {
+      column: 'product_volume',
+      order: 'desc',
+    },
+    {
+      column: 'cumulus_id',
+      order: 'asc',
+    },
+  ];
+  const dbQueryParams = convertQueryStringToDbQueryParameters('granule', queryStringParameters);
+  t.deepEqual(dbQueryParams.sort, expectedSortParameter);
+});
+
+test('convertQueryStringToDbQueryParameters does not add sorting on cumulus_id to db query parameters if limit is set to null and sort_key is provided', (t) => {
+  const queryStringParameters = {
+    limit: null,
+    sort_key: ['-productVolume'],
+  };
+  const expectedSortParameter = [
+    {
+      column: 'product_volume',
+      order: 'desc',
+    },
+  ];
+  const dbQueryParams = convertQueryStringToDbQueryParameters('granule', queryStringParameters);
+  t.deepEqual(dbQueryParams.sort, expectedSortParameter);
+});
+
+test('convertQueryStringToDbQueryParameters does not add sorting on cumulus_id to db query parameters if limit is set to null and sort_by is provided', (t) => {
+  const queryStringParameters = {
+    limit: null,
+    sort_by: 'productVolume',
+    order: 'desc',
+  };
+  const expectedSortParameter = [
+    {
+      column: 'product_volume',
+      order: 'desc',
+    },
+  ];
+  const dbQueryParams = convertQueryStringToDbQueryParameters('granule', queryStringParameters);
+  t.deepEqual(dbQueryParams.sort, expectedSortParameter);
+});
+
 test('convertQueryStringToDbQueryParameters correctly converts sortby error parameter to db query parameters', (t) => {
   const queryStringParameters = {
     sort_by: 'error.Error.keyword',
@@ -102,6 +192,10 @@ test('convertQueryStringToDbQueryParameters correctly converts sortby error para
     sort: [
       {
         column: 'error.Error',
+        order: 'asc',
+      },
+      {
+        column: 'cumulus_id',
         order: 'asc',
       },
     ],
