@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Running `terraform apply` on this change will **permanently delete** the DynamoDB table named `{prefix}-ReconciliationReportsTable` and all of the the data it contains.
   - Ensure that the DynamoDB table named `{prefix}-ReconciliationReportsTable` is no longer needed before applying this update.
 - **CUMULUS-4019**
-  - Made checksum type name comparison case-insensitive in lzards-backup
+  - Updated `@cumulus/lzards-backup` task to make checksum type name comparison case-insensitive
 
 ### Fixed
 

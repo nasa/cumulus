@@ -112,7 +112,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
                       fileName: 'testGranule.jpg',
                       bucket: ingestBucket,
                       key: `${ingestPath}/testGranule.jpg`,
-                      checksumType: 'md5',
+                      checksumType: 'MD5',
                       checksum: '5799f9560b232baf54337d334179caa0',
                     },
                     {
