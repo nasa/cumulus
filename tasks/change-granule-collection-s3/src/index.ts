@@ -590,7 +590,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const {
     cmrFilesByGranuleId,
     cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,
-  } = await getCMRObjectsByFileId(sourceGranules);
+  } = await getCMRObjectsByFileId(sourceGranules, config);
 
   //  here we update *just* the collection
   // this is because we need that to parse the target file location
