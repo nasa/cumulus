@@ -2,7 +2,11 @@
 
 import { Context } from 'aws-lambda';
 import pMap from 'p-map';
+import pRetry from 'p-retry';
 import path from 'path';
+import keyBy from 'lodash/keyBy';
+import range from 'lodash/range';
+import clone from 'lodash/clone';
 import { AssertionError } from 'assert';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { constructCollectionId } from '@cumulus/message/Collections';
@@ -12,12 +16,8 @@ import { CumulusMessage } from '@cumulus/types/message';
 import { BucketsConfigObject } from '@cumulus/common/types';
 import { bulkPatchGranuleCollection, bulkPatch } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-
-import keyBy from 'lodash/keyBy';
-import range from 'lodash/range';
 import { deleteS3Object } from '@cumulus/aws-client/S3';
 import { ValidationError } from '@cumulus/errors';
-import pRetry from 'p-retry';
 
 type ValidApiFile = {
   bucket: string,
@@ -80,7 +80,7 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
 }
 
 function validateConfig(config: EventConfig): ValidEventConfig {
-  const newConfig = config as ValidEventConfig;
+  const newConfig = clone(config) as ValidEventConfig;
   newConfig.concurrency = config.concurrency || 100;
   newConfig.maxRequestGranules = config.maxRequestGranules || 10000;
   delete newConfig.oldGranules;
