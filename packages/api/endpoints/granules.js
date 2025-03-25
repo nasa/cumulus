@@ -977,7 +977,7 @@ const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload
  * @param {number} [req.body.batchSize=100] - The batch size for processing granules.
  * @param {number} [req.body.concurrency=100] - The per-file concurrency level for processing
  * granules and granule records
- * @param {number} [req.body.maxRequestGranules=10000] - the maximum number of granules to send
+ * @param {number} [req.body.maxRequestGranules=1000] - the maximum number of granules to send
  * in an api request
  * @param {string} [req.body.invalidGranuleBehavior='error'] - The behavior for invalid granules
  * ('error' or 'skip').

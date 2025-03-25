@@ -82,7 +82,7 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
 function validateConfig(config: EventConfig): ValidEventConfig {
   const newConfig = clone(config) as ValidEventConfig;
   newConfig.concurrency = config.concurrency || 100;
-  newConfig.maxRequestGranules = config.maxRequestGranules || 10000;
+  newConfig.maxRequestGranules = config.maxRequestGranules || 1000;
   delete newConfig.oldGranules;
   return newConfig;
 }
