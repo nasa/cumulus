@@ -251,6 +251,7 @@ test.serial('bulkChangeCollection generates the proper payload and calls startEx
     s3MultipartChunkSizeMb: 500,
     batchSize: 200,
     concurrency: 50,
+    maxRequestGranules: 1000
   };
 
   await bulkChangeCollection({

@@ -18,7 +18,6 @@
             "invalidGranuleBehavior": "{$.meta.bulkChangeCollection.invalidGranuleBehavior}",
             "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
             "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
-            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}",
             "cumulus_message": {
               "input": "{$.payload}",
               "outputs": [
