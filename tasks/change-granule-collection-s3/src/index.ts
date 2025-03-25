@@ -292,6 +292,7 @@ async function copyGranulesInS3({
   targetGranules,
   cmrObjects,
   s3MultipartChunksizeMb,
+  concurrency
 }: {
   sourceGranules: Array<ValidGranuleRecord>,
   targetGranules: Array<ValidGranuleRecord>,
@@ -330,7 +331,7 @@ async function copyGranulesInS3({
   await pMap(
     copyOperations,
     (operation) => operation(),
-    { concurrency: 5 }
+    { concurrency }
   );
 }
 
@@ -531,7 +532,10 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
   };
 }
 
-async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promise<{
+async function getCMRObjectsByFileId(
+  granules: Array<ValidGranuleRecord>,
+  config: MassagedEventConfig
+): Promise<{
   cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
   cmrObjectsByGranuleId: { [granuleId: string]: Object },
 }> {
@@ -565,7 +569,7 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
         }
       );
     },
-    { concurrency: 50}
+    { concurrency: config.concurrency }
   );
   return {
     cmrFilesByGranuleId,
