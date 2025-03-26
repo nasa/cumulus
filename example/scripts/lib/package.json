@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/example-lib",
   "private": true,
-  "version": "18.5.6",
+  "version": "18.5.5",
   "description": "example project libs",
   "homepage": "https://github.com/nasa/cumulus/tree/master/example/scripts/lib",
   "engines": {

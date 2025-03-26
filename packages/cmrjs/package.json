@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cmrjs",
-  "version": "18.5.6",
+  "version": "18.5.5",
   "description": "A node SDK for CMR",
   "engines": {
     "node": ">=20.12.2"
