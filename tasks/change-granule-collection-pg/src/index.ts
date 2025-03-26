@@ -128,7 +128,7 @@ async function cleanupS3File(
     return;
   }
   await pRetry(
-    async () => await deleteS3Object(oldFile.bucket, oldFile.key),
+    () => deleteS3Object(oldFile.bucket, oldFile.key),
     {
       retries: 5,
       minTimeout: 2000,
@@ -189,7 +189,7 @@ async function cleanupInS3(
   });
   await pMap(
     operations,
-    async (operation) => await operation(),
+    (operation) => operation(),
     { concurrency: config.concurrency }
   );
 }
