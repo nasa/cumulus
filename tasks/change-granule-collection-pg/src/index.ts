@@ -177,7 +177,7 @@ async function cleanupInS3(
           onFailedAttempt: (error) => {
             if (error.toString().includes('RequestTimeout:')) {
               log.warn(
-                `Error when deleting object ${newFile?.bucket}/${oldFile?.key} to target ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
+                `Error when deleting object ${newFile?.bucket}/${oldFile?.key} ::  ${error}, retrying`
               );
             } else {
               throw error;
