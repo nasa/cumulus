@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4004**
+  - Add documentation explaining use and configuration of changegranuleCollections workflow
 - **CUMULUS-3992**
   - Update `MoveCollectionsWorkflow` references to `ChangeCollectionsWorkflow`
   - Update `@cumulus/api-client` to add bulkChangeCollection endpoint
