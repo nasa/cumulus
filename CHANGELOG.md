@@ -36,6 +36,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3752**
   - Fixed api return codes expected in api-client for bulkPatch and bulkPatchGranuleCollections
 
+## [v18.5.5] 2025-03-04
+
+### Added
+
+- **CUMULUS-3993**
+  - Added long PAN functionality and `panType` configuration option to `SendPan` task
+  - Updated example workflow configuration to better handle error exceptions,
+    see [Workflow Configuration](https://nasa.github.io/cumulus/docs/next/data-cookbooks/error-handling)
+  - Updated `PdrStatusCheck` task to properly propagate workflow execution error.
+
 ## [v18.5.3] 2025-01-21
 
 **Please note** changes in v18.5.3 may not yet be released in future versions, as this
@@ -8144,6 +8154,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
+[v18.5.5]: https://github.com/nasa/cumulus/compare/v18.5.3...v18.5.5
 [v18.5.3]: https://github.com/nasa/cumulus/compare/v18.5.2...v18.5.3
 [v18.5.2]: https://github.com/nasa/cumulus/compare/v18.5.1...v18.5.2
 [v18.5.1]: https://github.com/nasa/cumulus/compare/v18.5.0...v18.5.1
