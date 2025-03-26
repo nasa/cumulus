@@ -2,7 +2,10 @@
 
 import { Context } from 'aws-lambda';
 import pMap from 'p-map';
+import pRetry from 'p-retry';
 import path from 'path';
+import keyBy from 'lodash/keyBy';
+import range from 'lodash/range';
 import { AssertionError } from 'assert';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { constructCollectionId } from '@cumulus/message/Collections';
@@ -12,12 +15,8 @@ import { CumulusMessage } from '@cumulus/types/message';
 import { BucketsConfigObject } from '@cumulus/common/types';
 import { bulkPatchGranuleCollection, bulkPatch } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-
-import keyBy from 'lodash/keyBy';
-import range from 'lodash/range';
 import { deleteS3Object } from '@cumulus/aws-client/S3';
 import { ValidationError } from '@cumulus/errors';
-import pRetry from 'p-retry';
 
 type ValidApiFile = {
   bucket: string,
@@ -42,11 +41,14 @@ interface EventConfig {
   buckets: BucketsConfigObject,
   concurrency: number | undefined,
   dbMaxPool: number | undefined,
+  maxRequestGranules: number | undefined,
 }
 
 type ValidEventConfig = {
   concurrency: number,
-  dbMaxPool: number
+  dbMaxPool: number,
+  maxRequestGranules: number,
+  oldGranules?: Array<ApiGranuleRecord>
 } & EventConfig;
 
 interface MoveGranuleCollectionsEvent {
@@ -77,9 +79,11 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
 }
 
 function validateConfig(config: EventConfig): ValidEventConfig {
-  const newConfig = config;
+  const newConfig = config as ValidEventConfig;
   newConfig.concurrency = config.concurrency || 100;
-  return newConfig as ValidEventConfig;
+  newConfig.maxRequestGranules = config.maxRequestGranules || 1000;
+
+  return newConfig;
 }
 
 async function moveGranulesInCumulusDatastores(
@@ -177,8 +181,12 @@ async function changeGranuleCollectionsPG(
 
   const targetGranules = event.input.granules.filter(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(oldGranules.filter(validateGranule), 'granuleId');
-  log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
-  for (const granuleChunk of chunkGranules(targetGranules, config.concurrency)) {
+
+  log.debug(`change-granule-collection-pg run with config ${JSON.stringify({
+    ...config,
+    oldGranules: undefined, // oldGranules needs to not be logged because it can be enormous
+  })}`);
+  for (const granuleChunk of chunkGranules(targetGranules, config.maxRequestGranules)) {
     //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(
       granuleChunk,
