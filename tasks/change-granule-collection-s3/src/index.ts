@@ -251,11 +251,11 @@ async function copyFileInS3({
         minTimeout: 2000,
         maxTimeout: 2000,
         onFailedAttempt: (error) => {
-          if (error.toString().includes("RequestTimeout:"))
+          if (error.toString().includes('RequestTimeout:')) {
             log.warn(
               `failed attempt to upload CMR file ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
             );
-          else {
+          } else {
             throw error;
           }
         },
@@ -278,11 +278,11 @@ async function copyFileInS3({
         minTimeout: 2000,
         maxTimeout: 2000,
         onFailedAttempt: (error) => {
-          if (error.toString().includes("RequestTimeout:"))
+          if (error.toString().includes('RequestTimeout:')) {
             log.warn(
               `Error when copying object ${sourceFile?.bucket}/${sourceFile?.key} to target ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
             );
-          else {
+          } else {
             throw error;
           }
         },
@@ -300,7 +300,7 @@ async function copyGranulesInS3({
   targetGranules,
   cmrObjects,
   s3MultipartChunksizeMb,
-  concurrency
+  concurrency,
 }: {
   sourceGranules: Array<ValidGranuleRecord>,
   targetGranules: Array<ValidGranuleRecord>,
@@ -541,10 +541,13 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
   };
 }
 
-async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>, concurrency: number): Promise<{
-  cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
-  cmrObjectsByGranuleId: { [granuleId: string]: Object },
-}> {
+async function getCMRObjectsByFileId(
+  granules: Array<ValidGranuleRecord>,
+  concurrency: number
+): Promise<{
+    cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
+    cmrObjectsByGranuleId: { [granuleId: string]: Object },
+  }> {
   const unValidatedCMRFiles = granules.flatMap((granule) => {
     if (!granule.files) {
       return [];
@@ -568,11 +571,11 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>, concur
           minTimeout: 2000,
           maxTimeout: 2000,
           onFailedAttempt: (error) => {
-            if (error.toString().includes("RequestTimeout:"))
+            if (error.toString().includes('RequestTimeout:')) {
               log.warn(
                 `Error when reading cmr object ${cmrFile?.bucket}/${cmrFile?.key} :: ${error}, retrying`
               );
-            else {
+            } else {
               throw error;
             }
           },

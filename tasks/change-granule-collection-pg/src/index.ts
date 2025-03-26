@@ -134,11 +134,11 @@ async function cleanupS3File(
       minTimeout: 2000,
       maxTimeout: 2000,
       onFailedAttempt: (error) => {
-        if (error.toString().includes("RequestTimeout:"))
+        if (error.toString().includes('RequestTimeout:')) {
           log.warn(
             `Error when deleting object ${oldFile?.bucket}/${oldFile?.key} :: ${error}, retrying`
           );
-        else {
+        } else {
           throw error;
         }
       },
@@ -175,11 +175,11 @@ async function cleanupInS3(
           minTimeout: 2000,
           maxTimeout: 2000,
           onFailedAttempt: (error) => {
-            if (error.toString().includes("RequestTimeout:"))
+            if (error.toString().includes('RequestTimeout:')) {
               log.warn(
                 `Error when deleting object ${newFile?.bucket}/${oldFile?.key} to target ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
               );
-            else {
+            } else {
               throw error;
             }
           },
