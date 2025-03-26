@@ -300,12 +300,13 @@ async function copyGranulesInS3({
   targetGranules,
   cmrObjects,
   s3MultipartChunksizeMb,
+  concurrency
 }: {
   sourceGranules: Array<ValidGranuleRecord>,
   targetGranules: Array<ValidGranuleRecord>,
   cmrObjects: { [granuleId: string]: Object },
   s3MultipartChunksizeMb?: number,
-  concurrency?: number,
+  concurrency: number,
 }): Promise<void> {
   const sourceGranulesById = keyBy(sourceGranules, 'granuleId');
 
@@ -338,7 +339,7 @@ async function copyGranulesInS3({
   await pMap(
     copyOperations,
     (operation) => operation(),
-    { concurrency: 50 }
+    { concurrency: concurrency }
   );
 }
 
@@ -529,9 +530,10 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
     collectionName: config.targetCollection.name,
     collectionVersion: config.targetCollection.version,
   });
-
+  const concurrency = config.concurrency || 100;
   return {
     ...config,
+    concurrency,
     chunkSize,
     targetCollection,
     cmrGranuleUrlType: config.cmrGranuleUrlType || 'both',
@@ -539,7 +541,7 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
   };
 }
 
-async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promise<{
+async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>, concurrency: number): Promise<{
   cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
   cmrObjectsByGranuleId: { [granuleId: string]: Object },
 }> {
@@ -578,7 +580,7 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
         }
       );
     },
-    { concurrency: 50 }
+    { concurrency: concurrency }
   );
   return {
     cmrFilesByGranuleId,
@@ -599,7 +601,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const {
     cmrFilesByGranuleId,
     cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,
-  } = await getCMRObjectsByFileId(sourceGranules);
+  } = await getCMRObjectsByFileId(sourceGranules, config.concurrency);
 
   //  here we update *just* the collection
   // this is because we need that to parse the target file location

@@ -168,7 +168,7 @@ async function cleanupInS3(
           message: 'mismatch between target and source granule files',
         });
       }
-      return pRetry(
+      return () => pRetry(
         () => cleanupS3File(newFile, oldFile),
         {
           retries: 5,
