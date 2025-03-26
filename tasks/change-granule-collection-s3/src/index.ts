@@ -251,9 +251,13 @@ async function copyFileInS3({
         minTimeout: 2000,
         maxTimeout: 2000,
         onFailedAttempt: (error) => {
-          log.warn(
-            `failed attempt to upload CMR file ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
-          );
+          if (error.toString().includes("RequestTimeout:"))
+            log.warn(
+              `failed attempt to upload CMR file ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
+            );
+          else {
+            throw error;
+          }
         },
       });
     }
@@ -274,9 +278,13 @@ async function copyFileInS3({
         minTimeout: 2000,
         maxTimeout: 2000,
         onFailedAttempt: (error) => {
-          log.warn(
-            `Error when copying object ${sourceFile?.bucket}/${sourceFile?.key} to target ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
-          );
+          if (error.toString().includes("RequestTimeout:"))
+            log.warn(
+              `Error when copying object ${sourceFile?.bucket}/${sourceFile?.key} to target ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
+            );
+          else {
+            throw error;
+          }
         },
       }
     );
@@ -558,10 +566,15 @@ async function getCMRObjectsByFileId(granules: Array<ValidGranuleRecord>): Promi
           minTimeout: 2000,
           maxTimeout: 2000,
           onFailedAttempt: (error) => {
-            log.warn(
-              `Error on reading CMR object ${cmrFile?.bucket}/${cmrFile?.key} :: ${error}, retrying`
-            );
+            if (error.toString().includes("RequestTimeout:"))
+              log.warn(
+                `Error when reading cmr object ${cmrFile?.bucket}/${cmrFile?.key} :: ${error}, retrying`
+              );
+            else {
+              throw error;
+            }
           },
+
         }
       );
     },
