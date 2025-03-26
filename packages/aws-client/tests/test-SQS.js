@@ -12,6 +12,8 @@ const {
   sqsQueueExists,
   sendSQSMessage,
   isSQSRecordLike,
+  receiveSQSMessages,
+  limitSQSMessageLength,
 } = require('../SQS');
 
 const randomString = () => cryptoRandomString({ length: 10 });
@@ -99,4 +101,47 @@ test('isSQSRecordLike filters correctly for sqs record shape', (t) => {
   /* this is a bare check for body in object.
   body *should* be a string form json object,
   but strictly checking is not compatible with the current use-case*/
+});
+
+test('sendSQSMessage truncates oversized messages safely', async (t) => {
+  const queueName = randomString();
+  const queueUrl = await createQueue(queueName);
+  const maxLength = 262144;
+  const overflowMessage = '0'.repeat(maxLength + 2);
+  await sendSQSMessage(queueUrl, overflowMessage);
+
+  const recievedMessage = await receiveSQSMessages(queueUrl, {});
+  const messageBody = recievedMessage[0].Body;
+  t.true(messageBody.endsWith('...TruncatedForLength'));
+  t.true(messageBody.length <= maxLength);
+});
+
+test('limitSQSMessageLength truncates unicode messages of greater than maximum byte size', (t) => {
+  const maxLength = 262144;
+  const overflowMessageUnicodeMessage = 'è'.repeat(maxLength / 2 + 20);
+  const massagedMessage = limitSQSMessageLength(overflowMessageUnicodeMessage);
+
+  t.true(massagedMessage.endsWith('...TruncatedForLength'));
+  t.true(massagedMessage.length <= maxLength);
+
+  const overflowMessageMixedMessage = 'èa'.repeat(maxLength / 2 + 20);
+  const massagedMixedMessage = limitSQSMessageLength(overflowMessageMixedMessage);
+
+  t.true(massagedMixedMessage.endsWith('...TruncatedForLength'));
+  t.true(massagedMixedMessage.length <= maxLength);
+});
+
+test('limitSQSMessageLength does not truncate messages appropriate for sqs to handle', (t) => {
+  const maxLength = 262144;
+  let underflowMessage = '0'.repeat(maxLength);
+  t.is(limitSQSMessageLength(underflowMessage), underflowMessage);
+
+  underflowMessage = 'ř'.repeat(maxLength / 2);
+  t.is(limitSQSMessageLength(underflowMessage), underflowMessage);
+
+  underflowMessage = 'a'.repeat(maxLength / 2);
+  t.is(limitSQSMessageLength(underflowMessage), underflowMessage);
+
+  underflowMessage = 'abcd';
+  t.is(limitSQSMessageLength(underflowMessage), underflowMessage);
 });
