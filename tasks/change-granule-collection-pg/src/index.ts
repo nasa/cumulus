@@ -6,7 +6,6 @@ import pRetry from 'p-retry';
 import path from 'path';
 import keyBy from 'lodash/keyBy';
 import range from 'lodash/range';
-import clone from 'lodash/clone';
 import { AssertionError } from 'assert';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { constructCollectionId } from '@cumulus/message/Collections';
@@ -30,7 +29,7 @@ export type ValidGranuleRecord = {
 } & ApiGranuleRecord;
 
 interface EventConfig {
-  oldGranules?: Array<ApiGranuleRecord>
+  oldGranules: Array<ApiGranuleRecord>
   targetCollection: {
     name: string,
     version: string,
@@ -80,10 +79,10 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
 }
 
 function validateConfig(config: EventConfig): ValidEventConfig {
-  const newConfig = clone(config) as ValidEventConfig;
+  const newConfig = config as ValidEventConfig;
   newConfig.concurrency = config.concurrency || 100;
   newConfig.maxRequestGranules = config.maxRequestGranules || 1000;
-  delete newConfig.oldGranules;
+
   return newConfig;
 }
 
@@ -177,13 +176,16 @@ function chunkGranules(granules: ValidGranuleRecord[], concurrency: number) {
 async function changeGranuleCollectionsPG(
   event: MoveGranuleCollectionsEvent
 ): Promise<Object> {
-  const oldGranules = event.config.oldGranules as Array<ApiGranuleRecord>;
+  const oldGranules = event.config.oldGranules;
   const config = validateConfig(event.config);
 
   const targetGranules = event.input.granules.filter(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(oldGranules.filter(validateGranule), 'granuleId');
 
-  log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
+  log.debug(`change-granule-collection-pg run with config ${JSON.stringify({
+    ...config,
+    oldGranules: undefined, // oldGranules needs to not be logged because it can be enormous
+  })}`);
   for (const granuleChunk of chunkGranules(targetGranules, config.maxRequestGranules)) {
     //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(
