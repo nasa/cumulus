@@ -9,176 +9,83 @@ This documentation explains the process of transitioning granules across collect
 ## BulkChangeCollection Api Endpoint
 
 An api endpoint is exposed, along with a function in the @cumulus/api-client.
+
 - api endpoint - POST `/bulkChangeCollection`
 - api-client function - `@cumulus/api-client/granules/bulkChangeCollection`
 
 The api-client function accepts the following configurations that specify its targets
+
 - `sourceCollectionId` - specifies the collection *from* which granules should be transfered
 - `targetCollectionId` - specifies the collection *to* which granules should be transfered
 
 additionally the api-client function accepts the following configurations that help bound performance
-- `batchSize` - how many granules should be processed in on workflow run
-    - default 100
+
+- `batchSize` - how many granules should be processed in one workflow run
+  - default 100
 - `concurrency` - processing concurrency
-    - default 100
+  - default 100
 - `dbMaxPool` - database concurrency. should be greater than or equal to concurrency
-    - default 100
+  - default 100
 - `maxRequestGranules` - maximum number of granules to be handled in one api call
-    - default 1000
+  - default 1000
 - `invalidGranuleBehavior` - [`skip`, `error`] what to do if an invalid granule is encountered
-    - default `error`
+  - default `error`
 - `cmrGranuleUrlType` - [`s3`, `http`, `both`] granule urls to put into updated cmr record
-    - default `both`
+  - default `both`
 - `s3MultipartChunkSizeMb` - chunk size for s3 transfers/writes
-    - default 250 Mb
+  - default from environment
 
-## Dead Letter Archive recovery
+### batchSize
 
-In addition to the above, as of Cumulus v9+, the Cumulus API also contains a new endpoint at `/deadLetterArchive/recoverCumulusMessages`.
+This configuration defines the number of granules to be processed in one workflow run. The Api will load up a random `<batchSize>` batch of granules from the specified collection at `<sourceCollectionId>` and send them through the change-granule-collections workflow.
 
-Sending a POST request to this endpoint will trigger a Cumulus AsyncOperation that will attempt to reprocess (and if successful delete) all Cumulus messages in the dead letter archive, using the same underlying logic as the existing `sfEventSqsToDbRecords`. Otherwise, all Cumulus messages that fail to be reprocessed will be moved to a new archive location under the path `<stackName>/dead-letter-archive/failed-sqs/<YYYY-MM-DD>`.
+#### Idempotency and re-running
 
-This endpoint may prove particularly useful when recovering from extended or unexpected database outage, where messages failed to process due to external outage and there is no essential malformation of each Cumulus message.
+The intended workflow is that this api is called repeatedly with the same parameters. each step in the process is tested to be thoroughly idempotent, with the final step in the process* being the update to postgres. in the event of failures such as cmr failures or other intermitted errors, a granule will will simply be picked up by this call in a future run
 
-### Configurable request parameters
+- Note that the postgres update is strictly the second to last operation, the final step is to delete old s3 files. it is possible in the specific case that the s3 deletion fails, that that granule will not be re-run and old s3 files can be left over
 
-The DLA recovery endpoint takes the following configurations that help bound performance.
+### concurrency
 
-- `batchSize` - specifies how many DLA objects to read from S3 and hold in memory.    Increasing this value will cause the tool to read and hold `batchSize` DLA objects in memory and iterate over them with `concurrency` operations in parallel.   Defaults to 1000.
-- `concurrency` - specifies how many messages to process from the batch in parallel.  Defaults to 30.
-- `dbMaxPool` - specifies how many database connections to allow the process to utilize as part of it's connection pool.     This value will constrain database connections, but too low a value can cause performance issues or database write failures (Knex timeout errors) if the connection pool is not high enough to support the set concurrency.   Defaults to 30, value should target at minimum the value set for `concurrency`.
+This configuration defines parallelization to use. Defaults to 100.
 
-### Dead Letter Archive Recovery Configuration
+The specific subroutines that run at this concurrency are:
 
-The dead letter archive async operation environment can be configured to allow use of more memory/CPU if increased performance/concurrency is desired via the following `cumulus` terraform variables:
+- loading granule records from the cumulus Api
+- copying s3 files to new location (if necessary)
+- deleting old s3 files (if necessary)
+- updating granule records in cumulus datastores (es/postgres)
+- updating records in cmr
 
-- dead_letter_recovery_cpu
-- dead_letter_recovery_memory
+### dbMaxPool
 
-These values can be configured to increase according to configuration table in [Fargate Services Documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html) if the process is failing due to memory errors with high concurrency/connection limits/faster performance is desired.
+This configuration specifies how many database connections to allow the process to utilize as part of it's connection pool. This value will constrain database connections, but too low a value can cause performance issues or database write failures (Knex timeout errors) if the connection pool is not high enough to support the set concurrency.   Defaults 100, value should target at minimum the value set for `concurrency`.
 
-See [Cumulus DLA Documentation](https://nasa.github.io/cumulus/docs/features/dead_letter_archive) for more information on this feature.
+### maxRequestGranules
 
-## Dead Letter Archive Message structure
+This configuration limits the size of requests sent to api endpoints during the runtime of this workflow. Defaults to 1000, minimize overhead from api calls by setting higher, but must be small enough that an api call (primarily the stringified set of granules) does not overrun the limit of 6 Mb that can be passed, and also wont time out the api lambda in attempting to run. how this should be set depends heavily on how many files there are per granule, and what the privateApiLambda timeout is set to
 
-The Messages yielded to the dead letter archive have some inherent uncertainty to their structure due to their nature as failed messages that may have failed due to structural issues. However there is a standard format that they will overwhelmingly conform to. This follows, but adds attributes to the format documented at [SQSMessage](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_Message.html)
+the specific subroutines that run this maxRequestGranules are
 
-```ts
-{
-    body: [string], // parseable as EventBridge
-    error: [string | null], // error that caused the message to be shunted to the DLQ
-    execution: [string | null], // execution ARN for the execution which created the originating sf event
-    time: [string | null], // Zulu timestamp of of the originating sf event
-    collection: [string | null], // collection the granule belongs to
-    granules: [Array[string | null] | null], // granules
-    stateMachine: [string | null], // ARN of the triggering workflow
-    status: [string | null], status of triggering execution
-    /* these following are standard, not built by cumulus */
-    md5OfBody: [string], // checksum of message body
-    eventSource: [string], // aws:sqs
-    awsRegion: [string], // aws region that this is happening in
-    messageId: [string], // uniqueID of the DLQ message
-    receiptHandle: [string], // An identifier associated with the act of receiving the message. A new receipt handle is returned every time you receive a message.
-    attributes: [Object], // A map of the attributes requested in ReceiveMessage to their respective values.
-    messageAttributes: [Object], // Each message attribute consists of a Name, Type, and Value.
-}
-```
+- `bulkPatch` granule api endpoint
+- `bulkPatchGranuleCollection` granule api endpoint
 
-note that each of these fields except for 'body' can be null if no data was found, usually due to a parsing error
-for further details on body contents: [see below]
+### invalidGranuleBehavior
 
-## Dead Letter Archive Body contents
+This configuration specifies how to handle granule records that are un-processable due to containing file records missing either bucket or key. Defaults to `error`, can be either `error` or `skip`. It is of course hoped that these don't exist, but if they do show up it is, by default, expected that this should be taken as a needed fix. if however you wish to process what can be processed and come back to the rest later, they can be skipped
 
-The body attribute should be a JSON string containing an event bridge event
+### cmrGranuleUrlType
 
-Note that
+This specifies what type of urls to fill out in the cmr metadata as it is updated to the new collection's pathing pattern. Defaults to `both`, can be `both`, `s3`, or `http`.
 
-- Because this message body arrived in the Dead Letter Archive because of issues in processing it, there is no strict guarantee that it is a valid json object, or conforms to expected structure. the *expected* structure follows.
-- Automated processing of these messages *must* be prepared for attributes to be missing.
+### s3MultipartChunkSizeMb
 
-```ts
-{
-    version: [string | null], // versionString
-    id: [string | null], // unique ID of the triggering event
-    'detail-type': 'Step Functions Execution Status Change', // defines the below 'detail' spec
-    source: 'aws.states',
-    account: [string], // account ID
-    time: [string], // Zulu timestamp of the originating sf event
-    region: [string], //aws region
-    resources: [Array[string]], //ARNs of involved resources
-    detail: [string], //parses as Step Function Execution Status Change object, see below
-}
-```
+This allows you to set the size of chunks that files should be broken up into when loading to s3. This should, in most cases, be left unset, to use the value in your environment based upon the same global configuration that sets this same value elsewhere (i.e. move-granules task) in accordance with your stack's configuration
 
-Step Function Execution Status Change (detail) [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-sfn/Interface/DescribeExecutionCommandOutput/):
+## Implementation
 
-```ts
-{
-    executionArn: [string], // ARN of the triggering execution
-    stateMachineArn: [string], // ARN of the triggering workflow
-    name: [string], // Execution name of triggering execution
-    status: [string], // status of triggering execution
-    startDate: [int], // timestamp of
-    stopDate: [int | null], // timestamp of
-    input: [string], //parses as the cumulus message input
-    output: [string | null], //parses as the cumulus message output if execution succeeded
-    stateMachineVersionArn: [string | null], // The version ARN is a combination of state machine ARN and the version number separated by a colon (:)
-    stateMachineAliasArn: [string | null], // a combination of state machine ARN and the alias name separated by a colon (:)
-    inputDetails: [CloudWatchEventsExecutionDataDetails], // Details about execution input
-    outputDetails: [CloudWatchEventsExecutionDataDetails | null], // Details about execution output
-    error: [string | null], // The cause string if the state machine execution failed (most errors that send to the DLA will not have a *caught* failure that does not arrive here)
-    cause: [string | null], // the cause string if the state machine execution failed
-    /* note that these redrive statistics can be misleading, as they are not referring to the execution that failed if the triggering execution was sfEventSqsToDbRecords*/
-    redriveCount: [int],
-    redriveDate: [string | null],
-    redriveStatus: [string],
-    redriveStatusReason: [string],
-}
-```
+The intended use of this is to call this api on a rhythm untill it is done. this could be done with a cron job, or another script, but the same api call can be made again and again and by the way it is structured it will get new granules, or reprocess old granules that failed to process the first time.
 
-## Search and View Dead Letter Archive Messages
+multiple api calls should not be run against the same source and target collection ids in parrallel, they should be serialized to repeatedly run batches untill the work is done
 
-[Amazon Athena](https://docs.aws.amazon.com/athena/latest/ug/what-is.html) is a powerful serverless query service that allows us
-to analyze data directly from Amazon S3 using standard SQL. One of the key features of Athena is its support for partition
-projection. [Partition projection](https://docs.aws.amazon.com/athena/latest/ug/partition-projection.html) allows us to define a
-virtual partitioning scheme for our data stored in Amazon S3 without physically partitioning the data.
-
-We have provided an AWS Glue Catalog database, an AWS Glue Catalog table and an example query for querying S3 DLA messages.
-Our AWS Glue Catalog table `<prefix>_dla_glue_table` defines partition projection for `eventdate` key which corresponds
-to `date` folder under Dead Letter Archive S3 storage location.
-
-**Note:** `<prefix>` is your stack name with dash replaced by underscore
-
-### Procedure
-
-1. Navigate to AWS Athena Console:
-
-    Launch query editor to `Query your data with Trino SQL`.
-
-    Choose Workgroup `<prefix>_athena_workgroup` from the workgroup drop down menu and acknowledge `Workgroup <prefix>_athena_workgroup settings`.
-
-    The `Saved queries` tab should have an example query `<prefix>_athena_test_query`, click it to open.
-
-    Select the appropriate database `<prefix>_glue_database` from the Database dropdown menu and run the query.
-
-2. Write and Run the Query:
-
-    When the query includes the partition key `eventdate`, the query on the table will be executed using `partition projection`
-    settings and would result in faster results by directly scanning the folder and files based on the partition information
-    provided in the query.
-
-    In the following query, the data is filtered based on the eventdate partition key and a specific value in the granules column.
-    `$path` returns the S3 file location for the data in a table row.
-
-    ```sql
-    select "$path",
-        *
-    from <prefix>_dla_glue_table
-    where eventdate between '2024-03-10' and '2024-03-15'
-        and contains(
-            granules,
-            'MOD09GQ.A5039420.mQk0tM.006.9370766211793'
-        )
-    ```
-
-    See [SQL reference for Athena](https://docs.aws.amazon.com/athena/latest/ug/ddl-sql-reference.html) for the complete SQL guide.
+multiple api calls can be run to parallelize *different* collection moves (unique it both source and target collection id), provided sensible limits are understood with respect to the resources available to your stack.
