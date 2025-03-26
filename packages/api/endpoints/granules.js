@@ -958,12 +958,12 @@ const bulkChangeCollectionSchema = z.object({
   targetCollectionId: z.string().nonempty('targetCollectionId is required'),
   batchSize: z.number().positive().optional().default(100),
   concurrency: z.number().positive().optional().default(100),
+  dbMaxPool: z.number().positive().optional().default(100),
+  maxRequestGranules: z.number().positive().optional().default(10000),
   invalidGranuleBehavior: z.enum(['error', 'skip']).default('error'),
   cmrGranuleUrlType: z.enum(['http', 's3', 'both']).default('both'),
   s3MultipartChunkSizeMb: z.number().optional(),
   executionName: z.string().optional(),
-  dbMaxPool: z.number().positive().optional().default(100),
-  maxRequestGranules: z.number().positive().optional().default(10000),
 });
 const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload', bulkChangeCollectionSchema);
 
