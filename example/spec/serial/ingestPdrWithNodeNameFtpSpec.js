@@ -164,7 +164,7 @@ describe('Ingesting from PDR', () => {
 
       await S3.deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllFailed = error;
       console.log('beforeAll setup error %j', error);
       throw error;
     }
@@ -208,8 +208,8 @@ describe('Ingesting from PDR', () => {
 
   describe('The Discover and Queue PDRs workflow', () => {
     let queuePdrsOutput;
-
     beforeAll(async () => {
+      if (beforeAllFailed) throw beforeAllFailed;
       try {
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName,
@@ -284,6 +284,7 @@ describe('Ingesting from PDR', () => {
       const collectionId = 'MOD09GQ___006';
 
       beforeAll(async () => {
+        if (beforeAllFailed) throw beforeAllFailed;
         parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
 
         try {
