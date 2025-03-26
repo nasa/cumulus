@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/add-missing-file-checksums",
-  "version": "18.5.3",
+  "version": "18.5.5",
   "description": "Add checksums to files in S3 which don't have one",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -45,12 +45,12 @@
     "failFast": true
   },
   "dependencies": {
-    "@cumulus/aws-client": "18.5.3",
+    "@cumulus/aws-client": "18.5.5",
     "@cumulus/cumulus-message-adapter-js": "2.2.0"
   },
   "devDependencies": {
-    "@cumulus/schemas": "18.5.3",
-    "@cumulus/types": "18.5.3",
+    "@cumulus/schemas": "18.5.5",
+    "@cumulus/types": "18.5.5",
     "@types/aws-lambda": "^8.10.58"
   }
 }
