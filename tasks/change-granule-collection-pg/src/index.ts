@@ -220,9 +220,10 @@ async function changeGranuleCollectionsPG(
     oldGranules: undefined, // oldGranules needs to not be logged because it can be enormous
   })}`);
   for (const granuleChunk of chunkGranules(targetGranules, config.maxRequestGranules)) {
-    /* maxRequestGranules smaller than concurrency is effectively limiting concurrency for these requests
-    greater maxRequestGranules offers greater efficiency, and some intermitten errors were seen when 
-    maxRequestGranules and concurrency were large and unequal */
+    /* maxRequestGranules smaller than concurrency is effectively limiting concurrency
+    for these requests greater maxRequestGranules offers greater efficiency,
+    and some intermitten errors were seen when maxRequestGranules and concurrency were
+    large and unequal */
     //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(
       granuleChunk,
