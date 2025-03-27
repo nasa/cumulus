@@ -171,23 +171,7 @@ async function cleanupInS3(
           message: 'mismatch between target and source granule files',
         });
       }
-      return () => pRetry(
-        () => cleanupS3File(newFile, oldFile),
-        {
-          retries: 5,
-          minTimeout: 2000,
-          maxTimeout: 2000,
-          onFailedAttempt: (error) => {
-            if (error.toString().includes('RequestTimeout:')) {
-              log.warn(
-                `Error when deleting object ${newFile?.bucket}/${oldFile?.key} ::  ${error}, retrying`
-              );
-            } else {
-              throw error;
-            }
-          },
-        }
-      );
+      return () => cleanupS3File(newFile, oldFile);
     });
   });
   await pMap(
