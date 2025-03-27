@@ -11,9 +11,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4004**
   - Add documentation explaining use and configuration of changegranuleCollections workflow
 - **CUMULUS-3992**
-  - Update `MoveCollectionsWorkflow` references to `ChangeCollectionsWorkflow`
+  - Update `MoveCollectionsWorkflow` references to `ChangeGranuleCollectionsWorkflow`
   - Update `@cumulus/api-client` to add bulkChangeCollection endpoint
-  - Update `@cumulus/api` to add api endpoint to allow trigger of `ChangeCollectionsWorkflow`
+  - Update `@cumulus/api` to add api endpoint to allow trigger of `ChangeGranuleCollectionsWorkflow`
   - Update ChangeGranuleCollections integration test to use endpoint to trigger test instead of direct step function invocation
 - **CUMULUS-3751**
   - Added `change-granule-collection-s3` to move granules to a different collection.
