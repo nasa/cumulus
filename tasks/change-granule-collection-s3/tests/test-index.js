@@ -1217,6 +1217,7 @@ test('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
       error,
       'this is a log output'
     );
+    t.pass();
   }
   try {
     throw new TypeError('some random error to throw');
