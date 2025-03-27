@@ -6,18 +6,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v20.1.1] 2025-03-26
+
 ### Changed
 
 - **CUMULUS-3994**
   - Removed references to the Elasticsearch domain named `{prefix}-es-vpc` in the data-persistence Terraform module and example.
   - Running `terraform apply` on this change will **permanently delete** the Elasticsearch domain named `{prefix}-es-vpc` and all of the the data it contains.
   - Ensure that the Elasticsearch domain named `{prefix}-es-vpc` is no longer needed before applying this update.
-
 - **CUMULUS-3842**
   - Removed references to the DynamoDB table named `{prefix}-ReconciliationReportsTable` in the data-persistence Terraform module.
   - Running `terraform apply` on this change will **permanently delete** the DynamoDB table named `{prefix}-ReconciliationReportsTable` and all of the the data it contains.
   - Ensure that the DynamoDB table named `{prefix}-ReconciliationReportsTable` is no longer needed before applying this update.
+- **CUMULUS-4019**
+  - Updated `@cumulus/lzards-backup` task to make checksum type name comparison case-insensitive
+
+### Fixed
+
+- **CUMULUS-4018**
+  - Updated `@cumulus/db/search` to correctly handle string parameter when limit is `null`
   
+## [v20.0.1] 2025-03-12
+
 ### Notable Changes
 
 - The async_operation_image property of the cumulus module should be updated to pull
@@ -33,9 +43,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3862**
+  - Updated `@cumulus/messages/Granules/convertDateToISOStringSettingNull` to handle empty string as null to address CMR metadata compatibility concern
 - **CUMULUS-4006**
   - Created docker image from v20.0.0, and published new tag [`53` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/53/images/sha256-6e1b26f5933bc6685861a7cb31fbbace01c3a0090b1e41c26e313b15620762cc?context=explore)
-
 - **CUMULUS-4018**
   - Fixed API list endpoints pagination missing records issue by sorting on unique cumulus_id column
 
@@ -8476,7 +8487,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.0.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.1.1...HEAD
+[v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.1.1
+[v20.0.1]: https://github.com/nasa/cumulus/compare/v20.0.0...v20.0.1
 [v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
 [v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
 [v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.5...v19.0.0

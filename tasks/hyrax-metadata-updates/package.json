@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hyrax-metadata-updates",
-  "version": "20.0.0",
+  "version": "20.1.1",
   "description": "Update granule metadata with hooks to OPeNDAP URL",
   "main": "index.js",
   "directories": {
@@ -41,17 +41,17 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "20.0.0",
-    "@cumulus/cmr-client": "20.0.0",
-    "@cumulus/cmrjs": "20.0.0",
-    "@cumulus/common": "20.0.0",
+    "@cumulus/aws-client": "20.1.1",
+    "@cumulus/cmr-client": "20.1.1",
+    "@cumulus/cmrjs": "20.1.1",
+    "@cumulus/common": "20.1.1",
     "@cumulus/cumulus-message-adapter-js": "2.3.0",
-    "@cumulus/errors": "20.0.0",
+    "@cumulus/errors": "20.1.1",
     "lodash": "^4.17.21",
     "xml2js": "0.6.2"
   },
   "devDependencies": {
-    "@cumulus/schemas": "20.0.0",
+    "@cumulus/schemas": "20.1.1",
     "jsonwebtoken": "^9.0.0",
     "nock": "^12.0.1",
     "rewire": "^6.0.0"

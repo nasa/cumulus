@@ -15,7 +15,7 @@ CMR search, without loading them all into memory at once.  Handles paging.</p>
 ## Functions
 
 <dl>
-<dt><a href="#providerParams">providerParams(params)</a> ⇒ <code>URLSearchParams</code></dt>
+<dt><a href="#providerParams">providerParams()</a></dt>
 <dd><p>Shim to correctly add a default provider_short_name to the input searchParams</p>
 </dd>
 </dl>
@@ -28,7 +28,7 @@ A class to simplify requests to the CMR
 **Kind**: global class  
 
 * [CMR](#CMR)
-    * [new CMR(params)](#new_CMR_new)
+    * [new CMR()](#new_CMR_new)
     * [.getCmrPassword()](#CMR+getCmrPassword) ⇒ <code>Promise.&lt;string&gt;</code>
     * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;(string\|undefined)&gt;</code>
     * [.getWriteHeaders(params)](#CMR+getWriteHeaders) ⇒ <code>Object</code>
@@ -44,20 +44,8 @@ A class to simplify requests to the CMR
 
 <a name="new_CMR_new"></a>
 
-### new CMR(params)
+### new CMR()
 The constructor for the CMR class
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> |  |
-| params.provider | <code>string</code> | the CMR provider id |
-| params.clientId | <code>string</code> | the CMR clientId |
-| params.username | <code>string</code> | CMR username, not used if token is provided |
-| params.passwordSecretName | <code>string</code> | CMR password secret, not used if token is provided |
-| params.password | <code>string</code> | CMR password, not used if token or  passwordSecretName is provided |
-| params.token | <code>string</code> | CMR or Launchpad token, if not provided, CMR username and password are used to get a cmr token |
-| params.oauthProvider | <code>string</code> | Oauth provider: earthdata or launchpad |
 
 **Example**  
 ```js
@@ -77,6 +65,8 @@ const cmrClient = new CMR({
  clientId: 'my-clientId',
  token: 'cmr_or_launchpad_token'
 });
+TODO: this should be subclassed or refactored to a functional style
+due to branch logic/complexity in token vs password/username handling
 ```
 <a name="CMR+getCmrPassword"></a>
 
@@ -230,8 +220,8 @@ CMR search, without loading them all into memory at once.  Handles paging.
 
 * [CMRSearchConceptQueue](#CMRSearchConceptQueue)
     * [new CMRSearchConceptQueue(params)](#new_CMRSearchConceptQueue_new)
-    * [.peek()](#CMRSearchConceptQueue+peek) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.shift()](#CMRSearchConceptQueue+shift) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.peek()](#CMRSearchConceptQueue+peek)
+    * [.shift()](#CMRSearchConceptQueue+shift)
 
 <a name="new_CMRSearchConceptQueue_new"></a>
 
@@ -242,7 +232,7 @@ The constructor for the CMRSearchConceptQueue class
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | params | <code>Object</code> |  |  |
-| params.cmrSettings | <code>string</code> |  | the CMR settings for the requests - the provider, clientId, and either launchpad token or EDL username and password |
+| params.cmrSettings | <code>Object</code> |  | the CMR settings for the requests - the provider, clientId, and either launchpad token or EDL username and password |
 | params.type | <code>string</code> |  | the type of search 'granule' or 'collection' |
 | [params.searchParams] | <code>URLSearchParams</code> | <code>{}</code> | the search parameters |
 | params.format | <code>string</code> |  | the result format |
@@ -261,36 +251,27 @@ const cmrSearchConceptQueue = new CMRSearchConceptQueue({
 ```
 <a name="CMRSearchConceptQueue+peek"></a>
 
-### cmrSearchConceptQueue.peek() ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrSearchConceptQueue.peek()
 View the next item in the queue
 
 This does not remove the object from the queue.  When there are no more
 items in the queue, returns 'null'.
 
 **Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - an item from the CMR search  
 <a name="CMRSearchConceptQueue+shift"></a>
 
-### cmrSearchConceptQueue.shift() ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrSearchConceptQueue.shift()
 Remove the next item from the queue
 
 When there are no more items in the queue, returns `null`.
 
 **Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - an item from the CMR search  
 <a name="providerParams"></a>
 
-## providerParams(params) ⇒ <code>URLSearchParams</code>
+## providerParams()
 Shim to correctly add a default provider_short_name to the input searchParams
 
 **Kind**: global function  
-**Returns**: <code>URLSearchParams</code> - - input object appeneded with a default provider_short_name  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> |  |
-| params.searchParams | <code>URLSearchParams</code> | input search  parameters for searchConceptQueue. This parameter can be either a  URLSearchParam object or a plain Object. |
-
 
 ---
 

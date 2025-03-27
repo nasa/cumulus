@@ -75,7 +75,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
           },
           task_config: {
             urlType: 'cloudfront',
-            cloudfrontEndpoint: 'http://d111111abcdef8.cloudfront.net/',
+            cloudfrontEndpoint: 'https://d111111abcdef8.cloudfront.net/',
             cumulus_message: {
               outputs: [
                 {
@@ -112,7 +112,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
                       fileName: 'testGranule.jpg',
                       bucket: ingestBucket,
                       key: `${ingestPath}/testGranule.jpg`,
-                      checksumType: 'md5',
+                      checksumType: 'MD5',
                       checksum: '5799f9560b232baf54337d334179caa0',
                     },
                     {
@@ -142,6 +142,9 @@ describe('The Lzards Backup Task with distribution URL', () => {
 
   it('succeeds', () => {
     console.log(`lzardsBackupOutput: ${JSON.stringify(lzardsBackupOutput)}`);
+    if (lzardsBackupOutput && lzardsBackupOutput.Payload) {
+      console.log(`lzardsBackupOutput.Payload: ${new TextDecoder('utf-8').decode(lzardsBackupOutput.Payload)}`);
+    }
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       expect(lzardsBackupOutput.FunctionError).toBe(undefined);
