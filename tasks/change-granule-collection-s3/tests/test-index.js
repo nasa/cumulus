@@ -1211,15 +1211,15 @@ test.serial('changeGranuleCollectionS3 should parse fileName if not given in fil
 
 test('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
   try {
-    throw new TypeError('RequestTimeout: this thing')
+    throw new TypeError('RequestTimeout: this thing');
   } catch (error) {
     logOrThrow(
       error,
       'this is a log output'
-    )
+    );
   }
   try {
-    throw new TypeError('some random error to throw')
+    throw new TypeError('some random error to throw');
   } catch (error) {
     t.throws(
       () => logOrThrow(
@@ -1227,8 +1227,8 @@ test('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
         'this is a log output'
       ),
       {
-        message: 'some random error to throw'
+        message: 'some random error to throw',
       }
-    )
+    );
   }
-})
+});

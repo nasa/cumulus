@@ -65,7 +65,7 @@ export function logOrThrow(error: pRetry.FailedAttemptError, logString: string) 
       `${logString}, retrying`
     );
   } else {
-    log.error(logString)
+    log.error(logString);
     throw error;
   }
 }
@@ -183,7 +183,7 @@ export async function s3CopyNeeded(
           (error) => logOrThrow(
             error,
             `Error checking if s3 object exists ${targetFile?.bucket}/${targetFile?.key} :: ${error}`
-          )
+          ),
       }
     ),
   ]);
@@ -308,7 +308,7 @@ async function copyFileInS3({
     return;
   }
   if (await s3CopyNeeded(sourceFile, targetFile)) {
-    // thiis onFailedAttempt is impossible to test in 
+    // this onFailedAttempt is impossible to test in
     await pRetry(
       () =>
         copyObject({
@@ -592,9 +592,9 @@ async function getCMRObjectsByFileId(
   granules: Array<ValidGranuleRecord>,
   concurrency: number
 ): Promise<{
-  cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
-  cmrObjectsByGranuleId: { [granuleId: string]: Object },
-}> {
+    cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
+    cmrObjectsByGranuleId: { [granuleId: string]: Object },
+  }> {
   const unValidatedCMRFiles = granules.flatMap((granule) => {
     if (!granule.files) {
       return [];
@@ -610,7 +610,6 @@ async function getCMRObjectsByFileId(
   await pMap(
     cmrFiles,
     async (cmrFile) => {
-
       cmrObjectsByGranuleId[cmrFile.granuleId] = await pRetry(
         async () =>
           metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
@@ -624,7 +623,7 @@ async function getCMRObjectsByFileId(
             (error) => logOrThrow(
               error,
               `Error when loading cmr file from s3 ${cmrFile?.bucket}/${cmrFile?.key} :: ${error}`
-            )
+            ),
         }
       );
     },
