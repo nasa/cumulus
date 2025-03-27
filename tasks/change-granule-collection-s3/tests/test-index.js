@@ -34,7 +34,7 @@ const {
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { constructCollectionId } = require('../../../packages/message/Collections');
-const { changeGranuleCollectionS3, s3CopyNeeded, updateCMRData, updateCMRCollections } = require('../dist/src');
+const { changeGranuleCollectionS3, s3CopyNeeded, updateCMRData, updateCMRCollections, logOrThrow } = require('../dist/src');
 const { dummyGetCollection, dummyGetGranule, uploadFiles } = require('./_helpers');
 
 function granulesToFileURIs(granuleIds, t) {
@@ -1208,3 +1208,27 @@ test.serial('changeGranuleCollectionS3 should parse fileName if not given in fil
     'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
   ));
 });
+
+test('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
+  try {
+    throw new TypeError('RequestTimeout: this thing')
+  } catch (error) {
+    logOrThrow(
+      error,
+      'this is a log output'
+    )
+  }
+  try {
+    throw new TypeError('some random error to throw')
+  } catch (error) {
+    t.throws(
+      () => logOrThrow(
+        error,
+        'this is a log output'
+      ),
+      {
+        message: 'some random error to throw'
+      }
+    )
+  }
+})

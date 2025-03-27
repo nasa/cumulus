@@ -133,15 +133,17 @@ async function cleanupS3File(
       retries: 5,
       minTimeout: 2000,
       maxTimeout: 2000,
-      onFailedAttempt: (error) => {
-        if (error.toString().includes('RequestTimeout:')) {
-          log.warn(
-            `Error when deleting object ${oldFile?.bucket}/${oldFile?.key} :: ${error}, retrying`
-          );
-        } else {
-          throw error;
-        }
-      },
+      onFailedAttempt:
+        /* istanbul skip next */
+        (error) => {
+          if (error.toString().includes('RequestTimeout:')) {
+            log.warn(
+              `Error when deleting object ${oldFile?.bucket}/${oldFile?.key} :: ${error}, retrying`
+            );
+          } else {
+            throw error;
+          }
+        },
     }
   );
 }
