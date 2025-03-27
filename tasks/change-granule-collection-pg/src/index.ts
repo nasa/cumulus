@@ -132,7 +132,8 @@ async function cleanupS3File(
     {
       retries: 5,
       minTimeout: 2000,
-      maxTimeout: 2000,
+      maxTimeout: 10000,
+      randomize: true,
       onFailedAttempt:
         /* istanbul skip next */
         (error) => {
