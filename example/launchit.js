@@ -20,8 +20,9 @@ const main = async () => {
     body: {
       sourceCollectionId: 'MOD11A1___000',
       targetCollectionId: 'MOD11A1___001',
-      concurrency: 10,
-      batchSize: 100
+      concurrency: 2000,
+      batchSize: 8000,
+      maxRequestGranules: 10000
     }
   });
 

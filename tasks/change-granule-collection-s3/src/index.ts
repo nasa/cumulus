@@ -18,6 +18,8 @@ import {
   isCMRFile,
   metadataObjectFromCMRFile,
 } from '@cumulus/cmrjs';
+import AWS from 'aws-sdk';
+import https from 'https';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { s3 } from '@cumulus/aws-client/services';
 import { BucketsConfig, log } from '@cumulus/common';
@@ -579,6 +581,12 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
     collectionVersion: config.targetCollection.version,
   });
   const concurrency = config.concurrency || Number(process.env.concurrency) || 100;
+  const agent = new https.Agent({
+    maxSockets: concurrency
+  })
+  AWS.config.update({
+    httpOptions: { agent }
+  })
   return {
     ...config,
     concurrency,
