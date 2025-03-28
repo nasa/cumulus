@@ -612,7 +612,7 @@ async function getCMRObjectsByFileId(
     cmrFiles,
     async (cmrFile) => {
       cmrObjectsByGranuleId[cmrFile.granuleId] = await pRetry(
-        async () =>
+        () =>
           metadataFunc(`s3://${cmrFile.bucket}/${cmrFile.key}`),
         {
           retries: 5,

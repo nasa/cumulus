@@ -1209,7 +1209,7 @@ test.serial('changeGranuleCollectionS3 should parse fileName if not given in fil
   ));
 });
 
-test.only('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
+test('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
   try {
     throw new TypeError('RequestTimeout: this thing');
   } catch (error) {
@@ -1233,3 +1233,62 @@ test.only('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
     );
   }
 });
+
+test.only('timeout', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+  const filesToUpload = granulesToFileURIs(
+    t.context.payload.input.granuleIds, t
+  );
+  const collection = { name: 'MOD11A1', version: '002' };
+  const newPayload = buildPayload(t, collection);
+  let retries = 0;
+  newPayload.config.testMethods = {
+    ...newPayload.config.testMethods,
+    getMetadataFunction: (s3Url) => {
+      retries += 1;
+      throw new Error('uh oh');
+    }
+  }
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  await t.throwsAsync(
+    () => changeGranuleCollectionS3(newPayload),
+    {
+      message: 'uh oh',
+    }
+  )
+  t.is(retries, 1)
+
+  retries = 0;
+  newPayload.config.testMethods = {
+    ...newPayload.config.testMethods,
+    getMetadataFunction: (s3Url) => {
+      retries += 1;
+      throw new Error('RequestTimeout: uh oh');
+    }
+  }
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  await t.throwsAsync(
+    () => changeGranuleCollectionS3(newPayload),
+    {
+      message: 'RequestTimeout: uh oh',
+    }
+  )
+  t.is(retries, 6)
+
+  retries = 0;
+  newPayload.config.testMethods = {
+    ...newPayload.config.testMethods,
+    getMetadataFunction: async (s3Url) => {
+      retries += 1;
+      if (retries < 3) {
+        throw new Error('RequestTimeout: uh oh');
+      }
+      return await metadataObjectFromCMRFile(s3Url);
+    }
+  }
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  await changeGranuleCollectionS3(newPayload),
+  t.is(retries, 3)
+  
+})
