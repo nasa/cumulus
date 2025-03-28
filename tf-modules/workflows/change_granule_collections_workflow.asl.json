@@ -6,6 +6,9 @@
       "Parameters": {
         "cma": {
           "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
           "task_config": {
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
@@ -33,7 +36,7 @@
       },
       "Type": "Task",
       "Resource": "${change_granule_collection_s3_task_arn}",
-      "TimeoutSeconds": 60,
+      "TimeoutSeconds": 900,
       "Retry": [
         {
           "ErrorEquals": [
@@ -64,6 +67,7 @@
       "Type": "Task",
       "Resource": "${post_to_cmr_task_arn}",
       "Next": "ChangeGranuleCollectionPG",
+      "TimeoutSeconds": 900,
       "Retry": [
         {
           "BackoffRate": 2,
@@ -86,13 +90,16 @@
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
-            "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}"
+            "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "dbMaxPool": "{$.meta.bulkChangeCollection.dbMaxPool}",
+            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}"
           }
         }
       },
       "Type": "Task",
       "Resource": "${change_granule_collection_pg_task_arn}",
-      "TimeoutSeconds": 60,
+      "TimeoutSeconds": 900,
       "Retry": [
         {
           "ErrorEquals": [
