@@ -1,6 +1,3 @@
-import { NodeHttpHandler } from "@smithy/node-http-handler";
-import https from "https";
-
 import { APIGatewayClient } from '@aws-sdk/client-api-gateway';
 import { CloudFormation } from '@aws-sdk/client-cloudformation';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
@@ -38,13 +35,7 @@ export const es = awsClient(ElasticsearchService, '2015-01-01');
 export const kinesis = awsClient(Kinesis, '2013-12-02');
 export const kms = awsClient(KMS, '2014-11-01');
 export const lambda = awsClient(Lambda, '2015-03-31');
-export const s3 = awsClient(S3, '2006-03-01', {
-  requestHandler: new NodeHttpHandler({
-    httpsAgent: new https.Agent({
-      maxSockets: 200,
-    })
-  })
-});
+export const s3 = awsClient(S3, '2006-03-01');
 export const secretsManager = awsClient(SecretsManager, '2017-10-17');
 export const sfn = awsClient(SFN, '2016-11-23');
 export const sns = awsClient(SNS, '2010-03-31');

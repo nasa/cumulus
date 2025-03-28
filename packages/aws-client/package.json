@@ -72,7 +72,6 @@
     "@cumulus/errors": "18.5.5",
     "@cumulus/logger": "18.5.5",
     "@cumulus/types": "18.5.5",
-    "@smithy/node-http-handler": "^4.0.4",
     "lodash": "~4.17.21",
     "mem": "^8.0.2",
     "p-map": "^1.2.0",
