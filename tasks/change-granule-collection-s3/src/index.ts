@@ -60,6 +60,7 @@ function objectSourceAndTargetSame(
 }
 
 export function logOrThrow(error: pRetry.FailedAttemptError, logString: string) {
+  log.warn(`error is ${error}, ${typeof(error)}`)
   if (error.toString().includes('RequestTimeout:')) {
     log.warn(
       `${logString}, retrying`
