@@ -59,6 +59,17 @@ function objectSourceAndTargetSame(
   return ((sourceFile.key === targetFile.key) && (sourceFile.bucket === targetFile.bucket));
 }
 
+export function logOrThrow(error: pRetry.FailedAttemptError, logString: string) {
+  if (error.toString().includes('RequestTimeout:')) {
+    log.warn(
+      `${logString}, retrying`
+    );
+  } else {
+    log.error(logString);
+    throw error;
+  }
+}
+
 async function metadataCollisionsMatch(
   targetFile: ValidApiGranuleFile,
   metadataObject: Object
@@ -67,7 +78,18 @@ async function metadataCollisionsMatch(
     () => metadataObjectFromCMRFile(
       `s3://${targetFile.bucket}/${targetFile.key}`
     ),
-    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+    {
+      retries: 5,
+      minTimeout: 2000,
+      maxTimeout: 10000,
+      randomize: true,
+      onFailedAttempt:
+      /* istanbul ignore next */
+        (error) => logOrThrow(
+          error,
+          `Error loading cmr metadata file at targetFile location to check for collision ${targetFile?.bucket}/${targetFile?.key} :: ${error}`
+        ),
+    }
   );
   const sourceCollection = getCMRCollectionId(metadataObject, targetFile.key);
   const targetCollection = getCMRCollectionId(existingGranuleMetadata, targetFile.key);
@@ -81,11 +103,33 @@ async function checkSumsMatch(
   const [sourceHash, targetHash] = await Promise.all([
     pRetry(
       () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...sourceFile }),
-      { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
+      {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 10000,
+        randomize: true,
+        onFailedAttempt:
+          /* istanbul ignore next */
+          (error) => logOrThrow(
+            error,
+            `Error checking s3 object hash for ${sourceFile?.bucket}/${sourceFile?.key} :: ${error}`
+          ),
+      }
     ),
     pRetry(
       () => calculateObjectHash({ s3: s3(), algorithm: 'CKSUM', ...targetFile }),
-      { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
+      {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 10000,
+        randomize: true,
+        onFailedAttempt:
+          /* istanbul ignore next */
+          (error) => logOrThrow(
+            error,
+            `Error checking s3 object hash for ${targetFile?.bucket}/${targetFile?.key} :: ${error}`
+          ),
+      }
     ),
   ]);
 
@@ -109,39 +153,37 @@ export async function s3CopyNeeded(
     return false;
   }
 
-  const [targetExists, sourceExists] = await Promise.all([
+  const [sourceExists, targetExists] = await Promise.all([
+    pRetry(
+      () =>
+        s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
+      {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 10000,
+        randomize: true,
+        onFailedAttempt:
+          /* istanbul ignore next */
+          (error) => logOrThrow(
+            error,
+            `Error checking if s3 object exists ${sourceFile?.bucket}/${sourceFile?.key} :: ${error}`
+          ),
+      }
+    ),
     pRetry(
       () =>
         s3ObjectExists({ Bucket: targetFile.bucket, Key: targetFile.key }),
       {
-        retries: 3,
+        retries: 5,
         minTimeout: 2000,
-        maxTimeout: 2000,
-        onFailedAttempt: (error) => {
-          log.warn(
-            `Error when checking for object ${{
-              Bucket: targetFile?.bucket,
-              Key: targetFile?.key,
-            }} :: ${error}, retrying`
-          );
-        },
-      }
-    ),
-    pRetry(
-      async () =>
-        s3ObjectExists({ Bucket: sourceFile.bucket, Key: sourceFile.key }),
-      {
-        retries: 3,
-        minTimeout: 2000,
-        maxTimeout: 2000,
-        onFailedAttempt: (error) => {
-          log.warn(
-            `Error when checking for object ${{
-              Bucket: sourceFile?.bucket,
-              Key: sourceFile?.key,
-            }} :: ${error}, retrying`
-          );
-        },
+        maxTimeout: 10000,
+        randomize: true,
+        onFailedAttempt:
+          /* istanbul ignore next */
+          (error) => logOrThrow(
+            error,
+            `Error checking if s3 object exists ${targetFile?.bucket}/${targetFile?.key} :: ${error}`
+          ),
       }
     ),
   ]);
@@ -214,10 +256,14 @@ async function cmrFileCollision(
       {
         retries: 5,
         minTimeout: 2000,
-        maxTimeout: 2000,
-        onFailedAttempt: (error) => {
-          log.warn(`failed attempt to check for target collision when moving CMR file ${targetFile?.bucket}/${targetFile?.key} :: ${error}, retrying`);
-        },
+        maxTimeout: 10000,
+        randomize: true,
+        onFailedAttempt:
+          /* istanbul ignore next */
+          (error) => logOrThrow(
+            error,
+            `Error checking if s3 object exists ${targetFile?.bucket}/${targetFile?.key} :: ${error}`
+          ),
       }
     ))
   ) {
@@ -249,17 +295,20 @@ async function copyFileInS3({
       await pRetry(() => uploadCMRFile(targetFile, metadataString), {
         retries: 5,
         minTimeout: 2000,
-        maxTimeout: 2000,
-        onFailedAttempt: (error) => {
-          log.warn(
-            `failed attempt to upload CMR file ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
-          );
-        },
+        maxTimeout: 10000,
+        randomize: true,
+        onFailedAttempt:
+          /* istanbul ignore next */
+          (error) => logOrThrow(
+            error,
+            `failed attempt to upload new, updated CMR file ${targetFile?.bucket}/${targetFile?.key} :: ${error}`
+          ),
       });
     }
     return;
   }
   if (await s3CopyNeeded(sourceFile, targetFile)) {
+    // this onFailedAttempt is impossible to test in
     await pRetry(
       () =>
         copyObject({
@@ -272,12 +321,14 @@ async function copyFileInS3({
       {
         retries: 5,
         minTimeout: 2000,
-        maxTimeout: 2000,
-        onFailedAttempt: (error) => {
-          log.warn(
-            `Error when copying object ${sourceFile?.bucket}/${sourceFile?.key} to target ${targetFile?.bucket}/${targetFile?.key} ::  ${error}, retrying`
-          );
-        },
+        maxTimeout: 10000,
+        randomize: true,
+        onFailedAttempt:
+          /* istanbul ignore next */
+          (error) => logOrThrow(
+            error,
+            `Error when copying object ${sourceFile?.bucket}/${sourceFile?.key} to target ${targetFile?.bucket}/${targetFile?.key} :: ${error}`
+          ),
       }
     );
   }
@@ -298,13 +349,15 @@ async function copyGranulesInS3({
   targetGranules: Array<ValidGranuleRecord>,
   cmrObjects: { [granuleId: string]: Object },
   s3MultipartChunksizeMb?: number,
-  concurrency?: number,
+  concurrency: number,
 }): Promise<void> {
   const sourceGranulesById = keyBy(sourceGranules, 'granuleId');
 
   const copyOperations = flatten(targetGranules.map(
     (targetGranule) => {
       const sourceGranule = sourceGranulesById[targetGranule.granuleId];
+      // this is to satisfy typescript, but should be impossible
+      /* istanbul ignore next */
       if (!sourceGranule) {
         throw new AssertionError({ message: 'no source granule for your target granule by ID' });
       }
@@ -315,6 +368,8 @@ async function copyGranulesInS3({
       return targetGranule.files.map((targetFile) => {
         const sourceFile = sourceFilesByFileName[path.basename(targetFile.key)];
         if (!sourceFile) {
+          // this is to satisfy typescript, but should be impossible
+          /* istanbul ignore next */
           throw new AssertionError({
             message: 'size mismatch between target and source granule files',
           });
@@ -331,7 +386,7 @@ async function copyGranulesInS3({
   await pMap(
     copyOperations,
     (operation) => operation(),
-    { concurrency }
+    { concurrency: concurrency }
   );
 }
 
@@ -490,8 +545,8 @@ async function getAndValidateGranules(
       prefix: getRequiredEnvVar('stackName'),
       granuleId,
     }),
-    { concurrency: 40 },
-  )
+    { concurrency: config.concurrency }
+  );
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
     granulesInput = tempGranulesInput.filter((granule) => {
@@ -522,9 +577,10 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
     collectionName: config.targetCollection.name,
     collectionVersion: config.targetCollection.version,
   });
-
+  const concurrency = config.concurrency || Number(process.env.concurrency) || 100;
   return {
     ...config,
+    concurrency,
     chunkSize,
     targetCollection,
     cmrGranuleUrlType: config.cmrGranuleUrlType || 'both',
@@ -534,11 +590,11 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
 
 async function getCMRObjectsByFileId(
   granules: Array<ValidGranuleRecord>,
-  config: MassagedEventConfig
+  concurrency: number
 ): Promise<{
-  cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
-  cmrObjectsByGranuleId: { [granuleId: string]: Object },
-}> {
+    cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
+    cmrObjectsByGranuleId: { [granuleId: string]: Object },
+  }> {
   const unValidatedCMRFiles = granules.flatMap((granule) => {
     if (!granule.files) {
       return [];
@@ -560,16 +616,18 @@ async function getCMRObjectsByFileId(
         {
           retries: 5,
           minTimeout: 2000,
-          maxTimeout: 2000,
-          onFailedAttempt: (error) => {
-            log.warn(
-              `Error on reading CMR object ${cmrFile?.bucket}/${cmrFile?.key} :: ${error}, retrying`
-            );
-          },
+          maxTimeout: 10000,
+          randomize: true,
+          onFailedAttempt:
+            /* istanbul ignore next */
+            (error) => logOrThrow(
+              error,
+              `Error when loading cmr file from s3 ${cmrFile?.bucket}/${cmrFile?.key} :: ${error}`
+            ),
         }
       );
     },
-    { concurrency: config.concurrency }
+    { concurrency: concurrency }
   );
   return {
     cmrFilesByGranuleId,
@@ -590,7 +648,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const {
     cmrFilesByGranuleId,
     cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,
-  } = await getCMRObjectsByFileId(sourceGranules, config);
+  } = await getCMRObjectsByFileId(sourceGranules, config.concurrency);
 
   //  here we update *just* the collection
   // this is because we need that to parse the target file location
@@ -634,6 +692,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
 /**
  * Lambda handler
  */
+/* istanbul ignore next */
 async function handler(event: CumulusMessage, context: Context): Promise<Object> {
   return await runCumulusTask(changeGranuleCollectionS3, event, context);
 }

@@ -11,7 +11,6 @@ const {
   GranulesExecutionsPgModel,
   FilePgModel,
   getKnexClient,
-  CollectionPgModel,
 } = require('@cumulus/db');
 const {
   loadCollection,
@@ -52,7 +51,6 @@ process.env.DISABLE_PG_SSL = 'true';
  *   filesPerGranule: number
  *   granulesPerBatch: number,
  *   executionsPerBatch: number,
- *   uploadS3Files: boolean,
  *   models: ModelSet,
  * }} BatchParams
  *
@@ -72,7 +70,7 @@ const uploadDataBatch = async ({
   executionsPerBatch,
   models,
 }) => {
-  const granules = await loadGranules(
+  const granuleCumulusIds = await loadGranules(
     knex,
     collectionCumulusId,
     providerCumulusId,
@@ -80,9 +78,9 @@ const uploadDataBatch = async ({
     models.granuleModel
   );
   const fileCumulusIds = [];
-  for (const granule of granules) {
+  for (const granuleCumulusId of granuleCumulusIds) {
     fileCumulusIds.push(
-      await loadFiles(knex, granule.cumulus_id, filesPerGranule, models.fileModel, granule.granule_id)
+      await loadFiles(knex, granuleCumulusId, filesPerGranule, models.fileModel)
     );
   }
   const executionCumulusIds = await loadExecutions(
@@ -91,7 +89,6 @@ const uploadDataBatch = async ({
     executionsPerBatch,
     models.executionModel
   );
-  const granuleCumulusIds = granules.map((g) => g.cumulus_id)
   await loadGranulesExecutions(
     knex,
     granuleCumulusIds,
@@ -120,7 +117,6 @@ const uploadDataBatch = async ({
  * @param {number} params.executionsPerBatch
  * @param {ModelSet} params.models
  * @param {boolean} params.variance
- * @param {boolean} params.uploadS3Files
  * @returns {Iterable<BatchParams>}
  */
 
@@ -134,7 +130,6 @@ const getBatchParamGenerator = ({
   executionsPerBatch,
   models,
   variance,
-  uploadS3Files
 }) => {
   if (granulesPerBatch < 1) {
     throw new Error('granulesPerBatch must be set to >=1');
@@ -156,7 +151,6 @@ const getBatchParamGenerator = ({
       granulesPerBatch,
       executionsPerBatch,
       models,
-      uploadS3Files,
     };
 
     //asking for variance adds some noise to batch executions vs granules
@@ -198,7 +192,6 @@ const getBatchParamGenerator = ({
  * @param {number} executionsPerBatch
  * @param {number} concurrency
  * @param {boolean} variance
- * @param {boolean} uploadS3Files
  * @param {boolean} swallowErrors
  * @returns {Promise<void>}
  */
@@ -212,7 +205,6 @@ const uploadDBGranules = async (
   executionsPerBatch,
   concurrency,
   variance = false,
-  uploadS3Files = false,
   swallowErrors = false
 ) => {
   const collectionCumulusId = await loadCollection(knex, filesPerGranule, collectionNumber);
@@ -234,7 +226,6 @@ const uploadDBGranules = async (
     executionsPerBatch,
     models,
     variance,
-    uploadS3Files,
   });
   await pMap(
     iterableParamGenerator,
@@ -278,7 +269,6 @@ const parseExecutionsGranulesBatch = (executionsPerGranule) => {
  *   collections: number
  *   concurrency: number
  *   variance: boolean
- *   uploadS3Files: boolean
  *   swallowErrors: boolean
  * }}
  */
@@ -290,7 +280,6 @@ const parseArgs = () => {
     collections,
     variance,
     concurrency,
-    uploadS3Files,
     swallowErrors,
   } = minimist(
     process.argv,
@@ -305,7 +294,6 @@ const parseArgs = () => {
       boolean: [
         'swallowErrors',
         'variance',
-        'uploadS3Files',
       ],
       alias: {
         g: 'granulesK',
@@ -315,7 +303,6 @@ const parseArgs = () => {
         C: 'concurrency',
         v: 'variance',
         s: 'swallowErrors',
-        u: 'uploadS3Files',
       },
       default: {
         collections: process.env.COLLECTIONS || 1,
@@ -324,7 +311,6 @@ const parseArgs = () => {
         executionsPerGranule: process.env.EXECUTIONS_PER_GRANULE || '2:2',
         variance: process.env.VARIANCE || false,
         concurrency: process.env.CONCURRENCY || 1,
-        uploadS3Files: process.env.UPLOAD_S3_FILES || false,
         swallowErrors: process.env.SWALLOW_ERRORS || true,
       },
     }
@@ -347,7 +333,6 @@ const parseArgs = () => {
     collections: Number.parseInt(collections, 10),
     concurrency: Number.parseInt(concurrency, 10),
     variance,
-    uploadS3Files,
     swallowErrors,
   };
 };
@@ -395,8 +380,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  loadCollection,
-  loadProvider,
   getBatchParamGenerator,
   parseArgs,
   uploadDataBatch,

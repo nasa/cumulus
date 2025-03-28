@@ -53,4 +53,5 @@ export type MassagedEventConfig = {
   cmrGranuleUrlType: string,
   invalidGranuleBehavior: string,
   targetCollection: CollectionRecord,
+  concurrency: number
 } & EventConfig;
