@@ -538,7 +538,7 @@ async function getAndValidateGranules(
   granuleIds: Array<string>,
   config: MassagedEventConfig
 ): Promise<Array<ValidGranuleRecord>> {
-  const getGranuleMethod = config.testApiClientMethods?.getGranuleMethod || getGranule;
+  const getGranuleMethod = config.testMethods?.getGranuleMethod || getGranule;
   const tempGranulesInput = await pMap(
     granuleIds,
     (granuleId) => getGranuleMethod({
@@ -567,7 +567,7 @@ async function getAndValidateGranules(
  * Do math, environment parsing, and api calls to flesh out config with full values
  */
 async function getParsedConfigValues(config: EventConfig): Promise<MassagedEventConfig> {
-  const getCollectionMethod = config.testApiClientMethods?.getCollectionMethod || getCollection;
+  const getCollectionMethod = config.testMethods?.getCollectionMethod || getCollection;
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb || Number(
     process.env.default_s3_multipart_chunksize_mb
   );
@@ -590,7 +590,7 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
 
 async function getCMRObjectsByFileId(
   granules: Array<ValidGranuleRecord>,
-  concurrency: number
+  config: MassagedEventConfig
 ): Promise<{
     cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
     cmrObjectsByGranuleId: { [granuleId: string]: Object },
@@ -604,6 +604,7 @@ async function getCMRObjectsByFileId(
       granuleId: granule.granuleId,
     }));
   });
+  const metadataFunc = config.testMethods?.getMetadataFunction || metadataObjectFromCMRFile;
   const cmrFiles = unValidatedCMRFiles.filter(validateApiFile);
   const cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile } = keyBy(cmrFiles, 'granuleId');
   const cmrObjectsByGranuleId: { [granuleId: string]: Object } = {};
@@ -612,7 +613,7 @@ async function getCMRObjectsByFileId(
     async (cmrFile) => {
       cmrObjectsByGranuleId[cmrFile.granuleId] = await pRetry(
         async () =>
-          metadataObjectFromCMRFile(`s3://${cmrFile.bucket}/${cmrFile.key}`),
+          metadataFunc(`s3://${cmrFile.bucket}/${cmrFile.key}`),
         {
           retries: 5,
           minTimeout: 2000,
@@ -627,7 +628,7 @@ async function getCMRObjectsByFileId(
         }
       );
     },
-    { concurrency: concurrency }
+    { concurrency: config.concurrency }
   );
   return {
     cmrFilesByGranuleId,
@@ -648,7 +649,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const {
     cmrFilesByGranuleId,
     cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,
-  } = await getCMRObjectsByFileId(sourceGranules, config.concurrency);
+  } = await getCMRObjectsByFileId(sourceGranules, config);
 
   //  here we update *just* the collection
   // this is because we need that to parse the target file location

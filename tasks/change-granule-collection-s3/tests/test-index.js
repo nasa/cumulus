@@ -51,7 +51,7 @@ function buildPayload(t, collection) {
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.private.name = t.context.privateBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
-  newPayload.config.testApiClientMethods = t.context.testApiClientMethods;
+  newPayload.config.testMethods = t.context.testMethods;
   return newPayload;
 }
 
@@ -60,7 +60,7 @@ test.beforeEach(async (t) => {
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   const testDbName = `change-granule-collection-s3/change-collections-s3${cryptoRandomString({ length: 10 })}`;
-  t.context.testApiClientMethods = {
+  t.context.testMethods = {
     getGranuleMethod: (params) => dummyGetGranule(params.granuleId, t),
     getCollectionMethod: (params) => (
       dummyGetCollection(params.collectionName, params.collectionVersion)
@@ -1209,7 +1209,7 @@ test.serial('changeGranuleCollectionS3 should parse fileName if not given in fil
   ));
 });
 
-test('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
+test.only('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
   try {
     throw new TypeError('RequestTimeout: this thing');
   } catch (error) {
