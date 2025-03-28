@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v20.1.1] 2025-03-26
 
+### Notable Changes
+- Users upgrading to Release v20.1.x **must first deploy Release v20.0.x** to allow for Cumulus module reconfiguration of workflow/framework lambdas. Once this deployment is complete, users may upgrade to Release v20.1.x.
+- Release v20.1.x includes an update (CUMULUS-3994) that will **permanently delete** the Elasticsearch domain. Ensure that the Elasticsearch domain is no longer needed before applying this update.
+
 ### Changed
 
 - **CUMULUS-3994**
