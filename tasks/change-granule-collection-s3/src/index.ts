@@ -343,7 +343,7 @@ async function copyGranulesInS3({
   targetGranules,
   cmrObjects,
   s3MultipartChunksizeMb,
-  s3Concurrency
+  s3Concurrency,
 }: {
   sourceGranules: Array<ValidGranuleRecord>,
   targetGranules: Array<ValidGranuleRecord>,
@@ -592,7 +592,7 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
 
 async function getCMRObjectsByFileId(
   granules: Array<ValidGranuleRecord>,
-  s3Concurrency: number
+  config: MassagedEventConfig
 ): Promise<{
     cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
     cmrObjectsByGranuleId: { [granuleId: string]: Object },
@@ -630,7 +630,7 @@ async function getCMRObjectsByFileId(
         }
       );
     },
-    { concurrency: s3Concurrency }
+    { concurrency: config.s3Concurrency }
   );
   return {
     cmrFilesByGranuleId,
@@ -651,7 +651,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const {
     cmrFilesByGranuleId,
     cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,
-  } = await getCMRObjectsByFileId(sourceGranules, config.s3Concurrency);
+  } = await getCMRObjectsByFileId(sourceGranules, config);
 
   //  here we update *just* the collection
   // this is because we need that to parse the target file location

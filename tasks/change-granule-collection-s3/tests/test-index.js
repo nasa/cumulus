@@ -1234,7 +1234,7 @@ test('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
   }
 });
 
-test.only('timeout', async (t) => {
+test('s3 failures retry on timeout', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
   const filesToUpload = granulesToFileURIs(
@@ -1245,36 +1245,36 @@ test.only('timeout', async (t) => {
   let retries = 0;
   newPayload.config.testMethods = {
     ...newPayload.config.testMethods,
-    getMetadataFunction: (s3Url) => {
+    getMetadataFunction: () => {
       retries += 1;
       throw new Error('uh oh');
-    }
-  }
+    },
+  };
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   await t.throwsAsync(
     () => changeGranuleCollectionS3(newPayload),
     {
       message: 'uh oh',
     }
-  )
-  t.is(retries, 1)
+  );
+  t.is(retries, 1);
 
   retries = 0;
   newPayload.config.testMethods = {
     ...newPayload.config.testMethods,
-    getMetadataFunction: (s3Url) => {
+    getMetadataFunction: () => {
       retries += 1;
       throw new Error('RequestTimeout: uh oh');
-    }
-  }
+    },
+  };
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   await t.throwsAsync(
     () => changeGranuleCollectionS3(newPayload),
     {
       message: 'RequestTimeout: uh oh',
     }
-  )
-  t.is(retries, 6)
+  );
+  t.is(retries, 6);
 
   retries = 0;
   newPayload.config.testMethods = {
@@ -1285,10 +1285,9 @@ test.only('timeout', async (t) => {
         throw new Error('RequestTimeout: uh oh');
       }
       return await metadataObjectFromCMRFile(s3Url);
-    }
-  }
+    },
+  };
   await uploadFiles(filesToUpload, t.context.bucketMapping);
-  await changeGranuleCollectionS3(newPayload),
-  t.is(retries, 3)
-  
-})
+  await changeGranuleCollectionS3(newPayload);
+  t.is(retries, 3);
+});
