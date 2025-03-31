@@ -18,7 +18,7 @@ The api-client function accepts the following configurations that specify its ta
 - `sourceCollectionId` - specifies the collection *from* which granules should be transfered
 - `targetCollectionId` - specifies the collection *to* which granules should be transfered
 
-additionally the api-client function accepts the following configurations that help bound performance
+Additionally the api-client function accepts the following configurations that help bound performance
 
 - `batchSize` - how many granules should be processed in one workflow run
   - default 100
@@ -43,9 +43,9 @@ This configuration defines the number of granules to be processed in one workflo
 
 #### Idempotency and re-running
 
-The intended workflow is that this api is called repeatedly with the same parameters. each step in the process is tested to be thoroughly idempotent, with the final step in the process* being the update to postgres. in the event of failures such as cmr failures or other intermitted errors, a granule will will simply be picked up by this call in a future run
+The intended workflow is that this api is called repeatedly with the same parameters. Each step in the process is tested to be thoroughly idempotent, with the final step in the process* being the update to postgres. In the event of failures such as cmr failures or other intermitted errors, a granule will will simply be picked up by this call in a future run
 
-- Note that the postgres update is strictly the second to last operation, the final step is to delete old s3 files. it is possible in the specific case that the s3 deletion fails, that that granule will not be re-run and old s3 files can be left over
+- Note that the postgres update is strictly the second to last operation, the final step is to delete old s3 files. It is possible in the specific case that the s3 deletion fails, that that granule will not be re-run and old s3 files can be left over
 
 ### concurrency
 
@@ -54,15 +54,13 @@ This configuration defines general parallelization to use. Defaults to 100.
 The specific subroutines that run at this concurrency are:
 
 - loading granule records from the cumulus Api
-- copying s3 files to new location (if necessary)
-- deleting old s3 files (if necessary)
 - updating granule records in cumulus datastores (es/postgres)
 - updating records in cmr
 
-### concurrency
+### s3Concurrency
 
 This configuration defines s3 parallelization to use. Defaults to 50.
-depending on partitioning of s3 buckets, it may or may not be effective to set this higher than 50 as overwhelming s3 with parallel writes will cause it to act dramatically slower than a low concurrency.
+Depending on partitioning of s3 buckets, it may or may not be effective to set this higher than 50 as overwhelming s3 with parallel writes will cause it to act dramatically slower than a low concurrency.
 
 The specific subroutines that run at this concurrency are:
 
@@ -73,20 +71,20 @@ The specific subroutines that run at this concurrency are:
 
 ### dbMaxPool
 
-This configuration specifies how many database connections to allow the process to utilize as part of it's connection pool. This value will constrain database connections, but too low a value can cause performance issues or database write failures (Knex timeout errors) if the connection pool is not high enough to support the set concurrency.   Defaults 100, value should target at minimum the value set for `concurrency`.
+This configuration specifies how many database. Defaults to 100. Connections to allow the process to utilize as part of it's connection pool. This value will constrain database connections, but too low a value can cause performance issues or database write failures (Knex timeout errors) if the connection pool is not high enough to support the set concurrency. Defaults 100, value should target at minimum the value set for `concurrency`.
 
 ### maxRequestGranules
 
-This configuration limits the size of requests sent to api endpoints during the runtime of this workflow. Defaults to 1000, minimize overhead from api calls by setting higher, but must be small enough that an api call (primarily the stringified set of granules) does not overrun the limit of 6 Mb that can be passed, and also wont time out the api lambda in attempting to run. how this should be set depends heavily on how many files there are per granule, and what the privateApiLambda timeout is set to
+This configuration limits the size of requests sent to api endpoints during the runtime of this workflow. Defaults to 1000, minimize overhead from api calls by setting higher, but must be small enough that an api call (primarily the stringified set of granules) does not overrun the limit of 6 Mb that can be passed, and also wont time out the api lambda in attempting to run. How this should be set depends heavily on how many files there are per granule, and what the privateApiLambda timeout is set to.
 
-the specific subroutines that run this maxRequestGranules are
+the specific subroutines that run this maxRequestGranules are.
 
 - `bulkPatch` granule api endpoint
 - `bulkPatchGranuleCollection` granule api endpoint
 
 ### invalidGranuleBehavior
 
-This configuration specifies how to handle granule records that are un-processable due to containing file records missing either bucket or key. Defaults to `error`, can be either `error` or `skip`. It is of course hoped that these don't exist, but if they do show up it is, by default, expected that this should be taken as a needed fix. if however you wish to process what can be processed and come back to the rest later, they can be skipped
+This configuration specifies how to handle granule records that are un-processable due to containing file records missing either bucket or key. Defaults to `error`, can be either `error` or `skip`. It is of course hoped that these don't exist, but if they do show up it is, by default, expected that this should be taken as a needed fix. If however you wish to process what can be processed and come back to the rest later, they can be skipped.
 
 ### cmrGranuleUrlType
 
@@ -94,12 +92,12 @@ This specifies what type of urls to fill out in the cmr metadata as it is update
 
 ### s3MultipartChunkSizeMb
 
-This allows you to set the size of chunks that files should be broken up into when loading to s3. This should, in most cases, be left unset, to use the value in your environment based upon the same global configuration that sets this same value elsewhere (i.e. move-granules task) in accordance with your stack's configuration
+This allows you to set the size of chunks that files should be broken up into when loading to s3. This should, in most cases, be left unset, to use the value in your environment based upon the same global configuration that sets this same value elsewhere (i.e. move-granules task) in accordance with your stack's configuration.
 
 ## Implementation
 
-The intended use of this is to call this api on a rhythm untill it is done. this could be done with a cron job, or another script, but the same api call can be made again and again and by the way it is structured it will get new granules, or reprocess old granules that failed to process the first time.
+The intended use of this is to call this api on a rhythm until it is done. This could be done with a cron job, or another script, but the same api call can be made again and again and by the way it is structured it will get new granules, or reprocess old granules that failed to process the first time.
 
-multiple api calls should not be run against the same source and target collection ids in parrallel, they should be serialized to repeatedly run batches untill the work is done
+Multiple api calls should not be run against the same source and target collection ids in parrallel, they should be serialized to repeatedly run batches untill the work is done.
 
-multiple api calls can be run to parallelize *different* collection moves (unique it both source and target collection id), provided sensible limits are understood with respect to the resources available to your stack.
+Multiple api calls can be run to parallelize *different* collection moves (unique it both source and target collection id), provided sensible limits are understood with respect to the resources available to your stack.
