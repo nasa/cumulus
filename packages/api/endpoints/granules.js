@@ -957,7 +957,7 @@ const bulkChangeCollectionSchema = z.object({
   sourceCollectionId: z.string().nonempty('sourceCollectionId is required'),
   targetCollectionId: z.string().nonempty('targetCollectionId is required'),
   batchSize: z.number().positive().optional().default(100),
-  apiConcurrency: z.number().positive().optional().default(100),
+  concurrency: z.number().positive().optional().default(100),
   s3Concurrency: z.number().positive().optional().default(50),
   dbMaxPool: z.number().positive().optional().default(100),
   maxRequestGranules: z.number().positive().optional().default(10000),
@@ -976,7 +976,7 @@ const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload
  * @param {string} req.body.sourceCollectionId - The source collection ID.
  * @param {string} req.body.targetCollectionId - The target collection ID.
  * @param {number} [req.body.batchSize=100] - The batch size for processing granules.
- * @param {number} [req.body.apiConcurrency=100] - The per-file concurrency level for processing
+ * @param {number} [req.body.concurrency=100] - The per-file concurrency level for processing
  * granules and granule records in the cumulus api
  * @param {number} [req.body.s3Concurrency=100] - The per-file concurrency level for processing
  * granules and granule records in s3
@@ -1077,7 +1077,7 @@ async function bulkChangeCollection(req, res) {
       bulkChangeCollection: {
         batchSize: body.batchSize,
         cmrGranuleUrlType: body.cmrGranuleUrlType,
-        apiConcurrency: body.apiConcurrency,
+        concurrency: body.concurrency,
         s3Concurrency: body.s3Concurrency,
         dbMaxPool: body.dbMaxPool,
         invalidGranuleBehavior: body.invalidGranuleBehavior,

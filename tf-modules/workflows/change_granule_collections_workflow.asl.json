@@ -17,7 +17,7 @@
             "s3MultipartChunksizeMb": "{$.meta.bulkChangeCollection.s3MultipartChunksizeMb}",
             "invalidGranuleBehavior": "{$.meta.bulkChangeCollection.invalidGranuleBehavior}",
             "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
-            "apiConcurrency": "{$.meta.bulkChangeCollection.apiConcurrency}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
             "s3Concurrency": "{$.meta.bulkChangeCollection.s3Concurrency}",
             "cumulus_message": {
               "input": "{$.payload}",
@@ -58,7 +58,7 @@
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",
             "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}",
-            "apiConcurrency": "{$.meta.bulkChangeCollection.apiConcurrency}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
             "s3Concurrency": "{$.meta.bulkChangeCollection.s3Concurrency}",
             "dbMaxPool": "{$.meta.bulkChangeCollection.dbMaxPool}",
             "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}"

@@ -18,7 +18,7 @@ export type EventConfig = {
   }
   buckets: BucketsConfigObject,
   cmrGranuleUrlType?: string,
-  apiConcurrency?: number,
+  concurrency?: number,
   s3Concurrency?: number,
   distribution_endpoint?: string,
   invalidGranuleBehavior?: string,
@@ -56,6 +56,6 @@ export type MassagedEventConfig = {
   cmrGranuleUrlType: string,
   invalidGranuleBehavior: string,
   targetCollection: CollectionRecord,
-  apiConcurrency: number,
+  concurrency: number,
   s3Concurrency: number,
 } & EventConfig;

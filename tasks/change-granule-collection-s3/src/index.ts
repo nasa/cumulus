@@ -545,7 +545,7 @@ async function getAndValidateGranules(
       prefix: getRequiredEnvVar('stackName'),
       granuleId,
     }),
-    { concurrency: config.apiConcurrency }
+    { concurrency: config.concurrency }
   );
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
@@ -577,11 +577,11 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
     collectionName: config.targetCollection.name,
     collectionVersion: config.targetCollection.version,
   });
-  const apiConcurrency = config.apiConcurrency || Number(process.env.apiConcurrency) || 100;
+  const concurrency = config.concurrency || Number(process.env.concurrency) || 100;
   const s3Concurrency = config.s3Concurrency || Number(process.env.s3Concurrency) || 100;
   return {
     ...config,
-    apiConcurrency,
+    concurrency,
     s3Concurrency,
     chunkSize,
     targetCollection,

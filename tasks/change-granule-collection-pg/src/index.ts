@@ -39,14 +39,14 @@ interface EventConfig {
     version: string,
   }
   buckets: BucketsConfigObject,
-  apiConcurrency?: number,
+  concurrency?: number,
   s3Concurrency?: number,
   dbMaxPool?: number,
   maxRequestGranules?: number,
 }
 
 type ValidEventConfig = {
-  apiConcurrency: number,
+  concurrency: number,
   s3Concurrency: number,
   dbMaxPool: number,
   maxRequestGranules: number,
@@ -82,7 +82,7 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
 
 function validateConfig(config: EventConfig): ValidEventConfig {
   const newConfig = config as ValidEventConfig;
-  newConfig.apiConcurrency = config.apiConcurrency || Number(process.env.apiConcurrency) || 100;
+  newConfig.concurrency = config.concurrency || Number(process.env.concurrency) || 100;
   newConfig.s3Concurrency = config.s3Concurrency || Number(process.env.s3Concurrency) || 50;
   newConfig.maxRequestGranules = config.maxRequestGranules || 1000;
 
@@ -103,7 +103,7 @@ async function moveGranulesInCumulusDatastores(
     prefix: getRequiredEnvVar('stackName'),
     body: {
       apiGranules: updatedBodyGranules,
-      dbConcurrency: config.apiConcurrency,
+      dbConcurrency: config.concurrency,
       dbMaxPool: config.dbMaxPool,
     },
   });
@@ -112,7 +112,7 @@ async function moveGranulesInCumulusDatastores(
     body: {
       apiGranules: updatedBodyGranules,
       collectionId: targetCollectionId,
-      esConcurrency: config.apiConcurrency,
+      esConcurrency: config.concurrency,
     },
   });
 }
@@ -206,9 +206,9 @@ async function changeGranuleCollectionsPG(
     oldGranules: undefined, // oldGranules needs to not be logged because it can be enormous
   })}`);
   for (const granuleChunk of chunkGranules(targetGranules, config.maxRequestGranules)) {
-    /* maxRequestGranules smaller than apiConcurrency is effectively limiting apiConcurrency
+    /* maxRequestGranules smaller than concurrency is effectively limiting concurrency
     for these requests greater maxRequestGranules offers greater efficiency,
-    and some intermitten errors were seen when maxRequestGranules and apiConcurrency were
+    and some intermitten errors were seen when maxRequestGranules and concurrency were
     large and unequal */
     //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(
