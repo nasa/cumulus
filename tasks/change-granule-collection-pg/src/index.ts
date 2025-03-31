@@ -6,6 +6,7 @@ import pRetry from 'p-retry';
 import path from 'path';
 import keyBy from 'lodash/keyBy';
 import range from 'lodash/range';
+import clone from 'lodash/clone';
 import { AssertionError } from 'assert';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { constructCollectionId } from '@cumulus/message/Collections';
@@ -80,11 +81,14 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
   return true;
 }
 
-function validateConfig(config: EventConfig): ValidEventConfig {
-  const newConfig = config as ValidEventConfig;
+export function massageConfig(config: EventConfig): ValidEventConfig {
+  const newConfig = clone(config) as ValidEventConfig;
   newConfig.concurrency = config.concurrency || Number(process.env.concurrency) || 100;
   newConfig.s3Concurrency = config.s3Concurrency || Number(process.env.s3Concurrency) || 50;
-  newConfig.maxRequestGranules = config.maxRequestGranules || 1000;
+  newConfig.maxRequestGranules = config.maxRequestGranules
+    || Number(process.env.maxRequestGranules)
+    || 1000;
+  newConfig.dbMaxPool = config.dbMaxPool || Number(process.env.dbMaxPool) || 100;
 
   return newConfig;
 }
@@ -195,7 +199,7 @@ async function changeGranuleCollectionsPG(
   event: MoveGranuleCollectionsEvent
 ): Promise<Object> {
   const oldGranules = event.config.oldGranules;
-  const config = validateConfig(event.config);
+  const config = massageConfig(event.config);
 
   const targetGranules = event.input.granules.filter(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(oldGranules.filter(validateGranule), 'granuleId');

@@ -34,7 +34,9 @@ const {
   localStackConnectionEnv,
 } = require('@cumulus/db');
 const range = require('lodash/range');
-const { constructCollectionId } = require('../../../packages/message/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+const { massageConfig } = require('../dist/src');
+const { clone } = require('lodash');
 
 const mockResponse = () => {
   const res = {};
@@ -405,3 +407,71 @@ test.serial('changeGranuleCollectionsPG Should work correctly for a large batch'
     })
   )));
 });
+
+test('massageConfig massages input config to contain required variables', (t) => {
+  let config = {
+    oldGranules: [],
+    targetCollection: {
+      'name': 'abc',
+      'version': '001',
+    },
+    collection: {
+      'name': 'abc',
+      'version': '000',
+    },
+    concurrency: 120,
+    s3Concurrency: 123,
+    dbMaxPool: 200,
+    maxRequestGranules: 20000,
+  };
+  let massagedConfig = massageConfig(config);
+  t.deepEqual(config, massagedConfig);
+
+  config = {
+    oldGranules: [],
+    targetCollection: {
+      'name': 'abc',
+      'version': '001',
+    },
+    collection: {
+      'name': 'abc',
+      'version': '000',
+    },
+  };
+  massagedConfig = massageConfig(config);
+  t.deepEqual({
+    ...config,
+    concurrency: 100,
+    s3Concurrency: 50,
+    maxRequestGranules: 1000,
+    dbMaxPool: 100
+  }, massagedConfig);
+  const oldEnv = clone(process.env);
+  process.env = {
+    ...process.env,
+     concurrency: 1,
+     s3Concurrency: 2,
+     maxRequestGranules: 3,
+     dbMaxPool: 4
+  }
+  config = {
+    oldGranules: [],
+    targetCollection: {
+      'name': 'abc',
+      'version': '001',
+    },
+    collection: {
+      'name': 'abc',
+      'version': '000',
+    },
+  };
+  massagedConfig = massageConfig(config);
+  t.deepEqual({
+    ...config,
+    concurrency: 1,
+    s3Concurrency: 2,
+    maxRequestGranules: 3,
+    dbMaxPool: 4
+  }, massagedConfig);
+  process.env = oldEnv;
+})
