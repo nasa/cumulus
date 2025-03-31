@@ -43,7 +43,7 @@ This configuration defines the number of granules to be processed in one workflo
 
 #### Idempotency and re-running
 
-The intended workflow is that this api is called repeatedly with the same parameters. Each step in the process is tested to be thoroughly idempotent, with the final step in the process* being the update to postgres. In the event of failures such as cmr failures or other intermitted errors, a granule will will simply be picked up by this call in a future run
+The intended workflow is that this api is called repeatedly with the same parameters. Each step in the process is tested to be thoroughly idempotent, with the final step in the process* (see below) being the update to postgres. In the event of failures such as cmr failures or other intermitted errors, a granule will will simply be picked up by this call in a future run
 
 - Note that the postgres update is strictly the second to last operation, the final step is to delete old s3 files. It is possible in the specific case that the s3 deletion fails, that that granule will not be re-run and old s3 files can be left over
 
