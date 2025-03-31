@@ -39,13 +39,15 @@ interface EventConfig {
     version: string,
   }
   buckets: BucketsConfigObject,
-  concurrency: number | undefined,
-  dbMaxPool: number | undefined,
-  maxRequestGranules: number | undefined,
+  apiConcurrency?: number,
+  s3Concurrency?: number,
+  dbMaxPool?: number,
+  maxRequestGranules?: number,
 }
 
 type ValidEventConfig = {
-  concurrency: number,
+  apiConcurrency: number,
+  s3Concurrency: number,
   dbMaxPool: number,
   maxRequestGranules: number,
   oldGranules?: Array<ApiGranuleRecord>
@@ -80,7 +82,8 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
 
 function validateConfig(config: EventConfig): ValidEventConfig {
   const newConfig = config as ValidEventConfig;
-  newConfig.concurrency = config.concurrency || 100;
+  newConfig.apiConcurrency = config.apiConcurrency || Number(process.env.apiConcurrency) || 100;
+  newConfig.s3Concurrency = config.s3Concurrency || Number(process.env.s3Concurrency) || 50;
   newConfig.maxRequestGranules = config.maxRequestGranules || 1000;
 
   return newConfig;
@@ -100,19 +103,17 @@ async function moveGranulesInCumulusDatastores(
     prefix: getRequiredEnvVar('stackName'),
     body: {
       apiGranules: updatedBodyGranules,
-      dbConcurrency: config.concurrency,
+      dbConcurrency: config.apiConcurrency,
       dbMaxPool: config.dbMaxPool,
     },
-    pRetryOptions: { retries: 3, minTimeout: 2000, maxTimeout: 600000 },
   });
   await bulkPatchGranuleCollection({
     prefix: getRequiredEnvVar('stackName'),
     body: {
       apiGranules: updatedBodyGranules,
       collectionId: targetCollectionId,
-      esConcurrency: config.concurrency,
+      esConcurrency: config.apiConcurrency,
     },
-    pRetryOptions: { retries: 3, minTimeout: 2000, maxTimeout: 600000 },
   });
 }
 
@@ -179,12 +180,11 @@ async function cleanupInS3(
   await pMap(
     operations,
     (operation) => operation(),
-    { concurrency: config.concurrency }
+    { concurrency: config.s3Concurrency }
   );
 }
 
-function chunkGranules(granules: ValidGranuleRecord[], concurrency: number) {
-  const chunkSize = concurrency;
+function chunkGranules(granules: ValidGranuleRecord[], chunkSize: number) {
   return range(granules.length / chunkSize).map((i) => granules.slice(
     i * chunkSize,
     (i + 1) * chunkSize
@@ -206,9 +206,9 @@ async function changeGranuleCollectionsPG(
     oldGranules: undefined, // oldGranules needs to not be logged because it can be enormous
   })}`);
   for (const granuleChunk of chunkGranules(targetGranules, config.maxRequestGranules)) {
-    /* maxRequestGranules smaller than concurrency is effectively limiting concurrency
+    /* maxRequestGranules smaller than apiConcurrency is effectively limiting apiConcurrency
     for these requests greater maxRequestGranules offers greater efficiency,
-    and some intermitten errors were seen when maxRequestGranules and concurrency were
+    and some intermitten errors were seen when maxRequestGranules and apiConcurrency were
     large and unequal */
     //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(

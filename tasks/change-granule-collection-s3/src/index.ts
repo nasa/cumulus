@@ -18,8 +18,6 @@ import {
   isCMRFile,
   metadataObjectFromCMRFile,
 } from '@cumulus/cmrjs';
-import AWS from 'aws-sdk';
-import https from 'https';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { s3 } from '@cumulus/aws-client/services';
 import { BucketsConfig, log } from '@cumulus/common';
@@ -346,13 +344,13 @@ async function copyGranulesInS3({
   targetGranules,
   cmrObjects,
   s3MultipartChunksizeMb,
-  concurrency
+  s3Concurrency
 }: {
   sourceGranules: Array<ValidGranuleRecord>,
   targetGranules: Array<ValidGranuleRecord>,
   cmrObjects: { [granuleId: string]: Object },
   s3MultipartChunksizeMb?: number,
-  concurrency: number,
+  s3Concurrency: number,
 }): Promise<void> {
   const sourceGranulesById = keyBy(sourceGranules, 'granuleId');
 
@@ -389,7 +387,7 @@ async function copyGranulesInS3({
   await pMap(
     copyOperations,
     (operation) => operation(),
-    { concurrency: concurrency }
+    { concurrency: s3Concurrency }
   );
 }
 
@@ -548,7 +546,7 @@ async function getAndValidateGranules(
       prefix: getRequiredEnvVar('stackName'),
       granuleId,
     }),
-    { concurrency: config.concurrency }
+    { concurrency: config.apiConcurrency }
   );
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
@@ -580,16 +578,12 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
     collectionName: config.targetCollection.name,
     collectionVersion: config.targetCollection.version,
   });
-  const concurrency = config.concurrency || Number(process.env.concurrency) || 100;
-  const agent = new https.Agent({
-    maxSockets: concurrency
-  })
-  AWS.config.update({
-    httpOptions: { agent }
-  })
+  const apiConcurrency = config.apiConcurrency || Number(process.env.apiConcurrency) || 100;
+  const s3Concurrency = config.s3Concurrency || Number(process.env.s3Concurrency) || 100;
   return {
     ...config,
-    concurrency,
+    apiConcurrency,
+    s3Concurrency,
     chunkSize,
     targetCollection,
     cmrGranuleUrlType: config.cmrGranuleUrlType || 'both',
@@ -599,7 +593,7 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
 
 async function getCMRObjectsByFileId(
   granules: Array<ValidGranuleRecord>,
-  concurrency: number
+  s3Concurrency: number
 ): Promise<{
     cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
     cmrObjectsByGranuleId: { [granuleId: string]: Object },
@@ -636,7 +630,7 @@ async function getCMRObjectsByFileId(
         }
       );
     },
-    { concurrency: concurrency }
+    { concurrency: s3Concurrency }
   );
   return {
     cmrFilesByGranuleId,
@@ -657,7 +651,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const {
     cmrFilesByGranuleId,
     cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,
-  } = await getCMRObjectsByFileId(sourceGranules, config.concurrency);
+  } = await getCMRObjectsByFileId(sourceGranules, config.s3Concurrency);
 
   //  here we update *just* the collection
   // this is because we need that to parse the target file location
@@ -689,7 +683,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     targetGranules,
     cmrObjects: updatedCMRObjects,
     s3MultipartChunksizeMb: config.chunkSize,
-    concurrency: config.concurrency,
+    s3Concurrency: config.s3Concurrency,
   });
 
   return {

@@ -51,7 +51,6 @@
     "@cumulus/ingest": "18.5.5",
     "@cumulus/message": "18.5.5",
     "@cumulus/types": "18.5.5",
-    "aws-sdk": "^2.1692.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
