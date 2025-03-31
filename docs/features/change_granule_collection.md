@@ -24,6 +24,8 @@ additionally the api-client function accepts the following configurations that h
   - default 100
 - `concurrency` - processing concurrency
   - default 100
+- `s3Concurrency` - processing concurrency specifically for s3 operations that have their own bottleneck values
+  - default 50
 - `dbMaxPool` - database concurrency. should be greater than or equal to concurrency
   - default 100
 - `maxRequestGranules` - maximum number of granules to be handled in one api call
@@ -47,7 +49,7 @@ The intended workflow is that this api is called repeatedly with the same parame
 
 ### concurrency
 
-This configuration defines parallelization to use. Defaults to 100.
+This configuration defines general parallelization to use. Defaults to 100.
 
 The specific subroutines that run at this concurrency are:
 
@@ -56,6 +58,18 @@ The specific subroutines that run at this concurrency are:
 - deleting old s3 files (if necessary)
 - updating granule records in cumulus datastores (es/postgres)
 - updating records in cmr
+
+### concurrency
+
+This configuration defines s3 parallelization to use. Defaults to 50.
+depending on partitioning of s3 buckets, it may or may not be effective to set this higher than 50 as overwhelming s3 with parallel writes will cause it to act dramatically slower than a low concurrency.
+
+The specific subroutines that run at this concurrency are:
+
+- reading s3 records of cmr metadata
+- writing updated cmr metadata records to s3
+- copying s3 files to new location (if necessary)
+- deleting old s3 files (if necessary)
 
 ### dbMaxPool
 
