@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-
+const clone = require('lodash/clone');
 const proxyquire = require('proxyquire');
 const path = require('path');
 const test = require('ava');
@@ -36,7 +36,6 @@ const {
 const range = require('lodash/range');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { massageConfig } = require('../dist/src');
-const { clone } = require('lodash');
 
 const mockResponse = () => {
   const res = {};
@@ -412,12 +411,12 @@ test('massageConfig massages input config to contain required variables', (t) =>
   let config = {
     oldGranules: [],
     targetCollection: {
-      'name': 'abc',
-      'version': '001',
+      name: 'abc',
+      version: '001',
     },
     collection: {
-      'name': 'abc',
-      'version': '000',
+      name: 'abc',
+      version: '000',
     },
     concurrency: 120,
     s3Concurrency: 123,
@@ -430,12 +429,12 @@ test('massageConfig massages input config to contain required variables', (t) =>
   config = {
     oldGranules: [],
     targetCollection: {
-      'name': 'abc',
-      'version': '001',
+      name: 'abc',
+      version: '001',
     },
     collection: {
-      'name': 'abc',
-      'version': '000',
+      name: 'abc',
+      version: '000',
     },
   };
   massagedConfig = massageConfig(config);
@@ -444,25 +443,25 @@ test('massageConfig massages input config to contain required variables', (t) =>
     concurrency: 100,
     s3Concurrency: 50,
     maxRequestGranules: 1000,
-    dbMaxPool: 100
+    dbMaxPool: 100,
   }, massagedConfig);
   const oldEnv = clone(process.env);
   process.env = {
     ...process.env,
-     concurrency: 1,
-     s3Concurrency: 2,
-     maxRequestGranules: 3,
-     dbMaxPool: 4
-  }
+    concurrency: 1,
+    s3Concurrency: 2,
+    maxRequestGranules: 3,
+    dbMaxPool: 4,
+  };
   config = {
     oldGranules: [],
     targetCollection: {
-      'name': 'abc',
-      'version': '001',
+      name: 'abc',
+      version: '001',
     },
     collection: {
-      'name': 'abc',
-      'version': '000',
+      name: 'abc',
+      version: '000',
     },
   };
   massagedConfig = massageConfig(config);
@@ -471,7 +470,7 @@ test('massageConfig massages input config to contain required variables', (t) =>
     concurrency: 1,
     s3Concurrency: 2,
     maxRequestGranules: 3,
-    dbMaxPool: 4
+    dbMaxPool: 4,
   }, massagedConfig);
   process.env = oldEnv;
-})
+});
