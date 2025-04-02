@@ -19,6 +19,7 @@ const reservedWords = [
   'fields',
   'includeFullRecord',
   'searchContext',
+  'countOnly',
 ];
 
 /**
@@ -266,6 +267,7 @@ export const convertQueryStringToDbQueryParameters = (
   dbQueryParameters.estimateTableRowCount = (estimateTableRowCount === 'true');
   dbQueryParameters.includeFullRecord = (includeFullRecord === 'true');
   dbQueryParameters.sort = convertSort(type, queryStringParameters);
+  dbQueryParameters.countOnly = (queryStringParameters.countOnly === 'true');
 
   // remove reserved words (that are not fields)
   const fieldParams = omit(queryStringParameters, reservedWords);
