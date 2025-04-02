@@ -712,7 +712,7 @@ async function createRuleTrigger(ruleItem, testParams = {}) {
   const enabled = candidateRuleItem.state === 'ENABLED';
   const invokeMethod = testParams.invokeMethod || invoke;
   // make sure the name only has word characters
-  const re = /\W/;
+  const re = /[^\W-]/;
   if (re.test(ruleItem.name)) {
     throw new ValidationError('Rule name may only contain letters, numbers, and underscores.');
   }
