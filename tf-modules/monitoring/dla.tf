@@ -44,7 +44,7 @@ resource "aws_glue_catalog_table" "dla_glue_table" {
     }
   
     columns {
-      name = "execution_arn"
+      name = "executionarn"
       type = "string"
     }
     columns {
@@ -52,11 +52,11 @@ resource "aws_glue_catalog_table" "dla_glue_table" {
       type = "array<string>"
     }
     columns {
-      name = "collection_id"
+      name = "collectionid"
       type = "string"
     }
     columns {
-      name = "provider_id"
+      name = "providerid"
       type = "string"
     }
     columns {
@@ -64,7 +64,7 @@ resource "aws_glue_catalog_table" "dla_glue_table" {
       type = "string"
     }
     columns {
-      name = "state_machine_arn"
+      name = "statemachinearn"
       type = "string"
     }
     columns {
@@ -76,7 +76,7 @@ resource "aws_glue_catalog_table" "dla_glue_table" {
       type = "timestamp"
     }
     columns {
-      name = "message_id"
+      name = "messageid"
       type = "string"
     }
     columns {
@@ -88,7 +88,7 @@ resource "aws_glue_catalog_table" "dla_glue_table" {
       type = "struct<ApproximateReceiveCount:string,SentTimestamp:string,SenderId:string,ApproximateFirstReceiveTimestamp:string>"
     }
     columns {
-      name = "event_source_arn"
+      name = "eventsourcearn"
       type = "string"
     }
   }
