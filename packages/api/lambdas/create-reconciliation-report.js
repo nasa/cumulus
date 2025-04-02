@@ -193,7 +193,7 @@ async function fetchDbCollections(recReportParams) {
     collate: 'C',
   });
   const searchResponse = await new CollectionSearch({
-    queryStringParameters: { ...queryStringParameters, limit: null },
+    queryStringParameters: { ...queryStringParameters, limit: 'null' },
   }).query(knex);
   const dbCollections = searchResponse.results;
   return dbCollections.map((collection) =>

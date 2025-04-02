@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/pdr-status-check",
-  "version": "20.0.0",
+  "version": "20.1.1",
   "description": "Checks execution status of granules in a PDR",
   "main": "index.js",
   "directories": {
@@ -35,9 +35,9 @@
     "failFast": true
   },
   "dependencies": {
-    "@cumulus/aws-client": "20.0.0",
-    "@cumulus/common": "20.0.0",
+    "@cumulus/aws-client": "20.1.1",
+    "@cumulus/common": "20.1.1",
     "@cumulus/cumulus-message-adapter-js": "2.3.0",
-    "@cumulus/errors": "20.0.0"
+    "@cumulus/errors": "20.1.1"
   }
 }

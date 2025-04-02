@@ -129,13 +129,13 @@ export const setLzardsChecksumQueryType = (
   file: MessageGranuleFilesObject,
   granuleId: string
 ) => {
-  if (file.checksumType === 'md5') {
+  if (file.checksumType?.toLowerCase() === 'md5') {
     return { expectedMd5Hash: file.checksum };
   }
-  if (file.checksumType === 'sha256') {
+  if (file.checksumType?.toLowerCase() === 'sha256') {
     return { expectedSha256Hash: file.checksum };
   }
-  if (file.checksumType === 'sha512') {
+  if (file.checksumType?.toLowerCase() === 'sha512') {
     return { expectedSha512Hash: file.checksum };
   }
   log.error(`${granuleId}: File ${buildS3Uri(file.bucket, file.key)} did not have a checksum or supported checksumType defined`);
