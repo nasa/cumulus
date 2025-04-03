@@ -379,7 +379,14 @@ function mapCNMTypeToCMRType(type, urlType = 'distribution', useDirectS3Type = f
     metadata: 'EXTENDED METADATA',
     qa: 'EXTENDED METADATA',
   };
-  const mappedType = mapping[type] || 'GET DATA';
+  let mappedType = mapping[type];
+
+  if (!mappedType) {
+    log.warn(
+      `Type "${type}" not found in CNM to CMR mapping. Using default: 'GET DATA'`
+    );
+    mappedType = 'GET DATA';
+  }
 
   // The CMR Type for the s3 link of science file is "GET DATA VIA DIRECT ACCESS".
   // For non-science file, the Type for the s3 link is the same as its Type for the HTTPS URL.
