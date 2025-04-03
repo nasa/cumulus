@@ -383,7 +383,7 @@ function mapCNMTypeToCMRType(type, urlType = 'distribution', useDirectS3Type = f
 
   if (!mappedType) {
     log.warn(
-      `Type "${type}" not found in CNM to CMR mapping. Using default: 'GET DATA'`
+      `Type "${type}" not found in CNM to CMR mapping. Using default 'GET DATA' or 'GET DATA VIA DIRECT ACCESS'`
     );
     mappedType = 'GET DATA';
   }
