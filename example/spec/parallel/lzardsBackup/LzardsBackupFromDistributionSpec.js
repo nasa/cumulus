@@ -75,7 +75,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
           },
           task_config: {
             urlType: 'cloudfront',
-            cloudfrontEndpoint: 'http://d111111abcdef8.cloudfront.net/',
+            cloudfrontEndpoint: 'https://d111111abcdef8.cloudfront.net/',
             cumulus_message: {
               outputs: [
                 {
