@@ -18,6 +18,16 @@ fi
 
 DATA_PERSISTENCE_KEY="$DEPLOYMENT/data-persistence/terraform.tfstate"
 
+if [[ $NGAP_ENV = "SIT" ]]; then
+  BASE_VAR_FILE="sit.tfvars"
+  CMA_LAYER_VERSION=18
+  ROLE_BOUNDARY=NGAPShRoleBoundary
+else
+  BASE_VAR_FILE="sandbox.tfvars"
+  CMA_LAYER_VERSION=21
+  ROLE_BOUNDARY=NGAPShNonProdRoleBoundary
+fi
+
 cd cumulus-tf
 # Ensure remote state is configured for the deployment
 echo "terraform {
@@ -75,16 +85,6 @@ echo "terraform {
 # Initialize deployment
 ../terraform init \
   -input=false
-
-if [[ $NGAP_ENV = "SIT" ]]; then
-  BASE_VAR_FILE="sit.tfvars"
-  CMA_LAYER_VERSION=18
-  ROLE_BOUNDARY=NGAPShRoleBoundary
-else
-  BASE_VAR_FILE="sandbox.tfvars"
-  CMA_LAYER_VERSION=21
-  ROLE_BOUNDARY=NGAPShNonProdRoleBoundary
-fi
 
 # Deploy data-persistence-tf via terraform
 echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
