@@ -253,6 +253,7 @@ export const convertQueryStringToDbQueryParameters = (
     fields,
     estimateTableRowCount,
     includeFullRecord,
+    countOnly,
   } = queryStringParameters;
 
   const dbQueryParameters: DbQueryParameters = {};
@@ -266,8 +267,8 @@ export const convertQueryStringToDbQueryParameters = (
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
   dbQueryParameters.estimateTableRowCount = (estimateTableRowCount === 'true');
   dbQueryParameters.includeFullRecord = (includeFullRecord === 'true');
+  dbQueryParameters.countOnly = (countOnly === 'true');
   dbQueryParameters.sort = convertSort(type, queryStringParameters);
-  dbQueryParameters.countOnly = (queryStringParameters.countOnly === 'true');
 
   // remove reserved words (that are not fields)
   const fieldParams = omit(queryStringParameters, reservedWords);
