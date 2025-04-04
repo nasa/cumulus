@@ -2,7 +2,11 @@
 
 import { Context } from 'aws-lambda';
 import pMap from 'p-map';
+import pRetry from 'p-retry';
 import path from 'path';
+import keyBy from 'lodash/keyBy';
+import range from 'lodash/range';
+import clone from 'lodash/clone';
 import { AssertionError } from 'assert';
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { constructCollectionId } from '@cumulus/message/Collections';
@@ -10,14 +14,10 @@ import { log } from '@cumulus/common';
 import { ApiGranuleRecord, ApiFile } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { BucketsConfigObject } from '@cumulus/common/types';
-import { bulkPatch, bulkPatchGranuleCollection } from '@cumulus/api-client/granules';
+import { bulkPatchGranuleCollection, bulkPatch } from '@cumulus/api-client/granules';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-
-import keyBy from 'lodash/keyBy';
-import range from 'lodash/range';
 import { deleteS3Object } from '@cumulus/aws-client/S3';
 import { ValidationError } from '@cumulus/errors';
-import pRetry from 'p-retry';
 
 type ValidApiFile = {
   bucket: string,
@@ -40,13 +40,18 @@ interface EventConfig {
     version: string,
   }
   buckets: BucketsConfigObject,
-  concurrency: number | undefined,
-  dbMaxPool: number | undefined,
+  concurrency?: number,
+  s3Concurrency?: number,
+  dbMaxPool?: number,
+  maxRequestGranules?: number,
 }
 
 type ValidEventConfig = {
   concurrency: number,
-  dbMaxPool: number
+  s3Concurrency: number,
+  dbMaxPool: number,
+  maxRequestGranules: number,
+  oldGranules?: Array<ApiGranuleRecord>
 } & EventConfig;
 
 interface MoveGranuleCollectionsEvent {
@@ -76,10 +81,16 @@ function validateGranule(granule: ApiGranuleRecord): granule is ValidGranuleReco
   return true;
 }
 
-function validateConfig(config: EventConfig): ValidEventConfig {
-  const newConfig = config;
-  newConfig.concurrency = config.concurrency || 100;
-  return newConfig as ValidEventConfig;
+export function massageConfig(config: EventConfig): ValidEventConfig {
+  const newConfig = clone(config) as ValidEventConfig;
+  newConfig.concurrency = config.concurrency || Number(process.env.concurrency) || 100;
+  newConfig.s3Concurrency = config.s3Concurrency || Number(process.env.s3Concurrency) || 50;
+  newConfig.maxRequestGranules = config.maxRequestGranules
+    || Number(process.env.maxRequestGranules)
+    || 1000;
+  newConfig.dbMaxPool = config.dbMaxPool || Number(process.env.dbMaxPool) || 100;
+
+  return newConfig;
 }
 
 async function moveGranulesInCumulusDatastores(
@@ -124,8 +135,24 @@ async function cleanupS3File(
     return;
   }
   await pRetry(
-    async () => await deleteS3Object(oldFile.bucket, oldFile.key),
-    { retries: 3, minTimeout: 2000, maxTimeout: 2000 }
+    () => deleteS3Object(oldFile.bucket, oldFile.key),
+    {
+      retries: 5,
+      minTimeout: 2000,
+      maxTimeout: 10000,
+      randomize: true,
+      onFailedAttempt:
+        /* istanbul skip next */
+        (error) => {
+          if (error.toString().includes('RequestTimeout:')) {
+            log.warn(
+              `Error when deleting object ${oldFile?.bucket}/${oldFile?.key} :: ${error}, retrying`
+            );
+          } else {
+            throw error;
+          }
+        },
+    }
   );
 }
 
@@ -151,18 +178,17 @@ async function cleanupInS3(
           message: 'mismatch between target and source granule files',
         });
       }
-      return async () => await cleanupS3File(newFile, oldFile);
+      return () => cleanupS3File(newFile, oldFile);
     });
   });
   await pMap(
     operations,
-    async (operation) => await operation(),
-    { concurrency: config.concurrency }
+    (operation) => operation(),
+    { concurrency: config.s3Concurrency }
   );
 }
 
-function chunkGranules(granules: ValidGranuleRecord[], concurrency: number) {
-  const chunkSize = concurrency;
+function chunkGranules(granules: ValidGranuleRecord[], chunkSize: number) {
   return range(granules.length / chunkSize).map((i) => granules.slice(
     i * chunkSize,
     (i + 1) * chunkSize
@@ -173,12 +199,21 @@ async function changeGranuleCollectionsPG(
   event: MoveGranuleCollectionsEvent
 ): Promise<Object> {
   const oldGranules = event.config.oldGranules;
-  const config = validateConfig(event.config);
+  const config = massageConfig(event.config);
 
   const targetGranules = event.input.granules.filter(validateGranule);
   const oldGranulesByID: { [granuleId: string]: ValidGranuleRecord } = keyBy(oldGranules.filter(validateGranule), 'granuleId');
-  log.debug(`change-granule-collection-pg run with config ${JSON.stringify(config)}`);
-  for (const granuleChunk of chunkGranules(targetGranules, config.concurrency)) {
+
+  log.debug(`change-granule-collection-pg run with config ${JSON.stringify({
+    ...config,
+    /* massive logs can cause "random" errors with no clear cause */
+    oldGranules: undefined, // oldGranules needs to not be logged because it can be enormous
+  })}`);
+  for (const granuleChunk of chunkGranules(targetGranules, config.maxRequestGranules)) {
+    /* maxRequestGranules smaller than concurrency is effectively limiting concurrency
+    for these requests greater maxRequestGranules offers greater efficiency,
+    and some intermitten errors were seen when maxRequestGranules and concurrency were
+    large and unequal */
     //eslint-disable-next-line no-await-in-loop
     await moveGranulesInCumulusDatastores(
       granuleChunk,

@@ -5,6 +5,8 @@
 const { z } = require('zod');
 const isError = require('lodash/isError');
 const pMap = require('p-map');
+
+const pRetry = require('p-retry');
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
@@ -763,12 +765,16 @@ async function bulkPatchGranuleCollection(req, res) {
 
   await mappingFunction(
     granules,
-    async (apiGranule) => {
-      await updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule');
-    },
+    (apiGranule) => pRetry(
+      () => updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule'),
+      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+    ),
     { concurrency: body.esConcurrency }
   );
-  await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
+  await pRetry(
+    () => updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id),
+    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+  );
 
   return res.send({
     message: `Successfully wrote granules with Granule Id: ${granuleIds} to Collection Id: ${newCollectionId}`,
@@ -806,9 +812,7 @@ async function bulkPatch(req, res) {
 
   await mappingFunction(
     granules,
-    async (apiGranule) => {
-      await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
-    },
+    (apiGranule) => patchGranule({ body: apiGranule, knex, testContext: {} }, res),
     { concurrency: body.dbConcurrency }
   );
 
@@ -954,11 +958,13 @@ const bulkChangeCollectionSchema = z.object({
   targetCollectionId: z.string().nonempty('targetCollectionId is required'),
   batchSize: z.number().positive().optional().default(100),
   concurrency: z.number().positive().optional().default(100),
+  s3Concurrency: z.number().positive().optional().default(50),
+  dbMaxPool: z.number().positive().optional().default(100),
+  maxRequestGranules: z.number().positive().optional().default(10000),
   invalidGranuleBehavior: z.enum(['error', 'skip']).default('error'),
   cmrGranuleUrlType: z.enum(['http', 's3', 'both']).default('both'),
   s3MultipartChunkSizeMb: z.number().optional(),
   executionName: z.string().optional(),
-  dbMaxPool: z.number().positive().optional().default(100),
 });
 const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload', bulkChangeCollectionSchema);
 
@@ -971,7 +977,11 @@ const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload
  * @param {string} req.body.targetCollectionId - The target collection ID.
  * @param {number} [req.body.batchSize=100] - The batch size for processing granules.
  * @param {number} [req.body.concurrency=100] - The per-file concurrency level for processing
- * granules and granule records
+ * granules and granule records in the cumulus api
+ * @param {number} [req.body.s3Concurrency=100] - The per-file concurrency level for processing
+ * granules and granule records in s3
+ * @param {number} [req.body.maxRequestGranules=1000] - the maximum number of granules to send
+ * in an api request
  * @param {string} [req.body.invalidGranuleBehavior='error'] - The behavior for invalid granules
  * ('error' or 'skip').
  * @param {number} [req.body.s3MultipartChunkSizeMb] - The S3 multipart chunk size in MB
@@ -1068,10 +1078,12 @@ async function bulkChangeCollection(req, res) {
         batchSize: body.batchSize,
         cmrGranuleUrlType: body.cmrGranuleUrlType,
         concurrency: body.concurrency,
+        s3Concurrency: body.s3Concurrency,
         dbMaxPool: body.dbMaxPool,
         invalidGranuleBehavior: body.invalidGranuleBehavior,
         s3MultipartChunkSizeMb: body.s3MultipartChunkSizeMb,
         targetCollection: deconstructCollectionId(body.targetCollectionId),
+        maxRequestGranules: body.maxRequestGranules,
       },
     },
     payload: {},

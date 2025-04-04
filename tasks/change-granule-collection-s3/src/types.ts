@@ -2,12 +2,13 @@ import { BucketsConfigObject } from '@cumulus/common/types';
 import { ApiFile, ApiGranuleRecord, CollectionRecord } from '@cumulus/types';
 export const MB = 1024 * 1024;
 
-type TestApiClientMethods = {
+type TestMethods = {
   getGranuleMethod: (params: { granuleId: string }) => ApiGranuleRecord,
   getCollectionMethod: (params: {
     collectionName: string,
     collectionVersion: string
-  }) => CollectionRecord
+  }) => CollectionRecord,
+  getMetadataFunction: (s3url: string) => Object
 };
 
 export type EventConfig = {
@@ -18,11 +19,13 @@ export type EventConfig = {
   buckets: BucketsConfigObject,
   cmrGranuleUrlType?: string,
   concurrency?: number,
+  s3Concurrency?: number,
   distribution_endpoint?: string,
   invalidGranuleBehavior?: string,
   s3MultipartChunksizeMb?: number,
-  // this last is not a valid member of production configuration
-  testApiClientMethods?: TestApiClientMethods
+  // these last are not valid members of production configuration
+  testMethods?: TestMethods
+
 };
 
 export type ChangeCollectionsS3Event = {
@@ -53,4 +56,6 @@ export type MassagedEventConfig = {
   cmrGranuleUrlType: string,
   invalidGranuleBehavior: string,
   targetCollection: CollectionRecord,
+  concurrency: number,
+  s3Concurrency: number,
 } & EventConfig;

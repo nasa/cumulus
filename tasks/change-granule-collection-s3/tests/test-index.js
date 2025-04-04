@@ -34,7 +34,7 @@ const {
 
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { constructCollectionId } = require('../../../packages/message/Collections');
-const { changeGranuleCollectionS3, s3CopyNeeded, updateCMRData, updateCMRCollections } = require('../dist/src');
+const { changeGranuleCollectionS3, s3CopyNeeded, updateCMRData, updateCMRCollections, logOrThrow } = require('../dist/src');
 const { dummyGetCollection, dummyGetGranule, uploadFiles } = require('./_helpers');
 
 function granulesToFileURIs(granuleIds, t) {
@@ -51,7 +51,7 @@ function buildPayload(t, collection) {
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.private.name = t.context.privateBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
-  newPayload.config.testApiClientMethods = t.context.testApiClientMethods;
+  newPayload.config.testMethods = t.context.testMethods;
   return newPayload;
 }
 
@@ -60,7 +60,7 @@ test.beforeEach(async (t) => {
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   const testDbName = `change-granule-collection-s3/change-collections-s3${cryptoRandomString({ length: 10 })}`;
-  t.context.testApiClientMethods = {
+  t.context.testMethods = {
     getGranuleMethod: (params) => dummyGetGranule(params.granuleId, t),
     getCollectionMethod: (params) => (
       dummyGetCollection(params.collectionName, params.collectionVersion)
@@ -1207,4 +1207,87 @@ test.serial('changeGranuleCollectionS3 should parse fileName if not given in fil
     '/example2/2003/' +
     'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
   ));
+});
+
+test('logOrThrow logs throws on a timeout, but passes otherwise', (t) => {
+  try {
+    throw new TypeError('RequestTimeout: this thing');
+  } catch (error) {
+    logOrThrow(
+      error,
+      'this is a log output'
+    );
+    t.pass();
+  }
+  try {
+    throw new TypeError('some random error to throw');
+  } catch (error) {
+    t.throws(
+      () => logOrThrow(
+        error,
+        'this is a log output'
+      ),
+      {
+        message: 'some random error to throw',
+      }
+    );
+  }
+});
+
+test('s3 failures retry on timeout', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload_cmr_xml.json');
+  t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+  const filesToUpload = granulesToFileURIs(
+    t.context.payload.input.granuleIds, t
+  );
+  const collection = { name: 'MOD11A1', version: '002' };
+  const newPayload = buildPayload(t, collection);
+  let retries = 0;
+  newPayload.config.testMethods = {
+    ...newPayload.config.testMethods,
+    getMetadataFunction: () => {
+      retries += 1;
+      throw new Error('uh oh');
+    },
+  };
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  await t.throwsAsync(
+    () => changeGranuleCollectionS3(newPayload),
+    {
+      message: 'uh oh',
+    }
+  );
+  t.is(retries, 1);
+
+  retries = 0;
+  newPayload.config.testMethods = {
+    ...newPayload.config.testMethods,
+    getMetadataFunction: () => {
+      retries += 1;
+      throw new Error('RequestTimeout: uh oh');
+    },
+  };
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  await t.throwsAsync(
+    () => changeGranuleCollectionS3(newPayload),
+    {
+      message: 'RequestTimeout: uh oh',
+    }
+  );
+  t.is(retries, 6);
+
+  retries = 0;
+  newPayload.config.testMethods = {
+    ...newPayload.config.testMethods,
+    getMetadataFunction: async (s3Url) => {
+      retries += 1;
+      if (retries < 3) {
+        throw new Error('RequestTimeout: uh oh');
+      }
+      return await metadataObjectFromCMRFile(s3Url);
+    },
+  };
+  await uploadFiles(filesToUpload, t.context.bucketMapping);
+  await changeGranuleCollectionS3(newPayload);
+  t.is(retries, 3);
 });
