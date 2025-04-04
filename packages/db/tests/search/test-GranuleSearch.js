@@ -928,8 +928,19 @@ test('GranuleSearch estimates the rowcount of the table by default', async (t) =
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
-  t.true(response.meta.count > 0);
+  t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
   t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch only returns count if countOnly is set to true', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    countOnly: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
+  t.is(response.results?.length, 0);
 });
 
 test('GranuleSearch with includeFullRecord true retrieves associated file objects for granules', async (t) => {
