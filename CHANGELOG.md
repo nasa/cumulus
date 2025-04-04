@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-3788**
+  - Updated `@cumulus/launchpad-auth/getLaunchpadToken` to check if the token in s3 has been updated
+    before updating it with a new token
+
 ## [v20.1.1] 2025-03-26
 
 ### Changed
