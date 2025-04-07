@@ -31,12 +31,12 @@ test.before(async (t) => {
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
   t.context.asyncOperations = [];
-  t.context.asyncOperationSearchTmestamp = 1579352700000;
+  t.context.asyncOperationSearchTimestamp = 1579352700000;
 
   range(100).map((num) => (
     t.context.asyncOperations.push(fakeAsyncOperationRecordFactory({
       cumulus_id: num,
-      updated_at: new Date(t.context.asyncOperationSearchTmestamp + (num % 2)),
+      updated_at: new Date(t.context.asyncOperationSearchTimestamp + (num % 2)),
       operation_type: num % 2 === 0 ? 'Bulk Granules' : 'Data Migration',
       task_arn: num % 2 === 0 ? cryptoRandomString({ length: 3 }) : undefined,
     }))
@@ -134,7 +134,7 @@ test('AsyncOperationSearch supports term search for date field', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    updatedAt: `${t.context.asyncOperationSearchTmestamp + 1}`,
+    updatedAt: `${t.context.asyncOperationSearchTimestamp + 1}`,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
   const { results, meta } = await dbSearch.query(knex);
@@ -171,8 +171,8 @@ test('AsyncOperationSearch supports range search', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
-    timestamp__from: `${t.context.asyncOperationSearchTmestamp + 1}`,
-    timestamp__to: `${t.context.asyncOperationSearchTmestamp + 2}`,
+    timestamp__from: `${t.context.asyncOperationSearchTimestamp + 1}`,
+    timestamp__to: `${t.context.asyncOperationSearchTimestamp + 2}`,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
   const { results, meta } = await dbSearch.query(knex);
@@ -185,7 +185,7 @@ test('AsyncOperationSearch supports search for multiple fields', async (t) => {
   const queryStringParameters = {
     limit: 200,
     id: t.context.asyncOperations[2].id,
-    updatedAt: `${t.context.asyncOperationSearchTmestamp}`,
+    updatedAt: `${t.context.asyncOperationSearchTimestamp}`,
   };
   const dbSearch = new AsyncOperationSearch({ queryStringParameters });
   const { results, meta } = await dbSearch.query(knex);
