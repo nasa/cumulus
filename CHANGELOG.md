@@ -16,7 +16,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4077**
   - Update list/search endpoints and corresponding BaseSearch `@cumulus/db` logic to allow `countOnly` as a configuration-modifying query parameter that *only* returns a useful value for `meta.count` to allow users to get a count without returning results/incurring pagination/translation costs
 
-
 ## [v20.1.1] 2025-03-26
 
 ### Changed
