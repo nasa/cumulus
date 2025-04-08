@@ -1,4 +1,5 @@
 export type QueryStringParameters = {
+  countOnly?: string,
   field?: string,
   fields?: string,
   infix?: string,
@@ -30,6 +31,7 @@ export type SortType = {
 
 export type DbQueryParameters = {
   collate?: string,
+  countOnly?: boolean,
   fields?: string[],
   infix?: string,
   limit?: number,

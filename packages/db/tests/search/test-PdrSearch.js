@@ -750,3 +750,14 @@ test('PdrSearch returns the correct record', async (t) => {
 
   t.deepEqual(results?.[0], expectedApiRecord);
 });
+
+test('PdrSearch only returns count if countOnly is set to true', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    countOnly: 'true',
+  };
+  const dbSearch = new PdrSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
+  t.is(response.results?.length, 0);
+});
