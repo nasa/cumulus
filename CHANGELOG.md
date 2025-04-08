@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3980**
+  - Updated bulkPatchGranuleCollection to error when the collection it is getting updated to doesn't exist
 - **CUMULUS-4077**
   - Update list/search endpoints and corresponding BaseSearch `@cumulus/db` logic to allow `countOnly` as a configuration-modifying query parameter that *only* returns a useful value for `meta.count` to allow users to get a count without returning results/incurring pagination/translation costs
 
