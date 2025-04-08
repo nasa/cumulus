@@ -143,15 +143,10 @@ test.serial('getLaunchpadToken does not update the token in s3 if the token has 
   const firstToken = randomString();
   const secondToken = randomString();
 
-  console.log(stubS3Token, firstToken, secondToken);
   nock('https://www.example.com:12345')
     .get('/api/gettoken')
     .reply(200,
       JSON.stringify({ ...getTokenResponse, sm_token: firstToken }));
-  nock('https://www.example.com:12345')
-    .get('/api/gettoken')
-    .reply(200,
-      JSON.stringify({ ...getTokenResponse, sm_token: secondToken }));
 
   // does not update the token if token has been updated since
   const tokenReturnWithStubFunc = await launchpad.getLaunchpadToken(config);
@@ -160,6 +155,10 @@ test.serial('getLaunchpadToken does not update the token in s3 if the token has 
 
   // restore the original function
   revert();
+  nock('https://www.example.com:12345')
+    .get('/api/gettoken')
+    .reply(200,
+      JSON.stringify({ ...getTokenResponse, sm_token: secondToken }));
   // token is updated
   const tokenReturned = await launchpad.getLaunchpadToken(config);
   t.is(tokenReturned, secondToken);
