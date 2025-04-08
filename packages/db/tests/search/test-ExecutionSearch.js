@@ -608,6 +608,17 @@ test('ExecutionSearch estimates the rowcount of the table by default', async (t)
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
-  t.true(response.meta.count > 0);
+  t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
   t.is(response.results?.length, 50);
+});
+
+test('ExecutionSearch only returns count if countOnly is set to true', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    countOnly: 'true',
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
+  t.is(response.results?.length, 0);
 });
