@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/change-granule-collection-s3",
-  "version": "18.5.5",
+  "version": "18.5.6",
   "description": "Move granule files and postgres records to a new collection",
   "main": "dist/index.js",
   "directories": {
@@ -41,20 +41,20 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "18.5.5",
-    "@cumulus/aws-client": "18.5.5",
-    "@cumulus/cmrjs": "18.5.5",
-    "@cumulus/common": "18.5.5",
+    "@cumulus/api-client": "18.5.6",
+    "@cumulus/aws-client": "18.5.6",
+    "@cumulus/cmrjs": "18.5.6",
+    "@cumulus/common": "18.5.6",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
-    "@cumulus/distribution-utils": "18.5.5",
-    "@cumulus/errors": "18.5.5",
-    "@cumulus/ingest": "18.5.5",
-    "@cumulus/message": "18.5.5",
-    "@cumulus/types": "18.5.5",
+    "@cumulus/distribution-utils": "18.5.6",
+    "@cumulus/errors": "18.5.6",
+    "@cumulus/ingest": "18.5.6",
+    "@cumulus/message": "18.5.6",
+    "@cumulus/types": "18.5.6",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@cumulus/api": "18.5.5",
-    "@aws-sdk/client-sns": "^3.621.0"
+    "@aws-sdk/client-sns": "^3.621.0",
+    "@cumulus/api": "18.5.6"
   }
 }
