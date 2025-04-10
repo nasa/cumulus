@@ -366,6 +366,11 @@ each Cumulus version between your current version and v19.1.0 as normal.
 - **CUMULUS-3752**
   - Fixed api return codes expected in api-client for bulkPatch and bulkPatchGranuleCollections
 
+### Changed
+
+- **CUMULUS-3960**
+  - Updated `PostToCmr` task to be able to `republish` granules
+
 ## [v18.5.5] 2025-03-04
 
 **Please note** changes in v18.5.5 may not yet be released in future versions, as this
