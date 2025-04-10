@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-4004**
-  - Add documentation explaining use and configuration of changegranuleCollections workflow
+  - Add documentation explaining use and configuration of changeGranuleCollections workflow
 - **CUMULUS-3992**
   - Update `MoveCollectionsWorkflow` references to `ChangeGranuleCollectionsWorkflow`
   - Update `@cumulus/api-client` to add bulkChangeCollection endpoint
@@ -38,13 +38,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3752**
   - Fixed api return codes expected in api-client for bulkPatch and bulkPatchGranuleCollections
 
-- **CUMULUS-33944**
+- **CUMULUS-3944**
   - Updated DLA table column tables to lowercase to avoid recurring terraform update
 
 ### Changed
-
-- **CUMULUS-3960**
-  - Updated `PostToCmr` task to be able to `republish` granules
 
 - **CUMULUS-3788**
   - Updated `@cumulus/launchpad-auth/getLaunchpadToken` to check if the token in s3 has been updated
@@ -334,6 +331,40 @@ each Cumulus version between your current version and v19.1.0 as normal.
   - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
 - **CUMULUS-3981**
   - Added required $metadata field when creating new instance of ServiceException.
+
+## [v18.5.6] 2025-04-09
+
+### Added
+
+- **CUMULUS-4004**
+  - Add documentation explaining use and configuration of changeGranuleCollections workflow
+- **CUMULUS-3992**
+  - Update `MoveCollectionsWorkflow` references to `ChangeGranuleCollectionsWorkflow`
+  - Update `@cumulus/api-client` to add bulkChangeCollection endpoint
+  - Update `@cumulus/api` to add api endpoint to allow trigger of `ChangeGranuleCollectionsWorkflow`
+  - Update ChangeGranuleCollections integration test to use endpoint to trigger test instead of direct step function invocation
+- **CUMULUS-3751**
+  - Added `change-granule-collection-s3` to move granules to a different collection.
+    - expects a list of granuleIds along with a new (target) collection
+    - moves those granule files in S3 according to pathing of target collection
+    - update CMR metadata file according to new collection information
+  - Added CopyObject function in @cumulus/aws-client/S3 to facilitate multi-part s3 object copying
+  - Added functions to allow manipulation in memory of cmr metadata objects in @cumulus/cmrjs/cmr-utils
+    - updateUMMGMetadataObject updates file links for ummg metadata structure object
+    - updateEcho10XMLMetadataObject updates file links for echo10 metadata structure object
+    - setUMMGCollection sets collection name and version in ummg metadata structure object
+    - setEcho10Collection sets collection name and version in echo10 metadata structure object
+    - getCMRCollectionId gets collectionId from cmr metadata object using its filename to
+      determine how to correctly parse the object (echo10 vs ummg)
+  - Added MoveGranuleCollections workflow to cumulus core deployable according to terraform variables
+  - Added ingest module terraform variable "deploy_cumulus_workflows": a map of workflows that should be deployed
+    - as of merging only controls move_granule_collections_workflow
+    - defaults to true (deploy the workflow)
+
+### Fixed
+
+- **CUMULUS-3752**
+  - Fixed api return codes expected in api-client for bulkPatch and bulkPatchGranuleCollections
 
 ## [v18.5.5] 2025-03-04
 
@@ -8462,7 +8493,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [v20.0.1]: https://github.com/nasa/cumulus/compare/v20.0.0...v20.0.1
 [v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
 [v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
-[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.5...v19.0.0
+[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.6...v19.0.0
+[v18.5.6]: https://github.com/nasa/cumulus/compare/v18.5.5...v18.5.6
 [v18.5.5]: https://github.com/nasa/cumulus/compare/v18.5.3...v18.5.5
 [v18.5.3]: https://github.com/nasa/cumulus/compare/v18.5.2...v18.5.3
 [v18.5.2]: https://github.com/nasa/cumulus/compare/v18.5.1...v18.5.2
