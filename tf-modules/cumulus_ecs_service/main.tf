@@ -41,6 +41,7 @@ resource "aws_ecs_task_definition" "default" {
         options = {
           awslogs-group  = aws_cloudwatch_log_group.default.name
           awslogs-region = data.aws_region.current.name
+          awslogs-stream-prefix = var.name
         }
       }
     }
@@ -72,6 +73,7 @@ resource "aws_ecs_service" "default" {
   task_definition                    = aws_ecs_task_definition.default.arn
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0
+  force_new_deployment               = var.force_new_deployment
   # TODO Re-enable tags once this warning is addressed:
   #   The new ARN and resource ID format must be enabled to add tags to the
   #   service. Opt in to the new format and try again.

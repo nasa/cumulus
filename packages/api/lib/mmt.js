@@ -42,16 +42,16 @@ const buildMMTLink = (conceptId, cmrEnv = process.env.CMR_ENVIRONMENT) => {
 };
 
 /**
- * Updates the Collection query results from ES with an MMTLink when the
+ * Updates the Collection query results with a MMTLink when the
  * matching CMR entry contains a collection_id.
  *
- * @param {Array<Object>} esResults - collection query results from Cumulus' elasticsearch
+ * @param {Array<Object>} queryResults - collection query results from Cumulus DB
  * @param {Array<Object>} cmrEntries - cmr response feed entry that should match the
  *                                     results collections
- * @returns {Array<Object>} - Array of shallow clones of esResults objects with
+ * @returns {Array<Object>} - Array of shallow clones of queryResults objects with
  *                            MMTLinks added to them
  */
-const updateResponseWithMMT = (esResults, cmrEntries) => esResults.map((res) => {
+const updateResponseWithMMT = (queryResults, cmrEntries) => queryResults.map((res) => {
   const matchedCmr = cmrEntries.filter(
     (entry) => entry.short_name === res.name && entry.version_id === res.version
   );
@@ -61,7 +61,7 @@ const updateResponseWithMMT = (esResults, cmrEntries) => esResults.map((res) => 
 });
 
 /**
- * Simplifies and transforms The returned ES results from a collection query
+ * Simplifies and transforms the results from a collection query
  * into a list of objects suitable for a compound call to CMR to retrieve
  * collection_id information.
  *  Transforms each object in the results array into an new object.
@@ -69,7 +69,7 @@ const updateResponseWithMMT = (esResults, cmrEntries) => esResults.map((res) => 
  *  inputObject.version => outputObject.version
  *  all other input object keys are dropped.
  *
- * @param {Object} results - The elasticsearch results array returned from either
+ * @param {Object} results - The results array returned from either
  *          Collection.query() or Collection.queryCollectionsWithActiveGranules()
  * @returns {Arary<Object>} - list of Objects with two keys (short_name and version).
  */
@@ -80,10 +80,10 @@ const parseResults = (results) =>
   }));
 
 /**
- * parses the elasticsearch collection lists and for each result inserts a "MMTLink"
+ * parses the query collection lists and for each result inserts a "MMTLink"
  * into the collection object.
  *
- * @param {Object} inputResponse - an elasticsearch reponse returned from either
+ * @param {Object} inputResponse - a reponse returned from either
  *          Collection.query() or Collection.queryCollectionsWithActiveGranules()
  * @returns {Object} a copy of input response object where each collection
  *      has been updated to include a link to the Metadata Management Tool

@@ -1446,3 +1446,20 @@ test.serial('backupGranulesToLzards returns failed record (by default) or throws
   const errorResults = JSON.parse(error.message).map((result) => result.value).flat();
   t.deepEqual(errorResults, expectedBackupResults);
 });
+
+test.serial('setLzardsChecksumQueryType is case insensitive', (t) => {
+  const { fakeBucket1 } = t.context;
+  const granuleId = 'fakeGranuleId';
+
+  let file = { bucket: fakeBucket1, key: 'fakeKey', checksumType: 'MD5', checksum: 'md5Checksum' };
+  let actual = index.setLzardsChecksumQueryType(file, granuleId);
+  t.deepEqual(actual.expectedMd5Hash, 'md5Checksum');
+
+  file = { bucket: fakeBucket1, key: 'fakeKey', checksumType: 'SHA256', checksum: 'sha256Checksum' };
+  actual = index.setLzardsChecksumQueryType(file, granuleId);
+  t.deepEqual(actual.expectedSha256Hash, 'sha256Checksum');
+
+  file = { bucket: fakeBucket1, key: 'fakeKey', checksumType: 'SHA512', checksum: 'sha512Checksum' };
+  actual = index.setLzardsChecksumQueryType(file, granuleId);
+  t.deepEqual(actual.expectedSha512Hash, 'sha512Checksum');
+});

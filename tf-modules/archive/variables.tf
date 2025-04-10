@@ -71,27 +71,6 @@ variable "ecs_task_role" {
   type = object({ name = string, arn = string})
 }
 
-variable "elasticsearch_domain_arn" {
-  type    = string
-  default = null
-}
-
-variable "elasticsearch_hostname" {
-  type    = string
-  default = null
-}
-
-variable "elasticsearch_security_group_id" {
-  type    = string
-  default = ""
-}
-
-variable "elasticsearch_remove_index_alias_conflict" {
-  type = bool
-  default = false
-  description = "Set to true to allow cumulus deployment bootstrap lambda to remove existing ES index named 'cumulus-alias' if it exists.  Setting to false will cause deployment to fail on existing index"
-}
-
 variable "kinesis_inbound_event_logger_lambda_function_arn" {
   type = string
 }
@@ -196,18 +175,6 @@ variable "cmr_search_client_config" {
   description = "Configuration parameters for CMR search client for cumulus tasks"
   type        = map(string)
   default     = {}
-}
-
-variable "elasticsearch_client_config" {
-  description = "Configuration parameters for Elasticsearch client for cumulus tasks"
-  type        = map(string)
-  default     = {}
-}
-
-variable "es_request_concurrency" {
-  type = number
-  default = 10
-  description = "Maximum number of concurrent requests to send to Elasticsearch. Used in index-from-database operation"
 }
 
 variable "lambda_memory_sizes" {
@@ -340,41 +307,34 @@ variable "daily_execution_payload_cleanup_schedule_expression" {
   description = "Cloud Watch cron schedule for the execution payload cleanup lambda"
 }
 
-variable "complete_execution_payload_timeout_disable" {
+variable "cleanup_running" {
   type    = bool
   default = false
-  description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
+  description = "Boolean flag that when set to true will enable 'running' execution cleanup"
 }
 
-variable "complete_execution_payload_timeout" {
+variable "cleanup_non_running" {
+  type    = bool
+  default = true
+  description = "Boolean flag that when set to true will enable non 'running' execution cleanup"
+}
+
+variable "payload_timeout" {
   type    = number
   default = 10
-  description = "Number of days to retain 'complete' execution payload records in the database"
+  description = "Number of days to retain execution payload records in the database"
 }
 
-variable "non_complete_execution_payload_timeout_disable" {
-  type    = bool
-  default = false
-  description = "Boolean flag that when set to true will disable 'complete' execution cleanup"
-
-}
-
-variable "non_complete_execution_payload_timeout" {
-  description = "Number of days to retain 'non-complete' execution payload records in the database"
-  type    = number
-  default = 30
+variable "update_limit" {
+type = number
+  default = 10000
+  description = "number of executions to cleanup in one lambda run"
 }
 
 variable "log_destination_arn" {
   type = string
   default = "N/A"
   description = "A shared AWS:Log:Destination that receives logs from log_groups"
-}
-
-variable "es_index_shards" {
-  description = "The number of shards for the Elasticsearch index"
-  type        = number
-  default     = 2
 }
 
 variable "cloudwatch_log_retention_periods" {
@@ -392,4 +352,18 @@ variable "report_sns_topic_subscriber_arns" {
   type = list
   default = null
   description = "Account ARNs to supply to report SNS topics policy with subscribe action"
+}
+
+## Dead Letter Recovery Configuration
+
+variable "dead_letter_recovery_cpu" {
+  type = number
+  default = 256
+  description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
+}
+
+variable "dead_letter_recovery_memory" {
+  type = number
+  default = 1024
+  description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }

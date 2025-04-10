@@ -5,8 +5,6 @@ const {
   PdrPgModel,
   translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
-const { upsertPdr } = require('@cumulus/es-client/indexer');
-const { getEsClient } = require('@cumulus/es-client/search');
 const {
   getMessagePdrName,
   messageHasPdr,
@@ -14,7 +12,6 @@ const {
   getMessagePdrPANSent,
   getMessagePdrPANMessage,
   getPdrPercentCompletion,
-  generatePdrApiRecordFromMessage,
 } = require('@cumulus/message/PDRs');
 const {
   getMetaStatus,
@@ -87,23 +84,6 @@ const writePdrViaTransaction = async ({
   return pdr;
 };
 
-const writePdrToEs = async (params) => {
-  const {
-    cumulusMessage,
-    updatedAt = Date.now(),
-    esClient = await getEsClient(),
-  } = params;
-  const pdrApiRecord = generatePdrApiRecordFromMessage(cumulusMessage, updatedAt);
-  if (!pdrApiRecord) {
-    return;
-  }
-  await upsertPdr({
-    esClient,
-    updates: pdrApiRecord,
-    index: process.env.ES_INDEX,
-  });
-};
-
 const writePdr = async ({
   cumulusMessage,
   collectionCumulusId,
@@ -111,7 +91,6 @@ const writePdr = async ({
   executionCumulusId,
   knex,
   updatedAt = Date.now(),
-  esClient,
 }) => {
   let pgPdr;
   // If there is no PDR in the message, then there's nothing to do here, which is fine
@@ -133,11 +112,6 @@ const writePdr = async ({
       executionCumulusId,
       updatedAt,
     });
-    await writePdrToEs({
-      cumulusMessage,
-      updatedAt,
-      esClient,
-    });
     return pgPdr.cumulus_id;
   });
   const pdrToPublish = await translatePostgresPdrToApiPdr(pgPdr, knex);
@@ -149,5 +123,4 @@ module.exports = {
   generatePdrRecord,
   writePdrViaTransaction,
   writePdr,
-  writePdrToEs,
 };

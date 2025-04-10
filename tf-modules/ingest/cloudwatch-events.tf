@@ -45,8 +45,8 @@ resource "aws_cloudwatch_event_target" "sqs_message_consumer_watcher" {
   rule = aws_cloudwatch_event_rule.sqs_message_consumer_watcher.name
   arn  = aws_lambda_function.sqs_message_consumer.arn
   input = jsonencode({
-    messageLimit = 500
-    timeLimit    = 60
+    messageLimit = var.sqs_message_consumer_watcher_message_limit
+    timeLimit    = var.sqs_message_consumer_watcher_time_limit
   })
 }
 

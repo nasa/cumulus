@@ -29,7 +29,6 @@ process.env = {
   EcsCluster: randomString(),
   BulkOperationLambda: randomString(),
   invoke: randomString(),
-  ES_HOST: randomString(),
   METRICS_ES_HOST: randomString(),
   METRICS_ES_USER: randomString(),
   METRICS_ES_PASS: randomString(),
@@ -100,7 +99,6 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     payload: body,
     type: 'BULK_GRANULE',
     envVars: {
-      ES_HOST: process.env.ES_HOST,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
@@ -184,7 +182,6 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     payload: body,
     type: 'BULK_GRANULE',
     envVars: {
-      ES_HOST: process.env.ES_HOST,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,

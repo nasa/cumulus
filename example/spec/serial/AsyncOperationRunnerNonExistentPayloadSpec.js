@@ -43,7 +43,7 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
         id: asyncOperationId,
         taskArn: randomString(),
         description: 'Some description',
-        operationType: 'ES Index',
+        operationType: 'Bulk Granules',
         status: 'RUNNING',
       };
 

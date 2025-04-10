@@ -183,6 +183,25 @@ describe('The Granules API', () => {
       });
 
       const searchedGranule = JSON.parse(searchResults.body).results[0];
+      expect(searchedGranule).toEqual(jasmine.objectContaining({
+        ...randomGranuleRecord,
+        files: [],
+      }));
+    });
+    it('can search the granule including files via the API.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
+      const searchResults = await waitForListGranulesResult({
+        prefix,
+        query: {
+          granuleId: randomGranuleRecord.granuleId,
+          includeFullRecord: 'true',
+        },
+      });
+
+      const searchedGranule = JSON.parse(searchResults.body).results[0];
       expect(searchedGranule).toEqual(jasmine.objectContaining(randomGranuleRecord));
     });
 

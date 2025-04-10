@@ -8,6 +8,21 @@ cumulus-sit:
   apiUsername: jasmine
   pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
+cumulus-std:
+  bucket: cumulus-sit-internal
+  apiUsername: jasmine
+  pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
+
+cumulus-es:
+  bucket: cumulus-sit-internal
+  apiUsername: jasmine
+  pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
+
+cumulus-lp:
+  bucket: cumulus-sit-internal
+  apiUsername: jasmine
+  pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
+
 mvd-tf:
   bucket: mvd-internal
 

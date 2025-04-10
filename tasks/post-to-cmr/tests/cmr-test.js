@@ -108,7 +108,7 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
   }
 });
 
-test.serial('postToCMR fails when CMR is down', async (t) => {
+test.serial('postToCMR fails to publish granules when CMR is down', async (t) => {
   sinon.stub(cmrClient.CMR.prototype, 'getToken');
   const { bucket, payload } = t.context;
   const newPayload = payload;
@@ -125,6 +125,27 @@ test.serial('postToCMR fails when CMR is down', async (t) => {
     Key: cmrFileKey,
     Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
   });
+  try {
+    await t.throwsAsync(postToCMR(newPayload),
+      { instanceOf: CMRInternalError });
+  } finally {
+    cmrClient.CMR.prototype.getToken.restore();
+  }
+});
+
+test.serial('postToCMR fails to republish granules when CMR is down', async (t) => {
+  sinon.stub(cmrClient.CMR.prototype, 'getToken');
+  const newPayload = cloneDeep(t.context.payload);
+  newPayload.config.republish = true;
+  newPayload.config.concurrency = 2;
+  newPayload.input.granules[0].published = true;
+  newPayload.input.granules[0].cmrLink = randomString;
+
+  sinon.stub(cmrClient.CMR.prototype, 'deleteGranule').throws(new CMRInternalError());
+  t.teardown(() => {
+    cmrClient.CMR.prototype.deleteGranule.restore();
+  });
+
   try {
     await t.throwsAsync(postToCMR(newPayload),
       { instanceOf: CMRInternalError });
@@ -166,6 +187,45 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
 
   sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
   t.teardown(() => {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  });
+
+  await s3PutObject({
+    Bucket: bucket,
+    Key: cmrFileKey,
+    Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
+  });
+
+  await validateInput(t, newPayload.input);
+  await validateConfig(t, newPayload.config);
+  const output = await postToCMR(newPayload);
+  await validateOutput(t, output);
+  t.is(output.granules.length, 1);
+  t.is(
+    output.granules[0].cmrLink,
+    `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
+  );
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.post_to_cmr_duration));
+    t.true(g.post_to_cmr_duration >= 0);
+  });
+});
+
+test.serial('postToCMR successfully republishes granules with correct payload', async (t) => {
+  const { bucket, payload } = t.context;
+  const newPayload = cloneDeep(payload);
+  newPayload.config.concurrency = 2;
+  newPayload.config.republish = true;
+  newPayload.input.granules[0].published = true;
+  newPayload.input.granules[0].cmrLink = randomString;
+
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const cmrFileKey = `${granuleId}.cmr.xml`;
+
+  sinon.stub(cmrClient.CMR.prototype, 'deleteGranule');
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
+  t.teardown(() => {
+    cmrClient.CMR.prototype.deleteGranule.restore();
     cmrClient.CMR.prototype.ingestGranule.restore();
   });
 

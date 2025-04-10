@@ -91,7 +91,7 @@ function buildOutput(event, groupedExecutions) {
 
   const parseFailedExecution = (execution) => {
     let reason = 'Workflow Failed';
-    if (execution.output) reason = JSON.parse(execution.output).exception;
+    if (execution.error) reason = execution.error;
     return { arn: execution.executionArn, reason };
   };
 
@@ -127,7 +127,7 @@ function buildOutput(event, groupedExecutions) {
 }
 
 /**
- * check the status of a step funciton execution
+ * check the status of a step function execution
  *
  * @param {string} executionArn - step function execution arn
  * @returns {Promise.<Object>} - an object describing the status of the exection
@@ -136,7 +136,7 @@ async function describeExecutionStatus(executionArn) {
   try {
     return await StepFunctions.describeExecution({ executionArn });
   } catch (error) {
-    if (error.code === 'ExecutionDoesNotExist') {
+    if (error instanceof StepFunctions.ExecutionDoesNotExist) {
       return { executionArn: executionArn, status: 'RUNNING' };
     }
     throw error;

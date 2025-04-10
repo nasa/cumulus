@@ -102,12 +102,12 @@ describe('When the Sync Granule workflow is configured', () => {
             files: [
               {
                 bucket: config.buckets.internal.name,
-                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-hashedGranuleId/replace-me-granuleId.hdf`,
                 source: `${testDataFolder}/replace-me-granuleId.hdf`,
               },
               {
                 bucket: config.buckets.internal.name,
-                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-hashedGranuleId/replace-me-granuleId.hdf.met`,
                 source: `${testDataFolder}/replace-me-granuleId.hdf.met`,
               },
             ],

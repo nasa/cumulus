@@ -7,6 +7,7 @@ const isObject = require('lodash/isObject');
 const cloneDeep = require('lodash/cloneDeep');
 const proxyquire = require('proxyquire');
 const fs = require('fs-extra');
+const pWaitFor = require('p-wait-for');
 
 const {
   CreateEventSourceMappingCommand,
@@ -100,6 +101,19 @@ const getKinesisEventMappings = async () => {
   return await Promise.all(mappingPromises);
 };
 
+const waitForEventSourceMappingsDeletion = () =>
+  pWaitFor(
+    async () => {
+      const eventMappings = await getKinesisEventMappings();
+      return (eventMappings.map((eventMapping) => eventMapping.EventSourceMappings)
+        .flat().length === 0);
+    },
+    {
+      interval: 3000,
+      timeout: 60 * 1000,
+    }
+  );
+
 const deleteKinesisEventSourceMappings = async () => {
   const eventMappings = await getKinesisEventMappings();
 
@@ -111,8 +125,9 @@ const deleteKinesisEventSourceMappings = async () => {
     eventMappings[1].EventSourceMappings
   );
 
-  return await Promise.all(allEventMappings.map((e) =>
-    awsServices.lambda().send(new DeleteEventSourceMappingCommand({ UUID: e.UUID }))));
+  await Promise.all(allEventMappings.map((e) =>
+    e.State !== 'Deleting' && awsServices.lambda().send(new DeleteEventSourceMappingCommand({ UUID: e.UUID }))));
+  return await waitForEventSourceMappingsDeletion();
 };
 
 test.before(async (t) => {
@@ -200,20 +215,37 @@ test.serial('fetchRules invokes API to fetch rules', async (t) => {
   t.true(listRulesStub.calledOnce);
 });
 
+test.serial('fetchRules allows for configurable page size', async (t) => {
+  listRulesStub.onFirstCall().callsFake(({ query }) => {
+    t.is(query.limit, 100);
+    return { body: JSON.stringify({ results: [] }) };
+  });
+
+  listRulesStub.onSecondCall().callsFake(({ query }) => {
+    t.is(query.limit, 50);
+    return { body: JSON.stringify({ results: [] }) };
+  });
+
+  await rulesHelpers.fetchRules({});
+  await rulesHelpers.fetchRules({ pageSize: 50 });
+
+  t.true(listRulesStub.calledTwice);
+});
+
 test.serial('fetchRules pages through results until reaching an empty list', async (t) => {
   const rule1 = { name: 'rule-1' };
   const rule2 = { name: 'rule-2' };
   const firstCallArgs = {
     prefix: process.env.stackName,
-    query: { page: 1 },
+    query: { limit: 100, page: 1 },
   };
   const secondCallArgs = {
     prefix: process.env.stackName,
-    query: { page: 2 },
+    query: { limit: 100, page: 2 },
   };
   const thirdCallArgs = {
     prefix: process.env.stackName,
-    query: { page: 3 },
+    query: { limit: 100, page: 3 },
   };
   listRulesStub.onFirstCall().callsFake((params) => {
     t.deepEqual(params, firstCallArgs);
@@ -551,8 +583,10 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
   const deletedEventMappings = await getKinesisEventMappings();
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
-
-  t.is(deletedConsumerEventMappings.length, 0);
+  t.true(
+    (deletedConsumerEventMappings.length === 0)
+    || (deletedConsumerEventMappings[0].State === 'Deleting')
+  );
   t.is(deletedLogEventMappings.length, 1);
   t.teardown(async () => {
     await rulesHelpers.deleteKinesisEventSource(testKnex, kinesisRule, 'log_event_arn', { log_event_arn: kinesisRule.rule.logEventArn });
@@ -597,8 +631,14 @@ test.serial('deleteKinesisEventSources deletes all kinesis event sources', async
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
 
-  t.is(deletedConsumerEventMappings.length, 0);
-  t.is(deletedLogEventMappings.length, 0);
+  t.true(
+    (deletedConsumerEventMappings.length === 0)
+    || (deletedConsumerEventMappings[0].State === 'Deleting')
+  );
+  t.true(
+    (deletedLogEventMappings.length === 0)
+    || (deletedLogEventMappings[0].State === 'Deleting')
+  );
 });
 
 test.serial('deleteKinesisEventSources throws when deleteKinesisEventSource throws', async (t) => {
@@ -837,8 +877,14 @@ test.serial('deleteRuleResources correctly deletes resources for kinesis rule', 
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
 
-  t.is(deletedConsumerEventMappings.length, 0);
-  t.is(deletedLogEventMappings.length, 0);
+  t.true(
+    (deletedConsumerEventMappings.length === 0)
+    || (deletedConsumerEventMappings[0].State === 'Deleting')
+  );
+  t.true(
+    (deletedLogEventMappings.length === 0)
+    || (deletedLogEventMappings[0].State === 'Deleting')
+  );
 });
 
 test.serial('deleteRuleResources correctly deletes resources for sns rule', async (t) => {
@@ -1099,8 +1145,14 @@ test.serial('deleteRuleResources() removes kinesis source mappings', async (t) =
     consumerEventMappingsAfter,
     logEventMappingsAfter,
   ] = await getKinesisEventMappings();
-  t.is(consumerEventMappingsAfter.EventSourceMappings.length, 0);
-  t.is(logEventMappingsAfter.EventSourceMappings.length, 0);
+  t.true(
+    (consumerEventMappingsAfter.EventSourceMappings.length === 0)
+    || (consumerEventMappingsAfter.EventSourceMappings[0].State === 'Deleting')
+  );
+  t.true(
+    (logEventMappingsAfter.EventSourceMappings.length === 0)
+    || (logEventMappingsAfter.EventSourceMappings[0].State === 'Deleting')
+  );
 });
 
 test.serial('checkForSnsSubscriptions returns the correct status of a Rule\'s subscription', async (t) => {

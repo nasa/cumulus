@@ -3,7 +3,6 @@ resource "aws_ssm_parameter" "dynamo_table_names" {
   type = "String"
   value = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
-    ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
   })
 }
 locals {
@@ -13,7 +12,6 @@ locals {
   api_redirect_uri          = "${local.api_uri}token"
   dynamo_table_namestring   = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
-    ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
   })
   api_env_variables = {
         auth_mode                      = "public"
@@ -25,6 +23,7 @@ locals {
       API_BASE_URL                     = local.api_uri
       ASSERT_ENDPOINT                  = var.saml_assertion_consumer_service
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
+      DeadLetterRecoveryTaskDefinition = aws_ecs_task_definition.dead_letter_recovery_operation.arn
       backgroundQueueUrl               = var.background_queue_url
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
       collection_sns_topic_arn         = aws_sns_topic.report_collections_topic.arn
@@ -48,14 +47,10 @@ locals {
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
       EcsCluster                       = var.ecs_cluster_name
       ENTITY_ID                        = var.saml_entity_id
-      ES_CONCURRENCY                   = var.es_request_concurrency
-      ES_HOST                          = var.elasticsearch_hostname
-      ES_INDEX_SHARDS                  = var.es_index_shards
       granule_sns_topic_arn            = aws_sns_topic.report_granules_topic.arn
       execution_sns_topic_arn          = aws_sns_topic.report_executions_topic.arn
       idleTimeoutMillis                = var.rds_connection_timing_configuration.idleTimeoutMillis
       IDP_LOGIN                        = var.saml_idp_login
-      IndexFromDatabaseLambda          = aws_lambda_function.index_from_database.arn
       invoke                           = var.schedule_sf_function_arn
       invokeArn                        = var.schedule_sf_function_arn
       invokeReconcileLambda            = aws_lambda_function.create_reconciliation_report.arn

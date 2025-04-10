@@ -10,7 +10,7 @@ resource "aws_sqs_queue" "clean_executions_dead_letter_queue" {
 resource "aws_lambda_function" "clean_executions" {
   function_name    = "${var.prefix}-cleanExecutions"
   filename         = "${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip")
+source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"
@@ -21,13 +21,11 @@ resource "aws_lambda_function" "clean_executions" {
   }
   environment {
     variables = {
-      stackName       = var.prefix
-
-      completeExecutionPayloadTimeoutDisable = var.complete_execution_payload_timeout_disable
-      completeExecutionPayloadTimeout        = var.complete_execution_payload_timeout
-
-      nonCompleteExecutionPayloadTimeoutDisable = var.non_complete_execution_payload_timeout_disable
-      nonCompleteExecutionPayloadTimeout        = var.non_complete_execution_payload_timeout
+      stackName             = var.prefix
+      CLEANUP_RUNNING       = var.cleanup_running
+      CLEANUP_NON_RUNNING   = var.cleanup_non_running
+      PAYLOAD_TIMEOUT       = var.payload_timeout
+      UPDATE_LIMIT          = var.update_limit
     }
   }
 
@@ -37,9 +35,7 @@ resource "aws_lambda_function" "clean_executions" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id
-      ]
+      security_group_ids = local.lambda_security_group_ids
     }
   }
 }

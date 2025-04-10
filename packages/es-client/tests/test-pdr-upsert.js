@@ -30,7 +30,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test('upsertPdr creates a new "running" PDR record', async (t) => {
+test.serial('upsertPdr creates a new "running" PDR record', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const pdr = {
@@ -48,7 +48,7 @@ test('upsertPdr creates a new "running" PDR record', async (t) => {
   t.like(esRecord, pdr);
 });
 
-test('upsertPdr creates a new "completed" PDR record', async (t) => {
+test.serial('upsertPdr creates a new "completed" PDR record', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const pdr = {
@@ -66,7 +66,7 @@ test('upsertPdr creates a new "completed" PDR record', async (t) => {
   t.like(esRecord, pdr);
 });
 
-test('upsertPdr does update a "running" PDR record if execution is different', async (t) => {
+test.serial('upsertPdr does update a "running" PDR record if execution is different', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const pdr = {
@@ -97,7 +97,7 @@ test('upsertPdr does update a "running" PDR record if execution is different', a
   t.like(updatedEsRecord, updates);
 });
 
-test('upsertPdr does update a "completed" PDR record to "running" if execution is different and createdAt is newer', async (t) => {
+test.serial('upsertPdr does update a "completed" PDR record to "running" if execution is different and createdAt is newer', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const createdAt = Date.now();
@@ -131,7 +131,7 @@ test('upsertPdr does update a "completed" PDR record to "running" if execution i
   t.like(updatedEsRecord, updates);
 });
 
-test('upsertPdr does not update "completed" PDR record to "running" with same execution and older createdAt value', async (t) => {
+test.serial('upsertPdr does not update "completed" PDR record to "running" with same execution and older createdAt value', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const createdAt = Date.now();
@@ -165,7 +165,7 @@ test('upsertPdr does not update "completed" PDR record to "running" with same ex
   t.like(updatedEsRecord, pdr);
 });
 
-test('upsertPdr does not update PDR record with same execution if progress is less than current', async (t) => {
+test.serial('upsertPdr does not update PDR record with same execution if progress is less than current', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const execution = randomString();
@@ -208,7 +208,7 @@ test('upsertPdr does not update PDR record with same execution if progress is le
   t.like(updatedEsRecord, pdr);
 });
 
-test('upsertPdr does not update PDR record from different execution with older createdAt value', async (t) => {
+test.serial('upsertPdr does not update PDR record from different execution with older createdAt value', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const execution = randomString();
@@ -255,7 +255,7 @@ test('upsertPdr does not update PDR record from different execution with older c
   t.like(updatedEsRecord, pdr);
 });
 
-test('upsertPdr does not update PDR record from same execution with older createdAt value', async (t) => {
+test.serial('upsertPdr does not update PDR record from same execution with older createdAt value', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const execution = randomString();
@@ -300,7 +300,7 @@ test('upsertPdr does not update PDR record from same execution with older create
   t.like(updatedEsRecord, pdr);
 });
 
-test('upsertPdr does update PDR record from same execution if progress was made', async (t) => {
+test.serial('upsertPdr does update PDR record from same execution if progress was made', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const execution = randomString();
@@ -346,7 +346,7 @@ test('upsertPdr does update PDR record from same execution if progress was made'
   t.like(updatedEsRecord, updates);
 });
 
-test('upsertPdr does not update a final (failed) record to a final state (completed) if execution is different but createdAt is older', async (t) => {
+test.serial('upsertPdr does not update a final (failed) record to a final state (completed) if execution is different but createdAt is older', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const createdAt = Date.now();
@@ -382,7 +382,7 @@ test('upsertPdr does not update a final (failed) record to a final state (comple
   t.like(updatedEsRecord, pdr);
 });
 
-test('upsertPdr does update a final (failed) record to a final state (completed) if execution is different and createdAt is newer', async (t) => {
+test.serial('upsertPdr does update a final (failed) record to a final state (completed) if execution is different and createdAt is newer', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const createdAt = Date.now();
@@ -417,7 +417,7 @@ test('upsertPdr does update a final (failed) record to a final state (completed)
   t.like(updatedEsRecord, updates);
 });
 
-test('upsertPdr handles version conflicts on parallel updates', async (t) => {
+test.serial('upsertPdr handles version conflicts on parallel updates', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const createdAt = Date.now();

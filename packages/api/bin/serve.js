@@ -19,18 +19,12 @@ const {
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-
-const { ReconciliationReport } = require('../models');
-
 const testUtils = require('../lib/testUtils');
 const serveUtils = require('./serveUtils');
 const {
-  setLocalEsVariables,
   localStackName,
   localSystemBucket,
   localUserName,
-  getESClientAndIndex,
 } = require('./local-test-defaults');
 
 const workflowList = testUtils.getWorkflowList();
@@ -58,12 +52,6 @@ async function populateBucket(bucket, stackName) {
 }
 
 async function prepareServices(stackName, bucket) {
-  setLocalEsVariables(stackName);
-  console.log(process.env.ES_HOST);
-  await bootstrapElasticSearch({
-    host: process.env.ES_HOST,
-    index: process.env.ES_INDEX,
-  });
   await s3().createBucket({ Bucket: bucket });
 
   const { TopicArn } = await createSnsTopic(randomId('topicName'));
@@ -96,35 +84,7 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
 }
 
 /**
- * erases Elasticsearch index
- * @param {any} esClient - Elasticsearch client
- * @param {any} esIndex - index to delete
- */
-async function eraseElasticsearchIndices(esClient, esIndex) {
-  try {
-    await esClient.indices.delete({ index: esIndex });
-  } catch (error) {
-    if (error.message !== 'index_not_found_exception') throw error;
-  }
-}
-
-/**
- * resets Elasticsearch and returns the client and index.
- *
- * @param {string} stackName - The name of local stack. Used to prefix stack resources.
- * @returns {Object} - Elasticsearch client and index
- */
-async function initializeLocalElasticsearch(stackName) {
-  const es = await getESClientAndIndex(stackName);
-  await eraseElasticsearchIndices(es.client, es.index);
-  return bootstrapElasticSearch({
-    host: process.env.ES_HOST,
-    index: es.index,
-  });
-}
-
-/**
- * Fill Postgres and Elasticsearch with fake records for testing.
+ * Fill Postgres with fake records for testing.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  * @param {string} user - username
  * @param {Object} knexOverride - Used to override knex object for testing
@@ -140,7 +100,6 @@ async function createDBRecords(stackName, user, knexOverride) {
   const providerPgModel = new ProviderPgModel();
   const rulePgModel = new RulePgModel();
 
-  await initializeLocalElasticsearch(stackName);
   await serveUtils.resetPostgresDb();
 
   if (user) {
@@ -219,7 +178,7 @@ async function createDBRecords(stackName, user, knexOverride) {
  * @param {string} user - A username to add as an authorized user for the API.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  * @param {bool} reseed - boolean to control whether to load new data into
- *                        Postgres and Elasticsearch.
+ *                        Postgres.
  */
 async function serveApi(user, stackName = localStackName, reseed = true) {
   const port = process.env.PORT || 5001;
@@ -248,24 +207,6 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
     process.env.stackName = stackName;
 
     checkEnvVariablesAreSet(requiredEnvVars);
-
-    // Create reconciliation report table
-    const reconciliationReportTableName = `${stackName}-ReconciliationReportsTable`;
-    process.env.ReconciliationReportsTable = reconciliationReportTableName;
-    const reconciliationReportModel = new ReconciliationReport({
-      tableName: reconciliationReportTableName,
-      stackName: process.env.stackName,
-      systemBucket: process.env.system_bucket,
-    });
-    try {
-      await reconciliationReportModel.createTable();
-    } catch (error) {
-      if (error && error.name && error.name === 'ResourceInUseException') {
-        console.log(`${reconciliationReportTableName} is already created`);
-      } else {
-        throw error;
-      }
-    }
 
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
@@ -321,18 +262,6 @@ async function serveDistributionApi(stackName = localStackName, done) {
 }
 
 /**
- * Resets Elasticsearch
- *
- * @param {string} stackName - defaults to local stack, 'localrun'
- * @param {string} systemBucket - defaults to 'localbucket'
- */
-function eraseDataStack(
-  stackName = localStackName
-) {
-  return initializeLocalElasticsearch(stackName);
-}
-
-/**
  * Removes all additional data from tables and repopulates with original data.
  *
  * @param {string} user - defaults to local user, testUser
@@ -353,7 +282,6 @@ async function resetTables(
 }
 
 module.exports = {
-  eraseDataStack,
   serveApi,
   serveDistributionApi,
   resetTables,

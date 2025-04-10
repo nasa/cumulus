@@ -85,7 +85,7 @@ const getOrcaRecoveryStatusByGranuleIdAndCollection = async (granuleId, collecti
 /**
  * add recovery status for each granule in the granule list response
  *
- * @param {Object} inputResponse - an elasticsearch response returned from granules query
+ * @param {Object} inputResponse - a response returned from a granules query
  * @returns {Object} a copy of input response object where each granule
  *      has been updated to include orca recovery status
  */

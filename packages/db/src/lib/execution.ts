@@ -17,7 +17,39 @@ export interface ArnRecord {
 const log = new Logger({ sender: '@cumulus/db/lib/execution' });
 
 /**
- * Returns execution info sorted by most recent first for an input
+ * Returns execution records sorted by most recent first for an input
+ * set of Granule Cumulus IDs.
+ * @returns Array of arn objects with the most recent first.
+ */
+export const getExecutionInfoByGranuleCumulusIds = async ({
+  knexOrTransaction,
+  granuleCumulusIds,
+  limit,
+}: {
+  knexOrTransaction: Knex | Knex.Transaction,
+  granuleCumulusIds: number[],
+  limit?: number
+}): Promise<{ granule_cumulus_id: number, url: string }[]> => {
+  const knexQuery = knexOrTransaction(TableNames.executions)
+    .column([
+      `${TableNames.executions}.url`,
+      `${TableNames.granulesExecutions}.granule_cumulus_id`,
+    ])
+    .whereIn(`${TableNames.granulesExecutions}.granule_cumulus_id`, granuleCumulusIds)
+    .join(
+      TableNames.granulesExecutions,
+      `${TableNames.executions}.cumulus_id`,
+      `${TableNames.granulesExecutions}.execution_cumulus_id`
+    )
+    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
+  if (limit) {
+    knexQuery.limit(limit);
+  }
+  return await knexQuery;
+};
+
+/**
+ * Returns execution records sorted by most recent first for an input
  * Granule Cumulus ID.
  *
  * @param {Object} params
@@ -42,51 +74,11 @@ export const getExecutionInfoByGranuleCumulusId = async ({
 }): Promise<Partial<PostgresExecutionRecord>[]> => {
   const knexQuery = knexOrTransaction(TableNames.executions)
     .column(executionColumns.map((column) => `${TableNames.executions}.${column}`))
-    .where(`${TableNames.granules}.cumulus_id`, granuleCumulusId)
+    .where(`${TableNames.granulesExecutions}.granule_cumulus_id`, granuleCumulusId)
     .join(
       TableNames.granulesExecutions,
       `${TableNames.executions}.cumulus_id`,
       `${TableNames.granulesExecutions}.execution_cumulus_id`
-    )
-    .join(
-      TableNames.granules,
-      `${TableNames.granules}.cumulus_id`,
-      `${TableNames.granulesExecutions}.granule_cumulus_id`
-    )
-    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
-  if (limit) {
-    knexQuery.limit(limit);
-  }
-  return await knexQuery;
-};
-
-/**
- * Returns a list of executionArns sorted by most recent first, for an input
- * Granule Cumulus ID.
- *
- * @param {Knex | Knex.Transaction} knexOrTransaction
- *   Knex client for reading from RDS database
- * @param {number} granuleCumulusId - The primary ID for a Granule
- * @param {number} limit - limit to number of executions to query
- * @returns {Promise<ArnRecord[]>} - Array of arn objects with the most recent first.
- */
-export const getExecutionArnsByGranuleCumulusId = async (
-  knexOrTransaction: Knex | Knex.Transaction,
-  granuleCumulusId: Number,
-  limit?: number
-): Promise<ArnRecord[]> => {
-  const knexQuery = knexOrTransaction(TableNames.executions)
-    .select(`${TableNames.executions}.arn`)
-    .where(`${TableNames.granules}.cumulus_id`, granuleCumulusId)
-    .join(
-      TableNames.granulesExecutions,
-      `${TableNames.executions}.cumulus_id`,
-      `${TableNames.granulesExecutions}.execution_cumulus_id`
-    )
-    .join(
-      TableNames.granules,
-      `${TableNames.granules}.cumulus_id`,
-      `${TableNames.granulesExecutions}.granule_cumulus_id`
     )
     .orderBy(`${TableNames.executions}.timestamp`, 'desc');
   if (limit) {
@@ -178,21 +170,36 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
   const numberOfGranules = granuleCumulusIdsArray.length;
   const { executions: executionsTable, granulesExecutions: granulesExecutionsTable } = TableNames;
 
-  const aggregatedWorkflowCounts = await knexOrTransaction(executionsTable)
-    .select('workflow_name')
-    .countDistinct('granule_cumulus_id')
+  const aggregatedWorkflowCounts: Array<{
+    workflow_name: string,
+    min: number
+  }> = await knexOrTransaction(
+    executionsTable
+  )
+    .select(['workflow_name'])
     .innerJoin(granulesExecutionsTable, `${executionsTable}.cumulus_id`, `${granulesExecutionsTable}.execution_cumulus_id`)
     .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
     .groupBy('workflow_name')
+    .countDistinct('granule_cumulus_id')
     .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules])
     .modify((queryBuilder) => {
       if (numberOfGranules === 1) {
-        queryBuilder.groupBy('timestamp')
-          .orderBy('timestamp', 'desc');
+        queryBuilder.min('timestamp');
       }
     });
-  return aggregatedWorkflowCounts
-    .map((workflowCounts: { workflow_name: string }) => workflowCounts.workflow_name);
+
+  /*
+  sort (and group by) in knex causes an edge case where two distinct workflows
+  of the same name will be returned if they have different timestamps. This means
+  different returns depending on whether you have asked for one or multiple granules
+  hence this sort has been moved to js logic
+  */
+  if (numberOfGranules === 1) {
+    aggregatedWorkflowCounts.sort((a, b) => b.min - a.min);
+  }
+  return aggregatedWorkflowCounts.map(
+    (workflowCounts: { workflow_name: string }) => workflowCounts.workflow_name
+  );
 };
 
 /**

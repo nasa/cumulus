@@ -4,6 +4,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const nock = require('nock');
 const rewire = require('rewire');
+const sinon = require('sinon');
 const {
   createBucket,
   deleteS3Object,
@@ -127,6 +128,44 @@ test.serial('getLaunchpadToken gets a new token when existing token is expired',
   // get a new token when the existing token is expired
   const fourthToken = await getLaunchpadToken(config);
   t.not(thirdToken, fourthToken);
+
+  await deleteS3Object(Bucket, Key);
+});
+
+test.serial('getLaunchpadToken does not update the token in s3 if the token has been updated by another thread', async (t) => {
+  const stubS3Token = randomString();
+  const getValidLaunchpadTokenFromS3Stub = sinon.stub();
+  getValidLaunchpadTokenFromS3Stub.onCall(0).returns(undefined);
+  getValidLaunchpadTokenFromS3Stub.onCall(1).returns(stubS3Token);
+
+  const revert = launchpad.__set__('getValidLaunchpadTokenFromS3', getValidLaunchpadTokenFromS3Stub);
+
+  const firstToken = randomString();
+  const secondToken = randomString();
+
+  nock('https://www.example.com:12345')
+    .get('/api/gettoken')
+    .reply(200,
+      JSON.stringify({ ...getTokenResponse, sm_token: firstToken }));
+
+  // does not update the token if token has been updated since
+  const tokenReturnWithStubFunc = await launchpad.getLaunchpadToken(config);
+  t.is(tokenReturnWithStubFunc, stubS3Token);
+  t.not(tokenReturnWithStubFunc, firstToken);
+
+  // restore the original function
+  revert();
+  nock('https://www.example.com:12345')
+    .get('/api/gettoken')
+    .reply(200,
+      JSON.stringify({ ...getTokenResponse, sm_token: secondToken }));
+  // token is updated
+  const tokenReturned = await launchpad.getLaunchpadToken(config);
+  t.is(tokenReturned, secondToken);
+
+  // delete s3 token
+  const { Bucket, Key } = launchpadTokenBucketKey();
+  await deleteS3Object(Bucket, Key);
 });
 
 test.serial('validateLaunchpadToken returns success status when user is in specified group', async (t) => {

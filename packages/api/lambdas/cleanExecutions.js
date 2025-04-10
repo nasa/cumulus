@@ -1,48 +1,65 @@
+//@ts-check
+
 'use strict';
 
-const { Execution } = require('../models');
+/**
+ * This lambda has a dummy handler because it needs to be rewritten for PG instead of running
+ * in ElasticSearch. This will be done in CUMULUS-3982.
+ * When this is being rewritten, redo the test file also.
+ */
 
-async function cleanExecutionPayloads(ExecutionModel) {
-  let completeDisable = process.env.completeExecutionPayloadTimeoutDisable || 'false';
-  let nonCompleteDisable = process.env.nonCompleteExecutionPayloadTimeoutDisable || 'false';
+const Logger = require('@cumulus/logger');
+const log = new Logger({
+  sender: '@cumulus/api/lambdas/cleanExecutions',
+});
 
-  completeDisable = JSON.parse(completeDisable);
-  nonCompleteDisable = JSON.parse(nonCompleteDisable);
+/**
+ * parse out environment variable configuration
+ * @returns {{
+ *   cleanupNonRunning: boolean,
+ *   cleanupRunning: boolean,
+ *   payloadTimeout: number
+ *   esIndex: string,
+ *   updateLimit: number,
+ * }}
+ */
+const parseEnvironment = () => {
+  const cleanupNonRunning = JSON.parse(process.env.CLEANUP_NON_RUNNING || 'true');
+  const cleanupRunning = JSON.parse(process.env.CLEANUP_RUNNING || 'false');
+  if (!cleanupRunning && !cleanupNonRunning) throw new Error('running and non-running executions configured to be skipped, nothing to do');
 
-  if (completeDisable && nonCompleteDisable) {
-    return [];
+  const _payloadTimeout = process.env.PAYLOAD_TIMEOUT || '10';
+  const payloadTimeout = Number.parseInt(_payloadTimeout, 10);
+  if (!Number.isInteger(payloadTimeout)) {
+    throw new TypeError(`Invalid number of days specified in configuration for payloadTimeout: ${_payloadTimeout}`);
   }
+  const esIndex = process.env.ES_INDEX || 'cumulus';
 
-  const nonCompleteTimeout = Number.parseInt(process.env.nonCompleteExecutionPayloadTimeout, 10);
-  const completeTimeout = Number.parseInt(process.env.completeExecutionPayloadTimeout, 10);
+  const updateLimit = Number(process.env.UPDATE_LIMIT || 10000);
+  return {
+    cleanupRunning,
+    cleanupNonRunning,
+    payloadTimeout,
+    esIndex,
+    updateLimit,
+  };
+};
 
-  const configuration = [{
-    name: 'nonCompleteExecutionPayloadTimeout',
-    value: nonCompleteTimeout,
-    originalValue: process.env.nonCompleteExecutionPayloadTimeout,
-  },
-  {
-    name: 'completeExecutionPayloadTimeout',
-    value: completeTimeout,
-    originalValue: process.env.completeExecutionPayloadTimeout,
-  }];
+function handler(_event) {
+  const envConfig = parseEnvironment();
+  log.info(`running empty (to be updated) cleanExecutions with configuration ${JSON.stringify(envConfig)}`);
+}
 
-  configuration.forEach((timeout) => {
-    if (!Number.isInteger(timeout.value)) {
-      throw new TypeError(`Invalid number of days specified in configuration for ${timeout.name}: ${timeout.originalValue}`);
-    }
+if (require.main === module) {
+  handler(
+  ).then(
+    (ret) => ret
+  ).catch((error) => {
+    console.log(`failed: ${error}`);
+    throw error;
   });
-
-  const execution = new ExecutionModel();
-  return await execution.removeOldPayloadRecords(completeTimeout,
-    nonCompleteTimeout,
-    completeDisable,
-    nonCompleteDisable);
 }
 
-async function handler(_event) {
-  return await cleanExecutionPayloads(Execution);
-}
-
-exports.handler = handler;
-exports.cleanExecutionPayloads = cleanExecutionPayloads;
+module.exports = {
+  handler,
+};

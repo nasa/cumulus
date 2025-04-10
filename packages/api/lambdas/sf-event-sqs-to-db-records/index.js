@@ -105,7 +105,7 @@ const writeRecords = async ({
 
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
 
-  const pdrCumulusId = await writePdr({
+  await writePdr({
     cumulusMessage,
     collectionCumulusId,
     providerCumulusId,
@@ -115,9 +115,7 @@ const writeRecords = async ({
 
   return writeGranulesFromMessage({
     cumulusMessage,
-    providerCumulusId,
     executionCumulusId,
-    pdrCumulusId,
     knex,
     testOverrides,
   });

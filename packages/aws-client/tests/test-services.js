@@ -6,7 +6,6 @@ const { CloudFormation } = require('@aws-sdk/client-cloudformation');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { ECS } = require('@aws-sdk/client-ecs');
 const { EC2 } = require('@aws-sdk/client-ec2');
-const { ElasticsearchService } = require('@aws-sdk/client-elasticsearch-service');
 const { Kinesis } = require('@aws-sdk/client-kinesis');
 const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
@@ -26,7 +25,7 @@ test('apigateway() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(APIGatewayClient);
-  t.deepEqual(
+  t.like(
     await apigateway.config.credentials(),
     credentials
   );
@@ -44,7 +43,7 @@ test('cf() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(CloudFormation);
-  t.deepEqual(
+  t.like(
     await cf.config.credentials(),
     credentials
   );
@@ -67,7 +66,7 @@ test('cloudwatchevents() service defaults to localstack in test mode', async (t)
     endpoint,
   } = localStackAwsClientOptions(CloudWatchEvents);
 
-  t.deepEqual(
+  t.like(
     await cloudwatchevents.config.credentials(),
     credentials
   );
@@ -89,7 +88,7 @@ test('dynamoDb() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(DynamoDB);
-  t.deepEqual(
+  t.like(
     await dynamodb.config.credentials(),
     credentials
   );
@@ -110,7 +109,7 @@ test('dynamodbDocClient() service defaults to localstack in test mode', async (t
     credentials,
     endpoint,
   } = localStackAwsClientOptions(DynamoDB);
-  t.deepEqual(
+  t.like(
     await dynamodbDocClient.config.credentials(),
     credentials
   );
@@ -131,7 +130,7 @@ test('dynamodbstreams() service defaults to localstack in test mode', async (t) 
     credentials,
     endpoint,
   } = localStackAwsClientOptions(DynamoDB);
-  t.deepEqual(
+  t.like(
     await dynamodbstreams.config.credentials(),
     credentials
   );
@@ -152,7 +151,7 @@ test('ecs() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(ECS);
-  t.deepEqual(
+  t.like(
     await ecs.config.credentials(),
     credentials
   );
@@ -173,7 +172,7 @@ test('ec2() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(EC2);
-  t.deepEqual(
+  t.like(
     await ec2.config.credentials(),
     credentials
   );
@@ -188,34 +187,13 @@ test('ec2() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-test('es() service defaults to localstack in test mode', async (t) => {
-  const es = services.es();
-  const {
-    credentials,
-    endpoint,
-  } = localStackAwsClientOptions(ElasticsearchService);
-  t.deepEqual(
-    await es.config.credentials(),
-    credentials
-  );
-  const esEndpoint = await es.config.endpoint();
-  const localSatckEndpoint = new URL(endpoint);
-  t.like(
-    esEndpoint,
-    {
-      hostname: localSatckEndpoint.hostname,
-      port: Number.parseInt(localSatckEndpoint.port, 10),
-    }
-  );
-});
-
 test('kinesis() service defaults to localstack in test mode', async (t) => {
   const kinesis = services.kinesis();
   const {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(Kinesis);
-  t.deepEqual(
+  t.like(
     await kinesis.config.credentials(),
     credentials
   );
@@ -236,7 +214,7 @@ test('kms() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(KMS);
-  t.deepEqual(
+  t.like(
     await kms.config.credentials(),
     credentials
   );
@@ -258,7 +236,7 @@ test('lambda() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(Lambda);
-  t.deepEqual(
+  t.like(
     await lambda.config.credentials(),
     credentials
   );
@@ -279,7 +257,7 @@ test('s3() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(S3);
-  t.deepEqual(
+  t.like(
     await s3.config.credentials(),
     credentials
   );
@@ -300,7 +278,7 @@ test('secretsManager() service defaults to localstack in test mode', async (t) =
     credentials,
     endpoint,
   } = localStackAwsClientOptions(SecretsManager);
-  t.deepEqual(
+  t.like(
     await secretsManager.config.credentials(),
     credentials
   );
@@ -321,7 +299,7 @@ test('sfn() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(SFN);
-  t.deepEqual(
+  t.like(
     await sfn.config.credentials(),
     credentials
   );
@@ -343,7 +321,7 @@ test('sns() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(SNS);
-  t.deepEqual(
+  t.like(
     await sns.config.credentials(),
     credentials
   );
@@ -365,7 +343,7 @@ test('sqs() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(SQS);
-  t.deepEqual(
+  t.like(
     await sqs.config.credentials(),
     credentials
   );
@@ -386,7 +364,7 @@ test('sts() service defaults to localstack in test mode', async (t) => {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(STS);
-  t.deepEqual(
+  t.like(
     await sts.config.credentials(),
     credentials
   );

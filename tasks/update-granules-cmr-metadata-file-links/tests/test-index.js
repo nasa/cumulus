@@ -7,6 +7,9 @@ const cloneDeep = require('lodash/cloneDeep');
 
 const {
   buildS3Uri,
+  getObject,
+  getObjectSize,
+  getObjectStreamContents,
   recursivelyDeleteS3Bucket,
   putJsonS3Object,
   promiseS3Upload,
@@ -18,7 +21,9 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
-const { updateGranulesCmrMetadataFileLinks } = require('..');
+const { isCMRFile } = require('@cumulus/cmrjs');
+
+const { updateGranulesCmrMetadataFileLinks, updateCmrFileInfo } = require('..');
 
 function cmrReadStream(file) {
   return file.endsWith('.cmr.xml') ? fs.createReadStream('tests/data/meta.xml') : fs.createReadStream('tests/data/ummg-meta.json');
@@ -168,4 +173,130 @@ test.serial('update-granules-cmr-metadata-file-links does not throw error if no 
   await t.notThrowsAsync(
     () => updateGranulesCmrMetadataFileLinks(newPayload)
   );
+});
+
+test.serial('update-granules-cmr-metadata-file-links clears checksums only for updated CMR file', async (t) => {
+  const newPayload = buildPayload(t);
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  newPayload.input.granules[0].files.forEach((file) => {
+    file.type = 'metadata';
+  });
+  const message = await updateGranulesCmrMetadataFileLinks(newPayload);
+
+  message.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if ((isCMRFile(file))) {
+        t.is(file.checksum, undefined);
+        t.is(file.checksumType, undefined);
+      } else {
+        t.not(file.checksum, undefined);
+        t.not(file.checksumType, undefined);
+      }
+    });
+  });
+});
+
+test.serial('update-granules-cmr-metadata-file-links updates size for updated CMR file', async (t) => {
+  const newPayload = buildPayload(t);
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  const message = await updateGranulesCmrMetadataFileLinks(newPayload);
+
+  for (const granule of message.granules) {
+    for (const file of granule.files) {
+      if (isCMRFile(file)) {
+        const bucket = file.bucket;
+        const key = file.key;
+        // eslint-disable-next-line no-await-in-loop
+        const expectedSize = await getObjectSize({ s3: s3(), bucket, key });
+
+        t.is(file.size, expectedSize);
+      }
+    }
+  }
+});
+
+test.serial('update-granules-cmr-metadata-file-links properly handles a case where there are no cmr file in a granule', async (t) => {
+  const newPayload = buildPayload(t);
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  newPayload.input.granules.forEach((granule) => {
+    granule.files = granule.files.filter((file) => file.type !== 'metadata');
+  });
+  const message = await updateGranulesCmrMetadataFileLinks(newPayload);
+
+  t.deepEqual(message.granules, newPayload.input.granules);
+});
+
+test.serial('update-granules-cmr-metadata-file-links properly filters files using the excludeFileRegex', async (t) => {
+  const newPayload = buildPayload(t);
+
+  const ext = '.some.extension';
+  const excludeFileRegex = `.*${ext}`;
+
+  // Modify the payload to include a file that should be excluded
+  // The bucket must be public or protected, otherwise we will see a false test-success
+  // since only public/protected files are updated in the metadata
+  newPayload.input.granules.forEach((granule) => {
+    const newFile = {
+      bucket: t.context.publicBucket,
+      key: `some/prefix/some_filename${ext}`,
+      type: 'data',
+    };
+    granule.files.push(newFile);
+  });
+  newPayload.config.excludeFileRegex = excludeFileRegex;
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  await updateGranulesCmrMetadataFileLinks(newPayload);
+
+  const cmrFiles = [];
+  await newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if (isCMRFile(file)) {
+        cmrFiles.push(file);
+      }
+    });
+  });
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
+    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
+    t.true(!payloadContents.includes(ext));
+  }));
+});
+
+test('updateCmrFileInfo - throws error when granule not found', async (t) => {
+  const cmrFiles = [{ granuleId: 'granule1', bucket: 'bucket', key: 'key' }];
+  const granulesByGranuleId = {};
+
+  await t.throwsAsync(() => updateCmrFileInfo(cmrFiles, granulesByGranuleId), {
+    message: 'Granule with ID granule1 not found in input granules containing files',
+  });
+});
+
+test('updateCmrFileInfo - throws error when CMR file not found', async (t) => {
+  const cmrFiles = [{ granuleId: 'granule1', bucket: 'bucket', key: 'key' }];
+  const granulesByGranuleId = { granule1: { files: [] } };
+
+  await t.throwsAsync(() => updateCmrFileInfo(cmrFiles, granulesByGranuleId), {
+    message: 'CMR file not found for granule with ID granule1',
+  });
 });

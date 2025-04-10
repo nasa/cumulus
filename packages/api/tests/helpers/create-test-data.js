@@ -19,8 +19,6 @@ const {
   translatePostgresExecutionToApiExecution,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const { indexGranule, indexExecution } = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // Postgres mock data factories
@@ -49,8 +47,9 @@ const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/met
  * @param {Knex} params.dbClient - Knex client
  * @param {number} params.executionCumulusId - executionId for execution record to link
  * @param {number} params.collectionId - collectionId for the granule's parent collection
- * @param {number} params.collectionCumulusId - cumulus_id for the granule's parent collection
  * @param {boolean} params.published - if the granule should be marked published to CMR
+ * @param {Object} [params.granuleParams] - additional granule parameters
+ * @param {number} [params.collectionCumulusId] - cumulus_id for the granule's parent collection
  * @returns {Object} fake granule object
  */
 async function createGranuleAndFiles({
@@ -58,7 +57,6 @@ async function createGranuleAndFiles({
   executionCumulusId,
   collectionId,
   dbClient,
-  esClient,
   granuleParams = { published: false },
 }) {
   const s3Buckets = {
@@ -201,18 +199,9 @@ async function createGranuleAndFiles({
     granulePgRecord: pgGranule,
   });
 
-  await indexGranule(esClient, apiGranule, process.env.ES_INDEX);
-
-  const esGranulesClient = new Search(
-    {},
-    'granule',
-    process.env.ES_INDEX
-  );
-
   return {
     newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: pgGranule.cumulus_id }),
     apiGranule,
-    esRecord: await esGranulesClient.get(newGranule.granuleId),
     files: files,
     s3Buckets: s3Buckets,
   };
@@ -221,7 +210,6 @@ async function createGranuleAndFiles({
 async function createExecutionRecords({
   knex,
   count,
-  esClient,
   addGranules = false,
   collectionId,
   addParentExecutions = false,
@@ -277,18 +265,12 @@ async function createExecutionRecords({
       translatePostgresExecutionToApiExecution(execution[0], knex))
   );
 
-  await Promise.all(
-    executionRecords.map((record) =>
-      indexExecution(esClient, record, process.env.ES_INDEX))
-  );
-
   if (addGranules === true) {
     const testGranuleObject = await createGranuleAndFiles({
       collectionCumulusId: pgCollectionRecord.cumulus_id,
       executionCumulusId: pgExecutions[0][0].cumulus_id,
       collectionId,
       dbClient: knex,
-      esClient,
     });
     const granulesExecutionsModel = new GranulesExecutionsPgModel();
     await Promise.all(pgExecutions.map((execution) => granulesExecutionsModel.create(knex, {

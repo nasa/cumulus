@@ -41,11 +41,43 @@ async function sendPAN(event: HandlerEvent): Promise<HandlerOutput> {
   const { config, input } = event;
   const provider = config.provider;
   const remoteDir = config.remoteDir || 'pans';
+  const panType = config.panType || 'shortPan';
 
-  const panName = input.pdr.name.replace(/\.pdr/gi, '.pan');
+  const panName = input.pdr.name.replace(/\.pdr/gi, '.PAN');
   const uploadPath = path.join(remoteDir, panName);
 
-  const pan = pdrHelpers.generatePAN();
+  if (input.running.length !== 0) {
+    throw new Error('Executions still running');
+  }
+  let pan;
+  switch (panType) {
+    case 'longPanAlways': {
+      pan = await pdrHelpers.generateLongPAN([...input.completed, ...input.failed]);
+      log.debug('Created long PAN');
+      break;
+    }
+    case 'shortPan': {
+      const disposition = (input.failed.length > 0) ? 'FAILED' : 'SUCCESSFUL';
+      pan = pdrHelpers.generateShortPAN(disposition);
+      log.debug('Created short PAN');
+      break;
+    }
+    case 'longPan': {
+      const executionCount = input.failed.length + input.completed.length;
+      if (input.failed.length === executionCount || input.completed.length === executionCount) {
+        const disposition = (input.failed.length > 0) ? 'FAILED' : 'SUCCESSFUL';
+        pan = pdrHelpers.generateShortPAN(disposition);
+        log.debug('Created short PAN');
+      } else {
+        pan = await pdrHelpers.generateLongPAN([...input.completed, ...input.failed]);
+        log.debug('Created long PAN');
+      }
+      break;
+    }
+    default: {
+      throw new Error(`Unknown panType: ${panType}, must be shortPan, longPan, or longPanAlways`);
+    }
+  }
 
   const localPath = path.join(tmpdir(), panName);
   fs.writeFileSync(localPath, pan);

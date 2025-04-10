@@ -1,7 +1,7 @@
 locals {
   # Pulled out into a local to prevent cyclic dependencies
-  # between the IAM role, queue and lambda function.
-  sf_event_sqs_lambda_timeout = (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60
+  # between the IAM role, queue, and lambda function.
+  sf_event_sqs_lambda_timeout = lookup(var.lambda_timeouts, "sfEventSqsToDbRecords", (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60)
 }
 
 resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
@@ -192,7 +192,6 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       pdr_sns_topic_arn              = aws_sns_topic.report_pdrs_topic.arn
       RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
       reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
-      ES_HOST                        = var.elasticsearch_hostname
     }
   }
 

@@ -17,16 +17,6 @@ module "archive" {
   default_log_retention_days = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 
-  elasticsearch_client_config               = var.elasticsearch_client_config
-  elasticsearch_domain_arn                  = var.elasticsearch_domain_arn
-  elasticsearch_hostname                    = var.elasticsearch_hostname
-  elasticsearch_security_group_id           = var.elasticsearch_security_group_id
-  elasticsearch_remove_index_alias_conflict = var.elasticsearch_remove_index_alias_conflict
-
-
-  es_index_shards        = var.es_index_shards
-  es_request_concurrency = var.es_request_concurrency
-
   system_bucket     = var.system_bucket
   buckets           = var.buckets
 
@@ -88,11 +78,12 @@ module "archive" {
   metrics_es_username = var.metrics_es_username
 
   daily_execution_payload_cleanup_schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
-  complete_execution_payload_timeout_disable = var.complete_execution_payload_timeout_disable
-  complete_execution_payload_timeout = var.complete_execution_payload_timeout
-  non_complete_execution_payload_timeout_disable = var.non_complete_execution_payload_timeout_disable
-  non_complete_execution_payload_timeout = var.non_complete_execution_payload_timeout
+  cleanup_running        = var.cleanup_running
+  cleanup_non_running     = var.cleanup_non_running
 
+  payload_timeout        = var.payload_timeout
+
+  update_limit          = var.update_limit
   background_queue_url = module.ingest.background_queue_url
 
   distribution_api_id = var.tea_rest_api_id
@@ -108,6 +99,9 @@ module "archive" {
   rds_security_group = var.rds_security_group
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
+
+  dead_letter_recovery_cpu = var.dead_letter_recovery_cpu
+  dead_letter_recovery_memory = var.dead_letter_recovery_memory
 
   tags = var.tags
 

@@ -4,6 +4,7 @@
     "lambdas/**/*.ts",
     "packages/**/*.ts",
     "tasks/**/*.ts",
+    "tf-modules/s3-replicator/**/*.ts",
     ".eslintrc.js",
     "scripts/**/*.ts"
   ]
