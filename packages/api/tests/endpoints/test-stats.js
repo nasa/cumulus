@@ -3,11 +3,14 @@
 const test = require('ava');
 const request = require('supertest');
 const rewire = require('rewire');
-const range = require('lodash/range');
+const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = rewire('@cumulus/es-client/indexer');
+const { getEsClient } = require('@cumulus/es-client/search');
 
 const {
   destroyLocalTestDb,
@@ -35,29 +38,29 @@ const assertions = require('../../lib/assertions');
 const stats = rewire('../../endpoints/stats');
 const getType = stats.__get__('getType');
 
+let esClient;
+
+process.env.AccessTokensTable = randomId('accessTokenTable');
+
+process.env.system_bucket = randomId('bucket');
+process.env.stackName = randomId('stackName');
+
+const esIndex = randomId('esindex');
+const esAlias = randomId('esAlias');
+
+process.env.ES_INDEX = esAlias;
+process.env.TOKEN_SECRET = randomId('tokensecret');
+
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
 let accessTokenModel;
 let jwtAuthToken;
 
-process.env.PG_HOST = randomId('hostname');
-process.env.PG_USER = randomId('user');
-process.env.PG_PASSWORD = randomId('password');
-process.env.stackName = randomId('userstack');
-process.env.AccessTokensTable = randomId('tokentable');
-process.env.system_bucket = randomId('bucket');
-process.env.stackName = randomId('stackName');
-process.env.TOKEN_SECRET = randomId('tokensecret');
-
-process.env = {
-  ...process.env,
-  ...localStackConnectionEnv,
-  PG_DATABASE: testDbName,
-};
-
-test.before(async (t) => {
+test.before(async () => {
+  // create buckets
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
+  esClient = await getEsClient();
   const username = randomId();
   await setAuthorizedOAuthUsers([username]);
 
@@ -66,13 +69,23 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
-  const { knexAdmin, knex } = await generateLocalTestDb(
-    testDbName,
-    migrationDir
-  );
+  // create the elasticsearch index and add mapping
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
+  // Index test data - 2 collections, 3 granules
+  await Promise.all([
+    indexer.indexCollection(esClient, fakeCollectionFactory(), esAlias),
+    indexer.indexCollection(esClient, fakeCollectionFactory(), esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1' }), esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'coll1' }), esAlias),
+    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed', duration: 3 }), esAlias),
+  ]);
 
-  t.context.knexAdmin = knexAdmin;
-  t.context.knex = knex;
+  // Indexing using Date.now() to generate the timestamp
+  const stub = sinon.stub(Date, 'now').returns((new Date(2020, 0, 29)).getTime());
 
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.granulePgModel = new GranulePgModel();
@@ -111,16 +124,12 @@ test.before(async (t) => {
   await t.context.reconciliationReportPgModel.insert(t.context.knex, reconReports);
 });
 
-test.after.always(async (t) => {
+test.after.always(async () => {
   await Promise.all([
+    esClient.client.indices.delete({ index: esIndex }),
     await accessTokenModel.deleteTable(),
     s3.recursivelyDeleteS3Bucket(process.env.system_bucket),
   ]);
-
-  await destroyLocalTestDb({
-    ...t.context,
-    testDbName,
-  });
 });
 
 test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -144,6 +153,18 @@ test('GET /stats/aggregate without an Authorization header returns an Authorizat
 test('GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
     .get('/stats/')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(401);
+
+  assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test.todo('GET without pathParameters and with an unauthorized user returns an unauthorized response');
+
+test('GET /stats/aggregate with an invalid access token returns an unauthorized response', async (t) => {
+  const response = await request(app)
+    .get('/stats/aggregate')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
     .expect(401);
@@ -205,42 +226,30 @@ test('getType returns correct type from query params', (t) => {
   t.is(type, 'provider');
 });
 
-test.todo('GET without pathParameters and with an unauthorized user returns an unauthorized response');
-
-test('GET /stats/aggregate with an invalid access token returns an unauthorized response', async (t) => {
-  const response = await request(app)
-    .get('/stats/aggregate')
-    .set('Accept', 'application/json')
-    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(401);
-
-  assertions.isInvalidAccessTokenResponse(t, response);
-});
-
-test('GET /stats returns correct response, defaulted to the last day', async (t) => {
+test('GET /stats returns correct response, defaulted to all', async (t) => {
   const response = await request(app)
     .get('/stats')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.is(response.body.errors.value, 0);
-  t.is(response.body.processingTime.value, 108.9000015258789);
-  t.is(response.body.granules.value, 1);
-  t.is(response.body.collections.value, 1);
+  t.is(response.body.errors.value, 2);
+  t.is(response.body.collections.value, 2);
+  t.is(response.body.processingTime.value, 2.2);
+  t.is(response.body.granules.value, 5);
 });
 
 test('GET /stats returns correct response with date params filters values correctly', async (t) => {
   const response = await request(app)
-    .get(`/stats?timestamp__from=${(new Date(2018, 1, 28)).getTime()}&timestamp__to=${(new Date(2019, 1, 30)).getTime()}`)
+    .get(`/stats?timestamp__from=${(new Date(2020, 0, 28)).getTime()}&timestamp__to=${(new Date(2020, 0, 30)).getTime()}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.is(response.body.errors.value, 15);
-  t.is(response.body.collections.value, 10);
-  t.is(response.body.processingTime.value, 53.38235317258274);
-  t.is(response.body.granules.value, 17);
+  t.is(response.body.errors.value, 1);
+  t.is(response.body.collections.value, 1);
+  t.is(response.body.processingTime.value, 4);
+  t.is(response.body.granules.value, 2);
 });
 
 test('GET /stats/aggregate with type `granules` returns correct response', async (t) => {
@@ -250,31 +259,23 @@ test('GET /stats/aggregate with type `granules` returns correct response', async
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const expectedCount = [
-    { key: 'completed', count: 25 },
-    { key: 'failed', count: 25 },
-    { key: 'queued', count: 25 },
-    { key: 'running', count: 25 },
-  ];
-  t.is(response.body.meta.count, 100);
-  t.deepEqual(response.body.count, expectedCount);
+  t.is(response.body.meta.count, 5);
+  t.deepEqual(response.body.count, [
+    { key: 'completed', count: 3 }, { key: 'failed', count: 2 },
+  ]);
 });
 
 test('GET /stats/aggregate with type `granules` filters correctly by date', async (t) => {
   const response = await request(app)
-    .get(`/stats/aggregate?type=granules&timestamp__from=${(new Date(2020, 11, 28)).getTime()}&timestamp__to=${(new Date(2023, 8, 30)).getTime()}`)
+    .get(`/stats/aggregate?type=granules&timestamp__from=${(new Date(2020, 0, 28)).getTime()}&timestamp__to=${(new Date(2020, 0, 30)).getTime()}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const expectedCount = [
-    { key: 'failed', count: 16 },
-    { key: 'completed', count: 8 },
-    { key: 'queued', count: 8 },
-    { key: 'running', count: 8 },
-  ];
-  t.is(response.body.meta.count, 40);
-  t.deepEqual(response.body.count, expectedCount);
+  t.is(response.body.meta.count, 2);
+  t.deepEqual(response.body.count, [
+    { key: 'completed', count: 1 }, { key: 'failed', count: 1 },
+  ]);
 });
 
 test('GET /stats/aggregate with type `reconciliationReports` and field `type` returns the correct response', async (t) => {

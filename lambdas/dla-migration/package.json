@@ -30,7 +30,7 @@
     "@cumulus/message": "20.1.1",
     "@cumulus/types": "20.1.1",
     "lodash": "^4.17.21",
-    "moment": "^2.30.1",
+    "moment": "^2.29.4",
     "p-map": "^4.0.0"
   }
 }

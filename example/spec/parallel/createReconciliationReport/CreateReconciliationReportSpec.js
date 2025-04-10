@@ -356,6 +356,7 @@ describe('When there are granule differences and granule reconciliation is run',
       await s3().putObject({ Body: 'delete-me', ...extraS3Object });
 
       extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket);
+
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
@@ -565,7 +566,7 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(report.granulesInCumulusCmr.okCount).toBe(1);
     });
 
-    it('generates a filtered report showing granules that are in Cumulus but not in CMR', () => {
+    it('generates a filtered report showing granules that are in the Cumulus but not in CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       // ingested (not published) granule should only in Cumulus
       const cumulusGranuleIds = report.granulesInCumulusCmr.onlyInCumulus.map((gran) => gran.granuleId);

@@ -601,9 +601,14 @@ variable "dead_letter_recovery_cpu" {
   default = 256
   description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
 }
-
 variable "dead_letter_recovery_memory" {
   type = number
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
+}
+
+variable "deploy_cumulus_workflows" {
+  type = map(string)
+  default = { move_granule_collections_workflow: true }
+  description = "for each workflow, if true deploy that workflow"
 }

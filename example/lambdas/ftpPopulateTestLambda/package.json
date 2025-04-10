@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R granules ./dist/granules && ../../../node_modules/.bin/webpack",
-    "package": "npm run build && (cd dist && node ../../../../bin/zip.js lambda.zip index.js granules)",
+    "package": "npm run build && sleep 10 && (cd dist && node ../../../../bin/zip.js lambda.zip index.js granules)",
     "clean": "rm -rf dist",
     "test": "true",
     "oldpackage": "rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js node_modules ../../spec/helpers",

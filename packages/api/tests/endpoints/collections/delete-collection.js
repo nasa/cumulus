@@ -25,6 +25,12 @@ const {
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
+const EsCollection = require('@cumulus/es-client/collections');
+const { indexCollection } = require('@cumulus/es-client/indexer');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { AccessToken } = require('../../../models');
 const {
@@ -63,6 +69,15 @@ test.before(async (t) => {
   t.context.testKnexAdmin = knexAdmin;
 
   t.context.collectionPgModel = new CollectionPgModel();
+
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esCollectionClient = new EsCollection(
+    {},
+    undefined,
+    t.context.esIndex
+  );
 
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
@@ -119,6 +134,7 @@ test.afterEach(async (t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -215,9 +231,10 @@ test('DELETE returns a 404 if PostgreSQL collection cannot be found', async (t) 
   t.is(response.body.message, 'No record found');
 });
 
-test.serial('DELETE successfully deletes if collection exists in PostgreSQL', async (t) => {
+test.serial('DELETE successfully deletes if collection exists in PostgreSQL but not Elasticsearch', async (t) => {
   const {
     collectionPgModel,
+    esCollectionClient,
     testKnex,
   } = t.context;
   const testCollection = fakeCollectionRecordFactory();
@@ -229,6 +246,11 @@ test.serial('DELETE successfully deletes if collection exists in PostgreSQL', as
       version: testCollection.version,
     }
   ));
+  t.false(
+    await esCollectionClient.exists(
+      constructCollectionId(testCollection.name, testCollection.version)
+    )
+  );
 
   await request(app)
     .delete(`/collections/${testCollection.name}/${testCollection.version}`)
@@ -245,15 +267,69 @@ test.serial('DELETE successfully deletes if collection exists in PostgreSQL', as
       }
     )
   );
+  t.false(
+    await esCollectionClient.exists(
+      constructCollectionId(testCollection.name, testCollection.version)
+    )
+  );
 });
 
-test.serial('Deleting a collection removes it and publishes an SNS message', async (t) => {
+test.serial('DELETE successfully deletes if collection exists in Elasticsearch but not PostgreSQL', async (t) => {
+  const {
+    collectionPgModel,
+    esClient,
+    esCollectionClient,
+    testKnex,
+  } = t.context;
+  const testCollection = fakeCollectionRecordFactory();
+  await indexCollection(esClient, testCollection, process.env.ES_INDEX);
+  t.false(await collectionPgModel.exists(
+    testKnex,
+    {
+      name: testCollection.name,
+      version: testCollection.version,
+    }
+  ));
+  t.true(
+    await esCollectionClient.exists(
+      constructCollectionId(testCollection.name, testCollection.version)
+    )
+  );
+
+  await request(app)
+    .delete(`/collections/${testCollection.name}/${testCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.false(
+    await collectionPgModel.exists(
+      t.context.testKnex,
+      {
+        name: testCollection.name,
+        version: testCollection.version,
+      }
+    )
+  );
+  t.false(
+    await esCollectionClient.exists(
+      constructCollectionId(testCollection.name, testCollection.version)
+    )
+  );
+});
+
+test.serial('Deleting a collection removes it from all data stores and publishes an SNS message', async (t) => {
   const { originalPgRecord } = await createCollectionTestRecords(t.context);
 
   t.true(await t.context.collectionPgModel.exists(t.context.testKnex, {
     name: originalPgRecord.name,
     version: originalPgRecord.version,
   }));
+  t.true(
+    await t.context.esCollectionClient.exists(
+      constructCollectionId(originalPgRecord.name, originalPgRecord.version)
+    )
+  );
 
   await request(app)
     .delete(`/collections/${originalPgRecord.name}/${originalPgRecord.version}`)
@@ -265,6 +341,11 @@ test.serial('Deleting a collection removes it and publishes an SNS message', asy
     name: originalPgRecord.name,
     version: originalPgRecord.version,
   }));
+  t.false(
+    await t.context.esCollectionClient.exists(
+      constructCollectionId(originalPgRecord.name, originalPgRecord.version)
+    )
+  );
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -351,6 +432,112 @@ test.serial('Attempting to delete a collection with an associated rule does not 
       version: originalPgRecord.version,
     }
   ));
+});
+
+test.serial('del() does not remove from Elasticsearch or publish SNS message if removing from PostgreSQL fails', async (t) => {
+  const {
+    originalPgRecord,
+  } = await createCollectionTestRecords(
+    t.context
+  );
+
+  const fakeCollectionPgModel = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+    get: () => Promise.resolve(originalPgRecord),
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
+    },
+    body: originalPgRecord,
+    testContext: {
+      knex: t.context.testKnex,
+      collectionPgModel: fakeCollectionPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.true(
+    await t.context.collectionPgModel.exists(t.context.testKnex, {
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
+    })
+  );
+  t.true(
+    await t.context.esCollectionClient.exists(
+      constructCollectionId(originalPgRecord.name, originalPgRecord.version)
+    )
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  });
+
+  t.is(Messages.length, 0);
+});
+
+test.serial('del() does not remove from PostgreSQL or publish SNS message if removing from Elasticsearch fails', async (t) => {
+  const {
+    originalPgRecord,
+  } = await createCollectionTestRecords(
+    t.context
+  );
+
+  const fakeEsClient = {
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      delete: () => {
+        throw new Error('something bad');
+      },
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
+    },
+    body: originalPgRecord,
+    testContext: {
+      knex: t.context.testKnex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.true(
+    await t.context.collectionPgModel.exists(t.context.testKnex, {
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
+    })
+  );
+  t.true(
+    await t.context.esCollectionClient.exists(
+      constructCollectionId(originalPgRecord.name, originalPgRecord.version)
+    )
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  });
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('del() deletes a collection and removes its configuration store via name and version', async (t) => {

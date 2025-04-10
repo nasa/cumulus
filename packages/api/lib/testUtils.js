@@ -481,6 +481,8 @@ const createCollectionTestRecords = async (context, collectionParams) => {
     testKnex,
     collectionModel,
     collectionPgModel,
+    esClient,
+    esCollectionClient,
   } = context;
   const originalCollection = fakeCollectionFactory(collectionParams);
   if (collectionModel) {
@@ -492,9 +494,14 @@ const createCollectionTestRecords = async (context, collectionParams) => {
   const originalPgRecord = await collectionPgModel.get(
     testKnex, { cumulus_id: pgCollection.cumulus_id }
   );
+  await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
+  const originalEsRecord = await esCollectionClient.get(
+    constructCollectionId(originalCollection.name, originalCollection.version)
+  );
   return {
     originalCollection,
     originalPgRecord,
+    originalEsRecord,
   };
 };
 
@@ -580,6 +587,8 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
   const {
     knex,
     executionPgModel,
+    esClient,
+    esExecutionsClient,
   } = context;
 
   const originalExecution = fakeExecutionFactoryV2(executionParams);
@@ -589,8 +598,13 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
   const originalPgRecord = await executionPgModel.get(
     knex, { cumulus_id: executionCumulusId }
   );
+  await indexExecution(esClient, originalExecution, process.env.ES_INDEX);
+  const originalEsRecord = await esExecutionsClient.get(
+    originalExecution.arn
+  );
   return {
     originalPgRecord,
+    originalEsRecord,
   };
 };
 

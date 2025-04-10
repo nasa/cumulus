@@ -50,7 +50,7 @@
     "js-yaml": "^3.13.1",
     "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
-    "moment": "^2.30.1",
+    "moment": "2.29.4",
     "p-map": "^2.1.0",
     "p-retry": "^2.0.0",
     "p-wait-for": "^2.0.1",
