@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-33944**
+  - Updated DLA table column tables to lowercase to avoid recurring terraform update
+
 ### Changed
 
 - **CUMULUS-3788**
