@@ -497,6 +497,23 @@ test.serial('GET returns a 404 response if the granule is not found', async (t) 
   t.is(message, 'Granule not found');
 });
 
+test.serial('LIST endpoint with countOnly set returns only count of matching granules', async (t) => {
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+  const searchParams = new URLSearchParams({
+    granuleId: granuleIds[3],
+    countOnly: true,
+  });
+  const response = await request(app)
+    .get(`/granules?${searchParams}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta, results } = response.body;
+  t.is(meta.count, 2);
+  t.is(results.length, 0);
+});
+
 test.serial('LIST endpoint returns search result correctly', async (t) => {
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const searchParams = new URLSearchParams({
