@@ -22,6 +22,18 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
       .merge()
       .returning('*');
   }
+  /**
+   * Retrieves all files for all granules given
+  */
+  searchByGranuleCumulusIds(
+    knexOrTrx: Knex | Knex.Transaction,
+    granule_cumulus_ids: number[],
+    columns: string | string[] = '*'
+  ): Promise<PostgresFileRecord[]> {
+    return knexOrTrx(this.tableName)
+      .select(columns)
+      .whereIn('granule_cumulus_id', granule_cumulus_ids);
+  }
 }
 
 export { FilePgModel };

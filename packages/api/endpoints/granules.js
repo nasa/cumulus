@@ -236,7 +236,6 @@ const patchGranule = async (req, res) => {
   const {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
-    esClient = await getEsClient(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
   const knex = req.knex ?? await getKnexClient();
@@ -720,7 +719,6 @@ const associateExecution = async (req, res) => {
 const BulkPatchGranuleCollectionSchema = z.object({
   apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
   collectionId: z.string().nonempty(),
-  esConcurrency: z.number().positive(),
 }).catchall(z.unknown());
 
 const BulkPatchSchema = z.object({
@@ -733,8 +731,8 @@ const parseBulkPatchGranuleCollectionPayload = zodParser('BulkPatchGranuleCollec
 const parseBulkPatchPayload = zodParser('BulkPatchSchema payload', BulkPatchSchema);
 
 /**
- * Update a batch of granules to change the collectionId to a new collectionId
- * in PG and ES
+ * Update a batch of granules to change collectionId to a new collectionId
+ * in PG
  *
  * @param {Object} req - express request object
  * @param {Object} req.testContext - test context for client requests
@@ -746,15 +744,11 @@ async function bulkPatchGranuleCollection(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await getEsClient(),
-    mappingFunction = pMap,
   } = req.testContext || {};
-  req.body.esConcurrency = req.body.esConcurrency ?? 5;
   const body = parseBulkPatchGranuleCollectionPayload(req.body);
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
-
   const granules = req.body.apiGranules;
   const granuleIds = granules.map((granule) => granule.granuleId);
   const newCollectionId = req.body.collectionId;
@@ -763,18 +757,7 @@ async function bulkPatchGranuleCollection(req, res) {
     deconstructCollectionId(newCollectionId)
   );
 
-  await mappingFunction(
-    granules,
-    (apiGranule) => pRetry(
-      () => updateEsGranule(esClient, apiGranule, { collectionId: newCollectionId }, process.env.ES_INDEX, 'granule'),
-      { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-    ),
-    { concurrency: body.esConcurrency }
-  );
-  await pRetry(
-    () => updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id),
-    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
-  );
+  await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
 
   return res.send({
     message: `Successfully wrote granules with Granule Id: ${granuleIds} to Collection Id: ${newCollectionId}`,
@@ -812,7 +795,9 @@ async function bulkPatch(req, res) {
 
   await mappingFunction(
     granules,
-    (apiGranule) => patchGranule({ body: apiGranule, knex, testContext: {} }, res),
+    async (apiGranule) => {
+      await patchGranule({ body: apiGranule, knex, testContext: {} }, res);
+    },
     { concurrency: body.dbConcurrency }
   );
 

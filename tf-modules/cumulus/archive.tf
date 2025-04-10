@@ -17,16 +17,6 @@ module "archive" {
   default_log_retention_days = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 
-  elasticsearch_client_config               = var.elasticsearch_client_config
-  elasticsearch_domain_arn                  = var.elasticsearch_domain_arn
-  elasticsearch_hostname                    = var.elasticsearch_hostname
-  elasticsearch_security_group_id           = var.elasticsearch_security_group_id
-  elasticsearch_remove_index_alias_conflict = var.elasticsearch_remove_index_alias_conflict
-
-
-  es_index_shards        = var.es_index_shards
-  es_request_concurrency = var.es_request_concurrency
-
   system_bucket     = var.system_bucket
   buckets           = var.buckets
 
@@ -93,7 +83,6 @@ module "archive" {
 
   payload_timeout        = var.payload_timeout
 
-  es_index              = var.es_index
   update_limit          = var.update_limit
   background_queue_url = module.ingest.background_queue_url
 

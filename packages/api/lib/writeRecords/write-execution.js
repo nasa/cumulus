@@ -1,3 +1,5 @@
+// @ts-check
+
 const isNil = require('lodash/isNil');
 const isUndefined = require('lodash/isUndefined');
 const omitBy = require('lodash/omitBy');
@@ -70,7 +72,7 @@ const buildExecutionRecord = ({
   const record = {
     arn,
     status: getMetaStatus(cumulusMessage),
-    url: getExecutionUrlFromArn(arn),
+    url: arn ? getExecutionUrlFromArn(arn) : undefined,
     cumulus_version: getMessageCumulusVersion(cumulusMessage),
     tasks: getMessageWorkflowTasks(cumulusMessage),
     workflow_name: getMessageWorkflowName(cumulusMessage),

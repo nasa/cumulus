@@ -1,6 +1,10 @@
 {
   "name": "@cumulus/queue-workflow",
+<<<<<<< HEAD
   "version": "18.5.5",
+=======
+  "version": "20.1.1",
+>>>>>>> origin/master
   "description": "Add workflow to the queue",
   "main": "index.js",
   "directories": {
@@ -35,11 +39,19 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+<<<<<<< HEAD
     "@cumulus/aws-client": "18.5.5",
     "@cumulus/common": "18.5.5",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/ingest": "18.5.5",
     "@cumulus/message": "18.5.5",
+=======
+    "@cumulus/aws-client": "20.1.1",
+    "@cumulus/common": "20.1.1",
+    "@cumulus/cumulus-message-adapter-js": "2.3.0",
+    "@cumulus/ingest": "20.1.1",
+    "@cumulus/message": "20.1.1",
+>>>>>>> origin/master
     "lodash": "^4.17.21"
   }
 }

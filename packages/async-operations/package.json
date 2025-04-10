@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/async-operations",
-  "version": "18.5.5",
+  "version": "20.1.1",
   "description": "Cumulus Core internal async operations module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,17 +32,17 @@
   "dependencies": {
     "@aws-sdk/client-ecs": "^3.621.0",
     "@aws-sdk/client-lambda": "^3.621.0",
-    "@cumulus/aws-client": "18.5.5",
-    "@cumulus/db": "18.5.5",
-    "@cumulus/errors": "18.5.5",
-    "@cumulus/es-client": "18.5.5",
-    "@cumulus/logger": "18.5.5",
-    "@cumulus/types": "18.5.5",
+    "@cumulus/aws-client": "20.1.1",
+    "@cumulus/db": "20.1.1",
+    "@cumulus/errors": "20.1.1",
+    "@cumulus/es-client": "20.1.1",
+    "@cumulus/logger": "20.1.1",
+    "@cumulus/types": "20.1.1",
     "knex": "2.4.1",
     "uuid": "8.3.2"
   },
   "devDependencies": {
-    "@cumulus/common": "18.5.5",
+    "@cumulus/common": "20.1.1",
     "@types/aws-sdk": "2.7.0",
     "@types/uuid": "^8.0.0"
   }

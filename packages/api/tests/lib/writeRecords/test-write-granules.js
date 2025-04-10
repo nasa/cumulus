@@ -2001,7 +2001,7 @@ test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/E
     WaitTimeSeconds: 10,
   });
 
-  t.is(Messages.length, 0);
+  t.is(Messages, undefined);
 });
 
 test.serial('writeGranulesFromMessage() writes a granule and marks as failed if any file writes fail', async (t) => {
@@ -2432,7 +2432,7 @@ test.serial('writeGranulesFromMessage() does not write a granule to Postgres or 
     WaitTimeSeconds: 10,
   });
 
-  t.is(Messages.length, 0);
+  t.is(Messages, undefined);
 });
 
 test.serial('writeGranulesFromMessage() does not persist file records to Postgres if the workflow status is "running"', async (t) => {

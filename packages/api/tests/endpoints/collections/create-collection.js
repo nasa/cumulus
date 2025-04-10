@@ -595,5 +595,5 @@ test.serial('POST does not write to PostgreSQL/SNS if writing to Elasticsearch f
     WaitTimeSeconds: 10,
   });
 
-  t.is(Messages.length, 0);
+  t.is(Messages, undefined);
 });

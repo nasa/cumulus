@@ -62,7 +62,7 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { create, del, patch, patchGranuleAndReturnStatus } = require('../../endpoints/granules');
+const { create, patch, patchGranuleAndReturnStatus } = require('../../endpoints/granules');
 const { sortFilesByKey } = require('../helpers/sort');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
@@ -2877,7 +2877,7 @@ test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to 
       WaitTimeSeconds: 10,
     });
 
-  t.is(Messages.length, 0);
+  t.is(Messages, undefined);
 });
 
 test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if writing to Elasticsearch fails', async (t) => {
@@ -2941,7 +2941,7 @@ test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if wr
       WaitTimeSeconds: 10,
     });
 
-  t.is(Messages.length, 0);
+  t.is(Messages, undefined);
 });
 
 test.serial('PATCH adds granule if it does not exist and returns a 201 status', async (t) => {
@@ -3842,37 +3842,6 @@ test.serial('PUT returns 404 if collection is not part of URI', async (t) => {
     .send(newGranule);
 
   t.is(response.statusCode, 404);
-});
-
-test.serial('default paginates correctly with search_after', async (t) => {
-  const response = await request(app)
-    .get('/granules?limit=1')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
-
-  const { meta, results } = response.body;
-  t.is(results.length, 1);
-  t.is(meta.page, 1);
-  t.truthy(meta.searchContext);
-
-  const newResponse = await request(app)
-    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { meta: newMeta, results: newResults } = newResponse.body;
-  t.is(newResults.length, 1);
-  t.is(newMeta.page, 2);
-  t.truthy(newMeta.searchContext);
-  console.log(`default paginates granuleIds: ${JSON.stringify(granuleIds)}, results: ${results[0].granuleId}, ${newResults[0].granuleId}`);
-  t.true(granuleIds.includes(results[0].granuleId));
-  t.true(granuleIds.includes(newResults[0].granuleId));
-  t.not(results[0].granuleId, newResults[0].granuleId);
-  t.not(meta.searchContext === newMeta.searchContext);
 });
 
 test.serial('PUT returns 400 for version value less than the configured value', async (t) => {

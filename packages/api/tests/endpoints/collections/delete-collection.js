@@ -161,6 +161,54 @@ test('Attempting to delete a collection without an Authorization header returns 
   );
 });
 
+test.serial('del() does not publish an SNS message if removing from PostgreSQL fails', async (t) => {
+  const {
+    originalPgRecord,
+  } = await createCollectionTestRecords(
+    t.context
+  );
+
+  const fakeCollectionPgModel = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+    get: () => Promise.resolve(originalPgRecord),
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
+    },
+    body: originalPgRecord,
+    testContext: {
+      knex: t.context.testKnex,
+      collectionPgModel: fakeCollectionPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.true(
+    await t.context.collectionPgModel.exists(t.context.testKnex, {
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
+    })
+  );
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  });
+
+  t.is(Messages, undefined);
+});
+
 test('Attempting to delete a collection with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
     .delete('/collections/asdf/asdf')

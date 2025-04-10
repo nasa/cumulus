@@ -49,8 +49,9 @@ const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/met
  * @param {Knex} params.dbClient - Knex client
  * @param {number} params.executionCumulusId - executionId for execution record to link
  * @param {number} params.collectionId - collectionId for the granule's parent collection
- * @param {number} params.collectionCumulusId - cumulus_id for the granule's parent collection
  * @param {boolean} params.published - if the granule should be marked published to CMR
+ * @param {Object} [params.granuleParams] - additional granule parameters
+ * @param {number} [params.collectionCumulusId] - cumulus_id for the granule's parent collection
  * @returns {Object} fake granule object
  */
 async function createGranuleAndFiles({

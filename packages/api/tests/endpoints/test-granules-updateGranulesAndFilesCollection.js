@@ -25,11 +25,6 @@ const {
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
-const indexer = require('@cumulus/es-client/indexer');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const models = require('../../models');
@@ -108,12 +103,6 @@ test.before(async (t) => {
   const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
 
-  const { esIndex, esClient, searchClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-  t.context.searchClient = searchClient;
-  process.env.ES_INDEX = esIndex;
-
   // create a fake bucket
   await createBucket(process.env.system_bucket);
 
@@ -150,12 +139,10 @@ test.before(async (t) => {
     t.context.knex,
     t.context.collection
   );
-  await indexer.indexCollection(esClient, t.context.collection, t.context.esIndex);
   const collectionResponse2 = await t.context.collectionPgModel.create(
     t.context.knex,
     t.context.collection2
   );
-  await indexer.indexCollection(esClient, t.context.collection2, t.context.esIndex);
   t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
   t.context.collectionCumulusId2 = collectionResponse2[0].cumulus_id;
   t.context.apiCollection1 = translatePostgresCollectionToApiCollection(collectionResponse[0]);
@@ -211,7 +198,6 @@ test.before(async (t) => {
   t.context.pgFiles = await t.context.filePgModel.insert(knex, t.context.files);
   t.context.apiGranules = [];
 
-  await esClient.client.indices.refresh({ index: t.context.esIndex });
   await Promise.all(t.context.granules.map(async (granule) => {
     const newGranule = await translatePostgresGranuleResultToApiGranule(knex, {
       ...granule,
@@ -219,8 +205,6 @@ test.before(async (t) => {
       collectionVersion: t.context.collection.version,
     });
     t.context.apiGranules.push(newGranule);
-    await indexer.indexGranule(esClient, newGranule, t.context.esIndex);
-    await esClient.client.indices.refresh({ index: t.context.esIndex });
   }));
 
   // update all of the granules to be moved to the new collection
@@ -233,7 +217,6 @@ test.before(async (t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
@@ -241,7 +224,7 @@ test.after.always(async (t) => {
   });
 });
 
-test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates granules to a new collectionId in PG and ES', async (t) => {
+test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates granules to a new collectionId in PG', async (t) => {
   const {
     granuleIds,
     granulePgModel,
@@ -249,8 +232,6 @@ test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates gra
     collectionId2,
     collection2,
     collectionCumulusId2,
-    esIndex,
-    esClient,
     knex,
   } = t.context;
 
@@ -278,42 +259,9 @@ test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates gra
       collectionName: collection2.name,
       collectionVersion: collection2.version,
     });
-    const esGranule = await esClient.client.get({
-      index: esIndex,
-      type: 'granule',
-      id: granule.granule_id,
-      parent: apiGranule.collectionId,
-    }).then((res) => res.body);
 
     t.is(apiGranule.collectionId, collectionId2);
-    t.is(esGranule._source.collectionId, collectionId2);
   }
-});
-
-test.serial('PATCH /granules/bulkPatchGranuleCollection correctly passes in the payload-specified concurrency', async (t) => {
-  const {
-    apiGranules,
-    collectionId2,
-  } = t.context;
-  const mapStub = sinon.stub().returns(true);
-
-  const expressRequest = {
-    body: {
-      apiGranules,
-      collectionId: collectionId2,
-      esConcurrency: 10,
-    },
-    testContext: {
-      mappingFunction: mapStub,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-  await granuleFunctions.bulkPatchGranuleCollection(expressRequest, response);
-
-  const args = mapStub.getCall(0).args;
-  t.is(mapStub.calledOnce, true);
-  t.is(args[2].concurrency, 10);
 });
 
 test.serial('PATCH /granules/bulkPatch successfully updates a batch of granules', async (t) => {
@@ -324,8 +272,6 @@ test.serial('PATCH /granules/bulkPatch successfully updates a batch of granules'
     collectionId2,
     collection2,
     collectionCumulusId2,
-    esIndex,
-    esClient,
     knex,
   } = t.context;
 
@@ -352,16 +298,8 @@ test.serial('PATCH /granules/bulkPatch successfully updates a batch of granules'
       collectionVersion: collection2.version,
     });
 
-    const esGranule = await esClient.client.get({
-      index: esIndex,
-      type: 'granule',
-      id: granule.granule_id,
-      parent: apiGranule.collectionId,
-    }).then((res) => res.body);
-
     // now every granule should be part of collection 2
     t.is(apiGranule.collectionId, collectionId2);
-    t.is(esGranule._source.collectionId, collectionId2);
     for (const file of apiGranule.files) {
       t.true(file.key.includes(collectionId2));
       t.true(file.bucket.includes(collectionId2));

@@ -31,10 +31,6 @@ resource "aws_ecs_task_definition" "async_operation" {
       {
         "name": "databaseCredentialSecretArn",
         "value": "${var.rds_user_access_secret_arn}"
-      },
-      {
-        "name": "ES_HOST",
-        "value": "${var.elasticsearch_hostname}"
       }
     ],
     "image": "${var.async_operation_image}",
@@ -74,10 +70,6 @@ resource "aws_ecs_task_definition" "dead_letter_recovery_operation" {
       {
         "name": "databaseCredentialSecretArn",
         "value": "${var.rds_user_access_secret_arn}"
-      },
-      {
-        "name": "ES_HOST",
-        "value": "${var.elasticsearch_hostname}"
       }
     ],
     "image": "${var.async_operation_image}",

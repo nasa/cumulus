@@ -7,5 +7,6 @@ export enum TableNames {
   granulesExecutions = 'granules_executions',
   pdrs = 'pdrs',
   providers = 'providers',
+  reconciliationReports = 'reconciliation_reports',
   rules = 'rules'
 }

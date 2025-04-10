@@ -409,33 +409,7 @@ test.serial('writeExecutionRecordFromMessage() does not write record to Elastics
   t.false(await t.context.esExecutionsClient.exists(executionArn));
 });
 
-test.serial('writeExecutionRecordFromMessage() does not write record to RDS if Elasticsearch write fails', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionArn,
-    executionPgModel,
-  } = t.context;
-
-  const fakeEsClient = {
-    initializeEsClient: () => Promise.resolve(),
-    client: {
-      update: () => {
-        throw new Error('ES error');
-      },
-    },
-  };
-
-  await t.throwsAsync(
-    writeExecutionRecordFromMessage({
-      cumulusMessage,
-      knex,
-      esClient: fakeEsClient,
-    }),
-    { message: 'ES error' }
-  );
-  t.false(await executionPgModel.exists(knex, { arn: executionArn }));
-  t.false(await t.context.esExecutionsClient.exists(executionArn));
+  t.is(Messages, undefined);
 });
 
 test.serial('writeExecutionRecordFromMessage() correctly sets both original_payload and final_payload in postgres when execution records are run in sequence', async (t) => {

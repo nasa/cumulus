@@ -18,7 +18,6 @@ type AssociateExecutionRequest = {
 type BulkPatchGranuleCollection = {
   apiGranules: ApiGranuleRecord[],
   collectionId: string,
-  esConcurrency: number,
 };
 
 type BulkPatch = {
@@ -26,9 +25,6 @@ type BulkPatch = {
   dbConcurrency: number,
   dbMaxPool: number,
 };
-
-type InvalidBehavior = 'error' | 'skip';
-type CmrGranuleUrlType = 'http' | 's3' | 'both';
 
 const encodeGranulesURIComponent = (
   granuleId: string,
@@ -647,13 +643,13 @@ export const bulkPatchGranuleCollection = async (params: {
       path: '/granules/bulkPatchGranuleCollection',
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 200,
+    expectedStatusCodes: 202,
   });
 };
 
 /**
- * Applies PATCH to a list of granules
- * PATCH /granules/bulkPatch
+ * Apply PATCH to a list of granules
+ * POST /granules/bulkPatch
  *
  * @param params - params
  * @param params.prefix - the prefix configured for the stack
@@ -681,7 +677,7 @@ export const bulkPatch = async (params: {
       path: '/granules/bulkPatch',
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 200,
+    expectedStatusCodes: 202,
   });
 };
 

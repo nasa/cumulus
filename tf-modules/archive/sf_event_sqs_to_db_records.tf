@@ -192,7 +192,6 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       pdr_sns_topic_arn              = aws_sns_topic.report_pdrs_topic.arn
       RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
       reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
-      ES_HOST                        = var.elasticsearch_hostname
     }
   }
 

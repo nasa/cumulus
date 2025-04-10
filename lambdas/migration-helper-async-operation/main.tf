@@ -19,7 +19,6 @@ resource "aws_lambda_function" "migration_helper_async_operation" {
       createTimeoutMillis          = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn  = var.rds_user_access_secret_arn
       EcsCluster                   = var.ecs_cluster_name
-      ES_HOST                      = var.elasticsearch_hostname
       idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
       DlaMigrationLambda           = var.dla_migration_function_arn
       reapIntervalMillis           = var.rds_connection_timing_configuration.reapIntervalMillis
@@ -35,7 +34,6 @@ resource "aws_lambda_function" "migration_helper_async_operation" {
       security_group_ids = compact([
         aws_security_group.migration_helper_async_operation[0].id,
         var.rds_security_group_id,
-        var.elasticsearch_security_group_id
       ])
     }
   }

@@ -558,7 +558,7 @@ test.serial('PUT does not write to PostgreSQL or publish SNS message if writing 
     WaitTimeSeconds: 10,
   });
 
-  t.is(Messages.length, 0);
+  t.is(Messages, undefined);
 });
 
 test.serial('PUT throws InvalidRegexError for invalid granuleIdExtraction', async (t) => {

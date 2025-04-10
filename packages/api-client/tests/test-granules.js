@@ -584,7 +584,6 @@ test('bulkPatchGranuleCollection calls the callback with the expected object', a
           collectionId: t.context.collectionId,
         }],
         collectionId: t.context.collectionId2,
-        esConcurrency: 10,
       }),
     },
     expectedStatusCodes: 200,
@@ -599,7 +598,6 @@ test('bulkPatchGranuleCollection calls the callback with the expected object', a
           collectionId: t.context.collectionId,
         }],
         collectionId: t.context.collectionId2,
-        esConcurrency: 10,
       }),
     });
   };
@@ -613,7 +611,6 @@ test('bulkPatchGranuleCollection calls the callback with the expected object', a
         collectionId: t.context.collectionId,
       }],
       collectionId: t.context.collectionId2,
-      esConcurrency: 10,
     },
   }));
 });
