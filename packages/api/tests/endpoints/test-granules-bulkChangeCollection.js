@@ -14,7 +14,6 @@ const {
   GranulePgModel,
   localStackConnectionEnv,
   migrationDir,
-  translatePostgresGranuleToApiGranule,
   upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
@@ -184,16 +183,6 @@ test.beforeEach(async (t) => {
       }))
   );
   t.context.insertedPgGranules = t.context.fakePGGranuleRecords.flat();
-
-  // index PG Granules into ES
-  // Remove on merge to main
-  const insertedApiGranuleTranslations = await Promise.all(
-    t.context.insertedPgGranules.map((granule) =>
-      translatePostgresGranuleToApiGranule({
-        knexOrTransaction: t.context.knex,
-        granulePgRecord: granule,
-      }))
-  );
 });
 
 test.after.always(async (t) => {

@@ -65,7 +65,7 @@ async function setupS3Data(granules) {
 }
 
 async function setupDataStoreData(granules, targetCollection, t) {
-
+  const { knex } = t.context;
   const granuleModel = new GranulePgModel();
   const collectionModel = new CollectionPgModel();
   const sourceCollection = getOriginalCollection();
