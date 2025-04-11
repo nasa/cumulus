@@ -390,7 +390,7 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
       determine how to correctly parse the object (echo10 vs ummg)
   - Added MoveGranuleCollections workflow to cumulus core deployable according to terraform variables
   - Added ingest module terraform variable "deploy_cumulus_workflows": a map of workflows that should be deployed
-    - as of merging only controls move_granule_collections_workflow
+    - as of merging only controls change_granule_collections_workflow
     - defaults to true (deploy the workflow)
 
 ### Fixed
