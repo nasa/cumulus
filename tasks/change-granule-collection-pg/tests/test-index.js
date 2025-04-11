@@ -19,8 +19,6 @@ const {
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { bulkPatchGranuleCollection, bulkPatch } = require('@cumulus/api/endpoints/granules');
-const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
-const indexer = require('@cumulus/es-client/indexer');
 
 const sinon = require('sinon');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
@@ -67,11 +65,7 @@ async function setupS3Data(granules) {
 }
 
 async function setupDataStoreData(granules, targetCollection, t) {
-  const {
-    knex,
-    esClient,
-    esIndex,
-  } = t.context;
+
   const granuleModel = new GranulePgModel();
   const collectionModel = new CollectionPgModel();
   const sourceCollection = getOriginalCollection();
@@ -80,19 +74,9 @@ async function setupDataStoreData(granules, targetCollection, t) {
     knex,
     translateApiCollectionToPostgresCollection(sourceCollection)
   );
-  await indexer.indexCollection(
-    esClient,
-    sourceCollection,
-    esIndex
-  );
   [pgRecords.targetCollection] = await collectionModel.create(
     knex,
     translateApiCollectionToPostgresCollection(targetCollection)
-  );
-  await indexer.indexCollection(
-    esClient,
-    targetCollection,
-    esIndex
   );
   pgRecords.granules = await granuleModel.insert(
     knex,
@@ -105,11 +89,6 @@ async function setupDataStoreData(granules, targetCollection, t) {
     ['cumulus_id', 'granule_id']
   );
 
-  await Promise.all(granules.map((granule) => indexer.indexGranule(
-    esClient,
-    granule,
-    esIndex
-  )));
   return pgRecords;
 }
 
@@ -146,9 +125,6 @@ test.beforeEach(async (t) => {
     testDbName,
     migrationDir
   );
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
 
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
@@ -194,7 +170,6 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.privateBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
-  await cleanupTestIndex(t.context);
 });
 
 test.serial('changeGranuleCollectionsPG Should update pg status and cleanup in s3', async (t) => {

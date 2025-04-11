@@ -116,7 +116,6 @@ async function moveGranulesInCumulusDatastores(
     body: {
       apiGranules: updatedBodyGranules,
       collectionId: targetCollectionId,
-      esConcurrency: config.concurrency,
     },
   });
 }

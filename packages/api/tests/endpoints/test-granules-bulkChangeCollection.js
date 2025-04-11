@@ -18,15 +18,12 @@ const {
   upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
-const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
   s3PutObject,
   getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
-const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
 const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 
@@ -86,12 +83,6 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
-
-  // Remove on merge to main
-  t.context.esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX);
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
 });
 
 test.beforeEach(async (t) => {
@@ -203,10 +194,6 @@ test.beforeEach(async (t) => {
         granulePgRecord: granule,
       }))
   );
-  await Promise.all(
-    insertedApiGranuleTranslations.map((granule) =>
-      indexer.indexGranule(t.context.esClient, granule, t.context.esIndex))
-  );
 });
 
 test.after.always(async (t) => {
@@ -217,8 +204,6 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
-  // Remove on merge to main
-  await cleanupTestIndex(t.context);
 });
 
 test.serial('bulkChangeCollection generates the proper payload and calls startExecution with it', async (t) => {
