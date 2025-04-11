@@ -329,8 +329,73 @@ each Cumulus version between your current version and v19.1.0 as normal.
 
 - **CUMULUS-3940**
   - Updated `process-s3-dead-letter-archive` and downstream calls to pass in a esClient to  `writeRecordsFunction` and update downstream calls to utilize the client.
-- **CUMULUS-3981**
-  - Added required $metadata field when creating new instance of ServiceException.
+- **CUMULUS-3904**
+  - Passed sqs_message_consumer_watcher_message_limit and sqs_message_consumer_watcher_time_limit through the cumulus terraform module to the ingest terraform module.
+- **CUMULUS-3902**
+  - Update error handling to use AWS SDK V3 error classes instead of properties on js objects
+
+## [v19.0.0] 2024-08-28
+
+### Deprecated
+This release has been deprecated in favor of the 18.5->19.1 release series. The changes
+listed here are still valid and also contained in the v19.1.0 release and beyond.
+
+### Breaking Changes
+
+- This release includes `Replace ElasicSearch Phase 1` updates, we no longer save `collection/granule/execution` records to
+ElasticSearch, the `collections/granules/executions` API endpoints are updated to perform operations on the postgres database.
+
+### Migration Notes
+
+#### CUMULUS-3792 Add database indexes. Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-3792 require a manual update to the postgres database in the production environment.
+  Please follow [Update Table Indexes for CUMULUS-3792]
+  (https://nasa.github.io/cumulus/docs/next/upgrade-notes/update_table_indexes_CUMULUS_3792)
+
+### Replace ElasticSearch Phase 1
+
+- **CUMULUS-3238**
+  - Removed elasticsearch dependency from collections endpoint
+- **CUMULUS-3239**
+  - Updated `executions` list api endpoint and added `ExecutionSearch` class to query postgres
+- **CUMULUS-3240**
+  - Removed Elasticsearch dependency from `executions` endpoints
+- **CUMULUS-3639**
+  - Updated `/collections/active` endpoint to query postgres
+- **CUMULUS-3640**
+  - Removed elasticsearch dependency from granules endpoint
+- **CUMULUS-3641**
+  - Updated `collections` api endpoint to query postgres instead of elasticsearch except if `includeStats` is in the query parameters
+- **CUMULUS-3642**
+  - Adjusted queries to improve performance:
+    - Used count(*) over count(id) to count rows
+    - Estimated row count for large tables (granules and executions) by default for basic query
+  - Updated stats summary to default to the last day
+  - Updated ExecutionSearch to not include asyncOperationId by default
+- **CUMULUS-3688**
+  - Updated `stats` api endpoint to query postgres instead of elasticsearch
+- **CUMULUS-3689**
+  - Updated `stats/aggregate` api endpoint to query postgres instead of elasticsearch
+  - Created a new StatsSearch class for querying postgres with the stats endpoint
+- **CUMULUS-3692**
+  - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
+    support basic queries for granules
+  - Updated granules List endpoint to query postgres for basic queries
+- **CUMULUS-3693**
+  - Added functionality to `@cumulus/db/src/search` to support range queries
+- **CUMULUS-3694**
+  - Added functionality to `@cumulus/db/src/search` to support term queries
+  - Updated `BaseSearch` and `GranuleSearch` classes to support term queries for granules
+  - Updated granules List endpoint to search postgres
+- **CUMULUS-3695**
+  - Updated `granule` list api endpoint and BaseSearch class to handle sort fields
+- **CUMULUS-3696**
+  - Added functionality to `@cumulus/db/src/search` to support terms, `not` and `exists` queries
+- **CUMULUS-3699**
+  - Updated `collections` api endpoint to be able to support `includeStats` query string parameter
+- **CUMULUS-3792**
+  - Added database indexes to improve search performance
 
 ## [v18.5.6] 2025-04-09
 
@@ -611,6 +676,17 @@ degraded execution table operations.
   - Fixes default value (updated to tag 52) for async-operation-image in tf-modules/cumulus.
 - **CUMULUS-3840**
   - Fixed `@cumulus/api/bin/serve` to correctly use EsClient.
+
+## [v18.3.4] 2024-08-27
+
+**Please note** changes in v18.3.4 may not yet be released in future versions, as this
+is a backport/patch release on the v18.3.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Changed
+
+- **CUMULUS-3841**
+  - Increased `fetchRules` page size to default to 100 instead of 10. This improves overall query time when fetching all rules such as in `sqsMessageConsumer`.
 
 ## [v18.3.3] 2024-08-09
 
@@ -8505,7 +8581,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [v18.5.2]: https://github.com/nasa/cumulus/compare/v18.5.1...v18.5.2
 [v18.5.1]: https://github.com/nasa/cumulus/compare/v18.5.0...v18.5.1
 [v18.5.0]: https://github.com/nasa/cumulus/compare/v18.4.0...v18.5.0
-[v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.4.0
+[v18.4.0]: https://github.com/nasa/cumulus/compare/v18.3.4...v18.4.0
+[v18.3.3]: https://github.com/nasa/cumulus/compare/v18.3.3...v18.3.4
 [v18.3.3]: https://github.com/nasa/cumulus/compare/v18.3.2...v18.3.3
 [v18.3.2]: https://github.com/nasa/cumulus/compare/v18.3.1...v18.3.2
 [v18.3.1]: https://github.com/nasa/cumulus/compare/v18.2.2...v18.3.1
