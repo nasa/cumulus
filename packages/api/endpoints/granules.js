@@ -6,7 +6,6 @@ const { z } = require('zod');
 const isError = require('lodash/isError');
 const pMap = require('p-map');
 
-const pRetry = require('p-retry');
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
@@ -34,16 +33,8 @@ const {
   getGranuleAndCollection,
   updateBatchGranulesCollection,
 } = require('@cumulus/db');
-const {
-  Search,
-  getEsClient,
-  recordNotFoundString,
-  multipleRecordFoundString,
-} = require('@cumulus/es-client/search');
 const { sfn } = require('@cumulus/aws-client/services');
 
-const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
-const { updateGranule: updateEsGranule } = require('@cumulus/es-client/indexer');
 const { getJsonS3Object, promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
