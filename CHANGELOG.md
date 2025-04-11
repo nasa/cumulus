@@ -366,6 +366,43 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
 
+### Added
+
+- **CUMULUS-4004**
+  - Add documentation explaining use and configuration of changegranuleCollections workflow
+- **CUMULUS-3992**
+  - Update `MoveCollectionsWorkflow` references to `ChangeGranuleCollectionsWorkflow`
+  - Update `@cumulus/api-client` to add bulkChangeCollection endpoint
+  - Update `@cumulus/api` to add api endpoint to allow trigger of `ChangeGranuleCollectionsWorkflow`
+  - Update ChangeGranuleCollections integration test to use endpoint to trigger test instead of direct step function invocation
+- **CUMULUS-3751**
+  - Added `change-granule-collection-s3` to move granules to a different collection.
+    - expects a list of granuleIds along with a new (target) collection
+    - moves those granule files in S3 according to pathing of target collection
+    - update CMR metadata file according to new collection information
+  - Added CopyObject function in @cumulus/aws-client/S3 to facilitate multi-part s3 object copying
+  - Added functions to allow manipulation in memory of cmr metadata objects in @cumulus/cmrjs/cmr-utils
+    - updateUMMGMetadataObject updates file links for ummg metadata structure object
+    - updateEcho10XMLMetadataObject updates file links for echo10 metadata structure object
+    - setUMMGCollection sets collection name and version in ummg metadata structure object
+    - setEcho10Collection sets collection name and version in echo10 metadata structure object
+    - getCMRCollectionId gets collectionId from cmr metadata object using its filename to
+      determine how to correctly parse the object (echo10 vs ummg)
+  - Added MoveGranuleCollections workflow to cumulus core deployable according to terraform variables
+  - Added ingest module terraform variable "deploy_cumulus_workflows": a map of workflows that should be deployed
+    - as of merging only controls move_granule_collections_workflow
+    - defaults to true (deploy the workflow)
+
+### Fixed
+
+- **CUMULUS-3752**
+  - Fixed api return codes expected in api-client for bulkPatch and bulkPatchGranuleCollections
+
+### Changed
+
+- **CUMULUS-3960**
+  - Updated `PostToCmr` task to be able to `republish` granules
+
 ## [v18.5.5] 2025-03-04
 
 **Please note** changes in v18.5.5 may not yet be released in future versions, as this
@@ -409,7 +446,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
     - `concurrency` - specifies how many messages to process at the same time.  Defaults to 30.
     - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
   - Add API memory-constrained performance test to test minimum functionality under default+ configuration
-  - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
+  - Updated `@cumulus/async-operations.startAsyncOperation` to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
 
 ### Fixed
 
