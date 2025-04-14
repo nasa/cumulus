@@ -22,7 +22,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/lzards-backup` task to make checksum type name comparison case-insensitive
 
 ### Fixed
-
+- **CUMULUS-4056**
+  - fix raise ava timeout in aws-client to prevent intermitten test failures
+  - fix lambda deletion failure in aws-client tests to prevent intermitted failures
+  - fix queue-granules test inconsistent output ordering to prevent intermitten unit test failues
 - **CUMULUS-4018**
   - Updated `@cumulus/db/search` to correctly handle string parameter when limit is `null`
   

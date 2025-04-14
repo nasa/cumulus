@@ -27,7 +27,7 @@ test.serial('create, invoke and delete function', async (t) => {
   // this delete can, rarely, fail because a function "doesn't exist"
   // even though it was just invoked successfully. trying again in a second
   // almost always fixes this
-  for (const i of range(10)) {
+  for (const i of range(2)) {
     try {
       /* eslint-disable no-await-in-loop */
       await lambda().deleteFunction({ FunctionName: functionName });
