@@ -29,13 +29,13 @@ test.serial('create, invoke and delete function', async (t) => {
   // almost always fixes this
   for (const i of range(10)) {
     try {
-      // eslint-disable-next-line no-await-in-loop
+      /* eslint-disable no-await-in-loop */
       await lambda().deleteFunction({ FunctionName: functionName });
       break;
     } catch (error) {
       console.log(`delete failed with error ${error}, trying again for the ${i}th time`);
-      // eslint-disable-next-line no-await-in-loop
       await sleep(1000);
+      /* eslint-enable no-await-in-loop */
     }
   }
 });
