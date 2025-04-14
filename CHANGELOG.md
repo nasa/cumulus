@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-33944**
   - Updated DLA table column tables to lowercase to avoid recurring terraform update
 - **CUMULUS-4052**
-  - Removed vestigal/unneded elasticsearch reference from 'bulk delete executions by collection' endpoint
+  - Removed outdated elasticsearch reference from 'bulk delete executions by collection' endpoint
 
 ### Changed
 
