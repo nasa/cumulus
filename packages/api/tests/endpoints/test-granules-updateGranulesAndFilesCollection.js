@@ -271,7 +271,7 @@ test.serial('PATCH /granules/bulkPatchGranuleCollection throws an error when try
 
   const params = {
     apiGranules,
-    collectionId: 'nonexistCollection',
+    collectionId: 'nonexistCollection___999',
   };
 
   const response = await request(app)
@@ -282,7 +282,7 @@ test.serial('PATCH /granules/bulkPatchGranuleCollection throws an error when try
     .expect(404);
 
   const { message } = response.body;
-  t.true(message.includes('Collection nonexistCollection does not exist'));
+  t.true(message.includes(`Collection ${params.collectionId} does not exist`));
 });
 
 test.serial('PATCH /granules/bulkPatch successfully updates a batch of granules', async (t) => {

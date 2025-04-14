@@ -732,12 +732,11 @@ async function bulkPatchGranuleCollection(req, res) {
       deconstructCollectionId(newCollectionId)
     );
   } catch (error) {
-    if (error.message.includes('invalid collectionId')) {
-      log.info('Collection does not exist');
+    if (error instanceof RecordDoesNotExist) {
+      log.error(`Collection ${newCollectionId} does not exist`);
       return res.boom.notFound(`Collection ${newCollectionId} does not exist`);
     }
-    log.info('Failed to update granules to new collection');
-    return res.boom.notFound(`Failed to update granules to new collectionId ${newCollectionId} due to ${error}`);
+    return res.boom.badRequest(error.message);
   }
 
   await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
