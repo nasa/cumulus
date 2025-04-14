@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const got = require('got');
@@ -43,15 +45,48 @@ const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
  *   password?: string,
  *   token?: string
  * }} CmrCredentials
+ *
+ * @typedef { ApiGranuleFile & { etag: string }}
  */
 
+/**
+ * @typedef {Object<string, string>} cnmMappingOverride
+ * @typedef {import('@cumulus/types/api/files').ApiFile & { filepath: string }} ApiFileWithFilePath
+ * @typedef {import('@cumulus/types/api/files').ApiFile} ApiFile
+ * @typedef {import('@cumulus/types/api/granules').ApiGranuleRecord} ApiGranuleRecord
+ * @typedef {Omit<import('@cumulus/types/api/files').ApiFile, 'granuleId'>} ApiGranuleFile
+ * @typedef {{
+ *     filename: string,
+ *     metadataObject: Object,
+ *     granuleId: string,
+ *   }} cmrPublishObject
+ */
+
+/**
+ * Get the S3 key of a file.
+ *
+ * @param {ApiFileWithFilePath} file - The file object.
+ * @returns {string} The S3 key of the file.
+ * @throws {Error} If the S3 key cannot be determined.
+ */
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
   if (file.filepath) return file.filepath;
   if (file.key) return file.key;
-  throw new Error(`Unable to determine s3 key of file: ${JSON.stringify(file)}`);
+  throw new Error(`Unable to determine S3 key of file: ${JSON.stringify(file)}`);
 }
 
+/**
+ * Get the S3 URL of a file.
+ *
+ * @param {Object} file - The file object.
+ * @param {string} [file.filename] - The S3 URI of the file.
+ * @param {string} [file.bucket] - The S3 bucket of the file.
+ * @param {string} [file.filepath] - The S3 key of the file.
+ * @param {string} [file.key] - The S3 key of the file.
+ * @returns {string} The S3 URL of the file.
+ * @throws {Error} If the S3 URL cannot be determined.
+ */
 function getS3UrlOfFile(file) {
   if (file.filename) return file.filename;
   if (file.bucket && file.filepath) return buildS3Uri(file.bucket, file.filepath);
@@ -59,6 +94,17 @@ function getS3UrlOfFile(file) {
   throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
 }
 
+/**
+ * Get the filename of a file.
+ *
+ * @param {Object} file - The file object.
+ * @param {string} [file.fileName] - The name of the file.
+ * @param {string} [file.name] - The name of the file.
+ * @param {string} [file.filename] - The S3 URI of the file.
+ * @param {string} [file.filepath] - The S3 key of the file.
+ * @param {string} [file.key] - The S3 key of the file.
+ * @returns {string|undefined} The filename of the file, or `undefined` if it cannot be determined.
+ */
 function getFilename(file) {
   if (file.fileName) return file.fileName;
   if (file.name) return file.name;
@@ -68,6 +114,18 @@ function getFilename(file) {
   return undefined;
 }
 
+/**
+ * Get the description of a file.
+ *
+ * @param {Object} file - The file object.
+ * @param {string} [file.fileName] - The name of the file.
+ * @param {string} [file.name] - The name of the file.
+ * @param {string} [file.filename] - The S3 URI of the file.
+ * @param {string} [file.filepath] - The S3 key of the file.
+ * @param {string} [file.key] - The S3 key of the file.
+ * @param {string} [urlType='distribution'] - The type of URL (e.g., 'distribution' or 's3').
+ * @returns {string} The description of the file.
+ */
 function getFileDescription(file, urlType = 'distribution') {
   if (urlType === 's3') {
     return 'This link provides direct download access via S3 to the granule';
@@ -76,20 +134,62 @@ function getFileDescription(file, urlType = 'distribution') {
   return filename ? `Download ${filename}` : 'File to download';
 }
 
+/**
+ * Checks if the given filename is an ECHO10 CMR XML file.
+ *
+ * @param {string} filename - The name of the file to check.
+ * @returns {boolean} True if the filename ends with 'cmr.xml'.
+ */
 const isECHO10Filename = (filename) => filename.endsWith('cmr.xml');
-const isUMMGFilename = (filename) => filename.endsWith('cmr.json');
-const isISOFilename = (filename) => filename.endsWith('.iso.xml');
-const isCMRISOFilename = (filename) => filename.endsWith('cmr_iso.xml');
-const isCMRFilename = (filename) => isECHO10Filename(filename)
-  || isUMMGFilename(filename)
-  || isCMRISOFilename(filename);
 
+/**
+ * Checks if the given filename is a UMMG CMR JSON file.
+ *
+ * @param {string} filename - The name of the file to check.
+ * @returns {boolean} True if the filename ends with 'cmr.json'.
+ */
+const isUMMGFilename = (filename) => filename.endsWith('cmr.json');
+
+/**
+ * Checks if the given filename is an ISO XML file.
+ *
+ * @param {string} filename - The name of the file to check.
+ * @returns {boolean} True if the filename ends with '.iso.xml'.
+ */
+const isISOFilename = (filename) => filename.endsWith('.iso.xml');
+
+/**
+ * Checks if the given filename is a CMR ISO XML file.
+ *
+ * @param {string} filename - The name of the file to check.
+ * @returns {boolean} True if the filename ends with 'cmr_iso.xml'.
+ */
+const isCMRISOFilename = (filename) => filename.endsWith('cmr_iso.xml');
+
+/**
+ * Checks if the given filename is a valid CMR file (ECHO10, UMMG, or CMR ISO).
+ *
+ * @param {string} filename - The name of the file to check.
+ * @returns {boolean} True if the filename matches any known CMR file type.
+ */
+const isCMRFilename = (filename) =>
+  isECHO10Filename(filename) ||
+  isUMMGFilename(filename) ||
+  isCMRISOFilename(filename);
+
+/**
+ * Constructs a CMR concept link URL.
+ *
+ * @param {string} conceptId - The concept ID of the CMR resource.
+ * @param {string} extension - The file extension for the CMR resource (e.g., 'echo10', 'umm_json').
+ * @returns {string} The constructed CMR concept link URL.
+ */
 const constructCmrConceptLink = (conceptId, extension) => `${getSearchUrl()}concepts/${conceptId}.${extension}`;
 
 /**
  * Returns True if this object can be determined to be a cmrMetadata object.
  *
- * @param {Object} fileobject
+ * @param {ApiGranuleFile} fileobject
  * @returns {boolean} true if object references cmr metadata.
  */
 function isCMRFile(fileobject) {
@@ -100,7 +200,7 @@ function isCMRFile(fileobject) {
 /**
  * Returns True if this object can be determined to be an ISO file object.
  *
- * @param {Object} fileobject
+ * @param {ApiGranuleFile} fileobject
  * @returns {boolean} true if object references an ISO file metadata.
  */
 function isISOFile(fileobject) {
@@ -111,13 +211,12 @@ function isISOFile(fileobject) {
 /**
  * Extracts CMR file objects from the specified granule object.
  *
- * @param {Object} granule - granule object containing CMR files within its
+ * @param {ApiGranuleRecord} granule - granule object containing CMR files within its
  *    `files` property
- * @param {Array<Object>} granule.files - array of files for a granule
- * @param {string} granule.granuleId - granule ID
- * @param {Function} filterFunc - function to determine if the given file object is a
+ * @param {(file: ApiGranuleFile) => boolean} [filterFunc=isCMRFile] - A function to determine if a
+ * file object is a CMR file. Defaults to `isCMRFile`.
       CMR file; defaults to `isCMRFile`
- * @returns {Array<Object>} an array of CMR file objects, each with properties
+ * @returns an array of CMR file objects, each with properties
  *    `granuleId`, `bucket`, `key`, and possibly `etag` (if present on input)
  */
 function granuleToCmrFileObject({ granuleId, files = [] }, filterFunc = isCMRFile) {
@@ -138,11 +237,11 @@ function granuleToCmrFileObject({ granuleId, files = [] }, filterFunc = isCMRFil
 /**
  * Reduce granule object array to CMR files array
  *
- * @param {Array<Object>} granules - granule objects array
- * @param {Function} filterFunc - function to determine if the given file object is a
+ * @param {ApiGranuleRecord[]} granules - granule objects array
+ * @param {(file: ApiGranuleFile) => boolean} filterFunc - function to determine if the
+ *  given file object is a
       CMR file; defaults to `isCMRFile`
- *
- * @returns {Array<Object>} - CMR file object array: { etag, bucket, key, granuleId }
+ * @returns {ApiGranuleFile[]}- CMR file object array: { etag, bucket, key, granuleId }
  */
 function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
   return granules.flatMap((granule) => granuleToCmrFileObject(granule, filterFunc));
@@ -365,21 +464,34 @@ function getS3CredentialsObject(s3CredsUrl) {
 /**
  * Returns UMM/ECHO10 resource type mapping for CNM file type
  *
- * @param {string} type - CNM resource type to convert to UMM/ECHO10 type
- * @param {string} urlType - url type, distribution or s3
- * @param {boolean} useDirectS3Type - indicate if direct s3 access type is used
+ * @param {Object} params - input parameters
+ * @param {string} params.type - CNM resource type to convert to UMM/ECHO10 type
+ * @param {string} params.urlType - url type, distribution or s3
+ * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
+ * @param {cnmMappingOverride} params.cnmMappingOverride - Object with CNM to CMR override mapping values
  * @returns {( string | undefined )} type - UMM/ECHO10 resource type
  */
-function mapCNMTypeToCMRType(type, urlType = 'distribution', useDirectS3Type = false) {
+function mapCNMTypeToCMRType({
+  type,
+  urlType = 'distribution',
+  useDirectS3Type = false,
+  cnmMappingOverride = {},
+}) {
   const mapping = {
-    ancillary: 'VIEW RELATED INFORMATION',
-    data: 'GET DATA',
-    browse: 'GET RELATED VISUALIZATION',
-    linkage: 'EXTENDED METADATA',
-    metadata: 'EXTENDED METADATA',
-    qa: 'EXTENDED METADATA',
+    ...{
+      ancillary: 'VIEW RELATED INFORMATION',
+      data: 'GET DATA',
+      browse: 'GET RELATED VISUALIZATION',
+      linkage: 'EXTENDED METADATA',
+      metadata: 'EXTENDED METADATA',
+      qa: 'EXTENDED METADATA',
+    },
+    ...cnmMappingOverride,
   };
+
   let mappedType = mapping[type];
+
+  log.info(`Mapping type is ${mappedType}`);
 
   if (!mappedType) {
     log.warn(
@@ -495,6 +607,8 @@ function generateFileUrl({
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution bucketss
  * @param {boolean} [params.useDirectS3Type] - indicate if direct s3 access type is used
+ * @param {cnmMappingOverride} params.cnmMappingOverride - Object with CNM to CMR override mapping values
+
  * @returns {(OnlineAccessUrl | undefined)} online access url object, undefined if no URL exists
  */
 function constructOnlineAccessUrl({
@@ -504,6 +618,7 @@ function constructOnlineAccessUrl({
   urlType = 'distribution',
   distributionBucketMap,
   useDirectS3Type = false,
+  cnmMappingOverride = {},
 }) {
   const bucketType = bucketTypes[file.bucket];
   const distributionApiBuckets = ['protected', 'public'];
@@ -515,7 +630,9 @@ function constructOnlineAccessUrl({
         URL: fileUrl,
         URLDescription: fileDescription, // used by ECHO10
         Description: fileDescription, // used by UMMG
-        Type: mapCNMTypeToCMRType(file.type, urlType, useDirectS3Type), // used by ECHO10/UMMG
+        Type: mapCNMTypeToCMRType(
+          { type: file.type, urlType, useDirectS3Type, cnmMappingOverride }
+        ), // used by ECHO10/UMMG
       };
     }
   }
@@ -533,6 +650,8 @@ function constructOnlineAccessUrl({
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution bucketss
  * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
+ * @param {cnmMappingOverride} params.cnmMappingOverride - Object with CNM to CMR override mapping values
+
  * @returns {Promise<[{URL: string, URLDescription: string}]>} an array of
  *    online access url objects grouped by link type.
  */
@@ -543,6 +662,7 @@ function constructOnlineAccessUrls({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
   useDirectS3Type = false,
+  cnmMappingOverride = {},
 }) {
   if (['distribution', 'both'].includes(cmrGranuleUrlType) && !distEndpoint) {
     throw new Error(`cmrGranuleUrlType is ${cmrGranuleUrlType}, but no distribution endpoint is configured.`);
@@ -557,6 +677,7 @@ function constructOnlineAccessUrls({
         urlType: 'distribution',
         distributionBucketMap,
         useDirectS3Type,
+        cnmMappingOverride,
       });
       distributionAcc.push(url);
     }
@@ -568,6 +689,7 @@ function constructOnlineAccessUrls({
         urlType: 's3',
         distributionBucketMap,
         useDirectS3Type,
+        cnmMappingOverride,
       });
       s3Acc.push(url);
     }
@@ -589,6 +711,7 @@ function constructOnlineAccessUrls({
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
  * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
+ * @param {cnmMappingOverride} params.cnmMappingOverride - Object with CNM to CMR override mapping values
  * @returns {Promise<[{URL: string, string, Description: string, Type: string}]>}
  *   an array of online access url objects
  */
@@ -600,6 +723,7 @@ function constructRelatedUrls({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
   useDirectS3Type = false,
+  cnmMappingOverride = {},
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
@@ -610,6 +734,7 @@ function constructRelatedUrls({
     cmrGranuleUrlType,
     distributionBucketMap,
     useDirectS3Type,
+    cnmMappingOverride,
   });
 
   const relatedUrls = cmrUrlObjects.concat(s3CredentialsObject);
@@ -739,6 +864,7 @@ function shouldUseDirectS3Type(metadataObject) {
  * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
+ * @param {cnmMappingOverride} params.cnmMappingOverride - Object with CNM to CMR override mapping values
  * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
  *    containing a `metadataObject` (the updated UMMG metadata object) and the
  *    `etag` of the uploaded CMR file
@@ -750,6 +876,7 @@ async function updateUMMGMetadata({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
+  cnmMappingOverride = {},
 }) {
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRJSONFile(filename);
@@ -762,9 +889,8 @@ async function updateUMMGMetadata({
     cmrGranuleUrlType,
     distributionBucketMap,
     useDirectS3Type,
-  });
-
-  const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
+    cnmMappingOverride,
+  }); const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
   const originalURLs = get(metadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   set(metadataObject, 'RelatedUrls', mergedURLs);
@@ -896,6 +1022,8 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
+ * @param {cnmMappingOverride} params.cnmMappingOverride - Object with CNM to CMR override mapping values
+
  * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
  *    containing a `metadataObject` and the `etag` of the uploaded CMR file
  */
@@ -907,6 +1035,7 @@ async function updateEcho10XMLMetadata({
   s3CredsEndpoint = 's3credentials',
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
+  cnmMappingOverride = {},
 }) {
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
@@ -928,6 +1057,7 @@ async function updateEcho10XMLMetadata({
     bucketTypes,
     cmrGranuleUrlType,
     distributionBucketMap,
+    cnmMappingOverride,
   });
   newURLs.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
@@ -962,6 +1092,7 @@ async function updateEcho10XMLMetadata({
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
+ * @param {Object} params.cnmMappingOverride - Object with CNM to CMR override mapping values
  * @returns {Promise<Object>} CMR file object with the `etag` of the newly
  *    updated metadata file
  */
@@ -974,6 +1105,7 @@ async function updateCMRMetadata({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
+  cnmMappingOverride = {},
 }) {
   const filename = getS3UrlOfFile(cmrFile);
 
@@ -987,6 +1119,7 @@ async function updateCMRMetadata({
     bucketTypes,
     cmrGranuleUrlType,
     distributionBucketMap,
+    cnmMappingOverride,
   };
 
   let metadataObject;
@@ -1025,7 +1158,8 @@ async function updateCMRMetadata({
  *   the CMR service.
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
- * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ * @param {cnmMappingOverride} params.cnmMappingOverride - Object with CNM to CMR override mapping values
+ * @param {Object} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution buckets
  */
 async function reconcileCMRMetadata({
@@ -1036,6 +1170,7 @@ async function reconcileCMRMetadata({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
+  cnmMappingOverride = {},
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
@@ -1048,6 +1183,7 @@ async function reconcileCMRMetadata({
       cmrGranuleUrlType,
       distributionBucketMap,
       bucketTypes,
+      cnmMappingOverride,
     });
   }
   if (cmrMetadataFiles.length > 1) {

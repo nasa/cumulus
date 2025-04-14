@@ -69,6 +69,7 @@ async function updateEachCmrFileAccessURLs(
       bucketTypes,
       cmrGranuleUrlType,
       distributionBucketMap,
+      cnmMappingOverride: process.env.cnmMappingOverride ? JSON.parse(process.env.cnmMappingOverride) : {},
     });
   }));
 }

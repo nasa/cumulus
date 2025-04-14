@@ -34,6 +34,7 @@ locals {
       cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                     = var.cmr_provider
       cmr_username                     = var.cmr_username
+      cnmFileTypeMappingOverride       = var.cnm_file_type_mapping_override
       createRetryIntervalMillis        = var.rds_connection_timing_configuration.createRetryIntervalMillis
       createTimeoutMillis              = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn      = var.rds_user_access_secret_arn

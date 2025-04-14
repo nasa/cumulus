@@ -426,6 +426,14 @@ variable "subnets_tag_name" {
   default = "Private application us-east-1a *"
 }
 
+variable "cnm_file_type_mapping_override" {
+  description = "Override for the CMR CNM file type mapping"
+  type        = map(string)
+  default     = {
+    "ph" = ""
+  }
+}
+
 variable "cloudwatch_log_retention_periods" {
   type = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"

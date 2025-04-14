@@ -607,3 +607,15 @@ variable "dead_letter_recovery_memory" {
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
+
+## CMR Deploy Configuration
+
+variable "cnm_file_type_mapping_override" {
+  type = map(string)
+  default = {}
+  description = <<EOF
+    Map of file type to CMR file type mapping. This is used to extend the to-CNM spec mapping in the Cumulus
+    configuration. The key is the file type and the value is the CMR file type.     This configuration should be used
+    sparingly/as a last resort.
+  EOF
+}

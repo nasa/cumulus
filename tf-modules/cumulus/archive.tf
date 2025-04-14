@@ -40,6 +40,7 @@ module "archive" {
   cmr_password       = var.cmr_password
   cmr_custom_host    = var.cmr_custom_host
   cmr_search_client_config = var.cmr_search_client_config
+  cnm_file_type_mapping_override = var.cnm_file_type_mapping_override
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate

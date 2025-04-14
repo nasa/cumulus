@@ -116,6 +116,7 @@ module "cumulus" {
   cmr_password    = var.cmr_password
   cmr_provider    = var.cmr_provider
   cmr_custom_host = var.cmr_custom_host
+  cnm_file_type_mapping_override = var.cnm_file_type_mapping_override
 
   cmr_search_client_config = var.cmr_search_client_config
 

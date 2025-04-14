@@ -367,3 +367,11 @@ variable "dead_letter_recovery_memory" {
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
+
+## CMR Deploy Configuration
+
+variable "cnm_file_type_mapping_override" {
+  type = map(string)
+  default = {}
+  description = "Map of CNM file type to CMR file type overrides in the form of '<cnm_file_type>:<cmr_file_type>'}"
+}

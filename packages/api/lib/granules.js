@@ -173,6 +173,9 @@ async function getFilesExistingAtLocation(granule, destinations) {
 /**
  * Move a granule's files to destinations specified
  *
+ * Expects API to have cnmMappingOverride mapping to be set to a value if it's set
+ * as part of the cumulus deployment
+ *
  * @param {Object} apiGranule - the granule record object
  * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
  *    - list of destinations specified
@@ -209,6 +212,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint) {
     published: apiGranule.published,
     distributionBucketMap,
     bucketTypes,
+    cnmMappingOverride: process.env.cnmMappingOverride ? JSON.parse(process.env.cnmMappingOverride) : {},
   });
   if (moveGranuleErrors.length > 0) {
     log.error(`Granule ${JSON.stringify(apiGranule)} failed to move.`);
