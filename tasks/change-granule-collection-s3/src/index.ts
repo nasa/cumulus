@@ -6,6 +6,7 @@ import keyBy from 'lodash/keyBy';
 import cloneDeep from 'lodash/cloneDeep';
 import { AssertionError } from 'assert';
 import flatten from 'lodash/flatten';
+import range from 'lodash/range';
 import pRetry from 'p-retry';
 import path from 'path';
 import pMap from 'p-map';
@@ -18,17 +19,18 @@ import {
   isCMRFile,
   metadataObjectFromCMRFile,
 } from '@cumulus/cmrjs';
+
 import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { s3 } from '@cumulus/aws-client/services';
 import { BucketsConfig, log } from '@cumulus/common';
 import { urlPathTemplate } from '@cumulus/ingest/url-path-template';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { getCollection } from '@cumulus/api-client/collections';
-import { getGranule } from '@cumulus/api-client/granules';
-import { CollectionRecord, CollectionFile } from '@cumulus/types';
+import { CollectionRecord, CollectionFile, ApiGranuleRecord } from '@cumulus/types';
 import { CumulusMessage } from '@cumulus/types/message';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { calculateObjectHash, copyObject, s3Join, s3ObjectExists } from '@cumulus/aws-client/S3';
+import { listGranules } from '@cumulus/api-client/granules';
 import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
 import { getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
 import {
@@ -84,7 +86,7 @@ async function metadataCollisionsMatch(
       maxTimeout: 10000,
       randomize: true,
       onFailedAttempt:
-      /* istanbul ignore next */
+        /* istanbul ignore next */
         (error) => logOrThrow(
           error,
           `Error loading cmr metadata file at targetFile location to check for collision ${targetFile?.bucket}/${targetFile?.key} :: ${error}`
@@ -530,6 +532,24 @@ function buildTargetGranules(
   return targetGranules;
 }
 
+function chunkGranuleIds(granuleIds: string[], chunkSize: number) {
+  return range(granuleIds.length / chunkSize).map((i) => granuleIds.slice(
+    i * chunkSize,
+    (i + 1) * chunkSize
+  ));
+}
+
+async function getGranulesList(granuleIds: string[], collectionId: string) {
+  const granulesResponse = await listGranules({
+    prefix: getRequiredEnvVar('stackname'),
+    query: {
+      collectionId,
+      granuleId__in: granuleIds,
+    },
+  });
+  return JSON.parse(granulesResponse.body);
+}
+
 /**
  * convert granule IDs into full granules, validating that each granule is moveable
  * and acting as configured with any that arenot moveable
@@ -538,18 +558,19 @@ async function getAndValidateGranules(
   granuleIds: Array<string>,
   config: MassagedEventConfig
 ): Promise<Array<ValidGranuleRecord>> {
-  const getGranuleMethod = config.testMethods?.getGranuleMethod || getGranule;
-  const tempGranulesInput = await pMap(
-    granuleIds,
-    (granuleId) => getGranuleMethod({
-      prefix: getRequiredEnvVar('stackName'),
-      granuleId,
-    }),
-    { concurrency: config.concurrency }
-  );
+  const listGranulesMethod = config.testMethods?.listGranulesMethod || getGranulesList;
+
+  const tempGranulesInput: ApiGranuleRecord[][] = [];
+  for (const granuleChunk of chunkGranuleIds(granuleIds, 100 /* temp hardcoded */)) {
+    // eslint-disable-next-line no-await-in-loop
+    tempGranulesInput.push(await listGranulesMethod(
+      granuleChunk,
+      constructCollectionId(config.collection.name, config.collection.version)
+    ));
+  }
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
-    granulesInput = tempGranulesInput.filter((granule) => {
+    granulesInput = flatten(tempGranulesInput).filter((granule) => {
       try {
         return validateApiGranuleRecord(granule);
       } catch (error) {
@@ -558,7 +579,7 @@ async function getAndValidateGranules(
       }
     }).filter(Boolean) as Array<ValidGranuleRecord>;
   } else {
-    granulesInput = tempGranulesInput.filter(validateApiGranuleRecord);
+    granulesInput = flatten(tempGranulesInput).filter(validateApiGranuleRecord);
   }
   return granulesInput;
 }

@@ -3,7 +3,7 @@ import { ApiFile, ApiGranuleRecord, CollectionRecord } from '@cumulus/types';
 export const MB = 1024 * 1024;
 
 type TestMethods = {
-  getGranuleMethod: (params: { granuleId: string }) => ApiGranuleRecord,
+  listGranulesMethod: (granuleIds: string[], collectionId: string) => ApiGranuleRecord,
   getCollectionMethod: (params: {
     collectionName: string,
     collectionVersion: string
@@ -13,6 +13,10 @@ type TestMethods = {
 
 export type EventConfig = {
   targetCollection: {
+    name: string,
+    version: string,
+  }
+  collection: {
     name: string,
     version: string,
   }

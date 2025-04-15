@@ -45,6 +45,7 @@ function granulesToFileURIs(granuleIds, t) {
 
 function buildPayload(t, collection) {
   const newPayload = t.context.payload;
+  newPayload.config.collection = {name: 'abc', version: '001'};
   newPayload.config.targetCollection = collection;
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
@@ -61,7 +62,9 @@ test.beforeEach(async (t) => {
   process.env.granule_sns_topic_arn = TopicArn;
   const testDbName = `change-granule-collection-s3/change-collections-s3${cryptoRandomString({ length: 10 })}`;
   t.context.testMethods = {
-    getGranuleMethod: (params) => dummyGetGranule(params.granuleId, t),
+    listGranulesMethod: (granuleIds, _) => granuleIds.map(
+      (granuleId) => dummyGetGranule(granuleId, t)
+    ),
     getCollectionMethod: (params) => (
       dummyGetCollection(params.collectionName, params.collectionVersion)
     ),
