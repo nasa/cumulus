@@ -19,6 +19,7 @@
             "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
             "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
             "s3Concurrency": "{$.meta.bulkChangeCollection.s3Concurrency}",
+            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}",
             "cumulus_message": {
               "input": "{$.payload}",
               "outputs": [

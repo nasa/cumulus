@@ -561,7 +561,7 @@ async function getAndValidateGranules(
   const listGranulesMethod = config.testMethods?.listGranulesMethod || getGranulesList;
 
   const tempGranulesInput: ApiGranuleRecord[][] = [];
-  for (const granuleChunk of chunkGranuleIds(granuleIds, 100 /* temp hardcoded */)) {
+  for (const granuleChunk of chunkGranuleIds(granuleIds, config.maxRequestGranules)) {
     // eslint-disable-next-line no-await-in-loop
     tempGranulesInput.push(await listGranulesMethod(
       granuleChunk,
@@ -600,6 +600,8 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
   });
   const concurrency = config.concurrency || Number(process.env.concurrency) || 100;
   const s3Concurrency = config.s3Concurrency || Number(process.env.s3Concurrency) || 100;
+  const maxRequestGranules = config.maxRequestGranules
+    || Number(process.env.maxRequestGranules) || 100;
   return {
     ...config,
     concurrency,
@@ -608,6 +610,7 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
     targetCollection,
     cmrGranuleUrlType: config.cmrGranuleUrlType || 'both',
     invalidGranuleBehavior: config.invalidGranuleBehavior || 'skip',
+    maxRequestGranules,
   };
 }
 

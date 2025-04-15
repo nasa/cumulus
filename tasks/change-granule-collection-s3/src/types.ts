@@ -27,9 +27,9 @@ export type EventConfig = {
   distribution_endpoint?: string,
   invalidGranuleBehavior?: string,
   s3MultipartChunksizeMb?: number,
+  maxRequestGranules?: number,
   // these last are not valid members of production configuration
   testMethods?: TestMethods
-
 };
 
 export type ChangeCollectionsS3Event = {
@@ -62,4 +62,5 @@ export type MassagedEventConfig = {
   targetCollection: CollectionRecord,
   concurrency: number,
   s3Concurrency: number,
+  maxRequestGranules: number,
 } & EventConfig;
