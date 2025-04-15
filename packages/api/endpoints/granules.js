@@ -734,15 +734,25 @@ async function bulkPatchGranuleCollection(req, res) {
   const granules = req.body.apiGranules;
   const granuleIds = granules.map((granule) => granule.granuleId);
   const newCollectionId = req.body.collectionId;
-  const collection = await collectionPgModel.get(
-    knex,
-    deconstructCollectionId(newCollectionId)
-  );
+  let collection;
+
+  try {
+    collection = await collectionPgModel.get(
+      knex,
+      deconstructCollectionId(newCollectionId)
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.error(`Collection ${newCollectionId} does not exist`);
+      return res.boom.notFound(`Collection ${newCollectionId} does not exist`);
+    }
+    return res.boom.badRequest(error.message);
+  }
 
   await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
 
   return res.send({
-    message: `Successfully wrote granules with Granule Id: ${granuleIds} to Collection Id: ${newCollectionId}`,
+    message: `Successfully wrote granules with Granule Ids: ${granuleIds} to Collection Id: ${newCollectionId}`,
   });
 }
 

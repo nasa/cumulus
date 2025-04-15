@@ -39,12 +39,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed api return codes expected in api-client for bulkPatch and bulkPatchGranuleCollections
 - **CUMULUS-33944**
   - Updated DLA table column tables to lowercase to avoid recurring terraform update
+- **CUMULUS-4052**
+  - Removed outdated elasticsearch reference from 'bulk delete executions by collection' endpoint
 
 ### Changed
 
 - **CUMULUS-3788**
   - Updated `@cumulus/launchpad-auth/getLaunchpadToken` to check if the token in s3 has been updated
     before updating it with a new token
+- **CUMULUS-3980**
+  - Updated bulkPatchGranuleCollection to error when the collection it is getting updated to doesn't exist
 - **CUMULUS-4077**
   - Update list/search endpoints and corresponding BaseSearch `@cumulus/db` logic to allow `countOnly` as a configuration-modifying query parameter that *only* returns a useful value for `meta.count` to allow users to get a count without returning results/incurring pagination/translation costs
 
@@ -64,7 +68,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/lzards-backup` task to make checksum type name comparison case-insensitive
 
 ### Fixed
-
+- **CUMULUS-4056**
+  - fix raise ava timeout in aws-client to prevent intermitten test failures
+  - fix lambda deletion failure in aws-client tests to prevent intermitted failures
+  - fix queue-granules test inconsistent output ordering to prevent intermitten unit test failues
 - **CUMULUS-4018**
   - Updated `@cumulus/db/search` to correctly handle string parameter when limit is `null`
 

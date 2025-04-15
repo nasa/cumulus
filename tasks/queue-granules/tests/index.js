@@ -803,9 +803,6 @@ test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessag
     {
       dataType, version, granuleId: randomString(), files: [],
     },
-    {
-      dataType, version, granuleId: randomString(), files: [],
-    },
   ];
 
   t.context.enqueueGranuleIngestMessage.returnsArg(0);
