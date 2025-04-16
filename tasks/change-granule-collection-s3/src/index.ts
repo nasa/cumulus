@@ -541,7 +541,7 @@ function chunkGranuleIds(granuleIds: string[], chunkSize: number) {
 
 async function getGranulesList(granuleIds: string[], collectionId: string) {
   const granulesResponse = await listGranules({
-    prefix: getRequiredEnvVar('stackname'),
+    prefix: getRequiredEnvVar('stackName'),
     query: {
       collectionId,
       granuleId__in: granuleIds,
