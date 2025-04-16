@@ -581,6 +581,7 @@ async function getAndValidateGranules(
   } else {
     granulesInput = flatten(tempGranulesInput).filter(validateApiGranuleRecord);
   }
+  log.warn(`granules being processed: ${granulesInput}`);
   return granulesInput;
 }
 
