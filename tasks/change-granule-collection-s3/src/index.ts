@@ -11,7 +11,7 @@ import pRetry from 'p-retry';
 import path from 'path';
 import pMap from 'p-map';
 
-import { InvalidArgument, DuplicateFile } from '@cumulus/errors';
+import { InvalidArgument, DuplicateFile, ValidationError } from '@cumulus/errors';
 import {
   unversionFilename,
 } from '@cumulus/ingest/granule';
@@ -547,7 +547,8 @@ async function getGranulesList(granuleIds: string[], collectionId: string) {
       granuleId__in: granuleIds.join(','),
     },
   });
-  return JSON.parse(granulesResponse.body);
+
+  return JSON.parse(granulesResponse.body).results;
 }
 
 /**
@@ -563,10 +564,18 @@ async function getAndValidateGranules(
   const tempGranulesInput: ApiGranuleRecord[][] = [];
   for (const granuleChunk of chunkGranuleIds(granuleIds, config.maxRequestGranules)) {
     // eslint-disable-next-line no-await-in-loop
-    tempGranulesInput.push(await listGranulesMethod(
+    const listedGranules = await listGranulesMethod(
       granuleChunk,
       constructCollectionId(config.collection.name, config.collection.version)
-    ));
+    );
+    if (!listedGranules) {
+      if (config.invalidGranuleBehavior === 'skip') {
+        continue;
+      } else {
+        throw new ValidationError(`granules could not be retrieved from listGranules endpoint`)
+      }
+    }
+    tempGranulesInput.push(listedGranules);
   }
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
