@@ -544,7 +544,7 @@ async function getGranulesList(granuleIds: string[], collectionId: string) {
     prefix: getRequiredEnvVar('stackName'),
     query: {
       collectionId,
-      granuleId__in: granuleIds,
+      granuleId__in: granuleIds.join(','),
     },
   });
   return JSON.parse(granulesResponse.body);
