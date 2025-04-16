@@ -569,13 +569,12 @@ async function getAndValidateGranules(
       constructCollectionId(config.collection.name, config.collection.version)
     );
     if (!listedGranules) {
-      if (config.invalidGranuleBehavior === 'skip') {
-        continue;
-      } else {
-        throw new ValidationError(`granules could not be retrieved from listGranules endpoint`)
+      if (config.invalidGranuleBehavior !== 'skip') {
+        throw new ValidationError('granules could not be retrieved from listGranules endpoint');
       }
+    } else {
+      tempGranulesInput.push(listedGranules);
     }
-    tempGranulesInput.push(listedGranules);
   }
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
