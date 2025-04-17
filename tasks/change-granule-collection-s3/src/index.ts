@@ -548,9 +548,10 @@ async function getGranulesList(granuleIds: string[], collectionId: string) {
     query: {
       collectionId,
       granuleId__in: granuleIds.join(','),
+      includeFullRecord: 'true',
     },
   });
-
+  log.warn('raw output from listGranules looks like', granulesResponse.body)
   return JSON.parse(granulesResponse.body).results;
 }
 
