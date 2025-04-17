@@ -294,6 +294,7 @@ async function copyFileInS3({
   if (isCMRFile(targetFile)) {
     if (!(await cmrFileCollision(sourceFile, targetFile, cmrObject))) {
       const metadataString = CMRObjectToString(targetFile, cmrObject);
+      console.log('loading cmrFile to', JSON.stringify(targetFile));
       await pRetry(() => uploadCMRFile(targetFile, metadataString), {
         retries: 5,
         minTimeout: 2000,
@@ -309,6 +310,8 @@ async function copyFileInS3({
     }
     return;
   }
+
+  console.log('loading regular file to', JSON.stringify(targetFile));
   if (await s3CopyNeeded(sourceFile, targetFile)) {
     // this onFailedAttempt is impossible to test in
     await pRetry(
@@ -703,7 +706,8 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const targetGranules = buildTargetGranules(
     sourceGranules, config, collectionUpdatedCMRMetadata
   );
-
+  log.warn('source granules are', JSON.stringify(sourceGranules));
+  log.warn('target granules are', JSON.stringify(targetGranules));
   // now we call updateCMRData with our targetGranules to update
   // the cmr file links
   const updatedCMRObjects = await updateCMRData(
