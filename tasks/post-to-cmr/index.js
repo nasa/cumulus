@@ -48,12 +48,14 @@ function buildOutput(results, granules) {
  * @param {Array<Object>} cmrFiles - array of CMR file objects, each with a
  *    `filename`,`granuleId`, and optionally an `etag` (for specifying an exact
  *    CMR file version)
+ * @param {s3Concurrency} number - number of s3 requests to process at a time
  * @returns {Promise<Array<Object>>} clone of input array with each object
  *    updated with its metadata as a `metadataObject` property
  */
-async function addMetadataObjects(cmrFiles) {
-  return await Promise.all(
-    cmrFiles.map(async (cmrFile) => {
+async function addMetadataObjects(cmrFiles, s3Concurrency) {
+  return await pMap(
+    cmrFiles,
+    async (cmrFile) => {
       const metadataObject = await metadataObjectFromCMRFile(
         getS3UrlOfFile(cmrFile),
         cmrFile.etag
@@ -63,8 +65,10 @@ async function addMetadataObjects(cmrFiles) {
         ...cmrFile,
         metadataObject,
       };
-    })
-  );
+    },
+    { concurrency: s3Concurrency}
+  )
+  
 }
 
 /**
@@ -132,7 +136,7 @@ async function removeGranuleFromCmr({ granules, cmrSettings, concurrency }) {
  */
 async function postToCMR(event) {
   const { cmrRevisionId, granules } = event.input;
-  const { etags = {}, republish = false, concurrency = 20 } = event.config;
+  const { etags = {}, republish = false, concurrency = 20, s3Concurrency = 50 } = event.config;
 
   const cmrSettings = await getCmrSettings({
     ...event.config.cmr,
@@ -150,7 +154,7 @@ async function postToCMR(event) {
   const cmrFiles = granulesToCmrFileObjects(granules);
   log.debug(`Found ${cmrFiles.length} CMR files.`);
   if (!event.config.skipMetaCheck) checkForMetadata(granules, cmrFiles);
-  const updatedCMRFiles = await addMetadataObjects(cmrFiles);
+  const updatedCMRFiles = await addMetadataObjects(cmrFiles, s3Concurrency);
 
   log.info(`Publishing ${updatedCMRFiles.length} CMR files.`);
 

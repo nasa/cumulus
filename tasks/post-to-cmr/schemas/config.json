@@ -49,6 +49,11 @@
       "description": "Maximum concurrency of requests to CMR",
       "default": 20
     },
+    "s3Concurrency": {
+      "type": "bymber",
+      "description": "Maximum concurrency of requests to s3",
+      "default": 50
+    },
     "launchpad": {
       "type": "object",
       "description": "credentials needed to get launchpad token",
