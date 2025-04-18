@@ -50,7 +50,7 @@
       "default": 20
     },
     "s3Concurrency": {
-      "type": "bymber",
+      "type": "number",
       "description": "Maximum concurrency of requests to s3",
       "default": 50
     },
