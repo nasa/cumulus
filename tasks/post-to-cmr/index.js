@@ -66,9 +66,8 @@ async function addMetadataObjects(cmrFiles, s3Concurrency) {
         metadataObject,
       };
     },
-    { concurrency: s3Concurrency}
-  )
-  
+    { concurrency: s3Concurrency }
+  );
 }
 
 /**
