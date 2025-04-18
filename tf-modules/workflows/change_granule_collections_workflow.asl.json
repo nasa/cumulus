@@ -99,7 +99,7 @@
             "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
             "s3Concurrency": "{$.meta.bulkChangeCollection.s3Concurrency}",
             "dbMaxPool": "{$.meta.bulkChangeCollection.dbMaxPool}",
-            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}",
+            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}"
           }
         }
       },
