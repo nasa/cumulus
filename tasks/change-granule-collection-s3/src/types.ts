@@ -24,6 +24,7 @@ export type EventConfig = {
   cmrGranuleUrlType?: string,
   concurrency?: number,
   s3Concurrency?: number,
+  listGranulesConcurrency?: number,
   distribution_endpoint?: string,
   invalidGranuleBehavior?: string,
   s3MultipartChunksizeMb?: number,
@@ -62,4 +63,5 @@ export type MassagedEventConfig = {
   targetCollection: CollectionRecord,
   concurrency: number,
   s3Concurrency: number,
+  listGranulesConcurrency: number,
 } & EventConfig;

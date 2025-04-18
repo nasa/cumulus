@@ -11,7 +11,7 @@ import pRetry from 'p-retry';
 import path from 'path';
 import pMap from 'p-map';
 
-import { InvalidArgument, DuplicateFile } from '@cumulus/errors';
+import { InvalidArgument, DuplicateFile, ValidationError } from '@cumulus/errors';
 import {
   unversionFilename,
 } from '@cumulus/ingest/granule';
@@ -309,6 +309,7 @@ async function copyFileInS3({
     }
     return;
   }
+
   if (await s3CopyNeeded(sourceFile, targetFile)) {
     // this onFailedAttempt is impossible to test in
     await pRetry(
@@ -541,13 +542,14 @@ function chunkGranuleIds(granuleIds: string[], chunkSize: number) {
 
 async function getGranulesList(granuleIds: string[], collectionId: string) {
   const granulesResponse = await listGranules({
-    prefix: getRequiredEnvVar('stackname'),
+    prefix: getRequiredEnvVar('stackName'),
     query: {
       collectionId,
-      granuleId__in: granuleIds,
+      granuleId__in: granuleIds.join(','),
+      includeFullRecord: 'true',
     },
   });
-  return JSON.parse(granulesResponse.body);
+  return JSON.parse(granulesResponse.body).results;
 }
 
 /**
@@ -561,12 +563,22 @@ async function getAndValidateGranules(
   const listGranulesMethod = config.testMethods?.listGranulesMethod || getGranulesList;
 
   const tempGranulesInput: ApiGranuleRecord[][] = [];
-  for (const granuleChunk of chunkGranuleIds(granuleIds, 100 /* temp hardcoded */)) {
+  /*
+  too large a chunk will cause listGranules fail due to too large a max header size.
+  */
+  for (const granuleChunk of chunkGranuleIds(granuleIds, config.listGranulesConcurrency)) {
     // eslint-disable-next-line no-await-in-loop
-    tempGranulesInput.push(await listGranulesMethod(
+    const listedGranules = await listGranulesMethod(
       granuleChunk,
       constructCollectionId(config.collection.name, config.collection.version)
-    ));
+    );
+    if (!listedGranules) {
+      if (config.invalidGranuleBehavior !== 'skip') {
+        throw new ValidationError('granules could not be retrieved from listGranules endpoint');
+      }
+    } else {
+      tempGranulesInput.push(listedGranules);
+    }
   }
   let granulesInput: Array<ValidGranuleRecord>;
   if (config.invalidGranuleBehavior === 'skip') {
@@ -600,6 +612,8 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
   });
   const concurrency = config.concurrency || Number(process.env.concurrency) || 100;
   const s3Concurrency = config.s3Concurrency || Number(process.env.s3Concurrency) || 100;
+  const listGranulesConcurrency = config.listGranulesConcurrency
+    || Number(process.env.listGranulesConcurrency) || 100;
   return {
     ...config,
     concurrency,
@@ -608,6 +622,7 @@ async function getParsedConfigValues(config: EventConfig): Promise<MassagedEvent
     targetCollection,
     cmrGranuleUrlType: config.cmrGranuleUrlType || 'both',
     invalidGranuleBehavior: config.invalidGranuleBehavior || 'skip',
+    listGranulesConcurrency,
   };
 }
 
@@ -691,7 +706,6 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   const targetGranules = buildTargetGranules(
     sourceGranules, config, collectionUpdatedCMRMetadata
   );
-
   // now we call updateCMRData with our targetGranules to update
   // the cmr file links
   const updatedCMRObjects = await updateCMRData(

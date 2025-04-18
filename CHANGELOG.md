@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-3868**
+  - added listGranulesConcurrency parameter to control the size of requests made to the listGranules api endpoint. this should be lowered from default if granuleIds are larger than 300 characters.
 - **CUMULUS-4004**
   - Add documentation explaining use and configuration of changegranuleCollections workflow
 - **CUMULUS-3992**
@@ -41,6 +43,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated DLA table column tables to lowercase to avoid recurring terraform update
 
 ### Changed
+
+- **CUMULUS-3868**
+  - use listGranules endpoint to gather granules from granuleIds
 
 - **CUMULUS-3788**
   - Updated `@cumulus/launchpad-auth/getLaunchpadToken` to check if the token in s3 has been updated

@@ -397,6 +397,7 @@ test('massageConfig massages input config to contain required variables', (t) =>
     s3Concurrency: 123,
     dbMaxPool: 200,
     maxRequestGranules: 20000,
+    listGranulesConcurrency: 200,
   };
   let massagedConfig = massageConfig(config);
   t.deepEqual(config, massagedConfig);
@@ -419,6 +420,7 @@ test('massageConfig massages input config to contain required variables', (t) =>
     s3Concurrency: 50,
     maxRequestGranules: 1000,
     dbMaxPool: 100,
+    listGranulesConcurrency: 100,
   }, massagedConfig);
   const oldEnv = clone(process.env);
   process.env = {
@@ -427,6 +429,7 @@ test('massageConfig massages input config to contain required variables', (t) =>
     s3Concurrency: 2,
     maxRequestGranules: 3,
     dbMaxPool: 4,
+    listGranulesConcurrency: 5,
   };
   config = {
     oldGranules: [],
@@ -446,6 +449,7 @@ test('massageConfig massages input config to contain required variables', (t) =>
     s3Concurrency: 2,
     maxRequestGranules: 3,
     dbMaxPool: 4,
+    listGranulesConcurrency: 5,
   }, massagedConfig);
   process.env = oldEnv;
 });

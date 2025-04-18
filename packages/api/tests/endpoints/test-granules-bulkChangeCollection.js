@@ -227,6 +227,7 @@ test.serial('bulkChangeCollection generates the proper payload and calls startEx
     concurrency: 50,
     s3Concurrency: 50,
     maxRequestGranules: 1000,
+    listGranulesConcurrency: 200,
   };
 
   await bulkChangeCollection({

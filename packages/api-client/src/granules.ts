@@ -824,6 +824,7 @@ export const bulkChangeCollection = async (params: {
     batchSize?: number,
     concurrency?: number,
     s3Concurrency?: number,
+    listGranulesConcurrency?: number,
     dbMaxPool?: number,
     maxRequestGranules?: number,
     invalidGranuleBehavior?: InvalidBehavior,
