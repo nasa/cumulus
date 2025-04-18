@@ -53,6 +53,9 @@
       "Parameters": {
         "cma": {
           "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
           "task_config": {
             "oldGranules": "{$.meta.oldGranules}",
             "buckets": "{$.meta.buckets}",
@@ -62,7 +65,7 @@
             "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
             "s3Concurrency": "{$.meta.bulkChangeCollection.s3Concurrency}",
             "dbMaxPool": "{$.meta.bulkChangeCollection.dbMaxPool}",
-            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}"
+            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}",
           }
         }
       },
