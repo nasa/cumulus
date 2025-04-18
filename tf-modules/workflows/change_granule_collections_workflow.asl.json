@@ -62,6 +62,7 @@
             "cmr": "{$.meta.cmr}",
             "launchpad": "{$.meta.launchpad}",
             "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "s3Concurrency": "{$.meta.bulkChangeCollection.s3Concurrency}",
             "republish": true
           }
         }

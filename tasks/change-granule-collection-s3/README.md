@@ -15,6 +15,8 @@ Config object fields:
 | buckets | object | (required) | |Object specifying AWS S3 buckets used by this task |
 | collection | object | (required) | |The cumulus-api collection object |
 | targetCollection | object | (required) | |collection that each granule should end up in |
+| s3Concurrency | number | | 50 | concurrency to run s3 requests at |
+| listGranulesConcurrency | number | | 100 | concurrency to get granules from the api. needs to be lowered if each granuleId is largr than 300 characters |
 | s3MultipartChunksizeMb | number | | | S3 multipart upload chunk size in MB.  If none is specified, the default `default_s3_multipart_chunksize_mb` is used. |
 | invalidGranuleBehavior | string | 'skip' | 'skip', 'error' | What should be done with a granule that can't be processed (contains files with no key/bucket) |
 
