@@ -39,13 +39,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3752**
   - Fixed api return codes expected in api-client for bulkPatch and bulkPatchGranuleCollections
-- **CUMULUS-33944**
+- **CUMULUS-3394**
   - Updated DLA table column tables to lowercase to avoid recurring terraform update
 
 ### Changed
 
 - **CUMULUS-3868**
-  - use listGranules endpoint to gather granules from granuleIds
+  - Use listGranules endpoint to gather granules from granuleIds
+  - Bound cmr metadata download in post-to-cmr task to s3Concurrency limit
+
 - **CUMULUS-3788**
   - Updated `@cumulus/launchpad-auth/getLaunchpadToken` to check if the token in s3 has been updated
     before updating it with a new token
@@ -56,8 +58,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-3868**
-  - Bound cmr metadata download in post-to-cmr task to s3Concurrency limit
 - **CUMULUS-3994**
   - Removed references to the Elasticsearch domain named `{prefix}-es-vpc` in the data-persistence Terraform module and example.
   - Running `terraform apply` on this change will **permanently delete** the Elasticsearch domain named `{prefix}-es-vpc` and all of the the data it contains.
