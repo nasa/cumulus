@@ -26,6 +26,8 @@ Additionally the api-client function accepts the following configurations that h
   - default 100
 - `s3Concurrency` - processing concurrency specifically for s3 operations that have their own bottleneck values
   - default 50
+- `listGranulesConcurrency` - processing concurrency specifically for calling the listGranules that has its own bottleneck value
+  - default 100
 - `dbMaxPool` - database concurrency. should be greater than or equal to concurrency
   - default 100
 - `maxRequestGranules` - maximum number of granules to be handled in one api call
@@ -68,6 +70,12 @@ The specific subroutines that run at this concurrency are:
 - writing updated cmr metadata records to s3
 - copying s3 files to new location (if necessary)
 - deleting old s3 files (if necessary)
+
+### listGranulesConcurrency
+
+This configuration defines the size of granuleId batches to be sent to the listGranules endpoint when loading granules. Defaults to 100.
+internally the loading of these granules can choke on the size of the request, specifically because of max http headers limits.
+this default configuration of 100 has been tested to be safe with granuleIds up to 300 characters long, and so likely should be left alone, but must be lowered if that granuleId size is exceeded.
 
 ### dbMaxPool
 
