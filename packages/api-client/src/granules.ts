@@ -26,6 +26,9 @@ type BulkPatch = {
   dbMaxPool: number,
 };
 
+type InvalidBehavior = 'error' | 'skip';
+type CmrGranuleUrlType = 'http' | 's3' | 'both';
+
 const encodeGranulesURIComponent = (
   granuleId: string,
   collectionId: string | undefined
@@ -643,7 +646,7 @@ export const bulkPatchGranuleCollection = async (params: {
       path: '/granules/bulkPatchGranuleCollection',
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 202,
+    expectedStatusCodes: 200,
   });
 };
 
@@ -677,7 +680,7 @@ export const bulkPatch = async (params: {
       path: '/granules/bulkPatch',
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 202,
+    expectedStatusCodes: 200,
   });
 };
 
@@ -806,5 +809,43 @@ export const bulkOperation = async (params: {
       body: JSON.stringify({ granules, workflowName }),
     },
     expectedStatusCodes: 202,
+  });
+};
+
+/**
+ * Bulk Granule Operations
+ * POST /granules/bulkChangeCollection
+ */
+export const bulkChangeCollection = async (params: {
+  prefix: string,
+  body: {
+    sourceCollectionId: string,
+    targetCollectionId: string,
+    batchSize?: number,
+    concurrency?: number,
+    s3Concurrency?: number,
+    listGranulesConcurrency?: number,
+    dbMaxPool?: number,
+    maxRequestGranules?: number,
+    invalidGranuleBehavior?: InvalidBehavior,
+    cmrGranuleUrlType?: CmrGranuleUrlType,
+    s3MultipartChunkSizeMb?: number,
+    executionName?: string,
+  },
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/granules/bulkChangeCollection/',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 200,
   });
 };
