@@ -45,7 +45,7 @@ function granulesToFileURIs(granuleIds, t) {
 
 function buildPayload(t, collection) {
   const newPayload = t.context.payload;
-  newPayload.config.collection = {name: 'abc', version: '001'};
+  newPayload.config.collection = { name: 'abc', version: '001' };
   newPayload.config.targetCollection = collection;
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
