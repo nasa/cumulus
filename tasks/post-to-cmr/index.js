@@ -98,11 +98,11 @@ function checkForMetadata(granules, cmrFiles) {
  */
 async function removeGranuleFromCmr({ granules, cmrSettings, concurrency }) {
   const granulesToUnpublish = granules.filter((granule) => granule.published || !!granule.cmrLink);
-  await pMap(
-    granulesToUnpublish,
-    (granule) => removeFromCMR(granule.granuleId, cmrSettings),
-    { concurrency }
-  );
+  // await pMap(
+  //   granulesToUnpublish,
+  //   (granule) => removeFromCMR(granule.granuleId, cmrSettings),
+  //   { concurrency }
+  // );
 
   if (granulesToUnpublish.length > 0) {
     log.info(`Removing ${granulesToUnpublish.length} out of ${granules.length} granules from CMR for republishing`);
@@ -157,12 +157,12 @@ async function postToCMR(event) {
   const startTime = Date.now();
 
   // post all meta files to CMR
-  const results = await pMap(
-    updatedCMRFiles,
-    (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
-    { concurrency }
-  );
-
+  // const results = await pMap(
+  //   updatedCMRFiles,
+  //   (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
+  //   { concurrency }
+  // );
+  const results = {};
   const endTime = Date.now();
   const outputGranules = buildOutput(
     results,
