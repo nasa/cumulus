@@ -41,7 +41,10 @@ other issues that would result in the client being killed.
 
     ```sh
     sudo yum install -y tmux
+    # Amazon Linux 2
     sudo amazon-linux-extras install postgresql13
+    # Amazon Linux 2023
+    sudo dnf install -y postgresql15
     ```
 
     Once installed, a tmux session is started with two windows, the Cumulus database is connected to each window
