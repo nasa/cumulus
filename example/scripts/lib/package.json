@@ -18,8 +18,7 @@
     "clean": "true",
     "build": "true",
     "prepare": "true",
-    "package": "true",
-    "coverage": "python ../../../scripts/coverage_handler/coverage.py"
+    "package": "true"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"
