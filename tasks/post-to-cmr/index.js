@@ -101,11 +101,11 @@ function checkForMetadata(granules, cmrFiles) {
  */
 async function removeGranuleFromCmr({ granules, cmrSettings, concurrency }) {
   const granulesToUnpublish = granules.filter((granule) => granule.published || !!granule.cmrLink);
-  await pMap(
-    granulesToUnpublish,
-    (granule) => removeFromCMR(granule.granuleId, cmrSettings),
-    { concurrency }
-  );
+  // await pMap(
+  //   granulesToUnpublish,
+  //   (granule) => removeFromCMR(granule.granuleId, cmrSettings),
+  //   { concurrency }
+  // );
 
   if (granulesToUnpublish.length > 0) {
     log.info(`Removing ${granulesToUnpublish.length} out of ${granules.length} granules from CMR for republishing`);
