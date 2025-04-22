@@ -108,14 +108,19 @@ export async function getLaunchpadToken(params: LaunchpadTokenParams): Promise<s
       session_starttime: (Date.now() / 1000) - (5 * 60),
     };
 
-    const s3location = launchpadTokenBucketKey();
-    await s3PutObject({
-      Bucket: s3location.Bucket,
-      Key: s3location.Key,
-      Body: JSON.stringify(tokenObject),
-    });
+    // check if the token in s3 has been updated before updating it with the new token
+    token = await getValidLaunchpadTokenFromS3();
+    if (!token) {
+      log.debug('getLaunchpadToken updating launchpad token in s3');
+      const s3location = launchpadTokenBucketKey();
+      await s3PutObject({
+        Bucket: s3location.Bucket,
+        Key: s3location.Key,
+        Body: JSON.stringify(tokenObject),
+      });
 
-    token = tokenObject.sm_token;
+      token = tokenObject.sm_token;
+    }
   }
 
   return token;

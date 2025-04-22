@@ -28,6 +28,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
   };
 
   const expectedDbQueryParameters = {
+    countOnly: false,
     estimateTableRowCount: false,
     exists: {
       error: true,
@@ -93,6 +94,7 @@ test('convertQueryStringToDbQueryParameters does not include limit/offset parame
 
 test('convertQueryStringToDbQueryParameters adds limit and sorting on cumulus_id to db query parameters by default', (t) => {
   const expectedDbQueryParameters = {
+    countOnly: false,
     estimateTableRowCount: false,
     limit: 10,
     offset: 0,
@@ -184,6 +186,7 @@ test('convertQueryStringToDbQueryParameters correctly converts sortby error para
   };
 
   const expectedDbQueryParameters = {
+    countOnly: false,
     estimateTableRowCount: false,
     limit: 10,
     offset: 0,

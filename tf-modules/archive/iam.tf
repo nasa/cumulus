@@ -130,6 +130,13 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
 
   statement {
     actions = [
+      "states:StartExecution",
+    ]
+    resources = ["arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:${var.prefix}-*"]
+  }
+
+  statement {
+    actions = [
       "cloudwatch:List*",
       "cloudwatch:Get*",
       "cloudwatch:Describe*",

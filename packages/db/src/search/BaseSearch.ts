@@ -522,10 +522,12 @@ abstract class BaseSearch {
     const getEstimate = shouldEstimateRowcount
       ? this.getEstimatedRowcount({ knex })
       : undefined;
+    const shouldReturnCountOnly = this.dbQueryParameters.countOnly === true;
 
     try {
       const [countResult, pgRecords] = await Promise.all([
-        getEstimate || countQuery, searchQuery,
+        getEstimate || countQuery,
+        shouldReturnCountOnly ? [] : searchQuery,
       ]);
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;

@@ -286,8 +286,6 @@ async function workflowsByGranules(req, res) {
  * @param {Object} req - The request object.
  * @param {Object} req.params - The request parameters.
  * @param {Object} req.body - The request body.
- * @param {number|string} [req.body.esBatchSize=10000] - The number of records to delete
- * in each batch
  * @param {number|string} [req.body.dbBatchSize=10000] - The number of records to delete
  * in each batch.
  * @param {string} req.body.collectionId - The CollectionID to delete execution records for.
@@ -306,7 +304,6 @@ async function bulkDeleteExecutionsByCollection(req, res) {
     return returnCustomValidationErrors(res, payload);
   }
 
-  const esBatchSize = payload.esBatchSize || 10000;
   const dbBatchSize = payload.dbBatchSize || 10000;
   const collectionId = req.body.collectionId;
   const collectionPgModel = new CollectionPgModel();
@@ -344,7 +341,7 @@ async function bulkDeleteExecutionsByCollection(req, res) {
     operationType: 'Bulk Execution Delete',
     payload: {
       type: 'BULK_EXECUTION_DELETE',
-      payload: { ...payload, esBatchSize, dbBatchSize, collectionId },
+      payload: { ...payload, dbBatchSize, collectionId },
       envVars: {
         KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         stackName: process.env.stackName,
