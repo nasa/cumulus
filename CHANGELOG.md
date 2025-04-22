@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Handle Granules with Identical producerGranuleId in Different Collections
+
+- **CUMULUS-4058**
+  - Added new non-null column `producer_granule_id` to Postgres `granules` table
+  - Added `producerGranuleId` property to `granule` record schema
+
 ### Fixed
 
 - **CUMULUS-33944**

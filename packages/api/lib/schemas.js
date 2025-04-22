@@ -284,6 +284,11 @@ module.exports.granule = {
       type: 'string',
       readonly: true,
     },
+    producerGranuleId: {
+      title: 'Producer Granule ID',
+      type: 'string',
+      readonly: true,
+    },
     pdrName: {
       title: 'PDR associated with the granule',
       type: 'string',
