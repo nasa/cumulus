@@ -1,0 +1,121 @@
+{
+  "Comment": "Changes granules from their original collection to a new collection including updating CMR metadata, s3 files and db records",
+  "StartAt": "ChangeGranuleCollectionS3",
+  "States": {
+    "ChangeGranuleCollectionS3": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}",
+            "s3MultipartChunksizeMb": "{$.meta.bulkChangeCollection.s3MultipartChunksizeMb}",
+            "invalidGranuleBehavior": "{$.meta.bulkChangeCollection.invalidGranuleBehavior}",
+            "cmrGranuleUrlType": "{$.meta.bulkChangeCollection.cmrGranuleUrlType}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "s3Concurrency": "{$.meta.bulkChangeCollection.s3Concurrency}",
+            "listGranulesConcurrency": "{$.meta.bulkChangeCollection.listGranulesConcurrency}",
+            "cumulus_message": {
+              "input": "{$.payload}",
+              "outputs": [
+                {
+                  "source": "{$.oldGranules}",
+                  "destination": "{$.meta.oldGranules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${change_granule_collection_s3_task_arn}",
+      "TimeoutSeconds": 900,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "MaxAttempts": 1
+        }
+      ],
+      "Next": "CmrStep"
+    },
+    "CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "s3Concurrency": "{$.meta.bulkChangeCollection.s3Concurrency}",
+            "republish": true
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${post_to_cmr_task_arn}",
+      "TimeoutSeconds": 900,
+      "Next": "ChangeGranuleCollectionPG",
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "ChangeGranuleCollectionPG": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "oldGranules": "{$.meta.oldGranules}",
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "targetCollection": "{$.meta.bulkChangeCollection.targetCollection}",
+            "concurrency": "{$.meta.bulkChangeCollection.concurrency}",
+            "s3Concurrency": "{$.meta.bulkChangeCollection.s3Concurrency}",
+            "dbMaxPool": "{$.meta.bulkChangeCollection.dbMaxPool}",
+            "maxRequestGranules": "{$.meta.bulkChangeCollection.maxRequestGranules}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${change_granule_collection_pg_task_arn}",
+      "TimeoutSeconds": 900,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "MaxAttempts": 1
+        }
+      ],
+      "End": true
+    }
+  }
+}
