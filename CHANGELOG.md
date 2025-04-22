@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [V20.1.2] 2025-04-22
+## [Unreleased]
+
+## [v20.1.2] 2025-04-22
 
 ### Added
 
@@ -8588,7 +8590,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.1.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.1.2...HEAD
+[v20.1.2]: https://github.com/nasa/cumulus/compare/v20.1.1...v20.1.2
 [v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.1.1
 [v20.0.1]: https://github.com/nasa/cumulus/compare/v20.0.0...v20.0.1
 [v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
