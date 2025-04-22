@@ -287,7 +287,7 @@ Invoke a Lambda function
 
 * [S3](#module_S3)
     * _static_
-        * ~~[.getS3Object](#module_S3.getS3Object) ⇒ <code>Promise</code>~~
+        * ~~[.getS3Object](#module_S3.getS3Object)~~
         * [.recursivelyDeleteS3Bucket](#module_S3.recursivelyDeleteS3Bucket) ⇒
         * [.listS3ObjectsV2(params)](#module_S3.listS3ObjectsV2) ⇒ <code>Promise.&lt;Array&gt;</code>
         * [.listS3ObjectsV2Batch(params)](#module_S3.listS3ObjectsV2Batch)
@@ -299,24 +299,24 @@ Invoke a Lambda function
         * [~deleteS3Object(bucket, key)](#module_S3..deleteS3Object) ⇒ <code>Promise</code>
         * [~headObject(Bucket, Key, retryOptions)](#module_S3..headObject) ⇒
         * [~s3ObjectExists(params)](#module_S3..s3ObjectExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
-        * [~waitForObjectToExist(params)](#module_S3..waitForObjectToExist) ⇒ <code>Promise.&lt;undefined&gt;</code>
-        * [~s3PutObject(params)](#module_S3..s3PutObject) ⇒ <code>Promise</code>
-        * [~putFile(bucket, key, filename)](#module_S3..putFile) ⇒ <code>Promise</code>
-        * [~s3CopyObject(params)](#module_S3..s3CopyObject) ⇒ <code>Promise</code>
-        * [~promiseS3Upload(params)](#module_S3..promiseS3Upload) ⇒ <code>Promise</code>
-        * [~streamS3Upload(uploadStream, uploadParams)](#module_S3..streamS3Upload) ⇒ <code>Promise</code>
-        * [~getObjectReadStream(params)](#module_S3..getObjectReadStream) ⇒ <code>Promise.&lt;Readable&gt;</code>
-        * [~downloadS3File(s3Obj, filepath)](#module_S3..downloadS3File) ⇒ <code>Promise.&lt;string&gt;</code>
-        * [~getObjectSize(params)](#module_S3..getObjectSize) ⇒ <code>Promise.&lt;(number\|undefined)&gt;</code>
-        * [~s3GetObjectTagging(bucket, key)](#module_S3..s3GetObjectTagging) ⇒ <code>Promise.&lt;GetObjectTaggingOutput&gt;</code>
-        * [~s3PutObjectTagging(Bucket, Key, ObjectTagging)](#module_S3..s3PutObjectTagging) ⇒ <code>Promise</code>
-        * [~getObject(s3Client, params)](#module_S3..getObject) ⇒ <code>Promise.&lt;GetObjectOutput&gt;</code>
-        * [~waitForObject(s3Client, params, [retryOptions])](#module_S3..waitForObject) ⇒ <code>Promise.&lt;GetObjectOutput&gt;</code>
-        * [~getObjectStreamContents(objectReadStream)](#module_S3..getObjectStreamContents) ⇒ <code>Promise.&lt;string&gt;</code>
-        * [~getTextObject(bucket, key)](#module_S3..getTextObject) ⇒ <code>Promise.&lt;string&gt;</code>
-        * [~getJsonS3Object(bucket, key)](#module_S3..getJsonS3Object) ⇒ <code>Promise.&lt;\*&gt;</code>
-        * [~fileExists(bucket, key)](#module_S3..fileExists) ⇒ <code>Promise</code>
-        * [~deleteS3Files(s3Objs)](#module_S3..deleteS3Files) ⇒ <code>Promise</code>
+        * [~waitForObjectToExist()](#module_S3..waitForObjectToExist)
+        * [~s3PutObject(params)](#module_S3..s3PutObject)
+        * [~putFile()](#module_S3..putFile)
+        * [~s3CopyObject()](#module_S3..s3CopyObject)
+        * [~promiseS3Upload()](#module_S3..promiseS3Upload)
+        * [~streamS3Upload()](#module_S3..streamS3Upload)
+        * [~getObjectReadStream()](#module_S3..getObjectReadStream)
+        * [~downloadS3File()](#module_S3..downloadS3File)
+        * [~getObjectSize()](#module_S3..getObjectSize)
+        * [~s3GetObjectTagging()](#module_S3..s3GetObjectTagging)
+        * [~s3PutObjectTagging()](#module_S3..s3PutObjectTagging)
+        * [~getObject()](#module_S3..getObject)
+        * [~waitForObject()](#module_S3..waitForObject)
+        * [~getObjectStreamContents()](#module_S3..getObjectStreamContents)
+        * [~getTextObject()](#module_S3..getTextObject)
+        * [~getJsonS3Object()](#module_S3..getJsonS3Object)
+        * [~fileExists()](#module_S3..fileExists)
+        * [~deleteS3Files(s3Objs)](#module_S3..deleteS3Files)
         * [~uploadS3FileStream(fileStream, bucket, key, s3opts)](#module_S3..uploadS3FileStream) ⇒ <code>Promise</code>
         * [~listS3Objects()](#module_S3..listS3Objects)
         * [~deleteS3Buckets(buckets)](#module_S3..deleteS3Buckets) ⇒ <code>Promise</code>
@@ -326,24 +326,17 @@ Invoke a Lambda function
         * [~createBucket(Bucket)](#module_S3..createBucket) ⇒ <code>Promise</code>
         * [~createS3Buckets(buckets)](#module_S3..createS3Buckets) ⇒ <code>Promise</code>
         * [~multipartCopyObject(params)](#module_S3..multipartCopyObject) ⇒ <code>Promise.&lt;{etag: string}&gt;</code>
-        * [~moveObject(params)](#module_S3..moveObject) ⇒ <code>Promise.&lt;undefined&gt;</code>
+        * [~copyObject()](#module_S3..copyObject)
+        * [~moveObject()](#module_S3..moveObject) ⇒ <code>Promise.&lt;undefined&gt;</code>
 
 <a name="module_S3.getS3Object"></a>
 
-### ~~S3.getS3Object ⇒ <code>Promise</code>~~
+### ~~S3.getS3Object~~
 ***Deprecated***
 
 Gets an object from S3.
 
 **Kind**: static property of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise</code> - returns response from `S3.getObject` as a promise  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| Bucket | <code>string</code> | name of bucket |
-| Key | <code>string</code> | key for object (filepath + filename) |
-| retryOptions | <code>Object</code> | options to control retry behavior when an   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions   By default, retries will not be performed |
-
 <a name="module_S3.recursivelyDeleteS3Bucket"></a>
 
 ### S3.recursivelyDeleteS3Bucket ⇒
@@ -478,253 +471,139 @@ Test if an object exists in S3
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
 **Returns**: <code>Promise.&lt;boolean&gt;</code> - a Promise that will resolve to a boolean indicating
-                              if the object exists  
+                            if the object exists  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> | same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property |
+| Param | Description |
+| --- | --- |
+| params | same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property |
 
 <a name="module_S3..waitForObjectToExist"></a>
 
-### S3~waitForObjectToExist(params) ⇒ <code>Promise.&lt;undefined&gt;</code>
+### S3~waitForObjectToExist()
 Wait for an object to exist in S3
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| params | <code>Object</code> |  |  |
-| params.bucket | <code>string</code> |  |  |
-| params.key | <code>string</code> |  |  |
-| [params.interval] | <code>number</code> | <code>1000</code> | interval before retries, in ms |
-| [params.timeout] | <code>number</code> | <code>30000</code> | timeout, in ms |
+| Param | Default | Description |
+| --- | --- | --- |
+| params.interval | <code>1000</code> | interval before retries, in ms |
+| params.timeout | <code>30000</code> | timeout, in ms |
 
 <a name="module_S3..s3PutObject"></a>
 
-### S3~s3PutObject(params) ⇒ <code>Promise</code>
+### S3~s3PutObject(params)
 Put an object on S3
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> | same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property promise of the object being put |
+| Param | Description |
+| --- | --- |
+| params | same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property |
 
 <a name="module_S3..putFile"></a>
 
-### S3~putFile(bucket, key, filename) ⇒ <code>Promise</code>
+### S3~putFile()
 Upload a file to S3
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| bucket | <code>string</code> | the destination S3 bucket |
-| key | <code>string</code> | the destination S3 key |
-| filename | <code>filename</code> | the local file to be uploaded |
-
 <a name="module_S3..s3CopyObject"></a>
 
-### S3~s3CopyObject(params) ⇒ <code>Promise</code>
+### S3~s3CopyObject()
 Copy an object from one location on S3 to another
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise</code> - promise of the object being copied  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> | same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property |
-
 <a name="module_S3..promiseS3Upload"></a>
 
-### S3~promiseS3Upload(params) ⇒ <code>Promise</code>
+### S3~promiseS3Upload()
 Upload data to S3
 
 see https://github.com/aws/aws-sdk-js-v3/tree/main/lib/lib-storage
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-
-| Param | Type |
-| --- | --- |
-| params | <code>UploadOptions</code> | 
-
 <a name="module_S3..streamS3Upload"></a>
 
-### S3~streamS3Upload(uploadStream, uploadParams) ⇒ <code>Promise</code>
+### S3~streamS3Upload()
 Upload data to S3 using a stream
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| uploadStream | <code>Readable</code> | Stream of data to upload |
-| uploadParams | <code>Object</code> |  |
-
 <a name="module_S3..getObjectReadStream"></a>
 
-### S3~getObjectReadStream(params) ⇒ <code>Promise.&lt;Readable&gt;</code>
+### S3~getObjectReadStream()
 Get a readable stream for an S3 object
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> |  |
-| params.s3 | <code>S3</code> | an S3 instance |
-| params.bucket | <code>string</code> | the bucket of the requested object |
-| params.key | <code>string</code> | the key of the requested object |
-
 <a name="module_S3..downloadS3File"></a>
 
-### S3~downloadS3File(s3Obj, filepath) ⇒ <code>Promise.&lt;string&gt;</code>
+### S3~downloadS3File()
 Downloads the given s3Obj to the given filename in a streaming manner
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise.&lt;string&gt;</code> - returns filename if successful  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| s3Obj | <code>Object</code> | The parameters to send to S3 getObject call |
-| filepath | <code>string</code> | The filepath of the file that is downloaded |
-
 <a name="module_S3..getObjectSize"></a>
 
-### S3~getObjectSize(params) ⇒ <code>Promise.&lt;(number\|undefined)&gt;</code>
+### S3~getObjectSize()
 Get the size of an S3 object
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise.&lt;(number\|undefined)&gt;</code> - object size, in bytes  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> |  |
-| params.bucket | <code>string</code> |  |
-| params.key | <code>string</code> |  |
-| params.s3 | <code>S3</code> | an S3 client instance |
-
 <a name="module_S3..s3GetObjectTagging"></a>
 
-### S3~s3GetObjectTagging(bucket, key) ⇒ <code>Promise.&lt;GetObjectTaggingOutput&gt;</code>
+### S3~s3GetObjectTagging()
 Get object Tagging from S3
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise.&lt;GetObjectTaggingOutput&gt;</code> - the promised response from `S3.getObjectTagging`  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| bucket | <code>string</code> | name of bucket |
-| key | <code>string</code> | key for object (filepath + filename) |
-
 <a name="module_S3..s3PutObjectTagging"></a>
 
-### S3~s3PutObjectTagging(Bucket, Key, ObjectTagging) ⇒ <code>Promise</code>
+### S3~s3PutObjectTagging()
 Puts object Tagging in S3
 https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise</code> - returns response from `S3.getObjectTagging` as a promise  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| Bucket | <code>string</code> | name of bucket |
-| Key | <code>string</code> | key for object (filepath + filename) |
-| ObjectTagging | <code>Object</code> | tagging object |
-
 <a name="module_S3..getObject"></a>
 
-### S3~getObject(s3Client, params) ⇒ <code>Promise.&lt;GetObjectOutput&gt;</code>
+### S3~getObject()
 Gets an object from S3.
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise.&lt;GetObjectOutput&gt;</code> - response from `S3.getObject()`
-  as a Promise  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| s3Client | <code>S3</code> | an `S3` instance |
-| params | <code>GetObjectCommandInput</code> | parameters object to pass through   to `S3.getObject()` |
-
-**Example**  
-```js
-const obj = await getObject(s3(), { Bucket: 'b', Key: 'k' })
-```
 <a name="module_S3..waitForObject"></a>
 
-### S3~waitForObject(s3Client, params, [retryOptions]) ⇒ <code>Promise.&lt;GetObjectOutput&gt;</code>
+### S3~waitForObject()
 Get an object from S3, waiting for it to exist and, if specified, have the
 correct ETag.
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-
-| Param | Type | Default |
-| --- | --- | --- |
-| s3Client | <code>S3</code> |  | 
-| params | <code>GetObjectCommandInput</code> |  | 
-| [retryOptions] | <code>pRetry.Options</code> | <code>{}</code> | 
-
 <a name="module_S3..getObjectStreamContents"></a>
 
-### S3~getObjectStreamContents(objectReadStream) ⇒ <code>Promise.&lt;string&gt;</code>
+### S3~getObjectStreamContents()
 Transform streaming response from S3 object to text content
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the contents of the S3 object  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| objectReadStream | <code>Readable</code> | Readable stream of S3 object |
-
 <a name="module_S3..getTextObject"></a>
 
-### S3~getTextObject(bucket, key) ⇒ <code>Promise.&lt;string&gt;</code>
+### S3~getTextObject()
 Fetch the contents of an S3 object
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the contents of the S3 object  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| bucket | <code>string</code> | the S3 object's bucket |
-| key | <code>string</code> | the S3 object's key |
-
 <a name="module_S3..getJsonS3Object"></a>
 
-### S3~getJsonS3Object(bucket, key) ⇒ <code>Promise.&lt;\*&gt;</code>
+### S3~getJsonS3Object()
 Fetch JSON stored in an S3 object
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise.&lt;\*&gt;</code> - the contents of the S3 object, parsed as JSON  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| bucket | <code>string</code> | the S3 object's bucket |
-| key | <code>string</code> | the S3 object's key |
-
 <a name="module_S3..fileExists"></a>
 
-### S3~fileExists(bucket, key) ⇒ <code>Promise</code>
+### S3~fileExists()
 Check if a file exists in an S3 object
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise</code> - returns the response from `S3.headObject` as a promise  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| bucket | <code>string</code> | name of the S3 bucket |
-| key | <code>string</code> | key of the file in the S3 bucket |
-
 <a name="module_S3..deleteS3Files"></a>
 
-### S3~deleteS3Files(s3Objs) ⇒ <code>Promise</code>
+### S3~deleteS3Files(s3Objs)
 Delete files from S3
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
-**Returns**: <code>Promise</code> - A promise that resolves to an Array of the data returned
-  from the deletion operations  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| s3Objs | <code>Array</code> | An array of objects containing keys 'Bucket' and 'Key' |
+| Param | Description |
+| --- | --- |
+| s3Objs | An array of objects containing keys 'Bucket' and 'Key' |
 
 <a name="module_S3..uploadS3FileStream"></a>
 
@@ -852,20 +731,28 @@ note: this method may error if used with zero byte files. see CUMULUS-2557 and h
 | [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
 | [params.chunkSize] | <code>number</code> |  | chunk size of the S3 multipart uploads |
 
+<a name="module_S3..copyObject"></a>
+
+### S3~copyObject()
+Copy an S3 object to another location in S3
+
+**Kind**: inner method of [<code>S3</code>](#module_S3)  
+
+| Param | Default | Description |
+| --- | --- | --- |
+| params.ACL |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
+| params.copyTags | <code>false</code> |  |
+| params.chunkSize |  | chunk size of the S3 multipart uploads |
+
 <a name="module_S3..moveObject"></a>
 
-### S3~moveObject(params) ⇒ <code>Promise.&lt;undefined&gt;</code>
+### S3~moveObject() ⇒ <code>Promise.&lt;undefined&gt;</code>
 Move an S3 object to another location in S3
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| params | <code>Object</code> |  |  |
-| params.sourceBucket | <code>string</code> |  |  |
-| params.sourceKey | <code>string</code> |  |  |
-| params.destinationBucket | <code>string</code> |  |  |
-| params.destinationKey | <code>string</code> |  |  |
 | [params.ACL] | <code>string</code> |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
 | [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
 | [params.chunkSize] | <code>number</code> |  | chunk size of the S3 multipart uploads |
