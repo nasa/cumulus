@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "es2021",
+    "lib": [
+      "DOM",
+      "es2021"
+    ],
+    "outDir": "dist/src"
+  },
+  "include": [
+    "src/"
+  ],
+  "exclude": [],
+}

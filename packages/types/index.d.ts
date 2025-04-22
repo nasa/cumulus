@@ -1,5 +1,3 @@
-export { DuplicateHandling } from './duplicateHandling';
-
 export * as Message from './message';
 export * from './api/files';
 export * from './api/granules';
