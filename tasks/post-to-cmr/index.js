@@ -136,7 +136,12 @@ async function removeGranuleFromCmr({ granules, cmrSettings, concurrency }) {
 async function postToCMR(event) {
   const { cmrRevisionId, granules } = event.input;
   const { etags = {}, republish = false, concurrency = 20, s3Concurrency = 50 } = event.config;
-
+  log.info('post-to-cmr with config', {
+    etags,
+    republish,
+    concurrency,
+    s3Concurrency
+  })
   const cmrSettings = await getCmrSettings({
     ...event.config.cmr,
     ...event.config.launchpad,
@@ -144,7 +149,7 @@ async function postToCMR(event) {
 
   // if republish is true, unpublish granules which are public
   if (republish) {
-    await removeGranuleFromCmr({ granules, cmrSettings, concurrency });
+    // await removeGranuleFromCmr({ granules, cmrSettings, concurrency });
   }
 
   granules.forEach((granule) => addEtagsToFileObjects(granule, etags));
@@ -160,11 +165,12 @@ async function postToCMR(event) {
   const startTime = Date.now();
 
   // post all meta files to CMR
-  const results = await pMap(
-    updatedCMRFiles,
-    (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
-    { concurrency }
-  );
+  // const results = await pMap(
+  //   updatedCMRFiles,
+  //   (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
+  //   { concurrency }
+  // );
+  const results = {};
   const endTime = Date.now();
   const outputGranules = buildOutput(
     results,
