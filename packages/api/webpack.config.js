@@ -15,7 +15,8 @@ const ignoredPackages = [
   'pg-native',
   'pg-query-stream',
   'sqlite3',
-  'tedious'
+  'tedious',
+  'cloudflare:sockets'
 ];
 
 const root = path.resolve(__dirname);
