@@ -38,7 +38,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **CUMULUS-3868**
-  - exclude package cloudflare:sockets" in webpack.config in various places to prevent packaging bug
+  - exclude package cloudflare:sockets" in webpack.config throughout to prevent packaging bug
 - **CUMULUS-3752**
   - Fixed api return codes expected in api-client for bulkPatch and bulkPatchGranuleCollections
 - **CUMULUS-3394**
