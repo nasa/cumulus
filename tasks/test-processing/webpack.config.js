@@ -4,6 +4,7 @@ const { IgnorePlugin } = require('webpack');
 const root = path.resolve(__dirname);
 
 const ignoredPackages = [
+  'cloudflare:sockets',
   'better-sqlite3',
   'mssql',
   'mssql/lib/base',
