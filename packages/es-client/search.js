@@ -102,11 +102,12 @@ const esMetricsConfig = () => {
     throw new Error('ELK Metrics stack not configured');
   }
 
-  const node = `https://${process.env.METRICS_ES_USER}:${
-    process.env.METRICS_ES_PASS}@${process.env.METRICS_ES_HOST}`;
-
   return {
-    node,
+    node: `http://${process.env.METRICS_ES_HOST}`,
+    auth: {
+      username: process.env.METRICS_ES_USER,
+      password: process.env.METRICS_ES_PASS,
+    },
     requestTimeout: 50000,
   };
 };
