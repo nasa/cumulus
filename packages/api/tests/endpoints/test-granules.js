@@ -2735,7 +2735,10 @@ test.serial('PATCH can set running granule status to queued', async (t) => {
 });
 
 test.serial('PATCH will set completed status to queued', async (t) => {
-  const { granuleId, producerGranuleId } = t.context.fakePGGranules[0];
+  const {
+    granule_id: granuleId,
+    producer_granule_id: producerGranuleId,
+  } = t.context.fakePGGranules[0];
   const response = await request(app)
     .patch(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
@@ -2762,7 +2765,10 @@ test.serial('PATCH will set completed status to queued', async (t) => {
 
 test.serial('PUT will not set completed status to queued when queued created at is older', async (t) => {
   const { fakePGGranules, knex, collectionCumulusId } = t.context;
-  const { granuleId, producerGranuleId } = fakePGGranules[0];
+  const {
+    granule_id: granuleId,
+    producer_granule_id: producerGranuleId,
+  } = fakePGGranules[0];
   const response = await request(app)
     .put(`/granules/${t.context.collectionId}/${granuleId}`)
     .set('Accept', 'application/json')
