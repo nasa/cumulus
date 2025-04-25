@@ -14,7 +14,7 @@ export const up = async (knex: Knex): Promise<void> => {
       table.string('producer_granule_id').notNullable().alter();
     });
 
-    await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_producer_granule_id_index ON granules(producer_granule_id');
+    await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_producer_granule_id_index ON granules(producer_granule_id)');
   }
 };
 
