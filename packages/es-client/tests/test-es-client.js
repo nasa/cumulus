@@ -18,7 +18,7 @@ const setupTestEnvs = () => {
 setupTestEnvs();
 
 const test = require('ava');
-const { EsClient } = require('../search');
+const { EsClient, sanitizeSensitive, isError } = require('../search');
 
 test.afterEach(() => {
   setupTestEnvs();
@@ -118,4 +118,61 @@ test.serial('EsClient is created with credentialed ES client with expected auth/
   t.is(awsCreds, undefined);
   t.is(connectionUri, 'http://testlocalhost:9200/');
   t.like(connection[1].ssl, { rejectUnauthorized: false });
+});
+
+// Add tests for sanitizeSensitive
+test('sanitizeSensitive sanitizes string input with sensitive fields', (t) => {
+  process.env.METRICS_ES_USER = 'test';
+  process.env.METRICS_ES_PASS = 'secret';
+  const input = 'Error: Failed to connect with test:secret';
+  const result = sanitizeSensitive(input);
+  t.is(result, 'Error: Failed to connect with ****');
+});
+
+test('sanitizeSensitive returns unchanged string when no sensitive fields', (t) => {
+  process.env.METRICS_ES_USER = 'test';
+  process.env.METRICS_ES_PASS = 'secret';
+  const input = 'Error: Failed to connect';
+  const result = sanitizeSensitive(input);
+  t.is(result, 'Error: Failed to connect');
+});
+
+test('sanitizeSensitive sanitizes Error object with sensitive fields', (t) => {
+  process.env.METRICS_ES_USER = 'test';
+  process.env.METRICS_ES_PASS = 'secret';
+  const error = new Error('Failed to connect with test:secret');
+  const originalStack = error.stack;
+  const result = sanitizeSensitive(error);
+  t.is(result.message, 'Failed to connect with ****');
+  t.is(result.stack, originalStack);
+  t.true(isError(result)); // Fixed for ESLint lodash/prefer-lodash-typecheck
+});
+
+test('sanitizeSensitive handles Error with no sensitive fields', (t) => {
+  process.env.METRICS_ES_USER = 'test';
+  process.env.METRICS_ES_PASS = 'secret';
+  const error = new Error('Failed to connect');
+  const originalStack = error.stack;
+  const result = sanitizeSensitive(error);
+  t.is(result.message, 'Failed to connect');
+  t.is(result.stack, originalStack);
+  t.true(isError(result)); // Fixed for ESLint lodash/prefer-lodash-typecheck
+});
+
+test('sanitizeSensitive handles undefined sensitive fields', (t) => {
+  delete process.env.METRICS_ES_USER;
+  delete process.env.METRICS_ES_PASS;
+  const input = 'Error: Failed to connect';
+  const result = sanitizeSensitive(input);
+  t.is(result, 'Error: Failed to connect');
+});
+
+test('sanitizeSensitive sanitizes Error with no message property', (t) => {
+  process.env.METRICS_ES_USER = 'test';
+  process.env.METRICS_ES_PASS = 'secret';
+  const error = { toString: () => 'Failed to connect with test:secret', stack: 'stack trace' };
+  const result = sanitizeSensitive(error);
+  t.is(result.message, 'Failed to connect with ****');
+  t.is(result.stack, 'stack trace');
+  t.true(isError(result)); // Fixed for ESLint lodash/prefer-lodash-typecheck
 });

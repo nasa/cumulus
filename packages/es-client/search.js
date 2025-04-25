@@ -10,6 +10,7 @@
 const has = require('lodash/has');
 const omit = require('lodash/omit');
 const isString = require('lodash/isString');
+const isError = require('lodash/isError');
 const { fromNodeProviderChain } = require('@aws-sdk/credential-providers');
 const elasticsearch = require('@elastic/elasticsearch');
 
@@ -40,7 +41,7 @@ const sanitizeSensitive = (input) => {
   const sensitiveFields = [
     process.env.METRICS_ES_PASS,
     `${process.env.METRICS_ES_USER}:${process.env.METRICS_ES_PASS}`,
-  ].filter(Boolean); // Remove undefined/null values
+  ].filter(Boolean).sort((a, b) => b.length - a.length);
 
   let message = isString(input) ? input : input.message || input.toString();
   sensitiveFields.forEach((field) => {
@@ -517,4 +518,6 @@ module.exports = {
   multipleRecordFoundString,
   recordNotFoundString,
   getLocalEsHost,
+  sanitizeSensitive,
+  isError,
 };
