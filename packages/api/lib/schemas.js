@@ -396,6 +396,7 @@ module.exports.granule = {
   required: [
     'granuleId',
     'collectionId',
+    'producerGranuleId',
     'status',
     'updatedAt',
   ],

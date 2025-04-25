@@ -686,6 +686,7 @@ const writeGranuleRecordAndPublishSns = async ({
  * @param {string} [granule.timestamp] - timestamp
  * @param {string} [granule.updatedAt = new Date().valueOf()] - time value
  * @param {number} [granule.duration] - seconds
+ * @param {string} granule.producerGranuleId - producer granule id
  * @param {string} [granule.productVolume] - sum of the files sizes in bytes
  * @param {integer} [granule.timeToPreprocess] -  seconds
  * @param {integer} [granule.timeToArchive] - seconds
@@ -717,6 +718,7 @@ const writeGranuleFromApi = async (
     error,
     updatedAt,
     duration,
+    producerGranuleId,
     productVolume,
     timeToPreprocess,
     timeToArchive,
@@ -766,6 +768,7 @@ const writeGranuleFromApi = async (
     const granule = {
       granuleId,
       cmrLink,
+      producerGranuleId,
       published: publishedValue,
       createdAt: defaultCreatedAt,
       error: defaultSetError,
@@ -939,8 +942,14 @@ const writeGranulesFromMessage = async ({
         published = false;
       }
 
+      // if producerGranuleId is not in granule object, set it the same as granuleId
       const apiGranuleRecord = await generateGranuleApiRecord({
-        granule: { ...granule, published, createdAt: granule.createdAt || workflowStartTime },
+        granule: {
+          ...granule,
+          published,
+          createdAt: granule.createdAt || workflowStartTime,
+          producerGranuleId: granule.producerGranuleId || granule.granuleId,
+        },
         executionUrl,
         collectionId,
         provider: provider.id,

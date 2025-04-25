@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules` table
   - Added `producerGranuleId` property to `granule` record schema
+  - Updated `@cumulus` packages to handle `producer_granule_id` and `producerGranuleId`
 
 ## [Unreleased]
 
