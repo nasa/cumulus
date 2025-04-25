@@ -9,6 +9,7 @@
 
 const has = require('lodash/has');
 const omit = require('lodash/omit');
+const isString = require('lodash/isString');
 const { fromNodeProviderChain } = require('@aws-sdk/credential-providers');
 const elasticsearch = require('@elastic/elasticsearch');
 
@@ -41,12 +42,12 @@ const sanitizeSensitive = (input) => {
     `${process.env.METRICS_ES_USER}:${process.env.METRICS_ES_PASS}`,
   ].filter(Boolean); // Remove undefined/null values
 
-  let message = typeof input === 'string' ? input : input.message || input.toString();
+  let message = isString(input) ? input : input.message || input.toString();
   sensitiveFields.forEach((field) => {
     message = message.replace(new RegExp(field, 'g'), '****');
   });
 
-  if (typeof input === 'string') {
+  if (isString(input)) {
     return message;
   }
 
