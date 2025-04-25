@@ -30,6 +30,55 @@ const recordNotFoundString = 'Record not found';
 const logger = new Logger({ sender: '@cumulus/es-client/search' });
 
 /**
+ * Sanitizes sensitive data in error messages or logs
+ *
+ * @param {Error|string} input - The error object or message to sanitize
+ * @returns {Error|string} - Sanitized error or message
+ */
+const sanitizeSensitive = (input) => {
+  const sensitiveFields = [
+    process.env.METRICS_ES_PASS,
+    `${process.env.METRICS_ES_USER}:${process.env.METRICS_ES_PASS}`,
+  ].filter(Boolean); // Remove undefined/null values
+
+  let message = typeof input === 'string' ? input : input.message || input.toString();
+  sensitiveFields.forEach((field) => {
+    message = message.replace(new RegExp(field, 'g'), '****');
+  });
+
+  if (typeof input === 'string') {
+    return message;
+  }
+
+  const sanitizedError = new Error(message);
+  sanitizedError.stack = input.stack;
+  return sanitizedError;
+};
+
+/**
+ * Custom logger for elasticsearch client to sanitize sensitive data
+ */
+class EsCustomLogger {
+  constructor() {
+    this.levels = ['error', 'warning']; // Log only errors and warnings
+  }
+
+  error(message) {
+    logger.error(sanitizeSensitive(message));
+  }
+
+  warning(message) {
+    logger.warn(sanitizeSensitive(message));
+  }
+
+  info() {}
+
+  debug() {}
+
+  trace() {}
+}
+
+/**
  * Returns the local address of elasticsearch based on
  * environment variables
  *
@@ -102,13 +151,13 @@ const esMetricsConfig = () => {
     throw new Error('ELK Metrics stack not configured');
   }
 
+  const node = `http://${process.env.METRICS_ES_USER}:${
+    process.env.METRICS_ES_PASS}@${process.env.METRICS_ES_HOST}`;
+
   return {
-    node: `http://${process.env.METRICS_ES_HOST}`,
-    auth: {
-      username: process.env.METRICS_ES_USER,
-      password: process.env.METRICS_ES_PASS,
-    },
+    node,
     requestTimeout: 50000,
+    log: EsCustomLogger,
   };
 };
 
@@ -359,23 +408,28 @@ class BaseSearch {
       await this.initializeEsClient();
     }
 
-    const result = await this.client.search({
-      index: this.index,
-      type: this.type,
-      body,
-    })
-      .then((response) => response.body);
+    try {
+      const result = await this.client.search({
+        index: this.index,
+        type: this.type,
+        body,
+      })
+        .then((response) => response.body);
 
-    if (result.hits.total > 1) {
-      return { detail: multipleRecordFoundString };
-    }
-    if (result.hits.total === 0) {
-      return { detail: recordNotFoundString };
-    }
+      if (result.hits.total > 1) {
+        return { detail: multipleRecordFoundString };
+      }
+      if (result.hits.total === 0) {
+        return { detail: recordNotFoundString };
+      }
 
-    const resp = result.hits.hits[0]._source;
-    resp._id = result.hits.hits[0]._id;
-    return resp;
+      const resp = result.hits.hits[0]._source;
+      resp._id = result.hits.hits[0]._id;
+      return resp;
+    } catch (error) {
+      logger.error(sanitizeSensitive(error));
+      throw sanitizeSensitive(error);
+    }
   }
 
   async exists(id, parentId) {
@@ -409,7 +463,7 @@ class BaseSearch {
         results: hits.map((s) => s._source),
       };
     } catch (error) {
-      return error;
+      return sanitizeSensitive(error);
     }
   }
 
@@ -432,7 +486,7 @@ class BaseSearch {
         counts: result.body.aggregations,
       };
     } catch (error) {
-      return error;
+      return sanitizeSensitive(error);
     }
   }
 }
