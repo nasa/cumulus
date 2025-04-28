@@ -425,6 +425,7 @@ describe('The Granules API', () => {
 
       const replacementGranule = {
         granuleId: putReplaceGranule.granuleId,
+        producerGranuleId: putReplaceGranule.producerGranuleId,
         collectionId,
         status: 'failed',
       };
