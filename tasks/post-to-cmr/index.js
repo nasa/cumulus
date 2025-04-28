@@ -151,7 +151,7 @@ async function postToCMR(event) {
 
   // get cmr files and metadata
   const cmrFiles = granulesToCmrFileObjects(granules);
-  log.debug(`Found ${cmrFiles.length} CMR files.`);
+  log.debug(`Found ${cmrFiles.length} CMR files. among ${event.granules.length} granules`);
   if (!event.config.skipMetaCheck) checkForMetadata(granules, cmrFiles);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles, s3Concurrency);
 

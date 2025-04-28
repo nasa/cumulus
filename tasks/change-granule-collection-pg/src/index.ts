@@ -207,7 +207,7 @@ async function changeGranuleCollectionsPG(
     ...config,
     /* massive logs can cause "random" errors with no clear cause */
     oldGranules: undefined, // oldGranules needs to not be logged because it can be enormous
-  })}`);
+  })} and ${targetGranules.length} / ${oldGranules.length}`);
   for (const granuleChunk of chunkGranules(targetGranules, config.maxRequestGranules)) {
     /* maxRequestGranules smaller than concurrency is effectively limiting concurrency
     for these requests greater maxRequestGranules offers greater efficiency,

@@ -683,7 +683,7 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
     event.input.granuleIds,
     config
   );
-  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}`);
+  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}, with number of granules: ${sourceGranules.length}`);
   const {
     cmrFilesByGranuleId,
     cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,
