@@ -6,9 +6,6 @@
       "Parameters": {
         "cma": {
           "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
           "task_config": {
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
@@ -53,9 +50,6 @@
       "Parameters": {
         "cma": {
           "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
           "task_config": {
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
@@ -88,9 +82,6 @@
       "Parameters": {
         "cma": {
           "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
           "task_config": {
             "oldGranules": "{$.meta.oldGranules}",
             "buckets": "{$.meta.buckets}",
