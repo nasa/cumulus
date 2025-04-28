@@ -13,7 +13,8 @@ const ignoredPackages = [
   'pg-native',
   'pg-query-stream',
   'sqlite3',
-  'tedious'
+  'tedious',
+  'cloudflare:sockets'
 ];
 
 module.exports = {
