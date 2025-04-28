@@ -160,11 +160,12 @@ async function postToCMR(event) {
   const startTime = Date.now();
 
   // post all meta files to CMR
-  const results = await pMap(
-    updatedCMRFiles,
-    (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
-    { concurrency }
-  );
+  // const results = await pMap(
+  //   updatedCMRFiles,
+  //   (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
+  //   { concurrency }
+  // );
+  results = {};
   const endTime = Date.now();
   const outputGranules = buildOutput(
     results,
