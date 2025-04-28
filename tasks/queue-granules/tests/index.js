@@ -1052,7 +1052,7 @@ test.serial('handles different providers', async (t) => {
           body: {
             collectionId,
             granuleId,
-            producerGranuleId,
+            producerGranuleId: producerGranuleId || granuleId,
             status: 'queued',
             createdAt: createdMap[granuleId].createdAt,
             updatedAt: createdMap[granuleId].updatedAt,

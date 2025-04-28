@@ -174,7 +174,7 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
                 body: {
                   collectionId,
                   granuleId,
-                  producerGranuleId,
+                  producerGranuleId: producerGranuleId || granuleId,
                   status: 'queued',
                   updatedAt: updatedAt ?? createdAt,
                   createdAt: createdAt,
