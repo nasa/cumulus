@@ -165,7 +165,7 @@ async function postToCMR(event) {
   //   (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
   //   { concurrency }
   // );
-  results = {};
+  const results = {};
   const endTime = Date.now();
   const outputGranules = buildOutput(
     results,
