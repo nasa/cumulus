@@ -3,6 +3,7 @@ const { IgnorePlugin } = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 
 const ignoredPackages = [
+  'cloudflare:sockets',
   'better-sqlite3',
   'mssql',
   'mssql/lib/base',
@@ -13,7 +14,7 @@ const ignoredPackages = [
   'pg-native',
   'pg-query-stream',
   'sqlite3',
-  'tedious'
+  'tedious',
 ];
 
 module.exports = {
