@@ -944,7 +944,7 @@ async function bulkChangeCollection(req, res) {
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
-
+  log.warn(`endpoint has recieved batchSize ${body.batchSize}`)
   const { name, version } = deconstructCollectionId(body.sourceCollectionId);
 
   //get collection
@@ -958,6 +958,7 @@ async function bulkChangeCollection(req, res) {
   query.select('granule_id');
   query.limit(body.batchSize);
   const granules = await query;
+  log.warn(`actual granule count we got is ${granules.length}`)
   if (granules.length === 0) {
     return res.boom.notFound(
       `No granules found for collection ${body.sourceCollectionId}`
