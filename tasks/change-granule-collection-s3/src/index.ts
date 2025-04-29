@@ -567,11 +567,13 @@ async function getAndValidateGranules(
   too large a chunk will cause listGranules fail due to too large a max header size.
   */
   for (const granuleChunk of chunkGranuleIds(granuleIds, config.listGranulesConcurrency)) {
+    log.warn(`chunkSize: ${granuleChunk.length} unique: ${new Set(granuleChunk).size}: ${config.listGranulesConcurrency}`);
     // eslint-disable-next-line no-await-in-loop
     const listedGranules = await listGranulesMethod(
       granuleChunk,
       constructCollectionId(config.collection.name, config.collection.version)
     );
+    log.warn(`granules actually gotten: ${listedGranules.length}`);
     if (!listedGranules) {
       if (config.invalidGranuleBehavior !== 'skip') {
         throw new ValidationError('granules could not be retrieved from listGranules endpoint');
@@ -593,6 +595,7 @@ async function getAndValidateGranules(
   } else {
     granulesInput = flatten(tempGranulesInput).filter(validateApiGranuleRecord);
   }
+  log.warn(`and the final number of granules is ${granulesInput.length}`)
   return granulesInput;
 }
 
