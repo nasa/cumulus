@@ -28,9 +28,10 @@ const {
   generateMoveFileParams,
   handleDuplicateFile,
   listVersionedObjects,
-  renameS3FileWithTimestamp,
-  unversionFilename,
   moveGranuleFile,
+  renameS3FileWithTimestamp,
+  uniqueGranuleId,
+  unversionFilename,
 } = require('../granule');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
@@ -622,4 +623,40 @@ test('moveGranuleFile throws if the file does not have expected keys and no sour
     knex,
     pgGranule.cumulus_id
   ));
+});
+
+test('uniqueGranuleId generates a unique ID with the specified hash length', (t) => {
+  const granule = {
+    granuleId: 'testGranule',
+    collectionId: 'testCollection',
+  };
+
+  const hashLength = 8;
+  const uniqueId = uniqueGranuleId(granule, hashLength);
+
+  t.true(uniqueId.startsWith(`${granule.granuleId}_`), 'Generated ID should start with granuleId and underscore');
+  t.is(uniqueId.split('_')[1].length, hashLength, `Hash length should match the specified length: ${uniqueId}`);
+});
+
+test('uniqueGranuleId generates different IDs for different timestamps', (t) => {
+  const granule = {
+    granuleId: 'testGranule',
+    collectionId: 'testCollection',
+  };
+
+  const uniqueId1 = uniqueGranuleId(granule);
+  const uniqueId2 = uniqueGranuleId(granule);
+
+  t.not(uniqueId1, uniqueId2, 'Generated IDs should be unique due to different timestamps');
+});
+
+test('uniqueGranuleId generates different length hash for a different hashlength value', (t) => {
+  const granule = {
+    granuleId: 'testGranule',
+    collectionId: 'testCollection',
+  };
+
+  const hashLength = 4;
+  const uniqueId = uniqueGranuleId(granule, hashLength);
+  t.is(uniqueId.split('_')[1].length, hashLength, `Hash length should match the specified length: ${uniqueId}`);
 });

@@ -1,9 +1,11 @@
-import * as errors from '@cumulus/errors';
+import * as crypto from 'crypto';
 import moment from 'moment';
+
+import * as errors from '@cumulus/errors';
 import { s3 } from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
-import { ApiFile, DuplicateHandling } from '@cumulus/types';
+import { ApiFile, DuplicateHandling, ApiGranule } from '@cumulus/types';
 import { FilePgModel, translatePostgresFileToApiFile, Knex } from '@cumulus/db';
 import { RecordDoesNotExist } from '@cumulus/errors';
 
@@ -456,6 +458,26 @@ export function unversionFilename(filename: string): string {
   return isFileRenamed(filename)
     ? filename.split('.').slice(0, -1).join('.')
     : filename;
+}
+
+/**
+ * Generates a unique granule ID by appending a truncated MD5 hash of the granule object.
+ *
+ * @param granule - The granule object containing granuleId and collectionId.
+ * @param hashLength - The length of the hash to append to the granuleId.
+ * @returns - A unique granule ID in the format: granuleId_hash.
+ */
+export function uniqueGranuleId(granule: ApiGranule, hashLength: 8): string {
+  // use MD5 to generate truncated hash of granule object
+  // in the format
+
+  const jsonString = JSON.stringify({
+    collectionId: granule.collectionId,
+    granuleId: granule.granuleId,
+    timestamp: process.hrtime.bigint().toString(),
+  });
+  const hashBuffer = crypto.createHash('md5').update(jsonString).digest();
+  return `${granule.granuleId}_${hashBuffer.toString('base64url').replace(/_/g, '').slice(0, hashLength)}`;
 }
 
 /**
