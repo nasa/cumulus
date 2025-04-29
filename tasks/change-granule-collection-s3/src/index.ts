@@ -547,6 +547,7 @@ async function getGranulesList(granuleIds: string[], collectionId: string) {
       collectionId,
       granuleId__in: granuleIds.join(','),
       includeFullRecord: 'true',
+      limit: granuleIds.length.toString(),
     },
   });
   return JSON.parse(granulesResponse.body).results;
