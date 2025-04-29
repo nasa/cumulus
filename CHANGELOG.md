@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4073**
+  - Adds AddUniqueGranuleIdSpec tasks to `ingest` terraform module for deployment with Core.
+  This task will update a payload of existing granules to have 'uniquified' IDs and preserve the original
+  identifier in the `producerGranuleId` field
 - **CUMULUS-4061**
   - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a hashed/'uniquified' granuleID
 - **CUMULUS-3868**
