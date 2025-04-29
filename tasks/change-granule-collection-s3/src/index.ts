@@ -679,6 +679,8 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   granules: Array<ValidGranuleRecord>
 }> {
   const config = await getParsedConfigValues(event.config);
+  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}, with number of granules: ${event.input.granuleIds.length}`);
+  
   const sourceGranules = await getAndValidateGranules(
     event.input.granuleIds,
     config
