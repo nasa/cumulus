@@ -11,13 +11,13 @@
         "type": "object",
         "required": [
           "granuleId",
-          "providerGranuleId"
+          "producerGranuleId"
         ],
         "properties": {
           "granuleId": {
             "type": "string"
           },
-          "providerGranuleId": {
+          "producerGranuleId": {
             "type": "string"
           }
         }
