@@ -547,6 +547,7 @@ async function getGranulesList(granuleIds: string[], collectionId: string) {
       collectionId,
       granuleId__in: granuleIds.join(','),
       includeFullRecord: 'true',
+      limit: granuleIds.length.toString(),
     },
   });
   return JSON.parse(granulesResponse.body).results;
@@ -567,11 +568,13 @@ async function getAndValidateGranules(
   too large a chunk will cause listGranules fail due to too large a max header size.
   */
   for (const granuleChunk of chunkGranuleIds(granuleIds, config.listGranulesConcurrency)) {
+    log.warn(`chunkSize: ${granuleChunk.length} unique: ${new Set(granuleChunk).size}: ${config.listGranulesConcurrency}`);
     // eslint-disable-next-line no-await-in-loop
     const listedGranules = await listGranulesMethod(
       granuleChunk,
       constructCollectionId(config.collection.name, config.collection.version)
     );
+    log.warn(`granules actually gotten: ${listedGranules.length}`);
     if (!listedGranules) {
       if (config.invalidGranuleBehavior !== 'skip') {
         throw new ValidationError('granules could not be retrieved from listGranules endpoint');
@@ -593,6 +596,7 @@ async function getAndValidateGranules(
   } else {
     granulesInput = flatten(tempGranulesInput).filter(validateApiGranuleRecord);
   }
+  log.warn(`and the final number of granules is ${granulesInput.length}`)
   return granulesInput;
 }
 
@@ -679,11 +683,13 @@ async function changeGranuleCollectionS3(event: ChangeCollectionsS3Event): Promi
   granules: Array<ValidGranuleRecord>
 }> {
   const config = await getParsedConfigValues(event.config);
+  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}, with number of granules: ${event.input.granuleIds.length}`);
+  
   const sourceGranules = await getAndValidateGranules(
     event.input.granuleIds,
     config
   );
-  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}`);
+  log.debug(`change-granule-collection-s3 config: ${JSON.stringify(config)}, with number of granules: ${sourceGranules.length}`);
   const {
     cmrFilesByGranuleId,
     cmrObjectsByGranuleId: firstCMRObjectsByGranuleId,

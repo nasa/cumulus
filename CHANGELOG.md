@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-4090**
+  - add limit = number of granules to get return out as requested from listGranules
 - **CUMULUS-3868**
   - exclude package cloudflare:sockets" in webpack.config throughout to prevent packaging bug
 - **CUMULUS-3752**
