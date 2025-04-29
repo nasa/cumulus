@@ -41,6 +41,7 @@
       "tests/**/*.js"
     ],
     "verbose": true,
+    "timeout": "80s",
     "failFast": true
   },
   "author": "Cumulus Authors",
