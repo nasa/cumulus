@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-4061**
+  - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a hashed/'uniquified' granuleID
+
 ### Fixed
 
 - **CUMULUS-33944**
