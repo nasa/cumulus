@@ -264,6 +264,27 @@ test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates gra
   }
 });
 
+test.serial('PATCH /granules/bulkPatchGranuleCollection throws an error when trying to update granules to a nonexistent collection in PG', async (t) => {
+  const {
+    apiGranules,
+  } = t.context;
+
+  const params = {
+    apiGranules,
+    collectionId: 'nonexistCollection___999',
+  };
+
+  const response = await request(app)
+    .patch('/granules/bulkPatchGranuleCollection')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(params)
+    .expect(404);
+
+  const { message } = response.body;
+  t.true(message.includes(`Collection ${params.collectionId} does not exist`));
+});
+
 test.serial('PATCH /granules/bulkPatch successfully updates a batch of granules', async (t) => {
   const {
     granuleIds,
