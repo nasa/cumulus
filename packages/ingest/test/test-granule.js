@@ -30,7 +30,7 @@ const {
   listVersionedObjects,
   moveGranuleFile,
   renameS3FileWithTimestamp,
-  uniqueGranuleId,
+  generateUniqueGranuleId,
   unversionFilename,
 } = require('../granule');
 
@@ -625,38 +625,38 @@ test('moveGranuleFile throws if the file does not have expected keys and no sour
   ));
 });
 
-test('uniqueGranuleId generates a unique ID with the specified hash length', (t) => {
+test('generateUniqueGranuleId generates a unique ID with the specified hash length', (t) => {
   const granule = {
     granuleId: 'testGranule',
     collectionId: 'testCollection',
   };
 
   const hashLength = 8;
-  const uniqueId = uniqueGranuleId(granule, hashLength);
+  const uniqueId = generateUniqueGranuleId(granule, hashLength);
 
   t.true(uniqueId.startsWith(`${granule.granuleId}_`), 'Generated ID should start with granuleId and underscore');
   t.is(uniqueId.split('_')[1].length, hashLength, `Hash length should match the specified length: ${uniqueId}`);
 });
 
-test('uniqueGranuleId generates different IDs for different timestamps', (t) => {
+test('generateUniqueGranuleId generates different IDs for different timestamps', (t) => {
   const granule = {
     granuleId: 'testGranule',
     collectionId: 'testCollection',
   };
 
-  const uniqueId1 = uniqueGranuleId(granule);
-  const uniqueId2 = uniqueGranuleId(granule);
+  const uniqueId1 = generateUniqueGranuleId(granule);
+  const uniqueId2 = generateUniqueGranuleId(granule);
 
   t.not(uniqueId1, uniqueId2, 'Generated IDs should be unique due to different timestamps');
 });
 
-test('uniqueGranuleId generates different length hash for a different hashlength value', (t) => {
+test('generateUniqueGranuleId generates different length hash for a different hashlength value', (t) => {
   const granule = {
     granuleId: 'testGranule',
     collectionId: 'testCollection',
   };
 
   const hashLength = 4;
-  const uniqueId = uniqueGranuleId(granule, hashLength);
+  const uniqueId = generateUniqueGranuleId(granule, hashLength);
   t.is(uniqueId.split('_')[1].length, hashLength, `Hash length should match the specified length: ${uniqueId}`);
 });

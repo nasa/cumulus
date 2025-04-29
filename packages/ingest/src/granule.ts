@@ -467,7 +467,7 @@ export function unversionFilename(filename: string): string {
  * @param hashLength - The length of the hash to append to the granuleId.
  * @returns - A unique granule ID in the format: granuleId_hash.
  */
-export function uniqueGranuleId(granule: ApiGranule, hashLength: 8): string {
+export function generateUniqueGranuleId(granule: ApiGranule, hashLength: 8): string {
   // use MD5 to generate truncated hash of granule object
   // in the format
 
