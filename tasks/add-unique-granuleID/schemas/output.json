@@ -1,0 +1,27 @@
+{
+  "title": "SendPanOutput",
+  "description": "Describes the output produced by the send-pan task",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "Array of all granules",
+      "items": {
+        "type": "object",
+        "required": [
+          "granuleId",
+          "providerGranuleId"
+        ],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "providerGranuleId": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "title": "AddUniqueGranuleIDInput",
+  "description": "Describes the input expected by the add-unique-granule-id task component",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+   "granules": {
+      "type": "array",
+      "description": "Array of all granule objects with a granuleId.   This should be an API formatted granule",
+      "items": {
+        "type": "object",
+        "required": [
+          "granuleId", "collectionId"
+        ],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "collectionId": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
