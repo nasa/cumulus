@@ -41,7 +41,7 @@ Output is a list of Cumulus API granules
 
 ```JSON
 {
-  granules: []
+  "granules": []
 }
 ```
 
