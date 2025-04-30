@@ -475,7 +475,7 @@ export function generateUniqueGranuleId(
 ): string {
   // use MD5 to generate truncated hash of granule object
   // in the format
-  const hashString = `${id}_${collectionId}_${process.hrtime.bigint().toString()}`;
+  const hashString = `${collectionId}_${process.hrtime.bigint().toString()}`;
   const hashBuffer = crypto.createHash('md5').update(hashString).digest();
   return `${id}_${hashBuffer.toString('base64url').replace(/_/g, '').slice(0, hashLength)}`;
 }
