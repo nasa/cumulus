@@ -627,7 +627,7 @@ test('moveGranuleFile throws if the file does not have expected keys and no sour
 
 test('generateUniqueGranuleId generates a unique ID with the specified hash length', (t) => {
   const granule = {
-    granuleId: 'testGranule',
+    granuleId: 'Az09- éñøæß œüç ΔΩЖЯ あア漢 数据셋 àé',
     collectionId: 'testCollection',
   };
 
@@ -640,7 +640,7 @@ test('generateUniqueGranuleId generates a unique ID with the specified hash leng
 
 test('generateUniqueGranuleId generates different IDs for different timestamps', (t) => {
   const granule = {
-    granuleId: 'testGranule',
+    granuleId: 'Az09- éñøæß œüç ΔΩЖЯ あア漢 数据셋 àé',
     collectionId: 'testCollection',
   };
 
@@ -652,7 +652,7 @@ test('generateUniqueGranuleId generates different IDs for different timestamps',
 
 test('generateUniqueGranuleId generates different length hash for a different hashlength value', (t) => {
   const granule = {
-    granuleId: 'testGranule',
+    granuleId: 'Az09- éñøæß œüç ΔΩЖЯ あア漢 数据셋 àé',
     collectionId: 'testCollection',
   };
 
