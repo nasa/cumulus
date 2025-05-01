@@ -39,13 +39,18 @@ const logger = new Logger({ sender: '@cumulus/es-client/search' });
  */
 const sanitizeSensitive = (input) => {
   const sensitiveFields = [
-    process.env.METRICS_ES_PASS,
     `${process.env.METRICS_ES_USER}:${process.env.METRICS_ES_PASS}`,
-  ].filter(Boolean).sort((a, b) => b.length - a.length);
+  ].filter(Boolean);
 
   let message = isString(input) ? input : input.message || input.toString();
+
+  const escapeRegExp = (string) => string.replace(/[$()*+.?[\\\]^{|}-]/g, '\\$&');
+
   sensitiveFields.forEach((field) => {
-    message = message.replace(new RegExp(field, 'g'), '****');
+    if (field) {
+      const pattern = `(^|\\s|[^a-zA-Z0-9_])(${escapeRegExp(field)})($|\\s|[^a-zA-Z0-9_])`;
+      message = message.replace(new RegExp(pattern, 'g'), '$1*****$3');
+    }
   });
 
   if (isString(input)) {
@@ -153,8 +158,9 @@ const esMetricsConfig = () => {
     throw new Error('ELK Metrics stack not configured');
   }
 
-  const node = `https://${process.env.METRICS_ES_USER}:${
-    process.env.METRICS_ES_PASS}@${process.env.METRICS_ES_HOST}`;
+  const encodedUser = encodeURIComponent(process.env.METRICS_ES_USER);
+  const encodedPass = encodeURIComponent(process.env.METRICS_ES_PASS);
+  const node = `https://${encodedUser}:${encodedPass}@${process.env.METRICS_ES_HOST}`;
 
   return {
     node,
@@ -381,6 +387,7 @@ class BaseSearch {
   }
 
   async get(id, parentId) {
+    const esCustomLogger = new EsCustomLogger();
     const body = {
       query: {
         bool: {
@@ -429,7 +436,7 @@ class BaseSearch {
       resp._id = result.hits.hits[0]._id;
       return resp;
     } catch (error) {
-      logger.error(sanitizeSensitive(error));
+      esCustomLogger.error(sanitizeSensitive(error));
       throw sanitizeSensitive(error);
     }
   }
