@@ -16,11 +16,12 @@ test('assignUniqueIds assigns unique granule IDs and preserves producerGranuleId
     },
   };
 
+  const originalGranules = structuredClone(event.input.granules);
   const result = await assignUniqueIds(event, {});
 
   t.is(result.granules.length, 2, 'Output should have the same number of granules');
   result.granules.forEach((granule, index) => {
-    t.is(granule.producerGranuleId, event.input.granules[index].granuleId, 'Should preserve producerGranuleId as original granuleID value');
+    t.is(granule.producerGranuleId, originalGranules[index].granuleId, 'Should preserve producerGranuleId as original granuleID value');
     t.true(granule.granuleId.startsWith(`${granule.producerGranuleId}_`), 'Should assign a unique granuleId');
     t.is(granule.granuleId.split('_')[1].length, hashDepth, 'Hash length should match the configured hashDepth');
   });
@@ -37,11 +38,12 @@ test('assignUniqueIds ignores granules that already have producerID assigned', a
   };
 
   const result = await assignUniqueIds(event, {});
+  const originalGranules = structuredClone(event.input.granules);
 
   t.is(result.granules.length, 2, 'Output should have the same number of granules');
   result.granules.forEach((granule, index) => {
-    t.is(granule.producerGranuleId, event.input.granules[index].producerGranuleId, 'Should preserve existing producerGranuleId');
-    t.is(granule.granuleId, event.input.granules[index].granuleId, 'Should not change granuleId if producerGranuleId is already set');
+    t.is(granule.producerGranuleId, originalGranules[index].producerGranuleId, 'Should preserve existing producerGranuleId');
+    t.is(granule.granuleId, originalGranules[index].granuleId, 'Should not change granuleId if producerGranuleId is already set');
   });
 });
 

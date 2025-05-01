@@ -19,19 +19,18 @@ const log = new Logger({ sender: '@cumulus/add-unique-granule-id' });
  */
 async function assignUniqueIds(event: HandlerEvent): Promise<HandlerOutput> {
   const { granules } = event.input;
-
-  const output = {
-    granules: granules.map((granule) => {
-      const granuleId = granule.producerGranuleId ? granule.granuleId
-        : generateUniqueGranuleId(granule, Number(event?.config?.hashDepth || 8));
-      return {
-        producerGranuleId: granule.producerGranuleId ?? granule.granuleId,
-        ...granule,
-        granuleId,
-      };
-    }),
-  };
-  log.debug(':', output);
+  for (const granule of granules) {
+    if (!granule.producerGranuleId) {
+      const newGranuleId = generateUniqueGranuleId(
+        granule,
+        Number(event?.config?.hashDepth || 8)
+      );
+      granule.producerGranuleId = granule.granuleId;
+      granule.granuleId = newGranuleId;
+    }
+  }
+  const output = { granules };
+  log.debug('Granule output', output);
   return output;
 }
 
