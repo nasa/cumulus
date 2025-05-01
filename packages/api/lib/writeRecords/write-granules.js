@@ -749,6 +749,8 @@ const writeGranuleFromApi = async (
     // Validate fields that cannot/shouldn't be null aren't
     const invalidNullableFields = {
       status,
+      createdAt,
+      updatedAt,
       granuleId,
       collectionId,
       execution,

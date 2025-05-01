@@ -1933,7 +1933,6 @@ test.serial('PATCH nullifies expected fields for existing granules', async (t) =
     collectionId,
     producerGranuleId: apiGranule.producerGranuleId,
     status: newPgGranule.status,
-    createdAt: null,
     beginningDateTime: null,
     cmrLink: null,
     duration: null,
@@ -1951,7 +1950,6 @@ test.serial('PATCH nullifies expected fields for existing granules', async (t) =
     timestamp: null,
     timeToArchive: null,
     timeToPreprocess: null,
-    updatedAt: null,
   };
 
   await request(app)
@@ -2780,6 +2778,7 @@ test.serial('PUT will not set completed status to queued when queued created at 
       collectionId: t.context.collectionId,
       execution: t.context.executionUrl,
       createdAt: Date.now() - 100000,
+      updatedAt: Date.now(),
     });
 
   t.is(response.status, 200);
@@ -3133,6 +3132,8 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
     collectionId: apiGranule.collectionId,
     producerGranuleId: apiGranule.producerGranuleId,
     status: 'completed',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
 
   await request(app)

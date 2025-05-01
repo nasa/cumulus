@@ -3542,7 +3542,6 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
   const validNullableGranuleKeys = [
     'beginningDateTime',
     'cmrLink',
-    'createdAt',
     'duration',
     'endingDateTime',
     'files',
@@ -3558,7 +3557,6 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
     'timestamp',
     'timeToArchive',
     'timeToPreprocess',
-    'updatedAt',
   ];
 
   const completeGranule = fakeGranuleFactoryV2({
