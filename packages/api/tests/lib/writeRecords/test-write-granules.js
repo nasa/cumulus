@@ -3558,6 +3558,7 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
     'timestamp',
     'timeToArchive',
     'timeToPreprocess',
+    'updatedAt',
   ];
 
   const completeGranule = fakeGranuleFactoryV2({

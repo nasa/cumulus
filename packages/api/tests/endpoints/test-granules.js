@@ -1951,6 +1951,7 @@ test.serial('PATCH nullifies expected fields for existing granules', async (t) =
     timestamp: null,
     timeToArchive: null,
     timeToPreprocess: null,
+    updatedAt: null,
   };
 
   await request(app)
