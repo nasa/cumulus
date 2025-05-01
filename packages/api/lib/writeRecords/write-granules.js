@@ -749,14 +749,14 @@ const writeGranuleFromApi = async (
     // Validate fields that cannot/shouldn't be null aren't
     const invalidNullableFields = {
       status,
-      createdAt,
       updatedAt,
       granuleId,
       collectionId,
       execution,
+      producerGranuleId,
     };
     Object.entries(invalidNullableFields).forEach(([key, field]) => {
-      if (isNull(invalidNullableFields[field])) {
+      if (isNull(field)) {
         throw new Error(`granule.'${key}' cannot be removed as it is required and/or set to a default value on PUT.  Please set a value and try your request again`);
       }
     });

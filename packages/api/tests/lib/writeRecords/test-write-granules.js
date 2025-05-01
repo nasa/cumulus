@@ -537,7 +537,7 @@ test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/SNS'
   t.is(Messages.length, 1);
 });
 
-test.serial('writeGranulesFromMessage() propagates producerGranuleId with value from granuleId when producerGranuleId absent from message', async (t) => {
+test.serial('writeGranulesFromMessage() propagates producerGranuleId with value from granuleId when producerGranuleId is absent from message', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -3558,7 +3558,6 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
     'timestamp',
     'timeToArchive',
     'timeToPreprocess',
-    'updatedAt',
   ];
 
   const completeGranule = fakeGranuleFactoryV2({
@@ -4719,4 +4718,20 @@ test.serial('writeGranuleFromApi() overwrites granule with expected nullified va
   });
 
   t.deepEqual(translatedPgRecord.files, []);
+});
+
+test.serial('writeGranuleFromApi() failes to overwrite granule with required field set to null', async (t) => {
+  const {
+    knex,
+    granule,
+    granuleId,
+  } = t.context;
+
+  const result = await writeGranuleFromApi(granule, knex, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, producerGranuleId: null, status: 'completed' }, knex, 'Create'),
+    { message: new RegExp('granule.\'producerGranuleId\' cannot be removed as it is required and/or set to a default value on PUT') }
+  );
 });

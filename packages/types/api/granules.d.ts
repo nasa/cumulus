@@ -53,7 +53,7 @@ export type ApiGranuleRecord = {
 export type ApiGranule = {
   granuleId: string
   collectionId: string
-  producerGranuleId?: string
+  producerGranuleId: string
   status?: GranuleStatus
   updatedAt?: number | null
   cmrLink?: string | null
