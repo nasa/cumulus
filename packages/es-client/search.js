@@ -31,6 +31,14 @@ const multipleRecordFoundString = 'More than one record was found!';
 const recordNotFoundString = 'Record not found';
 const logger = new Logger({ sender: '@cumulus/es-client/search' });
 
+class HttpError extends Error {
+  constructor(statusCode, message) {
+    super(message);
+    this.statusCode = statusCode;
+    this.name = 'HttpError';
+  }
+}
+
 /**
  * Sanitizes sensitive data in error messages or logs
  *
@@ -437,6 +445,9 @@ class BaseSearch {
       return resp;
     } catch (error) {
       esCustomLogger.error(sanitizeSensitive(error));
+      if (error.meta?.statusCode === 401) {
+        throw new HttpError(401, 'Invalid credentials');
+      }
       throw sanitizeSensitive(error);
     }
   }
@@ -472,7 +483,13 @@ class BaseSearch {
         results: hits.map((s) => s._source),
       };
     } catch (error) {
-      return sanitizeSensitive(error);
+      const esCustomLogger = new EsCustomLogger();
+      esCustomLogger.error(sanitizeSensitive(error));
+
+      if (error.meta?.statusCode === 401) {
+        throw new HttpError(401, 'Invalid credentials');
+      }
+      throw sanitizeSensitive(error);
     }
   }
 
@@ -495,7 +512,13 @@ class BaseSearch {
         counts: result.body.aggregations,
       };
     } catch (error) {
-      return sanitizeSensitive(error);
+      const esCustomLogger = new EsCustomLogger();
+      esCustomLogger.error(sanitizeSensitive(error));
+
+      if (error.meta?.statusCode === 401) {
+        throw new HttpError(401, 'Invalid credentials');
+      }
+      throw sanitizeSensitive(error);
     }
   }
 }
