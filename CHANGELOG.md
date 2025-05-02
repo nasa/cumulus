@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4061**
+  - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a hashed/'uniquified' granuleID
 - **CUMULUS-3868**
   - added listGranulesConcurrency parameter to control the size of requests made to the listGranules api endpoint. this should be lowered from default if granuleIds are larger than 300 characters.
 - **CUMULUS-4004**
