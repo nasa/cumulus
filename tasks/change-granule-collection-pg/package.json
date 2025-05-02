@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/change-granule-collection-pg",
-  "version": "20.1.1",
+  "version": "20.1.2",
   "description": "Move granule files and postgres records to a new collection",
   "main": "dist/index.js",
   "directories": {
@@ -41,19 +41,19 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "20.1.1",
-    "@cumulus/aws-client": "20.1.1",
-    "@cumulus/common": "20.1.1",
+    "@cumulus/api-client": "20.1.2",
+    "@cumulus/aws-client": "20.1.2",
+    "@cumulus/common": "20.1.2",
     "@cumulus/cumulus-message-adapter-js": "2.2.0",
-    "@cumulus/message": "20.1.1",
-    "@cumulus/types": "20.1.1",
-    "@cumulus/errors": "20.1.1"
+    "@cumulus/errors": "20.1.2",
+    "@cumulus/message": "20.1.2",
+    "@cumulus/types": "20.1.2"
   },
   "devDependencies": {
-    "@cumulus/api": "20.1.1",
-    "@cumulus/db": "^20.1.1",
-    "@cumulus/distribution-utils": "20.1.1",
-    "@cumulus/es-client": "20.1.1",
+    "@cumulus/api": "20.1.2",
+    "@cumulus/db": "20.1.2",
+    "@cumulus/distribution-utils": "20.1.2",
+    "@cumulus/es-client": "20.1.2",
     "lodash": "^4.17.21"
   }
 }
