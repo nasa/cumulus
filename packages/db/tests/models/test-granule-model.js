@@ -284,6 +284,7 @@ test('GranulePgModel.upsert() will only overwrite allowed fields of a granule if
       status: 'running',
       collection_cumulus_id: collectionCumulusId,
       granule_id: granule.granule_id,
+      producer_granule_id: granule.producer_granule_id,
       published: true,
       duration: 100,
       time_to_archive: 100,

@@ -277,6 +277,7 @@ export const generateGranuleApiRecord = async ({
   const {
     granuleId,
     cmrLink,
+    producerGranuleId,
     published,
     createdAt,
   } = granule;
@@ -308,6 +309,7 @@ export const generateGranuleApiRecord = async ({
     timestamp: recordTimestamp,
     updatedAt: recordUpdatedAt,
     duration,
+    producerGranuleId,
     productVolume,
     timeToPreprocess,
     timeToArchive,

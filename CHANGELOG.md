@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+### Handle Granules with Identical producerGranuleId in Different Collections
+
+- **CUMULUS-4059**
+  - Added new non-null column `producer_granule_id` to Postgres `granules` table.
+  - Added `producerGranuleId` property to `granule` record schema.
+  - Updated `@cumulus` api/db/message packages to handle `producer_granule_id` and `producerGranuleId`.
+  - Updated `@cumulus/api/lib/writeGranulesFromMessage` to set producerGranuleId = granuleId if not set.
+  - Updated `queue-granules` task to set producerGranuleId = granuleId if not set.
+
 ## [Unreleased]
 
 
