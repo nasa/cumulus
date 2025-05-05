@@ -540,8 +540,13 @@ function chunkGranuleIds(granuleIds: string[], chunkSize: number) {
   ));
 }
 
-async function getGranulesList(granuleIds: string[], collectionId: string) {
-  const granulesResponse = await listGranules({
+async function getGranulesList(
+  granuleIds: string[],
+  collectionId: string,
+  config: MassagedEventConfig
+) {
+  const listGranulesMethod = config.testMethods?.listGranulesMethod || listGranules;
+  const granulesResponse = await listGranulesMethod({
     prefix: getRequiredEnvVar('stackName'),
     query: {
       collectionId,
@@ -561,17 +566,16 @@ async function getAndValidateGranules(
   granuleIds: Array<string>,
   config: MassagedEventConfig
 ): Promise<Array<ValidGranuleRecord>> {
-  const listGranulesMethod = config.testMethods?.listGranulesMethod || getGranulesList;
-
   const tempGranulesInput: ApiGranuleRecord[][] = [];
   /*
   too large a chunk will cause listGranules fail due to too large a max header size.
   */
   for (const granuleChunk of chunkGranuleIds(granuleIds, config.listGranulesConcurrency)) {
     // eslint-disable-next-line no-await-in-loop
-    const listedGranules = await listGranulesMethod(
+    const listedGranules = await getGranulesList(
       granuleChunk,
-      constructCollectionId(config.collection.name, config.collection.version)
+      constructCollectionId(config.collection.name, config.collection.version),
+      config
     );
     if (!listedGranules) {
       if (config.invalidGranuleBehavior !== 'skip') {
