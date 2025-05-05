@@ -11,7 +11,7 @@ This lambda takes the following input and config objects, derived from workflow 
 
 ### Input
 
-The input takes a list of Cumulus `API` formatted granules, with the following required fields:
+The input takes a list of 'pre-sync' or Cumulus API formatted granules, with the following required fields:
 
 ```json
 {
@@ -19,6 +19,21 @@ The input takes a list of Cumulus `API` formatted granules, with the following r
     {
       "granuleId": "foobar",
       "collectionId": "someCollection___001"
+      ...
+    }
+  ]
+}
+```
+
+or
+
+```json
+{
+  "granules": [
+    {
+      "granuleId": "foobar",
+      "datatype": "someCollection",
+      "version": "001"
       ...
     }
   ]
@@ -37,12 +52,11 @@ The config object has one key that allows specification of the truncated size of
 
 ### Output
 
-Output is a list of Cumulus API granules
+Output is list of granules in like format as the input *with* field modifications made (and other fields preserved).
 
 ```JSON
 {
-  "granules": []
-}
+  "granules": [{ "granuleId": "foobar_24asdfh", "producerGranuleId": "foobar", "datatype": "someCollection", "version": "001" }]}
 ```
 
 ### Example workflow configuration block
