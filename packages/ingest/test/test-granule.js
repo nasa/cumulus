@@ -627,12 +627,12 @@ test('moveGranuleFile throws if the file does not have expected keys and no sour
 
 test('generateUniqueGranuleId generates a unique ID with the specified hash length', (t) => {
   const granule = {
-    granuleId: 'testGranule',
+    granuleId: 'Az09- éñøæß œüç ΔΩЖЯ あア漢 数据셋 àé',
     collectionId: 'testCollection',
   };
 
   const hashLength = 8;
-  const uniqueId = generateUniqueGranuleId(granule, hashLength);
+  const uniqueId = generateUniqueGranuleId(granule.granuleId, granule.collectionId, hashLength);
 
   t.true(uniqueId.startsWith(`${granule.granuleId}_`), 'Generated ID should start with granuleId and underscore');
   t.is(uniqueId.split('_')[1].length, hashLength, `Hash length should match the specified length: ${uniqueId}`);
@@ -640,23 +640,23 @@ test('generateUniqueGranuleId generates a unique ID with the specified hash leng
 
 test('generateUniqueGranuleId generates different IDs for different timestamps', (t) => {
   const granule = {
-    granuleId: 'testGranule',
+    granuleId: 'Az09- éñøæß œüç ΔΩЖЯ あア漢 数据셋 àé',
     collectionId: 'testCollection',
   };
 
-  const uniqueId1 = generateUniqueGranuleId(granule);
-  const uniqueId2 = generateUniqueGranuleId(granule);
+  const uniqueId1 = generateUniqueGranuleId(granule.granuleId, granule.collectionId);
+  const uniqueId2 = generateUniqueGranuleId(granule.granuleId, granule.collectionId);
 
   t.not(uniqueId1, uniqueId2, 'Generated IDs should be unique due to different timestamps');
 });
 
 test('generateUniqueGranuleId generates different length hash for a different hashlength value', (t) => {
   const granule = {
-    granuleId: 'testGranule',
+    granuleId: 'Az09- éñøæß œüç ΔΩЖЯ あア漢 数据셋 àé',
     collectionId: 'testCollection',
   };
 
   const hashLength = 4;
-  const uniqueId = generateUniqueGranuleId(granule, hashLength);
+  const uniqueId = generateUniqueGranuleId(granule.granuleId, granule.collectionId, hashLength);
   t.is(uniqueId.split('_')[1].length, hashLength, `Hash length should match the specified length: ${uniqueId}`);
 });

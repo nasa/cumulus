@@ -6,8 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-
-## [v20.1.2] 2025-04-22
+## [Feature - duplicate granules]
 
 ### Added
 
@@ -17,6 +16,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   identifier in the `producerGranuleId` field
 - **CUMULUS-4061**
   - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a hashed/'uniquified' granuleID
+
+## [v20.1.2] 2025-04-22
+
+### Added
+
 - **CUMULUS-3868**
   - added listGranulesConcurrency parameter to control the size of requests made to the listGranules api endpoint. this should be lowered from default if granuleIds are larger than 300 characters.
 - **CUMULUS-4004**
