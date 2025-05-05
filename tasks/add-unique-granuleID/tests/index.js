@@ -58,3 +58,23 @@ test('assignUniqueIds handles empty granules array', async (t) => {
 
   t.deepEqual(result.granules, [], 'Output should be an empty array');
 });
+
+test('assignUniqueIds accepts granules with dataType and version instead of collectionId', async (t) => {
+  const event = {
+    input: {
+      granules: [
+        { granuleId: 'granule1', dataType: 'someType', version: '001' },
+        { granuleId: 'granule2', dataType: 'otherType', version: '002' },
+      ],
+    },
+    config: { },
+  };
+
+  const result = await assignUniqueIds(event, {});
+  t.is(result.granules.length, 2, 'Should return two granules');
+
+  result.granules.forEach((granule) => {
+    t.truthy(granule.producerGranuleId, 'Should assign producerGranuleId');
+    t.true(granule.granuleId.startsWith(`${granule.producerGranuleId}_`), 'Should append hash to granuleId');
+  });
+});

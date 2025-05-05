@@ -1,6 +1,6 @@
 {
-  "title": "SendPanOutput",
-  "description": "Describes the output produced by the send-pan task",
+  "title": "AddUniqueGranuleID Output",
+  "description": "Describes the output produced by the add-unique-granule-id task component",
   "type": "object",
   "required": ["granules"],
   "properties": {

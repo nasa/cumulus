@@ -1,6 +1,7 @@
 import Logger from '@cumulus/logger';
 import { Context } from 'aws-lambda';
 
+import { constructCollectionId } from '@cumulus/message/Collections';
 import { generateUniqueGranuleId } from '@cumulus/ingest/granule';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { CumulusMessageWithAssignedPayload, runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
@@ -21,8 +22,11 @@ async function assignUniqueIds(event: HandlerEvent): Promise<HandlerOutput> {
   const { granules } = event.input;
   for (const granule of granules) {
     if (!granule.producerGranuleId) {
+      const collectionId = granule.collectionId
+        || constructCollectionId(granule.dataType, granule.version);
       const newGranuleId = generateUniqueGranuleId(
-        granule,
+        granule.granuleId,
+        collectionId,
         Number(event?.config?.hashDepth || 8)
       );
       granule.producerGranuleId = granule.granuleId;

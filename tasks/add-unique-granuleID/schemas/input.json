@@ -4,22 +4,23 @@
   "type": "object",
   "required": ["granules"],
   "properties": {
-   "granules": {
+    "granules": {
       "type": "array",
-      "description": "Array of all granule objects with a granuleId.   This should be an API formatted granule",
+      "description": "Array of all granule objects with a granuleId. This should be an API formatted granule",
       "items": {
         "type": "object",
-        "required": [
-          "granuleId", "collectionId"
-        ],
+        "required": ["granuleId"],
         "properties": {
-          "granuleId": {
-            "type": "string"
-          },
-          "collectionId": {
-            "type": "string"
-          }
-        }
+          "granuleId": { "type": "string" },
+          "collectionId": { "type": "string" },
+          "producerGranuleId": { "type": "string" },
+          "dataType": { "type": "string" },
+          "version": { "type": "string" }
+        },
+        "anyOf": [
+          { "required": ["collectionId"] },
+          { "required": ["dataType", "version"] }
+        ]
       }
     }
   }

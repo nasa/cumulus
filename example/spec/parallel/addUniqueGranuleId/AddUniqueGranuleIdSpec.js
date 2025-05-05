@@ -52,7 +52,8 @@ describe('The Add Unique Granule Id Task ', () => {
               granules: [
                 {
                   granuleId,
-                  collectionId: 'FAKECOLLECTION___001',
+                  dataType: 'FAKECOLLECTION',
+                  version: '001',
                   files: [],
                 },
               ],
