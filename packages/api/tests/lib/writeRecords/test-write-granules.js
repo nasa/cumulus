@@ -537,6 +537,43 @@ test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/SNS'
   t.is(Messages.length, 1);
 });
 
+test.serial('writeGranulesFromMessage() propagates producerGranuleId with value from granuleId when producerGranuleId is absent from message', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+    granulePgModel,
+    stepFunctionUtils,
+  } = t.context;
+
+  delete cumulusMessage.payload.granules[0].producerGranuleId;
+
+  // Message must be completed or files will not update
+  cumulusMessage.meta.status = 'completed';
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    testOverrides: { stepFunctionUtils },
+  });
+
+  const postgresRecord = await granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const apiFormattedPostgresGranule =
+    await translatePostgresGranuleToApiGranule({
+      granulePgRecord: postgresRecord,
+      knexOrTransaction: knex,
+    });
+  t.is(apiFormattedPostgresGranule.producerGranuleId, granuleId);
+});
+
 test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/SNS with expected values nullified', async (t) => {
   const {
     collection,
@@ -818,7 +855,10 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
       knexOrTransaction: knex,
     });
 
-  cumulusMessage.payload.granules[0] = { granuleId: completeGranule.granuleId };
+  cumulusMessage.payload.granules[0] = {
+    granuleId: completeGranule.granuleId,
+    producerGranuleId: completeGranule.producerGranuleId,
+  };
   cumulusMessage.cumulus_meta.workflow_start_time = Date.now();
   await writeGranulesFromMessage({
     cumulusMessage,
@@ -1182,6 +1222,7 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
+    producerGranuleId: granule.producerGranuleId,
     status: granule.status,
     // files is undefined
   };
@@ -1252,6 +1293,7 @@ test.serial('writeGranulesFromMessage() given a partial granule overwrites only 
   // Update existing granule with a partial granule object
   const updateGranulePayload = {
     granuleId,
+    producerGranuleId: granule.producerGranuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
     status: granule.status,
@@ -1343,6 +1385,7 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
   // Update existing granule with a partial granule object
   const updateGranulePayload = {
     granuleId,
+    producerGranuleId: granule.producerGranuleId,
     collectionId: granule.collectionId,
     files: [],
     status: granule.status,
@@ -3413,6 +3456,7 @@ test.serial('writeGranuleFromApi() given a payload with undefined files, keeps e
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
+    producerGranuleId: granule.producerGranuleId,
     status: granule.status,
     // files is undefined
   };
@@ -3458,6 +3502,7 @@ test.serial('writeGranuleFromApi() given a partial granule overwrites only provi
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
+    producerGranuleId: granule.producerGranuleId,
     status: granule.status,
   };
 
@@ -3497,7 +3542,6 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
   const validNullableGranuleKeys = [
     'beginningDateTime',
     'cmrLink',
-    'createdAt',
     'duration',
     'endingDateTime',
     'files',
@@ -3513,7 +3557,6 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
     'timestamp',
     'timeToArchive',
     'timeToPreprocess',
-    'updatedAt',
   ];
 
   const completeGranule = fakeGranuleFactoryV2({
@@ -3626,6 +3669,7 @@ test.serial('writeGranuleFromApi() when called on a granuleId does not modify th
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
+    producerGranuleId: granule.producerGranuleId,
     status: granule.status,
   };
 
@@ -3673,6 +3717,7 @@ test.serial('writeGranuleFromApi() given an empty array as a files key will remo
     granuleId,
     collectionId: granule.collectionId,
     files: [],
+    producerGranuleId: granule.producerGranuleId,
     status: granule.status,
   };
 
@@ -4672,4 +4717,20 @@ test.serial('writeGranuleFromApi() overwrites granule with expected nullified va
   });
 
   t.deepEqual(translatedPgRecord.files, []);
+});
+
+test.serial('writeGranuleFromApi() failes to overwrite granule with required field set to null', async (t) => {
+  const {
+    knex,
+    granule,
+    granuleId,
+  } = t.context;
+
+  const result = await writeGranuleFromApi(granule, knex, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, producerGranuleId: null, status: 'completed' }, knex, 'Create'),
+    { message: new RegExp('granule.\'producerGranuleId\' cannot be removed as it is required and/or set to a default value on PUT') }
+  );
 });

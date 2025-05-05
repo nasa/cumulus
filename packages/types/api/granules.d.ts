@@ -12,6 +12,7 @@ export type GranuleTemporalInfo = {
 export interface MessageGranule {
   granuleId: string
   cmrLink?: string
+  producerGranuleId?: string
   published?: boolean
   status?: string
   sync_granule_duration?: number
@@ -31,7 +32,7 @@ export type ApiGranuleRecord = {
   collectionId: string
   createdAt: number
   granuleId: string
-  producerGranuleId?: string | null
+  producerGranuleId: string
   status: GranuleStatus
   updatedAt: number
   cmrLink?: string
@@ -52,6 +53,7 @@ export type ApiGranuleRecord = {
 export type ApiGranule = {
   granuleId: string
   collectionId: string
+  producerGranuleId: string
   cmrLink?: string | null
   createdAt?: number | null
   duration?: number | null

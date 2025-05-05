@@ -372,6 +372,7 @@ describe('When there are granule differences and granule reconciliation is run',
       };
       extraGranuleInDb = {
         granuleId: randomId('extra-granule'),
+        producerGranuleId: randomId('extra-producerGranuleId'),
         collectionId,
         status: 'completed',
         files: [extraFileInDb],

@@ -322,6 +322,7 @@ test.serial('changeGranuleCollectionsPG Should work correctly for a large batch'
   ).map((bucket) => bucket.name).filter(Boolean);
   const oldGranules = range(200).map((_) => ({
     granuleId: cryptoRandomString({ length: 5 }),
+    producerGranuleId: cryptoRandomString({ length: 5 }),
     status: 'completed',
     collectionId: constructCollectionId(
       t.context.payload.config.collection.name,

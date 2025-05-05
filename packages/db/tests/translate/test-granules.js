@@ -210,6 +210,7 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     pdrName: 'pdrName',
     processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
     processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
+    producerGranuleId: postgresGranule.producer_granule_id,
     productionDateTime: postgresGranule.production_date_time.toISOString(),
     productVolume: postgresGranule.product_volume,
     provider: 'providerName',
@@ -290,6 +291,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     pdrName: 'pdrName',
     processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
     processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
+    producerGranuleId: postgresGranule.producer_granule_id,
     productionDateTime: postgresGranule.production_date_time.toISOString(),
     productVolume: postgresGranule.product_volume,
     provider: 'providerName',
@@ -382,6 +384,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional provider', async 
     pdrName: 'pdrName',
     processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
     processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
+    producerGranuleId: postgresGranule.producer_granule_id,
     productionDateTime: postgresGranule.production_date_time.toISOString(),
     productVolume: postgresGranule.product_volume,
     provider: providerPgRecord.name,
@@ -457,6 +460,7 @@ test('translatePostgresGranuleToApiGranule returns an empty array for its files 
     collectionId,
     createdAt: pgGranule.created_at.getTime(),
     granuleId: pgGranule.granule_id,
+    producerGranuleId: pgGranule.producer_granule_id,
     status: pgGranule.status,
     updatedAt: pgGranule.updated_at.getTime(),
     files: [],
@@ -536,6 +540,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     lastUpdateDateTime: postgresGranule.last_update_date_time.toISOString(),
     processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
     processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
+    producerGranuleId: postgresGranule.producer_granule_id,
     productionDateTime: postgresGranule.production_date_time.toISOString(),
     productVolume: postgresGranule.product_volume,
     published: postgresGranule.published,
@@ -635,6 +640,7 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granul
     granuleId: cryptoRandomString({ length: 5 }),
     collectionId: constructCollectionId('name', 'version'),
     pdrName: 'pdr-name',
+    producerGranuleId: cryptoRandomString({ length: 5 }),
     provider: 'provider',
     published: false,
     queryFields: {
@@ -686,6 +692,7 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granul
     pdr_cumulus_id: pdrCumulusId,
     processing_end_date_time: new Date(apiGranule.processingEndDateTime),
     processing_start_date_time: new Date(apiGranule.processingStartDateTime),
+    producer_granule_id: apiGranule.producerGranuleId,
     product_volume: apiGranule.productVolume,
     production_date_time: new Date(apiGranule.productionDateTime),
     provider_cumulus_id: providerCumulusId,
@@ -724,6 +731,7 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved does not remove nul
     granuleId: cryptoRandomString({ length: 5 }),
     collectionId: constructCollectionId('name', 'version'),
     pdrName: 'pdr-name',
+    producerGranuleId: cryptoRandomString({ length: 5 }),
     provider: 'provider',
     published: false,
     status: 'running',
@@ -770,6 +778,7 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved does not remove nul
     pdr_cumulus_id: pdrCumulusId,
     processing_end_date_time: new Date(apiGranule.processingEndDateTime),
     processing_start_date_time: new Date(apiGranule.processingStartDateTime),
+    producer_granule_id: apiGranule.producerGranuleId,
     product_volume: undefined, // Undefined on apiGranule
     production_date_time: new Date(apiGranule.productionDateTime),
     provider_cumulus_id: providerCumulusId,
@@ -906,6 +915,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
   const apiGranule = {
     granuleId: cryptoRandomString({ length: 5 }),
     collectionId: constructCollectionId('name', 'version'),
+    producerGranuleId: cryptoRandomString({ length: 5 }),
     status: granuleStatus,
     cmrLink: null,
     duration: null,
@@ -931,6 +941,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
   const expectedPostgresGranule = {
     granule_id: apiGranule.granuleId,
     collection_cumulus_id: collectionCumulusId,
+    producer_granule_id: apiGranule.producerGranuleId,
     status: granuleStatus,
     beginning_date_time: null,
     cmr_link: null,
@@ -985,6 +996,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
   const apiGranule = {
     granuleId: cryptoRandomString({ length: 5 }),
     collectionId: constructCollectionId('name', 'version'),
+    producerGranuleId: cryptoRandomString({ length: 5 }),
     status: granuleStatus,
   };
 
@@ -992,6 +1004,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
     status: granuleStatus,
     collection_cumulus_id: collectionCumulusId,
     granule_id: apiGranule.granuleId,
+    producer_granule_id: apiGranule.producerGranuleId,
     beginning_date_time: undefined,
     cmr_link: undefined,
     created_at: undefined,
@@ -1044,6 +1057,7 @@ test.serial('translateApiGranuleToPostgresGranule converts API granule to Postgr
 
   const apiGranule = {
     granuleId: cryptoRandomString({ length: 5 }),
+    producerGranuleId: cryptoRandomString({ length: 5 }),
     collectionId: constructCollectionId('name', 'version'),
     status: granuleStatus,
     cmrLink: null,
@@ -1070,6 +1084,7 @@ test.serial('translateApiGranuleToPostgresGranule converts API granule to Postgr
   const expectedPostgresGranule = {
     granule_id: apiGranule.granuleId,
     collection_cumulus_id: collectionCumulusId,
+    producer_granule_id: apiGranule.producerGranuleId,
     status: granuleStatus,
   };
 
@@ -1099,6 +1114,7 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     granuleId: cryptoRandomString({ length: 5 }),
     collectionId: constructCollectionId('name', 'version'),
     pdrName: 'pdr-name',
+    producerGranuleId: cryptoRandomString({ length: 5 }),
     provider: 'provider',
     published: false,
     queryFields: {
@@ -1150,6 +1166,7 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     pdr_cumulus_id: pdrCumulusId,
     processing_end_date_time: new Date(apiGranule.processingEndDateTime),
     processing_start_date_time: new Date(apiGranule.processingStartDateTime),
+    producer_granule_id: apiGranule.producerGranuleId,
     product_volume: apiGranule.productVolume,
     production_date_time: new Date(apiGranule.productionDateTime),
     provider_cumulus_id: providerCumulusId,
@@ -1188,6 +1205,7 @@ test('translateApiGranuleToPostgresGranule removes null/undefined fields', async
     granuleId: cryptoRandomString({ length: 5 }),
     collectionId: constructCollectionId('name', 'version'),
     pdrName: 'pdr-name',
+    producerGranuleId: cryptoRandomString({ length: 5 }),
     provider: 'provider',
     published: false,
     status: 'running',
@@ -1234,6 +1252,7 @@ test('translateApiGranuleToPostgresGranule removes null/undefined fields', async
     pdr_cumulus_id: pdrCumulusId,
     processing_end_date_time: new Date(apiGranule.processingEndDateTime),
     processing_start_date_time: new Date(apiGranule.processingStartDateTime),
+    producer_granule_id: apiGranule.producerGranuleId,
     product_volume: undefined, // Undefined on apiGranule
     production_date_time: new Date(apiGranule.productionDateTime),
     provider_cumulus_id: providerCumulusId,
@@ -1293,6 +1312,7 @@ test('translatePostgresGranuleResultToApiGranule converts DB result to API granu
     pdrName: 'pdrName',
     processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
     processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
+    producerGranuleId: postgresGranule.producer_granule_id,
     productionDateTime: postgresGranule.production_date_time.toISOString(),
     productVolume: postgresGranule.product_volume,
     provider: providerName,
