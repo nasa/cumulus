@@ -67,7 +67,7 @@ The granule object values are set based on the incoming Cumulus Message values (
 | processingEndDateTime | Derived from AWS API interrogation (`sfn().describeExecution`)  based on `execution` value |
 | processingStartDateTime | Derived from AWS API interrogation (`sfn().describeExecution`)  based on `execution` value |
 | execution  | Derived from `cumulus_meta.state_machine` and `cumulus_meta.execution_name` |
-| producerGranuleId | Taken directly from `payload.granule.producerGranuleId`.   If producerGranuleId is `null` or absent, set it to granuleId |
+| producerGranuleId | Taken directly from `payload.granule.producerGranuleId`, if absent or `null` is specified, set it to granuleId |
 | productVolume | Sums the values of the passed in `payload.granules.files.size`.   Does not validate against S3 |
 | provider | Inferred from `meta.provider` value in cumulus message |
 | published | Taken directly from `granule.published`, if not specified or null is specified, defaults to `false` |
