@@ -11,7 +11,7 @@ This lambda takes the following input and config objects, derived from workflow 
 
 ### Input
 
-The input takes a list of 'pre-sync' or Cumulus API formatted granules, with the following required fields:
+The input takes a list of granule objects in one of two formats, with the following required fields:
 
 ```json
 {
