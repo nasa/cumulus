@@ -16,7 +16,7 @@ const log = new Logger({ sender: '@cumulus/add-unique-granule-id' });
  * preserving the original ID in 'producerGranuleId'.
  *
  * @param event - input from the message adapter
- * @returns the uri of the pan
+ * @returns - updated granules
  */
 async function assignUniqueIds(event: HandlerEvent): Promise<HandlerOutput> {
   const { granules } = event.input;
