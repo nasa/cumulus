@@ -11,7 +11,7 @@ import { HandlerEvent, GranuleOutput } from './types';
 const log = new Logger({ sender: '@cumulus/add-unique-granule-id' });
 
 /**
- * If no producerId is assigned,
+ * If no producerGranuleId is assigned,
  * assign uniqueIds to the granules in the payload,
  * preserving the original ID in 'producerGranuleId'.
  *
