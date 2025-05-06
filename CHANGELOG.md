@@ -12,18 +12,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus` api/db/message packages to handle `producer_granule_id` and `producerGranuleId`.
   - Updated `@cumulus/api/lib/writeGranulesFromMessage` to set producerGranuleId = granuleId if not set.
   - Updated `queue-granules` task to set producerGranuleId = granuleId if not set.
-- **CUMULUS-4073**
-  - Adds AddUniqueGranuleId task to `ingest` terraform module for deployment with Core.
-  This task will update a payload of existing granules to have 'uniquified' IDs and preserve the original
-  identifier in the `producerGranuleId` field
 - **CUMULUS-4061**
   - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a hashed/'uniquified' granuleID
 - **CUMULUS-4073**
   - Adds AddUniqueGranuleId task to `ingest` terraform module for deployment with Core.
   This task will update a payload of existing granules to have 'uniquified' IDs and preserve the original
   identifier in the `producerGranuleId` field
-- **CUMULUS-4061**
-  - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a hashed/'uniquified' granuleID
 
 ## [Unreleased]
 
