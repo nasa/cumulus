@@ -6,7 +6,7 @@ import { generateUniqueGranuleId } from '@cumulus/ingest/granule';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { CumulusMessageWithAssignedPayload, runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 
-import { HandlerEvent, HandlerOutput } from './types';
+import { HandlerEvent, GranuleOutput } from './types';
 
 const log = new Logger({ sender: '@cumulus/add-unique-granule-id' });
 
@@ -33,7 +33,7 @@ async function assignUniqueIds(event: HandlerEvent): Promise<HandlerOutput> {
       granule.granuleId = newGranuleId;
     }
   }
-  const output = { granules };
+  const output = { granules: granules as GranuleOutput[] };
   log.debug('Granule output', output);
   return output;
 }
