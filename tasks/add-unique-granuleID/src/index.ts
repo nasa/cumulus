@@ -6,7 +6,7 @@ import { generateUniqueGranuleId } from '@cumulus/ingest/granule';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { CumulusMessageWithAssignedPayload, runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 
-import { HandlerEvent, GranuleOutput } from './types';
+import { HandlerEvent, GranuleOutput, HandlerOutput } from './types';
 
 const log = new Logger({ sender: '@cumulus/add-unique-granule-id' });
 
