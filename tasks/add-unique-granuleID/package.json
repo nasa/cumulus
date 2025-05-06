@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/add-unique-granule-id",
   "version": "20.1.1",
-  "description": "Sends a PAN response after parsing a PDR.",
+  "description": "A Cumulus task to add a unique granule ID to a granule",
   "main": "dist/index.js",
   "private": true,
   "directories": {
