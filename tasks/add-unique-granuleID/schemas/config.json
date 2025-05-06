@@ -5,7 +5,7 @@
   "properties": {
     "hashLength": {
       "type": "string",
-      "description": "The maximum length of the computed granule hash"
+      "description": "The maximum length (characters) of the computed granule hash"
     }
   }
 }
