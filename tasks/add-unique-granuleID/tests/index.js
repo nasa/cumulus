@@ -27,7 +27,7 @@ test('assignUniqueIds assigns unique granule IDs and preserves producerGranuleId
   });
 });
 
-test('assignUniqueIds ignores granules that already have producerID assigned', async (t) => {
+test('assignUniqueIds ignores granules that already have producerGranuleId assigned', async (t) => {
   const event = {
     input: {
       granules: [
