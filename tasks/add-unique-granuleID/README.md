@@ -2,7 +2,7 @@
 
 This is a [Cumulus](https://nasa.github.io/cumulus) task which takes the following actions on each granule in an incoming set of payload granules:
 
-- Adds the existing `granuleId` to the `producerGranuleId` key
+- Populates `producerGranuleId` key with the value of `granuleId`
 - Updates the existing `granuleId` field to a 'unique' value based on the algorithim used in @cumulus/ingest `generateUniqueGranuleId`
 
 ## Usage
