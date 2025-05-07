@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-### Handle Granules with Identical producerGranuleId in Different Collections
+## Handle Granules with Identical producerGranuleId in Different Collections
 
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules` table.
@@ -12,16 +12,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus` api/db/message packages to handle `producer_granule_id` and `producerGranuleId`.
   - Updated `@cumulus/api/lib/writeGranulesFromMessage` to set producerGranuleId = granuleId if not set.
   - Updated `queue-granules` task to set producerGranuleId = granuleId if not set.
+- **CUMULUS-4061**
+  - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a hashed/'uniquified' granuleID
+- **CUMULUS-4073**
+  - Adds AddUniqueGranuleId task to `ingest` terraform module for deployment with Core.
+  This task will update a payload of existing granules to have 'uniquified' IDs and preserve the original
+  identifier in the `producerGranuleId` field
 
 ## [Unreleased]
-
 
 ## [v20.1.2] 2025-04-22
 
 ### Added
 
-- **CUMULUS-4061**
-  - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a hashed/'uniquified' granuleID
 - **CUMULUS-3868**
   - added listGranulesConcurrency parameter to control the size of requests made to the listGranules api endpoint. this should be lowered from default if granuleIds are larger than 300 characters.
 - **CUMULUS-4004**

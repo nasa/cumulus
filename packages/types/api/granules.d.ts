@@ -29,12 +29,12 @@ type PartialGranuleTemporalInfo = NullablePartialType<GranuleTemporalInfo>;
 type PartialGranuleProcessingInfo = NullablePartialType<import('./executions').ExecutionProcessingTimes>;
 
 export type ApiGranuleRecord = {
-  granuleId: string
   collectionId: string
+  createdAt: number
+  granuleId: string
   producerGranuleId: string
   status: GranuleStatus
   updatedAt: number
-  createdAt: number
   cmrLink?: string
   duration?: number
   error?: Object
@@ -54,8 +54,6 @@ export type ApiGranule = {
   granuleId: string
   collectionId: string
   producerGranuleId: string
-  status?: GranuleStatus
-  updatedAt?: number | null
   cmrLink?: string | null
   createdAt?: number | null
   duration?: number | null
@@ -63,11 +61,14 @@ export type ApiGranule = {
   execution?: string | null
   files?: Omit<import('./files').ApiFile, 'granuleId'>[] | null
   pdrName?: string | null
+  producerGranuleId?: string | null
   productVolume?: string | null
   provider?: string | null
   published?: boolean | null
   queryFields?: unknown | null
+  status?: GranuleStatus
   timestamp?: number | null
   timeToArchive?: number | null
   timeToPreprocess?: number | null
+  updatedAt?: number | null
 } & PartialGranuleTemporalInfo & PartialGranuleProcessingInfo;
