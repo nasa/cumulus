@@ -20,6 +20,7 @@
         "type": "object",
         "properties": {
           "granuleId": { "type": "string" },
+          "producerGranuleId": { "type": "string" },
           "dataType": { "type": "string" },
           "granuleSize": { "type": "number" },
           "granuleCount": { "type": "number" },

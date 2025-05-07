@@ -1,10 +1,14 @@
+//@ts-check
+
 'use strict';
 
-const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const path = require('path');
 const get = require('lodash/get');
 const isNumber = require('lodash/isNumber');
 const isString = require('lodash/isString');
+
+const { generateUniqueGranuleId } = require('@cumulus/ingest/granule');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const S3 = require('@cumulus/aws-client/S3');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const { PDRParsingError } = require('@cumulus/errors');
@@ -162,6 +166,7 @@ const extractGranuleId = (fileName, regex) => {
   return fileName;
 };
 
+// TODO - Typing
 /**
  * Convert PDR FILE_GROUP to granule object.
  *
@@ -170,12 +175,14 @@ const extractGranuleId = (fileName, regex) => {
  * @param {Object} params.fileGroup - PDR FILE_GROUP object
  * @param {string} params.pdrName - name of the PDR for error reporting
  * @param {Object} params.collectionConfigStore - collectionConfigStore
- * @returns {Object} granule object
+ * @param {boolean} params.uniquifyGranuleId
+ * @returns {Promise<Object>} - granule object
  */
 const convertFileGroupToGranule = async ({
   prefix,
   fileGroup,
   pdrName,
+  uniquifyGranuleId = true,
 }) => {
   if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
   const dataType = fileGroup.get('DATA_TYPE').value;
@@ -206,12 +213,19 @@ const convertFileGroupToGranule = async ({
     providerName = provider.id;
   }
 
+  let granuleId = extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction);
+  const producerGranuleId = granuleId;
+  if (uniquifyGranuleId) {
+    granuleId = generateUniqueGranuleId(granuleId, `${dataType}___${version}`, 8); // TODO - compose this via function
+  }
+
   return {
     dataType,
     version,
     files,
     provider: providerName,
-    granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
+    granuleId,
+    producerGranuleId,
     granuleSize: files.reduce((total, file) => total + file.size, 0),
   };
 };
@@ -225,7 +239,7 @@ const buildPdrDocument = (rawPdr) => {
 
   return pvlToJS(cleanedPdr);
 };
-
+// TODO - Holy hell fix this docstring
 /**
 * Parse a PDR
 * See schemas/input.json for detailed input schema
@@ -262,6 +276,7 @@ const parsePdr = async ({ config, input }) => {
         prefix: config.stack,
         fileGroup,
         pdrName: input.pdr.name,
+        uniquifyGranuleId: get(config, 'uniquifyGranuleId', false),
       }))
   );
 

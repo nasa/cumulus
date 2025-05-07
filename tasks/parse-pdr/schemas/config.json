@@ -15,6 +15,10 @@
       "description": "A regular expression that is applied against the filename of the first file of each granule contained in the PDR.  If the regular expression matches, then the granule is included in the output.  Defaults to '.', which will match all granules in the PDR.",
       "type": "string"
     },
+    "uniqifyGranules": {
+      "description": "A flag to indicate whether or not to apply uniqification to the listed",
+      "type": "string"
+    },
     "provider": {
       "type": "object",
       "properties": {
