@@ -5,6 +5,8 @@ This is a [Cumulus](https://nasa.github.io/cumulus) task which takes the followi
 - Populates `producerGranuleId` key with the value of `granuleId`
 - Updates the existing `granuleId` field to a 'unique' value based on the algorithim used in @cumulus/ingest `generateUniqueGranuleId`
 
+**Please Note**: This task is intended only for use in active ingest scenarios, or in workflows where incoming granules do not have a producerGranuleId populated, have a granuleId populated AND it is desirable to 'uniqueify' the archival granuleId to be distinct from the producer provided/derived granuleId.
+
 ## Usage
 
 This lambda takes the following input and config objects, derived from workflow configuration using the [Cumulus Message Adapter](https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md) to drive configuration from the full cumulus message:
