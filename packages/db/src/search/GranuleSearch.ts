@@ -44,45 +44,46 @@ export class GranuleSearch extends BaseSearch {
    */
   protected buildBasicQuery(knex: Knex)
     : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
+      cteQueryBuilder: Knex.QueryBuilder,
     } {
-    const {
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-    } = TableNames;
-    const countQuery = knex(this.tableName)
-      .count('*');
+    // const {
+    //   collections: collectionsTable,
+    //   providers: providersTable,
+    //   pdrs: pdrsTable,
+    // } = TableNames;
+    // const countQuery = knex(this.tableName)
+    //   .count('*');
 
-    const searchQuery = knex(this.tableName)
-      .select(`${this.tableName}.*`)
-      .select({
-        providerName: `${providersTable}.name`,
-        collectionName: `${collectionsTable}.name`,
-        collectionVersion: `${collectionsTable}.version`,
-        pdrName: `${pdrsTable}.name`,
-      })
-      .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    // const searchQuery = knex(this.tableName)
+    //   .select(`${this.tableName}.*`)
+    //   .select({
+    //     providerName: `${providersTable}.name`,
+    //     collectionName: `${collectionsTable}.name`,
+    //     collectionVersion: `${collectionsTable}.version`,
+    //     pdrName: `${pdrsTable}.name`,
+    //   })
+    //   .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
 
-    if (this.searchCollection()) {
-      countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-    }
+    // if (this.searchCollection()) {
+    //   countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    // }
 
-    if (this.searchProvider()) {
-      countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-      searchQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-    } else {
-      searchQuery.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-    }
+    // if (this.searchProvider()) {
+    //   countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    //   searchQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    // } else {
+    //   searchQuery.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    // }
 
-    if (this.searchPdr()) {
-      countQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-      searchQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-    } else {
-      searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-    }
-    return { countQuery, searchQuery };
+    // if (this.searchPdr()) {
+    //   countQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+    //   searchQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+    // } else {
+    //   searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+    // }
+    // return { countQuery, searchQuery };
+    const cteQueryBuilder = knex.select('*').from(this.tableName);
+    return { cteQueryBuilder };
   }
 
   /**
@@ -94,18 +95,73 @@ export class GranuleSearch extends BaseSearch {
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `%${infix}%`));
+      cteQueryBuilder.whereLike(`${this.tableName}.granule_id`, `%${infix}%`);
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `${prefix}%`));
+      cteQueryBuilder.whereLike(`${this.tableName}.granule_id`, `${prefix}%`);
     }
+  }
+
+  protected buildJoins(params: {
+    baseQuery: Knex.QueryBuilder,
+    cteName: string,
+  }): Knex.QueryBuilder {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+    } = TableNames;
+    const { baseQuery, cteName } = params;
+  
+      baseQuery.select({
+        providerName: `${providersTable}.name`,
+        collectionName: `${collectionsTable}.name`,
+        collectionVersion: `${collectionsTable}.version`,
+        pdrName: `${pdrsTable}.name`,
+      });
+  
+    if (this.searchCollection()) {
+      baseQuery.innerJoin(
+        collectionsTable,
+        `${cteName}.collection_cumulus_id`,
+        `${collectionsTable}.cumulus_id`
+      );
+    }
+  
+    if (this.searchProvider()) {
+      baseQuery.innerJoin(
+        providersTable,
+        `${cteName}.provider_cumulus_id`,
+        `${providersTable}.cumulus_id`
+      );
+    } else {
+      baseQuery.leftJoin(
+        providersTable,
+        `${cteName}.provider_cumulus_id`,
+        `${providersTable}.cumulus_id`
+      );
+    }
+  
+    if (this.searchPdr()) {
+      baseQuery.innerJoin(
+        pdrsTable,
+        `${cteName}.pdr_cumulus_id`,
+        `${pdrsTable}.cumulus_id`
+      );
+    } else {
+      baseQuery.leftJoin(
+        pdrsTable,
+        `${cteName}.pdr_cumulus_id`,
+        `${pdrsTable}.cumulus_id`
+      );
+    }
+    return baseQuery;
   }
 
   /**
@@ -121,11 +177,40 @@ export class GranuleSearch extends BaseSearch {
       countQuery: Knex.QueryBuilder,
       searchQuery: Knex.QueryBuilder,
     } {
-    const { countQuery, searchQuery } = this.buildBasicQuery(knex);
-    this.buildTermQuery({ countQuery, searchQuery });
-    this.buildTermsQuery({ countQuery, searchQuery });
-    this.buildRangeQuery({ knex, countQuery, searchQuery });
+      // const {
+      //   collections: collectionsTable,
+      //   providers: providersTable,
+      //   pdrs: pdrsTable,
+      // } = TableNames;
+    // const { countQuery, searchQuery } = this.buildBasicQuery(knex);
+    // this.buildTermQuery({ countQuery, searchQuery });
+    // this.buildTermsQuery({ countQuery, searchQuery });
+    // this.buildRangeQuery({ knex, countQuery, searchQuery });
 
+    // log.debug(`buildSearchForActiveCollections returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
+    // return { countQuery, searchQuery };
+    const { cteQueryBuilder } = this.buildBasicQuery(knex);
+  
+    this.buildTermQuery({ cteQueryBuilder });
+    this.buildTermsQuery({ cteQueryBuilder });
+    this.buildRangeQuery({ knex, cteQueryBuilder });
+  
+    const cteName = `${this.tableName}_cte`;
+    const baseCTE = knex.with(cteName, cteQueryBuilder);
+  
+    const searchQuery = this.buildJoins({
+      baseQuery: baseCTE.select(`${cteName}.*`),
+      cteName,
+    });
+    
+    const countQuery = baseCTE.countDistinct(`${cteName}.cumulus_id as count`);
+
+    this.buildSortQuery({ searchQuery });
+  
+    const { limit, offset } = this.dbQueryParameters;
+    if (limit) searchQuery.limit(limit);
+    if (offset) searchQuery.offset(offset);
+  
     log.debug(`buildSearchForActiveCollections returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
