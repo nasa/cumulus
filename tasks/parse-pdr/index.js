@@ -239,7 +239,6 @@ const buildPdrDocument = (rawPdr) => {
 
   return pvlToJS(cleanedPdr);
 };
-// TODO - Holy hell fix this docstring
 /**
 * Parse a PDR
 * See schemas/input.json for detailed input schema
