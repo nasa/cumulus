@@ -9,6 +9,8 @@
 
 const has = require('lodash/has');
 const omit = require('lodash/omit');
+const isString = require('lodash/isString');
+const isError = require('lodash/isError');
 const { fromNodeProviderChain } = require('@aws-sdk/credential-providers');
 const elasticsearch = require('@elastic/elasticsearch');
 
@@ -28,6 +30,68 @@ const defaultIndexAlias = 'cumulus-alias';
 const multipleRecordFoundString = 'More than one record was found!';
 const recordNotFoundString = 'Record not found';
 const logger = new Logger({ sender: '@cumulus/es-client/search' });
+
+class HttpError extends Error {
+  constructor(statusCode, message) {
+    super(message);
+    this.statusCode = statusCode;
+    this.name = 'HttpError';
+  }
+}
+
+/**
+ * Sanitizes sensitive data in error messages or logs
+ *
+ * @param {Error|string} input - The error object or message to sanitize
+ * @returns {Error|string} - Sanitized error or message
+ */
+const sanitizeSensitive = (input) => {
+  const sensitiveFields = [
+    `${process.env.METRICS_ES_USER}:${process.env.METRICS_ES_PASS}`,
+  ].filter(Boolean);
+
+  let message = isString(input) ? input : input.message || input.toString();
+
+  const escapeRegExp = (string) => string.replace(/[$()*+.?[\\\]^{|}-]/g, '\\$&');
+
+  sensitiveFields.forEach((field) => {
+    if (field) {
+      const pattern = `(^|\\s|[^a-zA-Z0-9_])(${escapeRegExp(field)})($|\\s|[^a-zA-Z0-9_])`;
+      message = message.replace(new RegExp(pattern, 'g'), '$1*****$3');
+    }
+  });
+
+  if (isString(input)) {
+    return message;
+  }
+
+  const sanitizedError = new Error(message);
+  sanitizedError.stack = input.stack;
+  return sanitizedError;
+};
+
+/**
+ * Custom logger for elasticsearch client to sanitize sensitive data
+ */
+class EsCustomLogger {
+  constructor() {
+    this.levels = ['error', 'warning']; // Log only errors and warnings
+  }
+
+  error(message) {
+    logger.error(sanitizeSensitive(message));
+  }
+
+  warning(message) {
+    logger.warn(sanitizeSensitive(message));
+  }
+
+  info() {}
+
+  debug() {}
+
+  trace() {}
+}
 
 /**
  * Returns the local address of elasticsearch based on
@@ -102,12 +166,14 @@ const esMetricsConfig = () => {
     throw new Error('ELK Metrics stack not configured');
   }
 
-  const node = `https://${process.env.METRICS_ES_USER}:${
-    process.env.METRICS_ES_PASS}@${process.env.METRICS_ES_HOST}`;
+  const encodedUser = encodeURIComponent(process.env.METRICS_ES_USER);
+  const encodedPass = encodeURIComponent(process.env.METRICS_ES_PASS);
+  const node = `https://${encodedUser}:${encodedPass}@${process.env.METRICS_ES_HOST}`;
 
   return {
     node,
     requestTimeout: 50000,
+    log: EsCustomLogger,
   };
 };
 
@@ -329,6 +395,7 @@ class BaseSearch {
   }
 
   async get(id, parentId) {
+    const esCustomLogger = new EsCustomLogger();
     const body = {
       query: {
         bool: {
@@ -358,23 +425,31 @@ class BaseSearch {
       await this.initializeEsClient();
     }
 
-    const result = await this.client.search({
-      index: this.index,
-      type: this.type,
-      body,
-    })
-      .then((response) => response.body);
+    try {
+      const result = await this.client.search({
+        index: this.index,
+        type: this.type,
+        body,
+      })
+        .then((response) => response.body);
 
-    if (result.hits.total > 1) {
-      return { detail: multipleRecordFoundString };
-    }
-    if (result.hits.total === 0) {
-      return { detail: recordNotFoundString };
-    }
+      if (result.hits.total > 1) {
+        return { detail: multipleRecordFoundString };
+      }
+      if (result.hits.total === 0) {
+        return { detail: recordNotFoundString };
+      }
 
-    const resp = result.hits.hits[0]._source;
-    resp._id = result.hits.hits[0]._id;
-    return resp;
+      const resp = result.hits.hits[0]._source;
+      resp._id = result.hits.hits[0]._id;
+      return resp;
+    } catch (error) {
+      esCustomLogger.error(sanitizeSensitive(error));
+      if (error.meta?.statusCode === 401) {
+        throw new HttpError(401, 'Invalid credentials');
+      }
+      throw sanitizeSensitive(error);
+    }
   }
 
   async exists(id, parentId) {
@@ -408,7 +483,13 @@ class BaseSearch {
         results: hits.map((s) => s._source),
       };
     } catch (error) {
-      return error;
+      const esCustomLogger = new EsCustomLogger();
+      esCustomLogger.error(sanitizeSensitive(error));
+
+      if (error.meta?.statusCode === 401) {
+        throw new HttpError(401, 'Invalid credentials');
+      }
+      throw sanitizeSensitive(error);
     }
   }
 
@@ -431,7 +512,13 @@ class BaseSearch {
         counts: result.body.aggregations,
       };
     } catch (error) {
-      return error;
+      const esCustomLogger = new EsCustomLogger();
+      esCustomLogger.error(sanitizeSensitive(error));
+
+      if (error.meta?.statusCode === 401) {
+        throw new HttpError(401, 'Invalid credentials');
+      }
+      throw sanitizeSensitive(error);
     }
   }
 }
@@ -461,4 +548,6 @@ module.exports = {
   multipleRecordFoundString,
   recordNotFoundString,
   getLocalEsHost,
+  sanitizeSensitive,
+  isError,
 };
