@@ -291,6 +291,9 @@ describe('Ingesting from PDR', () => {
           });
 
           expectedParsePdrOutput.pdr.name = pdrFilename;
+          expectedParsePdrOutput.granules.forEach((granule) => {
+            granule.producerGranuleId = granule.granuleId;
+          });
         } catch (error) {
           beforeAllFailed = error;
         }
