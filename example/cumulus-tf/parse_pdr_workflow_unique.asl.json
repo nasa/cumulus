@@ -1,0 +1,244 @@
+{
+  "Comment": "Parse a given PDR",
+  "StartAt": "ParsePdr",
+  "States": {
+    "ParsePdr": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "provider": "{$.meta.provider}",
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "uniquifyGranuleId": true
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${parse_pdr_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "QueueGranules"
+    },
+    "QueueGranules": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "provider": "{$.meta.provider}",
+            "internalBucket": "{$.meta.buckets.internal.name}",
+            "stackName": "{$.meta.stack}",
+            "granuleIngestWorkflow": "${ingest_workflow_name}",
+            "queueUrl": "${start_sf_queue_url}",
+            "preferredQueueBatchSize": "{$.meta.queueBatchSize}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${queue_granules_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "CheckStatus"
+    },
+    "CheckStatus": {
+      "Type": "Task",
+      "Resource": "${pdr_status_check_task_arn}",
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                },
+                {
+                  "source": "{$.isFinished}",
+                  "destination": "{$.meta.isPdrFinished}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "CheckAgainChoice"
+    },
+    "CheckAgainChoice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.meta.isPdrFinished",
+          "BooleanEquals": false,
+          "Next": "PdrStatusReport"
+        },
+        {
+          "Variable": "$.meta.isPdrFinished",
+          "BooleanEquals": true,
+          "Next": "SendPAN"
+        }
+      ],
+      "Default": "WorkflowSucceeded"
+    },
+    "PdrStatusReport": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "cumulus_message": {
+              "input": "{$}"
+            }
+          }
+        }
+      },
+      "ResultPath": null,
+      "Type": "Task",
+      "Resource": "${sf_sqs_report_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "WaitForSomeTime"
+    },
+    "WaitForSomeTime": {
+      "Type": "Wait",
+      "Seconds": 10,
+      "Next": "CheckStatus"
+    },
+    "SendPAN": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "provider": "{$.meta.provider}",
+            "panType": "longPan",
+            "remoteDir": "{$.meta.collection.meta.panPath}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${send_pan_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "WorkflowSucceeded"
+    },
+    "WorkflowFailed": {
+      "Type": "Fail",
+      "Cause": "Workflow failed"
+    },
+    "WorkflowSucceeded": {
+      "Type": "Succeed"
+    }
+  }
+}

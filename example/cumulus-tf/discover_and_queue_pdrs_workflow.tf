@@ -27,10 +27,10 @@ module "discover_and_queue_pdrs_unique_workflow" {
   tags            = local.tags
 
   state_machine_definition = templatefile(
-    "${path.module}/discover_and_queue_pdrs_workflow_unique.asl.json",
+    "${path.module}/discover_and_queue_pdrs_workflow.asl.json",
     {
       discover_pdrs_task_arn: module.cumulus.discover_pdrs_task.task_arn,
-      parse_pdr_workflow_name: module.parse_pdr_workflow.name,
+      parse_pdr_workflow_name: module.parse_pdr_workflow_unique.name,
       queue_pdrs_task_arn: module.cumulus.queue_pdrs_task.task_arn,
       start_sf_queue_url: module.cumulus.start_sf_queue_url
     }

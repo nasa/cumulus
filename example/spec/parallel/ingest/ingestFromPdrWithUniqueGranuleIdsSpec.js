@@ -2,7 +2,7 @@
 
 /**
  * End to end ingest from discovering a PDR,
- * configured to have unique granule ids.
+ * **configured to have unique granule ids.**
  *
  * Kick off discover and queue pdrs which:
  * Discovers 1 PDR which has 2 file groups
@@ -91,7 +91,8 @@ const testDataGranule2Id = 'MOD09GQ.A2017224.h27v08.006.2017227165029'.replace(g
 
 describe('Ingesting from PDR', () => {
   const providersDir = './data/providers/s3/';
-  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006-unique';
+  const granuleIds = [];
 
   let beforeAllFailed;
   let config;
@@ -168,7 +169,7 @@ describe('Ingesting from PDR', () => {
     // clean up stack state added by test
     const collectionId = constructCollectionId(addedCollections[0].name, addedCollections[0].version);
     await Promise.all(
-      [testDataGranuleId, testDataGranule2Id].map((granuleId) =>
+      granuleIds.map((granuleId) =>
         waitForGranuleAndDelete(
           config.stackName,
           granuleId,
@@ -257,7 +258,7 @@ describe('Ingesting from PDR', () => {
      * one running task, which is the ParsePdr workflow. The payload has the arn of the
      * running workflow, so use that to get the status.
      */
-    describe('The ParsePdr workflow', () => {
+    describe('The ParsePdrUnique workflow', () => {
       let parsePdrExecutionStatus;
       let parseLambdaOutput;
       let queueGranulesOutput;
@@ -290,8 +291,9 @@ describe('Ingesting from PDR', () => {
             file.name = file.name.replace(testDataGranuleId, testDataGranule2Id);
             return file;
           });
-
           expectedParsePdrOutput.pdr.name = pdrFilename;
+          expectedParsePdrOutput.granules[0].producerGranuleId = expectedParsePdrOutput.granules[0].granuleId;
+          expectedParsePdrOutput.granules[1].producerGranuleId = expectedParsePdrOutput.granules[1].granuleId;
         } catch (error) {
           beforeAllFailed = error;
         }
@@ -321,6 +323,11 @@ describe('Ingesting from PDR', () => {
               parsePdrExecutionArn,
               'ParsePdr'
             );
+            const outputGranules = parseLambdaOutput.payload.granules;
+            outputGranules.forEach((granule, index) => {
+              granuleIds.push(granule.granuleId);
+              expectedParsePdrOutput.granules[index].granuleId = granule.granuleId;
+            });
             expect(parseLambdaOutput.payload.granules).toEqual(expectedParsePdrOutput.granules);
             expectedParsePdrOutput.pdr.time = parseLambdaOutput.payload?.pdr?.time;
             // size is different due to the DIRECTORY_ID updates in PDR
