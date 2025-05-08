@@ -166,7 +166,6 @@ const extractGranuleId = (fileName, regex) => {
   return fileName;
 };
 
-// TODO - Typing
 /**
  * Convert PDR FILE_GROUP to granule object.
  *
@@ -216,7 +215,7 @@ const convertFileGroupToGranule = async ({
   let granuleId = extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction);
   const producerGranuleId = granuleId;
   if (uniquifyGranuleId) {
-    granuleId = generateUniqueGranuleId(granuleId, `${dataType}___${version}`, 8); // TODO - compose this via function
+    granuleId = generateUniqueGranuleId(granuleId, `${dataType}___${version}`, 8);
   }
 
   return {
