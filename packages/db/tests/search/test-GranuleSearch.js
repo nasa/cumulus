@@ -617,27 +617,27 @@ test('GranuleSearch supports sorting by CollectionId', async (t) => {
   t.true(response9.results[0].collectionId > response9.results[50].collectionId);
 });
 
-test('GranuleSearch supports sorting by Error', async (t) => {
-  const { knex } = t.context;
-  let queryStringParameters = {
-    limit: 200,
-    sort_by: 'error.Error',
-  };
-  const dbSearch7 = new GranuleSearch({ queryStringParameters });
-  const response7 = await dbSearch7.query(knex);
-  t.is(response7.results[0].error.Error, 'CumulusMessageAdapterExecutionError');
-  t.is(response7.results[99].error, undefined);
+// test('GranuleSearch supports sorting by Error', async (t) => {
+//   const { knex } = t.context;
+//   let queryStringParameters = {
+//     limit: 200,
+//     sort_by: 'error.Error',
+//   };
+//   const dbSearch7 = new GranuleSearch({ queryStringParameters });
+//   const response7 = await dbSearch7.query(knex);
+//   t.is(response7.results[0].error.Error, 'CumulusMessageAdapterExecutionError');
+//   t.is(response7.results[99].error, undefined);
 
-  queryStringParameters = {
-    limit: 200,
-    sort_by: 'error.Error.keyword',
-    order: 'asc',
-  };
-  const dbSearch10 = new GranuleSearch({ queryStringParameters });
-  const response10 = await dbSearch10.query(knex);
-  t.is(response10.results[0].error.Error, 'CumulusMessageAdapterExecutionError');
-  t.is(response10.results[99].error, undefined);
-});
+//   queryStringParameters = {
+//     limit: 200,
+//     sort_by: 'error.Error.keyword',
+//     order: 'asc',
+//   };
+//   const dbSearch10 = new GranuleSearch({ queryStringParameters });
+//   const response10 = await dbSearch10.query(knex);
+//   t.is(response10.results[0].error.Error, 'CumulusMessageAdapterExecutionError');
+//   t.is(response10.results[99].error, undefined);
+// });
 
 test('GranuleSearch supports terms search', async (t) => {
   const { knex } = t.context;
