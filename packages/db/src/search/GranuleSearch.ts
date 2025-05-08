@@ -1,7 +1,6 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
-
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import Logger from '@cumulus/logger';
 
@@ -36,6 +35,22 @@ export class GranuleSearch extends BaseSearch {
     super(event, 'granule');
   }
 
+  // temp helper for understanding query performance
+  private async explainAnalyzeQuery(queryBuilder: Knex.QueryBuilder, knex: Knex) {
+    const sql = queryBuilder.toSQL().sql;
+    const bindings = queryBuilder.toSQL().bindings;
+  
+    const explainQuery = knex.raw(`EXPLAIN (ANALYZE, BUFFERS) ${sql}`, bindings);
+    const result = await explainQuery;
+
+    const rows: Array<{ [key: string]: any }> = result.rows || result;
+  
+    console.log('--- EXPLAIN ANALYZE OUTPUT ---');
+    rows.forEach(row => {
+      console.log(row['QUERY PLAN']);
+    });
+  }
+
   /**
    * Build basic query
    *
@@ -44,45 +59,27 @@ export class GranuleSearch extends BaseSearch {
    */
   protected buildBasicQuery(knex: Knex)
     : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
+      cteQueryBuilder: Knex.QueryBuilder,
     } {
     const {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
     } = TableNames;
-    const countQuery = knex(this.tableName)
-      .count('*');
-
-    const searchQuery = knex(this.tableName)
-      .select(`${this.tableName}.*`)
-      .select({
-        providerName: `${providersTable}.name`,
-        collectionName: `${collectionsTable}.name`,
-        collectionVersion: `${collectionsTable}.version`,
-        pdrName: `${pdrsTable}.name`,
-      })
-      .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-
-    if (this.searchCollection()) {
-      countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-    }
-
-    if (this.searchProvider()) {
-      countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-      searchQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-    } else {
-      searchQuery.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-    }
-
-    if (this.searchPdr()) {
-      countQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-      searchQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-    } else {
-      searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-    }
-    return { countQuery, searchQuery };
+  
+    const cteQueryBuilder = knex(this.tableName)
+      .select(
+        `${this.tableName}.*`,
+        `${collectionsTable}.name as collectionName`,
+        `${collectionsTable}.version as collectionVersion`,
+        `${providersTable}.name as providerName`,
+        `${pdrsTable}.name as pdrName`,
+      )
+      .leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
+      .leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`)
+      .leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`)
+  
+    return { cteQueryBuilder };
   }
 
   /**
@@ -94,18 +91,165 @@ export class GranuleSearch extends BaseSearch {
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `%${infix}%`));
+      cteQueryBuilder.whereLike(`${this.tableName}.granule_id`, `%${infix}%`);
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `${prefix}%`));
+      cteQueryBuilder.whereLike(`${this.tableName}.granule_id`, `${prefix}%`);
     }
+  }
+
+  protected buildJoins(params: { searchQuery: Knex.QueryBuilder; cteName: string }): Knex.QueryBuilder {
+    return params.searchQuery;
+  }
+  
+
+  protected buildTermQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          cteQueryBuilder.where(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          cteQueryBuilder.where(`${collectionsTable}.version`, value);
+          break;
+        case 'executionArn':
+          cteQueryBuilder.where(`${executionsTable}.arn`, value);
+          break;
+        case 'providerName':
+          cteQueryBuilder.where(`${providersTable}.name`, value);
+          break;
+        case 'pdrName':
+          cteQueryBuilder.where(`${pdrsTable}.name`, value);
+          break;
+        case 'error.Error':
+          cteQueryBuilder.whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
+          break;
+        case 'asyncOperationId':
+          cteQueryBuilder.where(`${asyncOperationsTable}.id`, value);
+          break;
+        case 'parentArn':
+          cteQueryBuilder.where(`${executionsTable}.parentArn`, value);
+          break;
+        default:
+          cteQueryBuilder.where(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+  
+  protected buildTermsQuery(params: { cteQueryBuilder: Knex.QueryBuilder; dbQueryParameters?: DbQueryParameters; }) {
+  const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(terms).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          cteQueryBuilder.whereIn(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          cteQueryBuilder.whereIn(`${collectionsTable}.version`, value);
+          break;
+        case 'executionArn':
+          cteQueryBuilder.whereIn(`${executionsTable}.arn`, value);
+          break;
+        case 'providerName':
+          cteQueryBuilder.whereIn(`${providersTable}.name`, value);
+          break;
+        case 'pdrName':
+          cteQueryBuilder.whereIn(`${pdrsTable}.name`, value);
+          break;
+        case 'error.Error':
+          if (Array.isArray(value) && value.length > 0) {
+            cteQueryBuilder.whereRaw(
+              `${this.tableName}.error->>'Error' IN (${value.map(() => '?').join(',')})`,
+              value
+            );
+          }          
+          break;
+        case 'asyncOperationId':
+          cteQueryBuilder.whereIn(`${asyncOperationsTable}.id`, value);
+          break;
+        case 'parentArn':
+          cteQueryBuilder.whereIn(`${executionsTable}.parentArn`, value);
+          break;
+        default:
+          cteQueryBuilder.whereIn(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+  
+  protected buildNotMatchQuery(params: { cteQueryBuilder: Knex.QueryBuilder; dbQueryParameters?: DbQueryParameters; }) {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          cteQueryBuilder.whereNot(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          cteQueryBuilder.whereNot(`${collectionsTable}.version`, value);
+          break;
+        case 'executionArn':
+          cteQueryBuilder.whereNot(`${executionsTable}.arn`, value);
+          break;
+        case 'providerName':
+          cteQueryBuilder.whereNot(`${providersTable}.name`, value);
+          break;
+        case 'pdrName':
+          cteQueryBuilder.whereNot(`${pdrsTable}.name`, value);
+          break;
+        case 'error.Error':
+          cteQueryBuilder.whereRaw(`${this.tableName}.error->>'Error' != ?`, value);
+          break;
+        case 'asyncOperationId':
+          cteQueryBuilder.whereNot(`${asyncOperationsTable}.id`, value);
+          break;
+        case 'parentArn':
+          cteQueryBuilder.whereNot(`${executionsTable}.parentArn`, value);
+          break;
+        default:
+          cteQueryBuilder.whereNot(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
   }
 
   /**
@@ -121,12 +265,59 @@ export class GranuleSearch extends BaseSearch {
       countQuery: Knex.QueryBuilder,
       searchQuery: Knex.QueryBuilder,
     } {
-    const { countQuery, searchQuery } = this.buildBasicQuery(knex);
-    this.buildTermQuery({ countQuery, searchQuery });
-    this.buildTermsQuery({ countQuery, searchQuery });
-    this.buildRangeQuery({ knex, countQuery, searchQuery });
+    const { cteQueryBuilder } = this.buildBasicQuery(knex);
+  
+    this.buildTermQuery({ cteQueryBuilder });
+    this.buildTermsQuery({ cteQueryBuilder });
+    this.buildRangeQuery({ knex, cteQueryBuilder });
+  
+    const cteName = `${this.tableName}_cte`;
+    const baseCTE = knex.with(cteName, cteQueryBuilder);
+  
+    const searchQuery = this.buildJoins({
+      searchQuery: baseCTE.select(`${cteName}.*`),
+      cteName,
+    });
+    
+    const countQuery = baseCTE.countDistinct(`${cteName}.cumulus_id as count`);
 
+    this.buildSortQuery({ searchQuery, cteName });
+  
+    const { limit, offset } = this.dbQueryParameters;
+    if (limit) searchQuery.limit(limit);
+    if (offset) searchQuery.offset(offset);
+  
     log.debug(`buildSearchForActiveCollections returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
+    return { countQuery, searchQuery };
+  }
+
+  protected buildSearch(knex: Knex) {
+    const { cteQueryBuilder } = this.buildBasicQuery(knex);
+    this.buildTermQuery({ cteQueryBuilder });
+    this.buildTermsQuery({ cteQueryBuilder });
+    this.buildNotMatchQuery({ cteQueryBuilder });
+    this.buildRangeQuery({ knex, cteQueryBuilder });
+    this.buildExistsQuery({ cteQueryBuilder });
+    this.buildInfixPrefixQuery({ cteQueryBuilder });
+  
+    const cteName = `${this.tableName}_cte`;
+  
+    const searchQuery = knex.with(cteName, cteQueryBuilder)
+      .select(`${cteName}.*`)
+      .from(cteName);
+  
+    this.buildJoins({ searchQuery, cteName });
+  
+    const countQuery = knex.with(cteName, cteQueryBuilder)
+      .from(cteName)
+      .countDistinct(`${cteName}.cumulus_id as count`);
+  
+    this.buildSortQuery({ searchQuery, cteName });
+  
+    if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
+    if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
+  
+    log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
 

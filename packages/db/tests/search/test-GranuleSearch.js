@@ -627,7 +627,6 @@ test('GranuleSearch supports sorting by Error', async (t) => {
   const response7 = await dbSearch7.query(knex);
   t.is(response7.results[0].error.Error, 'CumulusMessageAdapterExecutionError');
   t.is(response7.results[99].error, undefined);
-
   queryStringParameters = {
     limit: 200,
     sort_by: 'error.Error.keyword',
