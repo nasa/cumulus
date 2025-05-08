@@ -380,7 +380,7 @@ test.serial(
     await setUpTestPdrAndValidate(t).catch(t.fail);
 
     const payload = structuredClone(t.context.payload);
-    payload.config.uniquifyGranuleId = 'true';
+    payload.config.uniquifyGranuleId = true;
     const result = await parsePdr(payload);
     await validateOutput(t, result).catch(t.fail);
 
@@ -445,7 +445,7 @@ test.serial(
     await setUpTestPdrAndValidate(t).catch(t.fail);
 
     const payload = structuredClone(t.context.payload);
-    payload.config.uniquifyGranuleId = 'true';
+    payload.config.uniquifyGranuleId = true;
     const result = await parsePdr(payload);
     await validateOutput(t, result).catch(t.fail);
 

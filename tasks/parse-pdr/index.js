@@ -19,8 +19,7 @@ const {
 } = require('@cumulus/api-client');
 const Logger = require('@cumulus/logger');
 
-const log = new Logger({ sender: 'tasks/parse-pdr'});
-
+const log = new Logger({ sender: 'tasks/parse-pdr' });
 
 const getProviderByHost = async ({ prefix, host }) => {
   const { body } = await providersApi.getProviders({
@@ -272,7 +271,7 @@ const parsePdr = async ({ config, input }) => {
   }
 
   const pdrDocument = buildPdrDocument(rawPdr);
-  const uniquifyGranuleId = get(config, 'uniquifyGranuleId', false) === 'true';
+  const uniquifyGranuleId = get(config, 'uniquifyGranuleId', false) === true;
   const allPdrGranules = await Promise.all(
     pdrDocument.objects('FILE_GROUP').map((fileGroup) =>
       convertFileGroupToGranule({
