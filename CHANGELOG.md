@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Handle Granules with Identical producerGranuleId in Different Collections
 
+### Breaking Changes
+
+- **CUMULUS-4072**
+  - Updated `parse-pdr` such that if the `uniquifyGranules` configuration parameter is not set to `true` , and a duplicate granuleId is created as part of the output after passing the `granuleIdFilter`, the task will throw with an error.
+
+### Added
+
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules` table.
   - Added `producerGranuleId` property to `granule` record schema.
@@ -14,6 +21,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `queue-granules` task to set producerGranuleId = granuleId if not set.
 - **CUMULUS-4061**
   - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a hashed/'uniquified' granuleID
+- **CUMULUS-4072**
+  - Updated `parse-pdr` task component to have the following behaviors:
+    - Always populate producerGranuleId from the incoming parsed granuleId
+    - If `uniquifyGranules` configuration value is set to true, parse-PDR will update the granuleId for all found granules to have a unique granule hash appended to the existing ID
+    - Updated `parse-pdr` such that if the `uniquifyGranules` configuration parameter is not set to `true` , and a duplicate granuleId is created as part of the output after passing the `granuleIdFilter`, the task will throw with an error.
+  - Added `ingestFromPdrWithUniqueGranuleIdsSpec.js` to the spec tests to demonstrate the ingest workflow works as expected with uniqueified granuleIds and producerGranuleIds set.
 - **CUMULUS-4073**
   - Adds AddUniqueGranuleId task to `ingest` terraform module for deployment with Core.
   This task will update a payload of existing granules to have 'uniquified' IDs and preserve the original
