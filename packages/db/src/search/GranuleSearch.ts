@@ -109,7 +109,7 @@ export class GranuleSearch extends BaseSearch {
   }
 
   protected buildJoins(params: {
-    baseQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
     cteName: string,
   }): Knex.QueryBuilder {
     const {
@@ -117,31 +117,37 @@ export class GranuleSearch extends BaseSearch {
       providers: providersTable,
       pdrs: pdrsTable,
     } = TableNames;
-    const { baseQuery, cteName } = params;
-  
-      baseQuery.select({
-        providerName: `${providersTable}.name`,
-        collectionName: `${collectionsTable}.name`,
-        collectionVersion: `${collectionsTable}.version`,
-        pdrName: `${pdrsTable}.name`,
-      });
-  
+    const { searchQuery, cteName } = params;
+    searchQuery.select({
+      providerName: `${providersTable}.name`,
+      collectionName: `${collectionsTable}.name`,
+      collectionVersion: `${collectionsTable}.version`,
+      pdrName: `${pdrsTable}.name`,
+    })
+    .from(cteName);    
+
     if (this.searchCollection()) {
-      baseQuery.innerJoin(
+      searchQuery.innerJoin(
+        collectionsTable,
+        `${cteName}.collection_cumulus_id`,
+        `${collectionsTable}.cumulus_id`
+      );
+    } else {
+      searchQuery.leftJoin(
         collectionsTable,
         `${cteName}.collection_cumulus_id`,
         `${collectionsTable}.cumulus_id`
       );
     }
-  
+
     if (this.searchProvider()) {
-      baseQuery.innerJoin(
+      searchQuery.innerJoin(
         providersTable,
         `${cteName}.provider_cumulus_id`,
         `${providersTable}.cumulus_id`
       );
     } else {
-      baseQuery.leftJoin(
+      searchQuery.leftJoin(
         providersTable,
         `${cteName}.provider_cumulus_id`,
         `${providersTable}.cumulus_id`
@@ -149,19 +155,21 @@ export class GranuleSearch extends BaseSearch {
     }
   
     if (this.searchPdr()) {
-      baseQuery.innerJoin(
+      searchQuery.innerJoin(
         pdrsTable,
         `${cteName}.pdr_cumulus_id`,
         `${pdrsTable}.cumulus_id`
       );
     } else {
-      baseQuery.leftJoin(
+      searchQuery.leftJoin(
         pdrsTable,
         `${cteName}.pdr_cumulus_id`,
         `${pdrsTable}.cumulus_id`
       );
     }
-    return baseQuery;
+  
+    log.debug(`searchQuery buildjoin ${searchQuery.toSQL().sql}`);
+    return searchQuery;
   }
 
   /**
@@ -197,9 +205,9 @@ export class GranuleSearch extends BaseSearch {
   
     const cteName = `${this.tableName}_cte`;
     const baseCTE = knex.with(cteName, cteQueryBuilder);
-  
+    
     const searchQuery = this.buildJoins({
-      baseQuery: baseCTE.select(`${cteName}.*`),
+      searchQuery: baseCTE.select(`${cteName}.*`),
       cteName,
     });
     
