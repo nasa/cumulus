@@ -1,12 +1,11 @@
 import { Knex } from 'knex';
 import get from 'lodash/get';
-// import omit from 'lodash/omit';
 import Logger from '@cumulus/logger';
 
 import { BaseRecord } from '../types/base';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
-import { DbQueryParameters, /*QueriableType,*/ QueryEvent, QueryStringParameters } from '../types/search';
+import { DbQueryParameters, QueryEvent, QueryStringParameters } from '../types/search';
 import { convertQueryStringToDbQueryParameters } from './queries';
 
 const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
@@ -138,7 +137,7 @@ abstract class BaseSearch {
     .from(cteName)
     .countDistinct(`${cteName}.cumulus_id as count`);
   
-    this.buildSortQuery({ searchQuery });
+    this.buildSortQuery({ searchQuery, cteName });
     if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
     if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
     log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
@@ -167,11 +166,6 @@ abstract class BaseSearch {
   protected buildBasicQuery(knex: Knex): {
     cteQueryBuilder: Knex.QueryBuilder,
   } {
-    // const countQuery = knex(this.tableName)
-    //   .count('*');
-
-    // const searchQuery = knex(this.tableName)
-    //   .select(`${this.tableName}.*`);
     const cteQueryBuilder = knex.select('*').from(this.tableName);
     return { cteQueryBuilder };
   }
@@ -299,16 +293,19 @@ abstract class BaseSearch {
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
-  protected buildSortQuery(params: {
+   protected buildSortQuery(params: {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
+    cteName?: string,
   }) {
-    const { searchQuery, dbQueryParameters } = params;
+    const { searchQuery, dbQueryParameters, cteName } = params;
     const { sort } = dbQueryParameters || this.dbQueryParameters;
+    const table = cteName || this.tableName;
+  
     sort?.forEach((key) => {
       if (key.column.startsWith('error')) {
         searchQuery.orderByRaw(
-          `${this.tableName}.error ->> 'Error' ${key.order}`
+          `${table}.error ->> 'Error' ${key.order}`
         );
       } else if (dbQueryParameters?.collate) {
         searchQuery.orderByRaw(
