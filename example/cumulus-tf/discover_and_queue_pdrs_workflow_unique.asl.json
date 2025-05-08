@@ -1,0 +1,93 @@
+{
+  "Comment": "Discovers new PDRs from a given provider",
+  "StartAt": "DiscoverPdrs",
+  "States": {
+    "DiscoverPdrs": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "stack": "{$.meta.stack}",
+            "provider": "{$.meta.provider}",
+            "provider_path": "{$.meta.provider_path}",
+            "bucket": "{$.meta.buckets.internal.name}",
+            "uniquifyGranuleId": true
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${discover_pdrs_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "QueuePdrs"
+    },
+    "QueuePdrs": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "queueUrl": "${start_sf_queue_url}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "internalBucket": "{$.meta.buckets.internal.name}",
+            "stackName": "{$.meta.stack}",
+            "parsePdrWorkflow": "${parse_pdr_workflow_name}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${queue_pdrs_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "End": true
+    },
+    "WorkflowFailed": {
+      "Type": "Fail",
+      "Cause": "Workflow failed"
+    }
+  }
+}
