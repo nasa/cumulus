@@ -35,20 +35,21 @@ export class GranuleSearch extends BaseSearch {
     super(event, 'granule');
   }
 
-  // private async explainAnalyzeQuery(queryBuilder: Knex.QueryBuilder, knex: Knex) {
-  //   const sql = queryBuilder.toSQL().sql;
-  //   const bindings = queryBuilder.toSQL().bindings;
+  // temp helper for understanding query performance
+  private async explainAnalyzeQuery(queryBuilder: Knex.QueryBuilder, knex: Knex) {
+    const sql = queryBuilder.toSQL().sql;
+    const bindings = queryBuilder.toSQL().bindings;
   
-  //   const explainQuery = knex.raw(`EXPLAIN (ANALYZE, BUFFERS) ${sql}`, bindings);
-  //   const result = await explainQuery;
+    const explainQuery = knex.raw(`EXPLAIN (ANALYZE, BUFFERS) ${sql}`, bindings);
+    const result = await explainQuery;
 
-  //   const rows: Array<{ [key: string]: any }> = result.rows || result;
+    const rows: Array<{ [key: string]: any }> = result.rows || result;
   
-  //   console.log('--- EXPLAIN ANALYZE OUTPUT ---');
-  //   rows.forEach(row => {
-  //     console.log(row['QUERY PLAN']);
-  //   });
-  // }
+    console.log('--- EXPLAIN ANALYZE OUTPUT ---');
+    rows.forEach(row => {
+      console.log(row['QUERY PLAN']);
+    });
+  }
 
   /**
    * Build basic query
@@ -280,7 +281,7 @@ export class GranuleSearch extends BaseSearch {
     
     const countQuery = baseCTE.countDistinct(`${cteName}.cumulus_id as count`);
 
-    this.buildSortQuery({ searchQuery });
+    this.buildSortQuery({ searchQuery, cteName });
   
     const { limit, offset } = this.dbQueryParameters;
     if (limit) searchQuery.limit(limit);
@@ -311,12 +312,12 @@ export class GranuleSearch extends BaseSearch {
       .from(cteName)
       .countDistinct(`${cteName}.cumulus_id as count`);
   
-    this.buildSortQuery({ searchQuery });
+    this.buildSortQuery({ searchQuery, cteName });
   
     if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
     if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
   
-    log.debug(`buildSearch (override) returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
+    log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
 
