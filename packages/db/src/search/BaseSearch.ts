@@ -126,6 +126,9 @@ abstract class BaseSearch {
     this.buildExistsQuery({ cteQueryBuilder });
     this.buildInfixPrefixQuery({ cteQueryBuilder });
 
+    const { cteFilterQueryBuilder } = this.buildCTEbyFilter({ knex });
+    if (typeof cteFilterQueryBuilder !== 'undefined') log.debug(`cteFilterQueryBuilder ${cteFilterQueryBuilder.toSQL().sql}`);
+
     const cteName = `${this.tableName}_cte`;
     
     const searchQuery = knex.with(cteName, cteQueryBuilder)
@@ -278,6 +281,74 @@ abstract class BaseSearch {
         cteQueryBuilder.where(`${this.tableName}.${name}`, '<=', lte);
       }
     });
+  }
+
+  protected buildCTEbyFilter(params: {
+    knex: Knex,
+    dbQueryParameters?: DbQueryParameters,
+  }): {
+    cteFilterQueryBuilder: Knex.QueryBuilder | undefined,
+  } {
+    //const cteQueryBuilder = knex.select('*').from(this.tableName);
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;    
+
+    const { knex, dbQueryParameters } = params;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    let cteTableName = '';
+    let baseQuery : any;
+    let cteFilterQueryBuilder;
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          cteTableName = `${collectionsTable}_cte`;
+          baseQuery = knex.select('*').from(`${collectionsTable}`).where(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          cteTableName = `${collectionsTable}_cte`;
+          baseQuery = knex.select('*').from(`${collectionsTable}`).where(`${collectionsTable}.version`, value);
+          break;
+        case 'executionArn':
+          cteTableName = `${executionsTable}_cte`;
+          baseQuery = knex.select('*').from(`${executionsTable}`).where(`${executionsTable}.arn`, value);
+          break;
+        case 'parentArn':
+          cteTableName = `${executionsTable}_cte`;
+          baseQuery = knex.select('*').from(`${executionsTable}`).where(`${executionsTable}_parent.arn`, value);
+          break;
+        case 'providerName':
+          cteTableName = `${providersTable}_cte`;
+          baseQuery = knex.select('*').from(`${providersTable}`).where(`${providersTable}.name`, value);
+          break;
+        case 'pdrName':
+          cteTableName = `${pdrsTable}_cte`;
+          baseQuery = knex.select('*').from(`${pdrsTable}`).where(`${pdrsTable}.name`, value);
+          break;
+        case 'asyncOperationId':
+          cteTableName = `${asyncOperationsTable}_cte`;
+          baseQuery = knex.select('*').from(`${asyncOperationsTable}`).where(`${asyncOperationsTable}.id`, value);
+          break;
+        case 'error.Error':
+          cteTableName = `${this.tableName}_cte`;
+          baseQuery = knex.select('*').from(`${this.tableName}`).whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
+          break;
+        default:
+          cteTableName = `${this.tableName}_cte`;
+          baseQuery = knex.select('*').from(`${this.tableName}`).where(`${asyncOperationsTable}.id`, value);
+          break;
+      }
+    });
+
+    if (typeof baseQuery !== 'undefined') {
+      cteFilterQueryBuilder = knex.with(cteTableName, baseQuery);      
+    }
+    
+    return { cteFilterQueryBuilder };
   }
 
   /**
