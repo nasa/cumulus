@@ -1,10 +1,14 @@
+//@ts-check
+
 'use strict';
 
-const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const path = require('path');
 const get = require('lodash/get');
 const isNumber = require('lodash/isNumber');
 const isString = require('lodash/isString');
+
+const { generateUniqueGranuleId } = require('@cumulus/ingest/granule');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const S3 = require('@cumulus/aws-client/S3');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const { PDRParsingError } = require('@cumulus/errors');
@@ -13,6 +17,9 @@ const {
   collections: collectionsApi,
   providers: providersApi,
 } = require('@cumulus/api-client');
+const Logger = require('@cumulus/logger');
+
+const log = new Logger({ sender: 'tasks/parse-pdr' });
 
 const getProviderByHost = async ({ prefix, host }) => {
   const { body } = await providersApi.getProviders({
@@ -169,13 +176,14 @@ const extractGranuleId = (fileName, regex) => {
  * @param {string} params.prefix - stack prefix
  * @param {Object} params.fileGroup - PDR FILE_GROUP object
  * @param {string} params.pdrName - name of the PDR for error reporting
- * @param {Object} params.collectionConfigStore - collectionConfigStore
- * @returns {Object} granule object
+ * @param {boolean} params.uniquifyGranuleId
+ * @returns {Promise<Object>} - granule object
  */
 const convertFileGroupToGranule = async ({
   prefix,
   fileGroup,
   pdrName,
+  uniquifyGranuleId = true,
 }) => {
   if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
   const dataType = fileGroup.get('DATA_TYPE').value;
@@ -206,12 +214,19 @@ const convertFileGroupToGranule = async ({
     providerName = provider.id;
   }
 
+  let granuleId = extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction);
+  const producerGranuleId = granuleId;
+  if (uniquifyGranuleId) {
+    granuleId = generateUniqueGranuleId(granuleId, `${dataType}___${version}`, 8);
+  }
+
   return {
     dataType,
     version,
     files,
     provider: providerName,
-    granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
+    granuleId,
+    producerGranuleId,
     granuleSize: files.reduce((total, file) => total + file.size, 0),
   };
 };
@@ -225,7 +240,6 @@ const buildPdrDocument = (rawPdr) => {
 
   return pvlToJS(cleanedPdr);
 };
-
 /**
 * Parse a PDR
 * See schemas/input.json for detailed input schema
@@ -236,6 +250,8 @@ const buildPdrDocument = (rawPdr) => {
 * @param {string} event.config.pdrFolder - folder for the PDRs
 * @param {Object} event.config.provider - provider information
 * @param {Object} event.config.bucket - the internal S3 bucket
+* @param {Object} event.config.uniquifyGranuleId - boolean flag to set granule
+* uniqification behavior
 * @returns {Promise<Object>} - see schemas/output.json for detailed output schema
 * that is passed to the next task in the workflow
 **/
@@ -255,13 +271,14 @@ const parsePdr = async ({ config, input }) => {
   }
 
   const pdrDocument = buildPdrDocument(rawPdr);
-
+  const uniquifyGranuleId = get(config, 'uniquifyGranuleId', false) === true;
   const allPdrGranules = await Promise.all(
     pdrDocument.objects('FILE_GROUP').map((fileGroup) =>
       convertFileGroupToGranule({
         prefix: config.stack,
         fileGroup,
         pdrName: input.pdr.name,
+        uniquifyGranuleId,
       }))
   );
 
@@ -273,7 +290,18 @@ const parsePdr = async ({ config, input }) => {
 
   // Filter based on the granuleIdFilter, default to match all granules
   const granuleIdFilter = get(config, 'granuleIdFilter', '.');
+
   const granules = allPdrGranules.filter((g) => g.files[0].name.match(granuleIdFilter));
+  const uniqueGranuleIds = new Set();
+  if (!uniquifyGranuleId) {
+    granules.forEach((granule) => {
+      if (uniqueGranuleIds.has(granule.granuleId)) {
+        log.error(`Duplicate granule ID found for ${granule.granuleId}`);
+        throw new Error(`Duplicate granule ID found for ${granule.granuleId}`);
+      }
+      uniqueGranuleIds.add(granule.granuleId);
+    });
+  }
 
   return {
     ...input,
