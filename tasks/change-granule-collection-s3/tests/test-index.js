@@ -62,9 +62,18 @@ test.beforeEach(async (t) => {
   process.env.granule_sns_topic_arn = TopicArn;
   const testDbName = `change-granule-collection-s3/change-collections-s3${cryptoRandomString({ length: 10 })}`;
   t.context.testMethods = {
-    listGranulesMethod: (granuleIds, _) => granuleIds.map(
-      (granuleId) => dummyGetGranule(granuleId, t)
-    ),
+    listGranulesMethod: (params) => {
+      // implicit limit of this method is 10 unless set.
+      const limit = params.query.limit || 10;
+      return {
+        body: JSON.stringify({
+          results: params.query.granuleId__in
+            .split(',')
+            .slice(0, limit)
+            .map((granuleId) => dummyGetGranule(granuleId, t)),
+        }),
+      };
+    },
     getCollectionMethod: (params) => (
       dummyGetCollection(params.collectionName, params.collectionVersion)
     ),
@@ -779,7 +788,7 @@ test('changeGranuleCollectionS3 throws on invalid granules when set to error', a
 test('changeGranuleCollectionS3 handles large group of granules', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'empty_payload.json');
   t.context.payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
-  t.context.payload.input.granuleIds = range(100).map((i) => `xml_granule${i}`);
+  t.context.payload.input.granuleIds = range(105).map((i) => `xml_granule${i}`);
   const filesToUpload = granulesToFileURIs(
     t.context.payload.input.granuleIds, t
   );
@@ -788,8 +797,8 @@ test('changeGranuleCollectionS3 handles large group of granules', async (t) => {
   await uploadFiles(filesToUpload, t.context.bucketMapping);
   const output = await changeGranuleCollectionS3(newPayload);
   await validateOutput(t, output);
-  t.assert(output.granules.length === 100);
-  t.assert(output.oldGranules.length === 100);
+  t.assert(output.granules.length === 105);
+  t.assert(output.oldGranules.length === 105);
   // verify that all these files are in new location
   await Promise.all(output.granules.map((granule) => (
     Promise.all(granule.files.map(async (file) => (
