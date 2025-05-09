@@ -57,6 +57,7 @@
     "@cumulus/cmr-client": "20.1.2",
     "@cumulus/cmrjs": "20.1.2",
     "@cumulus/common": "20.1.2",
+    "@cumulus/db": "20.1.2",
     "@cumulus/discover-granules": "20.1.2",
     "@cumulus/discover-pdrs": "20.1.2",
     "@cumulus/files-to-granules": "20.1.2",
