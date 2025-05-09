@@ -1,0 +1,11 @@
+{
+  "title": "AddUniqueGranuleIDConfig",
+  "description": "Describes the configuration the add-unique-granule-id task component",
+  "type": "object",
+  "properties": {
+    "hashLength": {
+      "type": "string",
+      "description": "The maximum length (characters) of the computed granule hash"
+    }
+  }
+}

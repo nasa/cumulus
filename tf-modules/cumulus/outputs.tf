@@ -51,6 +51,10 @@ output "add_missing_file_checksums_task" {
   value = module.ingest.add_missing_file_checksums_task
 }
 
+output "add_unique_granule_id_arn" {
+  value = module.ingest.add_unique_granule_id_task
+}
+
 output "discover_granules_task" {
   value = module.ingest.discover_granules_task
 }
