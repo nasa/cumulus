@@ -223,10 +223,10 @@ export class GranuleSearch extends BaseSearch {
     
     Object.entries(term).forEach(([name, value]) => {
       switch (name) {
-        case 'collectionVersion':
+        case 'collectionName':
           cteQueryBuilders[`${collectionsTable}`].where(`${collectionsTable}.name`, value);
           break;
-        case 'collectionName':
+        case 'collectionVersion':
           cteQueryBuilders[`${collectionsTable}`].where(`${collectionsTable}.version`, value);
           break;
         case 'executionArn':
@@ -248,7 +248,7 @@ export class GranuleSearch extends BaseSearch {
           cteQueryBuilders[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
           break;
         default:
-          cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.id`, value);
+          cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, value);
           break;
       }
     });    
@@ -660,8 +660,6 @@ export class GranuleSearch extends BaseSearch {
     if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
     if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
 
-    
- 
     const cteQueryBuilders = {};
     this.buildCTETermQuery({ knex, cteQueryBuilders });
     this.buildCTETermsQuery({ knex, cteQueryBuilders });
@@ -678,8 +676,6 @@ export class GranuleSearch extends BaseSearch {
     if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
     
     log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
-    
-    //return { countQuery, searchQuery };
     return { countQuery, searchQuery };
   }
 
