@@ -1,63 +1,116 @@
-// import { Knex } from 'knex';
-// import pick from 'lodash/pick';
+import { Knex } from 'knex';
+import pick from 'lodash/pick';
 
-// import Logger from '@cumulus/logger';
-// import { ApiProvider } from '@cumulus/types/api/providers';
-// import { BaseSearch } from './BaseSearch';
-// import { DbQueryParameters, QueryEvent } from '../types/search';
-// import { translatePostgresProviderToApiProvider } from '../translate/providers';
-// import { PostgresProviderRecord } from '../types/provider';
+import Logger from '@cumulus/logger';
+import { ApiProvider } from '@cumulus/types/api/providers';
+import { BaseSearch } from './BaseSearch';
+import { DbQueryParameters, QueryEvent } from '../types/search';
+import { translatePostgresProviderToApiProvider } from '../translate/providers';
+import { PostgresProviderRecord } from '../types/provider';
 
-// const log = new Logger({ sender: '@cumulus/db/ProviderSearch' });
+const log = new Logger({ sender: '@cumulus/db/ProviderSearch' });
 
-// /**
-//  * Class to build and execute db search query for collections
-//  */
-// export class ProviderSearch extends BaseSearch {
-//   constructor(event: QueryEvent) {
-//     const queryStringParameters = event.queryStringParameters || {};
-//     super({ queryStringParameters }, 'provider');
-//   }
+/**
+ * Class to build and execute db search query for collections
+ */
+export class ProviderSearch extends BaseSearch {
+  constructor(event: QueryEvent) {
+    const queryStringParameters = event.queryStringParameters || {};
+    super({ queryStringParameters }, 'provider');
+  }
 
-//   /**
-//    * Build queries for infix and prefix
-//    *
-//    * @param params
-//    * @param params.countQuery - query builder for getting count
-//    * @param params.searchQuery - query builder for search
-//    * @param [params.dbQueryParameters] - db query parameters
-//    */
-//   protected buildInfixPrefixQuery(params: {
-//     countQuery: Knex.QueryBuilder,
-//     searchQuery: Knex.QueryBuilder,
-//     dbQueryParameters?: DbQueryParameters,
-//   }) {
-//     const { countQuery, searchQuery, dbQueryParameters } = params;
-//     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
-//     if (infix) {
-//       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
-//     }
-//     if (prefix) {
-//       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
-//     }
-//   }
+  protected buildJoins(params: {
+    searchQuery: Knex.QueryBuilder,
+    cteName: string
+  }): Knex.QueryBuilder {
+    return params.searchQuery;
+  }
 
-//   /**
-//    * Translate postgres records to api records
-//    *
-//    * @param pgRecords - postgres Provider records returned from query
-//    * @returns translated api records
-//    */
-//   protected async translatePostgresRecordsToApiRecords(pgRecords: PostgresProviderRecord[])
-//     : Promise<Partial<ApiProvider>[]> {
-//     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
-//     const apiRecords = pgRecords.map((record) => {
-//       const apiRecord: ApiProvider = translatePostgresProviderToApiProvider(record);
-//       const apiRecordFinal = this.dbQueryParameters.fields
-//         ? pick(apiRecord, this.dbQueryParameters.fields)
-//         : apiRecord;
-//       return apiRecordFinal;
-//     });
-//     return apiRecords;
-//   }
-// }
+  /**
+   * Build queries for infix and prefix
+   *
+   * @param params
+   * @param params.countQuery - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildInfixPrefixQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
+    if (infix) {
+      cteQueryBuilder.whereLike(`${this.tableName}.name`, `%${infix}%`);
+    }
+    if (prefix) {
+      cteQueryBuilder.whereLike(`${this.tableName}.name`, `${prefix}%`);
+    }
+  }
+
+  protected buildTermQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        default:
+          cteQueryBuilder.where(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+
+  protected buildTermsQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters
+  }) {
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(terms).forEach(([name, value]) => {
+      switch (name) {
+        default:
+          cteQueryBuilder.whereIn(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+
+  protected buildNotMatchQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters
+  }) {
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        default:
+          cteQueryBuilder.whereNot(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+  /**
+   * Translate postgres records to api records
+   *
+   * @param pgRecords - postgres Provider records returned from query
+   * @returns translated api records
+   */
+  protected async translatePostgresRecordsToApiRecords(pgRecords: PostgresProviderRecord[])
+    : Promise<Partial<ApiProvider>[]> {
+    log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    const apiRecords = pgRecords.map((record) => {
+      const apiRecord: ApiProvider = translatePostgresProviderToApiProvider(record);
+      const apiRecordFinal = this.dbQueryParameters.fields
+        ? pick(apiRecord, this.dbQueryParameters.fields)
+        : apiRecord;
+      return apiRecordFinal;
+    });
+    return apiRecords;
+  }
+}

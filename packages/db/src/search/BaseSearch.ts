@@ -126,17 +126,17 @@ abstract class BaseSearch {
     this.buildInfixPrefixQuery({ cteQueryBuilder });
 
     const cteName = `${this.tableName}_cte`;
-    
+
     const searchQuery = knex.with(cteName, cteQueryBuilder)
-    .select(`${cteName}.*`)
-    .from(cteName);
+      .select(`${cteName}.*`)
+      .from(cteName);
 
     this.buildJoins({ searchQuery, cteName });
-    
+
     const countQuery = knex.with(cteName, cteQueryBuilder)
-    .from(cteName)
-    .countDistinct(`${cteName}.cumulus_id as count`);
-  
+      .from(cteName)
+      .countDistinct(`${cteName}.cumulus_id as count`);
+
     this.buildSortQuery({ searchQuery, cteName });
     if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
     if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
@@ -190,8 +190,8 @@ abstract class BaseSearch {
     searchQuery: Knex.QueryBuilder,
     cteName: string
   }) {
-    log.debug(`buildJoin is not implemented ${Object.keys(params)}`);
-    throw new Error('buildJoin is not implemented');
+    log.debug(`buildJoins is not implemented ${Object.keys(params)}`);
+    throw new Error('buildJoins is not implemented');
   }
 
   /**
@@ -296,119 +296,6 @@ abstract class BaseSearch {
     throw new Error('buildInfixPrefixQuery is not implemented');
   }
 
-  /*
-  protected buildCTETermQuery(params: {
-    knex: Knex,
-    dbQueryParameters?: DbQueryParameters,
-  }): any {
-    //const cteQueryBuilder = knex.select('*').from(this.tableName);
-    const {
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-      asyncOperations: asyncOperationsTable,
-      executions: executionsTable,
-    } = TableNames;    
-
-    const { knex, dbQueryParameters } = params;
-    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-    type QueryObject = {
-      [key: string]: Knex.QueryBuilder;
-    };
-    const cteTables: QueryObject = {};
-
-    Object.entries(term).forEach(([name, value]) => {
-      switch (name) {
-        case 'collectionVersion':
-          if (!(`${collectionsTable}` in cteTables)) {
-            cteTables[`${collectionsTable}`] = knex.select('*').from(`${collectionsTable}`);
-          }
-          cteTables[`${collectionsTable}`].where(`${collectionsTable}.name`, value);
-          break;
-        case 'collectionName':
-          if (!(`${collectionsTable}` in cteTables)) {
-            cteTables[`${collectionsTable}`] = knex.select('*').from(`${collectionsTable}`);
-          }
-          cteTables[`${collectionsTable}`].where(`${collectionsTable}.version`, value);
-          break;
-        case 'executionArn':
-          if (!(`${executionsTable}` in cteTables)) {
-            cteTables[`${executionsTable}`] = knex.select('*').from(`${executionsTable}`);
-          }
-          cteTables[`${executionsTable}`].where(`${executionsTable}.arn`, value);
-          break;
-        case 'parentArn':
-          if (!(`${executionsTable}` in cteTables)) {
-            cteTables[`${executionsTable}`] = knex.select('*').from(`${executionsTable}`);
-          }          
-          cteTables[`${executionsTable}`].where(`${executionsTable}_parent.arn`, value);
-          break;
-        case 'providerName':
-          if (!(`${providersTable}` in cteTables)) {
-            cteTables[`${providersTable}`] = knex.select('*').from(`${providersTable}`);
-          }
-          cteTables[`${providersTable}`].where(`${providersTable}.name`, value);
-          break;
-        case 'pdrName':
-          if (!(`${pdrsTable}` in cteTables)) {
-            cteTables[`${pdrsTable}`] = knex.select('*').from(`${pdrsTable}`);
-          }
-          cteTables[`${pdrsTable}`].where(`${pdrsTable}.name`, value);
-          break;
-        case 'asyncOperationId':
-          if (!(`${asyncOperationsTable}` in cteTables)) {
-            cteTables[`${asyncOperationsTable}`] = knex.select('*').from(`${asyncOperationsTable}`);
-          }
-          cteTables[`${asyncOperationsTable}`].where(`${asyncOperationsTable}.id`, value);
-          break;
-        case 'error.Error':
-          if (!(`${this.tableName}` in cteTables)) {
-            cteTables[`${this.tableName}`] = knex.select('*').from(`${this.tableName}`);
-          }
-          cteTables[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
-          break;
-        default:
-          if (!(`${this.tableName}` in cteTables)) {
-            cteTables[`${this.tableName}`] = knex.select('*').from(`${this.tableName}`);
-          }
-          cteTables[`${this.tableName}`].where(`${this.tableName}.id`, value);
-          break;
-      }
-    });
-    
-    const cteSearchQueryBuilder = knex.queryBuilder();
-    
-    Object.entries(cteTables).forEach(([tableName, cteQuery]) => {
-      if (tableName !== `${this.tableName}`) cteSearchQueryBuilder.with(`${tableName}_cte`, cteQuery);
-    });
-    // cteSearchQueryBuilder.select('*').from(`${this.tableName}_cte`);
-    let mainJoinTable = `${this.tableName}`;
-    if (`${this.tableName}` in cteTables) {
-      mainJoinTable = `${this.tableName}_cte`;
-      cteSearchQueryBuilder.select('*').from(`${this.tableName}_cte`);
-    } else {
-      cteSearchQueryBuilder.select('*').from(`${this.tableName}`);
-    }
-    if (`${collectionsTable}` in cteTables) {
-      cteSearchQueryBuilder.innerJoin(`${collectionsTable}_cte`, `${mainJoinTable}.collection_cumulus_id`, `${collectionsTable}_cte.cumulus_id`);
-    } else {
-      cteSearchQueryBuilder.leftJoin(`${collectionsTable}`, `${mainJoinTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-    }
-    if (`${providersTable}` in cteTables) {
-      cteSearchQueryBuilder.innerJoin(`${providersTable}_cte`, `${mainJoinTable}.provider_cumulus_id`, `${providersTable}_cte.cumulus_id`);
-    } else {
-      cteSearchQueryBuilder.leftJoin(`${providersTable}`, `${mainJoinTable}.collection_cumulus_id`, `${providersTable}.cumulus_id`);
-    }
-    if (`${pdrsTable}` in cteTables) {
-      cteSearchQueryBuilder.innerJoin(`${pdrsTable}_cte`, `${mainJoinTable}.pdr_cumulus_id`, `${pdrsTable}_cte.cumulus_id`);
-    } else {
-      cteSearchQueryBuilder.leftJoin(`${pdrsTable}`, `${mainJoinTable}.collection_cumulus_id`, `${pdrsTable}.cumulus_id`);
-    }
-    
-    // log.debug(`cteSearchQueryBuilder sql ${cteSearchQueryBuilder.toSQL().sql}`);
-    return cteSearchQueryBuilder;
-  }
-  */
   /**
    * Build queries for range fields
    *
@@ -437,17 +324,26 @@ abstract class BaseSearch {
     });
   }
 
-  protected buildTermQuery(params: { cteQueryBuilder: Knex.QueryBuilder; dbQueryParameters?: DbQueryParameters; }) {
+  protected buildTermQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
     log.debug(`buildTermQuery is not implemented ${Object.keys(params)}`);
     throw new Error('buildTermQuery is not implemented');
   }
 
-  protected buildTermsQuery(params: { cteQueryBuilder: Knex.QueryBuilder; dbQueryParameters?: DbQueryParameters; }) {
+  protected buildTermsQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
     log.debug(`buildTermsQuery is not implemented ${Object.keys(params)}`);
     throw new Error('buildTermsQuery is not implemented');
   }
 
-  protected buildNotMatchQuery(params: { cteQueryBuilder: Knex.QueryBuilder; dbQueryParameters?: DbQueryParameters; }) {
+  protected buildNotMatchQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
     log.debug(`buildNotMatchQuery is not implemented ${Object.keys(params)}`);
     throw new Error('buildNotMatchQuery is not implemented');
   }
@@ -459,7 +355,7 @@ abstract class BaseSearch {
    * @param params.searchQuery - query builder for search
    * @param [params.dbQueryParameters] - db query parameters
    */
-   protected buildSortQuery(params: {
+  protected buildSortQuery(params: {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
     cteName?: string,
@@ -467,7 +363,7 @@ abstract class BaseSearch {
     const { searchQuery, dbQueryParameters, cteName } = params;
     const { sort } = dbQueryParameters || this.dbQueryParameters;
     const table = cteName || this.tableName;
-  
+
     sort?.forEach((key) => {
       if (key.column.startsWith('error')) {
         searchQuery.orderByRaw(

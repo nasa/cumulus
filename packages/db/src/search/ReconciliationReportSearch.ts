@@ -1,88 +1,140 @@
-// import { Knex } from 'knex';
-// import Logger from '@cumulus/logger';
-// import pick from 'lodash/pick';
+import { Knex } from 'knex';
+import Logger from '@cumulus/logger';
+import pick from 'lodash/pick';
 
-// import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
-// import { BaseSearch } from './BaseSearch';
-// import { DbQueryParameters, QueryEvent } from '../types/search';
-// import { translatePostgresReconReportToApiReconReport } from '../translate/reconciliation_reports';
-// import { PostgresReconciliationReportRecord } from '../types/reconciliation_report';
-// import { TableNames } from '../tables';
+import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
+import { BaseSearch } from './BaseSearch';
+import { DbQueryParameters, QueryEvent } from '../types/search';
+import { translatePostgresReconReportToApiReconReport } from '../translate/reconciliation_reports';
+import { PostgresReconciliationReportRecord } from '../types/reconciliation_report';
+import { TableNames } from '../tables';
 
-// const log = new Logger({ sender: '@cumulus/db/ReconciliationReportSearch' });
+const log = new Logger({ sender: '@cumulus/db/ReconciliationReportSearch' });
 
-// /**
-//  * Class to build and execute db search query for granules
-//  */
-// export class ReconciliationReportSearch extends BaseSearch {
-//   constructor(event: QueryEvent) {
-//     super(event, 'reconciliationReport');
-//   }
+/**
+ * Class to build and execute db search query for granules
+ */
+export class ReconciliationReportSearch extends BaseSearch {
+  constructor(event: QueryEvent) {
+    super(event, 'reconciliationReport');
+  }
 
-//   /**
-//    * Build basic query
-//    *
-//    * @param knex - DB client
-//    * @returns queries for getting count and search result
-//    */
-//   protected buildBasicQuery(knex: Knex)
-//     : {
-//       countQuery: Knex.QueryBuilder,
-//       searchQuery: Knex.QueryBuilder,
-//     } {
-//     const {
-//       reconciliationReports: reconciliationReportsTable,
-//     } = TableNames;
-//     const countQuery = knex(this.tableName)
-//       .count('*');
+  /**
+   * Build basic query
+   *
+   * @param knex - DB client
+   * @returns queries for getting count and search result
+   */
+  protected buildBasicQuery(knex: Knex)
+    : {
+      cteQueryBuilder: Knex.QueryBuilder,
+    } {
+    const {
+      reconciliationReports: reconciliationReportsTable,
+    } = TableNames;
 
-//     const searchQuery = knex(this.tableName)
-//       .select(`${this.tableName}.*`)
-//       .select({
-//         reconciliationReportsName: `${reconciliationReportsTable}.name`,
-//       });
-//     return { countQuery, searchQuery };
-//   }
+    const cteQueryBuilder = knex(this.tableName)
+      .select(`${this.tableName}.*`)
+      .select({
+        reconciliationReportsName: `${reconciliationReportsTable}.name`,
+      });
 
-//   /**
-//    * Build queries for infix and prefix
-//    *
-//    * @param params
-//    * @param params.countQuery - query builder for getting count
-//    * @param params.searchQuery - query builder for search
-//    * @param [params.dbQueryParameters] - db query parameters
-//    */
-//   protected buildInfixPrefixQuery(params: {
-//     countQuery: Knex.QueryBuilder,
-//     searchQuery: Knex.QueryBuilder,
-//     dbQueryParameters?: DbQueryParameters,
-//   }) {
-//     const { countQuery, searchQuery, dbQueryParameters } = params;
-//     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
-//     if (infix) {
-//       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
-//     }
-//     if (prefix) {
-//       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
-//     }
-//   }
+    return { cteQueryBuilder };
+  }
 
-//   /**
-//    * Translate postgres records to api records
-//    *
-//    * @param pgRecords - postgres records returned from query
-//    * @returns translated api records
-//    */
-//   protected translatePostgresRecordsToApiRecords(pgRecords: PostgresReconciliationReportRecord[])
-//     : Partial<ApiReconciliationReportRecord>[] {
-//     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
-//     const { fields } = this.dbQueryParameters;
+  protected buildJoins(params: {
+    searchQuery: Knex.QueryBuilder,
+    cteName: string
+  }): Knex.QueryBuilder {
+    return params.searchQuery;
+  }
 
-//     const apiRecords = pgRecords.map((pgRecord) => {
-//       const apiRecord = translatePostgresReconReportToApiReconReport(pgRecord);
-//       return fields ? pick(apiRecord, fields) : apiRecord;
-//     });
+  protected buildTermQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
-//     return apiRecords;
-//   }
-// }
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        default:
+          cteQueryBuilder.where(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+
+  protected buildTermsQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters
+  }) {
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(terms).forEach(([name, value]) => {
+      switch (name) {
+        default:
+          cteQueryBuilder.whereIn(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+
+  protected buildNotMatchQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters
+  }) {
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        default:
+          cteQueryBuilder.whereNot(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+
+  /**
+   * Build queries for infix and prefix
+   *
+   * @param params
+   * @param params.countQuery - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildInfixPrefixQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
+    if (infix) {
+      cteQueryBuilder.whereLike(`${this.tableName}.name`, `%${infix}%`);
+    }
+    if (prefix) {
+      cteQueryBuilder.whereLike(`${this.tableName}.name`, `${prefix}%`);
+    }
+  }
+
+  /**
+   * Translate postgres records to api records
+   *
+   * @param pgRecords - postgres records returned from query
+   * @returns translated api records
+   */
+  protected translatePostgresRecordsToApiRecords(pgRecords: PostgresReconciliationReportRecord[])
+    : Partial<ApiReconciliationReportRecord>[] {
+    log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+    const { fields } = this.dbQueryParameters;
+
+    const apiRecords = pgRecords.map((pgRecord) => {
+      const apiRecord = translatePostgresReconReportToApiReconReport(pgRecord);
+      return fields ? pick(apiRecord, fields) : apiRecord;
+    });
+
+    return apiRecords;
+  }
+}

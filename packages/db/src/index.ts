@@ -148,9 +148,9 @@ export {
 export {
   QuerySearchClient,
 } from './lib/QuerySearchClient';
-// export {
-//   AsyncOperationSearch,
-// } from './search/AsyncOperationSearch';
+export {
+  AsyncOperationSearch,
+} from './search/AsyncOperationSearch';
 // export {
 //   CollectionSearch,
 // } from './search/CollectionSearch';
@@ -160,21 +160,21 @@ export {
 export {
   GranuleSearch,
 } from './search/GranuleSearch';
-// export {
-//   PdrSearch,
-// } from './search/PdrSearch';
-// export {
-//   ProviderSearch,
-// } from './search/ProviderSearch';
+export {
+  PdrSearch,
+} from './search/PdrSearch';
+export {
+  ProviderSearch,
+} from './search/ProviderSearch';
 // export {
 //   RuleSearch,
 // } from './search/RuleSearch';
 // export {
 //   StatsSearch,
 // } from './search/StatsSearch';
-// export {
-//   ReconciliationReportSearch,
-// } from './search/ReconciliationReportSearch';
+export {
+  ReconciliationReportSearch,
+} from './search/ReconciliationReportSearch';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';
