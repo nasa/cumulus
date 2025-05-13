@@ -6,20 +6,73 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+
+## [v20.1.2] 2025-04-22
+
+### Added
+
+- **CUMULUS-3868**
+  - added listGranulesConcurrency parameter to control the size of requests made to the listGranules api endpoint. this should be lowered from default if granuleIds are larger than 300 characters.
+- **CUMULUS-4004**
+  - Add documentation explaining use and configuration of changegranuleCollections workflow
+- **CUMULUS-3992**
+  - Update `MoveCollectionsWorkflow` references to `ChangeGranuleCollectionsWorkflow`
+  - Update `@cumulus/api-client` to add bulkChangeCollection endpoint
+  - Update `@cumulus/api` to add api endpoint to allow trigger of `ChangeGranuleCollectionsWorkflow`
+  - Update ChangeGranuleCollections integration test to use endpoint to trigger test instead of direct step function invocation
+- **CUMULUS-3751**
+  - Added `change-granule-collection-s3` to move granules to a different collection.
+    - expects a list of granuleIds along with a new (target) collection
+    - moves those granule files in S3 according to pathing of target collection
+    - update CMR metadata file according to new collection information
+  - Added CopyObject function in @cumulus/aws-client/S3 to facilitate multi-part s3 object copying
+  - Added functions to allow manipulation in memory of cmr metadata objects in @cumulus/cmrjs/cmr-utils
+    - updateUMMGMetadataObject updates file links for ummg metadata structure object
+    - updateEcho10XMLMetadataObject updates file links for echo10 metadata structure object
+    - setUMMGCollection sets collection name and version in ummg metadata structure object
+    - setEcho10Collection sets collection name and version in echo10 metadata structure object
+    - getCMRCollectionId gets collectionId from cmr metadata object using its filename to
+      determine how to correctly parse the object (echo10 vs ummg)
+  - Added MoveGranuleCollections workflow to cumulus core deployable according to terraform variables
+  - Added ingest module terraform variable "deploy_cumulus_workflows": a map of workflows that should be deployed
+    - as of merging only controls change_granule_collections_workflow
+    - defaults to true (deploy the workflow)
+
 ### Fixed
 
-- **CUMULUS-33944**
+- **CUMULUS-4090**
+  - add limit = number of granules to get return out as requested from listGranules
+- **CUMULUS-3868**
+  - exclude package cloudflare:sockets" in webpack.config throughout to prevent packaging bug
+- **CUMULUS-3752**
+  - Fixed api return codes expected in api-client for bulkPatch and bulkPatchGranuleCollections
+- **CUMULUS-3394**
   - Updated DLA table column tables to lowercase to avoid recurring terraform update
+- **CUMULUS-4052**
+  - Removed outdated elasticsearch reference from 'bulk delete executions by collection' endpoint
 
 ### Changed
+
+- **CUMULUS-3868**
+  - Use listGranules endpoint to gather granules from granuleIds
+  - Bound cmr metadata download in post-to-cmr task to s3Concurrency limit
 
 - **CUMULUS-3788**
   - Updated `@cumulus/launchpad-auth/getLaunchpadToken` to check if the token in s3 has been updated
     before updating it with a new token
+- **CUMULUS-3980**
+  - Updated bulkPatchGranuleCollection to error when the collection it is getting updated to doesn't exist
 - **CUMULUS-4077**
   - Update list/search endpoints and corresponding BaseSearch `@cumulus/db` logic to allow `countOnly` as a configuration-modifying query parameter that *only* returns a useful value for `meta.count` to allow users to get a count without returning results/incurring pagination/translation costs
+- **CUMULUS-4057**
+  - Updated psql installation instruction for Amazon Linux 2023
 
 ## [v20.1.1] 2025-03-26
+
+### Notable Changes
+
+- Users upgrading to Release v20.1.x **must first deploy Release v20.0.x** to allow for Cumulus module reconfiguration of workflow/framework lambdas. Once this deployment is complete, users may upgrade to Release v20.1.x.
+- Release v20.1.x includes an update (CUMULUS-3994) that will **permanently delete** the Elasticsearch domain. Ensure that the Elasticsearch domain is no longer needed before applying this update.
 
 ### Changed
 
@@ -35,7 +88,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/lzards-backup` task to make checksum type name comparison case-insensitive
 
 ### Fixed
-
+- **CUMULUS-4056**
+  - fix raise ava timeout in aws-client to prevent intermitten test failures
+  - fix lambda deletion failure in aws-client tests to prevent intermitted failures
+  - fix queue-granules test inconsistent output ordering to prevent intermitten unit test failues
 - **CUMULUS-4018**
   - Updated `@cumulus/db/search` to correctly handle string parameter when limit is `null`
 
@@ -366,6 +422,45 @@ ElasticSearch, the `collections/granules/executions` API endpoints are updated t
 - **CUMULUS-3792**
   - Added database indexes to improve search performance
 
+## [v18.5.6] 2025-04-10
+
+### Added
+
+- **CUMULUS-4004**
+  - Add documentation explaining use and configuration of changegranuleCollections workflow
+- **CUMULUS-3992**
+  - Update `MoveCollectionsWorkflow` references to `ChangeGranuleCollectionsWorkflow`
+  - Update `@cumulus/api-client` to add bulkChangeCollection endpoint
+  - Update `@cumulus/api` to add api endpoint to allow trigger of `ChangeGranuleCollectionsWorkflow`
+  - Update ChangeGranuleCollections integration test to use endpoint to trigger test instead of direct step function invocation
+- **CUMULUS-3751**
+  - Added `change-granule-collection-s3` to move granules to a different collection.
+    - expects a list of granuleIds along with a new (target) collection
+    - moves those granule files in S3 according to pathing of target collection
+    - update CMR metadata file according to new collection information
+  - Added CopyObject function in @cumulus/aws-client/S3 to facilitate multi-part s3 object copying
+  - Added functions to allow manipulation in memory of cmr metadata objects in @cumulus/cmrjs/cmr-utils
+    - updateUMMGMetadataObject updates file links for ummg metadata structure object
+    - updateEcho10XMLMetadataObject updates file links for echo10 metadata structure object
+    - setUMMGCollection sets collection name and version in ummg metadata structure object
+    - setEcho10Collection sets collection name and version in echo10 metadata structure object
+    - getCMRCollectionId gets collectionId from cmr metadata object using its filename to
+      determine how to correctly parse the object (echo10 vs ummg)
+  - Added MoveGranuleCollections workflow to cumulus core deployable according to terraform variables
+  - Added ingest module terraform variable "deploy_cumulus_workflows": a map of workflows that should be deployed
+    - as of merging only controls change_granule_collections_workflow
+    - defaults to true (deploy the workflow)
+
+### Fixed
+
+- **CUMULUS-3752**
+  - Fixed api return codes expected in api-client for bulkPatch and bulkPatchGranuleCollections
+
+### Changed
+
+- **CUMULUS-3960**
+  - Updated `PostToCmr` task to be able to `republish` granules
+
 ## [v18.5.5] 2025-03-04
 
 **Please note** changes in v18.5.5 may not yet be released in future versions, as this
@@ -409,7 +504,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
     - `concurrency` - specifies how many messages to process at the same time.  Defaults to 30.
     - `dbMaxPool` - specifies how many database connections to allow the process to utilize.  Defaults to 30.  Process should at minimum the value set for `concurrency`.
   - Add API memory-constrained performance test to test minimum functionality under default+ configuration
-  - Updated `@cumulus/async-operations.startAsyncOperation to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
+  - Updated `@cumulus/async-operations.startAsyncOperation` to take `containerName` as a parameter name, allowing it to specify a container other than the default 'AsyncOperations' container
 
 ### Fixed
 
@@ -8500,7 +8595,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.1.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.1.2...HEAD
+[v20.1.2]: https://github.com/nasa/cumulus/compare/v20.1.1...v20.1.2
 [v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.1.1
 [v20.0.1]: https://github.com/nasa/cumulus/compare/v20.0.0...v20.0.1
 [v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
