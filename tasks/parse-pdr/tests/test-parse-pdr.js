@@ -475,7 +475,7 @@ test.serial(
 );
 
 test.serial(
-  'parse-pdr handles ingest when two cross-collection granules have the same granule ID when uniquifyGranuleId set to "false"',
+  'parse-pdr handles ingest when two cross-collection granules have the same granule ID when uniquifyGranuleId set to "true"',
   async (t) => {
     t.context.payload.input.pdr.name = 'cross-collection-id-collision.PDR';
     await setUpTestPdrAndValidate(t).catch(t.fail);
