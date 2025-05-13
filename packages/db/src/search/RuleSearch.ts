@@ -36,7 +36,7 @@ export class RuleSearch extends BaseSearch {
     const searchQuery = this.joinCTESearchTables({ cteSearchQueryBuilder, cteQueryBuilders });
     const cteCountQueryBuilder = knex.queryBuilder();
     const countQuery = this.joinCTECountTables({ cteCountQueryBuilder, cteQueryBuilders });
-    this.buildCTESortQuery({ searchQuery });
+    this.buildSortQuery({ searchQuery: searchQuery, cteName: `${this.tableName}` });
     if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
     if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
 
@@ -276,28 +276,6 @@ export class RuleSearch extends BaseSearch {
     );
 
     return cteCountQueryBuilder;
-  }
-
-  protected buildCTESortQuery(params: {
-    searchQuery: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { searchQuery, dbQueryParameters } = params;
-    const { sort } = dbQueryParameters || this.dbQueryParameters;
-    // const table = cteName || this.tableName;
-    sort?.forEach((key) => {
-      if (key.column.startsWith('error')) {
-        searchQuery.orderByRaw(
-          `${this.tableName}_cte.error ->> 'Error' ${key.order}`
-        );
-      } else if (dbQueryParameters?.collate) {
-        searchQuery.orderByRaw(
-          `${key} collate \"${dbQueryParameters.collate}\"`
-        );
-      } else {
-        searchQuery.orderBy([key]);
-      }
-    });
   }
 
   /**

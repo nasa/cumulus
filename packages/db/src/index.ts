@@ -154,9 +154,9 @@ export {
 // export {
 //   CollectionSearch,
 // } from './search/CollectionSearch';
-// export {
-//   ExecutionSearch,
-// } from './search/ExecutionSearch';
+export {
+  ExecutionSearch,
+} from './search/ExecutionSearch';
 export {
   GranuleSearch,
 } from './search/GranuleSearch';
