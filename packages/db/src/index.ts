@@ -154,9 +154,9 @@ export {
 // export {
 //   CollectionSearch,
 // } from './search/CollectionSearch';
-// export {
-//   ExecutionSearch,
-// } from './search/ExecutionSearch';
+export {
+  ExecutionSearch,
+} from './search/ExecutionSearch';
 export {
   GranuleSearch,
 } from './search/GranuleSearch';
@@ -166,9 +166,9 @@ export {
 export {
   ProviderSearch,
 } from './search/ProviderSearch';
-// export {
-//   RuleSearch,
-// } from './search/RuleSearch';
+export {
+  RuleSearch,
+} from './search/RuleSearch';
 // export {
 //   StatsSearch,
 // } from './search/StatsSearch';
