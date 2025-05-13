@@ -17,7 +17,8 @@
     },
     "uniqifyGranules": {
       "description": "A boolean flag that indicates if the lambda should uniqify the granule IDs found in the PDR.   Defaults to false",
-      "type": "string"
+      "type": "string",
+      "default": "false"
     },
     "provider": {
       "type": "object",
