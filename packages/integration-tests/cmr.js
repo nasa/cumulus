@@ -360,7 +360,7 @@ async function generateAndStoreCmrUmmJson(
 ) {
   const versionString = metadataFormatToVersion(cmrMetadataFormat);
   const jsonObject = sampleUmmGranule;
-  jsonObject.GranuleUR = granule.granuleId;
+  jsonObject.GranuleUR = granule.producerGranuleId;
 
   jsonObject.CollectionReference = {
     ShortName: collection.name,
