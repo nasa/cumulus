@@ -30,6 +30,9 @@ const putUpFiles = async (
       const cmrString = cmrTemplate
         .replace('replaceme-collectionname', collection.name)
         .replace('replaceme-collectionversion', collection.version);
+      /* bucket is hardcoded because syncGranules expects to find data in internal
+      and this expected originally to be able to put it up where the granule says...well the granule isn't right (yet)
+      */
       return s3PutObject({
         Key: file.key,
         Bucket: 'cumulus-test-sandbox-internal',
