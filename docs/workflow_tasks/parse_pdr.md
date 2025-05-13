@@ -20,7 +20,7 @@ The purpose of this task is to do the following with the incoming PDR object:
 
 * Outputs a payload object containing metadata about the parsed PDR (e.g. total size of all files, files counts, etc) and a granules object
 
-* If `uniqifyGranules` is set to true in the configuration, granuleId will be a 'uniquified' value, and in either case producerGranuleId will retain the parsed original 'granuleId' from the PDR.
+* If `uniqifyGranules` is set to true in the configuration, `granuleId` will be a 'uniquified' value, and in either case `producerGranuleId` will retain the parsed original `granuleId` from the PDR.
 
 The constructed granules object is created using PDR metadata to determine values like data type and version, collection definitions to determine a file storage location based on the extracted data type and version number.
 
