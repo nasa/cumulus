@@ -25,48 +25,6 @@ export class RuleSearch extends BaseSearch {
     super(event, 'rule');
   }
 
-  /**
-  * Build basic query
-  *
-  * @param knex - DB client
-  * @returns queries for getting count and search result
-  */
-  // protected buildBasicQuery(knex: Knex): {
-  //   cteQueryBuilder: Knex.QueryBuilder,
-  // } {
-  //   const {
-  //     collections: collectionsTable,
-  //     providers: providersTable,
-  //   } = TableNames;
-
-  //   const countQuery = knex(this.tableName)
-  //     .count(`${this.tableName}.cumulus_id`);
-
-  //   const searchQuery = knex(this.tableName)
-  //     .select(`${this.tableName}.*`)
-  //     .select({
-  //       collectionName: `${collectionsTable}.name`,
-  //       collectionVersion: `${collectionsTable}.version`,
-  //       providerName: `${providersTable}.name`,
-  //     });
-
-  //   if (this.searchCollection()) {
-  //     searchQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-  //     countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-  //   } else {
-  //     searchQuery.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-  //   }
-
-  //   if (this.searchProvider()) {
-  //     searchQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-  //     countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-  //   } else {
-  //     searchQuery.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-  //   }
-
-  //   return { countQuery, searchQuery };
-  // }
-
   protected buildSearch(knex: Knex) {
     const cteQueryBuilders = {};
     this.buildCTETermQuery({ knex, cteQueryBuilders });
@@ -81,22 +39,26 @@ export class RuleSearch extends BaseSearch {
     this.buildCTESortQuery({ searchQuery });
     if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
     if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
-    
+
     log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
-  
-  protected buildCTETermQuery(params: { knex: Knex, cteQueryBuilders: Record<string, Knex.QueryBuilder>; dbQueryParameters?: DbQueryParameters; }) {
+
+  protected buildCTETermQuery(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
+    dbQueryParameters?: DbQueryParameters;
+  }) {
     const {
       collections: collectionsTable,
       providers: providersTable,
-    } = TableNames;    
+    } = TableNames;
 
     const { knex, cteQueryBuilders, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     this.buildCTETables({ knex, cteQueryBuilders, term });
-    
+
     Object.entries(term).forEach(([name, value]) => {
       switch (name) {
         case 'collectionName':
@@ -112,13 +74,13 @@ export class RuleSearch extends BaseSearch {
           cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, value);
           break;
       }
-    });    
+    });
   }
 
-  protected buildCTETermsQuery(params: { 
-    knex: Knex; cteQueryBuilders: 
-    Record<string, Knex.QueryBuilder>; 
-    dbQueryParameters?: DbQueryParameters; 
+  protected buildCTETermsQuery(params: {
+    knex: Knex; cteQueryBuilders:
+    Record<string, Knex.QueryBuilder>;
+    dbQueryParameters?: DbQueryParameters;
   }) {
     const {
       collections: collectionsTable,
@@ -140,7 +102,7 @@ export class RuleSearch extends BaseSearch {
           break;
         case 'providerName':
           cteQueryBuilders[`${providersTable}`].whereIn(`${providersTable}.name`, value);
-          break;        
+          break;
         default:
           cteQueryBuilders[`${this.tableName}`].whereIn(`${this.tableName}.${name}`, value);
           break;
@@ -198,7 +160,10 @@ export class RuleSearch extends BaseSearch {
     }
   }
 
-  protected buildCTETables(params: { knex: Knex; cteQueryBuilders: Record<string, Knex.QueryBuilder>; term: any }) {
+  protected buildCTETables(params: {
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
+    term: any }) {
     const {
       collections: collectionsTable,
       providers: providersTable,
@@ -226,7 +191,7 @@ export class RuleSearch extends BaseSearch {
           }
           break;
       }
-    });    
+    });
   }
 
   protected joinCTESearchTables(params: {
@@ -237,12 +202,12 @@ export class RuleSearch extends BaseSearch {
       collections: collectionsTable,
       providers: providersTable,
     } = TableNames;
-  
+
     const { cteSearchQueryBuilder, cteQueryBuilders } = params;
     Object.entries(cteQueryBuilders).forEach(([tableName, cteQuery]) => {
       cteSearchQueryBuilder.with(`${tableName}_cte`, cteQuery);
     });
-    
+
     let mainTableName = `${this.tableName}`;
     if (`${this.tableName}` in cteQueryBuilders) {
       mainTableName = `${this.tableName}_cte`;
@@ -269,7 +234,7 @@ export class RuleSearch extends BaseSearch {
       `${mainTableName}.*`,
       `${collectionsTableName}.name as collectionName`,
       `${collectionsTableName}.version as collectionVersion`,
-      `${providersTableName}.name as providerName`,
+      `${providersTableName}.name as providerName`
     );
 
     return cteSearchQueryBuilder;
@@ -283,12 +248,12 @@ export class RuleSearch extends BaseSearch {
       collections: collectionsTable,
       providers: providersTable,
     } = TableNames;
-  
+
     const { cteCountQueryBuilder, cteQueryBuilders } = params;
     Object.entries(cteQueryBuilders).forEach(([tableName, cteQuery]) => {
       cteCountQueryBuilder.with(`${tableName}_cte`, cteQuery);
     });
-    
+
     let mainTableName = `${this.tableName}`;
     if (`${this.tableName}` in cteQueryBuilders) {
       mainTableName = `${this.tableName}_cte`;
@@ -305,13 +270,13 @@ export class RuleSearch extends BaseSearch {
       cteCountQueryBuilder.innerJoin(`${providersTable}_cte`, `${mainTableName}.provider_cumulus_id`, `${providersTable}_cte.cumulus_id`);
     } else {
       cteCountQueryBuilder.leftJoin(`${providersTable}`, `${mainTableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-    }    
+    }
     cteCountQueryBuilder.countDistinct(
       `${mainTableName}.cumulus_id as count`
     );
 
     return cteCountQueryBuilder;
-  }  
+  }
 
   protected buildCTESortQuery(params: {
     searchQuery: Knex.QueryBuilder,
@@ -336,35 +301,11 @@ export class RuleSearch extends BaseSearch {
   }
 
   /**
-  * Build queries for infix and prefix
-  *
-  * @param params
-  * @param params.countQuery - query builder for getting count
-  * @param params.searchQuery - query builder for search
-  * @param [params.dbQueryParameters] - db query parameters
-  */
-  // protected buildInfixPrefixQuery(params: {
-  //   countQuery: Knex.QueryBuilder,
-  //   searchQuery: Knex.QueryBuilder,
-  //   dbQueryParameters?: DbQueryParameters,
-  // }) {
-  //   const { countQuery, searchQuery, dbQueryParameters } = params;
-  //   const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
-  //   if (infix) {
-  //     [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
-  //   }
-  //   if (prefix) {
-  //     [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
-  //   }
-  // }
-
-  /**
-  * Translate postgres records to api records
-  *
-  * @param pgRecords - postgres Rule records returned from query
-  * @param knex - knex for the translation method
-  * @returns translated api records
-  */
+   * Translate postgres records to api records
+   *
+   * @param pgRecords - postgres Rule records returned from query
+   * @returns translated api records
+   */
   protected async translatePostgresRecordsToApiRecords(
     pgRecords: RuleRecordWithExternals[]
   ): Promise<Partial<RuleRecord>[]> {
