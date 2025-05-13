@@ -439,6 +439,42 @@ test.serial(
 );
 
 test.serial(
+  'parse-pdr "uniqueifies" granule when "uniquifyGranuleId" is set to "true"',
+  async (t) => {
+    t.context.payload.input.pdr.name = 'multi-data-type.PDR';
+    await setUpTestPdrAndValidate(t).catch(t.fail);
+
+    const payload = structuredClone(t.context.payload);
+    payload.config.uniquifyGranuleId = 'true';
+    const result = await parsePdr(payload);
+    await validateOutput(t, result).catch(t.fail);
+
+    t.deepEqual(
+      {
+        filesCount: result.filesCount,
+        granulesCount: result.granulesCount,
+        granulesLength: result.granules.length,
+        totalSize: result.totalSize,
+      },
+      {
+        filesCount: 4,
+        granulesCount: 2,
+        granulesLength: 2,
+        totalSize: 35819466,
+      },
+      'Result metadata should match expected values'
+    );
+
+    const mod09Granule = result.granules.find(
+      (granule) => granule.dataType === 'MOD09GQ'
+    );
+    t.truthy(mod09Granule, 'MOD09GQ granule should exist');
+    t.is(mod09Granule.granuleId,
+      `MOD09GQ.A2017224.h09v02.006.2017227165020_${result.granules[0].granuleId.split('_')[1]}`);
+  }
+);
+
+test.serial(
   'parse-pdr handles ingest when two cross-collection granules have the same granule ID when uniquifyGranuleId set to "false"',
   async (t) => {
     t.context.payload.input.pdr.name = 'cross-collection-id-collision.PDR';

@@ -177,6 +177,7 @@ const extractGranuleId = (fileName, regex) => {
  * @param {Object} params.fileGroup - PDR FILE_GROUP object
  * @param {string} params.pdrName - name of the PDR for error reporting
  * @param {boolean} params.uniquifyGranuleId
+ * @param {number} params.hashLength
  * @returns {Promise<Object>} - granule object
  */
 const convertFileGroupToGranule = async ({
@@ -184,6 +185,7 @@ const convertFileGroupToGranule = async ({
   fileGroup,
   pdrName,
   uniquifyGranuleId = true,
+  hashLength = 8,
 }) => {
   if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
   const dataType = fileGroup.get('DATA_TYPE').value;
@@ -217,7 +219,7 @@ const convertFileGroupToGranule = async ({
   let granuleId = extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction);
   const producerGranuleId = granuleId;
   if (uniquifyGranuleId) {
-    granuleId = generateUniqueGranuleId(granuleId, `${dataType}___${version}`, 8);
+    granuleId = generateUniqueGranuleId(granuleId, `${dataType}___${version}`, hashLength);
   }
 
   return {
@@ -241,20 +243,31 @@ const buildPdrDocument = (rawPdr) => {
   return pvlToJS(cleanedPdr);
 };
 /**
-* Parse a PDR
-* See schemas/input.json for detailed input schema
-*
-* @param {Object} event - Lambda event object
-* @param {Object} event.config - configuration object for the task
-* @param {string} event.config.stack - the name of the deployment stack
-* @param {string} event.config.pdrFolder - folder for the PDRs
-* @param {Object} event.config.provider - provider information
-* @param {Object} event.config.bucket - the internal S3 bucket
-* @param {Object} event.config.uniquifyGranuleId - boolean flag to set granule
-* uniqification behavior
-* @returns {Promise<Object>} - see schemas/output.json for detailed output schema
-* that is passed to the next task in the workflow
-**/
+ * Parse a PDR
+ * See schemas/input.json and schemas/config.json for detailed input schema
+ *
+ * @param {object} event - Lambda event object
+ * @param {object} event.config - Configuration object for the task
+ * @param {string} event.config.stack - Name of the deployment stack
+ * @param {string} [event.config.pdrFolder] - Folder path where PDR files are located
+ * @param {string} [event.config.granuleIdFilter] - Regex to filter granule IDs by file name
+ * @param {boolean | string} [event.config.uniquifyGranuleId] - True/false to make granule IDs
+ * unique
+ * @param {number} [event.config.hashLength=8] - Length of hash used for uniquification
+ * @param {object} event.config.provider - Provider information
+ * @param {string} event.config.provider.id - Provider ID
+ * @param {number} [event.config.provider.globalConnectionLimit] - Max concurrent connections
+ * @param {'ftp'|'sftp'|'http'|'https'|'s3'} event.config.provider.protocol - Provider protocol
+ * @param {string} event.config.bucket - Name of the internal Cumulus S3 bucket
+ * @param {boolean} [event.config.useList=false] - Flag to tell ftp server to use 'LIST'
+ * instead of 'STAT'
+ * @param {object} event.input - Input object
+ * @param {object} event.input.pdr - The PDR object
+ * @param {string} event.input.pdr.name - PDR file name
+ * @param {string} event.input.pdr.path - Path to the PDR file
+ *
+ * @returns {Promise<object>} - Parsed PDR result (see schemas/output.json for structure)
+ */
 const parsePdr = async ({ config, input }) => {
   const providerClient = buildProviderClient(config.provider);
 
@@ -271,7 +284,9 @@ const parsePdr = async ({ config, input }) => {
   }
 
   const pdrDocument = buildPdrDocument(rawPdr);
-  const uniquifyGranuleId = get(config, 'uniquifyGranuleId', false) === true;
+  const uniquifyGranuleIdConfigValue = get(config, 'uniquifyGranuleId', false);
+  const uniquifyGranuleId = uniquifyGranuleIdConfigValue === 'true' || uniquifyGranuleIdConfigValue === true;
+  const hashLength = get(config, 'hashLength', 8);
   const allPdrGranules = await Promise.all(
     pdrDocument.objects('FILE_GROUP').map((fileGroup) =>
       convertFileGroupToGranule({
@@ -279,6 +294,7 @@ const parsePdr = async ({ config, input }) => {
         fileGroup,
         pdrName: input.pdr.name,
         uniquifyGranuleId,
+        hashLength,
       }))
   );
 

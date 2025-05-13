@@ -69,7 +69,7 @@ const {
 } = require('../../helpers/granuleUtils');
 
 const lambdaStep = new LambdaStep();
-const workflowName = 'DiscoverAndQueuePdrsUnique';
+const workflowName = 'DiscoverAndQueuePdrs';
 const origPdrFilename = 'MOD09GQ-multi-granule-missing-file.PDR';
 const granuleDateString = '2016360104606';
 const granule2DateString = '2017227165029';
@@ -258,7 +258,7 @@ describe('Ingesting from PDR', () => {
      * one running task, which is the ParsePdr workflow. The payload has the arn of the
      * running workflow, so use that to get the status.
      */
-    describe('The ParsePdrUnique workflow', () => {
+    describe('The ParsePdr workflow', () => {
       let parsePdrExecutionStatus;
       let parseLambdaOutput;
       let queueGranulesOutput;
@@ -326,8 +326,16 @@ describe('Ingesting from PDR', () => {
             const outputGranules = parseLambdaOutput.payload.granules;
             outputGranules.forEach((granule, index) => {
               granuleIds.push(granule.granuleId);
+              const producerId = expectedParsePdrOutput.granules[index].producerGranuleId;
+              const expectedPrefix = `${producerId}_`;
+              expect(granule.granuleId.startsWith(expectedPrefix)).toBe(true);
+              const hashPart = granule.granuleId.slice(expectedPrefix.length);
+              expect(hashPart.length).toEqual(3); // 4 is the defined value in the collection config
+              expect(/^[\w\-]+$/.test(hashPart)).toBe(true);
+
               expectedParsePdrOutput.granules[index].granuleId = granule.granuleId;
             });
+
             expect(parseLambdaOutput.payload.granules).toEqual(expectedParsePdrOutput.granules);
             expectedParsePdrOutput.pdr.time = parseLambdaOutput.payload?.pdr?.time;
             // size is different due to the DIRECTORY_ID updates in PDR
