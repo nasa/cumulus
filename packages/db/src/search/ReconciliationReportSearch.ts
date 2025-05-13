@@ -49,54 +49,6 @@ export class ReconciliationReportSearch extends BaseSearch {
     return params.searchQuery;
   }
 
-  protected buildTermQuery(params: {
-    cteQueryBuilder: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
-    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-
-    Object.entries(term).forEach(([name, value]) => {
-      switch (name) {
-        default:
-          cteQueryBuilder.where(`${this.tableName}.${name}`, value);
-          break;
-      }
-    });
-  }
-
-  protected buildTermsQuery(params: {
-    cteQueryBuilder: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters
-  }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
-    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
-
-    Object.entries(terms).forEach(([name, value]) => {
-      switch (name) {
-        default:
-          cteQueryBuilder.whereIn(`${this.tableName}.${name}`, value);
-          break;
-      }
-    });
-  }
-
-  protected buildNotMatchQuery(params: {
-    cteQueryBuilder: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters
-  }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
-    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-
-    Object.entries(term).forEach(([name, value]) => {
-      switch (name) {
-        default:
-          cteQueryBuilder.whereNot(`${this.tableName}.${name}`, value);
-          break;
-      }
-    });
-  }
-
   /**
    * Build queries for infix and prefix
    *
