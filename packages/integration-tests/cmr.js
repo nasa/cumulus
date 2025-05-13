@@ -197,7 +197,7 @@ function generateCmrXml(granule, collection, additionalUrls) {
 
   xmlObject.Granule.OnlineAccessURLs.forEach((url) => {
     // eslint-disable-next-line no-param-reassign
-    url.OnlineAccessURL.URL = url.OnlineAccessURL.URL.replace(oldGranuleId, granule.granuleId);
+    url.OnlineAccessURL.URL = url.OnlineAccessURL.URL.replace(oldGranuleId, granule.producerGranuleId);
   });
 
   if (additionalUrls) {
