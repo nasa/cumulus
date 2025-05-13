@@ -189,6 +189,7 @@ function generateCmrXml(granule, collection, additionalUrls) {
   const xmlObject = sampleEcho10Granule;
   const oldGranuleId = xmlObject.Granule.GranuleUR;
   xmlObject.Granule.GranuleUR = granule.granuleId;
+  xmlObject.Granule.ProducerGranuleId = granule.producerGranuleId;
 
   xmlObject.Granule.Collection = {
     ShortName: collection.name,
@@ -197,7 +198,7 @@ function generateCmrXml(granule, collection, additionalUrls) {
 
   xmlObject.Granule.OnlineAccessURLs.forEach((url) => {
     // eslint-disable-next-line no-param-reassign
-    url.OnlineAccessURL.URL = url.OnlineAccessURL.URL.replace(oldGranuleId, granule.producerGranuleId);
+    url.OnlineAccessURL.URL = url.OnlineAccessURL.URL.replace(oldGranuleId, granule.granuleId);
   });
 
   if (additionalUrls) {
@@ -360,7 +361,8 @@ async function generateAndStoreCmrUmmJson(
 ) {
   const versionString = metadataFormatToVersion(cmrMetadataFormat);
   const jsonObject = sampleUmmGranule;
-  jsonObject.GranuleUR = granule.producerGranuleId;
+  jsonObject.GranuleUR = granule.granuleId;
+  jsonObject.ProducerGranuleId = granule.producerGranuleId;
 
   jsonObject.CollectionReference = {
     ShortName: collection.name,
