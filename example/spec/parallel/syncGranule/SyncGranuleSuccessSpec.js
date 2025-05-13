@@ -146,7 +146,10 @@ describe('The Sync Granules workflow', () => {
     );
 
     expectedPayload.granuleDuplicates = {};
-
+    console.log('collectiona bout to be passed:', collection)
+    console.log('workflowName bout to be passed:', workflowName)
+    console.log('provider bout to be passed:', provider)
+    console.log('inputPayload bout to be passed:', JSON.stringify(inputPayload, null, 2))
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );

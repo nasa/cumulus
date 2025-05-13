@@ -136,7 +136,6 @@ const loadGranules = async (
       ...params,
     })
   ));
-  console.log('uploading granules', granules)
   granuleOutputs =  await model.insert(knex, granules, ['granule_id', 'cumulus_id']);
 
   return granuleOutputs.map((g) => ({
@@ -172,6 +171,8 @@ const loadFiles = async (
       granule_cumulus_id: granuleCumulusId,
       'key': `prefix1/${granuleId}.cmr.json`,
       'bucket': 'cumulus-test-sandbox-public',
+      'path': 'prefix1/',
+      file_name: `${granuleId}.cmr.json`,
       ...params
     }
   ]
@@ -180,6 +181,8 @@ const loadFiles = async (
       granule_cumulus_id: granuleCumulusId,
       key: `prefix1/${granuleId}_${i}.jpg`,
       bucket: 'cumulus-test-sandbox-public',
+      'path': 'prefix1/',
+      file_name: `${granuleId}_${i}.jpg`,
       ...params
     })
   })
@@ -239,7 +242,8 @@ const loadCollection = async (knex, files, collectionNumber = null, params = {})
       collectionJson.files = collectionJson.files.slice(0, files);
     }
     collectionJson.url_path = `prefix${collectionNumber}/`;
-    collectionJson.files = JSON.stringify(collectionJson.files)
+    collectionJson.files = JSON.stringify(collectionJson.files);
+    collectionJson.duplicate_handling = 'replace';
   } else {
     collectionJson = fakeCollectionRecordFactory({
       files: JSON.stringify((range(files)).map((i) => (
@@ -249,6 +253,7 @@ const loadCollection = async (knex, files, collectionNumber = null, params = {})
           sampleFileName: `538.${i}`,
         }
       ))),
+      duplicate_handling: 'replace',
       ...params,
     });
   }

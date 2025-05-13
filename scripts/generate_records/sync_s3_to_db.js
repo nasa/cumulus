@@ -32,13 +32,13 @@ const putUpFiles = async (
         .replace('replaceme-collectionversion', collection.version);
       return s3PutObject({
         Key: file.key,
-        Bucket: file.bucket,
+        Bucket: 'cumulus-test-sandbox-internal',
         Body: cmrString,
       })
     } else {
       return s3PutObject({
         Key: file.key,
-        Bucket: file.bucket,
+        Bucket: 'cumulus-test-sandbox-internal',
         Body: 'a'
       })
     }
@@ -102,7 +102,7 @@ const main = async () => {
     concurrency,
   } = parseArgs();
   try {
-    await s3().createBucket({Bucket: 'cumulus-test-sandbox-public'})
+    await s3().createBucket({Bucket: 'cumulus-test-sandbox-internal'})
   } catch {}
   process.env.dbMaxPool = concurrency.toString();
   const knex = await getKnexClient();

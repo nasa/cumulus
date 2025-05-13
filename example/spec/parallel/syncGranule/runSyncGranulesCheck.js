@@ -1,3 +1,10 @@
+/*
+this is a heavily clujed runner, that can def be cleaned up a lot *but*
+right now if you first run the generate scripts
+node generate_db_records.js --concurrency=100 --collections=1 --files=400 --granulesK=80 && node sync_s3_to_db.js --collection=MOD11A1___000 --concurrency=50
+and then run this, everything should work right (you need this to have access to rds through an ssh tunnel)
+*/
+
 const fs = require('fs');
 const difference = require('lodash/difference');
 const path = require('path');
@@ -6,6 +13,7 @@ const {
   getKnexClient,
   CollectionPgModel,
   translatePostgresGranuleToApiGranule,
+  translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
 const {
   addCollections,
@@ -103,30 +111,40 @@ describe('The Sync Granules workflow', () => {
 
     // populate collections, providers and test data
     await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix);
+    let _granules = []
     do {
-      granules = await getGranuleBatch(
+      _granules = (await getGranuleBatch(
         knex,
         collection.cumulus_id,
         cursor, 1
-      );
-      console.log(granules)
-      apiGranules = await Promise.all(granules.map((granulePgRecord) => translatePostgresGranuleToApiGranule(
-        {
+      ))
+      granules = _granules.filter((granule) => !granule.error);
+      cursor = _granules.length ? _granules[_granules.length-1].cumulus_id : 0
+      if (!granules.length) continue;
+      const apiGranules = await Promise.all(granules.map(async (granulePgRecord) => {
+        const apiGranule = await translatePostgresGranuleToApiGranule({
           granulePgRecord,
           collectionPgRecord: collection,
           knexOrTransaction: knex,
           providerPgRecord: provider
-        }
-      )))
-      console.log(JSON.stringify(apiGranules))
-      break
+        })
+        apiGranule.files = apiGranule.files.map((file) => ({
+          ...file,
+          name: file.fileName,
+          path: file.key.split('/').slice(0, file.key.split('/').length-1).join('/')
+        }));
+        return apiGranule;
+      }))
+      
+      // break
       workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, workflowName, collection, provider, {granules: apiGranules}
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider, {granules: apiGranules}
       );
-      console.log(workflowExecution)
-      // await Promise.all(granules.map(async (granule) => putUpFiles(knex, granule, collection)));
-      console.log(cursor)
       cursor = granules.length ? granules[granules.length-1].cumulus_id : 0
-    } while (granules.length);
+    } while (_granules.lenth);
   });
 });
