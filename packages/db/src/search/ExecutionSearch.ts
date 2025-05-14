@@ -54,9 +54,10 @@ export class ExecutionSearch extends BaseSearch {
 
   protected buildSearch(knex: Knex) {
     const cteQueryBuilders = {};
+    this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
     this.buildCTETermQuery({ knex, cteQueryBuilders });
     this.buildCTETermsQuery({ knex, cteQueryBuilders });
-    this.buildCTEExistsQuery({ knex, cteQueryBuilders });
+    this.buildCTEExistsQuery({ cteQueryBuilders });
     this.buildCTENotMatchQuery({ knex, cteQueryBuilders });
     this.buildCTERangeQuery({ knex, cteQueryBuilders });
     this.buildCTEInfixPrefixQuery({ knex, cteQueryBuilders });
@@ -210,6 +211,59 @@ export class ExecutionSearch extends BaseSearch {
       }
     });
   }
+
+  /*
+  protected buildCTEExistsQuery(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { exists = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    if (!(`${this.tableName}` in cteQueryBuilders)) cteQueryBuilders[`${this.tableName}`] = knex.select('*').from(`${this.tableName}`);
+
+    Object.entries(exists).forEach(([name, value]) => {
+      const queryMethod = value ? 'whereNotNull' : 'whereNull';
+      const checkNull = value ? 'not null' : 'null';
+      switch (name) {
+        case 'collectionName':
+        case 'collectionVersion':
+          cteQueryBuilders[`${this.tableName}`][queryMethod](`${this.tableName}.collection_cumulus_id`);
+          break;
+        case 'executionArn':
+          cteQueryBuilders[`${this.tableName}`][queryMethod](`${this.tableName}.execution_cumulus_id`);
+          break;
+        case 'providerName':
+          cteQueryBuilders[`${this.tableName}`][queryMethod](`${this.tableName}.provider_cumulus_id`);
+          break;
+        case 'pdrName':
+          cteQueryBuilders[`${this.tableName}`][queryMethod](`${this.tableName}.pdr_cumulus_id`);
+          break;
+        case 'asyncOperationId':
+          cteQueryBuilders[`${this.tableName}`][queryMethod](`${this.tableName}.async_operation_cumulus_id`);
+          break;
+        case 'error':
+        case 'error.Error':
+          cteQueryBuilders[`${this.tableName}`].whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`);
+          break;
+        case 'parentArn':
+          cteQueryBuilders[`${this.tableName}`][queryMethod](`${this.tableName}.parent_cumulus_id`);
+          break;
+        default:
+          cteQueryBuilders[`${this.tableName}`][queryMethod](`${this.tableName}.${name}`);
+          break;
+      }
+    });
+  }
+  */
+  protected buildCTEExistsQuery(params: {
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>
+  }) {
+    const { cteQueryBuilders } = params;
+    this.buildExistsQuery({ cteQueryBuilder: cteQueryBuilders[this.tableName] });
+  }
+
   protected buildCTETables(params: {
     knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;

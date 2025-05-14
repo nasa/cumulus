@@ -60,6 +60,7 @@ export class ReconciliationReportSearch extends BaseSearch {
   protected buildInfixPrefixQuery(params: {
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
+    cteName?: string,
   }) {
     const { cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;

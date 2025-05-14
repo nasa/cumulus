@@ -35,67 +35,7 @@ export class GranuleSearch extends BaseSearch {
     super(event, 'granule');
   }
 
-  /**
-   * Build basic query
-   *
-   * @param knex - DB client
-   * @returns queries for getting count and search result
-   */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      cteQueryBuilder: Knex.QueryBuilder,
-    } {
-    const {
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-    } = TableNames;
-
-    const cteQueryBuilder = knex(this.tableName)
-      .select(
-        `${this.tableName}.*`,
-        `${collectionsTable}.name as collectionName`,
-        `${collectionsTable}.version as collectionVersion`,
-        `${providersTable}.name as providerName`,
-        `${pdrsTable}.name as pdrName`
-      )
-      .leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
-      .leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`)
-      .leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-
-    return { cteQueryBuilder };
-  }
-
-  /**
-   * Build queries for infix and prefix
-   *
-   * @param params
-   * @param params.countQuery - query builder for getting count
-   * @param params.searchQuery - query builder for search
-   * @param [params.dbQueryParameters] - db query parameters
-   */
-  protected buildInfixPrefixQuery(params: {
-    cteQueryBuilder: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
-    const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
-    if (infix) {
-      cteQueryBuilder.whereLike(`${this.tableName}.granule_id`, `%${infix}%`);
-    }
-    if (prefix) {
-      cteQueryBuilder.whereLike(`${this.tableName}.granule_id`, `${prefix}%`);
-    }
-  }
-
-  protected buildJoins(params: {
-    searchQuery: Knex.QueryBuilder,
-    cteName: string
-  }): Knex.QueryBuilder {
-    return params.searchQuery;
-  }
-
-  protected buildCTETermQuery(params: {
+  protected buildCteTermQuery(params: {
     knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters,
@@ -110,8 +50,7 @@ export class GranuleSearch extends BaseSearch {
 
     const { knex, cteQueryBuilders, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-
-    this.buildCTETables({ knex, cteQueryBuilders, term });
+    this.buildCteTables({ knex, cteQueryBuilders, term });
 
     Object.entries(term).forEach(([name, value]) => {
       switch (name) {
@@ -146,8 +85,8 @@ export class GranuleSearch extends BaseSearch {
     });
   }
 
-  protected buildCTETermsQuery(params: {
-    knex: Knex,
+  protected buildCteTermsQuery(params: {
+    knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters,
   }) {
@@ -161,8 +100,7 @@ export class GranuleSearch extends BaseSearch {
 
     const { knex, cteQueryBuilders, dbQueryParameters } = params;
     const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
-    const term = terms;
-    this.buildCTETables({ knex, cteQueryBuilders, term });
+    this.buildCteTables({ knex, cteQueryBuilders, term: terms });
 
     Object.entries(terms).forEach(([name, value]) => {
       switch (name) {
@@ -202,7 +140,7 @@ export class GranuleSearch extends BaseSearch {
     });
   }
 
-  protected buildCTENotMatchQuery(params: {
+  protected buildCteNotMatchQuery(params: {
     knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters
@@ -217,7 +155,7 @@ export class GranuleSearch extends BaseSearch {
 
     const { knex, cteQueryBuilders, dbQueryParameters } = params;
     const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-    this.buildCTETables({ knex, cteQueryBuilders, term });
+    this.buildCteTables({ knex, cteQueryBuilders, term });
 
     Object.entries(term).forEach(([name, value]) => {
       switch (name) {
@@ -252,77 +190,22 @@ export class GranuleSearch extends BaseSearch {
     });
   }
 
-  protected buildCTEInfixPrefixQuery(params: {
-    knex: Knex,
-    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+  protected buildInfixPrefixQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
+    cteName?: string,
   }) {
-    const { knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { cteQueryBuilder, dbQueryParameters, cteName } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
 
-    if (!(`${this.tableName}` in cteQueryBuilders)) cteQueryBuilders[`${this.tableName}`] = knex.select('*').from(`${this.tableName}`);
+    const table = cteName || this.tableName;
 
     if (infix) {
-      cteQueryBuilders[`${this.tableName}`].whereLike(`${this.tableName}.granule_id`, `%${infix}%`);
+      cteQueryBuilder.whereLike(`${table}.granule_id`, `%${infix}%`);
     }
     if (prefix) {
-      cteQueryBuilders[`${this.tableName}`].whereLike(`${this.tableName}.granule_id`, `${prefix}%`);
+      cteQueryBuilder.whereLike(`${table}.granule_id`, `${prefix}%`);
     }
-  }
-
-  protected buildCTETables(params: {
-    knex: Knex,
-    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
-    term: any
-  }) {
-    const {
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-      asyncOperations: asyncOperationsTable,
-      executions: executionsTable,
-    } = TableNames;
-
-    const { knex, cteQueryBuilders, term } = params;
-
-    //Object.entries(term).forEach(([name, value]) => {
-    Object.keys(term).forEach((name) => {
-      switch (name) {
-        case 'collectionVersion':
-        case 'collectionName':
-          if (!(`${collectionsTable}` in cteQueryBuilders)) {
-            cteQueryBuilders[`${collectionsTable}`] = knex.select('*').from(`${collectionsTable}`);
-          }
-          break;
-        case 'executionArn':
-        case 'parentArn':
-          if (!(`${executionsTable}` in cteQueryBuilders)) {
-            cteQueryBuilders[`${executionsTable}`] = knex.select('*').from(`${executionsTable}`);
-          }
-          break;
-        case 'providerName':
-          if (!(`${providersTable}` in cteQueryBuilders)) {
-            cteQueryBuilders[`${providersTable}`] = knex.select('*').from(`${providersTable}`);
-          }
-          break;
-        case 'pdrName':
-          if (!(`${pdrsTable}` in cteQueryBuilders)) {
-            cteQueryBuilders[`${pdrsTable}`] = knex.select('*').from(`${pdrsTable}`);
-          }
-          break;
-        case 'asyncOperationId':
-          if (!(`${asyncOperationsTable}` in cteQueryBuilders)) {
-            cteQueryBuilders[`${asyncOperationsTable}`] = knex.select('*').from(`${asyncOperationsTable}`);
-          }
-          break;
-        case 'error.Error':
-        default:
-          if (!(`${this.tableName}` in cteQueryBuilders)) {
-            cteQueryBuilders[`${this.tableName}`] = knex.select('*').from(`${this.tableName}`);
-          }
-          break;
-      }
-    });
   }
 
   protected joinCTESearchTables(params: {
@@ -424,37 +307,6 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
-     * Build queries for sort keys and fields
-     *
-     * @param params
-     * @param params.searchQuery - query builder for search
-     * @param [params.dbQueryParameters] - db query parameters
-     */
-  protected buildCTESortQuery(params: {
-    searchQuery: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-    //cteQueryBuilders: Record<string, Knex.QueryBuilder>
-  }) {
-    const { searchQuery, dbQueryParameters } = params;
-    const { sort } = dbQueryParameters || this.dbQueryParameters;
-    // const table = cteName || this.tableName;
-    sort?.forEach((key) => {
-      log.debug(`sort key ${JSON.stringify(key)}`);
-      if (key.column.startsWith('error')) {
-        searchQuery.orderByRaw(
-          `${this.tableName}_cte.error ->> 'Error' ${key.order}`
-        );
-      } else if (dbQueryParameters?.collate) {
-        searchQuery.orderByRaw(
-          `${key} collate \"${dbQueryParameters.collate}\"`
-        );
-      } else {
-        searchQuery.orderBy([key]);
-      }
-    });
-  }
-
-  /**
    * Build the search query for active collections.
    * If time params are specified the query will search granules that have been updated
    * in that time frame.  If granuleId or providerId are provided, it will filter those as well.
@@ -467,24 +319,16 @@ export class GranuleSearch extends BaseSearch {
       countQuery: Knex.QueryBuilder,
       searchQuery: Knex.QueryBuilder,
     } {
-    const { cteQueryBuilder } = this.buildBasicQuery(knex);
-
-    this.buildTermQuery({ cteQueryBuilder });
-    this.buildTermsQuery({ cteQueryBuilder });
-    this.buildRangeQuery({ knex, cteQueryBuilder });
-
-    const cteName = `${this.tableName}_cte`;
-    const baseCTE = knex.with(cteName, cteQueryBuilder);
-
-    const searchQuery = this.buildJoins({
-      searchQuery: baseCTE.select(`${cteName}.*`),
-      cteName,
-    });
-
-    const countQuery = baseCTE.countDistinct(`${cteName}.cumulus_id as count`);
-
-    this.buildSortQuery({ searchQuery, cteName });
-
+    const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
+    this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
+    this.buildCteTermQuery({ knex, cteQueryBuilders });
+    this.buildCteTermsQuery({ knex, cteQueryBuilders });
+    this.buildRangeQuery({ knex, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
+    const cteSearchQueryBuilder = knex.queryBuilder();
+    const searchQuery = this.joinCTESearchTables({ cteSearchQueryBuilder, cteQueryBuilders });
+    const cteCountQueryBuilder = knex.queryBuilder();
+    const countQuery = this.joinCTECountTables({ cteCountQueryBuilder, cteQueryBuilders });
+    this.buildSortQuery({ searchQuery, cteName: `${this.tableName}_cte` });
     const { limit, offset } = this.dbQueryParameters;
     if (limit) searchQuery.limit(limit);
     if (offset) searchQuery.offset(offset);
@@ -493,44 +337,27 @@ export class GranuleSearch extends BaseSearch {
     return { countQuery, searchQuery };
   }
 
+  protected buildCTEExistsQuery(params: {
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>
+  }) {
+    const { cteQueryBuilders } = params;
+    this.buildExistsQuery({ cteQueryBuilder: cteQueryBuilders[this.tableName] });
+  }
+
   protected buildSearch(knex: Knex) {
-    const { cteQueryBuilder } = this.buildBasicQuery(knex);
-    this.buildTermQuery({ cteQueryBuilder });
-    this.buildTermsQuery({ cteQueryBuilder });
-    this.buildNotMatchQuery({ cteQueryBuilder });
-    this.buildRangeQuery({ knex, cteQueryBuilder });
-    this.buildExistsQuery({ cteQueryBuilder });
-    this.buildInfixPrefixQuery({ cteQueryBuilder });
-
-    const cteName = `${this.tableName}_cte`;
-
-    let searchQuery = knex.with(cteName, cteQueryBuilder)
-      .select(`${cteName}.*`)
-      .from(cteName);
-
-    this.buildJoins({ searchQuery, cteName });
-
-    let countQuery = knex.with(cteName, cteQueryBuilder)
-      .from(cteName)
-      .countDistinct(`${cteName}.cumulus_id as count`);
-
-    this.buildSortQuery({ searchQuery, cteName });
-
-    if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
-    if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
-
-    const cteQueryBuilders = {};
-    this.buildCTETermQuery({ knex, cteQueryBuilders });
-    this.buildCTETermsQuery({ knex, cteQueryBuilders });
-    this.buildCTENotMatchQuery({ knex, cteQueryBuilders });
-    this.buildCTERangeQuery({ knex, cteQueryBuilders });
-    this.buildCTEExistsQuery({ knex, cteQueryBuilders });
-    this.buildCTEInfixPrefixQuery({ knex, cteQueryBuilders });
+    const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
+    this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
+    this.buildCteTermQuery({ knex, cteQueryBuilders });
+    this.buildCteTermsQuery({ knex, cteQueryBuilders });
+    this.buildCteNotMatchQuery({ knex, cteQueryBuilders });
+    this.buildRangeQuery({ knex, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
+    this.buildCTEExistsQuery({ cteQueryBuilders });
+    this.buildInfixPrefixQuery({ cteQueryBuilder: cteQueryBuilders[`${this.tableName}`], cteName: `${this.tableName}` });
     const cteSearchQueryBuilder = knex.queryBuilder();
-    searchQuery = this.joinCTESearchTables({ cteSearchQueryBuilder, cteQueryBuilders });
+    const searchQuery = this.joinCTESearchTables({ cteSearchQueryBuilder, cteQueryBuilders });
     const cteCountQueryBuilder = knex.queryBuilder();
-    countQuery = this.joinCTECountTables({ cteCountQueryBuilder, cteQueryBuilders });
-    this.buildCTESortQuery({ searchQuery });
+    const countQuery = this.joinCTECountTables({ cteCountQueryBuilder, cteQueryBuilders });
+    this.buildSortQuery({ searchQuery, cteName: `${this.tableName}_cte` });
     if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
     if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
 
