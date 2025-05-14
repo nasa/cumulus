@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [20.1.3-alpha.0] 2025-05-14
+
 ## Handle Granules with Identical producerGranuleId in Different Collections
 
 - **CUMULUS-4059**
