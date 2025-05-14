@@ -35,9 +35,9 @@ export class GranuleSearch extends BaseSearch {
     super(event, 'granule');
   }
 
-  protected buildTermQuery(params: {
-    knex?: Knex,
-    cteQueryBuilder: Record<string, Knex.QueryBuilder>,
+  protected buildCteTermQuery(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters,
   }) {
     const {
@@ -48,47 +48,46 @@ export class GranuleSearch extends BaseSearch {
       executions: executionsTable,
     } = TableNames;
 
-    const { knex, cteQueryBuilder, dbQueryParameters } = params;
+    const { knex, cteQueryBuilders, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-
-    if (knex) this.buildCTETables({ knex, cteQueryBuilders: cteQueryBuilder, term });
+    this.buildCteTables({ knex, cteQueryBuilders, term });
 
     Object.entries(term).forEach(([name, value]) => {
       switch (name) {
         case 'collectionName':
-          cteQueryBuilder[`${collectionsTable}`].where(`${collectionsTable}.name`, value);
+          cteQueryBuilders[`${collectionsTable}`].where(`${collectionsTable}.name`, value);
           break;
         case 'collectionVersion':
-          cteQueryBuilder[`${collectionsTable}`].where(`${collectionsTable}.version`, value);
+          cteQueryBuilders[`${collectionsTable}`].where(`${collectionsTable}.version`, value);
           break;
         case 'executionArn':
-          cteQueryBuilder[`${executionsTable}`].where(`${executionsTable}.arn`, value);
+          cteQueryBuilders[`${executionsTable}`].where(`${executionsTable}.arn`, value);
           break;
         case 'parentArn':
-          cteQueryBuilder[`${executionsTable}`].where(`${executionsTable}_parent.arn`, value);
+          cteQueryBuilders[`${executionsTable}`].where(`${executionsTable}_parent.arn`, value);
           break;
         case 'providerName':
-          cteQueryBuilder[`${providersTable}`].where(`${providersTable}.name`, value);
+          cteQueryBuilders[`${providersTable}`].where(`${providersTable}.name`, value);
           break;
         case 'pdrName':
-          cteQueryBuilder[`${pdrsTable}`].where(`${pdrsTable}.name`, value);
+          cteQueryBuilders[`${pdrsTable}`].where(`${pdrsTable}.name`, value);
           break;
         case 'asyncOperationId':
-          cteQueryBuilder[`${asyncOperationsTable}`].where(`${asyncOperationsTable}.id`, value);
+          cteQueryBuilders[`${asyncOperationsTable}`].where(`${asyncOperationsTable}.id`, value);
           break;
         case 'error.Error':
-          cteQueryBuilder[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
+          cteQueryBuilders[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
           break;
         default:
-          cteQueryBuilder[`${this.tableName}`].where(`${this.tableName}.${name}`, value);
+          cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, value);
           break;
       }
     });
   }
 
-  protected buildTermsQuery(params: {
-    knex?: Knex,
-    cteQueryBuilder: Record<string, Knex.QueryBuilder>,
+  protected buildCteTermsQuery(params: {
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters,
   }) {
     const {
@@ -99,51 +98,51 @@ export class GranuleSearch extends BaseSearch {
       executions: executionsTable,
     } = TableNames;
 
-    const { knex, cteQueryBuilder, dbQueryParameters } = params;
+    const { knex, cteQueryBuilders, dbQueryParameters } = params;
     const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
-    if (knex) this.buildCTETables({ knex, cteQueryBuilders: cteQueryBuilder, term: terms });
+    this.buildCteTables({ knex, cteQueryBuilders, term: terms });
 
     Object.entries(terms).forEach(([name, value]) => {
       switch (name) {
         case 'collectionName':
-          cteQueryBuilder[`${collectionsTable}`].whereIn(`${collectionsTable}.name`, value);
+          cteQueryBuilders[`${collectionsTable}`].whereIn(`${collectionsTable}.name`, value);
           break;
         case 'collectionVersion':
-          cteQueryBuilder[`${collectionsTable}`].whereIn(`${collectionsTable}.version`, value);
+          cteQueryBuilders[`${collectionsTable}`].whereIn(`${collectionsTable}.version`, value);
           break;
         case 'executionArn':
-          cteQueryBuilder[`${executionsTable}`].whereIn(`${executionsTable}.arn`, value);
+          cteQueryBuilders[`${executionsTable}`].whereIn(`${executionsTable}.arn`, value);
           break;
         case 'providerName':
-          cteQueryBuilder[`${providersTable}`].whereIn(`${providersTable}.name`, value);
+          cteQueryBuilders[`${providersTable}`].whereIn(`${providersTable}.name`, value);
           break;
         case 'pdrName':
-          cteQueryBuilder[`${pdrsTable}`].whereIn(`${pdrsTable}.name`, value);
+          cteQueryBuilders[`${pdrsTable}`].whereIn(`${pdrsTable}.name`, value);
           break;
         case 'error.Error':
           if (Array.isArray(value) && value.length > 0) {
-            cteQueryBuilder[`${this.tableName}`].whereRaw(
+            cteQueryBuilders[`${this.tableName}`].whereRaw(
               `${this.tableName}.error->>'Error' IN (${value.map(() => '?').join(',')})`,
               value
             );
           }
           break;
         case 'asyncOperationId':
-          cteQueryBuilder[`${asyncOperationsTable}`].whereIn(`${asyncOperationsTable}.id`, value);
+          cteQueryBuilders[`${asyncOperationsTable}`].whereIn(`${asyncOperationsTable}.id`, value);
           break;
         case 'parentArn':
-          cteQueryBuilder[`${executionsTable}`].whereIn(`${executionsTable}.parentArn`, value);
+          cteQueryBuilders[`${executionsTable}`].whereIn(`${executionsTable}.parentArn`, value);
           break;
         default:
-          cteQueryBuilder[`${this.tableName}`].whereIn(`${this.tableName}.${name}`, value);
+          cteQueryBuilders[`${this.tableName}`].whereIn(`${this.tableName}.${name}`, value);
           break;
       }
     });
   }
 
-  protected buildNotMatchQuery(params: {
-    knex?: Knex,
-    cteQueryBuilder: Record<string, Knex.QueryBuilder>,
+  protected buildCteNotMatchQuery(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters
   }) {
     const {
@@ -154,38 +153,38 @@ export class GranuleSearch extends BaseSearch {
       executions: executionsTable,
     } = TableNames;
 
-    const { knex, cteQueryBuilder, dbQueryParameters } = params;
+    const { knex, cteQueryBuilders, dbQueryParameters } = params;
     const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-    if (knex) this.buildCTETables({ knex, cteQueryBuilders: cteQueryBuilder, term });
+    this.buildCteTables({ knex, cteQueryBuilders, term });
 
     Object.entries(term).forEach(([name, value]) => {
       switch (name) {
         case 'collectionName':
-          cteQueryBuilder[`${collectionsTable}`].whereNot(`${collectionsTable}.name`, value);
+          cteQueryBuilders[`${collectionsTable}`].whereNot(`${collectionsTable}.name`, value);
           break;
         case 'collectionVersion':
-          cteQueryBuilder[`${collectionsTable}`].whereNot(`${collectionsTable}.version`, value);
+          cteQueryBuilders[`${collectionsTable}`].whereNot(`${collectionsTable}.version`, value);
           break;
         case 'executionArn':
-          cteQueryBuilder[`${executionsTable}`].whereNot(`${executionsTable}.arn`, value);
+          cteQueryBuilders[`${executionsTable}`].whereNot(`${executionsTable}.arn`, value);
           break;
         case 'providerName':
-          cteQueryBuilder[`${providersTable}`].whereNot(`${providersTable}.name`, value);
+          cteQueryBuilders[`${providersTable}`].whereNot(`${providersTable}.name`, value);
           break;
         case 'pdrName':
-          cteQueryBuilder[`${pdrsTable}`].whereNot(`${pdrsTable}.name`, value);
+          cteQueryBuilders[`${pdrsTable}`].whereNot(`${pdrsTable}.name`, value);
           break;
         case 'error.Error':
-          cteQueryBuilder[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' != ?`, value);
+          cteQueryBuilders[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' != ?`, value);
           break;
         case 'asyncOperationId':
-          cteQueryBuilder[`${asyncOperationsTable}`].whereNot(`${asyncOperationsTable}.id`, value);
+          cteQueryBuilders[`${asyncOperationsTable}`].whereNot(`${asyncOperationsTable}.id`, value);
           break;
         case 'parentArn':
-          cteQueryBuilder[`${executionsTable}`].whereNot(`${executionsTable}.parentArn`, value);
+          cteQueryBuilders[`${executionsTable}`].whereNot(`${executionsTable}.parentArn`, value);
           break;
         default:
-          cteQueryBuilder[`${this.tableName}`].whereNot(`${this.tableName}.${name}`, value);
+          cteQueryBuilders[`${this.tableName}`].whereNot(`${this.tableName}.${name}`, value);
           break;
       }
     });
@@ -207,49 +206,6 @@ export class GranuleSearch extends BaseSearch {
     if (prefix) {
       cteQueryBuilder.whereLike(`${table}.granule_id`, `${prefix}%`);
     }
-  }
-
-  protected buildCTETables(params: {
-    knex: Knex,
-    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
-    term: any
-  }) {
-    const {
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-      asyncOperations: asyncOperationsTable,
-      executions: executionsTable,
-    } = TableNames;
-
-    const { knex, cteQueryBuilders, term } = params;
-
-    //Object.entries(term).forEach(([name, value]) => {
-    Object.keys(term).forEach((name) => {
-      switch (name) {
-        case 'collectionVersion':
-        case 'collectionName':
-          this.initCteTable({ knex, cteQueryBuilders, cteName: collectionsTable });
-          break;
-        case 'executionArn':
-        case 'parentArn':
-          this.initCteTable({ knex, cteQueryBuilders, cteName: executionsTable });
-          break;
-        case 'providerName':
-          this.initCteTable({ knex, cteQueryBuilders, cteName: providersTable });
-          break;
-        case 'pdrName':
-          this.initCteTable({ knex, cteQueryBuilders, cteName: pdrsTable });
-          break;
-        case 'asyncOperationId':
-          this.initCteTable({ knex, cteQueryBuilders, cteName: asyncOperationsTable });
-          break;
-        case 'error.Error':
-        default:
-          this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
-          break;
-      }
-    });
   }
 
   protected joinCTESearchTables(params: {
@@ -365,8 +321,8 @@ export class GranuleSearch extends BaseSearch {
     } {
     const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
     this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
-    this.buildTermQuery({ knex, cteQueryBuilder: cteQueryBuilders });
-    this.buildTermsQuery({ knex, cteQueryBuilder: cteQueryBuilders });
+    this.buildCteTermQuery({ knex, cteQueryBuilders });
+    this.buildCteTermsQuery({ knex, cteQueryBuilders });
     this.buildRangeQuery({ knex, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
     const cteSearchQueryBuilder = knex.queryBuilder();
     const searchQuery = this.joinCTESearchTables({ cteSearchQueryBuilder, cteQueryBuilders });
@@ -381,15 +337,6 @@ export class GranuleSearch extends BaseSearch {
     return { countQuery, searchQuery };
   }
 
-  protected initCteTable(params: {
-    knex: Knex,
-    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
-    cteName: string,
-  }) {
-    const { knex, cteQueryBuilders, cteName } = params;
-    if (!(`${cteName}` in cteQueryBuilders)) cteQueryBuilders[`${cteName}`] = knex.select('*').from(`${cteName}`);
-  }
-
   protected buildCTEExistsQuery(params: {
     cteQueryBuilders: Record<string, Knex.QueryBuilder>
   }) {
@@ -400,9 +347,9 @@ export class GranuleSearch extends BaseSearch {
   protected buildSearch(knex: Knex) {
     const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
     this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
-    this.buildTermQuery({ knex, cteQueryBuilder: cteQueryBuilders });
-    this.buildTermsQuery({ knex, cteQueryBuilder: cteQueryBuilders });
-    this.buildNotMatchQuery({ knex, cteQueryBuilder: cteQueryBuilders });
+    this.buildCteTermQuery({ knex, cteQueryBuilders });
+    this.buildCteTermsQuery({ knex, cteQueryBuilders });
+    this.buildCteNotMatchQuery({ knex, cteQueryBuilders });
     this.buildRangeQuery({ knex, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
     this.buildCTEExistsQuery({ cteQueryBuilders });
     this.buildInfixPrefixQuery({ cteQueryBuilder: cteQueryBuilders[`${this.tableName}`], cteName: `${this.tableName}` });

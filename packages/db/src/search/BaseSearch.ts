@@ -282,30 +282,148 @@ abstract class BaseSearch {
   }
 
   protected buildTermQuery(params: {
-    knex?: Knex,
-    cteQueryBuilder: Knex.QueryBuilder | Record<string, Knex.QueryBuilder>,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    log.debug(`buildTermQuery is not implemented ${Object.keys(params)}`);
-    throw new Error('buildTermQuery is not implemented');
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          cteQueryBuilder.where(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          cteQueryBuilder.where(`${collectionsTable}.version`, value);
+          break;
+        case 'executionArn':
+          cteQueryBuilder.where(`${executionsTable}.arn`, value);
+          break;
+        case 'providerName':
+          cteQueryBuilder.where(`${providersTable}.name`, value);
+          break;
+        case 'pdrName':
+          cteQueryBuilder.where(`${pdrsTable}.name`, value);
+          break;
+        case 'error.Error':
+          cteQueryBuilder.whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
+          break;
+        case 'asyncOperationId':
+          cteQueryBuilder.where(`${asyncOperationsTable}.id`, value);
+          break;
+        case 'parentArn':
+          cteQueryBuilder.where(`${executionsTable}.parentArn`, value);
+          break;
+        default:
+          cteQueryBuilder.where(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
   }
 
   protected buildTermsQuery(params: {
-    knex?: Knex,
-    cteQueryBuilder: Knex.QueryBuilder | Record<string, Knex.QueryBuilder>,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    log.debug(`buildTermsQuery is not implemented ${Object.keys(params)}`);
-    throw new Error('buildTermsQuery is not implemented');
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+
+    Object.entries(terms).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          cteQueryBuilder.whereIn(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          cteQueryBuilder.whereIn(`${collectionsTable}.version`, value);
+          break;
+        case 'executionArn':
+          cteQueryBuilder.whereIn(`${executionsTable}.arn`, value);
+          break;
+        case 'providerName':
+          cteQueryBuilder.whereIn(`${providersTable}.name`, value);
+          break;
+        case 'pdrName':
+          cteQueryBuilder.whereIn(`${pdrsTable}.name`, value);
+          break;
+        case 'error.Error':
+          if (Array.isArray(value) && value.length > 0) {
+            cteQueryBuilder.whereRaw(
+              `${this.tableName}.error->>'Error' IN (${value.map(() => '?').join(',')})`,
+              value
+            );
+          }
+          break;
+        case 'asyncOperationId':
+          cteQueryBuilder.whereIn(`${asyncOperationsTable}.id`, value);
+          break;
+        case 'parentArn':
+          cteQueryBuilder.whereIn(`${executionsTable}.parentArn`, value);
+          break;
+        default:
+          cteQueryBuilder.whereIn(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
   }
 
   protected buildNotMatchQuery(params: {
-    knex?: Knex,
-    cteQueryBuilder: Knex.QueryBuilder | Record<string, Knex.QueryBuilder>,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    log.debug(`buildNotMatchQuery is not implemented ${Object.keys(params)}`);
-    throw new Error('buildNotMatchQuery is not implemented');
+    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          cteQueryBuilder.whereNot(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          cteQueryBuilder.whereNot(`${collectionsTable}.version`, value);
+          break;
+        case 'executionArn':
+          cteQueryBuilder.whereNot(`${executionsTable}.arn`, value);
+          break;
+        case 'providerName':
+          cteQueryBuilder.whereNot(`${providersTable}.name`, value);
+          break;
+        case 'pdrName':
+          cteQueryBuilder.whereNot(`${pdrsTable}.name`, value);
+          break;
+        case 'error.Error':
+          cteQueryBuilder.whereRaw(`${this.tableName}.error->>'Error' != ?`, value);
+          break;
+        case 'asyncOperationId':
+          cteQueryBuilder.whereNot(`${asyncOperationsTable}.id`, value);
+          break;
+        case 'parentArn':
+          cteQueryBuilder.whereNot(`${executionsTable}.parentArn`, value);
+          break;
+        default:
+          cteQueryBuilder.whereNot(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
   }
 
   /**
@@ -337,6 +455,58 @@ abstract class BaseSearch {
         searchQuery.orderBy([key]);
       }
     });
+  }
+
+  protected buildCteTables(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    term: any
+  }) {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+
+    const { knex, cteQueryBuilders, term } = params;
+
+    //Object.entries(term).forEach(([name, value]) => {
+    Object.keys(term).forEach((name) => {
+      switch (name) {
+        case 'collectionVersion':
+        case 'collectionName':
+          this.initCteTable({ knex, cteQueryBuilders, cteName: collectionsTable });
+          break;
+        case 'executionArn':
+        case 'parentArn':
+          this.initCteTable({ knex, cteQueryBuilders, cteName: executionsTable });
+          break;
+        case 'providerName':
+          this.initCteTable({ knex, cteQueryBuilders, cteName: providersTable });
+          break;
+        case 'pdrName':
+          this.initCteTable({ knex, cteQueryBuilders, cteName: pdrsTable });
+          break;
+        case 'asyncOperationId':
+          this.initCteTable({ knex, cteQueryBuilders, cteName: asyncOperationsTable });
+          break;
+        case 'error.Error':
+        default:
+          this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
+          break;
+      }
+    });
+  }
+
+  protected initCteTable(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    cteName: string,
+  }) {
+    const { knex, cteQueryBuilders, cteName } = params;
+    if (!(`${cteName}` in cteQueryBuilders)) cteQueryBuilders[`${cteName}`] = knex.select('*').from(`${cteName}`);
   }
 
   /**

@@ -48,54 +48,6 @@ export class AsyncOperationSearch extends BaseSearch {
     }
   }
 
-  protected buildTermQuery(params: {
-    cteQueryBuilder: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
-    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-
-    Object.entries(term).forEach(([name, value]) => {
-      switch (name) {
-        default:
-          cteQueryBuilder.where(`${this.tableName}.${name}`, value);
-          break;
-      }
-    });
-  }
-
-  protected buildTermsQuery(params: {
-    cteQueryBuilder: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
-    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
-
-    Object.entries(terms).forEach(([name, value]) => {
-      switch (name) {
-        default:
-          cteQueryBuilder.whereIn(`${this.tableName}.${name}`, value);
-          break;
-      }
-    });
-  }
-
-  protected buildNotMatchQuery(params: {
-    cteQueryBuilder: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
-    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-
-    Object.entries(term).forEach(([name, value]) => {
-      switch (name) {
-        default:
-          cteQueryBuilder.whereNot(`${this.tableName}.${name}`, value);
-          break;
-      }
-    });
-  }
-
   /**
    * Translate postgres records to api records
    *
