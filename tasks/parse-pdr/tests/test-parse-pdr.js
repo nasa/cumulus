@@ -381,6 +381,7 @@ test.serial(
 
     const payload = structuredClone(t.context.payload);
     payload.config.uniquifyGranuleId = true;
+    payload.config.hashLength = 3;
     const result = await parsePdr(payload);
     await validateOutput(t, result).catch(t.fail);
 
@@ -404,6 +405,9 @@ test.serial(
       (granule) => granule.dataType === 'MOD09GQ'
     );
     t.truthy(mod09Granule, 'MOD09GQ granule should exist');
+    const granuleHash1 = result.granules[0].granuleId.split('_')[1];
+    const granuleHash2 = result.granules[1].granuleId.split('_')[1];
+
     t.deepEqual(
       {
         granuleId: mod09Granule.granuleId,
@@ -411,7 +415,7 @@ test.serial(
         producerGranuleId: mod09Granule.producerGranuleId,
       },
       {
-        granuleId: `MOD09GQ.A2017224.h09v02.006.2017227165020_${result.granules[0].granuleId.split('_')[1]}`,
+        granuleId: `MOD09GQ.A2017224.h09v02.006.2017227165020_${granuleHash1}`,
         granuleSize: 17909733,
         producerGranuleId: 'MOD09GQ.A2017224.h09v02.006.2017227165020',
       },
@@ -429,13 +433,16 @@ test.serial(
         producerGranuleId: mod87Granule.producerGranuleId,
       },
       {
-        granuleId: `MOD87GQ.A2017224.h09v02.006.2017227165020_${result.granules[1].granuleId.split('_')[1]}`,
+        granuleId: `MOD87GQ.A2017224.h09v02.006.2017227165020_${granuleHash2}`,
         granuleSize: 17909733,
         producerGranuleId: 'MOD87GQ.A2017224.h09v02.006.2017227165020',
       },
       'MOD87GQ granule metadata should match expected values'
     );
+    t.is(payload.config.hashLength, granuleHash1.length);
+    t.is(payload.config.hashLength, granuleHash2.length);
   }
+
 );
 
 test.serial(
@@ -446,6 +453,43 @@ test.serial(
 
     const payload = structuredClone(t.context.payload);
     payload.config.uniquifyGranuleId = 'true';
+    const result = await parsePdr(payload);
+    await validateOutput(t, result).catch(t.fail);
+
+    t.deepEqual(
+      {
+        filesCount: result.filesCount,
+        granulesCount: result.granulesCount,
+        granulesLength: result.granules.length,
+        totalSize: result.totalSize,
+      },
+      {
+        filesCount: 4,
+        granulesCount: 2,
+        granulesLength: 2,
+        totalSize: 35819466,
+      },
+      'Result metadata should match expected values'
+    );
+
+    const mod09Granule = result.granules.find(
+      (granule) => granule.dataType === 'MOD09GQ'
+    );
+    t.truthy(mod09Granule, 'MOD09GQ granule should exist');
+    t.is(mod09Granule.granuleId,
+      `MOD09GQ.A2017224.h09v02.006.2017227165020_${result.granules[0].granuleId.split('_')[1]}`);
+  }
+);
+
+test.serial(
+  'parse-pdr "uniqueifies" granule when "uniquifyGranuleId" is set to "true" and incoming hashLength key is defined but nullish',
+  async (t) => {
+    t.context.payload.input.pdr.name = 'multi-data-type.PDR';
+    await setUpTestPdrAndValidate(t).catch(t.fail);
+
+    const payload = structuredClone(t.context.payload);
+    payload.config.uniquifyGranuleId = 'true';
+    payload.config.hashLength = undefined;
     const result = await parsePdr(payload);
     await validateOutput(t, result).catch(t.fail);
 

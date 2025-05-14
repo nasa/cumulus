@@ -18,6 +18,7 @@
     "uniquifyGranuleId": {
       "description": "A flag (boolean or string) that indicates if the lambda should uniquify the granule IDs found in the PDR. Accepts true/false or 'true'/'false'. Defaults to false.  Positive string value is 'true'",
       "anyOf": [
+        { "type": "null"},
         { "type": "boolean" },
         { "type": "string", "enum": ["true", "false"] }
       ],
@@ -25,7 +26,7 @@
     },
     "hashLength": {
       "description": "If uniquify granules is set to true, sets the length of the generated granuleId hash",
-      "type": "number",
+      "type": ["number", "null"],
       "default": 8
     },
     "provider": {
