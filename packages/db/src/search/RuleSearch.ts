@@ -25,7 +25,7 @@ export class RuleSearch extends BaseSearch {
     super(event, 'rule');
   }
 
-/**
+  /**
    * Build basic query
    *
    * @param knex - DB client
