@@ -131,8 +131,6 @@ abstract class BaseSearch {
       .select(`${cteName}.*`)
       .from(cteName);
 
-    this.buildJoins({ searchQuery, cteName });
-
     const countQuery = knex.with(cteName, cteQueryBuilder)
       .from(cteName)
       .countDistinct(`${cteName}.cumulus_id as count`);
@@ -179,20 +177,12 @@ abstract class BaseSearch {
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
-    cteQueryBuilder: Knex.QueryBuilder | Record<string, Knex.QueryBuilder>,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
     cteName?: string,
   }) {
     log.debug(`buildInfixPrefixQuery is not implemented ${Object.keys(params)}`);
     throw new Error('buildInfixPrefixQuery is not implemented');
-  }
-
-  protected buildJoins(params: {
-    searchQuery: Knex.QueryBuilder,
-    cteName: string
-  }) {
-    log.debug(`buildJoins is not implemented ${Object.keys(params)}`);
-    throw new Error('buildJoins is not implemented');
   }
 
   /**

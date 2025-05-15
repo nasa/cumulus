@@ -35,6 +35,12 @@ export class GranuleSearch extends BaseSearch {
     super(event, 'granule');
   }
 
+  /**
+   * @param params
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object of query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   */
   protected buildCteTermQuery(params: {
     knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
@@ -85,6 +91,12 @@ export class GranuleSearch extends BaseSearch {
     });
   }
 
+  /**
+   * @param params
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object of query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   */
   protected buildCteTermsQuery(params: {
     knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
@@ -140,6 +152,12 @@ export class GranuleSearch extends BaseSearch {
     });
   }
 
+  /**
+   * @param params
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object of query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   */
   protected buildCteNotMatchQuery(params: {
     knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
@@ -190,6 +208,12 @@ export class GranuleSearch extends BaseSearch {
     });
   }
 
+  /**
+   * @param params
+   * @param params.cteQueryBuilder - query builder
+   * @param [params.dbQueryParameters] - db query parameters
+   * @param [params.cteName] - main common table expression name
+   */
   protected buildInfixPrefixQuery(params: {
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -208,10 +232,19 @@ export class GranuleSearch extends BaseSearch {
     }
   }
 
+  /**
+   * @param params
+   * @param params.cteSearchQueryBuilder - query builder
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @returns - search query builder
+   */
   protected joinCTESearchTables(params: {
     cteSearchQueryBuilder: Knex.QueryBuilder;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
-  }) {
+  })
+    : {
+      cteSearchQueryBuilder: Knex.QueryBuilder
+    } {
     const {
       collections: collectionsTable,
       providers: providersTable,
@@ -259,13 +292,22 @@ export class GranuleSearch extends BaseSearch {
       `${pdrsTableName}.name as pdrName`
     );
 
-    return cteSearchQueryBuilder;
+    return { cteSearchQueryBuilder };
   }
 
+  /**
+   * @param params
+   * @param params.cteCountQueryBuilder - query builder
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @returns - count query builder
+   */
   protected joinCTECountTables(params: {
     cteCountQueryBuilder: Knex.QueryBuilder;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
-  }) {
+  })
+    : {
+      cteCountQueryBuilder: Knex.QueryBuilder
+    } {
     const {
       collections: collectionsTable,
       providers: providersTable,
@@ -303,7 +345,46 @@ export class GranuleSearch extends BaseSearch {
       `${mainTableName}.cumulus_id as count`
     );
 
-    return cteCountQueryBuilder;
+    return { cteCountQueryBuilder };
+  }
+
+  /**
+   * Build basic query
+   *
+   * @param knex - DB client
+   * @returns queries for getting count and search result
+   */
+  protected buildBasicQuery(knex: Knex)
+    : {
+      cteQueryBuilder: Knex.QueryBuilder,
+    } {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+    } = TableNames;
+
+    const cteQueryBuilder = knex(this.tableName)
+      .select(
+        `${this.tableName}.*`,
+        `${collectionsTable}.name as collectionName`,
+        `${collectionsTable}.version as collectionVersion`,
+        `${providersTable}.name as providerName`,
+        `${pdrsTable}.arn as executionArn`
+      )
+      .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    if (this.searchProvider()) {
+      cteQueryBuilder.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    } else {
+      cteQueryBuilder.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    }
+    if (this.searchPdr()) {
+      cteQueryBuilder.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+    } else {
+      cteQueryBuilder.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+    }
+
+    return { cteQueryBuilder };
   }
 
   /**
@@ -319,24 +400,24 @@ export class GranuleSearch extends BaseSearch {
       countQuery: Knex.QueryBuilder,
       searchQuery: Knex.QueryBuilder,
     } {
-    const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
-    this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
-    this.buildCteTermQuery({ knex, cteQueryBuilders });
-    this.buildCteTermsQuery({ knex, cteQueryBuilders });
-    this.buildRangeQuery({ knex, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
-    const cteSearchQueryBuilder = knex.queryBuilder();
-    const searchQuery = this.joinCTESearchTables({ cteSearchQueryBuilder, cteQueryBuilders });
-    const cteCountQueryBuilder = knex.queryBuilder();
-    const countQuery = this.joinCTECountTables({ cteCountQueryBuilder, cteQueryBuilders });
-    this.buildSortQuery({ searchQuery, cteName: `${this.tableName}_cte` });
-    const { limit, offset } = this.dbQueryParameters;
-    if (limit) searchQuery.limit(limit);
-    if (offset) searchQuery.offset(offset);
+    const { cteQueryBuilder } = this.buildBasicQuery(knex);
+    this.buildTermQuery({ cteQueryBuilder });
+    this.buildTermsQuery({ cteQueryBuilder });
+    this.buildRangeQuery({ knex, cteQueryBuilder });
+    //const cteName = `${this.tableName}_cte`;
+
+    const searchQuery = cteQueryBuilder;
+
+    const countQuery = cteQueryBuilder;
 
     log.debug(`buildSearchForActiveCollections returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
 
+  /**
+   * @param params
+   * @param params.cteQueryBuilders - object that holds query builders
+   */
   protected buildCTEExistsQuery(params: {
     cteQueryBuilders: Record<string, Knex.QueryBuilder>
   }) {
@@ -344,7 +425,15 @@ export class GranuleSearch extends BaseSearch {
     this.buildExistsQuery({ cteQueryBuilder: cteQueryBuilders[this.tableName] });
   }
 
-  protected buildSearch(knex: Knex) {
+  /**
+   * @param knex - DB client
+   * @returns queries for getting count and search result
+   */
+  protected buildSearch(knex: Knex)
+    : {
+      countQuery?: Knex.QueryBuilder,
+      searchQuery: Knex.QueryBuilder,
+    } {
     const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
     this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
     this.buildCteTermQuery({ knex, cteQueryBuilders });
@@ -354,9 +443,13 @@ export class GranuleSearch extends BaseSearch {
     this.buildCTEExistsQuery({ cteQueryBuilders });
     this.buildInfixPrefixQuery({ cteQueryBuilder: cteQueryBuilders[`${this.tableName}`], cteName: `${this.tableName}` });
     const cteSearchQueryBuilder = knex.queryBuilder();
-    const searchQuery = this.joinCTESearchTables({ cteSearchQueryBuilder, cteQueryBuilders });
+    const { cteSearchQueryBuilder: searchQuery } = this.joinCTESearchTables(
+      { cteSearchQueryBuilder, cteQueryBuilders }
+    );
     const cteCountQueryBuilder = knex.queryBuilder();
-    const countQuery = this.joinCTECountTables({ cteCountQueryBuilder, cteQueryBuilders });
+    const { cteCountQueryBuilder: countQuery } = this.joinCTECountTables(
+      { cteCountQueryBuilder, cteQueryBuilders }
+    );
     this.buildSortQuery({ searchQuery, cteName: `${this.tableName}_cte` });
     if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
     if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);

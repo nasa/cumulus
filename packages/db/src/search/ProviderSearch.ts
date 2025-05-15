@@ -19,13 +19,6 @@ export class ProviderSearch extends BaseSearch {
     super({ queryStringParameters }, 'provider');
   }
 
-  protected buildJoins(params: {
-    searchQuery: Knex.QueryBuilder,
-    cteName: string
-  }): Knex.QueryBuilder {
-    return params.searchQuery;
-  }
-
   /**
    * Build queries for infix and prefix
    *
