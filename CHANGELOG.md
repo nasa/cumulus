@@ -6,13 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-4020**
+  - Added sanitizeSensitive function to mitigate credential exposure in ElasticSearch client (metrics)
+  - Update BaseSearch functions to sanitize the errors
+
+### Fixed
+
+- **CUMULUS-4090**
+  - add limit = number of granules to get return out as requested from listGranules
+
+### Changed
+
+- **CUMULUS-4096**
+  - optimized BaseSearch and child class queries to use CTE (common table expression) for improved performance
 
 ## [v20.1.2] 2025-04-22
 
 ### Added
-- **CUMULUS-4020**
-  - Added sanitizeSensitive function to mitigate credential exposure in ElasticSearch client (metrics)
-  - Update BaseSearch functions to sanitize the errors
+
 - **CUMULUS-3868**
   - added listGranulesConcurrency parameter to control the size of requests made to the listGranules api endpoint. this should be lowered from default if granuleIds are larger than 300 characters.
 - **CUMULUS-4004**
@@ -42,8 +55,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **CUMULUS-4090**
-  - add limit = number of granules to get return out as requested from listGranules
 - **CUMULUS-3868**
   - exclude package cloudflare:sockets" in webpack.config throughout to prevent packaging bug
 - **CUMULUS-3752**
@@ -58,7 +69,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3868**
   - Use listGranules endpoint to gather granules from granuleIds
   - Bound cmr metadata download in post-to-cmr task to s3Concurrency limit
-
 - **CUMULUS-3788**
   - Updated `@cumulus/launchpad-auth/getLaunchpadToken` to check if the token in s3 has been updated
     before updating it with a new token

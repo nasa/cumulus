@@ -59,22 +59,25 @@ export class CollectionSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
-   * @param params.countQuery - query builder for getting count
-   * @param params.searchQuery - query builder for search
+   * @param params.cteQueryBuilder - query builder
    * @param [params.dbQueryParameters] - db query parameters
+   * @param [params.cteName]
    */
   protected buildInfixPrefixQuery(params: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
+    cteName?: string,
   }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { cteQueryBuilder, dbQueryParameters, cteName } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
+
+    const table = cteName || this.tableName;
+
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
+      cteQueryBuilder.whereLike(`${table}.name`, `%${infix}%`);
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
+      cteQueryBuilder.whereLike(`${table}.name`, `${prefix}%`);
     }
   }
 
@@ -93,7 +96,7 @@ export class CollectionSearch extends BaseSearch {
     subQuery
       .clear('select')
       .select(1)
-      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`))
+      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}_cte.cumulus_id`))
       .limit(1);
     return subQuery;
   }

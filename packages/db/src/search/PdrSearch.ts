@@ -36,44 +36,27 @@ export class PdrSearch extends BaseSearch {
    */
   protected buildBasicQuery(knex: Knex)
     : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
+      cteQueryBuilder: Knex.QueryBuilder,
     } {
     const {
       collections: collectionsTable,
       providers: providersTable,
       executions: executionsTable,
     } = TableNames;
-    const countQuery = knex(this.tableName)
-      .count('*');
 
-    const searchQuery = knex(this.tableName)
-      .select(`${this.tableName}.*`)
-      .select({
-        providerName: `${providersTable}.name`,
-        collectionName: `${collectionsTable}.name`,
-        collectionVersion: `${collectionsTable}.version`,
-        executionArn: `${executionsTable}.arn`,
-      })
-      .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
-      .innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    const cteQueryBuilder = knex(this.tableName)
+      .select(
+        `${this.tableName}.*`,
+        `${collectionsTable}.name as collectionName`,
+        `${collectionsTable}.version as collectionVersion`,
+        `${providersTable}.name as providerName`,
+        `${executionsTable}.arn as executionArn`
+      )
+      .leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
+      .leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`)
+      .leftJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
 
-    if (this.searchCollection()) {
-      countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-    }
-
-    if (this.searchProvider()) {
-      countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-    }
-
-    if (this.searchExecution()) {
-      countQuery.innerJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
-      searchQuery.innerJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
-    } else {
-      searchQuery.leftJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
-    }
-
-    return { countQuery, searchQuery };
+    return { cteQueryBuilder };
   }
 
   /**
@@ -85,17 +68,17 @@ export class PdrSearch extends BaseSearch {
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
+    cteName?: string,
   }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
+      cteQueryBuilder.whereLike(`${this.tableName}.name`, `%${infix}%`);
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
+      cteQueryBuilder.whereLike(`${this.tableName}.name`, `${prefix}%`);
     }
   }
 

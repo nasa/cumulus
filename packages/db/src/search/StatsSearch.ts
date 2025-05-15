@@ -154,7 +154,7 @@ class StatsSearch extends BaseSearch {
   public async summary(testKnex?: Knex): Promise<SummaryResult> {
     const knex = testKnex ?? await getKnexClient();
     const aggregateQuery: Knex.QueryBuilder = knex(this.tableName);
-    this.buildRangeQuery({ searchQuery: aggregateQuery });
+    this.buildRangeQuery({ cteQueryBuilder: aggregateQuery });
     aggregateQuery.select(
       knex.raw(`COUNT(CASE WHEN ${this.tableName}.error ->> 'Error' is not null THEN 1 END) AS count_errors`),
       knex.raw('COUNT(*) AS count_granules'),
@@ -216,11 +216,11 @@ class StatsSearch extends BaseSearch {
    */
   protected buildBasicQuery(knex: Knex)
     : {
-      searchQuery: Knex.QueryBuilder,
+      cteQueryBuilder: Knex.QueryBuilder,
     } {
-    const searchQuery:Knex.QueryBuilder = knex(this.tableName);
-    this.aggregateQueryField(searchQuery, knex);
-    return { searchQuery };
+    const cteQueryBuilder:Knex.QueryBuilder = knex(this.tableName);
+    this.aggregateQueryField(cteQueryBuilder, knex);
+    return { cteQueryBuilder };
   }
 
   /**
@@ -231,17 +231,19 @@ class StatsSearch extends BaseSearch {
    * @param [params.dbQueryParameters] - the db query parameters
    */
   protected buildInfixPrefixQuery(params: {
-    searchQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
+    cteName?: string,
   }) {
-    const { searchQuery, dbQueryParameters } = params;
-    const { infix, prefix } = dbQueryParameters || this.dbQueryParameters;
+    const { cteQueryBuilder, dbQueryParameters, cteName } = params;
+    const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
+    const table = cteName || this.tableName;
     const fieldName = infixMapping[this.tableName];
     if (infix) {
-      searchQuery.whereLike(`${this.tableName}.${fieldName}`, `%${infix}%`);
+      cteQueryBuilder.whereLike(`${table}.${fieldName}`, `%${infix}%`);
     }
     if (prefix) {
-      searchQuery.whereLike(`${this.tableName}.${fieldName}`, `${prefix}%`);
+      cteQueryBuilder.whereLike(`${table}.${fieldName}`, `${prefix}%`);
     }
   }
 
@@ -253,14 +255,14 @@ class StatsSearch extends BaseSearch {
    * @param [params.dbQueryParameters] - the db query parameters
    */
   protected buildTermQuery(params: {
-    searchQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { dbQueryParameters, searchQuery } = params;
+    const { cteQueryBuilder, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     if (this.field?.includes('error.Error')) {
-      searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is not null`);
+      cteQueryBuilder.whereRaw(`${this.tableName}.error ->> 'Error' is not null`);
     }
 
     super.buildTermQuery({

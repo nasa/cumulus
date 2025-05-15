@@ -52,86 +52,344 @@ export class ExecutionSearch extends BaseSearch {
     return (!!(not?.parentArn || term?.parentArn || terms?.parentArn));
   }
 
-  /**
-   * Build basic query
-   *
-   * @param knex - DB client
-   * @returns queries for getting count and search result
-   */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
-    const {
-      collections: collectionsTable,
-      asyncOperations: asyncOperationsTable,
-      executions: executionsTable,
-    } = TableNames;
+  protected buildSearch(knex: Knex) {
+    const cteQueryBuilders = {};
+    this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
+    this.buildCTETermQuery({ knex, cteQueryBuilders });
+    this.buildCTETermsQuery({ knex, cteQueryBuilders });
+    this.buildCTEExistsQuery({ cteQueryBuilders });
+    this.buildCTENotMatchQuery({ knex, cteQueryBuilders });
+    this.buildCTERangeQuery({ knex, cteQueryBuilders });
+    this.buildCTEInfixPrefixQuery({ knex, cteQueryBuilders });
+    const cteSearchQueryBuilder = knex.queryBuilder();
+    const searchQuery = this.joinCTESearchTables({ cteSearchQueryBuilder, cteQueryBuilders });
+    const cteCountQueryBuilder = knex.queryBuilder();
+    const countQuery = this.joinCTECountTables({ cteCountQueryBuilder, cteQueryBuilders });
+    this.buildSortQuery({ searchQuery: searchQuery, cteName: `${this.tableName}_cte` });
+    if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
+    if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
 
-    const searchQuery = knex(`${this.tableName}`)
-      .select(`${this.tableName}.*`)
-      .select({
-        collectionName: `${collectionsTable}.name`,
-        collectionVersion: `${collectionsTable}.version`,
-
-      });
-
-    if (this.searchAsync() || this.dbQueryParameters.includeFullRecord) {
-      searchQuery.select({ asyncOperationId: `${asyncOperationsTable}.id` });
-    }
-
-    if (this.searchParent() || this.dbQueryParameters.includeFullRecord) {
-      searchQuery.select({ parentArn: `${executionsTable}_parent.arn` });
-    }
-
-    const countQuery = knex(this.tableName)
-      .count('*');
-
-    if (this.searchCollection()) {
-      countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-      searchQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-    } else {
-      searchQuery.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-    }
-
-    if (this.searchAsync()) {
-      countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
-      searchQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
-    } else if (this.dbQueryParameters.includeFullRecord) {
-      searchQuery.leftJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
-    }
-
-    if (this.searchParent()) {
-      countQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
-      searchQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
-    } else if (this.dbQueryParameters.includeFullRecord) {
-      searchQuery.leftJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
-    }
+    log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
 
-  /**
-   * Build queries for infix and prefix
-   *
-   * @param params
-   * @param params.countQuery - query builder for getting count
-   * @param params.searchQuery - query builder for search
-   * @param [params.dbQueryParameters] - db query parameters
-   */
-  protected buildInfixPrefixQuery(params: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
+  protected buildCTEInfixPrefixQuery(params: {
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { knex, cteQueryBuilders, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
+
+    if (!(`${this.tableName}` in cteQueryBuilders)) cteQueryBuilders[`${this.tableName}`] = knex.select('*').from(`${this.tableName}`);
+
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.arn`, `%${infix}%`));
+      cteQueryBuilders[`${this.tableName}`].whereLike(`${this.tableName}.arn`, `%${infix}%`);
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.arn`, `${prefix}%`));
+      cteQueryBuilders[`${this.tableName}`].whereLike(`${this.tableName}.arn`, `${prefix}%`);
     }
+  }
+
+  protected buildCTETermQuery(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
+    dbQueryParameters?: DbQueryParameters;
+  }) {
+    const {
+      collections: collectionsTable,
+      asyncOperations: asyncOperationsTable,
+    } = TableNames;
+
+    const { knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    this.buildCTETables({ knex, cteQueryBuilders, term });
+
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          cteQueryBuilders[`${collectionsTable}`].where(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          cteQueryBuilders[`${collectionsTable}`].where(`${collectionsTable}.version`, value);
+          break;
+        case 'asyncOperationId':
+          cteQueryBuilders[`${asyncOperationsTable}`].where(`${asyncOperationsTable}.id`, value);
+          break;
+        case 'parentArn':
+          cteQueryBuilders[`${this.tableName}_parent`].where(`${this.tableName}_parent.arn`, value);
+          break;
+        case 'error.Error':
+          cteQueryBuilders[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
+          break;
+        default:
+          cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+
+  protected buildCTETermsQuery(params: {
+    knex: Knex; cteQueryBuilders:
+    Record<string, Knex.QueryBuilder>;
+    dbQueryParameters?: DbQueryParameters;
+  }) {
+    const {
+      collections: collectionsTable,
+      asyncOperations: asyncOperationsTable,
+    } = TableNames;
+
+    const { knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    const term = terms;
+    this.buildCTETables({ knex, cteQueryBuilders, term });
+
+    Object.entries(terms).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          cteQueryBuilders[`${collectionsTable}`].whereIn(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          cteQueryBuilders[`${collectionsTable}`].whereIn(`${collectionsTable}.version`, value);
+          break;
+        case 'asyncOperationId':
+          cteQueryBuilders[`${asyncOperationsTable}`].whereIn(`${asyncOperationsTable}.id`, value);
+          break;
+        case 'parentArn':
+          cteQueryBuilders[`${this.tableName}_parent`].whereIn(`${this.tableName}_parent.arn`, value);
+          break;
+        case 'error.Error':
+          if (Array.isArray(value) && value.length > 0) {
+            cteQueryBuilders[`${this.tableName}`].whereRaw(
+              `${this.tableName}.error->>'Error' IN (${value.map(() => '?').join(',')})`,
+              value
+            );
+          }
+          break;
+        default:
+          cteQueryBuilders[`${this.tableName}`].whereIn(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+
+  protected buildCTENotMatchQuery(params: {
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
+    dbQueryParameters?: DbQueryParameters;
+  }) {
+    const {
+      collections: collectionsTable,
+      asyncOperations: asyncOperationsTable,
+    } = TableNames;
+
+    const { knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    this.buildCTETables({ knex, cteQueryBuilders, term });
+
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          cteQueryBuilders[`${collectionsTable}`].whereNot(`${collectionsTable}.name`, value);
+          break;
+        case 'collectionVersion':
+          cteQueryBuilders[`${collectionsTable}`].whereNot(`${collectionsTable}.version`, value);
+          break;
+        case 'asyncOperationId':
+          cteQueryBuilders[`${asyncOperationsTable}`].whereNot(`${asyncOperationsTable}.id`, value);
+          break;
+        case 'parentArn':
+          cteQueryBuilders[`${this.tableName}_parent`].whereNot(`${this.tableName}_parent.arn`, value);
+          break;
+        case 'error.Error':
+          cteQueryBuilders[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' != ?`, value);
+          break;
+        default:
+          cteQueryBuilders[`${this.tableName}`].whereNot(`${this.tableName}.${name}`, value);
+          break;
+      }
+    });
+  }
+
+  protected buildCTEExistsQuery(params: {
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>
+  }) {
+    const { cteQueryBuilders } = params;
+    this.buildExistsQuery({ cteQueryBuilder: cteQueryBuilders[this.tableName] });
+  }
+
+  protected buildCTETables(params: {
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
+    term: any }) {
+    const {
+      collections: collectionsTable,
+      asyncOperations: asyncOperationsTable,
+    } = TableNames;
+
+    const { knex, cteQueryBuilders, term } = params;
+
+    //Object.entries(term).forEach(([name, value]) => {
+    Object.keys(term).forEach((name) => {
+      switch (name) {
+        case 'collectionVersion':
+        case 'collectionName':
+          if (!(`${collectionsTable}` in cteQueryBuilders)) {
+            cteQueryBuilders[`${collectionsTable}`] = knex.select('*').from(`${collectionsTable}`);
+          }
+          break;
+        case 'parentArn':
+          if (!(`${this.tableName}_parent` in cteQueryBuilders)) {
+            cteQueryBuilders[`${this.tableName}_parent`] = knex.select('*').from(`${this.tableName} as ${this.tableName}_parent`);
+          }
+          break;
+        case 'error.Error':
+        default:
+          if (!(`${this.tableName}` in cteQueryBuilders)) {
+            cteQueryBuilders[`${this.tableName}`] = knex.select('*').from(`${this.tableName}`);
+          }
+          break;
+      }
+    });
+
+    if (this.searchAsync() || this.dbQueryParameters.includeFullRecord) {
+      cteQueryBuilders[`${asyncOperationsTable}`] = knex.select('*').from(`${asyncOperationsTable}`);
+    }
+
+    if ((this.searchParent() || this.dbQueryParameters.includeFullRecord) && !(`${this.tableName}_parent` in cteQueryBuilders)) {
+      cteQueryBuilders[`${this.tableName}_parent`] = knex.select('*').from(`${this.tableName} as ${this.tableName}_parent`);
+    }
+  }
+
+  protected joinCTESearchTables(params: {
+    cteSearchQueryBuilder: Knex.QueryBuilder;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
+  }) {
+    const {
+      collections: collectionsTable,
+      asyncOperations: asyncOperationsTable,
+    } = TableNames;
+
+    const { cteSearchQueryBuilder, cteQueryBuilders } = params;
+    Object.entries(cteQueryBuilders).forEach(([tableName, cteQuery]) => {
+      cteSearchQueryBuilder.with(`${tableName}_cte`, cteQuery);
+    });
+
+    let mainTableName = `${this.tableName}`;
+    if (`${this.tableName}` in cteQueryBuilders) {
+      mainTableName = `${this.tableName}_cte`;
+      cteSearchQueryBuilder.from(`${this.tableName}_cte`);
+    } else {
+      cteSearchQueryBuilder.from(`${this.tableName}`);
+    }
+
+    let collectionsTableName = `${collectionsTable}`;
+    if (`${collectionsTable}` in cteQueryBuilders) {
+      collectionsTableName = `${collectionsTable}_cte`;
+      cteSearchQueryBuilder.innerJoin(`${collectionsTableName}`, `${mainTableName}.collection_cumulus_id`, `${collectionsTableName}.cumulus_id`);
+    } else {
+      cteSearchQueryBuilder.leftJoin(`${collectionsTableName}`, `${mainTableName}.collection_cumulus_id`, `${collectionsTableName}.cumulus_id`);
+    }
+
+    let asyncOperationsTableName = `${asyncOperationsTable}`;
+    if (`${asyncOperationsTable}` in cteQueryBuilders) {
+      asyncOperationsTableName = `${asyncOperationsTable}_cte`;
+      if (this.dbQueryParameters.includeFullRecord) {
+        cteSearchQueryBuilder.leftJoin(`${asyncOperationsTableName}`, `${mainTableName}.async_operation_cumulus_id`, `${asyncOperationsTableName}.cumulus_id`);
+      } else {
+        cteSearchQueryBuilder.innerJoin(`${asyncOperationsTableName}`, `${mainTableName}.async_operation_cumulus_id`, `${asyncOperationsTableName}.cumulus_id`);
+      }
+    } else {
+      cteSearchQueryBuilder.leftJoin(`${asyncOperationsTableName}`, `${mainTableName}.async_operation_cumulus_id`, `${asyncOperationsTableName}.cumulus_id`);
+    }
+
+    let parentTableName = `${this.tableName}_parent`;
+    if (`${this.tableName}_parent` in cteQueryBuilders) {
+      parentTableName = `${this.tableName}_parent_cte`;
+      if (this.dbQueryParameters.includeFullRecord) {
+        cteSearchQueryBuilder.leftJoin(`${mainTableName} as ${parentTableName}`, `${mainTableName}.parent_cumulus_id`, `${parentTableName}.cumulus_id`);
+      } else {
+        cteSearchQueryBuilder.innerJoin(`${parentTableName}`, `${mainTableName}.parent_cumulus_id`, `${parentTableName}.cumulus_id`);
+      }
+    } else if (this.dbQueryParameters.includeFullRecord) {
+      cteSearchQueryBuilder.leftJoin(`${mainTableName} as ${parentTableName}`, `${mainTableName}.parent_cumulus_id`, `${parentTableName}.cumulus_id`);
+    }
+    cteSearchQueryBuilder.select(
+      `${mainTableName}.*`,
+      `${collectionsTableName}.name as collectionName`,
+      `${collectionsTableName}.version as collectionVersion`
+    );
+
+    if (this.searchAsync() || this.dbQueryParameters.includeFullRecord) {
+      cteSearchQueryBuilder.select(`${asyncOperationsTableName}.id as asyncOperationId`);
+    }
+
+    if (this.searchParent() || this.dbQueryParameters.includeFullRecord) {
+      cteSearchQueryBuilder.select(`${parentTableName}.arn as parentArn`);
+    }
+
+    return cteSearchQueryBuilder;
+  }
+
+  protected joinCTECountTables(params: {
+    cteCountQueryBuilder: Knex.QueryBuilder;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
+  }) {
+    const {
+      collections: collectionsTable,
+      asyncOperations: asyncOperationsTable,
+    } = TableNames;
+
+    const { cteCountQueryBuilder, cteQueryBuilders } = params;
+    Object.entries(cteQueryBuilders).forEach(([tableName, cteQuery]) => {
+      cteCountQueryBuilder.with(`${tableName}_cte`, cteQuery);
+    });
+
+    let mainTableName = `${this.tableName}`;
+    if (`${this.tableName}` in cteQueryBuilders) {
+      mainTableName = `${this.tableName}_cte`;
+      cteCountQueryBuilder.from(`${this.tableName}_cte`);
+    } else {
+      cteCountQueryBuilder.from(`${this.tableName}`);
+    }
+
+    let collectionsTableName = `${collectionsTable}`;
+    if (`${collectionsTable}` in cteQueryBuilders) {
+      collectionsTableName = `${collectionsTable}_cte`;
+      cteCountQueryBuilder.innerJoin(`${collectionsTableName}`, `${mainTableName}.collection_cumulus_id`, `${collectionsTableName}.cumulus_id`);
+    } else {
+      cteCountQueryBuilder.leftJoin(`${collectionsTableName}`, `${mainTableName}.collection_cumulus_id`, `${collectionsTableName}.cumulus_id`);
+    }
+
+    let asyncOperationsTableName = `${asyncOperationsTable}`;
+    if (`${asyncOperationsTable}` in cteQueryBuilders) {
+      asyncOperationsTableName = `${asyncOperationsTable}_cte`;
+      if (this.dbQueryParameters.includeFullRecord) {
+        cteCountQueryBuilder.leftJoin(`${asyncOperationsTableName}`, `${mainTableName}.async_operation_cumulus_id`, `${asyncOperationsTableName}.cumulus_id`);
+      } else {
+        cteCountQueryBuilder.innerJoin(`${asyncOperationsTableName}`, `${mainTableName}.async_operation_cumulus_id`, `${asyncOperationsTableName}.cumulus_id`);
+      }
+    } else {
+      cteCountQueryBuilder.leftJoin(`${asyncOperationsTableName}`, `${mainTableName}.async_operation_cumulus_id`, `${asyncOperationsTableName}.cumulus_id`);
+    }
+
+    let parentTableName = `${this.tableName}_parent`;
+    if (`${this.tableName}_parent` in cteQueryBuilders) {
+      parentTableName = `${this.tableName}_parent_cte`;
+      if (this.dbQueryParameters.includeFullRecord) {
+        cteCountQueryBuilder.leftJoin(`${mainTableName} as ${parentTableName}`, `${mainTableName}.parent_cumulus_id`, `${parentTableName}.cumulus_id`);
+      } else {
+        cteCountQueryBuilder.innerJoin(`${parentTableName}`, `${mainTableName}.parent_cumulus_id`, `${parentTableName}.cumulus_id`);
+      }
+    } else if (this.dbQueryParameters.includeFullRecord) {
+      cteCountQueryBuilder.leftJoin(`${mainTableName} as ${parentTableName}`, `${mainTableName}.parent_cumulus_id`, `${parentTableName}.cumulus_id`);
+    }
+    cteCountQueryBuilder.countDistinct(
+      `${mainTableName}.cumulus_id as count`
+    );
+
+    return cteCountQueryBuilder;
   }
 
   /**

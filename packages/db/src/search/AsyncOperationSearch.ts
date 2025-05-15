@@ -1,6 +1,5 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
-
 import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
 import Logger from '@cumulus/logger';
 
@@ -28,17 +27,17 @@ export class AsyncOperationSearch extends BaseSearch {
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
+    cteName?: string,
   }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereRaw(`${this.tableName}.id::text like ?`, `%${infix}%`));
+      cteQueryBuilder.whereRaw(`${this.tableName}.id::text like ?`, `%${infix}%`);
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereRaw(`${this.tableName}.id::text like ?`, `${prefix}%`));
+      cteQueryBuilder.whereRaw(`${this.tableName}.id::text like ?`, `${prefix}%`);
     }
   }
 
