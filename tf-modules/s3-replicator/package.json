@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/s3-replicator",
-  "version": "20.1.3-alpha.1",
+  "version": "20.1.3-alpha.2",
   "description": "Replicate S3 Events to alternate bucket. Solves same-region replication.",
   "engines": {
     "node": ">=20.12.2"
@@ -26,10 +26,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "20.1.3-alpha.1"
+    "@cumulus/aws-client": "20.1.3-alpha.2"
   },
   "devDependencies": {
-    "@cumulus/common": "20.1.3-alpha.1"
+    "@cumulus/common": "20.1.3-alpha.2"
   },
   "private": true
 }

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/logger",
-  "version": "20.1.3-alpha.1",
+  "version": "20.1.3-alpha.2",
   "description": "A log library for use on Cumulus",
   "keywords": [
     "GIBS",
