@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sqs-message-remover-lambda",
-  "version": "20.1.3-alpha.0",
+  "version": "20.1.3-alpha.1",
   "description": "Remove processed messages from SQS queues",
   "main": "src/index.js",
   "private": true,
@@ -39,10 +39,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "20.1.3-alpha.0",
-    "@cumulus/common": "20.1.3-alpha.0",
-    "@cumulus/ingest": "20.1.3-alpha.0",
-    "@cumulus/logger": "20.1.3-alpha.0",
+    "@cumulus/aws-client": "20.1.3-alpha.1",
+    "@cumulus/common": "20.1.3-alpha.1",
+    "@cumulus/ingest": "20.1.3-alpha.1",
+    "@cumulus/logger": "20.1.3-alpha.1",
     "lodash": "^4.17.21"
   }
 }

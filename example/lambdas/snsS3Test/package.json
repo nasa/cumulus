@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-sns-s3",
-  "version": "20.1.3-alpha.0",
+  "version": "20.1.3-alpha.1",
   "description": "SNS to S3 Test Lambda",
   "main": "index.js",
   "private": true,
