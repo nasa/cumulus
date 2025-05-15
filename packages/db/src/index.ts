@@ -151,9 +151,9 @@ export {
 export {
   AsyncOperationSearch,
 } from './search/AsyncOperationSearch';
-// export {
-//   CollectionSearch,
-// } from './search/CollectionSearch';
+export {
+  CollectionSearch,
+} from './search/CollectionSearch';
 export {
   ExecutionSearch,
 } from './search/ExecutionSearch';
@@ -169,9 +169,9 @@ export {
 export {
   RuleSearch,
 } from './search/RuleSearch';
-// export {
-//   StatsSearch,
-// } from './search/StatsSearch';
+export {
+  StatsSearch,
+} from './search/StatsSearch';
 export {
   ReconciliationReportSearch,
 } from './search/ReconciliationReportSearch';
