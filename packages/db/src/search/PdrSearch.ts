@@ -82,13 +82,6 @@ export class PdrSearch extends BaseSearch {
     }
   }
 
-  protected buildJoins(params: {
-    searchQuery: Knex.QueryBuilder,
-    cteName: string
-  }): Knex.QueryBuilder {
-    return params.searchQuery;
-  }
-
   /**
    * Translate postgres records to api records
    *

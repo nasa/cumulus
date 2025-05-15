@@ -42,13 +42,6 @@ export class ReconciliationReportSearch extends BaseSearch {
     return { cteQueryBuilder };
   }
 
-  protected buildJoins(params: {
-    searchQuery: Knex.QueryBuilder,
-    cteName: string
-  }): Knex.QueryBuilder {
-    return params.searchQuery;
-  }
-
   /**
    * Build queries for infix and prefix
    *

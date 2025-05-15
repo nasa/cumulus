@@ -18,13 +18,6 @@ export class AsyncOperationSearch extends BaseSearch {
     super(event, 'asyncOperation');
   }
 
-  protected buildJoins(params:
-  {
-    searchQuery: Knex.QueryBuilder; cteName: string
-  }): Knex.QueryBuilder {
-    return params.searchQuery;
-  }
-
   /**
    * Build queries for infix and prefix
    *
