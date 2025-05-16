@@ -9,6 +9,9 @@
     "url": "https://github.com/nasa/cumulus",
     "directory": "tasks/test-processing"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=20.12.2"
   },
