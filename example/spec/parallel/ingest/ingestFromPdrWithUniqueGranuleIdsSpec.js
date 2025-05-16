@@ -330,7 +330,7 @@ describe('Ingesting from PDR', () => {
               const expectedPrefix = `${producerId}_`;
               expect(granule.granuleId.startsWith(expectedPrefix)).toBe(true);
               const hashPart = granule.granuleId.slice(expectedPrefix.length);
-              expect(hashPart.length).toEqual(3); // 4 is the defined value in the collection config
+              expect(hashPart.length).toEqual(3); // this is the defined value in the collection config
               expect(/^[\w\-]+$/.test(hashPart)).toBe(true);
 
               expectedParsePdrOutput.granules[index].granuleId = granule.granuleId;
