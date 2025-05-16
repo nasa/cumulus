@@ -22,7 +22,7 @@
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "echo 'true'",
+    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
@@ -40,13 +40,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "20.1.1",
+    "@cumulus/common": "20.1.2",
     "@cumulus/cumulus-message-adapter-js": "2.3.0",
-    "@cumulus/message": "20.1.1",
-    "@cumulus/types": "20.1.1",
-    "@cumulus/ingest": "20.1.1",
-    "@cumulus/logger": "20.1.1"
-  },
-  "devDependencies": {
+    "@cumulus/ingest": "20.1.2",
+    "@cumulus/logger": "20.1.2",
+    "@cumulus/message": "20.1.2",
+    "@cumulus/types": "20.1.2"
   }
 }
