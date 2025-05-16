@@ -1785,6 +1785,7 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
   const updatedGranule = {
     granuleId: apiGranule.granuleId,
     collectionId: apiGranule.collectionId,
+    producerGranuleId: apiGranule.producerGranuleId,
     status: newPgGranule.status,
   };
 
@@ -1852,6 +1853,7 @@ test.serial('PATCH does not update non-current-timestamp undefined fields for ex
   const updatedGranule = {
     granuleId: apiGranule.granuleId,
     collectionId: constructCollectionId(t.context.collectionName, t.context.collectionVersion),
+    producerGranuleId: apiGranule.producerGranuleId,
     status: newPgGranule.status,
   };
 
@@ -1929,8 +1931,8 @@ test.serial('PATCH nullifies expected fields for existing granules', async (t) =
   const updatedGranule = {
     granuleId: apiGranule.granuleId,
     collectionId,
+    producerGranuleId: apiGranule.producerGranuleId,
     status: newPgGranule.status,
-    createdAt: null,
     beginningDateTime: null,
     cmrLink: null,
     duration: null,
@@ -1948,7 +1950,6 @@ test.serial('PATCH nullifies expected fields for existing granules', async (t) =
     timestamp: null,
     timeToArchive: null,
     timeToPreprocess: null,
-    updatedAt: null,
   };
 
   await request(app)
@@ -1974,6 +1975,7 @@ test.serial('PATCH nullifies expected fields for existing granules', async (t) =
     execution: translatedPostgresGranule.execution,
     files: [],
     granuleId: updatedGranule.granuleId,
+    producerGranuleId: updatedGranule.producerGranuleId,
     published: false,
     status: updatedGranule.status,
     timestamp: translatedPostgresGranule.timestamp,
@@ -2005,6 +2007,7 @@ test.serial('PATCH does not overwrite existing duration of an existing granule i
   const updatedGranule = {
     granuleId: apiGranule.granuleId,
     collectionId: apiGranule.collectionId,
+    producerGranuleId: apiGranule.producerGranuleId,
     status: 'completed',
     queryFields: newQueryFields,
   };
@@ -2045,6 +2048,7 @@ test.serial('PATCH does not overwrite existing createdAt of an existing granule 
   const updatedGranule = {
     granuleId: apiGranule.granuleId,
     collectionId: apiGranule.collectionId,
+    producerGranuleId: apiGranule.producerGranuleId,
     status: 'completed',
   };
 
@@ -2695,8 +2699,10 @@ test.serial('PATCH returns bad request when the path param collectionId does not
 
 test.serial('PATCH can set running granule status to queued', async (t) => {
   const granuleId = cryptoRandomString({ length: 6 });
+  const producerGranuleId = cryptoRandomString({ length: 6 });
   const runningGranule = fakeGranuleRecordFactory({
     granule_id: granuleId,
+    producer_granule_id: producerGranuleId,
     status: 'running',
     collection_cumulus_id: t.context.collectionCumulusId,
   });
@@ -2714,7 +2720,8 @@ test.serial('PATCH can set running granule status to queued', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
-      granuleId: granuleId,
+      granuleId,
+      producerGranuleId,
       status: 'queued',
       collectionId: t.context.collectionId,
     });
@@ -2726,13 +2733,17 @@ test.serial('PATCH can set running granule status to queued', async (t) => {
 });
 
 test.serial('PATCH will set completed status to queued', async (t) => {
-  const granuleId = t.context.fakePGGranules[0].granule_id;
+  const {
+    granule_id: granuleId,
+    producer_granule_id: producerGranuleId,
+  } = t.context.fakePGGranules[0];
   const response = await request(app)
     .patch(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
-      granuleId: granuleId,
+      granuleId,
+      producerGranuleId,
       status: 'queued',
       collectionId: t.context.collectionId,
       execution: t.context.executionUrl,
@@ -2752,17 +2763,22 @@ test.serial('PATCH will set completed status to queued', async (t) => {
 
 test.serial('PUT will not set completed status to queued when queued created at is older', async (t) => {
   const { fakePGGranules, knex, collectionCumulusId } = t.context;
-  const granuleId = fakePGGranules[0].granule_id;
+  const {
+    granule_id: granuleId,
+    producer_granule_id: producerGranuleId,
+  } = fakePGGranules[0];
   const response = await request(app)
     .put(`/granules/${t.context.collectionId}/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
-      granuleId: granuleId,
+      granuleId,
+      producerGranuleId,
       status: 'queued',
       collectionId: t.context.collectionId,
       execution: t.context.executionUrl,
       createdAt: Date.now() - 100000,
+      updatedAt: Date.now(),
     });
 
   t.is(response.status, 200);
@@ -2785,6 +2801,7 @@ test.serial('PATCH can create a new granule with status queued', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
       granuleId: granuleId,
+      producerGranuleId: randomId('producerGranuleId'),
       status: 'queued',
       collectionId: t.context.collectionId,
     });
@@ -3113,7 +3130,10 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
   const newGranule = {
     granuleId: apiGranule.granuleId,
     collectionId: apiGranule.collectionId,
+    producerGranuleId: apiGranule.producerGranuleId,
     status: 'completed',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
 
   await request(app)
@@ -3133,6 +3153,7 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
 
   const expectedGranule = {
     ...newGranule,
+    producerGranuleId: apiGranule.producerGranuleId,
     error: {}, // This is a default value for no execution
     published: false, // This is a default value
     execution: apiGranule.execution, // This should not have changed
@@ -3141,6 +3162,7 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
     updatedAt: translatedActualPgGranule.updatedAt,
     createdAt: translatedActualPgGranule.createdAt,
   };
+
   // Files is always returned as '[]' by translator if none exist
   t.deepEqual(
     { ...translatedActualPgGranule },
@@ -3160,6 +3182,7 @@ test.serial('PUT creates a new granule in all data stores', async (t) => {
   const newGranule = {
     granuleId,
     collectionId,
+    producerGranuleId: randomId('producerGranuleId'),
     status: 'completed',
   };
 
@@ -3206,6 +3229,7 @@ test.serial('PUT utilizes the collectionId from the URI if one is not provided',
   const granuleId = createGranuleId();
   const newGranule = {
     granuleId,
+    producerGranuleId: randomId('producerGranuleId'),
     status: 'completed',
   };
 
@@ -3252,6 +3276,7 @@ test.serial('PUT utilizes the granuleId from the URI if one is not provided', as
   const granuleId = createGranuleId();
   const newGranule = {
     collectionId,
+    producerGranuleId: randomId('producerGranuleId'),
     status: 'completed',
   };
 
@@ -3295,6 +3320,7 @@ test.serial('PUT throws if URI collection does not match provided object collect
   const granuleId = createGranuleId();
   const newGranule = {
     granuleId,
+    producerGranuleId: randomId('producerGranuleId'),
     status: 'completed',
     collectionId: 'fakeCollectionId',
   };
@@ -3317,6 +3343,7 @@ test.serial('PUT throws if URI granuleId does not match provided object granuleI
   const granuleId = createGranuleId();
   const newGranule = {
     granuleId,
+    producerGranuleId: randomId('producerGranuleId'),
     status: 'completed',
     collectionId: 'fakeCollectionId',
   };
@@ -3339,6 +3366,7 @@ test.serial('PUT returns 404 if collection is not part of URI', async (t) => {
   const granuleId = createGranuleId();
   const newGranule = {
     granuleId,
+    producerGranuleId: randomId('producerGranuleId'),
     status: 'completed',
     collectionId: 'fakeCollectionId',
   };
@@ -3359,7 +3387,7 @@ test.serial('PUT returns 400 for version value less than the configured value', 
     .set('Cumulus-API-Version', '0')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .send({ granuleId, collectionId: t.context.collectionId, producerGranuleId: randomId('producerGranuleId'), status: 'completed' })
     .expect(400);
   t.is(response.status, 400);
   t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
@@ -3372,7 +3400,7 @@ test.serial('PATCH returns 400 for version value less than the configured value'
     .set('Cumulus-API-Version', '0')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .send({ granuleId, collectionId: t.context.collectionId, producerGranuleId: randomId('producerGranuleId'), status: 'completed' })
     .expect(400);
   t.is(response.status, 400);
   t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
@@ -3385,7 +3413,7 @@ test.serial('PUT returns 201 (granule creation) for version value greater than t
     .set('Cumulus-API-Version', `${version + 1}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .send({ granuleId, collectionId: t.context.collectionId, producerGranuleId: randomId('producerGranuleId'), status: 'completed' })
     .expect(201);
   t.is(response.status, 201);
 });
@@ -3397,7 +3425,7 @@ test.serial('PATCH returns 201 (granule creation) for version value greater than
     .set('Cumulus-API-Version', `${version + 1}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .send({ granuleId, collectionId: t.context.collectionId, producerGranuleId: randomId('producerGranuleId'), status: 'completed' })
     .expect(201);
   t.is(response.status, 201);
 });

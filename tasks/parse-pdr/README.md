@@ -12,6 +12,7 @@
 | collection | (required) | The cumulus-api collection object
 | bucket     | (required) | The internal bucket name (used for record keeping)
 | stack      | (required) | Cumulus deployment stack name
+| uniquifyGranuleId | false | If set to true in the configuration, granuleId will be a 'uniquified' value instead of the original value in the form <producerId>_<hash>
 
 ### Input
 

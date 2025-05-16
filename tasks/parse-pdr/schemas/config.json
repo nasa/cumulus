@@ -8,12 +8,26 @@
       "type": "string"
     },
     "stack": {
-      "description": "The name of the Task's CloudFormation Task, useful as a prefix",
+      "description": "The cumulus stack prefix, pulled from $.meta.stack",
       "type": "string"
     },
     "granuleIdFilter": {
       "description": "A regular expression that is applied against the filename of the first file of each granule contained in the PDR.  If the regular expression matches, then the granule is included in the output.  Defaults to '.', which will match all granules in the PDR.",
       "type": "string"
+    },
+    "uniquifyGranuleId": {
+      "description": "A flag (boolean or string) that indicates if the lambda should uniquify the granule IDs found in the PDR. Accepts true/false or 'true'/'false'. Defaults to false.  Positive string value is 'true'",
+      "anyOf": [
+        { "type": "null"},
+        { "type": "boolean" },
+        { "type": "string", "enum": ["true", "false"] }
+      ],
+      "default": false
+    },
+    "hashLength": {
+      "description": "If uniquify granules is set to true, sets the length of the generated granuleId hash",
+      "type": ["number", "null"],
+      "default": 8
     },
     "provider": {
       "type": "object",
