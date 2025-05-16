@@ -6,13 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-4020**
+  - Added sanitizeSensitive function to mitigate credential exposure in ElasticSearch client (metrics)
+  - Update BaseSearch functions to sanitize the errors
+
+### Fixed
+
+- **CUMULUS-4106**
+  - Fixed the release npm publish error by adding private property to `@cumulus/change-granule-collection-pg`
+    and `@cumulus/change-granule-collection-s3` package.json.
 
 ## [v20.1.2] 2025-04-22
 
 ### Added
-- **CUMULUS-4020**
-  - Added sanitizeSensitive function to mitigate credential exposure in ElasticSearch client (metrics)
-  - Update BaseSearch functions to sanitize the errors
+
 - **CUMULUS-3868**
   - added listGranulesConcurrency parameter to control the size of requests made to the listGranules api endpoint. this should be lowered from default if granuleIds are larger than 300 characters.
 - **CUMULUS-4004**
