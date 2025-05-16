@@ -923,7 +923,7 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
  *    mapping for all distribution buckets
  * @returns {Object}
  */
-function updateEcho10XMLMetadataObject({
+function updateEcho10XMLMetadataObjectUrls({
   metadataObject,
   files,
   distEndpoint,
@@ -993,7 +993,7 @@ async function updateEcho10XMLMetadata({
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRXMLFile(filename);
 
-  const updatedMetadataObject = updateEcho10XMLMetadataObject({
+  const updatedMetadataObject = updateEcho10XMLMetadataObjectUrls({
     metadataObject,
     files,
     distEndpoint,
@@ -1429,7 +1429,7 @@ module.exports = {
   removeEtagsFromFileObjects,
   removeFromCMR,
   updateCMRMetadata,
-  updateEcho10XMLMetadataObject,
+  updateEcho10XMLMetadataObjectUrls,
   updateUMMGMetadataObject,
   setECHO10Collection,
   setUMMGCollection,

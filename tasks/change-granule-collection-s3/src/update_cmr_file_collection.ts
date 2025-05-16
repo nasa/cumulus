@@ -6,7 +6,7 @@ import {
   isECHO10Filename,
   isUMMGFilename,
   setECHO10Collection,
-  updateEcho10XMLMetadataObject,
+  updateEcho10XMLMetadataObjectUrls,
   setUMMGCollection,
   updateUMMGMetadataObject,
 } from '@cumulus/cmrjs/cmr-utils';
@@ -83,7 +83,7 @@ export const updateCmrFileLinks = ({
     distributionBucketMap,
   };
   if (isECHO10Filename(cmrFileName)) {
-    return updateEcho10XMLMetadataObject({
+    return updateEcho10XMLMetadataObjectUrls({
       ...params,
       metadataObject: cmrObject,
     });
