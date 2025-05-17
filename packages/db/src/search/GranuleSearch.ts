@@ -36,6 +36,21 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
+   * Build the search query
+   *
+   * @param knex - DB client
+   * @returns queries for getting count and search result
+   */
+  protected buildSearch(knex: Knex)
+    : {
+      countQuery?: Knex.QueryBuilder,
+      searchQuery: Knex.QueryBuilder,
+    } {
+    const { countQuery, searchQuery } = super.buildCteSearch(knex);
+    return { countQuery, searchQuery };
+  }
+
+  /**
    * @param params
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object of query builders
@@ -238,7 +253,7 @@ export class GranuleSearch extends BaseSearch {
    * @param params.cteQueryBuilders - object that holds query builders
    * @returns - search query builder
    */
-  protected joinCTESearchTables(params: {
+  protected joinCteTables(params: {
     cteSearchQueryBuilder: Knex.QueryBuilder;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
   })
@@ -256,13 +271,8 @@ export class GranuleSearch extends BaseSearch {
       cteSearchQueryBuilder.with(`${tableName}_cte`, cteQuery);
     });
 
-    let mainTableName = `${this.tableName}`;
-    if (`${this.tableName}` in cteQueryBuilders) {
-      mainTableName = `${this.tableName}_cte`;
-      cteSearchQueryBuilder.from(`${this.tableName}_cte`);
-    } else {
-      cteSearchQueryBuilder.from(`${this.tableName}`);
-    }
+    const mainTableName = `${this.tableName}_cte`;
+    cteSearchQueryBuilder.from(`${mainTableName}`);
     let collectionsTableName = `${collectionsTable}`;
     if (`${collectionsTable}` in cteQueryBuilders) {
       collectionsTableName = `${collectionsTable}_cte`;
@@ -293,59 +303,6 @@ export class GranuleSearch extends BaseSearch {
     );
 
     return { cteSearchQueryBuilder };
-  }
-
-  /**
-   * @param params
-   * @param params.cteCountQueryBuilder - query builder
-   * @param params.cteQueryBuilders - object that holds query builders
-   * @returns - count query builder
-   */
-  protected joinCTECountTables(params: {
-    cteCountQueryBuilder: Knex.QueryBuilder;
-    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
-  })
-    : {
-      cteCountQueryBuilder: Knex.QueryBuilder
-    } {
-    const {
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-    } = TableNames;
-
-    const { cteCountQueryBuilder, cteQueryBuilders } = params;
-    Object.entries(cteQueryBuilders).forEach(([tableName, cteQuery]) => {
-      cteCountQueryBuilder.with(`${tableName}_cte`, cteQuery);
-    });
-
-    let mainTableName = `${this.tableName}`;
-    if (`${this.tableName}` in cteQueryBuilders) {
-      mainTableName = `${this.tableName}_cte`;
-      cteCountQueryBuilder.from(`${this.tableName}_cte`);
-    } else {
-      cteCountQueryBuilder.from(`${this.tableName}`);
-    }
-    if (`${collectionsTable}` in cteQueryBuilders) {
-      cteCountQueryBuilder.innerJoin(`${collectionsTable}_cte`, `${mainTableName}.collection_cumulus_id`, `${collectionsTable}_cte.cumulus_id`);
-    } else {
-      cteCountQueryBuilder.leftJoin(`${collectionsTable}`, `${mainTableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-    }
-    if (`${providersTable}` in cteQueryBuilders) {
-      cteCountQueryBuilder.innerJoin(`${providersTable}_cte`, `${mainTableName}.provider_cumulus_id`, `${providersTable}_cte.cumulus_id`);
-    } else {
-      cteCountQueryBuilder.leftJoin(`${providersTable}`, `${mainTableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-    }
-    if (`${pdrsTable}` in cteQueryBuilders) {
-      cteCountQueryBuilder.innerJoin(`${pdrsTable}_cte`, `${mainTableName}.pdr_cumulus_id`, `${pdrsTable}_cte.cumulus_id`);
-    } else {
-      cteCountQueryBuilder.leftJoin(`${pdrsTable}`, `${mainTableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-    }
-    cteCountQueryBuilder.countDistinct(
-      `${mainTableName}.cumulus_id as count`
-    );
-
-    return { cteCountQueryBuilder };
   }
 
   /**
@@ -411,50 +368,6 @@ export class GranuleSearch extends BaseSearch {
     const countQuery = cteQueryBuilder;
 
     log.debug(`buildSearchForActiveCollections returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
-    return { countQuery, searchQuery };
-  }
-
-  /**
-   * @param params
-   * @param params.cteQueryBuilders - object that holds query builders
-   */
-  protected buildCTEExistsQuery(params: {
-    cteQueryBuilders: Record<string, Knex.QueryBuilder>
-  }) {
-    const { cteQueryBuilders } = params;
-    this.buildExistsQuery({ cteQueryBuilder: cteQueryBuilders[this.tableName] });
-  }
-
-  /**
-   * @param knex - DB client
-   * @returns queries for getting count and search result
-   */
-  protected buildSearch(knex: Knex)
-    : {
-      countQuery?: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
-    const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
-    this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
-    this.buildCteTermQuery({ knex, cteQueryBuilders });
-    this.buildCteTermsQuery({ knex, cteQueryBuilders });
-    this.buildCteNotMatchQuery({ knex, cteQueryBuilders });
-    this.buildRangeQuery({ knex, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
-    this.buildCTEExistsQuery({ cteQueryBuilders });
-    this.buildInfixPrefixQuery({ cteQueryBuilder: cteQueryBuilders[`${this.tableName}`], cteName: `${this.tableName}` });
-    const cteSearchQueryBuilder = knex.queryBuilder();
-    const { cteSearchQueryBuilder: searchQuery } = this.joinCTESearchTables(
-      { cteSearchQueryBuilder, cteQueryBuilders }
-    );
-    const cteCountQueryBuilder = knex.queryBuilder();
-    const { cteCountQueryBuilder: countQuery } = this.joinCTECountTables(
-      { cteCountQueryBuilder, cteQueryBuilders }
-    );
-    this.buildSortQuery({ searchQuery, cteName: `${this.tableName}_cte` });
-    if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
-    if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
-
-    log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
 
