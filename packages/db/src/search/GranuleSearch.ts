@@ -324,10 +324,10 @@ export class GranuleSearch extends BaseSearch {
     const cteQueryBuilder = knex(this.tableName)
       .select(
         `${this.tableName}.*`,
-        `${collectionsTable}.name`,
-        `${collectionsTable}.version`,
+        `${collectionsTable}.name as collectionName`,
+        `${collectionsTable}.version as collectionVersion`,
         `${providersTable}.name as providerName`,
-        `${pdrsTable}.name`
+        `${pdrsTable}.name as pdrsName`
       )
       .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     if (this.searchProvider()) {
