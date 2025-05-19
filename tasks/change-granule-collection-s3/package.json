@@ -2,6 +2,7 @@
   "name": "@cumulus/change-granule-collection-s3",
   "version": "20.1.2",
   "description": "Move granule files and postgres records to a new collection",
+  "private": true,
   "main": "dist/index.js",
   "directories": {
     "test": "tests"
