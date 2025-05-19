@@ -1,0 +1,37 @@
+{
+  "name": "@cumulus/ecs-async-operation",
+  "version": "13.1.0",
+  "description": "The docker image for running async operations",
+  "keywords": [
+    "NASA",
+    "Cumulus"
+  ],
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/api/ecs/async-operation#readme",
+  "bugs": "https://bugs.earthdata.nasa.gov/projects/CUMULUS/issues",
+  "license": "Apache-2.0",
+  "author": "Cumulus Authors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus.git",
+    "directory": "packages/api/ecs/async-operation"
+  },
+  "scripts": {
+    "test:coverage": "../../../../node_modules/.bin/nyc true",
+    "test": "../../../../node_modules/.bin/ava"
+  },
+  "dependencies": {
+    "@cumulus/aws-client": "13.1.0",
+    "@cumulus/db": "13.1.0",
+    "@cumulus/es-client": "13.1.0",
+    "@cumulus/logger": "13.1.0",
+    "aws-sdk": "^2.585.0",
+    "crypto-random-string": "^3.2.0",
+    "got": "^11.8.5",
+    "lodash": "^4.17.21",
+    "p-retry": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=14.19.1"
+  },
+  "private": true
+}

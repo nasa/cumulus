@@ -1,0 +1,24 @@
+{
+  "name": "http_testcollection",
+  "version": "001",
+  "dataType": "L4_GHRSST-SSTfnd-MUR-GLOB",
+  "duplicateHandling": "replace",
+  "granuleId": "^.*$",
+  "granuleIdExtraction": "^(.*)\\.(nc|nc\\.md5)$",
+  "reportToEms": false,
+  "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+  "files": [
+    {
+      "regex": ".*.nc$",
+      "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+      "bucket": "internal",
+      "type": "data"
+    },
+    {
+      "regex": ".*.nc.md5$",
+      "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
+      "bucket": "internal",
+      "type": "metadata"
+    }
+  ]
+}
