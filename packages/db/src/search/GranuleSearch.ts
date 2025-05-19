@@ -1,12 +1,13 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
+import omit from 'lodash/omit';
 import set from 'lodash/set';
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import Logger from '@cumulus/logger';
 
 import { BaseRecord } from '../types/base';
 import { BaseSearch } from './BaseSearch';
-import { DbQueryParameters, QueryEvent } from '../types/search';
+import { DbQueryParameters, QueriableType, QueryEvent } from '../types/search';
 import { PostgresGranuleRecord } from '../types/granule';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
 import { TableNames } from '../tables';
@@ -129,14 +130,21 @@ export class GranuleSearch extends BaseSearch {
     const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
     this.buildCteTables({ knex, cteQueryBuilders, term: terms });
 
-    Object.entries(terms).forEach(([name, value]) => {
+    // collection name and version are searched in pair
+    if (terms.collectionName && terms.collectionVersion
+      && terms.collectionName.length > 0
+      && terms.collectionVersion.length > 0) {
+      const collectionPair: QueriableType[][] = [];
+      for (let i = 0; i < terms.collectionName.length; i += 1) {
+        const name = terms.collectionName[i];
+        const version = terms.collectionVersion[i];
+        if (name && version) collectionPair.push([name, version]);
+      }
+      cteQueryBuilders[`${collectionsTable}`].whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
+    }
+
+    Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
-        case 'collectionName':
-          cteQueryBuilders[`${collectionsTable}`].whereIn(`${collectionsTable}.name`, value);
-          break;
-        case 'collectionVersion':
-          cteQueryBuilders[`${collectionsTable}`].whereIn(`${collectionsTable}.version`, value);
-          break;
         case 'executionArn':
           cteQueryBuilders[`${executionsTable}`].whereIn(`${executionsTable}.arn`, value);
           break;
@@ -190,14 +198,16 @@ export class GranuleSearch extends BaseSearch {
     const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
     this.buildCteTables({ knex, cteQueryBuilders, term });
 
-    Object.entries(term).forEach(([name, value]) => {
+    // collection name and version are searched in pair
+    if (term.collectionName && term.collectionVersion) {
+      cteQueryBuilders[`${collectionsTable}`].whereNot({
+        [`${collectionsTable}.name`]: term.collectionName,
+        [`${collectionsTable}.version`]: term.collectionVersion,
+      });
+    }
+
+    Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
-        case 'collectionName':
-          cteQueryBuilders[`${collectionsTable}`].whereNot(`${collectionsTable}.name`, value);
-          break;
-        case 'collectionVersion':
-          cteQueryBuilders[`${collectionsTable}`].whereNot(`${collectionsTable}.version`, value);
-          break;
         case 'executionArn':
           cteQueryBuilders[`${executionsTable}`].whereNot(`${executionsTable}.arn`, value);
           break;
@@ -256,10 +266,7 @@ export class GranuleSearch extends BaseSearch {
   protected joinCteTables(params: {
     cteSearchQueryBuilder: Knex.QueryBuilder;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
-  })
-    : {
-      cteSearchQueryBuilder: Knex.QueryBuilder
-    } {
+  }): { cteSearchQueryBuilder: Knex.QueryBuilder } {
     const {
       collections: collectionsTable,
       providers: providersTable,
@@ -361,7 +368,6 @@ export class GranuleSearch extends BaseSearch {
     this.buildTermQuery({ cteQueryBuilder });
     this.buildTermsQuery({ cteQueryBuilder });
     this.buildRangeQuery({ knex, cteQueryBuilder });
-    //const cteName = `${this.tableName}_cte`;
 
     const searchQuery = cteQueryBuilder;
 

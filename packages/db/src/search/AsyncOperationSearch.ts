@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
+
 import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
 import Logger from '@cumulus/logger';
 
@@ -22,8 +23,7 @@ export class AsyncOperationSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
-   * @param params.countQuery - query builder for getting count
-   * @param params.searchQuery - query builder for search
+   * @param params.cteQueryBuilder - common table expression query for search
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {

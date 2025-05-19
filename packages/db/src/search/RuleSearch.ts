@@ -29,7 +29,8 @@ export class RuleSearch extends BaseSearch {
    * Build basic query
    *
    * @param knex - DB client
-   * @returns queries for getting count and search result
+   * @param cteQueryBuilder - CTE query builder
+   * @returns joined CTE query
    */
   protected buildBasicQuery(knex: Knex)
     : {
@@ -57,9 +58,9 @@ export class RuleSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
-   * @param params.countQuery - query builder for getting count
-   * @param params.searchQuery - query builder for search
+   * @param params.cteQueryBuilder - CTE query builder
    * @param [params.dbQueryParameters] - db query parameters
+   * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
     cteQueryBuilder: Knex.QueryBuilder,

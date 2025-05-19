@@ -1,11 +1,12 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
 import pick from 'lodash/pick';
+import omit from 'lodash/omit';
 import set from 'lodash/set';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { ApiExecutionRecord } from '@cumulus/types/api/executions';
 import { BaseSearch } from './BaseSearch';
-import { DbQueryParameters, QueryEvent } from '../types/search';
+import { DbQueryParameters, QueriableType, QueryEvent } from '../types/search';
 import { translatePostgresExecutionToApiExecutionWithoutDbQuery } from '../translate/executions';
 import { PostgresExecutionRecord } from '../types/execution';
 import { TableNames } from '../tables';
@@ -67,6 +68,14 @@ export class ExecutionSearch extends BaseSearch {
     return { countQuery, searchQuery };
   }
 
+  /**
+   * Build query for infix and prefix search
+   *
+   * @param params
+   * @param params.cteQueryBuilder - query builder
+   * @param [params.dbQueryParameters] - db query parameters
+   * @param [params.cteName] - CTE name
+   */
   protected buildInfixPrefixQuery(params: {
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -85,6 +94,14 @@ export class ExecutionSearch extends BaseSearch {
     }
   }
 
+  /**
+   * Build CTE term query for search
+   *
+   * @param params
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   */
   protected buildCteTermQuery(params: {
     knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
@@ -123,9 +140,17 @@ export class ExecutionSearch extends BaseSearch {
     });
   }
 
+  /**
+   * Build CTE terms query for search
+   *
+   * @param params
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   */
   protected buildCteTermsQuery(params: {
-    knex: Knex; cteQueryBuilders:
-    Record<string, Knex.QueryBuilder>;
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
     dbQueryParameters?: DbQueryParameters;
   }) {
     const {
@@ -138,14 +163,21 @@ export class ExecutionSearch extends BaseSearch {
     const term = terms;
     this.buildCteTables({ knex, cteQueryBuilders, term });
 
-    Object.entries(terms).forEach(([name, value]) => {
+    // collection name and version are searched in pair
+    if (terms.collectionName && terms.collectionVersion
+      && terms.collectionName.length > 0
+      && terms.collectionVersion.length > 0) {
+      const collectionPair: QueriableType[][] = [];
+      for (let i = 0; i < terms.collectionName.length; i += 1) {
+        const name = terms.collectionName[i];
+        const version = terms.collectionVersion[i];
+        if (name && version) collectionPair.push([name, version]);
+      }
+      cteQueryBuilders[`${collectionsTable}`].whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
+    }
+
+    Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
-        case 'collectionName':
-          cteQueryBuilders[`${collectionsTable}`].whereIn(`${collectionsTable}.name`, value);
-          break;
-        case 'collectionVersion':
-          cteQueryBuilders[`${collectionsTable}`].whereIn(`${collectionsTable}.version`, value);
-          break;
         case 'asyncOperationId':
           cteQueryBuilders[`${asyncOperationsTable}`].whereIn(`${asyncOperationsTable}.id`, value);
           break;
@@ -167,6 +199,14 @@ export class ExecutionSearch extends BaseSearch {
     });
   }
 
+  /**
+   * Build CTE not match query for search
+   *
+   * @param params
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   */
   protected buildCteNotMatchQuery(params: {
     knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
@@ -181,14 +221,16 @@ export class ExecutionSearch extends BaseSearch {
     const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
     this.buildCteTables({ knex, cteQueryBuilders, term });
 
-    Object.entries(term).forEach(([name, value]) => {
+    // collection name and version are searched in pair
+    if (term.collectionName && term.collectionVersion) {
+      cteQueryBuilders[`${collectionsTable}`].whereNot({
+        [`${collectionsTable}.name`]: term.collectionName,
+        [`${collectionsTable}.version`]: term.collectionVersion,
+      });
+    }
+
+    Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
-        case 'collectionName':
-          cteQueryBuilders[`${collectionsTable}`].whereNot(`${collectionsTable}.name`, value);
-          break;
-        case 'collectionVersion':
-          cteQueryBuilders[`${collectionsTable}`].whereNot(`${collectionsTable}.version`, value);
-          break;
         case 'asyncOperationId':
           cteQueryBuilders[`${asyncOperationsTable}`].whereNot(`${asyncOperationsTable}.id`, value);
           break;
@@ -205,10 +247,19 @@ export class ExecutionSearch extends BaseSearch {
     });
   }
 
+  /**
+   * Build CTE tables for search
+   *
+   * @param params
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @param param.term - db query parameter for term for building table
+   */
   protected buildCteTables(params: {
     knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
-    term: any }) {
+    term: any
+  }) {
     const {
       collections: collectionsTable,
       asyncOperations: asyncOperationsTable,
@@ -216,7 +267,6 @@ export class ExecutionSearch extends BaseSearch {
 
     const { knex, cteQueryBuilders, term } = params;
 
-    //Object.entries(term).forEach(([name, value]) => {
     Object.keys(term).forEach((name) => {
       switch (name) {
         case 'collectionVersion':
@@ -248,13 +298,18 @@ export class ExecutionSearch extends BaseSearch {
     }
   }
 
+  /**
+   * Join CTE term queries for search
+   *
+   * @param params
+   * @param params.cteSearchQueryBuilder - CTE query for search
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @returns joined CTE query builder for search
+   */
   protected joinCteTables(params: {
     cteSearchQueryBuilder: Knex.QueryBuilder;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
-  })
-    : {
-      cteSearchQueryBuilder: Knex.QueryBuilder
-    } {
+  }) : { cteSearchQueryBuilder: Knex.QueryBuilder } {
     const {
       collections: collectionsTable,
       asyncOperations: asyncOperationsTable,

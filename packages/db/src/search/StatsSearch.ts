@@ -212,7 +212,8 @@ class StatsSearch extends BaseSearch {
    * Builds basic query
    *
    * @param knex - the knex client
-   * @returns the search query
+   * @param cteQueryBuilder - CTE query builder
+   * @returns the cte built query
    */
   protected buildBasicQuery(knex: Knex)
     : {
@@ -227,8 +228,9 @@ class StatsSearch extends BaseSearch {
    * Builds queries for infix and prefix
    *
    * @param params
-   * @param params.searchQuery - the search query
+   * @param cteQueryBuilder - CTE query builder
    * @param [params.dbQueryParameters] - the db query parameters
+   * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
     cteQueryBuilder: Knex.QueryBuilder,
@@ -251,7 +253,7 @@ class StatsSearch extends BaseSearch {
    * Builds queries for term fields
    *
    * @param params
-   * @param params.searchQuery - the search query
+   * @param params.cteQueryBuilder - CTE query builder
    * @param [params.dbQueryParameters] - the db query parameters
    */
   protected buildTermQuery(params: {

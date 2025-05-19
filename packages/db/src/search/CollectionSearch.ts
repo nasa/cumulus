@@ -61,7 +61,7 @@ export class CollectionSearch extends BaseSearch {
    * @param params
    * @param params.cteQueryBuilder - query builder
    * @param [params.dbQueryParameters] - db query parameters
-   * @param [params.cteName]
+   * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
     cteQueryBuilder: Knex.QueryBuilder,
