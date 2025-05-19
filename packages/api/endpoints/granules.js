@@ -720,21 +720,27 @@ async function del(req, res) {
       knex,
       deconstructCollectionId(collectionId)
     );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(
+        `No collection found for granuleId ${granuleId} with collectionId ${collectionId}`
+      );
+    }
+    throw error;
+  }
 
+  try {
     pgGranule = await granulePgModel.get(knex, {
       granule_id: granuleId,
       collection_cumulus_id: pgCollection.cumulus_id,
     });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (collectionId && pgCollection === undefined) {
-        return res.boom.notFound(
-          `No collection found for granuleId ${granuleId} with collectionId ${collectionId}`
-        );
-      }
-    } else {
-      throw error;
+      return res.boom.notFound(
+        `Granule ${granuleId} does not exist for collection ${collectionId} or was already deleted`
+      );
     }
+    throw error;
   }
 
   const deletionDetails = await deleteGranuleAndFiles({
