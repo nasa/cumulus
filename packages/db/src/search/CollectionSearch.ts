@@ -135,21 +135,23 @@ export class CollectionSearch extends BaseSearch {
   private async retrieveGranuleStats(collectionCumulusIds: number[], knex: Knex)
     : Promise<StatsRecords> {
     const granulesTable = TableNames.granules;
-    let statsQuery = knex(granulesTable);
+    let statsQuery = knex.with(`${granulesTable}_cte`, knex(granulesTable));
 
     if (this.active) {
       const granuleSearch = new GranuleSearch({
         queryStringParameters: this.queryStringParameters,
       });
       const { countQuery } = granuleSearch.buildSearchForActiveCollections(knex);
-      statsQuery = countQuery.clear('select');
+      //statsQuery = countQuery.clear('select');
+      statsQuery = knex.with(`${granulesTable}_cte`, countQuery);
     }
 
     statsQuery
-      .select(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
+      .select(`${granulesTable}_cte.collection_cumulus_id`, `${granulesTable}_cte.status`)
       .count('*')
-      .groupBy(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
-      .whereIn(`${granulesTable}.collection_cumulus_id`, collectionCumulusIds);
+      .from(`${granulesTable}_cte`)
+      .groupBy(`${granulesTable}_cte.collection_cumulus_id`, `${granulesTable}_cte.status`)
+      .whereIn(`${granulesTable}_cte.collection_cumulus_id`, collectionCumulusIds);
 
     log.debug(`retrieveGranuleStats statsQuery: ${statsQuery?.toSQL().sql}`);
     const results = await statsQuery;

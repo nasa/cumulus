@@ -143,6 +143,103 @@ abstract class BaseSearch {
   }
 
   /**
+   * @param knex - DB client
+   * @returns queries for getting count and search result
+   */
+  protected buildCteSearch(knex: Knex)
+    : {
+      countQuery?: Knex.QueryBuilder,
+      searchQuery: Knex.QueryBuilder,
+    } {
+    const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
+    this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
+    this.buildCteTermQuery({ knex, cteQueryBuilders });
+    this.buildCteTermsQuery({ knex, cteQueryBuilders });
+    this.buildCteNotMatchQuery({ knex, cteQueryBuilders });
+    this.buildRangeQuery({ knex, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
+    this.buildExistsQuery({ cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
+    this.buildInfixPrefixQuery({ cteQueryBuilder: cteQueryBuilders[`${this.tableName}`], cteName: `${this.tableName}` });
+    const cteSearchQueryBuilder = knex.queryBuilder();
+    const { cteSearchQueryBuilder: searchQuery } = this.joinCteTables(
+      { cteSearchQueryBuilder, cteQueryBuilders }
+    );
+
+    const countQuery = searchQuery.clone();
+    countQuery.clear('select').countDistinct(
+      `${this.tableName}_cte.cumulus_id as count`
+    );
+
+    this.buildSortQuery({ searchQuery, cteName: `${this.tableName}_cte` });
+    if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
+    if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
+
+    log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
+    return { countQuery, searchQuery };
+  }
+
+  /**
+   * @param params
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object of query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildCteTermQuery(params: {
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    log.debug(`buildCteTermQuery is not implemented ${Object.keys(params)}`);
+    throw new Error('buildCteTermQuery is not implemented');
+  }
+
+  /**
+   * @param params
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object of query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildCteTermsQuery(params: {
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    log.debug(`buildCteTermsQuery is not implemented ${Object.keys(params)}`);
+    throw new Error('buildCteTermsQuery is not implemented');
+  }
+
+  /**
+   * @param params
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object of query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildCteNotMatchQuery(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    dbQueryParameters?: DbQueryParameters
+  }) {
+    log.debug(`buildCteNotMatchQuery is not implemented ${Object.keys(params)}`);
+    throw new Error('buildCteNotMatchQuery is not implemented');
+  }
+
+  /**
+   * @param params
+   * @param params.cteSearchQueryBuilder - query builder
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @returns - search query builder
+   */
+  protected joinCteTables(params: {
+    cteSearchQueryBuilder: Knex.QueryBuilder;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>;
+  })
+    : {
+      cteSearchQueryBuilder: Knex.QueryBuilder
+    } {
+    log.debug(`joinCteTables is not implemented ${Object.keys(params)}`);
+    throw new Error('joinCteTables is not implemented');
+  }
+
+  /**
    * Get metadata template for query result
    *
    * @returns metadata template
