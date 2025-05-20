@@ -52,6 +52,8 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
+   * Build the CTE Term query for term search
+   *
    * @param params
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object of query builders
@@ -108,6 +110,8 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
+   * Builds the CTE Terms query for terms search
+   *
    * @param params
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object of query builders
@@ -176,6 +180,8 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
+   * Builds the CTE Not Match query for not match queries
+   *
    * @param params
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object of query builders
@@ -234,6 +240,8 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
+   * Build queries for infix and prefix
+   *
    * @param params
    * @param params.cteQueryBuilder - query builder
    * @param [params.dbQueryParameters] - db query parameters
@@ -258,6 +266,8 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
+   * * Joins the tables for the CTE query
+   *
    * @param params
    * @param params.cteSearchQueryBuilder - query builder
    * @param params.cteQueryBuilders - object that holds query builders

@@ -148,7 +148,7 @@ class StatsSearch extends BaseSearch {
   /**
    * Queries postgres for a summary of statistics around the granules in the system
    *
-   * @param testKnex - the knex client to be used
+   * @param [testKnex] - the knex client to be used
    * @returns the postgres aggregations based on query
    */
   public async summary(testKnex?: Knex): Promise<SummaryResult> {
@@ -212,7 +212,6 @@ class StatsSearch extends BaseSearch {
    * Builds basic query
    *
    * @param knex - the knex client
-   * @param cteQueryBuilder - CTE query builder
    * @returns the cte built query
    */
   protected buildBasicQuery(knex: Knex)

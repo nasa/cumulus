@@ -187,6 +187,7 @@ abstract class BaseSearch {
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object of CTE query builders
    * @param [params.dbQueryParameters] - db query parameters
+   * @throws - function is not implemented
    */
   protected buildCteTermQuery(params: {
     knex: Knex;
@@ -204,6 +205,7 @@ abstract class BaseSearch {
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object of CTE query builders
    * @param [params.dbQueryParameters] - db query parameters
+   * @throws - function is not implemented
    */
   protected buildCteTermsQuery(params: {
     knex: Knex;
@@ -221,6 +223,7 @@ abstract class BaseSearch {
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object of query builders
    * @param [params.dbQueryParameters] - db query parameters
+   * @throws - function is not implemented
    */
   protected buildCteNotMatchQuery(params: {
     knex: Knex,
@@ -232,12 +235,41 @@ abstract class BaseSearch {
   }
 
   /**
+   * Build Range query for CTE
+   *
+   * @param params
+   * @param params.knex - db client
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildCTERangeQuery(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { range = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    if (!(`${this.tableName}` in cteQueryBuilders)) cteQueryBuilders[`${this.tableName}`] = knex.select('*').from(`${this.tableName}`);
+
+    Object.entries(range).forEach(([name, rangeValues]) => {
+      const { gte, lte } = rangeValues;
+      if (gte) {
+        cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, '>=', gte);
+      }
+      if (lte) {
+        cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, '<=', lte);
+      }
+    });
+  }
+
+  /**
    * Joins the tables for the CTE query
    *
    * @param params
-   * @param params.cteSearchQueryBuilder - query builder
+   * @param params.cteSearchQueryBuilder - search query builder
    * @param params.cteQueryBuilders - object that holds query builders
    * @returns - search query builder
+   * @throws - function is not implemented
    */
   protected joinCteTables(params: {
     cteSearchQueryBuilder: Knex.QueryBuilder;
@@ -248,6 +280,73 @@ abstract class BaseSearch {
     } {
     log.debug(`joinCteTables is not implemented ${Object.keys(params)}`);
     throw new Error('joinCteTables is not implemented');
+  }
+
+  /**
+   * Build CTE tables
+   *
+   * @param params
+   * @param params.knex - db client
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @param params.term - term value to filter through for building the CTE
+   */
+  protected buildCteTables(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    term: any
+  }) {
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+
+    const { knex, cteQueryBuilders, term } = params;
+
+    Object.keys(term).forEach((name) => {
+      switch (name) {
+        case 'collectionVersion':
+        case 'collectionName':
+          this.initCteTable({ knex, cteQueryBuilders, cteName: collectionsTable });
+          break;
+        case 'executionArn':
+        case 'parentArn':
+          this.initCteTable({ knex, cteQueryBuilders, cteName: executionsTable });
+          break;
+        case 'providerName':
+          this.initCteTable({ knex, cteQueryBuilders, cteName: providersTable });
+          break;
+        case 'pdrName':
+          this.initCteTable({ knex, cteQueryBuilders, cteName: pdrsTable });
+          break;
+        case 'asyncOperationId':
+          this.initCteTable({ knex, cteQueryBuilders, cteName: asyncOperationsTable });
+          break;
+        case 'error.Error':
+        default:
+          this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
+          break;
+      }
+    });
+  }
+
+  /**
+   * Initialize CTE table
+   *
+   * @param params
+   * @param params.knex - db client
+   * @param params.cteQueryBuilders - object that holds query builders
+   * @param params.cteName - CTE table name
+   */
+  protected initCteTable(params: {
+    knex: Knex,
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    cteName: string,
+  }) {
+    const { knex, cteQueryBuilders, cteName } = params;
+    if (!(`${cteName}` in cteQueryBuilders)) cteQueryBuilders[`${cteName}`] = knex.select('*').from(`${cteName}`);
   }
 
   /**
@@ -281,12 +380,14 @@ abstract class BaseSearch {
    *
    * @param params
    * @param params.cteQueryBuilder - CTE query builder for search
+   * @param [params.cteName] - CTE table name
    * @param [params.dbQueryParameters] - db query parameters
+   * @throws - function is not implemented
    */
   protected buildInfixPrefixQuery(params: {
     cteQueryBuilder: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
     cteName?: string,
+    dbQueryParameters?: DbQueryParameters,
   }) {
     log.debug(`buildInfixPrefixQuery is not implemented ${Object.keys(params)}`);
     throw new Error('buildInfixPrefixQuery is not implemented');
@@ -344,13 +445,13 @@ abstract class BaseSearch {
    * Build queries for range fields
    *
    * @param params
-   * @param params.knex - db client
    * @param params.cteQueryBuilder - CTE query builder for search
+   * @param [params.knex] - db client
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildRangeQuery(params: {
-    knex?: Knex,
     cteQueryBuilder: Knex.QueryBuilder,
+    knex?: Knex,
     dbQueryParameters?: DbQueryParameters,
   }) {
     const { cteQueryBuilder, dbQueryParameters } = params;
@@ -588,73 +689,6 @@ abstract class BaseSearch {
   }
 
   /**
-   * Build CTE tables
-   *
-   * @param params
-   * @param params.knex - db client
-   * @param params.cteQueryBuilders - object that holds query builders
-   * @param params.term - term value to filter through for building the CTE
-   */
-  protected buildCteTables(params: {
-    knex: Knex,
-    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
-    term: any
-  }) {
-    const {
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-      asyncOperations: asyncOperationsTable,
-      executions: executionsTable,
-    } = TableNames;
-
-    const { knex, cteQueryBuilders, term } = params;
-
-    Object.keys(term).forEach((name) => {
-      switch (name) {
-        case 'collectionVersion':
-        case 'collectionName':
-          this.initCteTable({ knex, cteQueryBuilders, cteName: collectionsTable });
-          break;
-        case 'executionArn':
-        case 'parentArn':
-          this.initCteTable({ knex, cteQueryBuilders, cteName: executionsTable });
-          break;
-        case 'providerName':
-          this.initCteTable({ knex, cteQueryBuilders, cteName: providersTable });
-          break;
-        case 'pdrName':
-          this.initCteTable({ knex, cteQueryBuilders, cteName: pdrsTable });
-          break;
-        case 'asyncOperationId':
-          this.initCteTable({ knex, cteQueryBuilders, cteName: asyncOperationsTable });
-          break;
-        case 'error.Error':
-        default:
-          this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
-          break;
-      }
-    });
-  }
-
-  /**
-   * Initialize CTE table
-   *
-   * @param params
-   * @param params.knex - db client
-   * @param params.cteQueryBuilders - object that holds query builders
-   * @param params.cteName - CTE table name
-   */
-  protected initCteTable(params: {
-    knex: Knex,
-    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
-    cteName: string,
-  }) {
-    const { knex, cteQueryBuilders, cteName } = params;
-    if (!(`${cteName}` in cteQueryBuilders)) cteQueryBuilders[`${cteName}`] = knex.select('*').from(`${cteName}`);
-  }
-
-  /**
    * Translate postgres records to api records
    *
    * @param pgRecords - postgres records returned from query
@@ -686,34 +720,6 @@ abstract class BaseSearch {
     const estimatedCount = get(countResult, countPath);
     const count = Number(estimatedCount ?? 0);
     return count;
-  }
-
-  /**
-   * Build Range query for CTE
-   *
-   * @param params
-   * @param params.knex - db client
-   * @param params.cteQueryBuilders - object that holds query builders
-   * @param [params.dbQueryParameters] - db query parameters
-   */
-  protected buildCTERangeQuery(params: {
-    knex: Knex,
-    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { knex, cteQueryBuilders, dbQueryParameters } = params;
-    const { range = {} } = dbQueryParameters ?? this.dbQueryParameters;
-    if (!(`${this.tableName}` in cteQueryBuilders)) cteQueryBuilders[`${this.tableName}`] = knex.select('*').from(`${this.tableName}`);
-
-    Object.entries(range).forEach(([name, rangeValues]) => {
-      const { gte, lte } = rangeValues;
-      if (gte) {
-        cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, '>=', gte);
-      }
-      if (lte) {
-        cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, '<=', lte);
-      }
-    });
   }
 
   /**

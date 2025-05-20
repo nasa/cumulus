@@ -25,6 +25,7 @@ export class AsyncOperationSearch extends BaseSearch {
    * @param params
    * @param params.cteQueryBuilder - common table expression query for search
    * @param [params.dbQueryParameters] - db query parameters
+   * @param [params.cteName] - CTE table name
    */
   protected buildInfixPrefixQuery(params: {
     cteQueryBuilder: Knex.QueryBuilder,
