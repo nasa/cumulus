@@ -1467,6 +1467,7 @@ const getCMRCollectionId = (
 
 module.exports = {
   addEtagsToFileObjects,
+  buildCMRQuery,
   constructCmrConceptLink,
   constructOnlineAccessUrl,
   constructOnlineAccessUrls,
