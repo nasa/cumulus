@@ -12,7 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `parse-pdr` task component to throw an error if multiple granules within the same PDR have the same granuleId after applying the granuleIdFilter, unless the `uniquifyGranuleId` configuration parameter is explicitly set to `true`.
 
 ### Added
-
+- **CUMULUS-4089**
+  - Add integration testing for duplicate granule workflows
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules` table.
   - Added `producerGranuleId` property to `granule` record schema.
