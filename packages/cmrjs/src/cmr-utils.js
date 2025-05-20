@@ -36,6 +36,9 @@ const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
 } = require('./utils');
+const { updateEcho10XMLGranuleUrAndGranuleIdentifier } = require('./echo10Modifiers');
+const { updateUMMGGranuleURAndGranuleIdentifier } = require('./ummgModifiers');
+
 /* eslint-disable max-len */
 /**
  * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams
@@ -787,10 +790,18 @@ async function updateUMMGMetadata({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
+  producerGranuleId,
+  granuleId,
+  updateGranuleUr = false,
+  testOverrides = {},
 }) {
+  const {
+    localUploadUMMGJSONCMRFile = uploadUMMGJSONCMRFile,
+    localMetadataObjectFromCMRJSONFile = metadataObjectFromCMRJSONFile,
+  } = testOverrides;
   const filename = getS3UrlOfFile(cmrFile);
-  const metadataObject = await metadataObjectFromCMRJSONFile(filename);
-  const updatedMetadataObject = updateUMMGMetadataObject({
+  const metadataObject = await localMetadataObjectFromCMRJSONFile(filename);
+  let updatedMetadataObject = updateUMMGMetadataObject({
     metadataObject,
     files,
     distEndpoint,
@@ -798,7 +809,27 @@ async function updateUMMGMetadata({
     cmrGranuleUrlType,
     distributionBucketMap,
   });
-  const { ETag: etag } = await uploadUMMGJSONCMRFile(updatedMetadataObject, cmrFile);
+  if (updateGranuleUr) {
+    // TODO DRY this up
+    // Type checks are needed as this callers/API are not all typed/ts converted yet
+    if (!producerGranuleId) {
+      throw new Error(
+        'updateGranuleUr is true but no producerGranuleId was provided'
+      );
+    }
+    if (!granuleId) {
+      throw new Error('updateGranuleUr is true but no granuleId was provided');
+    }
+    updatedMetadataObject = updateUMMGGranuleURAndGranuleIdentifier({
+      granuleUr: granuleId,
+      identifier: producerGranuleId,
+      metadataObject: updatedMetadataObject,
+    });
+  }
+  const { ETag: etag } = await localUploadUMMGJSONCMRFile(
+    updatedMetadataObject,
+    cmrFile
+  );
   return { metadataObject: updatedMetadataObject, etag };
 }
 
@@ -981,28 +1012,56 @@ function updateEcho10XMLMetadataObjectUrls({
  * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
  *    containing a `metadataObject` and the `etag` of the uploaded CMR file
  */
-async function updateEcho10XMLMetadata({
+async function updateEcho10XMLMetadata({ // TODO fix typings for this method
+  granuleId,
+  producerGranuleId,
   cmrFile,
   files,
   distEndpoint,
   bucketTypes,
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
+  updateGranuleUr = false,
+  testOverrides = {},
 }) {
+  const {
+    localGenerateEcho10XMLString = generateEcho10XMLString,
+    localUploadEcho10CMRFile = uploadEcho10CMRFile,
+    localMetadataObjectFromCMRXMLFile = metadataObjectFromCMRXMLFile,
+  } = testOverrides;
+
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
-  const metadataObject = await metadataObjectFromCMRXMLFile(filename);
+  const metadataObject = await localMetadataObjectFromCMRXMLFile(filename);
+  // TODO: This is "any"... but....
 
-  const updatedMetadataObject = updateEcho10XMLMetadataObjectUrls({
+  let updatedMetadataObject = updateEcho10XMLMetadataObjectUrls({
     metadataObject,
     files,
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
     distributionBucketMap,
+    updateGranuleUr,
   });
-  const xml = generateEcho10XMLString(updatedMetadataObject.Granule);
-  const { ETag: etag } = await uploadEcho10CMRFile(xml, cmrFile);
+
+  //TODO: updateEcho10XMLGranuleUrAndDataGranuleIdentifier
+  if (updateGranuleUr) {
+    // Type checks as this callers/API are not all typed yet
+    if (!producerGranuleId) {
+      throw new Error('updateGranuleUr is true but no producerGranuleId was provided');
+    }
+    if (!granuleId) {
+      throw new Error('updateGranuleUr is true but no granuleId was provided');
+    }
+    updatedMetadataObject = updateEcho10XMLGranuleUrAndGranuleIdentifier({
+      granuleUr: granuleId,
+      identifier: producerGranuleId,
+      xml: updatedMetadataObject,
+    });
+  }
+  const xml = localGenerateEcho10XMLString(updatedMetadataObject.Granule);
+  const { ETag: etag } = await localUploadEcho10CMRFile(xml, cmrFile);
   return { metadataObject: updatedMetadataObject, etag };
 }
 
@@ -1011,6 +1070,7 @@ async function updateEcho10XMLMetadata({
  *
  * @param {Object} params - parameter object
  * @param {string} params.granuleId - granuleId
+ * @param {string} [params.producerGranuleId] - producer granuleId
  * @param {Object} params.cmrFile - cmr xml file to be updated
  * @param {Array<ApiFile>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution enpoint from config
@@ -1023,27 +1083,34 @@ async function updateEcho10XMLMetadata({
  *    updated metadata file
  */
 async function updateCMRMetadata({
+  // TODO - we need to update this method or refactor this method to allow for granuleUR
+  // updates if producerID is present
   granuleId,
+  producerGranuleId,
   cmrFile,
   files,
   distEndpoint,
   published,
   bucketTypes,
   cmrGranuleUrlType = 'both',
+  updateGranuleUr = false,
   distributionBucketMap,
 }) {
   const filename = getS3UrlOfFile(cmrFile);
 
-  log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${filename}`);
+  log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId} cmrMetadata file ${filename}`);
 
   const cmrCredentials = (published) ? await getCmrSettings() : {};
   const params = {
-    cmrFile,
-    files,
-    distEndpoint,
     bucketTypes,
+    cmrFile,
     cmrGranuleUrlType,
+    distEndpoint,
     distributionBucketMap,
+    files,
+    granuleId,
+    producerGranuleId,
+    updateGranuleUr,
   };
 
   let metadataObject;
@@ -1405,16 +1472,16 @@ module.exports = {
   constructOnlineAccessUrls,
   generateEcho10XMLString,
   generateFileUrl,
-  granuleToCmrFileObject,
-  getCmrSettings,
   getCMRCollectionId,
+  getCmrSettings,
+  getCollectionsByShortNameAndVersion,
   getFileDescription,
   getFilename,
   getGranuleTemporalInfo,
-  getCollectionsByShortNameAndVersion,
   getS3UrlOfFile,
   getUserAccessibleBuckets,
   granulesToCmrFileObjects,
+  granuleToCmrFileObject,
   isCMRFile,
   isCMRFilename,
   isCMRISOFilename,
@@ -1428,11 +1495,13 @@ module.exports = {
   reconcileCMRMetadata,
   removeEtagsFromFileObjects,
   removeFromCMR,
-  updateCMRMetadata,
-  updateEcho10XMLMetadataObjectUrls,
-  updateUMMGMetadataObject,
   setECHO10Collection,
   setUMMGCollection,
+  updateCMRMetadata,
+  updateEcho10XMLMetadata,
+  updateEcho10XMLMetadataObjectUrls,
+  updateUMMGMetadata,
+  updateUMMGMetadataObject,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
 };
