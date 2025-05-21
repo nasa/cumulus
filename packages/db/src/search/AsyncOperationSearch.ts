@@ -23,15 +23,14 @@ export class AsyncOperationSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
+   * @param params.countQuery - knex query for count
    * @param params.cteQueryBuilder - common table expression query for search
    * @param [params.dbQueryParameters] - db query parameters
-   * @param [params.cteName] - CTE table name
    */
   protected buildInfixPrefixQuery(params: {
     countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
-    cteName?: string,
   }) {
     const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;

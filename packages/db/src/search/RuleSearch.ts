@@ -3,6 +3,7 @@ import pick from 'lodash/pick';
 
 import Logger from '@cumulus/logger';
 import { RuleRecord } from '@cumulus/types/api/rules';
+
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresRuleRecord } from '../types/rule';
@@ -29,14 +30,12 @@ export class RuleSearch extends BaseSearch {
    * Build basic query
    *
    * @param knex - DB client
-   * @param cteQueryBuilder - CTE query builder
-   * @returns joined CTE query
+   * @returns count query and joined CTE search query
    */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      countQuery: Knex.QueryBuilder,
-      cteQueryBuilder: Knex.QueryBuilder,
-    } {
+  protected buildBasicQuery(knex: Knex) : {
+    countQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
+  } {
     const {
       collections: collectionsTable,
       providers: providersTable,
@@ -52,8 +51,7 @@ export class RuleSearch extends BaseSearch {
       .leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
       .leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
 
-    const countQuery = knex(this.tableName)
-      .count(`${this.tableName}.cumulus_id`);
+    const countQuery = knex(this.tableName).count(`${this.tableName}.cumulus_id`);
 
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
@@ -62,6 +60,7 @@ export class RuleSearch extends BaseSearch {
     if (this.searchProvider()) {
       countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
     }
+
     return { countQuery, cteQueryBuilder };
   }
 
@@ -69,15 +68,14 @@ export class RuleSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
+   * @param params.countQuery - knex query for count
    * @param params.cteQueryBuilder - CTE query builder
    * @param [params.dbQueryParameters] - db query parameters
-   * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
     countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
-    cteName?: string,
   }) {
     const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;

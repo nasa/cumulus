@@ -1,8 +1,9 @@
 import { Knex } from 'knex';
-import Logger from '@cumulus/logger';
 import pick from 'lodash/pick';
 
+import Logger from '@cumulus/logger';
 import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
+
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { translatePostgresReconReportToApiReconReport } from '../translate/reconciliation_reports';
@@ -23,19 +24,17 @@ export class ReconciliationReportSearch extends BaseSearch {
    * Build basic query
    *
    * @param knex - DB client
-   * @returns CTE query builder
+   * @returns count query and CTE search query builder
    */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      countQuery?: Knex.QueryBuilder,
-      cteQueryBuilder: Knex.QueryBuilder,
-    } {
+  protected buildBasicQuery(knex: Knex): {
+    countQuery?: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
+  } {
     const {
       reconciliationReports: reconciliationReportsTable,
     } = TableNames;
 
-    const countQuery = knex(this.tableName)
-      .count('*');
+    const countQuery = knex(this.tableName).count('*');
 
     const cteQueryBuilder = knex(this.tableName)
       .select(`${this.tableName}.*`)
@@ -50,15 +49,14 @@ export class ReconciliationReportSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
+   * @param params.countQuery - knex query for count
    * @param params.cteQueryBuilder - CTE query builder
    * @param [params.dbQueryParameters] - db query parameters
-   * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
     countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
-    cteName?: string,
   }) {
     const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;

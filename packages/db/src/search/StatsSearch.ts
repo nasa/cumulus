@@ -214,10 +214,9 @@ class StatsSearch extends BaseSearch {
    * @param knex - the knex client
    * @returns the cte built query
    */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      cteQueryBuilder: Knex.QueryBuilder,
-    } {
+  protected buildBasicQuery(knex: Knex): {
+    cteQueryBuilder: Knex.QueryBuilder,
+  } {
     const cteQueryBuilder:Knex.QueryBuilder = knex(this.tableName);
     this.aggregateQueryField(cteQueryBuilder, knex);
     return { cteQueryBuilder };

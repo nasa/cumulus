@@ -32,21 +32,19 @@ export class PdrSearch extends BaseSearch {
    * Build basic query
    *
    * @param knex - DB client
-   * @returns CTE query builder
+   * @returns count query and CTE search query builder
    */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      countQuery: Knex.QueryBuilder,
-      cteQueryBuilder: Knex.QueryBuilder,
-    } {
+  protected buildBasicQuery(knex: Knex): {
+    countQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
+  } {
     const {
       collections: collectionsTable,
       providers: providersTable,
       executions: executionsTable,
     } = TableNames;
 
-    const countQuery = knex(this.tableName)
-      .count('*');
+    const countQuery = knex(this.tableName).count('*');
 
     const cteQueryBuilder = knex(this.tableName)
       .select(
@@ -79,15 +77,14 @@ export class PdrSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
+   * @param params.countQuery - knex query for count
    * @param params.cteQueryBuilder - CTE query builder
    * @param [params.dbQueryParameters] - db query parameters
-   * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
     countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
-    cteName?: string,
   }) {
     const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;

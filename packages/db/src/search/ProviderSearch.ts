@@ -3,6 +3,7 @@ import pick from 'lodash/pick';
 
 import Logger from '@cumulus/logger';
 import { ApiProvider } from '@cumulus/types/api/providers';
+
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { translatePostgresProviderToApiProvider } from '../translate/providers';
@@ -23,15 +24,14 @@ export class ProviderSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
+   * @param params.countQuery - knex query for count
    * @param params.cteQueryBuilder - CTE query builder
    * @param [params.dbQueryParameters] - db query parameters
-   * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
     countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
-    cteName?: string,
   }) {
     const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;

@@ -4,6 +4,7 @@ import pick from 'lodash/pick';
 
 import Logger from '@cumulus/logger';
 import { CollectionRecord } from '@cumulus/types/api/collections';
+
 import { BaseSearch } from './BaseSearch';
 import { convertQueryStringToDbQueryParameters } from './queries';
 import { GranuleSearch } from './GranuleSearch';
@@ -60,25 +61,23 @@ export class CollectionSearch extends BaseSearch {
    *
    * @param params
    * @param params.cteQueryBuilder - query builder
+   * @param [params.countQuery] - count query
    * @param [params.dbQueryParameters] - db query parameters
    * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
-    countQuery?: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
+    countQuery?: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
-    cteName?: string,
   }) {
-    const { countQuery, cteQueryBuilder, dbQueryParameters, cteName } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
 
-    const table = cteName || this.tableName;
-
     if (infix) {
-      [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${table}.name`, `%${infix}%`));
+      [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${this.tableName}.name`, `%${infix}%`));
     }
     if (prefix) {
-      [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${table}.name`, `${prefix}%`));
+      [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${this.tableName}.name`, `${prefix}%`));
     }
   }
 
@@ -115,11 +114,10 @@ export class CollectionSearch extends BaseSearch {
    * @param knex - DB client
    * @returns queries for getting count and search result
    */
-  protected buildSearch(knex: Knex)
-    : {
-      countQuery?: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
+  protected buildSearch(knex: Knex): {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+  } {
     const queries = super.buildSearch(knex);
     if (!this.active) {
       return queries;

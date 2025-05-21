@@ -1,10 +1,12 @@
 import { Knex } from 'knex';
-import Logger from '@cumulus/logger';
 import pick from 'lodash/pick';
 import omit from 'lodash/omit';
 import set from 'lodash/set';
+
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { ApiExecutionRecord } from '@cumulus/types/api/executions';
+import Logger from '@cumulus/logger';
+
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueriableType, QueryEvent } from '../types/search';
 import { translatePostgresExecutionToApiExecutionWithoutDbQuery } from '../translate/executions';
@@ -59,11 +61,10 @@ export class ExecutionSearch extends BaseSearch {
    * @param knex - DB client
    * @returns queries for getting count and search result
    */
-  protected buildSearch(knex: Knex)
-    : {
-      countQuery?: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
+  protected buildSearch(knex: Knex): {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+  } {
     const {
       collections: collectionsTable,
       asyncOperations: asyncOperationsTable,
@@ -87,28 +88,23 @@ export class ExecutionSearch extends BaseSearch {
    * Build query for infix and prefix search
    *
    * @param params
+   * @param params.countQuery - count query
    * @param params.cteQueryBuilder - query builder
    * @param [params.dbQueryParameters] - db query parameters
-   * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
     countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
-    cteName?: string,
   }) {
-    const { countQuery, cteQueryBuilder, dbQueryParameters, cteName } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
 
-    const table = cteName || this.tableName;
-
     if (infix) {
-      cteQueryBuilder.whereLike(`${table}.arn`, `%${infix}%`);
-      countQuery.whereLike(`${table}.arn`, `%${infix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.arn`, `%${infix}%`));
     }
     if (prefix) {
-      cteQueryBuilder.whereLike(`${table}.arn`, `${prefix}%`);
-      countQuery.whereLike(`${table}.arn`, `${prefix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.arn`, `${prefix}%`));
     }
   }
 
@@ -116,6 +112,7 @@ export class ExecutionSearch extends BaseSearch {
    * Build CTE term query for search
    *
    * @param params
+   * @param params.countQuery - count query
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object that holds query builders
    * @param [params.dbQueryParameters] - db query parameters
@@ -138,28 +135,22 @@ export class ExecutionSearch extends BaseSearch {
     Object.entries(term).forEach(([name, value]) => {
       switch (name) {
         case 'collectionName':
-          cteQueryBuilders[`${collectionsTable}`].where(`${collectionsTable}.name`, value);
-          countQuery.where(`${collectionsTable}.name`, value);
+          [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.where(`${collectionsTable}.name`, value));
           break;
         case 'collectionVersion':
-          cteQueryBuilders[`${collectionsTable}`].where(`${collectionsTable}.version`, value);
-          countQuery.where(`${collectionsTable}.version`, value);
+          [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.where(`${collectionsTable}.version`, value));
           break;
         case 'asyncOperationId':
-          cteQueryBuilders[`${asyncOperationsTable}`].where(`${asyncOperationsTable}.id`, value);
-          countQuery.where(`${asyncOperationsTable}.id`, value);
+          [countQuery, cteQueryBuilders[`${asyncOperationsTable}`]].forEach((query) => query.where(`${asyncOperationsTable}.id`, value));
           break;
         case 'parentArn':
-          cteQueryBuilders[`${this.tableName}_parent`].where(`${this.tableName}_parent.arn`, value);
-          countQuery.where(`${this.tableName}_parent.arn`, value);
+          [countQuery, cteQueryBuilders[`${this.tableName}_parent`]].forEach((query) => query.where(`${this.tableName}_parent.arn`, value));
           break;
         case 'error.Error':
-          cteQueryBuilders[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
-          countQuery.whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
+          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereRaw(`${this.tableName}.error->>'Error' = ?`, value));
           break;
         default:
-          cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, value);
-          countQuery.where(`${this.tableName}.${name}`, value);
+          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.where(`${this.tableName}.${name}`, value));
           break;
       }
     });
@@ -199,35 +190,27 @@ export class ExecutionSearch extends BaseSearch {
         const version = terms.collectionVersion[i];
         if (name && version) collectionPair.push([name, version]);
       }
-      cteQueryBuilders[`${collectionsTable}`].whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
-      countQuery.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
+      [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair));
     }
 
     Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
         case 'asyncOperationId':
-          cteQueryBuilders[`${asyncOperationsTable}`].whereIn(`${asyncOperationsTable}.id`, value);
-          countQuery.whereIn(`${asyncOperationsTable}.id`, value);
+          [countQuery, cteQueryBuilders[`${asyncOperationsTable}`]].forEach((query) => query.whereIn(`${asyncOperationsTable}.id`, value));
           break;
         case 'parentArn':
-          cteQueryBuilders[`${this.tableName}_parent`].whereIn(`${this.tableName}_parent.arn`, value);
-          countQuery.whereIn(`${this.tableName}_parent.arn`, value);
+          [countQuery, cteQueryBuilders[`${this.tableName}_parent`]].forEach((query) => query.whereIn(`${this.tableName}_parent.arn`, value));
           break;
         case 'error.Error':
           if (Array.isArray(value) && value.length > 0) {
-            cteQueryBuilders[`${this.tableName}`].whereRaw(
+            [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereRaw(
               `${this.tableName}.error->>'Error' IN (${value.map(() => '?').join(',')})`,
               value
-            );
-            countQuery.whereRaw(
-              `${this.tableName}.error->>'Error' IN (${value.map(() => '?').join(',')})`,
-              value
-            );
+            ));
           }
           break;
         default:
-          cteQueryBuilders[`${this.tableName}`].whereIn(`${this.tableName}.${name}`, value);
-          countQuery.whereIn(`${this.tableName}.${name}`, value);
+          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereIn(`${this.tableName}.${name}`, value));
           break;
       }
     });
@@ -237,6 +220,7 @@ export class ExecutionSearch extends BaseSearch {
    * Build CTE not match query for search
    *
    * @param params
+   * @param params.countQuery - count query
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object that holds query builders
    * @param [params.dbQueryParameters] - db query parameters
@@ -258,33 +242,25 @@ export class ExecutionSearch extends BaseSearch {
 
     // collection name and version are searched in pair
     if (term.collectionName && term.collectionVersion) {
-      cteQueryBuilders[`${collectionsTable}`].whereNot({
+      [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.whereNot({
         [`${collectionsTable}.name`]: term.collectionName,
         [`${collectionsTable}.version`]: term.collectionVersion,
-      });
-      countQuery.whereNot({
-        [`${collectionsTable}.name`]: term.collectionName,
-        [`${collectionsTable}.version`]: term.collectionVersion,
-      });
+      }));
     }
 
     Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
         case 'asyncOperationId':
-          cteQueryBuilders[`${asyncOperationsTable}`].whereNot(`${asyncOperationsTable}.id`, value);
-          countQuery.whereNot(`${asyncOperationsTable}.id`, value);
+          [countQuery, cteQueryBuilders[`${asyncOperationsTable}`]].forEach((query) => query.whereNot(`${asyncOperationsTable}.id`, value));
           break;
         case 'parentArn':
-          cteQueryBuilders[`${this.tableName}_parent`].whereNot(`${this.tableName}_parent.arn`, value);
-          countQuery.whereNot(`${this.tableName}_parent.arn`, value);
+          [countQuery, cteQueryBuilders[`${this.tableName}_parent`]].forEach((query) => query.whereNot(`${this.tableName}_parent.arn`, value));
           break;
         case 'error.Error':
-          cteQueryBuilders[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' != ?`, value);
-          countQuery.whereRaw(`${this.tableName}.error->>'Error' != ?`, value);
+          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereRaw(`${this.tableName}.error->>'Error' != ?`, value));
           break;
         default:
-          cteQueryBuilders[`${this.tableName}`].whereNot(`${this.tableName}.${name}`, value);
-          countQuery.whereNot(`${this.tableName}.${name}`, value);
+          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereNot(`${this.tableName}.${name}`, value));
           break;
       }
     });

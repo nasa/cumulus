@@ -113,11 +113,10 @@ abstract class BaseSearch {
    * @param knex - DB client
    * @returns queries for getting count and search result
    */
-  protected buildSearch(knex: Knex)
-    : {
-      countQuery?: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
+  protected buildSearch(knex: Knex): {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+  } {
     const { countQuery, cteQueryBuilder } = this.buildBasicQuery(knex);
     this.buildTermQuery({ countQuery, cteQueryBuilder });
     this.buildTermsQuery({ countQuery, cteQueryBuilder });
@@ -145,11 +144,10 @@ abstract class BaseSearch {
    * @param knex - DB client
    * @returns queries for getting count and search result
    */
-  protected buildCteSearch(knex: Knex)
-    : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
+  protected buildCteSearch(knex: Knex): {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+  } {
     const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
     const countQuery = knex(this.tableName).count('*');
     this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
@@ -158,7 +156,7 @@ abstract class BaseSearch {
     this.buildCteNotMatchQuery({ countQuery, knex, cteQueryBuilders });
     this.buildRangeQuery({ knex, countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
     this.buildExistsQuery({ countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
-    this.buildInfixPrefixQuery({ countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`], cteName: `${this.tableName}` });
+    this.buildInfixPrefixQuery({ countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
     const cteSearchQueryBuilder = knex.queryBuilder();
     const { cteSearchQueryBuilder: searchQuery } = this.joinCteTables(
       { cteSearchQueryBuilder, cteQueryBuilders }
@@ -377,14 +375,12 @@ abstract class BaseSearch {
    *
    * @param params
    * @param params.cteQueryBuilder - CTE query builder for search
-   * @param [params.cteName] - CTE table name
    * @param [params.dbQueryParameters] - db query parameters
    * @throws - function is not implemented
    */
   protected buildInfixPrefixQuery(params: {
     countQuery?: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
-    cteName?: string,
     dbQueryParameters?: DbQueryParameters,
   }) {
     log.debug(`buildInfixPrefixQuery is not implemented ${Object.keys(params)}`);
