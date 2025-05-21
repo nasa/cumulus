@@ -69,6 +69,7 @@ async function updateEachCmrFileAccessURLs(
       bucketTypes,
       cmrGranuleUrlType,
       distributionBucketMap,
+      updateGranuleUr: true,
     });
   }));
 }
