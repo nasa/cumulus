@@ -39,12 +39,21 @@ async function fileObjectFromS3URI(s3URI) {
  * @param {Array<string>} inputFiles - list of s3 files to add to the inputgranules
  * @param {Array<Object>} inputGranules - an array of the granules
  * @param {string} regex - regex needed to extract granuleId from filenames
+ * @param {boolean} matchFilesWithProducerGranuleId -
+ *  If true, match files to granules using producerGranuleId. Else, granuleId.
  * @returns {Object} inputGranules with updated file lists
  */
-async function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex, isUniqueGranuleId) {
+async function mergeInputFilesWithInputGranules(
+  inputFiles,
+  inputGranules,
+  regex,
+  matchFilesWithProducerGranuleId
+) {
   // create hash list of the granules
   // and a list of files
-  const granulesHash = isUniqueGranuleId ? keyBy(inputGranules, 'producerGranuleId') : keyBy(inputGranules, 'granuleId');
+  const granulesHash = matchFilesWithProducerGranuleId ?
+    keyBy(inputGranules, 'producerGranuleId') :
+    keyBy(inputGranules, 'granuleId');
   const filesFromInputGranules = flatten(inputGranules.map((g) => g.files.map((f) => `s3://${f.bucket}/${f.key}`)));
 
   // add input files to corresponding granules
@@ -84,12 +93,12 @@ async function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex
  */
 function filesToGranules(event) {
   const granuleIdExtractionRegex = get(event.config, 'granuleIdExtraction', '(.*)');
-  const isUniqueGranuleId = get(event.config, 'isUniqueGranuleId', false);
+  const matchFilesWithProducerGranuleId = get(event.config, 'matchFilesWithProducerGranuleId', false);
   const inputGranules = event.config.inputGranules;
   const inputFileList = event.input;
 
   return mergeInputFilesWithInputGranules(
-    inputFileList, inputGranules, granuleIdExtractionRegex, isUniqueGranuleId
+    inputFileList, inputGranules, granuleIdExtractionRegex, matchFilesWithProducerGranuleId
   );
 }
 exports.filesToGranules = filesToGranules;

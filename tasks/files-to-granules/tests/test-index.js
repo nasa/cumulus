@@ -52,3 +52,16 @@ test('files-to-granules transforms files array to granules object', async (t) =>
   await validateOutput(t, output);
   t.deepEqual(output, expectedOutput);
 });
+
+ // TODO unique the granuleId
+test('files-to-granules matches granules using producerGranuleId if configured', async (t) => {
+  const event = t.context.payload;
+  event.config.matchFilesWithProducerGranuleId = true;
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+  const expectedOutput = t.context.output;
+  const output = await filesToGranules(event);
+  await validateOutput(t, output);
+  t.deepEqual(output, expectedOutput);
+});
