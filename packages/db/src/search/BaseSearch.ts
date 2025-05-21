@@ -151,20 +151,18 @@ abstract class BaseSearch {
       searchQuery: Knex.QueryBuilder,
     } {
     const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
+    const countQuery = knex(this.tableName).count('*');
     this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
-    this.buildCteTermQuery({ knex, cteQueryBuilders });
-    this.buildCteTermsQuery({ knex, cteQueryBuilders });
-    this.buildCteNotMatchQuery({ knex, cteQueryBuilders });
-    this.buildRangeQuery({ knex, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
-    this.buildExistsQuery({ cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
-    this.buildInfixPrefixQuery({ cteQueryBuilder: cteQueryBuilders[`${this.tableName}`], cteName: `${this.tableName}` });
+    this.buildCteTermQuery({ countQuery, knex, cteQueryBuilders });
+    this.buildCteTermsQuery({ countQuery, knex, cteQueryBuilders });
+    this.buildCteNotMatchQuery({ countQuery, knex, cteQueryBuilders });
+    this.buildRangeQuery({ knex, countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
+    this.buildExistsQuery({ countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
+    this.buildInfixPrefixQuery({ countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`], cteName: `${this.tableName}` });
     const cteSearchQueryBuilder = knex.queryBuilder();
     const { cteSearchQueryBuilder: searchQuery } = this.joinCteTables(
       { cteSearchQueryBuilder, cteQueryBuilders }
     );
-
-    const countQuery = knex(this.tableName)
-      .count('*');
 
     this.buildSortQuery({ searchQuery, cteName: `${this.tableName}_cte` });
     if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
@@ -184,6 +182,7 @@ abstract class BaseSearch {
    * @throws - function is not implemented
    */
   protected buildCteTermQuery(params: {
+    countQuery: Knex.QueryBuilder,
     knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters,
@@ -202,6 +201,7 @@ abstract class BaseSearch {
    * @throws - function is not implemented
    */
   protected buildCteTermsQuery(params: {
+    countQuery: Knex.QueryBuilder,
     knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters,
@@ -220,6 +220,7 @@ abstract class BaseSearch {
    * @throws - function is not implemented
    */
   protected buildCteNotMatchQuery(params: {
+    countQuery: Knex.QueryBuilder,
     knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters

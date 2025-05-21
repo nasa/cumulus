@@ -92,20 +92,23 @@ export class ExecutionSearch extends BaseSearch {
    * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
+    countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
     cteName?: string,
   }) {
-    const { cteQueryBuilder, dbQueryParameters, cteName } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters, cteName } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
 
     const table = cteName || this.tableName;
 
     if (infix) {
       cteQueryBuilder.whereLike(`${table}.arn`, `%${infix}%`);
+      countQuery.whereLike(`${table}.arn`, `%${infix}%`);
     }
     if (prefix) {
       cteQueryBuilder.whereLike(`${table}.arn`, `${prefix}%`);
+      countQuery.whereLike(`${table}.arn`, `${prefix}%`);
     }
   }
 
@@ -118,6 +121,7 @@ export class ExecutionSearch extends BaseSearch {
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildCteTermQuery(params: {
+    countQuery: Knex.QueryBuilder,
     knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
     dbQueryParameters?: DbQueryParameters;
@@ -127,7 +131,7 @@ export class ExecutionSearch extends BaseSearch {
       asyncOperations: asyncOperationsTable,
     } = TableNames;
 
-    const { knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { countQuery, knex, cteQueryBuilders, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
     this.buildCteTables({ knex, cteQueryBuilders, term });
 
@@ -135,21 +139,27 @@ export class ExecutionSearch extends BaseSearch {
       switch (name) {
         case 'collectionName':
           cteQueryBuilders[`${collectionsTable}`].where(`${collectionsTable}.name`, value);
+          countQuery.where(`${collectionsTable}.name`, value);
           break;
         case 'collectionVersion':
           cteQueryBuilders[`${collectionsTable}`].where(`${collectionsTable}.version`, value);
+          countQuery.where(`${collectionsTable}.version`, value);
           break;
         case 'asyncOperationId':
           cteQueryBuilders[`${asyncOperationsTable}`].where(`${asyncOperationsTable}.id`, value);
+          countQuery.where(`${asyncOperationsTable}.id`, value);
           break;
         case 'parentArn':
           cteQueryBuilders[`${this.tableName}_parent`].where(`${this.tableName}_parent.arn`, value);
+          countQuery.where(`${this.tableName}_parent.arn`, value);
           break;
         case 'error.Error':
           cteQueryBuilders[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
+          countQuery.whereRaw(`${this.tableName}.error->>'Error' = ?`, value);
           break;
         default:
           cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, value);
+          countQuery.where(`${this.tableName}.${name}`, value);
           break;
       }
     });
@@ -164,6 +174,7 @@ export class ExecutionSearch extends BaseSearch {
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildCteTermsQuery(params: {
+    countQuery: Knex.QueryBuilder,
     knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
     dbQueryParameters?: DbQueryParameters;
@@ -173,7 +184,7 @@ export class ExecutionSearch extends BaseSearch {
       asyncOperations: asyncOperationsTable,
     } = TableNames;
 
-    const { knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { countQuery, knex, cteQueryBuilders, dbQueryParameters } = params;
     const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
     const term = terms;
     this.buildCteTables({ knex, cteQueryBuilders, term });
@@ -189,15 +200,18 @@ export class ExecutionSearch extends BaseSearch {
         if (name && version) collectionPair.push([name, version]);
       }
       cteQueryBuilders[`${collectionsTable}`].whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
+      countQuery.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair);
     }
 
     Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
         case 'asyncOperationId':
           cteQueryBuilders[`${asyncOperationsTable}`].whereIn(`${asyncOperationsTable}.id`, value);
+          countQuery.whereIn(`${asyncOperationsTable}.id`, value);
           break;
         case 'parentArn':
           cteQueryBuilders[`${this.tableName}_parent`].whereIn(`${this.tableName}_parent.arn`, value);
+          countQuery.whereIn(`${this.tableName}_parent.arn`, value);
           break;
         case 'error.Error':
           if (Array.isArray(value) && value.length > 0) {
@@ -205,10 +219,15 @@ export class ExecutionSearch extends BaseSearch {
               `${this.tableName}.error->>'Error' IN (${value.map(() => '?').join(',')})`,
               value
             );
+            countQuery.whereRaw(
+              `${this.tableName}.error->>'Error' IN (${value.map(() => '?').join(',')})`,
+              value
+            );
           }
           break;
         default:
           cteQueryBuilders[`${this.tableName}`].whereIn(`${this.tableName}.${name}`, value);
+          countQuery.whereIn(`${this.tableName}.${name}`, value);
           break;
       }
     });
@@ -223,6 +242,7 @@ export class ExecutionSearch extends BaseSearch {
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildCteNotMatchQuery(params: {
+    countQuery: Knex.QueryBuilder,
     knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
     dbQueryParameters?: DbQueryParameters;
@@ -232,7 +252,7 @@ export class ExecutionSearch extends BaseSearch {
       asyncOperations: asyncOperationsTable,
     } = TableNames;
 
-    const { knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { countQuery, knex, cteQueryBuilders, dbQueryParameters } = params;
     const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
     this.buildCteTables({ knex, cteQueryBuilders, term });
 
@@ -242,21 +262,29 @@ export class ExecutionSearch extends BaseSearch {
         [`${collectionsTable}.name`]: term.collectionName,
         [`${collectionsTable}.version`]: term.collectionVersion,
       });
+      countQuery.whereNot({
+        [`${collectionsTable}.name`]: term.collectionName,
+        [`${collectionsTable}.version`]: term.collectionVersion,
+      });
     }
 
     Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
       switch (name) {
         case 'asyncOperationId':
           cteQueryBuilders[`${asyncOperationsTable}`].whereNot(`${asyncOperationsTable}.id`, value);
+          countQuery.whereNot(`${asyncOperationsTable}.id`, value);
           break;
         case 'parentArn':
           cteQueryBuilders[`${this.tableName}_parent`].whereNot(`${this.tableName}_parent.arn`, value);
+          countQuery.whereNot(`${this.tableName}_parent.arn`, value);
           break;
         case 'error.Error':
           cteQueryBuilders[`${this.tableName}`].whereRaw(`${this.tableName}.error->>'Error' != ?`, value);
+          countQuery.whereRaw(`${this.tableName}.error->>'Error' != ?`, value);
           break;
         default:
           cteQueryBuilders[`${this.tableName}`].whereNot(`${this.tableName}.${name}`, value);
+          countQuery.whereNot(`${this.tableName}.${name}`, value);
           break;
       }
     });
