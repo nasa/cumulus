@@ -1113,7 +1113,7 @@ async function updateCMRMetadata({
     distributionBucketMap,
     files,
     granuleId,
-    producerGranuleId,
+    producerGranuleId: producerGranuleId || granuleId,
     updateGranuleUr,
   };
 

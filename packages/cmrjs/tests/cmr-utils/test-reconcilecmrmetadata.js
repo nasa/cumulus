@@ -174,7 +174,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
       bucketTypes,
       distributionBucketMap,
       granuleId: granId,
-      producerGranuleId: undefined,
+      producerGranuleId: granId,
       updateGranuleUr: false,
     };
 
@@ -239,7 +239,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
       bucketTypes,
       distributionBucketMap,
       granuleId: granId,
-      producerGranuleId: undefined,
+      producerGranuleId: granId,
       updateGranuleUr: false,
     };
 
@@ -310,7 +310,7 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
       bucketTypes,
       distributionBucketMap,
       granuleId: granId,
-      producerGranuleId: undefined,
+      producerGranuleId: granId,
       updateGranuleUr: false,
     };
 
