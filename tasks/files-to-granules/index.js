@@ -93,7 +93,7 @@ async function mergeInputFilesWithInputGranules(
  */
 function filesToGranules(event) {
   const granuleIdExtractionRegex = get(event.config, 'granuleIdExtraction', '(.*)');
-  const matchFilesWithProducerGranuleId = get(event.config, 'matchFilesWithProducerGranuleId', false);
+  const matchFilesWithProducerGranuleId = get(event.config, 'matchFilesWithProducerGranuleId');
   const inputGranules = event.config.inputGranules;
   const inputFileList = event.input;
 
