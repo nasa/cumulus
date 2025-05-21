@@ -19,6 +19,9 @@
           "granuleId": {
             "type": "string"
           },
+          "producerGranuleId": {
+            "type": ["string", "null"]
+          },
           "files": {
             "type": "array",
             "items": {
