@@ -233,17 +233,15 @@ class StatsSearch extends BaseSearch {
   protected buildInfixPrefixQuery(params: {
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
-    cteName?: string,
   }) {
-    const { cteQueryBuilder, dbQueryParameters, cteName } = params;
+    const { cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
-    const table = cteName || this.tableName;
     const fieldName = infixMapping[this.tableName];
     if (infix) {
-      cteQueryBuilder.whereLike(`${table}.${fieldName}`, `%${infix}%`);
+      cteQueryBuilder.whereLike(`${this.tableName}.${fieldName}`, `%${infix}%`);
     }
     if (prefix) {
-      cteQueryBuilder.whereLike(`${table}.${fieldName}`, `${prefix}%`);
+      cteQueryBuilder.whereLike(`${this.tableName}.${fieldName}`, `${prefix}%`);
     }
   }
 

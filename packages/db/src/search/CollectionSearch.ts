@@ -63,7 +63,6 @@ export class CollectionSearch extends BaseSearch {
    * @param params.cteQueryBuilder - query builder
    * @param [params.countQuery] - count query
    * @param [params.dbQueryParameters] - db query parameters
-   * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
     cteQueryBuilder: Knex.QueryBuilder,
@@ -72,7 +71,6 @@ export class CollectionSearch extends BaseSearch {
   }) {
     const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
-
     if (infix) {
       [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${this.tableName}.name`, `%${infix}%`));
     }
@@ -86,25 +84,20 @@ export class CollectionSearch extends BaseSearch {
    * The subquery will search granules
    *
    * @param knex - db client
+   * @param isCount - boolean to tell if the subQuery should be for count or not
    * @returns granule query
    */
   private buildSubQueryForActiveCollections(knex: Knex, isCount: boolean): Knex.QueryBuilder {
     const granulesTable = TableNames.granules;
     const granuleSearch = new GranuleSearch({ queryStringParameters: this.queryStringParameters });
     const { countQuery: subQuery } = granuleSearch.buildSearchForActiveCollections(knex);
-    if (isCount) {
-      subQuery
-        .clear('select')
-        .select(1)
-        .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`))
-        .limit(1);
-    } else {
-      subQuery
-        .clear('select')
-        .select(1)
-        .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}_cte.cumulus_id`))
-        .limit(1);
-    }
+    const rawQuery = isCount ? knex.raw(`${this.tableName}.cumulus_id`) : knex.raw(`${this.tableName}_cte.cumulus_id`);
+
+    subQuery
+      .clear('select')
+      .select(1)
+      .where(`${granulesTable}.collection_cumulus_id`, rawQuery)
+      .limit(1);
     return subQuery;
   }
 

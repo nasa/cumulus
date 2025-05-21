@@ -1,6 +1,5 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
-import omit from 'lodash/omit';
 import set from 'lodash/set';
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
@@ -8,7 +7,7 @@ import Logger from '@cumulus/logger';
 
 import { BaseRecord } from '../types/base';
 import { BaseSearch } from './BaseSearch';
-import { DbQueryParameters, QueriableType, QueryEvent } from '../types/search';
+import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresGranuleRecord } from '../types/granule';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
 import { TableNames } from '../tables';
@@ -76,55 +75,13 @@ export class GranuleSearch extends BaseSearch {
    * @param params.cteQueryBuilders - object of query builders
    * @param [params.dbQueryParameters] - db query parameters
    */
-  protected buildCteTermQuery(params: {
+  protected buildCteTableTermQuery(params: {
     countQuery: Knex.QueryBuilder,
     knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const {
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-      asyncOperations: asyncOperationsTable,
-      executions: executionsTable,
-    } = TableNames;
-
-    const { countQuery, knex, cteQueryBuilders, dbQueryParameters } = params;
-    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-    this.buildCteTables({ knex, cteQueryBuilders, term });
-
-    Object.entries(term).forEach(([name, value]) => {
-      switch (name) {
-        case 'collectionName':
-          [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.where(`${collectionsTable}.name`, value));
-          break;
-        case 'collectionVersion':
-          [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.where(`${collectionsTable}.version`, value));
-          break;
-        case 'executionArn':
-          [countQuery, cteQueryBuilders[`${executionsTable}`]].forEach((query) => query.where(`${executionsTable}.arn`, value));
-          break;
-        case 'parentArn':
-          [countQuery, cteQueryBuilders[`${executionsTable}_parent`]].forEach((query) => query.where(`${executionsTable}_parent.arn`, value));
-          break;
-        case 'providerName':
-          [countQuery, cteQueryBuilders[`${providersTable}`]].forEach((query) => query.where(`${providersTable}.name`, value));
-          break;
-        case 'pdrName':
-          [countQuery, cteQueryBuilders[`${pdrsTable}`]].forEach((query) => query.where(`${pdrsTable}.name`, value));
-          break;
-        case 'asyncOperationId':
-          [countQuery, cteQueryBuilders[`${asyncOperationsTable}`]].forEach((query) => query.where(`${asyncOperationsTable}.id`, value));
-          break;
-        case 'error.Error':
-          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereRaw(`${this.tableName}.error->>'Error' = ?`, value));
-          break;
-        default:
-          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.where(`${this.tableName}.${name}`, value));
-          break;
-      }
-    });
+    super.buildCteTermQuery({ ...params });
   }
 
   /**
@@ -136,67 +93,13 @@ export class GranuleSearch extends BaseSearch {
    * @param params.cteQueryBuilders - object of query builders
    * @param [params.dbQueryParameters] - db query parameters
    */
-  protected buildCteTermsQuery(params: {
+  protected buildCteTableTermsQuery(params: {
     countQuery: Knex.QueryBuilder,
     knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const {
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-      asyncOperations: asyncOperationsTable,
-      executions: executionsTable,
-    } = TableNames;
-
-    const { countQuery, knex, cteQueryBuilders, dbQueryParameters } = params;
-    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
-    this.buildCteTables({ knex, cteQueryBuilders, term: terms });
-
-    // collection name and version are searched in pair
-    if (terms.collectionName && terms.collectionVersion
-      && terms.collectionName.length > 0
-      && terms.collectionVersion.length > 0) {
-      const collectionPair: QueriableType[][] = [];
-      for (let i = 0; i < terms.collectionName.length; i += 1) {
-        const name = terms.collectionName[i];
-        const version = terms.collectionVersion[i];
-        if (name && version) collectionPair.push([name, version]);
-      }
-      [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair));
-    }
-
-    Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
-      switch (name) {
-        case 'executionArn':
-          [countQuery, cteQueryBuilders[`${executionsTable}`]].forEach((query) => query.whereIn(`${executionsTable}.arn`, value));
-          break;
-        case 'providerName':
-          [countQuery, cteQueryBuilders[`${providersTable}`]].forEach((query) => query.whereIn(`${providersTable}.name`, value));
-          break;
-        case 'pdrName':
-          [countQuery, cteQueryBuilders[`${pdrsTable}`]].forEach((query) => query.whereIn(`${pdrsTable}.name`, value));
-          break;
-        case 'error.Error':
-          if (Array.isArray(value) && value.length > 0) {
-            [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereRaw(
-              `${this.tableName}.error->>'Error' IN (${value.map(() => '?').join(',')})`,
-              value
-            ));
-          }
-          break;
-        case 'asyncOperationId':
-          [countQuery, cteQueryBuilders[`${asyncOperationsTable}`]].forEach((query) => query.whereIn(`${asyncOperationsTable}.id`, value));
-          break;
-        case 'parentArn':
-          [countQuery, cteQueryBuilders[`${executionsTable}`]].forEach((query) => query.whereIn(`${executionsTable}.parentArn`, value));
-          break;
-        default:
-          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereIn(`${this.tableName}.${name}`, value));
-          break;
-      }
-    });
+    super.buildCteTermsQuery({ isExecution: false, ...params });
   }
 
   /**
@@ -208,57 +111,13 @@ export class GranuleSearch extends BaseSearch {
    * @param params.cteQueryBuilders - object of query builders
    * @param [params.dbQueryParameters] - db query parameters
    */
-  protected buildCteNotMatchQuery(params: {
+  protected buildCteTableNotMatchQuery(params: {
     countQuery: Knex.QueryBuilder,
     knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters
   }) {
-    const {
-      collections: collectionsTable,
-      providers: providersTable,
-      pdrs: pdrsTable,
-      asyncOperations: asyncOperationsTable,
-      executions: executionsTable,
-    } = TableNames;
-
-    const { countQuery, knex, cteQueryBuilders, dbQueryParameters } = params;
-    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-    this.buildCteTables({ knex, cteQueryBuilders, term });
-
-    // collection name and version are searched in pair
-    if (term.collectionName && term.collectionVersion) {
-      [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.whereNot({
-        [`${collectionsTable}.name`]: term.collectionName,
-        [`${collectionsTable}.version`]: term.collectionVersion,
-      }));
-    }
-
-    Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
-      switch (name) {
-        case 'executionArn':
-          [countQuery, cteQueryBuilders[`${executionsTable}`]].forEach((query) => query.whereNot(`${executionsTable}.arn`, value));
-          break;
-        case 'providerName':
-          [countQuery, cteQueryBuilders[`${providersTable}`]].forEach((query) => query.whereNot(`${providersTable}.name`, value));
-          break;
-        case 'pdrName':
-          [countQuery, cteQueryBuilders[`${pdrsTable}`]].forEach((query) => query.whereNot(`${pdrsTable}.name`, value));
-          break;
-        case 'error.Error':
-          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereRaw(`${this.tableName}.error->>'Error' != ?`, value));
-          break;
-        case 'asyncOperationId':
-          [countQuery, cteQueryBuilders[`${asyncOperationsTable}`]].forEach((query) => query.whereNot(`${asyncOperationsTable}.id`, value));
-          break;
-        case 'parentArn':
-          [countQuery, cteQueryBuilders[`${executionsTable}`]].forEach((query) => query.whereNot(`${executionsTable}.parentArn`, value));
-          break;
-        default:
-          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereNot(`${this.tableName}.${name}`, value));
-          break;
-      }
-    });
+    super.buildCteNotMatchQuery({ isExecution: false, ...params });
   }
 
   /**
@@ -276,7 +135,6 @@ export class GranuleSearch extends BaseSearch {
   }) {
     const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
-
     if (infix) {
       [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${this.tableName}.granule_id`, `%${infix}%`));
     }

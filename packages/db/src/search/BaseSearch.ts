@@ -151,9 +151,9 @@ abstract class BaseSearch {
     const cteQueryBuilders : Record<string, Knex.QueryBuilder> = {};
     const countQuery = knex(this.tableName).count('*');
     this.initCteTable({ knex, cteQueryBuilders, cteName: this.tableName });
-    this.buildCteTermQuery({ countQuery, knex, cteQueryBuilders });
-    this.buildCteTermsQuery({ countQuery, knex, cteQueryBuilders });
-    this.buildCteNotMatchQuery({ countQuery, knex, cteQueryBuilders });
+    this.buildCteTableTermQuery({ countQuery, knex, cteQueryBuilders });
+    this.buildCteTableTermsQuery({ countQuery, knex, cteQueryBuilders });
+    this.buildCteTableNotMatchQuery({ countQuery, knex, cteQueryBuilders });
     this.buildRangeQuery({ knex, countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
     this.buildExistsQuery({ countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
     this.buildInfixPrefixQuery({ countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
@@ -174,57 +174,206 @@ abstract class BaseSearch {
    * Builds the CTE Term query for term search
    *
    * @param params
+   * @param param.countQuery - query for count
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object of CTE query builders
    * @param [params.dbQueryParameters] - db query parameters
-   * @throws - function is not implemented
    */
   protected buildCteTermQuery(params: {
     countQuery: Knex.QueryBuilder,
-    knex: Knex;
+    knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    log.debug(`buildCteTermQuery is not implemented ${Object.keys(params)}`);
-    throw new Error('buildCteTermQuery is not implemented');
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+
+    const { countQuery, knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    this.buildCteTables({ knex, cteQueryBuilders, term });
+
+    Object.entries(term).forEach(([name, value]) => {
+      switch (name) {
+        case 'collectionName':
+          [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.where(`${collectionsTable}.name`, value));
+          break;
+        case 'collectionVersion':
+          [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.where(`${collectionsTable}.version`, value));
+          break;
+        case 'executionArn':
+          [countQuery, cteQueryBuilders[`${executionsTable}`]].forEach((query) => query.where(`${executionsTable}.arn`, value));
+          break;
+        case 'parentArn':
+          [countQuery, cteQueryBuilders[`${executionsTable}_parent`]].forEach((query) => query.where(`${executionsTable}_parent.arn`, value));
+          break;
+        case 'providerName':
+          [countQuery, cteQueryBuilders[`${providersTable}`]].forEach((query) => query.where(`${providersTable}.name`, value));
+          break;
+        case 'pdrName':
+          [countQuery, cteQueryBuilders[`${pdrsTable}`]].forEach((query) => query.where(`${pdrsTable}.name`, value));
+          break;
+        case 'asyncOperationId':
+          [countQuery, cteQueryBuilders[`${asyncOperationsTable}`]].forEach((query) => query.where(`${asyncOperationsTable}.id`, value));
+          break;
+        case 'error.Error':
+          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereRaw(`${this.tableName}.error->>'Error' = ?`, value));
+          break;
+        default:
+          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.where(`${this.tableName}.${name}`, value));
+          break;
+      }
+    });
   }
 
   /**
    * Builds the CTE Terms query for terms search
    *
    * @param params
+   * @param params.isExecution - true/false value for if the query is for executions
+   * @param param.countQuery - query for count
    * @param params.knex - DB client
    * @param params.cteQueryBuilders - object of CTE query builders
    * @param [params.dbQueryParameters] - db query parameters
-   * @throws - function is not implemented
    */
   protected buildCteTermsQuery(params: {
+    isExecution: boolean,
     countQuery: Knex.QueryBuilder,
     knex: Knex;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    log.debug(`buildCteTermsQuery is not implemented ${Object.keys(params)}`);
-    throw new Error('buildCteTermsQuery is not implemented');
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+
+    const { isExecution, countQuery, knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { terms = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    this.buildCteTables({ knex, cteQueryBuilders, term: terms });
+    const whichExecutionsTable = isExecution ? `${executionsTable}_parent` : `${executionsTable}`;
+    const whichArn = isExecution ? `${executionsTable}_parent.arn` : `${executionsTable}.parentArn`;
+
+    // collection name and version are searched in pair
+    if (terms.collectionName && terms.collectionVersion
+      && terms.collectionName.length > 0
+      && terms.collectionVersion.length > 0) {
+      const collectionPair: QueriableType[][] = [];
+      for (let i = 0; i < terms.collectionName.length; i += 1) {
+        const name = terms.collectionName[i];
+        const version = terms.collectionVersion[i];
+        if (name && version) collectionPair.push([name, version]);
+      }
+      [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.whereIn([`${collectionsTable}.name`, `${collectionsTable}.version`], collectionPair));
+    }
+
+    Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
+      switch (name) {
+        case 'executionArn':
+          [countQuery, cteQueryBuilders[`${executionsTable}`]].forEach((query) => query.whereIn(`${executionsTable}.arn`, value));
+          break;
+        case 'providerName':
+          [countQuery, cteQueryBuilders[`${providersTable}`]].forEach((query) => query.whereIn(`${providersTable}.name`, value));
+          break;
+        case 'pdrName':
+          [countQuery, cteQueryBuilders[`${pdrsTable}`]].forEach((query) => query.whereIn(`${pdrsTable}.name`, value));
+          break;
+        case 'error.Error':
+          if (Array.isArray(value) && value.length > 0) {
+            [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereRaw(
+              `${this.tableName}.error->>'Error' IN (${value.map(() => '?').join(',')})`,
+              value
+            ));
+          }
+          break;
+        case 'asyncOperationId':
+          [countQuery, cteQueryBuilders[`${asyncOperationsTable}`]].forEach((query) => query.whereIn(`${asyncOperationsTable}.id`, value));
+          break;
+        case 'parentArn':
+          [countQuery, cteQueryBuilders[whichExecutionsTable]].forEach(
+            (query) => query.whereIn(whichArn, value)
+          );
+          break;
+        default:
+          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereIn(`${this.tableName}.${name}`, value));
+          break;
+      }
+    });
   }
 
   /**
    * Builds the CTE Not Match query for not match queries
    *
    * @param params
+   * @param params.isExecution - true/false value for if the query is for executions
+   * @param param.countQuery - query for count
    * @param params.knex - DB client
-   * @param params.cteQueryBuilders - object of query builders
+   * @param params.cteQueryBuilders - object of CTE query builders
    * @param [params.dbQueryParameters] - db query parameters
-   * @throws - function is not implemented
    */
   protected buildCteNotMatchQuery(params: {
+    isExecution: boolean,
     countQuery: Knex.QueryBuilder,
     knex: Knex,
     cteQueryBuilders: Record<string, Knex.QueryBuilder>,
     dbQueryParameters?: DbQueryParameters
   }) {
-    log.debug(`buildCteNotMatchQuery is not implemented ${Object.keys(params)}`);
-    throw new Error('buildCteNotMatchQuery is not implemented');
+    const {
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+      asyncOperations: asyncOperationsTable,
+      executions: executionsTable,
+    } = TableNames;
+
+    const { isExecution, countQuery, knex, cteQueryBuilders, dbQueryParameters } = params;
+    const { not: term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    this.buildCteTables({ knex, cteQueryBuilders, term });
+    const whichExecutionsTable = isExecution ? `${executionsTable}_parent` : `${executionsTable}`;
+    const whichArn = isExecution ? `${executionsTable}_parent.arn` : `${executionsTable}.parentArn`;
+
+    // collection name and version are searched in pair
+    if (term.collectionName && term.collectionVersion) {
+      [countQuery, cteQueryBuilders[`${collectionsTable}`]].forEach((query) => query.whereNot({
+        [`${collectionsTable}.name`]: term.collectionName,
+        [`${collectionsTable}.version`]: term.collectionVersion,
+      }));
+    }
+
+    Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
+      switch (name) {
+        case 'executionArn':
+          [countQuery, cteQueryBuilders[`${executionsTable}`]].forEach((query) => query.whereNot(`${executionsTable}.arn`, value));
+          break;
+        case 'providerName':
+          [countQuery, cteQueryBuilders[`${providersTable}`]].forEach((query) => query.whereNot(`${providersTable}.name`, value));
+          break;
+        case 'pdrName':
+          [countQuery, cteQueryBuilders[`${pdrsTable}`]].forEach((query) => query.whereNot(`${pdrsTable}.name`, value));
+          break;
+        case 'error.Error':
+          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereRaw(`${this.tableName}.error->>'Error' != ?`, value));
+          break;
+        case 'asyncOperationId':
+          [countQuery, cteQueryBuilders[`${asyncOperationsTable}`]].forEach((query) => query.whereNot(`${asyncOperationsTable}.id`, value));
+          break;
+        case 'parentArn':
+          [countQuery, cteQueryBuilders[whichExecutionsTable]].forEach(
+            (query) => query.whereNot(whichArn, value)
+          );
+          break;
+        default:
+          [countQuery, cteQueryBuilders[`${this.tableName}`]].forEach((query) => query.whereNot(`${this.tableName}.${name}`, value));
+          break;
+      }
+    });
   }
 
   /**
@@ -253,6 +402,66 @@ abstract class BaseSearch {
         cteQueryBuilders[`${this.tableName}`].where(`${this.tableName}.${name}`, '<=', lte);
       }
     });
+  }
+
+  /**
+   * Builds the CTE Table Term query for term search
+   *
+   * @param params
+   * @param params.countQuery - query for count
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object of CTE query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   * @throws - function is not implemented
+   */
+  protected buildCteTableTermQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    log.debug(`buildCteTableTermQuery is not implemented ${Object.keys(params)}`);
+    throw new Error('buildCteTableTermQuery is not implemented');
+  }
+
+  /**
+   * Builds the CTE Table Terms query for terms search
+   *
+   * @param params
+   * @param param.countQuery - query for count
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object of CTE query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   * @throws - function is not implemented
+   */
+  protected buildCteTableTermsQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    log.debug(`buildCteTableTermsQuery is not implemented ${Object.keys(params)}`);
+    throw new Error('buildCteTableTermsQuery is not implemented');
+  }
+
+  /**
+   * Builds the CTE Not Match query for not match search
+   *
+   * @param params
+   * @param param.countQuery - query for count
+   * @param params.knex - DB client
+   * @param params.cteQueryBuilders - object of CTE query builders
+   * @param [params.dbQueryParameters] - db query parameters
+   * @throws - function is not implemented
+   */
+  protected buildCteTableNotMatchQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    knex: Knex;
+    cteQueryBuilders: Record<string, Knex.QueryBuilder>,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    log.debug(`buildCteTableNotMatchQuery is not implemented ${Object.keys(params)}`);
+    throw new Error('buildCteTableNotMatchQuery is not implemented');
   }
 
   /**
