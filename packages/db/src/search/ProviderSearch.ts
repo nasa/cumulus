@@ -28,17 +28,18 @@ export class ProviderSearch extends BaseSearch {
    * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
+    countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
     cteName?: string,
   }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      cteQueryBuilder.whereLike(`${this.tableName}.name`, `%${infix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
     }
     if (prefix) {
-      cteQueryBuilder.whereLike(`${this.tableName}.name`, `${prefix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
     }
   }
 

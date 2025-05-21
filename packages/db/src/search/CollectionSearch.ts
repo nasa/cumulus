@@ -64,20 +64,21 @@ export class CollectionSearch extends BaseSearch {
    * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
+    countQuery?: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
     cteName?: string,
   }) {
-    const { cteQueryBuilder, dbQueryParameters, cteName } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters, cteName } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
 
     const table = cteName || this.tableName;
 
     if (infix) {
-      cteQueryBuilder.whereLike(`${table}.name`, `%${infix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${table}.name`, `%${infix}%`));
     }
     if (prefix) {
-      cteQueryBuilder.whereLike(`${table}.name`, `${prefix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${table}.name`, `${prefix}%`));
     }
   }
 
@@ -88,16 +89,23 @@ export class CollectionSearch extends BaseSearch {
    * @param knex - db client
    * @returns granule query
    */
-  private buildSubQueryForActiveCollections(knex: Knex): Knex.QueryBuilder {
+  private buildSubQueryForActiveCollections(knex: Knex, isCount: boolean): Knex.QueryBuilder {
     const granulesTable = TableNames.granules;
     const granuleSearch = new GranuleSearch({ queryStringParameters: this.queryStringParameters });
     const { countQuery: subQuery } = granuleSearch.buildSearchForActiveCollections(knex);
-
-    subQuery
-      .clear('select')
-      .select(1)
-      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}_cte.cumulus_id`))
-      .limit(1);
+    if (isCount) {
+      subQuery
+        .clear('select')
+        .select(1)
+        .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`))
+        .limit(1);
+    } else {
+      subQuery
+        .clear('select')
+        .select(1)
+        .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}_cte.cumulus_id`))
+        .limit(1);
+    }
     return subQuery;
   }
 
@@ -117,9 +125,11 @@ export class CollectionSearch extends BaseSearch {
       return queries;
     }
 
-    const subQuery = this.buildSubQueryForActiveCollections(knex);
+    const countSubQuery = this.buildSubQueryForActiveCollections(knex, true);
+    const searchSubQuery = this.buildSubQueryForActiveCollections(knex, false);
     const { countQuery, searchQuery } = queries;
-    [countQuery, searchQuery].forEach((query) => query?.whereExists(subQuery));
+    countQuery?.whereExists(countSubQuery);
+    searchQuery.whereExists(searchSubQuery);
 
     log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
@@ -135,23 +145,21 @@ export class CollectionSearch extends BaseSearch {
   private async retrieveGranuleStats(collectionCumulusIds: number[], knex: Knex)
     : Promise<StatsRecords> {
     const granulesTable = TableNames.granules;
-    let statsQuery = knex.with(`${granulesTable}_cte`, knex(granulesTable));
+    let statsQuery = knex(granulesTable);
 
     if (this.active) {
       const granuleSearch = new GranuleSearch({
         queryStringParameters: this.queryStringParameters,
       });
       const { countQuery } = granuleSearch.buildSearchForActiveCollections(knex);
-      //statsQuery = countQuery.clear('select');
-      statsQuery = knex.with(`${granulesTable}_cte`, countQuery);
+      statsQuery = countQuery.clear('select');
     }
 
     statsQuery
-      .select(`${granulesTable}_cte.collection_cumulus_id`, `${granulesTable}_cte.status`)
+      .select(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
       .count('*')
-      .from(`${granulesTable}_cte`)
-      .groupBy(`${granulesTable}_cte.collection_cumulus_id`, `${granulesTable}_cte.status`)
-      .whereIn(`${granulesTable}_cte.collection_cumulus_id`, collectionCumulusIds);
+      .groupBy(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
+      .whereIn(`${granulesTable}.collection_cumulus_id`, collectionCumulusIds);
 
     log.debug(`retrieveGranuleStats statsQuery: ${statsQuery?.toSQL().sql}`);
     const results = await statsQuery;

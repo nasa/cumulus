@@ -34,6 +34,7 @@ export class RuleSearch extends BaseSearch {
    */
   protected buildBasicQuery(knex: Knex)
     : {
+      countQuery: Knex.QueryBuilder,
       cteQueryBuilder: Knex.QueryBuilder,
     } {
     const {
@@ -51,7 +52,17 @@ export class RuleSearch extends BaseSearch {
       .leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
       .leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
 
-    return { cteQueryBuilder };
+    const countQuery = knex(this.tableName)
+      .count(`${this.tableName}.cumulus_id`);
+
+    if (this.searchCollection()) {
+      countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    }
+
+    if (this.searchProvider()) {
+      countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    }
+    return { countQuery, cteQueryBuilder };
   }
 
   /**
@@ -63,17 +74,18 @@ export class RuleSearch extends BaseSearch {
    * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
+    countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
     cteName?: string,
   }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      cteQueryBuilder.whereLike(`${this.tableName}.name`, `%${infix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
     }
     if (prefix) {
-      cteQueryBuilder.whereLike(`${this.tableName}.name`, `${prefix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
     }
   }
 

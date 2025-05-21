@@ -28,17 +28,18 @@ export class AsyncOperationSearch extends BaseSearch {
    * @param [params.cteName] - CTE table name
    */
   protected buildInfixPrefixQuery(params: {
+    countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
     cteName?: string,
   }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      cteQueryBuilder.whereRaw(`${this.tableName}.id::text like ?`, `%${infix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereRaw(`${this.tableName}.id::text like ?`, `%${infix}%`));
     }
     if (prefix) {
-      cteQueryBuilder.whereRaw(`${this.tableName}.id::text like ?`, `${prefix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereRaw(`${this.tableName}.id::text like ?`, `${prefix}%`));
     }
   }
 

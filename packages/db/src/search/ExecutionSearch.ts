@@ -64,7 +64,22 @@ export class ExecutionSearch extends BaseSearch {
       countQuery?: Knex.QueryBuilder,
       searchQuery: Knex.QueryBuilder,
     } {
+    const {
+      collections: collectionsTable,
+      asyncOperations: asyncOperationsTable,
+    } = TableNames;
     const { countQuery, searchQuery } = super.buildCteSearch(knex);
+    if (this.searchCollection()) {
+      countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    }
+
+    if (this.searchAsync()) {
+      countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+    }
+
+    if (this.searchParent()) {
+      countQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
+    }
     return { countQuery, searchQuery };
   }
 

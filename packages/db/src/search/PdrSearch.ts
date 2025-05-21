@@ -36,6 +36,7 @@ export class PdrSearch extends BaseSearch {
    */
   protected buildBasicQuery(knex: Knex)
     : {
+      countQuery: Knex.QueryBuilder,
       cteQueryBuilder: Knex.QueryBuilder,
     } {
     const {
@@ -43,6 +44,9 @@ export class PdrSearch extends BaseSearch {
       providers: providersTable,
       executions: executionsTable,
     } = TableNames;
+
+    const countQuery = knex(this.tableName)
+      .count('*');
 
     const cteQueryBuilder = knex(this.tableName)
       .select(
@@ -56,7 +60,19 @@ export class PdrSearch extends BaseSearch {
       .leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`)
       .leftJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
 
-    return { cteQueryBuilder };
+    if (this.searchCollection()) {
+      countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    }
+
+    if (this.searchProvider()) {
+      countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    }
+
+    if (this.searchExecution()) {
+      countQuery.innerJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`);
+    }
+
+    return { countQuery, cteQueryBuilder };
   }
 
   /**
@@ -68,17 +84,18 @@ export class PdrSearch extends BaseSearch {
    * @param [params.cteName] - CTE name
    */
   protected buildInfixPrefixQuery(params: {
+    countQuery: Knex.QueryBuilder,
     cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
     cteName?: string,
   }) {
-    const { cteQueryBuilder, dbQueryParameters } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      cteQueryBuilder.whereLike(`${this.tableName}.name`, `%${infix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
     }
     if (prefix) {
-      cteQueryBuilder.whereLike(`${this.tableName}.name`, `${prefix}%`);
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
     }
   }
 
