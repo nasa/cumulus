@@ -1,5 +1,6 @@
 'use strict';
 
+const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
@@ -53,15 +54,25 @@ test('files-to-granules transforms files array to granules object', async (t) =>
   t.deepEqual(output, expectedOutput);
 });
 
- // TODO unique the granuleId
 test('files-to-granules matches granules using producerGranuleId if configured', async (t) => {
   const event = t.context.payload;
+
+  // Make the payload granuleId unique
+  const granuleDateString = '2017201090724';
+  const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });;
+  event.config.inputGranules[0].granuleId = event.config.inputGranules[0].granuleId
+    .replace(granuleDateString, granuleIdReplacement);
+
   event.config.matchFilesWithProducerGranuleId = true;
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
   const expectedOutput = t.context.output;
+  // Make the expected output granuleId unique
+  expectedOutput.granules[0].granuleId = expectedOutput.granules[0].granuleId
+    .replace(granuleDateString, granuleIdReplacement);
   const output = await filesToGranules(event);
   await validateOutput(t, output);
+
   t.deepEqual(output, expectedOutput);
 });
