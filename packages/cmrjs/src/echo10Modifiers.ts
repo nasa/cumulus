@@ -31,18 +31,15 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
 
   const moddedXml = structuredClone(xml);
 
-  // Update the top-level GranuleUR
   moddedXml.Granule ??= {};
   moddedXml.Granule.GranuleUR = granuleUr;
   moddedXml.Granule.DataGranule ??= {};
   const dataGranule = moddedXml.Granule.DataGranule;
 
-  // Ensure Identifiers structure exists
   dataGranule.Identifiers = dataGranule.Identifiers || [];
 
-  // Add the ProducerGranuleId entry (overwrite if one already exists)
   const producerIdIndex = dataGranule.Identifiers.findIndex(
-    (idObj: any) => idObj.IdentifierType?.[0] === 'ProducerGranuleId'
+    (idObj: any) => idObj.IdentifierType === 'ProducerGranuleId'
   );
   const newIdentifier = {
     Identifier: identifier,

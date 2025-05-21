@@ -1071,7 +1071,7 @@ async function updateEcho10XMLMetadata({ // TODO fix typings for this method
  * @param {Object} params - parameter object
  * @param {string} params.granuleId - granuleId
  * @param {string} [params.producerGranuleId] - producer granuleId
- * @param {Object} params.cmrFile - cmr xml file to be updated
+ * @param {Object} params.cmrFile - cmr file to be updated
  * @param {Array<ApiFile>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution enpoint from config
  * @param {boolean} params.published - indicate if publish is needed
@@ -1083,8 +1083,6 @@ async function updateEcho10XMLMetadata({ // TODO fix typings for this method
  *    updated metadata file
  */
 async function updateCMRMetadata({
-  // TODO - we need to update this method or refactor this method to allow for granuleUR
-  // updates if producerID is present
   granuleId,
   producerGranuleId,
   cmrFile,
@@ -1095,12 +1093,18 @@ async function updateCMRMetadata({
   cmrGranuleUrlType = 'both',
   updateGranuleUr = false,
   distributionBucketMap,
+  testOverrides = {},
 }) {
+  const {
+    localPublish2CMR = publish2CMR,
+    localGetCmrSettings = getCmrSettings,
+  } = testOverrides;
+
   const filename = getS3UrlOfFile(cmrFile);
 
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId} cmrMetadata file ${filename}`);
 
-  const cmrCredentials = (published) ? await getCmrSettings() : {};
+  const cmrCredentials = (published) ? await localGetCmrSettings() : {};
   const params = {
     bucketTypes,
     cmrFile,
@@ -1132,7 +1136,7 @@ async function updateCMRMetadata({
       granuleId,
     };
 
-    return { ...await publish2CMR(cmrPublishObject, cmrCredentials), etag };
+    return { ...await localPublish2CMR(cmrPublishObject, cmrCredentials), etag };
   }
 
   return { ...cmrFile, etag };
@@ -1481,6 +1485,7 @@ module.exports = {
   getGranuleTemporalInfo,
   getS3UrlOfFile,
   getUserAccessibleBuckets,
+  getXMLMetadataAsString,
   granulesToCmrFileObjects,
   granuleToCmrFileObject,
   isCMRFile,
@@ -1492,6 +1497,7 @@ module.exports = {
   isUMMGFilename,
   mapFileEtags,
   metadataObjectFromCMRFile,
+  parseXmlString,
   publish2CMR,
   reconcileCMRMetadata,
   removeEtagsFromFileObjects,
