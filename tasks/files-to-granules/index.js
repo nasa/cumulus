@@ -68,16 +68,16 @@ async function mergeInputFilesWithInputGranules({
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < filesToAdd.length; i += 1) {
     const f = filesToAdd[i];
-    const fileGranuleId = getGranuleId(f, regex);
+    const fileId = getGranuleId(f, regex);
     try {
-      granulesHash[fileGranuleId].files.push(await fileObjectFromS3URI(f));
+      granulesHash[fileId].files.push(await fileObjectFromS3URI(f));
     } catch (error) {
-      if (!granulesHash[fileGranuleId]) {
+      if (!granulesHash[fileId]) {
         throw new UnmetRequirementsError(
-          `fileGranuleId ${fileGranuleId} does not match an input granule. Check that 'matchFilesWithProducerGranuleId' is configured as expected.`
+          `fileId ${fileId} does not match an input granule. Check that 'matchFilesWithProducerGranuleId' is configured as expected.`
         );
       }
-      throw new Error(`Failed adding ${f} to ${fileGranuleId}'s files: ${error.name} ${error.message}`);
+      throw new Error(`Failed adding ${f} to ${fileId}'s files: ${error.name} ${error.message}`);
     }
   }
   /* eslint-enable no-await-in-loop */
