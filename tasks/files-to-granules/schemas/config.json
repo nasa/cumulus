@@ -45,7 +45,7 @@
     },
     "matchFilesWithProducerGranuleId": {
       "type": "boolean",
-      "description": "Use the 'producerGranuleId' instead of 'granuleId' when mapping files. Defaults to 'false'"
+      "description": "When set to true, use the 'producerGranuleId' instead default behavior of using 'granuleId' when mapping files to granules. Defaults to 'false'"
     }
   }
 }
