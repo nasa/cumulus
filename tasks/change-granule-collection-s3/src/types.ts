@@ -1,9 +1,10 @@
+import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
 import { BucketsConfigObject } from '@cumulus/common/types';
 import { ApiFile, ApiGranuleRecord, CollectionRecord } from '@cumulus/types';
 export const MB = 1024 * 1024;
 
 type TestMethods = {
-  listGranulesMethod: (granuleIds: string[], collectionId: string) => ApiGranuleRecord,
+  listGranulesMethod: (params: Object) => Promise<ApiGatewayLambdaHttpProxyResponse>,
   getCollectionMethod: (params: {
     collectionName: string,
     collectionVersion: string
