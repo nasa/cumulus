@@ -87,26 +87,35 @@ export class GranuleSearch extends BaseSearch {
         `${pdrsTable}.name as pdrsName`
       );
 
+    // construct inner join first
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
       cteQueryBuilder.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-    } else {
-      cteQueryBuilder.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
     if (this.searchProvider()) {
       countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
       cteQueryBuilder.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-    } else {
-      cteQueryBuilder.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
     }
 
     if (this.searchPdr()) {
       countQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
       cteQueryBuilder.innerJoin(pdrsTable, `${this.tableName}.provider_cumulus_id`, `${pdrsTable}.cumulus_id`);
-    } else {
+    }
+
+    // constrcut outer join
+    if (!this.searchCollection()) {
+      cteQueryBuilder.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    }
+
+    if (!this.searchProvider()) {
+      cteQueryBuilder.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    }
+
+    if (!this.searchPdr()) {
       cteQueryBuilder.leftJoin(pdrsTable, `${this.tableName}.provider_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
+
     return { countQuery, cteQueryBuilder };
   }
 
