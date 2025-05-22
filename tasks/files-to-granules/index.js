@@ -36,19 +36,20 @@ async function fileObjectFromS3URI(s3URI) {
  * Takes the files from input and granules and merges them into an object where
  * each file is associated with its granuleId.
  *
- * @param {Array<string>} inputFiles - list of s3 files to add to the inputgranules
- * @param {Array<Object>} inputGranules - an array of the granules
- * @param {string} regex - regex needed to extract granuleId from filenames
- * @param {boolean} matchFilesWithProducerGranuleId -
+ * @param {Object} params - params object
+ * @param {Array<string>} params.inputFiles - list of s3 files to add to the inputgranules
+ * @param {Array<Object>} params.inputGranules - an array of the granules
+ * @param {string} params.regex - regex needed to extract granuleId from filenames
+ * @param {boolean} params.matchFilesWithProducerGranuleId -
  *  If true, match files to granules using producerGranuleId. Else, granuleId.
  * @returns {Object} inputGranules with updated file lists
  */
-async function mergeInputFilesWithInputGranules(
+async function mergeInputFilesWithInputGranules({
   inputFiles,
   inputGranules,
   regex,
   matchFilesWithProducerGranuleId
-) {
+}) {
   // create hash list of the granules
   // and a list of files
   const granulesHash = matchFilesWithProducerGranuleId ?
@@ -92,14 +93,17 @@ async function mergeInputFilesWithInputGranules(
  * @returns {Object} Granules object
  */
 function filesToGranules(event) {
-  const granuleIdExtractionRegex = get(event.config, 'granuleIdExtraction', '(.*)');
+  const regex = get(event.config, 'granuleIdExtraction', '(.*)');
   const matchFilesWithProducerGranuleId = get(event.config, 'matchFilesWithProducerGranuleId');
   const inputGranules = event.config.inputGranules;
-  const inputFileList = event.input;
+  const inputFiles = event.input;
 
-  return mergeInputFilesWithInputGranules(
-    inputFileList, inputGranules, granuleIdExtractionRegex, matchFilesWithProducerGranuleId
-  );
+  return mergeInputFilesWithInputGranules({
+    inputFiles,
+    inputGranules,
+    regex,
+    matchFilesWithProducerGranuleId
+});
 }
 exports.filesToGranules = filesToGranules;
 
