@@ -124,7 +124,8 @@ abstract class BaseSearch {
     this.buildRangeQuery({ knex, countQuery, cteQueryBuilder });
     this.buildExistsQuery({ countQuery, cteQueryBuilder });
     this.buildInfixPrefixQuery({ countQuery, cteQueryBuilder });
-
+    if (this.dbQueryParameters.limit) cteQueryBuilder.limit(this.dbQueryParameters.limit);
+    if (this.dbQueryParameters.offset) cteQueryBuilder.offset(this.dbQueryParameters.offset);
     const cteName = `${this.tableName}_cte`;
 
     const searchQuery = knex.with(cteName, cteQueryBuilder)
@@ -132,8 +133,7 @@ abstract class BaseSearch {
       .from(cteName);
 
     this.buildSortQuery({ searchQuery, cteName });
-    if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
-    if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
+
     log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }

@@ -60,27 +60,78 @@ export class ExecutionSearch extends BaseSearch {
    * @param knex - DB client
    * @returns queries for getting count and search result
    */
-  protected buildSearch(knex: Knex): {
-    countQuery?: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
+  // protected buildSearch(knex: Knex): {
+  //   countQuery?: Knex.QueryBuilder,
+  //   searchQuery: Knex.QueryBuilder,
+  // } {
+  //   const {
+  //     collections: collectionsTable,
+  //     asyncOperations: asyncOperationsTable,
+  //   } = TableNames;
+  //   const { countQuery, searchQuery } = super.buildCteSearch(knex);
+  //   if (this.searchCollection()) {
+  //     countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+  //   }
+
+  //   if (this.searchAsync()) {
+  //     countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+  //   }
+
+  //   if (this.searchParent()) {
+  //     countQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
+  //   }
+  //   return { countQuery, searchQuery };
+  // }
+
+  protected buildBasicQuery(knex: Knex): {
+    countQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
   } {
     const {
       collections: collectionsTable,
       asyncOperations: asyncOperationsTable,
     } = TableNames;
-    const { countQuery, searchQuery } = super.buildCteSearch(knex);
+
+    const countQuery = knex(this.tableName)
+      .count('*');
+
+    const cteQueryBuilder = knex(this.tableName)
+      .select(
+        `${this.tableName}.*`,
+        `${collectionsTable}.name as collectionName`,
+        `${collectionsTable}.version as collectionVersion`
+      );
+
+    if (this.searchAsync() || this.dbQueryParameters.includeFullRecord) {
+      cteQueryBuilder.select(`${asyncOperationsTable}.id as asyncOperationId`);
+    }
+
+    if (this.searchParent() || this.dbQueryParameters.includeFullRecord) {
+      cteQueryBuilder.select(`${this.tableName}_parent.arn as parentArn`);
+    }
+
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+      cteQueryBuilder.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    } else {
+      cteQueryBuilder.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
     if (this.searchAsync()) {
       countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+      cteQueryBuilder.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+    } else if (this.dbQueryParameters.includeFullRecord) {
+      cteQueryBuilder.leftJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
     }
 
     if (this.searchParent()) {
       countQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
+      cteQueryBuilder.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
+    } else if (this.dbQueryParameters.includeFullRecord) {
+      cteQueryBuilder.leftJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
     }
-    return { countQuery, searchQuery };
+
+    return { countQuery, cteQueryBuilder };
   }
 
   /**
