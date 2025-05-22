@@ -214,31 +214,32 @@ export class ExecutionSearch extends BaseSearch {
    * Join CTE term queries for search
    *
    * @param params
+   * @param params.knex - DB client
    * @param params.cteSearchQueryBuilder - CTE query for search
    * @param params.cteQueryBuilders - object that holds query builders
    * @returns joined CTE query builder for search
    */
   protected joinCteTables(params: {
+    knex: Knex,
     cteSearchQueryBuilder: Knex.QueryBuilder;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
-  }) : { cteSearchQueryBuilder: Knex.QueryBuilder } {
+  }) : { searchQuery: Knex.QueryBuilder } {
     const {
       collections: collectionsTable,
       asyncOperations: asyncOperationsTable,
     } = TableNames;
 
-    const { cteSearchQueryBuilder, cteQueryBuilders } = params;
+    const { knex, cteSearchQueryBuilder, cteQueryBuilders } = params;
     Object.entries(cteQueryBuilders).forEach(([tableName, cteQuery]) => {
-      cteSearchQueryBuilder.with(`${tableName}_cte`, cteQuery);
+      if (tableName === this.tableName) {
+        cteSearchQueryBuilder.with(`${tableName}_inner_cte`, cteQuery);
+      } else {
+        cteSearchQueryBuilder.with(`${tableName}_cte`, cteQuery);
+      }
     });
 
-    let mainTableName = `${this.tableName}`;
-    if (`${this.tableName}` in cteQueryBuilders) {
-      mainTableName = `${this.tableName}_cte`;
-      cteSearchQueryBuilder.from(`${this.tableName}_cte`);
-    } else {
-      cteSearchQueryBuilder.from(`${this.tableName}`);
-    }
+    const mainTableName = `${this.tableName}_inner_cte`;
+    cteSearchQueryBuilder.from(`${mainTableName}`);
 
     let collectionsTableName = `${collectionsTable}`;
     if (`${collectionsTable}` in cteQueryBuilders) {
@@ -285,7 +286,12 @@ export class ExecutionSearch extends BaseSearch {
       cteSearchQueryBuilder.select(`${parentTableName}.arn as parentArn`);
     }
 
-    return { cteSearchQueryBuilder };
+    if (this.dbQueryParameters.limit) cteSearchQueryBuilder.limit(this.dbQueryParameters.limit);
+    if (this.dbQueryParameters.offset) cteSearchQueryBuilder.offset(this.dbQueryParameters.offset);
+
+    const searchQuery = knex.with(`${this.tableName}_cte`, cteSearchQueryBuilder).select('*').from(`${this.tableName}_cte`);
+
+    return { searchQuery };
   }
 
   /**

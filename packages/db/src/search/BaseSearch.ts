@@ -158,15 +158,13 @@ abstract class BaseSearch {
     this.buildExistsQuery({ countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
     this.buildInfixPrefixQuery({ countQuery, cteQueryBuilder: cteQueryBuilders[`${this.tableName}`] });
     const cteSearchQueryBuilder = knex.queryBuilder();
-    const { cteSearchQueryBuilder: searchQuery } = this.joinCteTables(
-      { cteSearchQueryBuilder, cteQueryBuilders }
+    const { searchQuery } = this.joinCteTables(
+      { knex, cteSearchQueryBuilder, cteQueryBuilders }
     );
 
     this.buildSortQuery({ searchQuery, cteName: `${this.tableName}_cte` });
-    if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
-    if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
 
-    log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
+    log.debug(`buildCteSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
 
@@ -468,17 +466,19 @@ abstract class BaseSearch {
    * Joins the tables for the CTE query
    *
    * @param params
+   * @param params.knex - DB client
    * @param params.cteSearchQueryBuilder - search query builder
    * @param params.cteQueryBuilders - object that holds query builders
    * @returns - search query builder
    * @throws - function is not implemented
    */
   protected joinCteTables(params: {
+    knex: Knex,
     cteSearchQueryBuilder: Knex.QueryBuilder;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
   })
     : {
-      cteSearchQueryBuilder: Knex.QueryBuilder
+      searchQuery: Knex.QueryBuilder
     } {
     log.debug(`joinCteTables is not implemented ${Object.keys(params)}`);
     throw new Error('joinCteTables is not implemented');

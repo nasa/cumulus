@@ -144,29 +144,35 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
-   * * Joins the tables for the CTE query
+   * Joins the tables for the CTE query
    *
    * @param params
+   * @param params.knex - DB client
    * @param params.cteSearchQueryBuilder - query builder
    * @param params.cteQueryBuilders - object that holds query builders
    * @returns - search query builder
    */
   protected joinCteTables(params: {
+    knex: Knex,
     cteSearchQueryBuilder: Knex.QueryBuilder;
     cteQueryBuilders: Record<string, Knex.QueryBuilder>;
-  }): { cteSearchQueryBuilder: Knex.QueryBuilder } {
+  }): { searchQuery: Knex.QueryBuilder } {
     const {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
     } = TableNames;
 
-    const { cteSearchQueryBuilder, cteQueryBuilders } = params;
+    const { knex, cteSearchQueryBuilder, cteQueryBuilders } = params;
     Object.entries(cteQueryBuilders).forEach(([tableName, cteQuery]) => {
-      cteSearchQueryBuilder.with(`${tableName}_cte`, cteQuery);
+      if (tableName === this.tableName) {
+        cteSearchQueryBuilder.with(`${tableName}_inner_cte`, cteQuery);
+      } else {
+        cteSearchQueryBuilder.with(`${tableName}_cte`, cteQuery);
+      }
     });
 
-    const mainTableName = `${this.tableName}_cte`;
+    const mainTableName = `${this.tableName}_inner_cte`;
     cteSearchQueryBuilder.from(`${mainTableName}`);
     let collectionsTableName = `${collectionsTable}`;
     if (`${collectionsTable}` in cteQueryBuilders) {
@@ -197,7 +203,12 @@ export class GranuleSearch extends BaseSearch {
       `${pdrsTableName}.name as pdrName`
     );
 
-    return { cteSearchQueryBuilder };
+    if (this.dbQueryParameters.limit) cteSearchQueryBuilder.limit(this.dbQueryParameters.limit);
+    if (this.dbQueryParameters.offset) cteSearchQueryBuilder.offset(this.dbQueryParameters.offset);
+
+    const searchQuery = knex.with(`${this.tableName}_cte`, cteSearchQueryBuilder).select('*').from(`${this.tableName}_cte`);
+
+    return { searchQuery };
   }
 
   /**
