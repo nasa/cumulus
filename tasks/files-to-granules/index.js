@@ -10,6 +10,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 
 const { getGranuleId } = require('./utils');
+const { UnmetRequirementsError } = require('@cumulus/errors');
 
 /**
  * Helper to turn an s3URI into a fileobject
@@ -55,6 +56,7 @@ async function mergeInputFilesWithInputGranules({
   const granulesHash = matchFilesWithProducerGranuleId ?
     keyBy(inputGranules, 'producerGranuleId') :
     keyBy(inputGranules, 'granuleId');
+
   const filesFromInputGranules = flatten(inputGranules.map((g) => g.files.map((f) => `s3://${f.bucket}/${f.key}`)));
 
   // add input files to corresponding granules
@@ -70,6 +72,11 @@ async function mergeInputFilesWithInputGranules({
     try {
       granulesHash[fileGranuleId].files.push(await fileObjectFromS3URI(f));
     } catch (error) {
+      if (!granulesHash[fileGranuleId]) {
+        throw new UnmetRequirementsError(
+          `fileGranuleId ${fileGranuleId} does not match an input granule. Check that 'matchFilesWithProducerGranuleId' is configured as expected.`
+        );
+      }
       throw new Error(`Failed adding ${f} to ${fileGranuleId}'s files: ${error.name} ${error.message}`);
     }
   }
