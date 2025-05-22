@@ -75,7 +75,7 @@ async function updateEachCmrFileAccessURLs(
 }
 
 async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
-  const updatedGranulesByGranuleId = cloneDeep(granulesByGranuleId);
+  const updatedGranulesByGranuleId = cloneDeep(granulesByGranuleId); // TODO don't use clonedeep
   const promises = cmrFiles.map(async (cmrFileObject) => {
     const granule = updatedGranulesByGranuleId[cmrFileObject.granuleId];
     if (!granule?.files) {
