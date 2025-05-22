@@ -100,3 +100,23 @@ test('files-to-granules throws error if configured to use ID that does not exist
     { instanceOf: UnmetRequirementsError }
   );
 });
+
+test('files-to-granules throws error if configured to use uniquified granuleId for matching files', async (t) => {
+  const event = t.context.payload;
+
+  // Make the payload granuleId unique
+  const granuleDateString = '2017201090724';
+  const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
+  event.config.inputGranules[0].granuleId = event.config.inputGranules[0].granuleId
+    .replace(granuleDateString, granuleIdReplacement);
+
+  event.config.matchFilesWithProducerGranuleId = true;
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+
+  await t.throwsAsync(
+    filesToGranules(event, { fileObjectFromS3URI: () => Promise.reject() }),
+    { instanceOf: Error }
+  );
+});

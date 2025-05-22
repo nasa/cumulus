@@ -43,6 +43,7 @@ async function fileObjectFromS3URI(s3URI) {
  * @param {string} params.regex - regex needed to extract granuleId from filenames
  * @param {boolean} params.matchFilesWithProducerGranuleId -
  *  If true, match files to granules using producerGranuleId. Else, granuleId.
+ * @param {Object} params.testMock - Mocks used for testing.
  * @returns {Object} inputGranules with updated file lists
  */
 async function mergeInputFilesWithInputGranules({
@@ -50,6 +51,7 @@ async function mergeInputFilesWithInputGranules({
   inputGranules,
   regex,
   matchFilesWithProducerGranuleId,
+  testMock,
 }) {
   // create hash list of the granules
   // and a list of files
@@ -70,7 +72,11 @@ async function mergeInputFilesWithInputGranules({
     const f = filesToAdd[i];
     const fileId = getGranuleId(f, regex);
     try {
-      granulesHash[fileId].files.push(await fileObjectFromS3URI(f));
+      granulesHash[fileId].files.push(
+        testMock?.fileObjectFromS3URI ?
+          await testMock.fileObjectFromS3URI(f) :
+          await fileObjectFromS3URI(f)
+      );
     } catch (error) {
       if (!granulesHash[fileId]) {
         throw new UnmetRequirementsError(
@@ -96,10 +102,11 @@ async function mergeInputFilesWithInputGranules({
  *                                                    from filenames
  * @param {Array<Object>} event.config.inputGranules - an array of granules
  * @param {Array<string>} event.input - an array of s3 uris
+ * @param {Object} testMock - Mocks used for testing.
  *
  * @returns {Object} Granules object
  */
-function filesToGranules(event) {
+function filesToGranules(event, testMock) {
   const regex = get(event.config, 'granuleIdExtraction', '(.*)');
   const matchFilesWithProducerGranuleId = get(event.config, 'matchFilesWithProducerGranuleId');
   const inputGranules = event.config.inputGranules;
@@ -110,6 +117,7 @@ function filesToGranules(event) {
     inputGranules,
     regex,
     matchFilesWithProducerGranuleId,
+    testMock,
   });
 }
 exports.filesToGranules = filesToGranules;
