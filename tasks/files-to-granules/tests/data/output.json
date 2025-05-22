@@ -2,6 +2,7 @@
   "granules": [
     {
       "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+      "producerGranuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
       "files": [
         {
           "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
