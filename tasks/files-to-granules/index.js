@@ -8,9 +8,9 @@ const path = require('path');
 const { getObjectSize, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const { UnmetRequirementsError } = require('@cumulus/errors');
 
 const { getGranuleId } = require('./utils');
-const { UnmetRequirementsError } = require('@cumulus/errors');
 
 /**
  * Helper to turn an s3URI into a fileobject
@@ -49,7 +49,7 @@ async function mergeInputFilesWithInputGranules({
   inputFiles,
   inputGranules,
   regex,
-  matchFilesWithProducerGranuleId
+  matchFilesWithProducerGranuleId,
 }) {
   // create hash list of the granules
   // and a list of files
@@ -109,8 +109,8 @@ function filesToGranules(event) {
     inputFiles,
     inputGranules,
     regex,
-    matchFilesWithProducerGranuleId
-});
+    matchFilesWithProducerGranuleId,
+  });
 }
 exports.filesToGranules = filesToGranules;
 

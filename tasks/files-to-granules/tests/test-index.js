@@ -62,7 +62,7 @@ test('files-to-granules matches granules using producerGranuleId if configured',
 
   // Make the payload granuleId unique
   const granuleDateString = '2017201090724';
-  const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });;
+  const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
   event.config.inputGranules[0].granuleId = event.config.inputGranules[0].granuleId
     .replace(granuleDateString, granuleIdReplacement);
 
@@ -81,11 +81,11 @@ test('files-to-granules matches granules using producerGranuleId if configured',
 });
 
 test('files-to-granules throws error if configured to use ID that does not exist', async (t) => {
-const event = t.context.payload;
+  const event = t.context.payload;
 
   // Make the payload granuleId unique
   const granuleDateString = '2017201090724';
-  const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });;
+  const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
   event.config.inputGranules[0].granuleId = event.config.inputGranules[0].granuleId
     .replace(granuleDateString, granuleIdReplacement);
 
