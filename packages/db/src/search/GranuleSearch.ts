@@ -37,75 +37,86 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
+   * Build queries for infix and prefix
+   *
+   * @param params
+   * @param params.cteQueryBuilder - search query builder
+   * @param [params.countQuery] - count query
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildInfixPrefixQuery(params: {
+    cteQueryBuilder: Knex.QueryBuilder,
+    countQuery?: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
+    const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
+    if (infix) {
+      [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${this.tableName}.granule_id`, `%${infix}%`));
+    }
+    if (prefix) {
+      [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${this.tableName}.granule_id`, `%${prefix}%`));
+    }
+  }
+
+  /**
    * Build basic query
    *
    * @param knex - DB client
    * @returns queries for getting count and search result
    */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
+  protected buildBasicQuery(knex: Knex): {
+    countQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
+  } {
     const {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
     } = TableNames;
+
     const countQuery = knex(this.tableName)
       .count('*');
 
-    const searchQuery = knex(this.tableName)
-      .select(`${this.tableName}.*`)
-      .select({
-        providerName: `${providersTable}.name`,
-        collectionName: `${collectionsTable}.name`,
-        collectionVersion: `${collectionsTable}.version`,
-        pdrName: `${pdrsTable}.name`,
-      })
-      .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    const cteQueryBuilder = knex(this.tableName)
+      .select(
+        `${this.tableName}.*`,
+        `${collectionsTable}.name as collectionName`,
+        `${collectionsTable}.version as collectionVersion`,
+        `${providersTable}.name as providerName`,
+        `${pdrsTable}.name as pdrsName`
+      );
 
+    // construct inner join first
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+      cteQueryBuilder.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
     if (this.searchProvider()) {
       countQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-      searchQuery.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
-    } else {
-      searchQuery.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+      cteQueryBuilder.innerJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
     }
 
     if (this.searchPdr()) {
       countQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-      searchQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
-    } else {
-      searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+      cteQueryBuilder.innerJoin(pdrsTable, `${this.tableName}.provider_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
-    return { countQuery, searchQuery };
-  }
 
-  /**
-   * Build queries for infix and prefix
-   *
-   * @param params
-   * @param params.countQuery - query builder for getting count
-   * @param params.searchQuery - query builder for search
-   * @param [params.dbQueryParameters] - db query parameters
-   */
-  protected buildInfixPrefixQuery(params: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
-    const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
-    if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `%${infix}%`));
+    // constrcut outer join
+    if (!this.searchCollection()) {
+      cteQueryBuilder.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
-    if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `${prefix}%`));
+
+    if (!this.searchProvider()) {
+      cteQueryBuilder.leftJoin(providersTable, `${this.tableName}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
     }
+
+    if (!this.searchPdr()) {
+      cteQueryBuilder.leftJoin(pdrsTable, `${this.tableName}.provider_cumulus_id`, `${pdrsTable}.cumulus_id`);
+    }
+
+    return { countQuery, cteQueryBuilder };
   }
 
   /**
@@ -116,15 +127,16 @@ export class GranuleSearch extends BaseSearch {
    * @param knex - DB client
    * @returns queries for getting count and search result
    */
-  public buildSearchForActiveCollections(knex: Knex)
-    : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
-    const { countQuery, searchQuery } = this.buildBasicQuery(knex);
-    this.buildTermQuery({ countQuery, searchQuery });
-    this.buildTermsQuery({ countQuery, searchQuery });
-    this.buildRangeQuery({ knex, countQuery, searchQuery });
+  public buildSearchForActiveCollections(knex: Knex): {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+  } {
+    const { countQuery, cteQueryBuilder } = this.buildBasicQuery(knex);
+    this.buildTermQuery({ countQuery, cteQueryBuilder });
+    this.buildTermsQuery({ countQuery, cteQueryBuilder });
+    this.buildRangeQuery({ knex, countQuery, cteQueryBuilder });
+
+    const searchQuery = cteQueryBuilder;
 
     log.debug(`buildSearchForActiveCollections returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };

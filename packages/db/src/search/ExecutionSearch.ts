@@ -1,9 +1,11 @@
 import { Knex } from 'knex';
-import Logger from '@cumulus/logger';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
+
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { ApiExecutionRecord } from '@cumulus/types/api/executions';
+import Logger from '@cumulus/logger';
+
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { translatePostgresExecutionToApiExecutionWithoutDbQuery } from '../translate/executions';
@@ -52,85 +54,82 @@ export class ExecutionSearch extends BaseSearch {
     return (!!(not?.parentArn || term?.parentArn || terms?.parentArn));
   }
 
-  /**
-   * Build basic query
-   *
-   * @param knex - DB client
-   * @returns queries for getting count and search result
-   */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
+  protected buildBasicQuery(knex: Knex): {
+    countQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
+  } {
     const {
       collections: collectionsTable,
       asyncOperations: asyncOperationsTable,
-      executions: executionsTable,
     } = TableNames;
-
-    const searchQuery = knex(`${this.tableName}`)
-      .select(`${this.tableName}.*`)
-      .select({
-        collectionName: `${collectionsTable}.name`,
-        collectionVersion: `${collectionsTable}.version`,
-
-      });
-
-    if (this.searchAsync() || this.dbQueryParameters.includeFullRecord) {
-      searchQuery.select({ asyncOperationId: `${asyncOperationsTable}.id` });
-    }
-
-    if (this.searchParent() || this.dbQueryParameters.includeFullRecord) {
-      searchQuery.select({ parentArn: `${executionsTable}_parent.arn` });
-    }
 
     const countQuery = knex(this.tableName)
       .count('*');
 
+    const cteQueryBuilder = knex(this.tableName)
+      .select(
+        `${this.tableName}.*`,
+        `${collectionsTable}.name as collectionName`,
+        `${collectionsTable}.version as collectionVersion`
+      );
+
+    if (this.searchAsync() || this.dbQueryParameters.includeFullRecord) {
+      cteQueryBuilder.select(`${asyncOperationsTable}.id as asyncOperationId`);
+    }
+
+    if (this.searchParent() || this.dbQueryParameters.includeFullRecord) {
+      cteQueryBuilder.select(`${this.tableName}_parent.arn as parentArn`);
+    }
+
+    // construct inner join first
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-      searchQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
-    } else {
-      searchQuery.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+      cteQueryBuilder.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
     if (this.searchAsync()) {
       countQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
-      searchQuery.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
-    } else if (this.dbQueryParameters.includeFullRecord) {
-      searchQuery.leftJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+      cteQueryBuilder.innerJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
     }
 
     if (this.searchParent()) {
       countQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
-      searchQuery.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
-    } else if (this.dbQueryParameters.includeFullRecord) {
-      searchQuery.leftJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
+      cteQueryBuilder.innerJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
     }
-    return { countQuery, searchQuery };
+
+    // constrcut outer join
+    if (!this.searchCollection()) {
+      cteQueryBuilder.leftJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    }
+
+    if (this.dbQueryParameters.includeFullRecord) {
+      cteQueryBuilder.leftJoin(asyncOperationsTable, `${this.tableName}.async_operation_cumulus_id`, `${asyncOperationsTable}.cumulus_id`);
+      cteQueryBuilder.leftJoin(`${this.tableName} as ${this.tableName}_parent`, `${this.tableName}.parent_cumulus_id`, `${this.tableName}_parent.cumulus_id`);
+    }
+
+    return { countQuery, cteQueryBuilder };
   }
 
   /**
-   * Build queries for infix and prefix
+   * Build query for infix and prefix search
    *
    * @param params
-   * @param params.countQuery - query builder for getting count
-   * @param params.searchQuery - query builder for search
+   * @param params.countQuery - count query
+   * @param params.cteQueryBuilder - query builder
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
     countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.arn`, `%${infix}%`));
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.arn`, `%${infix}%`));
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.arn`, `${prefix}%`));
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.arn`, `${prefix}%`));
     }
   }
 

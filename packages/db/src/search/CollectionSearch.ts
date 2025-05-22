@@ -4,6 +4,7 @@ import pick from 'lodash/pick';
 
 import Logger from '@cumulus/logger';
 import { CollectionRecord } from '@cumulus/types/api/collections';
+
 import { BaseSearch } from './BaseSearch';
 import { convertQueryStringToDbQueryParameters } from './queries';
 import { GranuleSearch } from './GranuleSearch';
@@ -59,22 +60,22 @@ export class CollectionSearch extends BaseSearch {
    * Build queries for infix and prefix
    *
    * @param params
-   * @param params.countQuery - query builder for getting count
-   * @param params.searchQuery - query builder for search
+   * @param params.cteQueryBuilder - query builder
+   * @param [params.countQuery] - count query
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
+    countQuery?: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
+      [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${this.tableName}.name`, `%${infix}%`));
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
+      [countQuery, cteQueryBuilder].forEach((query) => query?.whereLike(`${this.tableName}.name`, `${prefix}%`));
     }
   }
 
@@ -83,17 +84,19 @@ export class CollectionSearch extends BaseSearch {
    * The subquery will search granules
    *
    * @param knex - db client
+   * @param isCount - boolean to tell if the subQuery should be for count or not
    * @returns granule query
    */
-  private buildSubQueryForActiveCollections(knex: Knex): Knex.QueryBuilder {
+  private buildSubQueryForActiveCollections(knex: Knex, isCount: boolean): Knex.QueryBuilder {
     const granulesTable = TableNames.granules;
     const granuleSearch = new GranuleSearch({ queryStringParameters: this.queryStringParameters });
     const { countQuery: subQuery } = granuleSearch.buildSearchForActiveCollections(knex);
+    const rawQuery = isCount ? knex.raw(`${this.tableName}.cumulus_id`) : knex.raw(`${this.tableName}_cte.cumulus_id`);
 
     subQuery
       .clear('select')
       .select(1)
-      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`))
+      .where(`${granulesTable}.collection_cumulus_id`, rawQuery)
       .limit(1);
     return subQuery;
   }
@@ -104,19 +107,20 @@ export class CollectionSearch extends BaseSearch {
    * @param knex - DB client
    * @returns queries for getting count and search result
    */
-  protected buildSearch(knex: Knex)
-    : {
-      countQuery?: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
+  protected buildSearch(knex: Knex): {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+  } {
     const queries = super.buildSearch(knex);
     if (!this.active) {
       return queries;
     }
 
-    const subQuery = this.buildSubQueryForActiveCollections(knex);
+    const countSubQuery = this.buildSubQueryForActiveCollections(knex, true);
+    const searchSubQuery = this.buildSubQueryForActiveCollections(knex, false);
     const { countQuery, searchQuery } = queries;
-    [countQuery, searchQuery].forEach((query) => query?.whereExists(subQuery));
+    countQuery?.whereExists(countSubQuery);
+    searchQuery.whereExists(searchSubQuery);
 
     log.debug(`buildSearch returns countQuery: ${countQuery?.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };

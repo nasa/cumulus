@@ -1,8 +1,9 @@
 import { Knex } from 'knex';
-import Logger from '@cumulus/logger';
 import pick from 'lodash/pick';
 
+import Logger from '@cumulus/logger';
 import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
+
 import { BaseSearch } from './BaseSearch';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { translatePostgresReconReportToApiReconReport } from '../translate/reconciliation_reports';
@@ -23,47 +24,47 @@ export class ReconciliationReportSearch extends BaseSearch {
    * Build basic query
    *
    * @param knex - DB client
-   * @returns queries for getting count and search result
+   * @returns count query and CTE search query builder
    */
-  protected buildBasicQuery(knex: Knex)
-    : {
-      countQuery: Knex.QueryBuilder,
-      searchQuery: Knex.QueryBuilder,
-    } {
+  protected buildBasicQuery(knex: Knex): {
+    countQuery?: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
+  } {
     const {
       reconciliationReports: reconciliationReportsTable,
     } = TableNames;
-    const countQuery = knex(this.tableName)
-      .count('*');
 
-    const searchQuery = knex(this.tableName)
+    const countQuery = knex(this.tableName).count('*');
+
+    const cteQueryBuilder = knex(this.tableName)
       .select(`${this.tableName}.*`)
       .select({
         reconciliationReportsName: `${reconciliationReportsTable}.name`,
       });
-    return { countQuery, searchQuery };
+
+    return { countQuery, cteQueryBuilder };
   }
 
   /**
    * Build queries for infix and prefix
    *
    * @param params
-   * @param params.countQuery - query builder for getting count
-   * @param params.searchQuery - query builder for search
+   * @param params.countQuery - knex query for count
+   * @param params.cteQueryBuilder - CTE query builder
    * @param [params.dbQueryParameters] - db query parameters
    */
   protected buildInfixPrefixQuery(params: {
     countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
+    cteQueryBuilder: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { countQuery, cteQueryBuilder, dbQueryParameters } = params;
     const { infix, prefix } = dbQueryParameters ?? this.dbQueryParameters;
     if (infix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.name`, `%${infix}%`));
     }
     if (prefix) {
-      [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
+      [countQuery, cteQueryBuilder].forEach((query) => query.whereLike(`${this.tableName}.name`, `${prefix}%`));
     }
   }
 
