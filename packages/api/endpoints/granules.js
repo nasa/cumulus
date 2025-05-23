@@ -709,7 +709,7 @@ const BulkPatchSchema = z.object({
 
 const parseBulkPatchGranuleCollectionPayload = zodParser(
   'BulkPatchGranuleCollection payload',
-  BulkPatchGranuleCollectionSchema,
+  BulkPatchGranuleCollectionSchema
 );
 const parseBulkPatchPayload = zodParser('BulkPatchSchema payload', BulkPatchSchema);
 
