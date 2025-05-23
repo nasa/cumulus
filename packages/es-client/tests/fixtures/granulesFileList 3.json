@@ -1,0 +1,37 @@
+[
+  {
+    "granuleId": "gran.nToe7O.001",
+    "files": [
+      {
+        "bucket": "stackName-public",
+        "fileName": "gran.nToe7O.001.ndvi.jpg",
+        "key": "gran___001/stackName/gran.nToe7O.001.ndvi.jpg"
+      },
+      {
+        "bucket": "stackName-protected",
+        "fileName": "gran.nToe7O.001.cmr.json",
+        "key": "gran___001/stackName/gran.nToe7O.001.cmr.json"
+      },
+      {
+        "bucket": "stackName-protected",
+        "fileName": "gran.nToe7O.001.hdf",
+        "key": "stackName-test-data/files/gran___001/2016/stackName/gran.nToe7O.001.hdf"
+      }
+    ]
+  },
+  {
+    "granuleId": "gran.A7444061.d7sYKL.001",
+    "files": [
+      {
+        "bucket": "stackName-protected",
+        "fileName": "gran.A7444061.d7sYKL.001.cmr.json",
+        "key": "gran___001/stackName/gran.A7444061.d7sYKL.001.cmr.json"
+      },
+      {
+        "bucket": "stackName-protected-2",
+        "fileName": "gran.A7444061.d7sYKL.001.hdf",
+        "key": "stackName-test-data/files/gran___001/2016/stackName/gran.A7444061.d7sYKL.001.hdf"
+      }
+    ]
+  }
+]
