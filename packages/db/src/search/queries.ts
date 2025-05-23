@@ -19,6 +19,7 @@ const reservedWords = [
   'fields',
   'includeFullRecord',
   'searchContext',
+  'countOnly',
 ];
 
 /**
@@ -31,6 +32,14 @@ const regexes: { [key: string]: RegExp } = {
   exists: /^(.*)__exists$/,
   range: /^(.*)__(from|to)$/,
 };
+
+/**
+ * Based on PostgreSQL documentation, when using LIMIT, it is important to use
+ * an ORDER BY clause that constrains the result rows into a unique order.
+ * The following is the default sort column and order for the pagination.
+ */
+const defaultSortColumn = 'cumulus_id';
+const defaultSortOrder = 'asc';
 
 /**
  * Convert 'exists' query fields to db query parameters from api query string fields
@@ -192,7 +201,7 @@ const convertSort = (
   queryStringParameters: QueryStringParameters
 ): SortType[] => {
   const sortArray: SortType[] = [];
-  const { sort_by: sortBy, sort_key: sortKey } = queryStringParameters;
+  const { sort_by: sortBy, sort_key: sortKey, limit } = queryStringParameters;
   let { order } = queryStringParameters;
   if (sortBy) {
     order = order ?? 'asc';
@@ -205,6 +214,11 @@ const convertSort = (
       return Object.keys(queryParam ?? {}).map((key) => sortArray.push({ column: key, order }));
     });
   }
+
+  if (limit !== 'null') {
+    sortArray.push({ column: defaultSortColumn, order: defaultSortOrder });
+  }
+
   return sortArray;
 };
 
@@ -239,18 +253,21 @@ export const convertQueryStringToDbQueryParameters = (
     fields,
     estimateTableRowCount,
     includeFullRecord,
+    countOnly,
   } = queryStringParameters;
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
-  dbQueryParameters.limit = Number.parseInt(limit ?? '10', 10);
-  dbQueryParameters.offset = (dbQueryParameters.page - 1) * dbQueryParameters.limit;
-
+  if (limit !== 'null') {
+    dbQueryParameters.limit = Number.parseInt(limit ?? '10', 10);
+    dbQueryParameters.offset = (dbQueryParameters.page - 1) * dbQueryParameters.limit;
+  }
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
   dbQueryParameters.estimateTableRowCount = (estimateTableRowCount === 'true');
   dbQueryParameters.includeFullRecord = (includeFullRecord === 'true');
+  dbQueryParameters.countOnly = (countOnly === 'true');
   dbQueryParameters.sort = convertSort(type, queryStringParameters);
 
   // remove reserved words (that are not fields)
@@ -262,7 +279,6 @@ export const convertQueryStringToDbQueryParameters = (
   // for each search strategy, get all parameters and convert them to db parameters
   Object.keys(regexes).forEach((k: string) => {
     const matchedFields = fieldsList.filter((f) => f.name.match(regexes[k]));
-
     if (matchedFields && matchedFields.length > 0 && convert[k]) {
       const queryParams = convert[k](type, matchedFields, regexes[k]);
       Object.assign(dbQueryParameters, queryParams);

@@ -22,7 +22,6 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
       stackName                      = var.prefix
       system_bucket                  = var.system_bucket
       RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
-      ES_HOST                        = var.elasticsearch_hostname
     }
   }
 

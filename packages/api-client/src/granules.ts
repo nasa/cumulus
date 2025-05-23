@@ -15,6 +15,20 @@ type AssociateExecutionRequest = {
   executionArn: string
 };
 
+type BulkPatchGranuleCollection = {
+  apiGranules: ApiGranuleRecord[],
+  collectionId: string,
+};
+
+type BulkPatch = {
+  apiGranules: ApiGranuleRecord[],
+  dbConcurrency: number,
+  dbMaxPool: number,
+};
+
+type InvalidBehavior = 'error' | 'skip';
+type CmrGranuleUrlType = 'http' | 's3' | 'both';
+
 const encodeGranulesURIComponent = (
   granuleId: string,
   collectionId: string | undefined
@@ -603,6 +617,74 @@ export const associateExecutionWithGranule = async (params: {
 };
 
 /**
+ * Update a list of granules' to a new collectionId in postgres and elasticsearch
+ * PATCH /granules/bulkPatchGranuleCollection
+ *
+ * @param params - params
+ * @param params.prefix - the prefix configured for the stack
+ * @param params.body - body to pass the API lambda
+ * @param params.callback - async function to invoke the api lambda
+ *                          that takes a prefix / user payload.  Defaults
+ *                          to cumulusApiClient.invokeApifunction to invoke the
+ *                          api lambda
+ * @returns - the response from the callback
+ */
+export const bulkPatchGranuleCollection = async (params: {
+  prefix: string,
+  body: BulkPatchGranuleCollection,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'PATCH',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulkPatchGranuleCollection',
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 200,
+  });
+};
+
+/**
+ * Apply PATCH to a list of granules
+ * POST /granules/bulkPatch
+ *
+ * @param params - params
+ * @param params.prefix - the prefix configured for the stack
+ * @param params.body - body to pass the API lambda
+ * @param params.callback - async function to invoke the api lambda
+ *                          that takes a prefix / user payload.  Defaults
+ *                          to cumulusApiClient.invokeApifunction to invoke the
+ *                          api lambda
+ * @returns - the response from the callback
+ */
+export const bulkPatch = async (params: {
+  prefix: string,
+  body: BulkPatch,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'PATCH',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulkPatch',
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 200,
+  });
+};
+
+/**
  * Bulk operations on granules stored in cumulus
  * POST /granules/bulk
  *
@@ -727,5 +809,43 @@ export const bulkOperation = async (params: {
       body: JSON.stringify({ granules, workflowName }),
     },
     expectedStatusCodes: 202,
+  });
+};
+
+/**
+ * Bulk Granule Operations
+ * POST /granules/bulkChangeCollection
+ */
+export const bulkChangeCollection = async (params: {
+  prefix: string,
+  body: {
+    sourceCollectionId: string,
+    targetCollectionId: string,
+    batchSize?: number,
+    concurrency?: number,
+    s3Concurrency?: number,
+    listGranulesConcurrency?: number,
+    dbMaxPool?: number,
+    maxRequestGranules?: number,
+    invalidGranuleBehavior?: InvalidBehavior,
+    cmrGranuleUrlType?: CmrGranuleUrlType,
+    s3MultipartChunkSizeMb?: number,
+    executionName?: string,
+  },
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/granules/bulkChangeCollection/',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 200,
   });
 };

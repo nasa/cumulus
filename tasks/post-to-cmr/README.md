@@ -25,6 +25,8 @@ Config object fields:
 | process | string | (required) | Process the granules went through
 | stack | string | (required) | Name of deployment stack
 | cmr | object | (required) | CMR credentials object
+| concurrency | number | 20 | Maximum concurrency of requests to CMR
+| republish | boolean | false | Whether to remove published granules from CMR and republish them again
 
 ### Input
 

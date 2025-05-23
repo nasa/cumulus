@@ -21,7 +21,10 @@ resource "aws_iam_role" "lambda_api_gateway" {
 data "aws_iam_policy_document" "lambda_api_gateway_policy" {
   statement {
     actions   = ["ecs:RunTask"]
-    resources = [aws_ecs_task_definition.async_operation.arn]
+    resources = [
+      aws_ecs_task_definition.async_operation.arn,
+      aws_ecs_task_definition.dead_letter_recovery_operation.arn
+    ]
   }
 
   statement {
@@ -123,6 +126,13 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "sqs:SendMessage",
     ]
     resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.prefix}-*"]
+  }
+
+  statement {
+    actions = [
+      "states:StartExecution",
+    ]
+    resources = ["arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:${var.prefix}-*"]
   }
 
   statement {

@@ -44,6 +44,16 @@
         }
       }
     },
+    "concurrency": {
+      "type": "number",
+      "description": "Maximum concurrency of requests to CMR",
+      "default": 20
+    },
+    "s3Concurrency": {
+      "type": "number",
+      "description": "Maximum concurrency of requests to s3",
+      "default": 50
+    },
     "launchpad": {
       "type": "object",
       "description": "credentials needed to get launchpad token",
@@ -63,6 +73,11 @@
           "type": "string"
         }
       }
+    },
+    "republish": {
+      "type": "boolean",
+      "description": "Whether to remove published granules from CMR and republish them again.",
+      "default": false
     },
     "skipMetaCheck": {
       "description": "Adds the option to allow PostToCMR to pass when processing a granule without a metadata file.",

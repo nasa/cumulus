@@ -168,29 +168,6 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
   });
 });
 
-test.serial('indexing a rule record', async (t) => {
-  const { esIndex, esClient } = t.context;
-
-  const testRecord = {
-    name: randomString(),
-  };
-
-  const r = await indexer.indexRule(esClient, testRecord, esIndex);
-
-  // make sure record is created
-  t.is(r.result, 'created');
-
-  // check the record exists
-  const record = await esClient.client.get({
-    index: esIndex,
-    type: 'rule',
-    id: testRecord.name,
-  }).then((response) => response.body);
-
-  t.is(record._id, testRecord.name);
-  t.is(typeof record._source.timestamp, 'number');
-});
-
 test.serial('indexing a provider record', async (t) => {
   const { esIndex, esClient } = t.context;
 
@@ -615,31 +592,6 @@ test.serial('deleting a collection record', async (t) => {
     index: esIndex,
   });
   t.false(await esCollectionsClient.exists(collectionId));
-});
-
-test.serial('deleting a rule record', async (t) => {
-  const { esIndex, esClient } = t.context;
-  const name = randomString();
-  const testRecord = {
-    name,
-  };
-
-  await indexer.indexRule(esClient, testRecord, esIndex);
-
-  // check the record exists
-  const esRulesClient = new Search(
-    {},
-    'rule',
-    esIndex
-  );
-  t.true(await esRulesClient.exists(name));
-
-  await indexer.deleteRule({
-    esClient,
-    name,
-    index: esIndex,
-  });
-  t.false(await esRulesClient.exists(name));
 });
 
 test.serial('deleting a PDR record', async (t) => {

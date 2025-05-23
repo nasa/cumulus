@@ -30,13 +30,6 @@ const {
   UnmetRequirementsError,
 } = require('@cumulus/errors');
 const {
-  Search,
-} = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
-const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
 const {
@@ -139,26 +132,6 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
-
-  const { esIndex, esClient } = await createTestIndex();
-  t.context.esIndex = esIndex;
-  t.context.esClient = esClient;
-
-  t.context.esExecutionsClient = new Search(
-    {},
-    'execution',
-    t.context.esIndex
-  );
-  t.context.esPdrsClient = new Search(
-    {},
-    'pdr',
-    t.context.esIndex
-  );
-  t.context.esGranulesClient = new Search(
-    {},
-    'granule',
-    t.context.esIndex
-  );
 
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
@@ -283,7 +256,6 @@ test.after.always(async (t) => {
     knexAdmin: t.context.testKnexAdmin,
     testDbName: t.context.testDbName,
   });
-  await cleanupTestIndex(t.context);
   await sns().send(new DeleteTopicCommand({ TopicArn: ExecutionsTopicArn }));
   await sns().send(new DeleteTopicCommand({ TopicArn: PdrsTopicArn }));
 });

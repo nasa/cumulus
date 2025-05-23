@@ -15,7 +15,6 @@ resource "aws_lambda_function" "start_async_operation" {
       createTimeoutMillis          = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn  = var.rds_user_access_secret_arn
       EcsCluster                   = var.ecs_cluster_name
-      ES_HOST                      = var.elasticsearch_hostname
       idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
       reapIntervalMillis           = var.rds_connection_timing_configuration.reapIntervalMillis
       stackName                    = var.prefix

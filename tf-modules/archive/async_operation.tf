@@ -3,6 +3,11 @@ resource "aws_cloudwatch_log_group" "async_operation" {
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "AsyncOperationEcsLogs", var.default_log_retention_days)
   tags = var.tags
 }
+resource "aws_cloudwatch_log_group" "dead_letter_recovery" {
+  name = "${var.prefix}-DeadLetterRecoveryEcsLogs"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "DeadLetterRecoveryEcsLogs", var.default_log_retention_days)
+  tags = var.tags
+}
 resource "aws_ecs_task_definition" "async_operation" {
   depends_on               = [aws_cloudwatch_log_group.async_operation]
   family                   = "${var.prefix}-AsyncOperationTaskDefinition"
@@ -26,10 +31,6 @@ resource "aws_ecs_task_definition" "async_operation" {
       {
         "name": "databaseCredentialSecretArn",
         "value": "${var.rds_user_access_secret_arn}"
-      },
-      {
-        "name": "ES_HOST",
-        "value": "${var.elasticsearch_hostname}"
       }
     ],
     "image": "${var.async_operation_image}",
@@ -39,6 +40,45 @@ resource "aws_ecs_task_definition" "async_operation" {
         "awslogs-group": "${aws_cloudwatch_log_group.async_operation.name}",
         "awslogs-region": "${data.aws_region.current.name}",
         "awslogs-stream-prefix": "async-operation"
+      }
+    }
+  }
+]
+EOS
+}
+
+resource "aws_ecs_task_definition" "dead_letter_recovery_operation" {
+  depends_on               = [aws_cloudwatch_log_group. dead_letter_recovery]
+  family                   = "${var.prefix}-DeadLetterRecoveryTaskDefinition"
+  tags                     = var.tags
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  execution_role_arn       = var.ecs_execution_role.arn
+  task_role_arn            = var.ecs_task_role.arn
+  cpu                      = var.dead_letter_recovery_cpu
+  memory                   = var.dead_letter_recovery_memory
+  container_definitions    = <<EOS
+[
+  {
+    "name": "DeadLetterRecovery",
+    "essential": true,
+    "environment": [
+      {
+        "name": "AWS_REGION",
+        "value": "${data.aws_region.current.name}"
+      },
+      {
+        "name": "databaseCredentialSecretArn",
+        "value": "${var.rds_user_access_secret_arn}"
+      }
+    ],
+    "image": "${var.async_operation_image}",
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${aws_cloudwatch_log_group.dead_letter_recovery.name}",
+        "awslogs-region": "${data.aws_region.current.name}",
+        "awslogs-stream-prefix": "dead_letter_recovery"
       }
     }
   }

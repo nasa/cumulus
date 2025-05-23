@@ -59,6 +59,7 @@ const infixMapping: { [key: string]: string } = {
   providers: 'name',
   executions: 'arn',
   pdrs: 'name',
+  reconciliationReports: 'name',
 };
 
 /**
@@ -69,9 +70,8 @@ class StatsSearch extends BaseSearch {
 
   constructor(event: QueryEvent, type: string) {
     const { field, ...queryStringParameters } = event.queryStringParameters || {};
-    super({ queryStringParameters }, type);
+    super({ queryStringParameters: { ...queryStringParameters, limit: 'null' } }, type);
     this.field = field ?? 'status';
-    this.dbQueryParameters = omit(this.dbQueryParameters, ['limit', 'offset']);
   }
 
   /**
@@ -241,7 +241,7 @@ class StatsSearch extends BaseSearch {
       searchQuery.whereLike(`${this.tableName}.${fieldName}`, `%${infix}%`);
     }
     if (prefix) {
-      searchQuery.whereLike(`${this.tableName}.${fieldName}`, `%${prefix}%`);
+      searchQuery.whereLike(`${this.tableName}.${fieldName}`, `${prefix}%`);
     }
   }
 
@@ -251,7 +251,6 @@ class StatsSearch extends BaseSearch {
    * @param params
    * @param params.searchQuery - the search query
    * @param [params.dbQueryParameters] - the db query parameters
-   * @returns the updated search query based on queryStringParams
    */
   protected buildTermQuery(params: {
     searchQuery: Knex.QueryBuilder,
@@ -264,7 +263,7 @@ class StatsSearch extends BaseSearch {
       searchQuery.whereRaw(`${this.tableName}.error ->> 'Error' is not null`);
     }
 
-    return super.buildTermQuery({
+    super.buildTermQuery({
       ...params,
       dbQueryParameters: { term: omit(term, 'error.Error') },
     });

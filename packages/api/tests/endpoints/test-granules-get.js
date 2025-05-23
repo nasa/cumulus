@@ -293,52 +293,6 @@ test.afterEach(async (t) => {
   });
 });
 
-// TODO postgres query doesn't return searchContext
-test.serial.skip('default lists and paginates correctly with search_after', async (t) => {
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
-  const response = await request(app)
-    .get('/granules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { meta, results } = response.body;
-  t.is(results.length, 3);
-  t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'granule');
-  t.is(meta.count, 3);
-  results.forEach((r) => {
-    t.true(granuleIds.includes(r.granuleId));
-  });
-  // default paginates correctly with search_after
-  const firstResponse = await request(app)
-    .get('/granules?limit=1')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { meta: firstMeta, results: firstResults } = firstResponse.body;
-  t.is(firstResults.length, 1);
-  t.is(firstMeta.page, 1);
-  t.truthy(firstMeta.searchContext);
-
-  const newResponse = await request(app)
-    .get(`/granules?limit=1&page=2&searchContext=${firstMeta.searchContext}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { meta: newMeta, results: newResults } = newResponse.body;
-  t.is(newResults.length, 1);
-  t.is(newMeta.page, 2);
-  t.truthy(newMeta.searchContext);
-
-  t.true(granuleIds.includes(results[0].granuleId));
-  t.true(granuleIds.includes(newResults[0].granuleId));
-  t.not(results[0].granuleId, newResults[0].granuleId);
-  t.not(meta.searchContext === newMeta.searchContext);
-});
-
 test.serial('default lists and paginates correctly from querying database', async (t) => {
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const response = await request(app)
@@ -543,39 +497,24 @@ test.serial('GET returns a 404 response if the granule is not found', async (t) 
   t.is(message, 'Granule not found');
 });
 
-// TODO postgres query doesn't return searchContext
-test.serial.skip('default paginates correctly with search_after', async (t) => {
+test.serial('LIST endpoint with countOnly set returns only count of matching granules', async (t) => {
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+  const searchParams = new URLSearchParams({
+    granuleId: granuleIds[3],
+    countOnly: true,
+  });
   const response = await request(app)
-    .get('/granules?limit=1')
+    .get(`/granules?${searchParams}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
 
   const { meta, results } = response.body;
-  t.is(results.length, 1);
-  t.is(meta.page, 1);
-  t.truthy(meta.searchContext);
-
-  const newResponse = await request(app)
-    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { meta: newMeta, results: newResults } = newResponse.body;
-  t.is(newResults.length, 1);
-  t.is(newMeta.page, 2);
-  t.truthy(newMeta.searchContext);
-  console.log(`default paginates granuleIds: ${JSON.stringify(granuleIds)}, results: ${results[0].granuleId}, ${newResults[0].granuleId}`);
-  t.true(granuleIds.includes(results[0].granuleId));
-  t.true(granuleIds.includes(newResults[0].granuleId));
-  t.not(results[0].granuleId, newResults[0].granuleId);
-  t.not(meta.searchContext === newMeta.searchContext);
+  t.is(meta.count, 2);
+  t.is(results.length, 0);
 });
 
-test.only('LIST endpoint returns search result correctly', async (t) => {
+test.serial('LIST endpoint returns search result correctly', async (t) => {
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const searchParams = new URLSearchParams({
     granuleId: granuleIds[3],

@@ -2,17 +2,23 @@
 
 "use strict";
 
-const { z } = require("zod");
-const isError = require("lodash/isError");
+const { z } = require('zod');
+const isError = require('lodash/isError');
+const pMap = require('p-map');
 
-const router = require("express-promise-router")();
-const cloneDeep = require("lodash/cloneDeep");
-const { v4: uuidv4 } = require("uuid");
+const router = require('express-promise-router')();
+const cloneDeep = require('lodash/cloneDeep');
+const { v4: uuidv4 } = require('uuid');
+const {
+  getWorkflowFileKey,
+} = require('@cumulus/common/workflows');
 
 const Logger = require("@cumulus/logger");
 const { deconstructCollectionId } = require("@cumulus/message/Collections");
 const { RecordDoesNotExist } = require("@cumulus/errors");
 const { GranuleSearch } = require("@cumulus/db");
+
+const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
 
 const {
   CollectionPgModel,
@@ -25,10 +31,13 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
   getGranuleAndCollection,
-} = require("@cumulus/db");
+  updateBatchGranulesCollection,
+} = require('@cumulus/db');
+const { sfn } = require('@cumulus/aws-client/services');
 
-const { deleteGranuleAndFiles } = require("../src/lib/granule-delete");
-const { zodParser } = require("../src/zod-utils");
+const { getJsonS3Object, promiseS3Upload } = require('@cumulus/aws-client/S3');
+const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
+const { zodParser } = require('../src/zod-utils');
 
 const { chooseTargetExecution } = require("../lib/executions");
 const startAsyncOperation = require("../lib/startAsyncOperation");
@@ -56,18 +65,21 @@ const {
   getFunctionNameFromRequestContext,
 } = require("../lib/request");
 
-const schemas = require("../lib/schemas.js");
+const { buildPayload } = require('../lib/rulesHelpers');
+const schemas = require('../lib/schemas.js');
 
 /**
  * @typedef {import('express').Request} Request
  * @typedef {import('express').Response} Response
  * @typedef {import('../src/zod-utils').BetterZodError} BetterZodError
+ * @typedef {import('knex').Knex} Knex
  */
 
 const log = new Logger({ sender: "@cumulus/api/granules" });
 
 /**
  * 200/201 helper method for .put update/create messages
+ *
  * @param {boolean} isNewRecord - Boolean variable representing if the granule is a new record
  * @param {Object} granule   - API Granule being written
  * @param {Object} res        - express response object
@@ -198,6 +210,9 @@ const create = async (req, res) => {
  * Update existing granule *or* create new granule
  *
  * @param {Object} req - express request object
+ * @param {Knex} req.knex - knex instance to use for patching granule
+ * @param {Object} req.testContext - test context for client requests
+ * @param {Object} req.body - request body for patching a granule
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
@@ -205,9 +220,9 @@ const patchGranule = async (req, res) => {
   const {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
-    knex = await getKnexClient(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
+  const knex = req.knex ?? await getKnexClient();
   let apiGranule = req.body || {};
   let pgCollection;
 
@@ -275,7 +290,31 @@ const patchGranule = async (req, res) => {
     log.error("failed to update granule", error);
     return res.boom.badRequest(errorify(error));
   }
-  return _returnPatchGranuleStatus(isNewRecord, apiGranule, res);
+  return {
+    isNewRecord,
+    apiGranule,
+    patchRes: res,
+  };
+};
+
+/**
+ * Update existing granule *or* create new granule and return its status
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const patchGranuleAndReturnStatus = async (req, res) => {
+  let patchRes;
+  let isNewRecord = false;
+  let apiGranule = {};
+  try {
+    ({ isNewRecord, apiGranule, patchRes } = await patchGranule(req, res));
+  } catch (error) {
+    log.error('failed to update granule', error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return _returnPatchGranuleStatus(isNewRecord, apiGranule, patchRes);
 };
 
 /**
@@ -336,7 +375,7 @@ async function put(req, res) {
   }
   req.body = body;
   //Then patch new granule with nulls applied
-  return await patchGranule(req, res);
+  return await patchGranuleAndReturnStatus(req, res);
 }
 
 const _handleUpdateAction = async (req, res, pgGranule, pgCollection) => {
@@ -489,7 +528,7 @@ async function patchByGranuleId(req, res) {
 
   if (!action) {
     if (req.body.granuleId === req.params.granuleId) {
-      return patchGranule(req, res);
+      return patchGranuleAndReturnStatus(req, res);
     }
     return res.boom.badRequest(
       `input :granuleId (${req.params.granuleId}) must match body's granuleId (${req.body.granuleId})`
@@ -531,7 +570,7 @@ async function patch(req, res) {
   const action = body.action;
   if (!action) {
     if (_granulePayloadMatchesQueryParams(body, req)) {
-      return patchGranule(req, res);
+      return patchGranuleAndReturnStatus(req, res);
     }
     return res.boom.badRequest(
       `inputs :granuleId and :collectionId (${req.params.granuleId} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`
@@ -656,6 +695,104 @@ const associateExecution = async (req, res) => {
   });
 };
 
+const BulkPatchGranuleCollectionSchema = z.object({
+  apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
+  collectionId: z.string().nonempty(),
+}).catchall(z.unknown());
+
+const BulkPatchSchema = z.object({
+  apiGranules: z.array(z.object({}).catchall(z.any())).nonempty(),
+  dbConcurrency: z.number().positive(),
+  dbMaxPool: z.number().positive(),
+}).catchall(z.unknown());
+
+const parseBulkPatchGranuleCollectionPayload = zodParser('BulkPatchGranuleCollection payload', BulkPatchGranuleCollectionSchema);
+const parseBulkPatchPayload = zodParser('BulkPatchSchema payload', BulkPatchSchema);
+
+/**
+ * Update a batch of granules to change collectionId to a new collectionId
+ * in PG
+ *
+ * @param {Object} req - express request object
+ * @param {Object} req.testContext - test context for client requests
+ * @param {Object} req.body - request body for patching a granule
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function bulkPatchGranuleCollection(req, res) {
+  const {
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+  const body = parseBulkPatchGranuleCollectionPayload(req.body);
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+  const granules = req.body.apiGranules;
+  const granuleIds = granules.map((granule) => granule.granuleId);
+  const newCollectionId = req.body.collectionId;
+  let collection;
+
+  try {
+    collection = await collectionPgModel.get(
+      knex,
+      deconstructCollectionId(newCollectionId)
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.error(`Collection ${newCollectionId} does not exist`);
+      return res.boom.notFound(`Collection ${newCollectionId} does not exist`);
+    }
+    return res.boom.badRequest(error.message);
+  }
+
+  await updateBatchGranulesCollection(knex, granuleIds, collection.cumulus_id);
+
+  return res.send({
+    message: `Successfully wrote granules with Granule Ids: ${granuleIds} to Collection Id: ${newCollectionId}`,
+  });
+}
+
+/**
+ * Update a batch of granules
+ *
+ * @param {Object} req - express request object
+ * @param {Object} req.testContext - test context for client requests
+ * @param {Object} req.body - request body for patching a granule
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function bulkPatch(req, res) {
+  const {
+    mappingFunction = pMap,
+    getKnexClientMethod = getKnexClient,
+  } = req.testContext || {};
+  req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
+  req.body.dbMaxPool = req.body.dbMaxPool ?? 20;
+  const body = parseBulkPatchPayload(req.body);
+
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+  const granules = body.apiGranules;
+  const knex = await getKnexClientMethod({
+    env: {
+      ...process.env,
+      dbMaxPool: body.dbMaxPool.toString(),
+    },
+  });
+
+  await mappingFunction(
+    granules,
+    (apiGranule) => patchGranule({ body: apiGranule, knex, testContext: {} }, res),
+    { concurrency: body.dbConcurrency }
+  );
+
+  return res.send({
+    message: 'Successfully patched Granules',
+  });
+}
+
 /**
  * Delete a granule by granuleId
  *
@@ -749,6 +886,170 @@ async function del(req, res) {
   });
 
   return res.send({ detail: "Record deleted", ...deletionDetails });
+}
+
+const bulkChangeCollectionSchema = z.object({
+  sourceCollectionId: z.string().nonempty('sourceCollectionId is required'),
+  targetCollectionId: z.string().nonempty('targetCollectionId is required'),
+  batchSize: z.number().positive().optional().default(100),
+  concurrency: z.number().positive().optional().default(100),
+  s3Concurrency: z.number().positive().optional().default(50),
+  listGranulesConcurrency: z.number().positive().optional().default(100),
+  dbMaxPool: z.number().positive().optional().default(100),
+  maxRequestGranules: z.number().positive().optional().default(10000),
+  invalidGranuleBehavior: z.enum(['error', 'skip']).default('error'),
+  cmrGranuleUrlType: z.enum(['http', 's3', 'both']).default('both'),
+  s3MultipartChunkSizeMb: z.number().optional(),
+  executionName: z.string().optional(),
+});
+const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload', bulkChangeCollectionSchema);
+
+/**
+ * Bulk move granules to a new collection.
+ *
+ * @param {object} req - The request object.
+ * @param {object} req.body - The request payload.
+ * @param {string} req.body.sourceCollectionId - The source collection ID.
+ * @param {string} req.body.targetCollectionId - The target collection ID.
+ * @param {number} [req.body.batchSize=100] - The batch size for processing granules.
+ * @param {number} [req.body.concurrency=100] - The per-file concurrency level for processing
+ * granules and granule records in the cumulus api
+ * @param {number} [req.body.s3Concurrency=100] - The per-file concurrency level for processing
+ * granules and granule records in s3
+ * @param {number} [req.body.maxRequestGranules=1000] - the maximum number of granules to send
+ * in an api request
+ * @param {string} [req.body.invalidGranuleBehavior='error'] - The behavior for invalid granules
+ * ('error' or 'skip').
+ * @param {number} [req.body.s3MultipartChunkSizeMb] - The S3 multipart chunk size in MB
+ * @param {string} [req.body.executionName] - Override to allow specifying an execution 'name'
+ * @param {object} req.testContext - The test context object
+ * @param {object} res - The response object.
+ * @returns {Promise<Object>} The response object with the execution ARN and message.
+ */
+async function bulkChangeCollection(req, res) {
+  const {
+    knex = await getKnexClient(),
+    sfnMethod = sfn,
+    workflow = 'ChangeGranuleCollectionsWorkflow',
+  } = req.testContext || {};
+
+  const collectionPgModel = new CollectionPgModel();
+  const granulePgModel = new GranulePgModel();
+
+  if (!process.env.system_bucket) {
+    return res.boom.badRequest('API is misconfigured, system_bucket must be defined in the env variables');
+  }
+  if (!process.env.stackName) {
+    return res.boom.badRequest('API is misconfigured, stackName must be defined in the env variables');
+  }
+
+  const body = parsebulkChangeCollectionPayload(req.body);
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+
+  const { name, version } = deconstructCollectionId(body.sourceCollectionId);
+
+  //get collection
+  const pgCollection = await collectionPgModel.get(
+    knex,
+    { name, version }
+  );
+  const query = granulePgModel.queryBuilderSearch(knex, {
+    collection_cumulus_id: pgCollection.cumulus_id,
+  });
+  query.select('granule_id');
+  query.limit(body.batchSize);
+  const granules = await query;
+  if (granules.length === 0) {
+    return res.boom.notFound(
+      `No granules found for collection ${body.sourceCollectionId}`
+    );
+  }
+
+  const executionName = body.executionName || uuidv4();
+
+  let stateMachineArn;
+  try {
+    const workflowArnObject = await getJsonS3Object(
+      process.env.system_bucket,
+      getWorkflowFileKey(process.env.stackName, workflow)
+    );
+    stateMachineArn = workflowArnObject.arn;
+  } catch (error) {
+    return res.boom.badRequest(
+      `Unable to find state machine ARN for workflow ${workflow}`
+    );
+  }
+
+  // Upload payload to S3 due to size concerns
+  const remoteObjectKey = {
+    Bucket: process.env.system_bucket,
+    Key: `${process.env.stackName}/bulkGranuleMoveRequests/${executionName}.json`,
+  };
+
+  await promiseS3Upload({
+    params: {
+      ...remoteObjectKey,
+      Body: JSON.stringify({
+        granuleIds: granules.map((granule) => granule.granule_id),
+      }),
+    },
+  });
+
+  const input = await buildPayload({
+    workflow,
+    cumulus_meta: {
+      workflow_start_time: Date.now(),
+      execution_name: executionName,
+      state_machine: stateMachineArn,
+      system_bucket: process.env.system_bucket,
+    },
+    meta: {
+      collection: {
+        name,
+        version,
+      },
+      bulkChangeCollection: {
+        batchSize: body.batchSize,
+        cmrGranuleUrlType: body.cmrGranuleUrlType,
+        concurrency: body.concurrency,
+        s3Concurrency: body.s3Concurrency,
+        dbMaxPool: body.dbMaxPool,
+        invalidGranuleBehavior: body.invalidGranuleBehavior,
+        s3MultipartChunkSizeMb: body.s3MultipartChunkSizeMb,
+        targetCollection: deconstructCollectionId(body.targetCollectionId),
+        maxRequestGranules: body.maxRequestGranules,
+        listGranulesConcurrency: body.listGranulesConcurrency,
+      },
+    },
+    payload: {},
+  });
+
+  input.cumulus_meta = { ...input.template?.cumulus_meta, ...input.cumulus_meta };
+  input.meta = { ...input.template?.meta, ...input.meta };
+  input.replace = {
+    TargetPath: '$.payload',
+    ...remoteObjectKey,
+  };
+
+  let startExecutionResult;
+  try {
+    startExecutionResult = await sfnMethod().startExecution({
+      stateMachineArn,
+      input: JSON.stringify(input),
+      name: executionName,
+    });
+  } catch (error) {
+    if (error instanceof ExecutionAlreadyExists) {
+      return res.boom.badRequest(`Execution ${executionName} already exists for state machine ${stateMachineArn}`);
+    }
+    throw error;
+  }
+  return res.send({
+    execution: startExecutionResult.executionArn,
+    message: `Successfully submitted bulk granule change collection with ${granules.length} granules`,
+  });
 }
 
 /**
@@ -1017,15 +1318,18 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.get("/:granuleId", getByGranuleId);
-router.get("/:collectionId/:granuleId", get);
-router.get("/", list);
-router.post("/:granuleId/executions", associateExecution);
-router.post("/", create);
-router.patch("/:granuleId", requireApiVersion(2), patchByGranuleId);
-router.patch("/:collectionId/:granuleId", requireApiVersion(2), patch);
-router.put("/:collectionId/:granuleId", requireApiVersion(2), put);
+router.get('/:granuleId', getByGranuleId);
+router.get('/:collectionId/:granuleId', get);
+router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
+router.patch('/bulkPatch', bulkPatch);
+router.get('/', list);
+router.post('/:granuleId/executions', associateExecution);
+router.post('/', create);
+router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
+router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
+router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 
+router.post('/bulkChangeCollection', bulkChangeCollection);
 router.post(
   "/bulk",
   validateBulkGranulesRequest,
@@ -1049,12 +1353,15 @@ router.delete("/:collectionId/:granuleId", del);
 
 module.exports = {
   bulkDelete,
+  bulkChangeCollection,
   bulkOperations,
   bulkReingest,
   del,
   create,
   put,
   patch,
-  patchGranule,
+  patchGranuleAndReturnStatus,
+  bulkPatch,
+  bulkPatchGranuleCollection,
   router,
 };

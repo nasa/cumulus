@@ -3,7 +3,7 @@ const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
-
+const { sleep } = require('@cumulus/common');
 const {
   CollectionPgModel,
   fakeCollectionRecordFactory,
@@ -16,6 +16,11 @@ const {
   PdrPgModel,
   ProviderPgModel,
   migrationDir,
+  FilePgModel,
+  fakeFileRecordFactory,
+  ExecutionPgModel,
+  fakeExecutionRecordFactory,
+  GranulesExecutionsPgModel,
 } = require('../../dist');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
@@ -139,13 +144,80 @@ test.before(async (t) => {
         ? t.context.granuleSearchFields.lastUpdateDateTime : undefined,
       published: !!(num % 2),
       product_volume: Math.round(Number(t.context.granuleSearchFields.productVolume)
-         * (1 / (num + 1))).toString(),
+        * (1 / (num + 1))).toString(),
       time_to_archive: !(num % 10)
         ? Number(t.context.granuleSearchFields.timeToArchive) : undefined,
       time_to_process: !(num % 20)
         ? Number(t.context.granuleSearchFields.timeToPreprocess) : undefined,
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
+    }))
+  );
+
+  const filePgModel = new FilePgModel();
+  await filePgModel.insert(
+    knex,
+    t.context.pgGranules.map((granule) => fakeFileRecordFactory(
+      {
+        granule_cumulus_id: granule.cumulus_id,
+        path: 'a.txt',
+        checksum_type: 'md5',
+      }
+    ))
+  );
+  await filePgModel.insert(
+    knex,
+    t.context.pgGranules.map((granule) => fakeFileRecordFactory(
+      {
+        granule_cumulus_id: granule.cumulus_id,
+        path: 'b.txt',
+        checksum_type: 'sha256',
+      }
+    ))
+  );
+
+  const executionPgModel = new ExecutionPgModel();
+  const granuleExecutionPgModel = new GranulesExecutionsPgModel();
+
+  let executionRecords = await executionPgModel.insert(
+    knex,
+    t.context.pgGranules.map((_, i) => fakeExecutionRecordFactory({
+      url: `earlierUrl${i}`,
+    }))
+  );
+  await granuleExecutionPgModel.insert(
+    knex,
+    t.context.pgGranules.map((granule, i) => ({
+      granule_cumulus_id: granule.cumulus_id,
+      execution_cumulus_id: executionRecords[i].cumulus_id,
+    }))
+  );
+  executionRecords = [];
+  // it's important for later testing that these are uploaded strictly in order
+  for (const i of range(100)) {
+    const [executionRecord] = await executionPgModel.insert( // eslint-disable-line no-await-in-loop
+      knex,
+      [fakeExecutionRecordFactory({
+        url: `laterUrl${i}`,
+      })]
+    );
+    executionRecords.push(executionRecord);
+    //ensure that timestamp in execution record is distinct
+    await sleep(1); // eslint-disable-line no-await-in-loop
+  }
+
+  await granuleExecutionPgModel.insert(
+    knex,
+    t.context.pgGranules.map((granule, i) => ({
+      granule_cumulus_id: granule.cumulus_id,
+      execution_cumulus_id: executionRecords[i].cumulus_id,
+    }))
+  );
+  await granuleExecutionPgModel.insert(
+    knex,
+    t.context.pgGranules.map((granule, i) => ({
+      granule_cumulus_id: granule.cumulus_id,
+      execution_cumulus_id: executionRecords[99 - i].cumulus_id,
     }))
   );
 });
@@ -856,6 +928,105 @@ test('GranuleSearch estimates the rowcount of the table by default', async (t) =
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
-  t.true(response.meta.count > 0);
+  t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
   t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch only returns count if countOnly is set to true', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    countOnly: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
+  t.is(response.results?.length, 0);
+});
+
+test('GranuleSearch with includeFullRecord true retrieves associated file objects for granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.results?.length, 100);
+  response.results.forEach((granuleRecord) => {
+    t.is(granuleRecord.files?.length, 2);
+    t.true('bucket' in granuleRecord.files[0]);
+    t.true('key' in granuleRecord.files[0]);
+    t.true('bucket' in granuleRecord.files[1]);
+    t.true('key' in granuleRecord.files[1]);
+  });
+});
+test('GranuleSearch with includeFullRecord true retrieves associated file translated to api key format', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.results?.length, 100);
+  response.results.forEach((granuleRecord) => {
+    t.is(granuleRecord.files?.length, 2);
+    t.true('bucket' in granuleRecord.files[0]);
+    t.true('key' in granuleRecord.files[0]);
+    t.true('checksumType' in granuleRecord.files[0]);
+    t.true('bucket' in granuleRecord.files[1]);
+    t.true('key' in granuleRecord.files[1]);
+    t.true('checksumType' in granuleRecord.files[1]);
+  });
+});
+
+test('GranuleSearch with includeFullRecord true retrieves one associated Url object for granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.results?.length, 100);
+  response.results.forEach((granuleRecord) => {
+    t.true('execution' in granuleRecord);
+  });
+});
+
+test('GranuleSearch with includeFullRecord true retrieves latest associated Url object for granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.results?.length, 100);
+  response.results.sort((a, b) => a.cumulus_id - b.cumulus_id);
+  // these executions are loaded from lowest to highest number
+  // but each granule is associated with multiple executions:
+  //   earlierUrl${i}, laterUrl${i}, and laterUrl${99-i}
+  // hence `laterUrl${max(i, 99-i)}` is the most recently updated execution
+  response.results.forEach((granuleRecord, i) => {
+    t.is(granuleRecord.execution, `laterUrl${Math.max(i, 99 - i)}`);
+  });
+});
+
+test('GranuleSearch with includeFullRecord true retrieves granules, files and executions, with limit specifying number of granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 4,
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.results?.length, 4);
+  response.results.forEach((granuleRecord) => {
+    t.is(granuleRecord.files?.length, 2);
+    t.true('bucket' in granuleRecord.files[0]);
+    t.true('key' in granuleRecord.files[0]);
+    t.true('bucket' in granuleRecord.files[1]);
+    t.true('key' in granuleRecord.files[1]);
+  });
 });
