@@ -3,47 +3,12 @@ const {
   updateEcho10XMLGranuleUrAndGranuleIdentifier,
 } = require('../../echo10Modifiers');
 
-test('updates GranuleUR and adds ProducerGranuleId when Identifiers is missing', (t) => {
-  const xml = {
-    Granule: {
-      GranuleUR: 'OLD_ID',
-    },
-  };
-
-  const result = updateEcho10XMLGranuleUrAndGranuleIdentifier({
-    xml,
-    granuleUr: 'NEW_ID',
-    identifier: 'PRODUCER_ID',
-  });
-
-  t.is(result.Granule.GranuleUR, 'NEW_ID');
-  t.deepEqual(result.Granule.DataGranule?.Identifiers, [
-    {
-      Identifier: 'PRODUCER_ID',
-      IdentifierType: 'ProducerGranuleId',
-    },
-  ]);
-});
-
-test('overwrites existing ProducerGranuleId while preserving other identifiers', (t) => {
+test('updates GranuleUR and updates ProducerGranuleId', (t) => {
   const xml = {
     Granule: {
       GranuleUR: 'OLD_ID',
       DataGranule: {
-        Identifiers: [
-          {
-            Identifier: 'FEATURE_XYZ',
-            IdentifierType: 'FeatureId',
-          },
-          {
-            Identifier: 'OLD_PRODUCER_ID',
-            IdentifierType: 'ProducerGranuleId',
-          },
-          {
-            Identifier: 'LOCAL_ABC',
-            IdentifierType: 'LocalVersionId',
-          },
-        ],
+        ProducerGranuleId: 'OLD_PRODUCER_ID',
       },
     },
   };
@@ -55,43 +20,13 @@ test('overwrites existing ProducerGranuleId while preserving other identifiers',
   });
 
   t.is(result.Granule.GranuleUR, 'NEW_ID');
-
-  const expectedIdentifiers = [
-    {
-      Identifier: 'FEATURE_XYZ',
-      IdentifierType: 'FeatureId',
-    },
-    {
-      Identifier: 'PRODUCER_ID',
-      IdentifierType: 'ProducerGranuleId',
-    },
-    {
-      Identifier: 'LOCAL_ABC',
-      IdentifierType: 'LocalVersionId',
-    },
-  ];
-  const sortIdentifiers = (ids) =>
-    [...ids].sort((a, b) =>
-      a.IdentifierType.localeCompare(b.IdentifierType));
-
-  t.deepEqual(
-    sortIdentifiers(result.Granule.DataGranule.Identifiers),
-    sortIdentifiers(expectedIdentifiers)
-  );
+  t.deepEqual(result.Granule.DataGranule.ProducerGranuleId, 'PRODUCER_ID');
 });
 
-test('appends ProducerGranuleId if not present', (t) => {
+test('adds ProducerGranuleId if not present', (t) => {
   const xml = {
     Granule: {
       GranuleUR: 'OLD_ID',
-      DataGranule: {
-        Identifiers: [
-          {
-            Identifier: 'other',
-            IdentifierType: 'LocalVersionId',
-          },
-        ],
-      },
     },
   };
 
@@ -102,11 +37,7 @@ test('appends ProducerGranuleId if not present', (t) => {
   });
 
   t.is(result.Granule.GranuleUR, 'NEW_ID');
-  t.is(result.Granule.DataGranule?.Identifiers?.length, 2);
-  t.deepEqual(result.Granule.DataGranule?.Identifiers?.[1], {
-    Identifier: 'NEW_PRODUCER_ID',
-    IdentifierType: 'ProducerGranuleId',
-  });
+  t.is(result.Granule.DataGranule.ProducerGranuleId, 'NEW_PRODUCER_ID');
 });
 
 test('throws error if input is not Echo10XmlBaseGranule', (t) => {

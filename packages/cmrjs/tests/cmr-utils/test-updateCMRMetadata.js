@@ -162,7 +162,7 @@ test('updates Echo10 metadata with UR update, when publish is set to false', asy
 
   const expected = await parseXmlString(cmrXmlFixture);
   expected.Granule.GranuleUR = 'updated-id';
-  expected.Granule.DataGranule.Identifiers = { Identifier: 'original-id', IdentifierType: 'ProducerGranuleId' };
+  expected.Granule.DataGranule.ProducerGranuleId = 'original-id';
   expected.Granule.AssociatedBrowseImageUrls = '';
 
   await updateCMRMetadata({
@@ -264,16 +264,13 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
 
   const expected = await parseXmlString(cmrXmlFixture);
   expected.Granule.GranuleUR = 'updated-id';
-  expected.Granule.DataGranule.Identifiers = { Identifier: 'original-id', IdentifierType: 'ProducerGranuleId' };
+  expected.Granule.DataGranule.ProducerGranuleId = 'original-id';
   expected.Granule.AssociatedBrowseImageUrls = '';
 
   const expectedXmlJsObject = structuredClone(expected);
   // This is the actual expression of some of the 1 value or empty objects
   // in memory/as a node object  when not run through js2xmlParser
   expectedXmlJsObject.Granule.AssociatedBrowseImageUrls = { ProviderBrowseUrl: [] };
-  expectedXmlJsObject.Granule.DataGranule.Identifiers = [
-    expectedXmlJsObject.Granule.DataGranule.Identifiers,
-  ];
   expectedXmlJsObject.Granule.OnlineAccessURLs.OnlineAccessURL = [
     expectedXmlJsObject.Granule.OnlineAccessURLs.OnlineAccessURL,
   ];

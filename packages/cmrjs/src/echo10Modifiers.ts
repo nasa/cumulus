@@ -2,10 +2,7 @@ interface Echo10XmlBaseGranule {
   Granule: {
     GranuleUR?: string;
     DataGranule?: {
-      Identifiers?: {
-        IdentifierType?: string;
-        Identifier?: string;
-      }[];
+      ProducerGranuleId?: string;
     }
     [key: string]: unknown;
   };
@@ -34,22 +31,7 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
   moddedXml.Granule ??= {};
   moddedXml.Granule.GranuleUR = granuleUr;
   moddedXml.Granule.DataGranule ??= {};
-  const dataGranule = moddedXml.Granule.DataGranule;
+  moddedXml.Granule.DataGranule.ProducerGranuleId = identifier;
 
-  dataGranule.Identifiers = dataGranule.Identifiers || [];
-
-  const producerIdIndex = dataGranule.Identifiers.findIndex(
-    (idObj: any) => idObj.IdentifierType === 'ProducerGranuleId'
-  );
-  const newIdentifier = {
-    Identifier: identifier,
-    IdentifierType: 'ProducerGranuleId',
-  };
-
-  if (producerIdIndex !== -1) {
-    dataGranule.Identifiers[producerIdIndex] = newIdentifier;
-  } else {
-    dataGranule.Identifiers.push(newIdentifier);
-  }
   return moddedXml;
 }
