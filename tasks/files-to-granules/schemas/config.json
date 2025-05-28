@@ -16,6 +16,9 @@
           "granuleId": {
             "type": "string"
           },
+          "producerGranuleId": {
+            "type": "string"
+          },
           "files": {
             "type": "array",
             "items": {
@@ -39,6 +42,10 @@
     "granuleIdExtraction": {
       "type": "string",
       "description": "The regex needed for extracting granuleId from filenames"
+    },
+    "matchFilesWithProducerGranuleId": {
+      "type": "boolean",
+      "description": "When set to true, use the 'producerGranuleId' instead default behavior of using 'granuleId' when mapping files to granules. Defaults to 'false'"
     }
   }
 }

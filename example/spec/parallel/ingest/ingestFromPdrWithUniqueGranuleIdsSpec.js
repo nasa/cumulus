@@ -1,40 +1,42 @@
 'use strict';
 
 /**
- * End to end ingest from discovering and ingesting a PDR that specifies a
- * granule's provider using NODE_NAME
+ * End to end ingest from discovering a PDR,
+ * **configured to have unique granule ids.**
  *
  * Kick off discover and queue pdrs which:
- * Discovers 1 PDR with 1 file group
+ * Discovers 1 PDR which has 2 file groups
  * Queues that PDR
  * Kicks off the ParsePDR workflow
  *
  * Parse PDR workflow:
  * parses pdr
- * queues a granule
+ * queues 2 granules
  * pdr status check
- * This will kick off the ingest workflow
+ * This will kick off 2 ingest workflows
  *
- * Ingest workflow:
+ * - IngestGranule successful workflow:
  * runs sync granule - saves file to file staging location
  * performs the fake processing step - generates CMR metadata
  * Moves the file to the final location
  * Does not post to CMR (that is in a separate test)
  *
- * send pan: panType is configured to longPan, so a short pan should be created
- * when all granules (1 granule in this test) are successful
+ * - IngestGranule failed workflow:
+ * runs sync granule - failed due to missing file
+ *
+ * send pan task: panType is configured to longPan, so long pan
+ * should be generated with 1 successful granule and 1 failed granule
  */
 
+const flatten = require('lodash/flatten');
+const cryptoRandomString = require('crypto-random-string');
 const path = require('path');
 
-const S3 = require('@cumulus/aws-client/S3');
+const { buildS3Uri, deleteS3Object, getTextObject, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { providers: providersApi } = require('@cumulus/api-client');
-const { randomString } = require('@cumulus/common/test-utils');
 const { getPdr } = require('@cumulus/api-client/pdrs');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 
 const {
   addCollections,
@@ -48,6 +50,8 @@ const {
 
 const { getExecution } = require('@cumulus/api-client/executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
+
 const {
   createTestDataPath,
   createTestSuffix,
@@ -55,49 +59,57 @@ const {
   deleteFolder,
   getExecutionUrl,
   loadConfig,
+  updateAndUploadTestFileToBucket,
   updateAndUploadTestDataToBucket,
 } = require('../../helpers/testUtils');
-
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
+  waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
-
-const { uploadS3GranuleDataForDiscovery } = require('../../helpers/discoverUtils');
-const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
-const { waitForApiStatus } = require('../../helpers/apiUtils');
-const { deleteProvidersAndAllDependenciesByHost, waitForProviderRecordInOrNotInList } = require('../../helpers/Providers');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrs';
-const origPdrFilename = 'MOD09GQ_1granule_v3_with_NODE_NAME.PDR';
+const origPdrFilename = 'MOD09GQ-multi-granule-missing-file.PDR';
+const granuleDateString = '2016360104606';
+const granule2DateString = '2017227165029';
+const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
+const granule2IdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
 
 const s3data = [
-  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3_with_NODE_NAME.PDR',
+  '@cumulus/test-data/pdrs/MOD09GQ-multi-granule-missing-file.PDR',
 ];
+
+const unmodifiedS3Data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+];
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606'.replace(granuleDateString, granuleIdReplacement);
+const testDataGranule2Id = 'MOD09GQ.A2017224.h27v08.006.2017227165029'.replace(granule2DateString, granule2IdReplacement);
 
 describe('Ingesting from PDR', () => {
   const providersDir = './data/providers/s3/';
-  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006-unique';
+  const granuleIds = [];
 
-  let addedCollection;
   let beforeAllFailed;
   let config;
-  let nodeName;
-  let nodeNameProviderId;
   let parsePdrExecutionArn;
   let pdrFilename;
   let provider;
   let testDataFolder;
-  let testDataGranuleId;
   let testSuffix;
   let workflowExecution;
-  const ingestTime = Date.now() - 1000 * 30;
+  let addedCollections;
+  let ingestGranuleExecution;
 
   beforeAll(async () => {
     try {
       config = await loadConfig();
 
-      const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithNodeName');
+      const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
 
@@ -105,47 +117,40 @@ describe('Ingesting from PDR', () => {
 
       provider = { id: `s3_provider${testSuffix}` };
 
-      nodeName = config.pdrNodeNameProviderBucket;
-      await deleteProvidersAndAllDependenciesByHost(config.stackName, nodeName);
-
-      nodeNameProviderId = `provider-${randomString(4)}-${testSuffix}`;
-
-      await providersApi.createProvider({
-        prefix: config.stackName,
-        provider: {
-          id: nodeNameProviderId,
-          protocol: 's3',
-          host: nodeName,
-        },
-      });
-
-      await waitForProviderRecordInOrNotInList(config.stackName, nodeNameProviderId, true, { timestamp__from: ingestTime });
-
-      const { granuleId: newGranuleId } = await uploadS3GranuleDataForDiscovery({
-        bucket: nodeName,
-        prefix: testDataFolder,
-      });
-      testDataGranuleId = newGranuleId;
-
-      await updateAndUploadTestDataToBucket(
-        config.bucket,
-        s3data,
-        testDataFolder,
-        [
-          { old: 'cumulus-test-data/pdrs', new: testDataFolder },
-          { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` },
-          { old: 'XXX_NODE_NAME_XXX', new: nodeName },
-          { old: 'MOD09GQ.A2016358.h13v04.006.2016360104606', new: newGranuleId },
-        ]
-      );
+      console.log(`granules to ingest: ${testDataGranuleId}, ${testDataGranule2Id}`);
 
       // populate collections, providers and test data
-      const populatePromises = await Promise.all([
-        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-        addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
-      ]);
-
-      addedCollection = populatePromises[0][0];
+      [addedCollections] = await Promise.all(
+        flatten([
+          addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
+          updateAndUploadTestDataToBucket(
+            config.bucket,
+            s3data,
+            testDataFolder,
+            [
+              { old: 'cumulus-test-data/pdrs', new: testDataFolder },
+              { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` },
+              { old: granuleDateString, new: granuleIdReplacement },
+              { old: granule2DateString, new: granule2IdReplacement },
+            ]
+          ),
+          unmodifiedS3Data.slice(0, 2).map((file) => updateAndUploadTestFileToBucket({
+            file,
+            bucket: config.bucket,
+            prefix: testDataFolder,
+            targetReplacementRegex: granuleDateString,
+            targetReplacementString: granuleIdReplacement,
+          })),
+          unmodifiedS3Data.slice(2).map((file) => updateAndUploadTestFileToBucket({
+            file,
+            bucket: config.bucket,
+            prefix: testDataFolder,
+            targetReplacementRegex: granule2DateString,
+            targetReplacementString: granule2IdReplacement,
+          })),
+          addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
+        ])
+      );
 
       // Rename the PDR to avoid race conditions
       await s3().copyObject({
@@ -154,34 +159,36 @@ describe('Ingesting from PDR', () => {
         Key: `${testDataFolder}/${pdrFilename}`,
       });
 
-      await S3.deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
+      await deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
     } catch (error) {
-      beforeAllFailed = true;
-      throw error;
+      beforeAllFailed = error;
     }
   });
 
   afterAll(async () => {
     // clean up stack state added by test
+    const collectionId = constructCollectionId(addedCollections[0].name, addedCollections[0].version);
+    await Promise.all(
+      granuleIds.map((granuleId) =>
+        waitForGranuleAndDelete(
+          config.stackName,
+          granuleId,
+          collectionId,
+          ['completed', 'failed']
+        ))
+    );
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: pdrFilename,
     });
-
     // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
-
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-    ]).catch(console.error);
-
-    await providersApi.deleteProvider({
-      prefix: config.stackName,
-      providerId: nodeNameProviderId,
-    }).catch(console.error);
+    ]);
   });
 
   describe('The Discover and Queue PDRs workflow', () => {
@@ -193,7 +200,7 @@ describe('Ingesting from PDR', () => {
           config.stackName,
           config.bucket,
           workflowName,
-          { name: addedCollection.name, version: addedCollection.version },
+          { name: addedCollections[0].name, version: addedCollections[0].version },
           provider,
           undefined,
           { provider_path: testDataFolder }
@@ -205,7 +212,6 @@ describe('Ingesting from PDR', () => {
         );
       } catch (error) {
         beforeAllFailed = error;
-        throw error;
       }
     });
 
@@ -223,8 +229,7 @@ describe('Ingesting from PDR', () => {
         try {
           lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'DiscoverPdrs');
         } catch (error) {
-          beforeAllFailed = true;
-          throw error;
+          beforeAllFailed = error;
         }
       });
 
@@ -260,7 +265,7 @@ describe('Ingesting from PDR', () => {
       let expectedParsePdrOutput;
       let ingestGranuleWorkflowArn;
 
-      const outputPayloadFilename = './spec/parallel/ingest/resources/ParsePdr.output.json';
+      const outputPayloadFilename = './spec/parallel/ingest/resources/ParsePdr-multi-granule.output.json';
       const collectionId = 'MOD09GQ___006';
 
       beforeAll(() => {
@@ -273,24 +278,31 @@ describe('Ingesting from PDR', () => {
             testDataFolder,
             collectionId
           );
-
           expectedParsePdrOutput.granules[0].dataType += testSuffix;
-          expectedParsePdrOutput.pdr.name = pdrFilename;
-          expectedParsePdrOutput.granules[0].provider = nodeNameProviderId;
-          expectedParsePdrOutput.granules.forEach((granule) => {
-            granule.producerGranuleId = granule.granuleId;
+
+          // update granule 2 with its granuleId
+          expectedParsePdrOutput.granules[1].dataType += testSuffix;
+          expectedParsePdrOutput.granules[1].granuleId =
+            expectedParsePdrOutput.granules[1].granuleId.replace(
+              testDataGranuleId,
+              testDataGranule2Id
+            );
+          expectedParsePdrOutput.granules[1].files = expectedParsePdrOutput.granules[1].files.map((file) => {
+            file.name = file.name.replace(testDataGranuleId, testDataGranule2Id);
+            return file;
           });
+          expectedParsePdrOutput.pdr.name = pdrFilename;
+          expectedParsePdrOutput.granules[0].producerGranuleId = expectedParsePdrOutput.granules[0].granuleId;
+          expectedParsePdrOutput.granules[1].producerGranuleId = expectedParsePdrOutput.granules[1].granuleId;
         } catch (error) {
-          beforeAllFailed = true;
-          throw error;
+          beforeAllFailed = error;
         }
       });
 
       afterAll(async () => {
-        // wait for child executions to complete
         await Promise.all(
           queueGranulesOutput.payload.running
-            .map((arn) => waitForCompletedExecution(arn))
+            .map((arn) => deleteExecution({ prefix: config.stackName, executionArn: arn }))
         );
       });
 
@@ -306,12 +318,29 @@ describe('Ingesting from PDR', () => {
       describe('ParsePdr lambda function', () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          it('successfully parses a granule from the PDR', async () => {
+          it('successfully parses granules from the PDR', async () => {
             parseLambdaOutput = await lambdaStep.getStepOutput(
               parsePdrExecutionArn,
               'ParsePdr'
             );
+            const outputGranules = parseLambdaOutput.payload.granules;
+            outputGranules.forEach((granule, index) => {
+              granuleIds.push(granule.granuleId);
+              const producerId = expectedParsePdrOutput.granules[index].producerGranuleId;
+              const expectedPrefix = `${producerId}_`;
+              expect(granule.granuleId.startsWith(expectedPrefix)).toBe(true);
+              const hashPart = granule.granuleId.slice(expectedPrefix.length);
+              expect(hashPart.length).toEqual(3); // this is the defined value in the collection config
+              expect(/^[\w\-]+$/.test(hashPart)).toBe(true);
+
+              expectedParsePdrOutput.granules[index].granuleId = granule.granuleId;
+            });
+
             expect(parseLambdaOutput.payload.granules).toEqual(expectedParsePdrOutput.granules);
+            expectedParsePdrOutput.pdr.time = parseLambdaOutput.payload?.pdr?.time;
+            // size is different due to the DIRECTORY_ID updates in PDR
+            expectedParsePdrOutput.pdr.size = parseLambdaOutput.payload?.pdr?.size;
+            expect(parseLambdaOutput.payload).toEqual(expectedParsePdrOutput);
           });
         }
       });
@@ -325,7 +354,7 @@ describe('Ingesting from PDR', () => {
               'QueueGranules'
             );
 
-            expect(queueGranulesOutput.payload.running.length).toEqual(1);
+            expect(queueGranulesOutput.payload.running.length).toEqual(2);
 
             expect(queueGranulesOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
             expect(queueGranulesOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
@@ -347,7 +376,7 @@ describe('Ingesting from PDR', () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           else {
             const payload = lambdaOutput.payload;
-            expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
+            expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(2);
 
             expect(payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
             expect(payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
@@ -361,8 +390,7 @@ describe('Ingesting from PDR', () => {
           try {
             lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SfSqsReport');
           } catch (error) {
-            beforeAllFailed = true;
-            throw error;
+            beforeAllFailed = error;
           }
         });
 
@@ -379,12 +407,15 @@ describe('Ingesting from PDR', () => {
       });
 
       /**
-       * The parse pdr workflow kicks off a granule ingest workflow, so check that the
-       * granule ingest workflow completes successfully. Above, we checked that there is
+       * The parse pdr workflow kicks off two granule ingest workflows, one is successful, one is failed.
+       */
+
+      /**
+       * Check one granule ingest workflow completes successfully. Above, we checked that there is
        * one running task, which is the sync granule workflow. The payload has the arn of the
        * running workflow, so use that to get the status.
        */
-      describe('IngestGranule workflow', () => {
+      describe('IngestGranule successful workflow', () => {
         let ingestGranuleExecutionStatus;
 
         beforeAll(async () => {
@@ -394,65 +425,69 @@ describe('Ingesting from PDR', () => {
             console.log(`Waiting for workflow to complete: ${ingestGranuleWorkflowArn}`);
             ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
           } catch (error) {
-            beforeAllFailed = true;
-            throw error;
+            beforeAllFailed = error;
           }
-        });
-
-        afterAll(async () => {
-          // cleanup
-          const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'MoveGranules');
-          // delete ingested granule(s)
-          await Promise.all(
-            finalOutput.payload.granules.map(async (g) => {
-              const id = constructCollectionId(g.dataType, g.version);
-              await waitForApiStatus(
-                getGranule,
-                {
-                  prefix: config.stackName,
-                  granuleId: g.granuleId,
-                  collectionId: id,
-                },
-                'completed'
-              );
-              await deleteGranule({
-                prefix: config.stackName,
-                granuleId: g.granuleId,
-                collectionId: id,
-              });
-            })
-          );
         });
 
         it('executes successfully', () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           else {
-            console.log('\nINGEST GRANULE STATUS', ingestGranuleExecutionStatus);
             expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
           }
         });
 
         describe('SyncGranule lambda function', () => {
+          let syncGranuleLambdaOutput;
+
           it('outputs 1 granule and pdr', async () => {
             if (beforeAllFailed) fail(beforeAllFailed);
             else {
-              const lambdaOutput = await lambdaStep.getStepOutput(
+              syncGranuleLambdaOutput = await lambdaStep.getStepOutput(
                 ingestGranuleWorkflowArn,
                 'SyncGranule'
               );
-              expect(lambdaOutput.payload.granules.length).toEqual(1);
-              expect(lambdaOutput.payload.pdr).toEqual(lambdaOutput.payload.pdr);
+              expect(syncGranuleLambdaOutput.payload.granules.length).toEqual(1);
+              expect(syncGranuleLambdaOutput.payload.pdr).toEqual(syncGranuleLambdaOutput.payload.pdr);
             }
           });
         });
       });
 
-      /** This test relies on the previous 'IngestGranule workflow' to complete */
-      describe('When accessing an execution via the API that was triggered from a parent step function', () => {
-        afterAll(async () => {
-          await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn });
+      describe('IngestGranule failed workflow', () => {
+        let ingestGranuleExecutionStatus;
+        let failedIngestGranuleWorkflowArn;
+
+        beforeAll(async () => {
+          try {
+            // wait for IngestGranule execution to complete
+            failedIngestGranuleWorkflowArn = queueGranulesOutput.payload.running[1];
+            console.log(`Waiting for workflow to complete: ${failedIngestGranuleWorkflowArn}`);
+            ingestGranuleExecutionStatus = await waitForCompletedExecution(failedIngestGranuleWorkflowArn);
+          } catch (error) {
+            beforeAllFailed = error;
+          }
         });
 
+        it('executes but fails', () => {
+          if (beforeAllFailed) fail(beforeAllFailed);
+          else {
+            expect(ingestGranuleExecutionStatus).toEqual('FAILED');
+          }
+        });
+
+        it('outputs the error', async () => {
+          if (beforeAllFailed) fail(beforeAllFailed);
+          else {
+            const syncGranuleLambdaOutput = await lambdaStep.getStepOutput(failedIngestGranuleWorkflowArn, 'SyncGranule', 'failure');
+
+            expect(syncGranuleLambdaOutput.error).toEqual('FileNotFound');
+            expect(syncGranuleLambdaOutput.cause).toMatch(/.+Source file not found.+/);
+          }
+        });
+      });
+
+      /** This test relies on the previous 'IngestGranule successful workflow' to complete */
+      describe('When accessing an execution via the API that was triggered from a parent step function', () => {
         it('displays a link to the parent', async () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           else {
@@ -465,7 +500,7 @@ describe('Ingesting from PDR', () => {
               'completed'
             );
 
-            const ingestGranuleExecution = await executionsApiTestUtils.getExecution({
+            ingestGranuleExecution = await getExecution({
               prefix: config.stackName,
               arn: ingestGranuleWorkflowArn,
             });
@@ -479,7 +514,7 @@ describe('Ingesting from PDR', () => {
         it('does not display a parent link', async () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           else {
-            const parsePdrExecution = await executionsApiTestUtils.getExecution({
+            const parsePdrExecution = await getExecution({
               prefix: config.stackName,
               arn: workflowExecution.executionArn,
             });
@@ -503,7 +538,7 @@ describe('Ingesting from PDR', () => {
             executionStatus = JSON.parse(executionStatusResponse.body).data;
           } catch (error) {
             console.log(`Error parsing JSON ${executionStatusResponse}`);
-            beforeAllFailed = true;
+            beforeAllFailed = error;
             throw error;
           }
         });
@@ -567,32 +602,44 @@ describe('Ingesting from PDR', () => {
         });
 
         afterAll(async () => {
-          await S3.deleteS3Object(config.bucket, panKey);
+          await deleteS3Object(config.bucket, panKey);
         });
 
-        it('has expected short pan output when the files are successful', async () => {
+        it('has expected long pan output when the files have different dispositions', async () => {
           if (beforeAllFailed) fail(beforeAllFailed);
+
+          const granuleFileNames = [
+            `${testDataGranuleId}.hdf`,
+            `${testDataGranuleId}.hdf.met`,
+            `${testDataGranule2Id}.hdf`,
+            `${testDataGranule2Id}.hdf.met`,
+            `${testDataGranule2Id}_ndvi.jpg`,
+          ];
+
           const panName = lambdaOutput.payload.pdr.name.replace(/\.pdr/gi, '.PAN');
-          panKey = path.join(addedCollection.meta.panPath, panName);
-          const expectedPanUri = S3.buildS3Uri(config.bucket, panKey);
-          const panExists = await S3.s3ObjectExists({
+          panKey = path.join(addedCollections[0].meta.panPath, panName);
+          const expectedPanUri = buildS3Uri(config.bucket, panKey);
+          const panExists = await s3ObjectExists({
             Bucket: config.bucket,
             Key: panKey,
           });
           expect(lambdaOutput.payload.pan.uri).toEqual(expectedPanUri);
           expect(panExists).toEqual(true);
 
-          const panText = await S3.getTextObject(config.bucket, panKey);
+          const panText = await getTextObject(config.bucket, panKey);
           console.log(`Generated PAN ${lambdaOutput.payload.pan.uri}:\n${panText}`);
-          expect(panText).toMatch(/MESSAGE_TYPE = "SHORTPAN"/);
-          expect(panText).toMatch(/DISPOSITION = "SUCCESSFUL"/);
-          // has no long pan property
-          expect(panText).not.toMatch(/NO_OF_FILES/);
+          expect(panText).toMatch(/MESSAGE_TYPE = "LONGPAN"/);
+          expect(panText).toMatch(/NO_OF_FILES = 5/);
+          for (const fileName of granuleFileNames) {
+            expect(panText.includes(fileName)).toBe(true);
+          }
+
+          expect(panText.match(new RegExp('DISPOSITION = "FileNotFound"', 'g'))?.length).toBe(3);
         });
       });
     });
 
-    describe('the reporting lambda has received the cloudwatch step function event and', () => {
+    describe('the reporting lambda has received the CloudWatch step function event and', () => {
       it('the execution record is added to the PostgreSQL database', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
@@ -600,7 +647,7 @@ describe('Ingesting from PDR', () => {
             getExecution,
             {
               prefix: config.stackName,
-              arn: parsePdrExecutionArn,
+              arn: workflowExecution.executionArn,
             },
             'completed'
           );
@@ -669,23 +716,22 @@ describe('Ingesting from PDR', () => {
           pdrRunningMessageKey = `${config.stackName}/test-output/${pdrFilename}-running.output`;
           pdrCompletedMessageKey = `${config.stackName}/test-output/${pdrFilename}-completed.output`;
         } catch (error) {
-          beforeAllFailed = true;
-          throw error;
+          beforeAllFailed = error;
         }
       });
 
       afterAll(async () => {
         await Promise.all([
-          S3.deleteS3Object(config.bucket, executionCompletedKey),
-          S3.deleteS3Object(config.bucket, pdrRunningMessageKey),
-          S3.deleteS3Object(config.bucket, pdrCompletedMessageKey),
+          deleteS3Object(config.bucket, executionCompletedKey),
+          deleteS3Object(config.bucket, pdrRunningMessageKey),
+          deleteS3Object(config.bucket, pdrCompletedMessageKey),
         ]);
       });
 
       it('is published for a running PDR', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          const pdrExists = await S3.s3ObjectExists({
+          const pdrExists = await s3ObjectExists({
             Bucket: config.bucket,
             Key: pdrRunningMessageKey,
           });
@@ -696,7 +742,7 @@ describe('Ingesting from PDR', () => {
       it('is published for an execution on a successful workflow completion', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          const executionExists = await S3.s3ObjectExists({
+          const executionExists = await s3ObjectExists({
             Bucket: config.bucket,
             Key: executionCompletedKey,
           });
@@ -707,7 +753,7 @@ describe('Ingesting from PDR', () => {
       it('is published for a PDR on a successful workflow completion', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          const pdrExists = await S3.s3ObjectExists({
+          const pdrExists = await s3ObjectExists({
             Bucket: config.bucket,
             Key: pdrCompletedMessageKey,
           });
