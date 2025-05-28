@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 - **CUMULUS-4089**
   - Add integration testing for duplicate granule workflows
+- **CUMULUS-4085**
+  - Added config option for files-to-granules task to use `producerGranuleId` when mapping files to their granules.
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules` table.
   - Added `producerGranuleId` property to `granule` record schema.
