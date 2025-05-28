@@ -268,6 +268,15 @@ function isUMMGMetadataFormat(cmrMetadataFormat) {
   return cmrMetadataFormat && cmrMetadataFormat.match(/umm_json_v/);
 }
 
+async function getCmrMetadataECHO10(cmrLink) {
+  const response = await got.get(cmrLink);
+
+  if (response.statusCode !== 200) {
+    return null;
+  }
+
+  return JSON.parse(response.body);
+}
 /**
  * Get the online resource links from the CMR objects for ECH010
  *
@@ -280,15 +289,16 @@ function isUMMGMetadataFormat(cmrMetadataFormat) {
     href: 'https://opendap.cr.usgs.gov/opendap/hyrax/MYD13Q1.006/contents.html' }
  */
 async function getOnlineResourcesECHO10(cmrLink) {
-  const response = await got.get(cmrLink);
+  const body = await getCmrMetadataECHO10(cmrLink);
+  return body.links;
+}
 
+async function getCmrMetadataUMMG(cmrLink) {
+  const response = await got.get(cmrLink);
   if (response.statusCode !== 200) {
     return null;
   }
-
-  const body = JSON.parse(response.body);
-
-  return body.links;
+  return JSON.parse(response.body);
 }
 
 /**
@@ -302,18 +312,33 @@ async function getOnlineResourcesECHO10(cmrLink) {
     Type: "GET DATA" }
  */
 async function getOnlineResourcesUMMG(cmrLink) {
-  const response = await got.get(cmrLink);
-
-  if (response.statusCode !== 200) {
-    return null;
-  }
-
-  const body = JSON.parse(response.body);
-
+  const body = await getCmrMetadataUMMG(cmrLink);
   const links = body.items.map((item) => item.umm.RelatedUrls);
 
   // Links is a list of a list, so flatten to be one list
   return [].concat(...links);
+}
+
+/**
+ * Fetches full granule object from CMR based on file type (ECHO10, UMM-G)
+ *
+ * @param {Object} granule
+ * @param {string} granule.cmrMetadataFormat - the cmr file type (e.g. echo10, umm-g)
+ * @param {Object} granule.cmrConceptId - the CMR granule concept ID
+ * @param {Object} granule.cmrLink - the metadata's granuleId
+ *
+ * @returns {Promise<Array<Object>>} - Promise returning array of links
+ */
+async function getCmrMetadata({ cmrMetadataFormat, cmrConceptId, cmrLink }) {
+  if (cmrMetadataFormat === 'echo10') {
+    console.log(cmrLink);
+    return await getCmrMetadataECHO10(cmrLink.replace(/(.echo10)$/, '.json'));
+  }
+  if (isUMMGMetadataFormat(cmrMetadataFormat)) {
+    console.log(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
+    return await getCmrMetadataUMMG(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
+  }
+  throw new Error(`Invalid cmrMetadataFormat passed to getOnlineResources: ${cmrMetadataFormat}}`);
 }
 
 /**
@@ -459,6 +484,7 @@ async function generateCmrFilesForGranules({
 module.exports = {
   conceptExists,
   getOnlineResources,
+  getCmrMetadata,
   generateCmrFilesForGranules,
   generateCmrXml,
   waitForConceptExistsOutcome,

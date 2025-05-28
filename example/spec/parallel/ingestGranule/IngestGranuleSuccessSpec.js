@@ -27,7 +27,7 @@ const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-uti
 const {
   addCollections,
   conceptExists,
-  getOnlineResources,
+  getCmrMetadata,
   waitForAsyncOperationStatus,
   waitForConceptExistsOutcome,
   waitForTestExecutionStart,
@@ -591,6 +591,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('the PostToCmr task', () => {
+    let metadataResults;
     let cmrResource;
     let ummCmrResource;
     let files;
@@ -620,16 +621,16 @@ describe('The S3 Ingest Granules workflow', () => {
         files = granule.files;
 
         const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v1_6_2' };
-        const result = await Promise.all([
-          getOnlineResources(granule),
-          getOnlineResources(ummGranule),
+        metadataResults = await Promise.all([
+          getCmrMetadata(granule),
+          getCmrMetadata(ummGranule),
           getTEARequestHeaders(config.stackName),
         ]);
 
-        cmrResource = result[0];
-        ummCmrResource = result[1];
+        cmrResource = metadataResults[0].links;
         resourceURLs = cmrResource.map((resource) => resource.href);
-        teaRequestHeaders = result[2];
+        ummCmrResource = metadataResults[1].items.flatMap((item) => item.umm.RelatedUrls);
+        teaRequestHeaders = metadataResults[2];
 
         scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].key });
         s3ScienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].key, urlType: 's3' });
@@ -650,6 +651,13 @@ describe('The S3 Ingest Granules workflow', () => {
       const result = await conceptExists(granule.cmrLink);
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
+    });
+
+    it('updates the CMR metadata with the expected producerGranuleId', () => {
+      failOnSetupError([beforeAllError, subTestSetupError]);
+      const expectedProducerGranuleId = inputPayload.granules[0].granuleId;
+      expect(metadataResults[1].items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(expectedProducerGranuleId);
+      expect(metadataResults[0].producer_granule_id).toEqual(expectedProducerGranuleId);
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
