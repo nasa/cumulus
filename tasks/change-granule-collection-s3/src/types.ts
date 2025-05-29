@@ -1,6 +1,6 @@
 import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
 import { BucketsConfigObject } from '@cumulus/common/types';
-import { ApiFile, ApiGranuleRecord, CollectionRecord } from '@cumulus/types';
+import { ApiFileGranuleIdOptional, ApiGranuleRecord, CollectionRecord } from '@cumulus/types';
 export const MB = 1024 * 1024;
 
 type TestMethods = {
@@ -50,7 +50,7 @@ export type ValidApiFile = {
   bucket: string,
   fileName: string,
   key: string,
-} & ApiFile;
+} & ApiFileGranuleIdOptional;
 
 export type ValidApiGranuleFile = Omit<ValidApiFile, 'granuleId'>;
 export type ValidGranuleRecord = {

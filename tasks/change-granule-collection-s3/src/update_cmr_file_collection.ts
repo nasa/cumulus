@@ -68,8 +68,8 @@ export const updateCmrFileLinks = ({
   distributionBucketMap,
 }: {
   cmrFileName: string,
-  cmrObject: Object
-  files: Array<Omit<ValidApiFile, 'granuleId'>>,
+  cmrObject: any,
+  files: ValidApiFile[],
   distEndpoint: string,
   bucketTypes: { [key: string]: string },
   cmrGranuleUrlType: string

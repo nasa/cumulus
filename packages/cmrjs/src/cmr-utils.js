@@ -43,7 +43,8 @@ const { updateUMMGGranuleURAndGranuleIdentifier } = require('./ummgModifiers');
 /**
  * @typedef {import('@cumulus/cmr-client/CMR').CMRConstructorParams} CMRConstructorParams
  * @typedef {import('@cumulus/distribution-utils/dist/types').DistributionBucketMap} DistributionBucketMap
- * @typedef {import('@cumulus/types').ApiFile} ApiFile
+ * @typedef {import('@cumulus/types').ApiFileGranuleIdOptional} ApiFileGranuleIdOptional
+ * @typedef { ApiFileGranuleIdOptional & { filepath?: string }} ApiFileWithFilePath
  */
 
 /**
@@ -81,7 +82,7 @@ const { updateUMMGGranuleURAndGranuleIdentifier } = require('./ummgModifiers');
  */
 
 /**
- * @typedef {Object}  CmrFileLike
+ * @typedef {Object}  getS3UrlOfFileFile
  * @property {string} [filename] - Full S3 URI (e.g., s3://bucket/key)
  * @property {string} [bucket] - Bucket name (used with `key` or `filepath`)
  * @property {string} [key] - S3 key (used with `bucket`)
@@ -130,7 +131,7 @@ function checkRequiredMetadataParms({ producerGranuleId, granuleId }) {
  * Accepts multiple file shapes commonly used throughout Cumulus and resolves
  * them to a valid `s3://bucket/key` URI.
  *
- * @param {CmrFileLike} file - File object containing filename or bucket/key data
+ * @param {getS3UrlOfFileFile} file - File object containing filename or bucket/key data
  * @returns {string} - A string representing the S3 URI (e.g., `s3://bucket/key`)
  * @throws {Error} if the file does not contain enough information to construct the URI
  */
@@ -147,7 +148,7 @@ function getS3UrlOfFile(file) {
  * Accepts multiple file shapes commonly used throughout Cumulus and resolves
  * them to a valid `s3://bucket/key` URI.
  *
- * @param {ApiFile & { filepath?: string }} file - API File
+ * @param {ApiFileWithFilePath} file - API File
  * @returns {string | undefined} - The file name, or undefined if not found
  */
 function getFilename(file) {
@@ -573,7 +574,7 @@ function generateFileUrl({
  * Construct online access url for a given file and a url type.
  *
  * @param {Object} params
- * @param {ApiFile & { filepath?: string }} params.file - File object
+ * @param {ApiFileWithFilePath} params.file - File object
  * @param {string} params.distEndpoint - Distribution endpoint from config
  * @param {{ [key: string]: string }} params.bucketTypes - Map of bucket names to bucket types
  * @param {'distribution' | 's3'} params.urlType - URL type: 'distribution' or 's3'
@@ -610,7 +611,7 @@ function constructOnlineAccessUrl({
  * Construct a list of online access urls grouped by link type.
  *
  * @param {Object} params
- * @param {(ApiFile & { filepath?: string })[]} params.files - Array of file objects
+ * @param {ApiFileWithFilePath[]} params.files - Array of file objects
  * @param {string} params.distEndpoint - Distribution endpoint from config
  * @param {{ [key: string]: string }} params.bucketTypes - Map of bucket name to bucket type
  * @param {string} params.cmrGranuleUrlType - Granule URL type: 's3', 'distribution', or 'both'
@@ -818,7 +819,7 @@ function shouldUseDirectS3Type(metadataObject) {
  *
  * @param {Object} params - Parameters for updating the metadata object
  * @param {Object} params.metadataObject - The existing UMMG CMR metadata object to update
- * @param {Array<ApiFile & { filepath?: string }>} params.files - Array of file
+ * @param {ApiFileWithFilePath[]} params.files - Array of file
  * objects used to generate URLs
  * @param {string} params.distEndpoint - Base URL for distribution endpoints (e.g., CloudFront)
  * @param {{ [bucket: string]: string }} params.bucketTypes - Map of bucket names
@@ -864,7 +865,7 @@ function updateUMMGMetadataObject({
  *
  * @param {Object} params - parameter object
  * @param {CmrFile} params.cmrFile - cmr.json file whose contents will be updated.
- * @param {Array<ApiFile & { filepath?: string }>} params.files - array of moved file objects.
+ * @param {ApiFileWithFilePath[]} params.files - array of moved file objects.
  * @param {string} params.distEndpoint - distribution endpoint form config.
  * @param {{ [bucket: string]: string }} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
@@ -1044,7 +1045,7 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
  * @param {Object} params - Input parameters
  * @param {Echo10MetadataObject} params.metadataObject - The parsed ECHO10 metadata XML
  * object (as a JavaScript object), expected to include a `Granule` key
- * @param {(ApiFile & { filepath?: string })[]} params.files - Granule files to generate
+ * @param {ApiFileWithFilePath[]} params.files - Granule files to generate
  *  updated URLs from
  * @param {string} params.distEndpoint - The base distribution endpoint URL
  * (e.g., CloudFront origin)
@@ -1124,7 +1125,8 @@ function updateEcho10XMLMetadataObjectUrls({
  * @param {string} params.granuleId - New GranuleUR to set in metadata
  * @param {string} params.producerGranuleId - Original ProducerGranuleId to record
  * @param {CmrFile} params.cmrFile - The cmr xml file to be updated
- * @param {ApiFile[]} params.files - List of granule files used to generate OnlineAccess URLs
+ * @param {ApiFileWithFilePath[]} params.files - List of granule files used
+ * to generate OnlineAccess URLs
  * @param {string} params.distEndpoint - Distribution endpoint for download URLs
  * @param {{ [bucket: string]: string }} params.bucketTypes - Mapping of bucket names to their types
  * @param {string} [params.cmrGranuleUrlType]
@@ -1192,7 +1194,7 @@ async function updateEcho10XMLMetadata({
  * @param {string} params.granuleId - granuleId
  * @param {string} [params.producerGranuleId] - producer granuleId
  * @param {CmrFile} params.cmrFile - cmr file to be updated
- * @param {Array<ApiFile>} params.files - array of file objects
+ * @param {ApiFileWithFilePath[]} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution enpoint from config
  * @param {boolean} params.published - indicate if publish is needed
  * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
