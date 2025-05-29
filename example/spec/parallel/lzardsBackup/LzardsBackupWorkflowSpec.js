@@ -421,11 +421,10 @@ describe('The Lzards Backup workflow ', () => {
 });
 
 describe('works with duplicate granule with a uniquified granuleId', () => {
-   it('executes successfully when the payload granule contains dataType and version', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      expect(workflowExecution.status).toEqual('completed');
-    });
+  it('executes successfully when the payload granule contains dataType and version', () => {
+    if (beforeAllFailed) fail(beforeAllFailed);
+    expect(workflowExecution.status).toEqual('completed');
+  });
 
-    it('has the expected step output', () => {
-    });
+  it('has the expected step output', () => {});
 });
