@@ -88,13 +88,13 @@ variable "vpc_id" {
 variable "engine_version" {
   description = "Postgres engine version for serverless cluster"
   type        = string
-  default     = "13.12"
+  default     = "15.4"
 }
 
-variable "parameter_group_family_v13" {
+variable "parameter_group_family_v15" {
   description = "Database family to use for creating database parameter group under postgres 13 upgrade conditions"
   type = string
-  default = "aurora-postgresql13"
+  default = "aurora-postgresql15"
 }
 
 variable "max_capacity" {
