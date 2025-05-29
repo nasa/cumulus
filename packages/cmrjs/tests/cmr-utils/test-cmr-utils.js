@@ -512,7 +512,7 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
     producerGranuleId: 'TestFixtureGranuleUR',
   });
   t.is(metadataObject.Granule.GranuleUR, 'TestFixtureGranuleUR_uniq');
-  t.is(metadataObject.Granule.DataGranule.Identifiers[0].Identifier, 'TestFixtureGranuleUR');
+  t.is(metadataObject.Granule.DataGranule.ProducerGranuleId, 'TestFixtureGranuleUR');
 });
 
 test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleUR is true', async (t) => {
