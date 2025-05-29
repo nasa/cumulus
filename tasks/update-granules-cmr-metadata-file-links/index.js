@@ -3,7 +3,6 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
-const cloneDeep = require('lodash/cloneDeep');
 const Logger = require('@cumulus/logger');
 const { getObjectSize } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -75,7 +74,7 @@ async function updateEachCmrFileAccessURLs(
 }
 
 async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
-  const updatedGranulesByGranuleId = cloneDeep(granulesByGranuleId); // TODO don't use clonedeep
+  const updatedGranulesByGranuleId = structuredClone(granulesByGranuleId);
   const promises = cmrFiles.map(async (cmrFileObject) => {
     const granule = updatedGranulesByGranuleId[cmrFileObject.granuleId];
     if (!granule?.files) {

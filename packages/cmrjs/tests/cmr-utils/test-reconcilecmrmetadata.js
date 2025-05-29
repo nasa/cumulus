@@ -255,7 +255,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
     );
   } finally {
     sinon.restore();
-    restoreUpdateEcho10XMLMetadata(); // TODO - Verify this mock makes sense
+    restoreUpdateEcho10XMLMetadata();
     restorePublishECHO10XML2CMR();
   }
 });
