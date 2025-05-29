@@ -493,7 +493,7 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
   // Remove producerGranuleId from cmrMetadata.  We expect granuleUR = producerGranuleId
   // in this case
   // that granuleUR will after = granuleId, and producerGranuleId will be updated
-  const distEndpoint = 'https://distendpoint.com'; // TODO this should be just part of context if duped elsewhere
+  const distEndpoint = 'https://distendpoint.com';
   const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
 
   const { metadataObject } = await updateEcho10XMLMetadata({
@@ -519,7 +519,7 @@ test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correct
   const { bucketTypes, distributionBucketMap } = t.context;
 
   // Yes, ETag values always include enclosing double-quotes
-  const distEndpoint = 'https://distendpoint.com'; // TODO this should be just part of context if duped elsewhere
+  const distEndpoint = 'https://distendpoint.com';
   const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
 
   const cmrJSON = await fs.readFile(
