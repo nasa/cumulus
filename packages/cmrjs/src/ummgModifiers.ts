@@ -17,6 +17,23 @@ function isUMMGGranule(obj: any): obj is UMMGGranule {
   return typeof obj === 'object' && obj !== null && typeof obj.GranuleUR === 'string';
 }
 
+/**
+ * Updates a UMM-G metadata object with a new GranuleUR and ProducerGranuleId.
+ *
+ * This function:
+ * - Validates that the input is a valid UMM-G granule metadata object.
+ * - Performs a deep clone to preserve the original input.
+ * - Sets the GranuleUR to the specified value.
+ * - Ensures that the DataGranule.Identifiers array exists.
+ * - Adds or updates an entry of type "ProducerGranuleId" with the provided identifier.
+ *
+ * @param metadataObject - The parsed UMM-G metadata object to be modified.
+ * @param granuleUr - The new GranuleUR value to assign.
+ * @param identifier - The ProducerGranuleId to store in the Identifiers list.
+ * @returns A deep-cloned and updated copy of the UMM-G metadata object.
+ * @throws If the input does not match the expected UMM-G granule structure.
+ */
+
 export function updateUMMGGranuleURAndGranuleIdentifier({
   metadataObject,
   granuleUr,
