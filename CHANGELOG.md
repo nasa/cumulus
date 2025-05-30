@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     granules within the same PDR have the same granuleId after applying the
     granuleIdFilter, unless the `uniquifyGranuleId` configuration parameter is
     explicitly set to `true`.
+  - Updates `updateGranulesCmrMetadataFileLinks` to always ensure
+    `producerGranuleId` identifier is set in updated CMR metadata
 
 ### Added
 
@@ -63,6 +65,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `ApiFileGranuleIdOptional` to `@cumulus/types/api` for cases where an
     ApiFile is being generated and refactored existing code to use this type
     instead of custom relaxed typing
+  - Updates `update-granules-cmr-metadata-file-links` to use the updated `cmrjs`
+    logic to set producerGranuleId identifiers in the CMR metadata, either equal
+    to granuleId or the `producerGranuleID` set on the granule.
 
 ## [Unreleased]
 
