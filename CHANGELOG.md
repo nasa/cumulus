@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     granules within the same PDR have the same granuleId after applying the
     granuleIdFilter, unless the `uniquifyGranuleId` configuration parameter is
     explicitly set to `true`.
+- **CUMULUS-4074**
   - Updates `updateGranulesCmrMetadataFileLinks` to always ensure
     `producerGranuleId` identifier is set in updated CMR metadata
 
