@@ -276,4 +276,9 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
       await expectAsync(waitForQueueMessageCount(queues.sourceQueueUrl, 0)).toBeResolved();
     });
   });
+
+  describe('a duplicate granule record', () => {
+    it('is successfully ingested', async () => {});
+    it('has the expected step output', () => {});
+  });
 });
