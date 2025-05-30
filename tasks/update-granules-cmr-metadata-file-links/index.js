@@ -23,7 +23,9 @@ const {
 const logger = new Logger({ sender: '@cumulus/update-granules-cmr-metadata-file-links' });
 /**
  * Update each of the CMR files' OnlineAccessURL fields to represent the new
- * file locations. This function assumes that there will only ever be a single CMR file per granule.
+ * file locations, as well as update the granuleUR/producerGranuleId identifier.
+ * This function assumes that there will only ever be a single CMR file per granule.
+ *
  *
  * @param {Array<Object>} cmrFiles         - array of objects that include CMR xmls uris and
  *                                           granuleIds
@@ -38,7 +40,7 @@ const logger = new Logger({ sender: '@cumulus/update-granules-cmr-metadata-file-
  *
  */
 
-async function updateEachCmrFileAccessURLs(
+async function updateEachCmrFileMetadata(
   cmrFiles,
   granulesObject,
   cmrGranuleUrlType,
@@ -97,7 +99,7 @@ async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
   return updatedGranulesByGranuleId;
 }
 
-async function updateGranulesCmrMetadataFileLinks(event) {
+async function updateGranulesCmrMetadata(event) {
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
   const bucketTypes = Object.fromEntries(Object.values(bucketsConfig.buckets)
@@ -111,7 +113,7 @@ async function updateGranulesCmrMetadataFileLinks(event) {
   const granulesByGranuleId = keyBy(granules, 'granuleId');
 
   const distributionBucketMap = await fetchDistributionBucketMap();
-  const updatedCmrFiles = await updateEachCmrFileAccessURLs(
+  const updatedCmrFiles = await updateEachCmrFileMetadata(
     cmrFiles,
     granulesByGranuleId,
     cmrGranuleUrlType,
@@ -143,11 +145,11 @@ async function updateGranulesCmrMetadataFileLinks(event) {
  */
 async function handler(event, context) {
   return await cumulusMessageAdapter.runCumulusTask(
-    updateGranulesCmrMetadataFileLinks,
+    updateGranulesCmrMetadata,
     event, context
   );
 }
 
 exports.handler = handler;
-exports.updateGranulesCmrMetadataFileLinks = updateGranulesCmrMetadataFileLinks;
+exports.updateGranulesCmrMetadata = updateGranulesCmrMetadata;
 exports.updateCmrFileInfo = updateCmrFileInfo;

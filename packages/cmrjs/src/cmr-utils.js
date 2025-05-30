@@ -103,10 +103,7 @@ function getS3KeyOfFile(file) {
 
 /**
  * Validates that required granule metadata parameters are provided.
- *
- * This function is typically used when updating the GranuleUR and
- * ProducerGranuleId in CMR metadata. It throws an error if either
- * parameter is missing or falsy.
+ * Throws an error if either parameter is missing or falsy.
  *
  * @param {Object} params - Parameter object
  * @param {string} params.producerGranuleId - The original granule identifier (must be non-empty)
