@@ -1,6 +1,6 @@
 import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
 import { BucketsConfigObject } from '@cumulus/common/types';
-import { ApiFileGranuleIdOptional, ApiGranuleRecord, CollectionRecord } from '@cumulus/types';
+import { ApiGranuleRecord, CollectionRecord, ApiFileGranuleIdOptional } from '@cumulus/types';
 export const MB = 1024 * 1024;
 
 type TestMethods = {

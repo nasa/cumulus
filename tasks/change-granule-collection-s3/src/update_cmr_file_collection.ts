@@ -17,11 +17,10 @@ import {
   ValidGranuleRecord,
 } from './types';
 
-export function validateApiFile(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
-  if (file.bucket === undefined || file.key === undefined) {
-    throw new ValidationError(`file ${JSON.stringify(file)} is missing necessary key, bucket`);
+export function validateApiFile(file: Omit<ApiFile, 'granuleId'> | ApiFile) {
+  if (file.bucket === undefined || file.key === undefined || file.fileName === undefined) {
+    throw new ValidationError(`file ${JSON.stringify(file)} is missing necessary key, bucket, filename`);
   }
-
   return true;
 }
 
