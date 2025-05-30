@@ -52,7 +52,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `producerGranuleId` field
 - **CUMULUS-4074**
   - Updated `IngestGranuleSuccessSpec`/`IngestUMMGSuccessSpec` to validate
-    producerGranuleId is populated in CMR post ingest.
+    producerGranuleId is populated in CMR post ingest
+  - Updated IngestGranuleSuccessSpec to include a `producerGranuleId` in the default test case
   - Added ticket-relevant typing doc/ts-check updates to
     `@cumulus/cmrjs/cmr-utils`
   - Updated `updateCMRMetadata` to take `updateGranuleUr` configuration
@@ -69,6 +70,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `update-granules-cmr-metadata-file-links` to use the updated `cmrjs`
     logic to set producerGranuleId identifiers in the CMR metadata, either equal
     to granuleId or the `producerGranuleID` set on the granule.
+  - Updates `@cumulus/tasks/sync-granule/GranuleFetcher` to allow and pass through an
+    incoming `granule.producerGranuleId`
 
 ## [Unreleased]
 
