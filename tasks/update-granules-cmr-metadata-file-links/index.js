@@ -61,6 +61,7 @@ async function updateEachCmrFileAccessURLs(
     }
     return await updateCMRMetadata({
       granuleId,
+      producerGranuleId: granule.producerGranuleId,
       cmrFile: granule.files.find(isCMRFile),
       files: files,
       distEndpoint,
