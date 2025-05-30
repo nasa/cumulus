@@ -18,8 +18,8 @@ import {
 } from './types';
 
 export function validateApiFile(file: Omit<ApiFile, 'granuleId'> | ApiFile) {
-  if (file.bucket === undefined || file.key === undefined || file.fileName === undefined) {
-    throw new ValidationError(`file ${JSON.stringify(file)} is missing necessary key, bucket, filename`);
+  if (file.bucket === undefined || file.key === undefined) {
+    throw new ValidationError(`file ${JSON.stringify(file)} is missing necessary key, bucket`);
   }
   return true;
 }
