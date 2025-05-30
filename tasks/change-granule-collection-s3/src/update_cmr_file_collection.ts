@@ -17,7 +17,7 @@ import {
   ValidGranuleRecord,
 } from './types';
 
-export function validateApiFile(file: Omit<ApiFile, 'granuleId'> | ApiFile) {
+export function validateApiFile(file: Omit<ApiFile, 'granuleId'> | ApiFile): file is ValidApiFile {
   if (file.bucket === undefined || file.key === undefined) {
     throw new ValidationError(`file ${JSON.stringify(file)} is missing necessary key, bucket`);
   }

@@ -48,7 +48,7 @@ export type ChangeCollectionsS3Event = {
 
 export type ValidApiFile = {
   bucket: string,
-  fileName: string,
+  fileName?: string,
   key: string,
 } & ApiFileGranuleIdOptional;
 
