@@ -2,6 +2,43 @@
   "Comment": "Ingest Granule",
   "StartAt": "SyncGranule",
   "States": {
+    "ChooseUniqueGranules": {
+      "Choices": [
+        {
+          "Next": "AddUniqueGranuleId",
+          "BooleanEquals": true,
+          "Variable": "$.meta.makeGranuleIdUnique"
+        }
+      ],
+      "Default": "SyncGranule",
+      "Type": "Choice"
+    },
+     "AddUniqueGranuleId": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "hashDepth": "6"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${add_unique_granule_id_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 3
+        }
+      ],
+      "Next": "SyncGranule"
+    },
     "SyncGranule": {
       "Parameters": {
         "cma": {
