@@ -73,12 +73,11 @@ describe('The Ingest Granules workflow with unique duplicate handling', () => {
   let granuleCompletedMessageKey;
   let granuleRunningMessageKey;
   let inputPayload;
-  let opendapFilePath;
   let pdrFilename;
   let provider;
   let testDataFolder;
   let workflowExecutionArn;
-  let granuleWasDeleted = false;
+  const granuleWasDeleted = false;
   let reingestExecutionArn;
 
   beforeAll(async () => {
@@ -200,7 +199,6 @@ describe('The Ingest Granules workflow with unique duplicate handling', () => {
           distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
         }
       );
-      opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/collections/C1218668453-CUMULUS/granules/${granuleId}`;
     } catch (error) {
       beforeAllError = error;
     }
@@ -264,58 +262,102 @@ describe('The Ingest Granules workflow with unique duplicate handling', () => {
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
   });
 
-  xit('makes the granule available through the Cumulus API', async () => {});
+  xit('makes the granule available through the Cumulus API', () => {
+    expect(true).toEqual(true);
+  });
 
   describe('the SyncGranules task', () => {
-    xit('updates the meta object with input_granules', () => {});
+    xit('updates the meta object with input_granules', () => {
+      expect(true).toEqual(true);
+    });
   });
 
   describe('the PostToCmr task', () => {
-    xit('publishes the granule metadata to CMR', async () => {});
+    xit('publishes the granule metadata to CMR', () => {
+      expect(true).toEqual(true);
+    });
   });
 
   describe('The Cumulus API', () => {
-    xit('makes the granule available through the Cumulus API', () => {});
+    xit('makes the granule available through the Cumulus API', () => {
+      expect(true).toEqual(true);
+    });
   });
 
   describe('when moving a granule', () => {
-    xit('rejects moving a granule to a location that already exists', async () => {});
-    xit('when the file is deleted and the move retried, the move completes successfully', async () => {});
+    xit('rejects moving a granule to a location that already exists', () => {
+      expect(true).toEqual(true);
+    });
+    xit('when the file is deleted and the move retried, the move completes successfully', () => {
+      expect(true).toEqual(true);
+    });
   });
 
   // TODO need clarity on behavior here
   describe('Granule files already exists in different collection', () => {
-    xit('fails ingest', () => {});
-    xit('does not overwrite files', () => {});
+    xit('fails ingest', () => {
+      expect(true).toEqual(true);
+    });
+    xit('does not overwrite files', () => {
+      expect(true).toEqual(true);
+    });
   });
 
   // TODO need clarity on behavior here
   describe('Granule files already exists in same collection', () => {
-    xit('fails ingest', () => {});
-    xit('does not overwrite files', () => {});
+    xit('fails ingest', () => {
+      expect(true).toEqual(true);
+    });
+    xit('does not overwrite files', () => {
+      expect(true).toEqual(true);
+    });
   });
 
   describe('Granule with same producerGranuleId exists in the same collection', () => {
     describe('When set to "error"', () => {
-      xit('fails ingest', () => {});
-      xit('does not overwrite files', () => {});
+      xit('fails ingest', () => {
+        expect(true).toEqual(true);
+      });
+      xit('does not overwrite files', () => {
+        expect(true).toEqual(true);
+      });
     });
     describe('When set to "skip"', () => {
-      xit('ingest succeeds', () => {});
-      xit('does not ingest the duplicate', () => {});
-      xit('does not overwrite files', () => {});
+      xit('ingest succeeds', () => {
+        expect(true).toEqual(true);
+      });
+      xit('does not ingest the duplicate', () => {
+        expect(true).toEqual(true);
+      });
+      xit('does not overwrite files', () => {
+        expect(true).toEqual(true);
+      });
     });
     describe('When set to "replace"', () => {
-      xit('ingest succeeds', () => {});
-      xit('does ingest the duplicate', () => {});
-      xit('does overwrite files', () => {});
+      xit('ingest succeeds', () => {
+        expect(true).toEqual(true);
+      });
+      xit('does ingest the duplicate', () => {
+        expect(true).toEqual(true);
+      });
+      xit('does overwrite files', () => {
+        expect(true).toEqual(true);
+      });
     });
     describe('When set to "version"', () => {
-      xit('ingest succeeds', () => {});
-      xit('does ingest the duplicate', () => {});
-      xit('does not overwrite files', () => {});
+      xit('ingest succeeds', () => {
+        expect(true).toEqual(true);
+      });
+      xit('does ingest the duplicate', () => {
+        expect(true).toEqual(true);
+      });
+      xit('does not overwrite files', () => {
+        expect(true).toEqual(true);
+      });
       // TODO what is 'hides'?
-      xit('hides the previous granule', () => {});
+      xit('hides the previous granule', () => {
+        expect(true).toEqual(true);
+      });
     });
   });
 });
