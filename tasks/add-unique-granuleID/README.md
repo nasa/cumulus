@@ -74,7 +74,7 @@ Output is list of granules in like format as the input *with* field modification
 
           },
           "task_config": {
-            "hashDepth": "6",
+            "hashDepth": "6"
           }
         }
       },
