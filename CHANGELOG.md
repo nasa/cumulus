@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-3945**
-  - Upgrade Aurora Postgresql engine from 13.12 to 15.4
+  - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
   - Added sanitizeSensitive function to mitigate credential exposure in ElasticSearch client (metrics)
   - Update BaseSearch functions to sanitize the errors
