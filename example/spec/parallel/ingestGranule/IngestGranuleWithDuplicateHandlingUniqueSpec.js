@@ -37,7 +37,7 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
 
-const workflowName = 'IngestAndPublishGranuleUnique';
+const workflowName = 'IngestAndPublishGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -70,8 +70,8 @@ describe('The Ingest Granules workflow with unique duplicate handling', () => {
   let expectedPayload;
   let expectedS3TagSet;
   let expectedSyncGranulePayload;
-  let granuleCompletedMessageKey;
-  let granuleRunningMessageKey;
+  // let granuleCompletedMessageKey;
+  // let granuleRunningMessageKey;
   let inputPayload;
   let pdrFilename;
   let provider;
@@ -197,6 +197,7 @@ describe('The Ingest Granules workflow with unique duplicate handling', () => {
         inputPayload,
         {
           distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
+          uniquifyGranuleId: true,
         }
       );
     } catch (error) {
@@ -228,8 +229,6 @@ describe('The Ingest Granules workflow with unique duplicate handling', () => {
       pdr: pdrFilename,
     });
 
-    await deleteExecution({ prefix: config.stackName, executionArn: reingestExecutionArn });
-
     // clean up stack state added by test
     await providersApi.deleteProvider({
       prefix: config.stackName,
@@ -243,8 +242,9 @@ describe('The Ingest Granules workflow with unique duplicate handling', () => {
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
-      deleteS3Object(config.bucket, granuleCompletedMessageKey),
-      deleteS3Object(config.bucket, granuleRunningMessageKey),
+      // TODO: uncomment to clean up once used
+      // deleteS3Object(config.bucket, granuleCompletedMessageKey),
+      // deleteS3Object(config.bucket, granuleRunningMessageKey),
     ]);
   });
 
@@ -252,7 +252,7 @@ describe('The Ingest Granules workflow with unique duplicate handling', () => {
     if (beforeAllError) fail(beforeAllError);
   });
 
-  xit('prepares the test suite successfully', () => {
+  it('prepares the test suite successfully', () => {
     failOnSetupError([beforeAllError]);
   });
 
