@@ -58,7 +58,7 @@ function failOnSetupError(setupErrors) {
 }
 
 describe('The Ingest Granules workflow with unique duplicate handling', () => {
-  const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
+  const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranuleWithDuplicate.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
   const collectionDupeHandling = 'error';
@@ -293,7 +293,6 @@ describe('The Ingest Granules workflow with unique duplicate handling', () => {
     });
   });
 
-  // TODO need clarity on behavior here
   describe('Granule files already exists in different collection', () => {
     xit('fails ingest', () => {
       expect(true).toEqual(true);
@@ -303,7 +302,6 @@ describe('The Ingest Granules workflow with unique duplicate handling', () => {
     });
   });
 
-  // TODO need clarity on behavior here
   describe('Granule files already exists in same collection', () => {
     xit('fails ingest', () => {
       expect(true).toEqual(true);
