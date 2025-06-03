@@ -1,6 +1,6 @@
 {
   "Comment": "Ingest Granule",
-  "StartAt": "SyncGranule",
+  "StartAt": "ChooseUniqueGranules",
   "States": {
     "ChooseUniqueGranules": {
       "Choices": [
