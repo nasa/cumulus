@@ -227,7 +227,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
   const xml = generateCmrXml(granule, collection, additionalUrls);
   const granuleFiles = granule.files.map((f) => `s3://${f.bucket}/${f.key}`);
 
-  const fileKey = `${stagingDir}/${granule.granuleId}.cmr.xml`;
+  const fileKey = `${stagingDir}/${granule.producerGranuleId || granule.granuleId}.cmr.xml`;
 
   const params = {
     Bucket: bucket,

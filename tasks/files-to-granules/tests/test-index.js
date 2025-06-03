@@ -90,7 +90,7 @@ test('files-to-granules throws error if configured to use ID that does not exist
     .replace(granuleDateString, granuleIdReplacement);
 
   event.config.inputGranules[0].producerGranuleId = '';
-  event.config.matchFilesWithProducerGranuleId = true;
+  event.config.matchFilesWithProducerGranuleId = 'true';
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);

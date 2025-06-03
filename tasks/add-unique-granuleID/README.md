@@ -48,7 +48,7 @@ The config object has one key that allows specification of the truncated size of
 
 ```json
 {
-  "hashDepth": 8
+  "hashLength": 8
 }
 ```
 
@@ -74,7 +74,19 @@ Output is list of granules in like format as the input *with* field modification
 
           },
           "task_config": {
-            "hashDepth": "6"
+            "hashLength": 6,
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.meta.input_granules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            },
           }
         }
       },

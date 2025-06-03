@@ -4,8 +4,9 @@
   "type": "object",
   "properties": {
     "hashLength": {
-      "type": "string",
-      "description": "The maximum length (characters) of the computed granule hash"
+      "description": "The maximum length (characters) of the computed granule hash",
+      "type": ["null", "number", "string"],
+       "default": 8
     }
   }
 }

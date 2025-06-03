@@ -31,7 +31,7 @@ const {
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
-const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { getGranule, deleteGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -67,8 +67,8 @@ const testWorkflow = 'CNMExampleWorkflow';
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the messageConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
-describe('The Cloud Notification Mechanism Kinesis workflow', () => {
-  const collectionsDir = './data/collections/L2_HR_PIXC-000/';
+describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleIds', () => {
+  const collectionsDir = './data/collections/L2_HR_PIXC-000-unique/';
   const maxWaitForExecutionSecs = 60 * 5;
   const maxWaitForSFExistSecs = 60 * 4;
   const providersDir = './data/providers/PODAAC_SWOT/';
@@ -81,6 +81,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let fileData;
   let filePrefix;
   let granuleId;
+  let producerGranuleId;
   let lambdaStep;
   let logEventSourceMapping;
   let record;
@@ -112,6 +113,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
     await removePublishedGranule({ prefix: testConfig.stackName,
       granuleId,
+      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
+    // delete the granule from the failed workflow
+    await deleteGranule({ prefix: testConfig.stackName,
+      granuleId: producerGranuleId,
       collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
     await Promise.all([
@@ -147,7 +152,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     record.collection += testSuffix;
     record.product.name += testSuffix;
 
+    // granuleId will be uniquified
     granuleId = record.product.name;
+    producerGranuleId = record.product.name;
     recordIdentifier = randomString();
     record.identifier = recordIdentifier;
 
@@ -360,6 +367,26 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           ],
         };
         expect(lambdaOutput.payload).toEqual(updatedExpectedPayload);
+      });
+    });
+
+    describe('the AddUniqueGranuleId Lambda', () => {
+      let lambdaOutput;
+
+      beforeAll(async () => {
+        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'AddUniqueGranuleId');
+        // granuleId is uniquified
+        granuleId = lambdaOutput.payload.granules[0].granuleId;
+      });
+
+      it('outputs the granules object', () => {
+        const granule = lambdaOutput.payload.granules[0];
+        expect(granule.producerGranuleId).toEqual(producerGranuleId);
+        expect(granule.granuleId).not.toEqual(producerGranuleId);
+        expect(granule.granuleId).toBeTruthy();
+        expect(granule.granuleId).toMatch(
+          new RegExp(`^${producerGranuleId}_[a-zA-Z0-9-]+$`)
+        );
       });
     });
 

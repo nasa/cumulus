@@ -33,6 +33,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds AddUniqueGranuleId task to `ingest` terraform module for deployment with Core.
   This task will update a payload of existing granules to have 'uniquified' IDs and preserve the original
   identifier in the `producerGranuleId` field
+- **CUMULUS-4082**
+  - Updated example deployment to deploy cnmResponse lambda with zip file which utilizes producerGranuleId
 
 ## [Unreleased]
 

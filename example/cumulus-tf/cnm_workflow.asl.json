@@ -133,7 +133,19 @@
             "TargetPath": "$.payload"
           },
           "task_config": {
-            "hashDepth": "6"
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.meta.input_granules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            },
+            "hashLength": "{$.meta.collection.meta.hashLength}"
           }
         }
       },
@@ -207,7 +219,8 @@
           },
           "task_config": {
             "inputGranules": "{$.meta.input_granules}",
-            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}",
+            "matchFilesWithProducerGranuleId": "{$.meta.collection.meta.uniquifyGranuleId}"
           }
         }
       },
