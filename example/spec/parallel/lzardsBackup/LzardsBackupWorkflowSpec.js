@@ -420,8 +420,8 @@ describe('The Lzards Backup workflow ', () => {
   });
 });
 
-// TODO
-// describe('works with duplicate granule with a uniquified granuleId', () => {
-//   it('executes successfully when the payload granule contains dataType and version', () => {});
-//   it('has the expected step output', () => {});
-// });
+
+describe('works with duplicate granule with a uniquified granuleId', () => {
+  xit('executes successfully when the payload granule contains dataType and version', () => {});
+  xit('has the expected step output', () => {});
+});

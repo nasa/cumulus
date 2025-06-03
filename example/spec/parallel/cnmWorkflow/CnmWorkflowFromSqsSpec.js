@@ -278,11 +278,23 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
   });
 
   describe('a duplicate granule record', () => {
-    it('is successfully ingested', () => {
-      expect(true).toEqual(true);
+    beforeAll(async () => {
+      if (beforeAllFailed) return;
+      try {
+        ruleOverride.meta.uniquifyGranuleId = true;
+      } catch (error) {
+        console.log('beforeAll error', error);
+        beforeAllFailed = error;
+      }
     });
-    it('has the expected step output', () => {
-      expect(true).toEqual(true);
+
+    it('executes successfully', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      expect(executionStatus).toEqual('SUCCEEDED');
+    });
+    xit('is successfully ingested', () => {
+    });
+    xit('has the expected step output', () => {
     });
   });
 });

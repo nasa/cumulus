@@ -150,8 +150,8 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('Uniquified duplicate granules', () => {
-    it('completes execution with success status', async () => {});
-    it('copies files configured to orca', async () => {});
+    xit('completes execution with success status', async () => {});
+    xit('copies files configured to orca', async () => {});
   });
 
   describe('the recovery workflow', () => {

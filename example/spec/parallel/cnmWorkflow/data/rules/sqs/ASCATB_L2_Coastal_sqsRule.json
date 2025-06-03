@@ -8,7 +8,8 @@
   "meta": {
     "cnmResponseStream": "{{cnmResponseStream}}",
     "cnmResponseMethod": "sns",
-    "cmrMetadataFormat": "umm_json_v1_6_2"
+    "cmrMetadataFormat": "umm_json_v1_6_2",
+    "uniquifyGranuleId": false
   },
   "rule": {
     "type": "sqs",
