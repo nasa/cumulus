@@ -11,7 +11,7 @@ test('updates GranuleUR and adds ProducerGranuleId when Identifiers is missing',
   const result = updateUMMGGranuleURAndGranuleIdentifier({
     metadataObject: metadata,
     granuleUr: 'NEW_ID',
-    identifier: 'PRODUCER_ID',
+    producerGranuleId: 'PRODUCER_ID',
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -38,7 +38,7 @@ test('overwrites existing ProducerGranuleId while preserving other identifiers',
   const result = updateUMMGGranuleURAndGranuleIdentifier({
     metadataObject: metadata,
     granuleUr: 'NEW_ID',
-    identifier: 'NEW_PRODUCER_ID',
+    producerGranuleId: 'NEW_PRODUCER_ID',
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -75,7 +75,7 @@ test('appends ProducerGranuleId if not present', (t) => {
   const result = updateUMMGGranuleURAndGranuleIdentifier({
     metadataObject: metadata,
     granuleUr: 'NEW_ID',
-    identifier: 'PRODUCER_ID',
+    producerGranuleId: 'PRODUCER_ID',
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -98,7 +98,7 @@ test('throws error if input is not UMMGGranule', (t) => {
     updateUMMGGranuleURAndGranuleIdentifier({
       metadataObject: invalid,
       granuleUr: 'ID',
-      identifier: 'PRODUCER_ID',
+      producerGranuleId: 'PRODUCER_ID',
     }));
 
   t.true(error?.message.includes('Invalid UMM-G JSON metadata'));
@@ -114,7 +114,7 @@ test('does not mutate original object', (t) => {
   const result = updateUMMGGranuleURAndGranuleIdentifier({
     metadataObject: original,
     granuleUr: 'NEW_ID',
-    identifier: 'PRODUCER_ID',
+    producerGranuleId: 'PRODUCER_ID',
   });
 
   t.not(result, original);

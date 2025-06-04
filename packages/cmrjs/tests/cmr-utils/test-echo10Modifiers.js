@@ -16,7 +16,7 @@ test('updates GranuleUR and updates ProducerGranuleId', (t) => {
   const result = updateEcho10XMLGranuleUrAndGranuleIdentifier({
     xml,
     granuleUr: 'NEW_ID',
-    identifier: 'PRODUCER_ID',
+    producerGranuleId: 'PRODUCER_ID',
   });
 
   t.is(result.Granule.GranuleUR, 'NEW_ID');
@@ -33,7 +33,7 @@ test('adds ProducerGranuleId if not present', (t) => {
   const result = updateEcho10XMLGranuleUrAndGranuleIdentifier({
     xml,
     granuleUr: 'NEW_ID',
-    identifier: 'NEW_PRODUCER_ID',
+    producerGranuleId: 'NEW_PRODUCER_ID',
   });
 
   t.is(result.Granule.GranuleUR, 'NEW_ID');
@@ -49,7 +49,7 @@ test('throws error if input is not Echo10XmlBaseGranule', (t) => {
     updateEcho10XMLGranuleUrAndGranuleIdentifier({
       xml: invalid,
       granuleUr: 'ID',
-      identifier: 'PRODUCER_ID',
+      producerGranuleId: 'PRODUCER_ID',
     }));
 
   t.true(error?.message.includes('Invalid XML input'));
@@ -67,7 +67,7 @@ test('does not mutate original object', (t) => {
   const result = updateEcho10XMLGranuleUrAndGranuleIdentifier({
     xml: original,
     granuleUr: 'NEW_ID',
-    identifier: 'PRODUCER_ID',
+    producerGranuleId: 'PRODUCER_ID',
   });
 
   t.not(result, original);

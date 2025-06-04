@@ -24,18 +24,18 @@ function isEcho10XmlBaseGranule(obj: any): obj is Echo10XmlBaseGranule {
  * @param params
  * @param params.xml - The parsed XML object (e.g., from xml2js) representing ECHO10 metadata.
  * @param params.granuleUr - The new GranuleUR value to apply to the metadata.
- * @param params.identifier - The original identifier value to be set as ProducerGranuleId.
+ * @param params.producerGranuleId - The original identifier value to be set as ProducerGranuleId.
  * @returns A deep-cloned and updated copy of the original ECHO10 metadata object.
  * @throws If the input object does not conform to the expected ECHO10 structure.
  */
 export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
   xml, // The parsed XML object (e.g., from xml2js)
   granuleUr, // The new GranuleUR value
-  identifier, // The original identifier to store
+  producerGranuleId, // The original identifier to store
 }: {
   xml: unknown;
   granuleUr: string;
-  identifier: string;
+  producerGranuleId: string;
 }): any {
   if (!isEcho10XmlBaseGranule(xml)) {
     throw new Error('Invalid XML input - expected an object with GranuleUR');
@@ -46,7 +46,7 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
   moddedXml.Granule ??= {};
   moddedXml.Granule.GranuleUR = granuleUr;
   moddedXml.Granule.DataGranule ??= {};
-  moddedXml.Granule.DataGranule.ProducerGranuleId = identifier;
+  moddedXml.Granule.DataGranule.ProducerGranuleId = producerGranuleId;
 
   return moddedXml;
 }

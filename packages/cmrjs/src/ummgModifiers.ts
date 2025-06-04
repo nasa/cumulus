@@ -28,7 +28,7 @@ function isUMMGGranule(obj: any): obj is UMMGGranule {
  *
  * @param metadataObject - The parsed UMM-G metadata object to be modified.
  * @param granuleUr - The new GranuleUR value to assign.
- * @param identifier - The ProducerGranuleId to store in the Identifiers list.
+ * @param producerGranuleId - The ProducerGranuleId to store in the Identifiers list.
  * @returns A deep-cloned and updated copy of the UMM-G metadata object.
  * @throws If the input does not match the expected UMM-G granule structure.
  */
@@ -36,11 +36,11 @@ function isUMMGGranule(obj: any): obj is UMMGGranule {
 export function updateUMMGGranuleURAndGranuleIdentifier({
   metadataObject,
   granuleUr,
-  identifier,
+  producerGranuleId,
 }: {
   metadataObject: unknown;
   granuleUr: string;
-  identifier: string;
+  producerGranuleId: string;
 }): UMMGGranule {
   if (!isUMMGGranule(metadataObject)) {
     throw new Error('Invalid UMM-G JSON metadata');
@@ -56,15 +56,15 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
     (id) => id.IdentifierType === 'ProducerGranuleId'
   );
 
-  const producerGranuleId = {
-    Identifier: identifier,
+  const producerGranuleIdIdentifier = {
+    Identifier: producerGranuleId,
     IdentifierType: 'ProducerGranuleId',
   };
 
   if (producerIndex !== -1) {
-    moddedJson.DataGranule.Identifiers[producerIndex] = producerGranuleId;
+    moddedJson.DataGranule.Identifiers[producerIndex] = producerGranuleIdIdentifier;
   } else {
-    moddedJson.DataGranule.Identifiers.push(producerGranuleId);
+    moddedJson.DataGranule.Identifiers.push(producerGranuleIdIdentifier);
   }
 
   return moddedJson;
