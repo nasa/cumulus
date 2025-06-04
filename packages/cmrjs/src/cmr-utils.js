@@ -892,11 +892,11 @@ async function updateUMMGMetadata({
   testOverrides = {},
 }) {
   const {
-    localUploadUMMGJSONCMRFile = uploadUMMGJSONCMRFile,
-    localMetadataObjectFromCMRJSONFile = metadataObjectFromCMRJSONFile,
+    uploadUMMGJSONCMRFileMethod = uploadUMMGJSONCMRFile,
+    metadataObjectFromCMRJSONFileMethod = metadataObjectFromCMRJSONFile,
   } = testOverrides;
   const filename = getS3UrlOfFile(cmrFile);
-  const metadataObject = await localMetadataObjectFromCMRJSONFile(filename);
+  const metadataObject = await metadataObjectFromCMRJSONFileMethod(filename);
   let updatedMetadataObject = updateUMMGMetadataObject({
     metadataObject,
     files,
@@ -914,7 +914,7 @@ async function updateUMMGMetadata({
       metadataObject: updatedMetadataObject,
     });
   }
-  const { ETag: etag } = await localUploadUMMGJSONCMRFile(
+  const { ETag: etag } = await uploadUMMGJSONCMRFileMethod(
     updatedMetadataObject,
     cmrFile
   );
@@ -1153,14 +1153,14 @@ async function updateEcho10XMLMetadata({
   testOverrides = {},
 }) {
   const {
-    localGenerateEcho10XMLString = generateEcho10XMLString,
-    localUploadEcho10CMRFile = uploadEcho10CMRFile,
-    localMetadataObjectFromCMRXMLFile = metadataObjectFromCMRXMLFile,
+    generateEcho10XMLStringMethod = generateEcho10XMLString,
+    uploadEcho10CMRFileMethod = uploadEcho10CMRFile,
+    metadataObjectFromCMRXMLFileMethod = metadataObjectFromCMRXMLFile,
   } = testOverrides;
 
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
-  const metadataObject = await localMetadataObjectFromCMRXMLFile(filename);
+  const metadataObject = await metadataObjectFromCMRXMLFileMethod(filename);
 
   let updatedMetadataObject = updateEcho10XMLMetadataObjectUrls({
     metadataObject,
@@ -1187,8 +1187,8 @@ async function updateEcho10XMLMetadata({
       xml: updatedMetadataObject,
     });
   }
-  const xml = localGenerateEcho10XMLString(updatedMetadataObject.Granule);
-  const { ETag: etag } = await localUploadEcho10CMRFile(xml, cmrFile);
+  const xml = generateEcho10XMLStringMethod(updatedMetadataObject.Granule);
+  const { ETag: etag } = await uploadEcho10CMRFileMethod(xml, cmrFile);
   return { metadataObject: updatedMetadataObject, etag };
 }
 
@@ -1227,15 +1227,15 @@ async function updateCMRMetadata({
   testOverrides = {},
 }) {
   const {
-    localPublish2CMR = publish2CMR,
-    localGetCmrSettings = getCmrSettings,
+    publish2CMRMethod = publish2CMR,
+    getCmrSettingsMethod = getCmrSettings,
   } = testOverrides;
 
   const filename = getS3UrlOfFile(cmrFile);
 
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId} cmrMetadata file ${filename}`);
 
-  const cmrCredentials = (published) ? await localGetCmrSettings() : {};
+  const cmrCredentials = (published) ? await getCmrSettingsMethod() : {};
   const params = {
     bucketTypes,
     cmrFile,
@@ -1267,7 +1267,7 @@ async function updateCMRMetadata({
       granuleId,
     };
 
-    return { ...await localPublish2CMR(cmrPublishObject, cmrCredentials), etag };
+    return { ...await publish2CMRMethod(cmrPublishObject, cmrCredentials), etag };
   }
 
   return { ...cmrFile, etag };

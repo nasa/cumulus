@@ -220,14 +220,14 @@ test('publishes UMMG metadata when publish is set to true', async (t) => {
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
     testOverrides: {
-      localPublish2CMR: () => ({
+      publish2CMRMethod: () => ({
         conceptId: 'C123',
         granuleId: 'updated-granule',
         filename: `s3://${cmrFile.bucket}/${cmrFile.key}`,
         metadataFormat: 'umm_json',
         link: 'https://example.com/concepts/C123.umm_json',
       }),
-      localGetCmrSettings: () => 'someValue',
+      getCmrSettingsMethod: () => 'someValue',
     },
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
@@ -278,7 +278,7 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
     expectedXmlJsObject.Granule.OnlineResources.OnlineResource,
   ];
 
-  const localPublish2CMR = sinon.spy(() => ({
+  const publish2CMRMethod = sinon.spy(() => ({
     conceptId: 'C123',
     granuleId: 'updated-granule',
     filename: `s3://${cmrFile.bucket}/${cmrFile.key}`,
@@ -298,8 +298,8 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
     testOverrides: {
-      localPublish2CMR,
-      localGetCmrSettings: () => 'someValue',
+      publish2CMRMethod,
+      getCmrSettingsMethod: () => 'someValue',
     },
   });
 
@@ -310,5 +310,5 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
     conceptId: 'C123',
     granuleId: 'updated-granule',
   });
-  t.deepEqual(localPublish2CMR.getCall(0).args[0].metadataObject, expectedXmlJsObject);
+  t.deepEqual(publish2CMRMethod.getCall(0).args[0].metadataObject, expectedXmlJsObject);
 });

@@ -503,9 +503,9 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
     bucketTypes,
     distributionBucketMap,
     testOverrides: {
-      localGenerateEcho10XMLString: () => 'testXmlString',
-      localMetadataObjectFromCMRXMLFile: () => cmrMetadata,
-      localUploadEcho10CMRFile: uploadEchoSpy,
+      generateEcho10XMLStringMethod: () => 'testXmlString',
+      metadataObjectFromCMRXMLFileMethod: () => cmrMetadata,
+      uploadEcho10CMRFileMethod: uploadEchoSpy,
     },
     updateGranuleIdentifiers: true,
     granuleId: 'TestFixtureGranuleUR_uniq',
@@ -541,8 +541,8 @@ test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correct
     distributionBucketMap,
     updateGranuleIdentifiers: true,
     testOverrides: {
-      localUploadUMMGJSONCMRFile: uploadEchoSpy,
-      localMetadataObjectFromCMRJSONFile: () => cmrMetadata,
+      uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
+      metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
     },
   });
   t.is(metadataObject.GranuleUR, 'TestFixtureGranuleUR_uniq');
@@ -615,9 +615,9 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
     bucketTypes,
     distributionBucketMap,
     testOverrides: {
-      localGenerateEcho10XMLString: () => 'testXmlString',
-      localMetadataObjectFromCMRXMLFile: () => cmrMetadata,
-      localUploadEcho10CMRFile: uploadEchoSpy,
+      generateEcho10XMLStringMethod: () => 'testXmlString',
+      metadataObjectFromCMRXMLFileMethod: () => cmrMetadata,
+      uploadEcho10CMRFileMethod: uploadEchoSpy,
     },
   });
 
@@ -700,8 +700,8 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
     bucketTypes,
     distributionBucketMap,
     testOverrides: {
-      localUploadUMMGJSONCMRFile: uploadEchoSpy,
-      localMetadataObjectFromCMRJSONFile: () => cmrMetadata,
+      uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
+      metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
     },
   });
   t.is(etag, expectedEtag, "ETag doesn't match");
@@ -775,8 +775,8 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
     bucketTypes,
     distributionBucketMap,
     testOverrides: {
-      localUploadUMMGJSONCMRFile: uploadEchoSpy,
-      localMetadataObjectFromCMRJSONFile: () => cmrMetadata,
+      uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
+      metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
     },
   });
 
