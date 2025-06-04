@@ -70,7 +70,7 @@ describe('Ingesting duplicate granules using DiscoverGranules', () => {
 
       providerPath = `cumulus-test-data/${testId}`;
 
-      // Upload the granule to be discovered
+      // Upload granules to be discovered
       await uploadS3GranuleDataForDiscovery({
         bucket,
         prefix: providerPath,
@@ -151,23 +151,23 @@ describe('Ingesting duplicate granules using DiscoverGranules', () => {
     it('prepares the test suite successfully', () => {
       if (beforeAllError) fail(beforeAllError);
     });
-    it('executes successfully', async () => {});
-    it('results in a successful IngestGranule workflow execution', async () => {});
-    it('it makes the granule available via the Cumulus API', async () => {});
-    it('it publishes the granule metadata to CMR', async () => {});
+    xit('executes successfully', async () => {});
+    xit('results in a successful IngestGranule workflow execution', async () => {});
+    xit('it makes the granule available via the Cumulus API', async () => {});
+    xit('it publishes the granule metadata to CMR', async () => {});
   });
 
   // TODO: do we need all of these assertions for the second workflow execution?
   //  Do we want to just include the duplicate granule in the above workflow execution?
   describe('The DiscoverGranules workflow ingests a second granule with the same producerGranuleId but different collection', () => {
-    it('executes successfully', async () => {});
-    it('results in a successful IngestGranule workflow execution', async () => {});
-    it('it makes the granule available via the Cumulus API', async () => {});
-    it('it publishes the granule metadata to CMR', async () => {});
+    xit('executes successfully', async () => {});
+    xit('results in a successful IngestGranule workflow execution', async () => {});
+    xit('it makes the granule available via the Cumulus API', async () => {});
+    xit('it publishes the granule metadata to CMR', async () => {});
   });
 
   describe('The add-unique-granuleID task', () => {
-    it('it updates the Cumulus Message with the appropriate granuleId and providerGranuleId', async () => {});
-    it('it updates the CMR metadata with the appropriate granuleId and providerGranuleId', async () => {});
+    xit('it updates the Cumulus Message with the appropriate granuleId and providerGranuleId', async () => {});
+    xit('it updates the CMR metadata with the appropriate granuleId and providerGranuleId', async () => {});
   });
 });
