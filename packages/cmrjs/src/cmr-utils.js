@@ -114,11 +114,11 @@ function getS3KeyOfFile(file) {
 function checkRequiredMetadataParms({ producerGranuleId, granuleId }) {
   if (!producerGranuleId) {
     throw new Error(
-      'updateGranuleIdentifiers is true but no producerGranuleId was provided'
+      'No producerGranuleId was provided when required for CMR metadata update'
     );
   }
   if (!granuleId) {
-    throw new Error('updateGranuleIdentifiers is true but no granuleId was provided');
+    throw new Error('No granuleId was provided when required for CMR Metadata update');
   }
 }
 
@@ -1173,7 +1173,14 @@ async function updateEcho10XMLMetadata({
 
   if (updateGranuleIdentifiers) {
     // Type checks are needed as this callers/API are not all typed/ts converted yet
-    checkRequiredMetadataParms({ producerGranuleId, granuleId });
+    try {
+      checkRequiredMetadataParms({ producerGranuleId, granuleId });
+    } catch (error) {
+      throw new Error(
+        `updateGranuleIdentifiers was set, but producerGranuleId ${producerGranuleId} or granuleId ${granuleId} is not set.`,
+        { cause: error }
+      );
+    }
     updatedMetadataObject = updateEcho10XMLGranuleUrAndGranuleIdentifier({
       granuleUr: granuleId,
       identifier: producerGranuleId,
