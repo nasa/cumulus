@@ -73,7 +73,7 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
     bucketTypes: {},
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
-    updateGranuleUr: true,
+    updateGranuleIdentifiers: true,
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
   const expectedObject = {
@@ -103,7 +103,7 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
   });
 });
 
-test('does not updates UMMG metadata granule identifiers when updateGranuleUr is set to false', async (t) => {
+test('does not updates UMMG metadata granule identifiers when updateGranuleIdentifiers is set to false', async (t) => {
   const cmrFile = t.context.cmrFileJson;
   const result = await updateCMRMetadata({
     granuleId: 'new-granule',
@@ -115,7 +115,7 @@ test('does not updates UMMG metadata granule identifiers when updateGranuleUr is
     bucketTypes: {},
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
-    updateGranuleUr: false,
+    updateGranuleIdentifiers: false,
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
   const expectedObject = {
@@ -175,14 +175,14 @@ test('updates Echo10 metadata with UR update, when publish is set to false', asy
     bucketTypes: {},
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
-    updateGranuleUr: true,
+    updateGranuleIdentifiers: true,
   });
 
   const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
   t.deepEqual(actual, expected);
 });
 
-test('updateCMRMetadata does not updates ECHO10 metadata granule identifiers when updateGranuleUr is set to false', async (t) => {
+test('updateCMRMetadata does not updates ECHO10 metadata granule identifiers when updateGranuleIdentifiers is set to false', async (t) => {
   const cmrFile = t.context.cmrFileXml;
   const { cmrXmlFixture } = t.context;
 
@@ -199,7 +199,7 @@ test('updateCMRMetadata does not updates ECHO10 metadata granule identifiers whe
     bucketTypes: {},
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
-    updateGranuleUr: false,
+    updateGranuleIdentifiers: false,
   });
 
   const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
@@ -218,7 +218,7 @@ test('publishes UMMG metadata when publish is set to true', async (t) => {
     bucketTypes: {},
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
-    updateGranuleUr: true,
+    updateGranuleIdentifiers: true,
     testOverrides: {
       localPublish2CMR: () => ({
         conceptId: 'C123',
@@ -296,7 +296,7 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
     bucketTypes: {},
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
-    updateGranuleUr: true,
+    updateGranuleIdentifiers: true,
     testOverrides: {
       localPublish2CMR,
       localGetCmrSettings: () => 'someValue',

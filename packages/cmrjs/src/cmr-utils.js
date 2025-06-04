@@ -114,11 +114,11 @@ function getS3KeyOfFile(file) {
 function checkRequiredMetadataParms({ producerGranuleId, granuleId }) {
   if (!producerGranuleId) {
     throw new Error(
-      'updateGranuleUr is true but no producerGranuleId was provided'
+      'updateGranuleIdentifiers is true but no producerGranuleId was provided'
     );
   }
   if (!granuleId) {
-    throw new Error('updateGranuleUr is true but no granuleId was provided');
+    throw new Error('updateGranuleIdentifiers is true but no granuleId was provided');
   }
 }
 
@@ -872,7 +872,7 @@ function updateUMMGMetadataObject({
  *    mapping for all distribution buckets
  * @param {string} params.producerGranuleId - producer granule id
  * @param {string} params.granuleId - granule id
- * @param {boolean} [params.updateGranuleUr=false] - whether to update the granule UR/add
+ * @param {boolean} [params.updateGranuleIdentifiers=false] - whether to update the granule UR/add
  * producerGranuleID to the CMR metadata object
  * @param {any} [params.testOverrides] - overrides for testing
  * @returns {Promise<{ metadataObject: Object, etag: string | undefined}>} an object
@@ -888,7 +888,7 @@ async function updateUMMGMetadata({
   distributionBucketMap,
   producerGranuleId,
   granuleId,
-  updateGranuleUr = false,
+  updateGranuleIdentifiers = false,
   testOverrides = {},
 }) {
   const {
@@ -905,7 +905,7 @@ async function updateUMMGMetadata({
     cmrGranuleUrlType,
     distributionBucketMap,
   });
-  if (updateGranuleUr) {
+  if (updateGranuleIdentifiers) {
     // Type checks are needed as this callers/API are not all typed/ts converted yet
     checkRequiredMetadataParms({ producerGranuleId, granuleId });
     updatedMetadataObject = updateUMMGGranuleURAndGranuleIdentifier({
@@ -1132,7 +1132,7 @@ function updateEcho10XMLMetadataObjectUrls({
  * - Type of URLs to generate ('distribution' | 's3' | 'both')
  * @param {DistributionBucketMap} params.distributionBucketMap
  * - Maps buckets to distribution paths
- * @param {boolean} [params.updateGranuleUr]
+ * @param {boolean} [params.updateGranuleIdentifiers]
  * - If true, update the GranuleUR and ProducerGranuleId in metadata
  * @param {any} [params.testOverrides]
  * - Optional test overrides for internal functions
@@ -1149,7 +1149,7 @@ async function updateEcho10XMLMetadata({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
-  updateGranuleUr = false,
+  updateGranuleIdentifiers = false,
   testOverrides = {},
 }) {
   const {
@@ -1171,7 +1171,7 @@ async function updateEcho10XMLMetadata({
     distributionBucketMap,
   });
 
-  if (updateGranuleUr) {
+  if (updateGranuleIdentifiers) {
     // Type checks are needed as this callers/API are not all typed/ts converted yet
     checkRequiredMetadataParms({ producerGranuleId, granuleId });
     updatedMetadataObject = updateEcho10XMLGranuleUrAndGranuleIdentifier({
@@ -1197,7 +1197,7 @@ async function updateEcho10XMLMetadata({
  * @param {boolean} params.published - indicate if publish is needed
  * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
- * @param {boolean} [params.updateGranuleUr]
+ * @param {boolean} [params.updateGranuleIdentifiers]
  * - If true, update the GranuleUR and ProducerGranuleId in metadata
  * @param {any} [params.testOverrides]
  * - Optional test overrides for internal functions
@@ -1215,7 +1215,7 @@ async function updateCMRMetadata({
   published,
   bucketTypes,
   cmrGranuleUrlType = 'both',
-  updateGranuleUr = false,
+  updateGranuleIdentifiers = false,
   distributionBucketMap,
   testOverrides = {},
 }) {
@@ -1238,7 +1238,7 @@ async function updateCMRMetadata({
     files,
     granuleId,
     producerGranuleId: producerGranuleId || granuleId,
-    updateGranuleUr,
+    updateGranuleIdentifiers,
   };
 
   let metadataObject;

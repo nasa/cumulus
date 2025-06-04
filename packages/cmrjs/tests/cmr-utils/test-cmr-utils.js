@@ -483,7 +483,7 @@ test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving 
   }
 });
 
-test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleUR is true', async (t) => {
+test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
   const cmrXml = await fs.readFile(
     path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
@@ -507,7 +507,7 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
       localMetadataObjectFromCMRXMLFile: () => cmrMetadata,
       localUploadEcho10CMRFile: uploadEchoSpy,
     },
-    updateGranuleUr: true,
+    updateGranuleIdentifiers: true,
     granuleId: 'TestFixtureGranuleUR_uniq',
     producerGranuleId: 'TestFixtureGranuleUR',
   });
@@ -515,7 +515,7 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
   t.is(metadataObject.Granule.DataGranule.ProducerGranuleId, 'TestFixtureGranuleUR');
 });
 
-test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleUR is true', async (t) => {
+test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
   // Yes, ETag values always include enclosing double-quotes
@@ -539,7 +539,7 @@ test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correct
     distEndpoint,
     bucketTypes,
     distributionBucketMap,
-    updateGranuleUr: true,
+    updateGranuleIdentifiers: true,
     testOverrides: {
       localUploadUMMGJSONCMRFile: uploadEchoSpy,
       localMetadataObjectFromCMRJSONFile: () => cmrMetadata,

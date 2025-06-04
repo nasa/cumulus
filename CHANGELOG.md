@@ -56,7 +56,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated IngestGranuleSuccessSpec to include a `producerGranuleId` in the default test case
   - Added ticket-relevant typing doc/ts-check updates to
     `@cumulus/cmrjs/cmr-utils`
-  - Updated `updateCMRMetadata` to take `updateGranuleUr` configuration
+  - Updated `updateCMRMetadata` to take `updateGranuleIdentifiers` configuration
     flag/`producerGranuleId` such that that routine now will modify the CMR
     metadata object with the correct `GranuleUR`/`ProducerGranuleId` values in
     the CMR metadata.
