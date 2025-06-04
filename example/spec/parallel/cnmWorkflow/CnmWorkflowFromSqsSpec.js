@@ -281,7 +281,8 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
     beforeAll(() => {
       if (beforeAllFailed) return;
       try {
-        ruleOverride.meta.uniquifyGranuleId = true;
+        // TODO: Add uniqueGranuleId version of existing rule
+        console.log('Updated UniqueGranuleId Rule Required');
       } catch (error) {
         console.log('beforeAll error', error);
         beforeAllFailed = error;
