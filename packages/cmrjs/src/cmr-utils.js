@@ -531,7 +531,7 @@ function mapFileEtags(files) {
  * @param {Object} params - input parameters
  * @param {Object} params.file - file object
  * @param {string} params.distEndpoint - distribution endpoint from config
- * @param {Object} params.urlType - url type, distribution or s3
+ * @param {string} [params.urlType = 'distribution'] - url type, distribution or s3
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution buckets
  * @returns {(string | undefined)} online access url object, undefined if no URL exists
