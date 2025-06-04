@@ -2,9 +2,6 @@
 
 const fs = require('fs-extra');
 
-const {
-  deleteS3Object,
-} = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   addCollections,
@@ -78,7 +75,6 @@ describe('The Ingest Granules workflow with duplicates in the payload and uniqui
   let testDataFolder;
   let workflowExecutionArn;
   const granuleWasDeleted = false;
-  let reingestExecutionArn;
 
   beforeAll(async () => {
     try {

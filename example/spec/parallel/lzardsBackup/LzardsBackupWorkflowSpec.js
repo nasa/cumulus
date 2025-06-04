@@ -418,10 +418,20 @@ describe('The Lzards Backup workflow ', () => {
       expect(errorCause.errorMessage).toContain('testGranuleFail.jpg did not have a checksum or checksumType defined');
     });
   });
-});
 
-
-describe('works with duplicate granule with a uniquified granuleId', () => {
-  xit('executes successfully when the payload granule contains dataType and version', () => {});
-  xit('has the expected step output', () => {});
+  describe('works with duplicate granule with a uniquified granuleId', () => {
+    beforeAll(() => {
+      try {
+        // Set it up
+      } catch (error) {
+        beforeAllFailed = error;
+      }
+    });
+    xit('executes successfully when the payload granule contains dataType and version', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+    });
+    xit('has the expected step output', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+    });
+  });
 });
