@@ -6,11 +6,13 @@ const {
 } = require('@cumulus/integration-tests');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
-  createCollection, deleteCollection,
+  createCollection,
+  deleteCollection,
 } = require('@cumulus/api-client/collections');
 const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
 const {
-  createProvider, deleteProvider,
+  createProvider,
+  deleteProvider,
 } = require('@cumulus/api-client/providers');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
