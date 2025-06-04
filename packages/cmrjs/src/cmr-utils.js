@@ -612,18 +612,19 @@ function constructOnlineAccessUrl({
  * @param {ApiFileWithFilePath[]} params.files - Array of file objects
  * @param {string} params.distEndpoint - Distribution endpoint from config
  * @param {{ [key: string]: string }} params.bucketTypes - Map of bucket name to bucket type
- * @param {string} params.cmrGranuleUrlType - Granule URL type: 's3', 'distribution', or 'both'
  * @param {DistributionBucketMap} params.distributionBucketMap - Mapping of bucket to
  * distribution path
+ * @param {string} [params.cmrGranuleUrlType=both] - Granule URL type: 's3',
+ * 'distribution', or 'both'
  * @param {boolean} [params.useDirectS3Type=false] - Whether direct S3 URL types are used
  * @returns {Echo10URLObject[]} Array of online access URL objects
  */
 function constructOnlineAccessUrls({
-  files,
-  distEndpoint,
   bucketTypes,
   cmrGranuleUrlType = 'both',
+  distEndpoint,
   distributionBucketMap,
+  files,
   useDirectS3Type = false,
 }) {
   if (['distribution', 'both'].includes(cmrGranuleUrlType) && !distEndpoint) {
