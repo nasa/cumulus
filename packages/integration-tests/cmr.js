@@ -272,6 +272,7 @@ async function getCmrMetadataECHO10(cmrLink) {
   const response = await got.get(cmrLink);
 
   if (response.statusCode !== 200) {
+    console.log(`Error fetching CMR metadata, status code: ${response.statusCode}, response: ${JSON.stringify(response.body)}`);
     return null;
   }
 
@@ -296,6 +297,7 @@ async function getOnlineResourcesECHO10(cmrLink) {
 async function getCmrMetadataUMMG(cmrLink) {
   const response = await got.get(cmrLink);
   if (response.statusCode !== 200) {
+    console.log(`Error fetching CMR metadata, status code: ${response.statusCode}, response: ${JSON.stringify(response.body)}`);
     return null;
   }
   return JSON.parse(response.body);
