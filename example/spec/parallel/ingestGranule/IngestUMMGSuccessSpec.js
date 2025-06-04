@@ -358,7 +358,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
           getTEARequestHeaders(config.stackName),
         ]);
         onlineResources = metadataResults.items[0].umm.RelatedUrls;
-        resourceURLs = onlineResources.map((i) => i.URL);
+        resourceURLs = onlineResources.map((resource) => resource.URL);
       } catch (error) {
         subTestSetupError = error;
         throw error;
