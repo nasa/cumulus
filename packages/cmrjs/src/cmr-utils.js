@@ -452,10 +452,10 @@ function getS3CredentialsObject(s3CredsUrl) {
 /**
  * Returns UMM/ECHO10 resource type mapping for CNM file type
  *
- * @param {string | undefined} type - CNM resource type to convert to UMM/ECHO10 type
- * @param {string | undefined} urlType - url type, distribution or s3
- * @param {boolean} useDirectS3Type - indicate if direct s3 access type is used
- * @returns {( string | undefined )} type - UMM/ECHO10 resource type
+ * @param {string} type - CNM resource type to convert to UMM/ECHO10 type
+ * @param {string} [urlType = distribution] - url type, distribution or s3
+ * @param {boolean} [useDirectS3Type = false] - indicate if direct s3 access type is used
+ * @returns {( string | undefined )} - UMM/ECHO10 resource type
  */
 function mapCNMTypeToCMRType(type, urlType = 'distribution', useDirectS3Type = false) {
   /** @type {Record<string, string>} */
