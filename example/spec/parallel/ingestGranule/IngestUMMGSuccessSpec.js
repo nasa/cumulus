@@ -379,8 +379,9 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('updates the CMR metadata with the expected producerGranuleId', () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
-      const expectedProducerGranuleId = inputPayload.granules[0].granuleId;
-      expect(metadataResults.items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(expectedProducerGranuleId);
+      const expectedGranuleId = inputPayload.granules[0].granuleId;
+      expect(metadataResults.items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(expectedGranuleId);
+      expect(metadataResults[1].items[0].umm.GranuleUR).toEqual(expectedGranuleId);
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
