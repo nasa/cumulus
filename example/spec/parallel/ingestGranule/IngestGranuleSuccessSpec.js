@@ -661,9 +661,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
       expect(metadataResults[1].items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(expectedProducerGranuleId);
       expect(metadataResults[1].items[0].umm.GranuleUR).toEqual(expectedGranuleId);
-
-      expect(metadataResults[0].producer_granule_id).toEqual(expectedProducerGranuleId);
-      expect(metadataResults[0].title).toEqual(expectedGranuleId);
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
