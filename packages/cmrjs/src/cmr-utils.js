@@ -1161,7 +1161,6 @@ async function updateEcho10XMLMetadata({
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await localMetadataObjectFromCMRXMLFile(filename);
-  // TODO: This is "any"... but....
 
   let updatedMetadataObject = updateEcho10XMLMetadataObjectUrls({
     metadataObject,
