@@ -1,6 +1,5 @@
 // Implementation against https://git.earthdata.nasa.gov/projects/EMFD/repos/unified-metadata-model/browse/granule/v1.6.6/umm-g-json-schema.json
-
-interface UMMGGranule {
+type UMMGGranule = {
   GranuleUR: string;
   DataGranule?: {
     Identifiers?: {
@@ -11,7 +10,7 @@ interface UMMGGranule {
     [key: string]: any;
   };
   [key: string]: unknown;
-}
+};
 
 function isUMMGGranule(obj: any): obj is UMMGGranule {
   return typeof obj === 'object' && obj !== null && typeof obj.GranuleUR === 'string';

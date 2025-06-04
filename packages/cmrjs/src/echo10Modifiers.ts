@@ -1,4 +1,4 @@
-interface Echo10XmlBaseGranule {
+type Echo10XmlBaseGranule = {
   Granule: {
     GranuleUR?: string;
     DataGranule?: {
@@ -6,7 +6,7 @@ interface Echo10XmlBaseGranule {
     }
     [key: string]: unknown;
   };
-}
+};
 
 function isEcho10XmlBaseGranule(obj: any): obj is Echo10XmlBaseGranule {
   return typeof obj === 'object' && obj !== null
