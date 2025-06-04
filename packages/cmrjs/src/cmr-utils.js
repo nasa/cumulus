@@ -246,7 +246,7 @@ function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
  * @param {string} cmrFile.metadata - granule xml document
  * @param {Object} cmrClient - a CMR instance
  * @param {string} revisionId - Optional CMR Revision ID
- * @returns {Object} CMR's success response which includes the concept-id
+ * @returns {Promise<Object>} CMR's success response which includes the concept-id
  */
 async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
   const builder = new xml2js.Builder();
@@ -276,6 +276,7 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
  * @param {Object} cmrFile.granuleId - the metadata's granuleId
  * @param {Object} cmrClient - a CMR instance
  * @param {string} revisionId - Optional CMR Revision ID
+ * @returns {Promise<Object>} CMR's success response which includes the concept-id
  */
 async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
   const granuleId = cmrFile.metadataObject.GranuleUR;
