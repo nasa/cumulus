@@ -74,19 +74,7 @@ Output is list of granules in like format as the input *with* field modification
 
           },
           "task_config": {
-            "hashLength": 6,
-            "cumulus_message": {
-              "outputs": [
-                {
-                  "source": "{$.granules}",
-                  "destination": "{$.meta.input_granules}"
-                },
-                {
-                  "source": "{$}",
-                  "destination": "{$.payload}"
-                }
-              ]
-            },
+            "hashLength": 6
           }
         }
       },

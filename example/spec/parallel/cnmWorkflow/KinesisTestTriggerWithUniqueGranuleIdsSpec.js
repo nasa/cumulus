@@ -79,7 +79,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
   let expectedSyncGranulesPayload;
   let expectedTranslatePayload;
   let fileData;
-  let filePrefix;
   let granuleId;
   let producerGranuleId;
   let lambdaStep;
@@ -111,13 +110,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
     await deleteExecution({ prefix: testConfig.stackName, executionArn: failingWorkflowExecution.executionArn });
     await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
-    await removePublishedGranule({ prefix: testConfig.stackName,
-      granuleId,
-      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
-    // delete the granule from the failed workflow
-    await deleteGranule({ prefix: testConfig.stackName,
-      granuleId: producerGranuleId,
-      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
@@ -187,11 +179,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     };
 
     fileData = expectedTranslatePayload.granules[0].files[0];
-    filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000/${crypto.createHash('md5').update(record.product.name).digest('hex')}`;
 
     const fileDataWithFilename = {
       bucket: testConfig.buckets.private.name,
-      key: `${filePrefix}/${recordFile.name}`,
+      key: 'key_placeholder',
       fileName: recordFile.name,
       size: fileData.size,
       type: recordFile.type,
@@ -204,7 +195,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       granuleDuplicates: {},
       granules: [
         {
-          granuleId: record.product.name,
+          producerGranuleId: record.product.name,
           dataType: record.collection,
           version: '000',
           files: [fileDataWithFilename],
@@ -286,6 +277,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       });
     });
 
+    afterAll(async () => {
+      await removePublishedGranule({
+        prefix: testConfig.stackName,
+        granuleId,
+        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+      });
+    });
+
     it('executes successfully', () => {
       expect(executionStatus).toEqual('SUCCEEDED');
     });
@@ -347,6 +346,28 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       });
     });
 
+    describe('the AddUniqueGranuleId Lambda', () => {
+      let lambdaOutput;
+      let granule;
+
+      beforeAll(async () => {
+        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'AddUniqueGranuleId');
+        granule = lambdaOutput.payload.granules[0];
+        // granuleId is uniquified
+        granuleId = granule.granuleId;
+        console.log(`AddUniqueGranuleId returns granuleId: ${granuleId}, producerGranuleId: ${granule.producerGranuleId}`);
+      });
+
+      it('outputs the granules object', () => {
+        expect(granule.producerGranuleId).toEqual(producerGranuleId);
+        expect(granule.granuleId).not.toEqual(producerGranuleId);
+        expect(granule.granuleId).toBeTruthy();
+        expect(granule.granuleId).toMatch(
+          new RegExp(`^${producerGranuleId}_[a-zA-Z0-9-]+$`)
+        );
+      });
+    });
+
     describe('the SyncGranule Lambda', () => {
       let lambdaOutput;
 
@@ -355,11 +376,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       });
 
       it('outputs the granules object', () => {
+        const filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000/${crypto.createHash('md5').update(granuleId).digest('hex')}`;
+        expectedSyncGranulesPayload.granules[0].files[0].key = `${filePrefix}/${recordFile.name}`;
         const updatedExpectedPayload = {
           ...expectedSyncGranulesPayload,
           granules: [
             {
               ...expectedSyncGranulesPayload.granules[0],
+              granuleId,
               sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
               createdAt: lambdaOutput.payload.granules[0].createdAt,
               provider: record.provider,
@@ -367,26 +391,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
           ],
         };
         expect(lambdaOutput.payload).toEqual(updatedExpectedPayload);
-      });
-    });
-
-    describe('the AddUniqueGranuleId Lambda', () => {
-      let lambdaOutput;
-
-      beforeAll(async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'AddUniqueGranuleId');
-        // granuleId is uniquified
-        granuleId = lambdaOutput.payload.granules[0].granuleId;
-      });
-
-      it('outputs the granules object', () => {
-        const granule = lambdaOutput.payload.granules[0];
-        expect(granule.producerGranuleId).toEqual(producerGranuleId);
-        expect(granule.granuleId).not.toEqual(producerGranuleId);
-        expect(granule.granuleId).toBeTruthy();
-        expect(granule.granuleId).toMatch(
-          new RegExp(`^${producerGranuleId}_[a-zA-Z0-9-]+$`)
-        );
       });
     });
 
@@ -473,6 +477,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       });
     });
 
+    afterAll(async () => {
+      await deleteGranule({
+        prefix: testConfig.stackName,
+        granuleId,
+        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+      });
+    });
+
     it('executes but fails', () => {
       expect(executionStatus).toEqual('FAILED');
     });
@@ -481,6 +493,28 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       const lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'SyncGranule', 'failure');
       expect(lambdaOutput.error).toEqual('FileNotFound');
       expect(lambdaOutput.cause).toMatch(/.+Source file not found.+/);
+    });
+
+    describe('the AddUniqueGranuleId Lambda', () => {
+      let lambdaOutput;
+      let granule;
+
+      beforeAll(async () => {
+        lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'AddUniqueGranuleId');
+        granule = lambdaOutput.payload.granules[0];
+        // granuleId is uniquified
+        granuleId = granule.granuleId;
+        console.log(`AddUniqueGranuleId returns granuleId: ${granuleId}, producerGranuleId: ${granule.producerGranuleId}`);
+      });
+
+      it('outputs the granules object', () => {
+        expect(granule.producerGranuleId).toEqual(producerGranuleId);
+        expect(granule.granuleId).not.toEqual(producerGranuleId);
+        expect(granule.granuleId).toBeTruthy();
+        expect(granule.granuleId).toMatch(
+          new RegExp(`^${producerGranuleId}_[a-zA-Z0-9-]+$`)
+        );
+      });
     });
 
     describe('the CnmResponse Lambda', () => {
@@ -495,7 +529,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
             getGranule,
             {
               prefix: testConfig.stackName,
-              granuleId: record.product.name,
+              granuleId,
               collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
             },
             {

@@ -50,6 +50,51 @@
           "Next": "CnmResponseFail"
         }
       ],
+      "Next": "ChooseUniqueGranules"
+    },
+    "ChooseUniqueGranules": {
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.meta.collection.meta.uniquifyGranuleId",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.meta.collection.meta.uniquifyGranuleId",
+              "BooleanEquals": true
+            }
+          ],
+          "Next": "AddUniqueGranuleId"
+        }
+      ],
+      "Default": "SyncGranule",
+      "Type": "Choice"
+    },
+     "AddUniqueGranuleId": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "hashLength": "{$.meta.collection.meta.hashLength}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${add_unique_granule_id_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 3
+        }
+      ],
       "Next": "SyncGranule"
     },
     "SyncGranule": {
@@ -101,63 +146,6 @@
           ],
           "ResultPath": "$.exception",
           "Next": "CnmResponseFail"
-        }
-      ],
-      "Next": "ChooseUniqueGranules"
-    },
-    "ChooseUniqueGranules": {
-      "Choices": [
-        {
-          "And": [
-            {
-              "Variable": "$.meta.collection.meta.uniquifyGranuleId",
-              "IsPresent": true
-            },
-            {
-              "Variable": "$.meta.collection.meta.uniquifyGranuleId",
-              "BooleanEquals": true
-            }
-          ],
-          "Next": "AddUniqueGranuleId"
-        }
-      ],
-      "Default": "ProcessingStep",
-      "Type": "Choice"
-    },
-     "AddUniqueGranuleId": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "Path": "$.payload",
-            "TargetPath": "$.payload"
-          },
-          "task_config": {
-            "cumulus_message": {
-              "outputs": [
-                {
-                  "source": "{$.granules}",
-                  "destination": "{$.meta.input_granules}"
-                },
-                {
-                  "source": "{$}",
-                  "destination": "{$.payload}"
-                }
-              ]
-            },
-            "hashLength": "{$.meta.collection.meta.hashLength}"
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${add_unique_granule_id_arn}",
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "IntervalSeconds": 5,
-          "MaxAttempts": 3
         }
       ],
       "Next": "ProcessingStep"

@@ -31,7 +31,7 @@ const {
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
-const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { getGranule, deleteGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -110,9 +110,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     await deleteExecution({ prefix: testConfig.stackName, executionArn: failingWorkflowExecution.executionArn });
     await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
-    await removePublishedGranule({ prefix: testConfig.stackName,
-      granuleId,
-      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
@@ -276,6 +273,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
+      });
+    });
+
+    afterAll(async () => {
+      await removePublishedGranule({
+        prefix: testConfig.stackName,
+        granuleId,
+        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
       });
     });
 
@@ -443,6 +448,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
         console.log(`Waiting for completed execution of ${failingWorkflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(failingWorkflowExecution.executionArn, maxWaitForExecutionSecs);
+      });
+    });
+
+    afterAll(async () => {
+      await deleteGranule({
+        prefix: testConfig.stackName,
+        granuleId,
+        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
       });
     });
 
