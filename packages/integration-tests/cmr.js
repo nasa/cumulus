@@ -332,6 +332,9 @@ async function getOnlineResourcesUMMG(cmrLink) {
  * @returns {Promise<Array<Object>>} - Promise returning array of links
  */
 async function getCmrMetadata({ cmrMetadataFormat, cmrConceptId, cmrLink }) {
+  console.log('Running getCmrMetadata');
+  console.log(cmrLink);
+  console.log(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
   if (cmrMetadataFormat === 'echo10') {
     console.log(cmrLink);
     return await getCmrMetadataECHO10(cmrLink.replace(/(.echo10)$/, '.json'));
