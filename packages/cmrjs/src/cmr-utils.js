@@ -910,7 +910,7 @@ async function updateUMMGMetadata({
     checkRequiredMetadataParms({ producerGranuleId, granuleId });
     updatedMetadataObject = updateUMMGGranuleURAndGranuleIdentifier({
       granuleUr: granuleId,
-      identifier: producerGranuleId,
+      producerGranuleId,
       metadataObject: updatedMetadataObject,
     });
   }
@@ -1183,7 +1183,7 @@ async function updateEcho10XMLMetadata({
     }
     updatedMetadataObject = updateEcho10XMLGranuleUrAndGranuleIdentifier({
       granuleUr: granuleId,
-      identifier: producerGranuleId,
+      producerGranuleId,
       xml: updatedMetadataObject,
     });
   }
