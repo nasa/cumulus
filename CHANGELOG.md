@@ -39,8 +39,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated example deployment to deploy cnmResponse lambda version 3.1.0.
   - Updated example deployment to deploy cnmToGranule lambda version 2.1.0.
   - Updated `@cumulus/integraton-tests/cmr` `generateAndStoreCmrXml` to name
-    the cmr.xml file
-    based on `producerGranuleId` over `granuleId`.
+    the cmr.xml file based on `producerGranuleId` over `granuleId`.
   - Updated `AddUniqueGranuleId` task configuration `hashLength` to accept
     additional types and removed the use of `hashDepth`.
   - Updated `FilesToGranules` task configuration
