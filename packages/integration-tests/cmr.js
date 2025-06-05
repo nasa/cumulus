@@ -336,11 +336,9 @@ async function getCmrMetadata({ cmrMetadataFormat, cmrConceptId, cmrLink }) {
   console.log(cmrLink);
   console.log(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
   if (cmrMetadataFormat === 'echo10') {
-    console.log(cmrLink);
     return await getCmrMetadataECHO10(cmrLink.replace(/(.echo10)$/, '.json'));
   }
   if (isUMMGMetadataFormat(cmrMetadataFormat)) {
-    console.log(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
     return await getCmrMetadataUMMG(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
   }
   throw new Error(`Invalid cmrMetadataFormat passed to getOnlineResources: ${cmrMetadataFormat}`);
