@@ -36,13 +36,15 @@ const {
   setECHO10Collection,
   setUMMGCollection,
   getCMRCollectionId,
+  updateEcho10XMLMetadata,
+  updateUMMGMetadata,
+  uploadEcho10CMRFile,
+  uploadUMMGJSONCMRFile,
+  buildCMRQuery,
 } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, isISOFile, getGranuleTemporalInfo } = cmrUtil;
 const { xmlParseOptions } = require('../../utils');
-const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
-const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
-const buildCMRQuery = cmrUtil.__get__('buildCMRQuery');
 const stubDistributionBucketMap = {
   'fake-bucket': 'fake-bucket',
   'mapped-bucket': 'mapped/path/example',
@@ -481,6 +483,72 @@ test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving 
   }
 });
 
+test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+  const cmrXml = await fs.readFile(
+    path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
+    'utf8'
+  );
+  const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
+  // Remove producerGranuleId from cmrMetadata.  We expect granuleUR = producerGranuleId
+  // in this case
+  // that granuleUR will after = granuleId, and producerGranuleId will be updated
+  const distEndpoint = 'https://distendpoint.com';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
+
+  const { metadataObject } = await updateEcho10XMLMetadata({
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: [],
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    testOverrides: {
+      generateEcho10XMLStringMethod: () => 'testXmlString',
+      metadataObjectFromCMRXMLFileMethod: () => cmrMetadata,
+      uploadEcho10CMRFileMethod: uploadEchoSpy,
+    },
+    updateGranuleIdentifiers: true,
+    granuleId: 'TestFixtureGranuleUR_uniq',
+    producerGranuleId: 'TestFixtureGranuleUR',
+  });
+  t.is(metadataObject.Granule.GranuleUR, 'TestFixtureGranuleUR_uniq');
+  t.is(metadataObject.Granule.DataGranule.ProducerGranuleId, 'TestFixtureGranuleUR');
+});
+
+test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+
+  // Yes, ETag values always include enclosing double-quotes
+  const distEndpoint = 'https://distendpoint.com';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
+
+  const cmrJSON = await fs.readFile(
+    path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_v1.6.2.cmr.json'),
+    'utf8'
+  );
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const filesObject = await readJsonFixture(
+    path.join(__dirname, '../fixtures/UMMGFilesObjectFixture.json')
+  );
+
+  const { metadataObject } = await updateUMMGMetadata({
+    granuleId: 'TestFixtureGranuleUR_uniq',
+    producerGranuleId: 'TestFixtureGranuleUR',
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: filesObject,
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    updateGranuleIdentifiers: true,
+    testOverrides: {
+      uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
+      metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
+    },
+  });
+  t.is(metadataObject.GranuleUR, 'TestFixtureGranuleUR_uniq');
+  t.is(metadataObject.DataGranule.Identifiers[0].Identifier, 'TestFixtureGranuleUR');
+});
+
 test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
@@ -497,12 +565,6 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   );
 
   const distEndpoint = 'https://distendpoint.com';
-
-  const updateEcho10XMLMetadata = cmrUtil.__get__('updateEcho10XMLMetadata');
-
-  const revertGenerateXml = cmrUtil.__set__('generateEcho10XMLString', () => 'testXmlString');
-  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
-  const revertMockUpload = cmrUtil.__set__('uploadEcho10CMRFile', uploadEchoSpy);
 
   const onlineAccessURLsExpected = [
     {
@@ -546,31 +608,30 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
     },
   ];
 
-  try {
-    const { metadataObject, etag } = await updateEcho10XMLMetadata({
-      cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
-      files: filesObject,
-      distEndpoint,
-      bucketTypes,
-      distributionBucketMap,
-    });
+  const { metadataObject, etag } = await updateEcho10XMLMetadata({
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: filesObject,
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    testOverrides: {
+      generateEcho10XMLStringMethod: () => 'testXmlString',
+      metadataObjectFromCMRXMLFileMethod: () => cmrMetadata,
+      uploadEcho10CMRFileMethod: uploadEchoSpy,
+    },
+  });
 
-    t.is(etag, expectedEtag, "ETag doesn't match");
-    t.deepEqual(metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL.sort(sortByURL),
-      onlineAccessURLsExpected.sort(sortByURL));
-    t.deepEqual(metadataObject.Granule.OnlineResources.OnlineResource.sort(sortByURL),
-      onlineResourcesExpected.sort(sortByURL));
-    t.deepEqual(
-      metadataObject.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.sort(sortByURL),
-      AssociatedBrowseExpected.sort(sortByURL)
-    );
-    t.true(uploadEchoSpy.calledWith('testXmlString',
-      { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
-  } finally {
-    revertMetaObject();
-    revertMockUpload();
-    revertGenerateXml();
-  }
+  t.is(etag, expectedEtag, "ETag doesn't match");
+  t.deepEqual(metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL.sort(sortByURL),
+    onlineAccessURLsExpected.sort(sortByURL));
+  t.deepEqual(metadataObject.Granule.OnlineResources.OnlineResource.sort(sortByURL),
+    onlineResourcesExpected.sort(sortByURL));
+  t.deepEqual(
+    metadataObject.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.sort(sortByURL),
+    AssociatedBrowseExpected.sort(sortByURL)
+  );
+  t.true(uploadEchoSpy.calledWith('testXmlString',
+    { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
 });
 
 test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule with UMM-G version 1.5 ', async (t) => {
@@ -590,11 +651,6 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
   );
 
   const distEndpoint = 'https://distendpoint.com';
-
-  const updateUMMGMetadata = cmrUtil.__get__('updateUMMGMetadata');
-
-  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
-  const revertMockUpload = cmrUtil.__set__('uploadUMMGJSONCMRFile', uploadEchoSpy);
 
   const expectedRelatedURLs = [
     {
@@ -637,21 +693,19 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
       Type: 'EXTENDED METADATA',
     },
   ];
-
-  try {
-    const { metadataObject, etag } = await updateUMMGMetadata({
-      cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
-      files: filesObject,
-      distEndpoint,
-      bucketTypes,
-      distributionBucketMap,
-    });
-    t.is(etag, expectedEtag, "ETag doesn't match");
-    t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
-  } finally {
-    revertMetaObject();
-    revertMockUpload();
-  }
+  const { metadataObject, etag } = await updateUMMGMetadata({
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: filesObject,
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    testOverrides: {
+      uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
+      metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
+    },
+  });
+  t.is(etag, expectedEtag, "ETag doesn't match");
+  t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
 });
 
 test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule with UMM-G version 1.6.2 ', async (t) => {
@@ -671,11 +725,6 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
   );
 
   const distEndpoint = 'https://distendpoint.com';
-
-  const updateUMMGMetadata = cmrUtil.__get__('updateUMMGMetadata');
-
-  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
-  const revertMockUpload = cmrUtil.__set__('uploadUMMGJSONCMRFile', uploadEchoSpy);
 
   const expectedRelatedURLs = [
     {
@@ -719,21 +768,20 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
     },
   ];
 
-  try {
-    const { metadataObject, etag } = await updateUMMGMetadata({
-      cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
-      files: filesObject,
-      distEndpoint,
-      bucketTypes,
-      distributionBucketMap,
-    });
+  const { metadataObject, etag } = await updateUMMGMetadata({
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: filesObject,
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    testOverrides: {
+      uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
+      metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
+    },
+  });
 
-    t.is(etag, expectedEtag, "ETag doesn't match");
-    t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
-  } finally {
-    revertMetaObject();
-    revertMockUpload();
-  }
+  t.is(etag, expectedEtag, "ETag doesn't match");
+  t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
 });
 
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json file with RangeDateTime', async (t) => {

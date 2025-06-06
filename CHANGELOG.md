@@ -9,30 +9,71 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Breaking Changes
 
 - **CUMULUS-4072**
-  - Updated the `parse-pdr` task component to throw an error if multiple granules within the same PDR have the same granuleId after applying the granuleIdFilter, unless the `uniquifyGranuleId` configuration parameter is explicitly set to `true`.
+  - Updated the `parse-pdr` task component to throw an error if multiple
+    granules within the same PDR have the same granuleId after applying the
+    granuleIdFilter, unless the `uniquifyGranuleId` configuration parameter is
+    explicitly set to `true`.
+- **CUMULUS-4074**
+  - Updates `updateGranulesCmrMetadataFileLinks` to always ensure
+    `producerGranuleId` identifier is set in updated CMR metadata
 
 ### Added
 
 - **CUMULUS-4085**
   - Added config option for files-to-granules task to use `producerGranuleId` when mapping files to their granules.
 - **CUMULUS-4059**
-  - Added new non-null column `producer_granule_id` to Postgres `granules` table.
+  - Added new non-null column `producer_granule_id` to Postgres `granules`
+    table.
   - Added `producerGranuleId` property to `granule` record schema.
-  - Updated `@cumulus` api/db/message packages to handle `producer_granule_id` and `producerGranuleId`.
-  - Updated `@cumulus/api/lib/writeGranulesFromMessage` to set producerGranuleId = granuleId if not set.
-  - Updated `queue-granules` task to set producerGranuleId = granuleId if not set.
+  - Updated `@cumulus` api/db/message packages to handle `producer_granule_id`
+    and `producerGranuleId`.
+  - Updated `@cumulus/api/lib/writeGranulesFromMessage` to set producerGranuleId
+    = granuleId if not set.
+  - Updated `queue-granules` task to set producerGranuleId = granuleId if not
+    set.
 - **CUMULUS-4061**
-  - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a hashed/'uniquified' granuleID
+  - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a
+    hashed/'uniquified' granuleID
 - **CUMULUS-4072**
   - Updated `parse-pdr` task component to have the following behaviors:
     - Always populate producerGranuleId from the incoming parsed granuleId
-    - If `uniquifyGranuleId` configuration value is set to true, parse-PDR will update the granuleId for all found granules to have a unique granule hash appended to the existing ID
-    - Updated `parse-pdr` such that if the `uniquifyGranuleId` configuration parameter is not set to `true` , and a duplicate granuleId is created as part of the output after passing the `granuleIdFilter`, the task will throw with an error.
-  - Added `ingestFromPdrWithUniqueGranuleIdsSpec.js` to the spec tests to demonstrate the ingest workflow works as expected with unique granuleIds and producerGranuleIds set.
+    - If `uniquifyGranuleId` configuration value is set to true, parse-PDR will
+      update the granuleId for all found granules to have a unique granule hash
+      appended to the existing ID
+    - Updated `parse-pdr` such that if the `uniquifyGranuleId` configuration
+      parameter is not set to `true` , and a duplicate granuleId is created as
+      part of the output after passing the `granuleIdFilter`, the task will
+      throw with an error.
+  - Added `ingestFromPdrWithUniqueGranuleIdsSpec.js` to the spec tests to
+    demonstrate the ingest workflow works as expected with unique granuleIds and
+    producerGranuleIds set.
 - **CUMULUS-4073**
-  - Adds AddUniqueGranuleId task to `ingest` terraform module for deployment with Core.
-  This task will update a payload of existing granules to have 'uniquified' IDs and preserve the original
-  identifier in the `producerGranuleId` field
+  - Adds AddUniqueGranuleId task to `ingest` terraform module for deployment
+  with Core. This task will update a payload of existing granules to have
+  'uniquified' IDs and preserve the original identifier in the
+  `producerGranuleId` field
+- **CUMULUS-4074**
+  - Updated `IngestGranuleSuccessSpec`/`IngestUMMGSuccessSpec` to validate
+    producerGranuleId is populated in CMR post ingest
+  - Updated IngestGranuleSuccessSpec to include a `producerGranuleId` in the default test case
+  - Added ticket-relevant typing doc/ts-check updates to
+    `@cumulus/cmrjs/cmr-utils`
+  - Updated `updateCMRMetadata` to take `updateGranuleIdentifiers` configuration
+    flag/`producerGranuleId` such that that routine now will modify the CMR
+    metadata object with the correct `GranuleUR`/`ProducerGranuleId` values in
+    the CMR metadata.
+  - Added unit test/refactored mocks to use direct injection for `cmr-utils`
+  - Added `getCmrMetadata` helper to `@cumulus/integration-tests` to allow
+    access to the full CMR metadata object for verification of record metadata
+    fields
+  - Added `ApiFileGranuleIdOptional` to `@cumulus/types/api` for cases where an
+    ApiFile is being generated and refactored existing code to use this type
+    instead of custom relaxed typing
+  - Updates `update-granules-cmr-metadata-file-links` to use the updated `cmrjs`
+    logic to set producerGranuleId identifiers in the CMR metadata, either equal
+    to granuleId or the `producerGranuleID` set on the granule.
+  - Updates `@cumulus/tasks/sync-granule/GranuleFetcher` to allow and pass through an
+    incoming `granule.producerGranuleId`
 - **CUMULUS-4082**
   - Updated example deployment to deploy `cnmResponse` lambda with zip file
     which utilizes `producerGranuleId`.
