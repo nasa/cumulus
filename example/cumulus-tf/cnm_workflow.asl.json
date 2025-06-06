@@ -162,6 +162,7 @@
             "collection": "{$.meta.collection}",
             "cmrMetadataFormat": "{$.meta.cmrMetadataFormat}",
             "additionalUrls": "{$.meta.additionalUrls}",
+            "matchFilesWithProducerGranuleId": "{$.meta.collection.meta.uniquifyGranuleId}",
             "cumulus_message": {
               "outputs": [
                 {
