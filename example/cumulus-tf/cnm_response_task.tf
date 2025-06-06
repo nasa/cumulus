@@ -1,5 +1,5 @@
 locals {
-  cnm_response_version  = "2.1.1-alpha.2-SNAPSHOT"
+  cnm_response_version  = "3.1.0"
   cnm_response_filename = "cnmResponse-${local.cnm_response_version}.zip"
 }
 
@@ -8,7 +8,9 @@ resource "null_resource" "get_cnmResponse" {
     always_run = local.cnm_response_version
   }
   provisioner "local-exec" {
-    command = "curl -s -L -o ${local.cnm_response_filename} https://github.com/podaac/cumulus-cnm-response-task/releases/download/v${local.cnm_response_version}/${local.cnm_response_filename}"
+    ## TODO uncomment when we have a cnm_response_version to support producerGranuleId
+    # command = "curl -s -L -o ${local.cnm_response_filename} https://github.com/podaac/cumulus-cnm-response-task/releases/download/v${local.cnm_response_version}/${local.cnm_response_filename}"
+    command = "curl -s -L -o ${local.cnm_response_filename} https://github.com/nasa/cumulus/releases/download/v20.1.3-alpha.2/cnmResponse.zip"
   }
 }
 
@@ -26,7 +28,7 @@ resource "aws_lambda_function" "cnm_response_task" {
   s3_key           = aws_s3_bucket_object.cnm_response_lambda_zip.id
   handler          = "gov.nasa.cumulus.CNMResponse::handleRequestStreams"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "java11"
+  runtime          = "java17"
   timeout          = 300
   memory_size      = 256
   source_code_hash = aws_s3_bucket_object.cnm_response_lambda_zip.etag

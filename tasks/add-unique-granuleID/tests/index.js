@@ -2,7 +2,7 @@ const test = require('ava');
 const { assignUniqueIds } = require('../dist/src');
 
 test('assignUniqueIds assigns unique granule IDs and preserves producerGranuleId', async (t) => {
-  const hashDepth = 6;
+  const hashLength = 6;
 
   const event = {
     input: {
@@ -12,7 +12,7 @@ test('assignUniqueIds assigns unique granule IDs and preserves producerGranuleId
       ],
     },
     config: {
-      hashDepth,
+      hashLength,
     },
   };
 
@@ -23,7 +23,7 @@ test('assignUniqueIds assigns unique granule IDs and preserves producerGranuleId
   result.granules.forEach((granule, index) => {
     t.is(granule.producerGranuleId, originalGranules[index].granuleId, 'Should preserve producerGranuleId as original granuleID value');
     t.true(granule.granuleId.startsWith(`${granule.producerGranuleId}_`), 'Should assign a unique granuleId');
-    t.is(granule.granuleId.split('_')[1].length, hashDepth, 'Hash length should match the configured hashDepth');
+    t.is(granule.granuleId.split('_')[1].length, hashLength, 'Hash length should match the configured hashLength');
   });
 });
 

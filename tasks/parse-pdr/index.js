@@ -253,7 +253,8 @@ const buildPdrDocument = (rawPdr) => {
  * @param {string} [event.config.granuleIdFilter] - Regex to filter granule IDs by file name
  * @param {boolean | string | null} [event.config.uniquifyGranuleId] - True/false to make
  * granule IDs unique
- * @param {number | null} [event.config.hashLength] - Length of hash used for uniquification
+ * @param {null | number | string} [event.config.hashLength] - Length of hash used
+ * for uniquification
  * @param {object} event.config.provider - Provider information
  * @param {string} event.config.provider.id - Provider ID
  * @param {number} [event.config.provider.globalConnectionLimit] - Max concurrent connections
@@ -286,7 +287,7 @@ const parsePdr = async ({ config, input }) => {
   const pdrDocument = buildPdrDocument(rawPdr);
   const uniquifyGranuleIdConfigValue = get(config, 'uniquifyGranuleId', false);
   const uniquifyGranuleId = uniquifyGranuleIdConfigValue === 'true' || uniquifyGranuleIdConfigValue === true;
-  const hashLength = config.hashLength ?? 8;
+  const hashLength = Number(config.hashLength) || 8;
   const allPdrGranules = await Promise.all(
     pdrDocument.objects('FILE_GROUP').map((fileGroup) =>
       convertFileGroupToGranule({
