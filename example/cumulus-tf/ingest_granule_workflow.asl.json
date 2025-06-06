@@ -119,8 +119,7 @@
           "event.$": "$",
           "task_config": {
             "inputGranules": "{$.meta.input_granules}",
-            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}",
-            "matchFilesWithProducerGranuleId": "{$.meta.collection.meta.uniquifyGranuleId}"
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
           }
         }
       },
