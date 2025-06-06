@@ -5,9 +5,17 @@
     "ChooseUniqueGranules": {
       "Choices": [
         {
-          "Next": "AddUniqueGranuleId",
-          "BooleanEquals": true,
-          "Variable": "{$.meta.collection.meta.uniquifyGranuleId}"
+          "And": [
+            {
+              "Variable": "$.meta.collection.meta.uniquifyGranuleId",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.meta.collection.meta.uniquifyGranuleId",
+              "BooleanEquals": true
+            }
+          ],
+          "Next": "AddUniqueGranuleId"
         }
       ],
       "Default": "SyncGranule",
