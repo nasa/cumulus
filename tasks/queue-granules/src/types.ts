@@ -33,6 +33,7 @@ export interface QueueGranulesInput {
     granuleId: string;
     dataType?: string;
     version?: string;
+    producerGranuleId?: string,
     provider?: string;
     collectionId?: string;
     status?: string;

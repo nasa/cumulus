@@ -3,7 +3,6 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
-const cloneDeep = require('lodash/cloneDeep');
 const Logger = require('@cumulus/logger');
 const { getObjectSize } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -24,7 +23,9 @@ const {
 const logger = new Logger({ sender: '@cumulus/update-granules-cmr-metadata-file-links' });
 /**
  * Update each of the CMR files' OnlineAccessURL fields to represent the new
- * file locations. This function assumes that there will only ever be a single CMR file per granule.
+ * file locations, as well as update the granuleUR/producerGranuleId identifier.
+ * This function assumes that there will only ever be a single CMR file per granule.
+ *
  *
  * @param {Array<Object>} cmrFiles         - array of objects that include CMR xmls uris and
  *                                           granuleIds
@@ -39,7 +40,7 @@ const logger = new Logger({ sender: '@cumulus/update-granules-cmr-metadata-file-
  *
  */
 
-async function updateEachCmrFileAccessURLs(
+async function updateEachCmrFileMetadata(
   cmrFiles,
   granulesObject,
   cmrGranuleUrlType,
@@ -62,6 +63,7 @@ async function updateEachCmrFileAccessURLs(
     }
     return await updateCMRMetadata({
       granuleId,
+      producerGranuleId: granule.producerGranuleId,
       cmrFile: granule.files.find(isCMRFile),
       files: files,
       distEndpoint,
@@ -69,12 +71,13 @@ async function updateEachCmrFileAccessURLs(
       bucketTypes,
       cmrGranuleUrlType,
       distributionBucketMap,
+      updateGranuleIdentifiers: true,
     });
   }));
 }
 
 async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
-  const updatedGranulesByGranuleId = cloneDeep(granulesByGranuleId);
+  const updatedGranulesByGranuleId = structuredClone(granulesByGranuleId);
   const promises = cmrFiles.map(async (cmrFileObject) => {
     const granule = updatedGranulesByGranuleId[cmrFileObject.granuleId];
     if (!granule?.files) {
@@ -96,7 +99,7 @@ async function updateCmrFileInfo(cmrFiles, granulesByGranuleId) {
   return updatedGranulesByGranuleId;
 }
 
-async function updateGranulesCmrMetadataFileLinks(event) {
+async function updateGranulesCmrMetadata(event) {
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
   const bucketTypes = Object.fromEntries(Object.values(bucketsConfig.buckets)
@@ -110,7 +113,7 @@ async function updateGranulesCmrMetadataFileLinks(event) {
   const granulesByGranuleId = keyBy(granules, 'granuleId');
 
   const distributionBucketMap = await fetchDistributionBucketMap();
-  const updatedCmrFiles = await updateEachCmrFileAccessURLs(
+  const updatedCmrFiles = await updateEachCmrFileMetadata(
     cmrFiles,
     granulesByGranuleId,
     cmrGranuleUrlType,
@@ -142,11 +145,11 @@ async function updateGranulesCmrMetadataFileLinks(event) {
  */
 async function handler(event, context) {
   return await cumulusMessageAdapter.runCumulusTask(
-    updateGranulesCmrMetadataFileLinks,
+    updateGranulesCmrMetadata,
     event, context
   );
 }
 
 exports.handler = handler;
-exports.updateGranulesCmrMetadataFileLinks = updateGranulesCmrMetadataFileLinks;
+exports.updateGranulesCmrMetadata = updateGranulesCmrMetadata;
 exports.updateCmrFileInfo = updateCmrFileInfo;

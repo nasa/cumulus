@@ -12,7 +12,9 @@
           "task_config": {
             "provider": "{$.meta.provider}",
             "bucket": "{$.meta.buckets.internal.name}",
-            "stack": "{$.meta.stack}"
+            "stack": "{$.meta.stack}",
+            "uniquifyGranuleId": "{$.meta.collection.meta.uniquifyGranuleId}",
+            "hashLength": "{$.meta.collection.meta.hashLength}"
           }
         }
       },

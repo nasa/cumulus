@@ -425,8 +425,11 @@ describe('The Granules API', () => {
 
       const replacementGranule = {
         granuleId: putReplaceGranule.granuleId,
+        producerGranuleId: putReplaceGranule.producerGranuleId,
         collectionId,
         status: 'failed',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       };
       const replaceResponse = await replaceGranule({
         prefix,
@@ -446,8 +449,6 @@ describe('The Granules API', () => {
         error: {},
         published: false,
         timestamp: searchResults.timestamp,
-        updatedAt: searchResults.updatedAt,
-        createdAt: searchResults.createdAt,
       };
 
       expect(searchResults).toEqual(replacementGranuleWithDefaultsFilled);
