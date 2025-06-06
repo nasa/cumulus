@@ -15,7 +15,7 @@
       "excludedFileExtensions": [".met"]
     },
     "s3MultipartChunksizeMb": 16,
-    "uniquifyGranuleId": false
+    "uniquifyGranuleId": true
   },
   "files": [
     {
