@@ -80,6 +80,29 @@ test('files-to-granules matches granules using producerGranuleId if configured',
   t.deepEqual(output, expectedOutput);
 });
 
+test('files-to-granules matches granules using producerGranuleId if configured with "true"', async (t) => {
+  const event = t.context.payload;
+
+  // Make the payload granuleId unique
+  const granuleDateString = '2017201090724';
+  const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
+  event.config.inputGranules[0].granuleId = event.config.inputGranules[0].granuleId
+    .replace(granuleDateString, granuleIdReplacement);
+
+  event.config.matchFilesWithProducerGranuleId = 'true';
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+  const expectedOutput = t.context.output;
+  // Make the expected output granuleId unique
+  expectedOutput.granules[0].granuleId = expectedOutput.granules[0].granuleId
+    .replace(granuleDateString, granuleIdReplacement);
+  const output = await filesToGranules(event);
+  await validateOutput(t, output);
+
+  t.deepEqual(output, expectedOutput);
+});
+
 test('files-to-granules throws error if configured to use ID that does not exist', async (t) => {
   const event = t.context.payload;
 
@@ -90,7 +113,7 @@ test('files-to-granules throws error if configured to use ID that does not exist
     .replace(granuleDateString, granuleIdReplacement);
 
   event.config.inputGranules[0].producerGranuleId = '';
-  event.config.matchFilesWithProducerGranuleId = 'true';
+  event.config.matchFilesWithProducerGranuleId = true;
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
