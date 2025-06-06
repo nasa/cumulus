@@ -122,7 +122,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
   beforeAll(async () => {
     testConfig = await loadConfig();
-    const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger');
+    const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTriggerUnique');
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
     ruleSuffix = replace(testSuffix, /-/g, '_');
