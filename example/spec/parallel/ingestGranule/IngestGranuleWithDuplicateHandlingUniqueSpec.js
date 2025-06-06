@@ -57,7 +57,7 @@ function failOnSetupError(setupErrors) {
 describe('The Ingest Granules workflow with duplicates in the payload and uniquification enabled', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranuleWithDuplicate.input.payload.json';
   const providersDir = './data/providers/s3/';
-  const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest_unique';
   const collectionDupeHandling = 'error';
 
   let beforeAllError;
@@ -193,7 +193,6 @@ describe('The Ingest Granules workflow with duplicates in the payload and uniqui
         inputPayload,
         {
           distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
-          uniquifyGranuleId: true,
         }
       );
     } catch (error) {

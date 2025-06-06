@@ -7,7 +7,7 @@
         {
           "Next": "AddUniqueGranuleId",
           "BooleanEquals": true,
-          "Variable": "$.meta.uniquifyGranuleId"
+          "Variable": "$meta.collection.meta.uniquifyGranuleId"
         }
       ],
       "Default": "SyncGranule",
