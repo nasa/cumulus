@@ -55,9 +55,9 @@ resource "aws_security_group_rule" "rds_security_group_allow_postgres" {
   self              = true
 }
 
-resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
-  name   = "${var.prefix}-cluster-parameter-group-v13"
-  family = var.parameter_group_family_v13
+resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v17" {
+  name   = "${var.prefix}-cluster-parameter-group-v17"
+  family = var.parameter_group_family_v17
 
   dynamic "parameter" {
     for_each = var.db_parameters
@@ -70,7 +70,7 @@ resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
 }
 
 resource "aws_rds_cluster" "cumulus" {
-  depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group_v13]
+  depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group_v17]
   cluster_identifier      = var.cluster_identifier
   engine_mode             = "provisioned"
   engine                  = "aurora-postgresql"
@@ -83,7 +83,7 @@ resource "aws_rds_cluster" "cumulus" {
   db_subnet_group_name    = aws_db_subnet_group.default.id
   apply_immediately       = var.apply_immediately
   storage_encrypted       = true
-  
+
   serverlessv2_scaling_configuration {
     max_capacity = var.max_capacity
     min_capacity = var.min_capacity
@@ -94,7 +94,7 @@ resource "aws_rds_cluster" "cumulus" {
   tags                            = var.tags
   final_snapshot_identifier       = "${var.cluster_identifier}-final-snapshot"
   snapshot_identifier             = var.snapshot_identifier
-  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.rds_cluster_group_v13.id
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.rds_cluster_group_v17.id
 
   lifecycle {
     ignore_changes = [engine_version]
