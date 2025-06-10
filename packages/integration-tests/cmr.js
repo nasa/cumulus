@@ -189,7 +189,6 @@ function generateCmrXml(granule, collection, additionalUrls) {
   const xmlObject = sampleEcho10Granule;
   const oldGranuleId = xmlObject.Granule.GranuleUR;
   xmlObject.Granule.GranuleUR = granule.granuleId;
-  xmlObject.Granule.ProducerGranuleId = granule.producerGranuleId;
 
   xmlObject.Granule.Collection = {
     ShortName: collection.name,
@@ -362,7 +361,6 @@ async function generateAndStoreCmrUmmJson(
   const versionString = metadataFormatToVersion(cmrMetadataFormat);
   const jsonObject = sampleUmmGranule;
   jsonObject.GranuleUR = granule.granuleId;
-  jsonObject.ProducerGranuleId = granule.producerGranuleId;
 
   jsonObject.CollectionReference = {
     ShortName: collection.name,
