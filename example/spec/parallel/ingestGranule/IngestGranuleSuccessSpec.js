@@ -1408,7 +1408,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(definition.Comment).toEqual('Ingest Granule');
 
         // definition has all the states' information
-        expect(Object.keys(definition.States).length).toBe(12);
+        expect(Object.keys(definition.States).length).toBe(14);
       });
 
       it('returns the inputs, outputs, timing, and status information for each executed step', () => {
