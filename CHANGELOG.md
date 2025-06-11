@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4078**
+  - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
 - **CUMULUS-4085**
   - Added config option for files-to-granules task to use `producerGranuleId` when mapping files to their granules.
 - **CUMULUS-4059**

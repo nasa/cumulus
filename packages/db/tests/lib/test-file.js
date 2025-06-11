@@ -10,6 +10,7 @@ const {
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
   getFilesAndGranuleInfoQuery,
+  getGranuleIdAndCollectionIdFromFile,
   migrationDir,
   fakeProviderRecordFactory,
   ProviderPgModel,
@@ -57,6 +58,54 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await destroyLocalTestDb(t.context);
+});
+
+test('getGranuleIdAndCollectionIdFromFile returns expected values', async (t) => {
+  const { collectionCumulusId, filePgModel, knex } = t.context;
+
+  const testGranule1 = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const [pgGranule1] = await t.context.granulePgModel.create(
+    t.context.knex,
+    testGranule1
+  );
+  const granuleCumulusId1 = pgGranule1.cumulus_id;
+
+  const testGranule2 = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const [pgGranule2] = await t.context.granulePgModel.create(
+    t.context.knex,
+    testGranule2
+  );
+  const granuleCumulusId2 = pgGranule2.cumulus_id;
+
+  const bucket = randomBucketName();
+  const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
+  await filePgModel.create(knex, {
+    bucket,
+    key: firstKey,
+    granule_cumulus_id: granuleCumulusId1,
+  });
+  const secondKey = `b_${cryptoRandomString({ length: 10 })}`;
+  await filePgModel.create(knex, {
+    bucket,
+    key: secondKey,
+    granule_cumulus_id: granuleCumulusId2,
+  });
+
+  const results = await getGranuleIdAndCollectionIdFromFile({
+    knex,
+    bucket,
+    key: firstKey,
+  });
+  t.is(results[0].granule_id, testGranule1.granule_id);
+  t.is(
+    constructCollectionId(results[0].collection_name, results[0].collection_version),
+    constructCollectionId(t.context.collections[0].name, t.context.collections[0].version)
+  );
+  t.is(results.length, 1);
 });
 
 test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
