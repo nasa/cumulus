@@ -95,17 +95,16 @@ test('getGranuleIdAndCollectionIdFromFile returns expected values', async (t) =>
     granule_cumulus_id: granuleCumulusId2,
   });
 
-  const results = await getGranuleIdAndCollectionIdFromFile({
+  const result = await getGranuleIdAndCollectionIdFromFile({
     knex,
     bucket,
     key: firstKey,
   });
-  t.is(results[0].granule_id, testGranule1.granule_id);
+  t.is(result.granule_id, testGranule1.granule_id);
   t.is(
-    constructCollectionId(results[0].collection_name, results[0].collection_version),
+    constructCollectionId(result.collection_name, result.collection_version),
     constructCollectionId(t.context.collections[0].name, t.context.collections[0].version)
   );
-  t.is(results.length, 1);
 });
 
 test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {

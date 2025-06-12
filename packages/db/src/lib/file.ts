@@ -46,7 +46,8 @@ export const getGranuleIdAndCollectionIdFromFile = ({
       `${collectionsTable}.cumulus_id`
     )
     .where(`${filesTable}.bucket`, bucket)
-    .andWhere(`${filesTable}.key`, key);
+    .andWhere(`${filesTable}.key`, key)
+    .first();
 };
 
 /**
