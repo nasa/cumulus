@@ -42,6 +42,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "20.1.2",
+    "@cumulus/api-client": "20.1.2",
     "@cumulus/cmrjs": "20.1.2",
     "@cumulus/common": "20.1.2",
     "@cumulus/cumulus-message-adapter-js": "2.3.0",
