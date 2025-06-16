@@ -5,6 +5,9 @@ const log = new Logger({ sender: '@cumulus/db/field-mapping' });
 
 // functions to map the api search string field name and value to postgres db field
 const granuleMapping: { [key: string]: Function } = {
+  archived: (value?: boolean) => ({
+    archived: value
+  }),
   beginningDateTime: (value?: string) => ({
     beginning_date_time: value,
   }),

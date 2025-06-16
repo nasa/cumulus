@@ -51,6 +51,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   pdr?: Pick<PostgresPdrRecord, 'name'>,
   providerPgRecord?: Pick<PostgresProviderRecord, 'name'>,
 }): ApiGranuleRecord => removeNilProperties({
+  archived: granulePgRecord.archived,
   beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
   cmrLink: granulePgRecord.cmr_link,
   collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
