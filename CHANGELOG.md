@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4106**
   - Fixed the release npm publish error by adding private property to `@cumulus/change-granule-collection-pg`
     and `@cumulus/change-granule-collection-s3` package.json.
+- **CUMULUS-4039**
+  - update api-client endpoints to allow slashes in provider name and collection name
 
 ## [v20.1.2] 2025-04-22
 
