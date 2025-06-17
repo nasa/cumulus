@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
@@ -9,7 +11,7 @@ const path = require('path');
 
 const S3 = require('@cumulus/aws-client/S3');
 
-const { InvalidArgument } = require('@cumulus/errors');
+const { InvalidArgument, ValidationError } = require('@cumulus/errors');
 
 const {
   handleDuplicateFile,
@@ -24,13 +26,23 @@ const {
   granulesToCmrFileObjects,
 } = require('@cumulus/cmrjs');
 
+const { getFileGranuleAndCollectionByBucketAndKey } = require('@cumulus/api-client/granules');
+
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { isFileExtensionMatched } = require('@cumulus/message/utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
 
 const MB = 1024 * 1024;
+
+/**
+ * @typedef {object} GranuleFileInfo
+ * @property {string} granuleId - The ID of the granule found for the file.
+ * @property {string | null | undefined} [collectionId] - The ID of the
+ * collection associated with the file.
+ */
 
 function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
   const duplicatesObject = {};
@@ -129,6 +141,65 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
   }));
   return updatedGranules;
 }
+/**
+ * Checks for cross-collection collisions for a given file.
+ *
+ * This function retrieves the granule and collection information associated
+ * with a file identified by its S3 {@linkcode params.bucket bucket} and
+ * {@linkcode params.key key}. If the file is already associated with a
+ * collection and that collection ID is different from the provided
+ * {@linkcode params.granuleCollectionId granuleCollectionId}, it throws an
+ * `InvalidArgument` error, indicating a cross-collection collision.
+ *
+ * For testing, `params.getFileGranuleAndCollectionByBucketAndKeyMethod` can be
+ * provided to simulate the response from
+ * `getFileGranuleAndCollectionByBucketAndKey` without making an actual API
+ * call. This allows for injecting a mock function to control test scenarios.
+ *
+ * @param {object} params - The parameters for the collision check.
+ * @param {string} params.bucket - The S3 bucket name where the file is located.
+ * @param {string} params.key - The S3 key (path) of the file.
+ * @param {string} params.granuleCollectionId - The ID of the collection that
+ * the granule is expected to belong to during the current operation (e.g., move
+ * or ingest).
+ * @param {function({bucket: string, key: string}): Promise<object>}
+ *   params.getFileGranuleAndCollectionByBucketAndKeyMethod
+ *   - Optional mock function to simulate the response from
+ *   getFileGranuleAndCollectionByBucketAndKey without making an actual API call.
+ * @returns {Promise<void>} A Promise that resolves if no cross-collection
+ * collision is detected, or rejects with an `InvalidArgument` error if a
+ * collision occurs.
+ * @throws {InvalidArgument} If the file exists and is associated with a
+ * different collection than `granuleCollectionId`.
+ */
+async function _checkCrossCollectionCollisions({
+  bucket,
+  key,
+  granuleCollectionId,
+  getFileGranuleAndCollectionByBucketAndKeyMethod = getFileGranuleAndCollectionByBucketAndKey,
+}) {
+  const apiResponse = await getFileGranuleAndCollectionByBucketAndKeyMethod({ bucket, key });
+  const { granuleId, collectionId } = JSON.parse(apiResponse.body);
+
+  const collectionsDiffer =
+    collectionId && granuleCollectionId && collectionId !== granuleCollectionId;
+
+  if (!granuleCollectionId) {
+    // If we can't determine the collection, we can't make the comparison
+    throw new ValidationError(`File ${key} in bucket ${bucket} is associated with granuleId ${granuleId}, ` +
+      'but its collection is unknown. Cannot determine if it is a cross-collection collision.');
+  }
+
+  if (collectionsDiffer) {
+    // If the file is in a different collection, or we can't make the comparison,
+    // we need to handle it as a cross-collection collision
+    throw new InvalidArgument(
+      `File already exists in bucket ${bucket} with key ${key} ` +
+      `for collection ${collectionId} and granuleId: ${granuleId}, ` +
+      `but is being moved for collection ${granuleCollectionId}.`
+    );
+  }
+}
 
 /**
  * Move file from source bucket to target location, and return the file moved.
@@ -142,13 +213,16 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
  * @param {number} s3MultipartChunksizeMb - S3 multipart upload chunk size in MB
  * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
  */
-async function moveFileRequest(
+async function moveFileRequest({
   file,
   sourceBucket,
   duplicateHandling,
   markDuplicates = true,
-  s3MultipartChunksizeMb
-) {
+  s3MultipartChunksizeMb,
+  checkCrossCollectionCollisions = true,
+  granuleCollectionId,
+  testOverrides = {},
+}) {
   const source = {
     Bucket: sourceBucket,
     Key: file.sourceKey,
@@ -170,8 +244,19 @@ async function moveFileRequest(
 
   let versionedFiles = [];
   if (s3ObjAlreadyExists) {
+    // If there is a collision, per IART-924 we need to check if it's a cross
+    // collection collision and fail in all cases if it is
+    if (checkCrossCollectionCollisions) {
+      await _checkCrossCollectionCollisions({
+        bucket: source.Bucket,
+        key: source.Key,
+        granuleCollectionId,
+        getFileGranuleAndCollectionByBucketAndKeyMethod:
+          testOverrides.getFileGranuleAndCollectionByBucketAndKeyMethod,
+      });
+    }
     if (markDuplicates) fileMoved.duplicate_found = true;
-    // returns renamed files for 'version', otherwise empty array
+    // Common logic for same collection collisions
     versionedFiles = await handleDuplicateFile({
       source,
       target,
@@ -209,23 +294,50 @@ async function moveFileRequest(
  * @param {number} s3MultipartChunksizeMb - S3 multipart upload chunk size in MB
  * @returns {Object} the object with updated granules
  */
-async function moveFilesForAllGranules(
+async function moveFilesForAllGranules({
+  configCollection,
   granulesObject,
   sourceBucket,
   duplicateHandling,
-  s3MultipartChunksizeMb
-) {
+  s3MultipartChunksizeMb,
+  checkCrossCollectionCollisions = true,
+  testOverrides = {},
+}) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
     const granule = granulesObject[granuleKey];
     const filesToMove = granule.files.filter((file) => !isCMRFile(file));
     const cmrFiles = granule.files.filter((file) => isCMRFile(file));
+
+    let granuleCollectionId; /** @type {string | undefined} */
+    if (granule.dataType && granule.version) {
+      granuleCollectionId = constructCollectionId(granule.dataType, granule.version);
+    } else if (configCollection.name && configCollection.version) {
+      granuleCollectionId = constructCollectionId(configCollection.name, configCollection.version);
+    }
     const filesMoved = await Promise.all(
       filesToMove.map((file) =>
-        moveFileRequest(file, sourceBucket, duplicateHandling, true, s3MultipartChunksizeMb))
+        moveFileRequest({
+          file,
+          sourceBucket,
+          duplicateHandling,
+          markDuplicates: true,
+          s3MultipartChunksizeMb,
+          checkCrossCollectionCollisions,
+          granuleCollectionId,
+          testOverrides,
+        }))
     );
     const cmrFilesMoved = await Promise.all(
       cmrFiles.map(
-        (file) => moveFileRequest(file, sourceBucket, 'replace', false)
+        (file) => moveFileRequest({
+          file,
+          sourceBucket,
+          duplicateHandling: 'replace',
+          markDuplicates: false,
+          checkCrossCollectionCollisions,
+          granuleCollectionId,
+          testOverrides,
+        })
       )
     );
     granule.files = flatten(filesMoved).concat(flatten(cmrFilesMoved));
@@ -258,6 +370,8 @@ async function moveGranules(event) {
   const bucketsConfig = new BucketsConfig(config.buckets);
 
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
+  const checkCrossCollectionCollisions = get(config, 'checkCrossCollectionCollisions', true);
+
   const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
     ? config.s3MultipartChunksizeMb : process.env.default_s3_multipart_chunksize_mb;
 
@@ -291,9 +405,15 @@ async function moveGranules(event) {
     );
 
     // Move files from staging location to final location
-    movedGranulesByGranuleId = await moveFilesForAllGranules(
-      granulesToMove, config.bucket, duplicateHandling, s3MultipartChunksizeMb
-    );
+    movedGranulesByGranuleId = await moveFilesForAllGranules({
+      configCollection: config.collection,
+      granulesObject: granulesToMove,
+      sourceBucket: config.bucket,
+      duplicateHandling,
+      s3MultipartChunksizeMb,
+      checkCrossCollectionCollisions,
+      testOverrides: get(event, 'testOverrides', {}),
+    });
   } else {
     movedGranulesByGranuleId = granulesByGranuleId;
   }
@@ -320,3 +440,4 @@ async function handler(event, context) {
 
 exports.handler = handler;
 exports.moveGranules = moveGranules;
+exports._checkCrossCollectionCollisions = _checkCrossCollectionCollisions;
