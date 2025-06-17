@@ -81,9 +81,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     where the original granule is updated to 'queued', but the reingest workflow
     creates a new granule, leaving the original granule stuck in 'queued'.
 - **CUMULUS-4082**
-  - Updated example deployment to deploy `cnmResponse` lambda with zip file
-    which utilizes `producerGranuleId`.
-  - Updated example deployment to deploy cnmResponse lambda version 3.1.0.
+  - Updated example deployment to deploy `cnmResponse` lambda version
+    3.1.0-alpha.2-SNAPSHOT which utilizes `producerGranuleId`.
+  - Updated example deployment to deploy `cnmToGranule` lambda version 2.1.0.
   - Added `FakeProcessing` task configuration `matchFilesWithProducerGranuleId`
     to determine if the generated cmr file names should match
     `granuleId` or `producerGranuleId`
