@@ -17,10 +17,12 @@ export interface PostgresExecution {
   updated_at?: Date | null,
   url?: string | null,
   workflow_name?: string | null,
+  archived?: boolean
 }
 
 export interface PostgresExecutionRecord extends PostgresExecution {
   created_at: Date,
   cumulus_id: number,
   updated_at: Date,
+  archived: boolean
 }

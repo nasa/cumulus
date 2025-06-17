@@ -207,6 +207,9 @@ const executionMapping : { [key: string]: Function } = {
       collectionVersion: version,
     };
   },
+  archived: (value?: boolean) => ({
+    archived: value
+  }),
 };
 
 const pdrMapping : { [key: string]: Function } = {

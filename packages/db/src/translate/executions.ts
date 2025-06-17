@@ -45,6 +45,7 @@ export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
     asyncOperationId,
     collectionId,
     parentArn,
+    archived: executionRecord.archived,
     createdAt: executionRecord.created_at.getTime(),
     updatedAt: executionRecord.updated_at.getTime(),
     timestamp: executionRecord.timestamp?.getTime(),
