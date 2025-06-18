@@ -282,7 +282,7 @@ module.exports.granule = {
     archived: {
       title: 'archived',
       type: 'boolean',
-      readonly: false
+      readonly: false,
     },
     granuleId: {
       title: 'Granule ID',
@@ -726,7 +726,7 @@ module.exports.execution = {
     archived: {
       title: 'archived',
       type: 'boolean',
-      readonly: false
+      readonly: false,
     },
     arn: {
       title: 'Execution arn (this field is unique)',

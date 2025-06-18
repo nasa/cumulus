@@ -8,7 +8,7 @@ export const up = async (knex: Knex): Promise<void> => {
         .defaultTo('false');
     });
   }
-  
+
   if (!(await knex.schema.hasColumn('executions', 'archived'))) {
     await knex.schema.table('executions', (table) => {
       table.boolean('archived')
@@ -23,7 +23,7 @@ export const up = async (knex: Knex): Promise<void> => {
 export const down = async (knex: Knex): Promise<void> => {
   await knex.raw('DROP INDEX CONCURRENTLY IF EXISTS granules_archived_index');
   await knex.raw('DROP INDEX CONCURRENTLY IF EXISTS executions_archived_index');
-  
+
   if (await knex.schema.hasColumn('granules', 'archived')) {
     await knex.schema.table('granules', (table) => {
       table.dropColumn('archived');

@@ -1035,23 +1035,23 @@ test('GranuleSearch with includeFullRecord true retrieves granules, files and ex
 test('GranuleSearch with archived: true pulls only archive granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    archived: true
+    archived: true,
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
   response.results.forEach((granuleRecord) => {
     t.is(granuleRecord.archived, true);
   });
-})
+});
 
 test('GranuleSearch with archived: false pulls only non-archive granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    archived: false
+    archived: false,
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
   response.results.forEach((granuleRecord) => {
     t.is(granuleRecord.archived, false);
   });
-})
+});
