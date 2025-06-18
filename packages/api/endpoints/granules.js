@@ -166,8 +166,12 @@ const getFileGranuleAndCollectionByBucketAndKey = async (req, res) => {
   });
 
   res.send({
-    granuleId: results.granule_id,
-    collectionId: constructCollectionId(results.collection_name, results.collection_version),
+    granuleId: results?.granule_id,
+    collectionId: results?.collection_name
+      ? constructCollectionId(
+        results?.collection_name,
+        results?.collection_version
+      ) : undefined,
   });
 };
 
