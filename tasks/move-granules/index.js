@@ -13,6 +13,8 @@ const S3 = require('@cumulus/aws-client/S3');
 
 const { InvalidArgument, ValidationError } = require('@cumulus/errors');
 
+const { getRequiredEnvVar } = require('@cumulus/common/env');
+
 const {
   handleDuplicateFile,
   unversionFilename,
@@ -178,7 +180,7 @@ async function _checkCrossCollectionCollisions({
   granuleCollectionId,
   getFileGranuleAndCollectionByBucketAndKeyMethod = getFileGranuleAndCollectionByBucketAndKey,
 }) {
-  const apiResponse = await getFileGranuleAndCollectionByBucketAndKeyMethod({ bucket, key });
+  const apiResponse = await getFileGranuleAndCollectionByBucketAndKeyMethod({ bucket, key, prefix: getRequiredEnvVar('stackName') });
   const { granuleId, collectionId } = JSON.parse(apiResponse.body);
 
   const collectionsDiffer =
@@ -193,12 +195,15 @@ async function _checkCrossCollectionCollisions({
   if (collectionsDiffer) {
     // If the file is in a different collection, or we can't make the comparison,
     // we need to handle it as a cross-collection collision
+    log.error('Cross granule collection detected');
+    log.error(`File ${key} in bucket ${bucket} is associated with granuleId ${granuleId}, collection ${collectionId}`);
     throw new InvalidArgument(
       `File already exists in bucket ${bucket} with key ${key} ` +
       `for collection ${collectionId} and granuleId: ${granuleId}, ` +
       `but is being moved for collection ${granuleCollectionId}.`
     );
   }
+  log.debug(`File ${key} in bucket ${bucket} is not associated with a granule in a different collection.  ${JSON.stringify(apiResponse)}`);
 }
 
 /**
@@ -248,11 +253,12 @@ async function moveFileRequest({
     // collection collision and fail in all cases if it is
     if (checkCrossCollectionCollisions) {
       await _checkCrossCollectionCollisions({
-        bucket: source.Bucket,
-        key: source.Key,
+        bucket: target.Bucket,
+        key: target.Key,
         granuleCollectionId,
         getFileGranuleAndCollectionByBucketAndKeyMethod:
-          testOverrides.getFileGranuleAndCollectionByBucketAndKeyMethod,
+          testOverrides.getFileGranuleAndCollectionByBucketAndKeyMethod
+          || getFileGranuleAndCollectionByBucketAndKey,
       });
     }
     if (markDuplicates) fileMoved.duplicate_found = true;
