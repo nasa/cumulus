@@ -144,6 +144,7 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
         { id: apiRecord.asyncOperationId }
       ) : (isNull(apiRecord.asyncOperationId) ? null : undefined)
     ),
+    archived: apiRecord.archived,
     status: apiRecord.status,
     arn: apiRecord.arn,
     duration: apiRecord.duration,

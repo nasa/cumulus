@@ -88,6 +88,7 @@ test.before(async (t) => {
       parent_cumulus_id: num > 25 ? num % 25 : undefined,
       cumulus_id: num,
       timestamp: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
+      archived: Boolean(num % 2),
     }))
   ));
   await t.context.executionPgModel.insert(
@@ -125,6 +126,7 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
     createdAt: new Date(2017, 11, 31).getTime(),
     updatedAt: new Date(2018, 0, 1).getTime(),
     timestamp: new Date(2018, 0, 1).getTime(),
+    archived: false,
   };
 
   const expectedResponse10 = {
@@ -139,6 +141,7 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
     createdAt: new Date(2021, 9, 9).getTime(),
     updatedAt: new Date(2021, 9, 10).getTime(),
     timestamp: new Date(2021, 9, 10).getTime(),
+    archived: true,
   };
   t.deepEqual(results.results[0], expectedResponse1);
   t.deepEqual(results.results[9], expectedResponse10);
@@ -442,6 +445,7 @@ test('ExecutionSearch supports parentArn term search', async (t) => {
     createdAt: new Date(2022, 10, 16).getTime(),
     updatedAt: new Date(2022, 10, 18).getTime(),
     timestamp: new Date(2022, 10, 18).getTime(),
+    archived: false,
   };
 
   t.is(response.meta.count, 1);
@@ -577,6 +581,7 @@ test('ExecutionSearch includeFullRecord', async (t) => {
     createdAt: new Date(2017, 11, 31).getTime(),
     updatedAt: new Date(2018, 0, 1).getTime(),
     timestamp: new Date(2018, 0, 1).getTime(),
+    archived: false,
   };
 
   const expectedResponse40 = {
@@ -595,6 +600,7 @@ test('ExecutionSearch includeFullRecord', async (t) => {
     createdAt: new Date(2022, 4, 10).getTime(),
     updatedAt: new Date(2022, 4, 12).getTime(),
     timestamp: new Date(2022, 4, 12).getTime(),
+    archived: false
   };
 
   t.deepEqual(results.results[0], expectedResponse1);
@@ -622,3 +628,27 @@ test('ExecutionSearch only returns count if countOnly is set to true', async (t)
   t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
   t.is(response.results?.length, 0);
 });
+
+test('ExecutionSearch with archived: true pulls only archive granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    archived: true
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  response.results.forEach((ExecutionRecord) => {
+    t.is(ExecutionRecord.archived, true);
+  });
+})
+
+test('ExecutionSearch with archived: false pulls only non-archive granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    archived: false
+  };
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  response.results.forEach((ExecutionRecord) => {
+    t.is(ExecutionRecord.archived, false);
+  });
+})

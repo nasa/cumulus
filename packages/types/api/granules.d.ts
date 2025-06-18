@@ -46,6 +46,7 @@ export type ApiGranuleRecord = {
   timestamp?: number
   timeToArchive?: number
   timeToPreprocess?: number
+  archived?: boolean
 } & PartialGranuleTemporalInfo & PartialGranuleProcessingInfo;
 
 export type ApiGranule = {
@@ -67,4 +68,5 @@ export type ApiGranule = {
   timestamp?: number | null
   timeToArchive?: number | null
   timeToPreprocess?: number | null
+  archived?: boolean
 } & PartialGranuleTemporalInfo & PartialGranuleProcessingInfo;

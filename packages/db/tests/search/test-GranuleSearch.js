@@ -151,6 +151,7 @@ test.before(async (t) => {
         ? Number(t.context.granuleSearchFields.timeToPreprocess) : undefined,
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
+      archived: Boolean(num % 2),
     }))
   );
 
@@ -1030,3 +1031,27 @@ test('GranuleSearch with includeFullRecord true retrieves granules, files and ex
     t.true('key' in granuleRecord.files[1]);
   });
 });
+
+test('GranuleSearch with archived: true pulls only archive granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    archived: true
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  response.results.forEach((granuleRecord) => {
+    t.is(granuleRecord.archived, true);
+  });
+})
+
+test('GranuleSearch with archived: false pulls only non-archive granules', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    archived: false
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  response.results.forEach((granuleRecord) => {
+    t.is(granuleRecord.archived, false);
+  });
+})

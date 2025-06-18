@@ -231,6 +231,7 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
   }
 
   const granuleRecord: PostgresGranule = {
+    archived: dynamoRecord.archived,
     granule_id: dynamoRecord.granuleId,
     status: dynamoRecord.status,
     collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
