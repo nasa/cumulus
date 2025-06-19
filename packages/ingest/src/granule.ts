@@ -219,7 +219,7 @@ export async function handleDuplicateFile(params: {
   }) => Promise<void>,
   ACL?: string,
   sourceBucket?: string,
-  fileRemotePath: string,
+  fileRemotePath?: string,
   s3Object?: { moveObject: Function },
   moveGranuleFileWithVersioningFunction?: Function,
 }): Promise<VersionedObject[]> {
@@ -243,6 +243,9 @@ export async function handleDuplicateFile(params: {
   } else if (duplicateHandling === 'version') {
     // sync to staging location if required
     if (syncFileFunction) {
+      if (!fileRemotePath) {
+        throw new Error('fileRemotePath must be defined if syncFileFunction is provided');
+      }
       await syncFileFunction({
         bucket: sourceBucket,
         destinationBucket: source.Bucket,
@@ -265,6 +268,9 @@ export async function handleDuplicateFile(params: {
     );
   } else if (duplicateHandling === 'replace') {
     if (syncFileFunction) {
+      if (!fileRemotePath) {
+        throw new Error('fileRemotePath must be defined if syncFileFunction is provided');
+      }
       // sync directly to target location
       await syncFileFunction({
         destinationBucket: target.Bucket,

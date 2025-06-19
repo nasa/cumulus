@@ -40,25 +40,114 @@ const log = require('@cumulus/common/log');
 const MB = 1024 * 1024;
 
 /**
- * @typedef {object} GranuleFileInfo
- * @property {string} granuleId - The ID of the granule found for the file.
- * @property {string | null | undefined} [collectionId] - The ID of the
- * collection associated with the file.
+ * @typedef {InstanceType<typeof BucketsConfig>} BucketsConfigType
+ * @typedef {import('@cumulus/types/api/granules').ApiGranule } ApiGranule
+ * @typedef {import('@cumulus/types/api/collections').PartialCollectionRecord } ApiCollection
+ * @typedef {import('@cumulus/types').DuplicateHandling } DuplicateHandling
+
  */
 
+/**
+ * @typedef {Object} MoveGranulesFile
+ * @property {string} bucket - S3 bucket name
+ * @property {string} key - S3 key
+ * @property {string} [sourceKey] - Original source key before move
+ * @property {string} [fileName] - File name
+ * @property {number} [size] - File size
+ * @property {string} [type] - File type
+ * @property {boolean} [duplicate_found] - Whether a duplicate was found
+ */
+
+/**
+ * @typedef {MoveGranulesFile & {sourceKey: string}} MoveGranulesFileWithSourceKey
+ */
+
+/**
+ * @typedef {Object} MoveGranulesGranule
+ * @property {string} granuleId - Granule ID
+ * @property {string} [producerGranuleId] - Producer granule ID
+ * @property {string} [dataType] - Data type
+ * @property {string} [version] - Version
+ * @property {Array<MoveGranulesFileWithSourceKey>} files - Granule files
+ */
+
+/**
+ * @typedef {Object} MoveGranulesGranuleOptionalFilesFields
+ * @property {string} granuleId - Granule ID
+ * @property {string} [producerGranuleId] - Producer granule ID
+ * @property {string} [dataType] - Data type
+ * @property {string} [version] - Version
+ * @property {Array<MoveGranulesFile>} [files] - Granule files
+ */
+
+/**
+ * @typedef {Object.<string, MoveGranulesGranule>} GranulesObject
+ * @typedef {Object.<string, MoveGranulesGranuleOptionalFilesFields>} GranulesOutputObject
+ */
+
+/**
+ * @typedef {Object} CollectionFile
+ * @property {string} regex - Regular expression to match file
+ * @property {string} bucket - Bucket to store file
+ * @property {string} [url_path] - URL path template
+ */
+
+/**
+ * @typedef {Object} Collection
+ * @property {string} [name] - Collection name
+ * @property {string} [version] - Collection version
+ * @property {string} [url_path] - Default URL path template
+ * @property {Array<CollectionFile>} files - File specifications
+ */
+
+/**
+ * @typedef {object} S3Object
+ * @property {string} Bucket - S3 bucket name
+ * @property {string} Key - S3 object key
+ * @property {number} [size] - Object size
+ */
+
+/**
+ * @typedef {object} CMRFile
+ * @property {string} key - File key/path
+ * @property {string} bucket - File bucket
+ * @property {string} granuleId - Associated granule ID
+ */
+
+/**
+ * @typedef {object} GranuleFileInfo
+ * @property {string} granuleId - The ID of the granule found for the file
+ * @property {string | null | undefined} [collectionId] - The ID of the
+ * collection associated with the file
+ */
+
+/**
+ * Builds a granule duplicates object from moved granules
+ *
+ * This function identifies files that were detected as duplicates during moving
+ * and builds an object mapping granule IDs to lists of duplicate files.
+ *
+ * @param {GranulesOutputObject} movedGranulesByGranuleId - Object mapping granule IDs
+ * to granule objects
+ * @returns {Object.<string, {files: MoveGranulesFile[]}>} Object
+ * containing duplicate file information
+ */
 function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
+  /** @type {Object.<string, {files: MoveGranulesFile[]}>} */
   const duplicatesObject = {};
   Object.keys(movedGranulesByGranuleId).forEach((k) => {
-    duplicatesObject[k] = {
-      files: movedGranulesByGranuleId[k].files.filter((file) => {
-        if (file.duplicate_found) {
-          // eslint-disable-next-line no-param-reassign
-          delete file.duplicate_found;
-          return true;
-        }
-        return false;
-      }),
-    };
+    if (movedGranulesByGranuleId[k].files) {
+      duplicatesObject[k] = {
+        files: movedGranulesByGranuleId[k].files.filter((file) => {
+          if (file.duplicate_found) {
+            // eslint-disable-next-line no-param-reassign
+            delete file.duplicate_found;
+            return true;
+          }
+          return false;
+        }),
+      };
+    }
   });
   return duplicatesObject;
 }
@@ -67,11 +156,14 @@ function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
  * Validates the file matched only one collection.file and has a valid bucket
  * config.
  *
- * @param {Array<Object>} match - list of matched collection.file.
- * @param {BucketsConfig} bucketsConfig - instance describing stack configuration.
- * @param {Object} fileName - the file name tested.
- * @param {Array<Object>} fileSpecs - array of collection file specifications objects.
- * @throws {InvalidArgument} - If match is invalid, throws an error.
+ * This function checks that a file name matches exactly one collection file pattern
+ * and that the specified bucket exists in the configuration.
+ *
+ * @param {CollectionFile[]} match - list of matched collection.file
+ * @param {BucketsConfigType} bucketsConfig - instance describing stack configuration
+ * @param {string} fileName - the file name tested
+ * @param {CollectionFile[]} fileSpecs - array of collection file specifications objects
+ * @throws {InvalidArgument} - If match is invalid, throws an error
  */
 function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
   const collectionRegexes = fileSpecs.map((spec) => spec.regex);
@@ -90,17 +182,21 @@ function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
 /**
  * Update the granule metadata where each granule has its files replaced with
  * file objects that contain the desired final locations based on the
- * `collection.files.regexp`.  CMR metadata files have a file type added.
+ * `collection.files.regexp`. CMR metadata files have a file type added.
  *
- * @param {Object} granulesObject - an object of granules where the key is the granuleId
- * @param {Object} collection - configuration object defining a collection
- *                              of granules and their files
- * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
- * @param {BucketsConfig} bucketsConfig -  instance associated with the stack
- * @returns {Object} new granulesObject where each granules' files are updated with
- *                   the correct target buckets/paths/and s3uri filenames.
+ * This function calculates the final destinations for granule files and updates
+ * their metadata accordingly, applying URL templates and setting appropriate buckets.
+ *
+ * @param {GranulesObject} granulesObject - an object of granules where the key is the granuleId
+ * @param {Collection} collection - configuration object defining a collection of
+ * granules and their files
+ * @param {CMRFile[]} cmrFiles - array of objects that include CMR xmls uris and granuleIds
+ * @param {BucketsConfigType} bucketsConfig - instance associated with the stack
+ * @returns {Promise<GranulesObject>} new granulesObject where each granules' files are updated with
+ *                   the correct target buckets/paths/and s3uri filenames
  */
 async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucketsConfig) {
+  /** @type {GranulesObject} */
   const updatedGranules = {};
   const cmrFileNames = cmrFiles.map((f) => path.basename(f.key));
   const fileSpecs = collection.files;
@@ -143,36 +239,26 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
   }));
   return updatedGranules;
 }
+
 /**
  * Checks for cross-collection collisions for a given file.
  *
  * This function retrieves the granule and collection information associated
- * with a file identified by its S3 {@linkcode params.bucket bucket} and
- * {@linkcode params.key key}. If the file is already associated with a
+ * with a file identified by its S3 `bucket` and
+ * `key`. If the file is already associated with a
  * collection and that collection ID is different from the provided
  * {@linkcode params.granuleCollectionId granuleCollectionId}, it throws an
  * `InvalidArgument` error, indicating a cross-collection collision.
  *
- * For testing, `params.getFileGranuleAndCollectionByBucketAndKeyMethod` can be
- * provided to simulate the response from
- * `getFileGranuleAndCollectionByBucketAndKey` without making an actual API
- * call. This allows for injecting a mock function to control test scenarios.
- *
- * @param {object} params - The parameters for the collision check.
- * @param {string} params.bucket - The S3 bucket name where the file is located.
- * @param {string} params.key - The S3 key (path) of the file.
- * @param {string} params.granuleCollectionId - The ID of the collection that
- * the granule is expected to belong to during the current operation (e.g., move
- * or ingest).
- * @param {function({bucket: string, key: string}): Promise<object>}
- *   params.getFileGranuleAndCollectionByBucketAndKeyMethod
- *   - Optional mock function to simulate the response from
- *   getFileGranuleAndCollectionByBucketAndKey without making an actual API call.
- * @returns {Promise<void>} A Promise that resolves if no cross-collection
- * collision is detected, or rejects with an `InvalidArgument` error if a
- * collision occurs.
- * @throws {InvalidArgument} If the file exists and is associated with a
- * different collection than `granuleCollectionId`.
+ * @param {object} params - The parameters for the collision check
+ * @param {string} params.bucket - The S3 bucket name where the file is located
+ * @param {string} params.key - The S3 key (path) of the file
+ * @param {string} params.granuleCollectionId - The ID of the collection that the granule belongs to
+ * @param {Function} [params.getFileGranuleAndCollectionByBucketAndKeyMethod] - Direct
+ * injection test mock for database method to get file granule and collection
+ * @returns {Promise<void>} A Promise that resolves if no collision is detected
+ * @throws {ValidationError|InvalidArgument} -- throws if validation fails
+ *  or a collision is detected
  */
 async function _checkCrossCollectionCollisions({
   bucket,
@@ -210,13 +296,25 @@ async function _checkCrossCollectionCollisions({
  * Move file from source bucket to target location, and return the file moved.
  * In case of 'version' duplicateHandling, also return the renamed files.
  *
- * @param {Object} file - granule file to be moved
- * @param {string} sourceBucket - source bucket location of files
- * @param {string} duplicateHandling - how to handle duplicate files
- * @param {boolean} markDuplicates - Override to handle cmr metadata files that
- *                                   shouldn't be marked as duplicates
- * @param {number} s3MultipartChunksizeMb - S3 multipart upload chunk size in MB
- * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
+ * This function moves a single granule file from its source location to its target location,
+ * handling duplicate files according to the specified duplicate handling strategy.
+ *
+ * @param {object} params - Move file parameters
+ * @param {MoveGranulesFileWithSourceKey} params.file - granule file to be moved
+ * @param {string} params.sourceBucket - source bucket location of files
+ * @param {DuplicateHandling} params.duplicateHandling - how to handle duplicate files
+ * @param {string} params.granuleCollectionId - Collection ID of the granule
+ * @param {boolean} [params.markDuplicates=true] - Override to handle cmr
+ * metadata files that shouldn't be marked as duplicates
+ * @param {number} [params.s3MultipartChunksizeMb] - S3 multipart upload chunk
+ * size in MB
+ * @param {boolean} [params.checkCrossCollectionCollisions=true] - Whether to
+ * check for cross-collection collisions
+ * @param {object} [params.testOverrides={}] - Test overrides
+ * @param {function} [params.testOverrides.getFileGranuleAndCollectionByBucketAndKeyMethod] -
+ * Method to get file details
+ * @returns {Promise<MoveGranulesFile[]>} returns the file moved and the renamed
+ * existing duplicates if any
  */
 async function moveFileRequest({
   file,
@@ -240,7 +338,10 @@ async function moveFileRequest({
   // Due to S3's eventual consistency model, we need to make sure that the
   // source object is available in S3.
   await S3.waitForObjectToExist({ bucket: source.Bucket, key: source.Key });
+
   // the file moved to destination
+
+  /** @type {MoveGranulesFile} */
   const fileMoved = { ...file };
   delete fileMoved.sourceKey;
 
@@ -291,14 +392,90 @@ async function moveFileRequest({
 }
 
 /**
+ * Determines the collection ID for a granule based on granule metadata or config
+ *
+ * This function tries to construct a collection ID from either the granule's metadata
+ * or from the collection configuration.
+ *
+ * @param {MoveGranulesGranule} granule - The granule object
+ * @param {Collection} configCollection - The collection configuration
+ * @returns {string|undefined} The collection ID if available
+ */
+function determineGranuleCollectionId(granule, configCollection) {
+  if (granule.dataType && granule.version) {
+    return constructCollectionId(granule.dataType, granule.version);
+  }
+
+  if (configCollection.name && configCollection.version) {
+    return constructCollectionId(configCollection.name, configCollection.version);
+  }
+
+  return undefined;
+}
+
+/**
+ * Process and move a list of files with given parameters
+ *
+ * This function processes a list of files and moves them to their target locations,
+ * handling CMR files differently from regular files.
+ *
+ * @param {MoveGranulesFileWithSourceKey[]} files - List of files to move
+ * @param {object} moveParams - Common parameters for moving files
+ * @param {string} moveParams.sourceBucket - Source bucket location
+ * @param {DuplicateHandling} [moveParams.duplicateHandling] - How to handle duplicates
+ * @param {number} [moveParams.s3MultipartChunksizeMb] - Chunk size for multipart uploads
+ * @param {boolean} [moveParams.checkCrossCollectionCollisions] - Whether to check
+ * cross-collection collisions
+ * @param {string} moveParams.granuleCollectionId - Collection ID
+ * @param {object} [moveParams.testOverrides] - Test overrides
+ * @param {boolean} [isCmrFile=false] - Whether these are CMR files
+ * @returns {Promise<MoveGranulesFile[][]>} Moved files results
+ * @throws {Error} If duplicateHandling is not provided for non-CMR files
+ */
+function processAndMoveFiles(files, moveParams, isCmrFile = false) {
+  /** @type {DuplicateHandling} */
+  let duplicateHandling;
+  if (isCmrFile) {
+    duplicateHandling = 'replace';
+  } else {
+    if (!moveParams.duplicateHandling) {
+      throw new Error('duplicateHandling is required when processing non-CMR files');
+    }
+    duplicateHandling = moveParams.duplicateHandling;
+  }
+
+  if (!isCmrFile && !moveParams.duplicateHandling) {
+    throw new Error('duplicateHandling is required when processing non-CMR files');
+  }
+
+  return Promise.all(
+    files.map((file) =>
+      moveFileRequest({
+        ...moveParams,
+        file,
+        duplicateHandling,
+        markDuplicates: !isCmrFile,
+      }))
+  );
+}
+
+/**
  * Move all files in a collection of granules from staging location to final location,
  * and update granule files to include renamed files if any.
  *
- * @param {Object} granulesObject - an object of the granules where the key is the granuleId
- * @param {string} sourceBucket - source bucket location of files
- * @param {string} duplicateHandling - how to handle duplicate files
- * @param {number} s3MultipartChunksizeMb - S3 multipart upload chunk size in MB
- * @returns {Object} the object with updated granules
+ * This function processes all the granules and moves their files to the target locations,
+ * handling CMR files and regular files appropriately and updating granule metadata.
+ *
+ * @param {object} params - Move parameters
+ * @param {Collection} params.configCollection - Collection configuration
+ * @param {GranulesObject} params.granulesObject - an object of granules where key is granuleId
+ * @param {string} params.sourceBucket - source bucket location of files
+ * @param {DuplicateHandling} params.duplicateHandling - how to handle duplicate files
+ * @param {number} [params.s3MultipartChunksizeMb] - S3 multipart upload chunk size in MB
+ * @param {boolean} [params.checkCrossCollectionCollisions=true] - Whether to check
+ * for cross-collection collisions
+ * @param {object} [params.testOverrides={}] - Test overrides
+ * @returns {Promise<GranulesOutputObject>} the object with updated granules
  */
 async function moveFilesForAllGranules({
   configCollection,
@@ -310,65 +487,64 @@ async function moveFilesForAllGranules({
   testOverrides = {},
 }) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
-    const granule = granulesObject[granuleKey];
-    const filesToMove = granule.files.filter((file) => !isCMRFile(file));
-    const cmrFiles = granule.files.filter((file) => isCMRFile(file));
+    const filesToMove = granulesObject[granuleKey].files.filter((file) => !isCMRFile(file));
+    const cmrFiles = granulesObject[granuleKey].files.filter((file) => isCMRFile(file));
 
-    let granuleCollectionId; /** @type {string | undefined} */
-    if (granule.dataType && granule.version) {
-      granuleCollectionId = constructCollectionId(granule.dataType, granule.version);
-    } else if (configCollection.name && configCollection.version) {
-      granuleCollectionId = constructCollectionId(configCollection.name, configCollection.version);
+    const granuleCollectionId = determineGranuleCollectionId(
+      granulesObject[granuleKey],
+      configCollection
+    );
+    if (!granuleCollectionId) {
+      throw new ValidationError(`Unable to determine collection ID for granule ${granuleKey}`);
     }
-    const filesMoved = await Promise.all(
-      filesToMove.map((file) =>
-        moveFileRequest({
-          file,
-          sourceBucket,
-          duplicateHandling,
-          markDuplicates: true,
-          s3MultipartChunksizeMb,
-          checkCrossCollectionCollisions,
-          granuleCollectionId,
-          testOverrides,
-        }))
-    );
-    const cmrFilesMoved = await Promise.all(
-      cmrFiles.map(
-        (file) => moveFileRequest({
-          file,
-          sourceBucket,
-          duplicateHandling: 'replace',
-          markDuplicates: false,
-          checkCrossCollectionCollisions,
-          granuleCollectionId,
-          testOverrides,
-        })
-      )
-    );
+
+    /** @type {MoveGranulesGranuleOptionalFilesFields} */
+    const granule = granulesObject[granuleKey];
+    const commonMoveParams = {
+      sourceBucket,
+      checkCrossCollectionCollisions,
+      granuleCollectionId,
+      testOverrides,
+    };
+
+    const filesMoved = await processAndMoveFiles(filesToMove, {
+      ...commonMoveParams,
+      duplicateHandling,
+      s3MultipartChunksizeMb,
+    });
+
+    const cmrFilesMoved = await processAndMoveFiles(cmrFiles, commonMoveParams, true);
+
     granule.files = flatten(filesMoved).concat(flatten(cmrFilesMoved));
   });
 
   await Promise.all(moveFileRequests);
-  return granulesObject;
+  return /** @type {GranulesOutputObject} */ granulesObject;
 }
 
 /**
  * Move Granule files to final location.
- * See the schemas directory for detailed input and output schemas.
  *
- * @param {Object} event - Lambda function payload
- * @param {Object} event.config - the config object
+ * This function is the main entry point for the moveGranules task. It takes granules
+ * from the input, updates their metadata based on collection configuration, and
+ * moves their files to the target locations.
+ *
+ * @param {object} event - Lambda function payload
+ * @param {object} event.config - the config object
  * @param {string} event.config.bucket - AWS S3 bucket that contains the granule files
- * @param {Object} event.config.buckets - Buckets config
+ * @param {object} event.config.buckets - Buckets config
  * @param {string} event.config.distribution_endpoint - distribution endpoint for the api
- * @param {Object} event.config.collection - collection configuration
- *                     https://nasa.github.io/cumulus/docs/data-cookbooks/setup#collections
+ * @param {Collection} event.config.collection - collection configuration
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
- *                                 from staging to final bucket. Mostly useful for testing.
- * @param {Object} event.input - a granules object containing an array of granules
- *
- * @returns {Promise} returns the promise of an updated event object
+ * @param {number} [event.config.s3MultipartChunksizeMb] - S3 multipart upload chunk size in MB
+ * @param {boolean} [event.config.checkCrossCollectionCollisions=true] - Whether to check for
+ * cross-collection collisions
+ * @param {object} event.input - a granules object containing an array of granules
+ * @param {MoveGranulesGranule[]} event.input.granules - Array of granule objects
+ * @param {object} [event.testOverrides] - Test overrides
+ * @returns {Promise<{granuleDuplicates: Record<string, {files: MoveGranulesFile[]}>,
+ * granules: MoveGranulesGranuleOptionalFilesFields[]}>}
+ * Returns updated event object with moved granules and duplicate information
  */
 async function moveGranules(event) {
   // We have to post the meta-xml file of all output granules
@@ -416,7 +592,7 @@ async function moveGranules(event) {
       granulesObject: granulesToMove,
       sourceBucket: config.bucket,
       duplicateHandling,
-      s3MultipartChunksizeMb,
+      s3MultipartChunksizeMb: Number(s3MultipartChunksizeMb),
       checkCrossCollectionCollisions,
       testOverrides: get(event, 'testOverrides', {}),
     });
@@ -435,10 +611,12 @@ async function moveGranules(event) {
 /**
  * Lambda handler
  *
- * @param {Object} event      - a Cumulus Message
- * @param {Object} context    - an AWS Lambda context
- * @returns {Promise<Object>} - Returns output from task.
- *                              See schemas/output.json for detailed output schema
+ * This is the Lambda handler function that uses the Cumulus Message Adapter
+ * to run the moveGranules task.
+ *
+ * @param {object} event - a Cumulus Message
+ * @param {object} context - an AWS Lambda context
+ * @returns {Promise<object>} - Returns output from task.
  */
 async function handler(event, context) {
   return await cumulusMessageAdapter.runCumulusTask(moveGranules, event, context);
