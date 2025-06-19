@@ -75,10 +75,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     to granuleId or the `producerGranuleID` set on the granule.
   - Updates `@cumulus/tasks/sync-granule/GranuleFetcher` to allow and pass through an
     incoming `granule.producerGranuleId`
+- **CUMULUS-4077**
+  - Updated `@cumulus/api/lib/ingest.reingestGranule` to only update the original granule
+    to 'queued' if the original payload contains the granule. This avoids a situation
+    where the original granule is updated to 'queued', but the reingest workflow
+    creates a new granule, leaving the original granule stuck in 'queued'.
 - **CUMULUS-4082**
-  - Updated example deployment to deploy `cnmResponse` lambda with zip file
-    which utilizes `producerGranuleId`.
-  - Updated example deployment to deploy cnmResponse lambda version 3.1.0.
+  - Updated example deployment to deploy `cnmResponse` lambda version
+    3.1.0-alpha.2-SNAPSHOT which utilizes `producerGranuleId`.
+  - Updated example deployment to deploy `cnmToGranule` lambda version 2.1.0.
   - Added `FakeProcessing` task configuration `matchFilesWithProducerGranuleId`
     to determine if the generated cmr file names should match
     `granuleId` or `producerGranuleId`
