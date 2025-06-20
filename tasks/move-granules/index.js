@@ -77,7 +77,7 @@ const MB = 1024 * 1024;
  * @property {string} [producerGranuleId] - Producer granule ID
  * @property {string} [dataType] - Data type
  * @property {string} [version] - Version
- * @property {Array<MoveGranulesFile>} [files] - Granule files
+ * @property {Array<MoveGranulesFile>} files - Granule files
  */
 
 /**
@@ -136,18 +136,16 @@ function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
   /** @type {Object.<string, {files: MoveGranulesFile[]}>} */
   const duplicatesObject = {};
   Object.keys(movedGranulesByGranuleId).forEach((k) => {
-    if (movedGranulesByGranuleId[k].files) {
-      duplicatesObject[k] = {
-        files: movedGranulesByGranuleId[k].files.filter((file) => {
-          if (file.duplicate_found) {
-            // eslint-disable-next-line no-param-reassign
-            delete file.duplicate_found;
-            return true;
-          }
-          return false;
-        }),
-      };
-    }
+    duplicatesObject[k] = {
+      files: movedGranulesByGranuleId[k].files.filter((file) => {
+        if (file.duplicate_found) {
+          // eslint-disable-next-line no-param-reassign
+          delete file.duplicate_found;
+          return true;
+        }
+        return false;
+      }),
+    };
   });
   return duplicatesObject;
 }
