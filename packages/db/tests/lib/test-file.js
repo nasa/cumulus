@@ -107,6 +107,19 @@ test('getGranuleIdAndCollectionIdFromFile returns expected values', async (t) =>
   );
 });
 
+test('getGranuleIdAndCollectionIdFromFile returns undefined if no files match', async (t) => {
+  const { knex } = t.context;
+  const bucket = randomBucketName();
+  const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
+
+  const result = await getGranuleIdAndCollectionIdFromFile({
+    knex,
+    bucket,
+    key: firstKey,
+  });
+  t.is(result, undefined);
+});
+
 test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
   const { collectionCumulusId, filePgModel, knex } = t.context;
 
