@@ -493,7 +493,7 @@ export function generateUniqueGranuleId(
  * @param {Object} event.config - the config object
  * @param {Object} event.config.collection - collection object.
 
- * @returns {string} - duplicate handling directive.
+ * @returns {DuplicateHandling} - duplicate handling directive.
  */
 export function duplicateHandlingType(
   event: EventWithDuplicateHandling

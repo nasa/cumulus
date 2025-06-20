@@ -45,8 +45,8 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
  */
 
 /**
- * @typedef {object.<string, MoveGranulesGranule>} Granulesobject
- * @typedef {object.<string, MoveGranulesGranuleOptionalFilesFields>} GranulesOutputobject
+ * @typedef {Object.<string, MoveGranulesGranule>} GranulesObject
+ * @typedef {Object.<string, MoveGranulesGranuleOptionalFilesFields>} GranulesOutputObject
  */
 
 /**
@@ -61,21 +61,15 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
  * @property {string} [name] - Collection name
  * @property {string} [version] - Collection version
  * @property {string} [url_path] - Default URL path template
+ * @property {DuplicateHandling} [duplicateHandling] - Duplicate handling option
  * @property {Array<CollectionFile>} files - File specifications
  */
 
 /**
- * @typedef {object} S3object
+ * @typedef {object} S3Object
  * @property {string} Bucket - S3 bucket name
  * @property {string} Key - S3 object key
  * @property {number} [size] - object size
- */
-
-/**
- * @typedef {object} CMRFile
- * @property {string} key - File key/path
- * @property {string} bucket - File bucket
- * @property {string} granuleId - Associated granule ID
  */
 
 /**

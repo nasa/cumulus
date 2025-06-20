@@ -53,7 +53,7 @@ const log = require('@cumulus/common/log');
  * @typedef {import('./types').CollectionFile} CollectionFile
  * @typedef {import('./types').Collection} Collection
  * @typedef {import('./types').S3Object} S3Object
- * @typedef {import('./types').CMRFile} CMRFile
+ * @typedef {import('@cumulus/cmrjs/cmr-utils').CmrFile} CmrFile
  * @typedef {import('./types').GranuleFileInfo} GranuleFileInfo
  */
 
@@ -122,7 +122,7 @@ function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
  * @param {GranulesObject} granulesObject - an object of granules where the key is the granuleId
  * @param {Collection} collection - configuration object defining a collection of
  * granules and their files
- * @param {CMRFile[]} cmrFiles - array of objects that include CMR xmls uris and granuleIds
+ * @param {CmrFile[]} cmrFiles - array of objects that include CMR xmls uris and granuleIds
  * @param {BucketsConfigType} bucketsConfig - instance associated with the stack
  * @returns {Promise<GranulesObject>} new granulesObject where each granules' files are updated with
  *                   the correct target buckets/paths/and s3uri filenames
