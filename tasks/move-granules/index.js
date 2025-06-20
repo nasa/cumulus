@@ -241,7 +241,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
  * with a file identified by its S3 `bucket` and
  * `key`. If the file is already associated with a
  * collection and that collection ID is different from the provided
- * {@linkcode params.granuleCollectionId granuleCollectionId}, it throws an
+ * `granuleCollectionId it throws an
  * `InvalidArgument` error, indicating a cross-collection collision.
  *
  * @param {object} params - The parameters for the collision check
@@ -357,7 +357,7 @@ async function moveFileRequest({
       });
     }
     if (markDuplicates) fileMoved.duplicate_found = true;
-    // Common logic for same collection collisions
+
     versionedFiles = await handleDuplicateFile({
       source,
       target,
@@ -469,7 +469,7 @@ function processAndMoveFiles(files, moveParams, isCmrFile = false) {
  * @param {boolean} [params.checkCrossCollectionCollisions=true] - Whether to check
  * for cross-collection collisions
  * @param {object} [params.testOverrides={}] - Test overrides
- * @returns {Promise<GranulesOutputObject>} the object with updated granules
+ * @returns {Promise<GranulesObject>} the object with updated granules
  */
 async function moveFilesForAllGranules({
   configCollection,
@@ -513,7 +513,7 @@ async function moveFilesForAllGranules({
   });
 
   await Promise.all(moveFileRequests);
-  return /** @type {GranulesOutputObject} */ granulesObject;
+  return granulesObject;
 }
 
 /**
@@ -570,6 +570,7 @@ async function moveGranules(event) {
   const cmrFiles = granulesToCmrFileObjects(granulesInput, filterFunc);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 
+  /** @type {GranulesOutputObject} */
   let movedGranulesByGranuleId;
 
   // allows us to disable moving the files

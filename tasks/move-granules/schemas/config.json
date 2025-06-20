@@ -41,7 +41,8 @@
       "type": "object",
       "required": [
         "files",
-        "name"
+        "name",
+        "collection"
       ],
       "properties": {
         "name": { "type": "string" },
