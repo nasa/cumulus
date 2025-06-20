@@ -178,11 +178,7 @@ function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
 }
 
 /**
- * Update the granule metadata where each granule has its files replaced with
- * file objects that contain the desired final locations based on the
- * `collection.files.regexp`. CMR metadata files have a file type added.
- *
- * This function calculates the final destinations for granule files and updates
+ * This function determines the final destinations for granule files and updates
  * their metadata accordingly, applying URL templates and setting appropriate buckets.
  *
  * @param {GranulesObject} granulesObject - an object of granules where the key is the granuleId
