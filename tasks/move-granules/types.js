@@ -12,7 +12,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
  */
 
 /**
- * @typedef {Object} MoveGranulesFile
+ * @typedef {object} MoveGranulesFile
  * @property {string} bucket - S3 bucket name
  * @property {string} key - S3 key
  * @property {string} [sourceKey] - Original source key before move
@@ -27,7 +27,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
  */
 
 /**
- * @typedef {Object} MoveGranulesGranule
+ * @typedef {object} MoveGranulesGranule
  * @property {string} granuleId - Granule ID
  * @property {string} [producerGranuleId] - Producer granule ID
  * @property {string} [dataType] - Data type
@@ -36,7 +36,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
  */
 
 /**
- * @typedef {Object} MoveGranulesGranuleOptionalFilesFields
+ * @typedef {object} MoveGranulesGranuleOptionalFilesFields
  * @property {string} granuleId - Granule ID
  * @property {string} [producerGranuleId] - Producer granule ID
  * @property {string} [dataType] - Data type
@@ -45,19 +45,19 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
  */
 
 /**
- * @typedef {Object.<string, MoveGranulesGranule>} GranulesObject
- * @typedef {Object.<string, MoveGranulesGranuleOptionalFilesFields>} GranulesOutputObject
+ * @typedef {object.<string, MoveGranulesGranule>} Granulesobject
+ * @typedef {object.<string, MoveGranulesGranuleOptionalFilesFields>} GranulesOutputobject
  */
 
 /**
- * @typedef {Object} CollectionFile
+ * @typedef {object} CollectionFile
  * @property {string} regex - Regular expression to match file
  * @property {string} bucket - Bucket to store file
  * @property {string} [url_path] - URL path template
  */
 
 /**
- * @typedef {Object} Collection
+ * @typedef {object} Collection
  * @property {string} [name] - Collection name
  * @property {string} [version] - Collection version
  * @property {string} [url_path] - Default URL path template
@@ -65,10 +65,10 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
  */
 
 /**
- * @typedef {object} S3Object
+ * @typedef {object} S3object
  * @property {string} Bucket - S3 bucket name
  * @property {string} Key - S3 object key
- * @property {number} [size] - Object size
+ * @property {number} [size] - object size
  */
 
 /**
