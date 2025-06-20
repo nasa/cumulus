@@ -42,7 +42,7 @@
       "required": [
         "files",
         "name",
-        "collection"
+        "version"
       ],
       "properties": {
         "name": { "type": "string" },
