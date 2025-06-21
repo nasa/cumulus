@@ -67,8 +67,8 @@ const testWorkflow = 'CNMExampleWorkflow';
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the messageConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
-describe('The Cloud Notification Mechanism Kinesis workflow', () => {
-  const collectionsDir = './data/collections/L2_HR_PIXC-000/';
+describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleIds', () => {
+  const collectionsDir = './data/collections/L2_HR_PIXC-000-unique/';
   const maxWaitForExecutionSecs = 60 * 5;
   const maxWaitForSFExistSecs = 60 * 4;
   const providersDir = './data/providers/PODAAC_SWOT/';
@@ -79,8 +79,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let expectedSyncGranulesPayload;
   let expectedTranslatePayload;
   let fileData;
-  let filePrefix;
   let granuleId;
+  let producerGranuleId;
   let lambdaStep;
   let logEventSourceMapping;
   let record;
@@ -122,7 +122,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   beforeAll(async () => {
     testConfig = await loadConfig();
-    const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger');
+    const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTriggerUnique');
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
     ruleSuffix = replace(testSuffix, /-/g, '_');
@@ -144,7 +144,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     record.collection += testSuffix;
     record.product.name += testSuffix;
 
+    // granuleId will be uniquified
     granuleId = record.product.name;
+    producerGranuleId = record.product.name;
     recordIdentifier = randomString();
     record.identifier = recordIdentifier;
 
@@ -177,11 +179,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     };
 
     fileData = expectedTranslatePayload.granules[0].files[0];
-    filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000/${crypto.createHash('md5').update(record.product.name).digest('hex')}`;
 
     const fileDataWithFilename = {
       bucket: testConfig.buckets.private.name,
-      key: `${filePrefix}/${recordFile.name}`,
+      key: 'key_placeholder',
       fileName: recordFile.name,
       size: fileData.size,
       type: recordFile.type,
@@ -194,7 +195,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       granuleDuplicates: {},
       granules: [
         {
-          granuleId: record.product.name,
+          producerGranuleId: record.product.name,
           dataType: record.collection,
           version: '000',
           files: [fileDataWithFilename],
@@ -345,6 +346,28 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
     });
 
+    describe('the AddUniqueGranuleId Lambda', () => {
+      let lambdaOutput;
+      let granule;
+
+      beforeAll(async () => {
+        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'AddUniqueGranuleId');
+        granule = lambdaOutput.payload.granules[0];
+        // granuleId is uniquified
+        granuleId = granule.granuleId;
+        console.log(`AddUniqueGranuleId returns granuleId: ${granuleId}, producerGranuleId: ${granule.producerGranuleId}`);
+      });
+
+      it('outputs the granules object', () => {
+        expect(granule.producerGranuleId).toEqual(producerGranuleId);
+        expect(granule.granuleId).not.toEqual(producerGranuleId);
+        expect(granule.granuleId).toBeTruthy();
+        expect(granule.granuleId).toMatch(
+          new RegExp(`^${producerGranuleId}_[a-zA-Z0-9-]+$`)
+        );
+      });
+    });
+
     describe('the SyncGranule Lambda', () => {
       let lambdaOutput;
 
@@ -353,11 +376,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
 
       it('outputs the granules object', () => {
+        const filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000/${crypto.createHash('md5').update(granuleId).digest('hex')}`;
+        expectedSyncGranulesPayload.granules[0].files[0].key = `${filePrefix}/${recordFile.name}`;
         const updatedExpectedPayload = {
           ...expectedSyncGranulesPayload,
           granules: [
             {
               ...expectedSyncGranulesPayload.granules[0],
+              granuleId,
               sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
               createdAt: lambdaOutput.payload.granules[0].createdAt,
               provider: record.provider,
@@ -469,6 +495,28 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       expect(lambdaOutput.cause).toMatch(/.+Source file not found.+/);
     });
 
+    describe('the AddUniqueGranuleId Lambda', () => {
+      let lambdaOutput;
+      let granule;
+
+      beforeAll(async () => {
+        lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'AddUniqueGranuleId');
+        granule = lambdaOutput.payload.granules[0];
+        // granuleId is uniquified
+        granuleId = granule.granuleId;
+        console.log(`AddUniqueGranuleId returns granuleId: ${granuleId}, producerGranuleId: ${granule.producerGranuleId}`);
+      });
+
+      it('outputs the granules object', () => {
+        expect(granule.producerGranuleId).toEqual(producerGranuleId);
+        expect(granule.granuleId).not.toEqual(producerGranuleId);
+        expect(granule.granuleId).toBeTruthy();
+        expect(granule.granuleId).toMatch(
+          new RegExp(`^${producerGranuleId}_[a-zA-Z0-9-]+$`)
+        );
+      });
+    });
+
     describe('the CnmResponse Lambda', () => {
       let beforeAllFailed = false;
       let lambdaOutput;
@@ -481,7 +529,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
             getGranule,
             {
               prefix: testConfig.stackName,
-              granuleId: record.product.name,
+              granuleId,
               collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
             },
             {

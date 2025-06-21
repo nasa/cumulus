@@ -26,7 +26,7 @@
     },
     "hashLength": {
       "description": "If uniquify granules is set to true, sets the length of the generated granuleId hash",
-      "type": ["number", "null"],
+      "type": ["null", "number", "string"],
       "default": 8
     },
     "provider": {

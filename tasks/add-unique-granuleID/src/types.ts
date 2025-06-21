@@ -29,7 +29,7 @@ export type HandlerOutput = {
 };
 export type HandlerEvent = {
   config?: {
-    hashDepth?: string | number,
+    hashLength?: null | number | string,
   },
   input: HandlerInput,
 };

@@ -220,14 +220,21 @@ function generateCmrXml(granule, collection, additionalUrls) {
  * @param {Object} collection - collection object
  * @param {string} bucket - bucket to save the xml file to
  * @param {Array<string>} additionalUrls - URLs to convert to online resources
+ * @param {string} stagingDir - staging directory
+ * @param {boolean} matchFilesWithProducerGranuleId - When set to true, use the 'producerGranuleId'
+ * instead default behavior of using 'granuleId' when generating filenames.
  * @returns {Promise<Array<string>>} - Promise of a list of granule files including the created
  * CMR xml files
  */
-async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls, stagingDir = 'file-staging') {
+async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls, stagingDir = 'file-staging',
+  matchFilesWithProducerGranuleId = false) {
   const xml = generateCmrXml(granule, collection, additionalUrls);
   const granuleFiles = granule.files.map((f) => `s3://${f.bucket}/${f.key}`);
 
-  const fileKey = `${stagingDir}/${granule.granuleId}.cmr.xml`;
+  const fileNameBase = matchFilesWithProducerGranuleId
+    ? granule.producerGranuleId
+    : granule.granuleId;
+  const fileKey = `${stagingDir}/${fileNameBase}.cmr.xml`;
 
   const params = {
     Bucket: bucket,
@@ -375,6 +382,9 @@ async function getOnlineResources({ cmrMetadataFormat, cmrConceptId, cmrLink }) 
  * @param {string} bucket - bucket to save the xml file to
  * @param {Array<string>} additionalUrls - URLs to convert to related urls
  * @param {string} cmrMetadataFormat - CMR UMM-G version string <umm_json_v[x.y]>
+ * @param {string} stagingDir - staging directory
+ * @param {boolean} matchFilesWithProducerGranuleId - When set to true, use the 'producerGranuleId'
+ * instead default behavior of using 'granuleId' when generating filenames.
  * @returns {Promise<Array<string>>} - Promise of a list of granule files including the created
  * CMR files
  */
@@ -384,7 +394,8 @@ async function generateAndStoreCmrUmmJson(
   bucket,
   additionalUrls,
   cmrMetadataFormat,
-  stagingDir = 'file-staging'
+  stagingDir = 'file-staging',
+  matchFilesWithProducerGranuleId = false
 ) {
   const versionString = metadataFormatToVersion(cmrMetadataFormat);
   const jsonObject = sampleUmmGranule;
@@ -412,7 +423,10 @@ async function generateAndStoreCmrUmmJson(
     };
   }
 
-  const fileKey = `${stagingDir}/${granule.granuleId}.cmr.json`;
+  const fileNameBase = matchFilesWithProducerGranuleId
+    ? granule.producerGranuleId
+    : granule.granuleId;
+  const fileKey = `${stagingDir}/${fileNameBase}.cmr.json`;
 
   const params = {
     Bucket: bucket,
@@ -451,6 +465,7 @@ async function generateCmrFilesForGranules({
   cmrMetadataFormat,
   additionalUrls,
   stagingDir,
+  matchFilesWithProducerGranuleId = false,
 }) {
   let files;
 
@@ -465,7 +480,8 @@ async function generateCmrFilesForGranules({
           bucket,
           additionalUrls,
           cmrMetadataFormat,
-          stagingDir
+          stagingDir,
+          matchFilesWithProducerGranuleId
         ))
     );
   } else {
@@ -476,7 +492,8 @@ async function generateCmrFilesForGranules({
           collection,
           bucket,
           additionalUrls,
-          stagingDir
+          stagingDir,
+          matchFilesWithProducerGranuleId
         ))
     );
   }

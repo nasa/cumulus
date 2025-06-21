@@ -41,6 +41,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
 - **CUMULUS-4078**
   - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
+- **CUMULUS-4089**
+  - Add integration testing for duplicate granule workflows. This includes new specs and workflows in the `ingestGranule`, `discoverGranules`, `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
 - **CUMULUS-4085**
   - Added config option for files-to-granules task to use `producerGranuleId` when mapping files to their granules.
 - **CUMULUS-4059**
@@ -96,8 +98,47 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     to granuleId or the `producerGranuleID` set on the granule.
   - Updates `@cumulus/tasks/sync-granule/GranuleFetcher` to allow and pass through an
     incoming `granule.producerGranuleId`
+- **CUMULUS-4077**
+  - Updated `@cumulus/api/lib/ingest.reingestGranule` to only update the original granule
+    to 'queued' if the original payload contains the granule. This avoids a situation
+    where the original granule is updated to 'queued', but the reingest workflow
+    creates a new granule, leaving the original granule stuck in 'queued'.
+- **CUMULUS-4082**
+  - Updated example deployment to deploy `cnmResponse` lambda version
+    3.1.0-alpha.2-SNAPSHOT which utilizes `producerGranuleId`.
+  - Updated example deployment to deploy `cnmToGranule` lambda version 2.1.0.
+  - Added `FakeProcessing` task configuration `matchFilesWithProducerGranuleId`
+    to determine if the generated cmr file names should match
+    `granuleId` or `producerGranuleId`
+  - Updated `AddUniqueGranuleId` task configuration `hashLength` to accept
+    additional types and removed the use of `hashDepth`.
+  - Updated `FilesToGranules` task configuration
+    `matchFilesWithProducerGranuleId` to accept additional types.
+  - Updated `ParsePdr` task configuration `hashLength` to accept additional
+    types.
+  - Fixed `tf-modules/cumulus` `AddUniqueGranuleId` task output.
+  - Updated example deployment workflow `CNMExampleWorkflow` to uniquify
+    granuleIds based on collection configuration
+  - Added `KinesisTestTriggerWithUniqueGranuleIdsSpec.js` to the spec test to
+    demonstrate that the CNM ingest workflow ingests granules with unique
+    granuleIds and producerGranuleIds set, and that CnmResponse sends responses
+    using producerGranuleIds
 
 ## [Unreleased]
+
+### Added
+
+- **CUMULUS-3945**
+  - Upgrade Aurora Postgresql engine from 13.12 to 17.4
+- **CUMULUS-4020**
+  - Added sanitizeSensitive function to mitigate credential exposure in ElasticSearch client (metrics)
+  - Update BaseSearch functions to sanitize the errors
+
+### Fixed
+
+- **CUMULUS-4106**
+  - Fixed the release npm publish error by adding private property to `@cumulus/change-granule-collection-pg`
+    and `@cumulus/change-granule-collection-s3` package.json.
 
 ## [v20.1.2] 2025-04-22
 
