@@ -453,14 +453,13 @@ const _handleUpdateAction = async (
       );
     }
 
-    await updateGranuleStatusToQueuedMethod({ apiGranule, knex });
-
     await reingestHandler({
       apiGranule: {
         ...apiGranule,
         ...(targetExecution && { execution: targetExecution }),
       },
       queueUrl: process.env.backgroundQueueUrl,
+      updateGranuleStatusToQueuedMethod,
     });
 
     const response = {

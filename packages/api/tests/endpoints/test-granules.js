@@ -516,7 +516,51 @@ test.serial('PATCH returns a 404 if the granule is not found.', async (t) => {
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
-test.serial('PATCH reingests a granule', async (t) => {
+test.serial('PATCH reingests a granule with granules in payload', async (t) => {
+  const fakeDescribeExecutionResult = {
+    input: JSON.stringify({
+      meta: {
+        workflow_name: 'IngestGranule',
+      },
+      payload: {
+        granules: [
+          {
+            granuleId: t.context.fakePGGranules[0].granule_id,
+          },
+        ],
+      },
+    }),
+  };
+
+  // fake workflow
+  const message = JSON.parse(fakeDescribeExecutionResult.input);
+  const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
+  await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
+
+  const stub = sinon.stub(sfn(), 'describeExecution').returns(
+    Promise.resolve(fakeDescribeExecutionResult)
+  );
+  t.teardown(() => stub.restore());
+  const response = await request(app)
+    .patch(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ action: 'reingest' })
+    .expect(200);
+
+  const body = response.body;
+  t.is(body.status, 'SUCCESS');
+  t.is(body.action, 'reingest');
+  t.true(body.warning.includes('overwritten'));
+
+  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+    t.context.knex,
+    t.context.fakePGGranules[0].granule_id
+  );
+  t.is(updatedPgGranule.status, 'queued');
+});
+
+test.serial('PATCH reingests a granule without granules in payload', async (t) => {
   const fakeDescribeExecutionResult = {
     input: JSON.stringify({
       meta: {
@@ -551,7 +595,7 @@ test.serial('PATCH reingests a granule', async (t) => {
     t.context.knex,
     t.context.fakePGGranules[0].granule_id
   );
-  t.is(updatedPgGranule.status, 'queued');
+  t.is(updatedPgGranule.status, t.context.fakePGGranules[0].status);
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
