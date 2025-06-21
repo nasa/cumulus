@@ -165,7 +165,13 @@ const getFileGranuleAndCollectionByBucketAndKey = async (req, res) => {
     knex,
   });
 
-  res.send({
+  if (!results) {
+    return res.boom.notFound(
+      `No existing granule found for bucket: ${bucket} and key: ${key}`
+    );
+  }
+
+  return res.send({
     granuleId: results?.granule_id,
     collectionId: results?.collection_name
       ? constructCollectionId(

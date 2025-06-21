@@ -48,7 +48,7 @@ test.before(async () => {
   await accessTokenModel.createTable();
 });
 
-test.beforeEach(async (t) => {
+test.before(async (t) => {
   // Generate a local test postGres database
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   const granulePgModel = new GranulePgModel();
@@ -112,7 +112,7 @@ test.beforeEach(async (t) => {
   );
 });
 
-test.afterEach(async (t) => {
+test.after(async (t) => {
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
@@ -123,7 +123,6 @@ test.afterEach(async (t) => {
 test('GET /granules/file returns granule and collection information for a file', async (t) => {
   const fileRecord = t.context.fakePGFile;
   process.env.auth_mode = 'private';
-  // Make the request to the API endpoint
   const response = await request(app)
     .get(`/granules/file/${fileRecord.bucket}/${fileRecord.key}`)
     .set('Accept', 'application/json')
@@ -131,4 +130,16 @@ test('GET /granules/file returns granule and collection information for a file',
   t.is(response.statusCode, 200, 'response status code should be 200');
   t.is(response.body.granuleId, t.context.pgGranuleRecord[0].granule_id, 'granule_id should match');
   t.is(t.context.collectionId, response.body.collectionId, 'collection_id should match');
+});
+
+test('GET /granules/file returns 404 if file does not exist', async (t) => {
+  const fileRecord = t.context.fakePGFile;
+  process.env.auth_mode = 'private';
+  const response = await request(app)
+    .get(`/granules/file/${fileRecord.bucket}/${fileRecord.key}-not-found`)
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer fakeToken');
+  t.is(response.statusCode, 404, 'response status code should be 404');
+  const regexp = new RegExp(`No existing granule found for bucket: ${fileRecord.bucket} and key: ${fileRecord.key}-not-found`);
+  t.regex(response.body.message, regexp, 'error message should match');
 });
