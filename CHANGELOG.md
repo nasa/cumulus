@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **CUMULUS-4078**
+  - Move Granules task will now check on file collision if the existing file is
+    registered in Core's database to another collection.  If it is, the granule
+    (and the task execution) will fail, regardless of the duplicate behavior
+    configuration. If this behavior is undesirable for performance or logic
+    reaosns, the `checkCrossCollectionCollisions` may be set to `false` to
+    disable the behavior on a per-workflow, per-collection or other config
+    driven criteria.
+
 - **CUMULUS-4072**
   - Updated the `parse-pdr` task component to throw an error if multiple
     granules within the same PDR have the same granuleId after applying the
@@ -19,6 +28,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4078**
+  - Added `getGranuleIdAndCollectionIdFromFile` query method to `@cumulus/db` to
+    retrieve granule and collection metadata from a file's S3 location.
+  - Added new API route `GET /granules/file/:bucket/:key` in `@cumulus/api` to
+    return the granule ID and collection ID associated with a file.
+  - Added `getFileGranuleAndCollectionByBucketAndKey` method to
+    `@cumulus/api-client/granules` to allow use of new endpoint.
+  - Added integration and unit tests for the new DB query, API endpoint, and
+    client method.
+  - Updated `move-granules` task to validate cross-collection file collisions
+    using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
 - **CUMULUS-4078**
   - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
 - **CUMULUS-4085**
