@@ -1332,10 +1332,11 @@ router.get('/file/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
 router.get('/:collectionId/:granuleId', get);
 router.get('/:granuleId', getByGranuleId);
 router.get('/', list);
+router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
+router.patch('/bulkPatch', bulkPatch);
 router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
 router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
-router.patch('/bulkPatch', bulkPatch);
-router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
+
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
 
