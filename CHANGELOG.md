@@ -39,7 +39,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     client method.
   - Updated `move-granules` task to validate cross-collection file collisions
     using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
-- **CUMULUS-4078**
   - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
 - **CUMULUS-4089**
   - Add integration testing for duplicate granule workflows. This includes new specs and workflows in the `ingestGranule`, `discoverGranules`, `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
