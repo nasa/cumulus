@@ -1336,7 +1336,7 @@ router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
 router.patch('/bulkPatch', bulkPatch);
 router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
 router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
-
+router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
 
