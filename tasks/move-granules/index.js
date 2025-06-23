@@ -198,17 +198,17 @@ async function _checkCrossCollectionCollisions({
   granuleCollectionId,
   getFileGranuleAndCollectionByBucketAndKeyMethod = getFileGranuleAndCollectionByBucketAndKey,
 }) {
+  if (!granuleCollectionId) {
+    // If we can't determine the collection, we can't make the comparison
+    throw new ValidationError(
+      `File ${key} in bucket ${bucket} has an unknown collection  Cannot determine if it is a cross-collection collision.`
+    );
+  }
   const apiResponse = await getFileGranuleAndCollectionByBucketAndKeyMethod({ bucket, key, prefix: getRequiredEnvVar('stackName') });
   const { granuleId, collectionId } = JSON.parse(apiResponse.body);
 
   const collectionsDiffer =
     collectionId && granuleCollectionId && collectionId !== granuleCollectionId;
-
-  if (!granuleCollectionId) {
-    // If we can't determine the collection, we can't make the comparison
-    throw new ValidationError(`File ${key} in bucket ${bucket} is associated with granuleId ${granuleId}, ` +
-      'but its collection is unknown. Cannot determine if it is a cross-collection collision.');
-  }
 
   if (collectionsDiffer) {
     // If the file is in a different collection, or we can't make the comparison,
@@ -558,3 +558,4 @@ async function handler(event, context) {
 exports.handler = handler;
 exports.moveGranules = moveGranules;
 exports._checkCrossCollectionCollisions = _checkCrossCollectionCollisions;
+exports.determineGranuleCollectionId = determineGranuleCollectionId;

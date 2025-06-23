@@ -46,7 +46,8 @@ async function uploadFiles(files, bucket) {
     }
 
     return promiseS3Upload({
-      params: {
+      params:
+      {
         Bucket: bucket,
         Key: parseS3Uri(file).Key,
         Body: body,
@@ -1179,4 +1180,139 @@ test.serial('moveGranules throws an error if checkCrossCollectionCollisions is s
       getFileGranuleAndCollectionByBucketAndKeyMethod: t.context.checkCrossCollectionCollisionStub,
     }), { instanceOf: InvalidArgument }
   );
+});
+
+test.serial('moveGranules throws a ValidationError when no collection information can be determined', async (t) => {
+  // Build a payload with minimal configuration and remove collection information
+  const newPayload = buildPayload(t);
+  delete newPayload.input.granules[0].dataType;
+  delete newPayload.input.granules[0].version;
+  delete newPayload.config.collection.name;
+  delete newPayload.config.collection.version;
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  await t.throwsAsync(
+    moveGranules(newPayload),
+    {
+      instanceOf: errors.ValidationError,
+      message: /Unable to determine collection ID for granule/,
+    }
+  );
+});
+
+test.serial('moveGranules throws ValidationError when only partial collection information is available', async (t) => {
+  const partialGranulePayload = buildPayload(t);
+  partialGranulePayload.input.granules[0].dataType = 'MOD11A1';
+  delete partialGranulePayload.input.granules[0].version;
+  delete partialGranulePayload.config.collection.name;
+  delete partialGranulePayload.config.collection.version;
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  await t.throwsAsync(
+    moveGranules(partialGranulePayload),
+    {
+      instanceOf: errors.ValidationError,
+      message: /Unable to determine collection ID for granule/,
+    }
+  );
+
+  // Only name in collection config, no version
+  const partialConfigPayload = buildPayload(t);
+  delete partialConfigPayload.input.granules[0].dataType;
+  delete partialConfigPayload.input.granules[0].version;
+  partialConfigPayload.config.collection.name = 'MOD11A1';
+  delete partialConfigPayload.config.collection.version;
+
+  await t.throwsAsync(
+    moveGranules(partialConfigPayload),
+    {
+      instanceOf: errors.ValidationError,
+      message: /Unable to determine collection ID for granule/,
+    }
+  );
+});
+
+test.serial('moveGranules succeeds when collection information is only available in config', async (t) => {
+  const newPayload = buildPayload(t);
+  delete newPayload.input.granules[0].dataType;
+  delete newPayload.input.granules[0].version;
+  newPayload.config.collection.name = 'MOD11A1';
+  newPayload.config.collection.version = '006';
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  const expectedFileKeys = getExpectedOutputFileKeys(t);
+  const movedFileKeys = output.granules[0].files.map((f) => f.key);
+  t.deepEqual(expectedFileKeys.sort(), movedFileKeys.sort());
+});
+
+test.serial('moveGranules should assign metadata type to CMR files that do not already have a type', async (t) => {
+  const newPayload = buildPayload(t);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  const cmrFile = newPayload.input.granules[0].files.find((file) =>
+    file.key.endsWith('.cmr.xml'));
+  t.truthy(cmrFile, 'Payload should contain a CMR file');
+  if (cmrFile.type) {
+    delete cmrFile.type;
+  }
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+  const outputCmrFile = output.granules[0].files.find((file) =>
+    file.key.includes('.cmr.xml'));
+  t.truthy(outputCmrFile, 'Output should contain a CMR file');
+  t.is(outputCmrFile.type, 'metadata', 'CMR file should have type set to metadata');
+});
+
+test.serial('moveGranules should only assign metadata type to CMR files and not to other files', async (t) => {
+  const newPayload = buildPayload(t);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+  const outputFiles = output.granules[0].files;
+  const cmrFiles = outputFiles.filter((file) => file.key.includes('.cmr.xml'));
+  t.truthy(cmrFiles.length > 0, 'Output should contain CMR files');
+  cmrFiles.forEach((file) => {
+    t.is(file.type, 'metadata', `CMR file ${file.key} should have type set to metadata`);
+  });
+  const nonCmrFiles = outputFiles.filter((file) =>
+    !file.key.includes('.cmr.xml') && !file.key.includes('.iso.xml'));
+  t.truthy(nonCmrFiles.length > 0, 'Output should contain non-CMR files');
+  nonCmrFiles.forEach((file) => {
+    t.falsy(file.type === 'metadata', `Non-CMR file ${file.key} should not have type set to metadata`);
+  });
+});
+
+test.serial('moveGranules should not overwrite existing type on CMR files', async (t) => {
+  const newPayload = buildPayload(t);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+
+  const cmrFile = newPayload.input.granules[0].files.find((file) =>
+    file.key.endsWith('.cmr.xml'));
+  t.truthy(cmrFile, 'Payload should contain a CMR file');
+
+  const customType = 'custom-metadata-type';
+  cmrFile.type = customType;
+
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  const outputCmrFile = output.granules[0].files.find((file) =>
+    file.key.includes('.cmr.xml'));
+
+  t.is(outputCmrFile.type, customType, 'CMR file should keep its custom type');
+  t.not(outputCmrFile.type, 'metadata', 'CMR file should not have its type overwritten with metadata');
 });
