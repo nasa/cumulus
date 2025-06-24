@@ -22,11 +22,8 @@ services:
       - 127.0.0.1:4550-4599:4550-4599
       - 127.0.0.1:5432:5432
       - 127.0.0.1:8080:8080
-      - 127.0.0.1:9200:9200
   localstack:
     image: localstack/localstack:4.0.3
-  elasticsearch:
-    image: elasticsearch:5.3
   http:
     image: httpd:alpine
   ftp:

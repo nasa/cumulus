@@ -76,23 +76,6 @@ while ! $docker_command "sftp \
 done
 echo 'SFTP service is available'
 
-# Wait for the Elasticsearch service to be available
-while ! $docker_command  'nc -z 127.0.0.1 9200'; do
-  echo 'Waiting for Elasticsearch to start'
-  docker ps -a
-  sleep 2
-done
-echo 'Elasticsearch service is started'
-
-while ! $docker_command 'curl --connect-timeout 5 -sS http://127.0.0.1:9200/_cluster/health | grep green > /dev/null 2>&1'; do
-  echo 'Waiting for Elasticsearch status to be green'
-  sleep 2
-done
-echo 'Elasticsearch status is green'
-
-# Update Elasticsearch config to stop complaining about running out of disk space
-$docker_command "curl -XPUT 'http://127.0.0.1:9200/_cluster/settings' -d \@/$UNIT_TEST_BUILD_DIR/bamboo/elasticsearch.config"
-
 # Lambda seems to be the last service that's started up by Localstack
 while ! $docker_command 'nc -z 127.0.0.1 4566'; do
   echo 'Waiting for Localstack Lambda service to start'
