@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cmrjs",
-  "version": "20.1.2",
+  "version": "20.2.0",
   "description": "A node SDK for CMR",
   "engines": {
     "node": ">=20.12.2"
@@ -36,14 +36,14 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "20.1.2",
-    "@cumulus/cmr-client": "20.1.2",
-    "@cumulus/common": "20.1.2",
-    "@cumulus/distribution-utils": "20.1.2",
-    "@cumulus/errors": "20.1.2",
-    "@cumulus/launchpad-auth": "20.1.2",
-    "@cumulus/logger": "20.1.2",
-    "@cumulus/message": "20.1.2",
+    "@cumulus/aws-client": "20.2.0",
+    "@cumulus/cmr-client": "20.2.0",
+    "@cumulus/common": "20.2.0",
+    "@cumulus/distribution-utils": "20.2.0",
+    "@cumulus/errors": "20.2.0",
+    "@cumulus/launchpad-auth": "20.2.0",
+    "@cumulus/logger": "20.2.0",
+    "@cumulus/message": "20.2.0",
     "got": "^11.8.1",
     "js2xmlparser": "^4.0.0",
     "lodash": "^4.17.21",
@@ -52,6 +52,6 @@
     "xml2js": "0.5.0"
   },
   "devDependencies": {
-    "@cumulus/types": "20.1.2"
+    "@cumulus/types": "20.2.0"
   }
 }
