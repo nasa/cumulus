@@ -4,7 +4,7 @@ touch ./test_output.txt
 tail -f ./test_output.txt &
 TAIL_PID=$!
 
-npm run test:ci > ./test_output.txt
+npm run test:ci:units-no-api > ./test_output.txt
 
 RESULT=$?
 # make sure tail has gotten everything out
