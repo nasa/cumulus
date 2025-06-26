@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **CUMULUS-4131**
+  - Updated Terraform version requirement to `>=1.12.2`
+  - Updated AWS provider requirement to `5.100.x`
+
+
 ### Added
 
 - **CUMULUS-3945**
