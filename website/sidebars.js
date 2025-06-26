@@ -234,6 +234,7 @@ const sidebars = {
         'upgrade-notes/upgrade_execution_table_CUMULUS_3320',
         'upgrade-notes/update_table_indexes_CUMULUS_3792',
         'upgrade-notes/serverless-v2-upgrade',
+        'upgrade-notes/upgrade-terraform-1.12.',
       ],
     },
     {

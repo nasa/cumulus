@@ -14,15 +14,21 @@ This upgrade requires updates to your deployment environment (updating to use Te
 
 ### Prerequisites
 
-Prior to updating terraform you should deploy to the release prior to this update.    Updating from prior versions directly to this release *may* work, but have not been extensively tested.
+- Follow the [Terraform guidance for what to do before upgrading](https://developer.hashicorp.com/terraform/language/upgrade-guides), reviewing all the changes from 1.5.3 to 1.12 with respect to any custom/outside Cumulus terraform code, **notably ensuring that you have no pending changes to your Cumulus deployments before proceeding**.
+- Prior to updating terraform you should deploy to the release prior to this update.    Updating from prior versions directly to this release *may* work, but have not been extensively tested.
+- You should do a `terraform plan` to see if you have any pending changes for your deployment (for the `data-persistence-tf`, `cumulus-tf` and `rds-cluster-tf` modules), and if so, run a `terraform apply` **before doing the upgrade to Terraform 1.12.2**
+- Install Terraform version 1.12.2. We recommend using Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv) to manage your installed versons of Terraform, but this is not required.
+- Ensure that you are running Terraform 1.12.2 by running `terraform --version`. If you are using `tfenv`, you can switch versions by running `tfenv use 1.12.2`.
+- This document assumes you are using terraform remote states as recommended in the Cumulus deploy documentation
+- This document requires that you evaluate all custom code/external modules being deployed in combination with Cumulus Core that are not part of the Cumulus Core project.      Core has tested Orca v10.0.1 as part of our integration tests only.
 
-Prior to executing these steps you should have terraform v1.12.2 active in your deployment environment.
+### Upgrade your deployment
 
-This document assumes you are using terraform remote states as recommended in the Cumulus deploy documentation.
+For each stack you are deploying, you will need to run `terraform init --reconfigure`.   Details are as follows:
 
 #### Terraform Init
 
-Attempting to run terraform init/updates may result in an error message similar to:
+Attempting to run terraform init/updates will result in an error message similar to:
 
 ```bash
 ->terraform init
@@ -37,6 +43,11 @@ Initializing modules...
 │ If you wish to store the current configuration with no changes to the state, use "terraform init -reconfigure".
 ╵
 ```
+
+This is due to changes made in Terraform as part of release 1.10 and 1.8:
+
+- https://developer.hashicorp.com/terraform/language/v1.8.x/upgrade-guides
+- https://developer.hashicorp.com/terraform/language/v1.10.x/upgrade-guides
 
 To 'upgrade', run the following:
 
@@ -70,4 +81,4 @@ commands will detect it and remind you to do so if necessary.
 
 ### Terraform Plan/Apply
 
-Once this has run, you can run `terraform plan` and/or `terraform apply` as you normally would.
+Once this has run, you can run `terraform plan` and/or `terraform apply` as you normally would!
