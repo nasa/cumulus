@@ -613,3 +613,11 @@ variable "deploy_cumulus_workflows" {
   default = { change_granule_collections_workflow: true }
   description = "for each workflow, if true deploy that workflow"
 }
+
+## Ingest Module Optional Configuration
+
+variable "sf_start_rate" {
+  type    = number
+  default = 500
+  description = "The number of messages to process per run when polling the background processing SQS queue.    Use at your own risk, as increasing this beyond the default may result in sqs2sfThrottle lambda timeout and DLQ entries if messages cannot be processed in under 60 seconds. "
+}

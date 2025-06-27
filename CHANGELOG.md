@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4132**
+  - Expose `sf_start_rate` configuration from the `ingest` terraform module via
+    the `cumulus` module at user request.   Please note we still suggest use of
+    https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions/
+    instead if the queue parameters need modified.
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**

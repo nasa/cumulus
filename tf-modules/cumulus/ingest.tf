@@ -67,4 +67,7 @@ module "ingest" {
   # Cloudwatch log retention config
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
   default_log_retention_days = var.default_log_retention_days
+
+  ## Background processing config
+  sf_start_rate = var.sf_start_rate
 }
