@@ -10,9 +10,6 @@ if ! rpm -q lvm2 >/dev/null 2>&1; then
   yum install -y lvm2
 fi
 
-sudo yum install at -y
-sudo systemctl start atd
-echo "sudo halt" | at now + 5 minutes
 vgcreate docker /dev/xvdcz
 
 lvcreate -n docker-data -L${docker_volume_create_size}G docker
