@@ -167,7 +167,7 @@ const getFileGranuleAndCollectionByBucketAndKey = async (req, res) => {
 
   if (!results) {
     return res.boom.notFound(
-      `No existing granule found for bucket: ${bucket} and key: ${key}`
+      `No existing file found for bucket: ${bucket} and key: ${key}`
     );
   }
 
