@@ -225,12 +225,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     cnmResponseStreamName = `${testId}-KinesisTestTriggerCnmResponseStream`;
     testConfig.streamName = streamName;
     testConfig.cnmResponseStream = cnmResponseStreamName;
-    const collectionUrlPath = `{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}/${testSuffix}`;
 
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
-      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix, collectionUrlPath),
+      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix, testSuffix),
       addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix),
     ]);
     // create streams
