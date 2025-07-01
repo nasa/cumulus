@@ -26,7 +26,7 @@
     "test:ci": "lerna run --ignore @cumulus/cumulus-integration-tests --stream --concurrency 1 test:ci",
     "test:ci:units-no-api": "lerna run --ignore @cumulus/cumulus-integration-tests --ignore @cumulus/api --stream --concurrency 2 test:ci",
     "test:ci:api-units": "lerna run --stream --concurrency 1 test:ci --scope @cumulus/api",
-    "coverage:no-api": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 --since master coverage -- ",
+    "coverage:no-api": "lerna run --ignore @cumulus/cumulus-integration-tests --ignore @cumulus/api --concurrency 1 --since master coverage -- ",
     "coverage:api": "lerna run --concurrency 1 --scope @cumulus/api --since master coverage -- ",
     "tsc": "lerna run tsc",
     "tsc:listEmittedFiles": "lerna run tsc:listEmittedFiles --stream --no-prefix",
