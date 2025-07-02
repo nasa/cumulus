@@ -234,7 +234,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
   const fileNameBase = matchFilesWithProducerGranuleId
     ? granule.producerGranuleId
     : granule.granuleId;
-  const fileKey = `${stagingDir}/${fileNameBase}.cmr.xml`;
+  const fileKey = `${stagingDir}/${granule.granuleId}/${fileNameBase}.cmr.xml`;
 
   const params = {
     Bucket: bucket,
@@ -426,7 +426,7 @@ async function generateAndStoreCmrUmmJson(
   const fileNameBase = matchFilesWithProducerGranuleId
     ? granule.producerGranuleId
     : granule.granuleId;
-  const fileKey = `${stagingDir}/${fileNameBase}.cmr.json`;
+  const fileKey = `${stagingDir}/${granule.granuleId}/${fileNameBase}.cmr.json`;
 
   const params = {
     Bucket: bucket,
