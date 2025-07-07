@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated Terraform version requirement to `>=1.12.2`
   - Updated AWS provider requirement to `5.100.x`
 
+## [v20.2.0] 2025-06-24
 
 ### Added
 
