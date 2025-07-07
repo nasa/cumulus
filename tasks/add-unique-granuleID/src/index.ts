@@ -27,7 +27,7 @@ async function assignUniqueIds(event: HandlerEvent): Promise<HandlerOutput> {
       const newGranuleId = generateUniqueGranuleId(
         granule.granuleId,
         collectionId,
-        Number(event?.config?.hashDepth || 8)
+        Number(event?.config?.hashLength) || 8
       );
       granule.producerGranuleId = granule.granuleId;
       granule.granuleId = newGranuleId;

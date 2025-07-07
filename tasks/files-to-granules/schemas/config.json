@@ -44,8 +44,13 @@
       "description": "The regex needed for extracting granuleId from filenames"
     },
     "matchFilesWithProducerGranuleId": {
-      "type": "boolean",
-      "description": "When set to true, use the 'producerGranuleId' instead default behavior of using 'granuleId' when mapping files to granules. Defaults to 'false'"
+      "description": "When set to true/'true', use the 'producerGranuleId' instead default behavior of using 'granuleId' when mapping files to granules. Defaults to false",
+      "anyOf": [
+        { "type": "null"},
+        { "type": "boolean" },
+        { "type": "string", "enum": ["true", "false"] }
+      ],
+       "default": false
     }
   }
 }

@@ -108,7 +108,8 @@ async function mergeInputFilesWithInputGranules({
  */
 function filesToGranules(event, testMocks) {
   const regex = get(event.config, 'granuleIdExtraction', '(.*)');
-  const matchFilesWithProducerGranuleId = get(event.config, 'matchFilesWithProducerGranuleId');
+  const matchFilesWithProducerGranuleIdConfigValue = get(event.config, 'matchFilesWithProducerGranuleId');
+  const matchFilesWithProducerGranuleId = [true, 'true'].includes(matchFilesWithProducerGranuleIdConfigValue);
   const inputGranules = event.config.inputGranules;
   const inputFiles = event.input;
 
