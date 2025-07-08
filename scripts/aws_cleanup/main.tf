@@ -50,14 +50,14 @@ resource "aws_lambda_function" "ec2_cleanup" {
   timeout          = 150
   environment {
     variables = {
-      ENVIRONMENT = "production"
-      LOG_LEVEL   = "info"
+      ENVIRONMENT = "sandbox"
+      LOG_LEVEL   = "INFO"
     }
   }
 
   tags = {
     Environment = "production"
-    Application = "example"
+    Application = "sandbox"
   }
 }
 resource "aws_iam_role" "ec2_cleanup_scheduler" {
@@ -78,7 +78,7 @@ data "aws_iam_policy_document" "assume_scheduler_role" {
     actions = ["sts:AssumeRole"]
   }
 }
-resource "aws_scheduler_schedule" "example" {
+resource "aws_scheduler_schedule" "schedule_ec2_cleanup" {
   name       = "schedule_ec2_cleanup"
   group_name = "default"
 
