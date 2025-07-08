@@ -4,7 +4,7 @@ import logging
 import boto3
 from datetime import datetime
 
-from typing import TypedDict
+from typing import TypedDict, List
 from mypy_boto3_ec2 import EC2Client
 from mypy_boto3_ec2.type_defs import InstanceTypeDef
 
@@ -23,20 +23,32 @@ class TagObject(TypedDict):
     Value: str
 
 
-def rotation_time(rotate_by: str) -> bool:
-    rotate_date = datetime.strptime(rotate_by, '%Y-%m-%d %H:%M:%S')
-    if rotate_date < datetime.today():
-        return True
-    return False
-
-
 def should_be_cleaned_up(instance_object: InstanceTypeDef) -> bool:
+    '''
+    Identifies if an instance is expired.
+    Expects ec2 instances to have a Tag which specifies its expiration date
+    in '%Y-%m-%d' format. will accept further data after a space without issue
+    By default this Tag is expected at the Key "Rotate By",
+    but can be configured with the environment variable "timeout_key"
+
+    Parameters:
+        - instance_object (InstanceTypeDef): has Tags and InstanceId fields
+
+    Returns:
+        (bool) should this instance be cleaned up
+    '''
     timeout_key = os.getenv('timeout_key', 'Rotate By')
 
     for tag in instance_object['Tags']:
 
         if tag['Key'] == timeout_key:
-            return rotation_time(tag['Value'])
+            rotate_date = datetime.strptime(
+                tag['Key'].split(' ')[0],
+                '%Y-%m-%d'
+            )
+            if rotate_date < datetime.today():
+                return True
+            return False
     logger.warning(
         f'''never found timeout key for {
             instance_object['InstanceId']
@@ -45,7 +57,16 @@ def should_be_cleaned_up(instance_object: InstanceTypeDef) -> bool:
     return False
 
 
-def get_instances_to_clean(client: EC2Client):
+def get_instances_to_clean(client: EC2Client) -> List[str]:
+    '''
+    Identifies instances that should be cleaned
+
+    Parameters:
+        - client (EC2Client), implements describe_instances
+
+    Returns:
+        (List[str]): list of expired ec2 instance IDs
+    '''
     response = client.describe_instances()
     instances = [
         instance
@@ -62,6 +83,8 @@ def get_instances_to_clean(client: EC2Client):
 def handler(_, __) -> HandlerReturn:
     '''
     handler function
+    identifies ec2 instances that need cleanup and terminates them
+
     Returns:
         Dict containing status message
     '''
