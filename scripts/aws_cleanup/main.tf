@@ -34,7 +34,7 @@ resource "aws_iam_role_policy" "ec2_cleanup" {
 # Package the Lambda function code
 data "archive_file" "ec2_cleanup" {
   type        = "zip"
-  source_file = "${path.module}/index.py"
+  source_file = "${path.module}/index.js"
   output_path = "${path.module}/lambda/index.zip"
 }
 
@@ -46,7 +46,7 @@ resource "aws_lambda_function" "ec2_cleanup" {
   handler          = "index.handler"
   source_code_hash = data.archive_file.ec2_cleanup.output_base64sha256
 
-  runtime = "python3.10"
+  runtime = "nodejs20.x"
   timeout          = 150
   environment {
     variables = {
