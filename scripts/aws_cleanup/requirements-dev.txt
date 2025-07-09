@@ -1,2 +1,0 @@
-boto3-stubs
-boto3-stubs[ec2]
