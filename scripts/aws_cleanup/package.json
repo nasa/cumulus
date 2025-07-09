@@ -2,7 +2,7 @@
   "name": "@cumulus/ec2_cleanup",
   "version": "20.1.2",
   "author": "Cumulus Authors",
-  "description": "compile errors",
+  "description": "delete old ec2 instances",
   "license": "Apache-2.0",
   "private": true,
   "homepage": "https://github.com/nasa/cumulus/tree/master/scripts/ec2_cleanup#readme",
@@ -12,7 +12,7 @@
     "directory": "scripts/aws_cleanup"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "clean": "rm -rf node_modules",
@@ -22,10 +22,6 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test"
   },
   "dependencies": {
-    "@cumulus/aws-client": "20.1.2",
-    "tsc": "^2.0.4"
-  },
-  "devDependencies": {
-    "knex": "2.4.1"
+    "@cumulus/aws-client": "20.1.2"
   }
 }
