@@ -1,11 +1,11 @@
 {
-  "name": "@cumulus/ec2_cleanup",
+  "name": "@cumulus/aws_cleanup",
   "version": "20.1.2",
   "author": "Cumulus Authors",
   "description": "delete old ec2 instances",
   "license": "Apache-2.0",
   "private": true,
-  "homepage": "https://github.com/nasa/cumulus/tree/master/scripts/ec2_cleanup#readme",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/scripts/aws_cleanup#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/nasa/cumulus",
