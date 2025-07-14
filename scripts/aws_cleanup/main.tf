@@ -26,15 +26,15 @@ resource "aws_iam_role" "ec2_cleanup" {
 }
 
 resource "aws_iam_role_policy" "ec2_cleanup" {
-  name               = "lambda_ec2_access"
-  role               = aws_iam_role.ec2_cleanup.id
-  policy             = data.aws_iam_policy_document.ec2_cleanup_policy.json
+  name   = "lambda_ec2_access"
+  role   = aws_iam_role.ec2_cleanup.id
+  policy = data.aws_iam_policy_document.ec2_cleanup_policy.json
 }
 
 # Package the Lambda function code
 data "archive_file" "ec2_cleanup" {
-  type        = "zip"
-  source_file = "${path.module}/index.js"
+  type = "zip"
+  source_dir = "${path.module}/dist/"
   output_path = "${path.module}/lambda/index.zip"
 }
 
@@ -47,7 +47,7 @@ resource "aws_lambda_function" "ec2_cleanup" {
   source_code_hash = data.archive_file.ec2_cleanup.output_base64sha256
 
   runtime = "nodejs20.x"
-  timeout          = 150
+  timeout = 150
   environment {
     variables = {
       ENVIRONMENT = "sandbox"

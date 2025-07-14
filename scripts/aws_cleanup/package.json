@@ -19,9 +19,11 @@
     "coverage": "python ../../scripts/coverage_handler/coverage.py",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
-    "test:coverage": "../../node_modules/.bin/nyc npm test"
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "build": "mkdir -p dist && rm -r dist/* || true && cp index.js dist && cp -r node_modules dist"
   },
   "dependencies": {
-    "@cumulus/aws-client": "20.1.2"
+    "@cumulus/aws-client": "20.1.2",
+    "moment": "^2.30.1"
   }
 }
