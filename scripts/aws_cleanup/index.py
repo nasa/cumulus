@@ -21,7 +21,7 @@ class TagObject(TypedDict):
     Value: str
 
 
-def should_be_cleaned_up(instance_object: dict) -> bool:
+def should_be_cleaned_up(instance_object) -> bool:
     '''
     Identifies if an instance is expired.
     Expects ec2 instances to have a Tag which specifies its expiration date
@@ -55,7 +55,7 @@ def should_be_cleaned_up(instance_object: dict) -> bool:
     return False
 
 
-def get_instances_to_clean(client: dict) -> List[str]:
+def get_instances_to_clean(client) -> List[str]:
     '''
     Identifies instances that should be cleaned
 
