@@ -5,8 +5,6 @@ import boto3
 from datetime import datetime
 
 from typing import TypedDict, List
-from mypy_boto3_ec2 import EC2Client
-from mypy_boto3_ec2.type_defs import InstanceTypeDef
 
 
 logger = logging.getLogger()
@@ -23,7 +21,7 @@ class TagObject(TypedDict):
     Value: str
 
 
-def should_be_cleaned_up(instance_object: InstanceTypeDef) -> bool:
+def should_be_cleaned_up(instance_object: dict) -> bool:
     '''
     Identifies if an instance is expired.
     Expects ec2 instances to have a Tag which specifies its expiration date
@@ -43,7 +41,7 @@ def should_be_cleaned_up(instance_object: InstanceTypeDef) -> bool:
 
         if tag['Key'] == timeout_key:
             rotate_date = datetime.strptime(
-                tag['Key'].split(' ')[0],
+                tag['Value'].split(' ')[0],
                 '%Y-%m-%d'
             )
             if rotate_date < datetime.today():
@@ -57,7 +55,7 @@ def should_be_cleaned_up(instance_object: InstanceTypeDef) -> bool:
     return False
 
 
-def get_instances_to_clean(client: EC2Client) -> List[str]:
+def get_instances_to_clean(client: dict) -> List[str]:
     '''
     Identifies instances that should be cleaned
 
@@ -94,7 +92,6 @@ def handler(_, __) -> HandlerReturn:
         logger.info(f'attempting to clean up: {to_clean}')
         termination = client.terminate_instances(
             InstanceIds=to_clean,
-            DryRun=True,
         )
         return {
             'statusCode': 200,
