@@ -17,11 +17,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated Terraform version requirement to `>=1.12.2`
   - Updated AWS provider requirement to `5.100.x`
 
-<<<<<<< HEAD
-=======
+### Fixed
+
+- **CUMULUS-4170**
+  - Upgrade Node Docker image from buster to bullseye for a compatible debian version
+
 ## [v20.2.0] 2025-06-24
 
->>>>>>> 2b8b6ed6b7d0fd8f6a35e5e32de8d443802cb457
 ### Added
 
 - **CUMULUS-3945**
