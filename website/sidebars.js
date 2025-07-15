@@ -230,6 +230,7 @@ const sidebars = {
         'upgrade-notes/upgrade-rds-phase-3-release',
         'upgrade-notes/rds-phase-3-data-migration-guidance',
         'upgrade-notes/upgrade-rds-cluster-tf-postgres-13',
+        'upgrade-notes/upgrade-rds-cluster-tf-postgres-17',
         'upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449',
         'upgrade-notes/upgrade_execution_table_CUMULUS_3320',
         'upgrade-notes/update_table_indexes_CUMULUS_3792',
