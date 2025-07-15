@@ -46,8 +46,8 @@ Initializing modules...
 
 This is due to changes made in Terraform as part of release 1.10 and 1.8:
 
-- https://developer.hashicorp.com/terraform/language/v1.8.x/upgrade-guides
-- https://developer.hashicorp.com/terraform/language/v1.10.x/upgrade-guides
+- <https://developer.hashicorp.com/terraform/language/v1.8.x/upgrade-guides>
+- <https://developer.hashicorp.com/terraform/language/v1.10.x/upgrade-guides>
 
 To 'upgrade', run the following:
 
