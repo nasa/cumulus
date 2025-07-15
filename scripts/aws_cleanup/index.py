@@ -90,14 +90,19 @@ def handler(_, __) -> HandlerReturn:
         client = boto3.client('ec2')
         to_clean = get_instances_to_clean(client)
         logger.info(f'attempting to clean up: {to_clean}')
-        termination = client.terminate_instances(
-            InstanceIds=to_clean,
-        )
+        if (to_clean):
+            termination = client.terminate_instances(
+                InstanceIds=to_clean,
+            )
+            return {
+                'statusCode': 200,
+                'message': f'''termination completed with response {
+                    json.dumps(termination)
+                }''',
+            }
         return {
             'statusCode': 200,
-            'message': f'''termination completed with response {
-                json.dumps(termination)
-            }''',
+            'message': 'execution complete, no expired ec2 instances found'
         }
 
     except Exception as e:

@@ -78,6 +78,13 @@ data "aws_iam_policy_document" "assume_scheduler_role" {
     actions = ["sts:AssumeRole"]
   }
 }
+
+# resource "aws_cloudwatch_event_rule" "scheduler" {
+#   name                = "every_minute_test_schulder"
+#   description         = "Rule to trigger every minute"
+#   event_bus_name      = data.aws_cloudwatch_event_bus.default.name
+#   schedule_expression = "cron(* * * * ? *)" // Triggers every minute, could also be rate(1 minute)
+# }
 resource "aws_scheduler_schedule" "schedule_ec2_cleanup" {
   name       = "schedule_ec2_cleanup"
   group_name = "default"
@@ -86,7 +93,7 @@ resource "aws_scheduler_schedule" "schedule_ec2_cleanup" {
     mode = "OFF"
   }
 
-  schedule_expression = "rate(1 days)"
+  schedule_expression = "rate(1 minutes)"
 
   target {
     arn      = aws_lambda_function.ec2_cleanup.arn
