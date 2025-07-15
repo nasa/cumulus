@@ -6,12 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable Changes
+
+- **CUMULUS-4131**
+  - Users upgrading to this release will be required to update their terraform version to at least 1.12.2. Reference migration instructions are included at [https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12)
+
 ### Breaking Changes
 
 - **CUMULUS-4131**
   - Updated Terraform version requirement to `>=1.12.2`
   - Updated AWS provider requirement to `5.100.x`
-
 
 ### Added
 
