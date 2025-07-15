@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-4170**
+  - Upgrade Node Docker image from buster to bullseye for a compatible debian version
 ## [v20.2.0] 2025-06-24
 
 ### Added
