@@ -18,17 +18,24 @@ This upgrade requires updates to your deployment environment (updating to use Te
 - Prior to updating terraform you should deploy to the release prior to this update.    Updating from prior versions directly to this release *may* work, but have not been extensively tested.
 - You should do a `terraform plan` to see if you have any pending changes for your deployment (for the `data-persistence-tf`, `cumulus-tf` and `rds-cluster-tf` modules), and if so, run a `terraform apply` **before doing the upgrade to Terraform 1.12.2**
 - Install Terraform version 1.12.2. We recommend using Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv) to manage your installed versons of Terraform, but this is not required.
-- Ensure that you are running Terraform 1.12.2 by running `terraform --version`. If you are using `tfenv`, you can switch versions by running `tfenv use 1.12.2`.
+- Ensure that you are running the correct version of Terraform by running `terraform --version`. If you are using `tfenv`, you can switch versions by running `tfenv use 1.12.2`.
 - This document assumes you are using terraform remote states as recommended in the Cumulus deploy documentation
 - This document requires that you evaluate all custom code/external modules being deployed in combination with Cumulus Core that are not part of the Cumulus Core project.      Core has tested Orca v10.0.1 as part of our integration tests only.
 
-### Upgrade your deployment
+### Upgrade your deployment using `terraform init`
 
-For each stack you are deploying, you will need to run `terraform init --reconfigure`.   Details are as follows:
+For each stack you are deploying, you will need to either:
 
-#### Terraform Init
+- Run `terraform init` in absence of local terraform state/configuration.  This should update the remote state and allow a `terraform apply` to proceed with the new version of Terraform.    This is most likely in CI/one-off deployment environments without persistent storage.
 
-Attempting to run terraform init/updates will result in an error message similar to:
+*or*
+
+- If you are running in an environment with a stored local plugins/state in your `.terraform` directory, run `terraform init --reconfigure`.   Details are as follows:
+
+
+#### Terraform Init Reconfigure
+
+Attempting to run terraform init/updates with local Terraform configuration  information from a prior deployment will result in an error message similar to:
 
 ```bash
 ->terraform init
@@ -49,7 +56,7 @@ This is due to changes made in Terraform as part of release 1.10 and 1.8:
 - <https://developer.hashicorp.com/terraform/language/v1.8.x/upgrade-guides>
 - <https://developer.hashicorp.com/terraform/language/v1.10.x/upgrade-guides>
 
-To 'upgrade', run the following:
+To 'upgrade', either remove the local configuration *or* run the following:
 
 ```bash
 -> terraform init --reconfigure
@@ -79,6 +86,21 @@ rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
 
+
+### Validation
+
+Validation of the current statefile version can be done via the command line:
+
+```bash
+terraform show -json | jq '.terraform_version'
+```
+
+If the upgrade was successful this should result in output like:
+
+```bash
+"1.12.2"
+```
+
 ### Terraform Plan/Apply
 
-Once this has run, you can run `terraform plan` and/or `terraform apply` as you normally would!
+Once your terraform state has been updated, you can run `terraform plan` and/or `terraform apply` as you normally would.
