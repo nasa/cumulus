@@ -310,6 +310,7 @@ export const backupGranule = async (params: {
 }) => {
   let granuleCollection : CollectionRecord;
   let collectionId: string = '';
+  let actualProducerGranuleId: string;
   let name;
   let version;
   const { granule, backupConfig } = params;
@@ -341,6 +342,7 @@ export const backupGranule = async (params: {
       (file) => shouldBackupFile(path.basename(file.key), granuleCollection)
     );
 
+    actualProducerGranuleId = granule.producerGranuleId ?? granule.granuleId;
     log.info(`${JSON.stringify(granule)}: Backing up ${JSON.stringify(backupFiles)}`);
     return Promise.all(backupFiles.map((file) => makeBackupFileRequest({
       backupConfig,
@@ -349,7 +351,7 @@ export const backupGranule = async (params: {
       granuleId: granule.granuleId,
       provider: granule.provider,
       createdAt: granule.createdAt,
-      producerGranuleId: granule.producerGranuleId,
+      producerGranuleId: actualProducerGranuleId,
     })));
   } catch (error) {
     if (error instanceof CollectionIdentifiersNotProvidedError) {
