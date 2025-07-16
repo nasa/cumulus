@@ -31,7 +31,7 @@ const getGranulesList = async (
   const granulesResponse = await listGranulesMethod({
     prefix: getRequiredEnvVar('stackName'),
     query: {
-      archived: false,
+      archived: 'false',
       // limit: granuleIds.length.toString(), // change this to a configurable value
     },
   });
