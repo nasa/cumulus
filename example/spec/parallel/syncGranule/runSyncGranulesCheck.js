@@ -66,6 +66,7 @@ const getGranuleBatch = async (
 ) => {
   return await knex('granules')
     .where({collection_cumulus_id: collectionCumulusId})
+    .andWhere('status', '<>', 'completed')
     .andWhere('cumulus_id', '>', startAt)
     .orderBy('cumulus_id')
     .limit(batchSize);
@@ -110,16 +111,28 @@ describe('The Sync Granules workflow', () => {
     provider = { id: `s3_provider${testSuffix}` };
 
     // populate collections, providers and test data
+    console.log("start addProviders()");
     await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix);
+    console.log("finish addProviders()");
+
     let _granules = []
+
+    console.log("start getGranuleBatch()");
+    _granules = (await getGranuleBatch(
+      knex,
+      collection.cumulus_id,
+      cursor, 1
+    ))
+    console.log("finish getGranuleBatch()", _granules);
+
     do {
-      _granules = (await getGranuleBatch(
-        knex,
-        collection.cumulus_id,
-        cursor, 1
-      ))
-      granules = _granules.filter((granule) => !granule.error);
+      console.log('DO LOOP', cursor);
+
+      granules = _granules.filter((granule) => !granule.error).slice(0, 1);
+      console.log("granules", granules);
       cursor = _granules.length ? _granules[_granules.length-1].cumulus_id : 0
+      _granules.shift();
+
       if (!granules.length) continue;
       const apiGranules = await Promise.all(granules.map(async (granulePgRecord) => {
         const apiGranule = await translatePostgresGranuleToApiGranule({
@@ -136,6 +149,14 @@ describe('The Sync Granules workflow', () => {
         return apiGranule;
       }))
       
+      console.log('buildAndExecuteWorkflow');
+      console.log('config.stackName', config.stackName);
+      console.log('config.bucket', config.bucket);
+      console.log('workflowName', workflowName);
+      console.log('collection', collection);
+      console.log('provider', provider);
+      console.log('granules',granules);
+
       // break
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
@@ -144,7 +165,11 @@ describe('The Sync Granules workflow', () => {
         collection,
         provider, {granules: apiGranules}
       );
-      cursor = granules.length ? granules[granules.length-1].cumulus_id : 0
-    } while (_granules.lenth);
+     
+      console.log('**** workflowExecution', workflowExecution);
+
+
+      //cursor = granules.length ? granules[granules.length-1].cumulus_id : 0
+    } while (_granules.length);
   });
 });

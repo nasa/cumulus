@@ -150,38 +150,51 @@ describe('The Sync Granules workflow', () => {
     console.log('workflowName bout to be passed:', workflowName)
     console.log('provider bout to be passed:', provider)
     console.log('inputPayload bout to be passed:', JSON.stringify(inputPayload, null, 2))
+
+    console.log('**** buildAndExecuteWorkflow');
+      console.log('config.stackName', config.stackName);
+      console.log('config.bucket', config.bucket);
+      console.log('workflowName', workflowName);
+      console.log('collection', collection);
+      console.log('provider', provider);
+      console.log('inputPayload',inputPayload);
+
+
+
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+
+    console.log('**** workflowExecution', workflowExecution);
 
     syncGranuleExecutionArn = workflowExecution.executionArn;
   });
 
   afterAll(async () => {
-    // clean up stack state added by test
-    await Promise.all(inputPayload.granules.map(
-      async (granule) => {
-        const collectionId = constructCollectionId(collection.name, collection.version);
-        await waitForGranuleAndDelete(
-          config.stackName,
-          granule.granuleId,
-          collectionId,
-          ['completed', 'failed']
-        );
-      }
-    ));
+    // // clean up stack state added by test
+    // await Promise.all(inputPayload.granules.map(
+    //   async (granule) => {
+    //     const collectionId = constructCollectionId(collection.name, collection.version);
+    //     await waitForGranuleAndDelete(
+    //       config.stackName,
+    //       granule.granuleId,
+    //       collectionId,
+    //       ['completed', 'failed']
+    //     );
+    //   }
+    // ));
 
-    await Promise.all([
-      deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: reingestGranuleExecutionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: failingExecutionArn }),
-    ]);
+    // await Promise.all([
+    //   deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn }),
+    //   deleteExecution({ prefix: config.stackName, executionArn: reingestGranuleExecutionArn }),
+    //   deleteExecution({ prefix: config.stackName, executionArn: failingExecutionArn }),
+    // ]);
 
-    await Promise.all([
-      deleteFolder(config.bucket, testDataFolder),
-      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-    ]);
+    // await Promise.all([
+    //   deleteFolder(config.bucket, testDataFolder),
+    //   cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+    //   cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+    // ]);
   });
 
   it('has a checksum to test', () => {

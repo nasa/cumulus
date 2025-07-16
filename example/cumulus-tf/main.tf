@@ -78,7 +78,7 @@ module "cumulus" {
   bucket_map_key = var.bucket_map_key
   throttled_queues = [{
     url = aws_sqs_queue.throttled_queue.id
-    execution_limit = 30
+    execution_limit = 1000
   }]
 
   vpc_id            = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id

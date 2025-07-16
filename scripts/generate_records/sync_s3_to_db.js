@@ -24,29 +24,36 @@ const putUpFiles = async (
   granule,
   collection,
 ) => {
-  const files = await knex('files').where({granule_cumulus_id: granule.cumulus_id})
-  await Promise.all(files.map((file) => {
-    if (file.key.endsWith('cmr.json')) {
-      const cmrString = cmrTemplate
-        .replace('replaceme-collectionname', collection.name)
-        .replace('replaceme-collectionversion', collection.version);
-      /* bucket is hardcoded because syncGranules expects to find data in internal
-      and this expected originally to be able to put it up where the granule says...well the granule isn't right (yet)
-      */
-      return s3PutObject({
-        Key: file.key,
-        Bucket: 'cumulus-test-sandbox-internal',
-        Body: cmrString,
-      })
-    } else {
-      return s3PutObject({
-        Key: file.key,
-        Bucket: 'cumulus-test-sandbox-internal',
-        Body: 'a'
-      })
-    }
-    
-  }))
+  try {
+    const files = await knex('files').where({granule_cumulus_id: granule.cumulus_id})
+    await Promise.all(files.map((file) => {
+      try {
+        if (file.key.endsWith('cmr.json')) {
+          const cmrString = cmrTemplate
+            .replace('replaceme-collectionname', collection.name)
+            .replace('replaceme-collectionversion', collection.version);
+          /* bucket is hardcoded because syncGranules expects to find data in internal
+          and this expected originally to be able to put it up where the granule says...well the granule isn't right (yet)
+          */
+          return s3PutObject({
+            Key: file.key,
+            Bucket: 'cumulus-test-sandbox-internal',
+            Body: cmrString,
+          })
+        } else {
+          return s3PutObject({
+            Key: file.key,
+            Bucket: 'cumulus-test-sandbox-internal',
+            Body: 'a'
+          })
+        }      
+      } catch (error) {
+        console.log("putUpFiles ERROR:", error);
+      }
+    }))    
+  } catch (error) {
+    console.log("putUpFiles 2 ERROR:", error);
+  }
 }
 
 const getGranuleBatch = async (
@@ -107,30 +114,34 @@ const main = async () => {
   try {
     await s3().createBucket({Bucket: 'cumulus-test-sandbox-internal'})
   } catch {}
-  process.env.dbMaxPool = concurrency.toString();
-  const knex = await getKnexClient();
-  const collectionModel = new CollectionPgModel();
-  const fileModel = new FilePgModel();
-  const collection = await collectionModel.get(
-    knex,
-    deconstructCollectionId(
-      collectionId
-    )
-  );
-  let cursor = 0;
-  let granules = []
-  do {
-    granules = await getGranuleBatch(
+
+  try {
+    process.env.dbMaxPool = concurrency.toString();
+    const knex = await getKnexClient();
+    const collectionModel = new CollectionPgModel();
+    const fileModel = new FilePgModel();
+    const collection = await collectionModel.get(
       knex,
-      collection.cumulus_id,
-      cursor, concurrency
+      deconstructCollectionId(
+        collectionId
+      )
     );
-    await Promise.all(granules.map(async (granule) => putUpFiles(knex, granule, collection)));
-
-    cursor = granules.length ? granules[granules.length-1].cumulus_id : 0
-  } while (granules.length);
-
-
+    let cursor = 0;
+    let granules = []
+    do {
+      console.log("cursor", cursor);
+      granules = await getGranuleBatch(
+        knex,
+        collection.cumulus_id,
+        cursor, concurrency
+      );
+      await Promise.all(granules.map(async (granule) => putUpFiles(knex, granule, collection)));
+  
+      cursor = granules.length ? granules[granules.length-1].cumulus_id : 0
+    } while (granules.length);    
+  } catch (error) {
+    console.log("main 2 ERROR:", error);
+  }
 };
 
 if (require.main === module) {
