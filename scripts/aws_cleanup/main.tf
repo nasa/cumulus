@@ -33,7 +33,7 @@ resource "aws_iam_role_policy" "ec2_cleanup" {
 
 # Package the Lambda function code
 data "archive_file" "ec2_cleanup" {
-  type = "zip"
+  type        = "zip"
   source_file = "${path.module}/index.py"
   output_path = "${path.module}/lambda/index.zip"
 }
@@ -60,43 +60,21 @@ resource "aws_lambda_function" "ec2_cleanup" {
     Application = "sandbox"
   }
 }
-resource "aws_iam_role" "ec2_cleanup_scheduler" {
-  name               = "ec2_cleanup_scheduler_role"
-  assume_role_policy = data.aws_iam_policy_document.assume_scheduler_role.json
+
+resource "aws_cloudwatch_event_rule" "daily_ec2_cleanup" {
+  name                = "daily_ec2_cleanup"
+  schedule_expression = "cron(* * * * ? *)"
 }
 
-
-data "aws_iam_policy_document" "assume_scheduler_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["scheduler.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
+resource "aws_cloudwatch_event_target" "daily_ec2_cleanup" {
+  target_id = "ec2_cleanup_lambda_target"
+  rule      = aws_cloudwatch_event_rule.daily_ec2_cleanup.name
+  arn       = aws_lambda_function.ec2_cleanup.arn
 }
 
-# resource "aws_cloudwatch_event_rule" "scheduler" {
-#   name                = "every_minute_test_schulder"
-#   description         = "Rule to trigger every minute"
-#   event_bus_name      = data.aws_cloudwatch_event_bus.default.name
-#   schedule_expression = "cron(* * * * ? *)" // Triggers every minute, could also be rate(1 minute)
-# }
-resource "aws_scheduler_schedule" "schedule_ec2_cleanup" {
-  name       = "schedule_ec2_cleanup"
-  group_name = "default"
-
-  flexible_time_window {
-    mode = "OFF"
-  }
-
-  schedule_expression = "rate(1 minutes)"
-
-  target {
-    arn      = aws_lambda_function.ec2_cleanup.arn
-    role_arn = aws_iam_role.ec2_cleanup_scheduler.arn
-  }
+resource "aws_lambda_permission" "daily_ec2_cleanup" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.ec2_cleanup.arn
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.daily_ec2_cleanup.arn
 }
