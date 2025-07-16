@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-4170**
+  - Upgrade Node Docker image from buster to bullseye for a compatible debian version
+## [v20.2.0] 2025-06-24
+
 ### Added
 
 - **CUMULUS-4108**
@@ -17,6 +23,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update BaseSearch functions to sanitize the errors
 
 ### Fixed
+
+- **CUMULUS-4130**
+  - Update unit test CI scripts to split out api from other unit tests runs to make better use of bamboo agents
 
 - **CUMULUS-4106**
   - Fixed the release npm publish error by adding private property to `@cumulus/change-granule-collection-pg`

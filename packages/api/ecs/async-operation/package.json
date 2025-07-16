@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ecs-async-operation",
-  "version": "20.1.2",
+  "version": "20.2.0",
   "description": "The docker image for running async operations",
   "keywords": [
     "NASA",
@@ -23,9 +23,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.621.0",
-    "@cumulus/aws-client": "20.1.2",
-    "@cumulus/db": "20.1.2",
-    "@cumulus/logger": "20.1.2",
+    "@cumulus/aws-client": "20.2.0",
+    "@cumulus/db": "20.2.0",
+    "@cumulus/logger": "20.2.0",
     "crypto-random-string": "^3.2.0",
     "got": "^11.8.5",
     "lodash": "^4.17.21",
