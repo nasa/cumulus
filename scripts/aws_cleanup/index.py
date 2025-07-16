@@ -4,7 +4,7 @@ import logging
 import boto3
 from datetime import datetime
 
-from typing import TypedDict, List
+from typing import TypedDict, List, Callable, Optional
 
 
 logger = logging.getLogger()
@@ -21,7 +21,23 @@ class TagObject(TypedDict):
     Value: str
 
 
-def should_be_cleaned_up(instance_object) -> bool:
+class InstanceObject(TypedDict):
+    InstanceId: str
+    Tags: List[TagObject]
+
+    
+class InstancesSubObject(TypedDict):
+    Instances: List[InstanceObject]
+
+
+class DescribeResponse(TypedDict):
+    Reservations: List[InstancesSubObject]
+
+
+def should_be_cleaned_up(
+    instance_object: InstanceObject,
+    today_func: Callable[[], datetime] = datetime.today
+) -> bool:
     '''
     Identifies if an instance is expired.
     Expects ec2 instances to have a Tag which specifies its expiration date
@@ -36,15 +52,13 @@ def should_be_cleaned_up(instance_object) -> bool:
         (bool) should this instance be cleaned up
     '''
     timeout_key = os.getenv('timeout_key', 'Rotate By')
-
     for tag in instance_object['Tags']:
-
         if tag['Key'] == timeout_key:
             rotate_date = datetime.strptime(
                 tag['Value'].split(' ')[0],
                 '%Y-%m-%d'
             )
-            if rotate_date < datetime.today():
+            if rotate_date < today_func():
                 return True
             return False
     logger.warning(
@@ -55,17 +69,20 @@ def should_be_cleaned_up(instance_object) -> bool:
     return False
 
 
-def get_instances_to_clean(client) -> List[str]:
+def get_instances_to_clean(
+    describe_func,
+    today_func: Callable[[], datetime] = datetime.today,
+) -> List[str]:
     '''
     Identifies instances that should be cleaned
 
     Parameters:
-        - client (EC2Client), implements describe_instances
+        - describe_func: Callable, returns ec2 instance data to be examined
 
     Returns:
         (List[str]): list of expired ec2 instance IDs
     '''
-    response = client.describe_instances()
+    response = describe_func()
     instances = [
         instance
         for reservation in response['Reservations']
@@ -74,7 +91,7 @@ def get_instances_to_clean(client) -> List[str]:
     return [
         instance['InstanceId']
         for instance in instances
-        if should_be_cleaned_up(instance)
+        if should_be_cleaned_up(instance, today_func)
     ]
 
 
@@ -88,7 +105,7 @@ def handler(_, __) -> HandlerReturn:
     '''
     try:
         client = boto3.client('ec2')
-        to_clean = get_instances_to_clean(client)
+        to_clean = get_instances_to_clean(client.describe_instances)
         logger.info(f'attempting to clean up: {to_clean}')
         if (to_clean):
             termination = client.terminate_instances(
