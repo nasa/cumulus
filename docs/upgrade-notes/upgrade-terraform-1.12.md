@@ -28,10 +28,9 @@ For each stack you are deploying, you will need to either:
 
 - Run `terraform init` in absence of local terraform state/configuration.  This should update the remote state and allow a `terraform apply` to proceed with the new version of Terraform.    This is most likely in CI/one-off deployment environments without persistent storage.
 
-*or*
+### Or
 
 - If you are running in an environment with a stored local plugins/state in your `.terraform` directory, run `terraform init --reconfigure`.   Details are as follows:
-
 
 #### Terraform Init Reconfigure
 
@@ -85,7 +84,6 @@ If you ever set or change modules or backend configuration for Terraform,
 rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
-
 
 ### Validation
 
