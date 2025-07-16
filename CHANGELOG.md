@@ -34,6 +34,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-4130**
+  - Update unit test CI scripts to split out api from other unit tests runs to make better use of bamboo agents
+
 - **CUMULUS-4106**
   - Fixed the release npm publish error by adding private property to `@cumulus/change-granule-collection-pg`
     and `@cumulus/change-granule-collection-s3` package.json.
