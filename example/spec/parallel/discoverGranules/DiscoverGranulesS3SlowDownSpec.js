@@ -77,14 +77,20 @@ describe('The DiscoverGranules workflow', () => {
         s3Host: bucket,
       });
       provider.globalConnectionLimit = 1000;
+
+      //override prefix
+      var customPrefix = "file-staging/ATL08/006/";
+      //await createProvider({ prefix: customPrefix, provider });
       await createProvider({ prefix: stackName, provider });
 
       // Create the collection
       collection = await loadCollection({
-        filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
+        filename: './data/collections/s3_ATL08_006/s3_ATL08_006.json',
+        //filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
         postfix: testId,
       });
 
+      //await createCollection({ prefix: customPrefix, collection });
       await createCollection({ prefix: stackName, collection });
 
       if (existingTestId) {
@@ -92,45 +98,46 @@ describe('The DiscoverGranules workflow', () => {
         console.log('existing providerPath', providerPath);
 
       } else {
-        providerPath = `cumulus-test-data/${testId}`;
+        var providerPath = "file-staging/ATL08/006";
+        //providerPath = `cumulus-test-data/${testId}`;
         //providerPath = `${testId}`;
         console.log('new providerPath', providerPath);
 
-        // Upload the granule to be discovered
-        concurrency = 50;
-        granuleCount = 100;
-        multipleFileSets = 2;
-        var promises = [];
-        for(var i = 1; i <= granuleCount; i++) {
-          console.log('i', i);
+        // // Upload the granule to be discovered
+        // concurrency = 50;
+        // granuleCount = 100;
+        // multipleFileSets = 2;
+        // var promises = [];
+        // for(var i = 1; i <= granuleCount; i++) {
+        //   console.log('i', i);
 
-          promises.push(uploadS3GranuleDataForDiscovery({
-            bucket,
-            prefix: providerPath,
-            multipleFileSets: multipleFileSets
-          }));
+        //   promises.push(uploadS3GranuleDataForDiscovery({
+        //     bucket,
+        //     prefix: providerPath,
+        //     multipleFileSets: multipleFileSets
+        //   }));
 
-          if (promises.length == concurrency || i == granuleCount) {
-            try {
-              console.log("Waiting for async functions...");
-              const results = await Promise.all(promises);
-              console.log("All async functions completed.");
-              console.log("Results:", results);
-            } catch (error) {
-              console.error("An error occurred:", error);
-            } finally {
-              //reset array
-              promises = [];
-            }
-          }
+        //   if (promises.length == concurrency || i == granuleCount) {
+        //     try {
+        //       console.log("Waiting for async functions...");
+        //       const results = await Promise.all(promises);
+        //       console.log("All async functions completed.");
+        //       console.log("Results:", results);
+        //     } catch (error) {
+        //       console.error("An error occurred:", error);
+        //     } finally {
+        //       //reset array
+        //       promises = [];
+        //     }
+        //   }
 
-          // const { granuleId } = await uploadS3GranuleDataForDiscovery({
-          //   bucket,
-          //   prefix: providerPath,
-          // });
-          //expectedGranuleId = granuleId;
-          //console.log('expectedGranuleId, i=' + i, expectedGranuleId);
-        }
+        //   // const { granuleId } = await uploadS3GranuleDataForDiscovery({
+        //   //   bucket,
+        //   //   prefix: providerPath,
+        //   // });
+        //   //expectedGranuleId = granuleId;
+        //   //console.log('expectedGranuleId, i=' + i, expectedGranuleId);
+        // }
       }
 
       // Execute the DiscoverGranules workflow
