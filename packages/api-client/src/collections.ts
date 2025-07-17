@@ -63,7 +63,7 @@ export const updateCollection = async (params: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
-      path: `/collections/${collection.name}/${encodeURIComponent(collection.version)}`,
+      path: `/collections/${encodeURIComponent(collection.name)}/${encodeURIComponent(collection.version)}`,
       body: JSON.stringify(collection),
     },
   });
@@ -99,7 +99,7 @@ export const deleteCollection = async (params: {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/collections/${collectionName}/${encodeURIComponent(collectionVersion)}`,
+      path: `/collections/${encodeURIComponent(collectionName)}/${encodeURIComponent(collectionVersion)}`,
     },
   });
 };
@@ -135,7 +135,7 @@ export const getCollection = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/collections/${collectionName}/${encodeURIComponent(collectionVersion)}`,
+      path: `/collections/${encodeURIComponent(collectionName)}/${encodeURIComponent(collectionVersion)}`,
     },
   });
 

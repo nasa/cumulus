@@ -5,7 +5,7 @@ const providersApi = require('../providers');
 
 test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
-  t.context.testProviderId = 'testProviderId';
+  t.context.testProviderId = 'test/ProviderId';
   t.context.testProvider = '{ some: "providerObject" }';
 });
 
@@ -37,7 +37,7 @@ test('deleteProvider calls the callback with the expected object', async (t) => 
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/providers/${t.context.testProviderId}`,
+      path: `/providers/${encodeURIComponent(t.context.testProviderId)}`,
     },
     expectedStatusCodes: [404, 200],
   };
@@ -59,7 +59,7 @@ test('getProvider calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/providers/${t.context.testProviderId}`,
+      path: `/providers/${encodeURIComponent(t.context.testProviderId)}`,
     },
   };
 
