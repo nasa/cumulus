@@ -157,6 +157,7 @@ describe('The Lzards Backup workflow ', () => {
         }
       }
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
+      expect(lambdaOutput.payload.granules[0].producerGranuleId).toEqual('FakeGranule1');
     });
   });
 
@@ -222,6 +223,7 @@ describe('The Lzards Backup workflow ', () => {
 
     it('has the expected step output', () => {
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
+      expect(lambdaOutput.payload.granules[0].producerGranuleId).toEqual('FakeGranule1');
     });
   });
 
@@ -288,6 +290,7 @@ describe('The Lzards Backup workflow ', () => {
 
     it('has the expected step output', () => {
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
+      expect(lambdaOutput.payload.granules[0].producerGranuleId).toEqual('FakeGranule1');
     });
   });
 
@@ -416,22 +419,6 @@ describe('The Lzards Backup workflow ', () => {
       const errorCause = JSON.parse(lambdaOutput.cause);
       expect(workflowExecution.status).toEqual('failed');
       expect(errorCause.errorMessage).toContain('testGranuleFail.jpg did not have a checksum or checksumType defined');
-    });
-  });
-
-  describe('works with duplicate granule with a uniquified granuleId', () => {
-    beforeAll(() => {
-      try {
-        // Set it up
-      } catch (error) {
-        beforeAllFailed = error;
-      }
-    });
-    xit('executes successfully when the payload granule contains dataType and version', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-    });
-    xit('has the expected step output', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
     });
   });
 });
