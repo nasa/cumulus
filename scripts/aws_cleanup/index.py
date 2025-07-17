@@ -4,7 +4,7 @@ import logging
 import boto3
 from datetime import datetime
 
-from typing import TypedDict, List, Callable, Optional
+from typing import TypedDict, List, Callable
 
 
 logger = logging.getLogger()
@@ -25,7 +25,7 @@ class InstanceObject(TypedDict):
     InstanceId: str
     Tags: List[TagObject]
 
-    
+
 class InstancesSubObject(TypedDict):
     Instances: List[InstanceObject]
 
