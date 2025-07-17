@@ -221,7 +221,7 @@ locals {
 
 resource "aws_launch_template" "ecs_cluster_instance" {
   name_prefix   = "${var.prefix}_ecs_cluster_template"
-  key_name               = var.key_name
+  key_name      = var.key_name
   image_id      = var.ecs_cluster_instance_image_id
   instance_type = var.ecs_cluster_instance_type
   vpc_security_group_ids = local.security_group_ids
