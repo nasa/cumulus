@@ -12,9 +12,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `engine_version` default value to `17.4` in `example/rds-cluster-tf/variables.tf`.
   - Updated `tf-modules/cumulus-rds-tf` module to take additional parameter `enable_upgrade` in support of
     migration from Aurora PostgreSQl v13 to v17.
-
 - **CUMULUS-4177**
   - Update form-data sub-dependency to safe version ^4.0.4
+- **CUMULUS_4174**
+  - Fix broken CreateReconciliationReportSpec test cleanup
 - **CUMULUS-4170**
   - Upgrade Node Docker image from buster to bullseye for a compatible debian version
 
