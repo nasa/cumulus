@@ -23,7 +23,7 @@ const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
 const { isCMRFile } = require('@cumulus/cmrjs');
 
-const { updateGranulesCmrMetadataFileLinks, updateCmrFileInfo } = require('..');
+const { updateGranulesCmrMetadata, updateCmrFileInfo } = require('..');
 
 function cmrReadStream(file) {
   return file.endsWith('.cmr.xml') ? fs.createReadStream('tests/data/meta.xml') : fs.createReadStream('tests/data/ummg-meta.json');
@@ -123,7 +123,7 @@ test.serial('Should map etag for each CMR metadata file by checking that etag is
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
-  const output = await updateGranulesCmrMetadataFileLinks(newPayload);
+  const output = await updateGranulesCmrMetadata(newPayload);
   await validateOutput(t, output);
 
   Object.values(output.etags).forEach((etag) => t.regex(etag, /"\S+"/));
@@ -138,7 +138,7 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   const previousEtag = newPayload.config.etags[ETagS3URI];
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
-  const output = await updateGranulesCmrMetadataFileLinks(newPayload);
+  const output = await updateGranulesCmrMetadata(newPayload);
   await validateOutput(t, output);
   const newEtag = output.etags[ETagS3URI];
   t.false([previousEtag, undefined].includes(newEtag));
@@ -154,7 +154,7 @@ test.serial('update-granules-cmr-metadata-file-links throws an error when cmr fi
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   await t.throwsAsync(
-    () => updateGranulesCmrMetadataFileLinks(newPayload),
+    () => updateGranulesCmrMetadata(newPayload),
     { message: 'cmrGranuleUrlType is both, but no distribution endpoint is configured.' }
   );
 });
@@ -171,7 +171,7 @@ test.serial('update-granules-cmr-metadata-file-links does not throw error if no 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   await t.notThrowsAsync(
-    () => updateGranulesCmrMetadataFileLinks(newPayload)
+    () => updateGranulesCmrMetadata(newPayload)
   );
 });
 
@@ -187,7 +187,7 @@ test.serial('update-granules-cmr-metadata-file-links clears checksums only for u
   newPayload.input.granules[0].files.forEach((file) => {
     file.type = 'metadata';
   });
-  const message = await updateGranulesCmrMetadataFileLinks(newPayload);
+  const message = await updateGranulesCmrMetadata(newPayload);
 
   message.granules.forEach((granule) => {
     granule.files.forEach((file) => {
@@ -210,7 +210,7 @@ test.serial('update-granules-cmr-metadata-file-links updates size for updated CM
 
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
-  const message = await updateGranulesCmrMetadataFileLinks(newPayload);
+  const message = await updateGranulesCmrMetadata(newPayload);
 
   for (const granule of message.granules) {
     for (const file of granule.files) {
@@ -237,7 +237,7 @@ test.serial('update-granules-cmr-metadata-file-links properly handles a case whe
   newPayload.input.granules.forEach((granule) => {
     granule.files = granule.files.filter((file) => file.type !== 'metadata');
   });
-  const message = await updateGranulesCmrMetadataFileLinks(newPayload);
+  const message = await updateGranulesCmrMetadata(newPayload);
 
   t.deepEqual(message.granules, newPayload.input.granules);
 });
@@ -266,7 +266,7 @@ test.serial('update-granules-cmr-metadata-file-links properly filters files usin
 
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
-  await updateGranulesCmrMetadataFileLinks(newPayload);
+  await updateGranulesCmrMetadata(newPayload);
 
   const cmrFiles = [];
   await newPayload.input.granules.forEach((granule) => {

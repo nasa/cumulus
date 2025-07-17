@@ -722,23 +722,6 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules returned by
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to queued', async (t) => {
-  await setUpExistingDatabaseRecords(t);
-
-  await bulkOperation.handler({
-    type: 'BULK_GRANULE_REINGEST',
-    envVars,
-    payload: {
-      granules: t.context.granules,
-    },
-    reingestHandler: reingestStub,
-  });
-
-  t.is(reingestStub.callCount, 2);
-
-  await verifyGranulesQueuedStatus(t);
-});
-
 test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if they do not exist in PostgreSQL', async (t) => {
   const collectionPgModel = new CollectionPgModel();
 

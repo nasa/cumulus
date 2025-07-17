@@ -6,7 +6,7 @@ import {
   isECHO10Filename,
   isUMMGFilename,
   setECHO10Collection,
-  updateEcho10XMLMetadataObject,
+  updateEcho10XMLMetadataObjectUrls,
   setUMMGCollection,
   updateUMMGMetadataObject,
 } from '@cumulus/cmrjs/cmr-utils';
@@ -21,7 +21,6 @@ export function validateApiFile(file: Omit<ApiFile, 'granuleId'> | ApiFile): fil
   if (file.bucket === undefined || file.key === undefined) {
     throw new ValidationError(`file ${JSON.stringify(file)} is missing necessary key, bucket`);
   }
-
   return true;
 }
 
@@ -68,8 +67,8 @@ export const updateCmrFileLinks = ({
   distributionBucketMap,
 }: {
   cmrFileName: string,
-  cmrObject: Object
-  files: Array<Omit<ValidApiFile, 'granuleId'>>,
+  cmrObject: any,
+  files: ValidApiFile[],
   distEndpoint: string,
   bucketTypes: { [key: string]: string },
   cmrGranuleUrlType: string
@@ -83,7 +82,7 @@ export const updateCmrFileLinks = ({
     distributionBucketMap,
   };
   if (isECHO10Filename(cmrFileName)) {
-    return updateEcho10XMLMetadataObject({
+    return updateEcho10XMLMetadataObjectUrls({
       ...params,
       metadataObject: cmrObject,
     });
