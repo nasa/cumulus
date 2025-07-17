@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS_4174**
+  - Fix broken CreateReconciliationReportSpec test cleanup
 - **CUMULUS-4170**
   - Upgrade Node Docker image from buster to bullseye for a compatible debian version
 
