@@ -10,6 +10,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
 
+### Notable Changes
+
+- **CUMULUS-4131**
+  - Users upgrading to this release will be required to update their terraform version to at least 1.12.2. Reference migration instructions are included at [https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12)
+
+### Breaking Changes
+
+- **CUMULUS-4131**
+  - Updated Terraform version requirement to `>=1.12.2`
+  - Updated AWS provider requirement to `5.100.x`
+
 ### Changed
 
 - **CUMULUS-4155**
@@ -29,6 +40,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4200**
   - updated metrics_es_host terraform variable description and validation
   - Users should ensure that the metrics_es_host does not include `https://`
+
 - **CUMULUS-4252**
   - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
     `@aws-sdk/lib-storage@3.896.0`
@@ -258,7 +270,6 @@ Please follow the instructions before upgrading Cumulus
 - **CUMULUS-4170**
   - Upgrade Node Docker image from buster to bullseye for a compatible debian version
 
->>>>>>> e381074f9cd (CUMULUS-4191: Update lambdas to filter rules based on provider in message (#4062))
 ## [v20.2.1] 2025-08-14
 
 ### Changed
