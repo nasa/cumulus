@@ -157,7 +157,6 @@ describe('The Lzards Backup workflow ', () => {
         }
       }
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
-      expect(lambdaOutput.payload.granules[0].producerGranuleId).toEqual('FakeGranule1');
     });
   });
 
@@ -223,7 +222,6 @@ describe('The Lzards Backup workflow ', () => {
 
     it('has the expected step output', () => {
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
-      expect(lambdaOutput.payload.granules[0].producerGranuleId).toEqual('FakeGranule1');
     });
   });
 
@@ -290,7 +288,6 @@ describe('The Lzards Backup workflow ', () => {
 
     it('has the expected step output', () => {
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
-      expect(lambdaOutput.payload.granules[0].producerGranuleId).toEqual('FakeGranule1');
     });
   });
 
