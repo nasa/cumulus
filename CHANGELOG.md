@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-XXXX**
+  - Replaced use of `var.account_id` with the `aws_caller_identity` data source in the `db_provision` IAM policy to avoid requiring a hardcoded account ID in configuration. This improves portability and aligns with Terraform best practices.
+
 ### Notable Changes
 
 - **CUMULUS-4131**
