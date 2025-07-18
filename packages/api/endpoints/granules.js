@@ -14,7 +14,7 @@ const {
 } = require('@cumulus/common/workflows');
 
 const Logger = require('@cumulus/logger');
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { GranuleSearch } = require('@cumulus/db');
 
@@ -23,14 +23,15 @@ const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
 const {
   CollectionPgModel,
   ExecutionPgModel,
+  getGranuleAndCollection,
+  getGranuleIdAndCollectionIdFromFile,
+  getGranulesByGranuleId,
   getKnexClient,
   getUniqueGranuleByGranuleId,
-  getGranulesByGranuleId,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
-  getGranuleAndCollection,
   updateBatchGranulesCollection,
 } = require('@cumulus/db');
 const { sfn } = require('@cumulus/aws-client/services');
@@ -151,6 +152,33 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
     );
   }
   return apiGranule;
+};
+
+const getFileGranuleAndCollectionByBucketAndKey = async (req, res) => {
+  const { bucket, key } = req.params;
+  const { knex = await getKnexClient() } = req.testContext || {};
+
+  // Get file meta from postgres database using getGranuleIdAndCollectionIdFromFile
+  const results = await getGranuleIdAndCollectionIdFromFile({
+    bucket,
+    key,
+    knex,
+  });
+
+  if (!results) {
+    return res.boom.notFound(
+      `No existing file found for bucket: ${bucket} and key: ${key}`
+    );
+  }
+
+  return res.send({
+    granuleId: results?.granule_id,
+    collectionId: results?.collection_name
+      ? constructCollectionId(
+        results?.collection_name,
+        results?.collection_version
+      ) : undefined,
+  });
 };
 
 /**
@@ -1300,16 +1328,17 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.get('/:granuleId', getByGranuleId);
+router.get('/files/get_collection_and_granule_id/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
 router.get('/:collectionId/:granuleId', get);
+router.get('/:granuleId', getByGranuleId);
+router.get('/', list);
 router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
 router.patch('/bulkPatch', bulkPatch);
-router.get('/', list);
+router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
+router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
+router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
-router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
-router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
-router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 
 router.post('/bulkChangeCollection', bulkChangeCollection);
 router.post(
@@ -1345,5 +1374,6 @@ module.exports = {
   patchGranuleAndReturnStatus,
   bulkPatch,
   bulkPatchGranuleCollection,
+  getFileGranuleAndCollectionByBucketAndKey,
   router,
 };

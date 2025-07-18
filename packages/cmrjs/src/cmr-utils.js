@@ -51,6 +51,7 @@ const { updateUMMGGranuleURAndGranuleIdentifier } = require('./ummgModifiers');
  * @typedef {Object} CmrFile
  * @property {string} bucket - The S3 bucket name
  * @property {string} key - The S3 key for the metadata file
+ * @property {string} granuleId - The granule ID associated with the file
  * @property {string} [etag] - Optional entity tag for file versioning
  */
 /**
@@ -206,7 +207,7 @@ function isISOFile(fileobject) {
  * @param {string} granule.granuleId - granule ID
  * @param {Function} filterFunc - function to determine if the given file object is a
       CMR file; defaults to `isCMRFile`
- * @returns {Array<Object>} an array of CMR file objects, each with properties
+ * @returns {Array<CmrFile>} an array of CMR file objects, each with properties
  *    `granuleId`, `bucket`, `key`, and possibly `etag` (if present on input)
  */
 function granuleToCmrFileObject({ granuleId, files = [] }, filterFunc = isCMRFile) {
@@ -231,7 +232,7 @@ function granuleToCmrFileObject({ granuleId, files = [] }, filterFunc = isCMRFil
  * @param {Function} filterFunc - function to determine if the given file object is a
       CMR file; defaults to `isCMRFile`
  *
- * @returns {Array<Object>} - CMR file object array: { etag, bucket, key, granuleId }
+ * @returns {Array<CmrFile>} - CMR file object array: { etag, bucket, key, granuleId }
  */
 function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
   return granules.flatMap((granule) => granuleToCmrFileObject(granule, filterFunc));

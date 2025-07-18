@@ -229,7 +229,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
-      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix, testSuffix),
       addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix),
     ]);
     // create streams
