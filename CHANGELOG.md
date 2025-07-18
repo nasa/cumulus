@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `producerGranuleId` identifier is set in updated CMR metadata
 
 ### Added
+- **CUMULUS-4062**
+  - Added `producerGranuleId` to lzardsBackup task and lambda input/output schema
 - **CUMULUS-4089**
   - Add integration testing for duplicate granule workflows. This includes new specs and workflows in the `ingestGranule`, `discoverGranules`, `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
 - **CUMULUS-4085**
