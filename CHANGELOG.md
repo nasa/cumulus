@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     registered in Core's database to another collection.  If it is, the granule
     (and the task execution) will fail, regardless of the duplicate behavior
     configuration. If this behavior is undesirable for performance or logic
-    reaosns, the `checkCrossCollectionCollisions` may be set to `false` to
+    reasons, the `checkCrossCollectionCollisions` may be set to `false` to
     disable the behavior on a per-workflow, per-collection or other config
     driven criteria.
 
