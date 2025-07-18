@@ -69,3 +69,12 @@ variable "lambda_timeouts" {
   type = map(number)
   default = {}
 }
+variable "region" {
+  description = "AWS region used in policy ARNs"
+  type        = string
+}
+
+variable "account_id" {
+  description = "AWS account ID used in policy ARNs"
+  type        = string
+}
