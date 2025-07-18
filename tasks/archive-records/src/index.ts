@@ -32,14 +32,15 @@ const getGranulesList = async (
     prefix: getRequiredEnvVar('stackName'),
     query: {
       archived: 'false',
-      // limit: granuleIds.length.toString(), // change this to a configurable value
+      limit: '500',
     },
   });
   return JSON.parse(granulesResponse.body).results;
 }
 const archiveRecords = async (event: Event) => {
   const config = await getParsedConfigValues(event.config);
-  getGranulesList(config);
+  // for (const granuleChunk of ) //iterate?
+  const granules = getGranulesList(config);
   return {};
 }
 

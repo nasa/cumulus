@@ -796,6 +796,37 @@ async function bulkPatch(req, res) {
   });
 }
 
+async function bulkUpdate(req, res) {
+  const {
+    mappingFunction = pMap,
+    getKnexClientMethod = getKnexClient,
+  } = req.testContext || {};
+  req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
+  req.body.dbMaxPool = req.body.dbMaxPool ?? 20;
+  const body = parseBulkPatchPayload(req.body);
+
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+  const granules = body.apiGranules;
+  const knex = await getKnexClientMethod({
+    env: {
+      ...process.env,
+      dbMaxPool: body.dbMaxPool.toString(),
+    },
+  });
+
+  await mappingFunction(
+    granules,
+    (apiGranule) => patchGranule({ body: apiGranule, knex, testContext: {} }, res),
+    { concurrency: body.dbConcurrency }
+  );
+
+  return res.send({
+    message: 'Successfully patched Granules',
+  });
+}
+
 /**
  * Delete a granule by granuleId
  *
