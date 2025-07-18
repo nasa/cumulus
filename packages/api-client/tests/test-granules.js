@@ -703,7 +703,7 @@ test('getFileGranuleAndCollectionByBucketAndKey calls the callback with the expe
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/file/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
+      path: `/granules/files/get_collection_and_granule_id/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
     },
   };
 

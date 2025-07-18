@@ -120,11 +120,11 @@ test.after(async (t) => {
   });
 });
 
-test('GET /granules/file returns granule and collection information for a file', async (t) => {
+test('GET /granules/files/get_collection_and_granule_id returns granule and collection information for a file', async (t) => {
   const fileRecord = t.context.fakePGFile;
   process.env.auth_mode = 'private';
   const response = await request(app)
-    .get(`/granules/file/${fileRecord.bucket}/${fileRecord.key}`)
+    .get(`/granules/files/get_collection_and_granule_id/${fileRecord.bucket}/${fileRecord.key}`)
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer fakeToken');
   t.is(response.statusCode, 200, 'response status code should be 200');
@@ -132,14 +132,14 @@ test('GET /granules/file returns granule and collection information for a file',
   t.is(t.context.collectionId, response.body.collectionId, 'collection_id should match');
 });
 
-test('GET /granules/file returns 404 if file does not exist', async (t) => {
+test('GET /granules/files/get_collection_and_granule_id returns 404 if file does not exist', async (t) => {
   const fileRecord = t.context.fakePGFile;
   process.env.auth_mode = 'private';
   const response = await request(app)
-    .get(`/granules/file/${fileRecord.bucket}/${fileRecord.key}-not-found`)
+    .get(`/granules/files/get_collection_and_granule_id/${fileRecord.bucket}/${fileRecord.key}-not-found`)
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer fakeToken');
   t.is(response.statusCode, 404, 'response status code should be 404');
-  const regexp = new RegExp(`No existing granule found for bucket: ${fileRecord.bucket} and key: ${fileRecord.key}-not-found`);
+  const regexp = new RegExp(`No existing file found for bucket: ${fileRecord.bucket} and key: ${fileRecord.key}-not-found`);
   t.regex(response.body.message, regexp, 'error message should match');
 });

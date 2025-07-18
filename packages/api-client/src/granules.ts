@@ -767,7 +767,7 @@ export const getFileGranuleAndCollectionByBucketAndKey = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/file/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
+      path: `/granules/files/get_collection_and_granule_id/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
     },
   });
 };

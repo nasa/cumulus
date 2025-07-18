@@ -1328,7 +1328,7 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.get('/file/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
+router.get('/files/get_collection_and_granule_id/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
 router.get('/:collectionId/:granuleId', get);
 router.get('/:granuleId', getByGranuleId);
 router.get('/', list);
