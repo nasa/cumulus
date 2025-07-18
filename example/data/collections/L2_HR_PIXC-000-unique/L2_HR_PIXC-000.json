@@ -6,7 +6,7 @@
   "granuleId": "^.*$",
   "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
   "reportToEms": false,
-  "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
+  "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{cmrMetadata.Granule.granuleId}",
   "sampleFileName": "L2_HR_PIXC_product_0001-of-4154.h5",
   "files": [
     {
