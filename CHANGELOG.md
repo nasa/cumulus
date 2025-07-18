@@ -31,7 +31,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4078**
   - Added `getGranuleIdAndCollectionIdFromFile` query method to `@cumulus/db` to
     retrieve granule and collection metadata from a file's S3 location.
-  - Added new API route `GET /granules/file/:bucket/:key` in `@cumulus/api` to
+  - Added new API route `GET /granules/files/get_collection_and_granule_id/:bucket/:key` in `@cumulus/api` to
     return the granule ID and collection ID associated with a file.
   - Added `getFileGranuleAndCollectionByBucketAndKey` method to
     `@cumulus/api-client/granules` to allow use of new endpoint.
@@ -41,9 +41,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
   - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
 - **CUMULUS-4089**
-  - Add integration testing for duplicate granule workflows. This includes new specs and workflows in the `ingestGranule`, `discoverGranules`, `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
+  - Add integration testing for duplicate granule workflows. This includes new
+    specs and workflows in the `ingestGranule`, `discoverGranules`,
+    `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
 - **CUMULUS-4085**
-  - Added config option for files-to-granules task to use `producerGranuleId` when mapping files to their granules.
+  - Added config option for files-to-granules task to use `producerGranuleId`
+    when mapping files to their granules.
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules`
     table.
