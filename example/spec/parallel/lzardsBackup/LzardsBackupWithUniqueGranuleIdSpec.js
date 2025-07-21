@@ -1,59 +1,67 @@
 'use strict';
 
 const get = require('lodash/get');
+const pAll = require('p-all');
 const path = require('path');
+const pTimeout = require('p-timeout');
+
+const {
+  GetFunctionConfigurationCommand,
+  InvokeCommand,
+} = require('@aws-sdk/client-lambda');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { lambda } = require('@cumulus/aws-client/services');
 const { putFile } = require('@cumulus/aws-client/S3');
-const { waitForCompletedExecution } = require('@cumulus/integration-tests');
-const { generateUniqueGranuleId } = require('@cumulus/ingest/granule');
-const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { randomString } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+const { loadConfig } = require('../../helpers/testUtils');
 
-const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
-const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
-
-describe('The Lzards Backup workflow for duplicate granules with producerGranuleId and uniqified granuleId ', () => {
-  let beforeAllFailed = false;
+describe('The Lzards Backup Task for duplicate granule with producerGranuleId and uniquified granuleId', () => {
+  let beforeAllFailed;
+  let granuleId;
   let collection;
   let config;
-  let granuleId;
-  let ingestBucket;
-  let ingestPath;
-  let lambdaOutput;
+  let FunctionName;
+  let lzardsApiGetFunctionName;
+  let functionConfig;
   let prefix;
   let producerGranuleId;
-  let testId;
-  let testSuffix;
-  let workflowExecution;
+  let ingestBucket;
+  let ingestPath;
+  let lzardsBackupOutput;
   let provider;
 
-  const lzardsBackupTestWorkflowName = 'LzardsBackupTest';
   const now = new Date().getTime();
   const tenMinutesAgo = now - (1000 * 60 * 10);
 
-  beforeAll(async () => {
+  const testSetup = async (configOverride = {}) => {
     try {
+      beforeAllFailed = false;
       config = await loadConfig();
       prefix = config.stackName;
-      testId = createTimestampedTestId(prefix, 'LzardsBackupWorkflow');
-      testSuffix = createTestSuffix(testId);
       ingestBucket = config.buckets.protected.name;
-      ingestPath = `${prefix}/lzardsBackupWorkflowSpec`;
-      provider = `FakeProvider_${randomString()}`;
-      producerGranuleId = `FakeProducerGranuleId_${randomString()}`;
-
-      // Setup files for workflow
+      ingestPath = `${prefix}/lzardsBackupSpec`;
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
+      await putFile(ingestBucket, `${ingestPath}/testGranule2.dat`, path.join(__dirname, 'test_data', 'testGranule2.dat'));
+      await putFile(ingestBucket, `${ingestPath}/testGranule2.jpg`, path.join(__dirname, 'test_data', 'testGranule2.jpg'));
+      await putFile(ingestBucket, `${ingestPath}/testGranule3.dat`, path.join(__dirname, 'test_data', 'testGranule3.dat'));
+      await putFile(ingestBucket, `${ingestPath}/testGranule3.jpg`, path.join(__dirname, 'test_data', 'testGranule3.jpg'));
+      FunctionName = `${prefix}-LzardsBackup`;
+      lzardsApiGetFunctionName = `${prefix}-LzardsApiClientTest`;
+      functionConfig = await lambda().send(new GetFunctionConfigurationCommand({
+        FunctionName,
+      }));
+      granuleId = `FakeGranule_${randomString()}`;
+      producerGranuleId = `FakeProducerGranule_${randomString()}`;
+      provider = `FakeProvider_${randomString()}`;
 
-      // Create collection
+      // Create the collection
       collection = await createCollection(
         prefix,
         {
-          name: `testCollections-${testSuffix}`,
           files: [
             {
               bucket: 'protected',
@@ -70,157 +78,205 @@ describe('The Lzards Backup workflow for duplicate granules with producerGranule
         }
       );
 
-      granuleId = generateUniqueGranuleId({
-        id: 'FakeGranule1',
-        collectionId: `${collection.name}___${collection.version}`,
-        hashLength: 4,
-      });
+      const configObject = {
+        cma: {
+          ReplaceConfig: {
+            Path: '$.payload',
+            TargetPath: '$.payload',
+          },
+          task_config: {
+            cumulus_message: {
+              outputs: [
+                {
+                  source: '{$.originalPayload}',
+                  destination: '{$.payload}',
+                },
+                {
+                  source: '{$.backupResults}',
+                  destination: '{$.meta.backupStatus}',
+                },
+              ],
+            },
+          },
+          event: {
+            cumulus_meta: {
+              system_bucket: config.bucket,
+            },
+            meta: {
+              buckets: config.buckets,
+              collection,
+              stack: config.stackName,
+            },
+            payload: {
+              granules: [
+                {
+                  granuleId,
+                  dataType: collection.name,
+                  version: collection.version,
+                  provider,
+                  producerGranuleId,
+                  createdAt: tenMinutesAgo,
+                  files: [
+                    {
+                      fileName: 'testGranule.jpg',
+                      bucket: ingestBucket,
+                      key: `${ingestPath}/testGranule.jpg`,
+                      checksumType: 'md5',
+                      checksum: '5799f9560b232baf54337d334179caa0',
+                    },
+                    {
+                      fileName: 'testGranule.dat',
+                      bucket: ingestBucket,
+                      key: `${ingestPath}/testGranule.dat`,
+                      checksumType: 'md5',
+                      checksum: '39a870a194a787550b6b5d1f49629236',
+                    },
+                    {
+                      fileName: 'testGranule2.jpg',
+                      bucket: ingestBucket,
+                      key: `${ingestPath}/testGranule2.jpg`,
+                      checksumType: 'sha256',
+                      checksum: 'cf27948e5b84c8b3254162a77193ae02e4971da6313ddffaf075c45d7ca03fce',
+                    },
+                    {
+                      fileName: 'testGranule2.dat',
+                      bucket: ingestBucket,
+                      key: `${ingestPath}/testGranule2.dat`,
+                      checksumType: 'sha256',
+                      checksum: 'cf27948e5b84c8b3254162a77193ae02e4971da6313ddffaf075c45d7ca03fce',
+                    },
+                    {
+                      fileName: 'testGranule3.jpg',
+                      bucket: ingestBucket,
+                      key: `${ingestPath}/testGranule3.jpg`,
+                      checksumType: 'sha512',
+                      checksum: 'ceabc00b6c6d0b58c8dfa8e398808e217e893b01e4bf617e043d18d8680275285ad8dcd2aff88916d49a115ad76f8af5966f75cef481ab4764355254655fac2b',
+                    },
+                    {
+                      fileName: 'testGranule3.dat',
+                      bucket: ingestBucket,
+                      key: `${ingestPath}/testGranule3.dat`,
+                      checksumType: 'sha512',
+                      checksum: 'ceabc00b6c6d0b58c8dfa8e398808e217e893b01e4bf617e043d18d8680275285ad8dcd2aff88916d49a115ad76f8af5966f75cef481ab4764355254655fac2b',
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      configObject.cma.task_config = { ...configObject.cma.task_config, ...configOverride.task_config };
+
+      const Payload = new TextEncoder().encode(
+        JSON.stringify({ ...configObject, ...configOverride })
+      );
+
+      lzardsBackupOutput = await pTimeout(
+        lambda().send(new InvokeCommand({ FunctionName, Payload })),
+        (functionConfig.Timeout + 10) * 1000
+      );
+
+      console.log(`generated collection: ${JSON.stringify(collection)}`);
     } catch (error) {
       beforeAllFailed = true;
       throw error;
     }
+  };
+
+  describe('The Lzards Backup Task with override configured', () => {
+    it('invokes successfully', async () => {
+      const taskConfig = {
+        lzardsProvider: 'BOGUS_PROVIDER',
+        cumulus_message: {
+          outputs: [
+            {
+              source: '{$.originalPayload}',
+              destination: '{$.payload}',
+            },
+            {
+              source: '{$.backupResults}',
+              destination: '{$.meta.backupStatus}',
+            },
+          ],
+        },
+      };
+
+      await testSetup({ task_config: taskConfig });
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        expect(lzardsBackupOutput.FunctionError).toBe(undefined);
+      }
+    });
+
+    it('has the expected backup information', () => {
+      const backupStatus = JSON.parse(new TextDecoder('utf-8').decode(lzardsBackupOutput.Payload)).meta.backupStatus;
+      console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
+      expect(backupStatus[0].status).toBe('FAILED');
+      expect(backupStatus[0].body).toContain('Unprocessable Entity');
+    });
+  });
+
+  describe('The Lzards Backup Task', () => {
+    it('invokes successfully', async () => {
+      await testSetup();
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        expect(lzardsBackupOutput.FunctionError).toBe(undefined);
+      }
+    });
+
+    it('has the expected backup information', () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      const backupStatus = JSON.parse(new TextDecoder('utf-8').decode(lzardsBackupOutput.Payload)).meta.backupStatus;
+      console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
+      expect(backupStatus[0].status).toBe('COMPLETED');
+      expect(backupStatus[0].statusCode).toBe(201);
+      expect(backupStatus[0].granuleId).toBe(granuleId);
+      expect(backupStatus[0].producerGranuleId).toBe(producerGranuleId);
+      expect(backupStatus[0].provider).toBe(provider);
+      expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
+      expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
+    });
+
+    it('returns info for a request for a single granule successfully backed up to lzards with producerGranuleId searchParam', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
+          searchParams: {
+            'metadata[collection]': `${collection.name}___${collection.version}`,
+            'metadata[granuleId]': granuleId,
+            'metadata[producerGranuleId]': producerGranuleId,
+          },
+        }));
+        const lzardsApiGetOutput = await pTimeout(
+          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
+          (functionConfig.Timeout + 50) * 1000
+        );
+
+        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
+
+        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
+        expect(payload.count).toBe(3);
+        expect(payload.items[0].metadata.granuleId).toBe(granuleId);
+        expect(payload.items[0].metadata.producerGranuleId).toBe(producerGranuleId);
+        expect(payload.items[0].metadata.collection).toBe(`${collection.name}___${collection.version}`);
+        expect(payload.items[0].metadata.createdAt).toBe(tenMinutesAgo);
+      }
+    });
   });
 
   afterAll(async () => {
-    await deleteCollection({
-      prefix,
-      collectionName: get(collection, 'name'),
-      collectionVersion: get(collection, 'version'),
-    });
-  });
-
-  describe('works with a payload that contains dataType and version and not collectionId', () => {
-    beforeAll(async () => {
-      const payload = {
-        granules: [
-          {
-            granuleId,
-            dataType: collection.name,
-            version: collection.version,
-            provider,
-            producerGranuleId,
-            createdAt: tenMinutesAgo,
-            files: [
-              {
-                fileName: 'testGranule.jpg',
-                bucket: ingestBucket,
-                key: `${ingestPath}/testGranule.jpg`,
-                checksumType: 'md5',
-                checksum: '5799f9560b232baf54337d334179caa0',
-              },
-              {
-                fileName: 'testGranule.dat',
-                bucket: ingestBucket,
-                key: `${ingestPath}/testGranule.dat`,
-                checksumType: 'md5',
-                checksum: '39a870a194a787550b6b5d1f49629236',
-              },
-            ],
-          },
-        ],
-      };
-
-      try {
-        workflowExecution = await buildAndExecuteWorkflow(
+    await pAll(
+      [
+        () => deleteCollection({
           prefix,
-          config.bucket,
-          lzardsBackupTestWorkflowName,
-          collection,
-          undefined,
-          payload,
-          { urlType: 's3' }
-        );
-        const executionArn = workflowExecution.executionArn;
-        console.log(`Wait for completed execution ${executionArn}`);
-
-        await waitForCompletedExecution(executionArn);
-        const lambdaStep = new LambdaStep();
-        lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'LzardsBackup');
-      } catch (error) {
-        beforeAllFailed = error;
-      }
-    });
-
-    afterAll(async () => {
-      await deleteExecution({ prefix, executionArn: workflowExecution.executionArn });
-    });
-
-    it('executes successfully when the payload granule contains dataType and version', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      expect(workflowExecution.status).toEqual('completed');
-    });
-
-    it('has the expected step output', () => {
-      expect(lambdaOutput.payload.granules[0].granuleId).toEqual(granuleId);
-      expect(lambdaOutput.payload.granules[0].producerGranuleId).toEqual(producerGranuleId);
-    });
-  });
-
-  describe('works with a payload that contains dataType and version and collectionId', () => {
-    beforeAll(async () => {
-      const payload = {
-        granules: [
-          {
-            granuleId,
-            collectionId: `${collection.name}___${collection.version}`,
-            dataType: collection.name,
-            version: collection.version,
-            provider,
-            producerGranuleId,
-            createdAt: tenMinutesAgo,
-            files: [
-              {
-                fileName: 'testGranule.jpg',
-                bucket: ingestBucket,
-                key: `${ingestPath}/testGranule.jpg`,
-                checksumType: 'md5',
-                checksum: '5799f9560b232baf54337d334179caa0',
-              },
-              {
-                fileName: 'testGranule.dat',
-                bucket: ingestBucket,
-                key: `${ingestPath}/testGranule.dat`,
-                checksumType: 'md5',
-                checksum: '39a870a194a787550b6b5d1f49629236',
-              },
-            ],
-          },
-        ],
-      };
-
-      try {
-        workflowExecution = await buildAndExecuteWorkflow(
-          prefix,
-          config.bucket,
-          lzardsBackupTestWorkflowName,
-          collection,
-          undefined,
-          payload,
-          { urlType: 's3' }
-        );
-        const executionArn = workflowExecution.executionArn;
-        console.log(`Wait for completed execution ${executionArn}`);
-
-        await waitForCompletedExecution(executionArn);
-        const lambdaStep = new LambdaStep();
-        lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'LzardsBackup');
-      } catch (error) {
-        beforeAllFailed = error;
-      }
-    });
-
-    afterAll(async () => {
-      await deleteExecution({ prefix, executionArn: workflowExecution.executionArn });
-    });
-
-    it('executes successfully when the payload granule contains dataType and version', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      expect(workflowExecution.status).toEqual('completed');
-    });
-
-    it('has the expected step output', () => {
-      expect(lambdaOutput.payload.granules[0].granuleId).toEqual(granuleId);
-      expect(lambdaOutput.payload.granules[0].producerGranuleId).toEqual(producerGranuleId);
-    });
+          collectionName: get(collection, 'name'),
+          collectionVersion: get(collection, 'version'),
+        }),
+      ],
+      { stopOnError: false }
+    ).catch(console.error);
   });
 });
