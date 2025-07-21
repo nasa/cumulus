@@ -38,8 +38,8 @@ export type MessageGranuleFilesObject = {
 
 export interface BaseMessageGranule {
   granuleId: string,
-  producerGranuleId: string,
   files: MessageGranuleFilesObject[],
+  producerGranuleId?: string,
 }
 
 export interface MessageGranuleFromStepOutput extends BaseMessageGranule {
