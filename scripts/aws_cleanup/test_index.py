@@ -1,4 +1,5 @@
 import os
+import logging
 from datetime import datetime
 from index import should_be_cleaned_up, get_instances_to_clean
 
@@ -106,23 +107,26 @@ def test_should_be_cleaned_up_respects_env_variable():
     os.environ = env
 
 
-def test_should_be_cleaned_up_false_on_tag_not_found():
+def test_should_be_cleaned_up_false_on_tag_not_found(caplog):
+    caplog.at_level(logging.WARNING)
     assert (
         should_be_cleaned_up(
             {'InstanceId': 'a', 'Tags': []},
         )
         is False
     )
-
+    assert 'never found timeout key for a' in caplog.text
     assert (
         should_be_cleaned_up(
             {
-                'InstanceId': 'a',
+                'InstanceId': 'b',
                 'Tags': [{'Key': 'Something', 'Value': 'Else'}]
             },
         )
         is False
     )
+    
+    assert 'never found timeout key for b' in caplog.text
 
 
 def test_get_instances_to_clean():
