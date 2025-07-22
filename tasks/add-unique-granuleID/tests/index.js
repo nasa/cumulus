@@ -78,3 +78,65 @@ test('assignUniqueIds accepts granules with dataType and version instead of coll
     t.true(granule.granuleId.startsWith(`${granule.producerGranuleId}_`), 'Should append hash to granuleId');
   });
 });
+
+test('assignUniqueIds with hashKey collectionId removes duplicates', async (t) => {
+  const event = {
+    input: {
+      granules: [
+        { granuleId: 'granule1', collectionId: 'collectionId1' },
+        { granuleId: 'granule1', collectionId: 'collectionId1' },
+        { granuleId: 'granule2', collectionId: 'collectionId2' },
+        { granuleId: 'granule2', collectionId: 'collectionId2' },
+        { granuleId: 'granule3', collectionId: 'collectionId2' },
+      ],
+    },
+    config: {
+      hashKey: 'collectionId',
+    },
+  };
+
+  const result = await assignUniqueIds(event, {});
+  t.is(result.granules.length, 3, 'Should return three granules, removing duplicates from the list');
+});
+
+test('assignUniqueIds with an undefined hashKey will default to collectionId and still remove duplicates', async (t) => {
+  const event = {
+    input: {
+      granules: [
+        { granuleId: 'granule1', collectionId: 'collectionId1' },
+        { granuleId: 'granule1', collectionId: 'collectionId1' },
+        { granuleId: 'granule2', collectionId: 'collectionId2' },
+        { granuleId: 'granule2', collectionId: 'collectionId2' },
+        { granuleId: 'granule3', collectionId: 'collectionId2' },
+      ],
+    },
+    config: { },
+  };
+
+  const result = await assignUniqueIds(event, {});
+  t.is(result.granules.length, 3, 'Should return three granules, removing duplicates from the list');
+});
+
+test('assignUniqueIds with non-collectionId hashKey will not remove duplicates', async (t) => {
+  const event = {
+    input: {
+      granules: [
+        { granuleId: 'granule1', collectionId: 'collectionId1' },
+        { granuleId: 'granule1', collectionId: 'collectionId1' },
+        { granuleId: 'granule2', collectionId: 'collectionId2' },
+        { granuleId: 'granule2', collectionId: 'collectionId2' },
+        { granuleId: 'granule3', collectionId: 'collectionId2' },
+      ],
+    },
+    config: {
+      hashKey: 'granuleId',
+    },
+  };
+
+  const result = await assignUniqueIds(event, {});
+  t.is(result.granules.length, 5, 'Should return five granules, not removing duplicates from the list');
+  result.granules.forEach((granule) => {
+    t.truthy(granule.producerGranuleId, 'Should assign producerGranuleId');
+    t.true(granule.granuleId.startsWith(`${granule.producerGranuleId}_`), 'Should append hash to granuleId');
+  });
+});
