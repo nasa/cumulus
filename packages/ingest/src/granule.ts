@@ -477,11 +477,12 @@ export function unversionFilename(filename: string): string {
  * @returns - A unique granule ID in the format: granuleId_hash.
  */
 export function generateUniqueGranuleId(
-  id: string, collectionId: string, hashLength: number
+  id: string, collectionId: string, hashLength: number, hashKey?: string
 ): string {
   // use MD5 to generate truncated hash of granule object
   // in the format
-  const hashString = `${collectionId}_${process.hrtime.bigint().toString()}`;
+  const hashKeyToUse = hashKey ?? collectionId;
+  const hashString = `${hashKeyToUse}_${process.hrtime.bigint().toString()}`;
   const hashBuffer = crypto.createHash('md5').update(hashString).digest();
   return `${id}_${hashBuffer.toString('base64url').replace(/_/g, '').slice(0, hashLength)}`;
 }
