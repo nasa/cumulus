@@ -6,10 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable Changes
+
+- **CUMULUS-4131**
+  - Users upgrading to this release will be required to update their terraform version to at least 1.12.2. Reference migration instructions are included at [https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12)
+
+### Breaking Changes
+
+- **CUMULUS-4131**
+  - Updated Terraform version requirement to `>=1.12.2`
+  - Updated AWS provider requirement to `5.100.x`
+
 ### Fixed
 
+- **CUMULUS-4177**
+  - Update form-data sub-dependency to safe version ^4.0.4
+- **CUMULUS-4174**
+  - Fix broken CreateReconciliationReportSpec test cleanup
 - **CUMULUS-4170**
   - Upgrade Node Docker image from buster to bullseye for a compatible debian version
+
 ## [v20.2.0] 2025-06-24
 
 ### Added
