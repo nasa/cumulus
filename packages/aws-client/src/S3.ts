@@ -203,15 +203,28 @@ export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
     });
 
 /**
- * Wait for an object to exist in S3
- * @param params.interval=1000 - interval before retries, in ms
- * @param params.timeout=30000 - timeout, in ms
+ * Asynchronously waits for an S3 object to exist at a specified location.
+ *
+ * This function uses `p-wait-for` to repeatedly check for the object's existence
+ * until it's found or a timeout is reached. It provides configurable `interval`
+ * between checks and a total `timeout` duration.
+ *
+ * @param params - The parameters for waiting for the object.
+ * @param params.bucket - The name of the S3 bucket where the object is expected.
+ * @param params.key - The key (path) of the S3 object within the bucket.
+ * @param params.interval - The time in milliseconds to wait between checks.
+ * Defaults to 1000ms (1 second).
+ * @param params.timeout - The maximum time in milliseconds to wait before
+ * giving up and throwing a `TimeoutError`. Defaults to 30000ms (30 seconds).
+ * @returns A Promise that resolves when the S3 object is found.
+ * @throws {TimeoutError} If the object does not exist within the specified `timeout` period.
+ * @throws {Error} If an unexpected error occurs during the S3 existence check.
  */
 export const waitForObjectToExist = async (params: {
   bucket: string,
   key: string,
-  interval: number,
-  timeout: number
+  interval?: number,
+  timeout?: number
 }) => {
   const {
     bucket,
