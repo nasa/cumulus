@@ -27,7 +27,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `producerGranuleId` identifier is set in updated CMR metadata
 
 ### Added
-
 - **CUMULUS-4078**
   - Added `getGranuleIdAndCollectionIdFromFile` query method to `@cumulus/db` to
     retrieve granule and collection metadata from a file's S3 location.
@@ -40,6 +39,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `move-granules` task to validate cross-collection file collisions
     using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
   - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
+- **CUMULUS-4062**
+  - Added `producerGranuleId` to lzardsBackup task and lambda input/output schema
 - **CUMULUS-4089**
   - Add integration testing for duplicate granule workflows. This includes new
     specs and workflows in the `ingestGranule`, `discoverGranules`,
