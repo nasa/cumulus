@@ -9,7 +9,7 @@ const { randomString } = require('../../common/test-utils');
 test.before((t) => {
   process.env.stackName = randomString();
   t.context.testPrefix = 'unitTestStack';
-  t.context.collectionName = 'testCollection';
+  t.context.collectionName = 'testCollection/name';
   t.context.collectionVersion = randomId('abc/e-f-g-123');
 });
 
@@ -19,7 +19,7 @@ test('deleteCollection calls the callback with the expected object', async (t) =
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/collections/${t.context.collectionName}/${encodeURIComponent(t.context.collectionVersion)}`,
+      path: `/collections/${encodeURIComponent(t.context.collectionName)}/${encodeURIComponent(t.context.collectionVersion)}`,
     },
   };
 
@@ -64,7 +64,7 @@ test('getCollection calls the callback with the expected object and returns the 
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/collections/${t.context.collectionName}/${encodeURIComponent(t.context.collectionVersion)}`,
+      path: `/collections/${encodeURIComponent(t.context.collectionName)}/${encodeURIComponent(t.context.collectionVersion)}`,
     },
   };
 
@@ -116,7 +116,7 @@ test('updateCollection calls the callback with the expected object', async (t) =
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
-      path: `/collections/${collection.name}/${encodeURIComponent(collection.version)}`,
+      path: `/collections/${encodeURIComponent(collection.name)}/${encodeURIComponent(collection.version)}`,
       body: JSON.stringify(collection),
     },
   };
