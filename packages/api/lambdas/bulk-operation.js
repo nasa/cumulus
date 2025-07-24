@@ -240,7 +240,6 @@ async function bulkGranuleReingest(
           ...apiGranule,
           ...(targetExecution && { execution: targetExecution }),
         };
-        await updateGranuleStatusToQueued({ apiGranule: apiGranuleToReingest, knex });
         await reingestHandler({
           apiGranule: apiGranuleToReingest,
           asyncOperationId: process.env.asyncOperationId,
