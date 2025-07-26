@@ -8,7 +8,7 @@ def log(message):
 def get_env_or_prompt(var_name, prompt_text, default=None):
     val = os.getenv(var_name)
     if val is None:
-        val = input(f"{prompt_text} [{default if default else ''}]: ") or default
+        val = input(f"{prompt_text} [{default if default else ''}]: ").strip() or default
     return val
 
 DB_HOST = get_env_or_prompt("DB_HOST", "Enter DB host")
@@ -16,10 +16,10 @@ DB_PORT = int(get_env_or_prompt("DB_PORT", "Enter DB port", "5432"))
 DB_NAME = get_env_or_prompt("DB_NAME", "Enter DB name")
 DB_USER = get_env_or_prompt("DB_USER", "Enter DB user")
 DB_PASSWORD = get_env_or_prompt("DB_PASSWORD", "Enter DB password")
+BATCH_SIZE = int(get_env_or_prompt("BATCH_SIZE", "Enter BATCH SIZE for populating column", "100000"))
 
 TABLE_NAME = "granules"
 COLUMN_NAME = "producer_granule_id"
-BATCH_SIZE = 100_000
 
 def get_conn(autocommit=False):
     conn = psycopg2.connect(
@@ -114,13 +114,18 @@ def set_column_not_null():
 
 def create_index():
     log("Creating index on producer_granule_id...")
-    with get_conn(autocommit=True) as conn:
-        with conn.cursor() as cur:
-            cur.execute(f"""
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS {TABLE_NAME}_{COLUMN_NAME}_idx
-                ON {TABLE_NAME} ({COLUMN_NAME});
-            """)
-    log("Index created.")
+    # Do NOT use a context manager for the connection here, since it may wrap in a transaction
+    conn =  get_conn(autocommit=True)
+    try:
+        cur = conn.cursor()
+        cur.execute(f"""
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS {TABLE_NAME}_{COLUMN_NAME}_idx
+            ON {TABLE_NAME} ({COLUMN_NAME});
+        """)
+        cur.close()
+        log("Index created.")
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     try:
