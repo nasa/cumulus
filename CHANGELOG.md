@@ -101,8 +101,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     granuleIds and producerGranuleIds set, and that CnmResponse sends responses
     using producerGranuleIds
 - **CUMULUS-4162**
-  - Made `hashKey` configurable for the `add-unique-granuleId` task
-  - Updated documentation to detail the different `hashKey` configuration options
+  - Made a `includeTimestampHashKey` config variable for the `add-unique-granuleId` task to discern whether the hashKey is  `collectionId` or `collectionId` + timestamp
+  - Updated documentation to detail the two different `hashKey` configuration options
 
 ## [Unreleased]
 

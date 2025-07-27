@@ -8,10 +8,10 @@
       "type": ["null", "number", "string"],
       "default": 8
     },
-    "hashKey": {
-      "description": "Optional hashKey config to use for uniquifying granules, defaults to collectionId",
-      "type": ["null", "string"],
-      "default": "collectionId"
+    "includeTimestampHashKey": {
+      "description": "Optional boolean config on whether the hash, which is collectionId, should include timestamp, defaults to false",
+      "type": ["null", "boolean"],
+      "default": "false"
     }
   }
 }

@@ -20,8 +20,8 @@ const log = new Logger({ sender: '@cumulus/add-unique-granule-id' });
  */
 async function assignUniqueIds(event: HandlerEvent): Promise<HandlerOutput> {
   let { granules } = event.input;
-  const hashKey = event?.config?.hashKey ?? 'collectionId';
-  if (hashKey === 'collectionId') {
+  const includeTimestampHashKey = event?.config?.includeTimestampHashKey ?? false;
+  if (!includeTimestampHashKey) {
     // remove duplicate granules
     granules = Array.from(new Map(granules.map((obj) => [`${obj.granuleId}|${obj.collectionId}`, obj])).values());
   }
@@ -33,7 +33,7 @@ async function assignUniqueIds(event: HandlerEvent): Promise<HandlerOutput> {
         granule.granuleId,
         collectionId,
         Number(event?.config?.hashLength) || 8,
-        hashKey
+        includeTimestampHashKey
       );
       granule.producerGranuleId = granule.granuleId;
       granule.granuleId = newGranuleId;

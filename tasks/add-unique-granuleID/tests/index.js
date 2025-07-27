@@ -79,7 +79,7 @@ test('assignUniqueIds accepts granules with dataType and version instead of coll
   });
 });
 
-test('assignUniqueIds with hashKey collectionId removes duplicates', async (t) => {
+test('assignUniqueIds with includeTimestampHashKey set to false removes duplicates', async (t) => {
   const event = {
     input: {
       granules: [
@@ -91,7 +91,7 @@ test('assignUniqueIds with hashKey collectionId removes duplicates', async (t) =
       ],
     },
     config: {
-      hashKey: 'collectionId',
+      includeTimestampHashKey: false,
     },
   };
 
@@ -99,7 +99,7 @@ test('assignUniqueIds with hashKey collectionId removes duplicates', async (t) =
   t.is(result.granules.length, 3, 'Should return three granules, removing duplicates from the list');
 });
 
-test('assignUniqueIds with an undefined hashKey will default to collectionId and still remove duplicates', async (t) => {
+test('assignUniqueIds with an undefined includeTimestampHashKey value will default to collectionId and still remove duplicates', async (t) => {
   const event = {
     input: {
       granules: [
@@ -117,7 +117,7 @@ test('assignUniqueIds with an undefined hashKey will default to collectionId and
   t.is(result.granules.length, 3, 'Should return three granules, removing duplicates from the list');
 });
 
-test('assignUniqueIds with non-collectionId hashKey will not remove duplicates', async (t) => {
+test('assignUniqueIds with includeTimestampHashKey set to true will not remove duplicates', async (t) => {
   const event = {
     input: {
       granules: [
@@ -129,7 +129,7 @@ test('assignUniqueIds with non-collectionId hashKey will not remove duplicates',
       ],
     },
     config: {
-      hashKey: 'granuleId',
+      includeTimestampHashKey: true,
     },
   };
 

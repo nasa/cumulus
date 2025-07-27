@@ -30,7 +30,7 @@ export type HandlerOutput = {
 export type HandlerEvent = {
   config?: {
     hashLength?: null | number | string;
-    hashKey?: null | string;
+    includeTimestampHashKey?: null | boolean;
   },
   input: HandlerInput,
 };
