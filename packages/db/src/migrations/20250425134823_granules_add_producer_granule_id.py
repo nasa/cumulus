@@ -80,24 +80,31 @@ def batch_update(min_id, max_id):
     log("Starting batch update using a single connection...")
     log(f"min_id {min_id} AND max_id {max_id}")
 
+    # Run each batch as its own statement outside of an explicit transaction block
+    # autocommit=True ensures each UPDATE is committed immediately
+    conn =  get_conn(autocommit=True)
     try:
-        with get_conn() as conn:
-            with conn.cursor() as cur:
-                while min_id <= max_id:
-                    upper = min_id + BATCH_SIZE - 1
-                    log(f"Updating rows where cumulus_id BETWEEN {min_id} AND {upper}")
+        cur = conn.cursor()
+        while min_id <= max_id:
+            upper = min_id + BATCH_SIZE - 1
+            log(f"Updating rows where cumulus_id BETWEEN {min_id} AND {upper}")
 
-                    cur.execute(f"""
-                        UPDATE {TABLE_NAME}
-                        SET {COLUMN_NAME} = granule_id
-                        WHERE cumulus_id BETWEEN %s AND %s;
-                    """, (min_id, upper))
+            cur.execute(f"""
+                UPDATE {TABLE_NAME}
+                SET {COLUMN_NAME} = granule_id
+                WHERE cumulus_id BETWEEN %s AND %s;
+            """, (min_id, upper))
 
-                    conn.commit()  # commit after each batch
-                    min_id += BATCH_SIZE
+            updated = cur.rowcount
+            log(f"Updated {updated} rows where cumulus_id BETWEEN {min_id} AND {upper}")
+            min_id += BATCH_SIZE
+
+        cur.close()
     except Exception as e:
         log(f"Failed batch update: {e}")
         raise
+    finally:
+        conn.close()
 
     log("Finished populating producer_granule_id column.")
 
@@ -114,7 +121,7 @@ def set_column_not_null():
 
 def create_index():
     log("Creating index on producer_granule_id...")
-    # Do NOT use a context manager for the connection here, since it may wrap in a transaction
+    # "CREATE INDEX CONCURRENTLY" must be run outside of transaction
     conn =  get_conn(autocommit=True)
     try:
         cur = conn.cursor()
