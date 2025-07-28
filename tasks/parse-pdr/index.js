@@ -176,8 +176,11 @@ const extractGranuleId = (fileName, regex) => {
  * @param {string} params.prefix - stack prefix
  * @param {Object} params.fileGroup - PDR FILE_GROUP object
  * @param {string} params.pdrName - name of the PDR for error reporting
- * @param {boolean} params.uniquifyGranuleId
- * @param {number} params.hashLength
+ * @param {boolean} params.uniquifyGranuleId - boolean for whether granule should be
+ * uniquified or not
+ * @param {number} params.hashLength - Length of hash used for uniquification
+ * @param {boolean} params.includeTimestampHashKey - boolean for whether hash should
+ * include timestamp or not
  * @returns {Promise<Object>} - granule object
  */
 const convertFileGroupToGranule = async ({
@@ -186,6 +189,7 @@ const convertFileGroupToGranule = async ({
   pdrName,
   uniquifyGranuleId = true,
   hashLength = 8,
+  includeTimestampHashKey = false,
 }) => {
   if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
   const dataType = fileGroup.get('DATA_TYPE').value;
@@ -219,7 +223,7 @@ const convertFileGroupToGranule = async ({
   let granuleId = extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction);
   const producerGranuleId = granuleId;
   if (uniquifyGranuleId) {
-    granuleId = generateUniqueGranuleId(granuleId, `${dataType}___${version}`, hashLength);
+    granuleId = generateUniqueGranuleId(granuleId, `${dataType}___${version}`, hashLength, includeTimestampHashKey);
   }
 
   return {
@@ -255,6 +259,8 @@ const buildPdrDocument = (rawPdr) => {
  * granule IDs unique
  * @param {null | number | string} [event.config.hashLength] - Length of hash used
  * for uniquification
+ * @param {null | boolean} [event.config.includeTimestampHashKey] - Boolean value for if hashKey
+ * should include timestamp or not
  * @param {object} event.config.provider - Provider information
  * @param {string} event.config.provider.id - Provider ID
  * @param {number} [event.config.provider.globalConnectionLimit] - Max concurrent connections
@@ -288,7 +294,8 @@ const parsePdr = async ({ config, input }) => {
   const uniquifyGranuleIdConfigValue = get(config, 'uniquifyGranuleId', false);
   const uniquifyGranuleId = uniquifyGranuleIdConfigValue === 'true' || uniquifyGranuleIdConfigValue === true;
   const hashLength = Number(config.hashLength) || 8;
-  const allPdrGranules = await Promise.all(
+  const includeTimestampHashKey = config?.includeTimestampHashKey ?? false;
+  let allPdrGranules = await Promise.all(
     pdrDocument.objects('FILE_GROUP').map((fileGroup) =>
       convertFileGroupToGranule({
         prefix: config.stack,
@@ -296,8 +303,14 @@ const parsePdr = async ({ config, input }) => {
         pdrName: input.pdr.name,
         uniquifyGranuleId,
         hashLength,
+        includeTimestampHashKey,
       }))
   );
+
+  if (!includeTimestampHashKey) {
+    // remove duplicate granules
+    allPdrGranules = Array.from(new Map(allPdrGranules.map((obj) => [`${obj.granuleId}|${obj.collectionId}`, obj])).values());
+  }
 
   await S3.s3PutObject({
     Bucket: config.bucket,
