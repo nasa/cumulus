@@ -21,15 +21,16 @@ interface BaseGranule {
 }
 
 export type HandlerInput = {
-  granules: GranuleInput[],
+  granules: GranuleInput[];
 };
 
 export type HandlerOutput = {
-  granules: GranuleOutput[],
+  granules: GranuleOutput[];
 };
 export type HandlerEvent = {
   config?: {
-    hashLength?: null | number | string,
+    hashLength?: null | number | string;
+    includeTimestampHashKey?: null | boolean;
   },
   input: HandlerInput,
 };

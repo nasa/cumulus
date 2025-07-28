@@ -44,11 +44,14 @@ or
 
 ### Config Object
 
-The config object has one key that allows specification of the truncated size of the MD5 hash used to uniquify the granuleID.
+The config object has two keys, hashLength, which  allows specification of the truncated size of the MD5 hash used to uniquify the granuleID, and
+includeTimestampHashKey, which allows specification for whether or not the hashKey should be collectionId or collectionId and timestamp. If the
+includeTimestampHashKey value is false, which is its default value, then the hashKey will only be collectionId, removing duplicate granules from the granules list for the next step while supporting duplicate producerGranuleIds in different collections. If the value is set to true, then the hash will include timestamp and duplicates will not be removed, to support granule versioning in the same collection.
 
 ```json
 {
-  "hashLength": 8
+  "hashLength": 8,
+  "includeTimestampHashKey" : true,
 }
 ```
 
@@ -74,7 +77,8 @@ Output is list of granules in like format as the input *with* field modification
 
           },
           "task_config": {
-            "hashLength": 6
+            "hashLength": 6,
+            "includeTimestampHashKey": true,
           }
         }
       },
