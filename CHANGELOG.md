@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **CUMULUS-4078**
+  - Move Granules task will now check on file collision if the existing file is
+    registered in Core's database to another collection.  If it is, the granule
+    (and the task execution) will fail, regardless of the duplicate behavior
+    configuration. If this behavior is undesirable for performance or logic
+    reasons, the `checkCrossCollectionCollisions` may be set to `false` to
+    disable the behavior on a per-workflow, per-collection or other config
+    driven criteria.
+
 - **CUMULUS-4072**
   - Updated the `parse-pdr` task component to throw an error if multiple
     granules within the same PDR have the same granuleId after applying the
@@ -18,12 +27,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `producerGranuleId` identifier is set in updated CMR metadata
 
 ### Added
+- **CUMULUS-4078**
+  - Added `getGranuleIdAndCollectionIdFromFile` query method to `@cumulus/db` to
+    retrieve granule and collection metadata from a file's S3 location.
+  - Added new API route `GET /granules/files/get_collection_and_granule_id/:bucket/:key` in `@cumulus/api` to
+    return the granule ID and collection ID associated with a file.
+  - Added `getFileGranuleAndCollectionByBucketAndKey` method to
+    `@cumulus/api-client/granules` to allow use of new endpoint.
+  - Added integration and unit tests for the new DB query, API endpoint, and
+    client method.
+  - Updated `move-granules` task to validate cross-collection file collisions
+    using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
+  - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
 - **CUMULUS-4062**
   - Added `producerGranuleId` to lzardsBackup task and lambda input/output schema
 - **CUMULUS-4089**
-  - Add integration testing for duplicate granule workflows. This includes new specs and workflows in the `ingestGranule`, `discoverGranules`, `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
+  - Add integration testing for duplicate granule workflows. This includes new
+    specs and workflows in the `ingestGranule`, `discoverGranules`,
+    `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
 - **CUMULUS-4085**
-  - Added config option for files-to-granules task to use `producerGranuleId` when mapping files to their granules.
+  - Added config option for files-to-granules task to use `producerGranuleId`
+    when mapping files to their granules.
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules`
     table.
@@ -118,7 +142,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **CUMULUS_4174**
+- **CUMULUS-4177**
+  - Update form-data sub-dependency to safe version ^4.0.4
+- **CUMULUS-4174**
   - Fix broken CreateReconciliationReportSpec test cleanup
 - **CUMULUS-4170**
   - Upgrade Node Docker image from buster to bullseye for a compatible debian version
@@ -127,6 +153,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4108**
+  - Added standalone lambda function code to scan and terminate old instances when they pass their 90 day expiration
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
