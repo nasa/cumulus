@@ -1,6 +1,7 @@
 import os
 import getpass
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import psycopg2
 
@@ -22,6 +23,7 @@ DB_NAME = get_env_or_prompt("DB_NAME", "Enter DB name")
 DB_USER = get_env_or_prompt("DB_USER", "Enter DB user")
 DB_PASSWORD = get_env_or_prompt("DB_PASSWORD", "Enter DB password", hide_input=True)
 BATCH_SIZE = int(get_env_or_prompt("BATCH_SIZE", "Enter BATCH SIZE for populating column", "100000"))
+WORKERS = int(get_env_or_prompt("WORKERS", "Number of parallel workers", "1"))
 RECOVERY_MODE = get_env_or_prompt("RECOVERY_MODE", "Batch Update Recovery mode? (Y/N)", "N").strip().upper() == "Y"
 
 TABLE_NAME = "granules"
@@ -93,37 +95,46 @@ def get_min_max_ids():
                 """)
             return cur.fetchone()
 
-def batch_update(min_id, max_id):
-    log("Starting batch update using a single connection...")
-    log(f"min_id {min_id} AND max_id {max_id}")
-
-    # Run each batch as its own statement outside of an explicit transaction block
-    # autocommit=True ensures each UPDATE is committed immediately
-    conn =  get_conn(autocommit=True)
+def process_batch(batch_range):
+    start_id, end_id = batch_range
+    conn = get_conn(autocommit=True)
     try:
-        cur = conn.cursor()
-        while min_id <= max_id:
-            upper = min_id + BATCH_SIZE - 1
-            log(f"Updating rows where cumulus_id BETWEEN {min_id} AND {upper}")
-
+        with conn.cursor() as cur:
+            log(f"[Worker] Updating rows where cumulus_id BETWEEN {start_id} AND {end_id}")
             cur.execute(f"""
                 UPDATE {TABLE_NAME}
                 SET {COLUMN_NAME} = granule_id
                 WHERE cumulus_id BETWEEN %s AND %s;
-            """, (min_id, upper))
-
+            """, (start_id, end_id))
             updated = cur.rowcount
-            log(f"Updated {updated} rows where cumulus_id BETWEEN {min_id} AND {upper}")
-            min_id += BATCH_SIZE
-
-        cur.close()
+            log(f"[Worker] Updated {updated} rows where cumulus_id BETWEEN {start_id} AND {end_id}")
     except Exception as e:
-        log(f"Failed batch update: {e}")
+        log(f"[Worker] Failed batch {start_id}-{end_id}: {e}")
         raise
     finally:
         conn.close()
 
-    log("Finished populating producer_granule_id column.")
+def run_parallel_batch_update(min_id, max_id):
+    log(f"Starting parallel batch update with {WORKERS} worker(s)...")
+    batch_ranges = [
+        (start, min(start + BATCH_SIZE - 1, max_id))
+        for start in range(min_id, max_id + 1, BATCH_SIZE)
+    ]
+
+    if WORKERS <= 1:
+        for batch in batch_ranges:
+            process_batch(batch)
+    else:
+        with ThreadPoolExecutor(max_workers=WORKERS) as executor:
+            futures = {executor.submit(process_batch, br): br for br in batch_ranges}
+            for future in as_completed(futures):
+                batch = futures[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    log(f"[ERROR] Batch {batch} failed: {e}")
+                    raise
+    log("Parallel batch update complete.")
 
 def set_column_not_null():
     log("Setting producer_granule_id column to NOT NULL...")
@@ -174,7 +185,7 @@ if __name__ == "__main__":
             log("No rows to populate.")
         else:
             log(f"Populating cumulus_id range: {min_id} to {max_id}")
-            batch_update(min_id, max_id)
+            run_parallel_batch_update(min_id, max_id)
         set_column_not_null()
         create_index()
         vacuum_table()
