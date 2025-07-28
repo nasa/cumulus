@@ -41,6 +41,8 @@ HAVING COUNT(*) > 1
 ORDER BY count DESC;
 ```
 
+The migration script will abort if there are duplicate grarnule_id values in the granules table.
+
 ## Apply the Changes in Production Environment
 
 With large database (e.g. number of rows in granules table is greater than 100,000), the updates must be applied manually since
@@ -51,9 +53,9 @@ all database activity be quiesced. This means that Ingest and Archive and other 
 The table below from LP DAAC SNAPSHOT database provides the table sizes before and after the migration commands, and timings.  The commands are
 run with 16ACUs.
 
-| Table Name | Original Table Size | ALTER Run Time (clock) | New Table Size | Number of Rows |
+| Table Name | Original Table Size | Migration Time (clock) | New Table Size | Number of Rows |
 |---|---|---|---|---|
-| granules | 1.8 TB | 41 hours | 1.4 TB | 374,170,855 |
+| granules | 118 GB | 16 hours | 118 GB | 163 M |
 
 ## Tools Used
 
@@ -61,16 +63,6 @@ Since the update commands can take a few hours to run based on table size and IO
 in the AWS environment in a tmux or screen session. This will minimize the number of network hops and potential disconnects between the database client
 and the database. Additionally, this will allow operators applying the patch to check on progress periodically and not worry about credential expiration or
 other issues that would result in the client being killed.
-
-## Suggestions
-
-- Backup database before applying the updates, see the
-  [Backup and Restore document](https://nasa.github.io/cumulus/docs/features/backup_and_restore/#postgres-database).
-
-- To get a more accurate downtime estimate, you can take a snapshot of your database, and run the migration on it.
-
-- This upgrade should work on prior Cumulus releases, so the upgrade can be performed when maintenance windown allows
-  without having to upgrade Cumulus.
 
 ## Upgrade Steps
 
@@ -102,41 +94,65 @@ other issues that would result in the client being killed.
   
     :::note Remember to take a note on which instance you run the commands.
 
-3. Install tmux and postgres client
+3. Install tmux, postgres client and python packages
 
     ```sh
     sudo yum install -y tmux
-    # Amazon Linux 2
-    sudo amazon-linux-extras install postgresql13
     # Amazon Linux 2023
     sudo dnf install -y postgresql15
+    sudo dnf install -y python3 python3-pip
+    pip3 install --user psycopg2-binary
     ```
 
-    Once installed, a tmux session is started with two windows. The Cumulus database is connected to in each window
-    using the PostgreSQL client. The primary window is used for running the ALTER commands, while the secondary window
-    is used to monitor the database and alter statement. When the operator hits end of shift or is done monitoring for
-    the day, the tmux session can be detached from and reattached to at a later time.
+    Once installed, a tmux session is started with two windows. The primary window is used for running the
+    migration script, while the secondary window is used to monitor the database. When the operator hits
+    end of shift or is done monitoring for the day, the tmux session can be detached from and reattached to at a later time.
 
-4. Run SQL Commands
+4. Run Migration Script
     The database login credentials can be retrieved from the prefix_db_login secret.
-    When the SQL commands are running, perform step 5 to monitor the commands.
+    When the migration script is running, perform step 5 to monitor the commands.
 
+     ```sh
+     cd
+     curl -o /home/ssm-user/20250425134823_granules_add_producer_granule_id.py https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20250425134823_granules_add_producer_granule_id.py
+
+     tmux new-session -s CumulusUpgrade -n add-producer_granule_id
+     python3 /home/ssm-user/20250425134823_granules_add_producer_granule_id.py
+
+     ```
+
+    The actual number of rows updated in each batch may be less than BATCH_SIZE because cumulus_id values may not increase by exactly 1.
+
+    Example output:
     ```sh
-    tmux new-session -s CumulusUpgrade -n add-producer_granule_id
+    $ python3 /home/ssm-user/20250425134823_granules_add_producer_granule_id.py
+    Enter DB host []: cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com
+    Enter DB port [5432]:
+    Enter DB name []: cumulus_test_db
+    Enter DB user []: cumulus_test
+    Enter DB password []: 
+    [2025-07-26T03:20:24.863452] Checking for duplicate granule_id values...
+    [2025-07-26T03:20:24.863452] Checking for duplicate granule_id values...
+    [2025-07-26T03:26:13.266883] No duplicate granule_id values found.
+    [2025-07-26T03:26:13.267377] Adding column producer_granule_id if not present...
+    [2025-07-26T03:26:13.470536] Column check complete.
+    [2025-07-26T03:26:13.531711] Starting batch update using a single connection...
+    [2025-07-26T03:26:13.553828] Updating rows where cumulus_id BETWEEN 3 AND 100002
+    [2025-07-26T03:26:17.169326] Updating rows where cumulus_id BETWEEN 100003 AND 200002
+    [2025-07-26T03:26:17.939732] Updating rows where cumulus_id BETWEEN 200003 AND 300002
 
-    psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -W
-    #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -W
-
-    # Use -f option to run the SQL commands from a file
-    psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -f 20240124101001_update_cumulus_id_add_indexes.sql -W
+    [2025-07-26T16:48:23.979485] Updating rows where cumulus_id BETWEEN 560200003 AND 560300002
+    [2025-07-26T16:48:24.854294] Updating rows where cumulus_id BETWEEN 560300003 AND 560400002
+    [2025-07-26T16:48:24.869539] Finished populating producer_granule_id column.
+    [2025-07-26T16:48:24.869723] Setting producer_granule_id column to NOT NULL...
+    [2025-07-26T16:51:32.881139] Column is now NOT NULL.
+    [2025-07-26T16:51:32.881322] Creating index on producer_granule_id...
+    [2025-07-26T17:28:25.693141] Index created.
+    [2025-07-26T17:28:25.693327] Update completed successfully.
     ```
 
-    The following are SQL commands, and 20250425134823_granules_add_producer_granule_id.sql is available
-    [here](https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20250425134823_granules_add_producer_granule_id.sql):
-
-    ```sql
-    ....
-    ```
+    The SQL commands used for migration are available
+    [here](https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20250425134823_granules_add_producer_granule_id.sql)
 
 5. Monitor the Running Command
 
@@ -154,11 +170,11 @@ other issues that would result in the client being killed.
      We can verify that the tables are updated successfully by checking the `\d table` results from psql.  The following are expected results.
 
     ```sh
-    => \d granules;
+    => \d+ granules;
 
-              Column           |           Type           | Collation | Nullable |                    Default                     
-    ----------------------------+--------------------------+-----------+----------+------------------------------------------------
-    producer_granule_id        | text                     |           | not null |
+              Column           |           Type           | Collation | Nullable |               Default    |                     Description                 
+    ----------------------------+--------------------------+-----------+----------+-------------------------+--------------------------------------
+    producer_granule_id        | text                     |           | not null |                          | Producer Granule Id
 
     Indexes:
     "granules_producer_granule_id_index" btree (producer_granule_id)

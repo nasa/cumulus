@@ -1,21 +1,26 @@
-import psycopg2
 import os
+import getpass
 from datetime import datetime
+
+import psycopg2
 
 def log(message):
     print(f"[{datetime.now().isoformat()}] {message}")
 
-def get_env_or_prompt(var_name, prompt_text, default=None):
+def get_env_or_prompt(var_name, prompt_text, default=None, hide_input=False):
     val = os.getenv(var_name)
     if val is None:
-        val = input(f"{prompt_text} [{default if default else ''}]: ").strip() or default
+        if hide_input:
+            val = getpass.getpass(f"{prompt_text}: ")
+        else:
+            val = input(f"{prompt_text} [{default if default else ''}]: ").strip() or default
     return val
 
 DB_HOST = get_env_or_prompt("DB_HOST", "Enter DB host")
 DB_PORT = int(get_env_or_prompt("DB_PORT", "Enter DB port", "5432"))
 DB_NAME = get_env_or_prompt("DB_NAME", "Enter DB name")
 DB_USER = get_env_or_prompt("DB_USER", "Enter DB user")
-DB_PASSWORD = get_env_or_prompt("DB_PASSWORD", "Enter DB password")
+DB_PASSWORD = get_env_or_prompt("DB_PASSWORD", "Enter DB password", hide_input=True)
 BATCH_SIZE = int(get_env_or_prompt("BATCH_SIZE", "Enter BATCH SIZE for populating column", "100000"))
 
 TABLE_NAME = "granules"
@@ -121,16 +126,30 @@ def set_column_not_null():
 
 def create_index():
     log("Creating index on producer_granule_id...")
-    # "CREATE INDEX CONCURRENTLY" must be run outside of transaction
+    # "CREATE INDEX CONCURRENTLY" cannot be executed inside a transaction block
     conn =  get_conn(autocommit=True)
     try:
         cur = conn.cursor()
         cur.execute(f"""
-            CREATE INDEX CONCURRENTLY IF NOT EXISTS {TABLE_NAME}_{COLUMN_NAME}_idx
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS {TABLE_NAME}_{COLUMN_NAME}_index
             ON {TABLE_NAME} ({COLUMN_NAME});
         """)
         cur.close()
         log("Index created.")
+    finally:
+        conn.close()
+
+def vacuum_table():
+    log("Vacuuming granules table...")
+    # VACUUM cannot be executed inside a transaction block
+    conn =  get_conn(autocommit=True)
+    try:
+        cur = conn.cursor()
+        cur.execute(f"""
+            VACUUM (ANALYZE, VERBOSE) {TABLE_NAME};
+        """)
+        cur.close()
+        log("Vacuum complete.")
     finally:
         conn.close()
 
@@ -145,6 +164,7 @@ if __name__ == "__main__":
             batch_update(min_id, max_id)
             set_column_not_null()
             create_index()
+            vacuum_table()
             log("Update completed successfully.")
     except Exception as err:
         log(f"Aborted: {err}")
