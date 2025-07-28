@@ -62,3 +62,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_producer_granule_id_index
 ON granules(producer_granule_id);
 
 SELECT 'Creating index completed at ' || clock_timestamp() AS message;
+
+VACUUM (ANALYZE, VERBOSE) granules;
+
+SELECT 'Vacuum completed at ' || clock_timestamp() AS message;
