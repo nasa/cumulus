@@ -104,9 +104,10 @@ other issues that would result in the client being killed.
     pip3 install --user psycopg2-binary
     ```
 
-    Once installed, a tmux session is started with two windows. The primary window is used for running the
-    migration script, while the secondary window is used to monitor the database. When the operator hits
-    end of shift or is done monitoring for the day, the tmux session can be detached from and reattached to at a later time.
+    Once installed, a tmux session is started with two windows. Alternatively, you can start two ssm sessions
+    with the same EC2 instance concurrently. The primary window is used for running the migration script, 
+    while the secondary window is used to monitor the database. When the operator hits end of shift or is done
+    monitoring for the day, the tmux session can be detached from and reattached to at a later time.
 
 4. Run Migration Script
     The database login credentials can be retrieved from the prefix_db_login secret.

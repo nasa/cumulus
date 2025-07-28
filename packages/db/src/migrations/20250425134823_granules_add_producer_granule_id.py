@@ -22,6 +22,7 @@ DB_NAME = get_env_or_prompt("DB_NAME", "Enter DB name")
 DB_USER = get_env_or_prompt("DB_USER", "Enter DB user")
 DB_PASSWORD = get_env_or_prompt("DB_PASSWORD", "Enter DB password", hide_input=True)
 BATCH_SIZE = int(get_env_or_prompt("BATCH_SIZE", "Enter BATCH SIZE for populating column", "100000"))
+RECOVERY_MODE = get_env_or_prompt("RECOVERY_MODE", "Batch Update Recovery mode? (Y/N)", "N").strip().upper() == "Y"
 
 TABLE_NAME = "granules"
 COLUMN_NAME = "producer_granule_id"
@@ -76,9 +77,20 @@ def add_column_if_needed():
     log("Column check complete.")
 
 def get_min_max_ids():
+    log(f"Fetching min/max cumulus_id values ({'Recovery mode' if RECOVERY_MODE else 'Normal mode'})...")
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(f"SELECT MIN(cumulus_id), MAX(cumulus_id) FROM {TABLE_NAME}")
+            if RECOVERY_MODE:
+                cur.execute(f"""
+                    SELECT MIN(cumulus_id), MAX(cumulus_id)
+                    FROM {TABLE_NAME}
+                    WHERE {COLUMN_NAME} IS NULL;
+                """)
+            else:
+                cur.execute(f"""
+                    SELECT MIN(cumulus_id), MAX(cumulus_id)
+                    FROM {TABLE_NAME};
+                """)
             return cur.fetchone()
 
 def batch_update(min_id, max_id):
@@ -159,12 +171,13 @@ if __name__ == "__main__":
         add_column_if_needed()
         min_id, max_id = get_min_max_ids()
         if min_id is None or max_id is None:
-            log("The granules table is empty.")
+            log("No rows to populate.")
         else:
+            log(f"Populating cumulus_id range: {min_id} to {max_id}")
             batch_update(min_id, max_id)
-            set_column_not_null()
-            create_index()
-            vacuum_table()
-            log("Update completed successfully.")
+        set_column_not_null()
+        create_index()
+        vacuum_table()
+        log("Update completed successfully.")
     except Exception as err:
         log(f"Aborted: {err}")
