@@ -59,6 +59,10 @@ describe('The Add Unique Granule Id Task ', () => {
               ],
             },
           },
+          task_config: {
+            hashLength: 4,
+            includeTimestampHashKey: false,
+          },
         },
       };
 
@@ -91,7 +95,7 @@ describe('The Add Unique Granule Id Task ', () => {
       const payload = JSON.parse(new TextDecoder('utf-8').decode(functionOutput.Payload)).payload;
       expect(payload.granules[0].producerGranuleId).toBe(granuleId);
       expect(payload.granules[0].granuleId).toMatch(
-        new RegExp(`^${granuleId}_[a-zA-Z0-9-]{8}$`)
+        new RegExp(`^${granuleId}_[a-zA-Z0-9-]{4}$`)
       );
     });
   });

@@ -126,6 +126,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     demonstrate that the CNM ingest workflow ingests granules with unique
     granuleIds and producerGranuleIds set, and that CnmResponse sends responses
     using producerGranuleIds
+- **CUMULUS-4162**
+  - Made a `includeTimestampHashKey` config variable for the `add-unique-granuleId` and `parse-pdr` task to configure whether the hashKey is  `collectionId` or `collectionId` + timestamp
+  - Updated documentation to detail the two different `hashKey` configuration options
 
 ## [Unreleased]
 
@@ -141,10 +144,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated AWS provider requirement to `5.100.x`
 
 ### Fixed
-
-- **CUMULUS-4177**
-  - Update form-data sub-dependency to safe version ^4.0.4
-- **CUMULUS-4174**
+- **CUMULUS_4174**
   - Fix broken CreateReconciliationReportSpec test cleanup
 - **CUMULUS-4170**
   - Upgrade Node Docker image from buster to bullseye for a compatible debian version
@@ -153,8 +153,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-4108**
-  - Added standalone lambda function code to scan and terminate old instances when they pass their 90 day expiration
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**

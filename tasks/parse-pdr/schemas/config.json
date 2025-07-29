@@ -29,6 +29,11 @@
       "type": ["null", "number", "string"],
       "default": 8
     },
+    "includeTimestampHashKey": {
+      "description": "Optional boolean config on whether the hash, which is collectionId, should include timestamp, defaults to false",
+      "type": ["null", "boolean"],
+      "default": "false"
+    },
     "provider": {
       "type": "object",
       "properties": {
