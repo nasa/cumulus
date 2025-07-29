@@ -33,8 +33,8 @@ function evaluateOperation(name, args) {
   case 'extractPath': {
     return path.dirname(valueStr);
   }
-  case 'notNull': {
-    return valueStr || args[1];
+  case 'firstDefined': {
+    return args[0] || args[1];
   }
   default:
     throw new Error(`Could not support operation ${name}`);
@@ -60,8 +60,21 @@ function templateReplacer(context, submatch) {
     // args[0] is either an object path or a constant
     //   e.g. extractPath(file.path) or extractPath('/a/b/c')
     // assume args[0] is an object path if it starts with a key of context
-    const isObjectPath = Object.keys(context).includes(args[0].split('.')[0]);
+    let isObjectPath = Object.keys(context).includes(args[0].split('.')[0]);
     const jsonPathValue = get(context, args[0], isObjectPath ? undefined : args[0]);
+
+    // fall back to second argument if using the firstDefined function and
+    // the first argument doesn't produce a jsonPathValue
+    if (name === 'firstDefined' && !jsonPathValue && args[1]) {
+      isObjectPath = Object.keys(context).includes(args[1].split('.')[0]);
+      args[0] = null;
+      args[1] = get(context, args[1], isObjectPath ? undefined : args[1]);
+
+      if (!args[1]) throw new Error(`Could not resolve path ${args[1]}`);
+
+      return evaluateOperation(name, args);
+    }
+
     if (!jsonPathValue) throw new Error(`Could not resolve path ${args[0]}`);
     args[0] = jsonPathValue;
     return evaluateOperation(name, args);
@@ -82,12 +95,10 @@ function templateReplacer(context, submatch) {
 **/
 function urlPathTemplate(pathTemplate, context) {
   const templateRegex = /{([^{}]+)}/g;
-
   try {
     // match: The matched substring, submatch: The parenthesized submatch string
     const replacedPath = pathTemplate.replace(templateRegex, (match, submatch) =>
       templateReplacer(context, submatch));
-
     if (replacedPath.match(templateRegex)) {
       return urlPathTemplate(replacedPath, context);
     }
