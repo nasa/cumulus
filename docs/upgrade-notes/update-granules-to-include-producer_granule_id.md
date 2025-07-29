@@ -1,6 +1,6 @@
 ---
-id: update-granules-table-add-producer_granule_id 
-title: Update granules table add producer_granule_id 
+id: update-granules-to-include-producer_granule_id
+title: Update granules to include producer_granule_id
 hide_title: false
 ---
 
@@ -59,9 +59,9 @@ sizes were measured using the following query:
 SELECT pg_size_pretty(pg_total_relation_size('granules'));
 ```
 
-| Table Name | Original Table Size | Migration Time | New Table Size | Number of Rows |
+| Table Name | Original Table Size | New Table Size | Number of Rows | Migration Time |
 |---|---|---|---|---|
-| granules | 263 GB | 16 hours | 274 GB | 163 M |
+| granules | 263 GB | 274 GB | 163 M | 14 hours (1 worker), 5.5 hours (5 workers) |
 
 ## Tools Used
 
@@ -87,7 +87,7 @@ other issues that would result in the client being killed.
 
     Note: In rare instances if there are hung queries that are unable to resolve, it may be necessary to
     manually use psql [Server Signaling
-    Functions](https://www.postgresql.org/docs/13/functions-admin.html#FUNCTIONS-ADMIN-SIGNAL)
+    Functions](https://www.postgresql.org/docs/17/functions-admin.html#FUNCTIONS-ADMIN-SIGNAL)
     `pg_cancel_backend` and/or
     `pg_terminate_backend` to end the queries.
 
@@ -122,7 +122,6 @@ other issues that would result in the client being killed.
     When the migration script is running, perform step 5 to monitor the commands.
 
     ```sh
-    cd
     curl -o /home/ssm-user/20250425134823_granules_add_producer_granule_id.py https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20250425134823_granules_add_producer_granule_id.py
 
     tmux new-session -s CumulusUpgrade -n add-producer_granule_id
@@ -181,7 +180,7 @@ other issues that would result in the client being killed.
 
 6. Verify the Updates
 
-    We can verify that the tables are updated successfully by checking the `\d table` results from psql.  The following are expected results.
+    We can verify that the tables are updated successfully by checking the `\d+ table` results from psql.  The following are expected results.
 
     ```sh
     => \d+ granules;

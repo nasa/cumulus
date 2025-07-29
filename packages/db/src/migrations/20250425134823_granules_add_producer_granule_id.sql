@@ -19,10 +19,17 @@ END $$;
 
 -- Add a new producer_granule_id column (nullable for now) to the granules table
 SELECT 'Adding a new producer_granule_id column ' || clock_timestamp() AS message;
-ALTER TABLE granules
-ADD COLUMN producer_granule_id TEXT;
-
-COMMENT ON COLUMN granules.producer_granule_id IS 'Producer Granule Id';
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'granules' AND column_name = 'producer_granule_id'
+    ) THEN
+      ALTER TABLE granules ADD COLUMN producer_granule_id TEXT;
+      COMMENT ON COLUMN GRANULES.producer_granule_id IS 'Producer Granule Id';
+  END IF;
+END$$;
 
 -- Populate the producer_granule_id column in batches with values from the granule_id column
 SELECT 'Populating producer_granule_id column ' || clock_timestamp() AS message;
@@ -51,12 +58,12 @@ BEGIN
   RAISE NOTICE 'Completed populating new column at %', clock_timestamp();
 END $$;
 
--- Set NOT NULL constraint after confirming all rows are filled
+-- Set NOT NULL constraint
 SELECT 'Setting producer_granule_id column to NOT NULL ' || clock_timestamp() AS message;
 ALTER TABLE granules
 ALTER COLUMN producer_granule_id SET NOT NULL;
 
--- Create index concurrently (must not be inside a transaction)
+-- Create index concurrently
 SELECT 'Creating index ' || clock_timestamp() AS message;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_producer_granule_id_index
 ON granules(producer_granule_id);

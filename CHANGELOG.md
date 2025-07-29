@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Handle Granules with Identical producerGranuleId in Different Collections
 
+### Migration Notes
+
+#### CUMULUS-4069 Update granules table to include producer_granule_id column
+
+Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-4069 require a manual update to the PostgreSQL database
+  in the production environment. Please follow the instructions in
+  [Update granules to include producer_granule_id](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
+
 ### Breaking Changes
 
 - **CUMULUS-4078**
@@ -61,6 +71,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4061**
   - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a
     hashed/'uniquified' granuleID
+- **CUMULUS-4069**
+  - Added migration script and instructions to add the producer_granule_id column
+    to the granules table and populate it in the production environment.
 - **CUMULUS-4072**
   - Updated `parse-pdr` task component to have the following behaviors:
     - Always populate producerGranuleId from the incoming parsed granuleId
