@@ -33,6 +33,9 @@ function evaluateOperation(name, args) {
   case 'extractPath': {
     return path.dirname(valueStr);
   }
+  case 'notNull': {
+    return valueStr || args[1];
+  }
   default:
     throw new Error(`Could not support operation ${name}`);
   }

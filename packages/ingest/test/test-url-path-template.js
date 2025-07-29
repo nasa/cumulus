@@ -87,7 +87,14 @@ test('urlPathTemplate has metadata field which has multiple values', async (t) =
   t.is(result, 'ALOS');
 });
 
-test('urlPathTemplate supports extractPath operation', (t) => {
+test.only('urlPathTemplate supports extractPath operation', async (t) => {
+  const metadataObject = await getTestMetadata(modisXmlFile);
+  const urlPath = '{notNull(granule.producerGranuleId, granule.granuleId)}';
+  const result = urlPathTemplate(urlPath, { cmrMetadata: metadataObject });
+  t.is(result, '2016-12-23T13:45:00');
+});
+
+test('urlPathTemplate supports notNull operation', (t) => {
   const context = {
     file: {
       source: '/data/GPM_L3/GPM_3IMERGHH.06/2021/001/abc.efg.HDF.xml',
