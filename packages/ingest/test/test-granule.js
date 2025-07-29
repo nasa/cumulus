@@ -644,8 +644,8 @@ test('generateUniqueGranuleId generates different IDs for different timestamps',
     collectionId: 'testCollection',
   };
 
-  const uniqueId1 = generateUniqueGranuleId(granule.granuleId, granule.collectionId);
-  const uniqueId2 = generateUniqueGranuleId(granule.granuleId, granule.collectionId);
+  const uniqueId1 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, 8, true);
+  const uniqueId2 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, 8, true);
 
   t.not(uniqueId1, uniqueId2, 'Generated IDs should be unique due to different timestamps');
 });
