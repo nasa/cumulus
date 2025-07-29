@@ -14,7 +14,7 @@ Please follow the instructions before upgrading Cumulus
 
 - The updates in CUMULUS-4069 require a manual update to the PostgreSQL database
   in the production environment. Please follow the instructions in
-  [Update granules to include producer_granule_id](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
+  [Update granules to include producer_granule_id](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-granules-to-include-producer_granule_id)
 
 ### Breaking Changes
 
