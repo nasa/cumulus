@@ -17,6 +17,7 @@
           "collectionId": { "type": "string" },
           "provider": { "type": "string" },
           "createdAt": { "type": "number" },
+          "producerGranuleId": { "type": "string" },
           "statusCode": { "type": "number" }
         }
       },
@@ -30,6 +31,7 @@
             "dataType": { "type": "string" },
             "version": { "type": "string" },
             "collectionId": { "type": "string" },
+            "producerGranuleId": { "type": "string" },
             "files": "{{files}}"
           }
         }

@@ -18,7 +18,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
-describe('The Lzards Backup Task ', () => {
+describe('The Lzards Backup Task for duplicate granule with producerGranuleId and uniquified granuleId', () => {
   let beforeAllFailed;
   let granuleId;
   let collection;
@@ -27,15 +27,14 @@ describe('The Lzards Backup Task ', () => {
   let lzardsApiGetFunctionName;
   let functionConfig;
   let prefix;
+  let producerGranuleId;
   let ingestBucket;
   let ingestPath;
   let lzardsBackupOutput;
   let provider;
 
   const now = new Date().getTime();
-  const thirtyMinutesAgo = now - (1000 * 60 * 30);
   const tenMinutesAgo = now - (1000 * 60 * 10);
-  const twoMinutesAgo = now - (1000 * 60 * 2);
 
   const testSetup = async (configOverride = {}) => {
     try {
@@ -56,6 +55,7 @@ describe('The Lzards Backup Task ', () => {
         FunctionName,
       }));
       granuleId = `FakeGranule_${randomString()}`;
+      producerGranuleId = `FakeProducerGranule_${randomString()}`;
       provider = `FakeProvider_${randomString()}`;
 
       // Create the collection
@@ -114,6 +114,7 @@ describe('The Lzards Backup Task ', () => {
                   dataType: collection.name,
                   version: collection.version,
                   provider,
+                  producerGranuleId,
                   createdAt: tenMinutesAgo,
                   files: [
                     {
@@ -233,35 +234,19 @@ describe('The Lzards Backup Task ', () => {
       expect(backupStatus[0].status).toBe('COMPLETED');
       expect(backupStatus[0].statusCode).toBe(201);
       expect(backupStatus[0].granuleId).toBe(granuleId);
-      expect(backupStatus[0].producerGranuleId).toBe(granuleId);
+      expect(backupStatus[0].producerGranuleId).toBe(producerGranuleId);
       expect(backupStatus[0].provider).toBe(provider);
       expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
       expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
     });
 
-    it('throws an error when no search parameters are provided', async () => {
-      if (beforeAllFailed) fail('beforeAll() failed');
-      else {
-        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({ searchParams: {} }));
-        const lzardsApiGetOutput = await pTimeout(
-          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
-          (functionConfig.Timeout + 10) * 1000
-        );
-
-        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
-
-        expect(lzardsApiGetOutput.FunctionError).toBe('Unhandled');
-        expect(payload.errorMessage).toBe('The required searchParams is not provided or empty');
-      }
-    });
-
-    it('returns info for a request for a single granule successfully backed up to lzards', async () => {
+    it('returns info for a request for a single granule successfully backed up to lzards with producerGranuleId searchParam', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
             'metadata[collection]': `${collection.name}___${collection.version}`,
-            'metadata[granuleId]': granuleId,
+            'metadata[producerGranuleId]': producerGranuleId,
           },
         }));
         const lzardsApiGetOutput = await pTimeout(
@@ -274,58 +259,9 @@ describe('The Lzards Backup Task ', () => {
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(3);
         expect(payload.items[0].metadata.granuleId).toBe(granuleId);
-        expect(payload.items[0].metadata.producerGranuleId).toBe(granuleId);
+        expect(payload.items[0].metadata.producerGranuleId).toBe(producerGranuleId);
         expect(payload.items[0].metadata.collection).toBe(`${collection.name}___${collection.version}`);
         expect(payload.items[0].metadata.createdAt).toBe(tenMinutesAgo);
-      }
-    });
-
-    it('returns info for a request with date range provided', async () => {
-      if (beforeAllFailed) fail('beforeAll() failed');
-      else {
-        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
-          searchParams: {
-            pageLimit: 25,
-            'metadata[provider]': provider,
-            'metadata[createdAt][gte]': thirtyMinutesAgo,
-            'metadata[createdAt][lte]': twoMinutesAgo,
-          },
-        }));
-
-        const lzardsApiGetOutput = await pTimeout(
-          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
-          (functionConfig.Timeout + 10) * 1000
-        );
-
-        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
-
-        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
-        expect(payload.count).toBe(3);
-        expect(new Date(payload.items[0].metadata.createdAt).getTime()).toBeGreaterThanOrEqual(thirtyMinutesAgo);
-        expect(new Date(payload.items[0].metadata.createdAt).getTime()).toBeLessThanOrEqual(twoMinutesAgo);
-        expect(payload.items[0].metadata.provider).toBe(provider);
-      }
-    });
-
-    it('returns no results for granules not backed up', async () => {
-      if (beforeAllFailed) fail('beforeAll() failed');
-      else {
-        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
-          searchParams: {
-            'metadata[collection]': 'notBackedUpCollectionName',
-            'metadata[granuleId]': granuleId,
-          },
-        }));
-
-        const lzardsApiGetOutput = await pTimeout(
-          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
-          (functionConfig.Timeout + 10) * 1000
-        );
-
-        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
-
-        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
-        expect(payload.count).toBe(0);
       }
     });
   });
