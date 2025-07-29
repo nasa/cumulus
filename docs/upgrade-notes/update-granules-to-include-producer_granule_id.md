@@ -6,9 +6,9 @@ hide_title: false
 
 ## Background
 
-As part of the work for [CUMULUS-4058 Handle Granules with Identical producerGranuleId in Different Collections]
-(https://bugs.earthdata.nasa.gov/browse/CUMULUS-4058), we are adding a producer_granule_id column to the granules
-table.
+As part of the work for [CUMULUS-4058 Handle Granules with Identical producerGranuleId in Different
+Collections](https://bugs.earthdata.nasa.gov/browse/CUMULUS-4058), we are adding a
+producer_granule_id column to the granules table.
 
 The following updates are included:
 
@@ -22,7 +22,7 @@ The updates will be automatically created as part of the bootstrap lambda functi
 
 *In cases where the column and index are already applied, the updates will have no effect.*
 
-## Prerequisite:
+## Prerequisite
 
 Verify that there are no duplicate granule_id values in the granules table.
 If any are found, identify and remove the redundant records.
@@ -55,6 +55,7 @@ Ingest, Archive, and other Cumulus functions before and during the execution of 
 The table below, from the LP DAAC SNAPSHOT database, shows table sizes before and after the
 migration commands, along with their execution times. The commands were run using 32 ACUs. Table
 sizes were measured using the following query:
+
 ```sql
 SELECT pg_size_pretty(pg_total_relation_size('granules'));
 ```
@@ -112,7 +113,7 @@ other issues that would result in the client being killed.
 
     Once installed, a `tmux` session is started with two windows. Alternatively, you can open two
     concurrent SSM sessions to the same EC2 instance and start a separate tmux session from each.
-    
+
     The primary window is used to run the migration script, while the secondary window is used
     to monitor the database. When the operator's shift ends or monitoring is no longer needed,
     the tmux session can be detached and reattached later as needed.
@@ -131,6 +132,7 @@ other issues that would result in the client being killed.
     The actual number of rows updated in each batch may be less than BATCH_SIZE because cumulus_id values may not increase by exactly 1.
 
     Example output:
+
     ```sh
     $ python3 /home/ssm-user/20250425134823_granules_add_producer_granule_id.py
     Enter DB host []: cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com
