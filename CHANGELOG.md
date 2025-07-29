@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 - **CUMULUS-4080**
   - Add documentation for duplicate granule handling and, specifically, Collection configuration for duplicates.
+  - Update `urlPathTemplate` to allow falling back from one null/undefined interpolated value to a second argument
 - **CUMULUS-4078**
   - Added `getGranuleIdAndCollectionIdFromFile` query method to `@cumulus/db` to
     retrieve granule and collection metadata from a file's S3 location.

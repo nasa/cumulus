@@ -4,7 +4,7 @@ title: Cumulus Duplicate Granule Handling
 hide_title: false
 ---
 
-Collections and Workflows can be configured to assign a unique `granuleId` to each Granule. This is useful in cases where two Granules share the same `granuleId` but must both be ingested into the Cumulus system. Previously, a Granule with a conflict on the `granuleId` key would cause an ingest failure for that Granule.
+Collections and Workflows can be configured to assign a unique `granuleId` to each Granule. This is useful in cases where two Granules share the same `granuleId` but must both be ingested into the Cumulus system. Previously, a Granule with a conflict on the `granuleId` key within the same Collection would cause either an ingest failure or overwrite the previous granule, depending on `duplicateHandling` configuration.
 
 ## Granule Uniquification
 
@@ -12,13 +12,18 @@ Cumulus has implemented a set of changes that allow multiple Granules with ident
 
 ### Granule Uniquification Algorithm and Task Component
 
-The process Cumulus Core uses to generate a unique `granuleId` can be [found here](https://github.com/nasa/cumulus/blob/feature/duplicate-granule-924/packages/ingest/src/granule.ts#L479-L487).
+The process Cumulus Core uses to generate a unique `granuleId` can be [found here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts#L479-L487).
 
 To make the process easier, Cumulus Core also provides a Task Component that will uniquely identify each Granule in a payload and return a modified Granule object containing a unique `granuleId` and a `producerGranuleId` containing the original `granuleId`.
 
 ## Configuration
 
-### Collection Configuration
+Workflows can be configured to uniquely identify granules via
+  1. Collection configuration
+  2. Rule trigger configuration
+  3. Workflow Task configuration
+
+### 1. Collection Configuration
 
 Cumulus Collections can be configured to replace the Granule's existing `granuleId` with a unique value. The originnal `granuleId` will then be stored in a new field, `producerGranuleId`.
 
@@ -31,7 +36,7 @@ To configure a Collection to support uniquely identifying Granules, the followin
   }
 ```
 
-If `uniquifyGranuleId` is `true` and the Collection is ingested using a workflow that includes the `AddUniqueGranuleId` Task, the `granuleId` will be uniquely generated using the process [here](https://github.com/nasa/cumulus/blob/feature/duplicate-granule-924/packages/ingest/src/granule.ts#L479-L487). The `hashLength` specifies how many characters the randomized hash contains. More characters offer a greater chance of uniqueness.
+If `uniquifyGranuleId` is `true` and the Collection is ingested using a workflow that includes the `AddUniqueGranuleId` Task, the `granuleId` will be uniquely generated using the process [here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts#L479-L487). The `hashLength` specifies how many characters the randomized hash contains. More characters offer a greater chance of uniqueness.
 
 :::caution
 A Collection that is configured to uniquely identify Granules in this way means that the existing `granuleId` will change to a unique, hashed value. This is important to consider when building workflows and, in particular, specifying the S3 paths for a Granule's Files.
@@ -62,6 +67,10 @@ Taking it a step further, depending on the workflow configuration, users can spe
 
 :::
 
-### Workflow Configuration
+### 2. Rule Trigger Configuration
+
+TODO in CUMULUS-4079
+
+### 3. Workflow Task Configuration
 
 TODO in CUMULUS-4079
