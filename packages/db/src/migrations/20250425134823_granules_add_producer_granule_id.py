@@ -169,7 +169,7 @@ def vacuum_table():
     try:
         cur = conn.cursor()
         cur.execute(f"""
-            VACUUM (ANALYZE, VERBOSE) {TABLE_NAME};
+            VACUUM (VERBOSE, ANALYZE) {TABLE_NAME};
         """)
         cur.close()
         log("Vacuum complete.")

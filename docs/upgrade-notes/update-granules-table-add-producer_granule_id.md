@@ -16,6 +16,7 @@ The following updates are included:
 - Add a new producer_granule_id column to the granules table
 - Populate the producer_granule_id column in batches with values from the granule_id column
 - Make the producer_granule_id column NOT NULL and create an index on it
+- Vacuum the granules table
 
 The updates will be automatically created as part of the bootstrap lambda function on deployment of the data-persistence module.
 
@@ -45,17 +46,22 @@ The migration script will abort if there are duplicate grarnule_id values in the
 
 ## Apply the Changes in Production Environment
 
-With large database (e.g. number of rows in granules table is greater than 100,000), the updates must be applied manually since
-the commands can take significant amount of time. Since the ALTER TABLE commands require an EXCLUSIVE LOCK on the table,
-and populating the new column takes significant amount of time, it is recommended that
-all database activity be quiesced. This means that Ingest and Archive and other Cumulus functions must be shutdown before and during these commands.
+For large databases (e.g., when the `granules` table contains more than 100,000 rows), updates must
+be applied manually, as the commands can take a significant amount of time. Since `ALTER TABLE`
+commands require an **exclusive lock** on the table, and populating the new column is time-consuming,
+it is recommended to **quiesce all database activity** during this process. This means shutting down
+Ingest, Archive, and other Cumulus functions before and during the execution of these commands.
 
-The table below from LP DAAC SNAPSHOT database provides the table sizes before and after the migration commands, and timings.  The commands are
-run with 16ACUs.
+The table below, from the LP DAAC SNAPSHOT database, shows table sizes before and after the
+migration commands, along with their execution times. The commands were run using 32 ACUs. Table
+sizes were measured using the following query:
+```sql
+SELECT pg_size_pretty(pg_total_relation_size('granules'));
+```
 
-| Table Name | Original Table Size | Migration Time (clock) | New Table Size | Number of Rows |
+| Table Name | Original Table Size | Migration Time | New Table Size | Number of Rows |
 |---|---|---|---|---|
-| granules | 118 GB | 16 hours | 118 GB | 163 M |
+| granules | 263 GB | 16 hours | 274 GB | 163 M |
 
 ## Tools Used
 
@@ -104,23 +110,24 @@ other issues that would result in the client being killed.
     pip3 install --user psycopg2-binary
     ```
 
-    Once installed, a tmux session is started with two windows. Alternatively, you can start two ssm sessions
-    with the same EC2 instance concurrently. The primary window is used for running the migration script, 
-    while the secondary window is used to monitor the database. When the operator hits end of shift or is done
-    monitoring for the day, the tmux session can be detached from and reattached to at a later time.
+    Once installed, a `tmux` session is started with two windows. Alternatively, you can open two
+    concurrent SSM sessions to the same EC2 instance and start a separate tmux session from each.
+    
+    The primary window is used to run the migration script, while the secondary window is used
+    to monitor the database. When the operator's shift ends or monitoring is no longer needed,
+    the tmux session can be detached and reattached later as needed.
 
 4. Run Migration Script
     The database login credentials can be retrieved from the prefix_db_login secret.
     When the migration script is running, perform step 5 to monitor the commands.
 
-     ```sh
-     cd
-     curl -o /home/ssm-user/20250425134823_granules_add_producer_granule_id.py https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20250425134823_granules_add_producer_granule_id.py
+    ```sh
+    cd
+    curl -o /home/ssm-user/20250425134823_granules_add_producer_granule_id.py https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20250425134823_granules_add_producer_granule_id.py
 
-     tmux new-session -s CumulusUpgrade -n add-producer_granule_id
-     python3 /home/ssm-user/20250425134823_granules_add_producer_granule_id.py
-
-     ```
+    tmux new-session -s CumulusUpgrade -n add-producer_granule_id
+    python3 /home/ssm-user/20250425134823_granules_add_producer_granule_id.py
+    ```
 
     The actual number of rows updated in each batch may be less than BATCH_SIZE because cumulus_id values may not increase by exactly 1.
 
@@ -131,25 +138,31 @@ other issues that would result in the client being killed.
     Enter DB port [5432]:
     Enter DB name []: cumulus_test_db
     Enter DB user []: cumulus_test
-    Enter DB password []: 
-    [2025-07-26T03:20:24.863452] Checking for duplicate granule_id values...
-    [2025-07-26T03:20:24.863452] Checking for duplicate granule_id values...
-    [2025-07-26T03:26:13.266883] No duplicate granule_id values found.
-    [2025-07-26T03:26:13.267377] Adding column producer_granule_id if not present...
-    [2025-07-26T03:26:13.470536] Column check complete.
-    [2025-07-26T03:26:13.531711] Starting batch update using a single connection...
-    [2025-07-26T03:26:13.553828] Updating rows where cumulus_id BETWEEN 3 AND 100002
-    [2025-07-26T03:26:17.169326] Updating rows where cumulus_id BETWEEN 100003 AND 200002
-    [2025-07-26T03:26:17.939732] Updating rows where cumulus_id BETWEEN 200003 AND 300002
-
-    [2025-07-26T16:48:23.979485] Updating rows where cumulus_id BETWEEN 560200003 AND 560300002
-    [2025-07-26T16:48:24.854294] Updating rows where cumulus_id BETWEEN 560300003 AND 560400002
-    [2025-07-26T16:48:24.869539] Finished populating producer_granule_id column.
-    [2025-07-26T16:48:24.869723] Setting producer_granule_id column to NOT NULL...
-    [2025-07-26T16:51:32.881139] Column is now NOT NULL.
-    [2025-07-26T16:51:32.881322] Creating index on producer_granule_id...
-    [2025-07-26T17:28:25.693141] Index created.
-    [2025-07-26T17:28:25.693327] Update completed successfully.
+    Enter DB password:
+    Enter BATCH SIZE for populating column [100000]: 10000
+    Number of parallel workers [1]: 5
+    Batch Update Recovery mode? (Y/N) [N]:
+    [2025-07-28T21:56:21.055639] Checking for duplicate granule_id values...
+    [2025-07-28T21:56:21.434586] No duplicate granule_id values found.
+    [2025-07-28T21:56:21.434738] Adding column producer_granule_id if not present...
+    [2025-07-28T21:56:21.487823] Column check complete.
+    [2025-07-28T21:56:21.487971] Fetching min/max cumulus_id values (Normal mode)...
+    [2025-07-28T21:56:21.526511] Populating cumulus_id range: 123 to 1010205
+    [2025-07-28T21:56:21.526557] Starting parallel batch update with 5 worker(s)...
+    [2025-07-28T21:56:21.563192] [Worker] Updating rows where cumulus_id BETWEEN 20123 AND 30122
+    [2025-07-28T21:56:21.563477] [Worker] Updating rows where cumulus_id BETWEEN 10123 AND 20122
+    [2025-07-28T21:56:21.568455] [Worker] Updating rows where cumulus_id BETWEEN 123 AND 10122
+    ......
+    [2025-07-28T21:57:57.166841] [Worker] Updated 10000 rows where cumulus_id BETWEEN 980123 AND 990122
+    [2025-07-28T21:57:57.865475] [Worker] Updated 10000 rows where cumulus_id BETWEEN 1000123 AND 1010122
+    [2025-07-28T21:57:57.866147] Parallel batch update complete.
+    [2025-07-28T21:57:57.866269] Setting producer_granule_id column to NOT NULL...
+    [2025-07-28T21:57:58.152544] Column is now NOT NULL.
+    [2025-07-28T21:57:58.152706] Creating index on producer_granule_id...
+    [2025-07-28T21:58:02.324241] Index created.
+    [2025-07-28T21:58:02.324710] Vacuuming granules table...
+    [2025-07-28T21:58:03.271800] Vacuum complete.
+    [2025-07-28T21:58:03.272240] Update completed successfully.
     ```
 
     The SQL commands used for migration are available
@@ -168,13 +181,13 @@ other issues that would result in the client being killed.
 
 6. Verify the Updates
 
-     We can verify that the tables are updated successfully by checking the `\d table` results from psql.  The following are expected results.
+    We can verify that the tables are updated successfully by checking the `\d table` results from psql.  The following are expected results.
 
     ```sh
     => \d+ granules;
 
-              Column           |           Type           | Collation | Nullable |               Default    |                     Description                 
-    ----------------------------+--------------------------+-----------+----------+-------------------------+--------------------------------------
+              Column           |           Type           | Collation | Nullable |               Default    |           Description
+    ---------------------------+--------------------------+-----------+----------+--------------------------+------------------------------
     producer_granule_id        | text                     |           | not null |                          | Producer Granule Id
 
     Indexes:

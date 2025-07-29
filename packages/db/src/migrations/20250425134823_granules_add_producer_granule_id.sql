@@ -63,6 +63,6 @@ ON granules(producer_granule_id);
 
 SELECT 'Creating index completed at ' || clock_timestamp() AS message;
 
-VACUUM (ANALYZE, VERBOSE) granules;
+VACUUM (VERBOSE, ANALYZE) granules;
 
 SELECT 'Vacuum completed at ' || clock_timestamp() AS message;
