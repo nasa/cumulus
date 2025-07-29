@@ -144,6 +144,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated AWS provider requirement to `5.100.x`
 
 ### Fixed
+- **CUMULUS-4177**
+  - Update form-data sub-dependency to safe version ^4.0.4
 - **CUMULUS_4174**
   - Fix broken CreateReconciliationReportSpec test cleanup
 - **CUMULUS-4170**
@@ -153,6 +155,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4108**
+  - Added standalone lambda function code to scan and terminate old instances when they pass their 90 day expiration
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
