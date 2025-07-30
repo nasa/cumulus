@@ -88,11 +88,13 @@ other issues that would result in the client being killed.
     If query rows are returned with a `query` value that involves the tables, make sure ingest is halted
     and no other granule-update activity is running on the system.
 
-    Note: In rare instances if there are hung queries that are unable to resolve, it may be necessary to
+    :::note
+    In rare instances if there are hung queries that are unable to resolve, it may be necessary to
     manually use psql [Server Signaling
     Functions](https://www.postgresql.org/docs/17/functions-admin.html#FUNCTIONS-ADMIN-SIGNAL)
     `pg_cancel_backend` and/or
     `pg_terminate_backend` to end the queries.
+    :::
 
 2. Login into EC2 instance with database access.
 
@@ -131,7 +133,7 @@ other issues that would result in the client being killed.
     python3 /home/ssm-user/20250425134823_granules_add_producer_granule_id.py
     ```
 
-    :::note
+    :::note BATCH_SIZE
     The actual number of rows updated in each batch may be less than BATCH_SIZE because cumulus_id values
     may not increase by exactly 1.
     :::
