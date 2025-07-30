@@ -19,6 +19,7 @@ To make the process easier, Cumulus Core also provides a Task Component that wil
 ## Configuration
 
 Workflows can be configured to uniquely identify granules via
+
   1. Collection configuration
   2. Rule trigger configuration
   3. Workflow Task configuration
