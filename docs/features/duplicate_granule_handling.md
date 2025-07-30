@@ -39,6 +39,8 @@ To configure a Collection to support uniquely identifying Granules, the followin
 
 If `uniquifyGranuleId` is `true` and the Collection is ingested using a workflow that includes the `AddUniqueGranuleId` Task (required to update the granuleId), the `granuleId` will be uniquely generated using the [`generateUniqueGranuleId` function here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts). The `hashLength` specifies how many characters the randomized hash contains. More characters offer a greater chance of uniqueness.
 
+[Here is an example workflow configuration including the AddUniqueGranuleId task.](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_workflow.asl.json)
+
 :::caution
 A Collection that is configured to uniquely identify Granules in this way means that the existing `granuleId` will change to a unique, hashed value. This is important to consider when building workflows and, in particular, specifying the S3 paths for a Granule's Files. ***This is also true for all workflows that may be run with Granules that have previously had their `granuleId` uniquely generated.***
 
