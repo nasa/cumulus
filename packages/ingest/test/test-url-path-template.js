@@ -87,26 +87,26 @@ test('urlPathTemplate has metadata field which has multiple values', async (t) =
   t.is(result, 'ALOS');
 });
 
-test('urlPathTemplate supports firstDefined operation', (t) => {
+test('urlPathTemplate supports defaultTo operation', (t) => {
   const context = {
     granule: {
       granuleId: 'L2_HR_PIXC_product_0001-of-4154-hjkpoi',
       producerGranuleId: undefined,
     },
   };
-  const urlPath = '{firstDefined(granule.producerGranuleId, granule.granuleId)}';
+  const urlPath = '{defaultTo(granule.producerGranuleId, granule.granuleId)}';
   const result = urlPathTemplate(urlPath, context);
   t.is(result, 'L2_HR_PIXC_product_0001-of-4154-hjkpoi');
 });
 
-test('firstDefined operation respects a valid first argument', (t) => {
+test('defaultTo operation respects a valid first argument', (t) => {
   const context = {
     granule: {
       granuleId: 'L2_HR_PIXC_product_0001-of-4154-hjkpoi',
       producerGranuleId: 'L2_HR_PIXC_product_0001-of-4154',
     },
   };
-  const urlPath = '{firstDefined(granule.producerGranuleId, granule.granuleId)}';
+  const urlPath = '{defaultTo(granule.producerGranuleId, granule.granuleId)}';
   const result = urlPathTemplate(urlPath, context);
   t.is(result, 'L2_HR_PIXC_product_0001-of-4154');
 });

@@ -244,6 +244,7 @@ The following functions are implemented:
 * `dateFormat` - takes a second argument describing how to format the date, and
   passes the metadata date string and the format argument to
   [moment().format()](https://momentjs.com/docs/#/displaying/format/)
+* `defaultTo` - takes two arguments and returns the first defined (not `null` or `undefined`) value
 
 :::note
 

@@ -33,7 +33,7 @@ function evaluateOperation(name, args) {
   case 'extractPath': {
     return path.dirname(valueStr);
   }
-  case 'firstDefined': {
+  case 'defaultTo': {
     return args[0] || args[1];
   }
   default:
@@ -63,9 +63,9 @@ function templateReplacer(context, submatch) {
     let isObjectPath = Object.keys(context).includes(args[0].split('.')[0]);
     const jsonPathValue = get(context, args[0], isObjectPath ? undefined : args[0]);
 
-    // fall back to second argument if using the firstDefined function and
+    // fall back to second argument if using the defaultTo function and
     // the first argument doesn't produce a jsonPathValue
-    if (name === 'firstDefined' && !jsonPathValue && args[1]) {
+    if (name === 'defaultTo' && !jsonPathValue && args[1]) {
       isObjectPath = Object.keys(context).includes(args[1].split('.')[0]);
       args[0] = null;
       args[1] = get(context, args[1], isObjectPath ? undefined : args[1]);
