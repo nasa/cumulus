@@ -3,14 +3,24 @@ const moment = require('moment');
 const path = require('path');
 
 /**
-* evaluate the operation specified in template
-*
-* @param {string} name - the name of the operation
-* @param {Object} args - the args (in array) of the operation
-* @returns {string} - the return value of the operation
-**/
-function evaluateOperation(name, args) {
-  const valueStr = args[0];
+ * evaluate the operation specified in template
+ *
+ * @param {string} name - the name of the operation
+ * @param {object} args - the args (in array) of the operation
+ * @param {object} context - the metadata used in the template
+ * @returns {string} - the return value of the operation
+ */
+function evaluateOperation(name, args, context) {
+  // args[0] is either an object path or a constant
+  //   e.g. extractPath(file.path) or extractPath('/a/b/c')
+  // assume args[0] is an object path if it starts with a key of context
+  const isObjectPath = Object.keys(context).includes(args[0].split('.')[0]);
+  const jsonPathValue = get(context, args[0], isObjectPath ? undefined : args[0]);
+
+  if (name !== 'defaultTo' && !jsonPathValue) throw new Error(`Could not resolve path ${args[0]}`);
+
+  const valueStr = jsonPathValue;
+
   switch (name) {
   case 'extractYear': {
     return new Date(valueStr).getUTCFullYear();
@@ -34,7 +44,12 @@ function evaluateOperation(name, args) {
     return path.dirname(valueStr);
   }
   case 'defaultTo': {
-    return args[0] || args[1];
+    const isObjectPathSecondArg = Object.keys(context).includes(args[1].split('.')[0]);
+    const jsonPathValueSecondArg = get(
+      context, args[1],
+      isObjectPathSecondArg ? undefined : args[1]
+    );
+    return jsonPathValue || jsonPathValueSecondArg;
   }
   default:
     throw new Error(`Could not support operation ${name}`);
@@ -44,7 +59,7 @@ function evaluateOperation(name, args) {
 /**
  * retrieve the actual value of the matched string and return it
  *
- * @param {Object} context - the metadata used in the template
+ * @param {object} context - the metadata used in the template
  * @param {string} submatch - the parenthesized submatch string
  * @returns {string} - the value of the matched string
  */
@@ -57,27 +72,8 @@ function templateReplacer(context, submatch) {
   if (submatch.match(expressionRegex)) {
     const name = matches[1];
     const args = matches[2].split(/\s*,\s*/);
-    // args[0] is either an object path or a constant
-    //   e.g. extractPath(file.path) or extractPath('/a/b/c')
-    // assume args[0] is an object path if it starts with a key of context
-    let isObjectPath = Object.keys(context).includes(args[0].split('.')[0]);
-    const jsonPathValue = get(context, args[0], isObjectPath ? undefined : args[0]);
 
-    // fall back to second argument if using the defaultTo function and
-    // the first argument doesn't produce a jsonPathValue
-    if (name === 'defaultTo' && !jsonPathValue && args[1]) {
-      isObjectPath = Object.keys(context).includes(args[1].split('.')[0]);
-      args[0] = null;
-      args[1] = get(context, args[1], isObjectPath ? undefined : args[1]);
-
-      if (!args[1]) throw new Error(`Could not resolve path ${args[1]}`);
-
-      return evaluateOperation(name, args);
-    }
-
-    if (!jsonPathValue) throw new Error(`Could not resolve path ${args[0]}`);
-    args[0] = jsonPathValue;
-    return evaluateOperation(name, args);
+    return evaluateOperation(name, args, context);
   }
 
   const jsonPathValue = get(context, submatch);
