@@ -16,7 +16,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     reasons, the `checkCrossCollectionCollisions` may be set to `false` to
     disable the behavior on a per-workflow, per-collection or other config
     driven criteria.
-
 - **CUMULUS-4072**
   - Updated the `parse-pdr` task component to throw an error if multiple
     granules within the same PDR have the same granuleId after applying the
@@ -25,6 +24,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4074**
   - Updates `updateGranulesCmrMetadataFileLinks` to always ensure
     `producerGranuleId` identifier is set in updated CMR metadata
+- **CUMULUS-4121**
+  - Updates example deployment `cnm_response_task` to use newest version `v3.2.0`, which supports
+    `producerGranuleId`.
+  - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
 
 ### Added
 - **CUMULUS-4059**
