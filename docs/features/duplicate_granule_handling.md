@@ -62,10 +62,10 @@ If that is NOT desirable and using the original, non-unique value is preferred, 
 "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{granule.producerGranuleId}/",
 ```
 
-Taking it a step further, depending on the workflow configuration, users can specify a fallback if the `producerGranuleId` isn't available for a given Granule.
+Taking it a step further, depending on the workflow configuration, users can specify a default using the `defaultTo` operation if the `producerGranuleId` isn't available for a given Granule.
 
 ```json
-"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{granule.producerGranuleId || granule.granuleId}",
+"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{defaultTo(granule.producerGranuleId, granule.granuleId)}",
 ```
 
 :::
