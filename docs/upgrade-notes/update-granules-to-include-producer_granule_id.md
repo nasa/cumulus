@@ -49,7 +49,7 @@ The migration script will abort if there are duplicate grarnule_id values in the
 For large databases (e.g., when the `granules` table contains more than 100,000 rows), updates must
 be applied manually, as the commands can take a significant amount of time. Since `ALTER TABLE`
 commands require an **exclusive lock** on the table, and populating the new column is time-consuming,
-it is recommended to **quiesce all database activity** during this process. This means shutting down
+it is recommended to **quiesce all database activity** during this process. This means pausing
 Ingest, Archive, and other Cumulus functions before and during the execution of these commands.
 
 The table below, from the LP DAAC SNAPSHOT database, shows table sizes before and after the
@@ -166,8 +166,9 @@ other issues that would result in the client being killed.
     [2025-07-28T21:58:03.272240] Update completed successfully.
     ```
 
-    The SQL commands used for migration are available
+    You can find the SQL commands used for the migration
     [here](https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20250425134823_granules_add_producer_granule_id.sql)
+    for your reference.
 
 5. Monitor the Running Command
 
