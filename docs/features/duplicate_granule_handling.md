@@ -12,7 +12,7 @@ Cumulus has implemented a set of changes that allow multiple Granules with ident
 
 ### Granule Uniquification Algorithm and Task Component
 
-The process Cumulus Core uses to generate a unique `granuleId` can be [found here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts#L479-L487).
+The process Cumulus Core uses to generate a unique `granuleId` can be [found in the `generateUniqueGranuleId` function here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts).
 
 To make the process easier, Cumulus Core also provides a Task Component that will uniquely identify each Granule in a payload and return a modified Granule object containing a unique `granuleId` and a `producerGranuleId` containing the original `granuleId`.
 
@@ -37,7 +37,7 @@ To configure a Collection to support uniquely identifying Granules, the followin
   }
 ```
 
-If `uniquifyGranuleId` is `true` and the Collection is ingested using a workflow that includes the `AddUniqueGranuleId` Task (required to update the granuleId), the `granuleId` will be uniquely generated using the process [here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts#L479-L487). The `hashLength` specifies how many characters the randomized hash contains. More characters offer a greater chance of uniqueness.
+If `uniquifyGranuleId` is `true` and the Collection is ingested using a workflow that includes the `AddUniqueGranuleId` Task (required to update the granuleId), the `granuleId` will be uniquely generated using the [`generateUniqueGranuleId` function here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts). The `hashLength` specifies how many characters the randomized hash contains. More characters offer a greater chance of uniqueness.
 
 :::caution
 A Collection that is configured to uniquely identify Granules in this way means that the existing `granuleId` will change to a unique, hashed value. This is important to consider when building workflows and, in particular, specifying the S3 paths for a Granule's Files. ***This is also true for all workflows that may be run with Granules that have previously had their `granuleId` uniquely generated.***
