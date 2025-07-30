@@ -26,9 +26,6 @@ BATCH_SIZE = int(get_env_or_prompt("BATCH_SIZE", "Enter BATCH SIZE for populatin
 WORKERS = int(get_env_or_prompt("WORKERS", "Number of parallel workers", "1"))
 RECOVERY_MODE = get_env_or_prompt("RECOVERY_MODE", "Batch Update Recovery mode? (Y/N)", "N").strip().upper() == "Y"
 
-TABLE_NAME = "granules"
-COLUMN_NAME = "producer_granule_id"
-
 def get_conn(autocommit=False):
     conn = psycopg2.connect(
         host=DB_HOST,
@@ -68,10 +65,10 @@ def add_column_if_needed():
                   IF NOT EXISTS (
                     SELECT 1
                     FROM information_schema.columns
-                    WHERE table_name = '{TABLE_NAME}' AND column_name = '{COLUMN_NAME}'
+                    WHERE table_name = 'granules' AND column_name = 'producer_granule_id'
                   ) THEN
-                    ALTER TABLE {TABLE_NAME} ADD COLUMN {COLUMN_NAME} TEXT;
-                    COMMENT ON COLUMN {TABLE_NAME}.{COLUMN_NAME} IS 'Producer Granule Id';
+                    ALTER TABLE granules ADD COLUMN producer_granule_id TEXT;
+                    COMMENT ON COLUMN granules.producer_granule_id IS 'Producer Granule Id';
                   END IF;
                 END$$;
             """)
@@ -85,13 +82,13 @@ def get_min_max_ids():
             if RECOVERY_MODE:
                 cur.execute(f"""
                     SELECT MIN(cumulus_id), MAX(cumulus_id)
-                    FROM {TABLE_NAME}
-                    WHERE {COLUMN_NAME} IS NULL;
+                    FROM granules
+                    WHERE producer_granule_id IS NULL;
                 """)
             else:
                 cur.execute(f"""
                     SELECT MIN(cumulus_id), MAX(cumulus_id)
-                    FROM {TABLE_NAME};
+                    FROM granules;
                 """)
             return cur.fetchone()
 
@@ -102,8 +99,8 @@ def process_batch(batch_range):
         with conn.cursor() as cur:
             log(f"[Worker] Updating rows where cumulus_id BETWEEN {start_id} AND {end_id}")
             cur.execute(f"""
-                UPDATE {TABLE_NAME}
-                SET {COLUMN_NAME} = granule_id
+                UPDATE granules
+                SET producer_granule_id = granule_id
                 WHERE cumulus_id BETWEEN %s AND %s;
             """, (start_id, end_id))
             updated = cur.rowcount
@@ -141,8 +138,8 @@ def set_column_not_null():
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(f"""
-                ALTER TABLE {TABLE_NAME}
-                ALTER COLUMN {COLUMN_NAME} SET NOT NULL;
+                ALTER TABLE granules
+                ALTER COLUMN producer_granule_id SET NOT NULL;
             """)
             conn.commit()
     log("Column is now NOT NULL.")
@@ -154,8 +151,8 @@ def create_index():
     try:
         cur = conn.cursor()
         cur.execute(f"""
-            CREATE INDEX CONCURRENTLY IF NOT EXISTS {TABLE_NAME}_{COLUMN_NAME}_index
-            ON {TABLE_NAME} ({COLUMN_NAME});
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_producer_granule_id_index
+            ON granules (producer_granule_id);
         """)
         cur.close()
         log("Index created.")
@@ -169,7 +166,7 @@ def vacuum_table():
     try:
         cur = conn.cursor()
         cur.execute(f"""
-            VACUUM (VERBOSE, ANALYZE) {TABLE_NAME};
+            VACUUM (VERBOSE, ANALYZE) granules;
         """)
         cur.close()
         log("Vacuum complete.")
