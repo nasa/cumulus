@@ -42,7 +42,9 @@ HAVING COUNT(*) > 1
 ORDER BY count DESC;
 ```
 
+:::note
 The migration script will abort if there are duplicate granule_id values in the granules table.
+:::
 
 ## Apply the Changes in Production Environment
 
@@ -119,7 +121,7 @@ other issues that would result in the client being killed.
     the tmux session can be detached and reattached later as needed.
 
 4. Run Migration Script
-    The database login credentials can be retrieved from the prefix_db_login secret.
+    The database login credentials can be retrieved from the `<prefix>_db_login` secret.
     When the migration script is running, perform step 5 to monitor the commands.
 
     ```sh
@@ -129,7 +131,10 @@ other issues that would result in the client being killed.
     python3 /home/ssm-user/20250425134823_granules_add_producer_granule_id.py
     ```
 
-    The actual number of rows updated in each batch may be less than BATCH_SIZE because cumulus_id values may not increase by exactly 1.
+    :::note
+    The actual number of rows updated in each batch may be less than BATCH_SIZE because cumulus_id values
+    may not increase by exactly 1.
+    :::
 
     Example output:
 
