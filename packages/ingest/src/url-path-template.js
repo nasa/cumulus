@@ -19,29 +19,27 @@ function evaluateOperation(name, args, context) {
 
   if (name !== 'defaultTo' && !jsonPathValue) throw new Error(`Could not resolve path ${args[0]}`);
 
-  const valueStr = jsonPathValue;
-
   switch (name) {
   case 'extractYear': {
-    return new Date(valueStr).getUTCFullYear();
+    return new Date(jsonPathValue).getUTCFullYear();
   }
   case 'extractMonth': {
-    return (new Date(valueStr).getUTCMonth() + 1).toString();
+    return (new Date(jsonPathValue).getUTCMonth() + 1).toString();
   }
   case 'extractDate': {
-    return new Date(valueStr).getUTCDate().toString();
+    return new Date(jsonPathValue).getUTCDate().toString();
   }
   case 'extractHour': {
-    return new Date(valueStr).getUTCHours().toString();
+    return new Date(jsonPathValue).getUTCHours().toString();
   }
   case 'dateFormat': {
-    return moment.utc(valueStr).format(args[1]);
+    return moment.utc(jsonPathValue).format(args[1]);
   }
   case 'substring': {
-    return String.prototype.substring.apply(String(valueStr), args.slice(1));
+    return String.prototype.substring.apply(String(jsonPathValue), args.slice(1));
   }
   case 'extractPath': {
-    return path.dirname(valueStr);
+    return path.dirname(jsonPathValue);
   }
   case 'defaultTo': {
     const isObjectPathSecondArg = Object.keys(context).includes(args[1].split('.')[0]);
