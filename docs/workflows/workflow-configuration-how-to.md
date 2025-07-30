@@ -241,10 +241,18 @@ The following functions are implemented:
 * `extractMonth` - returns the month, formatted as MM
 * `extractDate` - returns the day of the month, formatted as DD
 * `extractHour` - returns the hour in 24-hour format, with no leading zero
+* `extractPath` - returns the path only, not including the file name e.g.`/data/test/abc.xml` returns `/data/test/`
+* `substring` - returns a portion of the string argument determined by start and end character number arguments
 * `dateFormat` - takes a second argument describing how to format the date, and
   passes the metadata date string and the format argument to
   [moment().format()](https://momentjs.com/docs/#/displaying/format/)
 * `defaultTo` - takes two arguments and returns the first defined (not `null` or `undefined`) value
+
+:::note
+
+Multiple functions can be nested. For example, `'{extractPath({substring(file.source, 6)})}'` would operate as expected.
+
+:::
 
 :::note
 
