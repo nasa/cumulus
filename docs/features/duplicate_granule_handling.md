@@ -36,10 +36,10 @@ To configure a Collection to support uniquely identifying Granules, the followin
   }
 ```
 
-If `uniquifyGranuleId` is `true` and the Collection is ingested using a workflow that includes the `AddUniqueGranuleId` Task, the `granuleId` will be uniquely generated using the process [here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts#L479-L487). The `hashLength` specifies how many characters the randomized hash contains. More characters offer a greater chance of uniqueness.
+If `uniquifyGranuleId` is `true` and the Collection is ingested using a workflow that includes the `AddUniqueGranuleId` Task (required to update the granuleId), the `granuleId` will be uniquely generated using the process [here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts#L479-L487). The `hashLength` specifies how many characters the randomized hash contains. More characters offer a greater chance of uniqueness.
 
 :::caution
-A Collection that is configured to uniquely identify Granules in this way means that the existing `granuleId` will change to a unique, hashed value. This is important to consider when building workflows and, in particular, specifying the S3 paths for a Granule's Files.
+A Collection that is configured to uniquely identify Granules in this way means that the existing `granuleId` will change to a unique, hashed value. This is important to consider when building workflows and, in particular, specifying the S3 paths for a Granule's Files. ***This is also true for all workflows that may be run with Granules that have previously had their `granuleId` uniquely generated.***
 
 In a Collection configuration, you can specify the `url_path` template that will be used to determine the final location of the Collection's Files. If that path contains a `granuleId` or anything derived from `granuleId`, notably the CMR Metadata's `GranuleUR`, that path will contain the unique value. An example containing the unique `granuleId` might look like:
 
