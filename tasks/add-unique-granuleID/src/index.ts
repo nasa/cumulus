@@ -23,8 +23,16 @@ async function assignUniqueIds(event: HandlerEvent): Promise<HandlerOutput> {
   const includeTimestampHashKey = event?.config?.includeTimestampHashKey ?? false;
   if (!includeTimestampHashKey) {
     // remove duplicate granules
-    granules = Array.from(new Map(granules.map((obj) => [`${obj.granuleId}|${obj.collectionId}`, obj])).values());
+    granules = Array.from(
+      new Map(
+        granules.map((obj) => {
+          const collectionId = obj.collectionId ?? constructCollectionId(obj.dataType, obj.version);
+          return [`${obj.granuleId}|${collectionId}`, obj];
+        })
+      ).values()
+    );
   }
+
   for (const granule of granules) {
     if (!granule.producerGranuleId) {
       const collectionId = granule.collectionId
@@ -39,6 +47,7 @@ async function assignUniqueIds(event: HandlerEvent): Promise<HandlerOutput> {
       granule.granuleId = newGranuleId;
     }
   }
+
   const output = { granules: granules as GranuleOutput[] };
   log.debug('Granule output', output);
   return output;

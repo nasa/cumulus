@@ -14,6 +14,7 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('The Add Unique Granule Id Task ', () => {
   let beforeAllFailed;
   let granuleId;
+  let granuleId2;
   let collection;
   let config;
   let functionConfig;
@@ -31,6 +32,7 @@ describe('The Add Unique Granule Id Task ', () => {
         FunctionName: addUniqueGranuleIdFunctionName,
       }));
       granuleId = `FakeGranule_${randomString()}`;
+      granuleId2 = `FalseGranule_${randomString()}`;
 
       const configObject = {
         cma: {
@@ -56,12 +58,30 @@ describe('The Add Unique Granule Id Task ', () => {
                   version: '001',
                   files: [],
                 },
+                {
+                  granuleId,
+                  dataType: 'FAKECOLLECTION',
+                  version: '001',
+                  files: [],
+                },
+                {
+                  granuleId: granuleId2,
+                  dataType: 'FAKECOLLECTION',
+                  version: '002',
+                  files: [],
+                },
+                {
+                  granuleId: granuleId2,
+                  dataType: 'FAKECOLLECTION',
+                  version: '002',
+                  files: [],
+                },
               ],
             },
           },
           task_config: {
-            hashLength: 4,
-            includeTimestampHashKey: true,
+            hashLength: 6,
+            includeTimestampHashKey: false,
           },
         },
       };
@@ -94,9 +114,21 @@ describe('The Add Unique Granule Id Task ', () => {
     it('has the expected output', () => {
       const payload = JSON.parse(new TextDecoder('utf-8').decode(functionOutput.Payload)).payload;
       expect(payload.granules[0].producerGranuleId).toBe(granuleId);
+      expect(payload.granules[1].producerGranuleId).toBe(granuleId2);
       expect(payload.granules[0].granuleId).toMatch(
-        new RegExp(`^${granuleId}_[a-zA-Z0-9-]{4}$`)
+        new RegExp(`^${granuleId}_[a-zA-Z0-9-]{6}$`)
       );
+      expect(payload.granules[1].granuleId).toMatch(
+        new RegExp(`^${granuleId2}_[a-zA-Z0-9-]{6}$`)
+      );
+    });
+
+    it('removes duplicate granules for the subsequent steps', () => {
+      const payload = JSON.parse(new TextDecoder('utf-8').decode(functionOutput.Payload)).payload;
+      expect(payload.granules.length, 2);
+      expect(payload.granules[0].granuleId !== payload.granules[1].granuleId &&
+        payload.granules[0].collectionId !== payload.granules[1].collectionId &&
+        payload.granules[0].producerGranuleId !== payload.granules[1].producerGranuleId);
     });
   });
 });
