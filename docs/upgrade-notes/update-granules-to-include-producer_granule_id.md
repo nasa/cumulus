@@ -42,7 +42,7 @@ HAVING COUNT(*) > 1
 ORDER BY count DESC;
 ```
 
-The migration script will abort if there are duplicate grarnule_id values in the granules table.
+The migration script will abort if there are duplicate granule_id values in the granules table.
 
 ## Apply the Changes in Production Environment
 
