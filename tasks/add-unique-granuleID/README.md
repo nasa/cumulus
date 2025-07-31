@@ -51,7 +51,7 @@ includeTimestampHashKey value is false, which is its default value, then the has
 ```json
 {
   "hashLength": 8,
-  "includeTimestampHashKey" : true,
+  "includeTimestampHashKey" : false,
 }
 ```
 
@@ -78,7 +78,7 @@ Output is list of granules in like format as the input *with* field modification
           },
           "task_config": {
             "hashLength": 6,
-            "includeTimestampHashKey": true,
+            "includeTimestampHashKey": false,
           }
         }
       },

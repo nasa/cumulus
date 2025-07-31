@@ -481,7 +481,9 @@ export function generateUniqueGranuleId(
   id: string, collectionId: string, hashLength: number, includeTimestampHashKey?: boolean
 ): string {
   // use MD5 to generate truncated hash of granule object
-  const hashString = includeTimestampHashKey ? `${collectionId}_${process.hrtime.bigint().toString()}` : `${collectionId}`;
+  const hashOption1 = `${id}_${collectionId}_${process.hrtime.bigint().toString()}`;
+  const hashOption2 = `${id}_${collectionId}`;
+  const hashString = includeTimestampHashKey ? hashOption1 : hashOption2;
   const hashBuffer = crypto.createHash('md5').update(hashString).digest();
   return `${id}_${hashBuffer.toString('base64url').replace(/_/g, '').slice(0, hashLength)}`;
 }

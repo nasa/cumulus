@@ -646,7 +646,6 @@ test('generateUniqueGranuleId generates different IDs for different timestamps',
 
   const uniqueId1 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, 8, true);
   const uniqueId2 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, 8, true);
-
   t.not(uniqueId1, uniqueId2, 'Generated IDs should be unique due to different timestamps');
 });
 
@@ -659,4 +658,16 @@ test('generateUniqueGranuleId generates different length hash for a different ha
   const hashLength = 4;
   const uniqueId = generateUniqueGranuleId(granule.granuleId, granule.collectionId, hashLength);
   t.is(uniqueId.split('_')[1].length, hashLength, `Hash length should match the specified length: ${uniqueId}`);
+});
+
+test('generateUniqueGranuleId generates the same IDs when timestamp is not included in the hash', (t) => {
+  const granule = {
+    granuleId: 'Az09- éñøæß œüç ΔΩЖЯ あア漢 数据셋 àé',
+    collectionId: 'testCollection',
+  };
+
+  const sameId1 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, 8);
+  const sameId2 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, 8);
+
+  t.is(sameId1, sameId2, 'Generated IDs should be unique due to different timestamps');
 });

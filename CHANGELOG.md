@@ -130,7 +130,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     specs and workflows in the `ingestGranule`, `discoverGranules`,
     `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
 - **CUMULUS-4162**
-  - Made a `includeTimestampHashKey` config variable for the `add-unique-granuleId` and `parse-pdr` task to configure whether the hashKey is  `collectionId` or `collectionId` + timestamp
+  - Made a `includeTimestampHashKey` config variable for the `add-unique-granuleId` and `parse-pdr` task to configure whether the hashKey uses timestamp or not
   - Updated documentation to detail the two different `hashKey` configuration options
 
 ## [Unreleased]
