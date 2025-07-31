@@ -125,6 +125,7 @@ async function handleLoginRequest(req, res) {
           expires: new Date(accessTokenResponse.expirationTime * 1000),
           httpOnly: true,
           secure: useSecureCookies(),
+          sameSite: 'Strict',
         }
       )
       .status(301)

@@ -95,6 +95,7 @@ async function handleRedirectRequest(req, res) {
         expires: new Date(expirationTime),
         httpOnly: true,
         secure: useSecureCookies(),
+        sameSite: 'Strict',
       }
     )
     .set({ Location: urljoin(distributionUrl, state) })
