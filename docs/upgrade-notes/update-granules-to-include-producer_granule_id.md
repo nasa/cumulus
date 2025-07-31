@@ -160,7 +160,7 @@ other issues that would result in the client being killed.
     [2025-07-28T21:56:21.563192] [Worker] Updating rows where cumulus_id BETWEEN 20123 AND 30122
     [2025-07-28T21:56:21.563477] [Worker] Updating rows where cumulus_id BETWEEN 10123 AND 20122
     [2025-07-28T21:56:21.568455] [Worker] Updating rows where cumulus_id BETWEEN 123 AND 10122
-    ......
+    ...
     [2025-07-28T21:57:57.166841] [Worker] Updated 10000 rows where cumulus_id BETWEEN 980123 AND 990122
     [2025-07-28T21:57:57.865475] [Worker] Updated 10000 rows where cumulus_id BETWEEN 1000123 AND 1010122
     [2025-07-28T21:57:57.866147] Parallel batch update complete.
@@ -172,6 +172,11 @@ other issues that would result in the client being killed.
     [2025-07-28T21:58:03.271800] Vacuum complete.
     [2025-07-28T21:58:03.272240] Update completed successfully.
     ```
+
+    :::note RECOVERY_MODE
+    If the migration is incomplete (e.g., the `producer_granule_id` column is not fully populated),
+    you can run the script in **recovery mode** to resume the migration process.
+    :::
 
     You can find the SQL commands used for the migration
     [here](https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20250425134823_granules_add_producer_granule_id.sql)
