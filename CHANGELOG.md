@@ -4,6 +4,148 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Handle Granules with Identical producerGranuleId in Different Collections
+
+### Migration Notes
+
+#### CUMULUS-4069 Update granules table to include producer_granule_id column
+
+Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-4069 require a manual update to the PostgreSQL database
+  in the production environment. Please follow the instructions in
+  [Update granules to include producer_granule_id](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-granules-to-include-producer_granule_id)
+
+### Breaking Changes
+
+- **CUMULUS-4078**
+  - Move Granules task will now check on file collision if the existing file is
+    registered in Core's database to another collection.  If it is, the granule
+    (and the task execution) will fail, regardless of the duplicate behavior
+    configuration. If this behavior is undesirable for performance or logic
+    reasons, the `checkCrossCollectionCollisions` may be set to `false` to
+    disable the behavior on a per-workflow, per-collection or other config
+    driven criteria.
+- **CUMULUS-4072**
+  - Updated the `parse-pdr` task component to throw an error if multiple
+    granules within the same PDR have the same granuleId after applying the
+    granuleIdFilter, unless the `uniquifyGranuleId` configuration parameter is
+    explicitly set to `true`.
+- **CUMULUS-4074**
+  - Updates `updateGranulesCmrMetadataFileLinks` to always ensure
+    `producerGranuleId` identifier is set in updated CMR metadata
+- **CUMULUS-4121**
+  - Updates example deployment `cnm_response_task` to use newest version `v3.2.0`, which supports
+    `producerGranuleId`.
+  - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
+
+### Added
+- **CUMULUS-4059**
+  - Added new non-null column `producer_granule_id` to Postgres `granules`
+    table.
+  - Added `producerGranuleId` property to `granule` record schema.
+  - Updated `@cumulus` api/db/message packages to handle `producer_granule_id`
+    and `producerGranuleId`.
+  - Updated `@cumulus/api/lib/writeGranulesFromMessage` to set producerGranuleId
+    = granuleId if not set.
+  - Updated `queue-granules` task to set producerGranuleId = granuleId if not
+    set.
+- **CUMULUS-4061**
+  - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a
+    hashed/'uniquified' granuleID
+- **CUMULUS-4062**
+  - Added `producerGranuleId` to lzardsBackup task and lambda input/output schema
+- **CUMULUS-4069**
+  - Added migration script and instructions to add the producer_granule_id column
+    to the granules table and populate it in the production environment.
+- **CUMULUS-4072**
+  - Updated `parse-pdr` task component to have the following behaviors:
+    - Always populate producerGranuleId from the incoming parsed granuleId
+    - If `uniquifyGranuleId` configuration value is set to true, parse-PDR will
+      update the granuleId for all found granules to have a unique granule hash
+      appended to the existing ID
+    - Updated `parse-pdr` such that if the `uniquifyGranuleId` configuration
+      parameter is not set to `true` , and a duplicate granuleId is created as
+      part of the output after passing the `granuleIdFilter`, the task will
+      throw with an error.
+  - Added `ingestFromPdrWithUniqueGranuleIdsSpec.js` to the spec tests to
+    demonstrate the ingest workflow works as expected with unique granuleIds and
+    producerGranuleIds set.
+- **CUMULUS-4073**
+  - Adds AddUniqueGranuleId task to `ingest` terraform module for deployment
+  with Core. This task will update a payload of existing granules to have
+  'uniquified' IDs and preserve the original identifier in the
+  `producerGranuleId` field
+- **CUMULUS-4074**
+  - Updated `IngestGranuleSuccessSpec`/`IngestUMMGSuccessSpec` to validate
+    producerGranuleId is populated in CMR post ingest
+  - Updated IngestGranuleSuccessSpec to include a `producerGranuleId` in the default test case
+  - Added ticket-relevant typing doc/ts-check updates to
+    `@cumulus/cmrjs/cmr-utils`
+  - Updated `updateCMRMetadata` to take `updateGranuleIdentifiers` configuration
+    flag/`producerGranuleId` such that that routine now will modify the CMR
+    metadata object with the correct `GranuleUR`/`ProducerGranuleId` values in
+    the CMR metadata.
+  - Added unit test/refactored mocks to use direct injection for `cmr-utils`
+  - Added `getCmrMetadata` helper to `@cumulus/integration-tests` to allow
+    access to the full CMR metadata object for verification of record metadata
+    fields
+  - Added `ApiFileGranuleIdOptional` to `@cumulus/types/api` for cases where an
+    ApiFile is being generated and refactored existing code to use this type
+    instead of custom relaxed typing
+  - Updates `update-granules-cmr-metadata-file-links` to use the updated `cmrjs`
+    logic to set producerGranuleId identifiers in the CMR metadata, either equal
+    to granuleId or the `producerGranuleID` set on the granule.
+  - Updates `@cumulus/tasks/sync-granule/GranuleFetcher` to allow and pass through an
+    incoming `granule.producerGranuleId`
+- **CUMULUS-4077**
+  - Updated `@cumulus/api/lib/ingest.reingestGranule` to only update the original granule
+    to 'queued' if the original payload contains the granule. This avoids a situation
+    where the original granule is updated to 'queued', but the reingest workflow
+    creates a new granule, leaving the original granule stuck in 'queued'.
+- **CUMULUS-4078**
+  - Added `getGranuleIdAndCollectionIdFromFile` query method to `@cumulus/db` to
+    retrieve granule and collection metadata from a file's S3 location.
+  - Added new API route `GET /granules/files/get_collection_and_granule_id/:bucket/:key` in `@cumulus/api` to
+    return the granule ID and collection ID associated with a file.
+  - Added `getFileGranuleAndCollectionByBucketAndKey` method to
+    `@cumulus/api-client/granules` to allow use of new endpoint.
+  - Added integration and unit tests for the new DB query, API endpoint, and
+    client method.
+  - Updated `move-granules` task to validate cross-collection file collisions
+    using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
+  - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
+- **CUMULUS-4080**
+  - Add documentation for duplicate granule handling and, specifically, Collection configuration for duplicates.
+  - Update `urlPathTemplate` to allow falling back from one null/undefined interpolated value to a second argument
+- **CUMULUS-4082**
+  - Updated example deployment to deploy `cnmResponse` lambda version
+    3.1.0-alpha.2-SNAPSHOT which utilizes `producerGranuleId`.
+  - Updated example deployment to deploy `cnmToGranule` lambda version 2.1.0.
+  - Added `FakeProcessing` task configuration `matchFilesWithProducerGranuleId`
+    to determine if the generated cmr file names should match
+    `granuleId` or `producerGranuleId`
+  - Updated `AddUniqueGranuleId` task configuration `hashLength` to accept
+    additional types and removed the use of `hashDepth`.
+  - Updated `FilesToGranules` task configuration
+    `matchFilesWithProducerGranuleId` to accept additional types.
+  - Updated `ParsePdr` task configuration `hashLength` to accept additional
+    types.
+  - Fixed `tf-modules/cumulus` `AddUniqueGranuleId` task output.
+  - Updated example deployment workflow `CNMExampleWorkflow` to uniquify
+    granuleIds based on collection configuration
+  - Added `KinesisTestTriggerWithUniqueGranuleIdsSpec.js` to the spec test to
+    demonstrate that the CNM ingest workflow ingests granules with unique
+    granuleIds and producerGranuleIds set, and that CnmResponse sends responses
+    using producerGranuleIds
+- **CUMULUS-4085**
+  - Added config option for files-to-granules task to use `producerGranuleId`
+    when mapping files to their granules.
+- **CUMULUS-4089**
+  - Add integration testing for duplicate granule workflows. This includes new
+    specs and workflows in the `ingestGranule`, `discoverGranules`,
+    `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
+
 ## [Unreleased]
 
 ### Notable Changes

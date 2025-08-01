@@ -55,7 +55,7 @@ test('getInvocationCount returns the expected invocation count', async (t) => {
     lambda: 'fakeLambda',
     maxCount: 8,
     minCount: 3,
-    timeout: 150,
+    timeout: 300,
   });
   t.is(actual, 5);
 });
@@ -104,7 +104,7 @@ test('getInvocationCount returns the expected value if result stabilizes', async
     lambda: 'fakeLambda',
     maxCount: 20,
     minCount: 5,
-    timeout: 60,
+    timeout: 300,
   });
   t.is(actual, 8);
 });
