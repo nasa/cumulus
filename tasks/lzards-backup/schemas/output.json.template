@@ -8,7 +8,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["filename", "status", "granuleId", "collectionId", "provider", "createdAt"],
+        "required": ["filename", "status", "granuleId", "collectionId", "provider", "createdAt", "producerGranuleId"],
         "properties": {
           "body": { "type": "string" },
           "filename": { "type": "string" },

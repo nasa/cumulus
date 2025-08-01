@@ -16,9 +16,9 @@
           "status",
           "granuleId",
           "collectionId",
-          "producerGranuleId",
           "provider",
-          "createdAt"
+          "createdAt",
+          "producerGranuleId"
         ],
         "properties": {
           "body": {

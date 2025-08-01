@@ -145,6 +145,9 @@ Please follow the instructions before upgrading Cumulus
   - Add integration testing for duplicate granule workflows. This includes new
     specs and workflows in the `ingestGranule`, `discoverGranules`,
     `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
+- **CUMULUS-4162**
+  - Made a `includeTimestampHashKey` config variable for the `add-unique-granuleId` and `parse-pdr` task to configure whether the hashKey uses timestamp or not
+  - Updated documentation to detail the two different `hashKey` configuration options
 
 ## [Unreleased]
 
