@@ -56,12 +56,14 @@ describe('The Add Unique Granule Id Task ', () => {
                   version: '001',
                   files: [],
                 },
+                {
+                  granuleId,
+                  dataType: 'FAKECOLLECTION',
+                  version: '001',
+                  files: [],
+                },
               ],
             },
-          },
-          task_config: {
-            hashLength: 4,
-            includeTimestampHashKey: true,
           },
         },
       };
@@ -82,7 +84,7 @@ describe('The Add Unique Granule Id Task ', () => {
     }
   };
 
-  describe('The Add Unique Granule Id Task ', () => {
+  describe('The Add Unique Granule Id Task with default hash config', () => {
     it('invokes successfully', async () => {
       await testSetup();
       if (beforeAllFailed) fail('beforeAll() failed');
@@ -95,8 +97,41 @@ describe('The Add Unique Granule Id Task ', () => {
       const payload = JSON.parse(new TextDecoder('utf-8').decode(functionOutput.Payload)).payload;
       expect(payload.granules[0].producerGranuleId).toBe(granuleId);
       expect(payload.granules[0].granuleId).toMatch(
-        new RegExp(`^${granuleId}_[a-zA-Z0-9-]{4}$`)
+        new RegExp(`^${granuleId}_[a-zA-Z0-9-]{8}$`)
       );
+      expect(payload.granules[1].producerGranuleId).toBe(granuleId);
+      expect(payload.granules[1].granuleId).toMatch(
+        new RegExp(`^${granuleId}_[a-zA-Z0-9-]{8}$`)
+      );
+      expect(payload.granules[0].granuleId === payload.granules[1].granuleId);
+    });
+  });
+
+  describe('The Add Unique Granule Id Task with personalized hash config', () => {
+    it('invokes successfully', async () => {
+      const newTaskConfig = {
+        hashLength: 6,
+        includeTimestampHashKey: true,
+      };
+      await testSetup({ task_config: newTaskConfig });
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        expect(functionOutput.FunctionError).toBe(undefined);
+      }
+    });
+
+    it('has the expected output', () => {
+      const payload = JSON.parse(new TextDecoder('utf-8').decode(functionOutput.Payload)).payload;
+      expect(payload.granules[0].producerGranuleId).toBe(granuleId);
+      expect(payload.granules[0].granuleId).toMatch(
+        new RegExp(`^${granuleId}_[a-zA-Z0-9-]{6}$`)
+      );
+      expect(payload.granules[1].producerGranuleId).toBe(granuleId);
+      expect(payload.granules[1].granuleId).toMatch(
+        new RegExp(`^${granuleId}_[a-zA-Z0-9-]{6}$`)
+      );
+      expect(payload.granules[1].producerGranuleId === payload.granules[0].producerGranuleId &&
+        payload.granules[0].granuleId !== payload.granules[1].granuleId);
     });
   });
 });
