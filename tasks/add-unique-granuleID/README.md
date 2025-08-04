@@ -5,7 +5,7 @@ This is a [Cumulus](https://nasa.github.io/cumulus) task which takes the followi
 - Populates `producerGranuleId` key with the value of `granuleId`
 - Updates the existing `granuleId` field to a 'unique' value based on the algorithim used in @cumulus/ingest `generateUniqueGranuleId`
 
-**Please Note**: This task is intended only for use in active ingest scenarios, or in workflows where incoming granules do not have a producerGranuleId populated, have a granuleId populated AND it is desirable to 'uniqueify' the archival granuleId to be distinct from the producer provided/derived granuleId.
+**Please Note**: This task is intended only for use in active ingest scenarios, or in workflows where incoming granules do not have a producerGranuleId populated, have a granuleId populated AND it is desirable to 'uniquify' the archival granuleId to be distinct from the producer provided/derived granuleId.
 
 ## Usage
 
@@ -46,8 +46,8 @@ or
 
 The config object has two keys, hashLength, which  allows specification of the truncated size of the MD5 hash used to uniquify the granuleID, and
 includeTimestampHashKey, which controls how the unique granule ID is generated for the next processing step.
-When set to false, the hash is based only on the collectionId + producerGranuleId, which supports granule payloads with duplicate IDs across collection, but does not support uniquifying duplicates of the same granule in a single collection.
-When set to true, the hash used in the ID includes a timestamp in addition to collectionId + producerGranuleId, ensuring that multiple granules with the same producerGranuleId can coexist—even within the same collection since all granuleIds will be uniquified.
+When set to false, the hash is based only on the collectionId + producerGranuleId (the original granuleId). This supports granule payloads with duplicate IDs across collection, but does not support uniquifying duplicates of the same granule in a single collection. It will result in collisions if there are duplicate granules within the same collection and includeTimestampHashKey is set to false.
+When set to true, the hash used for the new granuleId includes a timestamp in addition to collectionId + producerGranuleId, ensuring that multiple granules with the same producerGranuleId can coexist, even within the same collection since all granuleIds will be uniquified.
 
 ```json
 {
