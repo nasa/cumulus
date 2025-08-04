@@ -78,3 +78,35 @@ test('assignUniqueIds accepts granules with dataType and version instead of coll
     t.true(granule.granuleId.startsWith(`${granule.producerGranuleId}_`), 'Should append hash to granuleId');
   });
 });
+
+test('assignUniqueIds assigns the same granuleId for duplicates within a collection when includeTimestampHashKey is not set', async (t) => {
+  const event = {
+    input: {
+      granules: [
+        { granuleId: 'granule1', dataType: 'someType', version: '001' },
+        { granuleId: 'granule1', dataType: 'someType', version: '001' },
+      ],
+    },
+    config: { },
+  };
+
+  const result = await assignUniqueIds(event, {});
+  t.true(result.granules[0].granuleId === result.granules[1].granuleId, 'Should have the same granuleId for duplicates when hash excludes timestamp');
+});
+
+test('assignUniqueIds assigns unique granuleIds for duplicates when includeTimestampHashKey is set to true', async (t) => {
+  const event = {
+    input: {
+      granules: [
+        { granuleId: 'granule1', dataType: 'someType', version: '001' },
+        { granuleId: 'granule1', dataType: 'someType', version: '001' },
+      ],
+    },
+    config: {
+      includeTimestampHashKey: true,
+    },
+  };
+
+  const result = await assignUniqueIds(event, {});
+  t.true(result.granules[0].granuleId !== result.granules[1].granuleId, 'Should have different granuleIds for duplicates when hash includes timestamp');
+});

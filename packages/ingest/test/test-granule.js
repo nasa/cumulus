@@ -644,9 +644,9 @@ test('generateUniqueGranuleId generates different IDs for different timestamps',
     collectionId: 'testCollection',
   };
 
-  const uniqueId1 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, 8, true);
-  const uniqueId2 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, 8, true);
-  t.not(uniqueId1, uniqueId2, 'Generated IDs should be unique due to different timestamps');
+  const id1 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, undefined, true);
+  const id2 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, undefined, true);
+  t.not(id1, id2, 'Generated IDs should be unique due to different timestamps');
 });
 
 test('generateUniqueGranuleId generates different length hash for a different hashlength value', (t) => {
@@ -669,5 +669,5 @@ test('generateUniqueGranuleId generates the same IDs when timestamp is not inclu
   const sameId1 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, 8);
   const sameId2 = generateUniqueGranuleId(granule.granuleId, granule.collectionId, 8);
 
-  t.is(sameId1, sameId2, 'Generated IDs should be unique due to different timestamps');
+  t.is(sameId1, sameId2, 'Generated IDs should be the same due to not using timestamp for hash');
 });

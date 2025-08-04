@@ -45,8 +45,9 @@ or
 ### Config Object
 
 The config object has two keys, hashLength, which  allows specification of the truncated size of the MD5 hash used to uniquify the granuleID, and
-includeTimestampHashKey, which allows specification for whether or not the hashKey should be collectionId or collectionId and timestamp. If the
-includeTimestampHashKey value is false, which is its default value, then the hashKey will only be collectionId, removing duplicate granules from the granules list for the next step while supporting duplicate producerGranuleIds in different collections. If the value is set to true, then the hash will include timestamp and duplicates will not be removed, to support granule versioning in the same collection.
+includeTimestampHashKey, which controls how the unique granule ID is generated for the next processing step.
+When set to false, the hash is based only on the collectionId + producerGranuleId, which supports granule payloads with duplicate IDs across collection, but does not support uniquifying duplicates of the same granule in a single collection.
+When set to true, the hash used in the ID includes a timestamp in addition to collectionId + producerGranuleId, ensuring that multiple granules with the same producerGranuleId can coexist—even within the same collection since all granuleIds will be uniquified.
 
 ```json
 {

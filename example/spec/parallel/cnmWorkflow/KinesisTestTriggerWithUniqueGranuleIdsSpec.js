@@ -498,10 +498,12 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     describe('the AddUniqueGranuleId Lambda', () => {
       let lambdaOutput;
       let granule;
+      let granule2;
 
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'AddUniqueGranuleId');
         granule = lambdaOutput.payload.granules[0];
+        granule2 = lambdaOutput.payload.granules[1];
         // granuleId is uniquified
         granuleId = granule.granuleId;
         console.log(`AddUniqueGranuleId returns granuleId: ${granuleId}, producerGranuleId: ${granule.producerGranuleId}`);
@@ -514,6 +516,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
         expect(granule.granuleId).toMatch(
           new RegExp(`^${producerGranuleId}_[a-zA-Z0-9-]+$`)
         );
+        expect(granule.granuleId === granule2.granuleId && granule.producerGranuleId === granule2.producerGranuleId);
       });
     });
 

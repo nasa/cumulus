@@ -623,13 +623,13 @@ test.serial(
     t.is(result.totalSize, 35819466);
     // test MOD09 006
     const mod09Granule = result.granules.find((granule) => granule.dataType === 'MOD09GQ');
-    const mod09GranuleSubstring = 'MOD09GQ';
-    t.regex(mod09Granule.granuleId, new RegExp(`^${mod09GranuleSubstring}.A2017224.h09v02.006.2017227165020_[a-zA-Z0-9-]{8}$`));
+    const mod09GranuleSubstring = 'MOD09GQ.A2017224.h09v02.006';
+    t.regex(mod09Granule.granuleId, new RegExp(`^${mod09GranuleSubstring}.2017227165020_[a-zA-Z0-9-]{8}$`));
     t.truthy(mod09Granule);
 
     const mod87Granule = result.granules.find((granule) => granule.dataType === 'MOD87GQ');
-    const mod87GranuleSubstring = 'MOD87GQ';
-    t.regex(mod87Granule.granuleId, new RegExp(`^${mod87GranuleSubstring}.A2017224.h09v02.006.2017227165020_[a-zA-Z0-9-]{8}$`));
+    const mod87GranuleSubstring = 'MOD87GQ.A2017224.h09v02.006';
+    t.regex(mod87Granule.granuleId, new RegExp(`^${mod87GranuleSubstring}.2017227165020_[a-zA-Z0-9-]{8}$`));
     t.truthy(mod87Granule);
   }
 );
