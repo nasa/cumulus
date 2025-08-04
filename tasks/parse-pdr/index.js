@@ -177,10 +177,10 @@ const extractGranuleId = (fileName, regex) => {
  * @param {Object} params.fileGroup - PDR FILE_GROUP object
  * @param {string} params.pdrName - name of the PDR for error reporting
  * @param {boolean} params.uniquifyGranuleId - boolean for whether granule should be
- * uniquified or not
+ * uniquified
  * @param {number} params.hashLength - Length of hash used for uniquification
  * @param {boolean} params.includeTimestampHashKey - boolean for whether hash should
- * include timestamp or not
+ * use timestamp
  * @returns {Promise<Object>} - granule object
  */
 const convertFileGroupToGranule = async ({
@@ -260,7 +260,7 @@ const buildPdrDocument = (rawPdr) => {
  * @param {null | number | string} [event.config.hashLength] - Length of hash used
  * for uniquification
  * @param {null | boolean} [event.config.includeTimestampHashKey] - Boolean value for if hashKey
- * should include timestamp or not
+ * should use timestamp
  * @param {object} event.config.provider - Provider information
  * @param {string} event.config.provider.id - Provider ID
  * @param {number} [event.config.provider.globalConnectionLimit] - Max concurrent connections

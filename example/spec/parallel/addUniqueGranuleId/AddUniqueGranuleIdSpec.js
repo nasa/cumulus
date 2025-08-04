@@ -103,7 +103,8 @@ describe('The Add Unique Granule Id Task ', () => {
       expect(payload.granules[1].granuleId).toMatch(
         new RegExp(`^${granuleId}_[a-zA-Z0-9-]{8}$`)
       );
-      expect(payload.granules[0].granuleId === payload.granules[1].granuleId);
+      expect(payload.granules[1].producerGranuleId === payload.granules[0].producerGranuleId &&
+        payload.granules[0].granuleId === payload.granules[1].granuleId);
     });
   });
 

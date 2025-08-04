@@ -660,7 +660,7 @@ test('generateUniqueGranuleId generates different length hash for a different ha
   t.is(uniqueId.split('_')[1].length, hashLength, `Hash length should match the specified length: ${uniqueId}`);
 });
 
-test('generateUniqueGranuleId generates the same IDs when timestamp is not included in the hash', (t) => {
+test('generateUniqueGranuleId generates the same IDs when timestamp is not used in the hash', (t) => {
   const granule = {
     granuleId: 'Az09- éñøæß œüç ΔΩЖЯ あア漢 数据셋 àé',
     collectionId: 'testCollection',

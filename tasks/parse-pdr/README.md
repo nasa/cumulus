@@ -14,7 +14,7 @@
 | stack      | (required) | Cumulus deployment stack name
 | uniquifyGranuleId | false | If set to true in the configuration, granuleId will be a 'uniquified' value instead of the original value in the form <producerId>_<hash>
 | hashLength |     8      | The length of the hash used for uniquification
-| includeTimestampHashKey | false | A Boolean value for whether hashKey should include timestamp or not for uniquifying granules
+| includeTimestampHashKey | false | A Boolean value for whether hashKey should use timestamp for uniquifying granuleIds
 
 ### Input
 

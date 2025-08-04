@@ -584,7 +584,7 @@ test.serial(
 );
 
 test.serial(
-  'parse-pdr "uniquifies" granuleIds based on collectionId hash when includeTimestampHashKey is set to false',
+  'parse-pdr "uniquifies" granuleIds without using timestamp in hash when includeTimestampHashKey is set to false',
   async (t) => {
     t.context.payload.input.pdr.name = 'multi-data-type.PDR';
     await setUpTestPdrAndValidate(t).catch(t.fail);
@@ -608,7 +608,7 @@ test.serial(
 );
 
 test.serial(
-  'parse-pdr "uniquifies" granuleIds based on collectionId + timestamp hash when includeTimestampHashKey is set to true',
+  'parse-pdr "uniquifies" granuleIds using timestamp in hash when includeTimestampHashKey is set to true',
   async (t) => {
     t.context.payload.input.pdr.name = 'multi-data-type.PDR';
     await setUpTestPdrAndValidate(t).catch(t.fail);

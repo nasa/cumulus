@@ -474,7 +474,7 @@ export function unversionFilename(filename: string): string {
  * assigned by the granule producer
  * @param collectionId - The api collection ID (name___version) associated with the granule
  * @param hashLength - The length of the hash to append to the granuleId.
- * @param includeTimestampHashKey - Boolean value for whether hash key should include timestamp
+ * @param includeTimestampHashKey - Boolean value for whether hash value should use timestamp
  * @returns - A unique granule ID in the format: granuleId_hash.
  */
 export function generateUniqueGranuleId(

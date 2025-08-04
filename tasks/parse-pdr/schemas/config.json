@@ -30,7 +30,7 @@
       "default": 8
     },
     "includeTimestampHashKey": {
-      "description": "Optional boolean config on whether the hash, which is collectionId, should include timestamp, defaults to false",
+      "description": "Optional boolean value for whether hashKey should use timestamp for uniquifying granuleIds",
       "type": ["null", "boolean"],
       "default": false
     },

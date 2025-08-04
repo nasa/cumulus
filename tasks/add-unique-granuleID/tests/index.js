@@ -108,5 +108,5 @@ test('assignUniqueIds assigns unique granuleIds for duplicates when includeTimes
   };
 
   const result = await assignUniqueIds(event, {});
-  t.true(result.granules[0].granuleId !== result.granules[1].granuleId, 'Should have different granuleIds for duplicates when hash includes timestamp');
+  t.true(result.granules[0].granuleId !== result.granules[1].granuleId, 'Should have different granuleIds for duplicates when hash uses timestamp');
 });
