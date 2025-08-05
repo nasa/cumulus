@@ -4,12 +4,25 @@ title: Generate Unique GranuleId
 hide_title: false
 ---
 
-The `generateUniqueGranuleId` function is the algorithim used during the `parse-pdr` and `addUniqueGranuleId` tasks to
-create a new granuleId for a granule based on the hash scheme which the user configures in the appropriate task config.
-The purpose of the function is to take the parameters `id`, which maps to the granule's `producerGranuleId` (or original `granuleId`), `collectionId`,
-and two other optional variables: `hashLength`, which is the length of the MD5 hash being generated and appended to the newly uniquified granuleId, and
-`includeTimestampHashKey` which discerns whether the hash will use `id` + `collectionId` or `id` + `collectionId` + timestamp. The new `producerGranuleId`
-value for these granules' will be its original `id` of the granules' input payload.
+## Background
+
+As a part of ECS decommissioning, the Cumulus system needs to be able to handle duplicate granules within and across collections.
+This document focuses on a specific function, `generateUniqueGranuleId`, used in several pre-ingest tasks for the purpose of
+uniquifying `granuleIds` of a list of granules, while maintaining an identifier which can be used to identify duplicates (`producerGranuleId`).
+
+## generateUniqueGranuleId
+
+The `generateUniqueGranuleId` function is used during the `parse-pdr` and `addUniqueGranuleId` tasks to generate a new `granuleId`. The process relies on a hash scheme that the user configures in the respective task's configuration.
+
+The function accepts the following parameters:
+
+- `id`, which corresponds to the granule’s original `producerGranuleId` or `granuleId`.
+- `collectionId`, which is used to group the granule.
+- Two optional parameters:
+  - `hashLength`, specifying the length of the MD5 hash that will be appended to the new granuleId.
+  - `includeTimestampHashKey`, which determines whether the hash will be generated using `id` + `collectionId`, or with timestamp as well (i.e., `id` + `collectionId` + `timestamp`).
+
+The result is a new `producerGranuleId`, which retains the original `id` from the granule’s input payload but adds uniqueness based on the configured hash scheme.
 
 ## Hash used
 
