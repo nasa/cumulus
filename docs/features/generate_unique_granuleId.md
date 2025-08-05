@@ -10,9 +10,9 @@ As a part of ECS decommissioning, the Cumulus system needs to be able to handle 
 This document focuses on a specific function, `generateUniqueGranuleId`, used in several pre-ingest tasks for the purpose of
 uniquifying `granuleIds` of a list of granules, while maintaining an identifier which can be used to identify duplicates (`producerGranuleId`).
 
-## generateUniqueGranuleId
+## generateUniqueGranuleId function
 
-The `generateUniqueGranuleId` function is used during the `parse-pdr` and `addUniqueGranuleId` tasks to generate a new `granuleId`. The process relies on a hash scheme that the user configures in the respective task's configuration.
+The `generateUniqueGranuleId` function is used during the `addUniqueGranuleId` and other tasks such as `parse-pdr` to generate a new `granuleId`. The process relies on a hash scheme that the user configures in the respective task's configuration.
 
 The function accepts the following parameters:
 
@@ -20,22 +20,22 @@ The function accepts the following parameters:
 - `collectionId`, which is used to group the granule.
 - Two optional parameters:
   - `hashLength`, specifying the length of the MD5 hash that will be appended to the new granuleId.
-  - `includeTimestampHashKey`, which determines whether the hash will be generated using `id` + `collectionId`, or with timestamp as well (i.e., `id` + `collectionId` + `timestamp`).
+  - `includeTimestampHashKey`, which determines whether the hash will be generated using `collectionId`, or with timestamp as well (i.e., `collectionId` + `timestamp`).
 
-The result is a new `producerGranuleId`, which retains the original `id` from the granule’s input payload but adds uniqueness based on the configured hash scheme.
+The result is a new unique `granuleId` in the format: `granuleId_hash`, which retains the original `id` from the granule’s input payload but adds uniqueness based on the configured hash scheme.
 
-## Hash used
+## Hash schema
 
 The hash scheme used to generate the hash appended to the `id` is based on the MD5 hashing scheme due to being faster than some of the other options (SHA/crypto) and cross-language portable without much extra implementation or changes. The generated hash buffer value is converted into a base64 encoded string value, removed of any prohibited characters (such as `_`), trimmed using the `hashLength` value (since the MD5 generated hash value is 128 bits long), and appended to the original `id`.
 
 ## Configurable values explained
 
-For the tasks that use this function, being `parse-pdr` and `addUniqueGranuleId`, the values for `hashLength` and `includeTimestampHashKey` can be
+For the tasks that use this function, being `AddUniqueGranuleId` and `ParsePdr` etc, the values for `hashLength` and `includeTimestampHashKey` can be
 configured in the task config. See [Parse PDR](../workflow_tasks/parse_pdr) and the content below for more details.
 
 ### HashLength
 
-Hashlength will be the desired length of the hash that is being appended to the new granuleId. For example if `hashLength` is set to `3`, when the
+Hashlength will be the desired length of the hash that is being appended to the uniquified granuleId. For example if `hashLength` is set to `3`, when the
 `generateUniqueGranuleId` function is ran, the returned `granuleId` would be `<id>_<random string value of length 3>` (if the `id`, the original `producerGranuleId` is `MOD.GRANULE`, a possible
 output could be `MOD.GRANULE_a1q`, with the uniquified hash value being the `a1q` which has a length of 3). By default, when this value is not set in the task config, it will be `8`.
 
@@ -43,11 +43,11 @@ output could be `MOD.GRANULE_a1q`, with the uniquified hash value being the `a1q
 
 IncludeTimestampHashKey is a boolean that controls how the unique hash is generated in the `generateUniqueGranuleId` function:
 
-- If `false`: The hash is based only on `id` and `collectionId`. This means:
+- If `false`: The hash is based only on `collectionId`. This means:
   - Duplicates within the same collection will collide, as their hash will be identical.
   - Duplicates across different collections are supported.
 
-- If `true`: The hash includes `id`, `collectionId`, and a timestamp, ensuring:
+- If `true`: The hash includes `collectionId` and a timestamp, ensuring:
   - All granules are uniquified, even duplicates in the same collection.
   - Collision risk is extremely low (less than 0.1%).
 
@@ -65,7 +65,7 @@ import java.util.Base64;
 
 public class UniqueGranuleIdGeneratorNoSort {
 
-   public static String uniqueGranuleId(String granuleId, String collectionId, int hashLength, boolean includeTimestampHashKey) {
+   public static String generateUniqueGranuleId(String granuleId, String collectionId, int hashLength, boolean includeTimestampHashKey) {
 
        String jsonString;
        if (includeTimestampHashKey) {
@@ -106,7 +106,7 @@ import hashlib
 import base64
 import time
 
-def unique_granule_id(granule: dict, hash_length: int = 8, include_timestamp_in_hashkey: bool = False) -> str:
+def generate_unique_granule_id(granule: dict, hash_length: int = 8, include_timestamp_in_hashkey: bool = False) -> str:
 """
  Generates a unique granule ID by appending a truncated MD5 hash of the granule object.
 

@@ -45,12 +45,12 @@ or
 ### Config Object
 
 The config object has two keys, `hashLength`, which allows specification of the truncated size of the MD5 hash used to uniquify the `granuleID`, defaulting to 8, and
-`includeTimestampHashKey`, which is a boolean that controls how the unique hash is generated in the `generateUniqueGranuleId` function.
-- If `false`: The hash is based only on `id` and `collectionId`. This means:
-    - Duplicates within the same collection will collide, as their hash will be identical.
-    - Duplicates across different collections are supported.
+`includeTimestampHashKey`, which is a boolean that controls whether the hash string includes timestamp in the `generateUniqueGranuleId` function, defaulting to `false`.
+- If `false`(default): The hash is based only on `id` and `collectionId`. This means:
+    - Granules with identical `ids` within the same collection will collide, as their hash will be identical.
+    - Granules with identical `ids` across different collections are supported.
 - If `true`: The hash includes `id`, `collectionId`, and a timestamp, ensuring:
-    - All granules are uniquified, even duplicates in the same collection.
+    - All granules are uniquified, even granules with identical `ids` in the same collection.
     - Collision risk is extremely low (less than 0.1%).
 
 ```json
@@ -83,7 +83,7 @@ Output is list of granules in like format as the input *with* field modification
           },
           "task_config": {
             "hashLength": 6,
-            "includeTimestampHashKey": false,
+            "includeTimestampHashKey": true,
           }
         }
       },
