@@ -17,6 +17,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated Terraform version requirement to `>=1.12.2`
   - Updated AWS provider requirement to `5.100.x`
 
+### Changed
+
+- **CUMULUS-4142,CUMULUS-4144**
+  - Updated S3 credentials endpoint to delete the access token after successful authentication.
+  - Configured both Cumulus distribution and S3 credentials to set the SameSite attribute on cookies in the response.
+
 ### Fixed
 
 - **CUMULUS-4177**
