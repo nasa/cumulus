@@ -65,20 +65,20 @@ import java.util.Base64;
 
 public class UniqueGranuleIdGeneratorNoSort {
 
-   public static String generateUniqueGranuleId(String granuleId, String collectionId, int hashLength, boolean includeTimestampHashKey) {
+   public static String generateUniqueGranuleId(String id, String collectionId, int hashLength, boolean includeTimestampHashKey) {
 
        String jsonString;
        if (includeTimestampHashKey) {
          jsonString = String.format(
-            "{\"granuleId\":\"%s\",\"collectionId\":\"%s\",\"timestamp\":\"%d\"}",
-            granuleId,
+            "{\"id\":\"%s\",\"collectionId\":\"%s\",\"timestamp\":\"%d\"}",
+            id,
             collectionId,
             System.nanoTime()
         );
        } else {
          jsonString = String.format(
-            "{\"granuleId\":\"%s\",\"collectionId\":\"%s\"}",
-            granuleId,
+            "{\"id\":\"%s\",\"collectionId\":\"%s\"}",
+            id,
             collectionId,
         );
        }
@@ -111,7 +111,7 @@ def generate_unique_granule_id(granule: dict, hash_length: int = 8, include_time
  Generates a unique granule ID by appending a truncated MD5 hash of the granule object.
 
    Args:
-       granule (dict): The granule object containing 'granuleId' and 'collectionId'.
+       granule (dict): The granule object containing 'id' and 'collectionId'.
        hash_length (int): Length of hash slice to append.
        include_timestamp_in_hashkey (bool): Boolean value for if hash should use timestamp
 
@@ -122,13 +122,13 @@ def generate_unique_granule_id(granule: dict, hash_length: int = 8, include_time
     # Build payload similar to JS: granuleId, collectionId, timestamp
     if include_timestamp_in_hashkey:
         payload = {
-            "granuleId": granule["granuleId"],
+            "id": granule["granuleId"],
             "collectionId": granule["collectionId"],
             "timestamp": str(time.time_ns()), # nanosecond precision timestamp
         }
     else:
         payload = {
-            "granuleId": granule["granuleId"],
+            "id": granule["granuleId"],
             "collectionId": granule["collectionId"],
         }
 

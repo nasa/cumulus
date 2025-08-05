@@ -1,4 +1,5 @@
 const test = require('ava');
+const { validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
 const { assignUniqueIds } = require('../dist/src');
 
 test('assignUniqueIds assigns unique granule IDs and preserves producerGranuleId', async (t) => {
@@ -80,26 +81,37 @@ test('assignUniqueIds accepts granules with dataType and version instead of coll
 });
 
 test('assignUniqueIds assigns the same unique granule IDs for identical granules within a collection when includeTimestampHashKey is not set', async (t) => {
+  const granuleId1 = 'granule1';
+  const granuleId2 = 'granule2';
   const event = {
     input: {
       granules: [
-        { granuleId: 'granule1', dataType: 'someType', version: '001' },
-        { granuleId: 'granule1', dataType: 'someType', version: '001' },
+        { granuleId: granuleId1, dataType: 'someType', version: '001' },
+        { granuleId: granuleId2, dataType: 'someType', version: '001' },
       ],
     },
     config: { },
   };
 
-  const result = await assignUniqueIds(event, {});
-  t.true(result.granules[0].granuleId === result.granules[1].granuleId, 'Should have the same granuleId for duplicates when hash excludes timestamp');
+  const result1 = await assignUniqueIds(event, {});
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+  await validateOutput(t, result1);
+  const result2 = await assignUniqueIds(event, {});
+  t.true(result1.granules[0].granuleId === result2.granules[0].granuleId, 'Should have the same granuleId even when ran another time');
+  t.true(result1.granules[1].granuleId === result2.granules[1].granuleId, 'Should have the same granuleId even when ran another time');
+  t.true(result1.granules[0].producerGranuleId === granuleId1, 'Should retain original granuleId as producerGranuleId');
+  t.true(result1.granules[1].producerGranuleId === granuleId2, 'Should retain original granuleId as producerGranuleId');
 });
 
-test('assignUniqueIds assigns different unique granuleIds for duplicates when includeTimestampHashKey is set to true', async (t) => {
+test('assignUniqueIds assigns different unique granuleIds for identical granules when includeTimestampHashKey is set to true', async (t) => {
+  const granuleId1 = 'granule1';
+  const granuleId2 = 'granule2';
   const event = {
     input: {
       granules: [
         { granuleId: 'granule1', dataType: 'someType', version: '001' },
-        { granuleId: 'granule1', dataType: 'someType', version: '001' },
+        { granuleId: 'granule2', dataType: 'someType', version: '001' },
       ],
     },
     config: {
@@ -107,6 +119,26 @@ test('assignUniqueIds assigns different unique granuleIds for duplicates when in
     },
   };
 
-  const result = await assignUniqueIds(event, {});
-  t.true(result.granules[0].granuleId !== result.granules[1].granuleId, 'Should have different granuleIds for duplicates when hash uses timestamp');
+  const event2 = {
+    input: {
+      granules: [
+        { granuleId: 'granule1', dataType: 'someType', version: '001' },
+        { granuleId: 'granule2', dataType: 'someType', version: '001' },
+      ],
+    },
+    config: {
+      includeTimestampHashKey: true,
+    },
+  };
+
+  const result1 = await assignUniqueIds(event, {});
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+  await validateOutput(t, result1);
+  t.true(result1.granules[0].granuleId !== result1.granules[1].granuleId, 'Should not have the same granuleId');
+  const result2 = await assignUniqueIds(event2, {});
+  t.true(result1.granules[0].granuleId !== result2.granules[0].granuleId, 'Should not have the same granuleId even when ran another time');
+  t.true(result1.granules[1].granuleId !== result2.granules[1].granuleId, 'Should not have the same granuleId even when ran another time');
+  t.true(result1.granules[0].producerGranuleId === granuleId1, 'Should retain original granuleId as producerGranuleId');
+  t.true(result1.granules[1].producerGranuleId === granuleId2, 'Should retain original granuleId as producerGranuleId');
 });
