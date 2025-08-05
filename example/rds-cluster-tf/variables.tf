@@ -73,7 +73,7 @@ variable "tags" {
 variable "engine_version" {
   description = "Postgres engine version for Serverless cluster"
   type        = string
-  default     = "17.4"
+  default     = "13.12"
 }
 
 variable "vpc_tag_name" {
@@ -104,8 +104,8 @@ variable "lambda_timeouts" {
   }
 }
 
-variable "parameter_group_family_v17" {
-  description = "Database family to use for creating database parameter group under postgres 17 upgrade conditions"
+variable "parameter_group_family_v13" {
+  description = "Database family to use for creating database parameter group under postgres 13 upgrade conditions"
   type = string
-  default = "aurora-postgresql17"
+  default = "aurora-postgresql13"
 }
