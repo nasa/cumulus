@@ -176,10 +176,11 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   if (!accessToken || !accessTokenRecord || isAccessTokenExpired(accessTokenRecord)) {
     // No valid access token found or token is expired — redirect to obtain a new one
     return res.redirect(307, redirectURLForAuthorizationCode);
-  } else {
-    // Authentication successful — delete the access token to prevent reuse
-    await accessTokenModel.delete({ accessToken });
   }
+
+  // Authentication successful — delete the access token to prevent reuse
+  await accessTokenModel.delete({ accessToken });
+
   req.authorizedMetadata = { userName: accessTokenRecord.username };
   return next();
 }
