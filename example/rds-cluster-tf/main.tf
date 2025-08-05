@@ -28,5 +28,5 @@ module "rds_cluster" {
   snapshot_identifier        = var.snapshot_identifier
   lambda_timeouts            = var.lambda_timeouts
   lambda_memory_sizes        = var.lambda_memory_sizes
-  parameter_group_family_v13 = var.parameter_group_family_v13
+  parameter_group_family_v17 = var.parameter_group_family_v17
 }
