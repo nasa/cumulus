@@ -130,8 +130,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     specs and workflows in the `ingestGranule`, `discoverGranules`,
     `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
 - **CUMULUS-4162**
-  - Made an `includeTimestampHashKey` config variable for the `add-unique-granuleId` and `parse-pdr` task to configure whether the hashKey uses timestamp
-  - Added documentation to detail the two different `hashKey` configuration options
+  - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
+  - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
+  - Added a documentation page titled "Generate Unique GranuleId" to explain the algorithm for generating unique `granuleIds`.
 
 ## [Unreleased]
 
