@@ -44,10 +44,14 @@ or
 
 ### Config Object
 
-The config object has two keys, hashLength, which allows specification of the truncated size of the MD5 hash used to uniquify the granuleID, defaulting to 8, and
-includeTimestampHashKey, which controls how the unique granule ID is generated for the next processing step.
-When set to false, the default value, the hash is based only on the collectionId + producerGranuleId (the original granuleId). This supports granule payloads with duplicate IDs across collection, but does not support uniquifying duplicates of the same granule in a single collection. It will result in collisions if there are duplicate granules within the same collection and includeTimestampHashKey is set to false.
-When set to true, the hash used for the new granuleId includes a timestamp in addition to collectionId + producerGranuleId, ensuring that duplicate granules with the same producerGranuleId can coexist, even within the same collection since all granuleIds will be uniquified.
+The config object has two keys, `hashLength`, which allows specification of the truncated size of the MD5 hash used to uniquify the `granuleID`, defaulting to 8, and
+`includeTimestampHashKey`, which is a boolean that controls how the unique hash is generated in the `generateUniqueGranuleId` function.
+- If `false`: The hash is based only on `id` and `collectionId`. This means:
+    - Duplicates within the same collection will collide, as their hash will be identical.
+    - Duplicates across different collections are supported.
+- If `true`: The hash includes `id`, `collectionId`, and a timestamp, ensuring:
+    - All granules are uniquified, even duplicates in the same collection.
+    - Collision risk is extremely low (less than 0.1%).
 
 ```json
 {
