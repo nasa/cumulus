@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Users upgrading to this release will be required to update their terraform version to at least 1.12.2. Reference migration instructions are included at [https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12)
 - **CUMULUS-4176**
   - Updated `engine_version` default value to `17.4` in `example/rds-cluster-tf/variables.tf`.
-  - Update `cumulus-rds-tf` module to take additional parameters in support of
+  - Updated `tf-modules/cumulus-rds-tf` module to take additional parameter `enable_upgrade` in support of
     migration from Aurora PostgreSQl v13 to v17.
 
 ### Breaking Changes
