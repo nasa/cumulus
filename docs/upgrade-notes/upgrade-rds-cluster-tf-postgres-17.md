@@ -4,7 +4,7 @@ title: Upgrade Database Cluster to PostgreSQL v17
 hide_title: false
 ---
 
-Cumulus Core as of version > 20.1.2** now supports and is tested against Aurora Postgres v17.   All users should update their datastores to this version as part of an upgrade process upon upgrading to release version 20.1.2.
+Cumulus Core as of version **>= 20.2.0** now supports and is tested against Aurora Postgres v17.   All users should update their datastores to this version as part of an upgrade process upon upgrading to release version 20.1.2.
 
 We recommend stopping all ingest rules if database downtime is required (e.g. you do not have a blue-green database solution or are using serverless V2) for the update  as any unavailability of the database may result in unexpected database write failures (resulting in records in the Dead Letter Archive), workflow failures or other unexpected failures.
 
@@ -14,8 +14,7 @@ We recommend stopping all ingest rules if database downtime is required (e.g. yo
 
 It is recommended that users manually backup and/or consider cloning their datastore in order to recover the datastore if an upgrade goes awry.
 
-Upgrading the Aurora Serverless v2 cluster will be completed via AWS console in this document and require manual steps to complete the upgrade:
-If you are on version 13.12, it is recommended that you upgrade to version 13.18 prior to upgrading to 17.x. The AWS RDS for PostgreSQL upgrade document may be used as a reference:
+Upgrading the Aurora Serverless v2 cluster will be completed via AWS console in this document and require manual steps to complete the upgrade. The AWS RDS for PostgreSQL upgrade document may be used as a reference:
 <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.PostgreSQL.MajorVersion.html>
 
 - Ensure a supported version (> 20.1.2 a later patch version) is deployed.
