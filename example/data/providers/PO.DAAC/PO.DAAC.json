@@ -1,0 +1,6 @@
+{
+  "globalConnectionLimit": 10,
+  "host": "replaced with internal bucket in addProviders()",
+  "id": "NASA/JPL/PO.DAAC",
+  "protocol": "s3"
+}
