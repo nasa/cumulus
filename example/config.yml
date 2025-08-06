@@ -55,3 +55,6 @@ nnaga-tf:
 
 ecarton:
   bucket: ecarton-internal
+
+awisdom:
+  bucket: awisdom-internal
