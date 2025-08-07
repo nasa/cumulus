@@ -132,7 +132,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4162**
   - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
   - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
-  - Added a documentation page titled "Generate Unique GranuleId" to explain the algorithm for generating unique `granuleIds`.
+  - Added a documentation page titled `"Generate Unique GranuleId"` to explain the algorithm for generating unique `granuleIds`.
 
 ## [Unreleased]
 

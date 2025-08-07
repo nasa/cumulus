@@ -666,8 +666,8 @@ test('generateUniqueGranuleId generates the same IDs when timestamp is not used 
     collectionId: 'testCollection',
   };
 
-  const sameId1 = generateUniqueGranuleId(granule.granuleId, granule.collectionId);
-  const sameId2 = generateUniqueGranuleId(granule.granuleId, granule.collectionId);
+  const uniqueId1 = generateUniqueGranuleId(granule.granuleId, granule.collectionId);
+  const uniqueId2 = generateUniqueGranuleId(granule.granuleId, granule.collectionId);
 
-  t.is(sameId1, sameId2, 'Generated IDs should be the same due to not using timestamp for hash');
+  t.is(uniqueId1, uniqueId2, 'Generated IDs should be the same due to not using timestamp for hash');
 });

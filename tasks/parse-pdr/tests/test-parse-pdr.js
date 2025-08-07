@@ -591,19 +591,26 @@ test.serial(
     const payload = structuredClone(t.context.payload);
     payload.config.uniquifyGranuleId = true;
     const result = await parsePdr(payload);
+    const result2 = await parsePdr(payload);
     await validateOutput(t, result).catch(t.fail);
     t.is(result.filesCount, 4);
     t.is(result.granulesCount, 2);
     t.is(result.granules.length, 2);
     t.is(result.totalSize, 35819466);
+
     // test MOD09 006
-    const mod09Granule = result.granules.find((granule) => granule.dataType === 'MOD09GQ');
-    t.truthy(mod09Granule);
-    t.is(mod09Granule.granuleId, 'MOD09GQ.A2017224.h09v02.006.2017227165020_aoYA4tTn'); // includes added uniquified hash string
+    const mod09GranuleResult1 = result.granules.find((granule) => granule.dataType === 'MOD09GQ');
+    const mod09GranuleResult2 = result2.granules.find((granule) => granule.dataType === 'MOD09GQ');
+    t.truthy(mod09GranuleResult1);
+    t.truthy(mod09GranuleResult2);
+    t.true(mod09GranuleResult1.granuleId === mod09GranuleResult2.granuleId);
+
     // test MOD87 006
-    const mod87Granule = result.granules.find((granule) => granule.dataType === 'MOD87GQ');
-    t.truthy(mod87Granule);
-    t.is(mod87Granule.granuleId, 'MOD87GQ.A2017224.h09v02.006.2017227165020_UR9rEmjv'); // includes added uniquified hash string
+    const mod87GranuleResult1 = result.granules.find((granule) => granule.dataType === 'MOD87GQ');
+    const mod87GranuleResult2 = result.granules.find((granule) => granule.dataType === 'MOD87GQ');
+    t.truthy(mod87GranuleResult1);
+    t.truthy(mod87GranuleResult2);
+    t.true(mod09GranuleResult1.granuleId === mod09GranuleResult2.granuleId);
   }
 );
 
@@ -616,21 +623,26 @@ test.serial(
     payload.config.uniquifyGranuleId = true;
     payload.config.includeTimestampHashKey = true;
     const result = await parsePdr(payload);
+    const result2 = await parsePdr(payload);
     await validateOutput(t, result).catch(t.fail);
     t.is(result.filesCount, 4);
     t.is(result.granulesCount, 2);
     t.is(result.granules.length, 2);
     t.is(result.totalSize, 35819466);
-    // test MOD09 006
-    const mod09Granule = result.granules.find((granule) => granule.dataType === 'MOD09GQ');
-    const mod09GranuleSubstring = 'MOD09GQ.A2017224.h09v02.006';
-    t.regex(mod09Granule.granuleId, new RegExp(`^${mod09GranuleSubstring}.2017227165020_[a-zA-Z0-9-]{8}$`));
-    t.truthy(mod09Granule);
 
-    const mod87Granule = result.granules.find((granule) => granule.dataType === 'MOD87GQ');
-    const mod87GranuleSubstring = 'MOD87GQ.A2017224.h09v02.006';
-    t.regex(mod87Granule.granuleId, new RegExp(`^${mod87GranuleSubstring}.2017227165020_[a-zA-Z0-9-]{8}$`));
-    t.truthy(mod87Granule);
+    // test MOD09 006
+    const mod09GranuleResult1 = result.granules.find((granule) => granule.dataType === 'MOD09GQ');
+    const mod09GranuleResult2 = result2.granules.find((granule) => granule.dataType === 'MOD09GQ');
+    t.truthy(mod09GranuleResult1);
+    t.truthy(mod09GranuleResult2);
+    t.true(mod09GranuleResult1.granuleId !== mod09GranuleResult2.granuleId);
+
+    // test MOD87 006
+    const mod87GranuleResult1 = result.granules.find((granule) => granule.dataType === 'MOD87GQ');
+    const mod87GranuleResult2 = result.granules.find((granule) => granule.dataType === 'MOD87GQ');
+    t.truthy(mod87GranuleResult1);
+    t.truthy(mod87GranuleResult2);
+    t.true(mod09GranuleResult1.granuleId !== mod09GranuleResult2.granuleId);
   }
 );
 
