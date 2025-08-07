@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Handle Granules with Identical producerGranuleId in Different Collections
 
+### Migration Notes
+
+#### CUMULUS-4069 Update granules table to include producer_granule_id column
+
+Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-4069 require a manual update to the PostgreSQL database
+  in the production environment. Please follow the instructions in
+  [Update granules to include producer_granule_id](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-granules-to-include-producer_granule_id)
+
 ### Breaking Changes
 
 - **CUMULUS-4078**
@@ -16,7 +26,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     reasons, the `checkCrossCollectionCollisions` may be set to `false` to
     disable the behavior on a per-workflow, per-collection or other config
     driven criteria.
-
 - **CUMULUS-4072**
   - Updated the `parse-pdr` task component to throw an error if multiple
     granules within the same PDR have the same granuleId after applying the
@@ -25,29 +34,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4074**
   - Updates `updateGranulesCmrMetadataFileLinks` to always ensure
     `producerGranuleId` identifier is set in updated CMR metadata
+- **CUMULUS-4121**
+  - Updates example deployment `cnm_response_task` to use newest version `v3.2.0`, which supports
+    `producerGranuleId`.
+  - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
 
 ### Added
-- **CUMULUS-4078**
-  - Added `getGranuleIdAndCollectionIdFromFile` query method to `@cumulus/db` to
-    retrieve granule and collection metadata from a file's S3 location.
-  - Added new API route `GET /granules/files/get_collection_and_granule_id/:bucket/:key` in `@cumulus/api` to
-    return the granule ID and collection ID associated with a file.
-  - Added `getFileGranuleAndCollectionByBucketAndKey` method to
-    `@cumulus/api-client/granules` to allow use of new endpoint.
-  - Added integration and unit tests for the new DB query, API endpoint, and
-    client method.
-  - Updated `move-granules` task to validate cross-collection file collisions
-    using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
-  - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
-- **CUMULUS-4062**
-  - Added `producerGranuleId` to lzardsBackup task and lambda input/output schema
-- **CUMULUS-4089**
-  - Add integration testing for duplicate granule workflows. This includes new
-    specs and workflows in the `ingestGranule`, `discoverGranules`,
-    `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
-- **CUMULUS-4085**
-  - Added config option for files-to-granules task to use `producerGranuleId`
-    when mapping files to their granules.
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules`
     table.
@@ -61,6 +53,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4061**
   - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a
     hashed/'uniquified' granuleID
+- **CUMULUS-4062**
+  - Added `producerGranuleId` to lzardsBackup task and lambda input/output schema
+- **CUMULUS-4069**
+  - Added migration script and instructions to add the producer_granule_id column
+    to the granules table and populate it in the production environment.
 - **CUMULUS-4072**
   - Updated `parse-pdr` task component to have the following behaviors:
     - Always populate producerGranuleId from the incoming parsed granuleId
@@ -106,6 +103,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     to 'queued' if the original payload contains the granule. This avoids a situation
     where the original granule is updated to 'queued', but the reingest workflow
     creates a new granule, leaving the original granule stuck in 'queued'.
+- **CUMULUS-4078**
+  - Added `getGranuleIdAndCollectionIdFromFile` query method to `@cumulus/db` to
+    retrieve granule and collection metadata from a file's S3 location.
+  - Added new API route `GET /granules/files/get_collection_and_granule_id/:bucket/:key` in `@cumulus/api` to
+    return the granule ID and collection ID associated with a file.
+  - Added `getFileGranuleAndCollectionByBucketAndKey` method to
+    `@cumulus/api-client/granules` to allow use of new endpoint.
+  - Added integration and unit tests for the new DB query, API endpoint, and
+    client method.
+  - Updated `move-granules` task to validate cross-collection file collisions
+    using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
+  - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
+- **CUMULUS-4080**
+  - Add documentation for duplicate granule handling and, specifically, Collection configuration for duplicates.
+  - Update `urlPathTemplate` to allow falling back from one null/undefined interpolated value to a second argument
 - **CUMULUS-4082**
   - Updated example deployment to deploy `cnmResponse` lambda version
     3.1.0-alpha.2-SNAPSHOT which utilizes `producerGranuleId`.
@@ -126,6 +138,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     demonstrate that the CNM ingest workflow ingests granules with unique
     granuleIds and producerGranuleIds set, and that CnmResponse sends responses
     using producerGranuleIds
+- **CUMULUS-4085**
+  - Added config option for files-to-granules task to use `producerGranuleId`
+    when mapping files to their granules.
+- **CUMULUS-4089**
+  - Add integration testing for duplicate granule workflows. This includes new
+    specs and workflows in the `ingestGranule`, `discoverGranules`,
+    `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
 
 ## [Unreleased]
 
