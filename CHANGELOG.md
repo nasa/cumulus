@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Handle Granules with Identical producerGranuleId in Different Collections
 
+### Migration Notes
+
+#### CUMULUS-4069 Update granules table to include producer_granule_id column
+
+Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-4069 require a manual update to the PostgreSQL database
+  in the production environment. Please follow the instructions in
+  [Update granules to include producer_granule_id](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-granules-to-include-producer_granule_id)
+
 ### Breaking Changes
 
 - **CUMULUS-4078**
@@ -16,7 +26,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     reasons, the `checkCrossCollectionCollisions` may be set to `false` to
     disable the behavior on a per-workflow, per-collection or other config
     driven criteria.
-
 - **CUMULUS-4072**
   - Updated the `parse-pdr` task component to throw an error if multiple
     granules within the same PDR have the same granuleId after applying the
@@ -25,6 +34,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4074**
   - Updates `updateGranulesCmrMetadataFileLinks` to always ensure
     `producerGranuleId` identifier is set in updated CMR metadata
+- **CUMULUS-4121**
+  - Updates example deployment `cnm_response_task` to use newest version `v3.2.0`, which supports
+    `producerGranuleId`.
+  - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
 
 ### Added
 - **CUMULUS-4059**
@@ -42,6 +55,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     hashed/'uniquified' granuleID
 - **CUMULUS-4062**
   - Added `producerGranuleId` to lzardsBackup task and lambda input/output schema
+- **CUMULUS-4069**
+  - Added migration script and instructions to add the producer_granule_id column
+    to the granules table and populate it in the production environment.
 - **CUMULUS-4072**
   - Updated `parse-pdr` task component to have the following behaviors:
     - Always populate producerGranuleId from the incoming parsed granuleId
