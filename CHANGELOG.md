@@ -145,6 +145,10 @@ Please follow the instructions before upgrading Cumulus
   - Add integration testing for duplicate granule workflows. This includes new
     specs and workflows in the `ingestGranule`, `discoverGranules`,
     `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
+- **CUMULUS-4162**
+  - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
+  - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
+  - Added a documentation page titled `"Generate Unique GranuleId"` to explain the algorithm for generating unique `granuleIds`.
 
 ## [Unreleased]
 

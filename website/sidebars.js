@@ -163,6 +163,7 @@ const sidebars = {
         'features/dead_letter_queues',
         'features/dead_letter_archive',
         'features/execution_payload_retention',
+        'features/generate_unique_granuleId',
         'features/reports',
         'features/ancillary_metadata',
         'features/distribution-metrics',
