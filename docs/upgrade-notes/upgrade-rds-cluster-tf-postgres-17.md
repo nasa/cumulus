@@ -17,7 +17,7 @@ It is recommended that users manually backup and/or consider cloning their datas
 Upgrading the Aurora Serverless v2 cluster will be completed via AWS console in this document and require manual steps to complete the upgrade. The AWS RDS for PostgreSQL upgrade document may be used as a reference:
 <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.PostgreSQL.MajorVersion.html>
 
-- Ensure a supported version (> 20.1.2 a later patch version) is deployed.
+- Ensure a supported version (> 20.1.2 or a later patch version) is deployed.
 - Deploy the newest version of the `cumulus-rds-tf` module, ensuring `enable_upgrade` is set to false.   This will *only* deploy a `v17` version of your current parameter group configuration, named `<prefix>-cluster-parameter-group-v17`.
 - Shut down all ingest and other usage of the database cluster by 3rd party applications if appropriate.
 - Once this is done, utilize the AWS RDS console to `modify` the database cluster, and update the following settings:
