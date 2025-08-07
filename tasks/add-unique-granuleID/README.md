@@ -46,10 +46,10 @@ or
 
 The config object has two keys, `hashLength`, which allows specification of the truncated size of the MD5 hash used to uniquify the `granuleID`, defaulting to 8, and
 `includeTimestampHashKey`, which is a boolean that controls whether the hash string includes timestamp in the `generateUniqueGranuleId` function, defaulting to `false`.
-- If `false`(default): The hash is based only on `id` and `collectionId`. This means:
+- If `false`(default): The hash is based only on `collectionId`. This means:
     - Granules with identical `ids` within the same collection will collide, as their hash will be identical.
     - Granules with identical `ids` across different collections are supported.
-- If `true`: The hash includes `id`, `collectionId`, and a timestamp, ensuring:
+- If `true`: The hash includes ``collectionId` and a timestamp, ensuring:
     - All granules are uniquified, even granules with identical `ids` in the same collection.
     - Collision risk is extremely low (less than 0.1%).
 

@@ -459,7 +459,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
   describe('Workflow fails because SyncGranule fails', () => {
     let badRecord;
-    let granule;
 
     beforeAll(async () => {
       existingGranuleId = granuleId;
@@ -500,6 +499,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
     describe('the AddUniqueGranuleId Lambda', () => {
       let lambdaOutput;
+      let granule;
 
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'AddUniqueGranuleId');

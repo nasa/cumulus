@@ -118,7 +118,7 @@ def generate_unique_granule_id(id: str, collection_id: str, hash_length: int = 8
        str: Unique granule ID in format '<id>_<hash>'.
    """
 
-    # Build payload similar to JS: collectionId andtimestamp
+  # Build payload similar to JS: collectionId andtimestamp
   if include_timestamp_in_hashkey:
     payload = {
       "collectionId": collectionId,
@@ -129,12 +129,12 @@ def generate_unique_granule_id(id: str, collection_id: str, hash_length: int = 8
       "collectionId": collection_id,
     }
 
-   # Serialize payload, hash and encode
+  # Serialize payload, hash and encode
   json_string = json.dumps(payload, separators=(",", ":"), sort_keys=True)
   md5_digest = hashlib.md5(json_string.encode("utf-8")).digest()
   base64url_string = base64.urlsafe_b64encode(md5_digest).decode("utf-8")
 
-   # Remove any '_' characters from hash
+  # Remove any '_' characters from hash
   base64url_clean = base64url_string.replace("_", "")
 
   hash_part = base64url_clean[:hash_length]
