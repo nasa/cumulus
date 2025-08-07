@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v20.2.0] 2025-08-06 Updated
+
+### Migration Notes
+
+From this release forward, Cumulus Core will be tested against PostgreSQL v17. Users
+should migrate their datastores to Aurora PostgreSQL 17.4+ compatible data
+stores as soon as possible after upgrading to this release.
+
+#### Database Upgrade
+
+Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf upgrade
+instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-17).
+
 ### Fixed
 
 - **CUMULUS-4176**
