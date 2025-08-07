@@ -121,7 +121,7 @@ def generate_unique_granule_id(id: str, collection_id: str, hash_length: int = 8
   # Build payload similar to JS: collectionId andtimestamp
   if include_timestamp_in_hashkey:
     payload = {
-      "collectionId": collectionId,
+      "collectionId": collection_id,
        "timestamp": str(time.time_ns()), # nanosecond precision timestamp
     }
   else:
