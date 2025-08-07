@@ -1,10 +1,10 @@
 {
   "collection": {
-    "name": "ASCATB-L2-Coastal",
+    "name": "ASCATB-L2-Coastal/op",
     "version": "Operational/Near-Real-Time"
   },
   "name": "ASCATB_L2_Coastal_CnmSqsTestRule",
-  "provider": "PODAAC_SWOT",
+  "provider": "NASA/JPL/PO.DAAC",
   "meta": {
     "cnmResponseStream": "{{cnmResponseStream}}",
     "cnmResponseMethod": "sns",

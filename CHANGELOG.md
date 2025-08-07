@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable Changes
+
+- **CUMULUS-4131**
+  - Users upgrading to this release will be required to update their terraform version to at least 1.12.2. Reference migration instructions are included at [https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12)
+- **CUMULUS-4176**
+  - Updated `engine_version` default value to `17.4` in `example/rds-cluster-tf/variables.tf`.
+  - Updated `tf-modules/cumulus-rds-tf` module to take additional parameter `enable_upgrade` in support of
+    migration from Aurora PostgreSQl v13 to v17.
+
+### Breaking Changes
+
+- **CUMULUS-4131**
+  - Updated Terraform version requirement to `>=1.12.2`
+  - Updated AWS provider requirement to `5.100.x`
+
+### Fixed
+
+- **CUMULUS-4177**
+  - Update form-data sub-dependency to safe version ^4.0.4
+- **CUMULUS-4174**
+  - Fix broken CreateReconciliationReportSpec test cleanup
+- **CUMULUS-4170**
+  - Upgrade Node Docker image from buster to bullseye for a compatible debian version
+
 ## [v20.2.0] 2025-08-06 Updated
 
 ### Migration Notes
@@ -36,6 +60,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 
 ### Added
 
+- **CUMULUS-4108**
+  - Added standalone lambda function code to scan and terminate old instances when they pass their 90 day expiration
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
@@ -44,9 +70,14 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 
 ### Fixed
 
+- **CUMULUS-4130**
+  - Update unit test CI scripts to split out api from other unit tests runs to make better use of bamboo agents
+
 - **CUMULUS-4106**
   - Fixed the release npm publish error by adding private property to `@cumulus/change-granule-collection-pg`
     and `@cumulus/change-granule-collection-s3` package.json.
+- **CUMULUS-4039**
+  - update api-client endpoints to allow slashes in provider name and collection name
 
 ## [v20.1.2] 2025-04-22
 
