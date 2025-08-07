@@ -65,34 +65,34 @@ import java.util.Base64;
 
 public class UniqueGranuleIdGeneratorNoSort {
 
-   public static String generateUniqueGranuleId(String id, String collectionId, int hashLength, boolean includeTimestampHashKey) {
+    public static String generateUniqueGranuleId(String id, String collectionId, int hashLength, boolean includeTimestampHashKey) {
 
-       String jsonString;
-       if (includeTimestampHashKey) {
-         jsonString = String.format(
-            "{\"collectionId\":\"%s\",\"timestamp\":\"%d\"}",
-            collectionId,
-            System.nanoTime()
-        );
-       } else {
-         jsonString = String.format(
-            "{\"collectionId\":\"%s\"}",
-            collectionId,
-        );
-       }
+        String jsonString;
+        if (includeTimestampHashKey) {
+            jsonString = String.format(
+                "{\"collectionId\":\"%s\",\"timestamp\":\"%d\"}",
+                collectionId,
+                System.nanoTime()
+            );
+        } else {
+            jsonString = String.format(
+                "{\"collectionId\":\"%s\"}",
+                collectionId
+            );
+        }
 
-       try {
-           MessageDigest md5 = MessageDigest.getInstance("MD5");
-           byte[] md5Digest = md5.digest(jsonString.getBytes(StandardCharsets.UTF_8));
-           String base64url = Base64.getUrlEncoder().withoutPadding().encodeToString(md5Digest);
-           String cleanBase64url = base64url.replace("_", "");
-           String hashPart = cleanBase64url.substring(0, Math.min(hashLength, cleanBase64url.length()));
-           return id + "_" + hashPart;
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] md5Digest = md5.digest(jsonString.getBytes(StandardCharsets.UTF_8));
+            String base64url = Base64.getUrlEncoder().withoutPadding().encodeToString(md5Digest);
+            String cleanBase64url = base64url.replace("_", "");
+            String hashPart = cleanBase64url.substring(0, Math.min(hashLength, cleanBase64url.length()));
+            return id + "_" + hashPart;
 
-       } catch (NoSuchAlgorithmException e) {
-           throw new RuntimeException("MD5 algorithm not available", e);
-       }
-   }
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("MD5 algorithm not available", e);
+        }
+    }
 }
 ```
 
@@ -109,8 +109,8 @@ def generate_unique_granule_id(id: str, collection_id: str, hash_length: int = 8
  Generates a unique granule ID by appending a truncated MD5 hash of the granule object.
 
    Args:
-       id - the granules producerGranuleId or non-uniquified granuleId
-       collectionId - the collectionId of the granule used for the hash
+       id (str): the granules producerGranuleId or non-uniquified granuleId
+       collectionId (str): the collectionId of the granule used for the hash
        hash_length (int): Length of hash slice to append.
        include_timestamp_in_hashkey (bool): Boolean value for if hash should use timestamp
 
