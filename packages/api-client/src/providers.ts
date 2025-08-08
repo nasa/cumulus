@@ -56,7 +56,7 @@ export const deleteProvider = async (params: {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/providers/${providerId}`,
+      path: `/providers/${encodeURIComponent(providerId)}`,
     },
   });
 };
@@ -85,7 +85,7 @@ export const getProvider = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/providers/${providerId}`,
+      path: `/providers/${encodeURIComponent(providerId)}`,
     },
   });
 };
