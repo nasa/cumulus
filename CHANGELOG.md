@@ -19,8 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-4142,CUMULUS-4144**
-  - Updated S3 credentials endpoint to delete the access token after successful authentication.
+- **CUMULUS-4142, CUMULUS-4144**
+  - Updated the S3 credentials endpoint attached to TEA to delete the access token after successful authentication.
   - Configured both Cumulus distribution and S3 credentials to set the SameSite attribute on cookies in the response.
 
 ### Fixed
