@@ -2,7 +2,7 @@
 set -ex
 
 apt-get update
-apt-get install -y python-pip
+apt-get install -y python3-pip
 pip install awscli
 
 TF_VERSION=$(cat .tfversion)

@@ -41,15 +41,15 @@ NODE_ENV=test
 <dd></dd>
 <dt><a href="#module_S3">S3</a></dt>
 <dd></dd>
+<dt><a href="#module_SecretsManager">SecretsManager</a></dt>
+<dd></dd>
 <dt><a href="#module_SNS">SNS</a></dt>
 <dd></dd>
 <dt><a href="#module_SQS">SQS</a></dt>
 <dd></dd>
-<dt><a href="#module_STS">STS</a></dt>
-<dd></dd>
-<dt><a href="#module_SecretsManager">SecretsManager</a></dt>
-<dd></dd>
 <dt><a href="#module_StepFunctions">StepFunctions</a></dt>
+<dd></dd>
+<dt><a href="#module_STS">STS</a></dt>
 <dd></dd>
 </dl>
 
@@ -757,6 +757,9 @@ Move an S3 object to another location in S3
 | [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
 | [params.chunkSize] | <code>number</code> |  | chunk size of the S3 multipart uploads |
 
+<a name="module_SecretsManager"></a>
+
+## SecretsManager
 <a name="module_SNS"></a>
 
 ## SNS
@@ -847,12 +850,6 @@ Delete a given SQS message from a given queue.
 Test if an SQS queue exists
 
 **Kind**: inner method of [<code>SQS</code>](#module_SQS)  
-<a name="module_STS"></a>
-
-## STS
-<a name="module_SecretsManager"></a>
-
-## SecretsManager
 <a name="module_StepFunctions"></a>
 
 ## StepFunctions
@@ -948,6 +945,9 @@ exponential backoff.
 | --- | --- | --- |
 | executionArn | <code>string</code> | the ARN of the Step Function Execution to   check for |
 
+<a name="module_STS"></a>
+
+## STS
 <a name="DynamoDbSearchQueue"></a>
 
 ## DynamoDbSearchQueue

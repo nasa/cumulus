@@ -6,17 +6,84 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable Changes
+
+- **CUMULUS-4131**
+  - Users upgrading to this release will be required to update their terraform version to at least 1.12.2. Reference migration instructions are included at [https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12)
+- **CUMULUS-4176**
+  - Updated `engine_version` default value to `17.4` in `example/rds-cluster-tf/variables.tf`.
+  - Updated `tf-modules/cumulus-rds-tf` module to take additional parameter `enable_upgrade` in support of
+    migration from Aurora PostgreSQl v13 to v17.
+
+### Breaking Changes
+
+- **CUMULUS-4131**
+  - Updated Terraform version requirement to `>=1.12.2`
+  - Updated AWS provider requirement to `5.100.x`
+
+### Changed
+
+- **CUMULUS-4142, CUMULUS-4144**
+  - Updated the S3 credentials endpoint attached to TEA to delete the access token after successful authentication.
+  - Configured both Cumulus distribution and S3 credentials to set the SameSite attribute on cookies in the response.
+
+### Fixed
+
+- **CUMULUS-4177**
+  - Update form-data sub-dependency to safe version ^4.0.4
+- **CUMULUS-4174**
+  - Fix broken CreateReconciliationReportSpec test cleanup
+- **CUMULUS-4170**
+  - Upgrade Node Docker image from buster to bullseye for a compatible debian version
+
+## [v20.2.0] 2025-08-06 Updated
+
+### Migration Notes
+
+From this release forward, Cumulus Core will be tested against PostgreSQL v17. Users
+should migrate their datastores to Aurora PostgreSQL 17.4+ compatible data
+stores as soon as possible after upgrading to this release.
+
+#### Database Upgrade
+
+Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf upgrade
+instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-17).
+
+### Fixed
+
+- **CUMULUS-4176**
+  - Updated `engine_version` default value to `17.4` in `example/rds-cluster-tf/variables.tf`.
+  - Updated `tf-modules/cumulus-rds-tf` module to take additional parameter `enable_upgrade` in support of
+    migration from Aurora PostgreSQl v13 to v17.
+- **CUMULUS-4177**
+  - Update form-data sub-dependency to safe version ^4.0.4
+- **CUMULUS_4174**
+  - Fix broken CreateReconciliationReportSpec test cleanup
+- **CUMULUS-4170**
+  - Upgrade Node Docker image from buster to bullseye for a compatible debian version
+
+## [v20.2.0] 2025-06-24
+
 ### Added
 
+- **CUMULUS-4108**
+  - Added standalone lambda function code to scan and terminate old instances when they pass their 90 day expiration
+- **CUMULUS-3945**
+  - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
   - Added sanitizeSensitive function to mitigate credential exposure in ElasticSearch client (metrics)
   - Update BaseSearch functions to sanitize the errors
 
 ### Fixed
 
+- **CUMULUS-4130**
+  - Update unit test CI scripts to split out api from other unit tests runs to make better use of bamboo agents
+
 - **CUMULUS-4106**
   - Fixed the release npm publish error by adding private property to `@cumulus/change-granule-collection-pg`
     and `@cumulus/change-granule-collection-s3` package.json.
+- **CUMULUS-4039**
+  - update api-client endpoints to allow slashes in provider name and collection name
 
 ## [v20.1.2] 2025-04-22
 
@@ -8606,7 +8673,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.1.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.2.0...HEAD
+[v20.2.0]: https://github.com/nasa/cumulus/compare/v20.1.2...v20.2.0
 [v20.1.2]: https://github.com/nasa/cumulus/compare/v20.1.1...v20.1.2
 [v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.1.1
 [v20.0.1]: https://github.com/nasa/cumulus/compare/v20.0.0...v20.0.1
