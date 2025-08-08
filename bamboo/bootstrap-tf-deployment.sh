@@ -91,6 +91,7 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "region=$AWS_REGION" \
   -var "vpc_id=$VPC_ID" \
   -var "lambda_subnet_ids=[$AWS_LAMBDA_SUBNET]" \
+  -var "log_destination_arn=$SHARED_LOG_DESTINATION_ARN" \
   -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
   -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
   -var "token_secret=$TOKEN_SECRET" \
@@ -98,3 +99,6 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "pdr_node_name_provider_bucket=$PDR_NODE_NAME_PROVIDER_BUCKET" \
   -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
   -var "orca_db_user_password=$ORCA_DATABASE_USER_PASSWORD" \
+  -var "metrics_es_host=$METRICS_ES_HOST" \
+  -var "metrics_es_username=$METRICS_ES_USER" \
+  -var "metrics_es_password=$METRICS_ES_PASS" \
