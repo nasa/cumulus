@@ -8,7 +8,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["filename", "status", "granuleId", "collectionId", "provider", "createdAt"],
+        "required": ["filename", "status", "granuleId", "collectionId", "provider", "createdAt", "producerGranuleId"],
         "properties": {
           "body": { "type": "string" },
           "filename": { "type": "string" },
@@ -17,6 +17,7 @@
           "collectionId": { "type": "string" },
           "provider": { "type": "string" },
           "createdAt": { "type": "number" },
+          "producerGranuleId": { "type": "string" },
           "statusCode": { "type": "number" }
         }
       },
@@ -30,6 +31,7 @@
             "dataType": { "type": "string" },
             "version": { "type": "string" },
             "collectionId": { "type": "string" },
+            "producerGranuleId": { "type": "string" },
             "files": "{{files}}"
           }
         }

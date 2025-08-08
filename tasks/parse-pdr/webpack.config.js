@@ -6,7 +6,18 @@ const root = path.resolve(__dirname);
 const ignoredPackages = [
   'cloudflare:sockets',
   'cpu-features',
-  'sshcrypto.node'
+  'sshcrypto.node',
+  'better-sqlite3',
+  'mssql',
+  'mssql/lib/base',
+  'mssql/package.json',
+  'mysql',
+  'mysql2',
+  'oracledb',
+  'pg-native',
+  'pg-query-stream',
+  'sqlite3',
+  'tedious',
 ];
 
 module.exports = {

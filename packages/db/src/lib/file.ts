@@ -7,6 +7,50 @@ import { PostgresFileRecord } from '../types/file';
 import { PostgresGranuleRecord } from '../types/granule';
 
 /**
+ * Retrieves the granule ID, collection name, and collection version associated
+ * with a specific file by joining data across the files, granules, and collections tables.
+ *
+ * @param {Object} params - The parameters for the query.
+ * @param {Knex} params.knex - The Knex client object for database interaction.
+ * @param {string} params.bucket - The S3 bucket of the file.
+ * @param {string} params.key - The S3 key (path) of the file.
+ * @returns {Knex.QueryBuilder} A Knex query builder object that, when executed,
+ * will return the granule_cumulus_id, collection_name, and collection_version
+ * for the specified file.
+ */
+export const getGranuleIdAndCollectionIdFromFile = ({
+  knex,
+  bucket,
+  key,
+}: {
+  knex: Knex;
+  bucket: string;
+  key: string;
+}) => {
+  const { files: filesTable, granules: granulesTable, collections: collectionsTable } = TableNames;
+
+  return knex(filesTable)
+    .select(
+      `${granulesTable}.granule_id`,
+      `${collectionsTable}.name as collection_name`,
+      `${collectionsTable}.version as collection_version`
+    )
+    .innerJoin(
+      granulesTable,
+      `${filesTable}.granule_cumulus_id`,
+      `${granulesTable}.cumulus_id`
+    )
+    .innerJoin(
+      collectionsTable,
+      `${granulesTable}.collection_cumulus_id`,
+      `${collectionsTable}.cumulus_id`
+    )
+    .where(`${filesTable}.bucket`, bucket)
+    .andWhere(`${filesTable}.key`, key)
+    .first();
+};
+
+/**
  * Helper to build a query that returns records from the files table with data
  * joined in from the granules table optionally filtered by collectionIds,
  * granulesIds and providers.

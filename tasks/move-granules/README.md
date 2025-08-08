@@ -19,6 +19,7 @@ Config object fields:
 | duplicateHandling | string | `error` | <ul><li>`error` - Throws an error on duplicates</li><li>`replace` - Replaces the existing file</li><li>`skip` - Skips the duplicate file</li><li>`version` - Adds a suffix to the existing filename to avoid a clash</li></ul> | Specifies how duplicate filenames should be handled
 | moveStagedFiles | boolean | `true` | | Can set to `false` to skip moving files from the staging location. Defaults to `true`.
 | s3MultipartChunksizeMb | number | | | S3 multipart upload chunk size in MB.  If none is specified, the default `default_s3_multipart_chunksize_mb` is used.
+| checkCrossCollectionCollisions | boolean | true | true/false | Default behavior configures MoveGranules to use the API to determine if a file collision is the result of a file registered to a granule in another collection, and if it is, fail (ignoring `duplicateHandling` configuration).     Setting this value to false disables that check and MoveGranules will not use database checks and assume all collisions are due to same-collection collisions.
 
 ### Input
 
