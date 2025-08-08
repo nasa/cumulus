@@ -15,7 +15,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { objectStoreForProtocol } = require('@cumulus/object-store');
 
-const { buildLoginErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
+const { buildLoginErrorTemplateVars, createCookieOptions, getConfigurations } = require('../lib/distribution');
 const {
   getBucketMap,
   getPathsByBucketName,
@@ -120,12 +120,7 @@ async function handleLoginRequest(req, res) {
       .cookie(
         'accessToken',
         accessTokenResponse.accessToken,
-        {
-          // expirationTime is in seconds but Date() expects milliseconds
-          expires: new Date(accessTokenResponse.expirationTime * 1000),
-          httpOnly: true,
-          secure: useSecureCookies(),
-        }
+        createCookieOptions(accessTokenResponse.expirationTime)
       )
       .status(301)
       .set({ Location: urljoin(distributionUrl, state || '') })
