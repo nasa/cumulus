@@ -4,7 +4,7 @@ export interface PostgresGranuleUniqueColumns {
   collection_cumulus_id: number,
 }
 export interface PostgresGranule extends PostgresGranuleUniqueColumns {
-  archived?: boolean,
+  archived: boolean,
   status?: GranuleStatus,
   cmr_link?: string | null,
   error?: object | null,

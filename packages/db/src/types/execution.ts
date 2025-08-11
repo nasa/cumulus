@@ -17,7 +17,7 @@ export interface PostgresExecution {
   updated_at?: Date | null,
   url?: string | null,
   workflow_name?: string | null,
-  archived?: boolean
+  archived: boolean
 }
 
 export interface PostgresExecutionRecord extends PostgresExecution {
