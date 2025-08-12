@@ -161,7 +161,7 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
           await pMap(
             granuleBatch,
             (queuedGranule) => {
-              const { granuleId, updatedAt, createdAt } = queuedGranule;
+              const { granuleId, updatedAt, createdAt, archived } = queuedGranule;
 
               if (updatedAt && (!Number.isInteger(updatedAt) || updatedAt < 0)) {
                 throw new Error(`Invalid updatedAt value: ${queuedGranule.updatedAt} `
@@ -177,6 +177,7 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
                   status: 'queued',
                   updatedAt: updatedAt ?? createdAt,
                   createdAt: createdAt,
+                  archived: archived || false,
                 },
               });
             },
