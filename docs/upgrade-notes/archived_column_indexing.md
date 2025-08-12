@@ -36,7 +36,7 @@ other issues that would result in the client being killed.
     # Amazon Linux 2
     sudo amazon-linux-extras install postgresql17
     # Amazon Linux 2023
-    sudo dnf install -y postgresql15
+    sudo dnf install -y postgresql17
     ```
 
     Once installed, a tmux session is started with two windows, the Cumulus database is connected to each window
@@ -50,7 +50,7 @@ other issues that would result in the client being killed.
     When the SQL commands are running, perform step 5 to monitor the commands.
 
     ```sh
-    tmux new-session -s CumulusUpgrade -n AddIndexes
+    tmux new-session -s CumulusUpgrade -n ArchiveIndex
 
     psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -W
     #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -W
@@ -65,8 +65,8 @@ other issues that would result in the client being killed.
     ```sql
     ALTER TABLE granules ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
     ALTER TABLE executions ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
-    CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_archived_index ON executions (archived);
-    CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_archived_index ON granules (archived);
+    CREATE INDEX IF NOT EXISTS executions_archived_index ON executions (archived);
+    CREATE INDEX IF NOT EXISTS granules_archived_index ON granules (archived);
     ```
 
 4. Monitor the running command
@@ -80,7 +80,7 @@ other issues that would result in the client being killed.
     select pid, query, state, wait_event_type, wait_event from pg_stat_activity where state = 'active';
     ```
 
-    These commands should take a few minutes. Tested against a database with 160m granules and 380m executions and a v1 cluster running 32 ACUs, these commands took just under 10 minutes to complete
+    These commands should take a few minutes. Tested against a database with 160m granules and 380m executions and a v1 cluster running 32 ACUs, these commands took just under 30 minutes to complete
 
 5. Verify the updates
 
