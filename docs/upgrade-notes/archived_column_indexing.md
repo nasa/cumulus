@@ -9,7 +9,7 @@ To optimize record searching we are adding a boolean column to archive granules 
 
 ## Apply Changes in Production Environment
 
-With a large database (e.g. any daac production database), these columns and indices should be applied manually to ensure lambda timeouts are not exceeded
+With a large database (e.g. any DAAC production database), these columns and indices should be applied manually to ensure lambda timeouts are not exceeded
 
 ## Tools Used
 

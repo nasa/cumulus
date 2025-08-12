@@ -10,7 +10,7 @@ This documentation explains the database record archival and associated function
 
 The cumulus database tables "granules" and "executions" contain a field "archived" which is outside of normal data as it contains nothing useful to the end user, but instead is part of query structure to optimize database search.
 
-A granule or execution will by default be false, but once old enough (age set by the DAAC) will be flagged with archived=true.
+A granule or execution will by default be `archived=false`, but once old enough (age set by the DAAC) will be flagged with `archived=true`.
 
 This makes no material difference to the content or state of the record, but does allow a granule or execution search query to access un-archived records more rapidly and at lower cost by eliminating from consideration a majority of records.
 
@@ -35,7 +35,7 @@ const unArchivedGranules = await listGranules({
 
 This query would ask for the most recent 20 granules from the collection 'COLLECTION1' *which are not archived*.
 
-The key reason to do this is performance, a search with archived: false will be more performant in most cases than a general search as it allows the query to eliminate old, out of consideration records, more simply and rapidly.
+The key reason to do this is performance, a search with `archived: false` will be more performant in cases where records have been archived and therefor removed from these query results.
 
 ## Performance Parameters of Archival
 
