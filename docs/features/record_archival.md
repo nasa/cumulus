@@ -17,6 +17,7 @@ This makes no material difference to the content or state of the record, but doe
 ## Optimized Queries
 
 Queries can be lodged against the api incorporating this column just like any other db record column. For example, a request to list granules (non-archived) might call the cumulus api-client thusly:
+
 ```js
 const unArchivedGranules = await listGranules({
     prefix: 'my_prefix',
@@ -49,4 +50,4 @@ const unArchivedGranules = await listGranules({
 })
 ```
 
- will be similar performance or even marginally worse than searching without setting archived: false.
+will be similar performance or even marginally worse than searching without setting archived: false.

@@ -18,7 +18,6 @@ in the AWS environment in a tmux or screen session. This will minimize the numbe
 and the database. Additionally, this will allow operators applying the patch to check on progress periodically and not worry about credential expiration or
 other issues that would result in the client being killed.
 
-
 ## Upgrade Steps
 
 1. Login into EC2 instance with database access
@@ -64,10 +63,10 @@ other issues that would result in the client being killed.
     [here](https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20250617190412_add_archived_and_index.sql):
 
     ```sql
-ALTER TABLE granules ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE executions ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
-CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_archived_index ON executions (archived);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_archived_index ON granules (archived);
+    ALTER TABLE granules ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE executions ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_archived_index ON executions (archived);
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_archived_index ON granules (archived);
     ```
 
 4. Monitor the running command
@@ -80,6 +79,8 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_archived_index ON granules (arc
 
     select pid, query, state, wait_event_type, wait_event from pg_stat_activity where state = 'active';
     ```
+
+    These commands should take a few minutes. Tested against a database with 160m granules and 380m executions and a v1 cluster running 32 ACUs, these commands took just under 10 minutes to complete
 
 5. Verify the updates
 
