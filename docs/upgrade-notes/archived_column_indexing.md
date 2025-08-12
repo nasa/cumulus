@@ -35,7 +35,7 @@ other issues that would result in the client being killed.
     ```sh
     sudo yum install -y tmux
     # Amazon Linux 2
-    sudo amazon-linux-extras install postgresql13
+    sudo amazon-linux-extras install postgresql17
     # Amazon Linux 2023
     sudo dnf install -y postgresql15
     ```
@@ -61,11 +61,11 @@ other issues that would result in the client being killed.
     ```
 
     The following are SQL commands, and  20250617190412_add_archived_and_index.sql is available
-    [here](https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/ 20250617190412_add_archived_and_index.sql):
+    [here](https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20250617190412_add_archived_and_index.sql):
 
     ```sql
 ALTER TABLE granules ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE granules ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE executions ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_archived_index ON executions (archived);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_archived_index ON granules (archived);
     ```
