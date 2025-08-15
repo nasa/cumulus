@@ -65,8 +65,8 @@ other issues that would result in the client being killed.
     ```sql
     ALTER TABLE granules ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
     ALTER TABLE executions ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
-    CREATE INDEX IF NOT EXISTS executions_archived_index ON executions (archived);
-    CREATE INDEX IF NOT EXISTS granules_archived_index ON granules (archived);
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_archived_index ON executions (archived);
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_archived_index ON granules (archived);
     ```
 
 4. Monitor the running command
