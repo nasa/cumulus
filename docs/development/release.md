@@ -341,7 +341,7 @@ Bamboo will build and run lint and unit tests against that tagged release, publi
 The CI release scripts will automatically create a GitHub release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
 - A multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages`, and `tasks` directories for use as Terraform module sources.
-- A RDS cluster module
+- An RDS cluster module
 - A S3 replicator module
 - A workflow module
 - A distribution API module
