@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4123**
   - add "archived" column to granules and executions tables
   - add "archived" field to associated data types and schemas
+  - add docs/upgrade-notes/archived_column_indexing.md docs page for database upgrade
+  - add docs/features/record_archival.md docs page for explanation
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
