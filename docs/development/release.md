@@ -3,7 +3,6 @@ id: release
 title: Versioning and Releases
 hide_title: false
 ---
-# Versioning and Releases
 
 ## Versioning
 
