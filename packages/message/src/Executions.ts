@@ -245,6 +245,7 @@ export const generateExecutionApiRecordFromMessage = (
     originalPayload: getMessageExecutionOriginalPayload(message),
     finalPayload: getMessageExecutionFinalPayload(message),
     duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
+    archived: false,
   };
 
   return <ApiExecution>omitBy(record, isUndefined);

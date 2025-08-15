@@ -41,6 +41,7 @@ export interface QueueGranulesInput {
     files: {
       [k: string]: unknown;
     }[];
+    archived?: boolean;
   }[];
 }
 

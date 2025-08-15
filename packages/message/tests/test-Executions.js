@@ -228,6 +228,7 @@ test('generateExecutionApiRecordFromMessage() returns the correct record from wo
       value: 'my-payload',
     },
     duration: 0,
+    archived: false,
   };
 
   t.deepEqual(actualRecord, expectedRecord);
