@@ -37,7 +37,8 @@ const buildProviderClient = (providerConfig = {}) => {
  * @param {Object} param
  * @param {Object} param.providerClient  - a provider client
  * @param {string} param.remotePath      - the path of the file to fetch
- * @param {string} param.remoteAltBucket - alternate per-file bucket override to the providerClient
+ * @param {string} [param.remoteAltBucket] - alternate per-file bucket override to
+ * the providerClient
  * bucket
  * @returns {Promise<string>} the contents of the remote file
  */

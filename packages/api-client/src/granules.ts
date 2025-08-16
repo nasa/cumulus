@@ -754,6 +754,24 @@ export const bulkDeleteGranules = async (params: {
   });
 };
 
+export const getFileGranuleAndCollectionByBucketAndKey = async (params: {
+  prefix: string,
+  bucket: string,
+  key: string,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, bucket, key, callback = invokeApi } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/files/get_collection_and_granule_id/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
+    },
+  });
+};
+
 export const bulkReingestGranules = async (params: {
   prefix: string,
   body: unknown,

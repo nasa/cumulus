@@ -163,6 +163,7 @@ const sidebars = {
         'features/dead_letter_queues',
         'features/dead_letter_archive',
         'features/execution_payload_retention',
+        'features/generate_unique_granuleId',
         'features/reports',
         'features/ancillary_metadata',
         'features/distribution-metrics',
@@ -237,6 +238,7 @@ const sidebars = {
         'upgrade-notes/update_table_indexes_CUMULUS_3792',
         'upgrade-notes/serverless-v2-upgrade',
         'upgrade-notes/upgrade-terraform-1.12',
+        'upgrade-notes/update-granules-to-include-producer_granule_id',
       ],
     },
     {

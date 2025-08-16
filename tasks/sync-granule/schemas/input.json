@@ -13,6 +13,10 @@
           "granuleId": {"type": "string"},
           "dataType": {"type": "string"},
           "version": {"type": "string"},
+          "producerGranuleId": {
+            "type": "string",
+            "description": "Granule ID from the producer, if available"
+          },
           "files": {
             "type": "array",
             "items": {

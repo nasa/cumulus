@@ -17,7 +17,8 @@
           "granuleId",
           "collectionId",
           "provider",
-          "createdAt"
+          "createdAt",
+          "producerGranuleId"
         ],
         "properties": {
           "body": {
@@ -40,6 +41,9 @@
           },
           "createdAt": {
             "type": "number"
+          },
+          "producerGranuleId": {
+            "type": "string"
           },
           "statusCode": {
             "type": "number"
@@ -65,6 +69,9 @@
               "type": "string"
             },
             "collectionId": {
+              "type": "string"
+            },
+            "producerGranuleId": {
               "type": "string"
             },
             "files": {
