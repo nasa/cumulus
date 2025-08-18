@@ -1,7 +1,8 @@
 ---
 id: release
+title: Versioning and Releases
+hide_title: false
 ---
-# Versioning and Releases
 
 ## Versioning
 
@@ -13,7 +14,7 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 :::note
 
-This is only necessary when preparing a release for a new major version of Cumulus (e.g. preparing to go from `6.x.x` to `7.0.0`).
+This is only necessary when preparing a release for a new major version of Cumulus (e.g., going from `6.x.x` to `7.0.0`) or for a minor version release that includes significant updates.
 
 :::
 
@@ -26,17 +27,20 @@ You should create an entirely new deployment for this testing to replicate the e
 Pre-release testing steps:
 
 1. Checkout the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo
-2. Update the deployment code to use the latest release artifacts if it wasn't done already. For example, assuming that the latest release was `5.0.1`, update the deployment files as follows:
+2. Update the deployment code to use the latest release artifacts if it wasn't done already. For example, assuming that the latest release was `20.0.1`, update the deployment files as follows:
 
     ```text
+     # in rds-cluster-tf/main.tf
+    source = "https://github.com/nasa/cumulus/releases/download/v20.0.1/terraform-aws-cumulus-rds.zip"
+
     # in data-persistence-tf/main.tf
-    source = "https://github.com/nasa/cumulus/releases/download/v5.0.1/terraform-aws-cumulus.zip//tf-modules/data-persistence"
+    source = "https://github.com/nasa/cumulus/releases/download/v20.0.1/terraform-aws-cumulus.zip//tf-modules/data-persistence"
 
     # in cumulus-tf/main.tf
-    source = "https://github.com/nasa/cumulus/releases/download/v5.0.1/terraform-aws-cumulus.zip//tf-modules/cumulus"
+    source = "https://github.com/nasa/cumulus/releases/download/v20.0.1/terraform-aws-cumulus.zip//tf-modules/cumulus"
     ```
 
-3. For both the `data-persistence-tf` and `cumulus-tf` modules:
+3. For the `rds-cluster-tf`, `data-persistence-tf` and `cumulus-tf` modules:
    1. Add the necessary backend configuration (`terraform.tf`) and variables (`terraform.tfvars`)
       - You should use an entirely new deployment for this testing, so make sure to use values for `key` in `terraform.tf` and `prefix` in `terraform.tfvars` that don't collide with existing deployments
    2. Run `terraform init`
@@ -44,10 +48,13 @@ Pre-release testing steps:
 4. Checkout the `master` branch of the `cumulus` repo
 5. Run a full bootstrap of the code: `npm run bootstrap`
 6. Build the pre-release artifacts: `./bamboo/create-release-artifacts.sh`
-7. For both the `data-persistence-tf` and `cumulus-tf` modules:
+7. For all three modules:
    1. Update the deployment to use the built release artifacts:
 
       ```text
+      # in rds-cluster-tf/main.tf
+      source = "[path]/cumulus/terraform-aws-cumulus-rds.zip"
+
       # in data-persistence-tf/main.tf
       source = "[path]/cumulus/terraform-aws-cumulus.zip//tf-modules/data-persistence"
 
@@ -59,7 +66,7 @@ Pre-release testing steps:
    3. Run `terraform init`
    4. Run `terraform apply`
 8. Review the `CHANGELOG.md` for any post-deployment migration steps and confirm that they are successful
-9. Delete your test deployment by running `terraform destroy` in `cumulus-tf` and `data-persistence-tf`
+9. Delete your test deployment by running `terraform destroy` in `cumulus-tf`, `data-persistence-tf` and `rds-cluster-tf`
 
 ## Updating Cumulus version and publishing to NPM
 
@@ -333,6 +340,7 @@ Bamboo will build and run lint and unit tests against that tagged release, publi
 The CI release scripts will automatically create a GitHub release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
 - A multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages`, and `tasks` directories for use as Terraform module sources.
+- An RDS cluster module
 - A S3 replicator module
 - A workflow module
 - A distribution API module
@@ -384,6 +392,8 @@ module "cumulus" {
   ...
 }
 ```
+
+After updating all three modules with the correct release versions, deploy a stack and verify that the deployment is successful.
 
 ### 16. Merge base branch back to master
 
