@@ -182,6 +182,14 @@ Please follow the instructions before upgrading Cumulus
 - **CUMULUS-4170**
   - Upgrade Node Docker image from buster to bullseye for a compatible debian version
 
+## [v20.2.1] 2025-08-14
+
+### Changed
+
+- **CUMULUS-4142, CUMULUS-4144**
+  - Updated the S3 credentials endpoint attached to TEA to delete the access token after successful authentication.
+  - Configured both Cumulus distribution and S3 credentials to set the SameSite attribute on cookies in the response.
+
 ## [v20.2.0] 2025-08-06 Updated
 
 ### Migration Notes
@@ -8819,7 +8827,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.2.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.2.1...HEAD
+[v20.2.1]: https://github.com/nasa/cumulus/compare/v20.2.0...v20.2.1
 [v20.2.0]: https://github.com/nasa/cumulus/compare/v20.1.2...v20.2.0
 [v20.1.2]: https://github.com/nasa/cumulus/compare/v20.1.1...v20.1.2
 [v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.1.1
