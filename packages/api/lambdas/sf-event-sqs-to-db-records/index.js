@@ -47,6 +47,72 @@ const {
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
 /**
+@typedef {'execution' | 'granule' | 'pdr'} RecordType
+*/
+
+/**
+@typedef {Object} RecordWriteFlags
+@property {boolean} shouldWriteExecutionRecords
+@property {boolean} shouldWriteGranuleRecords
+@property {boolean} shouldWritePdrRecords
+*/
+
+/**
+ * @typedef {Object} CumulusMessage
+ * @property {Object} [meta]
+ * @property {string} [meta.reportMessageSource]
+ * @property {string} [meta.workflow_name]
+ * @property {string} [meta.status]
+ * @property {Object} [cumulus_meta]
+ * @property {{
+ *   [workflowName: string]: {
+ *     [status: string]: RecordType[]
+ *   }
+ * }} [cumulus_meta.sf_event_sqs_to_db_records_types]
+ */
+
+/**
+ * @param {RecordType[] | undefined} configuredRecordTypes
+ * @param {RecordType} recordType
+ * @returns {boolean}
+ */
+const checkShouldWriteRecord = (configuredRecordTypes, recordType) =>
+  (configuredRecordTypes === undefined || configuredRecordTypes.includes(recordType));
+
+/**
+ * @param {CumulusMessage} cumulusMessage
+ * @returns {RecordWriteFlags}
+ */
+const shouldWriteRecords = (cumulusMessage) => {
+  // do we save granule-execution cross reference if not saving granule
+
+  // if report message is from lambda, e.g., SfSqsReport, write all records
+  const reportMessageSource = get(cumulusMessage, 'meta.reportMessageSource');
+  if (reportMessageSource === 'lambda') {
+    return {
+      shouldWriteExecutionRecords: true,
+      shouldWriteGranuleRecords: true,
+      shouldWritePdrRecords: true,
+    };
+  }
+
+  // message is from workflow event bridge, check the workflow configuration to
+  // determine if the type of records to write
+  const workflowName = get(cumulusMessage, 'meta.workflow_name');
+  const status = get(cumulusMessage, 'meta.status');
+  const configuredRecordTypes = get(
+    cumulusMessage,
+    `cumulus_meta.sf_event_sqs_to_db_records_types.${workflowName}.${status}`
+  );
+
+  return {
+    shouldWriteExecutionRecords: checkShouldWriteRecord(configuredRecordTypes, 'execution'),
+    shouldWriteGranuleRecords: checkShouldWriteRecord(configuredRecordTypes, 'granule'),
+    shouldWritePdrRecords: checkShouldWriteRecord(configuredRecordTypes, 'pdr'),
+  };
+};
+
+/**
  * Write records to data stores.
  *
  * @param {Object} params
@@ -63,6 +129,13 @@ const writeRecords = async ({
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
   const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
   const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
+
+  const {
+    shouldWriteExecutionRecords,
+    shouldWriteGranuleRecords,
+    shouldWritePdrRecords,
+  } = shouldWriteRecords(cumulusMessage);
+
   const [
     collectionCumulusId,
     asyncOperationCumulusId,
@@ -95,30 +168,38 @@ const writeRecords = async ({
     throw new UnmetRequirementsError('Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   }
 
-  const executionCumulusId = await writeExecutionRecordFromMessage({
-    cumulusMessage,
-    collectionCumulusId,
-    asyncOperationCumulusId,
-    parentExecutionCumulusId,
-    knex,
-  });
+  let executionCumulusId;
+  if (shouldWriteExecutionRecords) {
+    executionCumulusId = await writeExecutionRecordFromMessage({
+      cumulusMessage,
+      collectionCumulusId,
+      asyncOperationCumulusId,
+      parentExecutionCumulusId,
+      knex,
+    });
+  }
 
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
 
-  await writePdr({
-    cumulusMessage,
-    collectionCumulusId,
-    providerCumulusId,
-    knex,
-    executionCumulusId,
-  });
+  if (shouldWritePdrRecords) {
+    await writePdr({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      knex,
+      executionCumulusId,
+    });
+  }
 
-  return writeGranulesFromMessage({
-    cumulusMessage,
-    executionCumulusId,
-    knex,
-    testOverrides,
-  });
+  if (shouldWriteGranuleRecords) {
+    return writeGranulesFromMessage({
+      cumulusMessage,
+      executionCumulusId,
+      knex,
+      testOverrides,
+    });
+  }
+  return undefined;
 };
 /**
  * @typedef {import('aws-lambda').SQSRecord} SQSRecord

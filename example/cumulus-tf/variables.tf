@@ -475,3 +475,39 @@ variable "dead_letter_recovery_memory" {
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
+
+variable "workflow_configurations" {
+  description = <<EOF
+    A map of workflow-specific configurations used to control which record types 
+    should be written to the database during different workflow execution statuses.
+
+    - `sf_event_sqs_to_db_records_types`: A nested map that defines which record types 
+      ("execution", "granule", "pdr") should be written for each workflow and status.
+
+      The structure is:
+        {
+          <workflow_name> = {
+            <status> = [<record_type>, ...]
+          }
+        }
+
+      Example:
+        {
+          sf_event_sqs_to_db_records_types = {
+            IngestAndPublishGranule = {
+              running = ["execution", "pdr"]
+            }
+          }
+        }
+  EOF
+  type = object({
+    sf_event_sqs_to_db_records_types = optional(map(map(list(string))), {})
+  })
+  default = {
+    sf_event_sqs_to_db_records_types = {
+      IngestAndPublishGranule = {
+        running = ["execution", "pdr"]
+      }
+    }
+  }
+}
