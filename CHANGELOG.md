@@ -147,7 +147,7 @@ Please follow the instructions before upgrading Cumulus
     `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
 - **CUMULUS-4110**
   - Added `workflow_configurations` variable `tf-modules/ingest` and `tf-modules/cumulus`
-    modulesto control control which record types should be written to the database during
+    modules to control which record types should be written to the database during
     different workflow execution statuses.
 - **CUMULUS-4162**
   - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.

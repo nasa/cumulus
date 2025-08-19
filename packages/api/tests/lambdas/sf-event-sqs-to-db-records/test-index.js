@@ -7,6 +7,7 @@ const { toCamel } = require('snake-camel');
 const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
 const proxyquire = require('proxyquire');
+const set = require('lodash/set');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { sns, sqs } = require('@cumulus/aws-client/services');
@@ -493,3 +494,125 @@ test.serial('Lambda captures error type on error', async (t) => {
     expectedMessage
   );
 });
+
+test.serial(
+  'writeRecords() writes to PostgreSQL only the record types specified in cumulus_meta.sf_event_sqs_to_db_records_types',
+  async (t) => {
+    const {
+      collectionCumulusId,
+      cumulusMessage,
+      testKnex,
+      executionArn,
+      pdrName,
+      granuleId,
+      testOverrides,
+    } = t.context;
+
+    const workflowName = 'IngestGranuleWorkflow';
+    const recordTypesToWrite = {
+      [workflowName]: {
+        running: ['execution', 'pdr'],
+      },
+    };
+    const clonedCumulusMessage = structuredClone(cumulusMessage);
+    set(clonedCumulusMessage, 'cumulus_meta.sf_event_sqs_to_db_records_types', recordTypesToWrite);
+    set(clonedCumulusMessage, 'meta.workflow_name', workflowName);
+
+    await writeRecords({ cumulusMessage: clonedCumulusMessage, knex: testKnex, testOverrides });
+
+    t.true(
+      await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
+    );
+    t.true(
+      await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
+    );
+    t.false(
+      await t.context.granulePgModel.exists(
+        t.context.testKnex,
+        { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+      )
+    );
+  }
+);
+
+test.serial(
+  'writeRecords() writes no records to PostgreSQL when cumulus_meta.sf_event_sqs_to_db_records_types[workflowName][status] is empty',
+  async (t) => {
+    const {
+      collectionCumulusId,
+      cumulusMessage,
+      testKnex,
+      executionArn,
+      pdrName,
+      granuleId,
+      testOverrides,
+    } = t.context;
+
+    const workflowName = 'IngestGranuleWorkflow';
+    const recordTypesToWrite = {
+      [workflowName]: {
+        running: [],
+      },
+    };
+    const clonedCumulusMessage = structuredClone(cumulusMessage);
+    set(clonedCumulusMessage, 'cumulus_meta.sf_event_sqs_to_db_records_types', recordTypesToWrite);
+    set(clonedCumulusMessage, 'meta.workflow_name', workflowName);
+
+    await writeRecords({ cumulusMessage: clonedCumulusMessage, knex: testKnex, testOverrides });
+
+    t.false(
+      await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
+    );
+    t.false(
+      await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
+    );
+    t.false(
+      await t.context.granulePgModel.exists(
+        t.context.testKnex,
+        { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+      )
+    );
+  }
+);
+
+test.serial(
+  'writeRecords() writes all records to PostgreSQL when meta.reportMessageSource is "lambda", '
+  + 'regardless of the record types specified in cumulus_meta.sf_event_sqs_to_db_records_types',
+  async (t) => {
+    const {
+      collectionCumulusId,
+      cumulusMessage,
+      testKnex,
+      executionArn,
+      pdrName,
+      granuleId,
+      testOverrides,
+    } = t.context;
+
+    const workflowName = 'IngestGranuleWorkflow';
+    const recordTypesToWrite = {
+      [workflowName]: {
+        running: ['execution', 'pdr'],
+      },
+    };
+    const clonedCumulusMessage = structuredClone(cumulusMessage);
+    set(clonedCumulusMessage, 'cumulus_meta.sf_event_sqs_to_db_records_types', recordTypesToWrite);
+    set(clonedCumulusMessage, 'meta.workflow_name', workflowName);
+    set(clonedCumulusMessage, 'meta.reportMessageSource', 'lambda');
+
+    await writeRecords({ cumulusMessage: clonedCumulusMessage, knex: testKnex, testOverrides });
+
+    t.true(
+      await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
+    );
+    t.true(
+      await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
+    );
+    t.true(
+      await t.context.granulePgModel.exists(
+        t.context.testKnex,
+        { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+      )
+    );
+  }
+);
