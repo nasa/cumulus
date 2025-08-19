@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 boto3 = "~=1.26.90"
-cumulus-process = "==1.4.0"
+cumulus-process = "==1.5.0"
 cumulus-message-adapter-python = "==2.3.0"
 six = "==1.12.0"
 
