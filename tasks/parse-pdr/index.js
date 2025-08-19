@@ -1,10 +1,14 @@
+//@ts-check
+
 'use strict';
 
-const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const path = require('path');
 const get = require('lodash/get');
 const isNumber = require('lodash/isNumber');
 const isString = require('lodash/isString');
+
+const { generateUniqueGranuleId } = require('@cumulus/ingest/granule');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const S3 = require('@cumulus/aws-client/S3');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const { PDRParsingError } = require('@cumulus/errors');
@@ -13,6 +17,9 @@ const {
   collections: collectionsApi,
   providers: providersApi,
 } = require('@cumulus/api-client');
+const Logger = require('@cumulus/logger');
+
+const log = new Logger({ sender: 'tasks/parse-pdr' });
 
 const getProviderByHost = async ({ prefix, host }) => {
   const { body } = await providersApi.getProviders({
@@ -169,13 +176,20 @@ const extractGranuleId = (fileName, regex) => {
  * @param {string} params.prefix - stack prefix
  * @param {Object} params.fileGroup - PDR FILE_GROUP object
  * @param {string} params.pdrName - name of the PDR for error reporting
- * @param {Object} params.collectionConfigStore - collectionConfigStore
- * @returns {Object} granule object
+ * @param {boolean} params.uniquifyGranuleId - boolean for whether granule should be
+ * uniquified
+ * @param {number} params.hashLength - Length of hash used for uniquification
+ * @param {boolean} params.includeTimestampHashKey - boolean for whether hash should
+ * use timestamp
+ * @returns {Promise<Object>} - granule object
  */
 const convertFileGroupToGranule = async ({
   prefix,
   fileGroup,
   pdrName,
+  uniquifyGranuleId = true,
+  hashLength = 8,
+  includeTimestampHashKey = false,
 }) => {
   if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
   const dataType = fileGroup.get('DATA_TYPE').value;
@@ -206,12 +220,19 @@ const convertFileGroupToGranule = async ({
     providerName = provider.id;
   }
 
+  let granuleId = extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction);
+  const producerGranuleId = granuleId;
+  if (uniquifyGranuleId) {
+    granuleId = generateUniqueGranuleId(granuleId, `${dataType}___${version}`, hashLength, includeTimestampHashKey);
+  }
+
   return {
     dataType,
     version,
     files,
     provider: providerName,
-    granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
+    granuleId,
+    producerGranuleId,
     granuleSize: files.reduce((total, file) => total + file.size, 0),
   };
 };
@@ -225,20 +246,35 @@ const buildPdrDocument = (rawPdr) => {
 
   return pvlToJS(cleanedPdr);
 };
-
 /**
-* Parse a PDR
-* See schemas/input.json for detailed input schema
-*
-* @param {Object} event - Lambda event object
-* @param {Object} event.config - configuration object for the task
-* @param {string} event.config.stack - the name of the deployment stack
-* @param {string} event.config.pdrFolder - folder for the PDRs
-* @param {Object} event.config.provider - provider information
-* @param {Object} event.config.bucket - the internal S3 bucket
-* @returns {Promise<Object>} - see schemas/output.json for detailed output schema
-* that is passed to the next task in the workflow
-**/
+ * Parse a PDR
+ * See schemas/input.json and schemas/config.json for detailed input schema
+ *
+ * @param {object} event - Lambda event object
+ * @param {object} event.config - Configuration object for the task
+ * @param {string} event.config.stack - Name of the deployment stack
+ * @param {string} [event.config.pdrFolder] - Folder path where PDR files are located
+ * @param {string} [event.config.granuleIdFilter] - Regex to filter granule IDs by file name
+ * @param {boolean | string | null} [event.config.uniquifyGranuleId] - True/false to make
+ * granule IDs unique
+ * @param {null | number | string} [event.config.hashLength] - Length of hash used
+ * for uniquification
+ * @param {null | boolean} [event.config.includeTimestampHashKey] - Boolean value for if hashKey
+ * should use timestamp
+ * @param {object} event.config.provider - Provider information
+ * @param {string} event.config.provider.id - Provider ID
+ * @param {number} [event.config.provider.globalConnectionLimit] - Max concurrent connections
+ * @param {'ftp'|'sftp'|'http'|'https'|'s3'} event.config.provider.protocol - Provider protocol
+ * @param {string} event.config.bucket - Name of the internal Cumulus S3 bucket
+ * @param {boolean} [event.config.useList=false] - Flag to tell ftp server to use 'LIST'
+ * instead of 'STAT'
+ * @param {object} event.input - Input object
+ * @param {object} event.input.pdr - The PDR object
+ * @param {string} event.input.pdr.name - PDR file name
+ * @param {string} event.input.pdr.path - Path to the PDR file
+ *
+ * @returns {Promise<object>} - Parsed PDR result (see schemas/output.json for structure)
+ */
 const parsePdr = async ({ config, input }) => {
   const providerClient = buildProviderClient(config.provider);
 
@@ -255,13 +291,19 @@ const parsePdr = async ({ config, input }) => {
   }
 
   const pdrDocument = buildPdrDocument(rawPdr);
-
+  const uniquifyGranuleIdConfigValue = get(config, 'uniquifyGranuleId', false);
+  const uniquifyGranuleId = uniquifyGranuleIdConfigValue === 'true' || uniquifyGranuleIdConfigValue === true;
+  const hashLength = Number(config.hashLength) || 8;
+  const includeTimestampHashKey = config?.includeTimestampHashKey ?? false;
   const allPdrGranules = await Promise.all(
     pdrDocument.objects('FILE_GROUP').map((fileGroup) =>
       convertFileGroupToGranule({
         prefix: config.stack,
         fileGroup,
         pdrName: input.pdr.name,
+        uniquifyGranuleId,
+        hashLength,
+        includeTimestampHashKey,
       }))
   );
 
@@ -273,7 +315,18 @@ const parsePdr = async ({ config, input }) => {
 
   // Filter based on the granuleIdFilter, default to match all granules
   const granuleIdFilter = get(config, 'granuleIdFilter', '.');
+
   const granules = allPdrGranules.filter((g) => g.files[0].name.match(granuleIdFilter));
+  const uniqueGranuleIds = new Set();
+  if (!uniquifyGranuleId) {
+    granules.forEach((granule) => {
+      if (uniqueGranuleIds.has(granule.granuleId)) {
+        log.error(`Duplicate granule ID found for ${granule.granuleId}`);
+        throw new Error(`Duplicate granule ID found for ${granule.granuleId}`);
+      }
+      uniqueGranuleIds.add(granule.granuleId);
+    });
+  }
 
   return {
     ...input,

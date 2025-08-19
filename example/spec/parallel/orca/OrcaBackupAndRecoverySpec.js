@@ -149,6 +149,11 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
+  describe('Uniquified duplicate granules', () => {
+    xit('completes execution with success status', async () => {});
+    xit('copies files configured to orca', async () => {});
+  });
+
   describe('the recovery workflow', () => {
     let asyncOperationId;
     let collectionId;

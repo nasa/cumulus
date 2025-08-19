@@ -1,0 +1,17 @@
+{
+  "title": "AddUniqueGranuleIDConfig",
+  "description": "Describes the configuration the add-unique-granule-id task component",
+  "type": "object",
+  "properties": {
+    "hashLength": {
+      "description": "The maximum length (characters) of the computed granule hash",
+      "type": ["null", "number", "string"],
+      "default": 8
+    },
+    "includeTimestampHashKey": {
+      "description": "Optional boolean config on whether the granule hash should use timestamp",
+      "type": ["null", "boolean"],
+      "default": false
+    }
+  }
+}

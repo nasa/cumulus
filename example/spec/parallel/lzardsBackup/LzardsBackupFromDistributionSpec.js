@@ -156,6 +156,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
     expect(backupStatus[0].status).toBe('COMPLETED');
     expect(backupStatus[0].statusCode).toBe(201);
     expect(backupStatus[0].granuleId).toBe(granuleId);
+    expect(backupStatus[0].producerGranuleId).toBe(granuleId);
     expect(backupStatus[0].provider).toBe(provider);
     expect(backupStatus[0].createdAt).toBe(now);
     expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
