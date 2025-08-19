@@ -76,19 +76,25 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
   let cnmResponseStreamName;
   let executionNamePrefix;
   let executionStatus;
+  let executionStatus2;
   let expectedSyncGranulesPayload;
   let expectedTranslatePayload;
   let fileData;
   let granuleId;
+  let granuleId2;
   let producerGranuleId;
   let lambdaStep;
   let logEventSourceMapping;
   let record;
+  let record2;
   let recordFile;
   let recordIdentifier;
+  let recordIdentifier2;
   let responseStreamShardIterator;
   let ruleDirectory;
+  let ruleDirectory2;
   let ruleOverride;
+  let ruleOverride2;
   let ruleSuffix;
   let streamName;
   let testConfig;
@@ -96,6 +102,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
   let testSuffix;
   let workflowArn;
   let workflowExecution;
+  let workflowExecution2;
   let scheduleQueueUrl;
   let failingWorkflowExecution;
 
@@ -147,7 +154,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     // granuleId will be uniquified
     granuleId = record.product.name;
     producerGranuleId = record.product.name;
-    recordIdentifier = randomString();
+    recordIdentifier = `granule1_${randomString()}`;
     record.identifier = recordIdentifier;
 
     lambdaStep = new LambdaStep();
@@ -207,7 +214,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
     scheduleQueueUrl = await getQueueUrlByName(`${testConfig.stackName}-backgroundProcessing`);
 
-    ruleDirectory = './spec/parallel/cnmWorkflow/data/rules/kinesis';
+    ruleDirectory = './spec/parallel/cnmWorkflow/data/rules/kinesis/unique';
     ruleOverride = {
       name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
       collection: {
@@ -274,14 +281,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
-      });
-    });
-
-    afterAll(async () => {
-      await removePublishedGranule({
-        prefix: testConfig.stackName,
-        granuleId,
-        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
       });
     });
 
@@ -453,6 +452,96 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
         expect(cnmResponse.product.files.length).toBe(2);
         expect(get(granule, 'queryFields.cnm')).toEqual(cnmResponse);
       });
+    });
+  });
+
+  describe('granule in a separate collection with the same producerGranuleId is ingested successfully', () => {
+    beforeAll(async () => {
+      const collectionsDir2 = './data/collections/L2_HR_PIXC-099/';
+      await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir2, testSuffix);
+
+      record2 = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154_dupe.json`));
+      record2.product.files[0].uri = replace(
+        record2.product.files[0].uri,
+        /<replace-bucket>\/cumulus-test-data\/pdrs/g,
+        `${testConfig.bucket}/${testDataFolder}`
+      );
+      record2.provider += testSuffix;
+      record2.collection += testSuffix;
+      record2.product.name += testSuffix;
+
+      recordIdentifier2 = `granule2_${randomString()}`;
+      record2.identifier = recordIdentifier2;
+
+      // Create new rule for new collection
+      ruleDirectory2 = './spec/parallel/cnmWorkflow/data/rules/kinesis/duplicate';
+      ruleOverride2 = {
+        name: `L2_HR_PIXC_DUPLICATE_kinesisRule${ruleSuffix}`,
+        collection: {
+          name: record2.collection,
+          version: '099',
+        },
+        provider: record2.provider,
+        executionNamePrefix,
+        // use custom queue for scheduling workflows
+        queueUrl: scheduleQueueUrl,
+      };
+
+      await addRules(testConfig, ruleDirectory2, ruleOverride2);
+
+      await tryCatchExit(cleanUp, async () => {
+        console.log(`Dropping duplicate record onto  ${streamName}, recordIdentifier2: ${recordIdentifier2}`);
+        await putRecordOnStream(streamName, record2);
+
+        workflowExecution2 = await waitForTestSfForRecord(recordIdentifier2, workflowArn, maxWaitForSFExistSecs);
+
+        console.log(`Waiting for completed execution of ${workflowExecution2.executionArn}`);
+        executionStatus2 = await waitForCompletedExecution(workflowExecution2.executionArn, maxWaitForExecutionSecs);
+      });
+
+      // Get the uniquified granuleId
+      const uniqueTaskOutput = await lambdaStep.getStepOutput(workflowExecution2.executionArn, 'AddUniqueGranuleId');
+      const duplicateGranule = uniqueTaskOutput.payload.granules[0];
+      granuleId2 = duplicateGranule.granuleId;
+    });
+
+    afterAll(async () => {
+      await removePublishedGranule({
+        prefix: testConfig.stackName,
+        granuleId,
+        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+      });
+      await removePublishedGranule({
+        prefix: testConfig.stackName,
+        granuleId: granuleId2,
+        collectionId: constructCollectionId(ruleOverride2.collection.name, ruleOverride2.collection.version),
+      });
+      console.log(`\nDeleting rule ${ruleOverride2.name}`);
+      const rules = await readJsonFilesFromDir(ruleDirectory2);
+      await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);
+    });
+
+    it('Executes successfully', () => {
+      expect(executionStatus2).toEqual('SUCCEEDED');
+    });
+
+    it('Makes the new granule with matching producerGranuleId available', async () => {
+      const originalGranule = await getGranule({
+        prefix: testConfig.stackName,
+        granuleId,
+        status: 'completed',
+        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+      });
+
+      const duplicateGranule = await getGranule({
+        prefix: testConfig.stackName,
+        granuleId: granuleId2,
+        status: 'completed',
+        collectionId: constructCollectionId(ruleOverride2.collection.name, ruleOverride2.collection.version),
+      });
+
+      expect(originalGranule.producerGranuleId).toEqual(duplicateGranule.producerGranuleId);
+      expect(originalGranule.granuleId !== duplicateGranule.granuleId).toBeTruthy();
     });
   });
 
