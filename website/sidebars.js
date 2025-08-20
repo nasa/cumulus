@@ -198,6 +198,7 @@ const sidebars = {
       items: [
         'adding-a-task',
         'docs-how-to',
+        'development/release',
       ],
     },
     {

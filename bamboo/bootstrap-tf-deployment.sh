@@ -98,3 +98,6 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "pdr_node_name_provider_bucket=$PDR_NODE_NAME_PROVIDER_BUCKET" \
   -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
   -var "orca_db_user_password=$ORCA_DATABASE_USER_PASSWORD" \
+  -var "metrics_es_host=$METRICS_ES_HOST" \
+  -var "metrics_es_username=$METRICS_ES_USER" \
+  -var "metrics_es_password=$METRICS_ES_PASS" \
