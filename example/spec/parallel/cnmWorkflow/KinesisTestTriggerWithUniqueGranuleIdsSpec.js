@@ -541,7 +541,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       });
 
       expect(originalGranule.producerGranuleId).toEqual(duplicateGranule.producerGranuleId);
-      expect(originalGranule.granuleId !== duplicateGranule.granuleId).toBeTruthy();
+      expect(originalGranule.granuleId !== duplicateGranule.granuleId).toBeTrue();
     });
   });
 
