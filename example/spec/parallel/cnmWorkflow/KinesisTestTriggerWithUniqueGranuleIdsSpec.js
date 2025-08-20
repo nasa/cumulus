@@ -69,6 +69,7 @@ const testWorkflow = 'CNMExampleWorkflow';
 // triggers workflows associated with the kinesis-type rules.
 describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleIds', () => {
   const collectionsDir = './data/collections/L2_HR_PIXC-000-unique/';
+  const collectionsDir2 = './data/collections/L2_HR_PIXC-099/';
   const maxWaitForExecutionSecs = 60 * 5;
   const maxWaitForSFExistSecs = 60 * 4;
   const providersDir = './data/providers/PODAAC_SWOT/';
@@ -108,19 +109,24 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
   async function cleanUp() {
     setProcessEnvironment(testConfig.stackName, testConfig.bucket);
-    // delete rule
-    console.log(`\nDeleting rule ${ruleOverride.name}`);
-    const rules = await readJsonFilesFromDir(ruleDirectory);
-    // clean up stack state added by test
-    console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
-    await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);
 
+    const rules = await readJsonFilesFromDir(ruleDirectory);
+    const rules2 = await readJsonFilesFromDir(ruleDirectory2);
+
+    console.log(`\nDeleting rules ${ruleOverride.name}`);
+    await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);
+    await deleteRules(testConfig.stackName, testConfig.bucket, rules2, ruleSuffix);
+
+    console.log('Deleting executions');
     await deleteExecution({ prefix: testConfig.stackName, executionArn: failingWorkflowExecution.executionArn });
     await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
+    await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution2.executionArn });
 
+    console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir2, testSuffix),
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
       deleteTestStream(streamName),
       deleteTestStream(cnmResponseStreamName),
@@ -457,7 +463,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
   describe('granule in a separate collection with the same producerGranuleId is ingested successfully', () => {
     beforeAll(async () => {
-      const collectionsDir2 = './data/collections/L2_HR_PIXC-099/';
       await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir2, testSuffix);
 
       record2 = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154_dupe.json`));
@@ -516,9 +521,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
         granuleId: granuleId2,
         collectionId: constructCollectionId(ruleOverride2.collection.name, ruleOverride2.collection.version),
       });
-      console.log(`\nDeleting rule ${ruleOverride2.name}`);
-      const rules = await readJsonFilesFromDir(ruleDirectory2);
-      await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);
     });
 
     it('Executes successfully', () => {
