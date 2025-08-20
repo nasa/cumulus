@@ -31,7 +31,7 @@ const {
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
-const { getGranule, deleteGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -83,6 +83,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
   let fileData;
   let granuleId;
   let granuleId2;
+  let granuleId3;
   let producerGranuleId;
   let lambdaStep;
   let logEventSourceMapping;
@@ -114,22 +115,49 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     const rules2 = await readJsonFilesFromDir(ruleDirectory2);
 
     console.log(`\nDeleting rules ${ruleOverride.name}`);
-    await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);
-    await deleteRules(testConfig.stackName, testConfig.bucket, rules2, ruleSuffix);
-
-    console.log('Deleting executions');
-    await deleteExecution({ prefix: testConfig.stackName, executionArn: failingWorkflowExecution.executionArn });
-    await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
-    await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution2.executionArn });
-
-    console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
     await Promise.all([
-      deleteFolder(testConfig.bucket, testDataFolder),
+      deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix),
+      deleteRules(testConfig.stackName, testConfig.bucket, rules2, ruleSuffix),
+    ]);
+
+    console.log('\nDeleting executions');
+    await Promise.all([
+      deleteExecution({ prefix: testConfig.stackName, executionArn: failingWorkflowExecution.executionArn }),
+      deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn }),
+      deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution2.executionArn }),
+    ]);
+
+    console.log('\nDeleting Granules');
+    await Promise.all([
+      removePublishedGranule({
+        prefix: testConfig.stackName,
+        granuleId,
+        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+      }),
+      removePublishedGranule({
+        prefix: testConfig.stackName,
+        granuleId: granuleId2,
+        collectionId: constructCollectionId(ruleOverride2.collection.name, ruleOverride2.collection.version),
+      }),
+      removePublishedGranule({
+        prefix: testConfig.stackName,
+        granuleId: granuleId3,
+        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+      }),
+    ]);
+
+    console.log('\nDeleting Collections');
+    await Promise.all([
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir2, testSuffix),
-      cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
+    ]);
+
+    console.log('\nDeleting S3 data, streams, and providers');
+    await Promise.all([
+      deleteFolder(testConfig.bucket, testDataFolder),
       deleteTestStream(streamName),
       deleteTestStream(cnmResponseStreamName),
+      cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
     ]);
   }
 
@@ -220,7 +248,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
     scheduleQueueUrl = await getQueueUrlByName(`${testConfig.stackName}-backgroundProcessing`);
 
-    ruleDirectory = './spec/parallel/cnmWorkflow/data/rules/kinesis/unique';
+    ruleDirectory = './spec/parallel/cnmWorkflow/data/rules/kinesis/';
     ruleOverride = {
       name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
       collection: {
@@ -479,7 +507,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       record2.identifier = recordIdentifier2;
 
       // Create new rule for new collection
-      ruleDirectory2 = './spec/parallel/cnmWorkflow/data/rules/kinesis/duplicate';
+      ruleDirectory2 = './spec/parallel/cnmWorkflow/data/rules/kinesis/duplicate/';
       ruleOverride2 = {
         name: `L2_HR_PIXC_DUPLICATE_kinesisRule${ruleSuffix}`,
         collection: {
@@ -495,7 +523,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       await addRules(testConfig, ruleDirectory2, ruleOverride2);
 
       await tryCatchExit(cleanUp, async () => {
-        console.log(`Dropping duplicate record onto  ${streamName}, recordIdentifier2: ${recordIdentifier2}`);
+        console.log(`Dropping second record onto  ${streamName}, recordIdentifier2: ${recordIdentifier2}`);
         await putRecordOnStream(streamName, record2);
 
         workflowExecution2 = await waitForTestSfForRecord(recordIdentifier2, workflowArn, maxWaitForSFExistSecs);
@@ -508,19 +536,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       const uniqueTaskOutput = await lambdaStep.getStepOutput(workflowExecution2.executionArn, 'AddUniqueGranuleId');
       const granule2 = uniqueTaskOutput.payload.granules[0];
       granuleId2 = granule2.granuleId;
-    });
-
-    afterAll(async () => {
-      await removePublishedGranule({
-        prefix: testConfig.stackName,
-        granuleId,
-        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
-      });
-      await removePublishedGranule({
-        prefix: testConfig.stackName,
-        granuleId: granuleId2,
-        collectionId: constructCollectionId(ruleOverride2.collection.name, ruleOverride2.collection.version),
-      });
     });
 
     it('Executes successfully', () => {
@@ -568,14 +583,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       });
     });
 
-    afterAll(async () => {
-      await deleteGranule({
-        prefix: testConfig.stackName,
-        granuleId,
-        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
-      });
-    });
-
     it('executes but fails', () => {
       expect(executionStatus).toEqual('FAILED');
     });
@@ -594,15 +601,15 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
         lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'AddUniqueGranuleId');
         granule = lambdaOutput.payload.granules[0];
         // granuleId is uniquified
-        granuleId = granule.granuleId;
-        console.log(`AddUniqueGranuleId returns granuleId: ${granuleId}, producerGranuleId: ${granule.producerGranuleId}`);
+        granuleId3 = granule.granuleId;
+        console.log(`AddUniqueGranuleId returns granuleId: ${granuleId3}, producerGranuleId: ${granule.producerGranuleId}`);
       });
 
       it('outputs the granules object', () => {
         expect(granule.producerGranuleId).toEqual(producerGranuleId);
-        expect(granule.granuleId).not.toEqual(producerGranuleId);
-        expect(granule.granuleId).toBeTruthy();
-        expect(granule.granuleId).toMatch(
+        expect(granuleId3).not.toEqual(producerGranuleId);
+        expect(granuleId3).toBeTruthy();
+        expect(granuleId3).toMatch(
           new RegExp(`^${producerGranuleId}_[a-zA-Z0-9-]+$`)
         );
       });
@@ -620,7 +627,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
             getGranule,
             {
               prefix: testConfig.stackName,
-              granuleId,
+              granuleId: granuleId3,
               collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
             },
             {
