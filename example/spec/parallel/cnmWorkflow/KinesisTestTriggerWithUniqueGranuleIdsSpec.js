@@ -501,8 +501,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
       // Get the uniquified granuleId
       const uniqueTaskOutput = await lambdaStep.getStepOutput(workflowExecution2.executionArn, 'AddUniqueGranuleId');
-      const duplicateGranule = uniqueTaskOutput.payload.granules[0];
-      granuleId2 = duplicateGranule.granuleId;
+      const granule2 = uniqueTaskOutput.payload.granules[0];
+      granuleId2 = granule2.granuleId;
     });
 
     afterAll(async () => {
@@ -526,22 +526,22 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     });
 
     it('Makes the new granule with matching producerGranuleId available', async () => {
-      const originalGranule = await getGranule({
+      const granule1 = await getGranule({
         prefix: testConfig.stackName,
         granuleId,
         status: 'completed',
         collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
       });
 
-      const duplicateGranule = await getGranule({
+      const granule2 = await getGranule({
         prefix: testConfig.stackName,
         granuleId: granuleId2,
         status: 'completed',
         collectionId: constructCollectionId(ruleOverride2.collection.name, ruleOverride2.collection.version),
       });
 
-      expect(originalGranule.producerGranuleId).toEqual(duplicateGranule.producerGranuleId);
-      expect(originalGranule.granuleId !== duplicateGranule.granuleId).toBeTrue();
+      expect(granule1.producerGranuleId).toEqual(granule2.producerGranuleId);
+      expect(granule1.granuleId !== granule2.granuleId).toBeTrue();
     });
   });
 
