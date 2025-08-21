@@ -1,7 +1,7 @@
 {
   "version": "1.4",
-  "provider": "PODAAC_SWOT",
-  "collection": "ASCATB-L2-Coastal",
+  "provider": "NASA/JPL/PO.DAAC",
+  "collection": "ASCATB-L2-Coastal/op",
   "submissionTime": "2022-08-10T17:49:30.477188",
   "identifier": "<<REPLACED with random string>>",
   "product": {

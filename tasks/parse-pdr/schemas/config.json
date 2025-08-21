@@ -29,6 +29,11 @@
       "type": ["null", "number", "string"],
       "default": 8
     },
+    "includeTimestampHashKey": {
+      "description": "Optional boolean value for whether hashKey should use timestamp for uniquifying granuleIds",
+      "type": ["null", "boolean"],
+      "default": false
+    },
     "provider": {
       "type": "object",
       "properties": {

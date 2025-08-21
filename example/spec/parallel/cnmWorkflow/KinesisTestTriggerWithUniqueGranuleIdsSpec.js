@@ -82,6 +82,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
   let duplicateRuleOverride;
   let duplicateWorkflowExecution;
   let executionNamePrefix;
+  let existingGranuleId;
   let expectedSyncGranulesPayload;
   let expectedTranslatePayload;
   let failingWorkflowExecution;
@@ -566,6 +567,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     let badRecord;
 
     beforeAll(async () => {
+      existingGranuleId = uniqueGranuleId1;
       badRecord = cloneDeep(initialRecord);
       badRecord.identifier = randomString();
       // bad record has a file which doesn't exist
@@ -644,6 +646,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
       it('prepares the test suite successfully', () => {
         if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
+      });
+
+      it('failed granule has the same granuleId as successful granule', () => {
+        expect(failedGranule.granuleId === existingGranuleId);
       });
 
       it('sends the error to the CnmResponse task', async () => {
