@@ -40,6 +40,9 @@ Please follow the instructions before upgrading Cumulus
   - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
 
 ### Added
+- **CUMULUS-4119**
+  - Added assertions in `KinesisTestTriggerWithUniqueGranuleIdsSpec` to cover "duplicate"
+    Granules in separate Collections.
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules`
     table.
