@@ -54,7 +54,8 @@ Please follow the instructions before upgrading Cumulus
   - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a
     hashed/'uniquified' granuleID
 - **CUMULUS-4062**
-  - Added `producerGranuleId` to lzardsBackup task and lambda input/output schema
+  - Added `producerGranuleId` to `LzardsBackup` task component and lambda input/output schema
+  - Updated `LzardsBackup` task component to submit `producerGranuleId` for storage in the lzards record as a key in the `metadata` object.
 - **CUMULUS-4069**
   - Added migration script and instructions to add the producer_granule_id column
     to the granules table and populate it in the production environment.
