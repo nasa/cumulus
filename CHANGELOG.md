@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Notable Changes
 
+- **CUMULUS-4194**
+  - update cumulus-process to 1.5.0
 - **CUMULUS-4131**
   - Users upgrading to this release will be required to update their terraform version to at least 1.12.2. Reference migration instructions are included at [https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12)
 - **CUMULUS-4176**
@@ -76,6 +78,11 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 
 - **CUMULUS-4108**
   - Added standalone lambda function code to scan and terminate old instances when they pass their 90 day expiration
+- **CUMULUS-4123**
+  - add "archived" column to granules and executions tables
+  - add "archived" field to associated data types and schemas
+  - add docs/upgrade-notes/archived_column_indexing.md docs page for database upgrade
+  - add docs/features/record_archival.md docs page for explanation
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
