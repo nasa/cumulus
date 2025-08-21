@@ -111,13 +111,13 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
   async function cleanUp() {
     setProcessEnvironment(testConfig.stackName, testConfig.bucket);
 
-    const rules = await readJsonFilesFromDir(initialRuleDirectory);
-    const rules2 = await readJsonFilesFromDir(duplicateRuleDirectory);
+    const initialRule = await readJsonFilesFromDir(initialRuleDirectory);
+    const duplicateRule = await readJsonFilesFromDir(duplicateRuleDirectory);
 
     console.log(`\nDeleting rules ${initialRuleOverride.name}`);
     await Promise.all([
-      deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix),
-      deleteRules(testConfig.stackName, testConfig.bucket, rules2, ruleSuffix),
+      deleteRules(testConfig.stackName, testConfig.bucket, initialRule, ruleSuffix),
+      deleteRules(testConfig.stackName, testConfig.bucket, duplicateRule, ruleSuffix),
     ]);
 
     console.log('\nDeleting executions');
