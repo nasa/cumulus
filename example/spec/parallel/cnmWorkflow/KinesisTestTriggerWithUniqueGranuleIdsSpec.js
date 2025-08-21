@@ -128,7 +128,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       deleteExecution({ prefix: testConfig.stackName, executionArn: duplicateWorkflowExecution.executionArn }),
     ]);
 
-    console.log('\nDeleting Granules');
+    console.log(`\nDeleting Granules ${uniqueGranuleId1}, ${uniqueGranuleIdDuplicate}`);
     await Promise.all([
       removePublishedGranule({
         prefix: testConfig.stackName,
@@ -139,11 +139,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
         prefix: testConfig.stackName,
         granuleId: uniqueGranuleIdDuplicate,
         collectionId: constructCollectionId(duplicateRuleOverride.collection.name, duplicateRuleOverride.collection.version),
-      }),
-      removePublishedGranule({
-        prefix: testConfig.stackName,
-        granuleId: uniqueGranuleIdError,
-        collectionId: constructCollectionId(initialRuleOverride.collection.name, initialRuleOverride.collection.version),
       }),
     ]);
 
