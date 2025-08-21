@@ -75,46 +75,46 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
   const providersDir = './data/providers/PODAAC_SWOT/';
 
   let cnmResponseStreamName;
+  let duplicateExecutionStatus;
+  let duplicateRecordDifferentCollection;
+  let duplicateRecordIdentifier;
+  let duplicateRuleDirectory;
+  let duplicateRuleOverride;
+  let duplicateWorkflowExecution;
   let executionNamePrefix;
-  let executionStatus;
-  let executionStatus2;
   let expectedSyncGranulesPayload;
   let expectedTranslatePayload;
+  let failingWorkflowExecution;
   let fileData;
-  let granuleId;
-  let granuleId2;
-  let granuleId3;
-  let producerGranuleId;
+  let initialExecutionStatus;
+  let initialRecord;
+  let initialRuleDirectory;
+  let initialRuleOverride;
+  let initialWorkflowExecution;
   let lambdaStep;
   let logEventSourceMapping;
-  let record;
-  let record2;
+  let producerGranuleId;
   let recordFile;
   let recordIdentifier;
-  let recordIdentifier2;
   let responseStreamShardIterator;
-  let ruleDirectory;
-  let ruleDirectory2;
-  let ruleOverride;
-  let ruleOverride2;
   let ruleSuffix;
+  let scheduleQueueUrl;
   let streamName;
   let testConfig;
   let testDataFolder;
   let testSuffix;
+  let uniqueGranuleId1;
+  let uniqueGranuleIdDuplicate;
+  let uniqueGranuleIdError;
   let workflowArn;
-  let workflowExecution;
-  let workflowExecution2;
-  let scheduleQueueUrl;
-  let failingWorkflowExecution;
 
   async function cleanUp() {
     setProcessEnvironment(testConfig.stackName, testConfig.bucket);
 
-    const rules = await readJsonFilesFromDir(ruleDirectory);
-    const rules2 = await readJsonFilesFromDir(ruleDirectory2);
+    const rules = await readJsonFilesFromDir(initialRuleDirectory);
+    const rules2 = await readJsonFilesFromDir(duplicateRuleDirectory);
 
-    console.log(`\nDeleting rules ${ruleOverride.name}`);
+    console.log(`\nDeleting rules ${initialRuleOverride.name}`);
     await Promise.all([
       deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix),
       deleteRules(testConfig.stackName, testConfig.bucket, rules2, ruleSuffix),
@@ -123,26 +123,26 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     console.log('\nDeleting executions');
     await Promise.all([
       deleteExecution({ prefix: testConfig.stackName, executionArn: failingWorkflowExecution.executionArn }),
-      deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn }),
-      deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution2.executionArn }),
+      deleteExecution({ prefix: testConfig.stackName, executionArn: initialWorkflowExecution.executionArn }),
+      deleteExecution({ prefix: testConfig.stackName, executionArn: duplicateWorkflowExecution.executionArn }),
     ]);
 
     console.log('\nDeleting Granules');
     await Promise.all([
       removePublishedGranule({
         prefix: testConfig.stackName,
-        granuleId,
-        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+        granuleId: uniqueGranuleId1,
+        collectionId: constructCollectionId(initialRuleOverride.collection.name, initialRuleOverride.collection.version),
       }),
       removePublishedGranule({
         prefix: testConfig.stackName,
-        granuleId: granuleId2,
-        collectionId: constructCollectionId(ruleOverride2.collection.name, ruleOverride2.collection.version),
+        granuleId: uniqueGranuleIdDuplicate,
+        collectionId: constructCollectionId(duplicateRuleOverride.collection.name, duplicateRuleOverride.collection.version),
       }),
       removePublishedGranule({
         prefix: testConfig.stackName,
-        granuleId: granuleId3,
-        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+        granuleId: uniqueGranuleIdError,
+        collectionId: constructCollectionId(initialRuleOverride.collection.name, initialRuleOverride.collection.version),
       }),
     ]);
 
@@ -174,32 +174,32 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     );
     workflowArn = workflowDefinition.arn;
 
-    record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
+    initialRecord = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
 
-    record.product.files[0].uri = replace(
-      record.product.files[0].uri,
+    initialRecord.product.files[0].uri = replace(
+      initialRecord.product.files[0].uri,
       /<replace-bucket>\/cumulus-test-data\/pdrs/g,
       `${testConfig.bucket}/${testDataFolder}`
     );
-    record.provider += testSuffix;
-    record.collection += testSuffix;
-    record.product.name += testSuffix;
+    initialRecord.provider += testSuffix;
+    initialRecord.collection += testSuffix;
+    initialRecord.product.name += testSuffix;
 
-    // granuleId will be uniquified
-    granuleId = record.product.name;
-    producerGranuleId = record.product.name;
+    // uniqueGranuleId1 will be uniquified
+    uniqueGranuleId1 = initialRecord.product.name;
+    producerGranuleId = initialRecord.product.name;
     recordIdentifier = `granule1_${randomString()}`;
-    record.identifier = recordIdentifier;
+    initialRecord.identifier = recordIdentifier;
 
     lambdaStep = new LambdaStep();
 
-    recordFile = record.product.files[0];
+    recordFile = initialRecord.product.files[0];
     expectedTranslatePayload = {
       granules: [
         {
-          granuleId: record.product.name,
-          version: record.product.dataVersion,
-          dataType: record.collection,
+          granuleId: initialRecord.product.name,
+          version: initialRecord.product.dataVersion,
+          dataType: initialRecord.collection,
           files: [
             {
               source_bucket: testConfig.bucket,
@@ -236,8 +236,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       granuleDuplicates: {},
       granules: [
         {
-          producerGranuleId: record.product.name,
-          dataType: record.collection,
+          producerGranuleId: initialRecord.product.name,
+          dataType: initialRecord.collection,
           version: '000',
           files: [fileDataWithFilename],
         },
@@ -248,14 +248,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
     scheduleQueueUrl = await getQueueUrlByName(`${testConfig.stackName}-backgroundProcessing`);
 
-    ruleDirectory = './spec/parallel/cnmWorkflow/data/rules/kinesis/';
-    ruleOverride = {
+    initialRuleDirectory = './spec/parallel/cnmWorkflow/data/rules/kinesis/';
+    initialRuleOverride = {
       name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
       collection: {
-        name: record.collection,
+        name: initialRecord.collection,
         version: '000',
       },
-      provider: record.provider,
+      provider: initialRecord.provider,
       executionNamePrefix,
       // use custom queue for scheduling workflows
       queueUrl: scheduleQueueUrl,
@@ -285,7 +285,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
         waitForActiveStream(streamName),
         waitForActiveStream(cnmResponseStreamName),
       ]);
-      const ruleList = await addRules(testConfig, ruleDirectory, ruleOverride);
+      const ruleList = await addRules(testConfig, initialRuleDirectory, initialRuleOverride);
       logEventSourceMapping = await getEventSourceMapping(ruleList[0].rule.logEventArn);
     });
   });
@@ -307,35 +307,35 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
   describe('Workflow executes successfully', () => {
     beforeAll(async () => {
       await tryCatchExit(cleanUp, async () => {
-        console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}`);
-        await putRecordOnStream(streamName, record);
+        console.log(`Dropping initialRecord onto  ${streamName}, recordIdentifier: ${recordIdentifier}`);
+        await putRecordOnStream(streamName, initialRecord);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSfForRecord(recordIdentifier, workflowArn, maxWaitForSFExistSecs);
+        initialWorkflowExecution = await waitForTestSfForRecord(recordIdentifier, workflowArn, maxWaitForSFExistSecs);
 
-        console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
-        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
+        console.log(`Waiting for completed execution of ${initialWorkflowExecution.executionArn}`);
+        initialExecutionStatus = await waitForCompletedExecution(initialWorkflowExecution.executionArn, maxWaitForExecutionSecs);
       });
     });
 
     it('executes successfully', () => {
-      expect(executionStatus).toEqual('SUCCEEDED');
+      expect(initialExecutionStatus).toEqual('SUCCEEDED');
     });
 
     it('creates an execution with the correct prefix', () => {
-      const executionName = workflowExecution.executionArn.split(':').reverse()[0];
+      const executionName = initialWorkflowExecution.executionArn.split(':').reverse()[0];
       expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
     });
 
     it('references the correct queue URL in the execution message', async () => {
-      const executionInput = await getExecutionInputObject(workflowExecution.executionArn);
+      const executionInput = await getExecutionInputObject(initialWorkflowExecution.executionArn);
       expect(executionInput.cumulus_meta.queueUrl).toBe(scheduleQueueUrl);
     });
 
     describe('the TranslateMessage Lambda', () => {
       let lambdaOutput;
       beforeAll(async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
+        lambdaOutput = await lambdaStep.getStepOutput(initialWorkflowExecution.executionArn, 'CNMToCMA');
       });
 
       it('outputs the expectedTranslatePayload object', () => {
@@ -347,12 +347,12 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
         delete lambdaOutput.meta.cnm.receivedTime;
 
         expect(lambdaOutput.meta.cnm).toEqual({
-          product: record.product,
+          product: initialRecord.product,
           identifier: recordIdentifier,
-          provider: record.provider,
-          collection: record.collection,
-          submissionTime: record.submissionTime,
-          version: record.version,
+          provider: initialRecord.provider,
+          collection: initialRecord.collection,
+          submissionTime: initialRecord.submissionTime,
+          version: initialRecord.version,
         });
       });
     });
@@ -361,8 +361,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       let startStep;
       let endStep;
       beforeAll(async () => {
-        startStep = await lambdaStep.getStepInput(workflowExecution.executionArn, 'CNMToCMA');
-        endStep = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
+        startStep = await lambdaStep.getStepInput(initialWorkflowExecution.executionArn, 'CNMToCMA');
+        endStep = await lambdaStep.getStepOutput(initialWorkflowExecution.executionArn, 'CnmResponse');
       });
 
       it('records both the original and the final payload', async () => {
@@ -370,7 +370,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
           getExecution,
           {
             prefix: testConfig.stackName,
-            arn: workflowExecution.executionArn,
+            arn: initialWorkflowExecution.executionArn,
           },
           'completed'
         );
@@ -384,11 +384,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       let granule;
 
       beforeAll(async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'AddUniqueGranuleId');
+        lambdaOutput = await lambdaStep.getStepOutput(initialWorkflowExecution.executionArn, 'AddUniqueGranuleId');
         granule = lambdaOutput.payload.granules[0];
-        // granuleId is uniquified
-        granuleId = granule.granuleId;
-        console.log(`AddUniqueGranuleId returns granuleId: ${granuleId}, producerGranuleId: ${granule.producerGranuleId}`);
+        // uniqueGranuleId1 is uniquified
+        uniqueGranuleId1 = granule.granuleId;
+        console.log(`AddUniqueGranuleId returns uniqueGranuleId1: ${uniqueGranuleId1}, producerGranuleId: ${granule.producerGranuleId}`);
       });
 
       it('outputs the granules object', () => {
@@ -405,21 +405,21 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       let lambdaOutput;
 
       beforeAll(async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+        lambdaOutput = await lambdaStep.getStepOutput(initialWorkflowExecution.executionArn, 'SyncGranule');
       });
 
       it('outputs the granules object', () => {
-        const filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000/${crypto.createHash('md5').update(granuleId).digest('hex')}`;
+        const filePrefix = `file-staging/${testConfig.stackName}/${initialRecord.collection}___000/${crypto.createHash('md5').update(uniqueGranuleId1).digest('hex')}`;
         expectedSyncGranulesPayload.granules[0].files[0].key = `${filePrefix}/${recordFile.name}`;
         const updatedExpectedPayload = {
           ...expectedSyncGranulesPayload,
           granules: [
             {
               ...expectedSyncGranulesPayload.granules[0],
-              granuleId,
+              granuleId: uniqueGranuleId1,
               sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
               createdAt: lambdaOutput.payload.granules[0].createdAt,
-              provider: record.provider,
+              provider: initialRecord.provider,
             },
           ],
         };
@@ -432,18 +432,18 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       let granule;
 
       beforeAll(async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
+        lambdaOutput = await lambdaStep.getStepOutput(initialWorkflowExecution.executionArn, 'CnmResponse');
 
         granule = await waitForApiRecord(
           getGranule,
           {
             prefix: testConfig.stackName,
-            granuleId,
-            collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+            granuleId: uniqueGranuleId1,
+            collectionId: constructCollectionId(initialRuleOverride.collection.name, initialRuleOverride.collection.version),
           },
           {
             status: 'completed',
-            execution: getExecutionUrlFromArn(workflowExecution.executionArn),
+            execution: getExecutionUrlFromArn(initialWorkflowExecution.executionArn),
           }
         );
       });
@@ -451,7 +451,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       it('outputs the expected object', () => {
         const actualPayload = lambdaOutput.payload;
         expect(actualPayload.granules.length).toBe(1);
-        expect(actualPayload.granules[0].granuleId).toBe(granuleId);
+        expect(actualPayload.granules[0].granuleId).toBe(uniqueGranuleId1);
       });
 
       it('writes a message to the response stream', async () => {
@@ -467,14 +467,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
 
       it('puts cnmResponse to cumulus message for granule record', () => {
         const expectedCnmResponse = {
-          version: record.version,
-          submissionTime: record.submissionTime,
-          collection: record.collection,
-          provider: record.provider,
-          identifier: record.identifier,
+          version: initialRecord.version,
+          submissionTime: initialRecord.submissionTime,
+          collection: initialRecord.collection,
+          provider: initialRecord.provider,
+          identifier: initialRecord.identifier,
           product: {
-            dataVersion: record.product.dataVersion,
-            name: record.product.name,
+            dataVersion: initialRecord.product.dataVersion,
+            name: initialRecord.product.name,
           },
           response: {
             status: 'SUCCESS',
@@ -493,68 +493,68 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     beforeAll(async () => {
       await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir2, testSuffix);
 
-      record2 = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154_dupe.json`));
-      record2.product.files[0].uri = replace(
-        record2.product.files[0].uri,
+      duplicateRecordDifferentCollection = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154_dupe.json`));
+      duplicateRecordDifferentCollection.product.files[0].uri = replace(
+        duplicateRecordDifferentCollection.product.files[0].uri,
         /<replace-bucket>\/cumulus-test-data\/pdrs/g,
         `${testConfig.bucket}/${testDataFolder}`
       );
-      record2.provider += testSuffix;
-      record2.collection += testSuffix;
-      record2.product.name += testSuffix;
+      duplicateRecordDifferentCollection.provider += testSuffix;
+      duplicateRecordDifferentCollection.collection += testSuffix;
+      duplicateRecordDifferentCollection.product.name += testSuffix;
 
-      recordIdentifier2 = `granule2_${randomString()}`;
-      record2.identifier = recordIdentifier2;
+      duplicateRecordIdentifier = `granule2_${randomString()}`;
+      duplicateRecordDifferentCollection.identifier = duplicateRecordIdentifier;
 
       // Create new rule for new collection
-      ruleDirectory2 = './spec/parallel/cnmWorkflow/data/rules/kinesis/duplicate/';
-      ruleOverride2 = {
+      duplicateRuleDirectory = './spec/parallel/cnmWorkflow/data/rules/kinesis/duplicate/';
+      duplicateRuleOverride = {
         name: `L2_HR_PIXC_DUPLICATE_kinesisRule${ruleSuffix}`,
         collection: {
-          name: record2.collection,
+          name: duplicateRecordDifferentCollection.collection,
           version: '099',
         },
-        provider: record2.provider,
+        provider: duplicateRecordDifferentCollection.provider,
         executionNamePrefix,
         // use custom queue for scheduling workflows
         queueUrl: scheduleQueueUrl,
       };
 
-      await addRules(testConfig, ruleDirectory2, ruleOverride2);
+      await addRules(testConfig, duplicateRuleDirectory, duplicateRuleOverride);
 
       await tryCatchExit(cleanUp, async () => {
-        console.log(`Dropping second record onto  ${streamName}, recordIdentifier2: ${recordIdentifier2}`);
-        await putRecordOnStream(streamName, record2);
+        console.log(`Dropping second record onto  ${streamName}, duplicateRecordIdentifier: ${duplicateRecordIdentifier}`);
+        await putRecordOnStream(streamName, duplicateRecordDifferentCollection);
 
-        workflowExecution2 = await waitForTestSfForRecord(recordIdentifier2, workflowArn, maxWaitForSFExistSecs);
+        duplicateWorkflowExecution = await waitForTestSfForRecord(duplicateRecordIdentifier, workflowArn, maxWaitForSFExistSecs);
 
-        console.log(`Waiting for completed execution of ${workflowExecution2.executionArn}`);
-        executionStatus2 = await waitForCompletedExecution(workflowExecution2.executionArn, maxWaitForExecutionSecs);
+        console.log(`Waiting for completed execution of ${duplicateWorkflowExecution.executionArn}`);
+        duplicateExecutionStatus = await waitForCompletedExecution(duplicateWorkflowExecution.executionArn, maxWaitForExecutionSecs);
       });
 
       // Get the uniquified granuleId
-      const uniqueTaskOutput = await lambdaStep.getStepOutput(workflowExecution2.executionArn, 'AddUniqueGranuleId');
+      const uniqueTaskOutput = await lambdaStep.getStepOutput(duplicateWorkflowExecution.executionArn, 'AddUniqueGranuleId');
       const granule2 = uniqueTaskOutput.payload.granules[0];
-      granuleId2 = granule2.granuleId;
+      uniqueGranuleIdDuplicate = granule2.granuleId;
     });
 
     it('Executes successfully', () => {
-      expect(executionStatus2).toEqual('SUCCEEDED');
+      expect(duplicateExecutionStatus).toEqual('SUCCEEDED');
     });
 
     it('Makes the new granule with matching producerGranuleId available', async () => {
       const granule1 = await getGranule({
         prefix: testConfig.stackName,
-        granuleId,
+        granuleId: uniqueGranuleId1,
         status: 'completed',
-        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+        collectionId: constructCollectionId(initialRuleOverride.collection.name, initialRuleOverride.collection.version),
       });
 
       const granule2 = await getGranule({
         prefix: testConfig.stackName,
-        granuleId: granuleId2,
+        granuleId: uniqueGranuleIdDuplicate,
         status: 'completed',
-        collectionId: constructCollectionId(ruleOverride2.collection.name, ruleOverride2.collection.version),
+        collectionId: constructCollectionId(duplicateRuleOverride.collection.name, duplicateRuleOverride.collection.version),
       });
 
       expect(granule1.producerGranuleId).toEqual(granule2.producerGranuleId);
@@ -566,7 +566,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     let badRecord;
 
     beforeAll(async () => {
-      badRecord = cloneDeep(record);
+      badRecord = cloneDeep(initialRecord);
       badRecord.identifier = randomString();
       // bad record has a file which doesn't exist
       badRecord.product.files[0].uri = `s3://${testConfig.bucket}/somepath/key-does-not-exist`;
@@ -579,12 +579,12 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
         failingWorkflowExecution = await waitForTestSfForRecord(badRecord.identifier, workflowArn, maxWaitForSFExistSecs);
 
         console.log(`Waiting for completed execution of ${failingWorkflowExecution.executionArn}.`);
-        executionStatus = await waitForCompletedExecution(failingWorkflowExecution.executionArn, maxWaitForExecutionSecs);
+        initialExecutionStatus = await waitForCompletedExecution(failingWorkflowExecution.executionArn, maxWaitForExecutionSecs);
       });
     });
 
     it('executes but fails', () => {
-      expect(executionStatus).toEqual('FAILED');
+      expect(initialExecutionStatus).toEqual('FAILED');
     });
 
     it('outputs the error', async () => {
@@ -601,15 +601,15 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
         lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'AddUniqueGranuleId');
         granule = lambdaOutput.payload.granules[0];
         // granuleId is uniquified
-        granuleId3 = granule.granuleId;
-        console.log(`AddUniqueGranuleId returns granuleId: ${granuleId3}, producerGranuleId: ${granule.producerGranuleId}`);
+        uniqueGranuleIdError = granule.granuleId;
+        console.log(`AddUniqueGranuleId returns granuleId: ${uniqueGranuleIdError}, producerGranuleId: ${granule.producerGranuleId}`);
       });
 
       it('outputs the granules object', () => {
         expect(granule.producerGranuleId).toEqual(producerGranuleId);
-        expect(granuleId3).not.toEqual(producerGranuleId);
-        expect(granuleId3).toBeTruthy();
-        expect(granuleId3).toMatch(
+        expect(uniqueGranuleIdError).not.toEqual(producerGranuleId);
+        expect(uniqueGranuleIdError).toBeTruthy();
+        expect(uniqueGranuleIdError).toMatch(
           new RegExp(`^${producerGranuleId}_[a-zA-Z0-9-]+$`)
         );
       });
@@ -627,8 +627,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
             getGranule,
             {
               prefix: testConfig.stackName,
-              granuleId: granuleId3,
-              collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+              granuleId: uniqueGranuleIdError,
+              collectionId: constructCollectionId(initialRuleOverride.collection.name, initialRuleOverride.collection.version),
             },
             {
               status: 'failed',
