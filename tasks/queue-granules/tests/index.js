@@ -907,6 +907,7 @@ test.serial('does not change collection id on granule', async (t) => {
           collectionId,
           granuleId,
           body: {
+            archived: false,
             collectionId,
             granuleId,
             status: 'queued',
@@ -974,6 +975,7 @@ test.serial('handles different collections', async (t) => {
           collectionId,
           granuleId,
           body: {
+            archived: false,
             collectionId,
             granuleId,
             status: 'queued',
@@ -1042,6 +1044,7 @@ test.serial('handles different providers', async (t) => {
           collectionId,
           granuleId,
           body: {
+            archived: false,
             collectionId,
             granuleId,
             status: 'queued',
