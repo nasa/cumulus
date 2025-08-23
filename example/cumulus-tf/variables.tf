@@ -491,14 +491,9 @@ variable "workflow_configurations" {
           }
         }
 
-      Example:
-        {
-          sf_event_sqs_to_db_records_types = {
-            IngestAndPublishGranule = {
-              running = ["execution", "pdr"]
-            }
-          }
-        }
+      default = {
+        sf_event_sqs_to_db_records_types = {}
+      }
   EOF
   type = object({
     sf_event_sqs_to_db_records_types = optional(map(map(list(string))), {})

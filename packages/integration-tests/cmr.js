@@ -182,10 +182,12 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
  * @param {Object} granule - granule object
  * @param {Object} collection - collection object
  * @param {Array<string>} additionalUrls - URLs to convert to online resources
+ * @param {boolean} matchFilesWithProducerGranuleId - When set to true, use the 'producerGranuleId'
  * @returns {Promise<Array<string>>} - Promise of the generated granule xml string
  * CMR xml files
  */
-function generateCmrXml(granule, collection, additionalUrls) {
+function generateCmrXml(granule, collection, additionalUrls,
+  matchFilesWithProducerGranuleId = false) {
   const xmlObject = sampleEcho10Granule;
   const oldGranuleId = xmlObject.Granule.GranuleUR;
   xmlObject.Granule.GranuleUR = granule.granuleId;
@@ -196,8 +198,10 @@ function generateCmrXml(granule, collection, additionalUrls) {
   };
 
   xmlObject.Granule.OnlineAccessURLs.forEach((url) => {
+    const replacementId = (matchFilesWithProducerGranuleId && granule.producerGranuleId)
+      ? granule.producerGranuleId : granule.granuleId;
     // eslint-disable-next-line no-param-reassign
-    url.OnlineAccessURL.URL = url.OnlineAccessURL.URL.replace(oldGranuleId, granule.granuleId);
+    url.OnlineAccessURL.URL = url.OnlineAccessURL.URL.replace(oldGranuleId, replacementId);
   });
 
   if (additionalUrls) {
@@ -228,20 +232,20 @@ function generateCmrXml(granule, collection, additionalUrls) {
  */
 async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls, stagingDir = 'file-staging',
   matchFilesWithProducerGranuleId = false) {
-  const xml = generateCmrXml(granule, collection, additionalUrls);
+  const xml = generateCmrXml(granule, collection, additionalUrls, matchFilesWithProducerGranuleId);
   const granuleFiles = granule.files.map((f) => `s3://${f.bucket}/${f.key}`);
 
-  const fileNameBase = matchFilesWithProducerGranuleId
+  const id = (matchFilesWithProducerGranuleId && granule.producerGranuleId)
     ? granule.producerGranuleId
     : granule.granuleId;
-  const fileKey = `${stagingDir}/${granule.granuleId}/${fileNameBase}.cmr.xml`;
+  const fileKey = `${stagingDir}/${granule.granuleId}/${id}.cmr.xml`;
 
   const params = {
     Bucket: bucket,
     Key: fileKey,
     Body: xml,
     ContentType: 'application/xml',
-    Tagging: `granuleId=${granule.granuleId}`,
+    Tagging: `granuleId=${id}`,
   };
 
   await s3().putObject(params);

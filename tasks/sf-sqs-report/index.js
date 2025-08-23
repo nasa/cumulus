@@ -19,7 +19,7 @@ async function reportSQSMessage(event) {
     meta: {
       ...meta,
       status: 'running',
-      reportMessageSource: 'lambda',
+      reportMessageSource: 'SfSqsReport',
     },
   };
 

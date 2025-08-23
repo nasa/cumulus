@@ -80,24 +80,24 @@ const checkShouldWriteRecord = (configuredRecordTypes, recordType) =>
   (configuredRecordTypes === undefined || configuredRecordTypes.includes(recordType));
 
 /**
- * @param {CumulusMessage} cumulusMessage
- * @returns {RecordWriteFlags}
+ * Determines which types of records should be written to database.
+ *
+ * @param {CumulusMessage} cumulusMessage - The input Cumulus message.
+ * @returns {RecordWriteFlags} An object indicating which record types should be written.
  */
 const shouldWriteRecords = (cumulusMessage) => {
-  // do we save granule-execution cross reference if not saving granule
+  const defaultWriteFlags = {
+    shouldWriteExecutionRecords: true,
+    shouldWriteGranuleRecords: true,
+    shouldWritePdrRecords: true,
+  };
 
-  // if report message is from lambda, e.g., SfSqsReport, write all records
   const reportMessageSource = get(cumulusMessage, 'meta.reportMessageSource');
-  if (reportMessageSource === 'lambda') {
-    return {
-      shouldWriteExecutionRecords: true,
-      shouldWriteGranuleRecords: true,
-      shouldWritePdrRecords: true,
-    };
+  if (reportMessageSource) {
+    log.debug(`shouldWriteRecords: reportMessageSource is '${reportMessageSource}', writing all records`);
+    return defaultWriteFlags;
   }
 
-  // message is from workflow event bridge, check the workflow configuration to
-  // determine if the type of records to write
   const workflowName = get(cumulusMessage, 'meta.workflow_name');
   const status = get(cumulusMessage, 'meta.status');
   const configuredRecordTypes = get(
@@ -105,11 +105,14 @@ const shouldWriteRecords = (cumulusMessage) => {
     `cumulus_meta.sf_event_sqs_to_db_records_types.${workflowName}.${status}`
   );
 
-  return {
+  const writeFlags = {
     shouldWriteExecutionRecords: checkShouldWriteRecord(configuredRecordTypes, 'execution'),
     shouldWriteGranuleRecords: checkShouldWriteRecord(configuredRecordTypes, 'granule'),
     shouldWritePdrRecords: checkShouldWriteRecord(configuredRecordTypes, 'pdr'),
   };
+
+  log.debug(`shouldWriteRecords: determined write flags: ${JSON.stringify(writeFlags)}`);
+  return writeFlags;
 };
 
 /**
