@@ -146,16 +146,18 @@ Please follow the instructions before upgrading Cumulus
     specs and workflows in the `ingestGranule`, `discoverGranules`,
     `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
 - **CUMULUS-4110**
-  - Added the workflow_configurations variable to the tf-modules/ingest and
+  - Added the `workflow_configurations` variable to the tf-modules/ingest and
     tf-modules/cumulus modules.
-    Its property sf_event_sqs_to_db_records_types has been added to 
-    workflow_template.json under the cumulus_meta field to control which record
+    Its property `sf_event_sqs_to_db_records_types` has been added to 
+    `workflow_template.json` under the `cumulus_meta` field to control which record
     types should be written to the database during different workflow execution statuses.
-  - Updated the SfSqsReport task to set meta.reportMessageSource in the Cumulus message.
-  - Updated the @cumulus/api/sfEventSqsToDbRecords Lambda to determine which
+  - Updated the `SfSqsReport` task to set `meta.reportMessageSource` in the Cumulus message.
+  - Updated the `@cumulus/api/sfEventSqsToDbRecords` Lambda to determine which
     record types should be written to the database based on the
-    cumulus_meta.sf_event_sqs_to_db_records_types and meta.reportMessageSource fields.
+    `cumulus_meta.sf_event_sqs_to_db_records_types` and `meta.reportMessageSource` fields.
     By default, all record types will be written to the database.
+  - Updated the `@cumulus/integration-tests` `cmr.generateAndStoreCmrXml` to
+    apply `matchFilesWithProducerGranuleId` for `OnlineAccessURL`
 - **CUMULUS-4162**
   - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
   - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
