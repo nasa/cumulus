@@ -97,7 +97,7 @@ const determineRecordWriteFlags = (cumulusMessage) => {
 
   const reportMessageSource = get(cumulusMessage, 'meta.reportMessageSource');
   if (reportMessageSource) {
-    log.debug(`shouldWriteRecords: reportMessageSource is '${reportMessageSource}', writing all records`);
+    log.debug(`determineRecordWriteFlags: reportMessageSource is '${reportMessageSource}', writing all records`);
     return defaultWriteFlags;
   }
 
@@ -114,7 +114,7 @@ const determineRecordWriteFlags = (cumulusMessage) => {
     shouldWritePdrRecords: isRecordTypeWritable(configuredRecordTypes, 'pdr'),
   };
 
-  log.debug(`shouldWriteRecords: determined write flags: ${JSON.stringify(writeFlags)}`);
+  log.debug(`determineRecordWriteFlags: determined write flags: ${JSON.stringify(writeFlags)}`);
   return writeFlags;
 };
 
