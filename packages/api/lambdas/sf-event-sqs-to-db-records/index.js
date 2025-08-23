@@ -72,20 +72,23 @@ const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-record
  */
 
 /**
- * @param {RecordType[] | undefined} configuredRecordTypes
- * @param {RecordType} recordType
- * @returns {boolean}
+ * Determines whether a record of the given type should be written to the database.
+ *
+ * @param {RecordType[] | undefined} configuredRecordTypes - An optional list of record types
+ *   that are allowed to be written. If undefined, all record types are allowed.
+ * @param {RecordType} recordType - The type of record to check.
+ * @returns {boolean} True if the record type should be written; otherwise, false.
  */
-const checkShouldWriteRecord = (configuredRecordTypes, recordType) =>
+const isRecordTypeWritable = (configuredRecordTypes, recordType) =>
   (configuredRecordTypes === undefined || configuredRecordTypes.includes(recordType));
 
 /**
- * Determines which types of records should be written to database.
+ * Determines which types of records should be written to the database.
  *
  * @param {CumulusMessage} cumulusMessage - The input Cumulus message.
  * @returns {RecordWriteFlags} An object indicating which record types should be written.
  */
-const shouldWriteRecords = (cumulusMessage) => {
+const determineRecordWriteFlags = (cumulusMessage) => {
   const defaultWriteFlags = {
     shouldWriteExecutionRecords: true,
     shouldWriteGranuleRecords: true,
@@ -106,9 +109,9 @@ const shouldWriteRecords = (cumulusMessage) => {
   );
 
   const writeFlags = {
-    shouldWriteExecutionRecords: checkShouldWriteRecord(configuredRecordTypes, 'execution'),
-    shouldWriteGranuleRecords: checkShouldWriteRecord(configuredRecordTypes, 'granule'),
-    shouldWritePdrRecords: checkShouldWriteRecord(configuredRecordTypes, 'pdr'),
+    shouldWriteExecutionRecords: isRecordTypeWritable(configuredRecordTypes, 'execution'),
+    shouldWriteGranuleRecords: isRecordTypeWritable(configuredRecordTypes, 'granule'),
+    shouldWritePdrRecords: isRecordTypeWritable(configuredRecordTypes, 'pdr'),
   };
 
   log.debug(`shouldWriteRecords: determined write flags: ${JSON.stringify(writeFlags)}`);
@@ -137,7 +140,7 @@ const writeRecords = async ({
     shouldWriteExecutionRecords,
     shouldWriteGranuleRecords,
     shouldWritePdrRecords,
-  } = shouldWriteRecords(cumulusMessage);
+  } = determineRecordWriteFlags(cumulusMessage);
 
   const [
     collectionCumulusId,
