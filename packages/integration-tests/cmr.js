@@ -188,7 +188,7 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
  */
 function generateCmrXml(granule, collection, additionalUrls,
   matchFilesWithProducerGranuleId = false) {
-  const xmlObject = sampleEcho10Granule;
+  const xmlObject = structuredClone(sampleEcho10Granule);
   const oldGranuleId = xmlObject.Granule.GranuleUR;
   xmlObject.Granule.GranuleUR = granule.granuleId;
 
