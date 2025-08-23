@@ -6,60 +6,53 @@ const path = require('path');
 const { URL, resolve } = require('url');
 
 const difference = require('lodash/difference');
-const {
-  s3GetObjectTagging,
-  s3ObjectExists,
-} = require('@cumulus/aws-client/S3');
+
+const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
+const { listGranules, reingestGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { getPdr } = require('@cumulus/api-client/pdrs');
+const providersApi = require('@cumulus/api-client/providers');
+
+const { s3GetObjectTagging, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const {
   addCollections,
   conceptExists,
   getCmrMetadata,
-  waitForTestExecutionStart,
   waitForCompletedExecution,
+  waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
-const { waitForListGranulesResult } = require('@cumulus/integration-tests/Granules');
-const providersApi = require('@cumulus/api-client/providers');
-const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
-const {
-  listGranules,
-  reingestGranule,
-  removePublishedGranule,
-} = require('@cumulus/api-client/granules');
 const {
   getDistributionFileUrl,
-  getTEADistributionApiRedirect,
   getTEADistributionApiFileStream,
+  getTEADistributionApiRedirect,
   getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
+const { waitForListGranulesResult } = require('@cumulus/integration-tests/Granules');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { getExecution } = require('@cumulus/api-client/executions');
-const { getPdr } = require('@cumulus/api-client/pdrs');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { waitForApiStatus } = require('../../helpers/apiUtils');
-const {
-  buildAndStartWorkflow,
-} = require('../../helpers/workflowUtils');
-const {
-  loadConfig,
-  templateFile,
-  uploadTestDataToBucket,
-  deleteFolder,
-  createTimestampedTestId,
-  createTestDataPath,
-  createTestSuffix,
-} = require('../../helpers/testUtils');
-const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
+const { setDistributionApiEnvVars, waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
-
-const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
+const {
+  createTestDataPath,
+  createTestSuffix,
+  createTimestampedTestId,
+  deleteFolder,
+  loadConfig,
+  templateFile,
+  uploadTestDataToBucket,
+} = require('../../helpers/testUtils');
+const {
+  buildAndStartWorkflow,
+  isReingestExecutionForGranuleId,
+} = require('../../helpers/workflowUtils');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestAndPublishGranule';

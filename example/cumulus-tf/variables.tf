@@ -478,26 +478,34 @@ variable "dead_letter_recovery_memory" {
 
 variable "workflow_configurations" {
   description = <<EOF
-    A map of workflow-specific configurations used to control which record types 
-    should be written to the database during different workflow execution statuses.
+    A general-purpose map of workflow-specific configurations.
+    This object may include one or more configuration fields used to influence workflow behavior.
 
-    - `sf_event_sqs_to_db_records_types`: A nested map that defines which record types 
-      ("execution", "granule", "pdr") should be written for each workflow and status.
+    - `sf_event_sqs_to_db_records_types`: An optional nested map that controls which record types
+      ("execution", "granule", "pdr") should be written to the database for each workflow and
+      workflow status("running", "completed", "failed").
+      This configuration is used by the `@cumulus/api/sfEventSqsToDbRecords` Lambda.
 
-      The structure is:
+      If this field is not provided, or if a specific workflow/status combination is not defined,
+      all record types will be written to the database by default.
+
+      Structure:
         {
           <workflow_name> = {
             <status> = [<record_type>, ...]
           }
         }
 
-      default = {
+    Default:
+      {
         sf_event_sqs_to_db_records_types = {}
       }
   EOF
+
   type = object({
     sf_event_sqs_to_db_records_types = optional(map(map(list(string))), {})
   })
+
   default = {
     sf_event_sqs_to_db_records_types = {
       IngestAndPublishGranule = {
