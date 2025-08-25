@@ -25,6 +25,7 @@ const {
   PdrPgModel,
   ExecutionPgModel,
   GranulePgModel,
+  GranulesExecutionsPgModel,
   migrationDir,
 } = require('@cumulus/db');
 const {
@@ -137,6 +138,7 @@ test.before(async (t) => {
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.granulePgModel = new GranulePgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   t.context.pdrPgModel = new PdrPgModel();
   t.context.providerPgModel = new ProviderPgModel();
 
@@ -190,6 +192,9 @@ test.beforeEach(async (t) => {
 
   t.context.executionName = cryptoRandomString({ length: 5 });
   t.context.executionArn = `arn:aws:states:${t.context.fixture.region}:${t.context.fixture.account}:execution:${stateMachineName}:${t.context.executionName}`;
+
+  t.context.failedExecutionName = cryptoRandomString({ length: 5 });
+  t.context.failedExecutionArn = `arn:aws:states:${t.context.fixture.region}:${t.context.fixture.account}:execution:${stateMachineName}:${t.context.failedExecutionName}`;
 
   t.context.provider = {
     id: `provider${cryptoRandomString({ length: 5 })}`,
@@ -532,6 +537,16 @@ test.serial(
         { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
       )
     );
+    const executionCumulusId = await t.context.executionPgModel.getRecordCumulusId(
+      t.context.testKnex,
+      { arn: executionArn }
+    );
+    t.false(
+      await t.context.granulesExecutionsPgModel.exists(
+        t.context.testKnex,
+        { execution_cumulus_id: executionCumulusId }
+      )
+    );
   }
 );
 
@@ -612,6 +627,85 @@ test.serial(
       await t.context.granulePgModel.exists(
         t.context.testKnex,
         { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+      )
+    );
+  }
+);
+
+test.serial(
+  'writeRecords() writes granule-execution association, '
+  + 'when only execution and pdr are specified in cumulus_meta.sf_event_sqs_to_db_records_types, '
+  + 'and granule already exists',
+  async (t) => {
+    const {
+      collectionCumulusId,
+      cumulusMessage,
+      testKnex,
+      executionArn,
+      failedExecutionArn,
+      failedExecutionName,
+      pdrName,
+      granuleId,
+      testOverrides,
+    } = t.context;
+
+    const executionPgModel = new ExecutionPgModel();
+    const pdrPgModel = new PdrPgModel();
+    const granulePgModel = new GranulePgModel();
+
+    cumulusMessage.meta.status = 'running';
+    await writeRecords({ cumulusMessage, knex: testKnex, testOverrides });
+
+    t.is('running', (await executionPgModel.get(testKnex, { arn: executionArn })).status);
+    t.is('running', (await granulePgModel.get(
+      testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )).status);
+    t.is('running', (await pdrPgModel.get(testKnex, { name: pdrName })).status);
+
+    const executionCumulusId = await t.context.executionPgModel.getRecordCumulusId(
+      t.context.testKnex,
+      { arn: executionArn }
+    );
+    const granuleCumulusId = await t.context.granulePgModel.getRecordCumulusId(
+      t.context.testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    );
+    t.true(
+      await t.context.granulesExecutionsPgModel.exists(
+        t.context.testKnex,
+        { granule_cumulus_id: granuleCumulusId, execution_cumulus_id: executionCumulusId }
+      )
+    );
+
+    const workflowName = 'IngestGranuleWorkflow';
+    const recordTypesToWrite = {
+      [workflowName]: {
+        failed: ['execution', 'pdr'],
+      },
+    };
+    const clonedCumulusMessage = structuredClone(cumulusMessage);
+    clonedCumulusMessage.meta.status = 'failed';
+    set(clonedCumulusMessage, 'cumulus_meta.execution_name', failedExecutionName);
+    set(clonedCumulusMessage, 'cumulus_meta.sf_event_sqs_to_db_records_types', recordTypesToWrite);
+    set(clonedCumulusMessage, 'meta.workflow_name', workflowName);
+
+    await writeRecords({ cumulusMessage: clonedCumulusMessage, knex: testKnex, testOverrides });
+
+    t.is('failed', (await executionPgModel.get(testKnex, { arn: failedExecutionArn })).status);
+    t.is('running', (await granulePgModel.get(
+      testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )).status);
+    t.is('failed', (await pdrPgModel.get(testKnex, { name: pdrName })).status);
+    const failedExecutionCumulusId = await t.context.executionPgModel.getRecordCumulusId(
+      t.context.testKnex,
+      { arn: failedExecutionArn }
+    );
+    t.true(
+      await t.context.granulesExecutionsPgModel.exists(
+        t.context.testKnex,
+        { granule_cumulus_id: granuleCumulusId, execution_cumulus_id: failedExecutionCumulusId }
       )
     );
   }

@@ -41,6 +41,7 @@ const {
 } = require('./write-pdr');
 
 const {
+  writeGranuleExecutionAssociationsFromMessage,
   writeGranulesFromMessage,
 } = require('../../lib/writeRecords/write-granules');
 
@@ -205,8 +206,18 @@ const writeRecords = async ({
       testOverrides,
     });
   }
+
+  if (shouldWriteExecutionRecords && !shouldWriteGranuleRecords && executionCumulusId) {
+    return writeGranuleExecutionAssociationsFromMessage({
+      cumulusMessage,
+      executionCumulusId,
+      knex,
+      testOverrides,
+    });
+  }
   return undefined;
 };
+
 /**
  * @typedef {import('aws-lambda').SQSRecord} SQSRecord
  * @typedef {{Records: Array<SQSRecord>, env: {[key: string]: any}, [key: string]: any}} LambdaEvent
