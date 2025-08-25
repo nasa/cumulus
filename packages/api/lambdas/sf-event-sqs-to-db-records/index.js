@@ -212,7 +212,6 @@ const writeRecords = async ({
       cumulusMessage,
       executionCumulusId,
       knex,
-      testOverrides,
     });
   }
   return undefined;
