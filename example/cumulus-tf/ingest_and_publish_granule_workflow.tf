@@ -11,6 +11,7 @@ module "ingest_and_publish_granule_workflow" {
     "${path.module}/ingest_and_publish_granule_workflow.asl.json",
     {
       add_unique_granule_id_arn: module.cumulus.add_unique_granule_id_task.task_arn,
+      sf_sqs_report_task_arn: module.cumulus.sf_sqs_report_task.task_arn,
       sync_granule_task_arn: module.cumulus.sync_granule_task.task_arn,
       add_missing_file_checksums_task_arn: module.cumulus.add_missing_file_checksums_task.task_arn,
       fake_processing_task_arn: module.cumulus.fake_processing_task.task_arn,

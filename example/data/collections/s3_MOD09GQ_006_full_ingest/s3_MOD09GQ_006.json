@@ -14,8 +14,7 @@
     "orca": {
       "excludedFileExtensions": [".met"]
     },
-    "s3MultipartChunksizeMb": 16,
-    "uniquifyGranuleId": false
+    "s3MultipartChunksizeMb": 16
   },
   "files": [
     {

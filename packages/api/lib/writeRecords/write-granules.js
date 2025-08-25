@@ -21,6 +21,7 @@ const {
   createRejectableTransaction,
   FilePgModel,
   GranulePgModel,
+  GranulesExecutionsPgModel,
   getGranulesByGranuleId,
   translateApiFiletoPostgresFile,
   upsertGranuleWithExecutionJoinRecord,
@@ -844,6 +845,62 @@ const updateGranuleFromApi = async (granule, knex) => {
 };
 
 /**
+ * Write granule-to-execution cross-references from a Cumulus message to PostgreSQL.
+ *
+ * @param {object} params - The input parameters.
+ * @param {object} params.cumulusMessage - The Cumulus workflow message.
+ * @param {number} params.executionCumulusId - Cumulus ID for the execution referenced
+ *   in the workflow message.
+ * @param {Knex} params.knex - A Knex client instance for interacting with PostgreSQL.
+ * @param {GranulePgModel} [params.granulePgModel] - Optional override for the GranulePgModel.
+ * @param {GranulesExecutionsPgModel} [params.granulesExecutionsPgModel] - Optional
+ *   override for the GranulesExecutionsPgModel.
+ * @returns {Promise<object[]|undefined>} - Results from Promise.allSettled()` for
+ *   each granule, or `undefined` if no granules exist.
+ * @throws {Error} - Throws on unexpected database errors.
+ */
+const writeGranuleExecutionAssociationsFromMessage = async ({
+  cumulusMessage,
+  executionCumulusId,
+  knex,
+  granulePgModel = new GranulePgModel(),
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel(),
+}) => {
+  if (!messageHasGranules(cumulusMessage)) {
+    log.info('No granules found in message. Skipping granules-executions cross-reference write.');
+    return undefined;
+  }
+
+  const granules = getMessageGranules(cumulusMessage);
+  const granuleIds = granules.map((granule) => granule.granuleId);
+
+  log.info(`Found granules: [${granuleIds.join(', ')}]. Fetching corresponding cumulus IDs...`);
+
+  const granuleCumulusIds = await granulePgModel.getRecordsCumulusIds(knex, ['granule_id'], granuleIds);
+
+  log.info(`Retrieved ${granuleCumulusIds.length} granule cumulus IDs for granule IDs: [${granuleIds.join(', ')}]`);
+
+  const results = await Promise.allSettled(
+    granuleCumulusIds.map((granuleCumulusId) =>
+      granulesExecutionsPgModel.upsert(knex, {
+        granule_cumulus_id: granuleCumulusId,
+        execution_cumulus_id: executionCumulusId,
+      }))
+  );
+
+  const failures = results.filter((result) => result.status === 'rejected');
+  if (failures.length > 0) {
+    const allFailures = failures.map((failure) => failure.reason);
+    const aggregateError = new AggregateError(allFailures);
+    log.error('Failed writing some granule-execution associations.', aggregateError);
+    throw aggregateError;
+  }
+
+  log.debug('Completed upsert of granule-execution associations.');
+  return results;
+};
+
+/**
  * Write granules from a cumulus message to PostgreSQL
  *
  * @param {Object} params
@@ -1069,6 +1126,7 @@ module.exports = {
   updateGranuleFromApi,
   updateGranuleStatusToQueued,
   updateGranuleStatusToFailed,
+  writeGranuleExecutionAssociationsFromMessage,
   writeGranuleFromApi,
   writeGranulesFromMessage,
   writeGranuleRecordAndPublishSns,

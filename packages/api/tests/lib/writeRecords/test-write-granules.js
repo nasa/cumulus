@@ -54,6 +54,7 @@ const {
   getGranuleFromQueryResultOrLookup,
   writeFilesViaTransaction,
   writeGranuleFromApi,
+  writeGranuleExecutionAssociationsFromMessage,
   writeGranulesFromMessage,
   _writeGranule,
   updateGranuleStatusToQueued,
@@ -466,6 +467,94 @@ test.serial('_writeGranule will not allow a running status to replace a complete
     }
   );
 });
+
+test.serial('writeGranuleExecutionAssociationsFromMessage() saves granule-execution associations to PostgreSQL',
+  async (t) => {
+    const {
+      cumulusMessage,
+      knex,
+      collectionCumulusId,
+      executionCumulusId,
+      providerCumulusId,
+      granuleId,
+      stepFunctionUtils,
+    } = t.context;
+
+    cumulusMessage.meta.status = 'running';
+
+    await writeGranulesFromMessage({
+      cumulusMessage,
+      providerCumulusId,
+      knex,
+      testOverrides: { stepFunctionUtils },
+    });
+
+    t.true(await t.context.granulePgModel.exists(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    ));
+
+    t.false(await t.context.granulesExecutionsPgModel.exists(
+      knex,
+      { execution_cumulus_id: executionCumulusId }
+    ));
+
+    t.is('running', (await t.context.granulePgModel.get(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )).status);
+
+    cumulusMessage.meta.status = 'completed';
+    await writeGranuleExecutionAssociationsFromMessage({
+      cumulusMessage,
+      executionCumulusId,
+      knex,
+    });
+
+    t.is('running', (await t.context.granulePgModel.get(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )).status);
+    t.true(await t.context.granulesExecutionsPgModel.exists(
+      knex,
+      { execution_cumulus_id: executionCumulusId }
+    ));
+  });
+
+test.serial(
+  'writeGranuleExecutionAssociationsFromMessage() does not save granule-execution associations '
+  + 'to PostgreSQL when granule does not already exist',
+  async (t) => {
+    const {
+      cumulusMessage,
+      knex,
+      collectionCumulusId,
+      executionCumulusId,
+      granuleId,
+    } = t.context;
+
+    t.false(await t.context.granulePgModel.exists(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    ));
+
+    t.false(await t.context.granulesExecutionsPgModel.exists(
+      knex,
+      { execution_cumulus_id: executionCumulusId }
+    ));
+
+    await writeGranuleExecutionAssociationsFromMessage({
+      cumulusMessage,
+      executionCumulusId,
+      knex,
+    });
+
+    t.false(await t.context.granulesExecutionsPgModel.exists(
+      knex,
+      { execution_cumulus_id: executionCumulusId }
+    ));
+  }
+);
 
 test.serial('writeGranulesFromMessage() returns undefined if message has no granules', async (t) => {
   const {
