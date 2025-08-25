@@ -371,6 +371,11 @@ variable "log_destination_arn" {
 variable "metrics_es_host" {
   type    = string
   default = null
+
+  validation {
+    condition = var.example == null || !can(regex("https://", var.example))
+    error_message = "'metrics_es_host' cannot contain 'https://'. Please provide a value without the https:// protocol."
+  }
 }
 
 variable "metrics_es_password" {
