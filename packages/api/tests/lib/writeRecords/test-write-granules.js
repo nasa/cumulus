@@ -5,6 +5,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
+const range = require('lodash/range');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
@@ -499,10 +500,11 @@ test.serial('writeGranuleExecutionAssociationsFromMessage() saves granule-execut
       { execution_cumulus_id: executionCumulusId }
     ));
 
-    t.is('running', (await t.context.granulePgModel.get(
+    const originalGranule = await t.context.granulePgModel.get(
       knex,
       { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-    )).status);
+    );
+    t.is('running', originalGranule.status);
 
     cumulusMessage.meta.status = 'completed';
     await writeGranuleExecutionAssociationsFromMessage({
@@ -511,10 +513,12 @@ test.serial('writeGranuleExecutionAssociationsFromMessage() saves granule-execut
       knex,
     });
 
-    t.is('running', (await t.context.granulePgModel.get(
+    const currentGranule = await t.context.granulePgModel.get(
       knex,
       { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-    )).status);
+    );
+
+    t.deepEqual(originalGranule, currentGranule);
     t.true(await t.context.granulesExecutionsPgModel.exists(
       knex,
       { execution_cumulus_id: executionCumulusId }
@@ -553,6 +557,63 @@ test.serial(
       knex,
       { execution_cumulus_id: executionCumulusId }
     ));
+  }
+);
+
+test.serial(
+  'writeGranuleExecutionAssociationsFromMessage() processes all granules that do not error, '
+  + 'and throws aggregateError',
+  async (t) => {
+    const {
+      cumulusMessage,
+      knex,
+      executionCumulusId,
+    } = t.context;
+
+    const granuleCount = 5;
+    const failedGranuleCount = 3;
+
+    const granuleCumulusIds = range(granuleCount).map(() =>
+      Math.floor(Math.random() * 100) + 1);
+    const getStub = sinon.stub(GranulePgModel.prototype, 'getRecordsCumulusIds')
+      .callsFake(() => granuleCumulusIds);
+
+    const errorMessage = 'fail';
+    let count = 0;
+    const upsertStub = sinon.stub(GranulesExecutionsPgModel.prototype, 'upsert')
+      .callsFake(() => {
+        count += 1;
+        if (count > failedGranuleCount - 1) {
+          return Promise.reject(errorMessage);
+        }
+        return Promise.resolve();
+      });
+    t.teardown(() => {
+      getStub.restore();
+      upsertStub.restore();
+    });
+
+    const granules = range(granuleCount).map(() => fakeGranuleFactoryV2());
+    cumulusMessage.payload.granules = granules;
+
+    const aggregateError = await t.throwsAsync(
+      writeGranuleExecutionAssociationsFromMessage({
+        cumulusMessage,
+        executionCumulusId,
+        knex,
+      })
+    );
+
+    t.true(getStub.calledOnce);
+    t.is(upsertStub.callCount, granuleCount);
+    t.deepEqual(
+      Array.from(aggregateError).map((error) => error.message),
+      [
+        errorMessage,
+        errorMessage,
+        errorMessage,
+      ]
+    );
   }
 );
 
