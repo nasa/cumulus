@@ -30,13 +30,13 @@ import { ApiFile } from '@cumulus/types/api/files';
 
 import { CmrUtilsClass } from './types';
 
-interface MetaWithGranuleQueryFields extends Message.Meta {
+export interface MetaWithGranuleQueryFields extends Message.Meta {
   granule?: {
     queryFields?: unknown
   }
 }
 
-interface MessageWithGranules extends Message.CumulusMessage {
+export interface MessageWithGranules extends Message.CumulusMessage {
   meta: MetaWithGranuleQueryFields,
   payload: {
     granules?: object[]
@@ -52,6 +52,7 @@ interface MessageWithGranules extends Message.CumulusMessage {
  *
  * @alias module:Granules
  */
+
 export const getMessageGranules = (
   message: MessageWithGranules
 ): unknown[] => message.payload?.granules ?? [];
@@ -59,14 +60,22 @@ export const getMessageGranules = (
 /**
  * Determine if message has a granules object.
  *
- * @param {MessageWithOptionalGranules} message - A workflow message object
- * @returns {boolean} true if message has a granules object
- *
+ * @param  message - A workflow message object
+ * @returns true if message has a granules object
  * @alias module:Granules
  */
-export const messageHasGranules = (
+export function messageHasGranules(
+  message: Message.CumulusMessage
+): message is MessageWithGranules;
+export function messageHasGranules(
   message: MessageWithGranules
-): boolean => getMessageGranules(message).length !== 0;
+): boolean;
+export function messageHasGranules(
+  message: Message.CumulusMessage
+): boolean {
+  const payload = message?.payload as any;
+  return Array.isArray(payload?.granules) && payload.granules.length > 0;
+}
 
 /**
  * Determine the status of a granule.
