@@ -3,6 +3,8 @@ id: granule-id-hashing-approach
 title: Unique Granule ID Generation Strategy
 ---
 
+## Unique Granule ID Generation Strategy
+
 To ensure granule uniqueness within the system, especially in scenarios where a producer might ingest a granule with the same `granuleId` multiple times (e.g., retries or reprocessing), a unique ID is generated using an entropy expansion strategy.
 
 The format for the unique granule ID is: `<producerId>_<hash>`
