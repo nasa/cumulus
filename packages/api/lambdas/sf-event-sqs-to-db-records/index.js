@@ -51,6 +51,7 @@ const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-record
 /**
  * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
  * @typedef {import('@cumulus/types/message').RecordType} RecordType
+ * @typedef {import('knex').Knex} Knex
  */
 
 /**
@@ -112,7 +113,7 @@ const determineRecordWriteFlags = (cumulusMessage) => {
  * Write records to data stores.
  *
  * @param {Object} params
- * @param {Object} params.cumulusMessage - Cumulus workflow message
+ * @param {CumulusMessage} params.cumulusMessage - Cumulus workflow message
  * @param {Knex} params.knex - Knex client
  * @param {Object} [params.testOverrides] -
  *   Optional override/mock object used for testing
