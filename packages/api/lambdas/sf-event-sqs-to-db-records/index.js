@@ -3,6 +3,7 @@
 'use strict';
 
 const get = require('lodash/get');
+const isNil = require('lodash/isNil');
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const Logger = require('@cumulus/logger');
@@ -48,40 +49,28 @@ const {
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
 /**
-@typedef {'execution' | 'granule' | 'pdr'} RecordType
-*/
+ * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
+ * @typedef {import('@cumulus/types/message').RecordType} RecordType
+ */
 
 /**
-@typedef {Object} RecordWriteFlags
+@typedef {object} RecordWriteFlags
 @property {boolean} shouldWriteExecutionRecords
 @property {boolean} shouldWriteGranuleRecords
 @property {boolean} shouldWritePdrRecords
 */
 
 /**
- * @typedef {Object} CumulusMessage
- * @property {Object} [meta]
- * @property {string} [meta.reportMessageSource]
- * @property {string} [meta.workflow_name]
- * @property {string} [meta.status]
- * @property {Object} [cumulus_meta]
- * @property {{
- *   [workflowName: string]: {
- *     [status: string]: RecordType[]
- *   }
- * }} [cumulus_meta.sf_event_sqs_to_db_records_types]
- */
-
-/**
  * Determines whether a record of the given type should be written to the database.
  *
- * @param {RecordType[] | undefined} configuredRecordTypes - An optional list of record types
- *   that are allowed to be written. If undefined, all record types are allowed.
+ * @param {RecordType[] | undefined | null } configuredRecordTypes - An optional list of
+ *   record types that are allowed to be written. If undefined, all record types are allowed.
  * @param {RecordType} recordType - The type of record to check.
  * @returns {boolean} True if the record type should be written; otherwise, false.
  */
-const isRecordTypeWritable = (configuredRecordTypes, recordType) =>
-  (configuredRecordTypes === undefined || configuredRecordTypes.includes(recordType));
+function isRecordTypeWritable(configuredRecordTypes, recordType) {
+  return (isNil(configuredRecordTypes) || configuredRecordTypes.includes(recordType));
+}
 
 /**
  * Determines which types of records should be written to the database.
@@ -125,7 +114,7 @@ const determineRecordWriteFlags = (cumulusMessage) => {
  * @param {Object} params
  * @param {Object} params.cumulusMessage - Cumulus workflow message
  * @param {Knex} params.knex - Knex client
- * @param {Object} [params.testOverrides]
+ * @param {Object} [params.testOverrides] -
  *   Optional override/mock object used for testing
  */
 const writeRecords = async ({
