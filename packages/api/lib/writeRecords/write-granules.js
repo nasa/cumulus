@@ -627,6 +627,32 @@ const _writeGranule = async ({
 };
 
 /**
+ * Filters and handles failed granule write operations from an array of Promise.allSettled results.
+ *
+ * This function examines the results of parallel granule write operations and identifies any
+ * that failed. If failures are found, it aggregates all error reasons into a single
+ * AggregateError, logs the error with the provided message, and throws the aggregated error
+ * to halt execution and provide error information to the caller.
+ *
+ * @param {Array<{status: 'fulfilled'|'rejected', value?: any, reason?: Error}>} results -
+ *   Array of results from Promise.allSettled(), where each result has a 'status' property
+ *   indicating 'fulfilled' or 'rejected'
+ * @param {string} errorMessage - Error message to log when failed writing to the database
+ * @returns {Array} - Returns the original results array if no rejected promises are detected
+ * @throws {AggregateError} -
+ */
+const _filterGranuleWriteFailures = (results, errorMessage) => {
+  const failedWrites = results.filter((result) => result.status === 'rejected');
+  if (failedWrites.length > 0) {
+    const allFailures = failedWrites.map((failure) => failure.reason);
+    const aggregateError = new AggregateError(allFailures);
+    log.error(errorMessage, aggregateError);
+    throw aggregateError;
+  }
+  return failedWrites;
+};
+
+/**
 * Method to facilitate partial granule record updates
 * @summary In cases where a full API record is not passed, but partial/tangential updates to granule
 *          records are called for, updates to files records are not required and pre-write
@@ -912,16 +938,9 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
       }))
   );
 
-  const failures = results.filter((result) => result.status === 'rejected');
-  if (failures.length > 0) {
-    const allFailures = failures.map((failure) => failure.reason);
-    const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some granule-execution associations.', aggregateError);
-    throw aggregateError;
-  }
-
+  const filteredResults = _filterGranuleWriteFailures(results, 'Failed writing some granule-execution associations');
   log.debug('Completed upsert of granule-execution associations.');
-  return results;
+  return filteredResults;
 };
 
 /**
@@ -1080,14 +1099,7 @@ const writeGranulesFromMessage = async ({
       });
     }
   ));
-  const failures = results.filter((result) => result.status === 'rejected');
-  if (failures.length > 0) {
-    const allFailures = failures.map((failure) => failure.reason);
-    const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some granules to Postgres', aggregateError);
-    throw aggregateError;
-  }
-  return results;
+  return _filterGranuleWriteFailures(results, 'Failed writing some granules to Postgres');
 };
 
 /**
