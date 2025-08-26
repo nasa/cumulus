@@ -521,7 +521,7 @@ test.serial('writeGranuleExecutionAssociationsFromMessage() saves granule-execut
     t.deepEqual(originalGranule, currentGranule);
     t.true(await t.context.granulesExecutionsPgModel.exists(
       knex,
-      { execution_cumulus_id: executionCumulusId }
+      { granule_cumulus_id: originalGranule.cumulus_id, execution_cumulus_id: executionCumulusId }
     ));
   });
 
