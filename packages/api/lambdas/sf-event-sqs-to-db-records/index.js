@@ -207,7 +207,7 @@ const writeRecords = async ({
     });
   }
 
-  if (shouldWriteExecutionRecords && !shouldWriteGranuleRecords && executionCumulusId) {
+  if (executionCumulusId && !shouldWriteGranuleRecords) {
     return writeGranuleExecutionAssociationsFromMessage({
       cumulusMessage,
       executionCumulusId,
