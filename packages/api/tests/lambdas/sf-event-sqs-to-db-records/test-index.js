@@ -591,7 +591,7 @@ test.serial(
 );
 
 test.serial(
-  'writeRecords() writes all records to PostgreSQL when meta.reportMessageSource is "lambda", '
+  'writeRecords() writes all records to PostgreSQL when meta.reportMessageSource is set, '
   + 'regardless of the record types specified in cumulus_meta.sf_event_sqs_to_db_records_types',
   async (t) => {
     const {
@@ -613,7 +613,7 @@ test.serial(
     const clonedCumulusMessage = structuredClone(cumulusMessage);
     set(clonedCumulusMessage, 'cumulus_meta.sf_event_sqs_to_db_records_types', recordTypesToWrite);
     set(clonedCumulusMessage, 'meta.workflow_name', workflowName);
-    set(clonedCumulusMessage, 'meta.reportMessageSource', 'lambda');
+    set(clonedCumulusMessage, 'meta.reportMessageSource', 'some_source');
 
     await writeRecords({ cumulusMessage: clonedCumulusMessage, knex: testKnex, testOverrides });
 

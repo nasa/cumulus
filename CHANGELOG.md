@@ -148,12 +148,12 @@ Please follow the instructions before upgrading Cumulus
 - **CUMULUS-4110**
   - Added the `workflow_configurations` variable to the `tf-modules/ingest` and
     `tf-modules/cumulus` modules.
-    Its property `sf_event_sqs_to_db_records_types` has been added to 
+    The property `sf_event_sqs_to_db_records_types` has been added to
     `workflow_template.json` under the `cumulus_meta` field to control which record
     types should be written to the database during different workflow execution statuses.
   - Updated the `SfSqsReport` task to set `meta.reportMessageSource` in the Cumulus message.
   - Updated the `@cumulus/api/sfEventSqsToDbRecords` lambda to determine which
-    record types should be written to the database based on the
+    record types ("execution", "granule", "pdr") should be written to the database based on the
     `cumulus_meta.sf_event_sqs_to_db_records_types` and `meta.reportMessageSource` fields.
     By default, all record types will be written to the database.
   - Added `@cumulus/api/lib.writeRecords.writeGranuleExecutionAssociationsFromMessage`
