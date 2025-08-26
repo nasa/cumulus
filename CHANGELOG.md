@@ -40,6 +40,9 @@ Please follow the instructions before upgrading Cumulus
   - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
 
 ### Added
+- **CUMULUS-4110**
+  - Added user docs for configuring workflows to skip specified record writes to the Cumulus datastore
+  - Docs found in `features/record__write_options.md`
 - **CUMULUS-4119**
   - Added assertions in `KinesisTestTriggerWithUniqueGranuleIdsSpec` to cover "duplicate"
     Granules in separate Collections.
