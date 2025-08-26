@@ -796,35 +796,26 @@ async function bulkPatch(req, res) {
   });
 }
 
-async function bulkUpdate(req, res) {
+const bulkArchiveSchema = z.object({
+  collectionId: z.string().optional(),
+  batchSize: z.number().positive().optional().default(100),
+  dbMaxPool: z.number().positive().optional().default(100),
+  expirationDays: z.number().positive().optional().default(365),
+
+});
+const parseBulkArchivePayload = zodParser('bulkChangeCollection payload', bulkArchiveSchema);
+async function bulkArchive(req, res) {
   const {
-    mappingFunction = pMap,
     getKnexClientMethod = getKnexClient,
   } = req.testContext || {};
+
   req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
   req.body.dbMaxPool = req.body.dbMaxPool ?? 20;
-  const body = parseBulkPatchPayload(req.body);
-
+  const body = parseBulkArchivePayload(req.body);
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
-  const granules = body.apiGranules;
-  const knex = await getKnexClientMethod({
-    env: {
-      ...process.env,
-      dbMaxPool: body.dbMaxPool.toString(),
-    },
-  });
 
-  await mappingFunction(
-    granules,
-    (apiGranule) => patchGranule({ body: apiGranule, knex, testContext: {} }, res),
-    { concurrency: body.dbConcurrency }
-  );
-
-  return res.send({
-    message: 'Successfully patched Granules',
-  });
 }
 
 /**
