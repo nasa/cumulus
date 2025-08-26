@@ -8,7 +8,8 @@ const isEmpty = require('lodash/isEmpty');
 const isNil = require('lodash/isNil');
 const omit = require('lodash/omit');
 const isNull = require('lodash/isNull');
-
+const isObject = require('lodash/isObject');
+const isString = require('lodash/isString');
 const isUndefined = require('lodash/isUndefined');
 const omitBy = require('lodash/omitBy');
 const pMap = require('p-map');
@@ -845,10 +846,37 @@ const updateGranuleFromApi = async (granule, knex) => {
 };
 
 /**
+* @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
+* @typedef {{ granuleId: string}} GranuleWithGranuleId
+*/
+
+/**
+ * Validate that every element in arr has a granuleId.
+ * Throws if any element is invalid.
+ *
+ * @param {unknown[]} unknownGranuleArray
+ * @returns {GranuleWithGranuleId[]}
+ */
+const _granulesWithIds = (unknownGranuleArray) => {
+  if (!Array.isArray(unknownGranuleArray)) {
+    throw new TypeError('Expected an array of granules');
+  }
+
+  for (const g of unknownGranuleArray) {
+    if (!(g && isObject(g) && isString(/** @type {any} */(g).granuleId))) {
+      throw new TypeError('Invalid granule: missing granuleId');
+    }
+  }
+
+  // Safe to cast, since we validated all items
+  return /** @type {GranuleWithGranuleId[]} */ (unknownGranuleArray);
+};
+
+/**
  * Write granule-to-execution cross-references from a Cumulus message to PostgreSQL.
  *
  * @param {object} params - The input parameters.
- * @param {object} params.cumulusMessage - The Cumulus workflow message.
+ * @param {CumulusMessage} params.cumulusMessage - The Cumulus workflow message.
  * @param {number} params.executionCumulusId - Cumulus ID for the execution referenced
  *   in the workflow message.
  * @param {Knex} params.knex - A Knex client instance for interacting with PostgreSQL.
@@ -871,7 +899,7 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
     return undefined;
   }
 
-  const granules = getMessageGranules(cumulusMessage);
+  const granules = _granulesWithIds(getMessageGranules(cumulusMessage));
   const granuleIds = granules.map((granule) => granule.granuleId);
 
   log.info(`Found granules: [${granuleIds.join(', ')}]. Fetching corresponding cumulus IDs...`);
