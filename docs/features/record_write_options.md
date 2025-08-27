@@ -8,9 +8,14 @@ Cumulus, by default, will write records involved in a workflow execution to the 
 
 For example, when a workflow is successfully triggered, records will be written to the datastore when that execution starts. This will include a granule record in its initial "running" state:
 
-```js
-
+```json
+{
+  "granuleId": "L2_HR_PIXC_A_zHGdMM",
+  "producerGranuleId": "L2_HR_PIXC_A",
+  "status": "running",
+}
 ```
+
 :::note
 This is an API-formatted granule. Granule records in the Postgres datastore will have different formatting.
 :::
@@ -34,4 +39,3 @@ If desired, workflows can be configured to write only specified record types whe
 :::note
 See the `sf_event_sqs_to_db_records_types` definition in [the terraform variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/variables.tf) for a complete list of the possible record types and states.
 :::
-

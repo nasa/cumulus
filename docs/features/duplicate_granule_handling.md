@@ -78,7 +78,7 @@ TODO in CUMULUS-4079
 
 An additional consideration to configuring the collection to uniquely identify granules is the record writing mechanism in the Cumulus Core framework.
 
-When a workflow executes, records are written to the Cumulus datastore including `execution`, `granule`, and `pdr` (among others). These records are written and updated to reflect the stages of the workflow execution. Initially a `granule` (for example) will be written in the `running` state. As the workflow progresses, that `granule` will be updated to either `completed` or `failed`. This presents a potential issue if the Cumulus workflow is generating a unique ID for the incoming granule as the initial write (a `granule` written as `running`) will happen _before_ the workflow task is able to generate the unique ID. The resulting record will reflect the original, non-unique `granuleId` e.g.
+When a workflow executes, records are written to the Cumulus datastore including `execution`, `granule`, and `pdr` (among others). These records are written and updated to reflect the stages of the workflow execution. Initially a `granule` (for example) will be written in the `running` state. As the workflow progresses, that `granule` will be updated to either `completed` or `failed`. This presents a potential issue if the Cumulus workflow is generating a unique ID for the incoming granule as the initial write (a `granule` written as `running`) will happen *before* the workflow task is able to generate the unique ID. The resulting record will reflect the original, non-unique `granuleId` e.g.
 
 ```json
 {
@@ -97,7 +97,7 @@ After the Granule has been assigned a unique `granuleId` in the `add-unique-gran
 
 Where the `granuleId` is now a unique value and the original `granuleId` is stored as `producerGranuleId`.
 
-In this case, it may be desirable to to _skip_ that initial record write as we do not want to attempt to write a granule with a `granuleId` that 1. may conflict with another and 2. does not represent the final `granuleId`, which could result in extraneous records.
+In this case, it may be desirable to to *skip* that initial record write as we do not want to attempt to write a granule with a `granuleId` that 1. may conflict with another and 2. does not represent the final `granuleId`, which could result in extraneous records.
 
 To configure the workflow to skip that initial `granule` write (when the granule is in the `running` state), the workflow can be configured using the `sf_event_sqs_to_db_records_types` block in the Terraform configuration. In this example using the `IngestAndPublishGranule` workflow, the configuration would be:
 
