@@ -59,7 +59,7 @@ const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-record
 @property {boolean} shouldWriteExecutionRecords
 @property {boolean} shouldWriteGranuleRecords
 @property {boolean} shouldWritePdrRecords
-*/
+ */
 
 /**
  * Determines whether a record of the given type should be written to the database.

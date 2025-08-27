@@ -30,13 +30,13 @@ import { ApiFile } from '@cumulus/types/api/files';
 
 import { CmrUtilsClass } from './types';
 
-export interface MetaWithGranuleQueryFields extends Message.Meta {
+interface MetaWithGranuleQueryFields extends Message.Meta {
   granule?: {
     queryFields?: unknown
   }
 }
 
-export interface MessageWithGranules extends Message.CumulusMessage {
+interface MessageWithGranules extends Message.CumulusMessage {
   meta: MetaWithGranuleQueryFields,
   payload: {
     granules?: object[]
@@ -46,35 +46,29 @@ export interface MessageWithGranules extends Message.CumulusMessage {
 /**
  * Get granules from payload?.granules of a workflow message.
  *
- * @param {MessageWithGranules} message - A workflow message
- * @returns {Array<Object>|undefined} An array of granule objects, or
+ * @param {Message.CumulusMessage} message - A workflow message
+ * @returns {Array<object>|undefined} An array of granule objects, or
  *   undefined if `message.payload.granules` is not set
- *
  * @alias module:Granules
  */
-
 export const getMessageGranules = (
-  message: MessageWithGranules
-): unknown[] => message.payload?.granules ?? [];
+  message: Message.CumulusMessage
+): unknown[] => {
+  const granules = (message.payload as any)?.granules;
+  return Array.isArray(granules) ? granules : [];
+};
 
 /**
  * Determine if message has a granules object.
  *
- * @param  message - A workflow message object
- * @returns true if message has a granules object
+ * @param {Message.CumulusMessage} message - A workflow message object
+ * @returns {boolean} true if message has a granules object
  * @alias module:Granules
  */
 export function messageHasGranules(
   message: Message.CumulusMessage
-): message is MessageWithGranules;
-export function messageHasGranules(
-  message: MessageWithGranules
-): boolean;
-export function messageHasGranules(
-  message: Message.CumulusMessage
-): boolean {
-  const payload = message?.payload as any;
-  return Array.isArray(payload?.granules) && payload.granules.length > 0;
+): message is MessageWithGranules {
+  return getMessageGranules(message).length > 0;
 }
 
 /**

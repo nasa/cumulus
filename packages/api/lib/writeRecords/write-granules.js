@@ -88,13 +88,16 @@ const {
 * @typedef { import('knex').Knex.Transaction } KnexTransaction
 * @typedef { import('@cumulus/types').ApiGranule } ApiGranule
 * @typedef { import('@cumulus/types').ApiGranuleRecord } ApiGranuleRecord
+* @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
 * @typedef { Granule } ApiGranuleModel
 * @typedef { import('@cumulus/db').PostgresGranuleRecord } PostgresGranuleRecord
 * @typedef { import('@cumulus/db').PostgresFile } PostgresFile
 * @typedef { import('@cumulus/db').PostgresFileRecord } PostgresFileRecord
 * @typedef { import('@cumulus/db').GranulePgModel } GranulePgModel
 * @typedef { import('@cumulus/db').FilePgModel } FilePgModel
+* @typedef {{ granuleId: string}} GranuleWithGranuleId
 */
+
 const { recordIsValid } = require('../schema');
 const granuleSchema = require('../schemas').granule;
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
@@ -846,11 +849,6 @@ const updateGranuleFromApi = async (granule, knex) => {
 };
 
 /**
-* @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
-* @typedef {{ granuleId: string}} GranuleWithGranuleId
-*/
-
-/**
  * Validate that every element in arr has a granuleId.
  * Throws if any element is invalid.
  *
@@ -862,10 +860,8 @@ const _granulesWithIds = (unknownGranuleArray) => {
     throw new TypeError('Expected an array of granules');
   }
 
-  for (const g of unknownGranuleArray) {
-    if (!(g && isObject(g) && isString(/** @type {any} */(g).granuleId))) {
-      throw new TypeError('Invalid granule: missing granuleId');
-    }
+  if (!unknownGranuleArray.every((g) => isObject(g) && g !== null && 'granuleId' in g && isString(g.granuleId))) {
+    throw new TypeError('Invalid granule: missing granuleId');
   }
 
   // Safe to cast, since we validated all items
