@@ -40,6 +40,10 @@ Please follow the instructions before upgrading Cumulus
   - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
 
 ### Added
+
+- **CUMULUS-4079**
+  - Added duplicate granule handling and related feature documentation, and updated related documentation to match
+  - Added `update-granules-cmr-metadata-file-links` task README
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules`
     table.
