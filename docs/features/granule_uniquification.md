@@ -18,14 +18,14 @@ The changes included with this feature make updates to the Cumulus database sche
 
 The intent is to modify the Cumulus database and framework to handle tracking both a unique identifier `granuleId` and provide a granule object field `producerGranuleId` that tracks an identifier from the data producer/provider that *may not* be unique.
 
-In concert with those updates, Cumulus task components that generate granule objects will be updated to optionally be configured to 'uniqify' granule objects by generating a unique `granuleId` and storing the original `granuleId` value in the `producerGranuleId` field.
+In concert with those updates, Cumulus task components that generate granule objects have been updated to optionally be configured to 'uniquify' granule objects by generating a unique `granuleId` and storing the original `granuleId` value in the `producerGranuleId` field.
 
 ### *Adding 'uniquification' to Ingest Workflows*
 
 The process of updating or creating an ingest workflow that makes use of this feature should follow the following high-level guidelines:
 
-* If providers/pre-ingest processing provides `producerGranuleId` as part of the granule object and pre-uniqifies the graunleId, Core task components will 'do the right thing' out of the box.
-* Ingest flows that have incoming granules that have only granuleId populated will need to make use of the updated Cumulus workflow task components *or* make updates to other in-use functions to make the granuleId unique  as appropriate.  For details on this, please see the following:
+* If providers/pre-ingest processing provides `producerGranuleId` as part of the granule object and pre-uniquifies the graunleId, Core task components will 'do the right thing' out of the box.
+* Ingest workflows that have incoming granules that have only granuleId populated will need to make use of the updated Cumulus workflow task components *or* make updates to other in-use functions to make the granuleId unique  as appropriate.  For details on this, please see the following:
 
   * [hashing approach document](doc:granule-id-hashing-approach) for details on the approach Cumulus components that create a `granuleId` are using.  Please also review the added task component
 
@@ -47,7 +47,7 @@ The following diagram shows expected flow and potential modification considerati
 
 ### **Uniquification Methodology**
 
-Optimally, adding a `uniqueGranuleId` and populating a relevant `producerGranuleId` in incoming granules should be done prior to ingest into Cumulus.  Cumulus maintained workflow tasks have been updated to handle incoming messages with `producerGranuleId` and `graunleId` appropriately.
+Optimally, adding a `uniqueGranuleId` and populating a relevant `producerGranuleId` in incoming granules should be done prior to ingest into Cumulus.  Cumulus maintained workflow tasks have been updated to handle incoming messages with `producerGranuleId` and `granuleId` appropriately.
 
 If that's not possible due to filename based discovery ingest, or provider process restrictions, the updated task components allow an in-workflow approach to making granuleIds unique.
 
@@ -99,7 +99,7 @@ Downstream consumers of Cumulus granule objects should not need to make modifica
 
 * **`producerGranuleId`**: This new field is intended to store the original, non-unique producer granule identification value.    This allows for traceability and correlation with the provider's source data.
 
-If using Cumulus Core reference Task Components this value will be retained from the original `granuleId`.    If using another process, or the provider is providing uniqified IDs, it's expected that `producerGranuleId` will be populated with an appropriate value.
+If using Cumulus Core reference Task Components this value will be retained from the original `granuleId`.    If using another process, or the provider is providing uniquified IDs, it's expected that `producerGranuleId` will be populated with an appropriate value.
 
 Downstream consumers of Cumulus granules objects should update to make use of this field if they intend to directly reference `producerGranuleId` or need to reconcile their records to provider records directly.
 
@@ -129,7 +129,7 @@ Task was added to provide a 'shim' option to allow for incoming granules without
 
 * Task was updated to take an optional configuration parameter `uniquifyGranules` that if set to `true` will update the granuleId for all found granules to have a unique granule hash appended to the existing ID   ([PR #3968](https://github.com/nasa/cumulus/pull/3983)).
 * Task was updated to always populate producerGranuleId for the output granule with the incoming producerGranuleId.
-* Task was updated to detect duplicate granuleIds and throw an error if uniqification is not enabled.
+* Task was updated to detect duplicate granuleIds and throw an error if uniquification is not enabled.
 
 ##### [`QueueGranules`](https://github.com/nasa/cumulus/blob/master/tasks/queue-granules/README.md)
 
