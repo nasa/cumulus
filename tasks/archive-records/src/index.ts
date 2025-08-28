@@ -54,7 +54,7 @@ const archiveRecords = async (event: Event) => {
     prefix: getRequiredEnvVar('prefix'),
     body: config
   });
-  const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod || bulkArchiveExecutionss
+  const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod || bulkArchiveExecutions
   await Promise.all([
     archiveGranulesMethod({
       prefix: getRequiredEnvVar('prefix'),
@@ -66,7 +66,7 @@ const archiveRecords = async (event: Event) => {
     }),
   ]);
   
-  return {message: 'yay'};
+  return { message: 'yay' };
 }
 
 /**
