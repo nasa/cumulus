@@ -23,21 +23,45 @@ The hashing process follows these steps:
 
 1. Construct the hash input string as:
    - `<collectionId>_<timestamp>` if includeTimestampHashKey=true
-   - `<collectionId>` if includeTimestampHashKey=false
+   - `<collectionId>` if includeTimestampHashKey=false. (default)
 2. Compute the MD5 digest of the UTF-8 encoded string.
 3. Encode the MD5 digest using Base64URL (no padding).
 4. Slice the resulting string to the configured hashLength.
 
-**Important**: Optionally the included generation code in @cumulus/ingest/granule.generateUniqueGranuleId allows configuration of the computed hash to not include `timestamp` and instead only compute a hash based on the `collectionId` to avoid duplicate re-ingest scenarios for tasks that utilize filenames for granule discovery instead of triggering workflows via messages/queues.  This has the advantage of having a predictable, separate identifier from the `producerGranuleId`, but is *not unique* within the same collection.
+    ***Important***:
+By *default* the included generation code in @cumulus/ingest/granule.generateUniqueGranuleId used in both `ParsePDR` and `AddUniqueGranuleId` tasks sets configuration of the computed hash to not include `timestamp` and instead only compute a hash based on the `collectionId` to avoid duplicate re-ingest scenarios for ingest flows that utilize filenames for granule discovery instead of triggering workflows via messages/queues, as it's believed this would be the more frequently encountered scenario versus same-collection duplicative ID scenarios.
 
+### Core Task Component Hash Value Configuration
+
+For the tasks that use this approach (`AddUniqueGranuleId` and `ParsePdr`) the values for `hashLength` and `includeTimestampHashKey` can be
+configured in the task config via `collection`, `rule` or any other message/workflow configuration hooks.
+
+### HashLength
+
+Hashlength will be the desired length of the hash that is being appended to the uniquified granuleId. For example if `hashLength` is set to `3`, when the
+`generateUniqueGranuleId` function is ran, the returned `granuleId` would be `<id>_<random string value of length 3>` (if the `id`, the original `producerGranuleId`, is `MOD.GRANULE`, a possible
+output could be `MOD.GRANULE_a1q`, with the uniquified hash value being the `a1q` which has a length of 3). By default, when this value is not set in the task config, it will be `8`.
+
+### IncludeTimestampHashKey
+
+IncludeTimestampHashKey is a boolean that controls how the unique hash is generated in the `generateUniqueGranuleId` function:
+
+- If `false`: The hash is based only on `collectionId`. This means:
+  - Duplicates within the same collection will collide, as their hash will be identical.
+  - Duplicates across different collections are supported.
+
+- If `true`: The hash includes `collectionId` and a timestamp, ensuring:
+  - All granules are uniquified, even duplicates in the same collection.
+  - Collision risk is extremely low (less than 0.1%).
 ---
 
 ## Benefits
 
-* **Idempotency on Retry/Producer ID re-issue**: The inclusion of a high-resolution timestamp ensures that if an ingest fails and is retried or a granule is re-generated with the same producer identifier, a new unique hash will be generated, preventing collisions and allowing granule versioning.
-* **Portability**: The use of MD5 and Base64URL is highly portable across languages and platforms, with standard library support in most environments.
-* **Human-Interpretability**: Users can easily identify the original producer ID from the unique granule ID.
-* **Low Complexity**: The implementation is straightforward and relies on well-understood, common libraries.
+- **Idempotency on Retry/Producer ID re-issue**: The inclusion of a high-resolution timestamp ensures that if an ingest fails and is retried or a granule is re-generated with the same producer identifier, a new unique hash will be generated, preventing collisions and allowing granule versioning.
+- **Flexibility if same-collection versioning is not desired**:  GranuleIds can be distinct across collections while still allowing same-collection collisions.
+- **Portability**: The use of MD5 and Base64URL is highly portable across languages and platforms, with standard library support in most environments.
+- **Human Interpretability**: Users can easily identify the original producer ID from the unique granule ID.
+- **Low Complexity**: The implementation is straightforward and relies on well-understood, common libraries.
 
 ---
 
@@ -45,7 +69,7 @@ The hashing process follows these steps:
 
 The primary risk is a hash collision for ingests with the same producer ID. The probability of a collision is governed by the birthday problem. (For a detailed explanation, see [Birthday problem on Wikipedia](https://en.wikipedia.org/wiki/Birthday_problem).
 
-Based on internal feature analysis, the collision risk for 10,000 ingests of granules with the same producer ID is as follows:
+Based on internal feature analysis, the collision risk for 10,000 ingests of granules with the same producer ID *when using timestamp in the hash value* is as follows:
 
 | Hash Length (chars) | Distinct Values (6 bits per char) | % Collision Risk for 10K same-ID ingests |
 | :------------------ | :-------------------------------- | :--------------------------------------- |

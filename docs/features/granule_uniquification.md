@@ -35,7 +35,7 @@ The process of updating or creating an ingest workflow that makes use of this fe
 
 * Workflows that *start* with a Cumulus message (*not* a CNM message or other format) with a payload containing granules but intend to change the ID as part of the workflow will need to reconfigure Cumulus to not report the initial granules prior to workflow steps that update the granule to have a unique Id and *optionally* update the workflow to report them as running following that uniquification using `SfSqsReportTask`.  See [relevant doc](link goes here) for more information.
 
-* *Important*: User task components, particularly any that re-implement core reference tasks, must be evaluated carefully to ensure consistent behavior in instances where the `granuleId` has been modified.
+***Important***: User task components, particularly any that re-implement core reference tasks, must be evaluated carefully to ensure consistent behavior in instances where the `granuleId` has been modified.
 
 The following diagram shows expected flow and potential modification considerations for a typical ingest flow, with orange being components that may need modification/update to make use of this feature, and green representing updated Core task components:
 
@@ -117,7 +117,7 @@ The following tasks have been added or updated from prior versions to handle and
 
 ##### [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md)
 
-Task was added to provide a 'shim' option to allow for incoming granules without a producerGranuleId to be `uniqified` as part of a workflow. A new ID is created and stored as the unique `granuleId`, with the original id in the incoming granule retained in the `producerGranuleId` field.
+Task was added to provide a 'shim' option to allow for incoming granules without a producerGranuleId to be `uniqified` as part of a workflow. A new ID is created and stored as the unique `granuleId`, with the original id in the incoming granule retained in the `producerGranuleId` field.   For details on the hashing approach used in this function see: [hashing approach document](doc:granule-id-hashing-approach)
 
 #### Updated
 
