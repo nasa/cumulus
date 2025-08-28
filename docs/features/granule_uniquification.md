@@ -71,12 +71,12 @@ Deploying a version of Cumulus with this feature enabled will result in the foll
 
 * CMR - Exported CMR metadata will now have UMMG/XML appropriate metadata populating the `ProducerGranuleId` in workflows that make use of the `Update Granules CMR Metadata File Links` task.   For more information/specifics see the [task README](https://github.com/nasa/cumulus/blob/master/tasks/update-granules-cmr-metadata-file-links/README.md)
 * Metrics - Granule objects newly ingested/updated will have the `producerGranuleId` field populated
-* Lzards - Granules ingested using the updated task component will now have `producerGranuleId` field populated as part of the lzards metadata.
+* Lzards - Granules ingested using the updated task component will now have `producerGranuleId` field populated as part of the LZARDS metadata.
 * Orca - no impacts, pending Orca updates that make use of the new field
 
 ## Migration From Prior Versions
 
-Users migrating to the release using this feature will need to migrate their database to make use of and populate the new `producer_granule_id` field in the postgres database.  Details of this transition are documented in the [upgrade notes document](doc:update-granules-to-include-producer_granule_id).
+Users migrating to the release using this feature will need to migrate their database to make use of and populate the new `producer_granule_id` field in the Postgres database.  Details of this transition are documented in the [upgrade notes document](doc:update-granules-to-include-producer_granule_id).
 
 ### Existing Workflow Updates
 
@@ -117,13 +117,13 @@ The following tasks have been added or updated from prior versions to handle and
 
 ##### [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md)
 
-Task was added to provide a 'shim' option to allow for incoming granules without a producerGranuleId to be `uniqified` as part of a workflow. A new ID is created and stored as the unique `granuleId`, with the original id in the incoming granule retained in the `producerGranuleId` field.   For details on the hashing approach used in this function see: [hashing approach document](doc:granule-id-hashing-approach)
+Task was added to provide a 'shim' option to allow for incoming granules without a producerGranuleId to be `uniqified` as part of a workflow. A new ID is created and stored as the unique `granuleId`, with the original ID in the incoming granule retained in the `producerGranuleId` field.   For details on the hashing approach used in this function see: [hashing approach document](doc:granule-id-hashing-approach)
 
 #### Updated
 
-##### [`LzardsBackup`](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md)
+##### [`LzardsBackup`](https://github.com/nasa/cumulus/blob/master/tasks/LZARDS-backup/README.md)
 
-* Task was updated to include `producerGranuleId` as part of the lzards `metadata` object
+* Task was updated to include `producerGranuleId` as part of the LZARDS `metadata` object
 
 ##### [`ParsePdr`](https://github.com/nasa/cumulus/blob/master/tasks/parse-pdr/README.md)
 
