@@ -62,7 +62,7 @@ let queues = {};
 let workflowExecution;
 
 const collectionsDir = './data/collections/ASCATB-L2-Coastal';
-const providersDir = './data/providers/PODAAC_SWOT/';
+const providersDir = './data/providers/PO.DAAC/';
 
 const workflowName = 'CNMExampleWorkflow';
 
@@ -224,10 +224,12 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
     });
 
     it('executes successfully', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
       expect(executionStatus).toEqual('SUCCEEDED');
     });
 
     it('creates an execution with the correct prefix', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
       const executionName = workflowExecution.executionArn.split(':').reverse()[0];
       expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
     });

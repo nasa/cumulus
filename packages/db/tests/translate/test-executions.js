@@ -185,6 +185,7 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
 
 test('translateApiExecutionToPostgresExecutionWithoutNilsRemoved converts API execution to Postgres, preserving null values', async (t) => {
   const apiExecution = {
+    archived: false,
     arn: 'arn:aws:lambda:us-east-1:1234:1234',
     name: `${cryptoRandomString({ length: 10 })}execution`,
     status: 'running',
@@ -205,6 +206,7 @@ test('translateApiExecutionToPostgresExecutionWithoutNilsRemoved converts API ex
   };
 
   const expectedPostgresExecution = {
+    archived: false,
     arn: apiExecution.arn,
     status: apiExecution.status,
     async_operation_cumulus_id: null,
