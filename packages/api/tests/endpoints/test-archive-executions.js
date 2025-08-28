@@ -9,21 +9,20 @@ const {
   CollectionPgModel,
   destroyLocalTestDb,
   fakeCollectionRecordFactory,
-  fakeGranuleRecordFactory,
+  fakeExecutionRecordFactory,
   generateLocalTestDb,
-  GranulePgModel,
+  ExecutionPgModel,
   localStackConnectionEnv,
   migrationDir,
-  upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { bulkArchiveGranules } = require('../../endpoints/granules');
+const { bulkArchiveExecutions } = require('../../endpoints/executions');
 
-const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
+const testDbName = `Executions_${cryptoRandomString({ length: 10 })}`;
 
-let granulePgModel;
+let executionPgModel;
 
 process.env.AccessTokensTable = randomId('token');
 process.env.stackName = randomId('stackname');
@@ -38,8 +37,8 @@ test.before((t) => {
     ...localStackConnectionEnv,
   };
 
-  granulePgModel = new GranulePgModel();
-  t.context.granulePgModel = granulePgModel;
+  executionPgModel = new ExecutionPgModel();
+  t.context.executionPgModel = executionPgModel;
 });
 
 test.beforeEach(async (t) => {
@@ -73,21 +72,20 @@ test.beforeEach(async (t) => {
   t.context.collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
 
   // create fake Postgres granule records
-  t.context.fakePGGranules = range(100).map((i) => fakeGranuleRecordFactory({
+  t.context.fakePGExecutions = range(100).map((i) => fakeExecutionRecordFactory({
     updated_at: moment().subtract(i, 'd'),
     collection_cumulus_id: t.context.collectionCumulusId,
   }));
 
-  t.context.fakePGGranuleRecords = await Promise.all(
-    t.context.fakePGGranules.map((granule) =>
-      upsertGranuleWithExecutionJoinRecord({
-        knexTransaction: t.context.knex,
-        granule,
-        executionCumulusId: t.context.testExecutionCumulusId,
-        granulePgModel: t.context.granulePgModel,
-      }))
+  t.context.fakePGExecutionRecords = await Promise.all(
+    t.context.fakePGExecutions.map((execution) =>
+      executionPgModel.upsert(
+        knex,
+        execution
+      )
+    )
   );
-  t.context.insertedPgGranules = t.context.fakePGGranuleRecords.flat();
+  t.context.insertedPgExecutions = t.context.fakePGExecutionRecords.flat();
 });
 
 test.afterEach(async (t) => {
@@ -98,7 +96,7 @@ test.afterEach(async (t) => {
   });
 });
 
-test.serial('bulkArchiveGranules archives granules more than 2 days old', async (t) => {
+test.serial('bulkArchiveExecutions archives executions more than 2 days old', async (t) => {
   const { knex } = t.context;
   const req = {
     body: {
@@ -120,12 +118,12 @@ test.serial('bulkArchiveGranules archives granules more than 2 days old', async 
     send: sinon.stub(),
   };
 
-  await bulkArchiveGranules(req, res);
+  await bulkArchiveExecutions(req, res);
   const archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        (await t.context.granulePgModel.get(knex, {
-          cumulus_id: fakeGranuleRecord[0].cumulus_id,
+    t.context.fakePGExecutionRecords.map(
+      async (fakeExecutionRecord) => (
+        (await t.context.executionPgModel.get(knex, {
+          cumulus_id: fakeExecutionRecord[0].cumulus_id,
         })).archived
       )
     )
@@ -133,7 +131,7 @@ test.serial('bulkArchiveGranules archives granules more than 2 days old', async 
   t.deepEqual(archivedPostArchived, range(100).map((i) => i > 2));
 });
 
-test.serial('bulkArchiveGranules archives granules more than 35 days old', async (t) => {
+test.serial('bulkArchiveExecutions archives executions more than 35 days old', async (t) => {
   const { knex } = t.context;
   const req = {
     body: {
@@ -155,18 +153,21 @@ test.serial('bulkArchiveGranules archives granules more than 35 days old', async
     send: sinon.stub(),
   };
 
-  await bulkArchiveGranules(req, res);
+  await bulkArchiveExecutions(req, res);
   const archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
+    t.context.fakePGExecutionRecords.map(
+      async (fakeExecutionRecord) => (
+        await t.context.executionPgModel.get(
+          knex,
+          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
+        )
       ).archived
     )
   );
   t.deepEqual(archivedPostArchived, range(100).map((i) => i > 35));
 });
 
-test.serial('bulkArchiveGranules archives only "batchSize" granules at a time', async (t) => {
+test.serial('bulkArchiveExecutions archives only "batchSize" executions at a time', async (t) => {
   const { knex } = t.context;
   const req = {
     body: {
@@ -188,18 +189,21 @@ test.serial('bulkArchiveGranules archives only "batchSize" granules at a time', 
     send: sinon.stub(),
   };
 
-  await bulkArchiveGranules(req, res);
+  await bulkArchiveExecutions(req, res);
   const archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
+    t.context.fakePGExecutionRecords.map(
+      async (fakeExecutionRecord) => (
+        await t.context.executionPgModel.get(
+          knex,
+          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
+        )
       ).archived
     )
   );
   t.is(10, archivedPostArchived.filter((archived) => archived).length);
 });
 
-test.serial('bulkArchiveGranules iterates "batchSize" granules at a time', async (t) => {
+test.serial('bulkArchiveExecutions iterates "batchSize" executions at a time', async (t) => {
   const { knex } = t.context;
   const req = {
     body: {
@@ -221,47 +225,59 @@ test.serial('bulkArchiveGranules iterates "batchSize" granules at a time', async
     send: sinon.stub(),
   };
 
-  await bulkArchiveGranules(req, res);
+  await bulkArchiveExecutions(req, res);
   let archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
+    t.context.fakePGExecutionRecords.map(
+      async (fakeExecutionRecord) => (
+        await t.context.executionPgModel.get(
+          knex,
+          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
+        )
       ).archived
     )
   );
   t.is(10, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveGranules(req, res);
+  await bulkArchiveExecutions(req, res);
   archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
+    t.context.fakePGExecutionRecords.map(
+      async (fakeExecutionRecord) => (
+        await t.context.executionPgModel.get(
+          knex,
+          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
+        )
       ).archived
     )
   );
   t.is(20, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveGranules(req, res);
+  await bulkArchiveExecutions(req, res);
   archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
+    t.context.fakePGExecutionRecords.map(
+      async (fakeExecutionRecord) => (
+        await t.context.executionPgModel.get(
+          knex,
+          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
+        )
       ).archived
     )
   );
   t.is(30, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveGranules(req, res);
+  await bulkArchiveExecutions(req, res);
   archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
+    t.context.fakePGExecutionRecords.map(
+      async (fakeExecutionRecord) => (
+        await t.context.executionPgModel.get(knex, { cumulus_id: fakeExecutionRecord[0].cumulus_id })
       ).archived
     )
   );
   t.is(40, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveGranules(req, res);
+  await bulkArchiveExecutions(req, res);
   archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
+    t.context.fakePGExecutionRecords.map(
+      async (fakeExecutionRecord) => (
+        await t.context.executionPgModel.get(
+          knex,
+          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
+        )
       ).archived
     )
   );
