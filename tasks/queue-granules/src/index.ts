@@ -161,7 +161,9 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
           await pMap(
             granuleBatch,
             (queuedGranule) => {
-              const { archived, granuleId, producerGranuleId, updatedAt, createdAt } = queuedGranule;
+              const {
+                archived, granuleId, producerGranuleId, updatedAt, createdAt,
+              } = queuedGranule;
 
               if (updatedAt && (!Number.isInteger(updatedAt) || updatedAt < 0)) {
                 throw new Error(`Invalid updatedAt value: ${queuedGranule.updatedAt} `
