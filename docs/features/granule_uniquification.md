@@ -20,7 +20,7 @@ The intent is to modify the Cumulus database and framework to handle tracking bo
 
 In concert with those updates, Cumulus task components that generate granule objects will be updated to optionally be configured to 'uniqify' granule objects by generating a unique `granuleId` and storing the original `granuleId` value in the `producerGranuleId` field.
 
-### *Adding 'uniqification' to Ingest Workflows*
+### *Adding 'uniquification' to Ingest Workflows*
 
 The process of updating or creating an ingest workflow that makes use of this feature should follow the following high-level guidelines:
 
@@ -33,7 +33,7 @@ The process of updating or creating an ingest workflow that makes use of this fe
 
   * [Updated Workflow Task Component Modifications](#updated-workflow-task-component-modifications)
 
-* Workflows that *start* with a Cumulus message (*not* a CNM message or other format) with a payload containing granules but intend to change the ID as part of the workflow will need to reconfigure Cumulus to not report the initial granules prior to workflow steps that update the granule to have a unique Id and *optionally* update the workflow to report them as running following that uniqification using `SfSqsReportTask`.  See [relevant doc](link goes here) for more information.
+* Workflows that *start* with a Cumulus message (*not* a CNM message or other format) with a payload containing granules but intend to change the ID as part of the workflow will need to reconfigure Cumulus to not report the initial granules prior to workflow steps that update the granule to have a unique Id and *optionally* update the workflow to report them as running following that uniquification using `SfSqsReportTask`.  See [relevant doc](link goes here) for more information.
 
 * *Important*: User task components, particularly any that re-implement core reference tasks, must be evaluated carefully to ensure consistent behavior in instances where the `granuleId` has been modified.
 
@@ -55,7 +55,7 @@ When a workflow is configured to utilize any of the modified tasks that generate
 
 The recommended algorithm generates an MD5 hash of the granule's `collectionId` (and optionally a timestamp) and appends a truncated version of this hash to the `producerGranuleId` to create the new unique `granuleId`.
 
-The process Cumulus Core uses to generate a unique `granuleId` can be [found in the `generateUniqueGranuleId` function here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts).
+The process Cumulus Core uses to generate a unique `granuleId` can be found in the [`generateUniqueGranuleId` function](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts).
 
 For more details on the algorithm and for implementations in other languages, see the [Hashing approach document](doc:granule-id-hashing-approach)
 
@@ -220,3 +220,19 @@ Taking it a step further, depending on the workflow configuration, users can spe
 
 :::
 
+### Workflow Example
+
+Cumulus's integration deployment provides an example of a `CNM` style workflow [here](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_workflow.asl.json) that can be used for both uniquified and non-uniquified collections.   This workflow is a typical single-workflow ingest using a Kinesis stream that is triggering workflows with a CNM message, but it uses a choice state to configurably use the [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md) task in the workflow for collections that are configured to handle this in-workflow:
+
+![CNM Workflow Example](../assets/stepfunctions_graph.png)
+
+Downstream steps have the relevant configuration values wired in from the collection configuration for steps that require it.  For example the integration test "ProcessingStep":
+
+```json
+"task_config": {
+            "bucket": "{$.meta.buckets.private.name}",
+            "collection": "{$.meta.collection}",
+            "cmrMetadataFormat": "{$.meta.cmrMetadataFormat}",
+            "additionalUrls": "{$.meta.additionalUrls}",
+            "matchFilesWithProducerGranuleId": "{$.meta.collection.meta.uniquifyGranuleId}"
+```
