@@ -104,12 +104,6 @@ def unique_granule_id(
     hash_length: int,
     include_timestamp_hash_key: bool = False
 ) -> str:
-    """
-    Mirrors Node implementation:
-      - hashString = f"{collection_id}_{time_ns}" if include_timestamp_hash_key else collection_id
-      - MD5 -> Base64URL (no '=') -> remove '_' -> slice
-      - returns f"{id}_{hashPart}"
-    """
     if include_timestamp_hash_key:
         hash_string = f"{collection_id}_{time.time_ns()}"
     else:
@@ -133,12 +127,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 public class UniqueGranuleIdGenerator {
-  /**
-   * Mirrors Node implementation:
-   * - hashString = collectionId + "_" + System.nanoTime() if includeTimestampHashKey else collectionId
-   * - MD5 -> Base64URL (no '=') -> remove '_' -> truncate
-   * - returns id + "_" + hashPart
-   */
   public static String uniqueGranuleId(
       String id,
       String collectionId,

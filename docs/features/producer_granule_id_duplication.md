@@ -1,6 +1,7 @@
 ---
 id: granule-uniquification
-title: Granule Uniquification
+title: Granule Uniquification Feature
+hide_title: false
 ---
 
 ## **Overview**
@@ -11,7 +12,7 @@ This feature is critical for systems migrating from ECS and other workflows wher
 
 This feature was added in Cumulus version 21, this document provides an overview of the feature and high level changes associated with the feature from previous versions.
 
-## Technical Approach Overview
+## Technical Approach
 
 The changes included with this feature make updates to the Cumulus database schema, granule read/write/reporting components and workflow task components.
 
@@ -24,8 +25,16 @@ In concert with those updates, Cumulus task components that generate granule obj
 The process of updating or creating an ingest workflow that makes use of this feature should follow the following high-level guidelines:
 
 * If providers/pre-ingest processing provides `producerGranuleId` as part of the granule object and pre-uniqifies the graunleId, Core task components will 'do the right thing' out of the box.
-* Ingest flows that have incoming granules that have only granuleId populated will need to make use of the updated Cumulus workflow task components *or* make updates to other in-use functions to make the granuleId unique  as     appropriate.  Please see the [hashing approach document](doc:granule-id-hashing-approach) for details on the approach Cumulus components that create a `granuleId` are using.   Please see the [uniquification cookbook](doc:uniquification-cookbook) for a concrete workflow update/example.
-* Workflows that *start* with a Cumulus message (*not* a CNM message or other format) with a payload containing granules but intend to change the ID as part of the workflow will need to reconfigure Cumulus to not report the initial granules prior to workflow steps that update the granule to have a unique Id and *optionally* update the workflow to report them as running following that uniqification using `SfSqsReportTask`.
+* Ingest flows that have incoming granules that have only granuleId populated will need to make use of the updated Cumulus workflow task components *or* make updates to other in-use functions to make the granuleId unique  as appropriate.  For details on this, please see the following:
+
+  * [hashing approach document](doc:granule-id-hashing-approach) for details on the approach Cumulus components that create a `granuleId` are using.  Please also review the added task component
+
+  * [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md) that can be utilized in workflows to update a granule with a unique `granuleId`, saving the 'original' as `producerGranuleId`.
+
+  * [Updated Workflow Task Component Modifications](#updated-workflow-task-component-modifications)
+
+* Workflows that *start* with a Cumulus message (*not* a CNM message or other format) with a payload containing granules but intend to change the ID as part of the workflow will need to reconfigure Cumulus to not report the initial granules prior to workflow steps that update the granule to have a unique Id and *optionally* update the workflow to report them as running following that uniqification using `SfSqsReportTask`.  See [relevant doc](link goes here) for more information.
+
 * *Important*: User task components, particularly any that re-implement core reference tasks, must be evaluated carefully to ensure consistent behavior in instances where the `granuleId` has been modified.
 
 The following diagram shows expected flow and potential modification considerations for a typical ingest flow, with orange being components that may need modification/update to make use of this feature, and green representing updated Core task components:
@@ -46,9 +55,13 @@ When a workflow is configured to utilize any of the modified tasks that generate
 
 The recommended algorithm generates an MD5 hash of the granule's `collectionId` (and optionally a timestamp) and appends a truncated version of this hash to the `producerGranuleId` to create the new unique `granuleId`.
 
-For more details on the algorithm and for implementations in other languages, see the [Granule Uniquification for External Tooling](./developer-guide/external-tooling-granule-uniquification.md) guide.
+The process Cumulus Core uses to generate a unique `granuleId` can be [found in the `generateUniqueGranuleId` function here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts).
+
+For more details on the algorithm and for implementations in other languages, see the [Hashing approach document](doc:granule-id-hashing-approach)
 
 There is no requirement to utilize Core's algorithm, as the workflow framework imposes no constraints outside of ensuring `producerGranuleId` is populated by a default, *however* if customization is desired, care should be taken to ensure that unique identification schemes are chosen such that unexpected collisions between granules do not occur system-wide.
+
+To make the process easier, Cumulus Core also provides a Task Component that will uniquely identify each Granule in a payload and return a modified Granule object containing a unique `granuleId` and a `producerGranuleId` containing the original `granuleId` - [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md)
 
 ---
 
@@ -65,14 +78,12 @@ Deploying a version of Cumulus with this feature enabled will result in the foll
 
 Users migrating to the release using this feature will need to migrate their database to make use of and populate the new `producer_granule_id` field in the postgres database.  Details of this transition are documented in the [upgrade notes document](doc:update-granules-to-include-producer_granule_id).
 
-### Workflow Updates
+### Existing Workflow Updates
 
-#### *Ingest Workflows Not Using Unique Identifiers*
-
-For existing ingest workflows/processes, the only functional changes are:
+For existing ingest workflows/processes not wishing to update, the only functional changes are:
 
 * The framework (post workflow event driven writes) populating a granule's `producerGranuleId` granule field with the value from the `granuleId` field if one is not provided as part of the ingest workflow.
-* CMR update task components will update the CMR metadata to include the new `producerGranuleId` in the CMR metadata
+* [`UpdateGranulesCmrMetadataFileLinks`](https://github.com/nasa/cumulus/blob/master/tasks/update-granules-cmr-metadata-file-links/README.md) will update the CMR metadata to include the new `producerGranuleId` in the CMR metadata.
 
 ---
 
@@ -92,6 +103,10 @@ If using Cumulus Core reference Task Components this value will be retained from
 
 Downstream consumers of Cumulus granules objects should update to make use of this field if they intend to directly reference `producerGranuleId` or need to reconcile their records to provider records directly.
 
+### Updated [`MoveGranules`](https://github.com/nasa/cumulus/blob/master/tasks/move-granules/README.md) 'duplicate' handling behavior
+
+Move Granules was [updated](https://github.com/nasa/cumulus/pull/4003) to validate if an archive location object collision is due to a same-collection or cross-collection collision.    If the collision is cross-collection, it will fail *regardless* of the collection configuration, to avoid inadvertent overwrites per requirements in IART-924.
+
 ### Updated Workflow Task Component Modifications
 
 The following tasks have been added or updated from prior versions to handle and/or allow conversion to use the new `producerGranuleId` field for this feature.  All Core workflow tasks that utilize a granule payload were updated to allow for producerGranuleId in the granule object schema, and are not individually listed here if that was the only update.
@@ -100,31 +115,31 @@ The following tasks have been added or updated from prior versions to handle and
 
 #### Added
 
-##### `AddUniqueGranuleId`
+##### [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md)
 
 Task was added to provide a 'shim' option to allow for incoming granules without a producerGranuleId to be `uniqified` as part of a workflow. A new ID is created and stored as the unique `granuleId`, with the original id in the incoming granule retained in the `producerGranuleId` field.
 
 #### Updated
 
-##### `LzardsBackup`
+##### [`LzardsBackup`](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md)
 
 * Task was updated to include `producerGranuleId` as part of the lzards `metadata` object
 
-##### `ParsePdr`
+##### [`ParsePdr`](https://github.com/nasa/cumulus/blob/master/tasks/parse-pdr/README.md)
 
 * Task was updated to take an optional configuration parameter `uniquifyGranules` that if set to `true` will update the granuleId for all found granules to have a unique granule hash appended to the existing ID   ([PR #3968](https://github.com/nasa/cumulus/pull/3983)).
 * Task was updated to always populate producerGranuleId for the output granule with the incoming producerGranuleId.
 * Task was updated to detect duplicate granuleIds and throw an error if uniqification is not enabled.
 
-##### `QueueGranules`
+##### [`QueueGranules`](https://github.com/nasa/cumulus/blob/master/tasks/queue-granules/README.md)
 
 * Task was updated to set `producerGranuleId` to `granuleId` if not set in the input granules ([PR #3968](https://github.com/nasa/cumulus/pull/3968))
 
-##### `UpdateGranulesCmrMetadataFileLinks`
+##### [`UpdateGranulesCmrMetadataFileLinks`](https://github.com/nasa/cumulus/blob/master/tasks/update-granules-cmr-metadata-file-links/README.md)
 
 * Task was updated to always set `granuleUR` and `producerGranuleId` in the CMR metadata file based on the passed in granule. ([PR #3997](https://github.com/nasa/cumulus/pull/3997))
 
-##### `FilesToGranules`
+##### [`FilesToGranules`](https://github.com/nasa/cumulus/blob/master/tasks/update-granules-cmr-metadata-file-links/README.md)
 
 * Task was updated to allow `producerGranuleId` in the granule schema, and added `matchFilesWithProducerGranuleId` as a configuration flag
 
@@ -134,13 +149,13 @@ Task was added to provide a 'shim' option to allow for incoming granules without
 * Granule PUT, GET, PATCH and POST will allow for `producerGranuleId` to be set.
 * `producerGranuleId` will be output from all calls that output a granule object, and update SNS topics will report them to downstream consumers as well
 
----
+## Workflow Feature Use
 
-## **Task Configuration**
+### Collection Configuration
 
-Most of the task Granule uniquification can be enabled and configured at the collection level, or optionally be provided via workflow configuration or some other workflow `meta` field.
+Most of the task Granule uniquification options in the updated task components can be enabled and configured at the collection level using `meta` , or optionally be provided via workflow configuration or a rule `meta` field.
 
-As an example, collection oriented configuration can be achieved in the Cumulus reference implementations by adding the following to the `collection.meta` object:
+As an example, collection oriented configuration can be achieved in the [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md) implementations by adding the following to the `collection.meta` object:
 
 ```json
 "meta": {
@@ -168,9 +183,40 @@ Once you've done that, you can then add task configuration hooks to the workflow
       },
 ```
 
-## More Information
+If `uniquifyGranuleId` is `true` and the Collection is ingested using a workflow that includes the `AddUniqueGranuleId` Task (required to update the granuleId), the `granuleId` will be uniquely generated using the [`generateUniqueGranuleId` function here](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts). The `hashLength` specifies how many characters the randomized hash contains. More characters offer a greater chance of uniqueness.
 
-For more details on the specifics of this feature, please see the following documentation:
+[Here is an example workflow configuration including the AddUniqueGranuleId task.](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_workflow.asl.json)
 
-* Thing one
-* Thing two
+#### Collection Path Considerations
+
+:::caution
+A Collection that is configured to uniquely identify Granules in this way means that the existing `granuleId` will change to a unique, hashed value. This is important to consider when building workflows and, in particular, specifying the S3 paths for a Granule's Files. ***This is also true for all workflows that may be run with Granules that have previously had their `granuleId` uniquely generated***
+
+In a Collection configuration, you can specify the `url_path` template that will be used to determine the final location of the Collection's Files if using the  `MoveGranules` Task Component.
+
+If that path contains a `granuleId` or anything derived from `granuleId`, notably the CMR Metadata's `GranuleUR`, that path will contain the unique value. An example containing the unique `granuleId` might look like:
+
+```json
+"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{granule.granuleId}",
+```
+
+or
+
+```json
+"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{cmrMetadata.Granule.GranuleUR}",
+```
+
+If that is NOT desirable and using the original, non-unique value is preferred, that is still possible. The Collection would need to be configured to use the `producerGranuleId`, which represents the original `granuleId` value without any uniquification, or a completely different value.
+
+```json
+"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{granule.producerGranuleId}/",
+```
+
+Taking it a step further, depending on the workflow configuration, users can specify a default using the `defaultTo` operation if the `producerGranuleId` isn't available for a given Granule.
+
+```json
+"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{defaultTo(granule.producerGranuleId, granule.granuleId)}",
+```
+
+:::
+
