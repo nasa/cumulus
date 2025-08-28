@@ -5,7 +5,7 @@
 const { z } = require('zod');
 const isError = require('lodash/isError');
 const pMap = require('p-map');
-
+const moment = require('moment');
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
@@ -16,7 +16,7 @@ const {
 const Logger = require('@cumulus/logger');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { GranuleSearch } = require('@cumulus/db');
+const { GranuleSearch, TableNames } = require('@cumulus/db');
 
 const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
 
@@ -797,27 +797,37 @@ async function bulkPatch(req, res) {
 }
 
 const bulkArchiveSchema = z.object({
-  collectionId: z.string().optional(),
+  // collectionId: z.string().optional(),
   batchSize: z.number().positive().optional().default(100),
+  dbConcurrency: z.number().positive().optional().default(50),
   dbMaxPool: z.number().positive().optional().default(100),
   expirationDays: z.number().positive().optional().default(365),
-
+  // should there be a collection mapping to be like "ok but MODA01 expires after 20 days"
 });
 const parseBulkArchivePayload = zodParser('bulkChangeCollection payload', bulkArchiveSchema);
 async function bulkArchive(req, res) {
   const {
     getKnexClientMethod = getKnexClient,
   } = req.testContext || {};
-
-  req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
-  req.body.dbMaxPool = req.body.dbMaxPool ?? 20;
   const body = parseBulkArchivePayload(req.body);
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
-
+  const knex = await getKnexClientMethod();
+  const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
+  
+  const subQuery = knex(TableNames.granules)
+    .select('cumulus_id')
+    .whereBetween('updated_at', [
+      new Date(0),
+      expirationDate,
+    ])
+    .where('archived', false)
+    .limit(body.batchSize);
+  await knex(TableNames.granules)
+    .update({ archived: true})
+    .whereIn('cumulus_id', subQuery);
 }
-
 /**
  * Delete a granule by granuleId
  *
@@ -1323,6 +1333,7 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+router.patch('/archive', bulkArchive);
 router.get('/:granuleId', getByGranuleId);
 router.get('/:collectionId/:granuleId', get);
 router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
@@ -1368,5 +1379,6 @@ module.exports = {
   patchGranuleAndReturnStatus,
   bulkPatch,
   bulkPatchGranuleCollection,
+  bulkArchive,
   router,
 };
