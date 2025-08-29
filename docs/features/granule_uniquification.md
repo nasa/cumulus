@@ -1,5 +1,5 @@
 ---
-id: granule-uniquification
+id: granule_uniquification
 title: Granule Uniquification Feature
 hide_title: false
 ---
