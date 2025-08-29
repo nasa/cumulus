@@ -8,14 +8,14 @@ resource "aws_sqs_queue" "archive_records_dead_letter_queue" {
 }
 
 resource "aws_lambda_function" "archive_records" {
-  function_name    = "${var.prefix}-archiveRecords"
-  filename         = "${path.module}/../../tasks/archive-records/dist/lambda.zip"
-source_code_hash = filebase64sha256("${path.module}/../../tasks/archive-records/dist/lambda.zip")
+  function_name    = "${var.prefix}-ArchiveRecords"
+  filename         = "${path.module}/../../tasks/archive-records/dist/webpack/lambda.zip"
+source_code_hash = filebase64sha256("${path.module}/../../tasks/archive-records/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"
-  timeout          = lookup(var.lambda_timeouts, "archiveRecords", 900)
-  memory_size      = lookup(var.lambda_memory_sizes, "archiveRecords", 128)
+  timeout          = lookup(var.lambda_timeouts, "ArchiveRecords", 900)
+  memory_size      = lookup(var.lambda_memory_sizes, "ArchiveRecords", 128)
   dead_letter_config {
     target_arn = aws_sqs_queue.archive_records_dead_letter_queue.arn
   }
