@@ -23,6 +23,7 @@ export interface ApiExecutionRecord {
   tasks?: object,
   timestamp?: number,
   type?: string,
+  archived: boolean,
 }
 
 export interface ApiExecution {
@@ -43,4 +44,5 @@ export interface ApiExecution {
   type?: string | null,
   status?: ExecutionRecordStatus,
   updatedAt?: number | null,
+  archived: boolean,
 }
