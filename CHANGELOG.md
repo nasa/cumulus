@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-4205**
+  - Add S3 Replicator lambda ARN to s3-replicator outputs
+
 ## [v20.3.0] 2025-08-18
 
 ### Notable Changes
