@@ -279,6 +279,11 @@ module.exports.granule = {
   title: 'Granule Object',
   type: 'object',
   properties: {
+    archived: {
+      title: 'archived',
+      type: 'boolean',
+      readonly: false,
+    },
     granuleId: {
       title: 'Granule ID',
       type: 'string',
@@ -724,6 +729,11 @@ module.exports.execution = {
   description: 'Keep the information about each step function execution',
   type: 'object',
   properties: {
+    archived: {
+      title: 'archived',
+      type: 'boolean',
+      readonly: false,
+    },
     arn: {
       title: 'Execution arn (this field is unique)',
       type: 'string',
