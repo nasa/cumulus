@@ -245,6 +245,6 @@ other issues that would result in the client being killed.
 
     reloptions should **NOT** includes `autovacuum_enabled=false`
 
- 8. Close the Session
+8. Close the Session
 
     Close the tmux session after the task is complete by `exit` or `<Ctrl>-b x`.
