@@ -65,7 +65,7 @@ SELECT pg_size_pretty(pg_total_relation_size('granules'));
 
 | Table Name | Original Table Size | New Table Size | Number of Rows | Migration Time |
 |---|---|---|---|---|
-| granules | 230 GB | 241 GB | 163 M | 10 hours 40 minutes (1 worker), 3 hours 40 minutes (5 workers), 2 hours 30 minutes (10 workers) |
+| granules | 230 GB | 241 GB | 163 M | 10 hours 40 minutes (1 worker)<br />3 hours 40 minutes (5 workers)<br />2 hours 30 minutes (10 workers) |
 
 ## Tools Used
 
@@ -136,6 +136,7 @@ other issues that would result in the client being killed.
     :::note
     **BATCH SIZE**: The actual number of rows updated in each batch may be less than BATCH_SIZE because
     cumulus_id values may not increase by exactly 1.
+
     **Number of parallel workers**: This value controls how many concurrent threads process batches of
     `producer_granule_id` updates. Increasing it can speed up processing but may also increase the load
     on the database. Adjust based on system capacity and performance needs.
@@ -196,8 +197,9 @@ other issues that would result in the client being killed.
     ```
 
     :::note RECOVERY_MODE
-    If the migration is incomplete (e.g., the `producer_granule_id` column is not fully populated),
-    you can run the script in **recovery mode** to resume the migration process.
+    If the migration is incomplete (e.g., the `producer_granule_id` column is partially populated),
+    you can run the script in **recovery mode** to resume the migration process. The script will skip
+    records that have already been migrated.
     :::
 
     You can find the SQL commands used for the migration
@@ -230,7 +232,7 @@ other issues that would result in the client being killed.
     "granules_producer_granule_id_index" btree (producer_granule_id)
     ```
 
-7. Make sure autovacuum is enabled again for granules table
+7. Make Sure Autovacuum Is Re-Enabled
 
    The output of `\d+ granules` should **NOT** have output `Options: autovacuum_enabled=false, toast.autovacuum_enabled=false`.
    You can also run the following query:
