@@ -220,6 +220,48 @@ Taking it a step further, depending on the workflow configuration, users can spe
 
 :::
 
+### Workflow Configuration
+
+An additional consideration to configuring the collection to uniquely identify granules is the record writing mechanism in the Cumulus Core framework.
+
+When a workflow executes, records are written to the Cumulus datastore including `execution`, `granule`, and `pdr` (among others). These records are written and updated to reflect the stages of the workflow execution. Initially a `granule` (for example) will be written in the `running` state. As the workflow progresses, that `granule` will be updated to either `completed` or `failed`. This presents a potential issue if the Cumulus workflow is generating a unique ID for the incoming granule as the initial write (a `granule` written as `running`) will happen *before* the workflow task is able to generate the unique ID. The resulting record will reflect the original, non-unique `granuleId` e.g.
+
+```json
+{
+  "granuleId": "L2_HR_PIXC_A"
+}
+```
+
+After the Granule has been assigned a unique `granuleId` in the `add-unique-granuleID` task the payload will look similar to this:
+
+```json
+{
+  "granuleId": "L2_HR_PIXC_A_zHGdMM",
+  "producerGranuleId": "L2_HR_PIXC_A"
+}
+```
+
+Where the `granuleId` is now a unique value and the original `granuleId` is stored as `producerGranuleId`.
+
+In this case, it may be desirable to to *skip* that initial record write as we do not want to attempt to write a granule with a `granuleId` that 1. may conflict with another and 2. does not represent the final `granuleId`, which could result in extraneous records.
+
+To configure the workflow to skip that initial `granule` write (when the granule is in the `running` state), the workflow can be configured using the `sf_event_sqs_to_db_records_types` block in the Terraform configuration. In this example using the `IngestAndPublishGranule` workflow, the configuration would be:
+
+```js
+{
+    sf_event_sqs_to_db_records_types = {
+        IngestAndPublishGranule = {
+            running = ["execution", "pdr"]
+        }
+    }
+}
+```
+
+`execution` and `pdr` records will be written in the `running` state. `granule` will not because it is not specified.
+
+For more information on skipping record writes see [the Record Write Options documentation](record_write_options.md)
+
+
 ### Workflow Example
 
 Cumulus's integration deployment provides an example of a `CNM` style workflow [here](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_workflow.asl.json) that can be used for both uniquified and non-uniquified collections.   This workflow is a typical single-workflow ingest using a Kinesis stream that is triggering workflows with a CNM message, but it uses a choice state to configurably use the [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md) task in the workflow for collections that are configured to handle this in-workflow:

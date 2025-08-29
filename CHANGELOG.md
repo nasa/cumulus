@@ -43,6 +43,7 @@ Please follow the instructions before upgrading Cumulus
 
 - **CUMULUS-4079**
   - Added duplicate granule handling and related feature documentation, and updated related documentation to match
+  - Added `record_write_options` documentation for logic introduced in CUMULUS-4011
   - Added `update-granules-cmr-metadata-file-links` task README
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules`
