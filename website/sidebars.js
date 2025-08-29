@@ -167,6 +167,7 @@ const sidebars = {
         'features/ancillary_metadata',
         'features/distribution-metrics',
         'features/logging-esdis-metrics',
+        'features/record_write_options',
         'features/replay-kinesis-messages',
         'features/replay-archived-sqs-messages',
         'features/granule_uniquification',
