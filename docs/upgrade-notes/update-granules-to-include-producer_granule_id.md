@@ -54,9 +54,10 @@ commands require an **exclusive lock** on the table, and populating the new colu
 it is recommended to **quiesce all database activity** during this process. This means pausing
 Ingest, Archive, and other Cumulus functions before and during the execution of these commands.
 
-The table below, from the LP DAAC SNAPSHOT database, shows table sizes before and after the
-migration commands, along with their execution times. The commands were run using 32 ACUs. Table
-sizes were measured using the following query:
+The table below, from the LP DAAC SNAPSHOT database running on Aurora Serverless v2 with
+PostgreSQL 17.4, shows the table sizes before and after the migration commands, along with their
+execution times. The commands were run using 32 ACUs, and table sizes were measured using the
+following query:
 
 ```sql
 SELECT pg_size_pretty(pg_total_relation_size('granules'));
@@ -64,7 +65,7 @@ SELECT pg_size_pretty(pg_total_relation_size('granules'));
 
 | Table Name | Original Table Size | New Table Size | Number of Rows | Migration Time |
 |---|---|---|---|---|
-| granules | 263 GB | 274 GB | 163 M | 14.5 hours (1 worker), 5.5 hours (5 workers), 4 hours (10 workers) |
+| granules | 230 GB | 241 GB | 163 M | 10 hours 40 minutes (1 worker), 3 hours 40 minutes (5 workers), 2 hours 30 minutes (10 workers) |
 
 ## Tools Used
 
@@ -109,8 +110,7 @@ other issues that would result in the client being killed.
 
     ```sh
     sudo yum install -y tmux
-    # Amazon Linux 2023
-    sudo dnf install -y postgresql15
+    sudo dnf install -y postgresql17
     sudo dnf install -y python3 python3-pip
     pip3 install --user psycopg2-binary
     ```
@@ -133,9 +133,12 @@ other issues that would result in the client being killed.
     python3 /home/ssm-user/20250425134823_granules_add_producer_granule_id.py
     ```
 
-    :::note BATCH_SIZE
-    The actual number of rows updated in each batch may be less than BATCH_SIZE because cumulus_id values
-    may not increase by exactly 1.
+    :::note
+    **BATCH SIZE**: The actual number of rows updated in each batch may be less than BATCH_SIZE because
+    cumulus_id values may not increase by exactly 1.
+    **Number of parallel workers**: This value controls how many concurrent threads process batches of
+    `producer_granule_id` updates. Increasing it can speed up processing but may also increase the load
+    on the database. Adjust based on system capacity and performance needs.
     :::
 
     Example output from migrating the LP DAAC SNAPSHOT database:
@@ -150,41 +153,46 @@ other issues that would result in the client being killed.
     Enter BATCH SIZE for populating column [100000]:
     Number of parallel workers [1]: 5
     Batch Update Recovery mode? (Y/N) [N]:
-    [2025-07-29T00:40:24.466352] Checking for duplicate granule_id values...
-    [2025-07-29T00:42:06.436400] No duplicate granule_id values found.
-    [2025-07-29T00:42:06.436562] Adding column producer_granule_id if not present...
-    [2025-07-29T00:42:06.496414] Column check complete.
-    [2025-07-29T00:42:06.496667] Fetching min/max cumulus_id values (Normal mode)...
-    [2025-07-29T00:42:06.529865] Populating cumulus_id range: 3 to 560391416
-    [2025-07-29T00:42:06.529922] Starting parallel batch update with 5 worker(s)...
-    [2025-07-29T00:42:06.555558] [Worker] Updating rows where cumulus_id BETWEEN 400003 AND 500002
-    [2025-07-29T00:42:06.555622] [Worker] Updating rows where cumulus_id BETWEEN 100003 AND 200002
-    [2025-07-29T00:42:06.555674] [Worker] Updating rows where cumulus_id BETWEEN 3 AND 100002
-    [2025-07-29T00:42:06.555659] [Worker] Updating rows where cumulus_id BETWEEN 200003 AND 300002
-    [2025-07-29T00:42:06.566189] [Worker] Updating rows where cumulus_id BETWEEN 300003 AND 400002
-    [2025-07-29T00:42:51.060512] [Worker] Updated 22931 rows where cumulus_id BETWEEN 400003 AND 500002
-    [2025-07-29T00:42:51.085174] [Worker] Updating rows where cumulus_id BETWEEN 500003 AND 600002
-    [2025-07-29T00:42:51.132408] [Worker] Updated 23062 rows where cumulus_id BETWEEN 300003 AND 400002
-    [2025-07-29T00:42:51.151860] [Worker] Updating rows where cumulus_id BETWEEN 600003 AND 700002
-    [2025-07-29T00:42:51.224615] [Worker] Updated 22829 rows where cumulus_id BETWEEN 100003 AND 200002
+    [2025-08-28T12:24:19.981864] Checking for duplicate granule_id values...
+    [2025-08-28T12:35:40.802003] No duplicate granule_id values found.
+    [2025-08-28T12:35:40.802177] Adding column producer_granule_id if not present...
+    [2025-08-28T12:35:41.279347] Column check complete.
+    [2025-08-28T12:35:41.279536] Disabling autovacuum on granules table...
+    [2025-08-28T12:35:41.293261] Autovacuum disabled.
+    [2025-08-28T12:35:41.295678] Fetching min/max cumulus_id values (Normal mode)...
+    [2025-08-28T12:35:41.336381] Populating cumulus_id range: 3 to 560391416
+    [2025-08-28T12:35:41.336432] Starting parallel batch update with 5 worker(s)...
+    [2025-08-28T12:35:41.355991] [Worker] Updating rows where cumulus_id BETWEEN 3 AND 100002
+    [2025-08-28T12:35:41.361517] [Worker] Updating rows where cumulus_id BETWEEN 200003 AND 300002
+    [2025-08-28T12:35:41.361676] [Worker] Updating rows where cumulus_id BETWEEN 100003 AND 200002
+    [2025-08-28T12:35:41.361784] [Worker] Updating rows where cumulus_id BETWEEN 300003 AND 400002
+    [2025-08-28T12:35:41.361893] [Worker] Updating rows where cumulus_id BETWEEN 400003 AND 500002
+    [2025-08-28T12:36:12.394086] [Worker] Updated 23062 rows where cumulus_id BETWEEN 300003 AND 400002
+    [2025-08-28T12:36:12.394207] [Worker] Updated 23028 rows where cumulus_id BETWEEN 200003 AND 300002
+    [2025-08-28T12:36:12.410337] [Worker] Updating rows where cumulus_id BETWEEN 500003 AND 600002
+    [2025-08-28T12:36:12.410914] [Worker] Updating rows where cumulus_id BETWEEN 600003 AND 700002
+    [2025-08-28T12:36:12.413539] [Worker] Updated 22829 rows where cumulus_id BETWEEN 100003 AND 200002
     ...
-    [2025-07-29T04:44:31.900726] [Worker] Updated 2825 rows where cumulus_id BETWEEN 560100003 AND 560200002
-    [2025-07-29T04:44:31.918739] [Worker] Updating rows where cumulus_id BETWEEN 560200003 AND 560300002
-    [2025-07-29T04:44:33.696690] [Worker] Updated 21143 rows where cumulus_id BETWEEN 560200003 AND 560300002
-    [2025-07-29T04:44:33.713739] [Worker] Updating rows where cumulus_id BETWEEN 560300003 AND 560391416
-    [2025-07-29T04:44:33.778480] [Worker] Updated 3 rows where cumulus_id BETWEEN 560300003 AND 560391416
-    [2025-07-29T04:44:35.884422] [Worker] Updated 19121 rows where cumulus_id BETWEEN 559900003 AND 560000002
-    [2025-07-29T04:44:35.986789] [Worker] Updated 16801 rows where cumulus_id BETWEEN 560000003 AND 560100002
-    [2025-07-29T04:44:38.020654] [Worker] Updated 60548 rows where cumulus_id BETWEEN 559600003 AND 559700002
-    [2025-07-29T04:44:42.108480] [Worker] Updated 59506 rows where cumulus_id BETWEEN 559500003 AND 559600002
-    [2025-07-29T04:44:42.109417] Parallel batch update complete.
-    [2025-07-29T04:44:42.113122] Setting producer_granule_id column to NOT NULL...
-    [2025-07-29T04:48:08.879740] Column is now NOT NULL.
-    [2025-07-29T04:48:08.879925] Creating index on producer_granule_id...
-    [2025-07-29T05:25:45.715523] Index created.
-    [2025-07-29T05:25:45.715731] Vacuuming granules table...
-    [2025-07-29T05:53:20.138421] Vacuum complete.
-    [2025-07-29T05:53:20.138595] Update completed successfully.
+    [2025-08-28T15:31:50.150774] [Worker] Updating rows where cumulus_id BETWEEN 560100003 AND 560200002
+    [2025-08-28T15:31:51.161134] [Worker] Updated 2825 rows where cumulus_id BETWEEN 560100003 AND 560200002
+    [2025-08-28T15:31:51.178434] [Worker] Updating rows where cumulus_id BETWEEN 560200003 AND 560300002
+    [2025-08-28T15:31:53.548197] [Worker] Updated 19121 rows where cumulus_id BETWEEN 559900003 AND 560000002
+    [2025-08-28T15:31:53.564171] [Worker] Updating rows where cumulus_id BETWEEN 560300003 AND 560391416
+    [2025-08-28T15:31:53.625941] [Worker] Updated 3 rows where cumulus_id BETWEEN 560300003 AND 560391416
+    [2025-08-28T15:31:54.883654] [Worker] Updated 16801 rows where cumulus_id BETWEEN 560000003 AND 560100002
+    [2025-08-28T15:31:57.284970] [Worker] Updated 21143 rows where cumulus_id BETWEEN 560200003 AND 560300002
+    [2025-08-28T15:31:57.933015] [Worker] Updated 60548 rows where cumulus_id BETWEEN 559600003 AND 559700002
+    [2025-08-28T15:31:58.171666] [Worker] Updated 59506 rows where cumulus_id BETWEEN 559500003 AND 559600002
+    [2025-08-28T15:31:58.172481] Parallel batch update complete.
+    [2025-08-28T15:31:58.175522] Setting producer_granule_id column to NOT NULL...
+    [2025-08-28T15:35:28.853811] Column is now NOT NULL.
+    [2025-08-28T15:35:28.853993] Creating index on producer_granule_id...
+    [2025-08-28T15:47:06.325941] Index created.
+    [2025-08-28T15:47:06.326141] Vacuuming granules table...
+    [2025-08-28T15:59:29.662899] Vacuum complete.
+    [2025-08-28T15:59:29.663072] Re-enabling autovacuum on granules table...
+    [2025-08-28T15:59:29.711125] Autovacuum re-enabled.
+    [2025-08-28T15:59:29.713473] Update completed successfully.
     ```
 
     :::note RECOVERY_MODE
@@ -222,6 +230,19 @@ other issues that would result in the client being killed.
     "granules_producer_granule_id_index" btree (producer_granule_id)
     ```
 
-7. Close the Session
+7. Make sure autovacuum is enabled again for granules table
+
+   The output of `\d+ granules` should **NOT** have output `Options: autovacuum_enabled=false, toast.autovacuum_enabled=false`.
+   You can also run the following query:
+
+    ```sh
+    SELECT relname AS table_name, reloptions
+    FROM pg_class
+    WHERE relname = 'granules';
+    ```
+
+    reloptions should **NOT** includes `autovacuum_enabled=false`
+
+ 8. Close the Session
 
     Close the tmux session after the task is complete by `exit` or `<Ctrl>-b x`.
