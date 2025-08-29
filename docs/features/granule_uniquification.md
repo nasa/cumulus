@@ -218,8 +218,6 @@ Taking it a step further, depending on the workflow configuration, users can spe
 "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{defaultTo(granule.producerGranuleId, granule.granuleId)}",
 ```
 
-:::
-
 ### Workflow Configuration
 
 An additional consideration to configuring the collection to uniquely identify granules is the record writing mechanism in the Cumulus Core framework.
@@ -257,7 +255,7 @@ To configure the workflow to skip that initial `granule` write (when the granule
 }
 ```
 
-`execution` and `pdr` records will be written in the `running` state. `granule` will not because it is not specified.
+`execution` and `pdr` records will be written in the `running` state. `granule` will not because it is not specified. As of this writing, `execution` and `pdr` must always be written. `granule` is currently the only record type that can be skipped in this way. This behavior is subject to change in the future, see below documentation for the most current Record Write Options.
 
 For more information on skipping record writes see [the Record Write Options documentation](record_write_options.md)
 
