@@ -259,7 +259,6 @@ To configure the workflow to skip that initial `granule` write (when the granule
 
 For more information on skipping record writes see [the Record Write Options documentation](record_write_options.md)
 
-
 ### Workflow Example
 
 Cumulus's integration deployment provides an example of a `CNM` style workflow [here](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_workflow.asl.json) that can be used for both uniquified and non-uniquified collections.   This workflow is a typical single-workflow ingest using a Kinesis stream that is triggering workflows with a CNM message, but it uses a choice state to configurably use the [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md) task in the workflow for collections that are configured to handle this in-workflow:
