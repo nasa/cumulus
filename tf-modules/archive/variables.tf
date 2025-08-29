@@ -367,3 +367,11 @@ variable "dead_letter_recovery_memory" {
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
+
+
+## Record Archival Configuration
+variable "daily_archive_records_schedule_expression" {
+  type    = string
+  default = "cron(0 4 * * ? *)"
+  description = "Cloud Watch cron schedule for the record archival lambda"
+}

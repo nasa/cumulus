@@ -78,6 +78,7 @@ module "archive" {
   metrics_es_username = var.metrics_es_username
 
   daily_execution_payload_cleanup_schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
+  daily_archive_records_schedule_expression = var.daily_archive_records_schedule_expression
   cleanup_running        = var.cleanup_running
   cleanup_non_running     = var.cleanup_non_running
 

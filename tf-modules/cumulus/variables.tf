@@ -613,3 +613,11 @@ variable "deploy_cumulus_workflows" {
   default = { change_granule_collections_workflow: true }
   description = "for each workflow, if true deploy that workflow"
 }
+
+
+## Record Archival Configuration
+variable "daily_archive_records_schedule_expression" {
+  type        = string
+  default     = "cron(0 4 * * ? *)"
+  description = "Cloud Watch cron schedule for the record archival lambda"
+}

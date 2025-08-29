@@ -41,8 +41,8 @@ type MassagedEventConfig = {
 } & EventConfig;
 function getParsedConfigValues(config: EventConfig): MassagedEventConfig {
   return {
-    batchSize: config.batchSize || 10000,
-    expirationDays: config.expirationDays || 365,
+    batchSize: config.batchSize || Number(process.env.BATCH_SIZE) || 10000,
+    expirationDays: config.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365,
     testMethods: config.testMethods,
   };
 }
