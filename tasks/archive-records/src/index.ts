@@ -16,32 +16,32 @@ type TestMethods = {
   archiveGranulesMethod: (params: {
     prefix: string,
     body: {
-      batchSize?: number,
+      updateLimit?: number,
       expirationDays?: number
     }
   }) => Promise<ApiGatewayLambdaHttpProxyResponse>,
   archiveExecutionsMethod: (params: {
     prefix: string,
     body: {
-      batchSize?: number,
+      updateLimit?: number,
       expirationDays?: number
     }
   }) => Promise<ApiGatewayLambdaHttpProxyResponse>,
 };
 
 type EventConfig = {
-  batchSize?: number;
+  updateLimit?: number;
   expirationDays?: number;
   testMethods?: TestMethods;
 };
 
 type MassagedEventConfig = {
-  batchSize: number;
+  updateLimit: number;
   expirationDays: number;
 } & EventConfig;
 function getParsedConfigValues(config: EventConfig): MassagedEventConfig {
   return {
-    batchSize: config.batchSize || Number(process.env.BATCH_SIZE) || 10000,
+    updateLimit: config.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000,
     expirationDays: config.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365,
     testMethods: config.testMethods,
   };

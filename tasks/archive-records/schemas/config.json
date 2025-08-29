@@ -1,0 +1,16 @@
+{
+  "title": "ArchiveRecordsConfig",
+  "description": "Describes the config used by the archive-records task",
+  "type": "object",
+  "required": [],
+  "properties": {
+    "updateLimit": {
+      "type": "number",
+      "description": "number of executions and granules to clean up in this run",
+    },
+    "expirationDays": {
+      "type": "number",
+      "description": "age to archive records after"
+    }
+  }
+}
