@@ -170,6 +170,9 @@ Please follow the instructions before upgrading Cumulus
 
 ## [Unreleased]
 
+- **CUMULUS-4205**
+  - Add S3 Replicator lambda ARN to s3-replicator outputs
+
 ## [v20.3.0] 2025-08-18
 
 ### Notable Changes

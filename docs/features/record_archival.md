@@ -1,5 +1,5 @@
 ---
-id: db_record_archive
+id: record_archival
 title: Database Record Archival
 hide_title: false
 ---
