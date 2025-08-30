@@ -31,6 +31,9 @@ BEGIN
   END IF;
 END$$;
 
+SELECT 'Disabling autovacuum on granules table ' || clock_timestamp() AS message;
+ALTER TABLE granules SET (autovacuum_enabled = false, toast.autovacuum_enabled = false);
+
 -- Populate the producer_granule_id column in batches with values from the granule_id column
 SELECT 'Populating producer_granule_id column ' || clock_timestamp() AS message;
 DO $$
@@ -63,6 +66,11 @@ SELECT 'Setting producer_granule_id column to NOT NULL ' || clock_timestamp() AS
 ALTER TABLE granules
 ALTER COLUMN producer_granule_id SET NOT NULL;
 
+SELECT 'Vacuuming granules table ' || clock_timestamp() AS message;
+VACUUM (VERBOSE, ANALYZE) granules;
+
+SELECT 'Vacuum completed at ' || clock_timestamp() AS message;
+
 -- Create index concurrently
 SELECT 'Creating index ' || clock_timestamp() AS message;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_producer_granule_id_index
@@ -70,6 +78,6 @@ ON granules(producer_granule_id);
 
 SELECT 'Creating index completed at ' || clock_timestamp() AS message;
 
-VACUUM (VERBOSE, ANALYZE) granules;
+ALTER TABLE granules RESET (autovacuum_enabled, toast.autovacuum_enabled);
 
-SELECT 'Vacuum completed at ' || clock_timestamp() AS message;
+SELECT 'Autovacuum re-enabled at ' || clock_timestamp() AS message;

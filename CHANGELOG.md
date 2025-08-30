@@ -167,6 +167,9 @@ Please follow the instructions before upgrading Cumulus
   - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
   - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
   - Added a documentation page titled `"Generate Unique GranuleId"` to explain the algorithm for generating unique `granuleIds`.
+- **CUMULUS-4209**
+  - Updated the `producer_granule_id` migration script to disable autovacuum before the
+    migration and re-enable it afterward to improve performance.
 
 ## [Unreleased]
 
