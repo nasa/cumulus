@@ -3,6 +3,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const moment = require('moment');
 const { v4: uuidv4 } = require('uuid');
 const { z } = require('zod');
 const isError = require('lodash/isError');
@@ -18,6 +19,7 @@ const {
   ExecutionPgModel,
   translatePostgresExecutionToApiExecution,
   ExecutionSearch,
+  TableNames,
 } = require('@cumulus/db');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
@@ -224,6 +226,39 @@ async function del(req, res) {
   return res.send({ message: 'Record deleted' });
 }
 
+const bulkArchiveExecutionsSchema = z.object({
+  // collectionId: z.string().optional(),
+  batchSize: z.number().positive().optional().default(100),
+  expirationDays: z.number().positive().optional().default(365),
+  // should there be a collection mapping to be like "ok but MODA01 expires after 20 days"
+});
+const parsebulkArchiveExecutionsPayload = zodParser('bulkArchiveExecutions payload', bulkArchiveExecutionsSchema);
+async function bulkArchiveExecutions(req, res) {
+  const {
+    getKnexClientMethod = getKnexClient,
+  } = req.testContext || {};
+  const body = parsebulkArchiveExecutionsPayload(req.body);
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+  const knex = await getKnexClientMethod();
+  const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
+
+  const subQuery = knex(TableNames.executions)
+    .select('cumulus_id')
+    .whereBetween('updated_at', [
+      new Date(0),
+      expirationDate,
+    ])
+    .where('archived', false)
+    .limit(body.batchSize);
+  const updatedCount = await knex(TableNames.executions)
+    .update({ archived: true })
+    .whereIn('cumulus_id', subQuery);
+
+  return res.send({ detail: `records updated: ${updatedCount}` });
+}
+
 /**
  * Get execution history for a single granule or multiple granules
  *
@@ -358,7 +393,7 @@ async function bulkDeleteExecutionsByCollection(req, res) {
   );
   return res.status(202).send({ id: asyncOperationId });
 }
-
+router.patch('/archive', bulkArchiveExecutions);
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
 router.post(
@@ -375,5 +410,6 @@ router.delete('/:arn', del);
 module.exports = {
   del,
   router,
+  bulkArchiveExecutions,
   bulkDeleteExecutionsByCollection,
 };
