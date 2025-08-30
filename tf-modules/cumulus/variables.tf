@@ -621,8 +621,10 @@ variable "workflow_configurations" {
 
     - `sf_event_sqs_to_db_records_types`: An optional nested map that controls which record types
       ("execution", "granule", "pdr") should be written to the database for each workflow and
-      workflow status("running", "completed", "failed").
+      workflow status ("running", "completed", "failed").
       This configuration is used by the `@cumulus/api/sfEventSqsToDbRecords` Lambda.
+
+      Currently, both "execution" and "pdr" must be written to the database, so the record type list must include both.
 
       If this field is not provided, or if a specific workflow/status combination is not defined,
       all record types will be written to the database by default.

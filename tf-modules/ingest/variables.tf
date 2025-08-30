@@ -227,6 +227,8 @@ variable "workflow_configurations" {
       workflow status ("running", "completed", "failed").
       This configuration is used by the `@cumulus/api/sfEventSqsToDbRecords` Lambda.
 
+      Currently, both "execution" and "pdr" must be written to the database, so the record type list must include both.
+
       If this field is not provided, or if a specific workflow/status combination is not defined,
       all record types will be written to the database by default.
 
@@ -268,11 +270,19 @@ variable "workflow_configurations" {
         ) :
         contains(["running", "completed", "failed"], status) &&
         alltrue([
+          for required_type in ["execution", "pdr"] :
+          contains(var.workflow_configurations.sf_event_sqs_to_db_records_types[workflow][status], required_type)
+        ]) &&
+        alltrue([
           for record_type in var.workflow_configurations.sf_event_sqs_to_db_records_types[workflow][status] :
           contains(["execution", "granule", "pdr"], record_type)
         ])
       ])
     ])
-    error_message = "Each status must be one of \"running\", \"completed\", or \"failed\", and each record type must be one of \"execution\", \"granule\", or \"pdr\"."
+    error_message = <<EOF
+Each status must be one of "running", "completed", or "failed".
+Each record type list must contain both "execution" and "pdr".
+Only valid record types are: "execution", "granule", "pdr".
+EOF
   }
 }
