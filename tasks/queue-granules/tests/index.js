@@ -864,18 +864,21 @@ test.serial('does not change collection id on granule', async (t) => {
   event.input.granules = [
     {
       granuleId: 'granule-1',
+      producerGranuleId: 'granule-1',
       dataType: 'http_testcollection_test-stackName-DiscoverGranules-1686092642035',
       version: '001',
       files: [],
     },
     {
       granuleId: 'granule-2',
+      producerGranuleId: 'granule-2',
       dataType: 'http_testcollection_test-stackName-DiscoverGranules-1686092642035',
       version: '001',
       files: [],
     },
     {
       granuleId: 'granule-3',
+      producerGranuleId: 'granule-3',
       dataType: 'http_testcollection_test-stackName-DiscoverGranules-1686092642035',
       version: '001',
       files: [],
@@ -900,7 +903,7 @@ test.serial('does not change collection id on granule', async (t) => {
       .map(({ args: [params] }) => params)
       .sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
     event.input.granules.map(
-      ({ granuleId, dataType, version }) => {
+      ({ granuleId, producerGranuleId, dataType, version }) => {
         const collectionId = constructCollectionId(dataType, version);
         return {
           prefix: event.config.stackName,
@@ -910,6 +913,7 @@ test.serial('does not change collection id on granule', async (t) => {
             archived: false,
             collectionId,
             granuleId,
+            producerGranuleId,
             status: 'queued',
             createdAt: createdMap[granuleId].createdAt,
             updatedAt: createdMap[granuleId].updatedAt,
@@ -931,18 +935,21 @@ test.serial('handles different collections', async (t) => {
   event.input.granules = [
     {
       granuleId: 'granule-1',
+      producerGranuleId: 'granule-1',
       dataType: 'http_testcollection_test-stackName-DiscoverGranules-1686092642035',
       version: '001',
       files: [],
     },
     {
       granuleId: 'granule-2',
+      producerGranuleId: 'granule-2',
       dataType: 'http_testcollection_test-stackName-DiscoverGranules-1686092642035',
       version: '001',
       files: [],
     },
     {
       granuleId: 'granule-3',
+      producerGranuleId: 'granule-3',
       dataType: 'http_testcollection_test-stackName-DiscoverGranules-1686092642035',
       version: '002',
       files: [],
@@ -968,7 +975,7 @@ test.serial('handles different collections', async (t) => {
       .map(({ args: [params] }) => params)
       .sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
     event.input.granules.map(
-      ({ granuleId, dataType, version }) => {
+      ({ granuleId, producerGranuleId, dataType, version }) => {
         const collectionId = constructCollectionId(dataType, version);
         return {
           prefix: event.config.stackName,
@@ -978,6 +985,7 @@ test.serial('handles different collections', async (t) => {
             archived: false,
             collectionId,
             granuleId,
+            producerGranuleId,
             status: 'queued',
             createdAt: createdMap[granuleId].createdAt,
             updatedAt: createdMap[granuleId].updatedAt,
@@ -1037,7 +1045,7 @@ test.serial('handles different providers', async (t) => {
       .map(({ args: [params] }) => params)
       .sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
     event.input.granules.map(
-      ({ granuleId, dataType, version }) => {
+      ({ granuleId, producerGranuleId, dataType, version }) => {
         const collectionId = constructCollectionId(dataType, version);
         return {
           prefix: event.config.stackName,
@@ -1047,6 +1055,7 @@ test.serial('handles different providers', async (t) => {
             archived: false,
             collectionId,
             granuleId,
+            producerGranuleId: producerGranuleId || granuleId,
             status: 'queued',
             createdAt: createdMap[granuleId].createdAt,
             updatedAt: createdMap[granuleId].updatedAt,

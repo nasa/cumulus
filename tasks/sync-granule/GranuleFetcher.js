@@ -24,6 +24,7 @@ const { handleDuplicateFile } = require('@cumulus/ingest/granule');
 /**
  * @typedef {Object} SyncGranuleGranule
  * @property {string} granuleId - The granule ID.
+ * @property {string} [producerGranuleId] - The producer granule ID.
  * @property {SyncGranuleFile[]} files - The array of files associated with the granule.
  * @property {string} [dataType] - The 'data type' of the granule, which corresponds
  * to the collection name
@@ -256,6 +257,7 @@ class GranuleFetcher {
     return {
       ingestedGranule: {
         granuleId: granule.granuleId,
+        producerGranuleId: granule.producerGranuleId,
         dataType: collectionName,
         version: collectionVersion,
         provider: this.provider.id,

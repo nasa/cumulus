@@ -46,27 +46,30 @@ interface MessageWithGranules extends Message.CumulusMessage {
 /**
  * Get granules from payload?.granules of a workflow message.
  *
- * @param {MessageWithGranules} message - A workflow message
- * @returns {Array<Object>|undefined} An array of granule objects, or
+ * @param {Message.CumulusMessage} message - A workflow message
+ * @returns {Array<object>|undefined} An array of granule objects, or
  *   undefined if `message.payload.granules` is not set
- *
  * @alias module:Granules
  */
 export const getMessageGranules = (
-  message: MessageWithGranules
-): unknown[] => message.payload?.granules ?? [];
+  message: Message.CumulusMessage
+): unknown[] => {
+  const granules = (message.payload as any)?.granules;
+  return Array.isArray(granules) ? granules : [];
+};
 
 /**
  * Determine if message has a granules object.
  *
- * @param {MessageWithOptionalGranules} message - A workflow message object
+ * @param {Message.CumulusMessage} message - A workflow message object
  * @returns {boolean} true if message has a granules object
- *
  * @alias module:Granules
  */
-export const messageHasGranules = (
-  message: MessageWithGranules
-): boolean => getMessageGranules(message).length !== 0;
+export function messageHasGranules(
+  message: Message.CumulusMessage
+): message is MessageWithGranules {
+  return getMessageGranules(message).length > 0;
+}
 
 /**
  * Determine the status of a granule.
@@ -277,6 +280,7 @@ export const generateGranuleApiRecord = async ({
   const {
     granuleId,
     cmrLink,
+    producerGranuleId,
     published,
     createdAt,
   } = granule;
@@ -308,6 +312,7 @@ export const generateGranuleApiRecord = async ({
     timestamp: recordTimestamp,
     updatedAt: recordUpdatedAt,
     duration,
+    producerGranuleId,
     productVolume,
     timeToPreprocess,
     timeToArchive,

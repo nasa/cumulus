@@ -35,7 +35,7 @@ For each granule to be written, the following constraints apply:
 
   Granule write will not be allowed if `granuleId` already exists in the database for another collection, granules in this state will be rejected to write and wind up in the [Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/)
 
-- Message granule must match the [API Granule schema](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js).
+- Message granule must match the [API Granule schema](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js), except `producerGranuleId` is optional. `producerGranuleId` is set to `granuleId` if it's absent in the message granule.
 
   If not the write will be rejected, the granule status will be updated to `failed`, and the message will wind up in the [Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/)
 
@@ -66,6 +66,8 @@ The granule object values are set based on the incoming Cumulus Message values (
 | pdrName | Taken directly from payload.pdr.name |
 | processingEndDateTime | Derived from AWS API interrogation (`sfn().describeExecution`)  based on `execution` value |
 | processingStartDateTime | Derived from AWS API interrogation (`sfn().describeExecution`)  based on `execution` value |
+| execution  | Derived from `cumulus_meta.state_machine` and `cumulus_meta.execution_name` |
+| producerGranuleId | Taken directly from `payload.granule.producerGranuleId`, if absent or `null` is specified, set it to granuleId |
 | productVolume | Sums the values of the passed in `payload.granules.files.size`.   Does not validate against S3 |
 | provider | Inferred from `meta.provider` value in cumulus message |
 | published | Taken directly from `granule.published`, if not specified or null is specified, defaults to `false` |
