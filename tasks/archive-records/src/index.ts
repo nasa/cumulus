@@ -7,7 +7,7 @@ import { bulkArchiveGranules } from '@cumulus/api-client/granules';
 import { bulkArchiveExecutions } from '@cumulus/api-client/executions';
 import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-
+import { log } from '@cumulus/common';
 type Event = {
   config: EventConfig;
 };
@@ -49,6 +49,7 @@ function getParsedConfigValues(config: EventConfig): MassagedEventConfig {
 
 const archiveRecords = async (event: Event) => {
   const config = await getParsedConfigValues(event.config);
+  log.info('running archive-records with config', JSON.stringify(config))
   const archiveGranulesMethod = config.testMethods?.archiveGranulesMethod || bulkArchiveGranules
   await archiveGranulesMethod({
     prefix: getRequiredEnvVar('prefix'),
