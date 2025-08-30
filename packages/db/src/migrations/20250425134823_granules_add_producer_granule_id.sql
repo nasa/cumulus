@@ -66,16 +66,17 @@ SELECT 'Setting producer_granule_id column to NOT NULL ' || clock_timestamp() AS
 ALTER TABLE granules
 ALTER COLUMN producer_granule_id SET NOT NULL;
 
+SELECT 'Vacuuming granules table ' || clock_timestamp() AS message;
+VACUUM (VERBOSE, ANALYZE) granules;
+
+SELECT 'Vacuum completed at ' || clock_timestamp() AS message;
+
 -- Create index concurrently
 SELECT 'Creating index ' || clock_timestamp() AS message;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_producer_granule_id_index
 ON granules(producer_granule_id);
 
 SELECT 'Creating index completed at ' || clock_timestamp() AS message;
-
-VACUUM (VERBOSE, ANALYZE) granules;
-
-SELECT 'Vacuum completed at ' || clock_timestamp() AS message;
 
 ALTER TABLE granules RESET (autovacuum_enabled, toast.autovacuum_enabled);
 

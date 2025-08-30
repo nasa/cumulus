@@ -205,8 +205,8 @@ if __name__ == "__main__":
             run_parallel_batch_update(min_id, max_id)
 
         set_column_not_null()
-        create_index()
         vacuum_table()
+        create_index()
         enable_autovacuum()
         log("Update completed successfully.")
     except Exception as err:
