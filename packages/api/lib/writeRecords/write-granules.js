@@ -681,6 +681,7 @@ const writeGranuleRecordAndPublishSns = async ({
  * @param {boolean} [granule.published] - published to cmr
  * @param {string} [granule.pdrName] - pdr name
  * @param {string} [granule.provider] - provider
+ * @param {boolean} [granule.active] - whether the granule is active or hidden
  * @param {Object} [granule.error = {}] - workflow errors
  * @param {string} [granule.createdAt = new Date().valueOf()] - time value
  * @param {string} [granule.timestamp] - timestamp
@@ -707,6 +708,7 @@ const writeGranuleRecordAndPublishSns = async ({
 const writeGranuleFromApi = async (
   {
     granuleId,
+    active,
     collectionId,
     createdAt,
     status,
@@ -770,6 +772,7 @@ const writeGranuleFromApi = async (
       granuleId,
       cmrLink,
       producerGranuleId,
+      active,
       published: publishedValue,
       createdAt: defaultCreatedAt,
       error: defaultSetError,
@@ -796,6 +799,7 @@ const writeGranuleFromApi = async (
       cmrTemporalInfo,
       cmrUtils,
       collectionId,
+      active,
       createdAt: defaultCreatedAt,
       duration,
       executionUrl: execution,
@@ -952,6 +956,7 @@ const writeGranulesFromMessage = async ({
           producerGranuleId: granule.producerGranuleId || granule.granuleId,
         },
         executionUrl,
+        active: granule.active,
         collectionId,
         provider: provider.id,
         files,

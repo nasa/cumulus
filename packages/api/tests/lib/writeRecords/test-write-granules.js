@@ -592,6 +592,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
 
   const validNullableGranuleKeys = [
     'beginningDateTime',
+    'active',
     'cmrLink',
     'createdAt',
     'duration',
@@ -924,6 +925,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
 
   const validNullableGranuleKeys = [
     'beginningDateTime',
+    'active',
     'cmrLink',
     'createdAt',
     'duration',
@@ -3541,6 +3543,7 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
 
   const validNullableGranuleKeys = [
     'beginningDateTime',
+    'active',
     'cmrLink',
     'duration',
     'endingDateTime',

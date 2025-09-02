@@ -27,6 +27,7 @@ export interface PostgresGranule extends PostgresGranuleUniqueColumns {
   processing_start_date_time?: Date | null,
   processing_end_date_time?: Date | null,
   query_fields?: unknown | null,
+  active?: boolean | null,
 }
 
 // product_volume is stored as a BigInt in Postgres. It returns from PG to Node

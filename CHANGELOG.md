@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Handle Granules with identical file names within a collection
+
+### Migration Notes
+
+#### CUMULUS-4146 Update granules table to include active column
+
+Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-4146 require a manual update to the PostgreSQL database
+  in the production environment. Please follow the instructions in []
+
+### Added
+
+- **CUMULUS-4146**
+  - Added new non-null column `active` to Postgres `granules`
+    table.
+  - Added `active` property to `granule` record schema.
+  - Created migration for `active` column and index for granules table
+
 ## Handle Granules with Identical producerGranuleId in Different Collections
 
 ### Migration Notes
