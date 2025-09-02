@@ -191,6 +191,7 @@ If `uniquifyGranuleId` is `true` and the Collection is ingested using a workflow
 
 :::caution
 A Collection that is configured to uniquely identify Granules in this way means that the existing `granuleId` will change to a unique, hashed value. This is important to consider when building workflows and, in particular, specifying the S3 paths for a Granule's Files. ***This is also true for all workflows that may be run with Granules that have previously had their `granuleId` uniquely generated***
+:::
 
 In a Collection configuration, you can specify the `url_path` template that will be used to determine the final location of the Collection's Files if using the  `MoveGranules` Task Component.
 
