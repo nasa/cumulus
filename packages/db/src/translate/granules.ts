@@ -53,7 +53,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
 }): ApiGranuleRecord => removeNilProperties({
   beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
   cmrLink: granulePgRecord.cmr_link,
-  active: granulePgRecord.active ?? false,
+  active: granulePgRecord.active,
   collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
   createdAt: granulePgRecord.created_at?.getTime(),
   duration: granulePgRecord.duration,

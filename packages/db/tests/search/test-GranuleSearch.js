@@ -150,6 +150,7 @@ test.before(async (t) => {
       time_to_process: !(num % 20)
         ? Number(t.context.granuleSearchFields.timeToPreprocess) : undefined,
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
+      active: !(num % 2),
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
     }))
   );
@@ -333,12 +334,21 @@ test('GranuleSearch supports pdrName term search', async (t) => {
 
 test('GranuleSearch supports term search for boolean field', async (t) => {
   const { knex } = t.context;
-  const queryStringParameters = {
+  let queryStringParameters = {
     limit: 200,
     published: 'true',
   };
-  const dbSearch = new GranuleSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    limit: 200,
+    active: 'false',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });

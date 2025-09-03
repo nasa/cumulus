@@ -100,6 +100,7 @@ test.beforeEach(async (t) => {
       production_date_time: new Date(Date.now() - 350 * 1000),
       provider_cumulus_id: t.context.providerCumulusId,
       published: false,
+      active: true,
       query_fields: { foo: 'bar' },
       status: 'running',
       time_to_archive: 0,
@@ -197,6 +198,7 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
   } = t.context;
 
   const expectedApiGranule = {
+    active: true,
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId: constructCollectionId('collectionName', 'collectionVersion'),
@@ -278,6 +280,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
   } = t.context;
 
   const expectedApiGranule = {
+    active: true,
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId: constructCollectionId('collectionName2', 'collectionVersion2'),
@@ -371,6 +374,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional provider', async 
 
   const providerPgRecord = fakeProviderRecordFactory();
   const expectedApiGranule = {
+    active: postgresGranule.active,
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId,
@@ -452,6 +456,7 @@ test('translatePostgresGranuleToApiGranule returns an empty array for its files 
     knex,
     fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
+      active: true,
     }),
     '*'
   );
@@ -463,6 +468,7 @@ test('translatePostgresGranuleToApiGranule returns an empty array for its files 
     producerGranuleId: pgGranule.producer_granule_id,
     status: pgGranule.status,
     updatedAt: pgGranule.updated_at.getTime(),
+    active: pgGranule.active,
     files: [],
   };
 
@@ -528,6 +534,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
   delete postgresGranule.provider_cumulus_id;
 
   const expectedApiGranule = {
+    active: true,
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId: constructCollectionId('collectionName', 'collectionVersion'),
@@ -703,6 +710,7 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granul
     time_to_process: apiGranule.timeToPreprocess,
     timestamp: new Date(apiGranule.timestamp),
     updated_at: new Date(apiGranule.updatedAt),
+    active: apiGranule.active,
   };
 
   const result = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
@@ -766,6 +774,7 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved does not remove nul
   };
 
   const expectedPostgresGranule = {
+    active: apiGranule.active,
     beginning_date_time: new Date(apiGranule.beginningDateTime),
     cmr_link: apiGranule.cmrLink,
     collection_cumulus_id: collectionCumulusId,
@@ -919,6 +928,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
     status: granuleStatus,
     cmrLink: null,
     duration: null,
+    active: null,
     pdrName: null,
     provider: null,
     published: null,
@@ -947,6 +957,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
     cmr_link: null,
     created_at: null,
     duration: null,
+    active: null,
     ending_date_time: null,
     error: null,
     last_update_date_time: null,
@@ -1005,6 +1016,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
     collection_cumulus_id: collectionCumulusId,
     granule_id: apiGranule.granuleId,
     producer_granule_id: apiGranule.producerGranuleId,
+    active: undefined,
     beginning_date_time: undefined,
     cmr_link: undefined,
     created_at: undefined,
@@ -1299,6 +1311,7 @@ test('translatePostgresGranuleResultToApiGranule converts DB result to API granu
   };
 
   const expectedApiGranule = {
+    active: true,
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId: constructCollectionId(collectionName, collectionVersion),
