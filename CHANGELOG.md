@@ -41,9 +41,6 @@ Please follow the instructions before upgrading Cumulus
 
 ### Added
 
-- **CUMULUS-4079**
-  - Added duplicate granule handling and related feature documentation, and updated related documentation to match
-  - Added `update-granules-cmr-metadata-file-links` task README
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules`
     table.
@@ -120,6 +117,9 @@ Please follow the instructions before upgrading Cumulus
   - Updated `move-granules` task to validate cross-collection file collisions
     using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
   - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
+- **CUMULUS-4079**
+  - Added duplicate granule handling and related feature documentation, and updated related documentation to match
+  - Added `update-granules-cmr-metadata-file-links` task README
 - **CUMULUS-4080**
   - Add documentation for duplicate granule handling and, specifically, Collection configuration for duplicates.
   - Update `urlPathTemplate` to allow falling back from one null/undefined interpolated value to a second argument
