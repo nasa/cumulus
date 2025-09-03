@@ -36,6 +36,12 @@ If desired, workflows can be configured to write only specified record types whe
 }
 ```
 
+:::caution
+There is a drawback to skipping the initial `granule` record write in PDR workflows. If the "running" granule is not written, there will be no link between the incoming `granule` and the incoming `pdr` until that `granule` is written. That linkage works via `granule.pdrName`, which requires the `granule` be written to the primary datastore. In this case it may be necessary to introduce an additional write step to store the `granule` _after_ the unique `granuleId` has been generated via the `add-unique-granuleID` task.
+
+[The sfs-sqs-report Task](https://github.com/nasa/cumulus/blob/master/tasks/sf-sqs-report/README.md) can be used for this purpose. If inserted after the `add-unique-granuleID` Task, the `sfs-sqs-report` Task will store the `granule` correctly with the uniquely-generated `granuleId` and `pdrName`.
+:::
+
 :::note
 See the `sf_event_sqs_to_db_records_types` definition in [the terraform variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/ingest/variables.tf) for a complete list of the possible record types and states.
 :::

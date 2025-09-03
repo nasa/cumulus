@@ -258,7 +258,7 @@ To configure the workflow to skip that initial `granule` write (when the granule
 
 `execution` and `pdr` records will be written in the `running` state. `granule` will not because it is not specified. As of this writing, `execution` and `pdr` must always be written. `granule` is currently the only record type that can be skipped in this way. This behavior is subject to change in the future, see below documentation for the most current Record Write Options.
 
-For more information on skipping record writes see [the Record Write Options documentation](record_write_options.md)
+**Important**: If skipping the initial Granule record write is desired in a **PDR workflow**, additional modification may be required. See [the Record Write Options documentation](record_write_options.md) for details on this use case as well as general documentation on skipping record writes.
 
 ### Workflow Example
 
