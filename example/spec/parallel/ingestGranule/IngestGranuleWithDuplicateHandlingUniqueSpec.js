@@ -34,7 +34,7 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
 
-const workflowName = 'IngestAndPublishGranule';
+const workflowName = 'IngestAndPublishGranuleUnique';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
