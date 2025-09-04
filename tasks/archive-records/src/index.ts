@@ -1,8 +1,5 @@
 'use-strict';
 
-import { Context } from 'aws-lambda';
-import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
-import { CumulusMessage } from '@cumulus/types/message';
 import { bulkArchiveGranules } from '@cumulus/api-client/granules';
 import { bulkArchiveExecutions } from '@cumulus/api-client/executions';
 import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
@@ -74,7 +71,7 @@ const archiveRecords = async (event: Event) => {
  * Lambda handler
  */
 /* istanbul ignore next */
-async function handler(event: Event, context: Context): Promise<Object> {
+async function handler(event: Event): Promise<Object> {
   return await archiveRecords(event);
 }
 
