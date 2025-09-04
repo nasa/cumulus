@@ -95,6 +95,7 @@ export const fakeExecutionRecordFactory = (
   const executionARN = `arn:aws:states:us-east-1:12345:execution:test-TestExecution:${executionId}`;
 
   return {
+    archived: false,
     arn: executionARN,
     url: getExecutionUrlFromArn(executionARN),
     status: 'running',
