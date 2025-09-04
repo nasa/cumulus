@@ -199,6 +199,7 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
 
   const expectedApiGranule = {
     active: true,
+    archived: false,
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId: constructCollectionId('collectionName', 'collectionVersion'),
@@ -281,6 +282,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
 
   const expectedApiGranule = {
     active: true,
+    archived: false,
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId: constructCollectionId('collectionName2', 'collectionVersion2'),
@@ -375,6 +377,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional provider', async 
   const providerPgRecord = fakeProviderRecordFactory();
   const expectedApiGranule = {
     active: postgresGranule.active,
+    archived: false,
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId,
@@ -462,6 +465,7 @@ test('translatePostgresGranuleToApiGranule returns an empty array for its files 
   );
 
   const expectedApiGranule = {
+    archived: false,
     collectionId,
     createdAt: pgGranule.created_at.getTime(),
     granuleId: pgGranule.granule_id,
@@ -535,6 +539,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
 
   const expectedApiGranule = {
     active: true,
+    archived: false,
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId: constructCollectionId('collectionName', 'collectionVersion'),
@@ -642,6 +647,7 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granul
   const dateString = new Date().toString();
 
   const apiGranule = {
+    archived: true,
     cmrLink: cryptoRandomString({ length: 10 }),
     duration: 10,
     granuleId: cryptoRandomString({ length: 5 }),
@@ -687,6 +693,7 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granul
   };
 
   const expectedPostgresGranule = {
+    archived: true,
     beginning_date_time: new Date(apiGranule.beginningDateTime),
     cmr_link: apiGranule.cmrLink,
     collection_cumulus_id: collectionCumulusId,
@@ -798,6 +805,7 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved does not remove nul
     time_to_process: undefined, // Undefined on apiGranule
     timestamp: new Date(apiGranule.timestamp),
     updated_at: new Date(apiGranule.updatedAt),
+    archived: undefined,
   };
 
   const result = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
@@ -922,6 +930,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
   };
 
   const apiGranule = {
+    archived: false,
     granuleId: cryptoRandomString({ length: 5 }),
     collectionId: constructCollectionId('name', 'version'),
     producerGranuleId: cryptoRandomString({ length: 5 }),
@@ -949,6 +958,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
   };
 
   const expectedPostgresGranule = {
+    archived: false,
     granule_id: apiGranule.granuleId,
     collection_cumulus_id: collectionCumulusId,
     producer_granule_id: apiGranule.producerGranuleId,
@@ -1012,6 +1022,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
   };
 
   const expectedPostgresGranule = {
+    archived: undefined,
     status: granuleStatus,
     collection_cumulus_id: collectionCumulusId,
     granule_id: apiGranule.granuleId,
@@ -1312,6 +1323,7 @@ test('translatePostgresGranuleResultToApiGranule converts DB result to API granu
 
   const expectedApiGranule = {
     active: true,
+    archived: false,
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId: constructCollectionId(collectionName, collectionVersion),
