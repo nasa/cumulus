@@ -1,7 +1,85 @@
 {
   "Comment": "Ingest Granule",
-  "StartAt": "SyncGranule",
+  "StartAt": "AddUniqueGranuleId",
   "States": {
+    "AddUniqueGranuleId": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "hashDepth": "6"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${add_unique_granule_id_arn}",
+      "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+      ],
+      "Catch": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "ResultPath": "$.exception",
+            "Next": "WorkflowFailed"
+          }
+      ],
+      "Next": "GranuleStatusReport"
+    },
+    "GranuleStatusReport": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "cumulus_message": {
+              "input": "{$}"
+            }
+          }
+        }
+      },
+      "ResultPath": null,
+      "Type": "Task",
+      "Resource": "${sf_sqs_report_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "SyncGranule"
+    },
     "SyncGranule": {
       "Parameters": {
         "cma": {

@@ -55,7 +55,7 @@ const {
 } = require('../../helpers/workflowUtils');
 
 const lambdaStep = new LambdaStep();
-const workflowName = 'IngestAndPublishGranule';
+const workflowName = 'IngestAndPublishGranuleUnique';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -289,7 +289,7 @@ describe('The S3 Ingest Granules workflow with uniquification enabled', () => {
     expect(['running', 'completed'].includes(record.status)).toBeTrue();
   });
 
-  it('ingests the uniquified granule', async () => {
+  it('ingests the uniquified granule with linked PDR', async () => {
     const searchResults = await waitForListGranulesResult({
       prefix: config.stackName,
       query: {
@@ -304,6 +304,7 @@ describe('The S3 Ingest Granules workflow with uniquification enabled', () => {
     expect(granules.length).toBe(1);
     expect(granules[0].producerGranuleId).toBe(inputPayload.granules[0].granuleId);
     expect(granules[0].status).toBe('completed');
+    expect(granules[0].pdrName).toBe(inputPayload.pdr.name);
     granuleIngested = granules[0];
     console.log('granuleIngested:', granuleIngested);
     ({ producerGranuleId, granuleId: uniquifiedGranuleId } = granuleIngested);
