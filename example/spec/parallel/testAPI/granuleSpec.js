@@ -445,6 +445,7 @@ describe('The Granules API', () => {
 
       const replacementGranuleWithDefaultsFilled = {
         ...replacementGranule,
+        archived: false,
         files: [],
         error: {},
         published: false,

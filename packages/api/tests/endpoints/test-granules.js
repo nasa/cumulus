@@ -2013,6 +2013,7 @@ test.serial('PATCH nullifies expected fields for existing granules', async (t) =
   });
 
   const expectedGranule = {
+    archived: false,
     collectionId,
     createdAt: translatedPostgresGranule.createdAt,
     error: {},
@@ -3197,6 +3198,7 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
 
   const expectedGranule = {
     ...newGranule,
+    archived: false, // this is a default value
     producerGranuleId: apiGranule.producerGranuleId,
     error: {}, // This is a default value for no execution
     published: false, // This is a default value
@@ -3248,6 +3250,7 @@ test.serial('PUT creates a new granule in all data stores', async (t) => {
 
   const expectedGranule = {
     ...newGranule,
+    archived: false, // this is a default
     error: {}, // This is a default value for no execution
     published: false, // This is a default value
     timestamp: translatedActualPgGranule.timestamp,
@@ -3297,6 +3300,7 @@ test.serial('PUT utilizes the collectionId from the URI if one is not provided',
     ...newGranule,
     collectionId,
     createdAt: translatedActualPgGranule.createdAt,
+    archived: false, // This is a default
     error: {}, // This is a default value for no execution
     published: false, // This is a default value
     timestamp: translatedActualPgGranule.timestamp,
@@ -3344,6 +3348,7 @@ test.serial('PUT utilizes the granuleId from the URI if one is not provided', as
     ...newGranule,
     granuleId,
     createdAt: translatedActualPgGranule.createdAt,
+    archived: false, //This is a default
     error: {}, // This is a default value for no execution
     published: false, // This is a default value
     timestamp: translatedActualPgGranule.timestamp,

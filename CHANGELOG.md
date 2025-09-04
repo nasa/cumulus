@@ -150,15 +150,45 @@ Please follow the instructions before upgrading Cumulus
   - Add integration testing for duplicate granule workflows. This includes new
     specs and workflows in the `ingestGranule`, `discoverGranules`,
     `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
+- **CUMULUS-4110**
+  - Added the `workflow_configurations` variable to the `tf-modules/ingest` and
+    `tf-modules/cumulus` modules.
+    The property `sf_event_sqs_to_db_records_types` has been added to
+    `workflow_template.json` under the `cumulus_meta` field to control which record
+    types should be written to the database during different workflow execution statuses.
+    Currently, both "execution" and "pdr" must be written to the database, so the
+    record type list must include both.
+  - Updated the `SfSqsReport` task to set `meta.reportMessageSource` in the Cumulus message.
+  - Updated the `@cumulus/api/sfEventSqsToDbRecords` lambda to determine which
+    record types ("execution", "granule", "pdr") should be written to the database based on the
+    `cumulus_meta.sf_event_sqs_to_db_records_types` and `meta.reportMessageSource` fields.
+    By default, all record types will be written to the database.
+  - Added `@cumulus/api/lib.writeRecords.writeGranuleExecutionAssociationsFromMessage`
+    to write granule-execution associations from message.
+  - Updated the `@cumulus/integration-tests` `cmr.generateAndStoreCmrXml` to
+    apply `matchFilesWithProducerGranuleId` when generaing `OnlineAccessURL`.
+- **CUMULUS-4119**
+  - Added assertions in `KinesisTestTriggerWithUniqueGranuleIdsSpec` to cover "duplicate"
+    Granules in separate Collections.
 - **CUMULUS-4162**
   - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
   - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
   - Added a documentation page titled `"Generate Unique GranuleId"` to explain the algorithm for generating unique `granuleIds`.
+- **CUMULUS-4209**
+  - Updated the `producer_granule_id` migration script to disable autovacuum before the
+    migration and re-enable it afterward to improve performance.
 
 ## [Unreleased]
 
+- **CUMULUS-4205**
+  - Add S3 Replicator lambda ARN to s3-replicator outputs
+
+## [v20.3.0] 2025-08-18
+
 ### Notable Changes
 
+- **CUMULUS-4194**
+  - update cumulus-process to 1.5.0
 - **CUMULUS-4131**
   - Users upgrading to this release will be required to update their terraform version to at least 1.12.2. Reference migration instructions are included at [https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12)
 - **CUMULUS-4176**
@@ -227,6 +257,11 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 
 - **CUMULUS-4108**
   - Added standalone lambda function code to scan and terminate old instances when they pass their 90 day expiration
+- **CUMULUS-4123**
+  - add "archived" column to granules and executions tables
+  - add "archived" field to associated data types and schemas
+  - add docs/upgrade-notes/archived_column_indexing.md docs page for database upgrade
+  - add docs/features/record_archival.md docs page for explanation
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
@@ -8832,7 +8867,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.2.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.3.0...HEAD
+[v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.3.0
 [v20.2.1]: https://github.com/nasa/cumulus/compare/v20.2.0...v20.2.1
 [v20.2.0]: https://github.com/nasa/cumulus/compare/v20.1.2...v20.2.0
 [v20.1.2]: https://github.com/nasa/cumulus/compare/v20.1.1...v20.1.2

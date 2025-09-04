@@ -48,11 +48,13 @@ export type ApiGranuleRecord = {
   timestamp?: number
   timeToArchive?: number
   timeToPreprocess?: number
+  archived: boolean
 } & PartialGranuleTemporalInfo & PartialGranuleProcessingInfo;
 
 export type ApiGranule = {
   granuleId: string
   collectionId: string
+  archived: boolean
   producerGranuleId: string
   cmrLink?: string | null
   createdAt?: number | null

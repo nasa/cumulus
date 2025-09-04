@@ -75,6 +75,24 @@ def add_column_if_needed():
             conn.commit()
     log("Column check complete.")
 
+def disable_autovacuum():
+    log("Disabling autovacuum on granules table...")
+    with get_conn(autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                ALTER TABLE granules SET (autovacuum_enabled = false, toast.autovacuum_enabled = false);
+            """)
+        log("Autovacuum disabled.")
+
+def enable_autovacuum():
+    log("Re-enabling autovacuum on granules table...")
+    with get_conn(autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                ALTER TABLE granules RESET (autovacuum_enabled, toast.autovacuum_enabled);
+            """)
+        log("Autovacuum re-enabled.")
+
 def get_min_max_ids():
     log(f"Fetching min/max cumulus_id values ({'Recovery mode' if RECOVERY_MODE else 'Normal mode'})...")
     with get_conn() as conn:
@@ -177,15 +195,20 @@ if __name__ == "__main__":
     try:
         check_for_duplicates()
         add_column_if_needed()
+        disable_autovacuum()
+
         min_id, max_id = get_min_max_ids()
         if min_id is None or max_id is None:
             log("No rows to populate.")
         else:
             log(f"Populating cumulus_id range: {min_id} to {max_id}")
             run_parallel_batch_update(min_id, max_id)
+
         set_column_not_null()
-        create_index()
         vacuum_table()
+        create_index()
+        enable_autovacuum()
         log("Update completed successfully.")
     except Exception as err:
         log(f"Aborted: {err}")
+        enable_autovacuum()
