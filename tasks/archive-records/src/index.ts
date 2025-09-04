@@ -6,7 +6,7 @@ import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { log } from '@cumulus/common';
 type Event = {
-  config: EventConfig;
+  config?: EventConfig;
 };
 
 type TestMethods = {
@@ -36,36 +36,36 @@ type MassagedEventConfig = {
   updateLimit: number;
   expirationDays: number;
 } & EventConfig;
-function getParsedConfigValues(config: EventConfig): MassagedEventConfig {
+function getParsedConfigValues(config: EventConfig | undefined): MassagedEventConfig {
   return {
-    updateLimit: config.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000,
-    expirationDays: config.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365,
-    testMethods: config.testMethods,
+    updateLimit: config?.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000,
+    expirationDays: config?.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365,
+    testMethods: config?.testMethods,
   };
 }
 
 const archiveRecords = async (event: Event) => {
   const config = await getParsedConfigValues(event.config);
-  log.info('running archive-records with config', JSON.stringify(config))
-  const archiveGranulesMethod = config.testMethods?.archiveGranulesMethod || bulkArchiveGranules
+  log.info('running archive-records with config', JSON.stringify(config));
+  const archiveGranulesMethod = config.testMethods?.archiveGranulesMethod || bulkArchiveGranules;
   await archiveGranulesMethod({
-    prefix: getRequiredEnvVar('prefix'),
-    body: config
+    prefix: getRequiredEnvVar('stackName'),
+    body: config,
   });
-  const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod || bulkArchiveExecutions
+  const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod
+    || bulkArchiveExecutions;
   await Promise.all([
     archiveGranulesMethod({
-      prefix: getRequiredEnvVar('prefix'),
-      body: config
+      prefix: getRequiredEnvVar('stackName'),
+      body: config,
     }),
     archiveExecutionsMethod({
-      prefix: getRequiredEnvVar('prefix'),
-      body: config
+      prefix: getRequiredEnvVar('stackName'),
+      body: config,
     }),
   ]);
-  
   return { message: 'yay' };
-}
+};
 
 /**
  * Lambda handler

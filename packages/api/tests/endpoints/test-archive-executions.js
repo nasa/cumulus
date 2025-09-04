@@ -78,12 +78,10 @@ test.beforeEach(async (t) => {
   }));
 
   t.context.fakePGExecutionRecords = await Promise.all(
-    t.context.fakePGExecutions.map((execution) =>
-      executionPgModel.upsert(
-        knex,
-        execution
-      )
-    )
+    t.context.fakePGExecutions.map((execution) => executionPgModel.upsert(
+      knex,
+      execution
+    ))
   );
   t.context.insertedPgExecutions = t.context.fakePGExecutionRecords.flat();
 });
@@ -265,7 +263,10 @@ test.serial('bulkArchiveExecutions iterates "batchSize" executions at a time', a
   archivedPostArchived = await Promise.all(
     t.context.fakePGExecutionRecords.map(
       async (fakeExecutionRecord) => (
-        await t.context.executionPgModel.get(knex, { cumulus_id: fakeExecutionRecord[0].cumulus_id })
+        await t.context.executionPgModel.get(
+          knex,
+          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
+        )
       ).archived
     )
   );
