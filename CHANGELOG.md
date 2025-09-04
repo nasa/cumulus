@@ -154,6 +154,8 @@ Please follow the instructions before upgrading Cumulus
     The property `sf_event_sqs_to_db_records_types` has been added to
     `workflow_template.json` under the `cumulus_meta` field to control which record
     types should be written to the database during different workflow execution statuses.
+    Currently, both "execution" and "pdr" must be written to the database, so the
+    record type list must include both.
   - Updated the `SfSqsReport` task to set `meta.reportMessageSource` in the Cumulus message.
   - Updated the `@cumulus/api/sfEventSqsToDbRecords` lambda to determine which
     record types ("execution", "granule", "pdr") should be written to the database based on the
