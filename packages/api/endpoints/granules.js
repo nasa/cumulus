@@ -808,6 +808,7 @@ async function bulkArchiveGranules(req, res) {
     getKnexClientMethod = getKnexClient,
   } = req.testContext || {};
   const body = parsebulkArchiveGranulesPayload(req.body);
+  console.log(body)
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
