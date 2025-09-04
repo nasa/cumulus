@@ -1,6 +1,6 @@
 {
     "name": "@cumulus/archive-records",
-    "version": "20.2.0",
+    "version": "20.3.0",
     "description": "flag records in database as 'archived' once they are past a certain age",
     "private": true,
     "main": "dist/index.js",
@@ -42,10 +42,10 @@
     "author": "Cumulus Authors",
     "license": "Apache-2.0",
     "dependencies": {
-      "@cumulus/api-client": "20.2.0",
-      "@cumulus/common": "20.2.0",
+      "@cumulus/api-client": "20.3.0",
+      "@cumulus/common": "20.3.0",
       "@cumulus/cumulus-message-adapter-js": "2.2.0",
-      "@cumulus/types": "20.2.0"
+      "@cumulus/types": "20.3.0"
     }
   }
   

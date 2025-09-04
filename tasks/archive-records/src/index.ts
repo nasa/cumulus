@@ -75,6 +75,8 @@ const archiveRecords = async (event: Event) => {
  */
 /* istanbul ignore next */
 async function handler(event: CumulusMessage, context: Context): Promise<Object> {
+  console.log('event:', event);
+  console.log('context:', context);
   return await runCumulusTask(archiveRecords, event, context);
 }
 
