@@ -21,9 +21,8 @@ describe('The Add Unique Granule Id Task ', () => {
   let prefix;
   let functionOutput;
   const pdr = {
-    pdrName: 'fakePdr',
-    provider: 'fakeProvider',
-    collectionId: 'FAKECOLLECTION___001',
+    name: 'fakePdr',
+    path: 'some-pdr-path',
   };
 
   const testSetup = async (configOverride = {}) => {
