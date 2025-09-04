@@ -33,7 +33,7 @@ The process of updating or creating an ingest workflow that makes use of this fe
 
   * [Updated Workflow Task Component Modifications](#updated-workflow-task-component-modifications)
 
-* Workflows that *start* with a Cumulus message (*not* a CNM message or other format) with a payload containing granules but intend to change the ID as part of the workflow will need to reconfigure Cumulus to not report the initial granules prior to workflow steps that update the granule to have a unique Id and *optionally* update the workflow to report them as running following that uniquification using `SfSqsReportTask`.  See [relevant doc](link goes here) for more information.
+* Workflows that *start* with a Cumulus message (*not* a CNM message or other format) with a payload containing granules but intend to change the ID as part of the workflow will need to reconfigure Cumulus to not report the initial granules prior to workflow steps that update the granule to have a unique Id and *optionally* update the workflow to report them as running following that uniquification using `SfSqsReportTask`.  See [Record Write Options feature doc](./record_write_options.md) for more information.
 
 ***Important***: User task components, particularly any that re-implement core reference tasks, must be evaluated carefully to ensure consistent behavior in instances where the `granuleId` has been modified.
 
