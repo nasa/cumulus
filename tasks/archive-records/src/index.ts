@@ -74,10 +74,8 @@ const archiveRecords = async (event: Event) => {
  * Lambda handler
  */
 /* istanbul ignore next */
-async function handler(event: CumulusMessage, context: Context): Promise<Object> {
-  console.log('event:', event);
-  console.log('context:', context);
-  return await runCumulusTask(archiveRecords, event, context);
+async function handler(event: Event, context: Context): Promise<Object> {
+  return await archiveRecords(event);
 }
 
 exports.handler = handler;
