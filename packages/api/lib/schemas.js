@@ -329,8 +329,8 @@ module.exports.granule = {
       readonly: true,
     },
     active: {
-      title: 'If the granule is active or hidden',
-      type: 'boolean',
+      title: 'Flag for if the granule is active or hidden',
+      type: 'char',
       readonly: true,
     },
     files: {

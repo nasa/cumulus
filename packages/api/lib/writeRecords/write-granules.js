@@ -712,7 +712,7 @@ const writeGranuleRecordAndPublishSns = async ({
  * @param {boolean} [granule.published] - published to cmr
  * @param {string} [granule.pdrName] - pdr name
  * @param {string} [granule.provider] - provider
- * @param {boolean} [granule.active] - whether the granule is active or hidden
+ * @param {boolean} [granule.active] - Flag for whether the granule is active or hidden
  * @param {Object} [granule.error = {}] - workflow errors
  * @param {string} [granule.createdAt = new Date().valueOf()] - time value
  * @param {string} [granule.timestamp] - timestamp

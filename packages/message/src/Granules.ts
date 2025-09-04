@@ -253,7 +253,7 @@ export const generateGranuleApiRecord = async ({
   error?: Object,
   pdrName?: string,
   status: GranuleStatus,
-  active: boolean,
+  active: string,
   queryFields?: Object,
   updatedAt: number,
   processingTimeInfo?: ExecutionProcessingTimes,

@@ -35,9 +35,9 @@ export type ApiGranuleRecord = {
   producerGranuleId: string
   status: GranuleStatus
   updatedAt: number
+  active: string
   cmrLink?: string
   duration?: number
-  active?: boolean | null
   error?: Object
   execution?: string
   files?: Omit<import('./files').ApiFile, 'granuleId'>[]
@@ -57,10 +57,10 @@ export type ApiGranule = {
   collectionId: string
   archived: boolean
   producerGranuleId: string
+  active: string
   cmrLink?: string | null
   createdAt?: number | null
   duration?: number | null
-  active?: boolean | null
   error?: Object | null
   execution?: string | null
   files?: Omit<import('./files').ApiFile, 'granuleId'>[] | null

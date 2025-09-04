@@ -181,6 +181,7 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
                   updatedAt: updatedAt ?? createdAt,
                   createdAt: createdAt,
                   archived: archived || false,
+                  active: 'A',
                 },
               });
             },
