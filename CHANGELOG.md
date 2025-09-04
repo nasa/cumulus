@@ -40,8 +40,6 @@ Please follow the instructions before upgrading Cumulus
   - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
 
 ### Added
-- **CUMULUS-4028**
-  - Update AddUniqueGranuleId task to output the input payload in addition to the modified granules.
 - **CUMULUS-4119**
   - Added assertions in `KinesisTestTriggerWithUniqueGranuleIdsSpec` to cover "duplicate"
     Granules in separate Collections.
@@ -169,6 +167,10 @@ Please follow the instructions before upgrading Cumulus
   - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
   - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
   - Added a documentation page titled `"Generate Unique GranuleId"` to explain the algorithm for generating unique `granuleIds`.
+- **CUMULUS-4028**
+  - Update AddUniqueGranuleId task to output the input payload in addition to the modified granules.
+  - Added 'unique' version of ingest_and_publish granule workflow for 'uniquiy' feature ingest tests
+
 - **CUMULUS-4209**
   - Updated the `producer_granule_id` migration script to disable autovacuum before the
     migration and re-enable it afterward to improve performance.
