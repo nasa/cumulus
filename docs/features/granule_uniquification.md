@@ -224,11 +224,11 @@ Taking it a step further, depending on the workflow configuration, users can spe
 
 #### SIPS/PDR Based Workflow
 
-Documentation in the ["SIPS" Workflow Cookbook] outlines an example usage of `DiscoverPDRs`, `QueuePDRs` and `ParsePDR` in a workflow.  As mentioned above, uniquification should be a simple matter of configuring `ParsePDR` with appropriate uniquification configuration values.
+Documentation in the ["SIPS" Workflow Cookbook](../data-cookbooks/sips-workflow.md) outlines an example usage of `DiscoverPDRs`, `QueuePDRs` and `ParsePDR` in a workflow.  As mentioned above, uniquification should be a simple matter of configuring `ParsePDR` with appropriate uniquification configuration values.
 
 #### CNM/Kinesis Style Ingest Workflow
 
-Cumulus's integration deployment provides an example of a `CNM` style workflow [here](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_workflow.asl.json) and detailed in a ["cookbook"](../data-cookbooks/cnm-workflow.md) that can be used for both uniquified and non-uniquified collections.   This workflow is a typical single-workflow ingest using a Kinesis stream that is triggering workflows with a CNM message, but it uses a choice state to configurably use the [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md) task in the workflow for collections that are configured to handle this in-workflow:
+Cumulus's integration deployment provides an example of a [`CNM` style workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_workflow.asl.json) which is detailed in a ["cookbook"](../data-cookbooks/cnm-workflow.md) that can be used for both uniquified and non-uniquified collections.   This workflow is a typical single-workflow ingest using a Kinesis stream that is triggering workflows with a CNM message, but it uses a choice state to configurably use the [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md) task in the workflow for collections that are configured to handle this in-workflow:
 
 ![CNM Workflow Example](../assets/stepfunctions_graph.png)
 
