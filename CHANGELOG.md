@@ -40,9 +40,7 @@ Please follow the instructions before upgrading Cumulus
   - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
 
 ### Added
-- **CUMULUS-4119**
-  - Added assertions in `KinesisTestTriggerWithUniqueGranuleIdsSpec` to cover "duplicate"
-    Granules in separate Collections.
+
 - **CUMULUS-4059**
   - Added new non-null column `producer_granule_id` to Postgres `granules`
     table.
@@ -57,7 +55,8 @@ Please follow the instructions before upgrading Cumulus
   - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a
     hashed/'uniquified' granuleID
 - **CUMULUS-4062**
-  - Added `producerGranuleId` to lzardsBackup task and lambda input/output schema
+  - Added `producerGranuleId` to `LzardsBackup` task component and lambda input/output schema
+  - Updated `LzardsBackup` task component to submit `producerGranuleId` for storage in the lzards record as a key in the `metadata` object.
 - **CUMULUS-4069**
   - Added migration script and instructions to add the producer_granule_id column
     to the granules table and populate it in the production environment.
@@ -118,6 +117,9 @@ Please follow the instructions before upgrading Cumulus
   - Updated `move-granules` task to validate cross-collection file collisions
     using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
   - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
+- **CUMULUS-4079**
+  - Added duplicate granule handling and related feature documentation, and updated related documentation to match
+  - Added `update-granules-cmr-metadata-file-links` task README
 - **CUMULUS-4080**
   - Add documentation for duplicate granule handling and, specifically, Collection configuration for duplicates.
   - Update `urlPathTemplate` to allow falling back from one null/undefined interpolated value to a second argument
@@ -165,6 +167,9 @@ Please follow the instructions before upgrading Cumulus
     to write granule-execution associations from message.
   - Updated the `@cumulus/integration-tests` `cmr.generateAndStoreCmrXml` to
     apply `matchFilesWithProducerGranuleId` when generaing `OnlineAccessURL`.
+- **CUMULUS-4119**
+  - Added assertions in `KinesisTestTriggerWithUniqueGranuleIdsSpec` to cover "duplicate"
+    Granules in separate Collections.
 - **CUMULUS-4162**
   - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
   - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
