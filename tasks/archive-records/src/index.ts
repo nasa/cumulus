@@ -33,12 +33,12 @@ type EventConfig = {
 };
 
 type MassagedEventConfig = {
-  updateLimit: number;
+  batchSize: number;
   expirationDays: number;
 } & EventConfig;
 function getParsedConfigValues(config: EventConfig | undefined): MassagedEventConfig {
   return {
-    updateLimit: config?.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000,
+    batchSize: config?.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000,
     expirationDays: config?.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365,
     testMethods: config?.testMethods,
   };
