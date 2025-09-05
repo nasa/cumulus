@@ -54,16 +54,26 @@ const archiveRecords = async (event: Event) => {
   });
   const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod
     || bulkArchiveExecutions;
-  await Promise.all([
-    archiveGranulesMethod({
-      prefix: getRequiredEnvVar('stackName'),
-      body: config,
-    }),
-    archiveExecutionsMethod({
-      prefix: getRequiredEnvVar('stackName'),
-      body: config,
-    }),
-  ]);
+  const granulesOutput = await archiveGranulesMethod({
+    prefix: getRequiredEnvVar('stackName'),
+    body: config,
+  });
+  const executionsOutput = await archiveExecutionsMethod({
+    prefix: getRequiredEnvVar('stackName'),
+    body: config,
+  });
+  log.info('got granules', JSON.stringify(granulesOutput));
+  log.info('got executions', JSON.stringify(executionsOutput));
+  // await Promise.all([
+  //   archiveGranulesMethod({
+  //     prefix: getRequiredEnvVar('stackName'),
+  //     body: config,
+  //   }),
+  //   archiveExecutionsMethod({
+  //     prefix: getRequiredEnvVar('stackName'),
+  //     body: config,
+  //   }),
+  // ]);
   return { message: 'yay' };
 };
 
