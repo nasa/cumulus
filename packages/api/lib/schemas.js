@@ -328,6 +328,11 @@ module.exports.granule = {
       type: 'number',
       readonly: true,
     },
+    active: {
+      title: 'Flag for if the granule is active or hidden',
+      type: 'char',
+      readonly: true,
+    },
     files: {
       title: 'Files',
       description: 'List of file definitions',
