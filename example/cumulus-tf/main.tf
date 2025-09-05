@@ -212,6 +212,9 @@ module "cumulus" {
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
 
+  # workflow configuration
+  workflow_configurations = var.workflow_configurations
+
   tags = local.tags
 }
 

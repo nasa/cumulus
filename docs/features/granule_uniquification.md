@@ -1,5 +1,5 @@
 ---
-id: granule-uniquification
+id: granule_uniquification
 title: Granule Uniquification Feature
 hide_title: false
 ---
@@ -27,13 +27,13 @@ The process of updating or creating an ingest workflow that makes use of this fe
 * If providers/pre-ingest processing provides `producerGranuleId` as part of the granule object and pre-uniquifies the graunleId, Core task components will 'do the right thing' out of the box.
 * Ingest workflows that have incoming granules that have only granuleId populated will need to make use of the updated Cumulus workflow task components *or* make updates to other in-use functions to make the granuleId unique  as appropriate.  For details on this, please see the following:
 
-  * [hashing approach document](doc:granule-id-hashing-approach) for details on the approach Cumulus components that create a `granuleId` are using.  Please also review the added task component
+  * [hashing approach document](./granule-id-hashing-approach.md) for details on the approach Cumulus components that create a `granuleId` are using.  Please also review the added task component
 
   * [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md) that can be utilized in workflows to update a granule with a unique `granuleId`, saving the 'original' as `producerGranuleId`.
 
   * [Updated Workflow Task Component Modifications](#updated-workflow-task-component-modifications)
 
-* Workflows that *start* with a Cumulus message (*not* a CNM message or other format) with a payload containing granules but intend to change the ID as part of the workflow will need to reconfigure Cumulus to not report the initial granules prior to workflow steps that update the granule to have a unique Id and *optionally* update the workflow to report them as running following that uniquification using `SfSqsReportTask`.  See [relevant doc](link goes here) for more information.
+* Workflows that *start* with a Cumulus message (*not* a CNM message or other format) with a payload containing granules but intend to change the ID as part of the workflow will need to reconfigure Cumulus to not report the initial granules prior to workflow steps that update the granule to have a unique Id and *optionally* update the workflow to report them as running following that uniquification using `SfSqsReportTask`.  See [Record Write Options feature doc](./record_write_options.md) for more information.
 
 ***Important***: User task components, particularly any that re-implement core reference tasks, must be evaluated carefully to ensure consistent behavior in instances where the `granuleId` has been modified.
 
@@ -57,7 +57,7 @@ The recommended algorithm generates an MD5 hash of the granule's `collectionId` 
 
 The process Cumulus Core uses to generate a unique `granuleId` can be found in the [`generateUniqueGranuleId` function](https://github.com/nasa/cumulus/blob/master/packages/ingest/src/granule.ts).
 
-For more details on the algorithm and for implementations in other languages, see the [Hashing approach document](doc:granule-id-hashing-approach)
+For more details on the algorithm and for implementations in other languages, see the [Hashing approach document](./granule-id-hashing-approach.md)
 
 There is no requirement to utilize Core's algorithm, as the workflow framework imposes no constraints outside of ensuring `producerGranuleId` is populated by a default, *however* if customization is desired, care should be taken to ensure that unique identification schemes are chosen such that unexpected collisions between granules do not occur system-wide.
 
@@ -76,7 +76,7 @@ Deploying a version of Cumulus with this feature enabled will result in the foll
 
 ## Migration From Prior Versions
 
-Users migrating to the release using this feature will need to migrate their database to make use of and populate the new `producer_granule_id` field in the Postgres database.  Details of this transition are documented in the [upgrade notes document](doc:update-granules-to-include-producer_granule_id).
+Users migrating to the release using this feature will need to migrate their database to make use of and populate the new `producer_granule_id` field in the Postgres database.  Details of this transition are documented in the [upgrade notes document](../upgrade-notes/update-granules-to-include-producer_granule_id.md).
 
 ### Existing Workflow Updates
 
@@ -117,7 +117,7 @@ The following tasks have been added or updated from prior versions to handle and
 
 ##### [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md)
 
-Task was added to provide a 'shim' option to allow for incoming granules without a producerGranuleId to be `uniqified` as part of a workflow. A new ID is created and stored as the unique `granuleId`, with the original ID in the incoming granule retained in the `producerGranuleId` field.   For details on the hashing approach used in this function see: [hashing approach document](doc:granule-id-hashing-approach)
+Task was added to provide a 'shim' option to allow for incoming granules without a producerGranuleId to be `uniqified` as part of a workflow. A new ID is created and stored as the unique `granuleId`, with the original ID in the incoming granule retained in the `producerGranuleId` field.   For details on the hashing approach used in this function see: [hashing approach document](./granule-id-hashing-approach.md)
 
 #### Updated
 
@@ -139,7 +139,7 @@ Task was added to provide a 'shim' option to allow for incoming granules without
 
 * Task was updated to always set `granuleUR` and `producerGranuleId` in the CMR metadata file based on the passed in granule. ([PR #3997](https://github.com/nasa/cumulus/pull/3997))
 
-##### [`FilesToGranules`](https://github.com/nasa/cumulus/blob/master/tasks/update-granules-cmr-metadata-file-links/README.md)
+##### [`FilesToGranules`](https://github.com/nasa/cumulus/blob/master/tasks/files-to-granules/README.md)
 
 * Task was updated to allow `producerGranuleId` in the granule schema, and added `matchFilesWithProducerGranuleId` as a configuration flag
 
@@ -260,9 +260,15 @@ To configure the workflow to skip that initial `granule` write (when the granule
 
 **Important**: If skipping the initial Granule record write is desired in a **PDR workflow**, additional modification may be required. See [the Record Write Options documentation](record_write_options.md) for details on this use case as well as general documentation on skipping record writes.
 
-### Workflow Example
+### Workflow Examples
 
-Cumulus's integration deployment provides an example of a `CNM` style workflow [here](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_workflow.asl.json) that can be used for both uniquified and non-uniquified collections.   This workflow is a typical single-workflow ingest using a Kinesis stream that is triggering workflows with a CNM message, but it uses a choice state to configurably use the [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md) task in the workflow for collections that are configured to handle this in-workflow:
+#### SIPS/PDR Based Workflow
+
+Documentation in the ["SIPS" Workflow Cookbook](../data-cookbooks/sips-workflow.md) outlines an example usage of `DiscoverPDRs`, `QueuePDRs` and `ParsePDR` in a workflow.  As mentioned above, uniquification should be a simple matter of configuring `ParsePDR` with appropriate uniquification configuration values.
+
+#### CNM/Kinesis Style Ingest Workflow
+
+Cumulus's integration deployment provides an example of a [`CNM` style workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_workflow.asl.json) which is detailed in a ["cookbook"](../data-cookbooks/cnm-workflow.md) that can be used for both uniquified and non-uniquified collections.   This workflow is a typical single-workflow ingest using a Kinesis stream that is triggering workflows with a CNM message, but it uses a choice state to configurably use the [`AddUniqueGranuleId`](https://github.com/nasa/cumulus/blob/master/tasks/add-unique-granule-id/README.md) task in the workflow for collections that are configured to handle this in-workflow:
 
 ![CNM Workflow Example](../assets/stepfunctions_graph.png)
 

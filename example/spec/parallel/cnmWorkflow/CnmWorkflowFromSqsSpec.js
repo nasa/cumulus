@@ -278,28 +278,4 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
       await expectAsync(waitForQueueMessageCount(queues.sourceQueueUrl, 0)).toBeResolved();
     });
   });
-
-  describe('a duplicate granule record', () => {
-    beforeAll(() => {
-      if (beforeAllFailed) return;
-      try {
-        // TODO: Add uniqueGranuleId version of existing rule
-        console.log('Updated UniqueGranuleId Rule Required');
-      } catch (error) {
-        console.log('beforeAll error', error);
-        beforeAllFailed = error;
-      }
-    });
-
-    it('executes successfully', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      expect(executionStatus).toEqual('SUCCEEDED');
-    });
-    xit('is successfully ingested', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-    });
-    xit('has the expected step output', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-    });
-  });
 });
