@@ -99,6 +99,7 @@ export const bulkArchiveExecutions = async (params: {
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  console.log('actually ended up in bulkArchiveExecutions')
   const { prefix, body, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,

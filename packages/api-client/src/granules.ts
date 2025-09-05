@@ -6,6 +6,7 @@ import Logger from '@cumulus/logger';
 
 import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
+import { log } from 'console';
 
 const logger = new Logger({ sender: '@api-client/granules' });
 
@@ -820,6 +821,7 @@ export const bulkArchiveGranules = async (params: {
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  console.log('actualy neded up in bulkArchiveGranules');
   const { prefix, body, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
