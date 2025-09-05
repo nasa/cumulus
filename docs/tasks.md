@@ -17,6 +17,15 @@ Add checksums to files in S3 which don't have one
 
 ---
 
+### [@cumulus/add-unique-granule-id](https://github.com/nasa/cumulus/tree/master/tasks/add-unique-granule-id)
+
+A Cumulus task to add a unique granule ID to a granule
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/add-unique-granule-id/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/add-unique-granule-id) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/add-unique-granule-id)
+
+---
+
 ### [@cumulus/change-granule-collection-pg](https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-pg)
 
 Move granule files and postgres records to a new collection

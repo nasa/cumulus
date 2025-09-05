@@ -82,6 +82,7 @@ function fakeGranuleFactory(status = 'completed') {
     archived: false,
     granuleId: randomId('granule'),
     collectionId: constructCollectionId('fakeCollection', 'v1'),
+    producerGranuleId: randomId('producerGranuleId'),
     status,
     execution: getExecutionUrlFromArn(randomId('execution')),
     createdAt: Date.now(),

@@ -1,0 +1,499 @@
+{
+  "Comment": "Ingest Granule",
+  "StartAt": "AddUniqueGranuleId",
+  "States": {
+    "AddUniqueGranuleId": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "hashDepth": "6"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${add_unique_granule_id_arn}",
+      "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+      ],
+      "Catch": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "ResultPath": "$.exception",
+            "Next": "WorkflowFailed"
+          }
+      ],
+      "Next": "GranuleStatusReport"
+    },
+    "GranuleStatusReport": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "cumulus_message": {
+              "input": "{$}"
+            }
+          }
+        }
+      },
+      "ResultPath": null,
+      "Type": "Task",
+      "Resource": "${sf_sqs_report_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "SyncGranule"
+    },
+    "SyncGranule": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "stack": "{$.meta.stack}",
+            "downloadBucket": "{$.cumulus_meta.system_bucket}",
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
+            "pdr": "{$.meta.pdr}",
+            "workflowStartTime": "{$.cumulus_meta.workflow_start_time}",
+            "cumulus_message": {
+              "input": "{$.payload}",
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.meta.input_granules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                },
+                {
+                  "source": "{$.process}",
+                  "destination": "{$.meta.process}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${sync_granule_task_arn}",
+      "Next": "AddMissingFileChecksums",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3
+        }
+      ]
+    },
+    "AddMissingFileChecksums": {
+      "Type": "Task",
+      "Resource": "${add_missing_file_checksums_task_arn}",
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "algorithm": "md5",
+            "cumulus_message": {
+              "input": "{$.payload}",
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.meta.input_granules}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Next": "ChooseProcess",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ]
+    },
+    "ChooseProcess": {
+      "Choices": [
+        {
+          "Next": "ProcessingStep",
+          "StringEquals": "modis",
+          "Variable": "$.meta.process"
+        }
+      ],
+      "Default": "WorkflowSucceeded",
+      "Type": "Choice"
+    },
+    "ProcessingStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "collection": "{$.meta.collection}",
+            "cmrMetadataFormat": "{$.meta.cmrMetadataFormat}",
+            "additionalUrls": "{$.meta.additionalUrls}",
+            "matchFilesWithProducerGranuleId": "{$.meta.collection.meta.uniquifyGranuleId}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.files}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${fake_processing_task_arn}",
+      "Next": "FilesToGranulesStep",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "FilesToGranulesStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "inputGranules": "{$.meta.input_granules}",
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}",
+            "matchFilesWithProducerGranuleId": "{$.meta.collection.meta.uniquifyGranuleId}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Next": "MoveGranuleStep",
+      "Resource": "${files_to_granules_task_arn}",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "MoveGranuleStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "buckets": "{$.meta.buckets}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "collection": "{$.meta.collection}",
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
+            "s3MultipartChunksizeMb": "{$.meta.collection.meta.s3MultipartChunksizeMb}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${move_granules_task_arn}",
+      "Next": "UpdateGranulesCmrMetadataFileLinksStep",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "UpdateGranulesCmrMetadataFileLinksStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.etags}",
+                  "destination": "{$.meta.file_etags}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${update_granules_cmr_metadata_file_links_task_arn}",
+      "Next": "HyraxMetadataUpdatesTask",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "HyraxMetadataUpdatesTask": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}",
+            "etags": "{$.meta.file_etags}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.etags}",
+                  "destination": "{$.meta.file_etags}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hyrax_metadata_updates_task_arn}",
+      "Next": "CmrStep",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "CmrStep": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "bucket": "{$.meta.buckets.internal.name}",
+            "stack": "{$.meta.stack}",
+            "cmr": "{$.meta.cmr}",
+            "launchpad": "{$.meta.launchpad}",
+            "etags": "{$.meta.file_etags}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${post_to_cmr_task_arn}",
+      "Next": "BackupGranulesToLzards",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "BackupGranulesToLzards": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.payload.granules}"
+                },
+                {
+                  "source": "{$.backupResults}",
+                  "destination": "{$.meta.backupStatus}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${lzards_backup_task_arn}",
+      "Next": "WorkflowSucceeded",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "WorkflowSucceeded": {
+      "Type": "Succeed"
+    },
+    "WorkflowFailed": {
+      "Type": "Fail",
+      "CausePath": "$.exception.Cause",
+      "ErrorPath": "$.exception.Error"
+    }
+  }
+}

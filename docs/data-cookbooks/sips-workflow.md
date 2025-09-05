@@ -110,6 +110,14 @@ To use this example workflow module as a template for a new workflow in your dep
 
 :::
 
+### Granule Uniquification
+
+This ingest flow can optionally take advantage of the [Granule Uniquification](../features/granule_uniquification.md) feature by setting the [ParsePdr](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr) configuration option `uniquifyGranuleId` to `true`.
+
+Setting this option will cause [ParsePdr](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr/README.md) to assign a unique `granuleId` to each granule in the task, retaining the original identifier as `producerGranuleId`.
+
+Downstream workflow components (e.g. `UpdateGranulesCmrMetadataFile`) and the Cumulus Core will handle this modification as noted in the [feature documentation](../features/granule_uniquification.md)
+
 ## IngestGranule Workflow
 
 The IngestGranule workflow processes and ingests a granule and posts the granule metadata to CMR.
@@ -117,13 +125,14 @@ The IngestGranule workflow processes and ingests a granule and posts the granule
 The lambdas below are included in the `cumulus` terraform module for use in your workflows:
 
 1. SyncGranule - [source](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule).
-2. CmrStep - [source](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr)
+2. UpdateGranulesCmrMetadataFileLinksStep - [source](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links)
+3. CmrStep - [source](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr)
 
 Additionally this workflow requires a processing step you must provide. The ProcessingStep step in the workflow picture below is an example of a custom processing step.
 
 :::tip
 
-Using the CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
+Using CmrStep, UpdateGranuleCmrMetadataFileLinks , HyraxProcessing, BackupGranuleToLzards is not required and can be left out of the processing trajectory if desired (for example, in testing situations or if you're not ingesting granules with CMR metadata).
 
 :::
 

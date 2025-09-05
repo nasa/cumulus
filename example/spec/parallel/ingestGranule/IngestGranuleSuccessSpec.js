@@ -27,7 +27,7 @@ const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-uti
 const {
   addCollections,
   conceptExists,
-  getOnlineResources,
+  getCmrMetadata,
   waitForAsyncOperationStatus,
   waitForConceptExistsOutcome,
   waitForTestExecutionStart,
@@ -165,6 +165,7 @@ describe('The S3 Ingest Granules workflow', () => {
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
       pdrFilename = inputPayload.pdr.name;
+      inputPayload.granules[0].producerGranuleId = 'TestProducerID';
       const granuleId = inputPayload.granules[0].granuleId;
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
@@ -195,7 +196,7 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, collectionId, config.stackName);
-
+      expectedSyncGranulePayload.granules[0].producerGranuleId = inputPayload.granules[0].producerGranuleId;
       expectedSyncGranulePayload.granules[0].dataType += testSuffix;
       expectedSyncGranulePayload.granules[0].files[0].checksumType = inputPayload.granules[0].files[0].checksumType;
       expectedSyncGranulePayload.granules[0].files[0].checksum = inputPayload.granules[0].files[0].checksum;
@@ -591,6 +592,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('the PostToCmr task', () => {
+    let metadataResults;
     let cmrResource;
     let ummCmrResource;
     let files;
@@ -620,16 +622,16 @@ describe('The S3 Ingest Granules workflow', () => {
         files = granule.files;
 
         const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v1_6_2' };
-        const result = await Promise.all([
-          getOnlineResources(granule),
-          getOnlineResources(ummGranule),
+        metadataResults = await Promise.all([
+          getCmrMetadata(granule),
+          getCmrMetadata(ummGranule),
           getTEARequestHeaders(config.stackName),
         ]);
 
-        cmrResource = result[0];
-        ummCmrResource = result[1];
+        cmrResource = metadataResults[0].links;
         resourceURLs = cmrResource.map((resource) => resource.href);
-        teaRequestHeaders = result[2];
+        ummCmrResource = metadataResults[1].items.flatMap((item) => item.umm.RelatedUrls);
+        teaRequestHeaders = metadataResults[2];
 
         scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].key });
         s3ScienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].key, urlType: 's3' });
@@ -650,6 +652,15 @@ describe('The S3 Ingest Granules workflow', () => {
       const result = await conceptExists(granule.cmrLink);
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
+    });
+
+    it('updates the CMR metadata with the expected producerGranuleId', () => {
+      failOnSetupError([beforeAllError, subTestSetupError]);
+      const expectedProducerGranuleId = inputPayload.granules[0].producerGranuleId;
+      const expectedGranuleId = inputPayload.granules[0].granuleId;
+
+      expect(metadataResults[1].items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(expectedProducerGranuleId);
+      expect(metadataResults[1].items[0].umm.GranuleUR).toEqual(expectedGranuleId);
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {

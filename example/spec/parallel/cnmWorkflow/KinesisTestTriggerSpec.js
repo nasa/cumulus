@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isMatch = require('lodash/isMatch');
+const path = require('path');
 const replace = require('lodash/replace');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
@@ -30,7 +31,7 @@ const {
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
-const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
+const { getGranule, deleteGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -109,9 +110,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     await deleteExecution({ prefix: testConfig.stackName, executionArn: failingWorkflowExecution.executionArn });
     await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
-    await deleteGranule({ prefix: testConfig.stackName,
-      granuleId,
-      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
@@ -170,6 +168,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
               size: recordFile.size,
               checksumType: recordFile.checksumType,
               checksum: recordFile.checksum,
+              fileName: recordFile.name,
+              key: path.join(testDataFolder, recordFile.name),
             },
           ],
         },
@@ -194,7 +194,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       granuleDuplicates: {},
       granules: [
         {
-          granuleId: granuleId,
+          granuleId: record.product.name,
           dataType: record.collection,
           version: '000',
           files: [fileDataWithFilename],
@@ -229,7 +229,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
-      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix, testSuffix),
       addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix),
     ]);
     // create streams
@@ -273,6 +273,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
+      });
+    });
+
+    afterAll(async () => {
+      await removePublishedGranule({
+        prefix: testConfig.stackName,
+        granuleId,
+        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
       });
     });
 
@@ -443,6 +451,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
     });
 
+    afterAll(async () => {
+      await deleteGranule({
+        prefix: testConfig.stackName,
+        granuleId,
+        collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+      });
+    });
+
     it('executes but fails', () => {
       expect(executionStatus).toEqual('FAILED');
     });
@@ -465,7 +481,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
             getGranule,
             {
               prefix: testConfig.stackName,
-              granuleId,
+              granuleId: record.product.name,
               collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
             },
             {

@@ -1,10 +1,17 @@
 type CumulusException = 'None' | object;
 
 export type WorkflowStatus = 'completed' | 'failed' | 'running';
+export type RecordType = 'execution' | 'granule' | 'pdr';
 
 export interface QueueExecutionLimits {
   [queueUrl: string]: number
 }
+
+export type SfEventSqsToDbRecordsTypes = {
+  [workflowName: string]: {
+    [status: WorkflowStatus]: RecordType[]
+  }
+};
 
 export interface CumulusMeta {
   execution_name: string
@@ -13,6 +20,7 @@ export interface CumulusMeta {
   asyncOperationId?: string
   queueExecutionLimits: QueueExecutionLimits
   cumulus_version?: string
+  sf_event_sqs_to_db_records_types?: SfEventSqsToDbRecordsTypes
 }
 
 export interface ReplaceConfig {

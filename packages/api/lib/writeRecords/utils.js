@@ -100,7 +100,8 @@ const getParentExecutionCumulusId = async (
 /**
  * Retrieves the Cumulus ID for a given collection name and version.
  *
- * @param {Partial<PostgresCollectionRecord>} collectionNameVersion - The name and version of
+ * @param {Partial<PostgresCollectionRecord> | undefined | null} collectionNameVersion -
+ * The name and version of
  * the collection, formatted as 'name__version'.
  * @param {Object} knex - An instance of a Knex database client.
  * @param {CollectionPgModel} [collectionPgModel=new CollectionPgModel()] - An instance of the
