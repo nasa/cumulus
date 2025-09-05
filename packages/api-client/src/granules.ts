@@ -6,7 +6,6 @@ import Logger from '@cumulus/logger';
 
 import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
-import { log } from 'console';
 
 const logger = new Logger({ sender: '@api-client/granules' });
 
