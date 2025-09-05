@@ -2,12 +2,12 @@
 
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
-  type = string
+  type        = string
 }
 
 variable "background_queue_url" {
   description = "Queue URL to use for throttled background operations (e.g. granule reingest)"
-  type = string
+  type        = string
 }
 
 variable "cmr_client_id" {
@@ -63,12 +63,12 @@ variable "ecs_cluster_name" {
 
 variable "ecs_execution_role" {
   description = "Object containing name and ARN of IAM role for initializing ECS tasks"
-  type = object({ name = string, arn = string})
+  type        = object({ name = string, arn = string})
 }
 
 variable "ecs_task_role" {
   description = "Object containing name and ARN of IAM role for running ECS tasks"
-  type = object({ name = string, arn = string})
+  type        = object({ name = string, arn = string})
 }
 
 variable "kinesis_inbound_event_logger_lambda_function_arn" {
@@ -112,21 +112,21 @@ variable "token_secret" {
 }
 
 variable "urs_client_id" {
-  type        = string
   description = "The URS app ID"
+  type        = string
 }
 
 variable "urs_client_password" {
-  type        = string
   description = "The URS app password"
+  type        = string
 }
 
 # Optional
 
 variable "api_gateway_stage" {
+  description = "The API Gateway stage to create"
   type        = string
   default     = "dev"
-  description = "The API Gateway stage to create"
 }
 
 variable "api_port" {
@@ -135,14 +135,14 @@ variable "api_port" {
 }
 
 variable "api_reserved_concurrency" {
-  type = number
+  type    = number
   default = 8
 }
 
 variable "api_url" {
+  description = "If not specified, the value of the API Gateway endpoint is used"
   type        = string
   default     = null
-  description = "If not specified, the value of the API Gateway endpoint is used"
 }
 
 variable "buckets" {
@@ -179,14 +179,14 @@ variable "cmr_search_client_config" {
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_subnet_ids" {
@@ -210,17 +210,23 @@ variable "launchpad_passphrase" {
 }
 
 variable "metrics_es_host" {
-  type = string
-  default = null
+  description = "Domain name (not URL) of the Cloud Metrics API."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = !startswith(var.metrics_es_host, "https://")
+    error_message = "metrics_es_host domain name should not include `https://`."
+  }
 }
 
 variable "metrics_es_password" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "metrics_es_username" {
-  type = string
+  type    = string
   default = null
 }
 
@@ -247,8 +253,8 @@ variable "private_archive_api_gateway" {
 
 variable "rds_connection_timing_configuration" {
   description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
-  type = map(number)
-  default = {
+  type        = map(number)
+  default     = {
       acquireTimeoutMillis: 90000
       createRetryIntervalMillis: 30000,
       createTimeoutMillis: 20000,
@@ -284,9 +290,9 @@ variable "tags" {
 }
 
 variable "urs_url" {
+  description = "The URL of the Earthdata Login site"
   type        = string
   default     = "https://uat.urs.earthdata.nasa.gov"
-  description = "The URL of the Earthdata Login site"
 }
 
 variable "users" {
@@ -302,68 +308,68 @@ variable "vpc_id" {
 ## clean_executions lambda config
 
 variable "daily_execution_payload_cleanup_schedule_expression" {
-  type    = string
-  default = "cron(0 4 * * ? *)"
   description = "Cloud Watch cron schedule for the execution payload cleanup lambda"
+  type        = string
+  default     = "cron(0 4 * * ? *)"
 }
 
 variable "cleanup_running" {
-  type    = bool
-  default = false
   description = "Boolean flag that when set to true will enable 'running' execution cleanup"
+  type        = bool
+  default     = false
 }
 
 variable "cleanup_non_running" {
-  type    = bool
-  default = true
   description = "Boolean flag that when set to true will enable non 'running' execution cleanup"
+  type        = bool
+  default     = true
 }
 
 variable "payload_timeout" {
-  type    = number
-  default = 10
   description = "Number of days to retain execution payload records in the database"
+  type        = number
+  default     = 10
 }
 
 variable "update_limit" {
-type = number
-  default = 10000
   description = "number of executions to cleanup in one lambda run"
+  type        = number
+  default     = 10000
 }
 
 variable "log_destination_arn" {
-  type = string
-  default = "N/A"
   description = "A shared AWS:Log:Destination that receives logs from log_groups"
+  type        = string
+  default      = "N/A"
 }
 
 variable "cloudwatch_log_retention_periods" {
-  type = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "default_log_retention_days" {
-  type = number
-  default = 30
   description = "default value that user chooses for their log retention periods"
+  type        = number
+  default     = 30
 }
 variable "report_sns_topic_subscriber_arns" {
-  type = list
-  default = null
   description = "Account ARNs to supply to report SNS topics policy with subscribe action"
+  type        = list
+  default     = null
 }
 
 ## Dead Letter Recovery Configuration
 
 variable "dead_letter_recovery_cpu" {
-  type = number
-  default = 256
   description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
+  type        = number
+  default     = 256
 }
 
 variable "dead_letter_recovery_memory" {
-  type = number
-  default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
+  type        = number
+  default     = 1024
 }

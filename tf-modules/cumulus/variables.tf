@@ -2,8 +2,8 @@
 
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
-  type = string
-  default = "cumuluss/async-operation:53"
+  type        = string
+  default     = "cumuluss/async-operation:53"
 }
 
 variable "cmr_client_id" {
@@ -63,8 +63,8 @@ variable "ecs_cluster_desired_size" {
 }
 
 variable "ecs_cluster_instance_image_id" {
-  type        = string
   description = "AMI ID of ECS instances"
+  type        = string
 }
 
 variable "ecs_cluster_instance_subnet_ids" {
@@ -84,14 +84,14 @@ variable "ecs_cluster_min_size" {
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "prefix" {
@@ -100,15 +100,15 @@ variable "prefix" {
 }
 
 variable "sts_credentials_lambda_function_arn" {
+  description = "ARN of lambda function that provides app owners with keys that can be passed on to their app users."
   type        = string
   default     = null
-  description = "ARN of lambda function that provides app owners with keys that can be passed on to their app users."
 }
 
 variable "sts_policy_helper_lambda_function_arn" {
+  description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
   type        = string
   default     = null
-  description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
 }
 
 variable "system_bucket" {
@@ -134,21 +134,21 @@ variable "token_secret" {
 }
 
 variable "urs_client_id" {
-  type        = string
   description = "The client ID for your Earthdata login (URS) application"
+  type        = string
 }
 
 variable "urs_client_password" {
-  type        = string
   description = "The client password for your Earthdata login (URS) application"
+  type        = string
 }
 
 # Optional
 
 variable "api_gateway_stage" {
+  description = "The archive API Gateway stage to create"
   type        = string
   default     = "dev"
-  description = "The archive API Gateway stage to create"
 }
 
 variable "cmr_search_client_config" {
@@ -165,8 +165,8 @@ variable "archive_api_port" {
 
 variable "archive_api_reserved_concurrency" {
   description = "Reserved Concurrency for the API lambda function"
-  type = number
-  default = 15
+  type        = number
+  default     = 15
 }
 
 variable "archive_api_users" {
@@ -219,8 +219,8 @@ variable "custom_queues" {
 
 variable "default_s3_multipart_chunksize_mb" {
   description = "default S3 multipart upload chunk size in MB"
-  type = number
-  default = 256
+  type        = number
+  default     = 256
 }
 
 variable "deploy_distribution_s3_credentials_endpoint" {
@@ -236,14 +236,14 @@ variable "ecs_container_stop_timeout" {
 }
 
 variable "ecs_cluster_instance_docker_volume_size" {
-  type        = number
   description = "Size (in GB) of the volume that Docker uses for image and metadata storage"
+  type        = number
   default     = 50
 }
 
 variable "ecs_cluster_instance_type" {
-  type        = string
   description = "EC2 instance type for cluster instances"
+  type        = string
   default     = "t3.medium"
 }
 
@@ -340,8 +340,8 @@ variable "lzards_provider" {
 
 variable "lzards_api" {
   description = "LZARDS backup API endpoint"
-  type = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
 variable "lzards_s3_link_timeout" {
@@ -369,8 +369,14 @@ variable "log_destination_arn" {
 }
 
 variable "metrics_es_host" {
-  type    = string
-  default = null
+  description = "Domain name (not URL) of the Cloud Metrics API."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = !startswith(var.metrics_es_host, "https://")
+    error_message = "metrics_es_host domain name should not include `https://`"
+  }
 }
 
 variable "metrics_es_password" {
@@ -415,8 +421,8 @@ variable "private_archive_api_gateway" {
 
 variable "rds_connection_timing_configuration" {
   description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
-  type = map(number)
-  default = {
+  type        = map(number)
+  default     = {
       acquireTimeoutMillis: 90000
       createRetryIntervalMillis: 30000,
       createTimeoutMillis: 20000,
@@ -476,7 +482,7 @@ variable "tea_rest_api_root_resource_id" {
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
   type        = list(object({
-    url = string,
+    url             = string,
     execution_limit = number
   }))
   default     = []
@@ -489,9 +495,9 @@ variable "urs_url" {
 }
 
 variable "cmr_acl_based_credentials" {
-  type = bool
-  default = false
   description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
+  type        = bool
+  default     = false
 }
 
 variable "vpc_id" {
@@ -503,51 +509,51 @@ variable "vpc_id" {
 # archive module clean_executions lambda configuration
 
 variable "daily_execution_payload_cleanup_schedule_expression" {
+  description = "Cloud Watch cron schedule for the execution payload cleanup lambda"
   type        = string
   default     = "cron(0 4 * * ? *)"
-  description = "Cloud Watch cron schedule for the execution payload cleanup lambda"
 }
 
 variable "cleanup_running" {
-  type    = bool
-  default = false
   description = "Boolean flag that when set to true will enable 'running' execution cleanup"
+  type        = bool
+  default     = false
 }
 
 variable "cleanup_non_running" {
-  type    = bool
-  default = true
   description = "Boolean flag that when set to true will enable non 'running' execution cleanup"
+  type        = bool
+  default     = true
 }
 
 variable "payload_timeout" {
-  type    = number
-  default = 10
   description = "Number of days to retain execution payload records in the database"
+  type        = number
+  default     = 10
 }
 
 variable "update_limit" {
-  type = number
-  default = 10000
   description = "number of executions to cleanup in one lambda run"
+  type        = number
+  default     = 10000
 }
 
 variable "archive_api_url" {
+  description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
   type        = string
   default     = null
-  description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
 }
 
 variable "additional_log_groups_to_elk" {
   description = "Map of Cloudwatch Log Groups. The key is a descriptor and the value is the log group"
-  type = map(string)
-  default = {}
+  type        = map(string)
+  default     = {}
 }
 
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"
-  type = list(string)
-  default = []
+  type        = list(string)
+  default     = []
 }
 
 variable "deploy_cumulus_distribution" {
@@ -557,59 +563,59 @@ variable "deploy_cumulus_distribution" {
 }
 
 variable "cloudwatch_log_retention_periods" {
-  type = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "default_log_retention_days" {
-  type = number
   description = "default value that user chooses for their log retention periods"
-  default = 30
+  type        = number
+  default     = 30
 }
 variable "report_sns_topic_subscriber_arns" {
-  type = list
-  default = null
   description = "Account ARNs to supply to report SNS topics policy with subscribe action"
+  type        = list
+  default     = null
 }
 
 variable "sqs_message_consumer_watcher_message_limit" {
-  type = number
-  default = 500
   description = <<EOF
     Number of messages the SQS message consumer Lambda will attempt to read from SQS in a single execution.
     Note that increasing this value may result in a direct increase/decrease in triggered workflows. Users should
     only adjust this value with the understanding of how it will impact the number of queued workflows in their
     system.
   EOF
+  type        = number
+  default     = 500
 }
 
 variable "sqs_message_consumer_watcher_time_limit" {
-  type = number
-  default = 60
   description = <<EOF
     Number of seconds the SQS message consumer Lambda will remain active and polling for new messages. Note that this value
     should be less than the overall Lambda invocation timeout or else the Lambda may be terminated while still actively
     polling SQS. This value should be adjusted in conjunction with sqs_message_consumer_watcher_message_limit.
   EOF
+  type        = number
+  default     = 60
 }
 
 ## Dead Letter Recovery Configuration
 
 variable "dead_letter_recovery_cpu" {
-  type = number
-  default = 256
   description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
+  type        = number
+  default     = 256
 }
 
 variable "dead_letter_recovery_memory" {
-  type = number
-  default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
+  type        = number
+  default     = 1024
 }
 
 variable "deploy_cumulus_workflows" {
-  type = map(string)
-  default = { change_granule_collections_workflow: true }
   description = "for each workflow, if true deploy that workflow"
+  type        = map(string)
+  default     = { change_granule_collections_workflow: true }
 }
