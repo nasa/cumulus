@@ -826,7 +826,7 @@ async function bulkArchiveGranules(req, res) {
   const updatedCount = await knex(TableNames.granules)
     .update({ archived: true })
     .whereIn('cumulus_id', subQuery);
-
+  log.warn('and weve updated:', updatedCount);
   return res.send({ detail: `records updated: ${updatedCount}` });
 }
 /**
