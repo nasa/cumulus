@@ -53,6 +53,7 @@ IncludeTimestampHashKey is a boolean that controls how the unique hash is genera
 - If `true`: The hash includes `collectionId` and a timestamp, ensuring:
   - All granules are uniquified, even duplicates in the same collection.
   - Collision risk is extremely low (less than 0.1%).
+
 ---
 
 ## Benefits
@@ -84,8 +85,8 @@ A default **hash length of 8 characters** provides a low risk of collision for t
 
 The following are reference implementations of the proposed function in Node.js, Python, and Java.   Please note the following caveats:
 
-* These are for reference/demonstration of multi-language compatibility, be sure to validate / *use at your own risk*
-* Timestamps will not be exact across implementations and/or systems
+- These are for reference/demonstration of multi-language compatibility, be sure to validate / *use at your own risk*
+- Timestamps will not be exact across implementations and/or systems
 
 ### Node.js
 
