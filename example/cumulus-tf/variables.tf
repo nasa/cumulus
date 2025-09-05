@@ -510,7 +510,7 @@ variable "workflow_configurations" {
 
   default = {
     sf_event_sqs_to_db_records_types = {
-      IngestAndPublishGranule = {
+      IngestAndPublishGranuleUnique = {
         running = ["execution", "pdr"]
       }
     }

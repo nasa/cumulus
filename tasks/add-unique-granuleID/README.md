@@ -13,10 +13,11 @@ This lambda takes the following input and config objects, derived from workflow 
 
 ### Input
 
-The input takes a list of granule objects in one of two formats, with the following required fields:
+The input takes a payload that contains a granule key as a list of granule objects in one of two formats, with the following required fields:
 
 ```json
 {
+  ...,
   "granules": [
     {
       "granuleId": "foobar",
@@ -31,6 +32,7 @@ or
 
 ```json
 {
+  ...,
   "granules": [
     {
       "granuleId": "foobar",
@@ -62,11 +64,13 @@ The config object has two keys, `hashLength`, which allows specification of the 
 
 ### Output
 
-Output is list of granules in like format as the input *with* field modifications made (and other fields preserved).
+Output is an object in like format as the input *with* `granules` object modifications made (and other fields preserved).
 
 ```JSON
 {
-  "granules": [{ "granuleId": "foobar_24asdfh", "producerGranuleId": "foobar", "datatype": "someCollection", "version": "001" }]}
+  ...,
+  "granules": [{ "granuleId": "foobar_24asdfh", "producerGranuleId": "foobar", "datatype": "someCollection", "version": "001" }]
+}
 ```
 
 ### Example workflow configuration block

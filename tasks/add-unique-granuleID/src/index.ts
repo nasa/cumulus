@@ -39,7 +39,7 @@ async function assignUniqueIds(event: HandlerEvent): Promise<HandlerOutput> {
 
   const output = { granules: granules as GranuleOutput[] };
   log.debug('Granule output', output);
-  return output;
+  return { ...event.input, ...output };
 }
 
 /**

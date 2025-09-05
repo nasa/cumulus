@@ -28,6 +28,30 @@ test('assignUniqueIds assigns unique granule IDs and preserves producerGranuleId
   });
 });
 
+test('assignUniqueIds retains the rest of the passed in payload', async (t) => {
+  const hashLength = 6;
+
+  const payloadKeys = {
+    pdrs: ['somePdrValue'],
+    otherKey: { other: 'value' },
+  };
+  const event = {
+    input: {
+      granules: [
+        { granuleId: 'granule1', collectionId: 'collection1' },
+        { granuleId: 'granule2', collectionId: 'collection2' },
+      ],
+      ...payloadKeys,
+    },
+    config: {
+      hashLength,
+    },
+  };
+  const result = await assignUniqueIds(event, {});
+  delete result.granules;
+  t.deepEqual(result, payloadKeys, 'Should retain all non-granule keys in the payload');
+});
+
 test('assignUniqueIds ignores granules that already have producerGranuleId assigned', async (t) => {
   const event = {
     input: {

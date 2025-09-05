@@ -20,6 +20,10 @@ describe('The Add Unique Granule Id Task ', () => {
   let addUniqueGranuleIdFunctionName;
   let prefix;
   let functionOutput;
+  const pdr = {
+    name: 'fakePdr',
+    path: 'some-pdr-path',
+  };
 
   const testSetup = async (configOverride = {}) => {
     try {
@@ -63,6 +67,7 @@ describe('The Add Unique Granule Id Task ', () => {
                   files: [],
                 },
               ],
+              pdr,
             },
           },
         },
@@ -93,7 +98,7 @@ describe('The Add Unique Granule Id Task ', () => {
       }
     });
 
-    it('has the expected output', () => {
+    it('has the expected outputs', () => {
       const payload = JSON.parse(new TextDecoder('utf-8').decode(functionOutput.Payload)).payload;
       expect(payload.granules[0].producerGranuleId).toBe(granuleId);
       expect(payload.granules[0].granuleId).toMatch(
@@ -105,10 +110,11 @@ describe('The Add Unique Granule Id Task ', () => {
       );
       expect(payload.granules[1].producerGranuleId === payload.granules[0].producerGranuleId &&
         payload.granules[0].granuleId === payload.granules[1].granuleId);
+      expect(payload.pdr).toEqual(pdr);
     });
   });
 
-  describe('The Add Unique Granule Id Task with personalized hash config', () => {
+  describe('The Add Unique Granule Id Task with customized hash config', () => {
     it('invokes successfully', async () => {
       const newTaskConfig = {
         hashLength: 6,
