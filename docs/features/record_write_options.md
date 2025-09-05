@@ -37,9 +37,9 @@ If desired, workflows can be configured to write only specified record types whe
 ```
 
 :::caution
-There is a drawback to skipping the initial `granule` record write in PDR workflows. If the "running" granule is not written, there will be no link between the incoming `granule` and the incoming `pdr` until that `granule` is written. That linkage works via `granule.pdrName`, which requires the `granule` be written to the primary datastore. In this case it may be necessary to introduce an additional write step to store the `granule` _after_ the unique `granuleId` has been generated via the `add-unique-granuleID` task.
+There is a drawback to skipping the initial `granule` record write in PDR workflows. If the "running" granule is not written, there will be no link between the incoming `granule` and the incoming `pdr` until that `granule` is written. In this case it may be necessary to introduce an additional database write step to store the `granule` _after_ the unique `granuleId` has been generated via the `addUniqueGranuleId` task.
 
-[The sfs-sqs-report Task](https://github.com/nasa/cumulus/blob/master/tasks/sf-sqs-report/README.md) can be used for this purpose. If inserted after the `add-unique-granuleID` Task, the `sfs-sqs-report` Task will store the `granule` correctly with the uniquely-generated `granuleId` and `pdrName`.
+[The SfSqsReport Task](https://github.com/nasa/cumulus/tree/master/tasks/sf-sqs-report) can be used for this purpose. If inserted after the `addUniqueGranuleId` Task, and given a payload that includes both the `granule` and the `PDR`, it will store the `granule` correctly with the appropriate linkage.
 :::
 
 :::note
