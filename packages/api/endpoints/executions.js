@@ -227,10 +227,8 @@ async function del(req, res) {
 }
 
 const bulkArchiveExecutionsSchema = z.object({
-  // collectionId: z.string().optional(),
   batchSize: z.number().positive().optional().default(100),
   expirationDays: z.number().positive().optional().default(365),
-  // should there be a collection mapping to be like "ok but MODA01 expires after 20 days"
 });
 const parsebulkArchiveExecutionsPayload = zodParser('bulkArchiveExecutions payload', bulkArchiveExecutionsSchema);
 async function bulkArchiveExecutions(req, res) {
@@ -241,24 +239,22 @@ async function bulkArchiveExecutions(req, res) {
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
-  log.warn("actually neded up in the archiveExecutions endpoint:", JSON.stringify(body));
-  const updatedCount=0;
-  // const knex = await getKnexClientMethod();
-  // const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
+  const knex = await getKnexClientMethod();
+  const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
 
-  // const subQuery = knex(TableNames.executions)
-  //   .select('cumulus_id')
-  //   .whereBetween('updated_at', [
-  //     new Date(0),
-  //     expirationDate,
-  //   ])
-  //   .where('archived', false)
-  //   .limit(body.batchSize);
-  // const updatedCount = await knex(TableNames.executions)
-  //   .update({ archived: true })
-  //   .whereIn('cumulus_id', subQuery);
+  const subQuery = knex(TableNames.executions)
+    .select('cumulus_id')
+    .whereBetween('updated_at', [
+      new Date(0),
+      expirationDate,
+    ])
+    .where('archived', false)
+    .limit(body.batchSize);
+  const updatedCount = await knex(TableNames.executions)
+    .update({ archived: true })
+    .whereIn('cumulus_id', subQuery);
 
-  return res.send({ detail: `records updated: ${updatedCount}` });
+  return res.send({ recordsUpdated: updatedCount });
 }
 
 /**

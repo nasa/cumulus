@@ -48,33 +48,22 @@ const archiveRecords = async (event: Event) => {
   const config = await getParsedConfigValues(event.config);
   log.info('running archive-records with config', JSON.stringify(config));
   const archiveGranulesMethod = config.testMethods?.archiveGranulesMethod || bulkArchiveGranules;
-  await archiveGranulesMethod({
-    prefix: getRequiredEnvVar('stackName'),
-    body: config,
-  });
   const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod
     || bulkArchiveExecutions;
-  const granulesOutput = await archiveGranulesMethod({
-    prefix: getRequiredEnvVar('stackName'),
-    body: config,
-  });
-  const executionsOutput = await archiveExecutionsMethod({
-    prefix: getRequiredEnvVar('stackName'),
-    body: config,
-  });
-  log.info('got granules', JSON.stringify(granulesOutput));
-  log.info('got executions', JSON.stringify(executionsOutput));
-  // await Promise.all([
-  //   archiveGranulesMethod({
-  //     prefix: getRequiredEnvVar('stackName'),
-  //     body: config,
-  //   }),
-  //   archiveExecutionsMethod({
-  //     prefix: getRequiredEnvVar('stackName'),
-  //     body: config,
-  //   }),
-  // ]);
-  return { message: 'yay' };
+  const [granulesOutput, executionsOutput] = await Promise.all([
+    archiveGranulesMethod({
+      prefix: getRequiredEnvVar('stackName'),
+      body: config,
+    }),
+    archiveExecutionsMethod({
+      prefix: getRequiredEnvVar('stackName'),
+      body: config,
+    }),
+  ]);
+  return {
+    granulesUpdated: JSON.parse(granulesOutput.body).recordsUpdated,
+    executionsUpdated: JSON.parse(executionsOutput.body).recordsUpdated,
+  };
 };
 
 /**

@@ -797,10 +797,8 @@ async function bulkPatch(req, res) {
 }
 
 const bulkArchiveGranulesSchema = z.object({
-  // collectionId: z.string().optional(),
   batchSize: z.number().positive().optional().default(100),
   expirationDays: z.number().positive().optional().default(365),
-  // should there be a collection mapping to be like "ok but MODA01 expires after 20 days"
 });
 const parsebulkArchiveGranulesPayload = zodParser('bulkArchiveGranules payload', bulkArchiveGranulesSchema);
 async function bulkArchiveGranules(req, res) {
@@ -808,7 +806,6 @@ async function bulkArchiveGranules(req, res) {
     getKnexClientMethod = getKnexClient,
   } = req.testContext || {};
   const body = parsebulkArchiveGranulesPayload(req.body);
-  log.warn('this thing is', JSON.stringify(body))
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
@@ -826,8 +823,7 @@ async function bulkArchiveGranules(req, res) {
   const updatedCount = await knex(TableNames.granules)
     .update({ archived: true })
     .whereIn('cumulus_id', subQuery);
-  log.warn('and weve updated:', updatedCount);
-  return res.send({ detail: `records updated: ${updatedCount}` });
+  return res.send({ recordsUpdated: updatedCount });
 }
 /**
  * Delete a granule by granuleId
