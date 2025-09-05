@@ -191,6 +191,7 @@ If `uniquifyGranuleId` is `true` and the Collection is ingested using a workflow
 
 :::caution
 A Collection that is configured to uniquely identify Granules in this way means that the existing `granuleId` will change to a unique, hashed value. This is important to consider when building workflows and, in particular, specifying the S3 paths for a Granule's Files. ***This is also true for all workflows that may be run with Granules that have previously had their `granuleId` uniquely generated***
+:::
 
 In a Collection configuration, you can specify the `url_path` template that will be used to determine the final location of the Collection's Files if using the  `MoveGranules` Task Component.
 
@@ -218,7 +219,46 @@ Taking it a step further, depending on the workflow configuration, users can spe
 "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{defaultTo(granule.producerGranuleId, granule.granuleId)}",
 ```
 
-:::
+### Workflow Configuration
+
+An additional consideration to configuring the collection to uniquely identify granules is the record writing mechanism in the Cumulus Core framework.
+
+When a workflow executes, records are written to the Cumulus datastore including `execution`, `granule`, and `pdr` (among others). These records are written and updated to reflect the stages of the workflow execution. Initially a `granule` (for example) will be written in the `running` state. As the workflow progresses, that `granule` will be updated to either `completed` or `failed`. This presents a potential issue if the Cumulus workflow is generating a unique ID for the incoming granule as the initial write (a `granule` written as `running`) will happen *before* the workflow task is able to generate the unique ID. The resulting record will reflect the original, non-unique `granuleId` e.g.
+
+```json
+{
+  "granuleId": "L2_HR_PIXC_A"
+}
+```
+
+After the Granule has been assigned a unique `granuleId` in the `add-unique-granuleID` task the payload will look similar to this:
+
+```json
+{
+  "granuleId": "L2_HR_PIXC_A_zHGdMM",
+  "producerGranuleId": "L2_HR_PIXC_A"
+}
+```
+
+Where the `granuleId` is now a unique value and the original `granuleId` is stored as `producerGranuleId`.
+
+In this case, it may be desirable to to *skip* that initial record write as we do not want to attempt to write a granule with a `granuleId` that 1. may conflict with another and 2. does not represent the final `granuleId`, which could result in extraneous records.
+
+To configure the workflow to skip that initial `granule` write (when the granule is in the `running` state), the workflow can be configured using the `sf_event_sqs_to_db_records_types` block in the Terraform configuration. In this example using the `IngestAndPublishGranule` workflow, the configuration would be:
+
+```js
+{
+    sf_event_sqs_to_db_records_types = {
+        IngestAndPublishGranule = {
+            running = ["execution", "pdr"]
+        }
+    }
+}
+```
+
+`execution` and `pdr` records will be written in the `running` state. `granule` will not because it is not specified. As of this writing, `execution` and `pdr` must always be written. `granule` is currently the only record type that can be skipped in this way. This behavior is subject to change in the future, see below documentation for the most current Record Write Options.
+
+**Important**: If skipping the initial Granule record write is desired in a **PDR workflow**, additional modification may be required. See [the Record Write Options documentation](record_write_options.md) for details on this use case as well as general documentation on skipping record writes.
 
 ### Workflow Examples
 
