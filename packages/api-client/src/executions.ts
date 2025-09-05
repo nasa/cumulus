@@ -105,7 +105,7 @@ export const bulkArchiveExecutions = async (params: {
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: '/granules/archive/',
+      path: '/executions/archive/',
       headers: {
         'Content-Type': 'application/json',
       },
