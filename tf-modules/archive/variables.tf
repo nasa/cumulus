@@ -326,9 +326,21 @@ variable "payload_timeout" {
 }
 
 variable "update_limit" {
-type = number
+  type = number
   default = 10000
   description = "number of executions to cleanup in one lambda run"
+}
+
+variable "archive_update_limit" {
+  type = number
+  default = 10000
+  description = "number of granules and executions to archive in one lambda run"
+}
+
+variable "archive_expiration_days" {
+  type = number
+  default = 365
+  description = "age (in days) after which granules or executions should be archived"
 }
 
 variable "log_destination_arn" {
@@ -366,4 +378,12 @@ variable "dead_letter_recovery_memory" {
   type = number
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
+}
+
+
+## Record Archival Configuration
+variable "daily_archive_records_schedule_expression" {
+  type    = string
+  default = "cron(0 4 * * ? *)"
+  description = "Cloud Watch cron schedule for the record archival lambda"
 }
