@@ -11,6 +11,7 @@ const {
   fetchEnabledRules,
   filterRulesByRuleParams,
   lookupCollectionInEvent,
+  lookupProviderInEvent,
   queueMessageForRule,
 } = require('../lib/rulesHelpers');
 
@@ -119,6 +120,7 @@ async function processRecord(record, fromSNS, enabledRules) {
     ruleParams = {
       type: originalMessageSource,
       ...lookupCollectionInEvent(eventObject),
+      provider: lookupProviderInEvent(eventObject),
       sourceArn: get(record, 'Sns.TopicArn'),
     };
   } else {
@@ -138,6 +140,7 @@ async function processRecord(record, fromSNS, enabledRules) {
         type: originalMessageSource,
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN'),
+        provider: lookupProviderInEvent(eventObject),
       };
     } catch (error) {
       log.error('Caught error parsing JSON:', error);
@@ -148,7 +151,7 @@ async function processRecord(record, fromSNS, enabledRules) {
 
   try {
     await validateMessage(eventObject, originalMessageSource, validationSchema);
-    const applicableRules = await filterRulesByRuleParams(enabledRules, ruleParams);
+    const applicableRules = filterRulesByRuleParams(enabledRules, ruleParams);
     return await Promise.all(applicableRules.map((rule) => {
       if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParams.sourceArn);
       return queueMessageForRule(rule, eventObject);

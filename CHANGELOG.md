@@ -6,8 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
 
 ## [v20.3.0] 2025-08-18
 

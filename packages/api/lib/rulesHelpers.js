@@ -112,10 +112,16 @@ const filterRulesByRuleParams = (rules, ruleParams) => rules.filter(
   (rule) => {
     const typeMatch = ruleParams.type ? get(ruleParams, 'type') === rule.rule.type : true;
     const collectionMatch = collectionRuleMatcher(rule, ruleParams);
+    const providerMatch = ruleParams.provider
+      ? ruleParams.provider === rule.provider
+      : true;
+    if (!providerMatch) {
+      log.info(`Rule provider name - ${rule.provider} - does not match provider - ${ruleParams.provider}`);
+    }
     const sourceArnMatch = ruleParams.sourceArn
       ? get(ruleParams, 'sourceArn') === rule.rule.value
       : true;
-    return typeMatch && collectionMatch && sourceArnMatch;
+    return typeMatch && collectionMatch && providerMatch && sourceArnMatch;
   }
 );
 
@@ -138,6 +144,10 @@ function lookupCollectionInEvent(eventObject) {
     version: get(eventObject, 'collection.version', get(eventObject, 'product.dataVersion')),
     dataType: get(eventObject, 'collection.dataType'),
   });
+}
+
+function lookupProviderInEvent(eventObject) {
+  return get(eventObject, 'provider.id', get(eventObject, 'provider'));
 }
 
 /**
@@ -774,6 +784,7 @@ module.exports = {
   invokeRerun,
   isEventSourceMappingShared,
   lookupCollectionInEvent,
+  lookupProviderInEvent,
   queueMessageForRule,
   updateRuleTrigger,
 };
