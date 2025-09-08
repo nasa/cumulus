@@ -35,6 +35,7 @@ export type ApiGranuleRecord = {
   producerGranuleId: string
   status: GranuleStatus
   updatedAt: number
+  activeStatus?: string
   cmrLink?: string
   duration?: number
   error?: Object
@@ -56,6 +57,7 @@ export type ApiGranule = {
   collectionId: string
   archived: boolean
   producerGranuleId: string
+  activeStatus?: string
   cmrLink?: string | null
   createdAt?: number | null
   duration?: number | null
