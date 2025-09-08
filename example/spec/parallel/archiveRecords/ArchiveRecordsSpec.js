@@ -26,7 +26,7 @@ const {
   deleteFolder,
 } = require('../../helpers/testUtils');
 
-describe('when ChangeGranuleCollectionPG is called', () => {
+describe('when ArchiveGranules is called', () => {
   const monthEpoch = 2629743000;
   const yearEpoch = 31556926000;
   let testSetupFailed;
@@ -67,7 +67,7 @@ describe('when ChangeGranuleCollectionPG is called', () => {
       const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
       config = await loadConfig();
       stackName = config.stackName;
-      const testId = createTimestampedTestId(stackName, 'changeGranuleCollectionPg');
+      const testId = createTimestampedTestId(stackName, 'archiveGranules');
       const testSuffix = createTestSuffix(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
