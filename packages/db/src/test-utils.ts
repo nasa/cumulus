@@ -123,7 +123,7 @@ export const fakeGranuleRecordFactory = (
   granule_id: cryptoRandomString({ length: 5 }),
   producer_granule_id: cryptoRandomString({ length: 5 }),
   status: 'completed',
-  active: 'A',
+  active_status: 'A',
   created_at: new Date(),
   ...params,
 });

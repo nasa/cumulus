@@ -87,7 +87,7 @@ function fakeGranuleFactory(status = 'completed') {
     execution: getExecutionUrlFromArn(randomId('execution')),
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    active: 'A',
+    activeStatus: 'A',
     published: true,
     cmrLink: 'example.com',
     productVolume: '100',

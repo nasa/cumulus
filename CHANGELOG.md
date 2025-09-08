@@ -18,9 +18,9 @@ Please follow the instructions before upgrading Cumulus
 ### Added
 
 - **CUMULUS-4146**
-  - Added new column `active` to Postgres `granules` table to discern whether a duplicate granule is active or hidden
-  - Added `active` property to `granule` record schema.
-  - Created migration for `active` column and index for granules table
+  - Added new column `active_status` to Postgres `granules` table to discern whether a duplicate granule is active or hidden
+  - Added `active_status` property to `granule` record schema.
+  - Created migration for `active_status` column and index for granules table
 
 ## Handle Granules with Identical producerGranuleId in Different Collections
 

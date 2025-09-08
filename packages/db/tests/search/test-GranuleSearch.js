@@ -150,7 +150,7 @@ test.before(async (t) => {
       time_to_process: !(num % 20)
         ? Number(t.context.granuleSearchFields.timeToPreprocess) : undefined,
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
-      active: !(num % 2) ? 'A' : 'H',
+      active_status: !(num % 2) ? 'A' : 'H',
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
       archived: Boolean(num % 2),
     }))
@@ -346,7 +346,7 @@ test('GranuleSearch supports term search for boolean field', async (t) => {
 
   queryStringParameters = {
     limit: 200,
-    active: 'A',
+    activeStatus: 'A',
   };
   dbSearch = new GranuleSearch({ queryStringParameters });
   response = await dbSearch.query(knex);

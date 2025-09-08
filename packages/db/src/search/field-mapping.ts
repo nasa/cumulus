@@ -26,8 +26,8 @@ const granuleMapping: { [key: string]: Function } = {
   granuleId: (value?: string) => ({
     granule_id: value,
   }),
-  active: (value?: string) => ({
-    active: value,
+  activeStatus: (value?: string) => ({
+    active_status: value,
   }),
   _id: (value?: string) => ({
     granule_id: value,

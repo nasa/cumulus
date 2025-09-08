@@ -328,7 +328,7 @@ module.exports.granule = {
       type: 'number',
       readonly: true,
     },
-    active: {
+    activeStatus: {
       title: 'Flag for if the granule is active or hidden',
       type: 'char',
       readonly: true,

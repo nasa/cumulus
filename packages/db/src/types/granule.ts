@@ -6,7 +6,7 @@ export interface PostgresGranuleUniqueColumns {
 export interface PostgresGranule extends PostgresGranuleUniqueColumns {
   archived: boolean,
   producer_granule_id: string,
-  active: string,
+  active_status?: string,
   status?: GranuleStatus,
   cmr_link?: string | null,
   error?: object | null,

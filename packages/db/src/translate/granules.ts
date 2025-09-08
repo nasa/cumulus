@@ -54,7 +54,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   archived: granulePgRecord.archived,
   beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
   cmrLink: granulePgRecord.cmr_link,
-  active: granulePgRecord.active,
+  activeStatus: granulePgRecord.active_status,
   collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
   createdAt: granulePgRecord.created_at?.getTime(),
   duration: granulePgRecord.duration,
@@ -252,7 +252,7 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
       ? dynamoRecord.productVolume
       : dynamoRecord.productVolume,
     error: dynamoRecord.error,
-    active: dynamoRecord.active,
+    active_status: dynamoRecord.activeStatus,
     cmr_link: dynamoRecord.cmrLink,
     pdr_cumulus_id,
     provider_cumulus_id,
