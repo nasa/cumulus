@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/schemas",
-  "version": "20.3.0",
+  "version": "21.0.0",
   "description": "Helpers for managing Cumulus task schemas",
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/schemas",
   "repository": {

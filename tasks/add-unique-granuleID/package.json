@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/add-unique-granule-id",
-  "version": "20.1.1",
+  "version": "21.0.0",
   "description": "A Cumulus task to add a unique granule ID to a granule",
   "main": "dist/index.js",
   "private": true,

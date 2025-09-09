@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/es-client",
-  "version": "20.3.0",
+  "version": "21.0.0",
   "description": "Utilities for working with Elasticsearch",
   "keywords": [
     "CUMULUS",
@@ -34,10 +34,10 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@aws-sdk/credential-providers": "^3.621.0",
-    "@cumulus/common": "20.3.0",
-    "@cumulus/errors": "20.3.0",
-    "@cumulus/logger": "20.3.0",
-    "@cumulus/message": "20.3.0",
+    "@cumulus/common": "21.0.0",
+    "@cumulus/errors": "21.0.0",
+    "@cumulus/logger": "21.0.0",
+    "@cumulus/message": "21.0.0",
     "@elastic/elasticsearch": "^5.6.20",
     "aws4": "^1.12.0",
     "lodash": "~4.17.21",
@@ -45,8 +45,8 @@
     "p-limit": "^1.2.0"
   },
   "devDependencies": {
-    "@cumulus/aws-client": "20.3.0",
-    "@cumulus/test-data": "20.3.0",
+    "@cumulus/aws-client": "21.0.0",
+    "@cumulus/test-data": "21.0.0",
     "p-each-series": "^2.1.0"
   }
 }
