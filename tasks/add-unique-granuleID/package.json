@@ -40,11 +40,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "20.2.0",
+    "@cumulus/common": "21.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.3.0",
-    "@cumulus/ingest": "20.2.0",
-    "@cumulus/logger": "20.2.0",
-    "@cumulus/message": "20.2.0",
-    "@cumulus/types": "20.2.0"
+    "@cumulus/ingest": "21.0.0",
+    "@cumulus/logger": "21.0.0",
+    "@cumulus/message": "21.0.0",
+    "@cumulus/types": "21.0.0"
   }
 }
