@@ -112,7 +112,7 @@ const filterRulesByRuleParams = (rules, ruleParams) => rules.filter(
   (rule) => {
     const typeMatch = ruleParams.type ? get(ruleParams, 'type') === rule.rule.type : true;
     const collectionMatch = collectionRuleMatcher(rule, ruleParams);
-    const providerMatch = ruleParams.provider
+    const providerMatch = rule.provider && ruleParams.provider
       ? ruleParams.provider === rule.provider
       : true;
     if (!providerMatch) {
@@ -146,9 +146,8 @@ function lookupCollectionInEvent(eventObject) {
   });
 }
 
-function lookupProviderInEvent(eventObject) {
-  return get(eventObject, 'provider.id', get(eventObject, 'provider'));
-}
+const lookupProviderInEvent = (eventObject) =>
+  get(eventObject, 'provider.id', get(eventObject, 'provider'));
 
 /**
  * Build payload from rule for lambda invocation
