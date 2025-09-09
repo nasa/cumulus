@@ -1,5 +1,5 @@
 ---
-id: add_and_index_archived_column
+id: archived_column_indexing
 title: Add and Index Archived Column
 ---
 
