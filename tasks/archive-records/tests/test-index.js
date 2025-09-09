@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const clone = require('lodash/clone');
 const {
   randomId
 } = require('@cumulus/common/test-utils');
@@ -19,10 +20,11 @@ const {
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const range = require('lodash/range');
-const { handler } = require('../dist/src');
 const { fakeGranuleRecordFactory, fakeCollectionRecordFactory } = require('@cumulus/db/dist');
 const { bulkArchiveGranules } = require('@cumulus/api/endpoints/granules');
 const { bulkArchiveExecutions } = require('@cumulus/api/endpoints/executions');
+
+const { handler, getParsedConfigValues } = require('../dist/src');
 const mockResponse = () => {
   const res = {};
   res.status = sinon.stub().returns(res);
@@ -201,6 +203,55 @@ test.serial('ArchiveRecords sets old granules to "archived=true" and not newer g
   })
 });
 
+test.serial('getParsedConfigValues handles empty config and no env with defaults', (t) => {
+  const envStore = clone(process.env)
+  delete process.env.UPDATE_LIMIT;
+  delete process.env.EXPIRATION_DAYS;
+  t.deepEqual(getParsedConfigValues(), {
+    batchSize: 10000,
+    expirationDays: 365,
+    testMethods: undefined
+  })
+  process.env = envStore;
+})
+
+test.serial('getParsedConfigValues handles empty config and prefers env to defaults', (t) => {
+  const envStore = clone(process.env)
+  process.env.UPDATE_LIMIT = 23;
+  process.env.EXPIRATION_DAYS = 2345;
+  t.deepEqual(getParsedConfigValues(), {
+    batchSize: 23,
+    expirationDays: 2345,
+    testMethods: undefined
+  })
+  process.env = envStore;
+})
+test.serial('getParsedConfigValues prefers explicit config values', (t) => {
+  const envStore = clone(process.env)
+  process.env.UPDATE_LIMIT = 23;
+  process.env.EXPIRATION_DAYS = 2345;
+  t.deepEqual(getParsedConfigValues({
+    updateLimit: 15,
+    expirationDays: 2,
+  }), {
+    batchSize: 15,
+    expirationDays: 2,
+    testMethods: undefined
+  })
+  t.is(
+    getParsedConfigValues({
+      testMethods: { archiveGranulesMethod: () => 2 }
+    }).testMethods.archiveGranulesMethod(),
+    2
+  )
+  t.is(
+    getParsedConfigValues({
+      testMethods: { archiveExecutionsMethod: () => 3 }
+    }).testMethods.archiveExecutionsMethod(),
+    3
+  )
+  process.env = envStore;
+})
 // test.serial('changeGranuleCollectionsPG should handle change where only some files are being moved', async (t) => {
 //   const payloadPath = path.join(__dirname, 'data', 'payload_base.json');
 //   let payloadString = fs.readFileSync(payloadPath, 'utf8');
