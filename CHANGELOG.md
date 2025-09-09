@@ -6,8 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
+- **CUMULUS-4124**
+  - Add api endpoint granules/archive to archive granules
+  - Add api endpoint executions/archive to archive executions
+  - Task lambda to call above api endpoints with configuration
+  - Add cron scheduler to call above task lambda and archive old records
 
 ## [v20.3.0] 2025-08-18
 
