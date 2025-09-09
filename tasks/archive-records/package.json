@@ -45,6 +45,10 @@
       "@cumulus/api-client": "20.3.0",
       "@cumulus/common": "20.3.0",
       "@cumulus/types": "20.3.0"
+    },
+    "devDependencies": {
+      "@cumulus/db": "20.3.0",
+      "@cumulus/api": "20.3.0"
     }
   }
   

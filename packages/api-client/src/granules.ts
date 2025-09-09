@@ -820,7 +820,6 @@ export const bulkArchiveGranules = async (params: {
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  console.log('actualy neded up in bulkArchiveGranules');
   const { prefix, body, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
