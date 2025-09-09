@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Handle Granules with Identical producerGranuleId in Different Collections
+## CUMULUS-4058 Handle Granules with Identical producerGranuleId in Different Collections
 
 ### Migration Notes
 
@@ -177,7 +177,6 @@ Please follow the instructions before upgrading Cumulus
 - **CUMULUS-4028**
   - Update AddUniqueGranuleId task to output the input payload in addition to the modified granules.
   - Added 'unique' version of ingest_and_publish granule workflow for 'uniquiy' feature ingest tests
-
 - **CUMULUS-4209**
   - Updated the `producer_granule_id` migration script to disable autovacuum before the
     migration and re-enable it afterward to improve performance.
