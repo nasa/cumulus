@@ -12,6 +12,7 @@ export type GranuleTemporalInfo = {
 export interface MessageGranule {
   granuleId: string
   cmrLink?: string
+  producerGranuleId?: string
   published?: boolean
   status?: string
   sync_granule_duration?: number
@@ -28,11 +29,12 @@ type PartialGranuleTemporalInfo = NullablePartialType<GranuleTemporalInfo>;
 type PartialGranuleProcessingInfo = NullablePartialType<import('./executions').ExecutionProcessingTimes>;
 
 export type ApiGranuleRecord = {
-  granuleId: string
   collectionId: string
+  createdAt: number
+  granuleId: string
+  producerGranuleId: string
   status: GranuleStatus
   updatedAt: number
-  createdAt: number
   cmrLink?: string
   duration?: number
   error?: Object
@@ -52,8 +54,8 @@ export type ApiGranuleRecord = {
 export type ApiGranule = {
   granuleId: string
   collectionId: string
-  status?: GranuleStatus
-  updatedAt?: number | null
+  archived: boolean
+  producerGranuleId: string
   cmrLink?: string | null
   createdAt?: number | null
   duration?: number | null
@@ -61,12 +63,14 @@ export type ApiGranule = {
   execution?: string | null
   files?: Omit<import('./files').ApiFile, 'granuleId'>[] | null
   pdrName?: string | null
+  producerGranuleId?: string | null
   productVolume?: string | null
   provider?: string | null
   published?: boolean | null
   queryFields?: unknown | null
+  status?: GranuleStatus
   timestamp?: number | null
   timeToArchive?: number | null
   timeToPreprocess?: number | null
-  archived: boolean
+  updatedAt?: number | null
 } & PartialGranuleTemporalInfo & PartialGranuleProcessingInfo;

@@ -1,0 +1,21 @@
+{
+  "version": "1.5",
+  "provider": "PODAAC_SWOT",
+  "collection": "L2_HR_PIXC",
+  "submissionTime":"2017-10-01T05:45:29.000000",
+  "identifier": "<<REPLACED with random string>>",
+  "product": {
+    "name": "L2_HR_PIXC_product_0001-of-4154",
+    "dataVersion": "099",
+    "files": [
+      {
+        "type": "data",
+        "uri": "s3://<replace-bucket>/cumulus-test-data/pdrs/L2_HR_PIXC_product_0001-of-4154.h5",
+        "name": "L2_HR_PIXC_product_0001-of-4154.h5",
+        "checksumType": "md5",
+        "checksum": "cd043418380acdf69b2fb80649357cda",
+        "size": 50
+      }
+    ]
+  }
+}
