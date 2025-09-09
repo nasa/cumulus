@@ -21,7 +21,7 @@ const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   addCollections,
   conceptExists,
-  getOnlineResources,
+  getCmrMetadata,
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
@@ -77,22 +77,22 @@ async function getUmmObject(fileLocation) {
   return ummFileJson;
 }
 
-const getOnlineResourcesWithRetries = async (granule) =>
+const getCmrMetadataWithRetries = async (granule) =>
   await pRetry(
     async () => {
-      let onlineResources;
+      let cmrMetadata;
 
       try {
-        onlineResources = await getOnlineResources(granule);
+        cmrMetadata = await getCmrMetadata(granule);
       } catch (error) {
         throw new pRetry.AbortError(error);
       }
 
-      if (onlineResources.length === 0) {
+      if (cmrMetadata.length === 0) {
         throw new Error('No online resources found');
       }
 
-      return onlineResources;
+      return cmrMetadata;
     },
     { retries: 60, maxTimeout: 5000, factor: 1.05 }
   );
@@ -331,6 +331,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   });
 
   describe('the PostToCmr task', () => {
+    let metadataResults;
     let onlineResources;
     let files;
     let resourceURLs;
@@ -350,13 +351,13 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         process.env.CMR_ENVIRONMENT = 'UAT';
 
         [
-          onlineResources,
+          metadataResults,
           teaRequestHeaders,
         ] = await Promise.all([
-          getOnlineResourcesWithRetries(granule),
+          getCmrMetadataWithRetries(granule),
           getTEARequestHeaders(config.stackName),
         ]);
-
+        onlineResources = metadataResults.items[0].umm.RelatedUrls;
         resourceURLs = onlineResources.map((resource) => resource.URL);
       } catch (error) {
         subTestSetupError = error;
@@ -374,6 +375,13 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
+    });
+
+    it('updates the CMR metadata with the expected producerGranuleId', () => {
+      if (beforeAllError || subTestSetupError) throw SetupError;
+      const expectedGranuleId = inputPayload.granules[0].granuleId;
+      expect(metadataResults.items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(expectedGranuleId);
+      expect(metadataResults.items[0].umm.GranuleUR).toEqual(expectedGranuleId);
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
