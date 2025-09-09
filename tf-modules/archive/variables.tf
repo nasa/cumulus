@@ -215,8 +215,14 @@ variable "metrics_es_host" {
   default     = null
 
   validation {
-    condition     = !startswith(var.metrics_es_host, "https://")
-    error_message = "metrics_es_host domain name should not include `https://`."
+    condition     = (
+     var.metrics_es_host == null ||
+     (
+       !startswith(trimspace(var.metrics_es_host), "https://") &&
+       !startswith(trimspace(var.metrics_es_host), "http://")
+     )
+    )
+    error_message = "metrics_es_host should be a domain name only (e.g., `abcdef123.metrics.com`) and must not start with `http://` or `https://`."
   }
 }
 
