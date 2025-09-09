@@ -3,9 +3,8 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const clone = require('lodash/clone');
-const {
-  randomId
-} = require('@cumulus/common/test-utils');
+const range = require('lodash/range');
+const { randomId } = require('@cumulus/common/test-utils');
 
 const sinon = require('sinon');
 const {
@@ -19,7 +18,6 @@ const {
   localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
-const range = require('lodash/range');
 const { fakeGranuleRecordFactory, fakeCollectionRecordFactory } = require('@cumulus/db/dist');
 const { bulkArchiveGranules } = require('@cumulus/api/endpoints/granules');
 const { bulkArchiveExecutions } = require('@cumulus/api/endpoints/executions');
@@ -58,7 +56,7 @@ async function setupDataStoreData(granules, executions, t) {
     knex,
     granules.map((granule) => ({
       ...granule,
-      collection_cumulus_id: collectionInserted[0].cumulus_id
+      collection_cumulus_id: collectionInserted[0].cumulus_id,
     })),
     ['cumulus_id']
   );
@@ -76,12 +74,13 @@ async function setupDataStoreData(granules, executions, t) {
 const archiveGranulesDummyMethod = async (params) => {
   await bulkArchiveGranules(params, mockResponse());
   return { body: JSON.stringify({ recordsUpdated: 0 }) };
-}
+};
 
 const archiveExecutionsDummyMethod = async (params) => {
   await bulkArchiveExecutions(params, mockResponse());
   return { body: JSON.stringify({ recordsUpdated: 0 }) };
-}
+};
+
 test.beforeEach(async (t) => {
   const testDbName = `ArchiveRecords/${cryptoRandomString({ length: 10 })}`;
   const { knexAdmin, knex } = await generateLocalTestDb(
@@ -92,7 +91,7 @@ test.beforeEach(async (t) => {
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
   t.context.stackName = randomId('ArchiveRecords');
-  
+
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
@@ -108,44 +107,43 @@ test.afterEach.always(async (t) => {
 });
 
 test.serial('ArchiveRecords sets old granules/executions to "archived=true"', async (t) => {
-
   const config = {
     expirationDays: 1,
     testMethods: {
       archiveGranulesMethod: archiveGranulesDummyMethod,
       archiveExecutionsMethod: archiveExecutionsDummyMethod,
-    }
+    },
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
       granule_id: cryptoRandomString({ length: 5 }),
-      updated_at: new Date(Date.now() - 2*epochDay),
+      updated_at: new Date(Date.now() - 2 * epochDay),
     })],
     [fakeExecutionRecordFactory({
-      updated_at: new Date(Date.now() - 2*epochDay)
+      updated_at: new Date(Date.now() - 2 * epochDay),
     })],
     t
   );
-  await handler({config});
+  await handler({ config });
   const granuleModel = new GranulePgModel();
   const granuleCumulusId = pgGranules[0].cumulus_id;
   const granule = await granuleModel.get(
     t.context.knex,
     {
-      cumulus_id: granuleCumulusId
+      cumulus_id: granuleCumulusId,
     }
-  )
-  t.true(granule.archived)
+  );
+  t.true(granule.archived);
 
   const executionModel = new ExecutionPgModel();
   const executionCumulusId = pgExecutions[0].cumulus_id;
   const execution = await executionModel.get(
     t.context.knex,
     {
-      cumulus_id: executionCumulusId
+      cumulus_id: executionCumulusId,
     }
-  )
-  t.true(execution.archived)
+  );
+  t.true(execution.archived);
 });
 
 test.serial('ArchiveRecords sets old granules to "archived=true" and not newer granules/executions', async (t) => {
@@ -154,7 +152,7 @@ test.serial('ArchiveRecords sets old granules to "archived=true" and not newer g
     testMethods: {
       archiveGranulesMethod: archiveGranulesDummyMethod,
       archiveExecutionsMethod: archiveExecutionsDummyMethod,
-    }
+    },
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     range(100).map((i) => fakeGranuleRecordFactory({
@@ -167,67 +165,68 @@ test.serial('ArchiveRecords sets old granules to "archived=true" and not newer g
     })),
     t
   );
-  await handler({config});
+  await handler({ config });
   const granuleModel = new GranulePgModel();
   const granules = await Promise.all(
     pgGranules.map(async (granule) => await granuleModel.get(
       t.context.knex,
       {
-        cumulus_id: granule.cumulus_id
+        cumulus_id: granule.cumulus_id,
       }
     ))
   );
   granules.forEach((granule) => {
-    if (parseInt(granule.granule_id) <= config.expirationDays) {
+    if (Number.parseInt(granule.granule_id, 10) <= config.expirationDays) {
       t.false(granule.archived);
     } else {
       t.true(granule.archived);
     }
-  })
+  });
 
   const executionModel = new ExecutionPgModel();
   const executions = await Promise.all(
     pgExecutions.map(async (execution) => await executionModel.get(
       t.context.knex,
       {
-        cumulus_id: execution.cumulus_id
+        cumulus_id: execution.cumulus_id,
       }
     ))
   );
   executions.forEach((execution) => {
-    if (parseInt(execution.arn) <= config.expirationDays) {
+    if (Number.parseInt(execution.arn, 10) <= config.expirationDays) {
       t.false(execution.archived);
     } else {
       t.true(execution.archived);
     }
-  })
+  });
 });
 
 test.serial('getParsedConfigValues handles empty config and no env with defaults', (t) => {
-  const envStore = clone(process.env)
+  const envStore = clone(process.env);
   delete process.env.UPDATE_LIMIT;
   delete process.env.EXPIRATION_DAYS;
   t.deepEqual(getParsedConfigValues(), {
     batchSize: 10000,
     expirationDays: 365,
-    testMethods: undefined
-  })
+    testMethods: undefined,
+  });
   process.env = envStore;
-})
+});
 
 test.serial('getParsedConfigValues handles empty config and prefers env to defaults', (t) => {
-  const envStore = clone(process.env)
+  const envStore = clone(process.env);
   process.env.UPDATE_LIMIT = 23;
   process.env.EXPIRATION_DAYS = 2345;
   t.deepEqual(getParsedConfigValues(), {
     batchSize: 23,
     expirationDays: 2345,
-    testMethods: undefined
-  })
+    testMethods: undefined,
+  });
   process.env = envStore;
-})
+});
+
 test.serial('getParsedConfigValues prefers explicit config values', (t) => {
-  const envStore = clone(process.env)
+  const envStore = clone(process.env);
   process.env.UPDATE_LIMIT = 23;
   process.env.EXPIRATION_DAYS = 2345;
   t.deepEqual(getParsedConfigValues({
@@ -236,227 +235,19 @@ test.serial('getParsedConfigValues prefers explicit config values', (t) => {
   }), {
     batchSize: 15,
     expirationDays: 2,
-    testMethods: undefined
-  })
+    testMethods: undefined,
+  });
   t.is(
     getParsedConfigValues({
-      testMethods: { archiveGranulesMethod: () => 2 }
+      testMethods: { archiveGranulesMethod: () => 2 },
     }).testMethods.archiveGranulesMethod(),
     2
-  )
+  );
   t.is(
     getParsedConfigValues({
-      testMethods: { archiveExecutionsMethod: () => 3 }
+      testMethods: { archiveExecutionsMethod: () => 3 },
     }).testMethods.archiveExecutionsMethod(),
     3
-  )
+  );
   process.env = envStore;
-})
-// test.serial('changeGranuleCollectionsPG should handle change where only some files are being moved', async (t) => {
-//   const payloadPath = path.join(__dirname, 'data', 'payload_base.json');
-//   let payloadString = fs.readFileSync(payloadPath, 'utf8');
-//   payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
-//   payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
-//   payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
-//   t.context.payload = JSON.parse(payloadString);
-
-//   t.context.payload.config.oldGranules[0].files[0] = t.context.payload.input.granules[0].files[0];
-//   t.context.payload.config.oldGranules[0].files[1] = t.context.payload.input.granules[0].files[1];
-
-//   await setupS3Data(t.context.payload.input.granules);
-//   await setupS3Data(t.context.payload.config.oldGranules);
-//   const collectionPath = path.join(__dirname, 'data', 'new_collection.json');
-//   const collection = JSON.parse(fs.readFileSync(collectionPath));
-//   const newPayload = buildPayload(t, collection);
-//   const pgRecords = await setupDataStoreData(
-//     newPayload.config.oldGranules,
-//     collection,
-//     t
-//   );
-//   const output = await changeGranuleCollectionsPG(newPayload);
-//   await validateOutput(t, output);
-//   const granuleModel = new GranulePgModel();
-//   const finalPgGranule = await granuleModel.get(t.context.knex, {
-//     cumulus_id: pgRecords.granules[0].cumulus_id,
-//   });
-//   t.assert(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-//   t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
-//   //ensure old files have been cleaned up
-
-//   await Promise.all(newPayload.config.oldGranules.slice(2).map((granule) => Promise.all(
-//     granule.files.map(async (file) => {
-//       t.assert(!await s3ObjectExists({
-//         Bucket: file.bucket,
-//         Key: file.key,
-//       }));
-//     })
-//   )));
-//   await Promise.all(newPayload.input.granules.map((granule) => Promise.all(
-//     granule.files.map(async (file) => {
-//       t.assert(await s3ObjectExists({
-//         Bucket: file.bucket,
-//         Key: file.key,
-//       }));
-//     })
-//   )));
-// });
-
-// test.serial('changeGranuleCollectionsPG should handle change where no files are being moved', async (t) => {
-//   const payloadPath = path.join(__dirname, 'data', 'payload_base.json');
-//   let payloadString = fs.readFileSync(payloadPath, 'utf8');
-//   payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
-//   payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
-//   payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
-//   t.context.payload = JSON.parse(payloadString);
-
-//   t.context.payload.config.oldGranules[0].files = t.context.payload.input.granules[0].files;
-//   await setupS3Data(t.context.payload.input.granules);
-//   await setupS3Data(t.context.payload.config.oldGranules);
-//   const collectionPath = path.join(__dirname, 'data', 'new_collection.json');
-//   const collection = JSON.parse(fs.readFileSync(collectionPath));
-//   const newPayload = buildPayload(t, collection);
-//   const pgRecords = await setupDataStoreData(
-//     newPayload.config.oldGranules,
-//     collection,
-//     t
-//   );
-//   const output = await changeGranuleCollectionsPG(newPayload);
-//   await validateOutput(t, output);
-//   const granuleModel = new GranulePgModel();
-//   const finalPgGranule = await granuleModel.get(t.context.knex, {
-//     cumulus_id: pgRecords.granules[0].cumulus_id,
-//   });
-//   t.assert(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-//   t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
-//   //nothing should have been cleaned up
-
-//   await Promise.all(newPayload.input.granules.map((granule) => Promise.all(
-//     granule.files.map(async (file) => {
-//       t.assert(await s3ObjectExists({
-//         Bucket: file.bucket,
-//         Key: file.key,
-//       }));
-//     })
-//   )));
-// });
-
-// test.serial('changeGranuleCollectionsPG Should work correctly for a large batch', async (t) => {
-//   const payloadPath = path.join(__dirname, 'data', 'payload_base.json');
-//   let payloadString = fs.readFileSync(payloadPath, 'utf8');
-//   payloadString = payloadString.replaceAll('replaceme-publicBucket', t.context.publicBucket);
-//   payloadString = payloadString.replaceAll('replaceme-privateBucket', t.context.privateBucket);
-//   payloadString = payloadString.replaceAll('replaceme-protectedBucket', t.context.protectedBucket);
-//   t.context.payload = JSON.parse(payloadString);
-
-//   const collectionPath = path.join(__dirname, 'data', 'new_collection.json');
-//   const collection = JSON.parse(fs.readFileSync(collectionPath));
-//   const newPayload = buildPayload(t, collection);
-//   const granules = range(200).map((_) => fakeGranuleRecordFactory({
-//     granuleId: cryptoRandomString({ length: 5 }),
-//     collectionId: constructCollectionId(
-//       t.context.payload.config.collection.name,
-//       t.context.payload.config.collection.version
-//     ),
-//     updated_at: Date.now() - (i * epochDay) // i days ago
-//   }));
-
-//   const pgRecords = await setupDataStoreData(
-//     granules,
-//     collection,
-//     t
-//   );
-//   const output = await archiveRecords(newPayload);
-//   await validateOutput(t, output);
-//   const granuleModel = new GranulePgModel();
-//   const finalPgGranule = await granuleModel.get(t.context.knex, {
-//     cumulus_id: pgRecords.granules[0].cumulus_id,
-//   });
-//   t.assert(finalPgGranule.granule_id === pgRecords.granules[0].granule_id);
-//   t.assert(finalPgGranule.collection_cumulus_id === pgRecords.targetCollection.cumulus_id);
-//   //ensure old files have been cleaned up
-
-//   await Promise.all(newPayload.config.oldGranules.map((granule) => Promise.all(
-//     granule.files.map(async (file) => {
-//       t.assert(!await s3ObjectExists({
-//         Bucket: file.bucket,
-//         Key: file.key,
-//       }));
-//     })
-//   )));
-//   await Promise.all(newPayload.input.granules.map((granule) => Promise.all(
-//     granule.files.map(async (file) => {
-//       t.assert(await s3ObjectExists({
-//         Bucket: file.bucket,
-//         Key: file.key,
-//       }));
-//     })
-//   )));
-// });
-
-// test('massageConfig massages input config to contain required variables', (t) => {
-//   let config = {
-//     oldGranules: [],
-//     targetCollection: {
-//       name: 'abc',
-//       version: '001',
-//     },
-//     collection: {
-//       name: 'abc',
-//       version: '000',
-//     },
-//     concurrency: 120,
-//     s3Concurrency: 123,
-//     dbMaxPool: 200,
-//     maxRequestGranules: 20000,
-//   };
-//   let massagedConfig = massageConfig(config);
-//   t.deepEqual(config, massagedConfig);
-
-//   config = {
-//     oldGranules: [],
-//     targetCollection: {
-//       name: 'abc',
-//       version: '001',
-//     },
-//     collection: {
-//       name: 'abc',
-//       version: '000',
-//     },
-//   };
-//   massagedConfig = massageConfig(config);
-//   t.deepEqual({
-//     ...config,
-//     concurrency: 100,
-//     s3Concurrency: 50,
-//     maxRequestGranules: 1000,
-//     dbMaxPool: 100,
-//   }, massagedConfig);
-//   const oldEnv = clone(process.env);
-//   process.env = {
-//     ...process.env,
-//     concurrency: 1,
-//     s3Concurrency: 2,
-//     maxRequestGranules: 3,
-//     dbMaxPool: 4,
-//   };
-//   config = {
-//     oldGranules: [],
-//     targetCollection: {
-//       name: 'abc',
-//       version: '001',
-//     },
-//     collection: {
-//       name: 'abc',
-//       version: '000',
-//     },
-//   };
-//   massagedConfig = massageConfig(config);
-//   t.deepEqual({
-//     ...config,
-//     concurrency: 1,
-//     s3Concurrency: 2,
-//     maxRequestGranules: 3,
-//     dbMaxPool: 4,
-//   }, massagedConfig);
-//   process.env = oldEnv;
-// });
+});

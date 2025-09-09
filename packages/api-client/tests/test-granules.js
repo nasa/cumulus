@@ -695,7 +695,6 @@ test('bulkChangeCollection calls the callback with the expected object', async (
   }));
 });
 
-
 test('bulkArchiveGranules calls the callback with the expected object and returns the parsed response', async (t) => {
   const body = {
     batchSize: 100,
@@ -720,7 +719,7 @@ test('bulkArchiveGranules calls the callback with the expected object and return
     t.deepEqual(expected, configObject);
   };
 
-  await t.notThrowsAsync(executionsApi.bulkArchiveGranules({
+  await t.notThrowsAsync(granulesApi.bulkArchiveGranules({
     prefix: t.context.testPrefix,
     body,
     callback,
