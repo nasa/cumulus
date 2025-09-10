@@ -614,7 +614,6 @@ variable "deploy_cumulus_workflows" {
   description = "for each workflow, if true deploy that workflow"
 }
 
-
 ## Record Archival Configuration
 variable "daily_archive_records_schedule_expression" {
   type        = string
