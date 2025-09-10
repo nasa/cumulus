@@ -58,6 +58,7 @@ locals {
       execution_name          = null
       workflow_start_time     = null
       queueExecutionLimits    = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
+      sf_event_sqs_to_db_records_types = lookup(var.workflow_configurations, "sf_event_sqs_to_db_records_types", {})
     }, jsondecode(file("${path.module}/cumulus_version.json")))
     meta = {
       workflow_name  = null

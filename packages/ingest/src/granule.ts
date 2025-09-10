@@ -1,11 +1,13 @@
-import * as errors from '@cumulus/errors';
+import * as crypto from 'crypto';
 import moment from 'moment';
-import { s3 } from '@cumulus/aws-client/services';
+
 import * as S3 from '@cumulus/aws-client/S3';
+import { s3 } from '@cumulus/aws-client/services';
 import * as log from '@cumulus/common/log';
-import { ApiFile, DuplicateHandling } from '@cumulus/types';
-import { FilePgModel, translatePostgresFileToApiFile, Knex } from '@cumulus/db';
+import { FilePgModel, Knex, translatePostgresFileToApiFile } from '@cumulus/db';
+import * as errors from '@cumulus/errors';
 import { RecordDoesNotExist } from '@cumulus/errors';
+import { ApiFile, DuplicateHandling } from '@cumulus/types';
 
 export interface EventWithDuplicateHandling {
   config: {
@@ -217,7 +219,7 @@ export async function handleDuplicateFile(params: {
   }) => Promise<void>,
   ACL?: string,
   sourceBucket?: string,
-  fileRemotePath: string,
+  fileRemotePath?: string,
   s3Object?: { moveObject: Function },
   moveGranuleFileWithVersioningFunction?: Function,
 }): Promise<VersionedObject[]> {
@@ -241,6 +243,9 @@ export async function handleDuplicateFile(params: {
   } else if (duplicateHandling === 'version') {
     // sync to staging location if required
     if (syncFileFunction) {
+      if (!fileRemotePath) {
+        throw new Error('fileRemotePath must be defined if syncFileFunction is provided');
+      }
       await syncFileFunction({
         bucket: sourceBucket,
         destinationBucket: source.Bucket,
@@ -263,6 +268,9 @@ export async function handleDuplicateFile(params: {
     );
   } else if (duplicateHandling === 'replace') {
     if (syncFileFunction) {
+      if (!fileRemotePath) {
+        throw new Error('fileRemotePath must be defined if syncFileFunction is provided');
+      }
       // sync directly to target location
       await syncFileFunction({
         destinationBucket: target.Bucket,
@@ -459,13 +467,35 @@ export function unversionFilename(filename: string): string {
 }
 
 /**
+ * Generates a unique granule ID by appending a truncated MD5 hash of values from
+ * a producer provided granule object
+ *
+ * @param id - An ID associated with the object to be hashed.  Likely the ID
+ * assigned by the granule producer
+ * @param collectionId - The api collection ID (name___version) associated with the granule
+ * @param hashLength - The length of the hash to append to the granuleId.
+ * @param includeTimestampHashKey - Boolean value for whether hash string should contain timestamp
+ * @returns - A unique granule ID in the format: granuleId_hash.
+ */
+export function generateUniqueGranuleId(
+  id: string, collectionId: string, hashLength: number, includeTimestampHashKey?: boolean
+): string {
+  // use MD5 to generate truncated hash of granule object
+  const hashStringWithTimestamp = `${collectionId}_${process.hrtime.bigint().toString()}`;
+  const hashStringWithoutTimestamp = `${collectionId}`;
+  const hashString = includeTimestampHashKey ? hashStringWithTimestamp : hashStringWithoutTimestamp;
+  const hashBuffer = crypto.createHash('md5').update(hashString).digest();
+  return `${id}_${hashBuffer.toString('base64url').replace(/_/g, '').slice(0, hashLength)}`;
+}
+
+/**
  * Returns a directive on how to act when duplicate files are encountered.
  *
  * @param {Object} event - lambda function event.
  * @param {Object} event.config - the config object
  * @param {Object} event.config.collection - collection object.
 
- * @returns {string} - duplicate handling directive.
+ * @returns {DuplicateHandling} - duplicate handling directive.
  */
 export function duplicateHandlingType(
   event: EventWithDuplicateHandling

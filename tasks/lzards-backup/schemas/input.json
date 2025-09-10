@@ -21,6 +21,9 @@
           "collectionId": {
             "type": "string"
           },
+          "producerGranuleId": {
+            "type": "string"
+          },
           "dataType": {
             "type": "string"
           },
