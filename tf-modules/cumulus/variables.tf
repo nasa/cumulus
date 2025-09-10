@@ -372,11 +372,6 @@ variable "metrics_es_host" {
   description = "Domain name (not URL) of the Cloud Metrics API."
   type        = string
   default     = null
-
-  validation {
-    condition     = !startswith(var.metrics_es_host, "https://")
-    error_message = "metrics_es_host domain name should not include `https://`"
-  }
 }
 
 variable "metrics_es_password" {

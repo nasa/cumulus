@@ -113,7 +113,6 @@ saml_assertion_consumer_service = "<Cumulus API endpoint>/saml/auth, e.g. https:
 # key_name      = "MY-KEY"
 
 # Optional, uncomment if needed.
-# NOTE: metrics_es_host is the domain name, not the URL, so should not include `https://`
 /*
 metrics_es_host = "abcdefg123.cloudfront.net"
 metrics_es_username = "user"
