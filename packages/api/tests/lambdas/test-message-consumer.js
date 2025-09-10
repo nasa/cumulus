@@ -9,60 +9,67 @@ const { PublishCommand } = require('@aws-sdk/client-sns');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sns } = require('@cumulus/aws-client/services');
 
-const sandbox = sinon.createSandbox();
-const stubPromiseReturn = Promise.resolve();
-const fetchEnabledRulesStub = sandbox.stub();
-const queueMessageStub = sandbox.stub().resolves(true);
-
-const snsMock = mockClient(sns());
-snsMock
-  .onAnyCommand()
-  .rejects()
-  .on(PublishCommand)
-  .resolves(stubPromiseReturn);
-
-const messageConsumer = proxyquire('../../lambdas/message-consumer', {
-  '@cumulus/aws-client/services': { sns: () => snsMock },
-  '../lib/rulesHelpers': {
-    fetchEnabledRules: fetchEnabledRulesStub,
-    queueMessageForRule: queueMessageStub,
-  },
-});
-
 test.before(() => {
   process.env.stackName = randomString();
   process.env.FallbackTopicArn = randomString();
 });
 
-test.afterEach.always(() => {
-  fetchEnabledRulesStub.reset();
-  snsMock.reset();
-  queueMessageStub.reset();
+test.beforeEach((t) => {
+  // Create a fresh sandbox and stubs for each test
+  const sandbox = sinon.createSandbox();
+  const fetchEnabledRulesStub = sandbox.stub();
+  const queueMessageStub = sandbox.stub().resolves(true);
+
+  const snsMock = mockClient(sns());
+  snsMock.onAnyCommand().rejects();
+  snsMock.on(PublishCommand).resolves();
+
+  // Re-proxy with fresh stubs
+  const messageConsumer = proxyquire('../../lambdas/message-consumer', {
+    '@cumulus/aws-client/services': { sns: () => snsMock },
+    '../lib/rulesHelpers': {
+      fetchEnabledRules: fetchEnabledRulesStub,
+      queueMessageForRule: queueMessageStub,
+    },
+  });
+
+  // Store in context
+  t.context = {
+    sandbox,
+    fetchEnabledRulesStub,
+    queueMessageStub,
+    snsMock,
+    messageConsumer,
+  };
 });
 
-test('handler processes records as expected', async (t) => {
+test.afterEach.always((t) => {
+  t.context.sandbox.restore();
+  t.context.snsMock.reset();
+});
+
+test.serial('handler processes records as expected', async (t) => {
+  const { fetchEnabledRulesStub, queueMessageStub, snsMock, messageConsumer } = t.context;
+
   const collection = {
     name: 'ABC',
     version: '1.2.3',
   };
   const topicArn = randomString();
+
   const sqsRule = {
     collection,
-    rule: {
-      type: 'sns',
-      value: topicArn,
-    },
+    rule: { type: 'sns', value: topicArn },
     state: 'ENABLED',
   };
   const kinesisRule = {
     collection,
-    rule: {
-      type: 'kinesis',
-      value: randomString(),
-    },
+    rule: { type: 'kinesis', value: randomString() },
     state: 'ENABLED',
   };
+
   fetchEnabledRulesStub.returns(Promise.resolve([sqsRule, kinesisRule]));
+
   const snsMessage = {
     EventSource: 'aws:sns',
     Sns: {
@@ -70,6 +77,7 @@ test('handler processes records as expected', async (t) => {
       Message: JSON.stringify({ collection }),
     },
   };
+
   const kinesisMessage = {
     EventSource: 'aws:kinesis',
     kinesis: {
@@ -81,6 +89,7 @@ test('handler processes records as expected', async (t) => {
       })).toString('base64'),
     },
   };
+
   const kinesisFallbackMessage = {
     EventSource: 'aws:sns',
     Sns: {
@@ -97,6 +106,7 @@ test('handler processes records as expected', async (t) => {
       }),
     },
   };
+
   const erroringMessage = {
     EventSource: 'aws:kinesis',
     kinesis: {
@@ -104,12 +114,13 @@ test('handler processes records as expected', async (t) => {
     },
   };
 
-  snsMock
-    .callsFake((params) => {
-      t.is(params.TopicArn, process.env.FallbackTopicArn);
-      t.deepEqual(params.Message, JSON.stringify(erroringMessage));
-      return stubPromiseReturn;
-    });
+  // Update snsMock to accept the fallback error message
+  snsMock.reset(); // reset previous behavior
+  snsMock.on(PublishCommand).callsFake((params) => {
+    t.is(params.TopicArn, process.env.FallbackTopicArn);
+    t.deepEqual(params.Message, JSON.stringify(erroringMessage));
+    return Promise.resolve();
+  });
 
   await messageConsumer.handler(
     { Records: [snsMessage, kinesisMessage, kinesisFallbackMessage, erroringMessage] },
@@ -124,9 +135,81 @@ test('handler processes records as expected', async (t) => {
     TopicArn: process.env.FallbackTopicArn,
     Message: JSON.stringify(erroringMessage),
   };
+
   const publishCalls = snsMock.commandCalls(PublishCommand);
   t.true(publishCalls.length > 0);
   t.deepEqual(expectedArgs, publishCalls[0].firstArg.input);
 
   t.is(queueMessageStub.callCount, 3);
+});
+
+test.serial('handler processes records only when record and rule have matching provider', async (t) => {
+  const { fetchEnabledRulesStub, queueMessageStub, messageConsumer } = t.context;
+
+  const collection = {
+    name: 'ABC',
+    version: '1.2.3',
+  };
+  const provider = randomString();
+
+  const ruleWithProvider = {
+    collection,
+    provider,
+    rule: {
+      type: 'kinesis',
+      value: randomString(),
+    },
+    state: 'ENABLED',
+  };
+
+  fetchEnabledRulesStub.returns(Promise.resolve([ruleWithProvider]));
+
+  const messageWithProvider = {
+    EventSource: 'aws:kinesis',
+    kinesis: {
+      data: Buffer.from(JSON.stringify({
+        collection: collection.name,
+        provider,
+        product: {
+          dataVersion: collection.version,
+        },
+      })).toString('base64'),
+    },
+  };
+
+  const messageWoProvider = {
+    EventSource: 'aws:kinesis',
+    kinesis: {
+      data: Buffer.from(JSON.stringify({
+        collection: collection.name,
+        product: {
+          dataVersion: collection.version,
+        },
+      })).toString('base64'),
+    },
+  };
+
+  const messageWithWrongProvider = {
+    EventSource: 'aws:kinesis',
+    kinesis: {
+      data: Buffer.from(JSON.stringify({
+        collection: collection.name,
+        provider: randomString(), // doesn't match rule
+        product: {
+          dataVersion: collection.version,
+        },
+      })).toString('base64'),
+    },
+  };
+
+  await messageConsumer.handler(
+    { Records: [messageWithProvider, messageWoProvider, messageWithWrongProvider] },
+    {},
+    (_, data) => {
+      t.deepEqual(data, [[true], [true], []]);
+    }
+  );
+
+  t.true(fetchEnabledRulesStub.calledOnce);
+  t.is(queueMessageStub.callCount, 2);
 });
