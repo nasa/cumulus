@@ -43,6 +43,10 @@ This task does expect values to be set in the `workflow_config` CMA parameters f
 
 For the most recent config.json schema, please see the [Cumulus Tasks page](../tasks) entry for the schema.
 
+#### Cross collection duplicate logic
+
+Move Granules will look for granuleId collisions across collections in the event of a file collision - if it detects a collision by ID, the above configuration will be ignored and the rules for `error` will be followed.
+
 ### Input
 
 This task expects event.input to provide an array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) objects.   The files listed for each granule represent the files to be acted upon as described in [summary](#summary).

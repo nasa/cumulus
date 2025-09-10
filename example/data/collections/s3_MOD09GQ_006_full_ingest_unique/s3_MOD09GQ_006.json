@@ -1,0 +1,55 @@
+{
+  "name": "MOD09GQ",
+  "version": "006",
+  "dataType": "MOD09GQ",
+  "process": "modis",
+  "duplicateHandling": "replace",
+  "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
+  "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
+  "reportToEms": false,
+  "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
+  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+  "meta": {
+    "granuleRecoveryWorkflow": "OrcaRecoveryAdapterWorkflow",
+    "orca": {
+      "excludedFileExtensions": [".met"]
+    },
+    "s3MultipartChunksizeMb": 16,
+    "uniquifyGranuleId": true
+  },
+  "files": [
+    {
+      "bucket": "protected",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+      "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}"
+    },
+    {
+      "bucket": "protected",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf.md5$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.md5",
+      "checksumFor": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"
+    },
+    {
+      "bucket": "private",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"
+    },
+    {
+      "bucket": "protected-2",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"
+    },
+    {
+      "bucket": "public",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg",
+      "lzards": { "backup": true }
+    },
+    {
+      "bucket": "private",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.md5$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.md5"
+    }
+  ]
+}

@@ -41,6 +41,7 @@
     "@cumulus/cumulus-message-adapter-js": "2.3.0",
     "@cumulus/errors": "20.3.0",
     "@cumulus/ingest": "20.3.0",
+    "@cumulus/logger": "20.3.0",
     "@cumulus/pvl": "20.3.0",
     "lodash": "^4.17.21"
   },

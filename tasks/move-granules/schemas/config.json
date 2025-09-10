@@ -41,7 +41,8 @@
       "type": "object",
       "required": [
         "files",
-        "name"
+        "name",
+        "version"
       ],
       "properties": {
         "name": { "type": "string" },

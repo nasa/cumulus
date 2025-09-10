@@ -539,6 +539,43 @@ test.serial('download granule from S3 provider', async (t) => {
   }
 });
 
+test.serial('download granule with producerGranuleId set includes producerGranuleId', async (t) => {
+  const granuleFilePath = randomString();
+  const granuleFileName = t.context.event.input.granules[0].files[0].name;
+
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: randomString(),
+  };
+
+  t.context.event.input.granules[0].files[0].path = granuleFilePath;
+  t.context.event.input.granules[0].producerGranuleId = 'PRODUCER_GRANULE_ID';
+
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
+
+  await s3().createBucket({ Bucket: t.context.event.config.provider.host });
+
+  try {
+    // Stage the file that's going to be downloaded
+    await s3PutObject({
+      Bucket: t.context.event.config.provider.host,
+      Key: `${granuleFilePath}/${granuleFileName}`,
+      Body: streamTestData(`granules/${granuleFileName}`),
+    });
+
+    const output = await syncGranule(t.context.event);
+
+    await validateOutput(t, output);
+    t.is(output.granules.length, 1, 'output should contain one granule');
+    t.is(output.granules[0].producerGranuleId, 'PRODUCER_GRANULE_ID', 'producerGranuleId should be set');
+  } finally {
+    // Clean up
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
+
 test.serial('download granule with checksum in file from an HTTP endpoint', async (t) => {
   const event = await loadJSONTestData('payloads/new-message-schema/ingest-checksumfile.json');
   const { config, input } = event;
