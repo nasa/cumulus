@@ -9,12 +9,9 @@ const { PublishCommand } = require('@aws-sdk/client-sns');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sns } = require('@cumulus/aws-client/services');
 
-test.before(() => {
+test.beforeEach((t) => {
   process.env.stackName = randomString();
   process.env.FallbackTopicArn = randomString();
-});
-
-test.beforeEach((t) => {
   // Create a fresh sandbox and stubs for each test
   const sandbox = sinon.createSandbox();
   const fetchEnabledRulesStub = sandbox.stub();
@@ -48,7 +45,7 @@ test.afterEach.always((t) => {
   t.context.snsMock.reset();
 });
 
-test.serial('handler processes records as expected', async (t) => {
+test('handler processes records as expected', async (t) => {
   const { fetchEnabledRulesStub, queueMessageStub, snsMock, messageConsumer } = t.context;
 
   const collection = {
@@ -143,7 +140,7 @@ test.serial('handler processes records as expected', async (t) => {
   t.is(queueMessageStub.callCount, 3);
 });
 
-test.serial('handler processes records only when record and rule have matching provider', async (t) => {
+test('handler processes records only when record and rule have matching provider', async (t) => {
   const { fetchEnabledRulesStub, queueMessageStub, messageConsumer } = t.context;
 
   const collection = {
