@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+
 ## CUMULUS-4058 Handle Granules with Identical producerGranuleId in Different Collections
 
 ### Migration Notes
@@ -183,16 +192,8 @@ Please follow the instructions before upgrading Cumulus
 
 ## [Unreleased]
 
-### Added
-
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
-
-### Changed
-
-- **CUMULUS-4191**
-  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
-    based on the provider from the record message.
 
 ## [v20.3.0] 2025-08-18
 
