@@ -119,13 +119,11 @@ test('handler processes records as expected', async (t) => {
     return Promise.resolve();
   });
 
-  await messageConsumer.handler(
-    { Records: [snsMessage, kinesisMessage, kinesisFallbackMessage, erroringMessage] },
-    {},
-    (_, data) => {
-      t.deepEqual(data, [[true], [true], [true]]);
-    }
+  const results = await messageConsumer.handler(
+    { Records: [snsMessage, kinesisMessage, kinesisFallbackMessage, erroringMessage] }
   );
+
+  t.deepEqual(results, [[true], [true], [true]]);
   t.true(fetchEnabledRulesStub.calledOnce);
 
   const expectedArgs = {
@@ -199,14 +197,11 @@ test('handler processes records only when record and rule have matching provider
     },
   };
 
-  await messageConsumer.handler(
-    { Records: [messageWithProvider, messageWoProvider, messageWithWrongProvider] },
-    {},
-    (_, data) => {
-      t.deepEqual(data, [[true], [true], []]);
-    }
+  const results = await messageConsumer.handler(
+    { Records: [messageWithProvider, messageWoProvider, messageWithWrongProvider] }
   );
 
+  t.deepEqual(results, [[true], [true], []]);
   t.true(fetchEnabledRulesStub.calledOnce);
   t.is(queueMessageStub.callCount, 2);
 });
