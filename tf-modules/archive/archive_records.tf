@@ -22,7 +22,7 @@ source_code_hash = filebase64sha256("${path.module}/../../tasks/archive-records/
   environment {
     variables = {
       stackName    = var.prefix
-      UPDATE_LIMIT = var.archive_update_limit
+      BATCH_SIZE = var.archive_batch_size
       EXPIRATION_DAYS = var.archive_expiration_days
     }
   }

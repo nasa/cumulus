@@ -203,7 +203,7 @@ test.serial('ArchiveRecords sets old granules to "archived=true" and not newer g
 
 test.serial('getParsedConfigValues handles empty config and no env with defaults', (t) => {
   const envStore = clone(process.env);
-  delete process.env.UPDATE_LIMIT;
+  delete process.env.BATCH_SIZE;
   delete process.env.EXPIRATION_DAYS;
   t.deepEqual(getParsedConfigValues(), {
     batchSize: 10000,
@@ -215,7 +215,7 @@ test.serial('getParsedConfigValues handles empty config and no env with defaults
 
 test.serial('getParsedConfigValues handles empty config and prefers env to defaults', (t) => {
   const envStore = clone(process.env);
-  process.env.UPDATE_LIMIT = 23;
+  process.env.BATCH_SIZE = 23;
   process.env.EXPIRATION_DAYS = 2345;
   t.deepEqual(getParsedConfigValues(), {
     batchSize: 23,
@@ -227,10 +227,10 @@ test.serial('getParsedConfigValues handles empty config and prefers env to defau
 
 test.serial('getParsedConfigValues prefers explicit config values', (t) => {
   const envStore = clone(process.env);
-  process.env.UPDATE_LIMIT = 23;
+  process.env.BATCH_SIZE = 23;
   process.env.EXPIRATION_DAYS = 2345;
   t.deepEqual(getParsedConfigValues({
-    updateLimit: 15,
+    batchSize: 15,
     expirationDays: 2,
   }), {
     batchSize: 15,

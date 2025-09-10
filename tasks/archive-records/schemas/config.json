@@ -4,7 +4,7 @@
   "type": "object",
   "required": [],
   "properties": {
-    "updateLimit": {
+    "batchSize": {
       "type": "number",
       "description": "number of executions and granules to clean up in this run",
     },
