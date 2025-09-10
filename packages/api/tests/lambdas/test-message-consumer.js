@@ -12,6 +12,7 @@ const { sns } = require('@cumulus/aws-client/services');
 test.beforeEach((t) => {
   process.env.stackName = randomString();
   process.env.FallbackTopicArn = randomString();
+
   // Create a fresh sandbox and stubs for each test
   const sandbox = sinon.createSandbox();
   const fetchEnabledRulesStub = sandbox.stub();
@@ -30,7 +31,6 @@ test.beforeEach((t) => {
     },
   });
 
-  // Store in context
   t.context = {
     sandbox,
     fetchEnabledRulesStub,
@@ -112,7 +112,7 @@ test('handler processes records as expected', async (t) => {
   };
 
   // Update snsMock to accept the fallback error message
-  snsMock.reset(); // reset previous behavior
+  snsMock.reset();
   snsMock.on(PublishCommand).callsFake((params) => {
     t.is(params.TopicArn, process.env.FallbackTopicArn);
     t.deepEqual(params.Message, JSON.stringify(erroringMessage));
