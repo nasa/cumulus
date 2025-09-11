@@ -369,6 +369,7 @@ variable "log_destination_arn" {
 }
 
 variable "metrics_es_host" {
+  description = "Domain name (not URL) of the Cloud Metrics API."
   type    = string
   default = null
 }

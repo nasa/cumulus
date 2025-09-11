@@ -182,8 +182,19 @@ Please follow the instructions before upgrading Cumulus
 - **CUMULUS-4209**
   - Updated the `producer_granule_id` migration script to disable autovacuum before the
     migration and re-enable it afterward to improve performance.
+
+### Changed
+
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
+
+## [Unreleased]
+
+### Notable Changes
+
+- **CUMULUS-4200**
+  - updated metrics_es_host terraform variable description and validation
+  - Users should ensure that the metrics_es_host does not include `https://`
 
 ## [v20.3.0] 2025-08-18
 

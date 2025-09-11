@@ -275,6 +275,7 @@ variable "thin_egress_jwt_secret_name" {
 }
 
 variable "metrics_es_host" {
+  description = "Domain name (not URL) of the Cloud Metrics API."
   type    = string
   default = null
 }
