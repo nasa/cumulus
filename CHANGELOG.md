@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v21.0.0] 2025-09-09
 
-### CUMULUS-4058 Handle Granules with Identical producerGranuleId in Different Collections
+### **CUMULUS-4058** Epic: Handle Granules with Identical producerGranuleId in Different Collections
 
 ### Migration Notes
 
