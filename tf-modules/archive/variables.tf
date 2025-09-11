@@ -210,8 +210,20 @@ variable "launchpad_passphrase" {
 }
 
 variable "metrics_es_host" {
-  type = string
-  default = null
+  description = "Domain name (not URL) of the Cloud Metrics API."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = (
+     var.metrics_es_host == null ||
+     (
+       !startswith(trimspace(var.metrics_es_host), "https://") &&
+       !startswith(trimspace(var.metrics_es_host), "http://")
+     )
+    )
+    error_message = "metrics_es_host should be a domain name only (e.g., `abcdef123.metrics.com`) and must not start with `http://` or `https://`."
+  }
 }
 
 variable "metrics_es_password" {

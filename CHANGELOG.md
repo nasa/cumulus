@@ -183,6 +183,14 @@ Please follow the instructions before upgrading Cumulus
 
 ## [Unreleased]
 
+### Notable Changes
+
+- **CUMULUS-4200**
+  - updated metrics_es_host terraform variable description and validation
+  - Users should ensure that the metrics_es_host does not include `https://`
+
+### Changed
+
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
 
