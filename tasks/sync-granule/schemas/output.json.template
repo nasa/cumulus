@@ -37,6 +37,7 @@
           "version": {"type": "string"},
           "files": "{{files}}",
           "createdAt": {"type": "number"},
+          "producerGranuleId": {"type": "string", "description": "Granule ID from the producer, if available"},
           "provider": {"type": "string"}
         }
       }
