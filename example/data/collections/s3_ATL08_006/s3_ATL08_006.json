@@ -1,0 +1,89 @@
+{
+    "createdAt": 1678308829325,
+    "updatedAt": 1751288340528,
+    "name": "ATL08",
+    "version": "006",
+    "process": "iso-metadata",
+    "url_path": "ATLAS/ATL08/006/{dateFormat(cmrMetadata.gmd:DS_Series.gmd:composedOf.gmd:DS_DataSet.gmd:has.gmi:MI_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:extent.gmd:EX_Extent.gmd:temporalElement.gmd:EX_TemporalExtent.gmd:extent.gml:TimePeriod.gml:beginPosition, YYYY/MM/DD)}/",
+    "duplicateHandling": "replace",
+    "granuleId": "^ATL08_.*_006_01",
+    "granuleIdExtraction": "^(ATL08.*(?<!BRW))(\\.h5|\\.h5\\.dmrpp|_BRW\\.h5|_BRW.*\\.jpg|\\.iso\\.xml|\\.h5\\.cmr_iso\\.xml)$",
+    "files": [
+      {
+        "type": "SCIENCE",
+        "regex": ".*(?<!BRW)\\.h5$",
+        "bucket": "protected",
+        "reportToEms": true,
+        "sampleFileName": "ATL08_20190901004029_09920401_006_01.h5"
+      },
+      {
+        "type": "METADATA",
+        "regex": ".*\\.h5\\.dmrpp$",
+        "bucket": "protected",
+        "reportToEms": true,
+        "sampleFileName": "ATL08_20190901004029_09920401_006_01.h5.dmrpp"
+      },
+      {
+        "type": "BROWSE",
+        "regex": ".*_BRW\\.h5$",
+        "bucket": "private",
+        "reportToEms": true,
+        "sampleFileName": "ATL08_20190901004029_09920401_006_01_BRW.h5"
+      },
+      {
+        "type": "BROWSE",
+        "regex": ".*\\.jpg$",
+        "bucket": "public",
+        "reportToEms": true,
+        "sampleFileName": "ATL08_20200430165335_05370703_006_01_BRW.default.default1.jpg"
+      },
+      {
+        "type": "METADATA",
+        "regex": ".*\\.iso\\.xml$",
+        "bucket": "public",
+        "reportToEms": true,
+        "sampleFileName": "ATL08_20190901004029_09920401_006_01.iso.xml"
+      },
+      {
+        "type": "METADATA",
+        "regex": ".*\\.cmr_iso\\.xml$",
+        "bucket": "private",
+        "reportToEms": true,
+        "sampleFileName": "ATL08_20190901004029_09920401_006_01.h5.cmr_iso.xml"
+      }
+    ],
+    "reportToEms": true,
+    "sampleFileName": "ATL08_20200430165335_05370703_006_01.h5",
+    "meta": {
+      "orca": {
+        "defaultRecoveryTypeOverride": "Expedited"
+      },
+      "dmrpp": {
+        "dmrpp_regex": "^.*(?<!BRW)\\.h5$"
+      },
+      "checksum": [
+        "ALL"
+      ],
+      "datasetId": "ATLAS/ICESat-2 L3A Land and Vegetation Height V006",
+      "XMLCMRPost": true,
+      "extensions": {
+        "h5": [
+          "application/x-hdf5",
+          "HDF5"
+        ],
+        "jpg": [
+          "image/jpeg",
+          "JPEG"
+        ],
+        "xml": [
+          "text/xml",
+          "XML"
+        ],
+        "dmrpp": [
+          "application/vnd.opendap.dap4.dmrpp+xml",
+          "XML"
+        ]
+      },
+      "granuleRecoveryWorkflow": "OrcaRecoveryAdapterWorkflow"
+    }
+  }
