@@ -25,6 +25,7 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
 } = require('../../helpers/testUtils');
+const { ConsoleReporter } = require('jasmine');
 
 describe('when ArchiveGranules is called', () => {
   const monthEpoch = 2629743000;
@@ -33,7 +34,7 @@ describe('when ArchiveGranules is called', () => {
   let stackName;
   let config;
   let inputPayload;
-  let granuleId;
+  let producerGranuleId;
   let collection;
   let sourceGranulePath;
   let granuleObject;
@@ -67,7 +68,7 @@ describe('when ArchiveGranules is called', () => {
       const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
       config = await loadConfig();
       stackName = config.stackName;
-      const testId = createTimestampedTestId(stackName, 'archiveGranules');
+      const testId = createTimestampedTestId(stackName, 'archiveGranules2');
       const testSuffix = createTestSuffix(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
@@ -83,6 +84,7 @@ describe('when ArchiveGranules is called', () => {
       ]);
 
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+      console.log('inputPayloadRaw is', inputPayloadJson)
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(
         config.bucket,
@@ -94,18 +96,20 @@ describe('when ArchiveGranules is called', () => {
         testSuffix,
         sourceGranulePath
       );
-      granuleId = inputPayload.granules[0].granuleId;
-
+      producerGranuleId = inputPayload.granules[0].granuleId;
+      console.log("producerGranuleId is", producerGranuleId);
       // Write granule to DB via API
       granuleObject = {
         prefix: stackName,
         body: {
+          producerGranuleId: inputPayload.granules[0].granuleId,
           ...(pick(inputPayload.granules[0], ['granuleId', 'files'])),
           collectionId: constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version),
           status: 'completed',
           updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
         },
       };
+      console.log("granuleObject is", granuleObject)
       granuleObject.body.files = granuleObject.body.files.map((file) => ({
         ...pick(file, ['size']),
         key: `${file.path}/${file.name}`,
@@ -126,7 +130,9 @@ describe('when ArchiveGranules is called', () => {
         bucket: cmrBucket,
         key: cmrKey.slice(1),
       });
-
+      console.log(
+        "about to go to createGranule with", granuleObject.body
+      )
       await createGranule({
         prefix: config.stackName,
         body: granuleObject.body,
