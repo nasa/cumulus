@@ -18,6 +18,7 @@ export const getExecution = async (params: {
   arn: string,
   callback?: InvokeApiFunction
 }): Promise<ApiExecutionRecord> => {
+  /* istanbul ignore next */
   const { prefix, arn, callback = invokeApi } = params;
 
   const response = await callback({
@@ -50,6 +51,7 @@ export const getExecutions = async (params: {
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, query, callback = invokeApi } = params;
 
   return await callback({
@@ -79,6 +81,7 @@ export const getExecutionStatus = async (params: {
   arn: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, arn, callback = invokeApi } = params;
 
   return await callback({
@@ -88,6 +91,31 @@ export const getExecutionStatus = async (params: {
       resource: '/{proxy+}',
       path: `/executions/status/${arn}`,
     },
+  });
+};
+
+export const bulkArchiveExecutions = async (params: {
+  prefix: string,
+  body: {
+    batchSize?: number,
+    expirationDays?: number,
+  },
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'PATCH',
+      resource: '/{proxy+}',
+      path: '/executions/archive/',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 200,
   });
 };
 
@@ -108,6 +136,7 @@ export const createExecution = async (params: {
   body: ApiExecutionRecord,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
 
   return await callback({
@@ -139,6 +168,7 @@ export const updateExecution = async (params: {
   body: ApiExecutionRecord,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
 
   return await callback({
@@ -169,6 +199,7 @@ export const deleteExecution = async (params: {
   executionArn: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, executionArn, callback = invokeApi } = params;
 
   return await callback({
@@ -200,6 +231,7 @@ export const searchExecutionsByGranules = async (params: {
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { query, prefix, payload, callback = invokeApi } = params;
 
   return await callback({
@@ -234,6 +266,7 @@ export const workflowsByGranules = async (params: {
   payload: object,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, payload, callback = invokeApi } = params;
 
   return await callback({
@@ -267,6 +300,7 @@ export const bulkDeleteByCollection = async (params: {
   payload: object,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, payload, callback = invokeApi } = params;
 
   return await callback({
