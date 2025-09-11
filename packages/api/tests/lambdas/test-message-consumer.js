@@ -45,7 +45,7 @@ test.afterEach.always((t) => {
   t.context.snsMock.reset();
 });
 
-test('handler processes records as expected', async (t) => {
+test('handler correctly processes mixed record types and handles errors via fallback', async (t) => {
   const { fetchEnabledRulesStub, queueMessageStub, snsMock, messageConsumer } = t.context;
 
   const collection = {

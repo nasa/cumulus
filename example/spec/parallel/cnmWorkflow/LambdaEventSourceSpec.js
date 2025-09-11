@@ -147,7 +147,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
           identifier: swotRecordIdentifier,
         };
 
-        console.log(`Dropping record onto ${streamName}, recordIdentifier: ${swotRecordIdentifier}.`);
+        console.log(`Dropping records onto ${streamName}, recordIdentifier: ${nisarRecordIdentifier}, ${swotRecordIdentifier}.`);
         await putRecordOnStream(streamName, nisarRecord);
         await putRecordOnStream(streamName, swotRecord);
 
@@ -166,7 +166,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
       });
     });
 
-    it('runs the HelloWorldWorkflow for rule and record with collection L2_HR_PIXC and provider PODAAC_SWOT', async () => {
+    it('runs the workflow for the record-matching-enabled rule, which has the same collection L2_HR_PIXC and provider PODAAC_SWOT', async () => {
       expect(workflowExecutions.length).toEqual(1);
       executionArn = workflowExecutions[0].executionArn;
 
