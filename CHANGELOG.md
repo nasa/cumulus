@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Notable Changes
+
+- **CUMULUS-4200**
+  - updated metrics_es_host terraform variable description and validation
+  - Users should ensure that the metrics_es_host does not include `https://`
+
 ## [v21.0.0] 2025-09-09
 
 ### **CUMULUS-4058** Epic: Handle Granules with Identical producerGranuleId in Different Collections
@@ -189,14 +197,6 @@ Please follow the instructions before upgrading Cumulus
   - Update Async Operation container to new version 54, `cumuluss/async-operation:54`. Users should update their references to `async-operation` with the new version.
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
-
-## [Unreleased]
-
-### Notable Changes
-
-- **CUMULUS-4200**
-  - updated metrics_es_host terraform variable description and validation
-  - Users should ensure that the metrics_es_host does not include `https://`
 
 ## [v20.3.0] 2025-08-18
 
