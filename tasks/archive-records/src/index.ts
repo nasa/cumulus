@@ -1,10 +1,11 @@
 'use-strict';
 
-import { bulkArchiveGranules } from '@cumulus/api-client/granules';
+import { bulkPatchGranuleArchived, listGranules } from '@cumulus/api-client/granules';
 import { bulkArchiveExecutions } from '@cumulus/api-client/executions';
 import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { log } from '@cumulus/common';
+import { ApiGranuleRecord } from '@cumulus/types';
 type Event = {
   config?: EventConfig;
 };
@@ -15,6 +16,13 @@ type TestMethods = {
     body: {
       batchSize?: number,
       expirationDays?: number
+    }
+  }) => Promise<ApiGatewayLambdaHttpProxyResponse>,
+  listGranulesMethod: (params: {
+    prefix: string,
+    body: {
+      limit: number,
+      archived: boolean,
     }
   }) => Promise<ApiGatewayLambdaHttpProxyResponse>,
   archiveExecutionsMethod: (params: {
@@ -44,15 +52,33 @@ export function getParsedConfigValues(config: EventConfig | undefined): Massaged
   };
 }
 
+const archiveGranulesBatch = async (config: MassagedEventConfig) => {
+  const archiveGranulesMethod = config.testMethods?.archiveGranulesMethod || bulkPatchGranuleArchived;
+  const listGranulesMethod = config.testMethods?.listGranulesMethod || listGranules;
+  const listGranulesResponse = await listGranulesMethod({
+    prefix: getRequiredEnvVar('stackName'),
+    query: {
+      limit: config.batchSize,
+      archived: false
+    }
+  })
+  const granules = JSON.parse(listGranulesResponse.body);
+  console.log(granules)
+  const granuleIds = granules.map((granule) => granule.granuleId);
+  return archiveGranulesMethod({
+    prefix: getRequiredEnvVar('stackName'),
+    granuleIds,
+    archived: true
+  })
+}
+
 const archiveRecords = async (event: Event) => {
   const config = await getParsedConfigValues(event.config);
   log.info('running archive-records with config', JSON.stringify(config));
-  const archiveGranulesMethod = config.testMethods?.archiveGranulesMethod || bulkArchiveGranules;
   const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod
     || bulkArchiveExecutions;
   const [granulesOutput, executionsOutput] = await Promise.all([
-    archiveGranulesMethod({
-      prefix: getRequiredEnvVar('stackName'),
+    archiveGranulesBatch({
       body: config,
     }),
     archiveExecutionsMethod({

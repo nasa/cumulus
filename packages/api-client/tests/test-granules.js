@@ -725,10 +725,10 @@ test('getFileGranuleAndCollectionByBucketAndKey calls the callback with the expe
   }));
 });
 
-test('bulkArchiveGranules calls the callback with the expected object and returns the parsed response', async (t) => {
+test('bulkPatchGranuleArchived calls the callback with the expected object and returns the parsed response', async (t) => {
   const body = {
-    batchSize: 100,
-    expirationDays: 200,
+    granuleIds: ['abc', 'abcd'],
+    archived: true,
   };
 
   const expected = {
@@ -749,7 +749,7 @@ test('bulkArchiveGranules calls the callback with the expected object and return
     t.deepEqual(expected, configObject);
   };
 
-  await t.notThrowsAsync(granulesApi.bulkArchiveGranules({
+  await t.notThrowsAsync(granulesApi.bulkPatchGranuleArchived({
     prefix: t.context.testPrefix,
     body,
     callback,

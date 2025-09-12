@@ -850,11 +850,15 @@ export const bulkOperation = async (params: {
   });
 };
 
-export const bulkArchiveGranules = async (params: {
+/**
+ * Bulk Granule Operations
+ * Patch /granules/archived
+ */
+export const bulkPatchGranuleArchived = async (params: {
   prefix: string,
   body: {
-    batchSize?: number,
-    expirationDays?: number,
+    granuleIds: Array<string>,
+    archived?: boolean,
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {

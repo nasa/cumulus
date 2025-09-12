@@ -226,6 +226,28 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       });
     return granules;
   }
+
+  /**
+   * Get granules from the granule cumulus_id
+   *
+   * @param {Knex | Knex.Transaction} knexOrTrx -
+   *  DB client or transaction
+   * @param {Array<number>} granuleCumulusIds -
+   * single granule cumulus_id or array of granule cumulus_ids
+   * @param {Object} [params] - Optional object with addition params for query
+   * @param {number} [params.limit] - number of records to be returned
+   * @param {number} [params.offset] - record offset
+   * @returns {Promise<Array<PostgresGranuleRecord>>} An array of granules
+   */
+  async bulkPatchArchived(
+    knexOrTrx: Knex | Knex.Transaction,
+    granuleIds: Array<string>,
+    archived: boolean
+  ): Promise<number> {
+    return knexOrTrx(this.tableName)
+      .update({ archived })
+      .whereIn('granule_id', granuleIds);
+  }
 }
 
 export { GranulePgModel };

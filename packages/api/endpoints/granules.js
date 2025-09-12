@@ -5,7 +5,6 @@
 const { z } = require('zod');
 const isError = require('lodash/isError');
 const pMap = require('p-map');
-const moment = require('moment');
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
@@ -16,7 +15,7 @@ const {
 const Logger = require('@cumulus/logger');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { GranuleSearch, TableNames } = require('@cumulus/db');
+const { GranuleSearch } = require('@cumulus/db');
 
 const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
 
@@ -838,10 +837,12 @@ async function bulkPatchGranuleArchived(req, res) {
   }
   const { granuleIds, archived } = body;
   const knex = await getKnexClientMethod();
-
-  const updatedCount = await knex(TableNames.granules)
-    .update({ archived })
-    .whereIn('granule_id', granuleIds);
+  const granulePgModel = new GranulePgModel();
+  const updatedCount = await granulePgModel.bulkPatchArchived(
+    knex,
+    granuleIds,
+    archived
+  );
   return res.send({ recordsUpdated: updatedCount });
 }
 /**
