@@ -117,7 +117,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
 
   describe('When the MOD09GQ rule is disabled and a L2_HR_PIXC record is dropped on the stream ', () => {
     let workflowExecutions;
-    const recordIdentifier = randomString();
+    const [nisarRecordIdentifier, swotRecordIdentifier] = [randomString(), randomString()];
 
     beforeAll(async () => {
       await tryCatchExit(cleanUp, async () => {
@@ -133,15 +133,23 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
           },
         });
 
-        const record = {
-          provider: `SWOT_PODAAC${testSuffix}`,
+        const nisarRecord = {
+          provider: `PODAAC_NISAR${testSuffix}`,
           collection: `L2_HR_PIXC${testSuffix}`,
           bucket: 'random-bucket',
-          identifier: recordIdentifier,
+          identifier: nisarRecordIdentifier,
         };
 
-        console.log(`Dropping record onto ${streamName}, recordIdentifier: ${recordIdentifier}.`);
-        await putRecordOnStream(streamName, record);
+        const swotRecord = {
+          provider: `PODAAC_SWOT${testSuffix}`,
+          collection: `L2_HR_PIXC${testSuffix}`,
+          bucket: 'random-bucket',
+          identifier: swotRecordIdentifier,
+        };
+
+        console.log(`Dropping records onto ${streamName}, recordIdentifier: ${nisarRecordIdentifier}, ${swotRecordIdentifier}.`);
+        await putRecordOnStream(streamName, nisarRecord);
+        await putRecordOnStream(streamName, swotRecord);
 
         const { arn: workflowArn } = await getJsonS3Object(
           testConfig.bucket,
@@ -150,7 +158,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
 
         console.log('Waiting for step function to start...');
         workflowExecutions = await waitForAllTestSfForRecord(
-          recordIdentifier,
+          swotRecordIdentifier,
           workflowArn,
           maxWaitForSFExistSecs,
           1
@@ -158,13 +166,18 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
       });
     });
 
-    it('runs the HelloWorldWorkflow for L2_HR_PIXC and not MOD09GQ', async () => {
+    it('runs the workflow for the record-matching-enabled rule, which has the same collection L2_HR_PIXC and provider PODAAC_SWOT', async () => {
       expect(workflowExecutions.length).toEqual(1);
       executionArn = workflowExecutions[0].executionArn;
 
       const taskInput = await lambdaStep.getStepInput(executionArn, 'HelloWorld');
 
       expect(taskInput.meta.collection.name).toEqual(`L2_HR_PIXC${testSuffix}`);
+      expect(taskInput.meta.provider.id).toEqual(`PODAAC_SWOT${testSuffix}`);
+
+      expect(taskInput.payload.collection).toEqual(`L2_HR_PIXC${testSuffix}`);
+      expect(taskInput.payload.provider).toEqual(`PODAAC_SWOT${testSuffix}`);
+      expect(taskInput.payload.identifier).toEqual(swotRecordIdentifier);
     });
   });
 });
