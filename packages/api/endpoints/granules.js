@@ -823,33 +823,25 @@ async function bulkPatch(req, res) {
   });
 }
 
-const bulkArchiveGranulesSchema = z.object({
-  batchSize: z.number().positive().optional().default(100),
-  expirationDays: z.number().positive().optional().default(365),
+const bulkPatchGranuleArchivedSchema = z.object({
+  granuleIds: z.array(z.string().nonempty()),
+  archived: z.boolean().optional().default(true),
 });
-const parsebulkArchiveGranulesPayload = zodParser('bulkArchiveGranules payload', bulkArchiveGranulesSchema);
-async function bulkArchiveGranules(req, res) {
+const parseBulkPatchGranuleArchivedPayload = zodParser('bulkPatchGranuleArchived payload', bulkPatchGranuleArchivedSchema);
+async function bulkPatchGranuleArchived(req, res) {
   const {
     getKnexClientMethod = getKnexClient,
   } = req.testContext || {};
-  const body = parsebulkArchiveGranulesPayload(req.body);
+  const body = parseBulkPatchGranuleArchivedPayload(req.body);
   if (isError(body)) {
     return returnCustomValidationErrors(res, body);
   }
+  const { granuleIds, archived } = body;
   const knex = await getKnexClientMethod();
-  const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
 
-  const subQuery = knex(TableNames.granules)
-    .select('cumulus_id')
-    .whereBetween('updated_at', [
-      new Date(0),
-      expirationDate,
-    ])
-    .where('archived', false)
-    .limit(body.batchSize);
   const updatedCount = await knex(TableNames.granules)
-    .update({ archived: true })
-    .whereIn('cumulus_id', subQuery);
+    .update({ archived })
+    .whereIn('granule_id', granuleIds);
   return res.send({ recordsUpdated: updatedCount });
 }
 /**
@@ -1357,7 +1349,7 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.patch('/archive', bulkArchiveGranules);
+router.patch('/archive', bulkPatchGranuleArchived);
 router.get('/:collectionId/:granuleId', get);
 router.get('/files/get_collection_and_granule_id/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
 router.get('/:granuleId', getByGranuleId);
@@ -1404,7 +1396,7 @@ module.exports = {
   patchGranuleAndReturnStatus,
   bulkPatch,
   bulkPatchGranuleCollection,
-  bulkArchiveGranules,
+  bulkPatchGranuleArchived,
   getFileGranuleAndCollectionByBucketAndKey,
   router,
 };
