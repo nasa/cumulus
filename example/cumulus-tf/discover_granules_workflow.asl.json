@@ -16,7 +16,9 @@
             "collection": "{$.meta.collection}",
             "buckets": "{$.meta.buckets}",
             "stack": "{$.meta.stack}",
-            "duplicateGranuleHandling": "{$.meta.collection.duplicateHandling}"
+            "duplicateGranuleHandling": "{$.meta.collection.duplicateHandling}",
+            "uniquifyGranuleId": "{$.meta.collection.meta.uniquifyGranuleId}",
+            "hashLength": "{$.meta.collection.meta.hashLength}"
           }
         }
       },

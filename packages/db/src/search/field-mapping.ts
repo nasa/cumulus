@@ -38,6 +38,9 @@ const granuleMapping: { [key: string]: Function } = {
   processingStartDateTime: (value?: string) => ({
     processing_start_date_time: value,
   }),
+  producerGranuleId: (value?: string) => ({
+    producer_granule_id: value,
+  }),
   productionDateTime: (value?: string) => ({
     production_date_time: value,
   }),
