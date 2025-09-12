@@ -95,6 +95,7 @@ describe('when ArchiveGranules is called', () => {
         sourceGranulePath
       );
       // Write granule to DB via API
+      granuleId = inputPayload.granules[0].granuleId;
       granuleObject = {
         prefix: stackName,
         body: {
