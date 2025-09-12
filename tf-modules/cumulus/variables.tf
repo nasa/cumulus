@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:53"
+  default = "cumuluss/async-operation:54"
 }
 
 variable "cmr_client_id" {
@@ -369,6 +369,7 @@ variable "log_destination_arn" {
 }
 
 variable "metrics_es_host" {
+  description = "Domain name (not URL) of the Cloud Metrics API."
   type    = string
   default = null
 }

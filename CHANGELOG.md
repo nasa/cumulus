@@ -13,7 +13,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     based on the provider from the record message.
   - Updated `messageConsumer` lambda handler to async/await style
 
-## CUMULUS-4058 Handle Granules with Identical producerGranuleId in Different Collections
+- **CUMULUS-4200**
+  - updated metrics_es_host terraform variable description and validation
+  - Users should ensure that the metrics_es_host does not include `https://`
+
+## [v21.0.0] 2025-09-09
+
+### **CUMULUS-4058** Epic: Handle Granules with Identical producerGranuleId in Different Collections
 
 ### Migration Notes
 
@@ -190,8 +196,10 @@ Please follow the instructions before upgrading Cumulus
   - Updated the `producer_granule_id` migration script to disable autovacuum before the
     migration and re-enable it afterward to improve performance.
 
-## [Unreleased]
+### Changed
 
+- **CUMULUS-4165**
+  - Update Async Operation container to new version 54, `cumuluss/async-operation:54`. Users should update their references to `async-operation` with the new version.
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
 
@@ -8879,7 +8887,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.3.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.0.0...HEAD
+[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.0...v21.0.0
 [v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.3.0
 [v20.2.1]: https://github.com/nasa/cumulus/compare/v20.2.0...v20.2.1
 [v20.2.0]: https://github.com/nasa/cumulus/compare/v20.1.2...v20.2.0
