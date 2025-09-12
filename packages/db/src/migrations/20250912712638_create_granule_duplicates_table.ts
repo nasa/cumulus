@@ -11,7 +11,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .inTable('granules')
       .notNullable();
     table
-      .specificType('status', 'char(1)').notNullable()
+      .specificType('status', 'char(1)')
       .comment('Granule active status')
       .notNullable();
     table
