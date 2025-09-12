@@ -54,21 +54,23 @@ export function getParsedConfigValues(config: EventConfig | undefined): Massaged
 
 const archiveGranulesBatch = async (config: MassagedEventConfig) => {
   const archiveGranulesMethod = config.testMethods?.archiveGranulesMethod || bulkPatchGranuleArchived;
-  const listGranulesMethod = config.testMethods?.listGranulesMethod || listGranules;
-  const listGranulesResponse = await listGranulesMethod({
+  // const listGranulesMethod = config.testMethods?.listGranulesMethod || listGranules;
+  const listGranulesResponse = await listGranules({
     prefix: getRequiredEnvVar('stackName'),
     query: {
-      limit: config.batchSize,
-      archived: false
+      limit: String(config.batchSize),
+      archived: 'false'
     }
   })
-  const granules = JSON.parse(listGranulesResponse.body);
+  const granules = JSON.parse(listGranulesResponse.body) as Array<ApiGranuleRecord>;
   console.log(granules)
   const granuleIds = granules.map((granule) => granule.granuleId);
   return archiveGranulesMethod({
     prefix: getRequiredEnvVar('stackName'),
-    granuleIds,
-    archived: true
+    body: {
+      granuleIds,
+      archived: true
+    }
   })
 }
 
@@ -78,9 +80,7 @@ const archiveRecords = async (event: Event) => {
   const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod
     || bulkArchiveExecutions;
   const [granulesOutput, executionsOutput] = await Promise.all([
-    archiveGranulesBatch({
-      body: config,
-    }),
+    archiveGranulesBatch(config),
     archiveExecutionsMethod({
       prefix: getRequiredEnvVar('stackName'),
       body: config,
