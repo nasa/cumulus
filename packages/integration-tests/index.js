@@ -801,6 +801,7 @@ module.exports = {
   getExecutions,
   getExecutionInputObject,
   getOnlineResources: cmr.getOnlineResources,
+  getCmrMetadata: cmr.getCmrMetadata,
   getProviderHost,
   getProviderPort,
   granulesApi,

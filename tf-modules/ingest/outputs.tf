@@ -5,6 +5,13 @@ output "add_missing_file_checksums_task" {
   }
 }
 
+output "add_unique_granule_id_task" {
+  value = {
+    task_arn           = aws_lambda_function.add_unique_granule_id_task.arn
+    last_modified_date = aws_lambda_function.add_unique_granule_id_task.last_modified
+  }
+}
+
 output "discover_granules_task" {
   value = {
     task_arn           = aws_lambda_function.discover_granules_task.arn
