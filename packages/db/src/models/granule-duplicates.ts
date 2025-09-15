@@ -5,11 +5,11 @@ import { TableNames } from '../tables';
 
 import { PostgresGranuleDuplicate } from '../types/granule-duplicate';
 
-export default class GranulesDuplicatesPgModel {
+export default class GranuleDuplicatesPgModel {
   readonly tableName: TableNames;
 
   // can't extend base class because type for this data doesn't contain
-  // a cumulus_id property
+  // an updated_at property
   constructor() {
     this.tableName = TableNames.granuleDuplicates;
   }
@@ -42,10 +42,10 @@ export default class GranulesDuplicatesPgModel {
    * Creates multiple granuleExecutions in Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
-   * @param {PostgresGranuleExecution[]} items - Records to insert into the DB
+   * @param {PostgresGranuleDuplicate[]} items - Records to insert into the DB
    * @param {string | Array<string>} returningFields - A string or array of strings
    *   of columns to return. Defaults to 'cumulus_id'.
-   * @returns {Promise<PostgresGranuleExecution[]>} Returns an array of objects
+   * @returns {Promise<PostgresGranuleDuplicate[]>} Returns an array of objects
    *   from the specified column(s) from returningFields.
    */
   async insert(
@@ -94,4 +94,4 @@ export default class GranulesDuplicatesPgModel {
   }
 }
 
-export { GranulesDuplicatesPgModel };
+export { GranuleDuplicatesPgModel };

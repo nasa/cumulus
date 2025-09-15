@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## Handle Granules with identical file names within a collection
+
+### Migration Notes
+
+#### CUMULUS-4146 Determine how a granule is marked 'hidden’ vs ‘active'
+
+Please follow the instructions before upgrading Cumulus
+
+- The changes in CUMULUS-4146 require updates to the PostgreSQL database
+  in the production environment. Please follow the instructions in []
+
+### Added
+
+- **CUMULUS-4146**
+  - Added new table `granule_duplicates` to provide linkage between duplicate granule sets
 ### Notable Changes
 
 - **CUMULUS-4200**
