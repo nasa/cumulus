@@ -24,8 +24,6 @@ export const up = async (knex: Knex): Promise<void> => {
   await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS providers_updated_at_index ON providers(updated_at)');
 
   await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS rules_updated_at_index ON rules(updated_at)');
-  await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS granule_duplicates_granule_cumulus_id_index ON granule_duplicates(granule_cumulus_id)');
-  await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS granule_duplicates_group_id_index ON granule_duplicates(group_id)');
 };
 
 export const down = async (knex: Knex): Promise<void> => {
