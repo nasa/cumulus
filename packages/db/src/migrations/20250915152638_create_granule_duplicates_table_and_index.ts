@@ -20,12 +20,12 @@ export const up = async (knex: Knex): Promise<void> => {
       .notNullable();
   });
 
-  await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS granule_duplicates_granule_cumulus_id_index ON granule_duplicates(granule_cumulus_id)');
-  await knex.raw('CREATE INDEX CONCURRENTLY IF NOT EXISTS granule_duplicates_group_id_index ON granule_duplicates(group_id)');
+  await knex.raw('CREATE INDEX IF NOT EXISTS granule_duplicates_granule_cumulus_id_index ON granule_duplicates(granule_cumulus_id)');
+  await knex.raw('CREATE INDEX IF NOT EXISTS granule_duplicates_group_id_index ON granule_duplicates(group_id)');
 };
 
 export const down = async (knex: Knex): Promise<void> => {
-  await knex.raw('DROP INDEX CONCURRENTLY IF EXISTS granule_duplicates_granule_cumulus_id_index');
-  await knex.raw('DROP INDEX CONCURRENTLY IF EXISTS granule_duplicates_group_id_index');
+  await knex.raw('DROP INDEX IF EXISTS granule_duplicates_granule_cumulus_id_index');
+  await knex.raw('DROP INDEX IF EXISTS granule_duplicates_group_id_index');
   await knex.schema.dropTableIfExists('granule_duplicates');
 };
