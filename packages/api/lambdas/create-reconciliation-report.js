@@ -956,7 +956,7 @@ async function processRequest(params) {
 
 async function handler(event) {
   // increase the limit of search result from CMR.searchCollections/searchGranules
-  process.env.CMR_LIMIT = process.env.CMR_LIMIT || '5000';
+  process.env.CMR_LIMIT = process.env.CMR_LIMIT || '7500';
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || '200';
 
   const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE'];
