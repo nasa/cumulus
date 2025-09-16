@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Changed 
+## [v20.2.2] 2025-10-07
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
 
 - **CUMULUS-4242**
   - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
@@ -8659,7 +8666,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.2.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.2.2...HEAD
+[v20.2.2]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.2.2
 [v20.2.1]: https://github.com/nasa/cumulus/compare/v20.2.0...v20.2.1
 [v20.2.0]: https://github.com/nasa/cumulus/compare/v20.1.2...v20.2.0
 [v20.1.2]: https://github.com/nasa/cumulus/compare/v20.1.1...v20.1.2
