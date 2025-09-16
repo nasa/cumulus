@@ -4,7 +4,7 @@ resource "aws_cloudwatch_event_rule" "daily_archive_records" {
   tags                = var.tags
 }
 
-resource "aws_cloudwatch_event_target" "daily_archive_records" {
+resource "aws_cloudwatch_event_target" "daily_archive_granules" {
   target_id = "archive_granules_lambda_target"
   rule = aws_cloudwatch_event_rule.daily_archive_records.name
   arn  = aws_lambda_function.private_api.arn
@@ -21,8 +21,8 @@ resource "aws_cloudwatch_event_target" "daily_archive_records" {
   }
   JSON
 }
-resource "aws_cloudwatch_event_target" "daily_archive_records" {
-  target_id = "archive_exections_lambda_target"
+resource "aws_cloudwatch_event_target" "daily_archive_executions" {
+  target_id = "archive_executions_lambda_target"
   rule = aws_cloudwatch_event_rule.daily_archive_records.name
   arn  = aws_lambda_function.private_api.arn
 
