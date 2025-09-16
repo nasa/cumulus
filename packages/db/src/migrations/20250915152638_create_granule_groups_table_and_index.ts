@@ -1,0 +1,36 @@
+import { Knex } from 'knex';
+
+export const up = async (knex: Knex): Promise<void> => {
+  await knex.schema.createTable('granule_groups', (table) => {
+    table
+      .increments('cumulus_id')
+      .primary();
+    table
+      .integer('granule_cumulus_id')
+      .references('cumulus_id')
+      .inTable('granules')
+      .notNullable()
+      .onDelete('CASCADE');
+    table
+      .specificType('status', 'char(1)')
+      .comment('Granule active status')
+      .notNullable();
+    table
+      .integer('group_id')
+      .comment('Granule duplicate group id')
+      .notNullable();
+    table
+      .timestamps(false, true);
+    table
+      .unique(['granule_cumulus_id']);
+  });
+
+  await knex.raw('CREATE INDEX IF NOT EXISTS granule_groups_granule_cumulus_id_index ON granule_groups(granule_cumulus_id)');
+  await knex.raw('CREATE INDEX IF NOT EXISTS granule_groups_group_id_index ON granule_groups(group_id)');
+};
+
+export const down = async (knex: Knex): Promise<void> => {
+  await knex.raw('DROP INDEX IF EXISTS granule_groups_granule_cumulus_id_index');
+  await knex.raw('DROP INDEX IF EXISTS granule_groups_group_id_index');
+  await knex.schema.dropTableIfExists('granule_groups');
+};
