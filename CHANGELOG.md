@@ -6,63 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Migration Notes
-
-- This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
-
-### Notable Changes
-
-- **CUMULUS-4124**
-  When these changes are deployed, if no action is taken to reconfigure the cron, it will run once per day in the early morning, archiving
-
-  - 100k granules
-  - 100k executions
-  - that are more than 1 year old.
-  
-  Being archived changes nothing about the record except to set a boolean flag (archived=true). this behavior can be reconfigured or turned off entirely. see features/record_archival.md for more details.
-
-### Added
-
-- **CUMULUS-4124**
-  - Add api endpoint `granules/archive` to archive granules
-  - Add api endpoint `executions/archive` to archive executions
-  - Task lambda to call above api endpoints with configuration
-  - Add cron scheduler to call above endpoints and archive old records
-
 ### Changed
 
-
-- **CUMULUS-4155**
-  - Update Cumulus integration tests to utilize:
-    - Cumulus Message Adapter: v2.0.5
-    - Cumulus Message Adapter-py: v2.4.0
-    - Cumulus Process: 1.6.0
-  - Update all Python dependencies to use boto >=1.40.29
-  - Update all Core integration lambdas to use Python 3.12
-  - Update external CNM lambdas to run on Java 21 in integration
 - **CUMULUS-4191**
   - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
     based on the provider from the record message.
   - Updated `messageConsumer` lambda handler to async/await style
-- **CUMULUS-4200**
-  - updated metrics_es_host terraform variable description and validation
-  - Users should ensure that the metrics_es_host does not include `https://`
-- **CUMULUS-4242**
-  - Skipped lzards api response assertions from lzards integration tests due to lzards api changes
-- **CUMULUS-4252**
-  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
-    `@aws-sdk/lib-storage@3.896.0`
-- **CUMULUS-4242**
-  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
-  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
-- **CUMULUS-4232**
-  - Update MoveGranules CUMULUS-4078 behavior such that it no longer defaults to throwing on an orphan (S3 file record not in database) situation when checking cross-collection file collisions.
-  - Added configuration `crossCollectionThrowOnObjectNotFound` to allow setting MoveGranules to fail in a collision/orphan situation
-  - Added `collectionCheckRetryCount` to allow configuration of the retry count for the `MoveGranules` crossCollection lookup
-- **CUMULUS-4254**
-  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
-  - Used `errorify` instead of `JSON.stringify` for AWS errors
-  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
 
 ## [v20.2.2] 2025-10-08
 
