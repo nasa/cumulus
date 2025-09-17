@@ -7,9 +7,7 @@ source_code_hash = filebase64sha256("${path.module}/../../tasks/archive-records/
   runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "ArchiveRecords", 900)
   memory_size      = lookup(var.lambda_memory_sizes, "ArchiveRecords", 128)
-  dead_letter_config {
-    target_arn = aws_sqs_queue.archive_records_dead_letter_queue.arn
-  }
+
   environment {
     variables = {
       stackName    = var.prefix
