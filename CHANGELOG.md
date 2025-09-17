@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Cumulus Process: 1.6.0
   - Update all Python dependencies to use boto >=1.40.29
   - Update all Core integration lambdas to use Python 3.12
+  - Update external CNM lambdas to run on Java 21 in integration
 
 - **CUMULUS-4191**
   - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
