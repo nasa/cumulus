@@ -11,7 +11,7 @@ const {
   CollectionPgModel,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-
+const { bulkArchiveGranules } = require("@cumulus/api-client/granules");
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { chooseTargetExecution } = require('../lib/executions');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
@@ -257,6 +257,9 @@ async function bulkGranuleReingest(
   );
 }
 
+async function batchArchiveGranules(payload) {
+  bulkArchiveG
+}
 /**
  * Handles various bulk operations based on the event type.
  *
@@ -288,6 +291,10 @@ async function handler(event) {
   if (event.type === 'BULK_EXECUTION_DELETE') {
     return await batchDeleteExecutions(event.payload);
   }
+  if (event.type === 'BULK_GRANULE_ARCHIVE') {
+    return await batchArchiveGranules(event.payload);
+  }
+
   // throw an appropriate error here
   throw new TypeError(`Type ${event.type} could not be matched, no operation attempted.`);
 }

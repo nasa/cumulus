@@ -1357,6 +1357,28 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+async function bulkArchiveGranulesAsyncWrapper(req, res) {
+  // const payload = req.body;
+  // const description `Archival of ${payload.}`
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
+    lambdaName: process.env.ArchiveGranules,
+    description: 'look at me go!',
+    OperationType: 'Archive Granules',
+    payload: {}
+  }
+  log.debug(
+    `About to invoke lambda to start async operation ${asyncOperationId}`
+  );
+  await startAsyncOperation.invokeStartAsyncOperationLambda(
+    asyncOperationEvent
+  );
+  return res.status(202).send({ id: asyncOperationId });
+}
+
+router.patch('/archiveAsync', bulkArchiveGranulesAsyncWrapper);
 router.patch('/archive', bulkArchiveGranules);
 router.get('/:collectionId/:granuleId', get);
 router.get('/files/get_collection_and_granule_id/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
