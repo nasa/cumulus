@@ -755,3 +755,34 @@ test('bulkArchiveGranules calls the callback with the expected object and return
     callback,
   }));
 });
+
+test('bulkArchiveGranulesAsync calls the callback with the expected object and returns the parsed response', async (t) => {
+  const body = {
+    batchSize: 100,
+    expirationDays: 200,
+  };
+
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PATCH',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/archiveAsync/',
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 200,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+
+  await t.notThrowsAsync(granulesApi.bulkArchiveGranulesAsync({
+    prefix: t.context.testPrefix,
+    body,
+    callback,
+  }));
+});

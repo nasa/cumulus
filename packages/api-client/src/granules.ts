@@ -875,6 +875,32 @@ export const bulkArchiveGranules = async (params: {
   });
 };
 
+export const bulkArchiveGranulesAsync = async (params: {
+  prefix: string,
+  body: {
+    batchSize?: number,
+    expirationDays?: number,
+  },
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'PATCH',
+      resource: '/{proxy+}',
+      path: '/granules/archiveAsync/',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 200,
+  });
+};
+
+
 /**
  * Bulk Granule Operations
  * POST /granules/bulkChangeCollection
