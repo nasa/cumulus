@@ -46,7 +46,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_granules" {
     "headers": {
       "Content-Type": "application/json"
     },
-    "path": "/granules/archive",
+    "path": "/granules/archiveAsync",
     "body": "{}"
   }
   JSON
@@ -63,7 +63,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_executions" {
     "headers": {
       "Content-Type": "application/json"
     },
-    "path": "/executions/archive",
+    "path": "/executions/archiveAsync",
     "body": "{}"
   }
   JSON

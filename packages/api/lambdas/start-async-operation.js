@@ -21,7 +21,7 @@ const handler = async (event) => {
   const {
     asyncOperationId, callerLambdaName, lambdaName, description, operationType, payload,
   } = event;
-
+  
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationId,
     cluster,

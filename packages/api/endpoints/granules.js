@@ -1357,18 +1357,27 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+const bulkArchiveGranulesAsyncWrapperSchema = z.object({
+  batchSize: z.number().optional().default(10000),
+  expirationDays: z.number().optional().default(365),
+});
+const parseBulkArchiveGranulesAsyncWrapperPayload = zodParser('bulkChangeCollection payload', bulkArchiveGranulesAsyncWrapperSchema);
+
 async function bulkArchiveGranulesAsyncWrapper(req, res) {
-  // const payload = req.body;
-  // const description `Archival of ${payload.}`
+  const payload = parseBulkArchiveGranulesAsyncWrapperPayload(req.body);
   const asyncOperationId = uuidv4();
-  console.log("trying to run lambdaName:", process.env.ArchiveRecordsLambda)
   const asyncOperationEvent = {
     asyncOperationId,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.ArchiveRecordsLambda,
     description: 'look at me go!',
     operationType: 'Bulk Granule Reingest',
-    payload: {}
+    payload: {
+      config: {
+        ...payload,
+        recordType: 'granules',
+      },
+    },
   }
   log.debug(
     `About to invoke lambda to start async operation ${asyncOperationId}`

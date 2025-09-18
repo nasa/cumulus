@@ -391,6 +391,39 @@ async function bulkDeleteExecutionsByCollection(req, res) {
   );
   return res.status(202).send({ id: asyncOperationId });
 }
+
+const bulkArchiveExecutionsAsyncWrapperSchema = z.object({
+  batchSize: z.number().optional().default(10000),
+  expirationDays: z.number().optional().default(365),
+});
+const parseBulkArchiveExecutionsAsyncWrapperPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsAsyncWrapperSchema);
+
+async function bulkArchiveExecutionsAsyncWrapper(req, res) {
+  const payload = parseBulkArchiveExecutionsAsyncWrapperPayload(req.body);
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
+    lambdaName: process.env.ArchiveRecordsLambda,
+    description: 'look at me go!',
+    operationType: 'Bulk Granule Reingest',
+    payload: {
+      config: {
+        ...payload,
+        recordType: 'executions',
+      },
+    },
+  }
+  log.debug(
+    `About to invoke lambda to start async operation ${asyncOperationId}`
+  );
+  await startAsyncOperation.invokeStartAsyncOperationLambda(
+    asyncOperationEvent
+  );
+  return res.status(202).send({ id: asyncOperationId });
+}
+
+router.patch('/archiveAsync', bulkArchiveExecutionsAsyncWrapper);
 router.patch('/archive', bulkArchiveExecutions);
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
