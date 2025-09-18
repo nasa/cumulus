@@ -6,7 +6,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v20.2.2] 2025-09-24
 
+### Migration Notes
+
+- This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
+
 ### Changed
+
+- **CUMULUS-4155**
+  - Update Cumulus integration tests to utilize:
+    - Cumulus Message Adapter: v2.0.5
+    - Cumulus Message Adapter-py: v2.4.0
+    - Cumulus Process: 1.6.0
+  - Update all Python dependencies to use boto >=1.40.29
+  - Update all Core integration lambdas to use Python 3.12
+  - Update external CNM lambdas to run on Java 21 in integration
 
 - **CUMULUS-4191**
   - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
