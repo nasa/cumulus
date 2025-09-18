@@ -331,7 +331,7 @@ test('bulkArchiveExecutionsAsync calls the callback with the expected object and
     t.deepEqual(expected, configObject);
   };
 
-  await t.notThrowsAsync(executionsApi.bulkArchiveExecutions({
+  await t.notThrowsAsync(executionsApi.bulkArchiveExecutionsAsync({
     prefix: t.context.testPrefix,
     body,
     callback,
