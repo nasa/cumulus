@@ -12,6 +12,7 @@ const {
 const { addCollections, addProviders, generateCmrFilesForGranules } = require('@cumulus/integration-tests');
 
 const {
+  bulkArchiveGranulesAsync,
   createGranule,
   getGranule,
   deleteGranule,
@@ -139,18 +140,12 @@ describe('when ArchiveGranules is called', () => {
   describe('The lambda, when invoked with an expected payload', () => {
     it('does not archive records younger than expirationDays', async () => {
       if (testSetupFailed) fail('test setup failed');
-      const { $metadata } = await lambda().send(new InvokeCommand({
-        FunctionName: `${stackName}-ArchiveRecords`,
-        InvocationType: 'RequestResponse',
-        Payload: JSON.stringify({
-          config: {
-            expirationDays: 365 * 2,
-          },
-        }),
-      }));
-      if ($metadata.httpStatusCode >= 400) {
-        throw new Error(`lambda invocation to run archival failed, code ${$metadata.httpStatusCode}`);
-      }
+      await bulkArchiveGranulesAsync({
+        prefix: stackName,
+        body: {
+          expirationDays: 365*2
+        }
+      })
       const granuleDetails = await getGranule({
         prefix: stackName,
         granuleId: granuleObject.body.granuleId,
@@ -159,18 +154,12 @@ describe('when ArchiveGranules is called', () => {
     });
     it('does archive records older than expirationDays', async () => {
       if (testSetupFailed) fail('test setup failed');
-      const { $metadata } = await lambda().send(new InvokeCommand({
-        FunctionName: `${stackName}-ArchiveRecords`,
-        InvocationType: 'RequestResponse',
-        Payload: JSON.stringify({
-          config: {
-            expirationDays: 365,
-          },
-        }),
-      }));
-      if ($metadata.httpStatusCode >= 400) {
-        throw new Error(`lambda invocation to run archival failed, code ${$metadata.httpStatusCode}`);
-      }
+      await bulkArchiveGranulesAsync({
+        prefix: stackName,
+        body: {
+          expirationDays: 365
+        }
+      })
       const granuleDetails = await getGranule({
         prefix: stackName,
         granuleId: granuleObject.body.granuleId,
