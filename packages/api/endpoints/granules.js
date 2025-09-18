@@ -1361,12 +1361,13 @@ async function bulkArchiveGranulesAsyncWrapper(req, res) {
   // const payload = req.body;
   // const description `Archival of ${payload.}`
   const asyncOperationId = uuidv4();
+  console.log("trying to run lambdaName:", process.env.ArchiveGranules)
   const asyncOperationEvent = {
     asyncOperationId,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.ArchiveGranules,
     description: 'look at me go!',
-    OperationType: 'Archive Granules',
+    operationType: 'Bulk Granule Reingest',
     payload: {}
   }
   log.debug(
