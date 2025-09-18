@@ -6,21 +6,18 @@ export const up = async (knex: Knex): Promise<void> => {
       .integer('granule_cumulus_id')
       .references('cumulus_id')
       .inTable('granules')
-      .notNullable()
       .onDelete('CASCADE')
       .primary();
-    table
-      .specificType('state', 'char(1)')
-      .comment('Granule active state')
-      .notNullable();
     table
       .integer('group_id')
       .comment('Granule duplicate group id')
       .notNullable();
     table
-      .timestamps(false, true);
+      .specificType('state', 'char(1)')
+      .comment('Granule active state')
+      .notNullable();
     table
-      .unique(['granule_cumulus_id']);
+      .timestamps(false, true);
   });
 
   await knex.raw('CREATE INDEX IF NOT EXISTS granule_groups_group_id_index ON granule_groups(group_id)');
