@@ -220,9 +220,10 @@ test.serial('bulkArchiveGranules iterates "batchSize" granules at a time', async
     },
     send: sinon.stub(),
   };
-  for (const i in range(5)) {
+  for (const i of range(5)) {
+    // eslint-disable-next-line no-await-in-loop
     await bulkArchiveGranules(req, res);
-    let archivedPostArchived = await Promise.all(
+    const archivedPostArchived = await Promise.all(
       t.context.fakePGGranuleRecords.map(
         async (fakeGranuleRecord) => (
           await t.context.GranulePgModel.get(
@@ -233,6 +234,6 @@ test.serial('bulkArchiveGranules iterates "batchSize" granules at a time', async
       )
     );
     // js really wants to interpret i as a string here, which gets you things like 1+1 = 11
-    t.is((10*(Number(i)+1)), archivedPostArchived.filter((archived) => archived).length);
+    t.is((10 * (Number(i) + 1)), archivedPostArchived.filter((archived) => archived).length);
   }
 });

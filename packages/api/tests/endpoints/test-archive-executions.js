@@ -221,10 +221,11 @@ test.serial('bulkArchiveExecutions iterates "batchSize" executions at a time', a
       badRequest: sinon.stub(),
     },
     send: sinon.stub(),
-  };
-  for (const i in range(5)) {
-    await bulkArchiveExecutions(req, res);
-    let archivedPostArchived = await Promise.all(
+  };  
+  for (const i of range(5)) {
+  // eslint-disable-next-line no-await-in-loop
+  await bulkArchiveExecutions(req, res);
+    const archivedPostArchived = await Promise.all(
       t.context.fakePGExecutionRecords.map(
         async (fakeExecutionRecord) => (
           await t.context.executionPgModel.get(
@@ -235,6 +236,6 @@ test.serial('bulkArchiveExecutions iterates "batchSize" executions at a time', a
       )
     );
     // js really wants to interpret i as a string here, which gets you things like 1+1 = 11
-    t.is((10*(Number(i)+1)), archivedPostArchived.filter((archived) => archived).length);
+    t.is((10 * (Number(i) + 1)), archivedPostArchived.filter((archived) => archived).length);
   }
 });
