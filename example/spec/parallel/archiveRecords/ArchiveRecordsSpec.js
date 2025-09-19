@@ -1,15 +1,16 @@
 'use strict';
 
+const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
 const parseurl = require('parseurl');
 const { InvokeCommand } = require('@aws-sdk/client-lambda');
-const { lambda } = require('@cumulus/aws-client/services');
+const { lambda, ecs } = require('@cumulus/aws-client/services');
 const fs = require('fs');
 const pick = require('lodash/pick');
 const {
   deleteS3Object,
 } = require('@cumulus/aws-client/S3');
 
-const { addCollections, addProviders, generateCmrFilesForGranules } = require('@cumulus/integration-tests');
+const { addCollections, addProviders, generateCmrFilesForGranules, getClusterArn } = require('@cumulus/integration-tests');
 
 const {
   bulkArchiveGranulesAsync,
@@ -26,6 +27,7 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
 } = require('../../helpers/testUtils');
+const { sleep } = require('@cumulus/common');
 
 describe('when ArchiveGranules is called', () => {
   const monthEpoch = 2629743000;
@@ -140,12 +142,21 @@ describe('when ArchiveGranules is called', () => {
   describe('The lambda, when invoked with an expected payload', () => {
     it('does not archive records younger than expirationDays', async () => {
       if (testSetupFailed) fail('test setup failed');
-      await bulkArchiveGranulesAsync({
+      const res = await bulkArchiveGranulesAsync({
         prefix: stackName,
         body: {
           expirationDays: 365*2
         }
-      })
+      });
+      const cluster = await getClusterArn(config.stackName);
+      const taskId = JSON.parse(res.body).id;
+      const taskArn = `${cluster.replace('cluster', 'task')}/${taskId}`
+      console.log(taskArn)
+      const waitReturn = await waitUntilTasksStopped(
+        { client: ecs(), maxWaitTime: 600, maxDelay: 1, minDelay: 1 },
+        { cluster: cluster, tasks: [taskArn]}
+      )
+      console.log(waitReturn)
       const granuleDetails = await getGranule({
         prefix: stackName,
         granuleId: granuleObject.body.granuleId,
@@ -154,12 +165,19 @@ describe('when ArchiveGranules is called', () => {
     });
     it('does archive records older than expirationDays', async () => {
       if (testSetupFailed) fail('test setup failed');
-      await bulkArchiveGranulesAsync({
+      const res = await bulkArchiveGranulesAsync({
         prefix: stackName,
         body: {
           expirationDays: 365
         }
-      })
+      });
+      const cluster = await getClusterArn(config.stackName);
+      const taskId = JSON.parse(res.body).id;
+      const taskArn = `${cluster.replace('cluster', 'task')}/${taskId}`
+      await waitUntilTasksStopped(
+        { client: ecs(), maxWaitTime: 600, maxDelay: 1, minDelay: 1 },
+        { cluster: cluster, tasks: [taskArn]}
+      )
       const granuleDetails = await getGranule({
         prefix: stackName,
         granuleId: granuleObject.body.granuleId,

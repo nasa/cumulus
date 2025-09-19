@@ -896,10 +896,9 @@ export const bulkArchiveGranulesAsync = async (params: {
       },
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 200,
+    expectedStatusCodes: 202,
   });
 };
-
 
 /**
  * Bulk Granule Operations
