@@ -412,7 +412,7 @@ async function bulkArchiveExecutionsAsyncWrapper(req, res) {
         recordType: 'executions',
       },
     },
-  }
+  };
   log.debug(
     `About to invoke lambda to start async operation ${asyncOperationId}`
   );

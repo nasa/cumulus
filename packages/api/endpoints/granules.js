@@ -1378,7 +1378,7 @@ async function bulkArchiveGranulesAsyncWrapper(req, res) {
         recordType: 'granules',
       },
     },
-  }
+  };
   log.debug(
     `About to invoke lambda to start async operation ${asyncOperationId}`
   );
