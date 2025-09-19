@@ -333,7 +333,7 @@ variable "async_operation_image_version" {
 variable "cumulus_process_activity_version" {
     description = "docker image version to use for python processing service"
     type = string
-    default = "4"
+    default = "5"
 }
 
 variable "ecs_task_image_version" {
@@ -345,7 +345,7 @@ variable "ecs_task_image_version" {
 variable "cumulus_test_ingest_image_version" {
     description = "docker image version to use for python test ingest processing service"
     type = string
-    default = "17"
+    default = "18"
 }
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"

@@ -11,20 +11,17 @@ This task is intended to be simple - the processing activity takes the input of 
 
 ### Requirements
 
-To develop against this task, you should be using python > 3.6 (CMA compatibility is baselined at 3.6).    Once you have a python env enabled:
-
-```bash
-pip install -r requirements.txt
-```
+To develop against this task, you should be using python > 3.12, preferably using pipenv.   See package.json for build setup and/or refer to [pipenv documentation](https://pipenv.pypa.io/en/latest/) for more on this.
 
 ### Build
 
 To update the container for a PR, you should run:
 
 ```bash
-docker build -t cumuluss/test-python-ingest-processing:{VERSION} .
-docker push cumuluss/test-python-ingest-processing:{VERSION}
+docker build --platform linux/amd64,linux/arm64 -t cumulus-test-ingest-process:{VERSION} .
 ```
+
+Then push to the configured ECR following the AWS console instructions for pushing to ECR for use in your build.
 
 Then update the `python_processing_service` resource in [`python_reference_workflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/python_reference_workflow.tf) to utilize the correct image reference.
 
@@ -32,4 +29,4 @@ Then update the `python_processing_service` resource in [`python_reference_workf
 
 ## Updates
 
-Updates should generally consist of updates to the included `requirements.txt`, as the purpose of this task is to ensure compatibility with updates to the [`cumulus-message-adapter-python`](https://github.com/nasa/cumulus-message-adapter-python) client library via [`cumulus-process-py`] dependencies.
+Updates should generally consist of updates to the included `Pipfile`, as the purpose of this task is to ensure compatibility with updates to the [`cumulus-message-adapter-python`](https://github.com/nasa/cumulus-message-adapter-python) client library via [`cumulus-process-py`] dependencies.
