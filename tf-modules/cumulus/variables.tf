@@ -655,3 +655,11 @@ variable "workflow_configurations" {
     sf_event_sqs_to_db_records_types = {}
   }
 }
+
+
+## Record Archival Configuration
+variable "daily_archive_records_schedule_expression" {
+  type        = string
+  default     = "cron(0 4 * * ? *)"
+  description = "Cloud Watch cron schedule for the record archival lambda"
+}

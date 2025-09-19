@@ -213,8 +213,15 @@ Please follow the instructions before upgrading Cumulus
 
 - **CUMULUS-4165**
   - Update Async Operation container to new version 54, `cumuluss/async-operation:54`. Users should update their references to `async-operation` with the new version.
+### Added
+
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
+- **CUMULUS-4124**
+  - Add api endpoint granules/archive to archive granules
+  - Add api endpoint executions/archive to archive executions
+  - Task lambda to call above api endpoints with configuration
+  - Add cron scheduler to call above task lambda and archive old records
 
 ## [v20.3.0] 2025-08-18
 
