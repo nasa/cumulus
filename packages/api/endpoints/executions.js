@@ -253,7 +253,6 @@ async function bulkArchiveExecutions(req, res) {
   const updatedCount = await knex(TableNames.executions)
     .update({ archived: true })
     .whereIn('cumulus_id', subQuery);
-
   return res.send({ recordsUpdated: updatedCount });
 }
 

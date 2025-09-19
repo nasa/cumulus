@@ -222,65 +222,19 @@ test.serial('bulkArchiveExecutions iterates "batchSize" executions at a time', a
     },
     send: sinon.stub(),
   };
-
-  await bulkArchiveExecutions(req, res);
-  let archivedPostArchived = await Promise.all(
-    t.context.fakePGExecutionRecords.map(
-      async (fakeExecutionRecord) => (
-        await t.context.executionPgModel.get(
-          knex,
-          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
-        )
-      ).archived
-    )
-  );
-  t.is(10, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveExecutions(req, res);
-  archivedPostArchived = await Promise.all(
-    t.context.fakePGExecutionRecords.map(
-      async (fakeExecutionRecord) => (
-        await t.context.executionPgModel.get(
-          knex,
-          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
-        )
-      ).archived
-    )
-  );
-  t.is(20, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveExecutions(req, res);
-  archivedPostArchived = await Promise.all(
-    t.context.fakePGExecutionRecords.map(
-      async (fakeExecutionRecord) => (
-        await t.context.executionPgModel.get(
-          knex,
-          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
-        )
-      ).archived
-    )
-  );
-  t.is(30, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveExecutions(req, res);
-  archivedPostArchived = await Promise.all(
-    t.context.fakePGExecutionRecords.map(
-      async (fakeExecutionRecord) => (
-        await t.context.executionPgModel.get(
-          knex,
-          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
-        )
-      ).archived
-    )
-  );
-  t.is(40, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveExecutions(req, res);
-  archivedPostArchived = await Promise.all(
-    t.context.fakePGExecutionRecords.map(
-      async (fakeExecutionRecord) => (
-        await t.context.executionPgModel.get(
-          knex,
-          { cumulus_id: fakeExecutionRecord[0].cumulus_id }
-        )
-      ).archived
-    )
-  );
-  t.is(50, archivedPostArchived.filter((archived) => archived).length);
+  for (const i in range(5)) {
+    await bulkArchiveExecutions(req, res);
+    let archivedPostArchived = await Promise.all(
+      t.context.fakePGExecutionRecords.map(
+        async (fakeExecutionRecord) => (
+          await t.context.executionPgModel.get(
+            knex,
+            { cumulus_id: fakeExecutionRecord[0].cumulus_id }
+          )
+        ).archived
+      )
+    );
+    // js really wants to interpret i as a string here, which gets you things like 1+1 = 11
+    t.is((10*(Number(i)+1)), archivedPostArchived.filter((archived) => archived).length);
+  }
 });

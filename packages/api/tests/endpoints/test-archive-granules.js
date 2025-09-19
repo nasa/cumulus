@@ -220,50 +220,19 @@ test.serial('bulkArchiveGranules iterates "batchSize" granules at a time', async
     },
     send: sinon.stub(),
   };
-
-  await bulkArchiveGranules(req, res);
-  let archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
-      ).archived
-    )
-  );
-  t.is(10, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveGranules(req, res);
-  archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
-      ).archived
-    )
-  );
-  t.is(20, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveGranules(req, res);
-  archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
-      ).archived
-    )
-  );
-  t.is(30, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveGranules(req, res);
-  archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
-      ).archived
-    )
-  );
-  t.is(40, archivedPostArchived.filter((archived) => archived).length);
-  await bulkArchiveGranules(req, res);
-  archivedPostArchived = await Promise.all(
-    t.context.fakePGGranuleRecords.map(
-      async (fakeGranuleRecord) => (
-        await t.context.granulePgModel.get(knex, { cumulus_id: fakeGranuleRecord[0].cumulus_id })
-      ).archived
-    )
-  );
-  t.is(50, archivedPostArchived.filter((archived) => archived).length);
+  for (const i in range(5)) {
+    await bulkArchiveGranules(req, res);
+    let archivedPostArchived = await Promise.all(
+      t.context.fakePGGranuleRecords.map(
+        async (fakeGranuleRecord) => (
+          await t.context.GranulePgModel.get(
+            knex,
+            { cumulus_id: fakeGranuleRecord[0].cumulus_id }
+          )
+        ).archived
+      )
+    );
+    // js really wants to interpret i as a string here, which gets you things like 1+1 = 11
+    t.is((10*(Number(i)+1)), archivedPostArchived.filter((archived) => archived).length);
+  }
 });
