@@ -48,11 +48,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_granules" {
       "Content-Type": "application/json"
     },
     "path": "/granules/archiveAsync",
-    "body": "{
-      \"updateLimit\": ${var.archive_update_limit},
-      \"batchSize\": ${var.archive_batch_size},
-      \"expirationDays\": ${var.archive_expiration_days},
-    }"
+    "body": "{\"updateLimit\": ${var.archive_update_limit},\"batchSize\": ${var.archive_batch_size},\"expirationDays\": ${var.archive_expiration_days}}"
   }
   JSON
 }
@@ -69,11 +65,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_executions" {
       "Content-Type": "application/json"
     },
     "path": "/executions/archiveAsync",
-    "body": "{
-      \"updateLimit\": ${var.archive_update_limit},
-      \"batchSize\": ${var.archive_batch_size},
-      \"expirationDays\": ${var.archive_expiration_days},
-    }"
+    "body": "{\"updateLimit\": ${var.archive_update_limit},\"batchSize\": ${var.archive_batch_size},\"expirationDays\": ${var.archive_expiration_days}}"
   }
   JSON
 }
