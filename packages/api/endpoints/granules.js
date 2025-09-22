@@ -16,7 +16,7 @@ const {
 const Logger = require('@cumulus/logger');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { GranuleSearch, TableNames } = require('@cumulus/db');
+const { GranuleSearch } = require('@cumulus/db');
 
 const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
 

@@ -19,7 +19,6 @@ const {
   ExecutionPgModel,
   translatePostgresExecutionToApiExecution,
   ExecutionSearch,
-  TableNames,
 } = require('@cumulus/db');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 

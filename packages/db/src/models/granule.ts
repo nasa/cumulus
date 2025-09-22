@@ -233,12 +233,12 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
    *  DB client or transaction
    * @param {Object} [params] - Optional object with addition params for query
    * @param {number} [params.limit] - number of records to be returned
-   * @param {number} [params.expirationDate] - record offset
+   * @param {string} [params.expirationDate] - record offset
    * @returns {Promise<number>} number of records actually updated
    */
   async bulkArchive(
     knexOrTrx: Knex | Knex.Transaction,
-    params: { limit: number; expirationDate: Date }
+    params: { limit: number; expirationDate: string }
   ): Promise<number> {
     const { limit, expirationDate } = params;
     const subQuery = knexOrTrx(this.tableName)
