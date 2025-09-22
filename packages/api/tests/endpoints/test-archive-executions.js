@@ -221,13 +221,16 @@ test.serial('bulkArchiveExecutions iterates "batchSize" executions at a time', a
       badRequest: sinon.stub(),
     },
     send: sinon.stub(),
-  };  
+  };
   for (const i of range(5)) {
-  // eslint-disable-next-line no-await-in-loop
-  await bulkArchiveExecutions(req, res);
+    // eslint-disable-next-line no-await-in-loop
+    await bulkArchiveExecutions(req, res);
+
+    // eslint-disable-next-line no-await-in-loop
     const archivedPostArchived = await Promise.all(
       t.context.fakePGExecutionRecords.map(
         async (fakeExecutionRecord) => (
+          // eslint-disable-next-line no-await-in-loop
           await t.context.executionPgModel.get(
             knex,
             { cumulus_id: fakeExecutionRecord[0].cumulus_id }

@@ -64,14 +64,14 @@ const archiveGranules = async (config: MassagedEventConfig) => {
   const archiveGranulesMethod = config.testMethods?.archiveGranulesMethod || bulkArchiveGranules;
   const { batchSize, updateLimit } = config;
   let totalUpdated = 0;
-  for(const i of range(updateLimit/batchSize)) {
+  for (const i of range(updateLimit / batchSize)) {
+    // eslint-disable-next-line no-await-in-loop
     const archiveOutput = await archiveGranulesMethod({
       prefix: getRequiredEnvVar('stackName'),
       body: {
         ...config,
-        batchSize: Math.min(batchSize, updateLimit-(i*batchSize))
-      }
-      
+        batchSize: Math.min(batchSize, updateLimit - (i * batchSize)),
+      },
     });
     const updated = JSON.parse(archiveOutput.body).recordsUpdated;
     totalUpdated += updated;
@@ -85,18 +85,19 @@ const archiveExecutions = async (config: MassagedEventConfig) => {
   if (config.recordType === 'granules') {
     return 0;
   }
-  const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod || bulkArchiveExecutions;
-  
+  const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod
+    || bulkArchiveExecutions;
+
   const { batchSize, updateLimit } = config;
   let totalUpdated = 0;
-  for(const i of range(updateLimit/batchSize)) {
-
+  for (const i of range(updateLimit / batchSize)) {
+    // eslint-disable-next-line no-await-in-loop
     const archiveOutput = await archiveExecutionsMethod({
       prefix: getRequiredEnvVar('stackName'),
       body: {
         ...config,
-        batchSize: Math.min(batchSize, updateLimit-(i*batchSize))
-      }
+        batchSize: Math.min(batchSize, updateLimit - (i * batchSize)),
+      },
     });
     const updated = JSON.parse(archiveOutput.body).recordsUpdated;
 
@@ -110,14 +111,14 @@ const archiveExecutions = async (config: MassagedEventConfig) => {
 const archiveRecords = async (event: Event) => {
   const config = await getParsedConfigValues(event.config);
   log.info('running archive-records with config', JSON.stringify(config));
-  const [ granulesUpdated, executionsUpdated ] = await Promise.all([
+  const [granulesUpdated, executionsUpdated] = await Promise.all([
     archiveGranules(config),
-    archiveExecutions(config)
+    archiveExecutions(config),
   ]);
   return {
     granulesUpdated,
-    executionsUpdated
-  }
+    executionsUpdated,
+  };
 };
 
 /**

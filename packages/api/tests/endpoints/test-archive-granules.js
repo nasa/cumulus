@@ -223,9 +223,12 @@ test.serial('bulkArchiveGranules iterates "batchSize" granules at a time', async
   for (const i of range(5)) {
     // eslint-disable-next-line no-await-in-loop
     await bulkArchiveGranules(req, res);
+
+    // eslint-disable-next-line no-await-in-loop
     const archivedPostArchived = await Promise.all(
       t.context.fakePGGranuleRecords.map(
         async (fakeGranuleRecord) => (
+          // eslint-disable-next-line no-await-in-loop
           await t.context.GranulePgModel.get(
             knex,
             { cumulus_id: fakeGranuleRecord[0].cumulus_id }

@@ -201,7 +201,6 @@ test.serial('ArchiveRecords sets old records to "archived=true" and not newer gr
   });
 });
 
-
 test.serial('ArchiveRecords archives only executions if recordType=executions', async (t) => {
   const config = {
     expirationDays: 1,
@@ -284,7 +283,7 @@ test.serial('ArchiveRecords archives only granules if recordType=granules', asyn
   t.false(execution.archived);
 });
 
-test.only('ArchiveRecords archives the entire "updateLimit" with odd batchSizes', async (t) => {
+test.serial('ArchiveRecords archives the entire "updateLimit" with odd batchSizes', async (t) => {
   const config = {
     expirationDays: 5,
     updateLimit: 50,
@@ -320,7 +319,7 @@ test.only('ArchiveRecords archives the entire "updateLimit" with odd batchSizes'
       t.false(granule.archived);
     }
   });
-  t.is(granules.filter((granule) => granule.archived).length, 50)
+  t.is(granules.filter((granule) => granule.archived).length, 50);
 
   const executionModel = new ExecutionPgModel();
   const executions = await Promise.all(
@@ -337,9 +336,8 @@ test.only('ArchiveRecords archives the entire "updateLimit" with odd batchSizes'
     }
   });
 
-  t.is(executions.filter((execution) => execution.archived).length, 50)
+  t.is(executions.filter((execution) => execution.archived).length, 50);
 });
-
 
 test.serial('getParsedConfigValues handles empty config and no env with defaults', (t) => {
   const envStore = clone(process.env);

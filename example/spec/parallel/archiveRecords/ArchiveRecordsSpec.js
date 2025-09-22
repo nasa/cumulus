@@ -1,18 +1,15 @@
 'use strict';
 
-const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
 const parseurl = require('parseurl');
 
 const { v4: uuidv4 } = require('uuid');
-const { InvokeCommand } = require('@aws-sdk/client-lambda');
-const { lambda, ecs } = require('@cumulus/aws-client/services');
 const fs = require('fs');
 const pick = require('lodash/pick');
 const {
   deleteS3Object,
 } = require('@cumulus/aws-client/S3');
 
-const { addCollections, addProviders, generateCmrFilesForGranules, getClusterArn } = require('@cumulus/integration-tests');
+const { addCollections, addProviders, generateCmrFilesForGranules } = require('@cumulus/integration-tests');
 
 const {
   bulkArchiveGranulesAsync,
@@ -21,6 +18,9 @@ const {
   deleteGranule,
 } = require('@cumulus/api-client/granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { sleep } = require('@cumulus/common');
+const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
+const { createExecution, getExecution } = require('@cumulus/api-client/executions');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 const {
   loadConfig,
@@ -29,9 +29,6 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
 } = require('../../helpers/testUtils');
-const { sleep } = require('@cumulus/common');
-const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
-const { createExecution, getExecution } = require('@cumulus/api-client/executions');
 
 describe('when ArchiveGranules is called', () => {
   const monthEpoch = 2629743000;
@@ -146,7 +143,7 @@ describe('when ArchiveGranules is called', () => {
         collectionId: granuleObject.collectionId,
         status: 'completed',
         updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
-      })
+      });
       await createExecution({
         prefix: config.stackName,
         body: executionObject,
@@ -163,10 +160,10 @@ describe('when ArchiveGranules is called', () => {
       await bulkArchiveGranulesAsync({
         prefix: stackName,
         body: {
-          expirationDays: 365
-        }
+          expirationDays: 365,
+        },
       });
-      await sleep(120000)
+      await sleep(120000);
       const granuleDetails = await getGranule({
         prefix: stackName,
         granuleId: granuleObject.body.granuleId,
@@ -175,7 +172,7 @@ describe('when ArchiveGranules is called', () => {
       const executionDetails = await getExecution({
         prefix: stackName,
         arn: executionObject.arn,
-      })
+      });
       expect(executionDetails.archived).toEqual(true);
     });
   });
