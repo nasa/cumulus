@@ -391,16 +391,23 @@ async function bulkArchiveExecutions(req, res) {
 }
 
 const bulkArchiveExecutionsAsyncWrapperSchema = z.object({
-  batchSize: z.number().optional().default(10000),
+  updateLimit: z.number().optional().default(10000),
+  batchSize: z.number().optional().default(1000),
   expirationDays: z.number().optional().default(365),
 });
 const parseBulkArchiveExecutionsAsyncWrapperPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsAsyncWrapperSchema);
-
 /**
  * Start an AsyncOperation that will archive a set of executions in ecs
  */
 async function bulkArchiveExecutionsAsyncWrapper(req, res) {
   const payload = parseBulkArchiveExecutionsAsyncWrapperPayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
+  }
+  if (payload.updateLimit === 0) {
+    // don't bother running an ecs task to do nothing
+    return res.status(202).send({});
+  }
   const asyncOperationId = uuidv4();
   const asyncOperationEvent = {
     asyncOperationId,

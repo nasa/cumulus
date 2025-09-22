@@ -1327,19 +1327,11 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-const bulkArchiveGranulesAsyncWrapperSchema = z.object({
-  updateLimit: z.number().optional().default(10000),
-  batchSize: z.number().optional().default(1000),
-  expirationDays: z.number().optional().default(365),
-});
-const parseBulkArchiveGranulesAsyncWrapperPayload = zodParser('bulkChangeCollection payload', bulkArchiveGranulesAsyncWrapperSchema);
-
 /**
  * Update a set of granules to "archived=true".
  * called as a subroutine of the ecs task launched by bulkArchiveGranulesAsyncWrapper
  */
 const bulkArchiveGranulesSchema = z.object({
-  updateLimit: z.number().positive().optional().default(10000),
   batchSize: z.number().positive().optional().default(1000),
   expirationDays: z.number().positive().optional().default(365),
 });
@@ -1366,11 +1358,24 @@ async function bulkArchiveGranules(req, res) {
   return res.send({ recordsUpdated: updatedCount });
 }
 
+const bulkArchiveExecutionsAsyncWrapperSchema = z.object({
+  updateLimit: z.number().optional().default(10000),
+  batchSize: z.number().optional().default(1000),
+  expirationDays: z.number().optional().default(365),
+});
+const parseBulkArchiveExecutionsAsyncWrapperPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsAsyncWrapperSchema);
 /**
  * Start an AsyncOperation that will archive a set of granules in ecs
  */
 async function bulkArchiveGranulesAsyncWrapper(req, res) {
-  const payload = parseBulkArchiveGranulesAsyncWrapperPayload(req.body);
+  const payload = parseBulkArchiveExecutionsAsyncWrapperPayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
+  }
+  if (payload.updateLimit === 0) {
+    // don't bother running an ecs task to do nothing
+    return res.status(202).send({});
+  }
   const asyncOperationId = uuidv4();
   const asyncOperationEvent = {
     asyncOperationId,
