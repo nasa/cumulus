@@ -139,10 +139,6 @@ describe('when ArchiveGranules is called', () => {
         prefix: config.stackName,
         body: granuleObject.body,
       });
-      console.log('looking at granule again', await getGranule({
-        prefix: stackName,
-        granuleId: granuleObject.body.granuleId,
-      }))
       executionId = uuidv4();
       executionObject = fakeExecutionFactoryV2({
         executionId,
@@ -151,16 +147,10 @@ describe('when ArchiveGranules is called', () => {
         status: 'completed',
         updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
       })
-      console.log('executionObject:', executionObject)
-      
       await createExecution({
         prefix: config.stackName,
         body: executionObject,
       });
-      console.log('looking at execution again', await getExecution({
-        prefix: stackName,
-        arn: executionObject.arn,
-      }))
     } catch (error) {
       console.log('setup test failed with', error);
       testSetupFailed = true;
@@ -176,20 +166,16 @@ describe('when ArchiveGranules is called', () => {
           expirationDays: 365
         }
       });
-      console.log('gonna sleep')
       await sleep(120000)
-      console.log('finished sleeping')
       const granuleDetails = await getGranule({
         prefix: stackName,
         granuleId: granuleObject.body.granuleId,
       });
-      console.log(granuleDetails)
       expect(granuleDetails.archived).toEqual(true);
       const executionDetails = await getExecution({
         prefix: stackName,
         arn: executionObject.arn,
       })
-      console.log(executionDetails)
       expect(executionDetails.archived).toEqual(true);
     });
   });
