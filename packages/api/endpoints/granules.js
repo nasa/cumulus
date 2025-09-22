@@ -1335,7 +1335,7 @@ const bulkArchiveGranulesAsyncWrapperSchema = z.object({
 const parseBulkArchiveGranulesAsyncWrapperPayload = zodParser('bulkChangeCollection payload', bulkArchiveGranulesAsyncWrapperSchema);
 
 /**
- * update a set of granules to "archived=true".
+ * Update a set of granules to "archived=true".
  * called as a subroutine of the ecs task launched by bulkArchiveGranulesAsyncWrapper
  */
 const bulkArchiveGranulesSchema = z.object({
@@ -1355,17 +1355,14 @@ async function bulkArchiveGranules(req, res) {
   const knex = await getKnexClientMethod();
   const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
 
-  const subQuery = knex(TableNames.granules)
-    .select('cumulus_id')
-    .whereBetween('updated_at', [
-      new Date(0),
+  const granulePgModel = new GranulePgModel();
+  const updatedCount = await granulePgModel.bulkArchive(
+    knex,
+    {
+      limit: body.batchSize,
       expirationDate,
-    ])
-    .where('archived', false)
-    .limit(body.batchSize);
-  const updatedCount = await knex(TableNames.granules)
-    .update({ archived: true })
-    .whereIn('cumulus_id', subQuery);
+    }
+  );
   return res.send({ recordsUpdated: updatedCount });
 }
 

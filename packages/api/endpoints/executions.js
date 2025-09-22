@@ -380,18 +380,14 @@ async function bulkArchiveExecutions(req, res) {
   }
   const knex = await getKnexClientMethod();
   const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
-
-  const subQuery = knex(TableNames.executions)
-    .select('cumulus_id')
-    .whereBetween('updated_at', [
-      new Date(0),
+  const executionPgModel = new ExecutionPgModel();
+  const updatedCount = await executionPgModel.bulkArchive(
+    knex,
+    {
+      limit: body.batchSize,
       expirationDate,
-    ])
-    .where('archived', false)
-    .limit(body.batchSize);
-  const updatedCount = await knex(TableNames.executions)
-    .update({ archived: true })
-    .whereIn('cumulus_id', subQuery);
+    }
+  );
   return res.send({ recordsUpdated: updatedCount });
 }
 
