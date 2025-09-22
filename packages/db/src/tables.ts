@@ -5,6 +5,7 @@ export enum TableNames {
   files = 'files',
   granules = 'granules',
   granulesExecutions = 'granules_executions',
+  granuleGroups = 'granule_groups',
   pdrs = 'pdrs',
   providers = 'providers',
   reconciliationReports = 'reconciliation_reports',
