@@ -229,7 +229,7 @@ test.serial('bulkArchiveGranules iterates "batchSize" granules at a time', async
       t.context.fakePGGranuleRecords.map(
         async (fakeGranuleRecord) => (
           // eslint-disable-next-line no-await-in-loop
-          await t.context.GranulePgModel.get(
+          await t.context.granulePgModel.get(
             knex,
             { cumulus_id: fakeGranuleRecord[0].cumulus_id }
           )
