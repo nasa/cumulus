@@ -14,7 +14,9 @@ export type AsyncOperationType =
   | 'ES Index'
   | 'Kinesis Replay'
   | 'Reconciliation Report'
-  | 'SQS Replay';
+  | 'SQS Replay'
+  | 'Bulk Granule Archive'
+  | 'Bulk Execution Archive';
 
 export interface ApiAsyncOperation {
   id: string,

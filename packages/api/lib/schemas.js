@@ -68,7 +68,10 @@ module.exports.asyncOperation = {
         'ES Index',
         'Kinesis Replay',
         'Reconciliation Report',
+        'Migration Count Report',
         'SQS Replay',
+        'Bulk Granule Archive',
+        'Bulk Execution Archive',
       ],
     },
     output: {

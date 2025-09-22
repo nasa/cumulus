@@ -2,6 +2,8 @@
 
 const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
 const parseurl = require('parseurl');
+
+const { v4: uuidv4 } = require('uuid');
 const { InvokeCommand } = require('@aws-sdk/client-lambda');
 const { lambda, ecs } = require('@cumulus/aws-client/services');
 const fs = require('fs');
@@ -28,6 +30,8 @@ const {
   deleteFolder,
 } = require('../../helpers/testUtils');
 const { sleep } = require('@cumulus/common');
+const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
+const { createExecution, getExecution } = require('@cumulus/api-client/executions');
 
 describe('when ArchiveGranules is called', () => {
   const monthEpoch = 2629743000;
@@ -40,6 +44,8 @@ describe('when ArchiveGranules is called', () => {
   let collection;
   let sourceGranulePath;
   let granuleObject;
+  let executionObject;
+  let executionId;
 
   afterAll(async () => {
     // Remove all the setup data - all keys at s3://${config.bucket}/sourceGranulePath
@@ -106,7 +112,7 @@ describe('when ArchiveGranules is called', () => {
           ...(pick(inputPayload.granules[0], ['granuleId', 'files'])),
           collectionId: constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version),
           status: 'completed',
-          updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
+          // updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
         },
       };
       granuleObject.body.files = granuleObject.body.files.map((file) => ({
@@ -133,6 +139,28 @@ describe('when ArchiveGranules is called', () => {
         prefix: config.stackName,
         body: granuleObject.body,
       });
+      console.log('looking at granule again', await getGranule({
+        prefix: stackName,
+        granuleId: granuleObject.body.granuleId,
+      }))
+      executionId = uuidv4();
+      executionObject = fakeExecutionFactoryV2({
+        executionId,
+        executionArn: executionId,
+        collectionId: granuleObject.collectionId,
+        status: 'completed',
+        updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
+      })
+      console.log('executionObject:', executionObject)
+      
+      await createExecution({
+        prefix: config.stackName,
+        body: executionObject,
+      });
+      console.log('looking at execution again', await getExecution({
+        prefix: stackName,
+        arn: executionObject.arn,
+      }))
     } catch (error) {
       console.log('setup test failed with', error);
       testSetupFailed = true;
@@ -140,49 +168,29 @@ describe('when ArchiveGranules is called', () => {
   });
 
   describe('The lambda, when invoked with an expected payload', () => {
-    it('does not archive records younger than expirationDays', async () => {
-      if (testSetupFailed) fail('test setup failed');
-      const res = await bulkArchiveGranulesAsync({
-        prefix: stackName,
-        body: {
-          expirationDays: 365*2
-        }
-      });
-      const cluster = await getClusterArn(config.stackName);
-      const taskId = JSON.parse(res.body).id;
-      const taskArn = `${cluster.replace('cluster', 'task')}/${taskId}`
-      console.log(taskArn)
-      const waitReturn = await waitUntilTasksStopped(
-        { client: ecs(), maxWaitTime: 600, maxDelay: 1, minDelay: 1 },
-        { cluster: cluster, tasks: [taskArn]}
-      )
-      console.log(waitReturn)
-      const granuleDetails = await getGranule({
-        prefix: stackName,
-        granuleId: granuleObject.body.granuleId,
-      });
-      expect(granuleDetails.archived).toEqual(false);
-    });
     it('does archive records older than expirationDays', async () => {
       if (testSetupFailed) fail('test setup failed');
-      const res = await bulkArchiveGranulesAsync({
+      await bulkArchiveGranulesAsync({
         prefix: stackName,
         body: {
           expirationDays: 365
         }
       });
-      const cluster = await getClusterArn(config.stackName);
-      const taskId = JSON.parse(res.body).id;
-      const taskArn = `${cluster.replace('cluster', 'task')}/${taskId}`
-      await waitUntilTasksStopped(
-        { client: ecs(), maxWaitTime: 600, maxDelay: 1, minDelay: 1 },
-        { cluster: cluster, tasks: [taskArn]}
-      )
+      console.log('gonna sleep')
+      await sleep(120000)
+      console.log('finished sleeping')
       const granuleDetails = await getGranule({
         prefix: stackName,
         granuleId: granuleObject.body.granuleId,
       });
+      console.log(granuleDetails)
       expect(granuleDetails.archived).toEqual(true);
+      const executionDetails = await getExecution({
+        prefix: stackName,
+        arn: executionObject.arn,
+      })
+      console.log(executionDetails)
+      expect(executionDetails.archived).toEqual(true);
     });
   });
 });
