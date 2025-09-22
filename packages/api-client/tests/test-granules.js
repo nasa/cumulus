@@ -773,7 +773,7 @@ test('bulkArchiveGranulesAsync calls the callback with the expected object and r
       path: '/granules/archiveAsync/',
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 200,
+    expectedStatusCodes: 202,
   };
 
   const callback = (configObject) => {
