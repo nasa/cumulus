@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
 
+### Added
+
+- **CUMULUS-4124**
+  - Add api endpoint `granules/archive` to archive granules
+  - Add api endpoint `executions/archive` to archive executions
+  - Task lambda to call above api endpoints with configuration
+  - Add cron scheduler to call above task lambda and archive old records
+
 ### Changed
 
 - **CUMULUS-4155**
@@ -217,11 +225,6 @@ Please follow the instructions before upgrading Cumulus
 
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
-- **CUMULUS-4124**
-  - Add api endpoint granules/archive to archive granules
-  - Add api endpoint executions/archive to archive executions
-  - Task lambda to call above api endpoints with configuration
-  - Add cron scheduler to call above task lambda and archive old records
 
 ## [v20.3.0] 2025-08-18
 
