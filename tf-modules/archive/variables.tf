@@ -343,10 +343,16 @@ variable "update_limit" {
   description = "number of executions to cleanup in one lambda run"
 }
 
+variable "archive_update_limit" {
+  type = number
+  default = 10000
+  description = "number of granules or executions to archive in one run"
+}
+
 variable "archive_batch_size" {
   type = number
   default = 10000
-  description = "number of granules and executions to archive in one lambda run"
+  description = "number of granules or executions to archive call to the /archive endpoint"
 }
 
 variable "archive_expiration_days" {

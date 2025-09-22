@@ -1370,7 +1370,7 @@ async function bulkArchiveGranulesAsyncWrapper(req, res) {
     asyncOperationId,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.ArchiveRecordsLambda,
-    description: 'look at me go!',
+    description: 'Launches an ecs task to archive a batch of granules',
     operationType: 'Bulk Granule Reingest',
     payload: {
       config: {

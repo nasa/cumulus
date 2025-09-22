@@ -163,7 +163,6 @@ export const createExecution = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
-
   return await callback({
     prefix,
     payload: {
