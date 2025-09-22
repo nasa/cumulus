@@ -74,7 +74,7 @@ this configuration would set it to run every hour instead
 
 #### archive_update_limit
 
-How many executions and granules to archive in one run of the task function.  This will archive up to <archive_batch_size> granules *and* up to <archive_batch_size> executions. This task function will run in ecs, avoiding uncertainty about time limitations
+How many executions and granules to archive in one run of the task function.  This will archive up to <archive_update_limit> granules *and* up to <archive_update_limit> executions. This task function will run in ecs, avoiding uncertainty about time limitations
 
 Default value is 10000.
 

@@ -11,7 +11,7 @@ source_code_hash = filebase64sha256("${path.module}/../../tasks/archive-records/
   environment {
     variables = {
       stackName = var.prefix
-      UPDATE_LIMIT = var.update_limit
+      UPDATE_LIMIT = var.archive_update_limit
       BATCH_SIZE = var.archive_batch_size
       EXPIRATION_DAYS = var.archive_expiration_days
     }
@@ -48,7 +48,11 @@ resource "aws_cloudwatch_event_target" "daily_archive_granules" {
       "Content-Type": "application/json"
     },
     "path": "/granules/archiveAsync",
-    "body": "{}"
+    "body": "{
+      \"updateLimit\": ${var.archive_update_limit},
+      \"batchSize\": ${var.archive_batch_size},
+      \"expirationDays\": ${var.archive_expiration_days},
+    }"
   }
   JSON
 }
@@ -65,7 +69,11 @@ resource "aws_cloudwatch_event_target" "daily_archive_executions" {
       "Content-Type": "application/json"
     },
     "path": "/executions/archiveAsync",
-    "body": "{}"
+    "body": "{
+      \"updateLimit\": ${var.archive_update_limit},
+      \"batchSize\": ${var.archive_batch_size},
+      \"expirationDays\": ${var.archive_expiration_days},
+    }"
   }
   JSON
 }
