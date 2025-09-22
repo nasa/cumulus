@@ -226,36 +226,6 @@ async function del(req, res) {
   return res.send({ message: 'Record deleted' });
 }
 
-const bulkArchiveExecutionsSchema = z.object({
-  batchSize: z.number().positive().optional().default(100),
-  expirationDays: z.number().positive().optional().default(365),
-});
-const parsebulkArchiveExecutionsPayload = zodParser('bulkArchiveExecutions payload', bulkArchiveExecutionsSchema);
-async function bulkArchiveExecutions(req, res) {
-  const {
-    getKnexClientMethod = getKnexClient,
-  } = req.testContext || {};
-  const body = parsebulkArchiveExecutionsPayload(req.body);
-  if (isError(body)) {
-    return returnCustomValidationErrors(res, body);
-  }
-  const knex = await getKnexClientMethod();
-  const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
-
-  const subQuery = knex(TableNames.executions)
-    .select('cumulus_id')
-    .whereBetween('updated_at', [
-      new Date(0),
-      expirationDate,
-    ])
-    .where('archived', false)
-    .limit(body.batchSize);
-  const updatedCount = await knex(TableNames.executions)
-    .update({ archived: true })
-    .whereIn('cumulus_id', subQuery);
-  return res.send({ recordsUpdated: updatedCount });
-}
-
 /**
  * Get execution history for a single granule or multiple granules
  *
@@ -391,12 +361,49 @@ async function bulkDeleteExecutionsByCollection(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+/**
+ * Update a set of executions to "archived=true".
+ * called as a subroutine of the ecs task launched by bulkArchiveExecutionsAsyncWrapper
+ */
+const bulkArchiveExecutionsSchema = z.object({
+  batchSize: z.number().positive().optional().default(100),
+  expirationDays: z.number().positive().optional().default(365),
+});
+const parsebulkArchiveExecutionsPayload = zodParser('bulkArchiveExecutions payload', bulkArchiveExecutionsSchema);
+async function bulkArchiveExecutions(req, res) {
+  const {
+    getKnexClientMethod = getKnexClient,
+  } = req.testContext || {};
+  const body = parsebulkArchiveExecutionsPayload(req.body);
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+  const knex = await getKnexClientMethod();
+  const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
+
+  const subQuery = knex(TableNames.executions)
+    .select('cumulus_id')
+    .whereBetween('updated_at', [
+      new Date(0),
+      expirationDate,
+    ])
+    .where('archived', false)
+    .limit(body.batchSize);
+  const updatedCount = await knex(TableNames.executions)
+    .update({ archived: true })
+    .whereIn('cumulus_id', subQuery);
+  return res.send({ recordsUpdated: updatedCount });
+}
+
 const bulkArchiveExecutionsAsyncWrapperSchema = z.object({
   batchSize: z.number().optional().default(10000),
   expirationDays: z.number().optional().default(365),
 });
 const parseBulkArchiveExecutionsAsyncWrapperPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsAsyncWrapperSchema);
 
+/**
+ * Start an AsyncOperation that will archive a set of executions in ecs
+ */
 async function bulkArchiveExecutionsAsyncWrapper(req, res) {
   const payload = parseBulkArchiveExecutionsAsyncWrapperPayload(req.body);
   const asyncOperationId = uuidv4();

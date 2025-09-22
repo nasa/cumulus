@@ -822,36 +822,6 @@ async function bulkPatch(req, res) {
     message: 'Successfully patched Granules',
   });
 }
-
-const bulkArchiveGranulesSchema = z.object({
-  batchSize: z.number().positive().optional().default(100),
-  expirationDays: z.number().positive().optional().default(365),
-});
-const parsebulkArchiveGranulesPayload = zodParser('bulkArchiveGranules payload', bulkArchiveGranulesSchema);
-async function bulkArchiveGranules(req, res) {
-  const {
-    getKnexClientMethod = getKnexClient,
-  } = req.testContext || {};
-  const body = parsebulkArchiveGranulesPayload(req.body);
-  if (isError(body)) {
-    return returnCustomValidationErrors(res, body);
-  }
-  const knex = await getKnexClientMethod();
-  const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
-
-  const subQuery = knex(TableNames.granules)
-    .select('cumulus_id')
-    .whereBetween('updated_at', [
-      new Date(0),
-      expirationDate,
-    ])
-    .where('archived', false)
-    .limit(body.batchSize);
-  const updatedCount = await knex(TableNames.granules)
-    .update({ archived: true })
-    .whereIn('cumulus_id', subQuery);
-  return res.send({ recordsUpdated: updatedCount });
-}
 /**
  * Delete a granule by granuleId
  *
@@ -1358,11 +1328,50 @@ async function bulkReingest(req, res) {
 }
 
 const bulkArchiveGranulesAsyncWrapperSchema = z.object({
-  batchSize: z.number().optional().default(10000),
+  updateLimit: z.number().optional().default(10000),
+  batchSize: z.number().optional().default(1000),
   expirationDays: z.number().optional().default(365),
 });
 const parseBulkArchiveGranulesAsyncWrapperPayload = zodParser('bulkChangeCollection payload', bulkArchiveGranulesAsyncWrapperSchema);
 
+/**
+ * update a set of granules to "archived=true".
+ * called as a subroutine of the ecs task launched by bulkArchiveGranulesAsyncWrapper
+ */
+const bulkArchiveGranulesSchema = z.object({
+  updateLimit: z.number().positive().optional().default(10000),
+  batchSize: z.number().positive().optional().default(1000),
+  expirationDays: z.number().positive().optional().default(365),
+});
+const parsebulkArchiveGranulesPayload = zodParser('bulkArchiveGranules payload', bulkArchiveGranulesSchema);
+async function bulkArchiveGranules(req, res) {
+  const {
+    getKnexClientMethod = getKnexClient,
+  } = req.testContext || {};
+  const body = parsebulkArchiveGranulesPayload(req.body);
+  if (isError(body)) {
+    return returnCustomValidationErrors(res, body);
+  }
+  const knex = await getKnexClientMethod();
+  const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
+
+  const subQuery = knex(TableNames.granules)
+    .select('cumulus_id')
+    .whereBetween('updated_at', [
+      new Date(0),
+      expirationDate,
+    ])
+    .where('archived', false)
+    .limit(body.batchSize);
+  const updatedCount = await knex(TableNames.granules)
+    .update({ archived: true })
+    .whereIn('cumulus_id', subQuery);
+  return res.send({ recordsUpdated: updatedCount });
+}
+
+/**
+ * Start an AsyncOperation that will archive a set of granules in ecs
+ */
 async function bulkArchiveGranulesAsyncWrapper(req, res) {
   const payload = parseBulkArchiveGranulesAsyncWrapperPayload(req.body);
   const asyncOperationId = uuidv4();
