@@ -79,7 +79,7 @@ How many executions and granules to archive in one run of the task function.  Th
 Default value is 10000.
 
 ```tf
-archive_batch_size = 300000
+archive_update_limit = 300000
 ```
 
 #### archive_batch_size

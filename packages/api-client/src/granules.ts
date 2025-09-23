@@ -855,6 +855,7 @@ export const bulkArchiveGranules = async (params: {
   body: {
     batchSize?: number,
     expirationDays?: number,
+    updateLimit?: number,
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
@@ -880,6 +881,7 @@ export const bulkArchiveGranulesAsync = async (params: {
   body: {
     batchSize?: number,
     expirationDays?: number,
+    updateLimit?: number,
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
