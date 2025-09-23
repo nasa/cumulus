@@ -358,47 +358,16 @@ async function bulkDeleteExecutionsByCollection(req, res) {
 }
 
 const bulkArchiveExecutionsSchema = z.object({
-  batchSize: z.number().positive().optional().default(100),
-  expirationDays: z.number().positive().optional().default(365),
-});
-const parsebulkArchiveExecutionsPayload = zodParser('bulkArchiveExecutions payload', bulkArchiveExecutionsSchema);
-
-/**
- * Update a set of executions to "archived=true".
- * called as a subroutine of the ecs task launched by bulkArchiveExecutionsAsyncWrapper
- */
-async function bulkArchiveExecutions(req, res) {
-  const {
-    getKnexClientMethod = getKnexClient,
-  } = req.testContext || {};
-  const body = parsebulkArchiveExecutionsPayload(req.body);
-  if (isError(body)) {
-    return returnCustomValidationErrors(res, body);
-  }
-  const knex = await getKnexClientMethod();
-  const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
-  const executionPgModel = new ExecutionPgModel();
-  const updatedCount = await executionPgModel.bulkArchive(
-    knex,
-    {
-      limit: body.batchSize,
-      expirationDate,
-    }
-  );
-  return res.send({ recordsUpdated: updatedCount });
-}
-
-const bulkArchiveExecutionsAsyncWrapperSchema = z.object({
   updateLimit: z.number().optional().default(10000),
   batchSize: z.number().optional().default(1000),
   expirationDays: z.number().optional().default(365),
 });
-const parseBulkArchiveExecutionsAsyncWrapperPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsAsyncWrapperSchema);
+const parseBulkArchiveExecutionsPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsSchema);
 /**
  * Start an AsyncOperation that will archive a set of executions in ecs
  */
-async function bulkArchiveExecutionsAsyncWrapper(req, res) {
-  const payload = parseBulkArchiveExecutionsAsyncWrapperPayload(req.body);
+async function bulkArchiveExecutions(req, res) {
+  const payload = parseBulkArchiveExecutionsPayload(req.body);
   if (isError(payload)) {
     return returnCustomValidationErrors(res, payload);
   }
@@ -429,7 +398,6 @@ async function bulkArchiveExecutionsAsyncWrapper(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.patch('/archiveAsync', bulkArchiveExecutionsAsyncWrapper);
 router.patch('/archive', bulkArchiveExecutions);
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);

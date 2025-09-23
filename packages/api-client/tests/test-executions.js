@@ -293,7 +293,7 @@ test('bulkArchiveExecutions calls the callback with the expected object and retu
       path: '/executions/archive/',
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 200,
+    expectedStatusCodes: 202,
   };
 
   const callback = (configObject) => {
@@ -301,37 +301,6 @@ test('bulkArchiveExecutions calls the callback with the expected object and retu
   };
 
   await t.notThrowsAsync(executionsApi.bulkArchiveExecutions({
-    prefix: t.context.testPrefix,
-    body,
-    callback,
-  }));
-});
-
-test('bulkArchiveExecutionsAsync calls the callback with the expected object and returns the parsed response', async (t) => {
-  const body = {
-    batchSize: 100,
-    expirationDays: 200,
-  };
-
-  const expected = {
-    prefix: t.context.testPrefix,
-    payload: {
-      httpMethod: 'PATCH',
-      resource: '/{proxy+}',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      path: '/executions/archiveAsync/',
-      body: JSON.stringify(body),
-    },
-    expectedStatusCodes: 200,
-  };
-
-  const callback = (configObject) => {
-    t.deepEqual(expected, configObject);
-  };
-
-  await t.notThrowsAsync(executionsApi.bulkArchiveExecutionsAsync({
     prefix: t.context.testPrefix,
     body,
     callback,

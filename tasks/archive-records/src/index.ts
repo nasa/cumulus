@@ -1,11 +1,11 @@
 'use-strict';
 
-import { bulkArchiveGranules } from '@cumulus/api-client/granules';
-import { bulkArchiveExecutions } from '@cumulus/api-client/executions';
-import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
-import { getRequiredEnvVar } from '@cumulus/common/env';
-import { log } from '@cumulus/common';
 import range from 'lodash/range';
+import moment from 'moment';
+import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
+import { GranulePgModel, ExecutionPgModel } from '@cumulus/db';
+import { log } from '@cumulus/common';
+import { getKnexClient } from '@cumulus/db';
 type Event = {
   config?: EventConfig;
 };
@@ -61,19 +61,20 @@ const archiveGranules = async (config: MassagedEventConfig) => {
   if (config.recordType === 'executions') {
     return 0;
   }
-  const archiveGranulesMethod = config.testMethods?.archiveGranulesMethod || bulkArchiveGranules;
-  const { batchSize, updateLimit } = config;
+  const { batchSize, updateLimit, expirationDays } = config;
   let totalUpdated = 0;
+  const expirationDate = moment().subtract(expirationDays, 'd').format('YYYY-MM-DD');
+  const granulePgModel = new GranulePgModel();
+  const knex = await getKnexClient();
   for (const i of range(updateLimit / batchSize)) {
     // eslint-disable-next-line no-await-in-loop
-    const archiveOutput = await archiveGranulesMethod({
-      prefix: getRequiredEnvVar('stackName'),
-      body: {
-        ...config,
-        batchSize: Math.min(batchSize, updateLimit - (i * batchSize)),
-      },
-    });
-    const updated = JSON.parse(archiveOutput.body).recordsUpdated;
+    const updated = await granulePgModel.bulkArchive(
+      knex,
+      {
+        limit: Math.min(batchSize, updateLimit - (i * batchSize)),
+        expirationDate,
+      }
+    )
     totalUpdated += updated;
     if (!updated) {
       break;
@@ -85,22 +86,21 @@ const archiveExecutions = async (config: MassagedEventConfig) => {
   if (config.recordType === 'granules') {
     return 0;
   }
-  const archiveExecutionsMethod = config.testMethods?.archiveExecutionsMethod
-    || bulkArchiveExecutions;
 
-  const { batchSize, updateLimit } = config;
+  const { batchSize, updateLimit, expirationDays } = config;
   let totalUpdated = 0;
+  const expirationDate = moment().subtract(expirationDays, 'd').format('YYYY-MM-DD');
+  const knex = await getKnexClient();
+  const executionPgModel = new ExecutionPgModel();
   for (const i of range(updateLimit / batchSize)) {
     // eslint-disable-next-line no-await-in-loop
-    const archiveOutput = await archiveExecutionsMethod({
-      prefix: getRequiredEnvVar('stackName'),
-      body: {
-        ...config,
-        batchSize: Math.min(batchSize, updateLimit - (i * batchSize)),
-      },
-    });
-    const updated = JSON.parse(archiveOutput.body).recordsUpdated;
-
+    const updated = await executionPgModel.bulkArchive(
+      knex,
+      {
+        limit: Math.min(batchSize, updateLimit - (i * batchSize)),
+        expirationDate,
+      }
+    )
     totalUpdated += updated;
     if (!updated) {
       break;

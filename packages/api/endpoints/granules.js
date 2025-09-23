@@ -1358,17 +1358,17 @@ async function bulkArchiveGranules(req, res) {
   return res.send({ recordsUpdated: updatedCount });
 }
 
-const bulkArchiveExecutionsAsyncWrapperSchema = z.object({
+const bulkArchiveExecutionsSchema = z.object({
   updateLimit: z.number().optional().default(10000),
   batchSize: z.number().optional().default(1000),
   expirationDays: z.number().optional().default(365),
 });
-const parseBulkArchiveExecutionsAsyncWrapperPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsAsyncWrapperSchema);
+const parseBulkArchiveExecutionsPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsSchema);
 /**
  * Start an AsyncOperation that will archive a set of granules in ecs
  */
-async function bulkArchiveGranulesAsyncWrapper(req, res) {
-  const payload = parseBulkArchiveExecutionsAsyncWrapperPayload(req.body);
+async function bulkArchiveGranules(req, res) {
+  const payload = parseBulkArchiveExecutionsPayload(req.body);
   if (isError(payload)) {
     return returnCustomValidationErrors(res, payload);
   }
@@ -1399,7 +1399,6 @@ async function bulkArchiveGranulesAsyncWrapper(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.patch('/archiveAsync', bulkArchiveGranulesAsyncWrapper);
 router.patch('/archive', bulkArchiveGranules);
 router.get('/:collectionId/:granuleId', get);
 router.get('/files/get_collection_and_granule_id/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);

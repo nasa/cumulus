@@ -44,11 +44,12 @@
     "dependencies": {
         "@cumulus/api-client": "20.3.0",
         "@cumulus/common": "20.3.0",
-        "@cumulus/types": "20.3.0"
+        "@cumulus/types": "20.3.0",
+        "@cumulus/db": "20.3.0",
+        "moment": "^2.30.1"
     },
     "devDependencies": {
         "@cumulus/api": "20.3.0",
-        "@cumulus/db": "20.3.0",
         "lodash": "^4.17.21"
     }
 }

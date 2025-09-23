@@ -116,32 +116,6 @@ export const bulkArchiveExecutions = async (params: {
       },
       body: JSON.stringify(body),
     },
-    expectedStatusCodes: 200,
-  });
-};
-
-export const bulkArchiveExecutionsAsync = async (params: {
-  prefix: string,
-  body: {
-    batchSize?: number,
-    expirationDays?: number,
-    updateLimit?: number,
-  },
-  callback?: InvokeApiFunction
-}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  /* istanbul ignore next */
-  const { prefix, body, callback = invokeApi } = params;
-  return await callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'PATCH',
-      resource: '/{proxy+}',
-      path: '/executions/archiveAsync/',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    },
     expectedStatusCodes: 202,
   });
 };

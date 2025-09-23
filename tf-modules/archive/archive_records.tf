@@ -18,12 +18,11 @@ source_code_hash = filebase64sha256("${path.module}/../../tasks/archive-records/
   }
 
   tags = var.tags
-
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = local.lambda_security_group_ids
+      security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
 }
@@ -47,7 +46,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_granules" {
     "headers": {
       "Content-Type": "application/json"
     },
-    "path": "/granules/archiveAsync",
+    "path": "/granules/archive",
     "body": "{\"updateLimit\": ${var.archive_update_limit},\"batchSize\": ${var.archive_batch_size},\"expirationDays\": ${var.archive_expiration_days}}"
   }
   JSON
@@ -64,7 +63,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_executions" {
     "headers": {
       "Content-Type": "application/json"
     },
-    "path": "/executions/archiveAsync",
+    "path": "/executions/archive",
     "body": "{\"updateLimit\": ${var.archive_update_limit},\"batchSize\": ${var.archive_batch_size},\"expirationDays\": ${var.archive_expiration_days}}"
   }
   JSON
