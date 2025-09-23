@@ -656,8 +656,13 @@ variable "workflow_configurations" {
   }
 }
 
-
 ## Record Archival Configuration
+variable "deploy_archive_records_event_rule" {
+  type = bool
+  default = false
+  description = "deploy the archive records cron eventBridgeRule"
+}
+
 variable "daily_archive_records_schedule_expression" {
   type        = string
   default     = "cron(0 4 * * ? *)"

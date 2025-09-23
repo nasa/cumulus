@@ -343,6 +343,12 @@ variable "update_limit" {
   description = "number of executions to cleanup in one lambda run"
 }
 
+variable "deploy_archive_records_event_rule" {
+  type = bool
+  default = false
+  description = "deploy the archive records cron eventBridgeRule"
+}
+
 variable "archive_update_limit" {
   type = number
   default = 10000
