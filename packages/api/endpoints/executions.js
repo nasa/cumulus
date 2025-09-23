@@ -356,15 +356,16 @@ async function bulkDeleteExecutionsByCollection(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-/**
- * Update a set of executions to "archived=true".
- * called as a subroutine of the ecs task launched by bulkArchiveExecutionsAsyncWrapper
- */
 const bulkArchiveExecutionsSchema = z.object({
   batchSize: z.number().positive().optional().default(100),
   expirationDays: z.number().positive().optional().default(365),
 });
 const parsebulkArchiveExecutionsPayload = zodParser('bulkArchiveExecutions payload', bulkArchiveExecutionsSchema);
+
+/**
+ * Update a set of executions to "archived=true".
+ * called as a subroutine of the ecs task launched by bulkArchiveExecutionsAsyncWrapper
+ */
 async function bulkArchiveExecutions(req, res) {
   const {
     getKnexClientMethod = getKnexClient,

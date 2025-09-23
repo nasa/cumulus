@@ -17,37 +17,37 @@ const formatAlterTableEnumSql = (
 
 export const up = async (knex: Knex): Promise<void> => {
   await knex.raw(formatAlterTableEnumSql('async_operations', 'operation_type', [
+    'Bulk Execution Archive',
+    'Bulk Execution Delete',
+    'Bulk Granules',
+    'Bulk Granule Archive',
     'Bulk Granule Delete',
     'Bulk Granule Reingest',
-    'Bulk Granules',
-    'Bulk Execution Delete',
     'Data Migration',
     'Dead-Letter Processing',
     'DLA Migration',
     'ES Index',
     'Kinesis Replay',
-    'Reconciliation Report',
     'Migration Count Report',
+    'Reconciliation Report',
     'SQS Replay',
-    'Bulk Granule Archive',
-    'Bulk Execution Archive',
   ]));
 };
 
 export const down = async (knex: Knex): Promise<void> => {
   await knex.raw(
     formatAlterTableEnumSql('async_operations', 'operation_type', [
+      'Bulk Execution Delete',
+      'Bulk Granules',
       'Bulk Granule Delete',
       'Bulk Granule Reingest',
-      'Bulk Granules',
-      'Bulk Execution Delete',
       'Data Migration',
       'Dead-Letter Processing',
       'DLA Migration',
       'ES Index',
       'Kinesis Replay',
-      'Reconciliation Report',
       'Migration Count Report',
+      'Reconciliation Report',
       'SQS Replay',
     ])
   );
