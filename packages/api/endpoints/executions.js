@@ -84,9 +84,6 @@ async function create(req, res) {
     return res.boom.conflict(`A record already exists for ${arn}`);
   }
 
-  execution.updatedAt = Date.now();
-  execution.createdAt = Date.now();
-
   try {
     await writeExecutionRecordFromApi({
       record: execution,
@@ -136,7 +133,6 @@ async function update(req, res) {
     return res.boom.notFound(`Execution '${arn}' not found`);
   }
 
-  execution.updatedAt = Date.now();
   execution.createdAt = oldPgRecord.created_at.getTime();
 
   try {

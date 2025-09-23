@@ -9,7 +9,7 @@ const {
   deleteS3Object,
 } = require('@cumulus/aws-client/S3');
 
-const { addCollections, addProviders, generateCmrFilesForGranules } = require('@cumulus/integration-tests');
+const { addCollections, addProviders, generateCmrFilesForGranules, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 
 const {
   bulkArchiveGranulesAsync,
@@ -109,7 +109,7 @@ describe('when ArchiveGranules is called', () => {
           ...(pick(inputPayload.granules[0], ['granuleId', 'files'])),
           collectionId: constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version),
           status: 'completed',
-          // updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
+          updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
         },
       };
       granuleObject.body.files = granuleObject.body.files.map((file) => ({
@@ -157,13 +157,23 @@ describe('when ArchiveGranules is called', () => {
   describe('The lambda, when invoked with an expected payload', () => {
     it('does archive records older than expirationDays', async () => {
       if (testSetupFailed) fail('test setup failed');
-      await bulkArchiveGranulesAsync({
+      const res = await bulkArchiveGranulesAsync({
         prefix: stackName,
         body: {
           expirationDays: 365,
         },
       });
-      await sleep(120000);
+      
+      const asyncOperation = await waitForAsyncOperationStatus({
+        id: JSON.parse(res.body).id,
+        status: 'SUCCEEDED',
+        stackName: config.stackName,
+        retryOptions: {
+          retries: 70,
+          factor: 1.041,
+        },
+      });
+      console.log(asyncOperation)
       const granuleDetails = await getGranule({
         prefix: stackName,
         granuleId: granuleObject.body.granuleId,
