@@ -1,7 +1,0 @@
-{
-  "title": "ArchiveRecordsInput",
-  "description": "Describes the input expected by the archive-records task",
-  "type": "object",
-  "required": [],
-  "properties": {}
-}

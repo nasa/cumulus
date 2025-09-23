@@ -18,9 +18,8 @@ const {
   deleteGranule,
 } = require('@cumulus/api-client/granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { sleep } = require('@cumulus/common');
 const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
-const { createExecution, getExecution } = require('@cumulus/api-client/executions');
+const { createExecution, getExecution, bulkArchiveExecutionsAsync } = require('@cumulus/api-client/executions');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 const {
   loadConfig,
@@ -118,20 +117,6 @@ describe('when ArchiveGranules is called', () => {
         bucket: config.bucket,
       }));
 
-      // Upload/add CMR file to granule
-      const cmrFiles = await generateCmrFilesForGranules({
-        granules: [granuleObject.body],
-        collection,
-        bucket: config.bucket,
-        cmrMetadataFormat: 'echo',
-        stagingDir: inputPayload.granules[0].files[0].path,
-      });
-
-      const { host: cmrBucket, path: cmrKey } = parseurl({ url: cmrFiles[3] });
-      granuleObject.body.files.push({
-        bucket: cmrBucket,
-        key: cmrKey.slice(1),
-      });
       await createGranule({
         prefix: config.stackName,
         body: granuleObject.body,
@@ -139,7 +124,6 @@ describe('when ArchiveGranules is called', () => {
       executionId = uuidv4();
       executionObject = fakeExecutionFactoryV2({
         executionId,
-        executionArn: executionId,
         collectionId: granuleObject.collectionId,
         status: 'completed',
         updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
@@ -157,14 +141,14 @@ describe('when ArchiveGranules is called', () => {
   describe('The lambda, when invoked with an expected payload', () => {
     it('does archive records older than expirationDays', async () => {
       if (testSetupFailed) fail('test setup failed');
-      const res = await bulkArchiveGranulesAsync({
+      let res = await bulkArchiveGranulesAsync({
         prefix: stackName,
         body: {
           expirationDays: 365,
         },
       });
-      
-      const asyncOperation = await waitForAsyncOperationStatus({
+
+      await waitForAsyncOperationStatus({
         id: JSON.parse(res.body).id,
         status: 'SUCCEEDED',
         stackName: config.stackName,
@@ -173,12 +157,28 @@ describe('when ArchiveGranules is called', () => {
           factor: 1.041,
         },
       });
-      console.log(asyncOperation)
       const granuleDetails = await getGranule({
         prefix: stackName,
         granuleId: granuleObject.body.granuleId,
       });
       expect(granuleDetails.archived).toEqual(true);
+
+      res = await bulkArchiveExecutionsAsync({
+        prefix: stackName,
+        body: {
+          expirationDays: 365,
+        },
+      });
+      await waitForAsyncOperationStatus({
+        id: JSON.parse(res.body).id,
+        status: 'SUCCEEDED',
+        stackName: config.stackName,
+        retryOptions: {
+          retries: 70,
+          factor: 1.041,
+        },
+      });
+
       const executionDetails = await getExecution({
         prefix: stackName,
         arn: executionObject.arn,
