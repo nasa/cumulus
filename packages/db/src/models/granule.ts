@@ -243,10 +243,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     const { limit, expirationDate } = params;
     const subQuery = knexOrTrx(this.tableName)
       .select('cumulus_id')
-      .whereBetween('updated_at', [
-        new Date(0),
-        expirationDate,
-      ])
+      .where('updated_at', '<', expirationDate)
       .where('archived', false)
       .limit(limit);
     return await knexOrTrx(this.tableName)
