@@ -345,7 +345,7 @@ variable "update_limit" {
 
 variable "deploy_archive_records_event_rule" {
   type = bool
-  default = false
+  default = true
   description = "deploy the archive records cron eventBridgeRule"
 }
 
