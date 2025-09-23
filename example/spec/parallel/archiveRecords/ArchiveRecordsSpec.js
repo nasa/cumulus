@@ -1,7 +1,5 @@
 'use strict';
 
-const parseurl = require('parseurl');
-
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const pick = require('lodash/pick');
@@ -9,7 +7,7 @@ const {
   deleteS3Object,
 } = require('@cumulus/aws-client/S3');
 
-const { addCollections, addProviders, generateCmrFilesForGranules, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
+const { addCollections, addProviders, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 
 const {
   bulkArchiveGranulesAsync,
@@ -37,7 +35,6 @@ describe('when ArchiveGranules is called', () => {
   let config;
   let inputPayload;
   let granuleId;
-  let collection;
   let sourceGranulePath;
   let granuleObject;
   let executionObject;
@@ -75,7 +72,6 @@ describe('when ArchiveGranules is called', () => {
       const testId = createTimestampedTestId(stackName, 'archiveGranules');
       const testSuffix = createTestSuffix(testId);
 
-      collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
       sourceGranulePath = `${stackName}/${testSuffix}/${testId}`;
 
       // populate collections, providers and test data
