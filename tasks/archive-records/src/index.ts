@@ -74,7 +74,7 @@ const archiveGranules = async (config: MassagedEventConfig) => {
         limit: Math.min(batchSize, updateLimit - (i * batchSize)),
         expirationDate,
       }
-    )
+    );
     totalUpdated += updated;
     if (!updated) {
       break;
@@ -100,7 +100,7 @@ const archiveExecutions = async (config: MassagedEventConfig) => {
         limit: Math.min(batchSize, updateLimit - (i * batchSize)),
         expirationDate,
       }
-    )
+    );
     totalUpdated += updated;
     if (!updated) {
       break;

@@ -10,14 +10,14 @@ const {
 const { addCollections, addProviders, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 
 const {
-  bulkArchiveGranulesAsync,
+  bulkArchiveGranules,
   createGranule,
   getGranule,
   deleteGranule,
 } = require('@cumulus/api-client/granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
-const { createExecution, getExecution, bulkArchiveExecutionsAsync } = require('@cumulus/api-client/executions');
+const { createExecution, getExecution, bulkArchiveExecutions } = require('@cumulus/api-client/executions');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 const {
   loadConfig,
@@ -137,7 +137,7 @@ describe('when ArchiveGranules is called', () => {
   describe('The lambda, when invoked with an expected payload', () => {
     it('does archive records older than expirationDays', async () => {
       if (testSetupFailed) fail('test setup failed');
-      let res = await bulkArchiveGranulesAsync({
+      let res = await bulkArchiveGranules({
         prefix: stackName,
         body: {
           expirationDays: 365,
@@ -159,7 +159,7 @@ describe('when ArchiveGranules is called', () => {
       });
       expect(granuleDetails.archived).toEqual(true);
 
-      res = await bulkArchiveExecutionsAsync({
+      res = await bulkArchiveExecutions({
         prefix: stackName,
         body: {
           expirationDays: 365,

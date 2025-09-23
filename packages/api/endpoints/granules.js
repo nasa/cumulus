@@ -1327,37 +1327,6 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-/**
- * Update a set of granules to "archived=true".
- * called as a subroutine of the ecs task launched by bulkArchiveGranulesAsyncWrapper
- */
-const bulkArchiveGranulesSchema = z.object({
-  batchSize: z.number().positive().optional().default(1000),
-  expirationDays: z.number().positive().optional().default(365),
-});
-const parsebulkArchiveGranulesPayload = zodParser('bulkArchiveGranules payload', bulkArchiveGranulesSchema);
-async function bulkArchiveGranules(req, res) {
-  const {
-    getKnexClientMethod = getKnexClient,
-  } = req.testContext || {};
-  const body = parsebulkArchiveGranulesPayload(req.body);
-  if (isError(body)) {
-    return returnCustomValidationErrors(res, body);
-  }
-  const knex = await getKnexClientMethod();
-  const expirationDate = moment().subtract(body.expirationDays, 'd').format('YYYY-MM-DD');
-
-  const granulePgModel = new GranulePgModel();
-  const updatedCount = await granulePgModel.bulkArchive(
-    knex,
-    {
-      limit: body.batchSize,
-      expirationDate,
-    }
-  );
-  return res.send({ recordsUpdated: updatedCount });
-}
-
 const bulkArchiveExecutionsSchema = z.object({
   updateLimit: z.number().optional().default(10000),
   batchSize: z.number().optional().default(1000),
