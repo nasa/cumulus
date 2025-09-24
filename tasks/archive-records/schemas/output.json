@@ -1,6 +1,0 @@
-{
-  "title": "ArchiveRecordsOutput",
-  "description": "Describes the output produced by the archive-records task",
-  "type": "object",
-  "properties": {}
-}

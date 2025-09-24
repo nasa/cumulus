@@ -237,7 +237,6 @@ async function runTask() {
   try {
     // Get some information about the lambda function that we'll be calling
     lambdaInfo = await getLambdaInfo(process.env.lambdaName);
-
     // Download the task (to the /home/task/lambda-function directory)
     await fetchLambdaFunction(lambdaInfo.codeUrl);
   } catch (error) {
@@ -253,6 +252,7 @@ async function runTask() {
     // Fetch the event that will be passed to the lambda function from S3
     logger.debug(`Fetching payload from ${process.env.payloadUrl}.`);
     payload = await fetchAndDeletePayload(process.env.payloadUrl);
+
   } catch (error) {
     logger.error('Failed to fetch payload', error);
     if (error.name === 'JSONParsingError') {

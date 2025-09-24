@@ -19,10 +19,8 @@ const {
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const { fakeGranuleRecordFactory, fakeCollectionRecordFactory } = require('@cumulus/db/dist');
-const { bulkArchiveGranules } = require('@cumulus/api/endpoints/granules');
-const { bulkArchiveExecutions } = require('@cumulus/api/endpoints/executions');
 
-const { handler, getParsedConfigValues } = require('../dist/src');
+const { handler, getParsedConfigValues } = require('../../lambdas/archive-records');
 const mockResponse = () => {
   const res = {};
   res.status = sinon.stub().returns(res);
@@ -71,16 +69,6 @@ async function setupDataStoreData(granules, executions, t) {
   };
 }
 
-const archiveGranulesDummyMethod = async (params) => {
-  await bulkArchiveGranules(params, mockResponse());
-  return { body: JSON.stringify({ recordsUpdated: params.body.batchSize }) };
-};
-
-const archiveExecutionsDummyMethod = async (params) => {
-  await bulkArchiveExecutions(params, mockResponse());
-  return { body: JSON.stringify({ recordsUpdated: params.body.batchSize }) };
-};
-
 test.beforeEach(async (t) => {
   const testDbName = `ArchiveRecords/${cryptoRandomString({ length: 10 })}`;
   const { knexAdmin, knex } = await generateLocalTestDb(
@@ -109,10 +97,6 @@ test.afterEach.always(async (t) => {
 test.serial('ArchiveRecords sets old granules/executions to "archived=true"', async (t) => {
   const config = {
     expirationDays: 1,
-    testMethods: {
-      archiveGranulesMethod: archiveGranulesDummyMethod,
-      archiveExecutionsMethod: archiveExecutionsDummyMethod,
-    },
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
@@ -149,10 +133,6 @@ test.serial('ArchiveRecords sets old granules/executions to "archived=true"', as
 test.serial('ArchiveRecords sets old records to "archived=true" and not newer granules/executions', async (t) => {
   const config = {
     expirationDays: 5,
-    testMethods: {
-      archiveGranulesMethod: archiveGranulesDummyMethod,
-      archiveExecutionsMethod: archiveExecutionsDummyMethod,
-    },
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     range(100).map((i) => fakeGranuleRecordFactory({
@@ -205,10 +185,6 @@ test.serial('ArchiveRecords archives only executions if recordType=executions', 
   const config = {
     expirationDays: 1,
     recordType: 'executions',
-    testMethods: {
-      archiveGranulesMethod: archiveGranulesDummyMethod,
-      archiveExecutionsMethod: archiveExecutionsDummyMethod,
-    },
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
@@ -246,10 +222,6 @@ test.serial('ArchiveRecords archives only granules if recordType=granules', asyn
   const config = {
     expirationDays: 1,
     recordType: 'granules',
-    testMethods: {
-      archiveGranulesMethod: archiveGranulesDummyMethod,
-      archiveExecutionsMethod: archiveExecutionsDummyMethod,
-    },
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
@@ -288,10 +260,6 @@ test.serial('ArchiveRecords archives the entire "updateLimit" with odd batchSize
     expirationDays: 5,
     updateLimit: 50,
     batchSize: 6,
-    testMethods: {
-      archiveGranulesMethod: archiveGranulesDummyMethod,
-      archiveExecutionsMethod: archiveExecutionsDummyMethod,
-    },
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     range(100).map((i) => fakeGranuleRecordFactory({
@@ -349,7 +317,6 @@ test.serial('getParsedConfigValues handles empty config and no env with defaults
     updateLimit: 10000,
     expirationDays: 365,
     recordType: 'both',
-    testMethods: undefined,
   });
   process.env = envStore;
 });
@@ -364,7 +331,6 @@ test.serial('getParsedConfigValues handles empty config and prefers env to defau
     updateLimit: 2005,
     expirationDays: 2345,
     recordType: 'both',
-    testMethods: undefined,
   });
   process.env = envStore;
 });
@@ -384,19 +350,6 @@ test.serial('getParsedConfigValues prefers explicit config values', (t) => {
     expirationDays: 2,
     updateLimit: 45,
     recordType: 'granules',
-    testMethods: undefined,
   });
-  t.is(
-    getParsedConfigValues({
-      testMethods: { archiveGranulesMethod: () => 2 },
-    }).testMethods.archiveGranulesMethod(),
-    2
-  );
-  t.is(
-    getParsedConfigValues({
-      testMethods: { archiveExecutionsMethod: () => 3 },
-    }).testMethods.archiveExecutionsMethod(),
-    3
-  );
   process.env = envStore;
 });

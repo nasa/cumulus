@@ -1,50 +1,47 @@
 'use-strict';
+const range = require('lodash/range');
+const moment = require('moment');
+const { GranulePgModel, ExecutionPgModel } = require('@cumulus/db');
+const { log } = require('@cumulus/common');
+const { getKnexClient } = require('@cumulus/db');
 
-import range from 'lodash/range';
-import moment from 'moment';
-import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
-import { GranulePgModel, ExecutionPgModel } from '@cumulus/db';
-import { log } from '@cumulus/common';
-import { getKnexClient } from '@cumulus/db';
-type Event = {
-  config?: EventConfig;
-};
+/**
+ * @typedef {'granules' | 'executions' | both } RecordTypes
+ */
+/** 
+ * @typedef {Object} EventConfig
+ * @property {number | undefined} updateLimit
+ * @property {number?} batchSize
+ * @property {number?} expirationDays
+ * @property {RecordTypes?} recordType
+ */
+/**
+ * @typedef {Object} Event
+ * @property {EventConfig?} config
+ */
 
-type TestMethods = {
-  archiveGranulesMethod: (params: {
-    prefix: string,
-    body: {
-      batchSize?: number,
-      expirationDays?: number
-    }
-  }) => Promise<ApiGatewayLambdaHttpProxyResponse>,
-  archiveExecutionsMethod: (params: {
-    prefix: string,
-    body: {
-      batchSize?: number,
-      expirationDays?: number
-    }
-  }) => Promise<ApiGatewayLambdaHttpProxyResponse>,
-};
-type RecordTypes = 'granules' | 'executions' | 'both';
-type EventConfig = {
-  updateLimit?: number;
-  batchSize?: number;
-  expirationDays?: number;
-  recordType?: string;
-  testMethods?: TestMethods;
-};
+/**
+ * @typedef {Object} MassagedEventConfig
+ * @property {number} updateLimit
+ * @property {number} batchSize
+ * @property {number} expirationDays
+ * @property {RecordTypes} recordType
+ */
+/**
+ * 
+ * @param {EventConfig} config?
+ * @returns 
+ */
 
-type MassagedEventConfig = {
-  updateLimit: number;
-  batchSize: number;
-  expirationDays: number;
-  recordType: RecordTypes;
-} & EventConfig;
-export function getParsedConfigValues(config: EventConfig | undefined): MassagedEventConfig {
-  let recordType: RecordTypes = 'both';
+/**
+ * Parse config, and fill with defaults as necessary
+ * @param {EventConfig?} config 
+ * @returns {MassagedEventConfig} config that has been validated and filled with defaults as necessary
+ */
+function getParsedConfigValues(config) {
+  let recordType = 'both';
   if (config?.recordType && ['granules', 'executions', 'both'].includes(config.recordType)) {
-    recordType = config.recordType as RecordTypes;
+    recordType = config.recordType;
   } else {
     log.warn(`unrecognized recordType requested, expected "granules", "executions", or "both", got ${config?.recordType}, running both`);
   }
@@ -53,11 +50,15 @@ export function getParsedConfigValues(config: EventConfig | undefined): Massaged
     batchSize: config?.batchSize || Number(process.env.BATCH_SIZE) || 1000,
     expirationDays: config?.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365,
     recordType,
-    testMethods: config?.testMethods,
   };
 }
 
-const archiveGranules = async (config: MassagedEventConfig) => {
+/**
+ * Performs granule update in batches in the database
+ * @param {MassagedEventConfig} config 
+ * @returns {Promise<number>} number of records that have actually been updated
+ */
+const archiveGranules = async (config) => {
   if (config.recordType === 'executions') {
     return 0;
   }
@@ -82,7 +83,13 @@ const archiveGranules = async (config: MassagedEventConfig) => {
   }
   return totalUpdated;
 };
-const archiveExecutions = async (config: MassagedEventConfig) => {
+
+/**
+ * Performs execution update in batches in the database
+ * @param {MassagedEventConfig} config 
+ * @returns {Promise<number>} number of records that have actually been updated
+ */
+const archiveExecutions = async (config) => {
   if (config.recordType === 'granules') {
     return 0;
   }
@@ -108,7 +115,14 @@ const archiveExecutions = async (config: MassagedEventConfig) => {
   }
   return totalUpdated;
 };
-const archiveRecords = async (event: Event) => {
+
+/**
+ * Lambda handler to wrap all functionality
+ * @param {Event} event event from 
+ * @returns {Promise<{granulesUpdated: number, executionsUpdated: number}>} object
+ *   containing number of records updated
+ */
+async function handler (event) {
   const config = await getParsedConfigValues(event.config);
   log.info('running archive-records with config', JSON.stringify(config));
   const [granulesUpdated, executionsUpdated] = await Promise.all([
@@ -121,12 +135,5 @@ const archiveRecords = async (event: Event) => {
   };
 };
 
-/**
- * Lambda handler
- */
-/* istanbul ignore next */
-async function handler(event: Event): Promise<Object> {
-  return await archiveRecords(event);
-}
-
 exports.handler = handler;
+exports.getParsedConfigValues = getParsedConfigValues;

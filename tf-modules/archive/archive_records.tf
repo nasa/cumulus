@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "archive_records" {
   function_name    = "${var.prefix}-ArchiveRecords"
-  filename         = "${path.module}/../../tasks/archive-records/dist/webpack/lambda.zip"
-source_code_hash = filebase64sha256("${path.module}/../../tasks/archive-records/dist/webpack/lambda.zip")
+  filename         = "${path.module}/../../packages/api/dist/archiveRecords/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/archiveRecords/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"
