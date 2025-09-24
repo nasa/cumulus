@@ -1331,7 +1331,7 @@ const bulkArchiveGranulesSchema = z.object({
   batchSize: z.number().min(1).optional().default(1000),
   expirationDays: z.number().optional().default(365),
 });
-const parseBulkArchiveGranulesPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsSchema);
+const parseBulkArchiveGranulesPayload = zodParser('bulkChangeCollection payload', bulkArchiveGranulesSchema);
 /**
  * Start an AsyncOperation that will archive a set of granules in ecs
  */
