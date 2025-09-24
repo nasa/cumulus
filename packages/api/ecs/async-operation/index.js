@@ -277,7 +277,7 @@ async function runTask() {
 
     // Run the lambda function
     logger.debug(`Invoking task lambda function: ${process.env.lambdaName}`);
-    console.log(task)
+    logger.debug(task)
     result = await task[lambdaInfo.moduleFunctionName](payload);
   } catch (error) {
     logger.error('Failed to execute the lambda function:', error);
