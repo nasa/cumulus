@@ -698,6 +698,7 @@ test('bulkChangeCollection calls the callback with the expected object', async (
 test('getFileGranuleAndCollectionByBucketAndKey calls the callback with the expected object', async (t) => {
   const bucket = randomId('my-test-bucket');
   const key = randomId('path/to/my/file.txt');
+  const pRetryOptions = { foo: 'bar' };
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -705,6 +706,8 @@ test('getFileGranuleAndCollectionByBucketAndKey calls the callback with the expe
       resource: '/{proxy+}',
       path: `/granules/files/get_collection_and_granule_id/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
     },
+    expectedStatusCodes: [200, 404],
+    pRetryOptions,
   };
 
   const callback = (configObject) => {
@@ -722,5 +725,6 @@ test('getFileGranuleAndCollectionByBucketAndKey calls the callback with the expe
     prefix: t.context.testPrefix,
     bucket,
     key,
+    pRetryOptions,
   }));
 });
