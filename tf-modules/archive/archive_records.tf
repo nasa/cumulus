@@ -36,7 +36,6 @@ resource "aws_cloudwatch_event_rule" "daily_archive_records" {
 }
 
 resource "aws_cloudwatch_event_target" "daily_archive_granules" {
-  count = var.deploy_archive_records_event_rule == true ? 1 : 0
   target_id = "archive_granules_lambda_target"
   rule = aws_cloudwatch_event_rule.daily_archive_records.name
   arn  = aws_lambda_function.private_api.arn
@@ -54,7 +53,6 @@ resource "aws_cloudwatch_event_target" "daily_archive_granules" {
   JSON
 }
 resource "aws_cloudwatch_event_target" "daily_archive_executions" {
-  count = var.deploy_archive_records_event_rule == true ? 1 : 0
   target_id = "archive_executions_lambda_target"
   rule = aws_cloudwatch_event_rule.daily_archive_records.name
   arn  = aws_lambda_function.private_api.arn
@@ -72,7 +70,6 @@ resource "aws_cloudwatch_event_target" "daily_archive_executions" {
   JSON
 }
 resource "aws_lambda_permission" "daily_archive_records" {
-  count = var.deploy_archive_records_event_rule == true ? 1 : 0
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.private_api.arn
   principal     = "events.amazonaws.com"
