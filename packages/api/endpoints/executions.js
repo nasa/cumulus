@@ -357,8 +357,8 @@ async function bulkDeleteExecutionsByCollection(req, res) {
 }
 
 const bulkArchiveExecutionsSchema = z.object({
-  updateLimit: z.number().optional().default(10000),
-  batchSize: z.number().optional().default(1000),
+  updateLimit: z.number().min(1).optional().default(10000),
+  batchSize: z.number().min(1).optional().default(1000),
   expirationDays: z.number().optional().default(365),
 });
 const parseBulkArchiveExecutionsPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsSchema);
@@ -369,10 +369,6 @@ async function bulkArchiveExecutions(req, res) {
   const payload = parseBulkArchiveExecutionsPayload(req.body);
   if (isError(payload)) {
     return returnCustomValidationErrors(res, payload);
-  }
-  if (payload.updateLimit === 0) {
-    // don't bother running an ecs task to do nothing
-    return res.status(202).send({});
   }
   const asyncOperationId = uuidv4();
   const asyncOperationEvent = {
