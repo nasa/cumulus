@@ -2,7 +2,8 @@
 
 'use strict';
 
-const router = require('express-promise-router');
+const router = require('express-promise-router')();
+const moment = require('moment');
 const { v4: uuidv4 } = require('uuid');
 const { z } = require('zod');
 const isError = require('lodash/isError');
