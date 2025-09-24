@@ -1,9 +1,9 @@
 import { Knex } from 'knex';
 
 type GranuleInput = {
-  producerGranuleId: string;
-  granuleId: string;
   collectionCumulusId: number;
+  producerGranuleId: string;
+  granuleId?: string;
 };
 
 type GranuleRecord = {
@@ -18,7 +18,6 @@ type GranuleRecord = {
 type DuplicateGranulesResult = {
   sameCollectionMatches: GranuleRecord[];
   differentCollectionMatches: GranuleRecord[];
-  sameProducerDifferentGranuleId: GranuleRecord[];
   customCriteriaMatches: GranuleRecord[]; // Placeholder
 };
 
@@ -50,32 +49,28 @@ export async function findDuplicateGranules(
       'granule_groups.state as group_state'
     );
 
-  // 1. Same producerGranuleId in the same collection
-  const sameCollectionMatches = await baseQuery.clone().where({
-    'granules.producer_granule_id': producerGranuleId,
-    'granules.collection_cumulus_id': collectionCumulusId,
+  const sameProducerGranuleIdResults = await baseQuery.clone()
+    .where({ 'granules.producer_granule_id': producerGranuleId })
+    .modify((queryBuilder) => {
+    if (granuleId != null) {
+      queryBuilder.whereNot('granules.granule_id', granuleId);
+    }
   });
 
+  // 1. Same producerGranuleId in the same collection
+  const sameCollectionMatches = sameProducerGranuleIdResults.filter((record: GranuleRecord) =>
+    record.collection_cumulus_id === collectionCumulusId);
+
   // 2. Same producerGranuleId in a different collection
-  const differentCollectionMatches = await baseQuery.clone()
-    .where('granules.producer_granule_id', producerGranuleId)
-    .whereNot('granules.collection_cumulus_id', collectionCumulusId);
+  const differentCollectionMatches = sameProducerGranuleIdResults.filter((record: GranuleRecord) =>
+    record.collection_cumulus_id !== collectionCumulusId);
 
-  // 3. Same producerGranuleId + same collection, but different granule_id
-  const sameProducerDifferentGranuleId = await baseQuery.clone()
-    .where({
-      'granules.producer_granule_id': producerGranuleId,
-      'granules.collection_cumulus_id': collectionCumulusId,
-    })
-    .whereNot('granules.granule_id', granuleId);
-
-  // 4. Placeholder for future criteria within a collection
+  // 3. Placeholder for future criteria within a collection
   const customCriteriaMatches: GranuleRecord[] = [];
 
   return {
     sameCollectionMatches,
     differentCollectionMatches,
-    sameProducerDifferentGranuleId,
     customCriteriaMatches,
   };
 }
