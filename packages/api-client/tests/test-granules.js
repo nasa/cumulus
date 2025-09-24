@@ -706,7 +706,6 @@ test('getFileGranuleAndCollectionByBucketAndKey calls the callback with the expe
       resource: '/{proxy+}',
       path: `/granules/files/get_collection_and_granule_id/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
     },
-    expectedStatusCodes: [200, 404],
     pRetryOptions,
   };
 
