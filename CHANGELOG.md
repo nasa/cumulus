@@ -20,16 +20,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update all Python dependencies to use boto >=1.40.29
   - Update all Core integration lambdas to use Python 3.12
   - Update external CNM lambdas to run on Java 21 in integration
-
 - **CUMULUS-4191**
   - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
     based on the provider from the record message.
   - Updated `messageConsumer` lambda handler to async/await style
-
 - **CUMULUS-4200**
   - updated metrics_es_host terraform variable description and validation
   - Users should ensure that the metrics_es_host does not include `https://`
-
+- **CUMULUS-4242**
+  - Added `requestSummary` and `provider` to searchParams of lzards api GET calls for lzardsBackup integration tests
 ## [v21.0.0] 2025-09-09
 
 ### **CUMULUS-4058** Epic: Handle Granules with Identical producerGranuleId in Different Collections
