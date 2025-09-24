@@ -6,7 +6,6 @@ const clone = require('lodash/clone');
 const range = require('lodash/range');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const sinon = require('sinon');
 const {
   generateLocalTestDb,
   destroyLocalTestDb,
@@ -21,13 +20,7 @@ const {
 const { fakeGranuleRecordFactory, fakeCollectionRecordFactory } = require('@cumulus/db/dist');
 
 const { handler, getParsedConfigValues } = require('../../lambdas/archive-records');
-const mockResponse = () => {
-  const res = {};
-  res.status = sinon.stub().returns(res);
-  res.send = sinon.stub().returns(res);
-  res.badRequest = sinon.stub().returns(res);
-  return res;
-};
+
 const epochDay = 86400000;
 
 async function setupDataStoreData(granules, executions, t) {

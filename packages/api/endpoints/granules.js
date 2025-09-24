@@ -821,6 +821,7 @@ async function bulkPatch(req, res) {
     message: 'Successfully patched Granules',
   });
 }
+
 /**
  * Delete a granule by granuleId
  *
