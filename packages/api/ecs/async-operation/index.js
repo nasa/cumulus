@@ -237,7 +237,6 @@ async function runTask() {
   try {
     // Get some information about the lambda function that we'll be calling
     lambdaInfo = await getLambdaInfo(process.env.lambdaName);
-    logger.warn(lambdaInfo)
     // Download the task (to the /home/task/lambda-function directory)
     await fetchLambdaFunction(lambdaInfo.codeUrl);
   } catch (error) {
@@ -278,7 +277,6 @@ async function runTask() {
 
     // Run the lambda function
     logger.debug(`Invoking task lambda function: ${process.env.lambdaName}`);
-    logger.debug(task)
     result = await task[lambdaInfo.moduleFunctionName](payload);
   } catch (error) {
     logger.error('Failed to execute the lambda function:', error);
