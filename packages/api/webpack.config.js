@@ -25,6 +25,7 @@ module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: {
     app: './app/index.js',
+    archiveRecords: './lambdas/archive-records.js',
     bulkOperation: './lambdas/bulk-operation.js',
     cleanExecutions: './lambdas/cleanExecutions.js',
     createReconciliationReport: './lambdas/create-reconciliation-report.js',
