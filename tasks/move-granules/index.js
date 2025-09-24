@@ -262,7 +262,7 @@ function _checkForCollision(collectionId, granuleCollectionId, granuleId, bucket
  * @param {string} params.bucket - The S3 bucket name where the file is located
  * @param {string} params.key - The S3 key (path) of the file
  * @param {string} params.granuleCollectionId - The ID of the collection that the granule belongs to
- * @param {boolean} [params.crossCollectionThrowOnNotFound=true] - Whether to throw an error if
+ * @param {boolean} [params.crossCollectionThrowOnNotFound=false] - Whether to throw an error if
  * the file is not found in the database
  * @param {number} [params.collectionCheckRetryCount=3] - Number of times to retry the
  * cross-collection-check database call
@@ -278,7 +278,7 @@ async function _checkCrossCollectionCollisions({
   granuleCollectionId,
   getFileGranuleAndCollectionByBucketAndKeyMethod = getFileGranuleAndCollectionByBucketAndKey,
   collectionCheckRetryCount = 3,
-  crossCollectionThrowOnNotFound = true,
+  crossCollectionThrowOnNotFound = false,
 }) {
   _validateCollisionCheckPreconditions(granuleCollectionId, bucket, key);
 
@@ -331,7 +331,7 @@ async function _checkCrossCollectionCollisions({
  * check for cross-collection collisions
  * @param {number} [params.collectionCheckRetryCount=3] - Number of times to retry the
  * cross-collection-check database call
- * @param {boolean} [params.crossCollectionThrowOnNotFound=true] - Whether to throw an error if
+ * @param {boolean} [params.crossCollectionThrowOnNotFound=false] - Whether to throw an error if
  * a file is not found in the database during cross-collection check
  * @param {object} [params.testOverrides={}] - Test overrides
  * @param {function} [params.testOverrides.getFileGranuleAndCollectionByBucketAndKeyMethod] -
@@ -347,7 +347,7 @@ async function moveFileRequest({
   s3MultipartChunksizeMb,
   checkCrossCollectionCollisions = true,
   collectionCheckRetryCount = 3,
-  crossCollectionThrowOnNotFound = true,
+  crossCollectionThrowOnNotFound = false,
   granuleCollectionId,
   testOverrides = {},
 }) {
@@ -456,9 +456,9 @@ function determineGranuleCollectionId(granule, configCollection) {
  * @param {boolean} [moveParams.checkCrossCollectionCollisions] - Whether to check
  * cross-collection collisions
  * @param {string} moveParams.granuleCollectionId - Collection ID
- * @param {number} [moveParams.collectionCheckRetryCount=3] - Number of times to retry the
+ * @param {number} [moveParams.collectionCheckRetryCount] - Number of times to retry the
  * cross-collection-check database call
- * @param {boolean} [moveParams.crossCollectionThrowOnNotFound=true] - Whether to throw an error if
+ * @param {boolean} [moveParams.crossCollectionThrowOnNotFound] - Whether to throw an error if
  * a file is not found in the database during cross-collection check
  * @param {object} [moveParams.testOverrides] - Test overrides
  * @param {boolean} [isCmrFile=false] - Whether these are CMR files
@@ -509,7 +509,7 @@ function processAndMoveFiles(files, moveParams, isCmrFile = false) {
  * for cross-collection collisions
  * @param {number} [params.collectionCheckRetryCount=3] - Number of times to retry the
  * cross-collection-check database call
- * @param {boolean} [params.crossCollectionThrowOnNotFound=true] - Whether to throw an error if
+ * @param {boolean} [params.crossCollectionThrowOnNotFound=false] - Whether to throw an error if
  * a file is not found in the database during cross-collection check
  * @param {object} [params.testOverrides={}] - Test overrides
  * @returns {Promise<GranulesObject>} the object with updated granules
@@ -521,8 +521,8 @@ async function moveFilesForAllGranules({
   duplicateHandling,
   s3MultipartChunksizeMb,
   checkCrossCollectionCollisions = true,
-  collectionCheckRetryCount,
-  crossCollectionThrowOnNotFound,
+  collectionCheckRetryCount = 3,
+  crossCollectionThrowOnNotFound = false,
   testOverrides = {},
 }) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
