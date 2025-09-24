@@ -29,14 +29,14 @@ source_code_hash = filebase64sha256("${path.module}/../../tasks/archive-records/
 
 
 resource "aws_cloudwatch_event_rule" "daily_archive_records" {
-  count = deploy_archive_records_event_rule == true ? 1 : 0
+  count = var.deploy_archive_records_event_rule == true ? 1 : 0
   name = "${var.prefix}_daily_archive_records"
   schedule_expression = var.daily_archive_records_schedule_expression
   tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_archive_granules" {
-  count = deploy_archive_records_event_rule == true ? 1 : 0
+  count = var.deploy_archive_records_event_rule == true ? 1 : 0
   target_id = "archive_granules_lambda_target"
   rule = aws_cloudwatch_event_rule.daily_archive_records.name
   arn  = aws_lambda_function.private_api.arn
@@ -54,7 +54,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_granules" {
   JSON
 }
 resource "aws_cloudwatch_event_target" "daily_archive_executions" {
-  count = deploy_archive_records_event_rule == true ? 1 : 0
+  count = var.deploy_archive_records_event_rule == true ? 1 : 0
   target_id = "archive_executions_lambda_target"
   rule = aws_cloudwatch_event_rule.daily_archive_records.name
   arn  = aws_lambda_function.private_api.arn
@@ -72,7 +72,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_executions" {
   JSON
 }
 resource "aws_lambda_permission" "daily_archive_records" {
-  count = deploy_archive_records_event_rule == true ? 1 : 0
+  count = var.deploy_archive_records_event_rule == true ? 1 : 0
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.private_api.arn
   principal     = "events.amazonaws.com"
