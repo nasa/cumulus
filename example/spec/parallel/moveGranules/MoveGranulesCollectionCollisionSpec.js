@@ -30,7 +30,7 @@ describe('The MoveGranules task', () => {
   async function setupTest({
     collisionFromSameCollection = false,
     orphanTest = false,
-    crossCollectionThrowOnNotFound = true,
+    crossCollectionThrowOnNotFound,
   } = {}) {
     config = await loadConfig();
     prefix = config.stackName;
@@ -268,6 +268,27 @@ describe('The MoveGranules task', () => {
     }
   });
   it('Handles orphaned file collisions without error when crossCollectionThrowOnNotFound is false', async () => {
+    let testResources;
+    try {
+      testResources = await setupTest({ orphanTest: true, crossCollectionThrowOnNotFound: false });
+      const { granuleId, targetKey, taskOutput } = testResources;
+
+      const s3ObjectStream = await getObject(s3(), {
+        Bucket: config.buckets.protected.name,
+        Key: targetKey,
+      });
+      const objectContents = await getObjectStreamContents(s3ObjectStream.Body);
+      expect(taskOutput.errorType).not.toEqual('InvalidArgument');
+      expect(objectContents).toEqual('fakeGranuleForSpecTesting');
+      expect(Object.keys(taskOutput.payload.granuleDuplicates)).toEqual([granuleId]);
+      expect(Object.keys(taskOutput.payload.granules[0].files[0])).toEqual(['bucket', 'key', 'fileName', 'size']);
+    } finally {
+      if (testResources) {
+        await cleanupResources(testResources);
+      }
+    }
+  });
+  it('Handles orphaned file collisions without error when crossCollectionThrowOnNotFound is default', async () => {
     let testResources;
     try {
       testResources = await setupTest({ orphanTest: true, crossCollectionThrowOnNotFound: false });
