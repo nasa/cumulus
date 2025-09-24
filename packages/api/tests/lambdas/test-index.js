@@ -19,10 +19,10 @@ const {
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const { fakeGranuleRecordFactory, fakeCollectionRecordFactory } = require('@cumulus/db/dist');
-const { bulkArchiveGranules } = require('@cumulus/api/endpoints/granules');
-const { bulkArchiveExecutions } = require('@cumulus/api/endpoints/executions');
+const { bulkArchiveGranules } = require('../../endpoints/granules');
+const { bulkArchiveExecutions } = require('../../endpoints/executions');
 
-const { handler, getParsedConfigValues } = require('../dist/src');
+const { handler, getParsedConfigValues } = require('../../lambdas/archive-records');
 const mockResponse = () => {
   const res = {};
   res.status = sinon.stub().returns(res);
