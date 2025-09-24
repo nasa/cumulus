@@ -96,7 +96,7 @@
     },
     "crossCollectionThrowOnNotFound": {
       "type": "boolean",
-      "description": "When checking for cross-collection collisions, throw an error if a file is not found in the database.  If false, files not found in the database will assume an orphan that can be overwritten.  Default is true."
+      "description": "If checkCrossCollectionCollisions is set to true, when checking for cross-collection collisions, throw an error if a file is not found in the database.  If false, files not found in the database will assume an orphan that can be overwritten.  Default is true."
     }
   }
 }
