@@ -3,15 +3,15 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-
 const get = require('lodash/get');
 const flatten = require('lodash/flatten');
 const keyBy = require('lodash/keyBy');
+const isObject = require('lodash/isObject');
 const path = require('path');
 
 const S3 = require('@cumulus/aws-client/S3');
 
-const { InvalidArgument, ValidationError } = require('@cumulus/errors');
+const { InvalidArgument, ValidationError, FileNotFound } = require('@cumulus/errors');
 
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 
@@ -55,9 +55,12 @@ const log = require('@cumulus/common/log');
  * @typedef {import('./types').S3Object} S3Object
  * @typedef {import('@cumulus/cmrjs/cmr-utils').CmrFile} CmrFile
  * @typedef {import('./types').GranuleFileInfo} GranuleFileInfo
+ * @typedef {import('@cumulus/types/message').CumulusMessage}  CumulusMessage
+ * @typedef {import('aws-lambda').Context} Context
  */
 
 const MB = 1024 * 1024;
+const HTTP_NOT_FOUND = 404;
 
 /**
  * Builds a granule duplicates object from moved granules
@@ -173,55 +176,139 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
 }
 
 /**
+ * Handles errors from the file lookup API call during cross-collection check.
+ *
+ * @param {unknown} error - The error thrown by the API call
+ * @param {string} bucket - S3 bucket name
+ * @param {string} key - S3 key
+ * @param {boolean} crossCollectionThrowOnNotFound - Whether to throw on 404 errors
+ * @throws {FileNotFound|Error} Throws appropriate error based on status code and configuration
+ * @returns {boolean} Returns true if the error was a 404 that should be ignored
+ */
+function _handleFileNotFoundError(error, bucket, key, crossCollectionThrowOnNotFound) {
+  if (!error || !isObject(error) || !('statusCode' in error)) {
+    throw error;
+  }
+  if (error.statusCode === HTTP_NOT_FOUND) {
+    if (crossCollectionThrowOnNotFound) {
+      throw new FileNotFound(
+        `File ${key} in bucket ${bucket} does not exist in the Cumulus database`
+      );
+    }
+
+    log.debug(
+      `File ${key} in bucket ${bucket} does not exist in the Cumulus database but exists in the filesystem. `
+      + 'Ignoring orphan due to MoveGranules configuration.'
+    );
+    return true;
+  }
+  throw error;
+}
+
+/**
+ * Validates that a cross-collection collision check can be performed.
+ *
+ * @param {string} granuleCollectionId - The collection ID to validate
+ * @param {string} bucket - S3 bucket name
+ * @param {string} key - S3 key
+ * @throws {ValidationError} If collection ID is missing
+ */
+function _validateCollisionCheckPreconditions(granuleCollectionId, bucket, key) {
+  if (!granuleCollectionId) {
+    throw new ValidationError(
+      `File ${key} in bucket ${bucket} has an unknown collection. `
+      + 'Cannot determine if it is a cross-collection collision.'
+    );
+  }
+}
+
+/**
+ * Checks if there is a collision between collections for the given file.
+ *
+ * @param {string} collectionId - Collection ID from the database
+ * @param {string} granuleCollectionId - Expected collection ID
+ * @param {string} granuleId - Granule ID from the database
+ * @param {string} bucket - S3 bucket name
+ * @param {string} key - S3 key
+ * @throws {InvalidArgument} If a cross-collection collision is detected
+ */
+function _checkForCollision(collectionId, granuleCollectionId, granuleId, bucket, key) {
+  const collectionsDiffer = !collectionId || (collectionId !== granuleCollectionId);
+
+  if (collectionsDiffer) {
+    log.error('Cross-collection collision detected');
+    log.error(
+      `File ${key} in bucket ${bucket} is associated with granuleId ${granuleId}, collection ${collectionId}`
+    );
+
+    throw new InvalidArgument(
+      `File already exists in bucket ${bucket} with key ${key} `
+      + `for collection ${collectionId} and granuleId: ${granuleId}, `
+      + `but is being moved for collection ${granuleCollectionId}.`
+    );
+  }
+}
+
+/**
  * Checks for cross-collection collisions for a given file.
  *
  * This function retrieves the granule and collection information associated
- * with a file identified by its S3 `bucket` and
- * `key`. If the file is already associated with a
- * collection and that collection ID is different from the provided
- * `granuleCollectionId it throws an
- * `InvalidArgument` error, indicating a cross-collection collision.
+ * with a file identified by its S3 `bucket` and `key`. If the file is already
+ * associated with a collection and that collection ID is different from the
+ * provided `granuleCollectionId`, it throws an `InvalidArgument` error,
+ * indicating a cross-collection collision.
  *
  * @param {object} params - The parameters for the collision check
  * @param {string} params.bucket - The S3 bucket name where the file is located
  * @param {string} params.key - The S3 key (path) of the file
  * @param {string} params.granuleCollectionId - The ID of the collection that the granule belongs to
+ * @param {boolean} [params.crossCollectionThrowOnNotFound=true] - Whether to throw an error if
+ * the file is not found in the database
+ * @param {number} [params.collectionCheckRetryCount=3] - Number of times to retry the
+ * cross-collection-check database call
  * @param {Function} [params.getFileGranuleAndCollectionByBucketAndKeyMethod] - Direct
  * injection test mock for database method to get file granule and collection
  * @returns {Promise<void>} A Promise that resolves if no collision is detected
- * @throws {ValidationError|InvalidArgument} -- throws if validation fails
- *  or a collision is detected
+ * @throws {ValidationError|InvalidArgument|FileNotFound} Throws if validation fails
+ * or a collision is detected
  */
 async function _checkCrossCollectionCollisions({
   bucket,
   key,
   granuleCollectionId,
   getFileGranuleAndCollectionByBucketAndKeyMethod = getFileGranuleAndCollectionByBucketAndKey,
+  collectionCheckRetryCount = 3,
+  crossCollectionThrowOnNotFound = true,
 }) {
-  if (!granuleCollectionId) {
-    // If we can't determine the collection, we can't make the comparison
-    throw new ValidationError(
-      `File ${key} in bucket ${bucket} has an unknown collection  Cannot determine if it is a cross-collection collision.`
+  _validateCollisionCheckPreconditions(granuleCollectionId, bucket, key);
+
+  let apiResponse;
+  try {
+    apiResponse = await getFileGranuleAndCollectionByBucketAndKeyMethod({
+      pRetryOptions: { retries: collectionCheckRetryCount },
+      bucket,
+      key,
+      prefix: getRequiredEnvVar('stackName'),
+    });
+  } catch (error) {
+    const shouldReturnEarly = _handleFileNotFoundError(
+      error,
+      bucket,
+      key,
+      crossCollectionThrowOnNotFound
     );
+    if (shouldReturnEarly) {
+      return;
+    }
   }
-  const apiResponse = await getFileGranuleAndCollectionByBucketAndKeyMethod({ bucket, key, prefix: getRequiredEnvVar('stackName') });
+
   const { granuleId, collectionId } = JSON.parse(apiResponse.body);
+  _checkForCollision(collectionId, granuleCollectionId, granuleId, bucket, key);
 
-  const collectionsDiffer =
-    collectionId && granuleCollectionId && collectionId !== granuleCollectionId;
-
-  if (collectionsDiffer) {
-    // If the file is in a different collection, or we can't make the comparison,
-    // we need to handle it as a cross-collection collision
-    log.error('Cross granule collection detected');
-    log.error(`File ${key} in bucket ${bucket} is associated with granuleId ${granuleId}, collection ${collectionId}`);
-    throw new InvalidArgument(
-      `File already exists in bucket ${bucket} with key ${key} ` +
-      `for collection ${collectionId} and granuleId: ${granuleId}, ` +
-      `but is being moved for collection ${granuleCollectionId}.`
-    );
-  }
-  log.debug(`File ${key} in bucket ${bucket} is not associated with a granule in a different collection.  ${JSON.stringify(apiResponse)}`);
+  log.debug(
+    `File ${key} in bucket ${bucket} is not associated with a granule in a different collection. `
+    + `${JSON.stringify(apiResponse)}`
+  );
 }
 
 /**
@@ -242,6 +329,10 @@ async function _checkCrossCollectionCollisions({
  * size in MB
  * @param {boolean} [params.checkCrossCollectionCollisions=true] - Whether to
  * check for cross-collection collisions
+ * @param {number} [params.collectionCheckRetryCount=3] - Number of times to retry the
+ * cross-collection-check database call
+ * @param {boolean} [params.crossCollectionThrowOnNotFound=true] - Whether to throw an error if
+ * a file is not found in the database during cross-collection check
  * @param {object} [params.testOverrides={}] - Test overrides
  * @param {function} [params.testOverrides.getFileGranuleAndCollectionByBucketAndKeyMethod] -
  * Method to get file details
@@ -255,6 +346,8 @@ async function moveFileRequest({
   markDuplicates = true,
   s3MultipartChunksizeMb,
   checkCrossCollectionCollisions = true,
+  collectionCheckRetryCount = 3,
+  crossCollectionThrowOnNotFound = true,
   granuleCollectionId,
   testOverrides = {},
 }) {
@@ -278,7 +371,9 @@ async function moveFileRequest({
   delete fileMoved.sourceKey;
 
   const s3ObjAlreadyExists = await S3.s3ObjectExists(target);
-  log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
+  log.debug(
+    `file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`
+  );
 
   let versionedFiles = [];
   if (s3ObjAlreadyExists) {
@@ -290,8 +385,10 @@ async function moveFileRequest({
         key: target.Key,
         granuleCollectionId,
         getFileGranuleAndCollectionByBucketAndKeyMethod:
-          testOverrides.getFileGranuleAndCollectionByBucketAndKeyMethod
-          || getFileGranuleAndCollectionByBucketAndKey,
+          testOverrides.getFileGranuleAndCollectionByBucketAndKeyMethod ||
+          getFileGranuleAndCollectionByBucketAndKey,
+        collectionCheckRetryCount,
+        crossCollectionThrowOnNotFound,
       });
     }
     if (markDuplicates) fileMoved.duplicate_found = true;
@@ -359,6 +456,10 @@ function determineGranuleCollectionId(granule, configCollection) {
  * @param {boolean} [moveParams.checkCrossCollectionCollisions] - Whether to check
  * cross-collection collisions
  * @param {string} moveParams.granuleCollectionId - Collection ID
+ * @param {number} [moveParams.collectionCheckRetryCount=3] - Number of times to retry the
+ * cross-collection-check database call
+ * @param {boolean} [moveParams.crossCollectionThrowOnNotFound=true] - Whether to throw an error if
+ * a file is not found in the database during cross-collection check
  * @param {object} [moveParams.testOverrides] - Test overrides
  * @param {boolean} [isCmrFile=false] - Whether these are CMR files
  * @returns {Promise<MoveGranulesFile[][]>} Moved files results
@@ -406,6 +507,10 @@ function processAndMoveFiles(files, moveParams, isCmrFile = false) {
  * @param {number} [params.s3MultipartChunksizeMb] - S3 multipart upload chunk size in MB
  * @param {boolean} [params.checkCrossCollectionCollisions=true] - Whether to check
  * for cross-collection collisions
+ * @param {number} [params.collectionCheckRetryCount=3] - Number of times to retry the
+ * cross-collection-check database call
+ * @param {boolean} [params.crossCollectionThrowOnNotFound=true] - Whether to throw an error if
+ * a file is not found in the database during cross-collection check
  * @param {object} [params.testOverrides={}] - Test overrides
  * @returns {Promise<GranulesObject>} the object with updated granules
  */
@@ -416,6 +521,8 @@ async function moveFilesForAllGranules({
   duplicateHandling,
   s3MultipartChunksizeMb,
   checkCrossCollectionCollisions = true,
+  collectionCheckRetryCount,
+  crossCollectionThrowOnNotFound,
   testOverrides = {},
 }) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
@@ -435,6 +542,8 @@ async function moveFilesForAllGranules({
     const commonMoveParams = {
       sourceBucket,
       checkCrossCollectionCollisions,
+      collectionCheckRetryCount,
+      crossCollectionThrowOnNotFound,
       granuleCollectionId,
       testOverrides,
     };
@@ -471,6 +580,10 @@ async function moveFilesForAllGranules({
  * @param {number} [event.config.s3MultipartChunksizeMb] - S3 multipart upload chunk size in MB
  * @param {boolean} [event.config.checkCrossCollectionCollisions=true] - Whether to check for
  * cross-collection collisions
+ * @param {number} [event.config.collectionCheckRetryCount=3] - Number of times to retry the
+ * cross-collection-check database call
+ * @param {boolean} [event.config.crossCollectionThrowOnNotFound=true] - Whether to throw an error
+ * if a file is not found in the database during cross-collection check
  * @param {object} event.input - a granules object containing an array of granules
  * @param {MoveGranulesGranule[]} event.input.granules - Array of granule objects
  * @param {object} [event.testOverrides] - Test overrides
@@ -516,7 +629,10 @@ async function moveGranules(event) {
     // Update all granules with aspirational metadata (where the files should
     // end up after moving).
     const granulesToMove = await updateGranuleMetadata(
-      granulesByGranuleId, config.collection, cmrFiles, bucketsConfig
+      granulesByGranuleId,
+      config.collection,
+      cmrFiles,
+      bucketsConfig
     );
 
     // Move files from staging location to final location
@@ -527,13 +643,17 @@ async function moveGranules(event) {
       duplicateHandling,
       s3MultipartChunksizeMb: Number(s3MultipartChunksizeMb),
       checkCrossCollectionCollisions,
+      collectionCheckRetryCount: config.collectionCheckRetryCount,
+      crossCollectionThrowOnNotFound: config.crossCollectionThrowOnNotFound,
       testOverrides: get(event, 'testOverrides', {}),
     });
   } else {
     movedGranulesByGranuleId = granulesByGranuleId;
   }
 
-  const granuleDuplicates = buildGranuleDuplicatesObject(movedGranulesByGranuleId);
+  const granuleDuplicates = buildGranuleDuplicatesObject(
+    movedGranulesByGranuleId
+  );
 
   return {
     granuleDuplicates,
@@ -547,8 +667,8 @@ async function moveGranules(event) {
  * This is the Lambda handler function that uses the Cumulus Message Adapter
  * to run the moveGranules task.
  *
- * @param {object} event - a Cumulus Message
- * @param {object} context - an AWS Lambda context
+ * @param {CumulusMessage} event - a Cumulus Message
+ * @param {Context} context - an AWS Lambda context
  * @returns {Promise<object>} - Returns output from task.
  */
 async function handler(event, context) {
