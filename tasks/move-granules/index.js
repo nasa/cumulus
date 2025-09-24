@@ -39,7 +39,7 @@ const log = require('@cumulus/common/log');
 
 // Import type definitions
 /**
- * @typedef {import('./types').BucketsConfigType} BucketsConfigType
+ * @typedef {import('@cumulus/common/types').BucketsConfigObject} BucketsConfigObject
  * @typedef {import('./types').ApiGranule} ApiGranule
  * @typedef {import('./types').ApiCollection} ApiCollection
  * @typedef {import('./types').DuplicateHandling} DuplicateHandling
@@ -99,7 +99,7 @@ function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
  * and that the specified bucket exists in the configuration.
  *
  * @param {CollectionFile[]} match - list of matched collection.file
- * @param {BucketsConfigType} bucketsConfig - instance describing stack configuration
+ * @param {BucketsConfig} bucketsConfig - instance describing stack configuration
  * @param {string} fileName - the file name tested
  * @param {CollectionFile[]} fileSpecs - array of collection file specifications objects
  * @throws {InvalidArgument} - If match is invalid, throws an error
@@ -126,7 +126,7 @@ function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
  * @param {Collection} collection - configuration object defining a collection of
  * granules and their files
  * @param {CmrFile[]} cmrFiles - array of objects that include CMR xmls uris and granuleIds
- * @param {BucketsConfigType} bucketsConfig - instance associated with the stack
+ * @param {BucketsConfig} bucketsConfig - instance associated with the stack
  * @returns {Promise<GranulesObject>} new granulesObject where each granules' files are updated with
  *                   the correct target buckets/paths/and s3uri filenames
  */
@@ -137,6 +137,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
   const fileSpecs = collection.files;
 
   await Promise.all(Object.keys(granulesObject).map(async (granuleId) => {
+    /** @type {MoveGranulesFileWithSourceKey[]} */
     const updatedFiles = [];
     updatedGranules[granuleId] = { ...granulesObject[granuleId] };
 
@@ -594,7 +595,7 @@ async function moveFilesForAllGranules({
 async function moveGranules(event) {
   // We have to post the meta-xml file of all output granules
   const config = event.config;
-  const bucketsConfig = new BucketsConfig(config.buckets);
+  const bucketsConfig = new BucketsConfig(/** @type {BucketsConfigObject} */ (config.buckets));
 
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const checkCrossCollectionCollisions = get(config, 'checkCrossCollectionCollisions', true);
@@ -612,9 +613,11 @@ async function moveGranules(event) {
 
   let filterFunc;
   if (granuleMetadataFileExtension) {
-    filterFunc = (fileobject) => isFileExtensionMatched(fileobject, granuleMetadataFileExtension);
+    filterFunc = /** @type {(fileobject: any) => boolean} */ (fileobject) =>
+      isFileExtensionMatched(fileobject, granuleMetadataFileExtension);
   } else {
-    filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
+    filterFunc = /** @type {(fileobject: any) => boolean} */ (fileobject) =>
+      isCMRFile(fileobject) || isISOFile(fileobject);
   }
 
   const granulesInput = event.input.granules;
