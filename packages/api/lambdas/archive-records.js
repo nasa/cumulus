@@ -14,7 +14,6 @@ const { getKnexClient } = require('@cumulus/db');
  * @property {number?} batchSize
  * @property {number?} expirationDays
  * @property {RecordTypes?} recordType
- * @property {Object?} testMethods
  */
 /**
  * @typedef {Object} Event
@@ -39,7 +38,7 @@ const { getKnexClient } = require('@cumulus/db');
  * @param {EventConfig?} config 
  * @returns {MassagedEventConfig} config that has been validated and filled with defaults as necessary
  */
-export function getParsedConfigValues(config) {
+function getParsedConfigValues(config) {
   let recordType = 'both';
   if (config?.recordType && ['granules', 'executions', 'both'].includes(config.recordType)) {
     recordType = config.recordType;
@@ -51,7 +50,6 @@ export function getParsedConfigValues(config) {
     batchSize: config?.batchSize || Number(process.env.BATCH_SIZE) || 1000,
     expirationDays: config?.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365,
     recordType,
-    testMethods: config?.testMethods,
   };
 }
 
@@ -138,3 +136,4 @@ async function handler (event) {
 };
 
 exports.handler = handler;
+exports.getParsedConfigValues = getParsedConfigValues;
