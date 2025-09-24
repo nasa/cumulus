@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-4232**
+  - Update MoveGranules CUMULUS-4078 behavior such that it no longer defaults to throwing on an orphan (S3 file record not in database) situation when checking cross-collection file collisions.
+  - Added configuration `crossCollectionThrowOnNotFound` to allow setting MoveGranules to fail in a collision/orphan situation
+  - Added `collectionCheckRetryCount` to allow configuration of the retry count for the `MoveGranules` crossCollection lookup
 - **CUMULUS-4155**
   - Update Cumulus integration tests to utilize:
     - Cumulus Message Adapter: v2.0.5
