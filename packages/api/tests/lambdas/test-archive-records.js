@@ -1,4 +1,5 @@
 'use strict';
+
 const moment = require('moment');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
@@ -299,7 +300,6 @@ test.serial('ArchiveRecords archives the entire "updateLimit" with odd batchSize
 
   t.is(executions.filter((execution) => execution.archived).length, 10);
 });
-
 
 test.serial('ArchiveRecords archives "updateLimit" with larger batchSize', async (t) => {
   const config = {
