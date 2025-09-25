@@ -42,6 +42,18 @@ function getParsedConfigValues(config) {
   } else {
     log.warn(`unrecognized recordType requested, expected "granules", "executions", or "both", got ${config?.recordType}, running both`);
   }
+  const updateLimit = config?.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000;
+  const batchSize = config?.batchSize || Number(process.env.BATCH_SIZE) || 1000;
+  const expirationDays = config?.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365;
+  if (updateLimit <= 0) {
+    throw new Error(`updateLimit must be a positive number greater than 0, got ${updateLimit}`)
+  }
+  if (batchSize <= 0) {
+    throw new Error(`batchSize must be a positive number greater than 0, got ${batchSize}`)
+  }
+  if (expirationDays <= 0) {
+    throw new Error(`expirationDays must be a positive number greater than 0, got ${expirationDays}`)
+  }
   return {
     updateLimit: config?.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000,
     batchSize: config?.batchSize || Number(process.env.BATCH_SIZE) || 1000,
