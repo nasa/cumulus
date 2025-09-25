@@ -199,7 +199,7 @@ export const startAsyncOperation = async (
   if (!callerLambdaName) {
     throw new MissingRequiredArgument(`callerLambdaName must be specified to start new async operation, received: ${callerLambdaName}`);
   }
-  console.log(`checking again what the ID is ${params.asyncOperationId}`);
+
   const id = params.asyncOperationId ?? uuidv4();
   // Store the payload to S3
   const payloadBucket = systemBucket;
