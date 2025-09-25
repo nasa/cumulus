@@ -6,7 +6,7 @@ resource "aws_lambda_function" "archive_records" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "ArchiveRecords", 900)
-  memory_size      = lookup(var.lambda_memory_sizes, "ArchiveRecords", 128)
+  memory_size      = lookup(var.lambda_memory_sizes, "ArchiveRecords", 512)
 
   environment {
     variables = {
