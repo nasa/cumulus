@@ -28,7 +28,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - updated metrics_es_host terraform variable description and validation
   - Users should ensure that the metrics_es_host does not include `https://`
 - **CUMULUS-4242**
-  - Added `requestSummary` and `provider` to searchParams of lzards api GET calls for lzardsBackup integration tests
+  - Removed lzards api calls and assertions from lzards integration tests due to lzards-api changes
+
 ## [v21.0.0] 2025-09-09
 
 ### **CUMULUS-4058** Epic: Handle Granules with Identical producerGranuleId in Different Collections
