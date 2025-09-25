@@ -4,7 +4,7 @@ resource "aws_lambda_function" "python_reference_task" {
   source_code_hash = filebase64sha256("${path.module}/../lambdas/python-reference-task/dist/lambda.zip")
   handler          = "initial_task.handler"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "python3.10"
+  runtime          = "python3.12"
   timeout          = 300
   memory_size      = 1556
 
