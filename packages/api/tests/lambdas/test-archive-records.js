@@ -1,5 +1,5 @@
 'use strict';
-
+const moment = require('moment');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const clone = require('lodash/clone');
@@ -94,10 +94,10 @@ test.serial('ArchiveRecords sets old granules/executions to "archived=true"', as
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
       granule_id: cryptoRandomString({ length: 5 }),
-      updated_at: new Date(Date.now() - 2 * epochDay),
+      updated_at: new Date(moment.now() - 3 * epochDay),
     })],
     [fakeExecutionRecordFactory({
-      updated_at: new Date(Date.now() - 2 * epochDay),
+      updated_at: new Date(moment.now() - 3 * epochDay),
     })],
     t
   );
@@ -130,11 +130,11 @@ test.serial('ArchiveRecords sets old records to "archived=true" and not newer gr
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     range(100).map((i) => fakeGranuleRecordFactory({
       granule_id: `${i}`,
-      updated_at: new Date(Date.now() - i * epochDay),
+      updated_at: new Date(moment.now() - i * epochDay),
     })),
     range(100).map((i) => fakeExecutionRecordFactory({
       arn: `${i}`,
-      updated_at: new Date(Date.now() - i * epochDay),
+      updated_at: new Date(moment.now() - i * epochDay),
     })),
     t
   );
@@ -149,7 +149,7 @@ test.serial('ArchiveRecords sets old records to "archived=true" and not newer gr
     ))
   );
   granules.forEach((granule) => {
-    if (Number.parseInt(granule.granule_id, 10) <= config.expirationDays) {
+    if (Number.parseInt(granule.granule_id, 10) < config.expirationDays) {
       t.false(granule.archived);
     } else {
       t.true(granule.archived);
@@ -166,7 +166,7 @@ test.serial('ArchiveRecords sets old records to "archived=true" and not newer gr
     ))
   );
   executions.forEach((execution) => {
-    if (Number.parseInt(execution.arn, 10) <= config.expirationDays) {
+    if (Number.parseInt(execution.arn, 10) < config.expirationDays) {
       t.false(execution.archived);
     } else {
       t.true(execution.archived);
@@ -182,10 +182,10 @@ test.serial('ArchiveRecords archives only executions if recordType=executions', 
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
       granule_id: cryptoRandomString({ length: 5 }),
-      updated_at: new Date(Date.now() - 2 * epochDay),
+      updated_at: new Date(moment.now() - 3 * epochDay),
     })],
     [fakeExecutionRecordFactory({
-      updated_at: new Date(Date.now() - 2 * epochDay),
+      updated_at: new Date(moment.now() - 3 * epochDay),
     })],
     t
   );
@@ -219,10 +219,10 @@ test.serial('ArchiveRecords archives only granules if recordType=granules', asyn
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
       granule_id: cryptoRandomString({ length: 5 }),
-      updated_at: new Date(Date.now() - 2 * epochDay),
+      updated_at: new Date(moment.now() - 3 * epochDay),
     })],
     [fakeExecutionRecordFactory({
-      updated_at: new Date(Date.now() - 2 * epochDay),
+      updated_at: new Date(moment.now() - 3 * epochDay),
     })],
     t
   );
@@ -251,17 +251,17 @@ test.serial('ArchiveRecords archives only granules if recordType=granules', asyn
 test.serial('ArchiveRecords archives the entire "updateLimit" with odd batchSizes', async (t) => {
   const config = {
     expirationDays: 5,
-    updateLimit: 50,
+    updateLimit: 10,
     batchSize: 6,
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
-    range(100).map((i) => fakeGranuleRecordFactory({
+    range(20).map((i) => fakeGranuleRecordFactory({
       granule_id: `${i}`,
-      updated_at: new Date(Date.now() - i * epochDay),
+      updated_at: new Date(moment.now() - i * epochDay),
     })),
-    range(100).map((i) => fakeExecutionRecordFactory({
+    range(20).map((i) => fakeExecutionRecordFactory({
       arn: `${i}`,
-      updated_at: new Date(Date.now() - i * epochDay),
+      updated_at: new Date(moment.now() - i * epochDay),
     })),
     t
   );
@@ -276,7 +276,60 @@ test.serial('ArchiveRecords archives the entire "updateLimit" with odd batchSize
     ))
   );
   granules.forEach((granule) => {
-    if (Number.parseInt(granule.granule_id, 10) <= config.expirationDays) {
+    if (Number.parseInt(granule.granule_id, 10) < config.expirationDays) {
+      t.false(granule.archived);
+    }
+  });
+  t.is(granules.filter((granule) => granule.archived).length, 10);
+
+  const executionModel = new ExecutionPgModel();
+  const executions = await Promise.all(
+    pgExecutions.map(async (execution) => await executionModel.get(
+      t.context.knex,
+      {
+        cumulus_id: execution.cumulus_id,
+      }
+    ))
+  );
+  executions.forEach((execution) => {
+    if (Number.parseInt(execution.arn, 10) < config.expirationDays) {
+      t.false(execution.archived);
+    }
+  });
+
+  t.is(executions.filter((execution) => execution.archived).length, 10);
+});
+
+
+test.serial('ArchiveRecords archives "updateLimit" with larger batchSize', async (t) => {
+  const config = {
+    expirationDays: 5,
+    updateLimit: 50,
+    batchSize: 60,
+  };
+  const { pgGranules, pgExecutions } = await setupDataStoreData(
+    range(100).map((i) => fakeGranuleRecordFactory({
+      granule_id: `${i}`,
+      updated_at: new Date(moment.now() - i * epochDay),
+    })),
+    range(100).map((i) => fakeExecutionRecordFactory({
+      arn: `${i}`,
+      updated_at: new Date(moment.now() - i * epochDay),
+    })),
+    t
+  );
+  await handler({ config });
+  const granuleModel = new GranulePgModel();
+  const granules = await Promise.all(
+    pgGranules.map(async (granule) => await granuleModel.get(
+      t.context.knex,
+      {
+        cumulus_id: granule.cumulus_id,
+      }
+    ))
+  );
+  granules.forEach((granule) => {
+    if (Number.parseInt(granule.granule_id, 10) < config.expirationDays) {
       t.false(granule.archived);
     }
   });
@@ -292,7 +345,7 @@ test.serial('ArchiveRecords archives the entire "updateLimit" with odd batchSize
     ))
   );
   executions.forEach((execution) => {
-    if (Number.parseInt(execution.arn, 10) <= config.expirationDays) {
+    if (Number.parseInt(execution.arn, 10) < config.expirationDays) {
       t.false(execution.archived);
     }
   });

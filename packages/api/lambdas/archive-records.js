@@ -61,7 +61,7 @@ const archiveGranules = async (config) => {
   }
   const { batchSize, updateLimit, expirationDays } = config;
   let totalUpdated = 0;
-  const expirationDate = moment().subtract(expirationDays, 'd').format('YYYY-MM-DD');
+  const expirationDate = new Date(moment().subtract(expirationDays, 'd'));
   const granulePgModel = new GranulePgModel();
   const knex = await getKnexClient();
   for (const i of range(updateLimit / batchSize)) {
@@ -93,7 +93,7 @@ const archiveExecutions = async (config) => {
 
   const { batchSize, updateLimit, expirationDays } = config;
   let totalUpdated = 0;
-  const expirationDate = moment().subtract(expirationDays, 'd').format('YYYY-MM-DD');
+  const expirationDate = new Date(moment().subtract(expirationDays, 'd'));
   const knex = await getKnexClient();
   const executionPgModel = new ExecutionPgModel();
   for (const i of range(updateLimit / batchSize)) {
