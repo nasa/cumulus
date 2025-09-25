@@ -260,8 +260,8 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
-            provider,
-            requestSummary: true,
+            provider: 'BOGUS_PROVIDER',
+            requestSummary: false,
             'metadata[collection]': `${collection.name}___${collection.version}`,
             'metadata[granuleId]': granuleId,
           },
@@ -287,8 +287,8 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
-            provider,
-            requestSummary: true,
+            provider: 'BOGUS_PROVIDER',
+            requestSummary: false,
             pageLimit: 25,
             'metadata[provider]': provider,
             'metadata[createdAt][gte]': thirtyMinutesAgo,
@@ -316,8 +316,8 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
-            provider,
-            requestSummary: true,
+            provider: 'BOGUS_PROVIDER',
+            requestSummary: false,
             'metadata[collection]': 'notBackedUpCollectionName',
             'metadata[granuleId]': granuleId,
           },
