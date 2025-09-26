@@ -655,3 +655,34 @@ variable "workflow_configurations" {
     sf_event_sqs_to_db_records_types = {}
   }
 }
+
+## Record Archival Configuration
+variable "deploy_archive_records_event_rule" {
+  type = bool
+  default = true
+  description = "deploy the archive records cron eventBridgeRule"
+}
+
+variable "daily_archive_records_schedule_expression" {
+  type        = string
+  default     = "cron(0 4 * * ? *)"
+  description = "Cloud Watch cron schedule for the record archival lambda"
+}
+
+variable "archive_update_limit" {
+  type = number
+  default = 10000
+  description = "number of granules or executions to archive in one run"
+}
+
+variable "archive_batch_size" {
+  type = number
+  default = 10000
+  description = "number of granules or executions to archive call to the /archive endpoint"
+}
+
+variable "archive_expiration_days" {
+  type = number
+  default = 365
+  description = "age (in days) after which granules or executions should be archived"
+}

@@ -10,6 +10,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
 
+### Notable Changes
+
+- **CUMULUS-4124**
+  - Add api endpoint `granules/archive` to archive granules
+  - Add api endpoint `executions/archive` to archive executions
+  - Task lambda to call above api endpoints with configuration
+  - Add cron scheduler to call above task lambda and archive old records
+  - cron task can be disabled by setting the value deploy_archive_records_event_rule in the cumulus tf-module
+
 ### Changed
 
 - **CUMULUS-4155**
@@ -213,6 +222,8 @@ Please follow the instructions before upgrading Cumulus
 
 - **CUMULUS-4165**
   - Update Async Operation container to new version 54, `cumuluss/async-operation:54`. Users should update their references to `async-operation` with the new version.
+### Added
+
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
 

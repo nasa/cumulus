@@ -24,6 +24,7 @@ const sinon = require('sinon');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const {
   generateLocalTestDb,
+  destroyLocalTestDb,
   migrationDir,
   GranulePgModel,
   CollectionPgModel,
@@ -170,6 +171,9 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.privateBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
+  await destroyLocalTestDb({
+    ...t.context,
+  });
 });
 
 test.serial('changeGranuleCollectionsPG Should update pg status and cleanup in s3', async (t) => {

@@ -226,6 +226,30 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       });
     return granules;
   }
+  /**
+   * update granules to set archived=true within date range
+   *
+   * @param {Knex | Knex.Transaction} knexOrTrx -
+   *  DB client or transaction
+   * @param {Object} [params] - Optional object with addition params for query
+   * @param {number} [params.limit] - number of records to be returned
+   * @param {string} [params.expirationDate] - record offset
+   * @returns {Promise<number>} number of records actually updated
+   */
+  async bulkArchive(
+    knexOrTrx: Knex | Knex.Transaction,
+    params: { limit: number; expirationDate: string }
+  ): Promise<number> {
+    const { limit, expirationDate } = params;
+    const subQuery = knexOrTrx(this.tableName)
+      .select('cumulus_id')
+      .where('updated_at', '<', expirationDate)
+      .where('archived', false)
+      .limit(limit);
+    return await knexOrTrx(this.tableName)
+      .update({ archived: true })
+      .whereIn('cumulus_id', subQuery);
+  }
 }
 
 export { GranulePgModel };
