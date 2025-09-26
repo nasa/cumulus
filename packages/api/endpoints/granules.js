@@ -1364,7 +1364,7 @@ async function bulkArchiveGranules(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.patch('/bulkArchive', bulkArchiveGranules);
+router.post('/bulkArchive', bulkArchiveGranules);
 router.get('/:collectionId/:granuleId', get);
 router.get('/files/get_collection_and_granule_id/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
 router.get('/:granuleId', getByGranuleId);
