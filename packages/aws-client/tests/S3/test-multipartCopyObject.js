@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const fs = require('fs');
 const { createHash, randomBytes } = require('crypto');
 const { Readable } = require('stream');
 const {
