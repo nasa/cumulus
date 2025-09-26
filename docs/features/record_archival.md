@@ -62,7 +62,7 @@ Configuration for this functionality is set in the cumulus tf-module, and is str
 
 #### daily_archive_records_schedule_expression
 
-cron schedule for running the task, using a Cloudwatch cron expression.
+Cron schedule for running the task, using a Cloudwatch cron expression.
 
 Default Value is `"cron(0 4 * * ? *)"`
 
@@ -70,7 +70,7 @@ Default Value is `"cron(0 4 * * ? *)"`
 daily_archive_records_schedule_expression = "cron(0 * * ? *)"
 ```
 
-this configuration would set it to run every hour instead
+This configuration would set it to run every hour instead
 
 #### archive_update_limit
 
@@ -84,7 +84,7 @@ archive_update_limit = 300000
 
 #### archive_batch_size
 
-processing batch size to prevent overrunning the privateApiLambda function's timeout.
+Processing batch size, size of individual update calls to Postgres
 
 Default value is 1000.
 
@@ -94,10 +94,18 @@ archive_batch_size = 3000
 
 #### archive_expiration_days
 
-how old a record should be in days before it is archived.
+How old a record should be in days before it is archived.
 
-default value is 365
+Default value is 365
 
 ```tf
 archive_expiration_days = 100
+```
+
+#### deploy_archive_records_event_rule
+
+Should the eventBridge rule be deployed. setting this to false will cause the archive not to be deployed at all. The api endpoint will still exist and can be called directly, but will not happen automatically.
+
+```tf
+deploy_archive_records_event_rule = false
 ```
