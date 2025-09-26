@@ -22,8 +22,7 @@ const randomId = (prefix) =>
 
 // Create an object in with random data of the given size
 const createDummyObject = ({ Bucket, Key, size, contentType }) => {
-  const buffer = randomBytes(size);
-  const readStream = Readable.from(buffer);
+  const readStream = Readable.from(randomBytes(size));
 
   return uploadS3FileStream(
     readStream,
