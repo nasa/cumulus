@@ -46,18 +46,18 @@ function getParsedConfigValues(config) {
   const batchSize = config?.batchSize || Number(process.env.BATCH_SIZE) || 1000;
   const expirationDays = config?.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365;
   if (updateLimit <= 0) {
-    throw new Error(`updateLimit must be a positive number greater than 0, got ${updateLimit}`)
+    throw new Error(`updateLimit must be a positive number greater than 0, got ${updateLimit}`);
   }
   if (batchSize <= 0) {
-    throw new Error(`batchSize must be a positive number greater than 0, got ${batchSize}`)
+    throw new Error(`batchSize must be a positive number greater than 0, got ${batchSize}`);
   }
   if (expirationDays <= 0) {
-    throw new Error(`expirationDays must be a positive number greater than 0, got ${expirationDays}`)
+    throw new Error(`expirationDays must be a positive number greater than 0, got ${expirationDays}`);
   }
   return {
-    updateLimit: config?.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000,
-    batchSize: config?.batchSize || Number(process.env.BATCH_SIZE) || 1000,
-    expirationDays: config?.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365,
+    updateLimit,
+    batchSize,
+    expirationDays,
     recordType,
   };
 }
