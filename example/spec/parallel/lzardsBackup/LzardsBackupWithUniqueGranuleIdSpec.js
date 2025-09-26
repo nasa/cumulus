@@ -24,6 +24,7 @@ describe('The Lzards Backup Task for duplicate granule with producerGranuleId an
   let collection;
   let config;
   let FunctionName;
+  let lzardsApiGetFunctionName;
   let functionConfig;
   let prefix;
   let producerGranuleId;
@@ -49,6 +50,7 @@ describe('The Lzards Backup Task for duplicate granule with producerGranuleId an
       await putFile(ingestBucket, `${ingestPath}/testGranule3.dat`, path.join(__dirname, 'test_data', 'testGranule3.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule3.jpg`, path.join(__dirname, 'test_data', 'testGranule3.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
+      lzardsApiGetFunctionName = `${prefix}-LzardsApiClientTest`;
       functionConfig = await lambda().send(new GetFunctionConfigurationCommand({
         FunctionName,
       }));
@@ -236,6 +238,31 @@ describe('The Lzards Backup Task for duplicate granule with producerGranuleId an
       expect(backupStatus[0].provider).toBe(provider);
       expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
       expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
+    });
+
+    xit('returns info for a request for a single granule successfully backed up to lzards with producerGranuleId searchParam', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
+          searchParams: {
+            'metadata[collection]': `${collection.name}___${collection.version}`,
+            'metadata[producerGranuleId]': producerGranuleId,
+          },
+        }));
+        const lzardsApiGetOutput = await pTimeout(
+          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
+          (functionConfig.Timeout + 50) * 1000
+        );
+
+        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
+
+        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
+        expect(payload.count).toBe(3);
+        expect(payload.items[0].metadata.granuleId).toBe(granuleId);
+        expect(payload.items[0].metadata.producerGranuleId).toBe(producerGranuleId);
+        expect(payload.items[0].metadata.collection).toBe(`${collection.name}___${collection.version}`);
+        expect(payload.items[0].metadata.createdAt).toBe(tenMinutesAgo);
+      }
     });
   });
 

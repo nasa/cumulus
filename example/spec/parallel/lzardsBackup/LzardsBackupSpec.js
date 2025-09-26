@@ -24,6 +24,7 @@ describe('The Lzards Backup Task ', () => {
   let collection;
   let config;
   let FunctionName;
+  let lzardsApiGetFunctionName;
   let functionConfig;
   let prefix;
   let ingestBucket;
@@ -32,7 +33,9 @@ describe('The Lzards Backup Task ', () => {
   let provider;
 
   const now = new Date().getTime();
+  const thirtyMinutesAgo = now - (1000 * 60 * 30);
   const tenMinutesAgo = now - (1000 * 60 * 10);
+  const twoMinutesAgo = now - (1000 * 60 * 2);
 
   const testSetup = async (configOverride = {}) => {
     try {
@@ -48,6 +51,7 @@ describe('The Lzards Backup Task ', () => {
       await putFile(ingestBucket, `${ingestPath}/testGranule3.dat`, path.join(__dirname, 'test_data', 'testGranule3.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule3.jpg`, path.join(__dirname, 'test_data', 'testGranule3.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
+      lzardsApiGetFunctionName = `${prefix}-LzardsApiClientTest`;
       functionConfig = await lambda().send(new GetFunctionConfigurationCommand({
         FunctionName,
       }));
@@ -233,6 +237,96 @@ describe('The Lzards Backup Task ', () => {
       expect(backupStatus[0].provider).toBe(provider);
       expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
       expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
+    });
+
+    xit('throws an error when no search parameters are provided', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({ searchParams: {} }));
+        const lzardsApiGetOutput = await pTimeout(
+          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
+          (functionConfig.Timeout + 10) * 1000
+        );
+
+        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
+
+        expect(lzardsApiGetOutput.FunctionError).toBe('Unhandled');
+        expect(payload.errorMessage).toBe('The required searchParams is not provided or empty');
+      }
+    });
+
+    xit('returns info for a request for a single granule successfully backed up to lzards', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
+          searchParams: {
+            'metadata[collection]': `${collection.name}___${collection.version}`,
+            'metadata[granuleId]': granuleId,
+          },
+        }));
+        const lzardsApiGetOutput = await pTimeout(
+          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
+          (functionConfig.Timeout + 50) * 1000
+        );
+
+        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
+
+        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
+        expect(payload.count).toBe(3);
+        expect(payload.items[0].metadata.granuleId).toBe(granuleId);
+        expect(payload.items[0].metadata.producerGranuleId).toBe(granuleId);
+        expect(payload.items[0].metadata.collection).toBe(`${collection.name}___${collection.version}`);
+        expect(payload.items[0].metadata.createdAt).toBe(tenMinutesAgo);
+      }
+    });
+
+    xit('returns info for a request with date range provided', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
+          searchParams: {
+            pageLimit: 25,
+            'metadata[provider]': provider,
+            'metadata[createdAt][gte]': thirtyMinutesAgo,
+            'metadata[createdAt][lte]': twoMinutesAgo,
+          },
+        }));
+
+        const lzardsApiGetOutput = await pTimeout(
+          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
+          (functionConfig.Timeout + 10) * 1000
+        );
+
+        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
+
+        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
+        expect(payload.count).toBe(3);
+        expect(new Date(payload.items[0].metadata.createdAt).getTime()).toBeGreaterThanOrEqual(thirtyMinutesAgo);
+        expect(new Date(payload.items[0].metadata.createdAt).getTime()).toBeLessThanOrEqual(twoMinutesAgo);
+        expect(payload.items[0].metadata.provider).toBe(provider);
+      }
+    });
+
+    xit('returns no results for granules not backed up', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
+          searchParams: {
+            'metadata[collection]': 'notBackedUpCollectionName',
+            'metadata[granuleId]': granuleId,
+          },
+        }));
+
+        const lzardsApiGetOutput = await pTimeout(
+          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
+          (functionConfig.Timeout + 10) * 1000
+        );
+
+        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
+
+        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
+        expect(payload.count).toBe(0);
+      }
     });
   });
 
