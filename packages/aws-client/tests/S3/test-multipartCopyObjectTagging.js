@@ -3,9 +3,10 @@
 // It seems like the Tagging param to S3.createMultipartUpload() is ignored
 // by LocalStack, so using proxyquire to test tagging instead.
 
-const fs = require('fs');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { randomBytes } = require('crypto');
+const { Readable } = require('stream');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 const { s3 } = require('../../services');
@@ -29,7 +30,7 @@ const randomId = (prefix) =>
 
 // Create an object in with random data of the given size
 const createDummyObject = async ({ Bucket, Key, size, tags = {} }) => {
-  const readStream = fs.createReadStream('/dev/urandom', { end: size - 1 });
+  const readStream = Readable.from(randomBytes(size));
 
   await uploadS3FileStream(
     readStream,
