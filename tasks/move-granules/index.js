@@ -39,7 +39,7 @@ const log = require('@cumulus/common/log');
 
 // Import type definitions
 /**
- * @typedef {import('@cumulus/common/types').BucketsConfigObject} BucketsConfigObject
+ * @typedef {import('./types').BucketsConfigObject} BucketsConfigObject
  * @typedef {import('./types').ApiGranule} ApiGranule
  * @typedef {import('./types').ApiCollection} ApiCollection
  * @typedef {import('./types').DuplicateHandling} DuplicateHandling
