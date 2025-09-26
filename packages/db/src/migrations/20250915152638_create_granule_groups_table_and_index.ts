@@ -20,6 +20,13 @@ export const up = async (knex: Knex): Promise<void> => {
       .timestamps(false, true);
   });
 
+  await knex.raw('CREATE SEQUENCE IF NOT EXISTS granule_group_id_seq');
+
+  await knex.raw(`
+    ALTER TABLE granule_groups
+    ALTER COLUMN group_id SET DEFAULT nextval('granule_group_id_seq');
+  `);
+
   await knex.raw('CREATE INDEX IF NOT EXISTS granule_groups_group_id_index ON granule_groups(group_id)');
 };
 

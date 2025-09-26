@@ -1,8 +1,11 @@
 import { Knex } from 'knex';
+import { deconstructCollectionId } from '@cumulus/message/Collections';
+import { CollectionPgModel } from '../models/collection';
 
 type GranuleInput = {
-  collectionCumulusId: number;
+  collectionId: string;
   producerGranuleId: string;
+  collectionCumulusId?: number;
   granuleId?: string;
 };
 
@@ -12,13 +15,18 @@ type GranuleRecord = {
   producer_granule_id: string;
   collection_cumulus_id: number;
   status: string;
-  group_state: string | null; // 'H', or null if no entry
+  group_state: string | null;
 };
 
 type DuplicateGranulesResult = {
   sameCollectionMatches: GranuleRecord[];
   differentCollectionMatches: GranuleRecord[];
-  customCriteriaMatches: GranuleRecord[]; // Placeholder
+  customCriteriaMatches: GranuleRecord[];
+};
+
+export const getNextGranuleGroupId = async (knex: Knex) : Promise<number> => {
+  const result = await knex.raw("SELECT nextval('granule_group_id_seq')");
+  return Number(result.rows[0].nextval);
 };
 
 /**
@@ -26,20 +34,40 @@ type DuplicateGranulesResult = {
  * A granule is considered "active" if its `granule_groups.state != 'H'` or it's
  * not in granule_groups.
  */
-export async function findDuplicateGranules(
+export const findDuplicateGranules = async (
+  incoming: GranuleInput,
   knex: Knex,
-  incomingGranule: GranuleInput
-): Promise<DuplicateGranulesResult> {
+  collectionPgModel = new CollectionPgModel(),
+): Promise<DuplicateGranulesResult> => {
   const {
+    collectionId,
     producerGranuleId,
     granuleId,
-    collectionCumulusId,
-  } = incomingGranule;
+  } = incoming;
 
-  const baseQuery = knex('granules')
+  let { collectionCumulusId } = incoming;
+
+  // Ensure we have collectionCumulusId
+  if (!collectionCumulusId) {
+    const { cumulus_id } = await collectionPgModel.get(
+      knex,
+      deconstructCollectionId(collectionId)
+    );
+    collectionCumulusId = cumulus_id;
+  }
+
+  // Query for active granules with matching producerGranuleId
+  const duplicates = await knex('granules')
     .leftJoin('granule_groups', 'granules.cumulus_id', 'granule_groups.granule_cumulus_id')
-    .where((builder) =>
-      builder.where('granule_groups.state', '!=', 'H').orWhereNull('granule_groups.state'))
+    .where('granules.producer_granule_id', producerGranuleId)
+    .modify((qb) => {
+      if (granuleId) {
+        qb.whereNot('granules.granule_id', granuleId);
+      }
+    })
+    .andWhere((qb) =>
+      qb.where('granule_groups.state', '!=', 'H').orWhereNull('granule_groups.state')
+    )
     .select(
       'granules.cumulus_id',
       'granules.granule_id',
@@ -47,30 +75,19 @@ export async function findDuplicateGranules(
       'granules.collection_cumulus_id',
       'granules.status',
       'granule_groups.state as group_state'
-    );
+    ) as GranuleRecord[];
 
-  const sameProducerGranuleIdResults = await baseQuery.clone()
-    .where({ 'granules.producer_granule_id': producerGranuleId })
-    .modify((queryBuilder) => {
-    if (granuleId != null) {
-      queryBuilder.whereNot('granules.granule_id', granuleId);
-    }
-  });
-
-  // 1. Same producerGranuleId in the same collection
-  const sameCollectionMatches = sameProducerGranuleIdResults.filter((record: GranuleRecord) =>
-    record.collection_cumulus_id === collectionCumulusId);
-
-  // 2. Same producerGranuleId in a different collection
-  const differentCollectionMatches = sameProducerGranuleIdResults.filter((record: GranuleRecord) =>
-    record.collection_cumulus_id !== collectionCumulusId);
-
-  // 3. Placeholder for future criteria within a collection
-  const customCriteriaMatches: GranuleRecord[] = [];
+  // Split results by collection
+  const sameCollectionMatches = duplicates.filter(
+    (g) => g.collection_cumulus_id === collectionCumulusId
+  );
+  const differentCollectionMatches = duplicates.filter(
+    (g) => g.collection_cumulus_id !== collectionCumulusId
+  );
 
   return {
     sameCollectionMatches,
     differentCollectionMatches,
-    customCriteriaMatches,
+    customCriteriaMatches: [], // Placeholder
   };
-}
+};

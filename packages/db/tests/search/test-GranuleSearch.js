@@ -6,6 +6,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { sleep } = require('@cumulus/common');
 const {
   CollectionPgModel,
+  destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
   fakePdrRecordFactory,
@@ -221,6 +222,10 @@ test.before(async (t) => {
       execution_cumulus_id: executionRecords[99 - i].cumulus_id,
     }))
   );
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb(t.context);
 });
 
 test('GranuleSearch returns 10 granule records by default', async (t) => {
