@@ -14,7 +14,6 @@ resource "aws_lambda_function" "archive_records" {
       UPDATE_LIMIT = var.archive_update_limit
       BATCH_SIZE = var.archive_batch_size
       EXPIRATION_DAYS = var.archive_expiration_days
-      AWS_REGION = data.aws_region.current.name
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
     }
   }
