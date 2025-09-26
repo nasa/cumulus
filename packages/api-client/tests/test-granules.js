@@ -734,12 +734,12 @@ test('bulkArchiveGranules calls the callback with the expected object and return
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
-      httpMethod: 'PATCH',
+      httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/granules/archive/',
+      path: '/granules/bulkArchive/',
       body: JSON.stringify(body),
     },
     expectedStatusCodes: 202,

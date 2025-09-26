@@ -285,12 +285,12 @@ test('bulkArchiveExecutions calls the callback with the expected object and retu
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
-      httpMethod: 'PATCH',
+      httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/executions/archive/',
+      path: '/executions/bulkArchive/',
       body: JSON.stringify(body),
     },
     expectedStatusCodes: 202,

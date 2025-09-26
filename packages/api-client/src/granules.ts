@@ -864,9 +864,9 @@ export const bulkArchiveGranules = async (params: {
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'PATCH',
+      httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: '/granules/archive/',
+      path: '/granules/bulkArchive/',
       headers: {
         'Content-Type': 'application/json',
       },

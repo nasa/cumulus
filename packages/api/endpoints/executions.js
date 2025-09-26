@@ -393,7 +393,7 @@ async function bulkArchiveExecutions(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.patch('/archive', bulkArchiveExecutions);
+router.post('/bulkArchive', bulkArchiveExecutions);
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
 router.post(

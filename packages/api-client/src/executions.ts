@@ -108,9 +108,9 @@ export const bulkArchiveExecutions = async (params: {
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'PATCH',
+      httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: '/executions/archive/',
+      path: '/executions/bulkArchive/',
       headers: {
         'Content-Type': 'application/json',
       },
