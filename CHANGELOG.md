@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add api endpoint `executions/archive` to archive executions
   - Task lambda to call above api endpoints with configuration
   - Add cron scheduler to call above task lambda and archive old records
+  - cron task can be disabled by setting the value deploy_archive_records_event_rule in the cumulus tf-module
 
 ### Changed
 
