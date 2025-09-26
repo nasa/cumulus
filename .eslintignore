@@ -4,6 +4,8 @@
 **/dist/**
 **/node_modules/**
 **/webpack.config.js
+packages/api/ts-lambdas/**/*.js*
+packages/api/ts-lambdas/**/*.d.ts*
 tmp/**
 docs/**
 _book/**
