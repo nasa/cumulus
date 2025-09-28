@@ -13,11 +13,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Notable Changes
 
 - **CUMULUS-4124**
+  When these changes are deployed, if no action is taken to reconfigure the cron, it will run once per day in the early morning, archiving
+
+  - 100k granules
+  - 100k executions
+  - that are more than 1 year old.
+  
+  Being archived changes nothing about the record except to set a boolean flag (archived=true). this behavior can be reconfigured or turned off entirely. see features/record_archival.md for more details.
+
+### Added
+
+- **CUMULUS-4124**
   - Add api endpoint `granules/archive` to archive granules
   - Add api endpoint `executions/archive` to archive executions
   - Task lambda to call above api endpoints with configuration
   - Add cron scheduler to call above task lambda and archive old records
-  - cron task can be disabled by setting the value deploy_archive_records_event_rule in the cumulus tf-module
 
 ### Changed
 
