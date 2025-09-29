@@ -25,8 +25,8 @@ type DuplicateGranulesResult = {
 };
 
 export const getNextGranuleGroupId = async (knex: Knex) : Promise<number> => {
-  const result = await knex.raw("SELECT nextval('granule_group_id_seq')");
-  return Number(result.rows[0].nextval);
+  const result = await knex.raw("SELECT nextval('granule_group_id_seq')::int");
+  return result.rows[0].nextval;
 };
 
 /**
@@ -37,7 +37,7 @@ export const getNextGranuleGroupId = async (knex: Knex) : Promise<number> => {
 export const findDuplicateGranules = async (
   incoming: GranuleInput,
   knex: Knex,
-  collectionPgModel = new CollectionPgModel(),
+  collectionPgModel = new CollectionPgModel()
 ): Promise<DuplicateGranulesResult> => {
   const {
     collectionId,
@@ -49,11 +49,11 @@ export const findDuplicateGranules = async (
 
   // Ensure we have collectionCumulusId
   if (!collectionCumulusId) {
-    const { cumulus_id } = await collectionPgModel.get(
+    const pgCollection = await collectionPgModel.get(
       knex,
       deconstructCollectionId(collectionId)
     );
-    collectionCumulusId = cumulus_id;
+    collectionCumulusId = pgCollection.cumulus_id;
   }
 
   // Query for active granules with matching producerGranuleId
@@ -66,8 +66,7 @@ export const findDuplicateGranules = async (
       }
     })
     .andWhere((qb) =>
-      qb.where('granule_groups.state', '!=', 'H').orWhereNull('granule_groups.state')
-    )
+      qb.where('granule_groups.state', '!=', 'H').orWhereNull('granule_groups.state'))
     .select(
       'granules.cumulus_id',
       'granules.granule_id',
