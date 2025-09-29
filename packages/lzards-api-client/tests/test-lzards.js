@@ -18,6 +18,7 @@ const initializeEnvVars = () => {
   process.env.lzards_launchpad_passphrase_secret_name = 'fakeLzardsLaunchpadPassphraseSecretName';
   process.env.system_bucket = 'fakeSystemBucket';
   process.env.stackName = 'fakeStackName';
+  process.env.lzards_provider = 'fakeProvider';
 };
 
 const resetEnvVars = () => {
@@ -77,8 +78,8 @@ test.serial('submitQueryToLzards sends request to lzards api',
     };
     const requestUrl = `${process.env.lzards_api}`;
     const requestBody = {
+      searchParams: { ...searchParams, provider: process.env.lzards_provider },
       responseType: 'json',
-      searchParams,
       throwHttpErrors: false,
       headers: {
         Authorization: `Bearer ${fakeLaunchpadToken}`,

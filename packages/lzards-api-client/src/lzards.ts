@@ -50,6 +50,7 @@ export async function submitQueryToLzards(
   }: LzardsApiGetRequestParameters
 ) {
   const lzardsApiUri = getRequiredEnvVar('lzards_api');
+  const provider = getRequiredEnvVar('lzards_provider');
 
   if (!searchParams || isEmpty(searchParams)) {
     const errMsg = 'The required searchParams is not provided or empty';
@@ -63,7 +64,7 @@ export async function submitQueryToLzards(
     return await got.get(
       lzardsApiUri,
       {
-        searchParams,
+        searchParams: { ...searchParams, provider },
         responseType: 'json',
         throwHttpErrors: false,
         headers: {
