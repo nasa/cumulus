@@ -34,18 +34,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update all Python dependencies to use boto >=1.40.29
   - Update all Core integration lambdas to use Python 3.12
   - Update external CNM lambdas to run on Java 21 in integration
-
 - **CUMULUS-4191**
   - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
     based on the provider from the record message.
   - Updated `messageConsumer` lambda handler to async/await style
-
 - **CUMULUS-4200**
   - updated metrics_es_host terraform variable description and validation
   - Users should ensure that the metrics_es_host does not include `https://`
+- **CUMULUS-4242**
+  - Skipped lzards api response assertions from lzards integration tests due to lzards api changes
 - **CUMULUS-4252**
   - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
     `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
 
 ## [v21.0.0] 2025-09-09
 
