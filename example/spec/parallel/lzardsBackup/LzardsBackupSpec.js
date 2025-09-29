@@ -296,6 +296,7 @@ describe('The Lzards Backup Task ', () => {
             'metadata[provider]': provider,
             'metadata[createdAt][gte]': thirtyMinutesAgo,
             'metadata[createdAt][lte]': twoMinutesAgo,
+            ...commonSearchParams,
           },
         }));
 
@@ -321,6 +322,7 @@ describe('The Lzards Backup Task ', () => {
           searchParams: {
             'metadata[collection]': 'notBackedUpCollectionName',
             'metadata[granuleId]': granuleId,
+            ...commonSearchParams,
           },
         }));
 
