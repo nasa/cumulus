@@ -19,6 +19,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added unit tests to verify ECHO10 schema element ordering
     - Resolves CMR validation error when ProducerGranuleId appears out of sequence
 
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+
 ## [v21.0.0] 2025-09-09
 
 ### CUMULUS-4058 Handle Granules with Identical producerGranuleId in Different Collections
