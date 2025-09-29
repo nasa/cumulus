@@ -20,8 +20,6 @@ const {
 } = require('../../helpers/testUtils');
 
 describe('when ArchiveGranules is called', () => {
-  // const monthEpoch = 2629743000;
-  // const yearEpoch = 31556926000;
   let testSetupFailed;
   let stackName;
   let config;
