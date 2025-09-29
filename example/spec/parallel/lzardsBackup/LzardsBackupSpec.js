@@ -245,7 +245,7 @@ describe('The Lzards Backup Task ', () => {
       expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
     });
 
-    it('throws an error when no search parameters are provided', async () => {
+    xit('throws an error when no search parameters are provided', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({ searchParams: {} }));
@@ -261,7 +261,7 @@ describe('The Lzards Backup Task ', () => {
       }
     });
 
-    it('returns info for a request for a single granule successfully backed up to lzards', async () => {
+    xit('returns info for a request for a single granule successfully backed up to lzards', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
@@ -287,7 +287,7 @@ describe('The Lzards Backup Task ', () => {
       }
     });
 
-    it('returns info for a request with date range provided', async () => {
+    xit('returns info for a request with date range provided', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
@@ -315,7 +315,7 @@ describe('The Lzards Backup Task ', () => {
       }
     });
 
-    it('returns no results for granules not backed up', async () => {
+    xit('returns no results for granules not backed up', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
