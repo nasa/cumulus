@@ -251,7 +251,7 @@ describe('The Lzards Backup Task for duplicate granule with producerGranuleId an
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
-            'metadata[collection]': `${collection.name}___${collection.version}`,
+            collection: `${collection.name}___${collection.version}`,
             'metadata[producerGranuleId]': producerGranuleId,
             ...commonSearchParams,
           },

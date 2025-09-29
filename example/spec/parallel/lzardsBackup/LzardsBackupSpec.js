@@ -320,7 +320,7 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
-            'metadata[collection]': 'notBackedUpCollectionName',
+            collection: 'notBackedUpCollectionName',
             'metadata[granuleId]': granuleId,
             ...commonSearchParams,
           },
