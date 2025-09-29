@@ -37,6 +37,12 @@ describe('The Lzards Backup Task ', () => {
   const tenMinutesAgo = now - (1000 * 60 * 10);
   const twoMinutesAgo = now - (1000 * 60 * 2);
 
+  const commonSearchParams = {
+    requestSummary: false,
+    includeEvents: true,
+    status: '',
+  };
+
   const testSetup = async (configOverride = {}) => {
     try {
       beforeAllFailed = false;
@@ -259,8 +265,9 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
-            'metadata[collection]': `${collection.name}___${collection.version}`,
+            collection: `${collection.name}___${collection.version}`,
             'metadata[granuleId]': granuleId,
+            ...commonSearchParams,
           },
         }));
         const lzardsApiGetOutput = await pTimeout(
@@ -288,6 +295,7 @@ describe('The Lzards Backup Task ', () => {
             'metadata[provider]': provider,
             'metadata[createdAt][gte]': thirtyMinutesAgo,
             'metadata[createdAt][lte]': twoMinutesAgo,
+            ...commonSearchParams,
           },
         }));
 
@@ -311,8 +319,9 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
-            'metadata[collection]': 'notBackedUpCollectionName',
+            collection: 'notBackedUpCollectionName',
             'metadata[granuleId]': granuleId,
+            ...commonSearchParams,
           },
         }));
 
