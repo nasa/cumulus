@@ -29,8 +29,8 @@ describe('The MoveGranules task', () => {
 
   async function setupTest({
     collisionFromSameCollection = false,
-    orphanTest = false,
     crossCollectionThrowOnNotFound,
+    orphanTest = false,
   } = {}) {
     config = await loadConfig();
     prefix = config.stackName;
@@ -128,6 +128,18 @@ describe('The MoveGranules task', () => {
         }
       );
     }
+
+    let taskConfig = {
+      buckets: config.buckets,
+      collection,
+      bucket: config.bucket,
+      duplicateHandling: 'replace',
+      distribution_endpoint: 'http://www.example.com',
+    };
+
+    if (crossCollectionThrowOnNotFound !== undefined) {
+      taskConfig = { ...taskConfig, crossCollectionThrowOnNotFound };
+    }
     const Payload = new TextEncoder().encode(JSON.stringify({
       cma: {
         ReplaceConfig: {
@@ -135,14 +147,7 @@ describe('The MoveGranules task', () => {
           TargetPath: '$.payload',
           MaxSize: 1000000,
         },
-        task_config: {
-          buckets: config.buckets,
-          collection,
-          bucket: config.bucket,
-          duplicateHandling: 'replace',
-          distribution_endpoint: 'http://www.example.com',
-          crossCollectionThrowOnNotFound,
-        },
+        task_config: taskConfig,
         event: {
           cumulus_meta: {
             system_bucket: config.bucket,
@@ -291,7 +296,7 @@ describe('The MoveGranules task', () => {
   it('Handles orphaned file collisions without error when crossCollectionThrowOnNotFound is default', async () => {
     let testResources;
     try {
-      testResources = await setupTest({ orphanTest: true, crossCollectionThrowOnNotFound: false });
+      testResources = await setupTest({ orphanTest: true });
       const { granuleId, targetKey, taskOutput } = testResources;
 
       const s3ObjectStream = await getObject(s3(), {
