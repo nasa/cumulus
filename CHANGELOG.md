@@ -8,14 +8,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed 
 
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
 - **CUMULUS-4254**
   - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
-
-- **CUMULUS-4242**
-  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
-  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
 
 ## [v20.2.1] 2025-08-14
 
