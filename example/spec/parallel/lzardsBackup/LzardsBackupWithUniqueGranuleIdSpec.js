@@ -246,7 +246,7 @@ describe('The Lzards Backup Task for duplicate granule with producerGranuleId an
       expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
     });
 
-    xit('returns info for a request for a single granule successfully backed up to lzards with producerGranuleId searchParam', async () => {
+    it('returns info for a request for a single granule successfully backed up to lzards with producerGranuleId searchParam', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
