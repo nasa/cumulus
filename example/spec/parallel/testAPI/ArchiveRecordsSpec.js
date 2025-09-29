@@ -1,7 +1,7 @@
 'use strict';
 
 const { v4: uuidv4 } = require('uuid');
-
+const moment = require('moment');
 const { addCollections, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const {
   bulkArchiveGranules,
@@ -20,8 +20,8 @@ const {
 } = require('../../helpers/testUtils');
 
 describe('when ArchiveGranules is called', () => {
-  const monthEpoch = 2629743000;
-  const yearEpoch = 31556926000;
+  // const monthEpoch = 2629743000;
+  // const yearEpoch = 31556926000;
   let testSetupFailed;
   let stackName;
   let config;
@@ -47,7 +47,7 @@ describe('when ArchiveGranules is called', () => {
         executionId: uuidv4(),
         collectionId,
         status: 'completed',
-        updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
+        updatedAt: moment().subtract(1, 'year').subtract(1, 'month').toDate().getTime(), // more than a year ago
       });
       executionArn = executionObject.arn;
       await createExecution({
@@ -57,7 +57,7 @@ describe('when ArchiveGranules is called', () => {
       const granuleObject = fakeGranuleFactoryV2({
         collectionId,
         published: false,
-        updatedAt: Date.now() - yearEpoch - monthEpoch, // more than a year ago
+        updatedAt: moment().subtract(1, 'year').subtract(1, 'month').toDate().getTime(), // more than a year ago
         execution: executionObject.execution,
       });
       granuleId = granuleObject.granuleId;
