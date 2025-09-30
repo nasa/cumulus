@@ -83,11 +83,7 @@ module "archive" {
   payload_timeout        = var.payload_timeout
   update_limit          = var.update_limit
 
-  deploy_archive_records_event_rule = var.deploy_archive_records_event_rule
-  daily_archive_records_schedule_expression = var.daily_archive_records_schedule_expression
-  archive_update_limit = var.archive_update_limit
-  archive_batch_size = var.archive_batch_size
-  archive_expiration_days = var.archive_expiration_days
+  archive_records_config = var.archive_records_config
 
   background_queue_url = module.ingest.background_queue_url
 

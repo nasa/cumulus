@@ -343,28 +343,22 @@ variable "update_limit" {
   description = "number of executions to cleanup in one lambda run"
 }
 
-variable "deploy_archive_records_event_rule" {
-  type = bool
-  default = true
-  description = "deploy the archive records cron eventBridgeRule"
-}
-
-variable "archive_update_limit" {
-  type = number
-  default = 10000
-  description = "number of granules or executions to archive in one run"
-}
-
-variable "archive_batch_size" {
-  type = number
-  default = 10000
-  description = "number of granules or executions to archive call to the /archive endpoint"
-}
-
-variable "archive_expiration_days" {
-  type = number
-  default = 365
-  description = "age (in days) after which granules or executions should be archived"
+variable "archive_records_config" {
+  type = object({
+    deploy_rule = bool, // deploy the archive records cron eventBridgeRule
+    update_limit = number, // number of granules or executions to archive in one run
+    batch_size = number, // number of granules or executions to archive call to the /archive endpoint
+    expiration_days = number, // age (in days) after which granules or executions should be archived
+    schedule_expression = string, // CloudWatch cron schedule for the record archival lambda
+  })
+  description = "config object for archive-records tooling"
+  default = {
+    deploy_rule = true,
+    update_limit = 100000,
+    batch_size = 10000,
+    expiration_days = 365,
+    schedule_expression = "cron(0 4 * * ? *)"
+  }
 }
 
 variable "log_destination_arn" {
@@ -404,10 +398,3 @@ variable "dead_letter_recovery_memory" {
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
 
-
-## Record Archival Configuration
-variable "daily_archive_records_schedule_expression" {
-  type    = string
-  default = "cron(0 4 * * ? *)"
-  description = "Cloud Watch cron schedule for the record archival lambda"
-}
