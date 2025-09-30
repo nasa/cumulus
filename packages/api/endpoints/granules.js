@@ -1351,7 +1351,7 @@ async function bulkArchiveGranules(req, res) {
     payload: {
       config: {
         ...payload,
-        recordType: 'granules',
+        recordType: 'granule',
       },
     },
   };

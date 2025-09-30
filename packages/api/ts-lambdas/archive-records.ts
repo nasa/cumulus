@@ -10,37 +10,28 @@ type ArchiveRecordsEvent = {
   config?: EventConfig;
 };
 
-type ArchiveRecordTypes = Exclude<Message.RecordType, 'pdr'>
+type ArchiveRecordTypes = Exclude<Message.RecordType, 'pdr'>;
 type EventConfig = {
   updateLimit?: number;
   batchSize?: number;
   expirationDays?: number;
-  recordTypes?: string;
+  recordType?: string;
 };
 
 type MassagedEventConfig = {
   updateLimit: number;
   batchSize: number;
   expirationDays: number;
-  recordTypes: ArchiveRecordTypes[];
+  recordType: ArchiveRecordTypes;
 };
 function getParsedConfigValues(config: EventConfig | undefined): MassagedEventConfig {
-  let recordTypes: ArchiveRecordTypes[];
-  if(!config?.recordTypes) {
-    log.warn('no recordType specified, in config, doing granules and executions')
-    recordTypes = ['granule', 'execution'];
+  let recordType: ArchiveRecordTypes = 'granule';
+  if (!config?.recordType) {
+    log.warn('no recordType specified, in config, doing granules');
+  } else if (!['granule', 'execution'].includes(config.recordType)) {
+    log.warn('invalid recordType specified, in config, doing granules');
   } else {
-    const unMassagedRecordTypes = config.recordTypes.split(',');
-    recordTypes = unMassagedRecordTypes.map((recordTypeString) => {
-      if (['granule', 'execution'].includes(recordTypeString)){
-        return recordTypeString;
-      }
-      else {
-        log.warn(`unrecognized recordType requested, expected "granule" or "execution", got ${recordTypeString}, skipping`);
-        return ""
-      }
-      
-    }).filter(Boolean) as ArchiveRecordTypes[];
+    recordType = config.recordType as ArchiveRecordTypes;
   }
 
   const updateLimit = config?.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000;
@@ -59,7 +50,7 @@ function getParsedConfigValues(config: EventConfig | undefined): MassagedEventCo
     updateLimit,
     batchSize,
     expirationDays,
-    recordTypes,
+    recordType,
   };
 }
 
@@ -69,7 +60,7 @@ function getParsedConfigValues(config: EventConfig | undefined): MassagedEventCo
  * @returns number of records that have actually been updated
  */
 const archiveGranules = async (config: MassagedEventConfig): Promise<number> => {
-  if (!config.recordTypes.includes('granule')) {
+  if (!(config.recordType === 'granule')) {
     return 0;
   }
   const { batchSize, updateLimit, expirationDays } = config;
@@ -100,7 +91,7 @@ const archiveGranules = async (config: MassagedEventConfig): Promise<number> => 
  * @returns number of records that have actually been updated
  */
 const archiveExecutions = async (config: MassagedEventConfig): Promise<number> => {
-  if (!config.recordTypes.includes('execution')) {
+  if (!(config.recordType === 'execution')) {
     return 0;
   }
   const { batchSize, updateLimit, expirationDays } = config;
