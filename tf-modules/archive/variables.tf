@@ -345,20 +345,13 @@ variable "update_limit" {
 
 variable "archive_records_config" {
   type = object({
-    deploy_rule: bool, // deploy the archive records cron eventBridgeRule
-    update_limit: number, // number of granules or executions to archive in one run
-    batch_size: number, // number of granules or executions to archive call to the /archive endpoint
-    expiration_days: number, // age (in days) after which granules or executions should be archived
-    schedule_expression: string, // CloudWatch cron schedule for the record archival lambda
+    deploy_rule = optional(bool, true), // deploy the archive records cron eventBridgeRule
+    update_limit = optional(number, 100000), // number of granules or executions to archive in one run
+    batch_size = optional(number, 10000), // number of granules or executions to archive call to the /archive endpoint
+    expiration_days = optional(number, 365), // age (in days) after which granules or executions should be archived
+    schedule_expression = optional(string, "cron(0 4 * * ? *)"), // CloudWatch cron schedule for the record archival lambda
   })
   description = "config object for archive-records tooling"
-  default = {
-    deploy_rule: true,
-    update_limit: 100000,
-    batch_size: 10000,
-    expiration_days: 365,
-    schedule_expression: "cron(0 4 * * ? *)"
-  }
 }
 
 variable "log_destination_arn" {
