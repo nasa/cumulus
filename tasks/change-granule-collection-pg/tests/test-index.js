@@ -126,7 +126,7 @@ test.beforeEach(async (t) => {
     testDbName,
     migrationDir
   );
-
+  t.context.testDbName = testDbName
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
   t.context.publicBucket = randomId('public');
@@ -172,7 +172,9 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.privateBucket);
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
   await destroyLocalTestDb({
-    ...t.context,
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName: t.context.testDbName,
   });
 });
 

@@ -30,7 +30,7 @@ resource "aws_lambda_function" "archive_records" {
 
 resource "aws_cloudwatch_event_rule" "daily_archive_records" {
   count = var.deploy_archive_records_event_rule == true ? 1 : 0
-  name = "${var.prefix}_daily_archive_records"
+  name = "${var.prefix}-daily-archive-records"
   schedule_expression = var.daily_archive_records_schedule_expression
   tags                = var.tags
 }
@@ -51,7 +51,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_granules" {
     "headers": {
       "Content-Type": "application/json"
     },
-    "path": "/granules/archive",
+    "path": "/granules/bulkArchive",
     "body": "{\"updateLimit\": ${var.archive_update_limit},\"batchSize\": ${var.archive_batch_size},\"expirationDays\": ${var.archive_expiration_days}}"
   }
   JSON
@@ -72,7 +72,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_executions" {
     "headers": {
       "Content-Type": "application/json"
     },
-    "path": "/executions/archive",
+    "path": "/executions/bulkArchive",
     "body": "{\"updateLimit\": ${var.archive_update_limit},\"batchSize\": ${var.archive_batch_size},\"expirationDays\": ${var.archive_expiration_days}}"
   }
   JSON
