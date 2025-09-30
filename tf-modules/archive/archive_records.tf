@@ -11,9 +11,6 @@ resource "aws_lambda_function" "archive_records" {
   environment {
     variables = {
       stackName = var.prefix
-      UPDATE_LIMIT = var.archive_records_config.update_limit
-      BATCH_SIZE = var.archive_records_config.batch_size
-      EXPIRATION_DAYS = var.archive_records_config.expiration_days
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
     }
   }

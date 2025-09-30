@@ -290,32 +290,13 @@ test.serial('ArchiveRecords archives "updateLimit" with larger batchSize', async
   t.is(executions.filter((execution) => execution.archived).length, 50);
 });
 
-test.serial('getParsedConfigValues handles empty config and no env with defaults', (t) => {
-  const envStore = clone(process.env);
-  delete process.env.UPDATE_LIMIT;
-  delete process.env.BATCH_SIZE;
-  delete process.env.EXPIRATION_DAYS;
+test('getParsedConfigValues handles empty config with defaults', (t) => {
   t.deepEqual(getParsedConfigValues(), {
     batchSize: 1000,
     updateLimit: 10000,
     expirationDays: 365,
     recordType: 'granule',
   });
-  process.env = envStore;
-});
-
-test.serial('getParsedConfigValues handles empty config and prefers env to defaults', (t) => {
-  const envStore = clone(process.env);
-  process.env.BATCH_SIZE = 23;
-  process.env.UPDATE_LIMIT = 2005;
-  process.env.EXPIRATION_DAYS = 2345;
-  t.deepEqual(getParsedConfigValues(), {
-    batchSize: 23,
-    updateLimit: 2005,
-    expirationDays: 2345,
-    recordType: 'granule',
-  });
-  process.env = envStore;
 });
 
 test('getParsedConfigValues prefers explicit config values', (t) => {

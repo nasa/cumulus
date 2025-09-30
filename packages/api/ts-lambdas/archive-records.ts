@@ -34,9 +34,9 @@ function getParsedConfigValues(config: EventConfig | undefined): MassagedEventCo
     recordType = config.recordType as ArchiveRecordTypes;
   }
 
-  const updateLimit = config?.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000;
-  const batchSize = config?.batchSize || Number(process.env.BATCH_SIZE) || 1000;
-  const expirationDays = config?.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365;
+  const updateLimit = config?.updateLimit || 10000;
+  const batchSize = config?.batchSize || 1000;
+  const expirationDays = config?.expirationDays || 365;
   if (updateLimit <= 0) {
     throw new Error(`updateLimit must be a positive number greater than 0, got ${updateLimit}`);
   }
