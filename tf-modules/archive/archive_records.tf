@@ -46,7 +46,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_granules" {
 
   input = <<JSON
   {
-    "httpMethod": "PATCH",
+    "httpMethod": "POST",
     "resource": "/{proxy+}",
     "headers": {
       "Content-Type": "application/json"
@@ -67,7 +67,7 @@ resource "aws_cloudwatch_event_target" "daily_archive_executions" {
 
   input = <<JSON
   {
-    "httpMethod": "PATCH",
+    "httpMethod": "POST",
     "resource": "/{proxy+}",
     "headers": {
       "Content-Type": "application/json"
