@@ -126,7 +126,7 @@ test.beforeEach(async (t) => {
     testDbName,
     migrationDir
   );
-  t.context.testDbName = testDbName
+  t.context.testDbName = testDbName;
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
   t.context.publicBucket = randomId('public');
