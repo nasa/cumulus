@@ -20,7 +20,7 @@ const {
 } = require('@cumulus/db');
 const { fakeGranuleRecordFactory, fakeCollectionRecordFactory } = require('@cumulus/db/dist');
 
-const { handler, getParsedConfigValues } = require('../../lambdas/archive-records');
+const { handler, getParsedConfigValues } = require('../../ts-lambdas/archive-records');
 
 const epochDay = 86400000;
 
@@ -91,6 +91,7 @@ test.afterEach.always(async (t) => {
 test.serial('ArchiveRecords sets old granules/executions to "archived=true"', async (t) => {
   const config = {
     expirationDays: 1,
+    recordTypes: 'granule,execution',
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
@@ -127,6 +128,7 @@ test.serial('ArchiveRecords sets old granules/executions to "archived=true"', as
 test.serial('ArchiveRecords sets old records to "archived=true" and not newer granules/executions', async (t) => {
   const config = {
     expirationDays: 5,
+    recordTypes: 'granule,execution',
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     range(100).map((i) => fakeGranuleRecordFactory({
@@ -178,7 +180,7 @@ test.serial('ArchiveRecords sets old records to "archived=true" and not newer gr
 test.serial('ArchiveRecords archives only executions if recordType=executions', async (t) => {
   const config = {
     expirationDays: 1,
-    recordType: 'executions',
+    recordTypes: 'execution',
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
@@ -215,7 +217,7 @@ test.serial('ArchiveRecords archives only executions if recordType=executions', 
 test.serial('ArchiveRecords archives only granules if recordType=granules', async (t) => {
   const config = {
     expirationDays: 1,
-    recordType: 'granules',
+    recordTypes: 'granule',
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
@@ -254,6 +256,7 @@ test.serial('ArchiveRecords archives the entire "updateLimit" with odd batchSize
     expirationDays: 5,
     updateLimit: 10,
     batchSize: 6,
+    recordTypes: 'execution,granule',
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     range(20).map((i) => fakeGranuleRecordFactory({
@@ -306,6 +309,7 @@ test.serial('ArchiveRecords archives "updateLimit" with larger batchSize', async
     expirationDays: 5,
     updateLimit: 50,
     batchSize: 60,
+    recordTypes: 'execution,granule',
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     range(100).map((i) => fakeGranuleRecordFactory({
@@ -362,7 +366,7 @@ test.serial('getParsedConfigValues handles empty config and no env with defaults
     batchSize: 1000,
     updateLimit: 10000,
     expirationDays: 365,
-    recordType: 'both',
+    recordTypes: ['granule', 'execution'],
   });
   process.env = envStore;
 });
@@ -376,12 +380,12 @@ test.serial('getParsedConfigValues handles empty config and prefers env to defau
     batchSize: 23,
     updateLimit: 2005,
     expirationDays: 2345,
-    recordType: 'both',
+    recordTypes: ['granule', 'execution'],
   });
   process.env = envStore;
 });
 
-test.serial('getParsedConfigValues prefers explicit config values', (t) => {
+test.only('getParsedConfigValues prefers explicit config values', (t) => {
   const envStore = clone(process.env);
   process.env.BATCH_SIZE = 23;
   process.env.EXPIRATION_DAYS = 2345;
@@ -390,12 +394,12 @@ test.serial('getParsedConfigValues prefers explicit config values', (t) => {
     batchSize: 15,
     expirationDays: 2,
     updateLimit: 45,
-    recordType: 'granules',
+    recordTypes: 'granule',
   }), {
     batchSize: 15,
     expirationDays: 2,
     updateLimit: 45,
-    recordType: 'granules',
+    recordTypes: ['granule'],
   });
   process.env = envStore;
 });

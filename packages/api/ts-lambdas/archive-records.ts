@@ -1,36 +1,48 @@
 'use-strict';
 
-const range = require('lodash/range');
-const moment = require('moment');
-const { GranulePgModel, ExecutionPgModel } = require('@cumulus/db');
-const { log } = require('@cumulus/common');
-const { getKnexClient } = require('@cumulus/db');
+import range from 'lodash/range';
+import moment from 'moment';
+import { GranulePgModel, ExecutionPgModel, getKnexClient } from '@cumulus/db';
+import { log } from '@cumulus/common';
+import { Message } from '@cumulus/types';
 
 type ArchiveRecordsEvent = {
   config?: EventConfig;
 };
 
-type RecordTypes = 'granules' | 'executions' | 'both';
+type ArchiveRecordTypes = Exclude<Message.RecordType, 'pdr'>
 type EventConfig = {
   updateLimit?: number;
   batchSize?: number;
   expirationDays?: number;
-  recordType?: string;
+  recordTypes?: string;
 };
 
 type MassagedEventConfig = {
   updateLimit: number;
   batchSize: number;
   expirationDays: number;
-  recordType: RecordTypes;
-} & EventConfig;
+  recordTypes: ArchiveRecordTypes[];
+};
 function getParsedConfigValues(config: EventConfig | undefined): MassagedEventConfig {
-  let recordType: RecordTypes = 'both';
-  if (config?.recordType && ['granules', 'executions', 'both'].includes(config.recordType)) {
-    recordType = config.recordType as RecordTypes;
+  let recordTypes: ArchiveRecordTypes[];
+  if(!config?.recordTypes) {
+    log.warn('no recordType specified, in config, doing granules and executions')
+    recordTypes = ['granule', 'execution'];
   } else {
-    log.warn(`unrecognized recordType requested, expected "granules", "executions", or "both", got ${config?.recordType}, running both`);
+    const unMassagedRecordTypes = config.recordTypes.split(',');
+    recordTypes = unMassagedRecordTypes.map((recordTypeString) => {
+      if (['granule', 'execution'].includes(recordTypeString)){
+        return recordTypeString;
+      }
+      else {
+        log.warn(`unrecognized recordType requested, expected "granule" or "execution", got ${recordTypeString}, skipping`);
+        return ""
+      }
+      
+    }).filter(Boolean) as ArchiveRecordTypes[];
   }
+
   const updateLimit = config?.updateLimit || Number(process.env.UPDATE_LIMIT) || 10000;
   const batchSize = config?.batchSize || Number(process.env.BATCH_SIZE) || 1000;
   const expirationDays = config?.expirationDays || Number(process.env.EXPIRATION_DAYS) || 365;
@@ -47,7 +59,7 @@ function getParsedConfigValues(config: EventConfig | undefined): MassagedEventCo
     updateLimit,
     batchSize,
     expirationDays,
-    recordType,
+    recordTypes,
   };
 }
 
@@ -57,12 +69,12 @@ function getParsedConfigValues(config: EventConfig | undefined): MassagedEventCo
  * @returns number of records that have actually been updated
  */
 const archiveGranules = async (config: MassagedEventConfig): Promise<number> => {
-  if (config.recordType === 'executions') {
+  if (!config.recordTypes.includes('granule')) {
     return 0;
   }
   const { batchSize, updateLimit, expirationDays } = config;
   let totalUpdated = 0;
-  const expirationDate = new Date(moment().subtract(expirationDays, 'd'));
+  const expirationDate = moment().subtract(expirationDays, 'd').toDate().toISOString();
   const granulePgModel = new GranulePgModel();
   const knex = await getKnexClient();
   for (const i of range(updateLimit / batchSize)) {
@@ -88,13 +100,12 @@ const archiveGranules = async (config: MassagedEventConfig): Promise<number> => 
  * @returns number of records that have actually been updated
  */
 const archiveExecutions = async (config: MassagedEventConfig): Promise<number> => {
-  if (config.recordType === 'granules') {
+  if (!config.recordTypes.includes('execution')) {
     return 0;
   }
-
   const { batchSize, updateLimit, expirationDays } = config;
   let totalUpdated = 0;
-  const expirationDate = new Date(moment().subtract(expirationDays, 'd'));
+  const expirationDate = moment().subtract(expirationDays, 'd').toDate().toISOString();
   const knex = await getKnexClient();
   const executionPgModel = new ExecutionPgModel();
   for (const i of range(updateLimit / batchSize)) {

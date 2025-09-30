@@ -45,7 +45,11 @@ describe('when ArchiveGranules is called', () => {
         executionId: uuidv4(),
         collectionId,
         status: 'completed',
-        updatedAt: moment().subtract(1, 'year').subtract(1, 'month').toDate().getTime(), // more than a year ago
+        updatedAt: moment()
+          .subtract(1, 'year')
+          .subtract(1, 'month')
+          .toDate()
+          .getTime(),
       });
       executionArn = executionObject.arn;
       await createExecution({
@@ -55,7 +59,11 @@ describe('when ArchiveGranules is called', () => {
       const granuleObject = fakeGranuleFactoryV2({
         collectionId,
         published: false,
-        updatedAt: moment().subtract(1, 'year').subtract(1, 'month').toDate().getTime(), // more than a year ago
+        updatedAt: moment()
+          .subtract(1, 'year')
+          .subtract(1, 'month')
+          .toDate()
+          .getTime(),
         execution: executionObject.execution,
       });
       granuleId = granuleObject.granuleId;
