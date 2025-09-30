@@ -29,7 +29,7 @@ describe('The MoveGranules task', () => {
 
   async function setupTest({
     collisionFromSameCollection = false,
-    crossCollectionThrowOnFileNotFound,
+    crossCollectionThrowOnObjectNotFound,
     orphanTest = false,
   } = {}) {
     config = await loadConfig();
@@ -137,8 +137,8 @@ describe('The MoveGranules task', () => {
       distribution_endpoint: 'http://www.example.com',
     };
 
-    if (crossCollectionThrowOnFileNotFound !== undefined) {
-      taskConfig = { ...taskConfig, crossCollectionThrowOnFileNotFound };
+    if (crossCollectionThrowOnObjectNotFound !== undefined) {
+      taskConfig = { ...taskConfig, crossCollectionThrowOnObjectNotFound };
     }
     const Payload = new TextEncoder().encode(JSON.stringify({
       cma: {
@@ -252,10 +252,10 @@ describe('The MoveGranules task', () => {
       }
     }
   });
-  it('Handles orphaned file collisions as errors when crossCollectionThrowOnFileNotFound is true', async () => {
+  it('Handles orphaned file collisions as errors when crossCollectionThrowOnObjectNotFound is true', async () => {
     let testResources;
     try {
-      testResources = await setupTest({ orphanTest: true, crossCollectionThrowOnFileNotFound: true });
+      testResources = await setupTest({ orphanTest: true, crossCollectionThrowOnObjectNotFound: true });
       const { targetKey, taskOutput } = testResources;
 
       const s3ObjectStream = await getObject(s3(), {
@@ -272,10 +272,10 @@ describe('The MoveGranules task', () => {
       }
     }
   });
-  it('Handles orphaned file collisions without error when crossCollectionThrowOnFileNotFound is false', async () => {
+  it('Handles orphaned file collisions without error when crossCollectionThrowOnObjectNotFound is false', async () => {
     let testResources;
     try {
-      testResources = await setupTest({ orphanTest: true, crossCollectionThrowOnFileNotFound: false });
+      testResources = await setupTest({ orphanTest: true, crossCollectionThrowOnObjectNotFound: false });
       const { granuleId, targetKey, taskOutput } = testResources;
 
       const s3ObjectStream = await getObject(s3(), {
@@ -293,7 +293,7 @@ describe('The MoveGranules task', () => {
       }
     }
   });
-  it('Handles orphaned file collisions without error when crossCollectionThrowOnFileNotFound is default', async () => {
+  it('Handles orphaned file collisions without error when crossCollectionThrowOnObjectNotFound is default', async () => {
     let testResources;
     try {
       testResources = await setupTest({ orphanTest: true });
