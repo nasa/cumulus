@@ -380,7 +380,7 @@ async function bulkArchiveExecutions(req, res) {
     payload: {
       config: {
         ...payload,
-        recordType: 'executions',
+        recordType: 'execution',
       },
     },
   };

@@ -44,19 +44,25 @@ async function setupDataStoreData(granules, executions, t) {
     knex,
     translateApiCollectionToPostgresCollection(collection)
   );
-  const pgGranules = await granuleModel.create(
-    knex,
-    granules.map((granule) => ({
-      ...granule,
-      collection_cumulus_id: collectionInserted[0].cumulus_id,
-    })),
-    ['cumulus_id']
-  );
-  const pgExecutions = await executionModel.create(
-    knex,
-    executions,
-    ['cumulus_id']
-  );
+  let pgGranules = [];
+  if (granules.length > 0) {
+    pgGranules = await granuleModel.create(
+      knex,
+      granules.map((granule) => ({
+        ...granule,
+        collection_cumulus_id: collectionInserted[0].cumulus_id,
+      })),
+      ['cumulus_id']
+    );
+  }
+  let pgExecutions = [];
+  if (executions.length > 0) {
+    pgExecutions = await executionModel.create(
+      knex,
+      executions,
+      ['cumulus_id']
+    );
+  }
   return {
     pgGranules,
     pgExecutions,
@@ -88,19 +94,17 @@ test.afterEach.always(async (t) => {
   });
 });
 
-test.serial('ArchiveRecords sets old granules/executions to "archived=true"', async (t) => {
+test.serial('ArchiveRecords sets old records to "archived=true"', async (t) => {
   const config = {
     expirationDays: 1,
-    recordTypes: 'granule,execution',
+    recordType: 'granule',
   };
-  const { pgGranules, pgExecutions } = await setupDataStoreData(
+  const { pgGranules } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
       granule_id: cryptoRandomString({ length: 5 }),
       updated_at: new Date(moment.now() - 3 * epochDay),
     })],
-    [fakeExecutionRecordFactory({
-      updated_at: new Date(moment.now() - 3 * epochDay),
-    })],
+    [],
     t
   );
   await handler({ config });
@@ -113,32 +117,18 @@ test.serial('ArchiveRecords sets old granules/executions to "archived=true"', as
     }
   );
   t.true(granule.archived);
-
-  const executionModel = new ExecutionPgModel();
-  const executionCumulusId = pgExecutions[0].cumulus_id;
-  const execution = await executionModel.get(
-    t.context.knex,
-    {
-      cumulus_id: executionCumulusId,
-    }
-  );
-  t.true(execution.archived);
 });
 
-test.serial('ArchiveRecords sets old records to "archived=true" and not newer granules/executions', async (t) => {
+test.serial('ArchiveRecords sets old records to "archived=true" and not newer records', async (t) => {
   const config = {
     expirationDays: 5,
-    recordTypes: 'granule,execution',
   };
-  const { pgGranules, pgExecutions } = await setupDataStoreData(
+  const { pgGranules } = await setupDataStoreData(
     range(100).map((i) => fakeGranuleRecordFactory({
       granule_id: `${i}`,
       updated_at: new Date(moment.now() - i * epochDay),
     })),
-    range(100).map((i) => fakeExecutionRecordFactory({
-      arn: `${i}`,
-      updated_at: new Date(moment.now() - i * epochDay),
-    })),
+    [],
     t
   );
   await handler({ config });
@@ -158,29 +148,12 @@ test.serial('ArchiveRecords sets old records to "archived=true" and not newer gr
       t.true(granule.archived);
     }
   });
-
-  const executionModel = new ExecutionPgModel();
-  const executions = await Promise.all(
-    pgExecutions.map(async (execution) => await executionModel.get(
-      t.context.knex,
-      {
-        cumulus_id: execution.cumulus_id,
-      }
-    ))
-  );
-  executions.forEach((execution) => {
-    if (Number.parseInt(execution.arn, 10) < config.expirationDays) {
-      t.false(execution.archived);
-    } else {
-      t.true(execution.archived);
-    }
-  });
 });
 
 test.serial('ArchiveRecords archives only executions if recordType=executions', async (t) => {
   const config = {
     expirationDays: 1,
-    recordTypes: 'execution',
+    recordType: 'execution',
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
@@ -217,7 +190,7 @@ test.serial('ArchiveRecords archives only executions if recordType=executions', 
 test.serial('ArchiveRecords archives only granules if recordType=granules', async (t) => {
   const config = {
     expirationDays: 1,
-    recordTypes: 'granule',
+    recordType: 'granule',
   };
   const { pgGranules, pgExecutions } = await setupDataStoreData(
     [fakeGranuleRecordFactory({
@@ -256,17 +229,13 @@ test.serial('ArchiveRecords archives the entire "updateLimit" with odd batchSize
     expirationDays: 5,
     updateLimit: 10,
     batchSize: 6,
-    recordTypes: 'execution,granule',
   };
-  const { pgGranules, pgExecutions } = await setupDataStoreData(
+  const { pgGranules } = await setupDataStoreData(
     range(20).map((i) => fakeGranuleRecordFactory({
       granule_id: `${i}`,
       updated_at: new Date(moment.now() - i * epochDay),
     })),
-    range(20).map((i) => fakeExecutionRecordFactory({
-      arn: `${i}`,
-      updated_at: new Date(moment.now() - i * epochDay),
-    })),
+    [],
     t
   );
   await handler({ config });
@@ -285,23 +254,6 @@ test.serial('ArchiveRecords archives the entire "updateLimit" with odd batchSize
     }
   });
   t.is(granules.filter((granule) => granule.archived).length, 10);
-
-  const executionModel = new ExecutionPgModel();
-  const executions = await Promise.all(
-    pgExecutions.map(async (execution) => await executionModel.get(
-      t.context.knex,
-      {
-        cumulus_id: execution.cumulus_id,
-      }
-    ))
-  );
-  executions.forEach((execution) => {
-    if (Number.parseInt(execution.arn, 10) < config.expirationDays) {
-      t.false(execution.archived);
-    }
-  });
-
-  t.is(executions.filter((execution) => execution.archived).length, 10);
 });
 
 test.serial('ArchiveRecords archives "updateLimit" with larger batchSize', async (t) => {
@@ -309,13 +261,10 @@ test.serial('ArchiveRecords archives "updateLimit" with larger batchSize', async
     expirationDays: 5,
     updateLimit: 50,
     batchSize: 60,
-    recordTypes: 'execution,granule',
+    recordType: 'execution',
   };
-  const { pgGranules, pgExecutions } = await setupDataStoreData(
-    range(100).map((i) => fakeGranuleRecordFactory({
-      granule_id: `${i}`,
-      updated_at: new Date(moment.now() - i * epochDay),
-    })),
+  const { pgExecutions } = await setupDataStoreData(
+    [],
     range(100).map((i) => fakeExecutionRecordFactory({
       arn: `${i}`,
       updated_at: new Date(moment.now() - i * epochDay),
@@ -323,22 +272,6 @@ test.serial('ArchiveRecords archives "updateLimit" with larger batchSize', async
     t
   );
   await handler({ config });
-  const granuleModel = new GranulePgModel();
-  const granules = await Promise.all(
-    pgGranules.map(async (granule) => await granuleModel.get(
-      t.context.knex,
-      {
-        cumulus_id: granule.cumulus_id,
-      }
-    ))
-  );
-  granules.forEach((granule) => {
-    if (Number.parseInt(granule.granule_id, 10) < config.expirationDays) {
-      t.false(granule.archived);
-    }
-  });
-  t.is(granules.filter((granule) => granule.archived).length, 50);
-
   const executionModel = new ExecutionPgModel();
   const executions = await Promise.all(
     pgExecutions.map(async (execution) => await executionModel.get(
@@ -366,7 +299,7 @@ test.serial('getParsedConfigValues handles empty config and no env with defaults
     batchSize: 1000,
     updateLimit: 10000,
     expirationDays: 365,
-    recordTypes: ['granule', 'execution'],
+    recordType: 'granule',
   });
   process.env = envStore;
 });
@@ -380,26 +313,28 @@ test.serial('getParsedConfigValues handles empty config and prefers env to defau
     batchSize: 23,
     updateLimit: 2005,
     expirationDays: 2345,
-    recordTypes: ['granule', 'execution'],
+    recordType: 'granule',
   });
   process.env = envStore;
 });
 
-test.only('getParsedConfigValues prefers explicit config values', (t) => {
-  const envStore = clone(process.env);
-  process.env.BATCH_SIZE = 23;
-  process.env.EXPIRATION_DAYS = 2345;
-  process.env.UPDATE_LIMIT = 56;
+test('getParsedConfigValues prefers explicit config values', (t) => {
   t.deepEqual(getParsedConfigValues({
     batchSize: 15,
     expirationDays: 2,
     updateLimit: 45,
-    recordTypes: 'granule',
+    recordType: 'execution',
   }), {
     batchSize: 15,
     expirationDays: 2,
     updateLimit: 45,
-    recordTypes: ['granule'],
+    recordType: 'execution',
   });
-  process.env = envStore;
+});
+
+test('getParsedConfigValues defaults mangled recordType to "granule"', (t) => {
+  t.deepEqual(
+    getParsedConfigValues({ recordType: 'abcd' }).recordType,
+    'granule'
+  );
 });
