@@ -207,23 +207,6 @@ function _handleFileNotFoundError(error, bucket, key, crossCollectionThrowOnObje
 }
 
 /**
- * Validates that a cross-collection collision check can be performed.
- *
- * @param {string} granuleCollectionId - The collection ID to validate
- * @param {string} bucket - S3 bucket name
- * @param {string} key - S3 key
- * @throws {ValidationError} If collection ID is missing
- */
-function _validateCollisionCheckPreconditions(granuleCollectionId, bucket, key) {
-  if (!granuleCollectionId) {
-    throw new ValidationError(
-      `File ${key} in bucket ${bucket} has an unknown collection. `
-      + 'Cannot determine if it is a cross-collection collision.'
-    );
-  }
-}
-
-/**
  * Checks if there is a collision between collections for the given file.
  *
  * @param {string} collectionId - Collection ID from the database
@@ -281,8 +264,6 @@ async function _checkCrossCollectionCollisions({
   collectionCheckRetryCount = 3,
   crossCollectionThrowOnObjectNotFound = false,
 }) {
-  _validateCollisionCheckPreconditions(granuleCollectionId, bucket, key);
-
   let apiResponse;
   try {
     apiResponse = await getFileGranuleAndCollectionByBucketAndKeyMethod({
