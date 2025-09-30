@@ -27,7 +27,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add api endpoint `granules/archive` to archive granules
   - Add api endpoint `executions/archive` to archive executions
   - Task lambda to call above api endpoints with configuration
-  - Add cron scheduler to call above task lambda and archive old records
+  - Add cron scheduler to call above endpoints and archive old records
 
 ### Changed
 

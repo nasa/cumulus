@@ -68,7 +68,7 @@ Default Value is `"cron(0 4 * * ? *)"`
 
 ```tf
 archive_records_config = {
-  schedule_expression: "cron(0 * * * ? *)" // execute every hour
+  schedule_expression: "cron(0 * * * ? *)" # execute every hour
 }
 ```
 
@@ -82,7 +82,7 @@ Default value is 10000.
 
 ```tf
 archive_records_config = {
-  update_limit: 200000, // update 200000 at a time
+  update_limit: 200000, # update 200000 at a time
 }
 ```
 
@@ -94,7 +94,7 @@ Default value is 1000.
 
 ```tf
 archive_records_config = {
-  batch_size: 1000, // update in batches of 1000
+  batch_size: 1000, # update in batches of 1000
 }
 ```
 
@@ -106,7 +106,7 @@ Default value is 365
 
 ```tf
 archive_records_config = {
-  expiration_days: 30, // archive records more than 30 days old
+  expiration_days: 30, # archive records more than 30 days old
 }
 ```
 
@@ -116,6 +116,6 @@ Should the eventBridge rule be deployed. setting this to false will cause the ar
 
 ```tf
 archive_records_config = {
-  deploy_rule: false, // don't deploy the eventbridge rule
+  deploy_rule: false, # don't deploy the eventbridge rule
 }
 ```

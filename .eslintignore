@@ -4,8 +4,6 @@
 **/dist/**
 **/node_modules/**
 **/webpack.config.js
-packages/api/ts-lambdas/**/*.js*
-packages/api/ts-lambdas/**/*.d.ts*
 tmp/**
 docs/**
 _book/**
@@ -38,3 +36,5 @@ _book/**
 /packages/object-store/*.js
 /packages/lzards-api-client/*.d.ts
 /packages/lzards-api-client/*.js
+/packages/api/ts-lambdas/**/*.js*
+/packages/api/ts-lambdas/**/*.d.ts*

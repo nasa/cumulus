@@ -660,11 +660,11 @@ variable "workflow_configurations" {
 
 variable "archive_records_config" {
   type = object({
-    deploy_rule = optional(bool, true), // deploy the archive records cron eventBridgeRule
-    update_limit = optional(number, 100000), // number of granules or executions to archive in one run
-    batch_size = optional(number, 10000), // number of granules or executions to archive call to the /archive endpoint
-    expiration_days = optional(number, 365), // age (in days) after which granules or executions should be archived
-    schedule_expression = optional(string, "cron(0 4 * * ? *)"), // CloudWatch cron schedule for the record archival lambda
+    deploy_rule = optional(bool, true), # deploy the archive records cron eventBridgeRule
+    update_limit = optional(number, 100000), # number of granules or executions to archive in one run
+    batch_size = optional(number, 10000), # number of granules or executions to archive call to the /archive endpoint
+    expiration_days = optional(number, 365), # age (in days) after which granules or executions should be archived
+    schedule_expression = optional(string, "cron(0 4 * * ? *)"), # CloudWatch cron schedule for the record archival lambda
   })
   description = "config object for archive-records tooling"
   default = {
