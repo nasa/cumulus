@@ -3,7 +3,6 @@
 const moment = require('moment');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const clone = require('lodash/clone');
 const range = require('lodash/range');
 const { randomId } = require('@cumulus/common/test-utils');
 
