@@ -60,52 +60,82 @@ There is a pair of api endpoints which are run on a schedule, and archive a batc
 
 Configuration for this functionality is set in the cumulus tf-module, and is structured as follows:
 
-#### daily_archive_records_schedule_expression
+#### archive_records_config.schedule_expression
 
 Cron schedule for running the task, using a Cloudwatch cron expression.
 
 Default Value is `"cron(0 4 * * ? *)"`
 
 ```tf
-daily_archive_records_schedule_expression = "cron(0 * * ? *)"
+archive_records_config = {
+  deploy_rule: true,
+  update_limit: 100000,
+  batch_size: 10000,
+  expiration_days: 365,
+  schedule_expression: "cron(0 * * * ? *)" // execute every hour
+}
 ```
 
 This configuration would set it to run every hour instead
 
-#### archive_update_limit
+#### archive_records_config.update_limit
 
 How many executions and granules to archive in one run of the task function.  This will archive up to <archive_update_limit> granules *and* up to <archive_update_limit> executions. This task function will run in ecs, avoiding uncertainty about time limitations
 
 Default value is 10000.
 
 ```tf
-archive_update_limit = 300000
+archive_records_config = {
+  deploy_rule: true,
+  update_limit: 200000, // update 200000 at a time
+  batch_size: 10000,
+  expiration_days: 365,
+  schedule_expression: "cron(0 4 * * ? *)"
+}
 ```
 
-#### archive_batch_size
+#### archive_records_config.batch_size
 
 Processing batch size, size of individual update calls to Postgres
 
 Default value is 1000.
 
 ```tf
-archive_batch_size = 3000
+archive_records_config = {
+  deploy_rule: true,
+  update_limit: 100000,
+  batch_size: 1000, // update in batches of 1000
+  expiration_days: 365,
+  schedule_expression: "cron(0 4 * * ? *)"
+}
 ```
 
-#### archive_expiration_days
+#### archive_records_config.expiration_days
 
 How old a record should be in days before it is archived.
 
 Default value is 365
 
 ```tf
-archive_expiration_days = 100
+archive_records_config = {
+  deploy_rule: true,
+  update_limit: 100000,
+  batch_size: 10000,
+  expiration_days: 30, // archive records more than 30 days old
+  schedule_expression: "cron(0 4 * * ? *)"
+}
 ```
 
-#### deploy_archive_records_event_rule
+#### archive_records_config.deploy_rule
 
 Should the eventBridge rule be deployed. setting this to false will cause the archive not to be deployed at all. The api endpoint will still exist and can be called directly, but will not happen automatically.
 
 ```tf
-deploy_archive_records_event_rule = false
+archive_records_config = {
+  deploy_rule: false, // don't deploy the eventbridge rule
+  update_limit: 100000,
+  batch_size: 10000,
+  expiration_days: 365,
+  schedule_expression: "cron(0 4 * * ? *)"
+}
 ```
