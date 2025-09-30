@@ -667,4 +667,11 @@ variable "archive_records_config" {
     schedule_expression = optional(string, "cron(0 4 * * ? *)"), // CloudWatch cron schedule for the record archival lambda
   })
   description = "config object for archive-records tooling"
+  default = {
+    deploy_rule = true,
+    update_limit = 100000,
+    batch_size = 10000,
+    expiration_days = 365,
+    schedule_expression = "cron(0 4 * * ? *)",
+  }
 }
