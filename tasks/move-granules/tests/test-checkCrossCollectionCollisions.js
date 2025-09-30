@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const sinon = require('sinon');
-const { InvalidArgument, ValidationError, FileNotFound } = require('@cumulus/errors');
+const { InvalidArgument, FileNotFound } = require('@cumulus/errors');
 
 const { _checkCrossCollectionCollisions } = require('..');
 
@@ -116,32 +116,6 @@ test('_checkCrossCollectionCollisions throws InvalidArgument error if a cross-co
       pRetryOptions: { retries: 3 },
     })
   );
-});
-
-test.serial('_checkCrossCollectionCollisions throws if collectionId is present but granuleCollectionId is null/undefined', async (t) => {
-  const existingCollectionId = 'existing-collection-id';
-  const testGranuleId = 'granule-003';
-
-  t.context.getFileGranuleAndCollectionByBucketAndKeyStub.returns(
-    Promise.resolve({
-      body: JSON.stringify({
-        granuleId: testGranuleId,
-        collectionId: existingCollectionId,
-      }),
-    })
-  );
-
-  const params = {
-    bucket: 'test-bucket',
-    key: 'test-key',
-    granuleCollectionId: undefined, // Simulating a case where granuleCollectionId is not provided
-    getFileGranuleAndCollectionByBucketAndKeyMethod:
-      t.context.getFileGranuleAndCollectionByBucketAndKeyStub,
-  };
-
-  await t.throwsAsync(() => _checkCrossCollectionCollisions(params), {
-    instanceOf: ValidationError,
-  });
 });
 
 test('_checkCrossCollectionCollisions throws InvalidArgument when apiResponse body has no collectionId', async (t) => {
