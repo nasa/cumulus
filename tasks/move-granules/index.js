@@ -182,16 +182,16 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
  * @param {unknown} error - The error thrown by the API call
  * @param {string} bucket - S3 bucket name
  * @param {string} key - S3 key
- * @param {boolean} crossCollectionThrowOnNotFound - Whether to throw on 404 errors
+ * @param {boolean} crossCollectionThrowOnFileNotFound - Whether to throw on 404 errors
  * @throws {FileNotFound|Error} Throws appropriate error based on status code and configuration
  * @returns {boolean} Returns true if the error was a 404 that should be ignored
  */
-function _handleFileNotFoundError(error, bucket, key, crossCollectionThrowOnNotFound) {
+function _handleFileNotFoundError(error, bucket, key, crossCollectionThrowOnFileNotFound) {
   if (!error || !isObject(error) || !('statusCode' in error)) {
     throw error;
   }
   if (error.statusCode === HTTP_NOT_FOUND) {
-    if (crossCollectionThrowOnNotFound) {
+    if (crossCollectionThrowOnFileNotFound) {
       throw new FileNotFound(
         `File ${key} in bucket ${bucket} does not exist in the Cumulus database`
       );
@@ -263,7 +263,7 @@ function _checkForCollision(collectionId, granuleCollectionId, granuleId, bucket
  * @param {string} params.bucket - The S3 bucket name where the file is located
  * @param {string} params.key - The S3 key (path) of the file
  * @param {string} params.granuleCollectionId - The ID of the collection that the granule belongs to
- * @param {boolean} [params.crossCollectionThrowOnNotFound=false] - Whether to throw an error if
+ * @param {boolean} [params.crossCollectionThrowOnFileNotFound=false] - Whether to throw an error if
  * the file is not found in the database
  * @param {number} [params.collectionCheckRetryCount=3] - Number of times to retry the
  * cross-collection-check database call
@@ -279,7 +279,7 @@ async function _checkCrossCollectionCollisions({
   granuleCollectionId,
   getFileGranuleAndCollectionByBucketAndKeyMethod = getFileGranuleAndCollectionByBucketAndKey,
   collectionCheckRetryCount = 3,
-  crossCollectionThrowOnNotFound = false,
+  crossCollectionThrowOnFileNotFound = false,
 }) {
   _validateCollisionCheckPreconditions(granuleCollectionId, bucket, key);
 
@@ -296,7 +296,7 @@ async function _checkCrossCollectionCollisions({
       error,
       bucket,
       key,
-      crossCollectionThrowOnNotFound
+      crossCollectionThrowOnFileNotFound
     );
     if (shouldReturnEarly) {
       return;
@@ -332,7 +332,7 @@ async function _checkCrossCollectionCollisions({
  * check for cross-collection collisions
  * @param {number} [params.collectionCheckRetryCount=3] - Number of times to retry the
  * cross-collection-check database call
- * @param {boolean} [params.crossCollectionThrowOnNotFound=false] - Whether to throw an error if
+ * @param {boolean} [params.crossCollectionThrowOnFileNotFound=false] - Whether to throw an error if
  * a file is not found in the database during cross-collection check
  * @param {object} [params.testOverrides={}] - Test overrides
  * @param {function} [params.testOverrides.getFileGranuleAndCollectionByBucketAndKeyMethod] -
@@ -348,7 +348,7 @@ async function moveFileRequest({
   s3MultipartChunksizeMb,
   checkCrossCollectionCollisions = true,
   collectionCheckRetryCount = 3,
-  crossCollectionThrowOnNotFound = false,
+  crossCollectionThrowOnFileNotFound = false,
   granuleCollectionId,
   testOverrides = {},
 }) {
@@ -389,7 +389,7 @@ async function moveFileRequest({
           testOverrides.getFileGranuleAndCollectionByBucketAndKeyMethod ||
           getFileGranuleAndCollectionByBucketAndKey,
         collectionCheckRetryCount,
-        crossCollectionThrowOnNotFound,
+        crossCollectionThrowOnFileNotFound,
       });
     }
     if (markDuplicates) fileMoved.duplicate_found = true;
@@ -459,7 +459,7 @@ function determineGranuleCollectionId(granule, configCollection) {
  * @param {string} moveParams.granuleCollectionId - Collection ID
  * @param {number} [moveParams.collectionCheckRetryCount] - Number of times to retry the
  * cross-collection-check database call
- * @param {boolean} [moveParams.crossCollectionThrowOnNotFound] - Whether to throw an error if
+ * @param {boolean} [moveParams.crossCollectionThrowOnFileNotFound] - Whether to throw an error if
  * a file is not found in the database during cross-collection check
  * @param {object} [moveParams.testOverrides] - Test overrides
  * @param {boolean} [isCmrFile=false] - Whether these are CMR files
@@ -510,7 +510,7 @@ function processAndMoveFiles(files, moveParams, isCmrFile = false) {
  * for cross-collection collisions
  * @param {number} [params.collectionCheckRetryCount=3] - Number of times to retry the
  * cross-collection-check database call
- * @param {boolean} [params.crossCollectionThrowOnNotFound=false] - Whether to throw an error if
+ * @param {boolean} [params.crossCollectionThrowOnFileNotFound=false] - Whether to throw an error if
  * a file is not found in the database during cross-collection check
  * @param {object} [params.testOverrides={}] - Test overrides
  * @returns {Promise<GranulesObject>} the object with updated granules
@@ -523,7 +523,7 @@ async function moveFilesForAllGranules({
   s3MultipartChunksizeMb,
   checkCrossCollectionCollisions = true,
   collectionCheckRetryCount = 3,
-  crossCollectionThrowOnNotFound = false,
+  crossCollectionThrowOnFileNotFound = false,
   testOverrides = {},
 }) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
@@ -544,7 +544,7 @@ async function moveFilesForAllGranules({
       sourceBucket,
       checkCrossCollectionCollisions,
       collectionCheckRetryCount,
-      crossCollectionThrowOnNotFound,
+      crossCollectionThrowOnFileNotFound,
       granuleCollectionId,
       testOverrides,
     };
@@ -583,7 +583,8 @@ async function moveFilesForAllGranules({
  * cross-collection collisions
  * @param {number} [event.config.collectionCheckRetryCount=3] - Number of times to retry the
  * cross-collection-check database call
- * @param {boolean} [event.config.crossCollectionThrowOnNotFound=true] - Whether to throw an error
+ * @param {boolean} [event.config.crossCollectionThrowOnFileNotFound=true] - Whether to throw
+ * an error
  * if a file is not found in the database during cross-collection check
  * @param {object} event.input - a granules object containing an array of granules
  * @param {MoveGranulesGranule[]} event.input.granules - Array of granule objects
@@ -647,7 +648,7 @@ async function moveGranules(event) {
       s3MultipartChunksizeMb: Number(s3MultipartChunksizeMb),
       checkCrossCollectionCollisions,
       collectionCheckRetryCount: config.collectionCheckRetryCount,
-      crossCollectionThrowOnNotFound: config.crossCollectionThrowOnNotFound,
+      crossCollectionThrowOnFileNotFound: config.crossCollectionThrowOnFileNotFound,
       testOverrides: get(event, 'testOverrides', {}),
     });
   } else {

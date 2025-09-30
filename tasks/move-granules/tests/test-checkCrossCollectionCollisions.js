@@ -227,7 +227,7 @@ test('_checkCrossCollectionCollisions uses custom retry count when provided', as
   );
 });
 
-test('_checkCrossCollectionCollisions throws FileNotFound when API returns 404 and crossCollectionThrowOnNotFound is true', async (t) => {
+test('_checkCrossCollectionCollisions throws FileNotFound when API returns 404 and crossCollectionThrowOnFileNotFound is true', async (t) => {
   const rejectError = new Error('Not Found');
   rejectError.statusCode = 404;
 
@@ -237,7 +237,7 @@ test('_checkCrossCollectionCollisions throws FileNotFound when API returns 404 a
     bucket: 'test-bucket',
     key: 'test-key',
     granuleCollectionId: 'test-collection',
-    crossCollectionThrowOnNotFound: true,
+    crossCollectionThrowOnFileNotFound: true,
     getFileGranuleAndCollectionByBucketAndKeyMethod:
       t.context.getFileGranuleAndCollectionByBucketAndKeyStub,
   };
@@ -250,7 +250,7 @@ test('_checkCrossCollectionCollisions throws FileNotFound when API returns 404 a
   t.true(error.message.includes('File test-key in bucket test-bucket does not exist in the Cumulus database'));
 });
 
-test('_checkCrossCollectionCollisions returns early when file not found and crossCollectionThrowOnNotFound is false', async (t) => {
+test('_checkCrossCollectionCollisions returns early when file not found and crossCollectionThrowOnFileNotFound is false', async (t) => {
   const rejectError = new Error('Not Found');
   rejectError.statusCode = 404;
 
@@ -260,7 +260,7 @@ test('_checkCrossCollectionCollisions returns early when file not found and cros
     bucket: 'test-bucket',
     key: 'test-key',
     granuleCollectionId: 'test-collection',
-    crossCollectionThrowOnNotFound: false,
+    crossCollectionThrowOnFileNotFound: false,
     getFileGranuleAndCollectionByBucketAndKeyMethod:
       t.context.getFileGranuleAndCollectionByBucketAndKeyStub,
   };
