@@ -724,3 +724,34 @@ test('getFileGranuleAndCollectionByBucketAndKey calls the callback with the expe
     key,
   }));
 });
+
+test('bulkArchiveGranules calls the callback with the expected object and returns the parsed response', async (t) => {
+  const body = {
+    batchSize: 100,
+    expirationDays: 200,
+  };
+
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulkArchive/',
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 202,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+
+  await t.notThrowsAsync(granulesApi.bulkArchiveGranules({
+    prefix: t.context.testPrefix,
+    body,
+    callback,
+  }));
+});
