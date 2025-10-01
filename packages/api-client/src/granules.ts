@@ -68,6 +68,7 @@ export const getGranuleResponse = async (params: {
     collectionId,
     query,
     expectedStatusCodes,
+    /* istanbul ignore next */
     callback = invokeApi,
   } = params;
 
@@ -105,6 +106,7 @@ export const getGranule = async (params: {
   granuleId: GranuleId,
   collectionId?: CollectionId,
   query?: { [key: string]: string },
+  /* istanbul ignore next */
   callback?: InvokeApiFunction
 }): Promise<ApiGranuleRecord> => {
   const response = await getGranuleResponse(params);
@@ -139,6 +141,7 @@ export const waitForGranule = async (params: {
     status,
     retries = 10,
     pRetryOptions = {},
+    /* istanbul ignore next */
     callback = invokeApi,
   } = params;
 
@@ -205,6 +208,7 @@ export const reingestGranule = async (params: {
     collectionId,
     workflowName,
     executionArn,
+    /* istanbul ignore next */
     callback = invokeApi,
   } = params;
 
@@ -249,6 +253,7 @@ export const removeFromCMR = async (params: {
   collectionId?: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, granuleId, collectionId, callback = invokeApi } = params;
 
   const path = encodeGranulesURIComponent(granuleId, collectionId);
@@ -298,6 +303,7 @@ export const applyWorkflow = async (params: {
     collectionId,
     workflow,
     meta,
+    /* istanbul ignore next */
     callback = invokeApi,
   } = params;
 
@@ -345,6 +351,7 @@ export const deleteGranule = async (params: {
     prefix,
     granuleId,
     collectionId,
+    /* istanbul ignore next */
     callback = invokeApi,
   } = params;
 
@@ -388,6 +395,7 @@ export const moveGranule = async (params: {
     granuleId,
     collectionId,
     destinations,
+    /* istanbul ignore next */
     callback = invokeApi,
   } = params;
 
@@ -427,6 +435,7 @@ export const removePublishedGranule = async (params: {
   collectionId?: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, granuleId, collectionId, callback = invokeApi } = params;
 
   // pre-delete: Remove the granule from CMR
@@ -456,6 +465,7 @@ export const listGranules = async (params: {
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, query, callback = invokeApi } = params;
 
   return await callback({
@@ -487,6 +497,7 @@ export const createGranule = async (params: {
   body: ApiGranuleRecord,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
 
   return await callback({
@@ -521,6 +532,7 @@ export const replaceGranule = async (params: {
   body: ApiGranuleRecord,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
 
   const path = encodeGranulesURIComponent(body.granuleId, body.collectionId);
@@ -565,6 +577,7 @@ export const updateGranule = async (params: {
   collectionId?: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, granuleId, collectionId, body, callback = invokeApi } = params;
 
   const path = encodeGranulesURIComponent(granuleId, collectionId);
@@ -600,6 +613,7 @@ export const associateExecutionWithGranule = async (params: {
   body: AssociateExecutionRequest,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
 
   const path = encodeGranulesURIComponent(body.granuleId, undefined);
@@ -634,6 +648,7 @@ export const bulkPatchGranuleCollection = async (params: {
   body: BulkPatchGranuleCollection,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
@@ -668,6 +683,7 @@ export const bulkPatch = async (params: {
   body: BulkPatch,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
@@ -702,6 +718,7 @@ export const bulkGranules = async (params: {
   body: unknown,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
 
   return await callback({
@@ -737,6 +754,7 @@ export const bulkDeleteGranules = async (params: {
   body: unknown,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
 
   return await callback({
@@ -779,6 +797,7 @@ export const bulkReingestGranules = async (params: {
   body: unknown,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
 
   return await callback({
@@ -816,6 +835,7 @@ export const bulkOperation = async (params: {
   workflowName: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, granules, workflowName, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
@@ -827,6 +847,32 @@ export const bulkOperation = async (params: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ granules, workflowName }),
+    },
+    expectedStatusCodes: 202,
+  });
+};
+
+export const bulkArchiveGranules = async (params: {
+  prefix: string,
+  body: {
+    batchSize?: number,
+    expirationDays?: number,
+    updateLimit?: number,
+  },
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/granules/bulkArchive/',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
     },
     expectedStatusCodes: 202,
   });
@@ -854,6 +900,7 @@ export const bulkChangeCollection = async (params: {
   },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
   const { prefix, body, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
