@@ -212,6 +212,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint) {
   });
   if (moveGranuleErrors.length > 0) {
     log.error(`Granule ${JSON.stringify(apiGranule)} failed to move.`);
+    moveGranuleErrors[0].$response = [];
     log.error(JSON.stringify(moveGranuleErrors));
     throw new Error(
       JSON.stringify({
