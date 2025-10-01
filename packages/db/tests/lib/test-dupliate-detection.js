@@ -217,4 +217,5 @@ test('findActiveDuplicateGranules excludes inactive granules from results', asyn
 
   t.is(result.sameCollectionMatches.length, 2);
   t.true(result.sameCollectionMatches.every((g) => g.granule_id.startsWith('active')));
+  t.true(result.sameCollectionMatches.every((g) => g.group_state === 'A'));
 });

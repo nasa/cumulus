@@ -109,6 +109,6 @@ export const findActiveDuplicateGranules = async (
   return {
     sameCollectionMatches,
     differentCollectionMatches,
-    customCriteriaMatches: [], // Placeholder
+    customCriteriaMatches: [],
   };
 };
