@@ -13,9 +13,7 @@ const {
   migrationDir,
 } = require('../../dist');
 
-const { getNextGranuleGroupId, findDuplicateGranules } = require('../../dist/lib/duplicate-detection'); // adjust path as needed
-
-const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
+const { getNextGranuleGroupId, findDuplicateGranules } = require('../../dist/lib/duplicate-detection');
 
 // Insert multiple granules with the same producerGranuleId into the specified collection.
 const insertGranulesWithProducerId = async ({
@@ -27,7 +25,7 @@ const insertGranulesWithProducerId = async ({
   granuleIdPrefix = 'g',
 }) => await granulePgModel.insert(
   knex,
-  Array.from({ length: count }).map((_, i) =>
+  Array.from({ length: count }, (_, i) =>
     fakeGranuleRecordFactory({
       granule_id: `${granuleIdPrefix}-${i}`,
       producer_granule_id: producerGranuleId,
@@ -48,7 +46,8 @@ const setGranuleGroupStates = async (knex, granules, state) => {
 };
 
 test.before(async (t) => {
-  const { knexAdmin, knex } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
+  const { knexAdmin, knex } = await generateLocalTestDb(t.context.testDbName, migrationDir);
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
   t.context.granulePgModel = new GranulePgModel();
