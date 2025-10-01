@@ -776,6 +776,7 @@ export const getFileGranuleAndCollectionByBucketAndKey = async (params: {
   prefix: string,
   bucket: string,
   key: string,
+  pRetryOptions?: pRetry.Options,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, bucket, key, callback = invokeApi } = params;
@@ -787,6 +788,7 @@ export const getFileGranuleAndCollectionByBucketAndKey = async (params: {
       resource: '/{proxy+}',
       path: `/granules/files/get_collection_and_granule_id/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
     },
+    pRetryOptions: params.pRetryOptions,
   });
 };
 
