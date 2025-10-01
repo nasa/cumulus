@@ -63,6 +63,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added configuration `crossCollectionThrowOnObjectNotFound` to allow setting MoveGranules to fail in a collision/orphan situation
   - Added `collectionCheckRetryCount` to allow configuration of the retry count for the `MoveGranules` crossCollection lookup
 
+- Removed error response object from `moveGranule` due to JSON parsing cyclical error
+
 ## [v21.0.0] 2025-09-09
 
 ### **CUMULUS-4058** Epic: Handle Granules with Identical producerGranuleId in Different Collections
