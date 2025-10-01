@@ -338,9 +338,27 @@ variable "payload_timeout" {
 }
 
 variable "update_limit" {
-type = number
+  type = number
   default = 10000
   description = "number of executions to cleanup in one lambda run"
+}
+
+variable "archive_records_config" {
+  type = object({
+    deploy_rule = optional(bool, true), # deploy the archive records cron eventBridgeRule
+    update_limit = optional(number, 100000), # number of granules or executions to archive in one run
+    batch_size = optional(number, 10000), # number of granules or executions to archive call to the /archive endpoint
+    expiration_days = optional(number, 365), # age (in days) after which granules or executions should be archived
+    schedule_expression = optional(string, "cron(0 4 * * ? *)"), # CloudWatch cron schedule for the record archival lambda
+  })
+  description = "config object for archive-records tooling"
+  default = {
+    deploy_rule = true,
+    update_limit = 100000,
+    batch_size = 10000,
+    expiration_days = 365,
+    schedule_expression = "cron(0 4 * * ? *)",
+  }
 }
 
 variable "log_destination_arn" {
@@ -379,3 +397,4 @@ variable "dead_letter_recovery_memory" {
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
+

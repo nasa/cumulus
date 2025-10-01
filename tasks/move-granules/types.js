@@ -5,6 +5,7 @@
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 /**
+ * @typedef {import('@cumulus/common/types').BucketsConfigObject} BucketsConfigObject
  * @typedef {InstanceType<typeof BucketsConfig>} BucketsConfigType
  * @typedef {import('@cumulus/types/api/granules').ApiGranule} ApiGranule
  * @typedef {import('@cumulus/types/api/collections').PartialCollectionRecord} ApiCollection
