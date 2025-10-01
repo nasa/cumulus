@@ -37,10 +37,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     based on the provider from the record message.
   - Updated `messageConsumer` lambda handler to async/await style
 
-- **CUMULUS-4200**
-  - updated metrics_es_host terraform variable description and validation
-  - Users should ensure that the metrics_es_host does not include `https://`
-
 - **CUMULUS-4252**
   - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
     `@aws-sdk/lib-storage@3.896.0`
