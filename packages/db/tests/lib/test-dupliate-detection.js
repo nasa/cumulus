@@ -13,7 +13,7 @@ const {
   migrationDir,
 } = require('../../dist');
 
-const { getNextGranuleGroupId, findDuplicateGranules } = require('../../dist/lib/duplicate-detection');
+const { getNextGranuleGroupId, findActiveDuplicateGranules } = require('../../dist/lib/duplicate-detection');
 
 // Insert multiple granules with the same producerGranuleId into the specified collection.
 const insertGranulesWithProducerId = async ({
@@ -87,7 +87,7 @@ test('getNextGranuleGroupId returns increasing sequence values', async (t) => {
   t.true(id2 > id1, 'Second call should return a higher group_id');
 });
 
-test('findDuplicateGranules finds multiple duplicates in same collection', async (t) => {
+test('findActiveDuplicateGranules finds multiple duplicates in same collection', async (t) => {
   const { knex, collectionId, collectionCumulusId, granulePgModel } = t.context;
 
   const producerGranuleId = 'same-producer-id-same-collection';
@@ -101,7 +101,7 @@ test('findDuplicateGranules finds multiple duplicates in same collection', async
     granuleIdPrefix: 'same-coll',
   });
 
-  const result = await findDuplicateGranules({
+  const result = await findActiveDuplicateGranules({
     collectionId,
     producerGranuleId,
     collectionCumulusId,
@@ -111,7 +111,7 @@ test('findDuplicateGranules finds multiple duplicates in same collection', async
   t.is(result.differentCollectionMatches.length, 0);
 });
 
-test('findDuplicateGranules finds duplicates across collections', async (t) => {
+test('findActiveDuplicateGranules finds duplicates across collections', async (t) => {
   const {
     knex,
     collectionId1,
@@ -140,7 +140,7 @@ test('findDuplicateGranules finds duplicates across collections', async (t) => {
     granuleIdPrefix: 'diff-2',
   });
 
-  const result = await findDuplicateGranules({
+  const result = await findActiveDuplicateGranules({
     collectionId: collectionId1,
     producerGranuleId,
     collectionCumulusId: collectionCumulusId1,
@@ -150,7 +150,7 @@ test('findDuplicateGranules finds duplicates across collections', async (t) => {
   t.is(result.differentCollectionMatches.length, 2);
 });
 
-test('findDuplicateGranules excludes granule with matching granuleId', async (t) => {
+test('findActiveDuplicateGranules excludes granule with matching granuleId', async (t) => {
   const { knex, collectionId, collectionCumulusId, granulePgModel } = t.context;
 
   const producerGranuleId = 'producer-id-self-test';
@@ -173,7 +173,7 @@ test('findDuplicateGranules excludes granule with matching granuleId', async (t)
     granuleIdPrefix: 'other',
   });
 
-  const result = await findDuplicateGranules({
+  const result = await findActiveDuplicateGranules({
     collectionId,
     producerGranuleId,
     collectionCumulusId,
@@ -184,7 +184,7 @@ test('findDuplicateGranules excludes granule with matching granuleId', async (t)
   t.false(result.sameCollectionMatches.some((g) => g.granule_id === selfGranuleId));
 });
 
-test('findDuplicateGranules excludes inactive granules from results', async (t) => {
+test('findActiveDuplicateGranules excludes inactive granules from results', async (t) => {
   const { knex, collectionId, collectionCumulusId, granulePgModel } = t.context;
   const producerGranuleId = 'producer-id-active-test';
 
@@ -209,7 +209,7 @@ test('findDuplicateGranules excludes inactive granules from results', async (t) 
   await setGranuleGroupStates(knex, inactiveGranules, 'H');
   await setGranuleGroupStates(knex, activeGranules, 'A');
 
-  const result = await findDuplicateGranules({
+  const result = await findActiveDuplicateGranules({
     collectionId,
     producerGranuleId,
     collectionCumulusId,

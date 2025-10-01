@@ -2,14 +2,14 @@ import { Knex } from 'knex';
 import { deconstructCollectionId } from '@cumulus/message/Collections';
 import { CollectionPgModel } from '../models/collection';
 
-type GranuleInput = {
+export type GranuleInput = {
   collectionId: string;
   producerGranuleId: string;
   collectionCumulusId?: number;
   granuleId?: string;
 };
 
-type GranuleRecord = {
+export type GranuleGroupRecord = {
   cumulus_id: number;
   granule_id: string;
   producer_granule_id: string;
@@ -18,10 +18,22 @@ type GranuleRecord = {
   group_state: string | null;
 };
 
-type DuplicateGranulesResult = {
-  sameCollectionMatches: GranuleRecord[];
-  differentCollectionMatches: GranuleRecord[];
-  customCriteriaMatches: GranuleRecord[];
+export type DuplicateGranulesResult = {
+  /**
+   * Granules that have the same producerGranuleId and belong to the same collection
+   * as the input granule.
+   */
+  sameCollectionMatches: GranuleGroupRecord[];
+  /**
+   * Granules that have the same producerGranuleId but belong to a different collection
+   * than the input granule.
+   */
+  differentCollectionMatches: GranuleGroupRecord[];
+  /**
+   * Granules that match the input granule based on custom-defined duplication criteria.
+   * Currently unused and always returns an empty array; reserved for future enhancements.
+   */
+  customCriteriaMatches: GranuleGroupRecord[];
 };
 
 export const getNextGranuleGroupId = async (knex: Knex) : Promise<number> => {
@@ -30,12 +42,22 @@ export const getNextGranuleGroupId = async (knex: Knex) : Promise<number> => {
 };
 
 /**
- * Detects "active" duplicate granules based on producerGranuleId and collection.
- * A granule is considered "active" if its `granule_groups.state != 'H'` or it's
- * not in granule_groups.
+ * Finds "active" duplicate granules based on the `producerGranuleId` and associated collection,
+ * and excludes input granule itself by `granuleId` if provided
+ *
+ * A granule is considered a duplicate if it shares the same `producerGranuleId` as the
+ * input granule.
+ * It is considered "active" if:
+ *   - It is either not in the `granule_groups` table, OR
+ *   - Its associated `granule_groups.state` is NOT equal to `'H'` (i.e., not hidden).
+ *
+ * @param input - The granule input object
+ * @param knex - DB client
+ * @param collectionPgModel - (Optional) Instance of the collection database model
+ * @returns - the duplicate granules found
  */
-export const findDuplicateGranules = async (
-  incoming: GranuleInput,
+export const findActiveDuplicateGranules = async (
+  input: GranuleInput,
   knex: Knex,
   collectionPgModel = new CollectionPgModel()
 ): Promise<DuplicateGranulesResult> => {
@@ -43,9 +65,9 @@ export const findDuplicateGranules = async (
     collectionId,
     producerGranuleId,
     granuleId,
-  } = incoming;
+  } = input;
 
-  let { collectionCumulusId } = incoming;
+  let { collectionCumulusId } = input;
 
   // Ensure we have collectionCumulusId
   if (!collectionCumulusId) {
@@ -74,7 +96,7 @@ export const findDuplicateGranules = async (
       'granules.collection_cumulus_id',
       'granules.status',
       'granule_groups.state as group_state'
-    ) as GranuleRecord[];
+    ) as GranuleGroupRecord[];
 
   // Split results by collection
   const sameCollectionMatches = duplicates.filter(

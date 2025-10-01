@@ -124,7 +124,7 @@ export {
 } from './lib/collection';
 
 export {
-  findDuplicateGranules,
+  findActiveDuplicateGranules,
 } from './lib/duplicate-detection';
 
 export {

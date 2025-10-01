@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4147**
   - Added PostgreSQL sequence `granule_group_id_seq` and set the default value of
     `granule_groups.group_id` to use `nextval('granule_group_id_seq')`.
-  - Added function `findDuplicateGranules` to `@cumulus/db/src/lib/duplicate-detection` to
+  - Added function `findActiveDuplicateGranules` to `@cumulus/db/src/lib/duplicate-detection` to
     return duplicate granules
 
 ### Notable Changes
