@@ -65,6 +65,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4254**
   - Pinned `@aws-sdk` version for `api` and `aws-client` packages to `3.621.0` to circumvent circular JSON errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
 
 ## [v21.0.0] 2025-09-09
 
