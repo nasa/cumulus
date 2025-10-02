@@ -26,7 +26,7 @@ resource "aws_lambda_function" "cnm_response_task" {
   s3_key           = aws_s3_bucket_object.cnm_response_lambda_zip.id
   handler          = "gov.nasa.cumulus.CNMResponse::handleRequestStreams"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "java11"
+  runtime          = "java21"
   timeout          = 300
   memory_size      = 256
   source_code_hash = aws_s3_bucket_object.cnm_response_lambda_zip.etag

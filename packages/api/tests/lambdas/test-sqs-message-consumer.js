@@ -402,6 +402,56 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
   });
 });
 
+test.serial('SQS message consumer queues correct number of workflows for rules matching the event provider', async (t) => {
+  const { queueMessageStub } = t.context;
+
+  const queue = await createSqsQueues(randomId('queue'));
+  const provider = randomId('provider');
+  // Set visibility timeout to 0 for testing to ensure that message is
+  // read when processing all rules
+  const visibilityTimeout = 0;
+  const rules = [
+    fakeRuleFactoryV2({
+      name: randomId('matchingRule'),
+      provider,
+      rule: {
+        type: 'sqs',
+        value: queue.queueUrl,
+      },
+      meta: {
+        visibilityTimeout,
+      },
+      state: 'ENABLED',
+      workflow,
+    }),
+    fakeRuleFactoryV2({
+      rule: {
+        type: 'sqs',
+        value: queue.queueUrl,
+      },
+      meta: {
+        visibilityTimeout,
+      },
+      state: 'ENABLED',
+      workflow,
+    }),
+  ];
+  t.context.fetchRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
+
+  await SQS.sendSQSMessage(
+    queue.queueUrl,
+    { provider }
+  );
+
+  await handler(event);
+
+  t.is(queueMessageStub.callCount, 1);
+
+  t.teardown(async () => {
+    await cleanupQueues([queue]);
+  });
+});
+
 test.serial('processQueues archives messages from the ENABLED sqs rule only', async (t) => {
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();

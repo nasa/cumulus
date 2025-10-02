@@ -7,6 +7,7 @@ const { tmpdir } = require('os');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const pTimeout = require('p-timeout');
+const { randomBytes } = require('crypto');
 const { Readable } = require('stream');
 const { promisify } = require('util');
 
@@ -456,7 +457,7 @@ test('streamS3Upload() throws error if upload stream errors', async (t) => {
 });
 
 test('uploadS3FileStream() respects S3 configuration parameters', async (t) => {
-  const readStream = fs.createReadStream('/dev/urandom', { end: 5 });
+  const readStream = Readable.from(randomBytes(5));
   const key = cryptoRandomString({ length: 5 });
   const contentType = 'application/json';
   await uploadS3FileStream(
