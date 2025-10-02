@@ -1,5 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { randomId } = require('@cumulus/common/test-utils');
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
@@ -108,6 +109,7 @@ test('findActiveDuplicateGranules finds multiple duplicates in same collection',
 
   t.is(resultByCollectionCumulusId.sameCollectionMatches.length, 3);
   t.is(resultByCollectionCumulusId.differentCollectionMatches.length, 0);
+  t.is(resultByCollectionCumulusId.customCriteriaMatches.length, 0);
 
   const resultByollectionId = await findActiveDuplicateGranules({
     collectionId,
@@ -117,6 +119,7 @@ test('findActiveDuplicateGranules finds multiple duplicates in same collection',
 
   t.is(resultByollectionId.sameCollectionMatches.length, 3);
   t.is(resultByollectionId.differentCollectionMatches.length, 0);
+  t.is(resultByollectionId.customCriteriaMatches.length, 0);
 });
 
 test('findActiveDuplicateGranules finds duplicates across collections', async (t) => {
@@ -156,6 +159,7 @@ test('findActiveDuplicateGranules finds duplicates across collections', async (t
 
   t.is(result.sameCollectionMatches.length, 3);
   t.is(result.differentCollectionMatches.length, 2);
+  t.is(result.customCriteriaMatches.length, 0);
 });
 
 test('findActiveDuplicateGranules excludes granule with matching granuleId', async (t) => {
@@ -190,6 +194,8 @@ test('findActiveDuplicateGranules excludes granule with matching granuleId', asy
 
   t.is(result.sameCollectionMatches.length, 2);
   t.false(result.sameCollectionMatches.some((g) => g.granule_id === selfGranuleId));
+  t.is(result.differentCollectionMatches.length, 0);
+  t.is(result.customCriteriaMatches.length, 0);
 });
 
 test('findActiveDuplicateGranules excludes inactive granules from results', async (t) => {
@@ -226,12 +232,58 @@ test('findActiveDuplicateGranules excludes inactive granules from results', asyn
   t.is(result.sameCollectionMatches.length, 2);
   t.true(result.sameCollectionMatches.every((g) => g.granule_id.startsWith('active')));
   t.true(result.sameCollectionMatches.every((g) => g.group_state === 'A'));
+  t.is(result.differentCollectionMatches.length, 0);
+  t.is(result.customCriteriaMatches.length, 0);
+});
+
+test('findActiveDuplicateGranules finds no duplicates when producerGranuleId provided is empty string', async (t) => {
+  const { knex, collectionCumulusId, granulePgModel } = t.context;
+
+  await insertGranulesWithProducerId({
+    knex,
+    granulePgModel,
+    count: 3,
+    collectionCumulusId,
+    producerGranuleId: randomId(),
+    granuleIdPrefix: randomId(),
+  });
+
+  const result = await findActiveDuplicateGranules({
+    producerGranuleId: '',
+    collectionCumulusId,
+  }, knex);
+
+  t.is(result.sameCollectionMatches.length, 0);
+  t.is(result.differentCollectionMatches.length, 0);
+  t.is(result.customCriteriaMatches.length, 0);
+});
+
+test('findActiveDuplicateGranules finds no duplicates when producerGranuleId provided has no matching granules in db', async (t) => {
+  const { knex, collectionCumulusId, granulePgModel } = t.context;
+
+  await insertGranulesWithProducerId({
+    knex,
+    granulePgModel,
+    count: 3,
+    collectionCumulusId,
+    producerGranuleId: randomId(),
+    granuleIdPrefix: randomId(),
+  });
+
+  const result = await findActiveDuplicateGranules({
+    producerGranuleId: randomId(),
+    collectionCumulusId,
+  }, knex);
+
+  t.is(result.sameCollectionMatches.length, 0);
+  t.is(result.differentCollectionMatches.length, 0);
+  t.is(result.customCriteriaMatches.length, 0);
 });
 
 test('findActiveDuplicateGranules throws error when collectionId provided is not valid', async (t) => {
   const { knex } = t.context;
   const collectionId = '';
-  const producerGranuleId = 'some-producer-id';
+  const producerGranuleId = randomId();
 
   await t.throwsAsync(
     () => findActiveDuplicateGranules({
