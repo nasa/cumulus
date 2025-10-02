@@ -101,14 +101,22 @@ test('findActiveDuplicateGranules finds multiple duplicates in same collection',
     granuleIdPrefix: 'same-coll',
   });
 
-  const result = await findActiveDuplicateGranules({
+  const resultByCollectionCumulusId = await findActiveDuplicateGranules({
+    producerGranuleId,
+    collectionCumulusId,
+  }, knex);
+
+  t.is(resultByCollectionCumulusId.sameCollectionMatches.length, 3);
+  t.is(resultByCollectionCumulusId.differentCollectionMatches.length, 0);
+
+  const resultByollectionId = await findActiveDuplicateGranules({
     collectionId,
     producerGranuleId,
     collectionCumulusId,
   }, knex);
 
-  t.is(result.sameCollectionMatches.length, 3);
-  t.is(result.differentCollectionMatches.length, 0);
+  t.is(resultByollectionId.sameCollectionMatches.length, 3);
+  t.is(resultByollectionId.differentCollectionMatches.length, 0);
 });
 
 test('findActiveDuplicateGranules finds duplicates across collections', async (t) => {
@@ -218,4 +226,18 @@ test('findActiveDuplicateGranules excludes inactive granules from results', asyn
   t.is(result.sameCollectionMatches.length, 2);
   t.true(result.sameCollectionMatches.every((g) => g.granule_id.startsWith('active')));
   t.true(result.sameCollectionMatches.every((g) => g.group_state === 'A'));
+});
+
+test('findActiveDuplicateGranules throws error when collectionId provided is not valid', async (t) => {
+  const { knex } = t.context;
+  const collectionId = '';
+  const producerGranuleId = 'some-producer-id';
+
+  await t.throwsAsync(
+    () => findActiveDuplicateGranules({
+      collectionId,
+      producerGranuleId,
+    }, knex),
+    { message: `invalid collectionId: "${collectionId}"` }
+  );
 });
