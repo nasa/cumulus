@@ -1,6 +1,11 @@
 import { Knex } from 'knex';
 
 export const up = async (knex: Knex): Promise<void> => {
+  await knex.raw(`
+    CREATE SEQUENCE IF NOT EXISTS granule_group_id_seq
+      MAXVALUE 2147483647
+    `);
+
   await knex.schema.createTable('granule_groups', (table) => {
     table
       .integer('granule_cumulus_id')
@@ -11,7 +16,8 @@ export const up = async (knex: Knex): Promise<void> => {
     table
       .integer('group_id')
       .comment('Granule duplicate group id')
-      .notNullable();
+      .notNullable()
+      .defaultTo(knex.raw('nextval(\'granule_group_id_seq\')'));
     table
       .specificType('state', 'char(1)')
       .comment('Granule active state')

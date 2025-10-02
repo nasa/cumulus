@@ -124,6 +124,14 @@ export {
 } from './lib/collection';
 
 export {
+  DuplicateGranulesResult,
+  findActiveDuplicateGranules,
+  getNextGranuleGroupId,
+  GranuleGroupRecord,
+  GranuleInput,
+} from './lib/duplicate-detection';
+
+export {
   batchDeleteExecutionFromDatabaseByCumulusCollectionId,
   executionArnsFromGranuleIdsAndWorkflowNames,
   getApiExecutionCumulusIds,
