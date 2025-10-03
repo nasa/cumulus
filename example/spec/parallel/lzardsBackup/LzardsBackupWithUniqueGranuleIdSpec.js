@@ -21,7 +21,6 @@ const { loadConfig } = require('../../helpers/testUtils');
 const commonSearchParams = {
   requestSummary: false,
   includeEvents: true,
-  status: '',
 };
 
 describe('The Lzards Backup Task for duplicate granule with producerGranuleId and uniquified granuleId', () => {
