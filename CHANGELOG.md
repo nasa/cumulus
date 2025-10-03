@@ -64,6 +64,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `collectionCheckRetryCount` to allow configuration of the retry count for the `MoveGranules` crossCollection lookup
 
 - **CUMULUS-4254**
+  - Updated `@cumulus/api/lib/utils.errorify` to remove circular reference
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
 
