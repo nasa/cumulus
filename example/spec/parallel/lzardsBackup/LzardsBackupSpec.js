@@ -40,6 +40,7 @@ describe('The Lzards Backup Task ', () => {
   const commonSearchParams = {
     requestSummary: false,
     includeEvents: true,
+    status: '',
   };
 
   const testSetup = async (configOverride = {}) => {
