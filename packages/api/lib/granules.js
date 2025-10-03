@@ -27,6 +27,7 @@ const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
+const { errorify } = require('./utils');
 const FileUtils = require('./FileUtils');
 
 /**
@@ -212,10 +213,9 @@ async function moveGranule(apiGranule, destinations, distEndpoint) {
   });
   if (moveGranuleErrors.length > 0) {
     log.error(`Granule ${JSON.stringify(apiGranule)} failed to move.`);
-    moveGranuleErrors[0].$response = [];
-    log.error(JSON.stringify(moveGranuleErrors));
+    log.error(errorify(moveGranuleErrors));
     throw new Error(
-      JSON.stringify({
+      errorify({
         reason: 'Failed to move granule',
         granule: apiGranule,
         errors: moveGranuleErrors,
