@@ -27,7 +27,7 @@ const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
-const { errorify } = require('./utils');
+const { errorify } = require('@cumulus/errors');
 const FileUtils = require('./FileUtils');
 
 /**

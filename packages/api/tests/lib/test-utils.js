@@ -2,9 +2,9 @@
 
 const test = require('ava');
 const isString = require('lodash/isString');
-const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
+const { InvalidRegexError, UnmatchedRegexError, errorify } = require('@cumulus/errors');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
-const { errorify, validateCollection, setEnvVarsForOperation } = require('../../lib/utils');
+const { validateCollection, setEnvVarsForOperation } = require('../../lib/utils');
 
 test.afterEach(() => {
   delete process.env.TEST_VAR;

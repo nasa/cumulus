@@ -3,32 +3,7 @@
 const get = require('lodash/get');
 const isObject = require('lodash/isObject');
 const isNil = require('lodash/isNil');
-const pick = require('lodash/pick');
 const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
-
-function replacerFactory() {
-  const seen = new WeakSet();
-
-  return function replacer(key, value) {
-    if (isObject(value) && value !== null) {
-      if (seen.has(value)) {
-        return undefined; // Remove circular reference
-      }
-      seen.add(value);
-    }
-
-    // If it's an object but not an array, pick its own property names
-    if (!Array.isArray(value) && isObject(value)) {
-      return pick(value, Object.getOwnPropertyNames(value));
-    }
-
-    return value;
-  };
-}
-
-function errorify(err) {
-  return JSON.stringify(err, replacerFactory());
-}
 
 function filenamify(fileName) {
   return fileName.replace(/["%*/:<>?\\|]/g, '_');
@@ -197,7 +172,6 @@ const validateCollection = (collection) => {
 module.exports = {
   deconstructCollectionId,
   parseException,
-  errorify,
   extractDate,
   filenamify,
   findCaseInsensitiveKey,
