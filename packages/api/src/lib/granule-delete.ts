@@ -12,7 +12,7 @@ import {
   PdrPgModel,
   ProviderPgModel,
 } from '@cumulus/db';
-import { DeletePublishedGranule } from '@cumulus/errors';
+import { DeletePublishedGranule, errorify } from '@cumulus/errors';
 import { ApiFile } from '@cumulus/types';
 import Logger from '@cumulus/logger';
 const { publishGranuleDeleteSnsMessage } = require('../../lib/publishSnsMessageUtils');
@@ -104,7 +104,7 @@ const deleteGranuleAndFiles = async (params: {
       deletedFiles: files,
     };
   } catch (error) {
-    logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(files)}: ${JSON.stringify(error)}`);
+    logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(files)}: ${errorify(error)}`);
     throw error;
   }
 };

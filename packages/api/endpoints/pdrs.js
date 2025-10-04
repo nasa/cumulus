@@ -10,7 +10,7 @@ const {
   translatePostgresPdrToApiPdr,
   createRejectableTransaction,
 } = require('@cumulus/db');
-const { RecordDoesNotExist } = require('@cumulus/errors');
+const { errorify, RecordDoesNotExist } = require('@cumulus/errors');
 const { PdrSearch } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
 
@@ -80,7 +80,7 @@ async function del(req, res) {
       return await s3Utils.deleteS3Object(process.env.system_bucket, pdrS3Key);
     });
   } catch (error) {
-    log.debug(`Failed to delete PDR with name ${pdrName}. Error ${JSON.stringify(error)}.`);
+    log.debug(`Failed to delete PDR with name ${pdrName}. Error ${errorify(error)}.`);
     throw error;
   }
   return res.send({ detail: 'Record deleted' });

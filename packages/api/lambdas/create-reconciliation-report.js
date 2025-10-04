@@ -29,6 +29,7 @@ const {
   translatePostgresFileToApiFile,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
+const { errorify } = require('@cumulus/errors');
 
 const {
   ReconciliationReportPgModel,
@@ -36,7 +37,7 @@ const {
 } = require('@cumulus/db');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
-const { errorify, filenamify } = require('../lib/utils');
+const { filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
   convertToDBGranuleSearchParams,

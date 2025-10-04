@@ -4,6 +4,7 @@
 
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
+import { errorify } from '@cumulus/errors';
 import { PublishCommand, CreateTopicCommand } from '@aws-sdk/client-sns';
 
 import { sns } from './services';
@@ -38,7 +39,7 @@ export const publishSnsMessageWithRetry = async (
     },
     {
       maxTimeout: 5000,
-      onFailedAttempt: (err) => log.debug(`publishSnsMessageWithRetry('${snsTopicArn}', '${JSON.stringify(message)}') failed with ${err.retriesLeft} retries left: ${JSON.stringify(err)}`),
+      onFailedAttempt: (err) => log.debug(`publishSnsMessageWithRetry('${snsTopicArn}', '${JSON.stringify(message)}') failed with ${err.retriesLeft} retries left: ${errorify(err)}`),
       ...retryOptions,
     }
   );

@@ -1,4 +1,8 @@
 /* eslint-disable max-classes-per-file */
+
+const isObject = require('lodash/isObject');
+const pick = require('lodash/pick');
+
 /**
  * A constructor function that returns an instance of Error (or something that inherits from Error).
  * Typically, this is going to be a class, such as `Error`, `TypeError`, etc.
@@ -180,3 +184,40 @@ export const PostgresUpdateFailed = createErrorType('PostgresUpdateFailed');
 export const IndexExistsError = createErrorType('IndexExistsError');
 
 export const UnmetRequirementsError = createErrorType('UnmetRequirementsError');
+
+/**
+ * Creates a JSON replacer function that removes circular references and
+ * ensures only an object's own properties (not inherited ones) are serialized.
+ *
+ * @returns A JSON replacer function
+ */
+const replacerFactory = (): (key: string, value: any) => any => {
+  const seen = new WeakSet();
+
+  const replacer = (_key: string, value: any): any => {
+    if (isObject(value) && value !== null) {
+      if (seen.has(value)) {
+        return undefined; // Remove circular reference
+      }
+      seen.add(value);
+    }
+
+    if (!Array.isArray(value) && isObject(value)) {
+      return pick(value, Object.getOwnPropertyNames(value));
+    }
+
+    return value;
+  };
+
+  return replacer;
+};
+
+/**
+ * Safely serializes an error-like object to JSON, removing circular references
+ * and including only own properties.
+ *
+ * @param err - The error or object to serialize
+ * @returns A JSON string representation of the object
+ */
+export const errorify = (err: any): string =>
+  JSON.stringify(err, replacerFactory());
