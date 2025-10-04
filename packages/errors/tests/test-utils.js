@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const isString = require('lodash/isString');
-const { errorify } = require('../');
+const { errorify } = require('..');
 
 test('errorify serializes a normal error object', (t) => {
   const err = new Error('Something went wrong');
@@ -49,4 +49,3 @@ test('errorify handles nested circular references', (t) => {
   t.truthy(parsed.meta);
   t.is(parsed.meta.parent, undefined); // circular should be removed
 });
-

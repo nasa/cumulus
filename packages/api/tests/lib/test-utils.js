@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const isString = require('lodash/isString');
 const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
 const { validateCollection, setEnvVarsForOperation } = require('../../lib/utils');
