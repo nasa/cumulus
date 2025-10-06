@@ -1,6 +1,6 @@
 const Logger = require('@cumulus/logger');
+const { errorify } = require('@cumulus/errors');
 const { postRequestToOrca } = require('./orca');
-const { errorify } = require('./utils');
 
 const log = new Logger({ sender: '@cumulus/api' });
 
