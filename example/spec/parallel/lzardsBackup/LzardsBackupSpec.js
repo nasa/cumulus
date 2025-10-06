@@ -283,6 +283,7 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
+            collection: `${collection.name}___${collection.version}`,
             pageLimit: 25,
             'metadata[provider]': provider,
             'metadata[createdAt][gte]': thirtyMinutesAgo,

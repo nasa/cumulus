@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed 
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
 ## [v20.2.1] 2025-08-14
 
 ### Changed
