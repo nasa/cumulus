@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## **CUMULUS-3744** Epic: Handle Granules with identical file names within a collection
+
+### Added
+
+- **CUMULUS-4146**
+  - Added new table and postgres model `granule_groups` to provide linkage between duplicate granule sets
+- **CUMULUS-4147**
+  - Added PostgreSQL sequence `granule_group_id_seq` and set the default value of
+    `granule_groups.group_id` to use `nextval('granule_group_id_seq')`.
+  - Added function `findActiveDuplicateGranules` to `@cumulus/db/src/lib/duplicate-detection` to
+    return duplicate granules
+
+### Notable Changes
+
 ### Migration Notes
 
 - This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
