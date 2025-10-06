@@ -18,6 +18,7 @@ import { PostgresPdr } from './types/pdr';
 import { PostgresProvider } from './types/provider';
 import { PostgresReconciliationReport } from './types/reconciliation_report';
 import { PostgresRule } from './types/rule';
+import { PostgresGranuleGroup } from './types/granule-group';
 
 export const createTestDatabase = async (knex: Knex, dbName: string, dbUser: string) => {
   await knex.raw(`create database "${dbName}";`);
@@ -124,6 +125,14 @@ export const fakeGranuleRecordFactory = (
   producer_granule_id: cryptoRandomString({ length: 5 }),
   status: 'completed',
   created_at: new Date(),
+  ...params,
+});
+
+export const fakeGranuleGroupRecordFactory = (
+  params: Partial<PostgresGranuleGroup>
+): Partial<PostgresGranuleGroup> => ({
+  created_at: new Date(),
+  updated_at: new Date(),
   ...params,
 });
 
