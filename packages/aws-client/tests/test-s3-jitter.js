@@ -55,13 +55,15 @@ test('applyS3Jitter works without operation parameter', async (t) => {
 test('applyS3Jitter applies different random values on multiple calls', async (t) => {
   const maxJitterMs = 1000;
   const iterations = 10;
-  const durations = [];
 
-  for (let i = 0; i < iterations; i++) {
+  // Run all jitter calls in parallel
+  const durationPromises = Array.from({ length: iterations }, async () => {
     const startTime = Date.now();
     await applyS3Jitter(maxJitterMs);
-    durations.push(Date.now() - startTime);
-  }
+    return Date.now() - startTime;
+  });
+
+  const durations = await Promise.all(durationPromises);
 
   // Check that we got different values (at least some variation)
   const uniqueDurations = new Set(durations);
@@ -80,7 +82,8 @@ test('applyS3Jitter respects upper bound', async (t) => {
   const maxJitterMs = 100;
   const iterations = 20;
 
-  for (let i = 0; i < iterations; i++) {
+  // Run all jitter calls in parallel and check each duration
+  const durationPromises = Array.from({ length: iterations }, async (_, index) => {
     const startTime = Date.now();
     await applyS3Jitter(maxJitterMs);
     const duration = Date.now() - startTime;
@@ -88,9 +91,10 @@ test('applyS3Jitter respects upper bound', async (t) => {
     // Should never exceed maxJitterMs (allow 20ms for overhead)
     t.true(
       duration <= maxJitterMs + 20,
-      `Iteration ${i}: Duration ${duration}ms exceeded max ${maxJitterMs}ms`
+      `Iteration ${index}: Duration ${duration}ms exceeded max ${maxJitterMs}ms`
     );
-  }
+  });
 
+  await Promise.all(durationPromises);
   t.pass();
 });
