@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 
 const {
   addCollections,
@@ -332,8 +331,7 @@ describe('The SyncGranule workflow with S3 jitter', () => {
       process.env.S3_JITTER_MAX_MS = '2000';
 
       // Launch 3 concurrent workflow executions with jitter enabled
-      const workflowPromises = [];
-      for (let i = 0; i < 3; i += 1) {
+      const setupPromises = Array.from({ length: 3 }, async (_, i) => {
         const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
         const inputPayload = await setupTestGranuleForIngest(
           config.bucket,
@@ -343,19 +341,20 @@ describe('The SyncGranule workflow with S3 jitter', () => {
           testDataFolder
         );
         granuleIds.push(inputPayload.granules[0].granuleId);
+        return inputPayload;
+      });
 
-        workflowPromises.push(
-          buildAndExecuteWorkflow(
-            config.stackName,
-            config.bucket,
-            workflowName,
-            collection,
-            provider,
-            inputPayload,
-            { env: { S3_JITTER_MAX_MS: '2000' } }
-          )
-        );
-      }
+      const inputPayloads = await Promise.all(setupPromises);
+
+      const workflowPromises = inputPayloads.map((inputPayload) => buildAndExecuteWorkflow(
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider,
+        inputPayload,
+        { env: { S3_JITTER_MAX_MS: '2000' } }
+      ));
 
       const workflowExecutions = await Promise.all(workflowPromises);
       executionArns.push(...workflowExecutions.map((execution) => execution.executionArn));
@@ -367,13 +366,9 @@ describe('The SyncGranule workflow with S3 jitter', () => {
     afterAll(async () => {
       const collectionId = constructCollectionId(collection.name, collection.version);
       const cleanupPromises = granuleIds.map((granuleId) =>
-        waitForGranuleAndDelete(config.stackName, granuleId, collectionId, ['completed', 'failed'])
-      );
-      cleanupPromises.push(
-        ...executionArns.map((executionArn) =>
-          deleteExecution({ prefix: config.stackName, executionArn })
-        )
-      );
+        waitForGranuleAndDelete(config.stackName, granuleId, collectionId, ['completed', 'failed']));
+      cleanupPromises.push(...executionArns.map((executionArn) =>
+        deleteExecution({ prefix: config.stackName, executionArn })));
       await Promise.all(cleanupPromises);
     });
 
