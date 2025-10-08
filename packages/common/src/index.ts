@@ -11,3 +11,4 @@ export * as testUtils from './test-utils';
 export * as util from './util';
 export * as workflows from './workflows';
 export * from './sleep';
+export * from './s3-jitter';
