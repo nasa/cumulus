@@ -16,7 +16,7 @@ export const applyS3Jitter = async (
   operation?: string
 ): Promise<void> => {
   if (maxJitterMs <= 0) {
-    log.debug('S3 jitter disabled (maxJitterMs = 0)');
+    //log.debug('S3 jitter disabled (maxJitterMs = 0)');
     return;
   }
 
