@@ -1310,6 +1310,9 @@ test.serial('S3 jitter respects configured maximum value', async (t) => {
   const jitterMaxMs = 500;
   process.env.S3_JITTER_MAX_MS = jitterMaxMs.toString();
 
+  // Set duplicateHandling to 'replace' to allow re-running
+  t.context.event.config.duplicateHandling = 'replace';
+
   await prepareS3DownloadEvent(t);
 
   // Run multiple times and verify jitter is within bounds
