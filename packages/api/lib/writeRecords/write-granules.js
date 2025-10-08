@@ -61,6 +61,7 @@ const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/trans
 
 const {
   CumulusMessageError,
+  errorify,
   GranuleFileWriteError,
 } = require('@cumulus/errors');
 
@@ -425,7 +426,7 @@ const _writeGranuleFiles = async ({
     errors.push(errorObject);
 
     const errorsObject = {
-      errors: JSON.stringify(errors),
+      errors: errorify(errors),
     };
 
     await updateGranuleStatusToFailed({
@@ -546,7 +547,7 @@ const _writeGranuleRecords = async (params) => {
       };
       errors.push(errorObject);
       const errorsObject = {
-        errors: JSON.stringify(errors),
+        errors: errorify(errors),
       };
 
       await updateGranuleStatusToFailed({

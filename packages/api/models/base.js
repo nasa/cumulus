@@ -8,9 +8,8 @@ const pWaitFor = require('p-wait-for');
 const awsServices = require('@cumulus/aws-client/services');
 const { deprecate } = require('@cumulus/common/util');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
-const { RecordDoesNotExist } = require('@cumulus/errors');
+const { RecordDoesNotExist, errorify } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { errorify } = require('../lib/utils');
 
 async function enableStream(tableName) {
   const params = {
