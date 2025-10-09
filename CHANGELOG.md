@@ -64,6 +64,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
 
+## [v20.2.2] 2025-10-08
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
 ## [v21.0.0] 2025-09-09
 
 ### **CUMULUS-4058** Epic: Handle Granules with Identical producerGranuleId in Different Collections
@@ -8938,15 +8960,18 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 [Unreleased]: https://github.com/nasa/cumulus/compare/v21.0.0...HEAD
 [v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.0...v21.0.0
-[v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.3.0
+[v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.2...v20.3.0
+[v20.2.2]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.2.2
 [v20.2.1]: https://github.com/nasa/cumulus/compare/v20.2.0...v20.2.1
 [v20.2.0]: https://github.com/nasa/cumulus/compare/v20.1.2...v20.2.0
 [v20.1.2]: https://github.com/nasa/cumulus/compare/v20.1.1...v20.1.2
-[v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.1.1
+[v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.2...v20.1.1
+[v20.0.2]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.0.2
 [v20.0.1]: https://github.com/nasa/cumulus/compare/v20.0.0...v20.0.1
 [v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
 [v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
-[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.5...v19.0.0
+[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.6...v19.0.0
+[v18.5.6]: https://github.com/nasa/cumulus/compare/v18.5.5...v18.5.6
 [v18.5.5]: https://github.com/nasa/cumulus/compare/v18.5.3...v18.5.5
 [v18.5.3]: https://github.com/nasa/cumulus/compare/v18.5.2...v18.5.3
 [v18.5.2]: https://github.com/nasa/cumulus/compare/v18.5.1...v18.5.2
