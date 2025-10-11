@@ -28,6 +28,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add api endpoint `executions/archive` to archive executions
   - Task lambda to call above api endpoints with configuration
   - Add cron scheduler to call above endpoints and archive old records
+  
+- **CUMULUS-4032**
+  - Added S3 jitter functionality to prevent AWS S3 SlowDown errors during high-concurrency operations
+  - Added `sync_granule_s3_jitter_max_ms` Terraform variable to configure random jitter delay (0-59000ms) for SyncGranule task
+  - S3 operations in `@cumulus/aws-client` now support optional jitter via `S3_JITTER_MAX_MS` environment variable
+  - Jitter is applied to: `headObject`, `putObject`, `copyObject`, `getObject`, `downloadS3File`, `promiseS3Upload`, and `multipartCopyObject`
 
 ### Changed
 

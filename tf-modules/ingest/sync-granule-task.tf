@@ -16,6 +16,7 @@ resource "aws_lambda_function" "sync_granule_task" {
       stackName                   = var.prefix
       system_bucket               = var.system_bucket
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      S3_JITTER_MAX_MS            = var.sync_granule_s3_jitter_max_ms
     }
   }
 
