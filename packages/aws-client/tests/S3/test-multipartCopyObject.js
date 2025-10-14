@@ -2,8 +2,8 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const fs = require('fs');
-const { createHash } = require('crypto');
+const { createHash, randomBytes } = require('crypto');
+const { Readable } = require('stream');
 const {
   createBucket,
   multipartCopyObject,
@@ -21,7 +21,7 @@ const randomId = (prefix) =>
 
 // Create an object in with random data of the given size
 const createDummyObject = ({ Bucket, Key, size, contentType }) => {
-  const readStream = fs.createReadStream('/dev/urandom', { end: size - 1 });
+  const readStream = Readable.from(randomBytes(size));
 
   return uploadS3FileStream(
     readStream,
