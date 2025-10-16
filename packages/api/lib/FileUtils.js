@@ -74,7 +74,47 @@ const setS3FileSize = async (s3, file) => {
 
     return { ...file, size };
   } catch (error) {
-    log.debug(`Unable to get object size for file: ${JSON.stringify(file, null, 2)}, Cause: ${error}`);
+    // Extract HTTP status code from AWS SDK error
+    const statusCode = error.$metadata?.httpStatusCode || error.statusCode || 'unknown';
+    const errorType = error.name || error.constructor.name;
+
+    const errorDetails = {
+      bucket: file.bucket,
+      key: file.key,
+      statusCode,
+      errorType,
+      errorMessage: error.message,
+      granuleFile: file.fileName || file.name,
+    };
+
+    // Log as ERROR for permission issues (403/401), WARN for others
+    if (statusCode === 403 || statusCode === 401) {
+      log.error(
+        'S3 Permission Denied: Failed to get object size for file. '
+        + 'This likely indicates missing IAM permissions for the Lambda role. '
+        + `Bucket: ${file.bucket}, Key: ${file.key}, `
+        + `Status: ${statusCode}, Error: ${errorType}`,
+        errorDetails
+      );
+      log.error(
+        'ACTION REQUIRED: Ensure the sf-event-sqs-to-db-records Lambda role has '
+        + `s3:GetObject and s3:GetObjectAttributes permissions for bucket: ${file.bucket}`
+      );
+    } else if (statusCode === 404) {
+      log.warn(
+        'S3 Object Not Found: File does not exist in S3. '
+        + `Bucket: ${file.bucket}, Key: ${file.key}`,
+        errorDetails
+      );
+    } else {
+      log.warn(
+        'Failed to get object size from S3. '
+        + `Bucket: ${file.bucket}, Key: ${file.key}, `
+        + `Status: ${statusCode}, Error: ${errorType}, Message: ${error.message}`,
+        errorDetails
+      );
+    }
+
     return file;
   }
 };

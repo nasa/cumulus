@@ -31,6 +31,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-4244**
+  - Improve logging for Ingest Granules
+    - Upgrade log level from debug to error for 403/401 errors 
+    - Add detailed error context (status code, error type, bucket, key)
+    - Add actionable remediation suggestions for permission issues 
+    - Add try-catch in write-granules.js for better error context
+
 
 - **CUMULUS-4155**
   - Update Cumulus integration tests to utilize:
