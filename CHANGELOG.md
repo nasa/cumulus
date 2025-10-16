@@ -10,7 +10,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
 
+### Notable Changes
+
+- **CUMULUS-4124**
+  When these changes are deployed, if no action is taken to reconfigure the cron, it will run once per day in the early morning, archiving
+
+  - 100k granules
+  - 100k executions
+  - that are more than 1 year old.
+  
+  Being archived changes nothing about the record except to set a boolean flag (archived=true). this behavior can be reconfigured or turned off entirely. see features/record_archival.md for more details.
+
+### Added
+
+- **CUMULUS-4124**
+  - Add api endpoint `granules/archive` to archive granules
+  - Add api endpoint `executions/archive` to archive executions
+  - Task lambda to call above api endpoints with configuration
+  - Add cron scheduler to call above endpoints and archive old records
+
 ### Changed
+
 
 - **CUMULUS-4155**
   - Update Cumulus integration tests to utilize:
@@ -20,15 +40,73 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update all Python dependencies to use boto >=1.40.29
   - Update all Core integration lambdas to use Python 3.12
   - Update external CNM lambdas to run on Java 21 in integration
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+- **CUMULUS-4200**
+  - updated metrics_es_host terraform variable description and validation
+  - Users should ensure that the metrics_es_host does not include `https://`
+- **CUMULUS-4242**
+  - Skipped lzards api response assertions from lzards integration tests due to lzards api changes
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+- **CUMULUS-4232**
+  - Update MoveGranules CUMULUS-4078 behavior such that it no longer defaults to throwing on an orphan (S3 file record not in database) situation when checking cross-collection file collisions.
+  - Added configuration `crossCollectionThrowOnObjectNotFound` to allow setting MoveGranules to fail in a collision/orphan situation
+  - Added `collectionCheckRetryCount` to allow configuration of the retry count for the `MoveGranules` crossCollection lookup
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+## [v20.3.1] 2025-10-14
+
+### Changed
 
 - **CUMULUS-4191**
   - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
     based on the provider from the record message.
   - Updated `messageConsumer` lambda handler to async/await style
 
-- **CUMULUS-4200**
-  - updated metrics_es_host terraform variable description and validation
-  - Users should ensure that the metrics_es_host does not include `https://`
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+## [v20.2.2] 2025-10-08
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
 
 ## [v21.0.0] 2025-09-09
 
@@ -213,6 +291,8 @@ Please follow the instructions before upgrading Cumulus
 
 - **CUMULUS-4165**
   - Update Async Operation container to new version 54, `cumuluss/async-operation:54`. Users should update their references to `async-operation` with the new version.
+### Added
+
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
 
@@ -8901,16 +8981,20 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 
 [Unreleased]: https://github.com/nasa/cumulus/compare/v21.0.0...HEAD
-[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.0...v21.0.0
-[v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.3.0
+[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.1...v21.0.0
+[v20.3.1]: https://github.com/nasa/cumulus/compare/v20.3.0...v20.3.1
+[v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.2...v20.3.0
+[v20.2.2]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.2.2
 [v20.2.1]: https://github.com/nasa/cumulus/compare/v20.2.0...v20.2.1
 [v20.2.0]: https://github.com/nasa/cumulus/compare/v20.1.2...v20.2.0
 [v20.1.2]: https://github.com/nasa/cumulus/compare/v20.1.1...v20.1.2
-[v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.1.1
+[v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.2...v20.1.1
+[v20.0.2]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.0.2
 [v20.0.1]: https://github.com/nasa/cumulus/compare/v20.0.0...v20.0.1
 [v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
 [v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
-[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.5...v19.0.0
+[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.6...v19.0.0
+[v18.5.6]: https://github.com/nasa/cumulus/compare/v18.5.5...v18.5.6
 [v18.5.5]: https://github.com/nasa/cumulus/compare/v18.5.3...v18.5.5
 [v18.5.3]: https://github.com/nasa/cumulus/compare/v18.5.2...v18.5.3
 [v18.5.2]: https://github.com/nasa/cumulus/compare/v18.5.1...v18.5.2
