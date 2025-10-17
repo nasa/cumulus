@@ -1,5 +1,4 @@
 import Logger from '@cumulus/logger';
-import { sleep } from '@cumulus/common';
 
 const log = new Logger({ sender: 's3-jitter' });
 
@@ -25,7 +24,7 @@ export const applyS3Jitter = async (
   const logContext = operation ? ` for ${operation}` : '';
   log.info(`Applying S3 jitter: ${jitterMs}ms${logContext} (max: ${maxJitterMs}ms)`);
 
-  await sleep(jitterMs);
+  await new Promise((resolve) => setTimeout(resolve, jitterMs));
 
   log.debug(`S3 jitter delay completed: ${jitterMs}ms${logContext}`);
 };
