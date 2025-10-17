@@ -1,4 +1,5 @@
 import Logger from '@cumulus/logger';
+import { sleep } from '@cumulus/common';
 
 const log = new Logger({ sender: 's3-jitter' });
 
@@ -16,16 +17,15 @@ export const applyS3Jitter = async (
   operation?: string
 ): Promise<void> => {
   if (maxJitterMs <= 0) {
-    //log.debug('S3 jitter disabled (maxJitterMs = 0)');
     return;
   }
 
-  const jitterMs = Math.floor(Math.random() * maxJitterMs);
+  const jitterMs = Math.ceil(Math.random() * maxJitterMs);
 
   const logContext = operation ? ` for ${operation}` : '';
   log.info(`Applying S3 jitter: ${jitterMs}ms${logContext} (max: ${maxJitterMs}ms)`);
 
-  await new Promise((resolve) => setTimeout(resolve, jitterMs));
+  await sleep(jitterMs);
 
   log.debug(`S3 jitter delay completed: ${jitterMs}ms${logContext}`);
 };

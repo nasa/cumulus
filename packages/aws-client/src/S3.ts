@@ -400,6 +400,9 @@ export const getObjectSize = async (
   }
 ): Promise<number | undefined> => {
   // eslint-disable-next-line no-shadow
+
+  await applyS3Jitter(s3JitterMaxMs, `getObjectSize(${params.bucket}/${params.key})`);
+
   const { s3: s3Client, bucket, key } = params;
 
   const headObjectResponse = await s3Client.headObject({
