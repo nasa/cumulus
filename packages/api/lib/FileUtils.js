@@ -87,18 +87,30 @@ const setS3FileSize = async (s3, file) => {
       granuleFile: file.fileName || file.name,
     };
 
-    // Log as ERROR for permission issues (403/401), WARN for others
-    if (statusCode === 403 || statusCode === 401) {
+    if (statusCode === 403) {
       log.error(
-        'S3 Permission Denied: Failed to get object size for file. '
-        + 'This likely indicates missing IAM permissions for the Lambda role. '
+        'S3 Access Forbidden (403): Failed to get object size for file. '
+        + 'The Lambda has credentials but is explicitly denied access. '
         + `Bucket: ${file.bucket}, Key: ${file.key}, `
-        + `Status: ${statusCode}, Error: ${errorType}`,
+        + `Error: ${errorType}`,
         errorDetails
       );
       log.error(
         'ACTION REQUIRED: Ensure the sf-event-sqs-to-db-records Lambda role has '
-        + `s3:GetObject and s3:GetObjectAttributes permissions for bucket: ${file.bucket}`
+        + `s3:GetObject and s3:GetObjectAttributes permissions for bucket: ${file.bucket}. `
+        + 'Check both IAM role policies and S3 bucket policies for explicit Deny statements.'
+      );
+    } else if (statusCode === 401) {
+      log.error(
+        'S3 Authentication Failed (401): Failed to get object size for file. '
+        + 'The Lambda credentials are missing, invalid, or expired. '
+        + `Bucket: ${file.bucket}, Key: ${file.key}, `
+        + `Error: ${errorType}`,
+        errorDetails
+      );
+      log.error(
+        'ACTION REQUIRED: Verify the Lambda execution role is properly attached. '
+        + 'Check AWS credentials configuration and IAM role trust relationships.'
       );
     } else if (statusCode === 404) {
       log.warn(
