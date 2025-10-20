@@ -69,6 +69,36 @@ test('setS3FileSize logs WARN for 404 status', async (t) => {
   t.pass('Function handles 404 error gracefully');
 });
 
+test('setS3FileSize logs ERROR for 401 status', async (t) => {
+  const getObjectSizeStub = sinon.stub().rejects({
+    name: 'UnauthorizedException',
+    message: 'Unauthorized',
+    $metadata: { httpStatusCode: 401 },
+  });
+
+  const FileUtils = proxyquire('../../lib/FileUtils', {
+    '@cumulus/aws-client/S3': {
+      getObjectSize: getObjectSizeStub,
+      parseS3Uri: (uri) => {
+        const match = uri.match(/s3:\/\/([^/]+)\/(.+)/);
+        return { Bucket: match?.[1] || 'bucket', Key: match?.[2] || 'key' };
+      },
+    },
+  });
+
+  const testFile = {
+    bucket: 'test-bucket',
+    key: 'test-key',
+    fileName: 'test.tif',
+  };
+
+  const result = await FileUtils.setS3FileSize({}, testFile);
+
+  t.deepEqual(result, testFile);
+  t.true(getObjectSizeStub.calledOnce);
+  t.pass('Function handles 401 error gracefully');
+});
+
 test('setS3FileSize returns file with size when getObjectSize succeeds', async (t) => {
   const getObjectSizeStub = sinon.stub().resolves(12345);
 
