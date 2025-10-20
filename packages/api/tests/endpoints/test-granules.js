@@ -2146,6 +2146,12 @@ test.serial('PATCH creates a granule if one does not already exist in all data s
     ...fakePgGranule,
     timestamp: actualPgGranule.timestamp,
     cumulus_id: actualPgGranule.cumulus_id,
+    beginning_date_time: actualPgGranule.beginning_date_time,
+    ending_date_time: actualPgGranule.ending_date_time,
+    last_update_date_time: actualPgGranule.last_update_date_time,
+    processing_end_date_time: actualPgGranule.processing_end_date_time,
+    processing_start_date_time: actualPgGranule.processing_start_date_time,
+    production_date_time: actualPgGranule.production_date_time,
   });
 });
 
@@ -3256,6 +3262,12 @@ test.serial('PUT creates a new granule in all data stores', async (t) => {
     timestamp: translatedActualPgGranule.timestamp,
     updatedAt: translatedActualPgGranule.updatedAt,
     createdAt: translatedActualPgGranule.createdAt,
+    beginningDateTime: translatedActualPgGranule.beginningDateTime,
+    endingDateTime: translatedActualPgGranule.endingDateTime,
+    lastUpdateDateTime: translatedActualPgGranule.lastUpdateDateTime,
+    processingEndDateTime: translatedActualPgGranule.processingEndDateTime,
+    processingStartDateTime: translatedActualPgGranule.processingStartDateTime,
+    productionDateTime: translatedActualPgGranule.productionDateTime,
   };
 
   // Files is always returned as '[]' via translator
@@ -3305,6 +3317,12 @@ test.serial('PUT utilizes the collectionId from the URI if one is not provided',
     published: false, // This is a default value
     timestamp: translatedActualPgGranule.timestamp,
     updatedAt: translatedActualPgGranule.updatedAt,
+    beginningDateTime: translatedActualPgGranule.beginningDateTime,
+    endingDateTime: translatedActualPgGranule.endingDateTime,
+    lastUpdateDateTime: translatedActualPgGranule.lastUpdateDateTime,
+    processingEndDateTime: translatedActualPgGranule.processingEndDateTime,
+    processingStartDateTime: translatedActualPgGranule.processingStartDateTime,
+    productionDateTime: translatedActualPgGranule.productionDateTime,
   };
   // Files is always returned as '[]' via translator
   t.deepEqual(
@@ -3353,6 +3371,12 @@ test.serial('PUT utilizes the granuleId from the URI if one is not provided', as
     published: false, // This is a default value
     timestamp: translatedActualPgGranule.timestamp,
     updatedAt: translatedActualPgGranule.updatedAt,
+    beginningDateTime: translatedActualPgGranule.beginningDateTime,
+    endingDateTime: translatedActualPgGranule.endingDateTime,
+    lastUpdateDateTime: translatedActualPgGranule.lastUpdateDateTime,
+    processingEndDateTime: translatedActualPgGranule.processingEndDateTime,
+    processingStartDateTime: translatedActualPgGranule.processingStartDateTime,
+    productionDateTime: translatedActualPgGranule.productionDateTime,
   };
   // Files is always returned as '[]' via translator
   t.deepEqual(

@@ -136,6 +136,12 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
     published: false,
     createdAt: updateDate,
     updatedAt: updateDate,
+    beginningDateTime: updateDate,
+    endingDateTime: updateDate,
+    lastUpdateDateTime: updateDate,
+    processingEndDateTime: updateDate,
+    processingStartDateTime: updateDate,
+    productionDateTime: updateDate,
     error: {},
   };
   // Set API defaults only if new record

@@ -46,6 +46,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update all Core integration lambdas to use Python 3.12
   - Update external CNM lambdas to run on Java 21 in integration
 - **CUMULUS-4191**
+  - Added populated values for `beginningDateTime`, `endingDateTime`, `productionDateTime`, `lastUpdateDateTime`, `processingStartDateTime`, and `processingEndDateTime` for newly created granules from the api
+- **CUMULUS-4191**
   - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
     based on the provider from the record message.
   - Updated `messageConsumer` lambda handler to async/await style
