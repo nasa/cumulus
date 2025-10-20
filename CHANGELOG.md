@@ -6,8 +6,375 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration Notes
+
+- This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
+
+### Notable Changes
+
+- **CUMULUS-4124**
+  When these changes are deployed, if no action is taken to reconfigure the cron, it will run once per day in the early morning, archiving
+
+  - 100k granules
+  - 100k executions
+  - that are more than 1 year old.
+  
+  Being archived changes nothing about the record except to set a boolean flag (archived=true). this behavior can be reconfigured or turned off entirely. see features/record_archival.md for more details.
+
 ### Added
 
+- **CUMULUS-4124**
+  - Add api endpoint `granules/archive` to archive granules
+  - Add api endpoint `executions/archive` to archive executions
+  - Task lambda to call above api endpoints with configuration
+  - Add cron scheduler to call above endpoints and archive old records
+
+### Changed
+
+
+- **CUMULUS-4155**
+  - Update Cumulus integration tests to utilize:
+    - Cumulus Message Adapter: v2.0.5
+    - Cumulus Message Adapter-py: v2.4.0
+    - Cumulus Process: 1.6.0
+  - Update all Python dependencies to use boto >=1.40.29
+  - Update all Core integration lambdas to use Python 3.12
+  - Update external CNM lambdas to run on Java 21 in integration
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+- **CUMULUS-4200**
+  - updated metrics_es_host terraform variable description and validation
+  - Users should ensure that the metrics_es_host does not include `https://`
+- **CUMULUS-4242**
+  - Skipped lzards api response assertions from lzards integration tests due to lzards api changes
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+- **CUMULUS-4232**
+  - Update MoveGranules CUMULUS-4078 behavior such that it no longer defaults to throwing on an orphan (S3 file record not in database) situation when checking cross-collection file collisions.
+  - Added configuration `crossCollectionThrowOnObjectNotFound` to allow setting MoveGranules to fail in a collision/orphan situation
+  - Added `collectionCheckRetryCount` to allow configuration of the retry count for the `MoveGranules` crossCollection lookup
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+## [v20.3.1] 2025-10-14
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+## [v20.2.2] 2025-10-08
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+## [v21.0.0] 2025-09-09
+
+### **CUMULUS-4058** Epic: Handle Granules with Identical producerGranuleId in Different Collections
+
+### Migration Notes
+
+#### CUMULUS-4069 Update granules table to include producer_granule_id column
+
+Please follow the instructions before upgrading Cumulus
+
+- The updates in CUMULUS-4069 require a manual update to the PostgreSQL database
+  in the production environment. Please follow the instructions in
+  [Update granules to include producer_granule_id](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-granules-to-include-producer_granule_id)
+
+### Breaking Changes
+
+- **CUMULUS-4078**
+  - Move Granules task will now check on file collision if the existing file is
+    registered in Core's database to another collection.  If it is, the granule
+    (and the task execution) will fail, regardless of the duplicate behavior
+    configuration. If this behavior is undesirable for performance or logic
+    reasons, the `checkCrossCollectionCollisions` may be set to `false` to
+    disable the behavior on a per-workflow, per-collection or other config
+    driven criteria.
+- **CUMULUS-4072**
+  - Updated the `parse-pdr` task component to throw an error if multiple
+    granules within the same PDR have the same granuleId after applying the
+    granuleIdFilter, unless the `uniquifyGranuleId` configuration parameter is
+    explicitly set to `true`.
+- **CUMULUS-4074**
+  - Updates `updateGranulesCmrMetadataFileLinks` to always ensure
+    `producerGranuleId` identifier is set in updated CMR metadata
+- **CUMULUS-4121**
+  - Updates example deployment `cnm_response_task` to use newest version `v3.2.0`, which supports
+    `producerGranuleId`.
+  - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
+
+### Added
+
+- **CUMULUS-4059**
+  - Added new non-null column `producer_granule_id` to Postgres `granules`
+    table.
+  - Added `producerGranuleId` property to `granule` record schema.
+  - Updated `@cumulus` api/db/message packages to handle `producer_granule_id`
+    and `producerGranuleId`.
+  - Updated `@cumulus/api/lib/writeGranulesFromMessage` to set producerGranuleId
+    = granuleId if not set.
+  - Updated `queue-granules` task to set producerGranuleId = granuleId if not
+    set.
+- **CUMULUS-4061**
+  - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a
+    hashed/'uniquified' granuleID
+- **CUMULUS-4062**
+  - Added `producerGranuleId` to `LzardsBackup` task component and lambda input/output schema
+  - Updated `LzardsBackup` task component to submit `producerGranuleId` for storage in the lzards record as a key in the `metadata` object.
+- **CUMULUS-4069**
+  - Added migration script and instructions to add the producer_granule_id column
+    to the granules table and populate it in the production environment.
+- **CUMULUS-4072**
+  - Updated `parse-pdr` task component to have the following behaviors:
+    - Always populate producerGranuleId from the incoming parsed granuleId
+    - If `uniquifyGranuleId` configuration value is set to true, parse-PDR will
+      update the granuleId for all found granules to have a unique granule hash
+      appended to the existing ID
+    - Updated `parse-pdr` such that if the `uniquifyGranuleId` configuration
+      parameter is not set to `true` , and a duplicate granuleId is created as
+      part of the output after passing the `granuleIdFilter`, the task will
+      throw with an error.
+  - Added `ingestFromPdrWithUniqueGranuleIdsSpec.js` to the spec tests to
+    demonstrate the ingest workflow works as expected with unique granuleIds and
+    producerGranuleIds set.
+- **CUMULUS-4073**
+  - Adds AddUniqueGranuleId task to `ingest` terraform module for deployment
+  with Core. This task will update a payload of existing granules to have
+  'uniquified' IDs and preserve the original identifier in the
+  `producerGranuleId` field
+- **CUMULUS-4074**
+  - Updated `IngestGranuleSuccessSpec`/`IngestUMMGSuccessSpec` to validate
+    producerGranuleId is populated in CMR post ingest
+  - Updated IngestGranuleSuccessSpec to include a `producerGranuleId` in the default test case
+  - Added ticket-relevant typing doc/ts-check updates to
+    `@cumulus/cmrjs/cmr-utils`
+  - Updated `updateCMRMetadata` to take `updateGranuleIdentifiers` configuration
+    flag/`producerGranuleId` such that that routine now will modify the CMR
+    metadata object with the correct `GranuleUR`/`ProducerGranuleId` values in
+    the CMR metadata.
+  - Added unit test/refactored mocks to use direct injection for `cmr-utils`
+  - Added `getCmrMetadata` helper to `@cumulus/integration-tests` to allow
+    access to the full CMR metadata object for verification of record metadata
+    fields
+  - Added `ApiFileGranuleIdOptional` to `@cumulus/types/api` for cases where an
+    ApiFile is being generated and refactored existing code to use this type
+    instead of custom relaxed typing
+  - Updates `update-granules-cmr-metadata-file-links` to use the updated `cmrjs`
+    logic to set producerGranuleId identifiers in the CMR metadata, either equal
+    to granuleId or the `producerGranuleID` set on the granule.
+  - Updates `@cumulus/tasks/sync-granule/GranuleFetcher` to allow and pass through an
+    incoming `granule.producerGranuleId`
+- **CUMULUS-4077**
+  - Updated `@cumulus/api/lib/ingest.reingestGranule` to only update the original granule
+    to 'queued' if the original payload contains the granule. This avoids a situation
+    where the original granule is updated to 'queued', but the reingest workflow
+    creates a new granule, leaving the original granule stuck in 'queued'.
+- **CUMULUS-4078**
+  - Added `getGranuleIdAndCollectionIdFromFile` query method to `@cumulus/db` to
+    retrieve granule and collection metadata from a file's S3 location.
+  - Added new API route `GET /granules/files/get_collection_and_granule_id/:bucket/:key` in `@cumulus/api` to
+    return the granule ID and collection ID associated with a file.
+  - Added `getFileGranuleAndCollectionByBucketAndKey` method to
+    `@cumulus/api-client/granules` to allow use of new endpoint.
+  - Added integration and unit tests for the new DB query, API endpoint, and
+    client method.
+  - Updated `move-granules` task to validate cross-collection file collisions
+    using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
+  - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
+- **CUMULUS-4079**
+  - Added duplicate granule handling and related feature documentation, and updated related documentation to match
+  - Added `update-granules-cmr-metadata-file-links` task README
+- **CUMULUS-4080**
+  - Add documentation for duplicate granule handling and, specifically, Collection configuration for duplicates.
+  - Update `urlPathTemplate` to allow falling back from one null/undefined interpolated value to a second argument
+- **CUMULUS-4082**
+  - Updated example deployment to deploy `cnmResponse` lambda version
+    3.1.0-alpha.2-SNAPSHOT which utilizes `producerGranuleId`.
+  - Updated example deployment to deploy `cnmToGranule` lambda version 2.1.0.
+  - Added `FakeProcessing` task configuration `matchFilesWithProducerGranuleId`
+    to determine if the generated cmr file names should match
+    `granuleId` or `producerGranuleId`
+  - Updated `AddUniqueGranuleId` task configuration `hashLength` to accept
+    additional types and removed the use of `hashDepth`.
+  - Updated `FilesToGranules` task configuration
+    `matchFilesWithProducerGranuleId` to accept additional types.
+  - Updated `ParsePdr` task configuration `hashLength` to accept additional
+    types.
+  - Fixed `tf-modules/cumulus` `AddUniqueGranuleId` task output.
+  - Updated example deployment workflow `CNMExampleWorkflow` to uniquify
+    granuleIds based on collection configuration
+  - Added `KinesisTestTriggerWithUniqueGranuleIdsSpec.js` to the spec test to
+    demonstrate that the CNM ingest workflow ingests granules with unique
+    granuleIds and producerGranuleIds set, and that CnmResponse sends responses
+    using producerGranuleIds
+- **CUMULUS-4085**
+  - Added config option for files-to-granules task to use `producerGranuleId`
+    when mapping files to their granules.
+- **CUMULUS-4089**
+  - Add integration testing for duplicate granule workflows. This includes new
+    specs and workflows in the `ingestGranule`, `discoverGranules`,
+    `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
+- **CUMULUS-4110**
+  - Added the `workflow_configurations` variable to the `tf-modules/ingest` and
+    `tf-modules/cumulus` modules.
+    The property `sf_event_sqs_to_db_records_types` has been added to
+    `workflow_template.json` under the `cumulus_meta` field to control which record
+    types should be written to the database during different workflow execution statuses.
+    Currently, both "execution" and "pdr" must be written to the database, so the
+    record type list must include both.
+  - Updated the `SfSqsReport` task to set `meta.reportMessageSource` in the Cumulus message.
+  - Updated the `@cumulus/api/sfEventSqsToDbRecords` lambda to determine which
+    record types ("execution", "granule", "pdr") should be written to the database based on the
+    `cumulus_meta.sf_event_sqs_to_db_records_types` and `meta.reportMessageSource` fields.
+    By default, all record types will be written to the database.
+  - Added `@cumulus/api/lib.writeRecords.writeGranuleExecutionAssociationsFromMessage`
+    to write granule-execution associations from message.
+  - Updated the `@cumulus/integration-tests` `cmr.generateAndStoreCmrXml` to
+    apply `matchFilesWithProducerGranuleId` when generaing `OnlineAccessURL`.
+- **CUMULUS-4119**
+  - Added assertions in `KinesisTestTriggerWithUniqueGranuleIdsSpec` to cover "duplicate"
+    Granules in separate Collections.
+- **CUMULUS-4162**
+  - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
+  - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
+  - Added a documentation page titled `"Generate Unique GranuleId"` to explain the algorithm for generating unique `granuleIds`.
+- **CUMULUS-4028**
+  - Update AddUniqueGranuleId task to output the input payload in addition to the modified granules.
+  - Added 'unique' version of ingest_and_publish granule workflow for 'uniquiy' feature ingest tests
+- **CUMULUS-4209**
+  - Updated the `producer_granule_id` migration script to disable autovacuum before the
+    migration and re-enable it afterward to improve performance.
+
+### Changed
+
+- **CUMULUS-4165**
+  - Update Async Operation container to new version 54, `cumuluss/async-operation:54`. Users should update their references to `async-operation` with the new version.
+### Added
+
+- **CUMULUS-4205**
+  - Add S3 Replicator lambda ARN to s3-replicator outputs
+
+## [v20.3.0] 2025-08-18
+
+### Notable Changes
+
+- **CUMULUS-4194**
+  - update cumulus-process to 1.5.0
+- **CUMULUS-4131**
+  - Users upgrading to this release will be required to update their terraform version to at least 1.12.2. Reference migration instructions are included at [https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-terraform-1.12)
+- **CUMULUS-4176**
+  - Updated `engine_version` default value to `17.4` in `example/rds-cluster-tf/variables.tf`.
+  - Updated `tf-modules/cumulus-rds-tf` module to take additional parameter `enable_upgrade` in support of
+    migration from Aurora PostgreSQl v13 to v17.
+
+### Breaking Changes
+
+- **CUMULUS-4131**
+  - Updated Terraform version requirement to `>=1.12.2`
+  - Updated AWS provider requirement to `5.100.x`
+
+### Changed
+
+- **CUMULUS-4142, CUMULUS-4144**
+  - Updated the S3 credentials endpoint attached to TEA to delete the access token after successful authentication.
+  - Configured both Cumulus distribution and S3 credentials to set the SameSite attribute on cookies in the response.
+
+### Fixed
+
+- **CUMULUS-4177**
+  - Update form-data sub-dependency to safe version ^4.0.4
+- **CUMULUS-4174**
+  - Fix broken CreateReconciliationReportSpec test cleanup
+- **CUMULUS-4170**
+  - Upgrade Node Docker image from buster to bullseye for a compatible debian version
+
+## [v20.2.1] 2025-08-14
+
+### Changed
+
+- **CUMULUS-4142, CUMULUS-4144**
+  - Updated the S3 credentials endpoint attached to TEA to delete the access token after successful authentication.
+  - Configured both Cumulus distribution and S3 credentials to set the SameSite attribute on cookies in the response.
+
+## [v20.2.0] 2025-08-06 Updated
+
+### Migration Notes
+
+From this release forward, Cumulus Core will be tested against PostgreSQL v17. Users
+should migrate their datastores to Aurora PostgreSQL 17.4+ compatible data
+stores as soon as possible after upgrading to this release.
+
+#### Database Upgrade
+
+Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf upgrade
+instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-17).
+
+### Fixed
+
+- **CUMULUS-4176**
+  - Updated `engine_version` default value to `17.4` in `example/rds-cluster-tf/variables.tf`.
+  - Updated `tf-modules/cumulus-rds-tf` module to take additional parameter `enable_upgrade` in support of
+    migration from Aurora PostgreSQl v13 to v17.
+- **CUMULUS-4177**
+  - Update form-data sub-dependency to safe version ^4.0.4
+- **CUMULUS_4174**
+  - Fix broken CreateReconciliationReportSpec test cleanup
+- **CUMULUS-4170**
+  - Upgrade Node Docker image from buster to bullseye for a compatible debian version
+
+## [v20.2.0] 2025-06-24
+
+### Added
+
+- **CUMULUS-4108**
+  - Added standalone lambda function code to scan and terminate old instances when they pass their 90 day expiration
+- **CUMULUS-4123**
+  - add "archived" column to granules and executions tables
+  - add "archived" field to associated data types and schemas
+  - add docs/upgrade-notes/archived_column_indexing.md docs page for database upgrade
+  - add docs/features/record_archival.md docs page for explanation
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
@@ -16,9 +383,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-4130**
+  - Update unit test CI scripts to split out api from other unit tests runs to make better use of bamboo agents
+
 - **CUMULUS-4106**
   - Fixed the release npm publish error by adding private property to `@cumulus/change-granule-collection-pg`
     and `@cumulus/change-granule-collection-s3` package.json.
+- **CUMULUS-4039**
+  - update api-client endpoints to allow slashes in provider name and collection name
 
 ## [v20.1.2] 2025-04-22
 
@@ -8608,13 +8980,21 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.1.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.0.0...HEAD
+[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.1...v21.0.0
+[v20.3.1]: https://github.com/nasa/cumulus/compare/v20.3.0...v20.3.1
+[v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.2...v20.3.0
+[v20.2.2]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.2.2
+[v20.2.1]: https://github.com/nasa/cumulus/compare/v20.2.0...v20.2.1
+[v20.2.0]: https://github.com/nasa/cumulus/compare/v20.1.2...v20.2.0
 [v20.1.2]: https://github.com/nasa/cumulus/compare/v20.1.1...v20.1.2
-[v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.1.1
+[v20.1.1]: https://github.com/nasa/cumulus/compare/v20.0.2...v20.1.1
+[v20.0.2]: https://github.com/nasa/cumulus/compare/v20.0.1...v20.0.2
 [v20.0.1]: https://github.com/nasa/cumulus/compare/v20.0.0...v20.0.1
 [v20.0.0]: https://github.com/nasa/cumulus/compare/v19.1.0...v20.0.0
 [v19.1.0]: https://github.com/nasa/cumulus/compare/v19.0.0...v19.1.0
-[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.5...v19.0.0
+[v19.0.0]: https://github.com/nasa/cumulus/compare/v18.5.6...v19.0.0
+[v18.5.6]: https://github.com/nasa/cumulus/compare/v18.5.5...v18.5.6
 [v18.5.5]: https://github.com/nasa/cumulus/compare/v18.5.3...v18.5.5
 [v18.5.3]: https://github.com/nasa/cumulus/compare/v18.5.2...v18.5.3
 [v18.5.2]: https://github.com/nasa/cumulus/compare/v18.5.1...v18.5.2

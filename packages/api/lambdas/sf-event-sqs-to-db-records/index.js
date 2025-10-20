@@ -3,6 +3,7 @@
 'use strict';
 
 const get = require('lodash/get');
+const isNil = require('lodash/isNil');
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const Logger = require('@cumulus/logger');
@@ -41,18 +42,80 @@ const {
 } = require('./write-pdr');
 
 const {
+  writeGranuleExecutionAssociationsFromMessage,
   writeGranulesFromMessage,
 } = require('../../lib/writeRecords/write-granules');
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
 /**
+ * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
+ * @typedef {import('@cumulus/types/message').RecordType} RecordType
+ * @typedef {import('knex').Knex} Knex
+ */
+
+/**
+@typedef {object} RecordWriteFlags
+@property {boolean} shouldWriteExecutionRecords
+@property {boolean} shouldWriteGranuleRecords
+@property {boolean} shouldWritePdrRecords
+ */
+
+/**
+ * Determines whether a record of the given type should be written to the database.
+ *
+ * @param {RecordType[] | undefined | null } configuredRecordTypes - An optional list of
+ *   record types that are allowed to be written. If undefined, all record types are allowed.
+ * @param {RecordType} recordType - The type of record to check.
+ * @returns {boolean} True if the record type should be written; otherwise, false.
+ */
+function isRecordTypeWritable(configuredRecordTypes, recordType) {
+  return (isNil(configuredRecordTypes) || configuredRecordTypes.includes(recordType));
+}
+
+/**
+ * Determines which types of records should be written to the database.
+ *
+ * @param {CumulusMessage} cumulusMessage - The input Cumulus message.
+ * @returns {RecordWriteFlags} An object indicating which record types should be written.
+ */
+const determineRecordWriteFlags = (cumulusMessage) => {
+  const defaultWriteFlags = {
+    shouldWriteExecutionRecords: true,
+    shouldWriteGranuleRecords: true,
+    shouldWritePdrRecords: true,
+  };
+
+  const reportMessageSource = get(cumulusMessage, 'meta.reportMessageSource');
+  if (reportMessageSource) {
+    log.debug(`determineRecordWriteFlags: reportMessageSource is '${reportMessageSource}', writing all records`);
+    return defaultWriteFlags;
+  }
+
+  const workflowName = get(cumulusMessage, 'meta.workflow_name');
+  const status = get(cumulusMessage, 'meta.status');
+  const configuredRecordTypes = get(
+    cumulusMessage,
+    `cumulus_meta.sf_event_sqs_to_db_records_types.${workflowName}.${status}`
+  );
+
+  const writeFlags = {
+    shouldWriteExecutionRecords: isRecordTypeWritable(configuredRecordTypes, 'execution'),
+    shouldWriteGranuleRecords: isRecordTypeWritable(configuredRecordTypes, 'granule'),
+    shouldWritePdrRecords: isRecordTypeWritable(configuredRecordTypes, 'pdr'),
+  };
+
+  log.debug(`determineRecordWriteFlags: determined write flags: ${JSON.stringify(writeFlags)}`);
+  return writeFlags;
+};
+
+/**
  * Write records to data stores.
  *
  * @param {Object} params
- * @param {Object} params.cumulusMessage - Cumulus workflow message
+ * @param {CumulusMessage} params.cumulusMessage - Cumulus workflow message
  * @param {Knex} params.knex - Knex client
- * @param {Object} [params.testOverrides]
+ * @param {Object} [params.testOverrides] -
  *   Optional override/mock object used for testing
  */
 const writeRecords = async ({
@@ -63,6 +126,13 @@ const writeRecords = async ({
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
   const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
   const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
+
+  const {
+    shouldWriteExecutionRecords,
+    shouldWriteGranuleRecords,
+    shouldWritePdrRecords,
+  } = determineRecordWriteFlags(cumulusMessage);
+
   const [
     collectionCumulusId,
     asyncOperationCumulusId,
@@ -95,31 +165,48 @@ const writeRecords = async ({
     throw new UnmetRequirementsError('Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   }
 
-  const executionCumulusId = await writeExecutionRecordFromMessage({
-    cumulusMessage,
-    collectionCumulusId,
-    asyncOperationCumulusId,
-    parentExecutionCumulusId,
-    knex,
-  });
+  let executionCumulusId;
+  if (shouldWriteExecutionRecords) {
+    executionCumulusId = await writeExecutionRecordFromMessage({
+      cumulusMessage,
+      collectionCumulusId,
+      asyncOperationCumulusId,
+      parentExecutionCumulusId,
+      knex,
+    });
+  }
 
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
 
-  await writePdr({
-    cumulusMessage,
-    collectionCumulusId,
-    providerCumulusId,
-    knex,
-    executionCumulusId,
-  });
+  if (shouldWritePdrRecords) {
+    await writePdr({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      knex,
+      executionCumulusId,
+    });
+  }
 
-  return writeGranulesFromMessage({
-    cumulusMessage,
-    executionCumulusId,
-    knex,
-    testOverrides,
-  });
+  if (shouldWriteGranuleRecords) {
+    return writeGranulesFromMessage({
+      cumulusMessage,
+      executionCumulusId,
+      knex,
+      testOverrides,
+    });
+  }
+
+  if (executionCumulusId && !shouldWriteGranuleRecords) {
+    return writeGranuleExecutionAssociationsFromMessage({
+      cumulusMessage,
+      executionCumulusId,
+      knex,
+    });
+  }
+  return undefined;
 };
+
 /**
  * @typedef {import('aws-lambda').SQSRecord} SQSRecord
  * @typedef {{Records: Array<SQSRecord>, env: {[key: string]: any}, [key: string]: any}} LambdaEvent

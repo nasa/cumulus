@@ -5,7 +5,6 @@
 const { z } = require('zod');
 const isError = require('lodash/isError');
 const pMap = require('p-map');
-
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
@@ -14,8 +13,8 @@ const {
 } = require('@cumulus/common/workflows');
 
 const Logger = require('@cumulus/logger');
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
-const { RecordDoesNotExist } = require('@cumulus/errors');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
+const { RecordDoesNotExist, errorify } = require('@cumulus/errors');
 const { GranuleSearch } = require('@cumulus/db');
 
 const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
@@ -23,14 +22,15 @@ const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
 const {
   CollectionPgModel,
   ExecutionPgModel,
+  getGranuleAndCollection,
+  getGranuleIdAndCollectionIdFromFile,
+  getGranulesByGranuleId,
   getKnexClient,
   getUniqueGranuleByGranuleId,
-  getGranulesByGranuleId,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
-  getGranuleAndCollection,
   updateBatchGranulesCollection,
 } = require('@cumulus/db');
 const { sfn } = require('@cumulus/aws-client/services');
@@ -51,7 +51,6 @@ const {
   asyncOperationEndpointErrorHandler,
   requireApiVersion,
 } = require('../app/middleware');
-const { errorify } = require('../lib/utils');
 const { returnCustomValidationErrors } = require('../lib/endpoints');
 const { moveGranule, getFilesExistingAtLocation } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
@@ -151,6 +150,33 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
     );
   }
   return apiGranule;
+};
+
+const getFileGranuleAndCollectionByBucketAndKey = async (req, res) => {
+  const { bucket, key } = req.params;
+  const { knex = await getKnexClient() } = req.testContext || {};
+
+  // Get file meta from postgres database using getGranuleIdAndCollectionIdFromFile
+  const results = await getGranuleIdAndCollectionIdFromFile({
+    bucket,
+    key,
+    knex,
+  });
+
+  if (!results) {
+    return res.boom.notFound(
+      `No existing file found for bucket: ${bucket} and key: ${key}`
+    );
+  }
+
+  return res.send({
+    granuleId: results?.granule_id,
+    collectionId: results?.collection_name
+      ? constructCollectionId(
+        results?.collection_name,
+        results?.collection_version
+      ) : undefined,
+  });
 };
 
 /**
@@ -425,14 +451,13 @@ const _handleUpdateAction = async (
       );
     }
 
-    await updateGranuleStatusToQueuedMethod({ apiGranule, knex });
-
     await reingestHandler({
       apiGranule: {
         ...apiGranule,
         ...(targetExecution && { execution: targetExecution }),
       },
       queueUrl: process.env.backgroundQueueUrl,
+      updateGranuleStatusToQueuedMethod,
     });
 
     const response = {
@@ -1301,16 +1326,55 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.get('/:granuleId', getByGranuleId);
+const bulkArchiveGranulesSchema = z.object({
+  updateLimit: z.number().min(1).optional().default(10000),
+  batchSize: z.number().min(1).optional().default(1000),
+  expirationDays: z.number().optional().default(365),
+});
+const parseBulkArchiveGranulesPayload = zodParser('bulkChangeCollection payload', bulkArchiveGranulesSchema);
+/**
+ * Start an AsyncOperation that will archive a set of granules in ecs
+ */
+async function bulkArchiveGranules(req, res) {
+  const payload = parseBulkArchiveGranulesPayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
+  }
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
+    lambdaName: process.env.ArchiveRecordsLambda,
+    description: 'Launches an ecs task to archive a batch of granules',
+    operationType: 'Bulk Granule Archive',
+    payload: {
+      config: {
+        ...payload,
+        recordType: 'granule',
+      },
+    },
+  };
+  log.debug(
+    `About to invoke lambda to start async operation ${asyncOperationId}`
+  );
+  await startAsyncOperation.invokeStartAsyncOperationLambda(
+    asyncOperationEvent
+  );
+  return res.status(202).send({ id: asyncOperationId });
+}
+
+router.post('/bulkArchive', bulkArchiveGranules);
 router.get('/:collectionId/:granuleId', get);
+router.get('/files/get_collection_and_granule_id/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
+router.get('/:granuleId', getByGranuleId);
+router.get('/', list);
 router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
 router.patch('/bulkPatch', bulkPatch);
-router.get('/', list);
+router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
+router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
+router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
-router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
-router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
-router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 
 router.post('/bulkChangeCollection', bulkChangeCollection);
 router.post(
@@ -1346,5 +1410,7 @@ module.exports = {
   patchGranuleAndReturnStatus,
   bulkPatch,
   bulkPatchGranuleCollection,
+  bulkArchiveGranules,
+  getFileGranuleAndCollectionByBucketAndKey,
   router,
 };

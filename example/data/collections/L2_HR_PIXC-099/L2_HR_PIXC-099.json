@@ -1,0 +1,29 @@
+{
+  "name": "L2_HR_PIXC",
+  "version": "099",
+  "dataType": "L2_HR_PIXC",
+  "duplicateHandling": "replace",
+  "granuleId": "^.*$",
+  "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
+  "reportToEms": false,
+  "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
+  "sampleFileName": "L2_HR_PIXC_product_0001-of-4154.h5",
+  "files": [
+    {
+      "bucket": "protected",
+      "regex": "^.*\\.h5$",
+      "sampleFileName": "L2_HR_PIXC_product_0001-of-4154.h5",
+      "type": "data"
+    },
+    {
+      "bucket": "protected",
+      "regex": "^.*\\.cmr\\.xml$",
+      "sampleFileName": "L2_HR_PIXC_product_0001-of-4154.cmr.xml",
+      "type": "metadata"
+    }
+  ],
+  "meta": {
+    "uniquifyGranuleId": true,
+    "hashLength": 6
+  }
+}

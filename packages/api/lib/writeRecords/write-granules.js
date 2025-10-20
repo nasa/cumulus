@@ -8,7 +8,8 @@ const isEmpty = require('lodash/isEmpty');
 const isNil = require('lodash/isNil');
 const omit = require('lodash/omit');
 const isNull = require('lodash/isNull');
-
+const isObject = require('lodash/isObject');
+const isString = require('lodash/isString');
 const isUndefined = require('lodash/isUndefined');
 const omitBy = require('lodash/omitBy');
 const pMap = require('p-map');
@@ -21,6 +22,7 @@ const {
   createRejectableTransaction,
   FilePgModel,
   GranulePgModel,
+  GranulesExecutionsPgModel,
   getGranulesByGranuleId,
   translateApiFiletoPostgresFile,
   upsertGranuleWithExecutionJoinRecord,
@@ -61,6 +63,7 @@ const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/trans
 
 const {
   CumulusMessageError,
+  errorify,
   GranuleFileWriteError,
 } = require('@cumulus/errors');
 
@@ -86,13 +89,16 @@ const {
 * @typedef { import('knex').Knex.Transaction } KnexTransaction
 * @typedef { import('@cumulus/types').ApiGranule } ApiGranule
 * @typedef { import('@cumulus/types').ApiGranuleRecord } ApiGranuleRecord
+* @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
 * @typedef { Granule } ApiGranuleModel
 * @typedef { import('@cumulus/db').PostgresGranuleRecord } PostgresGranuleRecord
 * @typedef { import('@cumulus/db').PostgresFile } PostgresFile
 * @typedef { import('@cumulus/db').PostgresFileRecord } PostgresFileRecord
 * @typedef { import('@cumulus/db').GranulePgModel } GranulePgModel
 * @typedef { import('@cumulus/db').FilePgModel } FilePgModel
+* @typedef {{ granuleId: string}} GranuleWithGranuleId
 */
+
 const { recordIsValid } = require('../schema');
 const granuleSchema = require('../schemas').granule;
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
@@ -425,7 +431,7 @@ const _writeGranuleFiles = async ({
     errors.push(errorObject);
 
     const errorsObject = {
-      errors: JSON.stringify(errors),
+      errors: errorify(errors),
     };
 
     await updateGranuleStatusToFailed({
@@ -546,7 +552,7 @@ const _writeGranuleRecords = async (params) => {
       };
       errors.push(errorObject);
       const errorsObject = {
-        errors: JSON.stringify(errors),
+        errors: errorify(errors),
       };
 
       await updateGranuleStatusToFailed({
@@ -622,6 +628,32 @@ const _writeGranule = async ({
 };
 
 /**
+ * Filters and handles failed granule write operations from an array of Promise.allSettled results.
+ *
+ * This function examines the results of parallel granule write operations and identifies any
+ * that failed. If failures are found, it aggregates all error reasons into a single
+ * AggregateError, logs the error with the provided message, and throws the aggregated error
+ * to halt execution and provide error information to the caller.
+ *
+ * @param {Array<{status: 'fulfilled'|'rejected', value?: any, reason?: Error}>} results -
+ *   Array of results from Promise.allSettled(), where each result has a 'status' property
+ *   indicating 'fulfilled' or 'rejected'
+ * @param {string} errorMessage - Error message to log when failed writing to the database
+ * @returns {Array} - Returns the original results array if no rejected promises are detected
+ * @throws {AggregateError} -
+ */
+const _filterGranuleWriteFailures = (results, errorMessage) => {
+  const failedWrites = results.filter((result) => result.status === 'rejected');
+  if (failedWrites.length > 0) {
+    const allFailures = failedWrites.map((failure) => failure.reason);
+    const aggregateError = new AggregateError(allFailures);
+    log.error(errorMessage, aggregateError);
+    throw aggregateError;
+  }
+  return failedWrites;
+};
+
+/**
 * Method to facilitate partial granule record updates
 * @summary In cases where a full API record is not passed, but partial/tangential updates to granule
 *          records are called for, updates to files records are not required and pre-write
@@ -686,6 +718,7 @@ const writeGranuleRecordAndPublishSns = async ({
  * @param {string} [granule.timestamp] - timestamp
  * @param {string} [granule.updatedAt = new Date().valueOf()] - time value
  * @param {number} [granule.duration] - seconds
+ * @param {string} granule.producerGranuleId - producer granule id
  * @param {string} [granule.productVolume] - sum of the files sizes in bytes
  * @param {integer} [granule.timeToPreprocess] -  seconds
  * @param {integer} [granule.timeToArchive] - seconds
@@ -717,6 +750,7 @@ const writeGranuleFromApi = async (
     error,
     updatedAt,
     duration,
+    producerGranuleId,
     productVolume,
     timeToPreprocess,
     timeToArchive,
@@ -752,9 +786,10 @@ const writeGranuleFromApi = async (
       granuleId,
       collectionId,
       execution,
+      producerGranuleId,
     };
     Object.entries(invalidNullableFields).forEach(([key, field]) => {
-      if (isNull(invalidNullableFields[field])) {
+      if (isNull(field)) {
         throw new Error(`granule.'${key}' cannot be removed as it is required and/or set to a default value on PUT.  Please set a value and try your request again`);
       }
     });
@@ -766,6 +801,7 @@ const writeGranuleFromApi = async (
     const granule = {
       granuleId,
       cmrLink,
+      producerGranuleId,
       published: publishedValue,
       createdAt: defaultCreatedAt,
       error: defaultSetError,
@@ -837,6 +873,75 @@ const createGranuleFromApi = async (granule, knex) => {
 
 const updateGranuleFromApi = async (granule, knex) => {
   await writeGranuleFromApi(granule, knex, 'Update');
+};
+
+/**
+ * Validate that every element in arr has a granuleId.
+ * Throws if any element is invalid.
+ *
+ * @param {unknown[]} unknownGranuleArray
+ * @returns {GranuleWithGranuleId[]}
+ */
+const _granulesWithIds = (unknownGranuleArray) => {
+  if (!Array.isArray(unknownGranuleArray)) {
+    throw new TypeError('Expected an array of granules');
+  }
+
+  if (!unknownGranuleArray.every((g) => isObject(g) && g !== null && 'granuleId' in g && isString(g.granuleId))) {
+    throw new TypeError('Invalid granule: missing granuleId');
+  }
+
+  // Safe to cast, since we validated all items
+  return /** @type {GranuleWithGranuleId[]} */ (unknownGranuleArray);
+};
+
+/**
+ * Write granule-to-execution cross-references from a Cumulus message to PostgreSQL.
+ *
+ * @param {object} params - The input parameters.
+ * @param {CumulusMessage} params.cumulusMessage - The Cumulus workflow message.
+ * @param {number} params.executionCumulusId - Cumulus ID for the execution referenced
+ *   in the workflow message.
+ * @param {Knex} params.knex - A Knex client instance for interacting with PostgreSQL.
+ * @param {GranulePgModel} [params.granulePgModel] - Optional override for the GranulePgModel.
+ * @param {GranulesExecutionsPgModel} [params.granulesExecutionsPgModel] - Optional
+ *   override for the GranulesExecutionsPgModel.
+ * @returns {Promise<object[]|undefined>} - Results from Promise.allSettled()` for
+ *   each granule, or `undefined` if no granules exist.
+ * @throws {Error} - Throws on unexpected database errors.
+ */
+const writeGranuleExecutionAssociationsFromMessage = async ({
+  cumulusMessage,
+  executionCumulusId,
+  knex,
+  granulePgModel = new GranulePgModel(),
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel(),
+}) => {
+  if (!messageHasGranules(cumulusMessage)) {
+    log.info('No granules found in message. Skipping granules-executions cross-reference write.');
+    return undefined;
+  }
+
+  const granules = _granulesWithIds(getMessageGranules(cumulusMessage));
+  const granuleIds = granules.map((granule) => granule.granuleId);
+
+  log.info(`Found granules: [${granuleIds.join(', ')}]. Fetching corresponding cumulus IDs...`);
+
+  const granuleCumulusIds = await granulePgModel.getRecordsCumulusIds(knex, ['granule_id'], granuleIds);
+
+  log.info(`Retrieved ${granuleCumulusIds.length} granule cumulus IDs for granule IDs: [${granuleIds.join(', ')}]`);
+
+  const results = await Promise.allSettled(
+    granuleCumulusIds.map((granuleCumulusId) =>
+      granulesExecutionsPgModel.upsert(knex, {
+        granule_cumulus_id: granuleCumulusId,
+        execution_cumulus_id: executionCumulusId,
+      }))
+  );
+
+  const filteredResults = _filterGranuleWriteFailures(results, 'Failed writing some granule-execution associations');
+  log.debug('Completed upsert of granule-execution associations.');
+  return filteredResults;
 };
 
 /**
@@ -939,8 +1044,14 @@ const writeGranulesFromMessage = async ({
         published = false;
       }
 
+      // if producerGranuleId is not in granule object, set it the same as granuleId
       const apiGranuleRecord = await generateGranuleApiRecord({
-        granule: { ...granule, published, createdAt: granule.createdAt || workflowStartTime },
+        granule: {
+          ...granule,
+          published,
+          createdAt: granule.createdAt || workflowStartTime,
+          producerGranuleId: granule.producerGranuleId || granule.granuleId,
+        },
         executionUrl,
         collectionId,
         provider: provider.id,
@@ -989,14 +1100,7 @@ const writeGranulesFromMessage = async ({
       });
     }
   ));
-  const failures = results.filter((result) => result.status === 'rejected');
-  if (failures.length > 0) {
-    const allFailures = failures.map((failure) => failure.reason);
-    const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some granules to Postgres', aggregateError);
-    throw aggregateError;
-  }
-  return results;
+  return _filterGranuleWriteFailures(results, 'Failed writing some granules to Postgres');
 };
 
 /**
@@ -1059,6 +1163,7 @@ module.exports = {
   updateGranuleFromApi,
   updateGranuleStatusToQueued,
   updateGranuleStatusToFailed,
+  writeGranuleExecutionAssociationsFromMessage,
   writeGranuleFromApi,
   writeGranulesFromMessage,
   writeGranuleRecordAndPublishSns,

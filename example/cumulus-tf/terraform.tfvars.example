@@ -114,7 +114,7 @@ saml_assertion_consumer_service = "<Cumulus API endpoint>/saml/auth, e.g. https:
 
 # Optional, uncomment if needed.
 /*
-metrics_es_host = "xxxxxxxxxx.cloudfront.net"
+metrics_es_host = "abcdefg123.cloudfront.net"
 metrics_es_username = "user"
 metrics_es_password = "password"
 */

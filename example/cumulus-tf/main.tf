@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = ">= 5.100, < 6.0.0"
     }
     null = {
       source  = "hashicorp/null"
@@ -163,6 +163,7 @@ module "cumulus" {
     "acyu",
     "chuang14",
     "ds_jennifertran",
+    "ecarton",
     "efenollal",
     "filipgraniczny",
     "jasmine",
@@ -210,6 +211,9 @@ module "cumulus" {
   cmr_acl_based_credentials = true
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
+
+  # workflow configuration
+  workflow_configurations = var.workflow_configurations
 
   tags = local.tags
 }

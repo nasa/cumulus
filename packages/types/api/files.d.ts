@@ -14,3 +14,7 @@ export interface ApiFile {
   type?: string
   updatedAt: Date
 }
+
+export type ApiFileGranuleIdOptional = Omit<ApiFile, 'granuleId'> & {
+  granuleId?: string;
+};

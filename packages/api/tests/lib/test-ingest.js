@@ -33,7 +33,6 @@ const {
 } = require('../../lib/ingest');
 
 const testDbName = randomString(12);
-const sandbox = sinon.createSandbox();
 
 let fakeExecution;
 let testCumulusMessage;
@@ -94,7 +93,6 @@ test.before(async (t) => {
     startDate: new Date(Date.UTC(2019, 6, 28)),
     stopDate: new Date(Date.UTC(2019, 6, 28, 1)),
   };
-  sandbox.stub(StepFunctions, 'describeExecution').resolves(fakeExecution);
 
   // Create collections in Dynamo and Postgres
   // we need this because a granule has a foreign key referring to collections
@@ -123,12 +121,7 @@ test.before(async (t) => {
   t.context.collectionCumulusId = pgCollection.cumulus_id;
 });
 
-test.afterEach.always(() => {
-  sandbox.resetHistory();
-});
-
 test.after.always(async (t) => {
-  sandbox.restore();
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
@@ -137,7 +130,7 @@ test.after.always(async (t) => {
   await sns().send(new DeleteTopicCommand({ TopicArn: t.context.granules_sns_topic_arn }));
 });
 
-test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {
+test.serial('reingestGranule pushes a message with the correct queueUrl, and update granule status to queued when original payload has granule', async (t) => {
   const {
     collectionId,
   } = t.context;
@@ -148,6 +141,7 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
     collectionId,
   });
 
+  const describeExecutionStub = sinon.stub(StepFunctions, 'describeExecution').resolves(fakeExecution);
   const buildPayloadSpy = sinon.stub(rulesHelpers, 'buildPayload').resolves();
 
   await granulePgModel.create(
@@ -158,7 +152,9 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
     })
   );
 
-  t.teardown(() => buildPayloadSpy.restore());
+  t.teardown(() => {
+    [buildPayloadSpy, describeExecutionStub].forEach((stub) => stub.restore());
+  });
 
   await reingestGranule({
     apiGranule,
@@ -175,6 +171,54 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
     apiGranule.granuleId
   );
   t.is(updatedPgGranule.status, 'queued');
+});
+
+test.serial('reingestGranule does not update granule status if the original payload has no granule', async (t) => {
+  const {
+    collectionId,
+  } = t.context;
+  const granulePgModel = new GranulePgModel();
+  const queueUrl = 'testqueueUrl';
+
+  const apiGranule = fakeGranuleFactoryV2({
+    collectionId,
+    status: 'completed',
+  });
+
+  const cumulusMessage = structuredClone(testCumulusMessage);
+  cumulusMessage.payload = { foo: 'nogranule' };
+  const executionDescription = {
+    ...fakeExecution,
+    input: JSON.stringify(cumulusMessage),
+  };
+  const describeExecutionStub = sinon.stub(StepFunctions, 'describeExecution').resolves(executionDescription);
+  const buildPayloadSpy = sinon.stub(rulesHelpers, 'buildPayload').resolves();
+
+  await granulePgModel.create(
+    t.context.knex,
+    await translateApiGranuleToPostgresGranule({
+      dynamoRecord: apiGranule,
+      knexOrTransaction: t.context.knex,
+    })
+  );
+
+  t.teardown(() => {
+    [buildPayloadSpy, describeExecutionStub].forEach((stub) => stub.restore());
+  });
+
+  await reingestGranule({
+    apiGranule,
+    queueUrl,
+    granulePgModel,
+  });
+
+  t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
+
+  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+    t.context.knex,
+    apiGranule.granuleId
+  );
+  t.is(updatedPgGranule.status, 'completed');
 });
 
 test.serial('applyWorkflow throws error if workflow argument is missing', async (t) => {
