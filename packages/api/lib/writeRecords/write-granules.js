@@ -1023,11 +1023,30 @@ const writeGranulesFromMessage = async ({
       let files;
       if (isNull(granule.files)) files = [];
 
-      files = granule.files ? await FileUtils.buildDatabaseFiles({
-        s3: s3(),
-        providerURL: buildURL(provider),
-        files: granule.files,
-      }) : undefined;
+      try {
+        files = granule.files ? await FileUtils.buildDatabaseFiles({
+          s3: s3(),
+          providerURL: buildURL(provider),
+          files: granule.files,
+        }) : undefined;
+      } catch (buildFilesError) {
+        log.error(
+          'Failed to build database files for granule. '
+          + 'This may indicate S3 permission issues or missing files. '
+          + `Granule: ${granule.granuleId}, `
+          + `Collection: ${collectionId}, `
+          + `Provider: ${provider?.id || 'unknown'}, `
+          + `Error: ${buildFilesError.message}`,
+          {
+            granuleId: granule.granuleId,
+            collectionId,
+            providerId: provider?.id,
+            error: buildFilesError,
+            fileCount: granule.files?.length || 0,
+          }
+        );
+        throw buildFilesError;
+      }
       const timeToArchive = getGranuleTimeToArchive(granule);
       const timeToPreprocess = getGranuleTimeToPreprocess(granule);
       const productVolume = files ? getGranuleProductVolume(files) : undefined;
