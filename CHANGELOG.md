@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v21.1.0] 2025-10-22
+
 ### Migration Notes
 
 - This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
@@ -9012,7 +9014,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.0.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.1.0...HEAD
+[v21.1.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.1.0
 [v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
 [v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.1...v21.0.0
 [v20.3.1]: https://github.com/nasa/cumulus/compare/v20.3.0...v20.3.1

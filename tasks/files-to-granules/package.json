@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/files-to-granules",
-  "version": "21.0.1",
+  "version": "21.1.0",
   "description": "Converts array-of-files input into a granules object by extracting granuleId from filename",
   "main": "index.js",
   "directories": {
@@ -36,13 +36,13 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "21.0.1",
+    "@cumulus/aws-client": "21.1.0",
     "@cumulus/cumulus-message-adapter-js": "2.3.0",
-    "@cumulus/errors": "21.0.1",
+    "@cumulus/errors": "21.1.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@cumulus/common": "21.0.1",
-    "@cumulus/schemas": "21.0.1"
+    "@cumulus/common": "21.1.0",
+    "@cumulus/schemas": "21.1.0"
   }
 }
