@@ -121,3 +121,15 @@ variable "parameter_group_family_v17" {
   type = string
   default = "aurora-postgresql17"
 }
+
+variable "restore_type" {
+  description = "Type of restore to be performed."
+  type = string
+  default = "full-copy"
+}
+
+variable "use_latest_restorable_time" {
+  description = "Boolean for whether to set the database cluster to the latest restorable backup time."
+  type = bool
+  default = false
+}

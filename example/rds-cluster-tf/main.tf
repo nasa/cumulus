@@ -31,4 +31,6 @@ module "rds_cluster" {
   enable_upgrade             = var.enable_upgrade
   parameter_group_family_v13 = var.parameter_group_family_v13
   parameter_group_family_v17 = var.parameter_group_family_v17
+  restore_type               = var.restore_type
+  use_latest_restorable_time = var.use_latest_restorable_time
 }
