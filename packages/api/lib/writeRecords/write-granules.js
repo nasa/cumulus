@@ -12,7 +12,6 @@ const isObject = require('lodash/isObject');
 const isString = require('lodash/isString');
 const isUndefined = require('lodash/isUndefined');
 const omitBy = require('lodash/omitBy');
-const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
