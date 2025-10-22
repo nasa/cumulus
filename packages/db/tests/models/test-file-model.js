@@ -108,6 +108,61 @@ test('FilePgModel.upsert() overwrites a file record', async (t) => {
   );
 });
 
+test('FilePgModel.upsert() creates multiple file records', async (t) => {
+  const {
+    knex,
+    filePgModel,
+    granuleCumulusId,
+  } = t.context;
+
+  const files = Array.from({ length: 1000 }, () =>
+    fakeFileRecordFactory({
+      granule_cumulus_id: granuleCumulusId,
+    }));
+
+  await filePgModel.upsert(knex, files);
+  await Promise.all(files.map(async (file) => {
+    t.like(
+      await filePgModel.get(knex, file),
+      file
+    );
+  }));
+});
+
+test('FilePgModel.upsert() overwrites existing file records and inserts new ones', async (t) => {
+  const {
+    knex,
+    filePgModel,
+    granuleCumulusId,
+  } = t.context;
+
+  const file = fakeFileRecordFactory({
+    granule_cumulus_id: granuleCumulusId,
+    checksum_value: cryptoRandomString({ length: 3 }),
+  });
+  await filePgModel.create(knex, file);
+
+  const updatedFile = {
+    ...file,
+    checksum_value: cryptoRandomString({ length: 3 }),
+  };
+  const additionalFiles = Array.from({ length: 10 }, () =>
+    fakeFileRecordFactory({
+      granule_cumulus_id: granuleCumulusId,
+    }));
+  additionalFiles.push(updatedFile);
+
+  await filePgModel.upsert(knex, additionalFiles);
+
+  t.like(
+    await filePgModel.get(knex, {
+      bucket: file.bucket,
+      key: file.key,
+    }),
+    updatedFile
+  );
+});
+
 test('FilePgModel.searchByGranuleCumulusIds() returns relevant files', async (t) => {
   const usedGranuleCumulusIds = await Promise.all(range(5).map(() => (
     createFakeGranule(t.context.knex)
