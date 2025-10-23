@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - 100k granules
   - 100k executions
   - that are more than 1 year old.
-  
+
   Being archived changes nothing about the record except to set a boolean flag (archived=true). this behavior can be reconfigured or turned off entirely. see features/record_archival.md for more details.
 
 ### Added
@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add api endpoint `executions/archive` to archive executions
   - Task lambda to call above api endpoints with configuration
   - Add cron scheduler to call above endpoints and archive old records
-  
+
 - **CUMULUS-4032**
   - Added S3 jitter functionality to prevent AWS S3 SlowDown errors during high-concurrency operations
   - Added `sync_granule_s3_jitter_max_ms` Terraform variable to configure random jitter delay (0-59000ms) for SyncGranule task
@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-4271**
+  - Updated release instructions to include schema updates
 - **CUMULUS-4155**
   - Update Cumulus integration tests to utilize:
     - Cumulus Message Adapter: v2.0.5
