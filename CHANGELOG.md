@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Notable Changes
 
+- **CUMULUS-3574**
+  - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all files for a granule in a single batch.
 - **CUMULUS-4124**
   When these changes are deployed, if no action is taken to reconfigure the cron, it will run once per day in the early morning, archiving
 
@@ -37,8 +39,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-3574**
-  - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all files for a granule in a single batch.
 - **CUMULUS-4244**
   - Improve logging for Ingest Granules
     - Upgrade log level from debug to error for 403/401 errors 
