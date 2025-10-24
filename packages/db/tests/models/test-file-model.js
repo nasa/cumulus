@@ -120,7 +120,8 @@ test('FilePgModel.upsert() creates multiple file records', async (t) => {
       granule_cumulus_id: granuleCumulusId,
     }));
 
-  await filePgModel.upsert(knex, files);
+  const result = await filePgModel.upsert(knex, files);
+  t.is(result.length, 1000);
   await Promise.all(files.map(async (file) => {
     t.like(
       await filePgModel.get(knex, file),
@@ -152,7 +153,8 @@ test('FilePgModel.upsert() overwrites existing file records and inserts new ones
     }));
   additionalFiles.push(updatedFile);
 
-  await filePgModel.upsert(knex, additionalFiles);
+  const result = await filePgModel.upsert(knex, additionalFiles);
+  t.is(result.length, 11);
 
   t.like(
     await filePgModel.get(knex, {
@@ -161,6 +163,16 @@ test('FilePgModel.upsert() overwrites existing file records and inserts new ones
     }),
     updatedFile
   );
+});
+
+test('FilePgModel.upsert() creates no file records if input file list is empty', async (t) => {
+  const {
+    knex,
+    filePgModel,
+  } = t.context;
+
+  const result = await filePgModel.upsert(knex, []);
+  t.is(result.length, 0);
 });
 
 test('FilePgModel.searchByGranuleCumulusIds() returns relevant files', async (t) => {
