@@ -46,7 +46,7 @@ test.before(async (t) => {
   t.context.concurrency = 60;
   process.env.dbMaxPool = 60;
   t.context.totalGranules = 2000;
-  t.context.granuleFiles = 10;
+  t.context.granuleFiles = 200;
 
   t.context.testDbName = `writeGranules_${cryptoRandomString({ length: 10 })}`;
   t.context.stepFunctionUtils = {
@@ -208,7 +208,7 @@ test.after.always(async (t) => {
 // This test is a performance test designed to run with a large number of messages
 // in a memory constrained test environment, it is not intended to run as part of
 // the normal unit test suite.
-test('writeGranulesFromMessage operates on 2k granules with 10 files each within 1GB of ram when concurrency is set to 60 and db connections are set to 60', async (t) => {
+test('writeGranulesFromMessage operates on 2k granules with 200 files each within 1GB of ram when concurrency is set to 60 and db connections are set to 60', async (t) => {
   const {
     cumulusMessages,
     knex,

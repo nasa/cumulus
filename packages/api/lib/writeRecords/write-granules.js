@@ -12,7 +12,6 @@ const isObject = require('lodash/isObject');
 const isString = require('lodash/isString');
 const isUndefined = require('lodash/isUndefined');
 const omitBy = require('lodash/omitBy');
-const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
@@ -144,16 +143,17 @@ const _writeFiles = async ({
   fileRecords,
   knex,
   filePgModel = new FilePgModel(),
-}) => await pMap(
-  fileRecords,
-  async (fileRecord) => {
-    log.info('About to write file record to PostgreSQL: %j', fileRecord);
-    const [upsertedRecord] = await filePgModel.upsert(knex, fileRecord);
-    log.info('Successfully wrote file record to PostgreSQL: %j', fileRecord);
-    return upsertedRecord;
-  },
-  { stopOnError: false }
-);
+}) => {
+  log.info(`About to write ${fileRecords.length} file records to PostgreSQL`);
+  fileRecords.forEach((fileRecord, index) => {
+    log.debug('File record [%d]: %j', index, fileRecord);
+  });
+
+  const insertedRecords = await filePgModel.upsert(knex, fileRecords);
+
+  log.info(`Successfully wrote ${insertedRecords.length} file records to PostgreSQL`);
+  return insertedRecords;
+};
 
 /**
  * Get the granule from a query result or look it up in the database.

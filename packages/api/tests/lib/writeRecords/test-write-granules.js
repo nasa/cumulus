@@ -1896,7 +1896,7 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
   t.is(pgGranule.status, 'failed');
   const pgGranuleError = JSON.parse(pgGranule.error.errors);
   t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
-  t.true(pgGranuleError[0].Cause.includes('AggregateError'));
+  t.true(pgGranuleError[0].Cause.includes('error: insert into "files"'));
 });
 
 test.serial('writeGranuleFromMessage() writes a new granule with files set to "[]" results in file value set to undefined/default', async (t) => {
@@ -1984,7 +1984,7 @@ test.serial('_writeGranules attempts to mark granule as failed if a SchemaValida
   t.is(pgGranule.status, 'failed');
 });
 
-test.serial('writeGranulesFromMessage() writes all valid files if any non-valid file fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not write any files if there is an invalid file', async (t) => {
   const {
     cumulusMessage,
     executionCumulusId,
@@ -2009,7 +2009,6 @@ test.serial('writeGranulesFromMessage() writes all valid files if any non-valid 
   for (let i = 0; i < validFiles; i += 1) {
     cumulusMessage.payload.granules[0].files.push(fakeFileFactory());
   }
-  const validFileCount = cumulusMessage.payload.granules[0].files.length - invalidFiles.length;
 
   await writeGranulesFromMessage({
     cumulusMessage,
@@ -2027,7 +2026,7 @@ test.serial('writeGranulesFromMessage() writes all valid files if any non-valid 
     { granule_id: cumulusMessage.payload.granules[0].granuleId }
   );
   const fileRecords = await filePgModel.search(knex, { granule_cumulus_id: granuleCumulusId });
-  t.is(fileRecords.length, validFileCount);
+  t.is(fileRecords.length, 0);
 });
 
 test.serial('writeGranulesFromMessage() stores error on granule if any file fails', async (t) => {
@@ -2070,7 +2069,7 @@ test.serial('writeGranulesFromMessage() stores error on granule if any file fail
   );
   const pgGranuleError = JSON.parse(pgGranule.error.errors);
   t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
-  t.true(pgGranuleError[0].Cause.includes('AggregateError'));
+  t.true(pgGranuleError[0].Cause.includes('error: insert into "files"'));
 });
 
 test.serial('writeGranulesFromMessage() stores an aggregate workflow error and file-writing error on a granule', async (t) => {
@@ -4060,7 +4059,7 @@ test.serial('writeGranuleFromApi() saves file records to Postgres if Postgres wr
   );
 });
 
-test.serial('writeGranuleFromApi() sets granule to fail, writes all valid files and throws if any non-valid file fails', async (t) => {
+test.serial('writeGranuleFromApi() sets granule to fail, does not write any files if there is an invalid file', async (t) => {
   const {
     collectionCumulusId,
     filePgModel,
@@ -4079,7 +4078,6 @@ test.serial('writeGranuleFromApi() sets granule to fail, writes all valid files 
   for (let i = 0; i < validFiles; i += 1) {
     allfiles.push(fakeFileFactory());
   }
-  const validFileCount = allfiles.length - invalidFiles.length;
 
   await t.throwsAsync(writeGranuleFromApi({ ...granule, files: allfiles }, knex, 'Create'));
 
@@ -4096,7 +4094,7 @@ test.serial('writeGranuleFromApi() sets granule to fail, writes all valid files 
     { granule_id: granule.granuleId }
   );
   const fileRecords = await filePgModel.search(knex, { granule_cumulus_id: granuleCumulusId });
-  t.is(fileRecords.length, validFileCount);
+  t.is(fileRecords.length, 0);
 });
 
 test.serial('writeGranuleFromApi() sets granule to failed with expected error and throws if any file fails', async (t) => {
@@ -4132,7 +4130,7 @@ test.serial('writeGranuleFromApi() sets granule to failed with expected error an
   const pgGranuleError = JSON.parse(pgGranule.error.errors);
   t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
   t.is(pgGranule.status, 'failed');
-  t.true(pgGranuleError[0].Cause.includes('AggregateError'));
+  t.true(pgGranuleError[0].Cause.includes('error: insert into "files"'));
 });
 
 test.serial('writeGranuleFromApi() allows update of complete granule record if older granule exists with same execution in a completed state', async (t) => {
