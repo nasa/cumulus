@@ -17,6 +17,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3574**
   - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
 
+### Fixed
+
+- **CUMULUS-4275**
+  - Fixed unit tests broken by updated HTTP error messages in got
+
 ## [v21.1.0]
 
 ### Migration Notes
