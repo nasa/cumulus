@@ -22,6 +22,8 @@ interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   collectionVersion: string,
   pdrName?: string,
   providerName?: string,
+  state?: string,
+  groupId?: number,
 }
 
 /**
@@ -51,6 +53,7 @@ export class GranuleSearch extends BaseSearch {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
+      granuleGroups: granuleGroupsTable
     } = TableNames;
     const countQuery = knex(this.tableName)
       .count('*');
@@ -62,6 +65,8 @@ export class GranuleSearch extends BaseSearch {
         collectionName: `${collectionsTable}.name`,
         collectionVersion: `${collectionsTable}.version`,
         pdrName: `${pdrsTable}.name`,
+        groupId: `${granuleGroupsTable}.group_id`,
+        state: `${granuleGroupsTable}.state`,
       })
       .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
 
@@ -81,6 +86,12 @@ export class GranuleSearch extends BaseSearch {
       searchQuery.innerJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     } else {
       searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+    }
+
+    if(this.dbQueryParameters.includeActiveStatus){
+      searchQuery.innerJoin(granuleGroupsTable, `${this.tableName}.cumulus_id`, `${granuleGroupsTable}.granule_cumulus_id`)
+    } else {
+      searchQuery.leftJoin(granuleGroupsTable, `${this.tableName}.cumulus_id`, `${granuleGroupsTable}.granule_cumulus_id`)
     }
     return { countQuery, searchQuery };
   }
@@ -181,9 +192,11 @@ export class GranuleSearch extends BaseSearch {
       const pdr = item.pdrName ? { name: item.pdrName } : undefined;
       const providerPgRecord = item.providerName ? { name: item.providerName } : undefined;
       const fileRecords = fileMapping[granulePgRecord.cumulus_id] || [];
+      const granuleGroupRecord = item.state && item.groupId ? { state: item.state, group_id: item.groupId} : undefined;
       const apiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
         granulePgRecord,
         collectionPgRecord,
+        granuleGroupRecord,
         pdr,
         providerPgRecord,
         files: fileRecords,

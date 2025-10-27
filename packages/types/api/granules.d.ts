@@ -40,11 +40,13 @@ export type ApiGranuleRecord = {
   error?: Object
   execution?: string
   files?: Omit<import('./files').ApiFile, 'granuleId'>[]
+  groupId?: number,
   pdrName?: string
   productVolume?: string
   provider?: string
   published?: boolean
   queryFields?: unknown
+  state?: string,
   timestamp?: number
   timeToArchive?: number
   timeToPreprocess?: number
