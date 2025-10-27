@@ -6,14 +6,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable Changes
+
+- **CUMULUS-3574**
+  - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
+    now, if any granule file fails, none are written.
+
+### Changed
+
+- **CUMULUS-3574**
+  - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
+
+## [v21.1.0]
+
 ### Migration Notes
 
 - This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
 
 ### Notable Changes
 
-- **CUMULUS-3574**
-  - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all files for a granule in a single batch.
 - **CUMULUS-4124**
   When these changes are deployed, if no action is taken to reconfigure the cron, it will run once per day in the early morning, archiving
 
