@@ -14,7 +14,7 @@ const {
 
 const Logger = require('@cumulus/logger');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
-const { RecordDoesNotExist } = require('@cumulus/errors');
+const { RecordDoesNotExist, errorify } = require('@cumulus/errors');
 const { GranuleSearch } = require('@cumulus/db');
 
 const { ExecutionAlreadyExists } = require('@cumulus/aws-client/StepFunctions');
@@ -51,7 +51,6 @@ const {
   asyncOperationEndpointErrorHandler,
   requireApiVersion,
 } = require('../app/middleware');
-const { errorify } = require('../lib/utils');
 const { returnCustomValidationErrors } = require('../lib/endpoints');
 const { moveGranule, getFilesExistingAtLocation } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
