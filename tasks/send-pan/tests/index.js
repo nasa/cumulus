@@ -101,8 +101,10 @@ test('SendPan task sends PAN to HTTP server', async (t) => {
     t.fail();
   } catch (error) {
     // uploading file to httpd running in docker returns error
-    if (error.message.includes('Response code 404 (Not Found)')) {
+    if (error.message.includes('Request failed with status code 404 (Not Found)')) {
       t.pass();
+    } else {
+      t.fail(`Error message is not expected: ${error.message}`);
     }
   }
 });
