@@ -30,6 +30,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     This change is required because, starting with PostgreSQL 15, new databases assign ownership
     of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
     prior to v15 preserve the previous ownership of the public schema.
+- **CUMULUS-4275**
+  - Fixed unit tests broken by updated HTTP error messages in got
 
 ## [v20.3.1] 2025-10-14
 
