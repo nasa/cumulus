@@ -22,6 +22,7 @@ import { GranuleWithProviderAndCollectionInfo } from '../types/query';
 import { PostgresProviderRecord } from '../types/provider';
 
 import { translatePostgresFileToApiFile } from './file';
+import { PostgresGranuleGroupRecord } from '../types/granule-group';
 
 /**
  * Generate an API Granule object from the granule and associated Postgres objects without
@@ -39,6 +40,7 @@ import { translatePostgresFileToApiFile } from './file';
 export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   granulePgRecord,
   collectionPgRecord,
+  granuleGroupRecord,
   executionUrls = [],
   files = [],
   pdr,
@@ -46,6 +48,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
 }: {
   granulePgRecord: PostgresGranuleRecord,
   collectionPgRecord: Pick<PostgresCollectionRecord, 'cumulus_id' | 'name' | 'version'>,
+  granuleGroupRecord?: Partial<PostgresGranuleGroupRecord>,
   executionUrls?: Partial<PostgresExecutionRecord>[],
   files?: PostgresFileRecord[],
   pdr?: Pick<PostgresPdrRecord, 'name'>,
@@ -62,6 +65,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   execution: executionUrls[0] ? executionUrls[0].url : undefined,
   files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : [],
   granuleId: granulePgRecord.granule_id,
+  groupId: granuleGroupRecord ? granuleGroupRecord.group_id : undefined,
   lastUpdateDateTime: granulePgRecord.last_update_date_time?.toISOString(),
   pdrName: pdr ? pdr.name : undefined,
   processingEndDateTime: granulePgRecord.processing_end_date_time?.toISOString(),
@@ -72,6 +76,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   provider: providerPgRecord ? providerPgRecord.name : undefined,
   published: granulePgRecord.published,
   queryFields: granulePgRecord.query_fields,
+  state: granuleGroupRecord ? granuleGroupRecord.state : undefined,
   status: granulePgRecord.status as GranuleStatus,
   timestamp: granulePgRecord.timestamp?.getTime(),
   timeToArchive: granulePgRecord.time_to_archive,

@@ -13,12 +13,14 @@ const {
   fakeProviderRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
+  GranuleGroupsPgModel,
   GranuleSearch,
   PdrPgModel,
   ProviderPgModel,
   migrationDir,
   FilePgModel,
   fakeFileRecordFactory,
+  fakeGranuleGroupRecordFactory,
   ExecutionPgModel,
   fakeExecutionRecordFactory,
   GranulesExecutionsPgModel,
@@ -219,6 +221,16 @@ test.before(async (t) => {
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
       execution_cumulus_id: executionRecords[99 - i].cumulus_id,
+    }))
+  );
+
+  t.context.granuleGroupsPgModel = new GranuleGroupsPgModel();
+  t.context.granuleGroups = await t.context.granuleGroupsPgModel.insert(
+    knex,
+    range(10).map((num) => fakeGranuleGroupRecordFactory({
+      granule_cumulus_id: num + 1,
+      group_id: num > 5 ? 1 : 0,
+      state: num % 5 == 0 ? 'A' : 'H',
     }))
   );
 });
