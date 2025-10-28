@@ -114,6 +114,12 @@ resource "aws_rds_cluster" "cumulus" {
   lifecycle {
     ignore_changes = [engine_version]
   }
+
+  restore_to_point_in_time {
+    source_cluster_identifier  = var.cluster_identifier
+    restore_type               = var.restore_type
+    use_latest_restorable_time = var.use_latest_restorable_time
+  }
 }
 
 resource "aws_rds_cluster_instance" "cumulus" {
