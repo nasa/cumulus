@@ -11,6 +11,7 @@ export interface PostgresCollection {
   report_to_ems?: boolean,
   sample_file_name: string,
   url_path?: string,
+  hidden_file_bucket?: string,
   ignore_files_config_for_discovery?: boolean,
   meta?: object,
   tags?: string,

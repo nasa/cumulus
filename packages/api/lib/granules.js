@@ -72,7 +72,7 @@ const getExecutionProcessingTimeInfo = ({
 };
 
 /**
- * Move granule 'file' S3 Objects and update Postgres/CMR metadata with new locations
+ * Move granule 'file' S3 Objects and update Postgres with new locations
  *
  * @param {Object} params                                - params object
  * @param {Object} params.apiGranule                     - API 'granule' object to move
