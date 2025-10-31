@@ -177,7 +177,8 @@ module "cumulus" {
     "npauzenga",
     "vnguyen",
     "rkwarten",
-    "terrafirma13"
+    "terrafirma13",
+    "ppilone"
   ]
 
   archive_api_url             = var.archive_api_url
