@@ -36,6 +36,7 @@ function determineIntegrationTestStackName(cb) {
     'Tim Clark': 'teclark-ci',
     'Bryan Wexler': 'bwexler-ci',
     'Curtis Banh': 'cbanh-ci',
+    'Robert Swanson': 'rs-ci',
     wisdomaj: 'awisdom-ci',
   };
 
