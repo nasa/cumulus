@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-data",
-  "version": "21.0.0",
+  "version": "21.0.1",
   "description": "Includes the test data for various packages",
   "keywords": [
     "GIBS",

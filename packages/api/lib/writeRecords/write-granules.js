@@ -12,7 +12,6 @@ const isObject = require('lodash/isObject');
 const isString = require('lodash/isString');
 const isUndefined = require('lodash/isUndefined');
 const omitBy = require('lodash/omitBy');
-const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
@@ -144,16 +143,17 @@ const _writeFiles = async ({
   fileRecords,
   knex,
   filePgModel = new FilePgModel(),
-}) => await pMap(
-  fileRecords,
-  async (fileRecord) => {
-    log.info('About to write file record to PostgreSQL: %j', fileRecord);
-    const [upsertedRecord] = await filePgModel.upsert(knex, fileRecord);
-    log.info('Successfully wrote file record to PostgreSQL: %j', fileRecord);
-    return upsertedRecord;
-  },
-  { stopOnError: false }
-);
+}) => {
+  log.info(`About to write ${fileRecords.length} file records to PostgreSQL`);
+  fileRecords.forEach((fileRecord, index) => {
+    log.debug('File record [%d]: %j', index, fileRecord);
+  });
+
+  const insertedRecords = await filePgModel.upsert(knex, fileRecords);
+
+  log.info(`Successfully wrote ${insertedRecords.length} file records to PostgreSQL`);
+  return insertedRecords;
+};
 
 /**
  * Get the granule from a query result or look it up in the database.
@@ -1022,11 +1022,30 @@ const writeGranulesFromMessage = async ({
       let files;
       if (isNull(granule.files)) files = [];
 
-      files = granule.files ? await FileUtils.buildDatabaseFiles({
-        s3: s3(),
-        providerURL: buildURL(provider),
-        files: granule.files,
-      }) : undefined;
+      try {
+        files = granule.files ? await FileUtils.buildDatabaseFiles({
+          s3: s3(),
+          providerURL: buildURL(provider),
+          files: granule.files,
+        }) : undefined;
+      } catch (buildFilesError) {
+        log.error(
+          'Failed to build database files for granule. '
+          + 'This may indicate S3 permission issues or missing files. '
+          + `Granule: ${granule.granuleId}, `
+          + `Collection: ${collectionId}, `
+          + `Provider: ${provider?.id || 'unknown'}, `
+          + `Error: ${buildFilesError.message}`,
+          {
+            granuleId: granule.granuleId,
+            collectionId,
+            providerId: provider?.id,
+            error: buildFilesError,
+            fileCount: granule.files?.length || 0,
+          }
+        );
+        throw buildFilesError;
+      }
       const timeToArchive = getGranuleTimeToArchive(granule);
       const timeToPreprocess = getGranuleTimeToPreprocess(granule);
       const productVolume = files ? getGranuleProductVolume(files) : undefined;
