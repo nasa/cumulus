@@ -23,7 +23,7 @@ import {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
 } from '@cumulus/db';
-import { publishGranuleUpdateSnsMessage } from '../../lib/publishSnsMessageUtils';
+const { publishGranuleUpdateSnsMessage } = require('../../lib/publishSnsMessageUtils');
 
 const unpublishGranule = require('../../lib/granule-remove-from-cmr');
 
