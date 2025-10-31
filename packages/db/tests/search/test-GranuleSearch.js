@@ -6,6 +6,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { sleep } = require('@cumulus/common');
 const {
   CollectionPgModel,
+  destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
   fakePdrRecordFactory,
@@ -23,8 +24,6 @@ const {
   GranulesExecutionsPgModel,
 } = require('../../dist');
 
-const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
-
 // generate granuleId for infix and prefix search
 const generateGranuleId = (num) => {
   let granuleId = cryptoRandomString({ length: 10 });
@@ -34,8 +33,9 @@ const generateGranuleId = (num) => {
 };
 
 test.before(async (t) => {
+  t.context.testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
   const { knexAdmin, knex } = await generateLocalTestDb(
-    testDbName,
+    t.context.testDbName,
     migrationDir
   );
   t.context.knexAdmin = knexAdmin;
@@ -221,6 +221,10 @@ test.before(async (t) => {
       execution_cumulus_id: executionRecords[99 - i].cumulus_id,
     }))
   );
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb(t.context);
 });
 
 test('GranuleSearch returns 10 granule records by default', async (t) => {

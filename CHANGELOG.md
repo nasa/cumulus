@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## **CUMULUS-3744** Epic: Handle Granules with identical file names within a collection
+
+### Added
+
+- **CUMULUS-4146**
+  - Added new table and postgres model `granule_groups` to provide linkage between duplicate granule sets
+- **CUMULUS-4147**
+  - Added PostgreSQL sequence `granule_group_id_seq` and set the default value of
+    `granule_groups.group_id` to use `nextval('granule_group_id_seq')`.
+  - Added function `findActiveDuplicateGranules` to `@cumulus/db/src/lib/duplicate-detection` to
+    return duplicate granules
+
 ## [Unreleased]
 
 ### Notable Changes
