@@ -223,6 +223,12 @@ variable "default_s3_multipart_chunksize_mb" {
   default = 256
 }
 
+variable "sync_granule_s3_jitter_max_ms" {
+  description = "Maximum random jitter in milliseconds to apply before S3 operations in SyncGranule task (0-59000). Set to 0 to disable jitter."
+  type        = number
+  default     = 0
+}
+
 variable "deploy_distribution_s3_credentials_endpoint" {
   description = "Whether or not to include the S3 credentials endpoint in the Thin Egress App"
   type        = bool
