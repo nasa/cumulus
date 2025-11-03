@@ -71,9 +71,6 @@ echo "terraform {
 ../terraform init \
   -input=false
 
-echo "Force unlock broken state..."
-../terraform force-unlock -force 716c6350-e38d-271c-ad53-92ede98be088
-
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
