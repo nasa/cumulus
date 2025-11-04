@@ -8,7 +8,6 @@
  * const Granules = require('@cumulus/message/Granules');
  */
 
-import isEmpty from 'lodash/isEmpty';
 import isNil from 'lodash/isNil';
 import isInteger from 'lodash/isInteger';
 import isUndefined from 'lodash/isUndefined';
@@ -203,16 +202,28 @@ export const getGranuleCmrTemporalInfo = async ({
 }): Promise<PartialGranuleTemporalInfo | {}> => {
   // Get CMR temporalInfo (beginningDateTime, endingDateTime,
   // productionDateTime, lastUpdateDateTime)
-  const temporalInfo = isGranuleTemporalInfo(cmrTemporalInfo)
-    ? { ...cmrTemporalInfo }
-    : await cmrUtils.getGranuleTemporalInfo(granule) as PartialGranuleTemporalInfo;
-
-  if (isEmpty(temporalInfo)) {
-    return pick(granule, ['beginningDateTime', 'endingDateTime', 'productionDateTime', 'lastUpdateDateTime']);
+  // only go out and fetch new cmr temporal info *if* the data passed doesn't have our info
+  let freshCmrTemporal = {} as PartialGranuleTemporalInfo;
+  if (!isGranuleTemporalInfo(cmrTemporalInfo)){
+    freshCmrTemporal = await cmrUtils.getGranuleTemporalInfo(granule) as PartialGranuleTemporalInfo;
   }
+  const granuleTemporal = pick(
+    granule,
+    [
+      'beginningDateTime',
+      'endingDateTime',
+      'productionDateTime',
+      'lastUpdateDateTime'
+    ]
+  ) as PartialGranuleTemporalInfo;
+
 
   return mapValues(
-    temporalInfo,
+    {
+      ...granuleTemporal,
+      ...freshCmrTemporal,
+      ...cmrTemporalInfo,
+    },
     convertDateToISOStringSettingNull
   );
 };
