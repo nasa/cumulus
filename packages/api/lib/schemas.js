@@ -151,7 +151,7 @@ module.exports.collection = {
       type: 'string',
     },
     hiddenFileBucket: {
-      description: 'Name of the S3 bucket used to store granule files in the hidden archive. Defaults to the primary archive bucket if not specified.',
+      description: 'Name of the S3 bucket used to store granule files in the hidden archive. Defaults to the primary archive buckets if not specified.',
       type: 'string',
     },
     ignoreFilesConfigForDiscovery: {

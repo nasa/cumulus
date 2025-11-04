@@ -24,8 +24,7 @@ import {
   translatePostgresGranuleToApiGranule,
 } from '@cumulus/db';
 const { publishGranuleUpdateSnsMessage } = require('../../lib/publishSnsMessageUtils');
-
-const unpublishGranule = require('../../lib/granule-remove-from-cmr');
+const { unpublishGranule } = require('../../lib/granule-remove-from-cmr');
 
 const log = new Logger({ sender: 'granule-demote-promote' });
 
@@ -101,7 +100,7 @@ export const updateDatabaseRecords = async ({
       key: file.newKey,
     }));
 
-    await filePgModel.upsert(trx, updatedFileRecords);
+    await filePgModel.updateFilesById(trx, updatedFileRecords);
 
     // TODO existing or not already exist, both should work
     await granuleGroupsModel.upsert(trx, {
@@ -112,6 +111,7 @@ export const updateDatabaseRecords = async ({
 
     await trx.commit();
   } catch (error) {
+    log.error(error);
     await trx.rollback();
     throw error;
   }

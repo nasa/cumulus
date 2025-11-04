@@ -28,6 +28,44 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
   }
 
   /**
+   * Updates one or multiple files by cumulus_id
+   */
+  async updateFilesById(
+    knexOrTrx: Knex | Knex.Transaction,
+    input: Partial<PostgresFileRecord> | Partial<PostgresFileRecord>[]
+  ): Promise<PostgresFileRecord[]> {
+    const files = Array.isArray(input) ? input : [input];
+
+    if (files.length === 0) return Promise.resolve([]);
+
+    const results: PostgresFileRecord[] = [];
+
+    for (const file of files) {
+      const { cumulus_id: cumulusId, ...updates } = file;
+
+      if (!cumulusId) {
+        throw new Error('cumulus_id is required to update a file');
+      }
+
+      if (Object.keys(updates).length > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        const [updated] = await knexOrTrx(this.tableName)
+          .where({ cumulus_id: cumulusId })
+          .update(updates)
+          .returning('*');
+
+        if (!updated) {
+          throw new Error(`File not found with cumulus_id=${cumulusId}`);
+        }
+
+        results.push(updated);
+      }
+    }
+
+    return results;
+  }
+
+  /**
    * Retrieves all files for all granules given
   */
   searchByGranuleCumulusIds(
