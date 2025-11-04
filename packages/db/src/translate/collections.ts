@@ -22,6 +22,7 @@ export const translatePostgresCollectionToApiCollection = (
   files: collectionRecord.files,
   reportToEms: collectionRecord.report_to_ems,
   sampleFileName: collectionRecord.sample_file_name,
+  hiddenFileBucket: collectionRecord.hidden_file_bucket,
   ignoreFilesConfigForDiscovery: collectionRecord.ignore_files_config_for_discovery,
   meta: collectionRecord.meta,
   tags: collectionRecord.tags,
@@ -48,6 +49,7 @@ export const translateApiCollectionToPostgresCollection = (
     files: (JSON.stringify(record.files)),
     report_to_ems: record.reportToEms,
     sample_file_name: record.sampleFileName,
+    hidden_file_bucket: record.hiddenFileBucket,
     ignore_files_config_for_discovery: record.ignoreFilesConfigForDiscovery,
     meta: record.meta,
     // have to stringify on an array of values

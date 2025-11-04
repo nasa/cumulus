@@ -19,6 +19,7 @@ export interface PartialCollectionRecord {
   files?: CollectionFile[],
   granuleId?: string,
   granuleIdExtraction?: string,
+  hiddenFileBucket?: string,
   ignoreFilesConfigForDiscovery?: boolean,
   name?: string,
   process?: string,

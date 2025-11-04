@@ -150,6 +150,10 @@ module.exports.collection = {
         + 'validation and extraction regexes against',
       type: 'string',
     },
+    hiddenFileBucket: {
+      description: 'Name of the S3 bucket used to store granule files in the hidden archive. Defaults to the primary archive buckets if not specified.',
+      type: 'string',
+    },
     ignoreFilesConfigForDiscovery: {
       title: 'Ignore Files Configuration During Discovery',
       description: "When true, ignore this collection's files config list for"
