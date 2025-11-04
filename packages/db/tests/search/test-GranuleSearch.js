@@ -227,10 +227,10 @@ test.before(async (t) => {
   t.context.granuleGroupsPgModel = new GranuleGroupsPgModel();
   t.context.granuleGroups = await t.context.granuleGroupsPgModel.insert(
     knex,
-    range(10).map((num) => fakeGranuleGroupRecordFactory({
+    range(100).map((num) => fakeGranuleGroupRecordFactory({
       granule_cumulus_id: num + 1,
-      group_id: num > 5 ? 1 : 0,
-      state: num % 5 == 0 ? 'A' : 'H',
+      group_id: num % 2 === 0 ? 2 : 1,
+      state: num % 5 === 0 ? 'A' : 'H',
     }))
   );
 });
@@ -1069,5 +1069,31 @@ test('GranuleSearch with archived: false pulls only non-archive granules', async
   const response = await dbSearch.query(knex);
   response.results.forEach((granuleRecord) => {
     t.is(granuleRecord.archived, false);
+  });
+});
+
+test('GranuleSearch with includeActiveStatus set to true returns GranuleGroup info', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    includeActiveState: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  response.results.forEach((granuleRecord) => {
+    t.true('state' in granuleRecord && (granuleRecord.state === 'A' || granuleRecord.state === 'H'));
+    t.true('groupId' in granuleRecord && (granuleRecord.groupId === 2 || granuleRecord.groupId === 1));
+  });
+});
+
+test('GranuleSearch with includeActiveStatus set to false does not return GranuleGroup info', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    includeActiveState: 'false',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  response.results.forEach((granuleRecord) => {
+    t.false('state' in granuleRecord);
+    t.false('groupId' in granuleRecord);
   });
 });

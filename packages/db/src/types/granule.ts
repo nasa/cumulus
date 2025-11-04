@@ -41,3 +41,8 @@ export interface PostgresGranuleRecord extends Omit<PostgresGranule, 'product_vo
   updated_at: Date,
   status: GranuleStatus,
 }
+
+export interface PostgresGranuleAndGroupRecord extends PostgresGranuleRecord {
+  state: string,
+  groupId: number,
+}

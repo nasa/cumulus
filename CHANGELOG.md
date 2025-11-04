@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added function `findActiveDuplicateGranules` to `@cumulus/db/src/lib/duplicate-detection` to
     return duplicate granules
 - **CUMULUS-4273**
-  - Added a new query string parameter `includeActiveStatus` to the `GranuleSearch` class for whether to include `group_id` and `state` from the `GranuleGroups` table for granules in api search
+  - Added a new query string parameter `includeActiveState` to the `GranuleSearch` class for whether to include `group_id` and `state` from the `GranuleGroups` table for granules in api search
 
 ### Notable Changes
 

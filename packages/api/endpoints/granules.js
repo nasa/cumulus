@@ -24,6 +24,7 @@ const {
   ExecutionPgModel,
   getGranuleAndCollection,
   getGranuleIdAndCollectionIdFromFile,
+  getGranuleAndGroupFromPG,
   getGranulesByGranuleId,
   getKnexClient,
   getUniqueGranuleByGranuleId,
@@ -117,6 +118,24 @@ async function list(req, res) {
     return res.send(await addOrcaRecoveryStatus(result));
   }
   return res.send(result);
+}
+
+/**
+ * Get a granule and its GranuleGroup information
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function getGranuleAndGroup(req, res) {
+  if (!req.body.granuleId) {
+    throw new Error(
+      'granuleId is needed in order to search up a granule and its group information. Please resubmit the request including a granuleId'
+    );
+  }
+  const granuleId = req.body.granuleId;
+  const granuleAndGroup = await getGranuleAndGroupFromPG(granuleId);
+  return res.send(granuleAndGroup);
 }
 
 /**
@@ -1367,6 +1386,7 @@ router.post('/bulkArchive', bulkArchiveGranules);
 router.get('/:collectionId/:granuleId', get);
 router.get('/files/get_collection_and_granule_id/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
 router.get('/:granuleId', getByGranuleId);
+router.get('/getGranuleAndGroup', getGranuleAndGroup);
 router.get('/', list);
 router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
 router.patch('/bulkPatch', bulkPatch);
@@ -1405,6 +1425,7 @@ module.exports = {
   bulkReingest,
   del,
   create,
+  getGranuleAndGroup,
   put,
   patch,
   patchGranuleAndReturnStatus,

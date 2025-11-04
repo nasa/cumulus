@@ -17,7 +17,7 @@ const reservedWords = [
   'infix',
   'estimateTableRowCount',
   'fields',
-  'includeActiveStatus',
+  'includeActiveState',
   'includeFullRecord',
   'searchContext',
   'countOnly',
@@ -253,7 +253,7 @@ export const convertQueryStringToDbQueryParameters = (
     infix,
     fields,
     estimateTableRowCount,
-    includeActiveStatus,
+    includeActiveState,
     includeFullRecord,
     countOnly,
   } = queryStringParameters;
@@ -269,7 +269,7 @@ export const convertQueryStringToDbQueryParameters = (
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
   dbQueryParameters.estimateTableRowCount = (estimateTableRowCount === 'true');
   dbQueryParameters.includeFullRecord = (includeFullRecord === 'true');
-  dbQueryParameters.includeActiveStatus = (includeActiveStatus === 'true');
+  dbQueryParameters.includeActiveState = (includeActiveState === 'true');
   dbQueryParameters.countOnly = (countOnly === 'true');
   dbQueryParameters.sort = convertSort(type, queryStringParameters);
 

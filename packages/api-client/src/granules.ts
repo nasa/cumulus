@@ -86,6 +86,27 @@ export const getGranuleResponse = async (params: {
   });
 };
 
+export const getGranuleAndGroup = async (params: {
+  prefix: string,
+  body: Object,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/getGranuleAndGroup',
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 202,
+  });
+};
+
 /**
  * GET granule record from /granules/{granuleId} or /granules/{collectionId}/{granuleId}
  *

@@ -12,7 +12,7 @@ import Logger from '@cumulus/logger';
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
-import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
+import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleAndGroupRecord } from '../types/granule';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
 import { UpdatedAtRange } from '../types/record';
 const { deprecate } = require('@cumulus/common/util');
@@ -352,6 +352,35 @@ export const getGranulesByGranuleId = async (
   } = TableNames;
   const records: PostgresGranuleRecord[] = await knexOrTransaction(granulesTable)
     .where({ granule_id: granuleId });
+  return records;
+};
+
+/**
+ * Get granules from table where granule_id matches provided granuleId joined
+ * with GranuleGroups for group state and groupId information
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+ * @param {string} granuleId - Granule ID
+ * @returns {Promise<PostgresGranuleAndGroupRecord[]>} The returned list of records
+ */
+export const getGranuleAndGroupFromPG = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  granuleId: string
+): Promise<PostgresGranuleAndGroupRecord[]> => {
+  const {
+    granules: granulesTable,
+    granuleGroups: granuleGroupsTable,
+  } = TableNames;
+
+  let records: PostgresGranuleAndGroupRecord[];
+  try {
+    records = await knexOrTransaction(granulesTable)
+      .innerJoin(granuleGroupsTable, `${granulesTable}.cumulus_id`, `${granuleGroupsTable}.granule_cumulus_id`)
+      .where({ granule_id: granuleId });
+  } catch (thrownError) {
+    log.error(`GetGranuleAndGroup failed: ${JSON.stringify(thrownError)}`);
+    throw thrownError;
+  }
   return records;
 };
 
