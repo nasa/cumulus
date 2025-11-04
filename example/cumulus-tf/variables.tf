@@ -205,6 +205,12 @@ variable "tea_distribution_url" {
   default = null
 }
 
+variable "sync_granule_s3_jitter_max_ms" {
+  description = "Maximum random jitter in milliseconds for SyncGranule S3 operations (0-59000). Set to 0 to disable."
+  type        = number
+  default     = 0
+}
+
 variable "ecs_cluster_instance_subnet_ids" {
   type = list(string)
   default = []
