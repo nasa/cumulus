@@ -73,7 +73,7 @@ variable "tags" {
 variable "engine_version" {
   description = "Postgres engine version for Serverless cluster"
   type        = string
-  default     = "13.12"
+  default     = "17.4"
 }
 
 variable "vpc_tag_name" {
@@ -86,6 +86,12 @@ variable "subnets_tag_name" {
   description = "Tag name to use for looking up VPC subnets"
   type = string
   default = "Private application *"
+}
+
+variable "enable_upgrade" {
+  description = "Flag to enable use of updated parameter group"
+  type = bool
+  default = false
 }
 
 variable "lambda_memory_sizes" {
@@ -108,4 +114,10 @@ variable "parameter_group_family_v13" {
   description = "Database family to use for creating database parameter group under postgres 13 upgrade conditions"
   type = string
   default = "aurora-postgresql13"
+}
+
+variable "parameter_group_family_v17" {
+  description = "Database family to use for creating database parameter group under postgres 17 upgrade conditions"
+  type = string
+  default = "aurora-postgresql17"
 }

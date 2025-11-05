@@ -58,15 +58,18 @@ module.exports.asyncOperation = {
     operationType: {
       type: 'string',
       enum: [
+        'Bulk Execution Archive',
+        'Bulk Execution Delete',
+        'Bulk Granules',
+        'Bulk Granule Archive',
         'Bulk Granule Delete',
         'Bulk Granule Reingest',
-        'Bulk Granules',
-        'Bulk Execution Delete',
         'Data Migration',
         'Dead-Letter Processing',
         'DLA Migration',
         'ES Index',
         'Kinesis Replay',
+        'Migration Count Report',
         'Reconciliation Report',
         'SQS Replay',
       ],
@@ -279,8 +282,18 @@ module.exports.granule = {
   title: 'Granule Object',
   type: 'object',
   properties: {
+    archived: {
+      title: 'archived',
+      type: 'boolean',
+      readonly: false,
+    },
     granuleId: {
       title: 'Granule ID',
+      type: 'string',
+      readonly: true,
+    },
+    producerGranuleId: {
+      title: 'Producer Granule ID',
       type: 'string',
       readonly: true,
     },
@@ -391,6 +404,7 @@ module.exports.granule = {
   required: [
     'granuleId',
     'collectionId',
+    'producerGranuleId',
     'status',
     'updatedAt',
   ],
@@ -718,6 +732,11 @@ module.exports.execution = {
   description: 'Keep the information about each step function execution',
   type: 'object',
   properties: {
+    archived: {
+      title: 'archived',
+      type: 'boolean',
+      readonly: false,
+    },
     arn: {
       title: 'Execution arn (this field is unique)',
       type: 'string',

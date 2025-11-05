@@ -12,6 +12,7 @@
         "properties": {
           "granuleId": { "type": "string" },
           "collectionId": { "type": "string" },
+          "producerGranuleId": { "type": "string" },
           "dataType": { "type": "string" },
           "version": { "type": "string" },
           "files": "{{files}}"

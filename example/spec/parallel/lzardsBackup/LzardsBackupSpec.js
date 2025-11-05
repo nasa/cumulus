@@ -37,6 +37,12 @@ describe('The Lzards Backup Task ', () => {
   const tenMinutesAgo = now - (1000 * 60 * 10);
   const twoMinutesAgo = now - (1000 * 60 * 2);
 
+  const commonSearchParams = {
+    requestSummary: false,
+    includeEvents: true,
+    status: '',
+  };
+
   const testSetup = async (configOverride = {}) => {
     try {
       beforeAllFailed = false;
@@ -233,6 +239,7 @@ describe('The Lzards Backup Task ', () => {
       expect(backupStatus[0].status).toBe('COMPLETED');
       expect(backupStatus[0].statusCode).toBe(201);
       expect(backupStatus[0].granuleId).toBe(granuleId);
+      expect(backupStatus[0].producerGranuleId).toBe(granuleId);
       expect(backupStatus[0].provider).toBe(provider);
       expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
       expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
@@ -259,8 +266,9 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
-            'metadata[collection]': `${collection.name}___${collection.version}`,
+            collection: `${collection.name}___${collection.version}`,
             'metadata[granuleId]': granuleId,
+            ...commonSearchParams,
           },
         }));
         const lzardsApiGetOutput = await pTimeout(
@@ -273,6 +281,7 @@ describe('The Lzards Backup Task ', () => {
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(3);
         expect(payload.items[0].metadata.granuleId).toBe(granuleId);
+        expect(payload.items[0].metadata.producerGranuleId).toBe(granuleId);
         expect(payload.items[0].metadata.collection).toBe(`${collection.name}___${collection.version}`);
         expect(payload.items[0].metadata.createdAt).toBe(tenMinutesAgo);
       }
@@ -283,10 +292,12 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
+            collection: `${collection.name}___${collection.version}`,
             pageLimit: 25,
             'metadata[provider]': provider,
             'metadata[createdAt][gte]': thirtyMinutesAgo,
             'metadata[createdAt][lte]': twoMinutesAgo,
+            ...commonSearchParams,
           },
         }));
 
@@ -310,8 +321,9 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
-            'metadata[collection]': 'notBackedUpCollectionName',
+            collection: 'notBackedUpCollectionName',
             'metadata[granuleId]': granuleId,
+            ...commonSearchParams,
           },
         }));
 

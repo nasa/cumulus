@@ -26,6 +26,7 @@ locals {
       DeadLetterRecoveryTaskDefinition = aws_ecs_task_definition.dead_letter_recovery_operation.arn
       backgroundQueueUrl               = var.background_queue_url
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
+      ArchiveRecordsLambda             = aws_lambda_function.archive_records.arn
       collection_sns_topic_arn         = aws_sns_topic.report_collections_topic.arn
       cmr_client_id                    = var.cmr_client_id
       CMR_ENVIRONMENT                  = var.cmr_environment

@@ -5,14 +5,18 @@ export type AsyncOperationStatus =
   | 'TASK_FAILED';
 
 export type AsyncOperationType =
+  | 'Bulk Execution Archive'
   | 'Bulk Execution Delete'
+  | 'Bulk Granules'
+  | 'Bulk Granule Archive'
   | 'Bulk Granule Delete'
   | 'Bulk Granule Reingest'
-  | 'Bulk Granules'
+  | 'Data Migration'
   | 'Dead-Letter Processing'
   | 'DLA Migration'
   | 'ES Index'
   | 'Kinesis Replay'
+  | 'Migration Count Report'
   | 'Reconciliation Report'
   | 'SQS Replay';
 

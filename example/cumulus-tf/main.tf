@@ -122,6 +122,7 @@ module "cumulus" {
   cmr_oauth_provider = var.cmr_oauth_provider
 
   default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
+  sync_granule_s3_jitter_max_ms     = var.sync_granule_s3_jitter_max_ms
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
@@ -212,6 +213,9 @@ module "cumulus" {
   cmr_acl_based_credentials = true
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
+
+  # workflow configuration
+  workflow_configurations = var.workflow_configurations
 
   tags = local.tags
 }

@@ -96,7 +96,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('PATCH request with reingest action queues granule and calls the reingestGranule function with expected parameters', async (t) => {
+test('PATCH request with reingest action calls the reingestGranule function with expected parameters', async (t) => {
   const { granuleId, collectionId } = t.context;
 
   const granuleReingestStub = sinon
@@ -124,8 +124,11 @@ test('PATCH request with reingest action queues granule and calls the reingestGr
 
   t.is(granuleReingestStub.calledOnce, true);
 
-  const { queueUrl } = granuleReingestStub.lastCall.args[0];
-  const { apiGranule } = updateGranuleStatusToQueuedMethod.lastCall.args[0];
+  const { apiGranule,
+    queueUrl,
+    updateGranuleStatusToQueuedMethod: updateGranuleStatusMethod,
+  } = granuleReingestStub.lastCall.args[0];
   t.is(apiGranule.granuleId, granuleId);
   t.is(queueUrl, process.env.backgroundQueueUrl);
+  t.is(updateGranuleStatusMethod, updateGranuleStatusToQueuedMethod);
 });
