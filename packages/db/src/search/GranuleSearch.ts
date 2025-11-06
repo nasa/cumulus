@@ -22,6 +22,8 @@ interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   collectionVersion: string,
   pdrName?: string,
   providerName?: string,
+  state?: string,
+  groupId?: number,
 }
 
 /**
@@ -51,18 +53,30 @@ export class GranuleSearch extends BaseSearch {
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
+      granuleGroups: granuleGroupsTable,
     } = TableNames;
     const countQuery = knex(this.tableName)
       .count('*');
 
+    const searchParams = {
+      providerName: `${providersTable}.name`,
+      collectionName: `${collectionsTable}.name`,
+      collectionVersion: `${collectionsTable}.version`,
+      pdrName: `${pdrsTable}.name`,
+    };
+
+    const fullSearchParams = this.searchGranuleGroup() ?
+      {
+        groupId: `${granuleGroupsTable}.group_id`,
+        state: `${granuleGroupsTable}.state`,
+        ...searchParams,
+      } : searchParams;
+
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)
-      .select({
-        providerName: `${providersTable}.name`,
-        collectionName: `${collectionsTable}.name`,
-        collectionVersion: `${collectionsTable}.version`,
-        pdrName: `${pdrsTable}.name`,
-      })
+      .select(
+        fullSearchParams
+      )
       .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
 
     if (this.searchCollection()) {
@@ -82,6 +96,14 @@ export class GranuleSearch extends BaseSearch {
     } else {
       searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
+
+    if (this.searchGranuleGroup()) {
+      countQuery.innerJoin(granuleGroupsTable, `${this.tableName}.cumulus_id`, `${granuleGroupsTable}.granule_cumulus_id`);
+      searchQuery.innerJoin(granuleGroupsTable, `${this.tableName}.cumulus_id`, `${granuleGroupsTable}.granule_cumulus_id`);
+    } else {
+      searchQuery.leftJoin(granuleGroupsTable, `${this.tableName}.cumulus_id`, `${granuleGroupsTable}.granule_cumulus_id`);
+    }
+
     return { countQuery, searchQuery };
   }
 
@@ -181,9 +203,12 @@ export class GranuleSearch extends BaseSearch {
       const pdr = item.pdrName ? { name: item.pdrName } : undefined;
       const providerPgRecord = item.providerName ? { name: item.providerName } : undefined;
       const fileRecords = fileMapping[granulePgRecord.cumulus_id] || [];
+      const granuleGroupRecord = item.state && item.groupId ?
+        { state: item.state, group_id: item.groupId } : undefined;
       const apiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
         granulePgRecord,
         collectionPgRecord,
+        granuleGroupRecord,
         pdr,
         providerPgRecord,
         files: fileRecords,

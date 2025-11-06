@@ -24,6 +24,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     collectionId__in: 'MOD09GQ___006,MODIS___007',
     granuleId__not: 'notMatchingGranuleId',
     error__exists: 'true',
+    includeActiveState: 'true',
     includeFullRecord: 'true',
   };
 
@@ -35,6 +36,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     },
     fields: ['granuleId', 'collectionId', 'status', 'updatedAt'],
     infix: 'A1657416',
+    includeActiveState: true,
     includeFullRecord: true,
     limit: 20,
     not: {
@@ -99,6 +101,7 @@ test('convertQueryStringToDbQueryParameters adds limit and sorting on cumulus_id
     limit: 10,
     offset: 0,
     page: 1,
+    includeActiveState: false,
     includeFullRecord: false,
     sort: [
       {
@@ -191,6 +194,7 @@ test('convertQueryStringToDbQueryParameters correctly converts sortby error para
     limit: 10,
     offset: 0,
     page: 1,
+    includeActiveState: false,
     includeFullRecord: false,
     sort: [
       {

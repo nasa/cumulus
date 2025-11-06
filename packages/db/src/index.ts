@@ -150,6 +150,7 @@ export {
   getApiGranuleCumulusIds,
   getApiGranuleExecutionCumulusIds,
   getGranuleCollectionId,
+  getGranuleAndGroupFromPG,
   getUniqueGranuleByGranuleId,
   getGranuleByUniqueColumns,
   upsertGranuleWithExecutionJoinRecord,

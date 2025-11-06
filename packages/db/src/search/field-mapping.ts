@@ -26,6 +26,9 @@ const granuleMapping: { [key: string]: Function } = {
   granuleId: (value?: string) => ({
     granule_id: value,
   }),
+  groupId: (value?: string) => ({
+    group_id: value,
+  }),
   _id: (value?: string) => ({
     granule_id: value,
   }),
@@ -49,6 +52,9 @@ const granuleMapping: { [key: string]: Function } = {
   }),
   published: (value?: string) => ({
     published: (value === 'true'),
+  }),
+  state: (value?: string) => ({
+    state: value,
   }),
   status: (value?: string) => ({
     status: value,
