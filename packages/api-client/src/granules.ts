@@ -86,6 +86,18 @@ export const getGranuleResponse = async (params: {
   });
 };
 
+/**
+ * GET granule record with granuleGroup information from /granules/getGranuleAndGroup
+ *
+ * @param params - params
+ * @param params.prefix - the prefix configured for the stack
+ * @param params.body - param sent to endpoint, (granuleId of desired granule)
+ * @param params.callback - async function to invoke the api lambda
+ *                          that takes a prefix / user payload,
+ *                          cumulusApiClient.invokeApifunction
+ *                          is the default to invoke the api lambda
+ * @returns - the granule fetched by the API
+ */
 export const getGranuleAndGroup = async (params: {
   prefix: string,
   body: Object,

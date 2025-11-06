@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     return duplicate granules
 - **CUMULUS-4273**
   - Added a new query string parameter `includeActiveState` to the `GranuleSearch` class for whether to include `group_id` and `state` from the `GranuleGroups` table for granules in api search
+  - Updated `GranuleSearch` and `/granules` api to be able to handle `GranuleGroup` `groupId` and `state` term, not, and terms queries
+  - Added a new endpoint `GET /granules/getGranuleAndGroup` which takes a `granuleId` and returns a record of a granule with its granulGroup information as well
 
 ## [Unreleased]
 
