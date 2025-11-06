@@ -100,6 +100,37 @@ test('getGranule calls the callback with the expected object when there is query
   }));
 });
 
+test('getGranuleAndGroup calls the callback with the expected object when there is query param', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      body: undefined,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      httpMethod: 'GET',
+      path: '/granules/getGranuleAndGroup',
+      resource: '/{proxy+}',
+    },
+    expectedStatusCodes: 202,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.getGranuleAndGroup({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+  }));
+});
+
 test('getGranule accepts an optional collectionId', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,

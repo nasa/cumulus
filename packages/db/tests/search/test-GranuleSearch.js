@@ -1097,3 +1097,24 @@ test('GranuleSearch with includeActiveStatus set to false does not return Granul
     t.false('groupId' in granuleRecord);
   });
 });
+
+test('GranuleSearch supports GranuleGroup term search', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    state: 'H',
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  response.results.forEach((granuleRecord) => {
+    t.true('state' in granuleRecord && granuleRecord.state === 'H');
+  });
+
+  queryStringParameters = {
+    groupId: '2',
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  response.results.forEach((granuleRecord) => {
+    t.true('groupId' in granuleRecord && granuleRecord.groupId === 2);
+  });
+});

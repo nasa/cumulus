@@ -65,7 +65,7 @@ export class GranuleSearch extends BaseSearch {
       pdrName: `${pdrsTable}.name`,
     };
 
-    const fullSearchParams = this.dbQueryParameters.includeActiveState ?
+    const fullSearchParams = this.searchGranuleGroup() ?
       {
         groupId: `${granuleGroupsTable}.group_id`,
         state: `${granuleGroupsTable}.state`,
@@ -97,8 +97,11 @@ export class GranuleSearch extends BaseSearch {
       searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
 
-    if (this.dbQueryParameters.includeActiveState) {
+    if (this.searchGranuleGroup()) {
+      countQuery.innerJoin(granuleGroupsTable, `${this.tableName}.cumulus_id`, `${granuleGroupsTable}.granule_cumulus_id`);
       searchQuery.innerJoin(granuleGroupsTable, `${this.tableName}.cumulus_id`, `${granuleGroupsTable}.granule_cumulus_id`);
+    } else {
+      searchQuery.leftJoin(granuleGroupsTable, `${this.tableName}.cumulus_id`, `${granuleGroupsTable}.granule_cumulus_id`);
     }
 
     return { countQuery, searchQuery };

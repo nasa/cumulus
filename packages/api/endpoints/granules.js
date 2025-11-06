@@ -128,13 +128,14 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function getGranuleAndGroup(req, res) {
+  const { knex = await getKnexClient() } = req.testContext || {};
   if (!req.body.granuleId) {
     throw new Error(
       'granuleId is needed in order to search up a granule and its group information. Please resubmit the request including a granuleId'
     );
   }
   const granuleId = req.body.granuleId;
-  const granuleAndGroup = await getGranuleAndGroupFromPG(granuleId);
+  const granuleAndGroup = await getGranuleAndGroupFromPG(knex, granuleId);
   return res.send(granuleAndGroup);
 }
 
@@ -1385,8 +1386,8 @@ async function bulkArchiveGranules(req, res) {
 router.post('/bulkArchive', bulkArchiveGranules);
 router.get('/:collectionId/:granuleId', get);
 router.get('/files/get_collection_and_granule_id/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
-router.get('/:granuleId', getByGranuleId);
 router.get('/getGranuleAndGroup', getGranuleAndGroup);
+router.get('/:granuleId', getByGranuleId);
 router.get('/', list);
 router.patch('/bulkPatchGranuleCollection', bulkPatchGranuleCollection);
 router.patch('/bulkPatch', bulkPatch);

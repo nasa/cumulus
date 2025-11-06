@@ -9,10 +9,12 @@ const {
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
+  fakeGranuleGroupRecordFactory,
   fakePdrRecordFactory,
   fakeProviderRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
+  GranuleGroupsPgModel,
   localStackConnectionEnv,
   migrationDir,
   PdrPgModel,
@@ -56,6 +58,7 @@ const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 let accessTokenModel;
 let executionPgModel;
 let granulePgModel;
+let granuleGroupsPgModel;
 let jwtAuthToken;
 
 process.env.AccessTokensTable = randomId('token');
@@ -87,6 +90,9 @@ test.beforeEach(async (t) => {
 
   granulePgModel = new GranulePgModel();
   t.context.granulePgModel = granulePgModel;
+
+  granuleGroupsPgModel = new GranuleGroupsPgModel();
+  t.context.granuleGroupsPgModel = granuleGroupsPgModel;
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -547,4 +553,34 @@ test.serial('LIST endpoint returns search result correctly', async (t) => {
   t.is(newResults.length, 2);
   const newResultIds = newResults.map((g) => g.granuleId);
   t.deepEqual([granuleIds[1], granuleIds[2]].sort(), newResultIds.sort());
+});
+
+test.serial('GET returns the granule and granuleGroup info when getGranuleAndGroup is called', async (t) => {
+  const { knex, fakePGGranuleRecords } = t.context;
+  const granuleGroup = await granuleGroupsPgModel.insert(
+    knex,
+    fakeGranuleGroupRecordFactory({
+      granule_cumulus_id: fakePGGranuleRecords[0][0].cumulus_id,
+      group_id: 1,
+      state: 'A',
+    })
+  );
+
+  const params = {
+    granuleId: fakePGGranuleRecords[0][0].granule_id,
+  };
+
+  const response = await request(app)
+    .get('/granules/getGranuleAndGroup')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(params)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const granule = response.body[0];
+  t.true(granule.state === granuleGroup[0].state);
+  t.true(granule.group_id === granuleGroup[0].group_id);
+  t.true(granule.granule_id === fakePGGranuleRecords[0][0].granule_id);
+  t.true(granule.collection_cumulus_id === fakePGGranuleRecords[0][0].collection_cumulus_id);
 });

@@ -25,6 +25,7 @@ export const typeToTable: { [key: string]: string } = {
   collection: TableNames.collections,
   execution: TableNames.executions,
   granule: TableNames.granules,
+  granuleGroups: TableNames.granuleGroups,
   pdr: TableNames.pdrs,
   provider: TableNames.providers,
   rule: TableNames.rules,
@@ -64,6 +65,18 @@ abstract class BaseSearch {
       || term?.collectionVersion
       || terms?.collectionName
       || terms?.collectionVersion);
+  }
+
+  /**
+   * check if joined granuleGroups table search is needed
+   *
+   * @returns whether granuleGroups search is needed
+   */
+  protected searchGranuleGroup(): boolean {
+    const { not, term, terms, includeActiveState } = this.dbQueryParameters;
+    return includeActiveState || !!(not?.state || not?.group_id
+      || term?.state || term?.group_id
+      || terms?.state || terms?.group_id);
   }
 
   /**
@@ -226,6 +239,12 @@ abstract class BaseSearch {
         case 'parentArn':
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.parent_cumulus_id`));
           break;
+        case 'state':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.state`));
+          break;
+        case 'group_id':
+          [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.group_id`));
+          break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.${name}`));
           break;
@@ -281,6 +300,7 @@ abstract class BaseSearch {
       pdrs: pdrsTable,
       asyncOperations: asyncOperationsTable,
       executions: executionsTable,
+      granuleGroups: granuleGroupsTable,
     } = TableNames;
 
     const { countQuery, searchQuery, dbQueryParameters } = params;
@@ -313,6 +333,12 @@ abstract class BaseSearch {
         case 'parentArn':
           [countQuery, searchQuery].forEach((query) => query?.where(`${executionsTable}_parent.arn`, value));
           break;
+        case 'state':
+          [countQuery, searchQuery].forEach((query) => query?.where(`${granuleGroupsTable}.state`, value));
+          break;
+        case 'group_id':
+          [countQuery, searchQuery].forEach((query) => query?.where(`${granuleGroupsTable}.group_id`, value));
+          break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, value));
           break;
@@ -335,6 +361,7 @@ abstract class BaseSearch {
   }) {
     const {
       collections: collectionsTable,
+      granuleGroups: granuleGroupsTable,
       providers: providersTable,
       pdrs: pdrsTable,
       asyncOperations: asyncOperationsTable,
@@ -379,6 +406,12 @@ abstract class BaseSearch {
         case 'parentArn':
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${executionsTable}_parent.arn`, value));
           break;
+        case 'state':
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${granuleGroupsTable}.state`, value));
+          break;
+        case 'group_id':
+          [countQuery, searchQuery].forEach((query) => query?.whereIn(`${granuleGroupsTable}.group_id`, value));
+          break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${this.tableName}.${name}`, value));
           break;
@@ -401,6 +434,7 @@ abstract class BaseSearch {
   }) {
     const {
       collections: collectionsTable,
+      granuleGroups: granuleGroupsTable,
       providers: providersTable,
       pdrs: pdrsTable,
       asyncOperations: asyncOperationsTable,
@@ -436,6 +470,12 @@ abstract class BaseSearch {
           break;
         case 'error.Error':
           [countQuery, searchQuery].forEach((query) => value && query?.whereRaw(`${this.tableName}.error->>'Error' != ?`, value));
+          break;
+        case 'state':
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${granuleGroupsTable}.state`, value));
+          break;
+        case 'group_id':
+          [countQuery, searchQuery].forEach((query) => query?.whereNot(`${granuleGroupsTable}.group_id`, value));
           break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${this.tableName}.${name}`, value));
