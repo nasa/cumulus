@@ -58,3 +58,6 @@ ecarton:
 
 awisdom:
   bucket: awisdom-internal
+
+rs:
+  bucket: rs-internal
