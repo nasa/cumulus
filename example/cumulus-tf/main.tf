@@ -162,22 +162,20 @@ module "cumulus" {
   token_secret = var.token_secret
   archive_api_users = [
     "acyu",
+    "awisdom",
     "chuang14",
-    "ds_jennifertran",
+    "cdurbin",
     "ecarton",
-    "efenollal",
-    "filipgraniczny",
     "jasmine",
     "jennyhliu",
     "jmccoy_uat",
+    "jnorton1",
     "kkelly",
     "kovarik",
     "mobrien84",
     "nnageswa",
     "npauzenga",
-    "vnguyen",
-    "rkwarten",
-    "awisdom"
+    "yliu10"
   ]
 
   archive_api_url             = var.archive_api_url
