@@ -17,8 +17,9 @@ function determineIntegrationTestStackName(cb) {
   // uses github name
   const stacks = {
     'Charles Huang': 'ch-ci',
-    'Edwin Fenollal': 'ef-ci',
+    'chris-durbin': 'cdd-ci',
     'Filip Graniczny': 'fg-ci',
+    indiejames: 'jn-ci',
     'Jenny Liu': 'jl-rds',
     jennyhliu: 'jl-rds',
     kkelly51: 'kk-int',
@@ -27,16 +28,14 @@ function determineIntegrationTestStackName(cb) {
     'Jonathan Kovarik': 'jk',
     etcart: 'ecarton-ci',
     ecarton: 'ecarton-ci',
-    nasamoduyebo: 'mao-ci',
     'Nate Pauzenga': 'np-ci',
     'Naga Nages': 'nnaga-ci',
-    vpnguye2: 'vkn-ci',
-    'Roger Kwarteng': 'rkwarten-ci',
     'Paul Pilone': 'ppilone-ci',
     'Tim Clark': 'teclark-ci',
     'Bryan Wexler': 'bwexler-ci',
     'Curtis Banh': 'cbanh-ci',
     wisdomaj: 'awisdom-ci',
+    ygliuvt: 'yliu10-ci',
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
