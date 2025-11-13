@@ -22,6 +22,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4275**
   - Fixed unit tests broken by updated HTTP error messages in got
 
+- **CUMULUS-4325**
+  - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
+    - Updated `@cumulus/cmrjs` to use Map for guaranteed element ordering in
+      `updateEcho10XMLGranuleUrAndGranuleIdentifier`
+    - Modified integration test helpers to use `js2xmlparser` instead of `xml2js.Builder`
+      for correct XML serialization
+    - Added unit tests to verify ECHO10 schema element ordering
+    - Resolves CMR validation error when ProducerGranuleId appears out of sequence
+
 ## [v21.1.0]
 
 ### Migration Notes
@@ -59,9 +68,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated release instructions to include schema updates
 - **CUMULUS-4244**
   - Improve logging for Ingest Granules
-    - Upgrade log level from debug to error for 403/401 errors 
+    - Upgrade log level from debug to error for 403/401 errors
     - Add detailed error context (status code, error type, bucket, key)
-    - Add actionable remediation suggestions for permission issues 
+    - Add actionable remediation suggestions for permission issues
     - Add try-catch in write-granules.js for better error context
 - **CUMULUS-4155**
   - Update Cumulus integration tests to utilize:
