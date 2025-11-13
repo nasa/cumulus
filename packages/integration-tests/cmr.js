@@ -206,7 +206,6 @@ function generateCmrXml(granule, collection, additionalUrls,
 
   xmlObject.Granule.DataGranule = new Map();
   xmlObject.Granule.DataGranule.set('SizeMBDataGranule', '10');
-  xmlObject.Granule.DataGranule.set('ProducerGranuleId', 'FAKE_ID');
   xmlObject.Granule.DataGranule.set('DayNightFlag', 'BOTH');
   xmlObject.Granule.DataGranule.set('ProductionDateTime', '2018-07-19T12:01:01Z');
 
@@ -218,9 +217,6 @@ function generateCmrXml(granule, collection, additionalUrls,
       },
     }));
   }
-
-  // Convert Granule to Map for guaranteed element ordering
-  // js2xmlParser respects Map insertion order, unlike xml2js.Builder
   const granuleMap = new Map();
   Object.keys(xmlObject.Granule).forEach((key) => {
     granuleMap.set(key, xmlObject.Granule[key]);
