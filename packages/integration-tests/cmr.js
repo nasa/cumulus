@@ -2,7 +2,7 @@
 
 const got = require('got');
 const pWaitFor = require('p-wait-for');
-const xml2js = require('xml2js');
+const js2xmlParser = require('js2xmlparser');
 const { s3 } = require('@cumulus/aws-client/services');
 const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const { sleep } = require('@cumulus/common');
@@ -204,6 +204,12 @@ function generateCmrXml(granule, collection, additionalUrls,
     url.OnlineAccessURL.URL = url.OnlineAccessURL.URL.replace(oldGranuleId, replacementId);
   });
 
+  xmlObject.Granule.DataGranule = new Map();
+  xmlObject.Granule.DataGranule.set('SizeMBDataGranule', '10');
+  xmlObject.Granule.DataGranule.set('ProducerGranuleId', 'FAKE_ID');
+  xmlObject.Granule.DataGranule.set('DayNightFlag', 'BOTH');
+  xmlObject.Granule.DataGranule.set('ProductionDateTime', '2018-07-19T12:01:01Z');
+
   if (additionalUrls) {
     xmlObject.Granule.OnlineAccessURLs = additionalUrls.map((url) => ({
       OnlineAccessURL: {
@@ -213,7 +219,14 @@ function generateCmrXml(granule, collection, additionalUrls,
     }));
   }
 
-  const xml = new xml2js.Builder().buildObject(xmlObject);
+  // Convert Granule to Map for guaranteed element ordering
+  // js2xmlParser respects Map insertion order, unlike xml2js.Builder
+  const granuleMap = new Map();
+  Object.keys(xmlObject.Granule).forEach((key) => {
+    granuleMap.set(key, xmlObject.Granule[key]);
+  });
+
+  const xml = js2xmlParser.parse('Granule', granuleMap);
   return xml;
 }
 
