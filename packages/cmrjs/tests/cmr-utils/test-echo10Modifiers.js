@@ -38,7 +38,7 @@ test('adds ProducerGranuleId if not present', (t) => {
   });
 
   t.is(result.Granule.GranuleUR, 'NEW_ID');
-  t.true(result.Granule.DataGranule instanceof Map);
+  t.true(result.Granule.DataGranule instanceof Map, 'DataGranule should be a Map');
   t.is(result.Granule.DataGranule.get('ProducerGranuleId'), 'NEW_PRODUCER_ID');
 });
 
