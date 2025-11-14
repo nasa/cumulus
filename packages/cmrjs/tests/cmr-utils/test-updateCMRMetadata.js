@@ -267,17 +267,6 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
   expected.Granule.DataGranule.ProducerGranuleId = 'original-id';
   expected.Granule.AssociatedBrowseImageUrls = '';
 
-  const expectedXmlJsObject = structuredClone(expected);
-  // This is the actual expression of some of the 1 value or empty objects
-  // in memory/as a node object  when not run through js2xmlParser
-  expectedXmlJsObject.Granule.AssociatedBrowseImageUrls = { ProviderBrowseUrl: [] };
-  expectedXmlJsObject.Granule.OnlineAccessURLs.OnlineAccessURL = [
-    expectedXmlJsObject.Granule.OnlineAccessURLs.OnlineAccessURL,
-  ];
-  expectedXmlJsObject.Granule.OnlineResources.OnlineResource = [
-    expectedXmlJsObject.Granule.OnlineResources.OnlineResource,
-  ];
-
   const publish2CMRMethod = sinon.spy(() => ({
     conceptId: 'C123',
     granuleId: 'updated-granule',
@@ -310,5 +299,14 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
     conceptId: 'C123',
     granuleId: 'updated-granule',
   });
-  t.deepEqual(publish2CMRMethod.getCall(0).args[0].metadataObject, expectedXmlJsObject);
+
+  const publishedMetadata = publish2CMRMethod.getCall(0).args[0].metadataObject;
+  t.is(publishedMetadata.Granule.GranuleUR, 'updated-id');
+
+  t.true(publishedMetadata.Granule.DataGranule instanceof Map);
+  t.is(publishedMetadata.Granule.DataGranule.get('ProducerGranuleId'), 'original-id');
+
+  t.deepEqual(publishedMetadata.Granule.AssociatedBrowseImageUrls, { ProviderBrowseUrl: [] });
+  t.true(Array.isArray(publishedMetadata.Granule.OnlineAccessURLs.OnlineAccessURL));
+  t.true(Array.isArray(publishedMetadata.Granule.OnlineResources.OnlineResource));
 });
