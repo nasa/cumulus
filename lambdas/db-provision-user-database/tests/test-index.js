@@ -102,6 +102,35 @@ test('provision user database handler database creates the expected database whe
   t.is(userResults[0].usename, `${expectedDbUser}`);
 });
 
+test('provision user database handler grants privileges on public schema to user', async (t) => {
+  const {
+    expectedDbUser,
+    expectedTestDb,
+    handlerEvent,
+  } = t.context;
+
+  await handler(handlerEvent);
+
+  // Connect directly to the newly created user database
+  const userDbKnex = await getKnexClient({
+    env: {
+      ...localStackConnectionEnv,
+      PG_DATABASE: expectedTestDb,
+    },
+  });
+
+  t.context.testKnex = userDbKnex;
+
+  const { rows: privileges } = await userDbKnex.raw(`
+  SELECT
+    has_schema_privilege('${expectedDbUser}', 'public', 'CREATE') AS can_create,
+    has_schema_privilege('${expectedDbUser}', 'public', 'USAGE') AS can_usage
+  `);
+
+  t.true(privileges[0].can_create, 'User has CREATE privilege on public schema');
+  t.true(privileges[0].can_usage, 'User has USAGE privilege on public schema');
+});
+
 test('provision user fails if invalid password string is used', async (t) => {
   await t.throwsAsync(handler({
     ...t.context.handlerEvent,
