@@ -23,11 +23,14 @@ cumulus-lp:
   apiUsername: jasmine
   pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
-mvd-tf:
-  bucket: mvd-internal
+awisdom:
+  bucket: awisdom-internal
 
-mvd-dev-tf:
-  bucket: mvd-internal
+cdd-tf:
+  bucket: cdd-test-sandbox-internal
+
+ecarton:
+  bucket: ecarton-internal
 
 jl-tf:
   bucket: jl-test-integration-internal
@@ -35,17 +38,11 @@ jl-tf:
 jl-rds-tf:
   bucket: jl-test-integration-internal
 
+jn-tf:
+  bucket: jn-test-sandbox-internal
+
 kk2-tf:
   bucket: kk2-tf-internal
-
-jtran-tf:
-  bucket: jtran-internal
-
-vkn-tf:
-  bucket: vkn-tf-internal
-
-vkn-ci-tf:
-  bucket: vkn-ci-tf-internal
 
 np:
   bucket: npauzenga-internal
@@ -53,8 +50,8 @@ np:
 nnaga-tf:
   bucket: nnaga-internal
 
-ecarton:
-  bucket: ecarton-internal
+rs:
+  bucket: rs-internal
 
-awisdom:
-  bucket: awisdom-internal
+yliu10-tf:
+  bucket: yliu10-sandbox-internal

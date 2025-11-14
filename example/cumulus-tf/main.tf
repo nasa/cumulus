@@ -175,6 +175,7 @@ module "cumulus" {
     "mobrien84",
     "nnageswa",
     "npauzenga",
+    "terrafirma13",
     "yliu10"
   ]
 
