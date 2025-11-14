@@ -55,9 +55,10 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         throw new Error(`Attempted to create database user ${dbUser} - username/password must be [a-zA-Z0-9_] only`);
       }
     });
+    const dbName = `${dbUser}_db`;
 
     const userExistsResults = await userExists(dbUser, knexClient);
-    const dbExistsResults = await dbExists(`${dbUser}_db`, knexClient);
+    const dbExistsResults = await dbExists(dbName, knexClient);
 
     if (userExistsResults.length === 0) {
       await knexClient.raw(`create user "${dbUser}" with encrypted password '${event.dbPassword}'`);
@@ -67,22 +68,22 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
 
     if (event.dbRecreation) {
       if (dbExistsResults.length !== 0) {
-        await knexClient.raw(`alter database "${dbUser}_db" connection limit 0;`);
-        await knexClient.raw(`select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg_stat_activity.datname = '${dbUser}_db'`);
-        await knexClient.raw(`drop database "${dbUser}_db";`);
+        await knexClient.raw(`alter database "${dbName}" connection limit 0;`);
+        await knexClient.raw(`select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg_stat_activity.datname = '${dbName}'`);
+        await knexClient.raw(`drop database "${dbName}";`);
       }
-      await knexClient.raw(`create database "${dbUser}_db";`);
+      await knexClient.raw(`create database "${dbName}";`);
     } else if (dbExistsResults.length === 0) {
-      await knexClient.raw(`create database "${dbUser}_db";`);
+      await knexClient.raw(`create database "${dbName}";`);
     }
 
-    await knexClient.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
+    await knexClient.raw(`grant all privileges on database "${dbName}" to "${dbUser}"`);
 
     await knexClient.destroy();
 
     // connect to user database
     const userDbKnexConfig = cloneDeep(rootKnexConfig);
-    set(userDbKnexConfig, 'connection.database', `${dbUser}_db`);
+    set(userDbKnexConfig, 'connection.database', dbName);
     knexClient = knex(userDbKnexConfig);
     await knexClient.raw(`grant create, usage on schema public to "${dbUser}"`);
 
@@ -91,7 +92,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
       SecretString: JSON.stringify({
         username: dbUser,
         password: event.dbPassword,
-        database: `${dbUser}_db`,
+        database: dbName,
         host: (rootKnexConfig.connection as Knex.PgConnectionConfig).host,
         port: (rootKnexConfig.connection as Knex.PgConnectionConfig).port,
         rejectUnauthorized: 'false',
