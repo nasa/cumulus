@@ -119,8 +119,6 @@ test('provision user database handler grants privileges on public schema to user
     },
   });
 
-  t.context.testKnex = userDbKnex;
-
   const { rows: privileges } = await userDbKnex.raw(`
   SELECT
     has_schema_privilege('${expectedDbUser}', 'public', 'CREATE') AS can_create,
@@ -129,6 +127,7 @@ test('provision user database handler grants privileges on public schema to user
 
   t.true(privileges[0].can_create, 'User has CREATE privilege on public schema');
   t.true(privileges[0].can_usage, 'User has USAGE privilege on public schema');
+  await userDbKnex.destroy();
 });
 
 test('provision user fails if invalid password string is used', async (t) => {
