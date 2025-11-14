@@ -16,13 +16,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
 
+### Fixed
+
+- **CUMULUS-4279**
+  - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
+    on the public schema of the user database to the database user.
+    This change is required because, starting with PostgreSQL 15, new databases assign ownership
+    of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
+    prior to v15 preserve the previous ownership of the public schema.
+
 ### Added
 
 - **CUMULUS-4272**
   - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
     specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
-
-### Added
 
 - **CUMULUS-4354**
   - Added an optional terraform-configurable lambda level env variable `allow_provider_mismatch_on_rule_filter` to `message-consumer` and `sqs-message-consumer` to check
