@@ -11,6 +11,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
+- **CUMULUS-4272**
+  - Added support in the `tf-modules/cumulus-rds-tf` module for using a user-provided or
+    snapshot-derived security group when creating or restoring the RDS cluster.
+
+### Added
+
+- **CUMULUS-4272**
+  - Updated `tf-modules/cumulus-rds-tf`
+    - Added `input_security_group_id` to allow specifying an existing security group; this always
+      takes precedence, including when restoring from a snapshot.
+    - Added `use_snapshot_security_group` (default: `true`) to allow using security groups from a
+      snapshot when `snapshot_identifier` is set and no `input_security_group_id` is provided.
+    - Updated `security_group_id` output to return the effective security group attached to the cluster.
 
 ### Changed
 

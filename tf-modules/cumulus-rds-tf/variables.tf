@@ -210,3 +210,15 @@ variable "lambda_timeouts" {
   type = map(number)
   default = {}
 }
+
+variable "input_security_group_id" {
+  description = "Optional existing security group ID to use for the RDS cluster. If provided, it overrides all other SG logic."
+  type        = string
+  default     = null
+}
+
+variable "use_snapshot_security_group" {
+  description = "If true and snapshot_identifier is provided, use the security group(s) from the snapshot."
+  type        = bool
+  default     = true
+}
