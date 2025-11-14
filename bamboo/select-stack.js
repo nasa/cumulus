@@ -37,6 +37,7 @@ function determineIntegrationTestStackName(cb) {
     'Bryan Wexler': 'bwexler-ci',
     'Curtis Banh': 'cbanh-ci',
     wisdomaj: 'awisdom-ci',
+    'Robert Swanson': 'rs-ci',
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
