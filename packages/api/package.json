@@ -92,7 +92,7 @@
     "got": "^11.8.5",
     "hsts": "^2.1.0",
     "is-valid-hostname": "1.0.2",
-    "js-yaml": "^3.13.1",
+    "js-yaml": "^4.1.1",
     "json2csv": "^4.5.1",
     "jsonpath-plus": "^10.0.0",
     "jsonwebtoken": "^9.0.0",
