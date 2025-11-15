@@ -59,6 +59,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - S3 operations in `@cumulus/aws-client` now support optional jitter via `S3_JITTER_MAX_MS` environment variable
   - Jitter is applied to: `headObject`, `putObject`, `copyObject`, `getObject`, `downloadS3File`, `promiseS3Upload`, and `multipartCopyObject`
 
+- **CUMULUS-4218**
+  - Added `restore_to_point_in_time` to `cumulus-rds-tf` rds-cluster
+  - Added `restore_type` and `use_latest_restorable_time` variables for PITR configuration
+
 ### Changed
 
 - **CUMULUS-4271**
