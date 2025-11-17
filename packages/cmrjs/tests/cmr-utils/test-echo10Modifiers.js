@@ -154,3 +154,30 @@ test('ProducerGranuleId appears in correct position relative to other fields', (
   t.true(sizeIndex < producerIndex, 'SizeMBDataGranule should come before ProducerGranuleId');
   t.true(producerIndex < dayNightIndex, 'ProducerGranuleId should come before DayNightFlag');
 });
+
+test('throws error when DataGranule contains unexpected keys', (t) => {
+  const xml = {
+    Granule: {
+      GranuleUR: 'TEST_GRANULE_ID',
+      DataGranule: {
+        SizeMBDataGranule: 10,
+        ProducerGranuleId: 'PRODUCER_123',
+        UnexpectedField: 'some value',
+        AnotherInvalidKey: 'another value',
+      },
+    },
+  };
+
+  const error = t.throws(() =>
+    updateEcho10XMLGranuleUrAndGranuleIdentifier({
+      xml,
+      granuleUr: 'NEW_ID',
+      producerGranuleId: 'PRODUCER_456',
+    }));
+
+  t.true(error?.message.includes('Unexpected DataGranule key(s) found'));
+  t.true(error?.message.includes('UnexpectedField'));
+  t.true(error?.message.includes('AnotherInvalidKey'));
+  t.true(error?.message.includes('NEW_ID'));
+  t.true(error?.message.includes('Valid keys are'));
+});

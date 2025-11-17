@@ -68,6 +68,17 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
     'AdditionalFile',
   ];
 
+  const existingKeys = Object.keys(dataGranule);
+  const unexpectedKeys = existingKeys.filter((key) => !echo10DataGranuleOrder.includes(key));
+
+  if (unexpectedKeys.length > 0) {
+    throw new Error(
+      `Unexpected DataGranule key(s) found: ${unexpectedKeys.join(', ')}. `
+      + `Valid keys are: ${echo10DataGranuleOrder.join(', ')}. `
+      + `GranuleUR: ${moddedXml.Granule.GranuleUR}`
+    );
+  }
+
   echo10DataGranuleOrder.forEach((key) => {
     if (key === 'ProducerGranuleId') {
       orderedDataGranule.set(key, producerGranuleId);
