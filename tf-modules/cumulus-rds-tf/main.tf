@@ -20,10 +20,10 @@ locals {
     var.snapshot_identifier != null && var.use_snapshot_security_group
   )
 
-  # Determine which base SG to use:
-  # 1. If security_group_id is provided, use it.
-  # 2. If snapshot is being restored and use_snapshot_security_group = true, don't specify (null).
-  # 3. Otherwise, use the new SG created by this module.
+  # Determine the SG to pass into aws_rds_cluster
+  # - If input_security_group_id is provided, use it.
+  # - If snapshot is being restored and use_snapshot_security_group = true, don't specify (null).
+  # - Otherwise, use the new SG created by this module.
   rds_security_group_id = try(
     var.input_security_group_id != null
       ? var.input_security_group_id
@@ -35,8 +35,7 @@ locals {
     null
   )
 
-  # Effective SG ID:
-  # If null, attempt to read the actual SG attached to the cluster (useful when using snapshot SGs)
+  # The actual SG attached to the cluster
   effective_security_group_id = try(
     local.rds_security_group_id != null
       ? local.rds_security_group_id
