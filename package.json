@@ -167,7 +167,8 @@
   },
   "overrides": {
     "lerna": { "semver": "^7.5.2" },
-    "form-data": "^4.0.4"
+    "form-data": "^4.0.4",
+    "glob": "^11.1.0"
   },
   "private": true
 }
