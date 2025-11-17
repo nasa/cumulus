@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-4346**
+  - Updated package overrides for dev env to use `glob` "^11.1.0" to address reported CVE
 - **CUMULUS-4279**
   - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
     on the public schema of the user database to the database user.
@@ -65,9 +67,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated release instructions to include schema updates
 - **CUMULUS-4244**
   - Improve logging for Ingest Granules
-    - Upgrade log level from debug to error for 403/401 errors 
+    - Upgrade log level from debug to error for 403/401 errors
     - Add detailed error context (status code, error type, bucket, key)
-    - Add actionable remediation suggestions for permission issues 
+    - Add actionable remediation suggestions for permission issues
     - Add try-catch in write-granules.js for better error context
 - **CUMULUS-4155**
   - Update Cumulus integration tests to utilize:
