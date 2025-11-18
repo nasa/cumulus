@@ -95,6 +95,7 @@ export const fakeExecutionRecordFactory = (
   const executionARN = `arn:aws:states:us-east-1:12345:execution:test-TestExecution:${executionId}`;
 
   return {
+    archived: false,
     arn: executionARN,
     url: getExecutionUrlFromArn(executionARN),
     status: 'running',
@@ -120,6 +121,7 @@ export const fakeGranuleRecordFactory = (
   params: Partial<PostgresGranule>
 ): Partial<PostgresGranule> => ({
   granule_id: cryptoRandomString({ length: 5 }),
+  producer_granule_id: cryptoRandomString({ length: 5 }),
   status: 'completed',
   created_at: new Date(),
   ...params,

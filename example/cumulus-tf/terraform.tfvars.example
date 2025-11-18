@@ -84,6 +84,10 @@ deploy_cumulus_distribution = true
 # toggle this after deployed to put the correct port in. (and hosts and config)
 # tea_distribution_url = "TEA distribution URL"
 
+# Optional. Uncomment to enable S3 jitter for SyncGranule to prevent S3 SlowDown errors.
+# Set to a value between 1-59000 milliseconds. Recommended: 5000 (5 seconds) for high-concurrency environments.
+# sync_granule_s3_jitter_max_ms = 5000
+
 launchpad_api = "launchpadApi"
 launchpad_certificate = "certificate"
 launchpad_passphrase = "passphrase"
@@ -114,7 +118,7 @@ saml_assertion_consumer_service = "<Cumulus API endpoint>/saml/auth, e.g. https:
 
 # Optional, uncomment if needed.
 /*
-metrics_es_host = "xxxxxxxxxx.cloudfront.net"
+metrics_es_host = "abcdefg123.cloudfront.net"
 metrics_es_username = "user"
 metrics_es_password = "password"
 */

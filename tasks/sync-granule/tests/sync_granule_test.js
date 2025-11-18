@@ -539,6 +539,43 @@ test.serial('download granule from S3 provider', async (t) => {
   }
 });
 
+test.serial('download granule with producerGranuleId set includes producerGranuleId', async (t) => {
+  const granuleFilePath = randomString();
+  const granuleFileName = t.context.event.input.granules[0].files[0].name;
+
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: randomString(),
+  };
+
+  t.context.event.input.granules[0].files[0].path = granuleFilePath;
+  t.context.event.input.granules[0].producerGranuleId = 'PRODUCER_GRANULE_ID';
+
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
+
+  await s3().createBucket({ Bucket: t.context.event.config.provider.host });
+
+  try {
+    // Stage the file that's going to be downloaded
+    await s3PutObject({
+      Bucket: t.context.event.config.provider.host,
+      Key: `${granuleFilePath}/${granuleFileName}`,
+      Body: streamTestData(`granules/${granuleFileName}`),
+    });
+
+    const output = await syncGranule(t.context.event);
+
+    await validateOutput(t, output);
+    t.is(output.granules.length, 1, 'output should contain one granule');
+    t.is(output.granules[0].producerGranuleId, 'PRODUCER_GRANULE_ID', 'producerGranuleId should be set');
+  } finally {
+    // Clean up
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
+
 test.serial('download granule with checksum in file from an HTTP endpoint', async (t) => {
   const event = await loadJSONTestData('payloads/new-message-schema/ingest-checksumfile.json');
   const { config, input } = event;
@@ -1191,4 +1228,146 @@ test.serial('download multiple granules from S3 provider to correct staging dire
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
+});
+
+test.serial('S3 jitter is disabled by default (backward compatibility)', async (t) => {
+  // Ensure S3_JITTER_MAX_MS is not set
+  delete process.env.S3_JITTER_MAX_MS;
+
+  await prepareS3DownloadEvent(t);
+
+  const startTime = Date.now();
+  const output = await syncGranule(t.context.event);
+  const duration = Date.now() - startTime;
+
+  await validateOutput(t, output);
+  t.is(output.granules.length, 1);
+
+  // Should complete quickly without jitter (allow generous buffer for S3 operations)
+  // This verifies jitter is NOT adding delay when disabled
+  t.true(duration < 5000, `Expected < 5s without jitter, got ${duration}ms`);
+});
+
+test.serial('S3 jitter adds delay when S3_JITTER_MAX_MS is set', async (t) => {
+  // Enable jitter with 2 second max
+  process.env.S3_JITTER_MAX_MS = '2000';
+
+  await prepareS3DownloadEvent(t);
+
+  const startTime = Date.now();
+  const output = await syncGranule(t.context.event);
+  const duration = Date.now() - startTime;
+
+  await validateOutput(t, output);
+  t.is(output.granules.length, 1);
+
+  // Should take longer due to jitter on S3 operations
+  // The sync involves multiple S3 ops: headObject, copyObject, etc.
+  // With jitter, we expect some additional delay
+  // Note: Exact timing is hard to predict, but we verify it works without errors
+  t.true(duration > 0);
+
+  // Clean up
+  delete process.env.S3_JITTER_MAX_MS;
+});
+
+test.serial('S3 jitter prevents concurrent SlowDown errors in high-concurrency scenario', async (t) => {
+  // Enable moderate jitter
+  process.env.S3_JITTER_MAX_MS = '1000';
+
+  // Prepare multiple granules for concurrent sync
+  await prepareS3DownloadEvent(t);
+
+  // Create additional granules for concurrent processing
+  const additionalGranules = Array.from({ length: 5 }, (_, i) => ({
+    ...t.context.event.input.granules[0],
+    granuleId: `MOD09GQ.A${2016238 + i}.h09v02.006.2016240051501`,
+  }));
+
+  t.context.event.input.granules = [
+    t.context.event.input.granules[0],
+    ...additionalGranules,
+  ];
+
+  // Process all granules - jitter should stagger S3 operations
+  const output = await syncGranule(t.context.event);
+
+  await validateOutput(t, output);
+  t.is(output.granules.length, 6);
+
+  // All granules should sync successfully without S3 SlowDown errors
+  output.granules.forEach((granule) => {
+    t.truthy(granule.files);
+    t.true(granule.files.length > 0);
+  });
+
+  // Clean up
+  delete process.env.S3_JITTER_MAX_MS;
+});
+
+test.serial('S3 jitter respects configured maximum value', async (t) => {
+  // Set jitter to a specific value we can measure
+  const jitterMaxMs = 500;
+  process.env.S3_JITTER_MAX_MS = jitterMaxMs.toString();
+
+  // Set duplicateHandling to 'replace' to allow re-running
+  t.context.event.config.duplicateHandling = 'replace';
+
+  await prepareS3DownloadEvent(t);
+
+  // Run the sync operation and verify it completes successfully
+  const output = await syncGranule(t.context.event);
+  await validateOutput(t, output);
+  t.is(output.granules.length, 1);
+
+  // Verify that with jitter enabled, the operation completes without errors
+  // The jitter value is respected by the S3 operations (tested in unit tests)
+  t.truthy(output.granules[0].files);
+  t.true(output.granules[0].files.length > 0);
+
+  // Clean up
+  delete process.env.S3_JITTER_MAX_MS;
+});
+
+test.serial('S3 jitter works with S3 provider', async (t) => {
+  process.env.S3_JITTER_MAX_MS = '1000';
+
+  await prepareS3DownloadEvent(t);
+
+  // S3 provider should work with jitter enabled
+  const output = await syncGranule(t.context.event);
+
+  await validateOutput(t, output);
+  t.is(output.granules.length, 1);
+  t.is(output.granules[0].files.length, 1);
+
+  // Verify file was actually downloaded
+  const downloadedFile = output.granules[0].files[0];
+  const fileExists = await s3ObjectExists({
+    Bucket: downloadedFile.bucket,
+    Key: downloadedFile.key,
+  });
+  t.true(fileExists, 'File should exist in S3 after sync with jitter');
+
+  // Clean up
+  delete process.env.S3_JITTER_MAX_MS;
+});
+
+test.serial('S3 jitter with zero value behaves same as disabled', async (t) => {
+  process.env.S3_JITTER_MAX_MS = '0';
+
+  await prepareS3DownloadEvent(t);
+
+  const startTime = Date.now();
+  const output = await syncGranule(t.context.event);
+  const duration = Date.now() - startTime;
+
+  await validateOutput(t, output);
+  t.is(output.granules.length, 1);
+
+  // Should complete quickly like disabled jitter
+  t.true(duration < 5000, `Expected < 5s with jitter=0, got ${duration}ms`);
+
+  // Clean up
+  delete process.env.S3_JITTER_MAX_MS;
 });

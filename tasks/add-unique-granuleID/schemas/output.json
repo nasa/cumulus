@@ -1,0 +1,27 @@
+{
+  "title": "AddUniqueGranuleID Output",
+  "description": "Describes the output produced by the add-unique-granule-id task component",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "Array of all granules",
+      "items": {
+        "type": "object",
+        "required": [
+          "granuleId",
+          "producerGranuleId"
+        ],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "producerGranuleId": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

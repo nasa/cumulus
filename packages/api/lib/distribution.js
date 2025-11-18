@@ -25,6 +25,19 @@ const useSecureCookies = () => {
 };
 
 /**
+ * generates cookie options for an HTTP response based on an expiration time
+ *
+ * @param {number} expirationTimeInSeconds - cookie expiration time in seconds
+ * @returns {object} cookie options object
+ */
+const createCookieOptions = (expirationTimeInSeconds) => ({
+  expires: new Date(expirationTimeInSeconds * 1000),
+  httpOnly: true,
+  secure: useSecureCookies(),
+  sameSite: 'Lax',
+});
+
+/**
  * build OAuth client based on environment variables
  *
  * @returns {Promise<Object>} - OAuthClient object
@@ -234,6 +247,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
 module.exports = {
   buildLoginErrorTemplateVars,
+  createCookieOptions,
   ensureAuthorizedOrRedirect,
   getConfigurations,
   handleAuthBearerToken,

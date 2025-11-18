@@ -5,6 +5,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
+const range = require('lodash/range');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
@@ -54,6 +55,7 @@ const {
   getGranuleFromQueryResultOrLookup,
   writeFilesViaTransaction,
   writeGranuleFromApi,
+  writeGranuleExecutionAssociationsFromMessage,
   writeGranulesFromMessage,
   _writeGranule,
   updateGranuleStatusToQueued,
@@ -467,6 +469,154 @@ test.serial('_writeGranule will not allow a running status to replace a complete
   );
 });
 
+test.serial('writeGranuleExecutionAssociationsFromMessage() saves granule-execution associations to PostgreSQL',
+  async (t) => {
+    const {
+      cumulusMessage,
+      knex,
+      collectionCumulusId,
+      executionCumulusId,
+      providerCumulusId,
+      granuleId,
+      stepFunctionUtils,
+    } = t.context;
+
+    cumulusMessage.meta.status = 'running';
+
+    await writeGranulesFromMessage({
+      cumulusMessage,
+      providerCumulusId,
+      knex,
+      testOverrides: { stepFunctionUtils },
+    });
+
+    t.true(await t.context.granulePgModel.exists(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    ));
+
+    t.false(await t.context.granulesExecutionsPgModel.exists(
+      knex,
+      { execution_cumulus_id: executionCumulusId }
+    ));
+
+    const originalGranule = await t.context.granulePgModel.get(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    );
+    t.is('running', originalGranule.status);
+
+    cumulusMessage.meta.status = 'completed';
+    await writeGranuleExecutionAssociationsFromMessage({
+      cumulusMessage,
+      executionCumulusId,
+      knex,
+    });
+
+    const currentGranule = await t.context.granulePgModel.get(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    );
+
+    t.deepEqual(originalGranule, currentGranule);
+    t.true(await t.context.granulesExecutionsPgModel.exists(
+      knex,
+      { granule_cumulus_id: originalGranule.cumulus_id, execution_cumulus_id: executionCumulusId }
+    ));
+  });
+
+test.serial(
+  'writeGranuleExecutionAssociationsFromMessage() does not save granule-execution associations '
+  + 'to PostgreSQL when granule does not already exist',
+  async (t) => {
+    const {
+      cumulusMessage,
+      knex,
+      collectionCumulusId,
+      executionCumulusId,
+      granuleId,
+    } = t.context;
+
+    t.false(await t.context.granulePgModel.exists(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    ));
+
+    t.false(await t.context.granulesExecutionsPgModel.exists(
+      knex,
+      { execution_cumulus_id: executionCumulusId }
+    ));
+
+    await writeGranuleExecutionAssociationsFromMessage({
+      cumulusMessage,
+      executionCumulusId,
+      knex,
+    });
+
+    t.false(await t.context.granulesExecutionsPgModel.exists(
+      knex,
+      { execution_cumulus_id: executionCumulusId }
+    ));
+  }
+);
+
+test.serial(
+  'writeGranuleExecutionAssociationsFromMessage() processes all granules that do not error, '
+  + 'and throws aggregateError',
+  async (t) => {
+    const {
+      cumulusMessage,
+      knex,
+      executionCumulusId,
+    } = t.context;
+
+    const granuleCount = 5;
+    const failedGranuleCount = 3;
+
+    const granuleCumulusIds = range(granuleCount).map(() =>
+      Math.floor(Math.random() * 100) + 1);
+    const getStub = sinon.stub(GranulePgModel.prototype, 'getRecordsCumulusIds')
+      .callsFake(() => granuleCumulusIds);
+
+    const errorMessage = 'fail';
+    let count = 0;
+    const upsertStub = sinon.stub(GranulesExecutionsPgModel.prototype, 'upsert')
+      .callsFake(() => {
+        count += 1;
+        if (count > failedGranuleCount - 1) {
+          return Promise.reject(errorMessage);
+        }
+        return Promise.resolve();
+      });
+    t.teardown(() => {
+      getStub.restore();
+      upsertStub.restore();
+    });
+
+    const granules = range(granuleCount).map(() => fakeGranuleFactoryV2());
+    cumulusMessage.payload.granules = granules;
+
+    const aggregateError = await t.throwsAsync(
+      writeGranuleExecutionAssociationsFromMessage({
+        cumulusMessage,
+        executionCumulusId,
+        knex,
+      })
+    );
+
+    t.true(getStub.calledOnce);
+    t.is(upsertStub.callCount, granuleCount);
+    t.deepEqual(
+      Array.from(aggregateError).map((error) => error.message),
+      [
+        errorMessage,
+        errorMessage,
+        errorMessage,
+      ]
+    );
+  }
+);
+
 test.serial('writeGranulesFromMessage() returns undefined if message has no granules', async (t) => {
   const {
     knex,
@@ -535,6 +685,43 @@ test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/SNS'
     WaitTimeSeconds: 10,
   });
   t.is(Messages.length, 1);
+});
+
+test.serial('writeGranulesFromMessage() propagates producerGranuleId with value from granuleId when producerGranuleId is absent from message', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+    granulePgModel,
+    stepFunctionUtils,
+  } = t.context;
+
+  delete cumulusMessage.payload.granules[0].producerGranuleId;
+
+  // Message must be completed or files will not update
+  cumulusMessage.meta.status = 'completed';
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    testOverrides: { stepFunctionUtils },
+  });
+
+  const postgresRecord = await granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const apiFormattedPostgresGranule =
+    await translatePostgresGranuleToApiGranule({
+      granulePgRecord: postgresRecord,
+      knexOrTransaction: knex,
+    });
+  t.is(apiFormattedPostgresGranule.producerGranuleId, granuleId);
 });
 
 test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/SNS with expected values nullified', async (t) => {
@@ -818,7 +1005,10 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
       knexOrTransaction: knex,
     });
 
-  cumulusMessage.payload.granules[0] = { granuleId: completeGranule.granuleId };
+  cumulusMessage.payload.granules[0] = {
+    granuleId: completeGranule.granuleId,
+    producerGranuleId: completeGranule.producerGranuleId,
+  };
   cumulusMessage.cumulus_meta.workflow_start_time = Date.now();
   await writeGranulesFromMessage({
     cumulusMessage,
@@ -1182,6 +1372,7 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
+    producerGranuleId: granule.producerGranuleId,
     status: granule.status,
     // files is undefined
   };
@@ -1252,6 +1443,7 @@ test.serial('writeGranulesFromMessage() given a partial granule overwrites only 
   // Update existing granule with a partial granule object
   const updateGranulePayload = {
     granuleId,
+    producerGranuleId: granule.producerGranuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
     status: granule.status,
@@ -1343,6 +1535,7 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
   // Update existing granule with a partial granule object
   const updateGranulePayload = {
     granuleId,
+    producerGranuleId: granule.producerGranuleId,
     collectionId: granule.collectionId,
     files: [],
     status: granule.status,
@@ -1703,7 +1896,7 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
   t.is(pgGranule.status, 'failed');
   const pgGranuleError = JSON.parse(pgGranule.error.errors);
   t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
-  t.true(pgGranuleError[0].Cause.includes('AggregateError'));
+  t.true(pgGranuleError[0].Cause.includes('error: insert into "files"'));
 });
 
 test.serial('writeGranuleFromMessage() writes a new granule with files set to "[]" results in file value set to undefined/default', async (t) => {
@@ -1791,7 +1984,7 @@ test.serial('_writeGranules attempts to mark granule as failed if a SchemaValida
   t.is(pgGranule.status, 'failed');
 });
 
-test.serial('writeGranulesFromMessage() writes all valid files if any non-valid file fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not write any files if there is an invalid file', async (t) => {
   const {
     cumulusMessage,
     executionCumulusId,
@@ -1816,7 +2009,6 @@ test.serial('writeGranulesFromMessage() writes all valid files if any non-valid 
   for (let i = 0; i < validFiles; i += 1) {
     cumulusMessage.payload.granules[0].files.push(fakeFileFactory());
   }
-  const validFileCount = cumulusMessage.payload.granules[0].files.length - invalidFiles.length;
 
   await writeGranulesFromMessage({
     cumulusMessage,
@@ -1834,7 +2026,7 @@ test.serial('writeGranulesFromMessage() writes all valid files if any non-valid 
     { granule_id: cumulusMessage.payload.granules[0].granuleId }
   );
   const fileRecords = await filePgModel.search(knex, { granule_cumulus_id: granuleCumulusId });
-  t.is(fileRecords.length, validFileCount);
+  t.is(fileRecords.length, 0);
 });
 
 test.serial('writeGranulesFromMessage() stores error on granule if any file fails', async (t) => {
@@ -1877,7 +2069,7 @@ test.serial('writeGranulesFromMessage() stores error on granule if any file fail
   );
   const pgGranuleError = JSON.parse(pgGranule.error.errors);
   t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
-  t.true(pgGranuleError[0].Cause.includes('AggregateError'));
+  t.true(pgGranuleError[0].Cause.includes('error: insert into "files"'));
 });
 
 test.serial('writeGranulesFromMessage() stores an aggregate workflow error and file-writing error on a granule', async (t) => {
@@ -3413,6 +3605,7 @@ test.serial('writeGranuleFromApi() given a payload with undefined files, keeps e
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
+    producerGranuleId: granule.producerGranuleId,
     status: granule.status,
     // files is undefined
   };
@@ -3458,6 +3651,7 @@ test.serial('writeGranuleFromApi() given a partial granule overwrites only provi
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
+    producerGranuleId: granule.producerGranuleId,
     status: granule.status,
   };
 
@@ -3497,7 +3691,6 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
   const validNullableGranuleKeys = [
     'beginningDateTime',
     'cmrLink',
-    'createdAt',
     'duration',
     'endingDateTime',
     'files',
@@ -3513,7 +3706,6 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
     'timestamp',
     'timeToArchive',
     'timeToPreprocess',
-    'updatedAt',
   ];
 
   const completeGranule = fakeGranuleFactoryV2({
@@ -3626,6 +3818,7 @@ test.serial('writeGranuleFromApi() when called on a granuleId does not modify th
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
+    producerGranuleId: granule.producerGranuleId,
     status: granule.status,
   };
 
@@ -3673,6 +3866,7 @@ test.serial('writeGranuleFromApi() given an empty array as a files key will remo
     granuleId,
     collectionId: granule.collectionId,
     files: [],
+    producerGranuleId: granule.producerGranuleId,
     status: granule.status,
   };
 
@@ -3865,7 +4059,7 @@ test.serial('writeGranuleFromApi() saves file records to Postgres if Postgres wr
   );
 });
 
-test.serial('writeGranuleFromApi() sets granule to fail, writes all valid files and throws if any non-valid file fails', async (t) => {
+test.serial('writeGranuleFromApi() sets granule to fail, does not write any files if there is an invalid file', async (t) => {
   const {
     collectionCumulusId,
     filePgModel,
@@ -3884,7 +4078,6 @@ test.serial('writeGranuleFromApi() sets granule to fail, writes all valid files 
   for (let i = 0; i < validFiles; i += 1) {
     allfiles.push(fakeFileFactory());
   }
-  const validFileCount = allfiles.length - invalidFiles.length;
 
   await t.throwsAsync(writeGranuleFromApi({ ...granule, files: allfiles }, knex, 'Create'));
 
@@ -3901,7 +4094,7 @@ test.serial('writeGranuleFromApi() sets granule to fail, writes all valid files 
     { granule_id: granule.granuleId }
   );
   const fileRecords = await filePgModel.search(knex, { granule_cumulus_id: granuleCumulusId });
-  t.is(fileRecords.length, validFileCount);
+  t.is(fileRecords.length, 0);
 });
 
 test.serial('writeGranuleFromApi() sets granule to failed with expected error and throws if any file fails', async (t) => {
@@ -3937,7 +4130,7 @@ test.serial('writeGranuleFromApi() sets granule to failed with expected error an
   const pgGranuleError = JSON.parse(pgGranule.error.errors);
   t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
   t.is(pgGranule.status, 'failed');
-  t.true(pgGranuleError[0].Cause.includes('AggregateError'));
+  t.true(pgGranuleError[0].Cause.includes('error: insert into "files"'));
 });
 
 test.serial('writeGranuleFromApi() allows update of complete granule record if older granule exists with same execution in a completed state', async (t) => {
@@ -4672,4 +4865,20 @@ test.serial('writeGranuleFromApi() overwrites granule with expected nullified va
   });
 
   t.deepEqual(translatedPgRecord.files, []);
+});
+
+test.serial('writeGranuleFromApi() failes to overwrite granule with required field set to null', async (t) => {
+  const {
+    knex,
+    granule,
+    granuleId,
+  } = t.context;
+
+  const result = await writeGranuleFromApi(granule, knex, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, producerGranuleId: null, status: 'completed' }, knex, 'Create'),
+    { message: new RegExp('granule.\'producerGranuleId\' cannot be removed as it is required and/or set to a default value on PUT') }
+  );
 });

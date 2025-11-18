@@ -257,6 +257,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
   const authToken = 'fakeToken';
   const collectionId = 'FAKE_COLLECTION';
   const provider = 'fakeProvider';
+  const producerGranuleId = 'fakeProducerGranuleId';
   const now = new Date().getTime();
   const tenMinutesAgo = now - (1000 * 60 * 10);
   const createdAt = tenMinutesAgo;
@@ -278,6 +279,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
     granuleId,
     provider,
     createdAt,
+    producerGranuleId,
     lzardsPostMethod,
   });
 
@@ -287,6 +289,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
     collectionId,
     provider,
     createdAt,
+    producerGranuleId,
     status: 'FAILED',
   };
 
@@ -305,6 +308,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
   const authToken = 'fakeToken';
   const collectionId = 'FAKE_COLLECTION';
   const provider = 'fakeProvider';
+  const producerGranuleId = 'fakeProducerGranuleId';
   const now = new Date().getTime();
   const tenMinutesAgo = now - (1000 * 60 * 10);
   const createdAt = tenMinutesAgo;
@@ -332,6 +336,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
     granuleId,
     provider,
     createdAt,
+    producerGranuleId,
     lzardsPostMethod,
   });
 
@@ -342,6 +347,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
     collectionId,
     provider,
     createdAt,
+    producerGranuleId,
     status: 'FAILED',
     statusCode: 404,
   };
@@ -357,6 +363,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
   const authToken = 'fakeToken';
   const collectionId = 'FAKE_COLLECTION';
   const provider = 'fakeProvider';
+  const producerGranuleId = 'fakeProducerGranuleId';
   const now = new Date().getTime();
   const tenMinutesAgo = now - (1000 * 60 * 10);
   const createdAt = tenMinutesAgo;
@@ -384,6 +391,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
     granuleId,
     provider,
     createdAt,
+    producerGranuleId,
     lzardsPostMethod,
   });
 
@@ -394,6 +402,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
     collectionId,
     provider,
     createdAt,
+    producerGranuleId,
     status: 'FAILED',
   };
 
@@ -415,6 +424,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult'
   const authToken = 'fakeToken';
   const collectionId = 'FAKE_COLLECTION';
   const provider = 'fakeProvider';
+  const producerGranuleId = 'fakeProducerGranuleId';
   const now = new Date().getTime();
   const tenMinutesAgo = now - (1000 * 60 * 10);
   const createdAt = tenMinutesAgo;
@@ -436,6 +446,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult'
     granuleId,
     provider,
     createdAt,
+    producerGranuleId,
     generateAccessUrlMethod,
     lzardsPostMethod,
   });
@@ -447,6 +458,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult'
     collectionId,
     provider,
     createdAt,
+    producerGranuleId,
     status: 'COMPLETED',
     statusCode: 201,
   };
@@ -484,6 +496,7 @@ test.serial('postRequestToLzards creates the expected query', async (t) => {
         filename: `s3://${setupObj.file.bucket}/${setupObj.file.key}`,
         collection: setupObj.collection,
         granuleId: setupObj.granuleId,
+        producerGranuleId: setupObj.producerGranuleId,
         provider: setupObj.provider,
         createdAt: setupObj.createdAt,
       },
@@ -527,6 +540,7 @@ test.serial('postRequestToLzards creates the expected query with SHA256 checksum
   const lzardsApi = 'fakeApi';
   const lzardsProviderName = 'fakeProvider';
   const provider = 'fakeProvider';
+  const producerGranuleId = 'fakeProducerGranuleId';
   const now = new Date().getTime();
   const tenMinutesAgo = now - (1000 * 60 * 10);
   const createdAt = tenMinutesAgo;
@@ -542,6 +556,7 @@ test.serial('postRequestToLzards creates the expected query with SHA256 checksum
     granuleId,
     provider,
     createdAt,
+    producerGranuleId,
     lzardsApi,
     lzardsProviderName,
   });
@@ -557,6 +572,7 @@ test.serial('postRequestToLzards creates the expected query with SHA256 checksum
         granuleId,
         provider,
         createdAt,
+        producerGranuleId,
       },
     },
     headers: {
@@ -574,6 +590,7 @@ test.serial('postRequestToLzards creates the expected query with SHA512 checksum
   const lzardsApi = 'fakeApi';
   const lzardsProviderName = 'fakeProvider';
   const provider = 'fakeProvider';
+  const producerGranuleId = 'fakeProducerGranuleId';
   const now = new Date().getTime();
   const tenMinutesAgo = now - (1000 * 60 * 10);
   const createdAt = tenMinutesAgo;
@@ -589,6 +606,7 @@ test.serial('postRequestToLzards creates the expected query with SHA512 checksum
     granuleId,
     provider,
     createdAt,
+    producerGranuleId,
     lzardsApi,
     lzardsProviderName,
   });
@@ -604,6 +622,7 @@ test.serial('postRequestToLzards creates the expected query with SHA512 checksum
         granuleId,
         provider,
         createdAt,
+        producerGranuleId,
       },
     },
     headers: {
@@ -620,6 +639,7 @@ test.serial('postRequestToLzards throws if lzardsApiUrl is not set', async (t) =
   const granuleId = 'fakeGranuleId';
   const lzardsProviderName = 'fakeProvider';
   const provider = 'fakeProvider';
+  const producerGranuleId = 'fakeProducerGranuleId';
   const now = new Date().getTime();
   const tenMinutesAgo = now - (1000 * 60 * 10);
   const createdAt = tenMinutesAgo;
@@ -633,6 +653,7 @@ test.serial('postRequestToLzards throws if lzardsApiUrl is not set', async (t) =
     granuleId,
     provider,
     createdAt,
+    producerGranuleId,
   }));
 });
 
@@ -765,6 +786,120 @@ test.serial('generateAccessUrl switches correctly based on urlType', async (t) =
   t.true(index.generateCloudfrontUrl.calledOnce);
 });
 
+test.serial('backupGranulesToLzards returns the expected payload when producerGranuleId is not set, setting it to granuleId', async (t) => {
+  const {
+    collectionPgModel,
+    fakeBucket1,
+    fakeBucket2,
+    testKnex,
+  } = t.context;
+  const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
+  sandbox.stub(index, 'generateAccessCredentials').returns({
+    Credentials: {
+      SecretAccessKey: 'FAKEKey',
+      AccessKeyId: 'FAKEId',
+      SessionToken: 'FAKEToken',
+    },
+  });
+  const now = new Date().getTime();
+  const testCollection1 = fakeCollectionRecordFactory();
+  const testCollection2 = fakeCollectionRecordFactory();
+  await collectionPgModel.create(testKnex, testCollection1);
+  await collectionPgModel.create(testKnex, testCollection2);
+  const collectionId1 = constructCollectionId(testCollection1.name, testCollection1.version);
+  const collectionId2 = constructCollectionId(testCollection2.name, testCollection2.version);
+
+  const fakePayload = {
+    input: {
+      granules: [
+        {
+          granuleId: 'FakeGranule1',
+          collectionId: collectionId1,
+          provider: 'FakeProvider',
+          createdAt: now,
+          files: [
+            {
+              bucket: fakeBucket1,
+              checksumType: 'md5',
+              checksum: 'fakehash',
+              key: 'path/to/granule1/foo.jpg',
+            },
+            {
+              bucket: fakeBucket1,
+              checksumType: 'md5',
+              checksum: 'fakehash',
+              key: '/path/to/granule1/foo.dat',
+            },
+          ],
+        },
+        {
+          granuleId: 'FakeGranule2',
+          collectionId: collectionId2,
+          provider: 'FakeProvider',
+          createdAt: now,
+          files: [
+            {
+              bucket: fakeBucket2,
+              key: 'path/to/granule1/foo.jpg',
+              checksumType: 'md5',
+              checksum: 'fakehash',
+            },
+            {
+              bucket: fakeBucket2,
+              key: 'path/to/granule1/foo.dat',
+              checksumType: 'md5',
+              checksum: 'fakehash',
+            },
+          ],
+        },
+      ],
+    },
+    config: {
+      urlType: 's3',
+    },
+  };
+
+  await stageFixtureObjects(fakePayload);
+  t.teardown(() => deleteFixtureObjects(fakePayload));
+
+  process.env.lzards_api = 'fakeApi';
+  process.env.lzards_provider = 'fakeProvider';
+  process.env.stackName = 'fakeStack';
+
+  await validateInput(t, fakePayload.input);
+  await validateConfig(t, fakePayload.config);
+  const actual = await index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod);
+  await validateOutput(t, actual);
+  const expected = {
+    backupResults: [
+      {
+        body: 'fake body',
+        filename: `s3://${fakeBucket1}/path/to/granule1/foo.jpg`,
+        status: 'COMPLETED',
+        granuleId: 'FakeGranule1',
+        collectionId: collectionId1,
+        provider: 'FakeProvider',
+        producerGranuleId: 'FakeGranule1',
+        createdAt: now,
+        statusCode: 201,
+      },
+      {
+        body: 'fake body',
+        filename: `s3://${fakeBucket2}/path/to/granule1/foo.jpg`,
+        status: 'COMPLETED',
+        granuleId: 'FakeGranule2',
+        collectionId: collectionId2,
+        provider: 'FakeProvider',
+        producerGranuleId: 'FakeGranule2',
+        createdAt: now,
+        statusCode: 201,
+      },
+    ],
+    granules: fakePayload.input.granules,
+  };
+  t.deepEqual(actual, expected);
+});
+
 test.serial('backupGranulesToLzards returns the expected payload with "workflow output" type input granule containing dataType and version', async (t) => {
   const { fakeBucket1, fakeBucket2 } = t.context;
   const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
@@ -786,6 +921,7 @@ test.serial('backupGranulesToLzards returns the expected payload with "workflow 
           dataType: 'FakeGranuleType',
           version: '000',
           provider: 'FakeProvider',
+          producerGranuleId: 'FakeProducerGranuleId1',
           createdAt: now,
           files: [
             {
@@ -807,6 +943,7 @@ test.serial('backupGranulesToLzards returns the expected payload with "workflow 
           dataType: 'FakeGranuleType',
           version: '000',
           provider: 'FakeProvider',
+          producerGranuleId: 'FakeProducerGranuleId2',
           createdAt: now,
           files: [
             {
@@ -850,6 +987,7 @@ test.serial('backupGranulesToLzards returns the expected payload with "workflow 
         granuleId: 'FakeGranule1',
         collectionId: 'FakeGranuleType___000',
         provider: 'FakeProvider',
+        producerGranuleId: 'FakeProducerGranuleId1',
         createdAt: now,
         statusCode: 201,
       },
@@ -860,6 +998,7 @@ test.serial('backupGranulesToLzards returns the expected payload with "workflow 
         granuleId: 'FakeGranule2',
         collectionId: 'FakeGranuleType___000',
         provider: 'FakeProvider',
+        producerGranuleId: 'FakeProducerGranuleId2',
         createdAt: now,
         statusCode: 201,
       },
@@ -900,6 +1039,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
           collectionId: collectionId1,
           provider: 'FakeProvider',
           createdAt: now,
+          producerGranuleId: 'FakeProducerGranuleId1',
           files: [
             {
               bucket: fakeBucket1,
@@ -920,6 +1060,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
           collectionId: collectionId2,
           provider: 'FakeProvider',
           createdAt: now,
+          producerGranuleId: 'FakeProducerGranuleId2',
           files: [
             {
               bucket: fakeBucket2,
@@ -962,6 +1103,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
         granuleId: 'FakeGranule1',
         collectionId: collectionId1,
         provider: 'FakeProvider',
+        producerGranuleId: 'FakeProducerGranuleId1',
         createdAt: now,
         statusCode: 201,
       },
@@ -972,6 +1114,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
         granuleId: 'FakeGranule2',
         collectionId: collectionId2,
         provider: 'FakeProvider',
+        producerGranuleId: 'FakeProducerGranuleId2',
         createdAt: now,
         statusCode: 201,
       },
@@ -1011,6 +1154,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
           granuleId: 'FakeGranule1',
           collectionId: collectionId1,
           provider: 'FakeProvider',
+          producerGranuleId: 'FakeProducerGranuleId1',
           createdAt: now,
           dataType: 'FakeGranuleType',
           version: '000',
@@ -1033,6 +1177,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
           granuleId: 'FakeGranule2',
           collectionId: collectionId2,
           provider: 'FakeProvider',
+          producerGranuleId: 'FakeProducerGranuleId2',
           createdAt: now,
           files: [
             {
@@ -1076,6 +1221,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
         granuleId: 'FakeGranule1',
         collectionId: collectionId1,
         provider: 'FakeProvider',
+        producerGranuleId: 'FakeProducerGranuleId1',
         createdAt: now,
         statusCode: 201,
       },
@@ -1086,6 +1232,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
         granuleId: 'FakeGranule2',
         collectionId: collectionId2,
         provider: 'FakeProvider',
+        producerGranuleId: 'FakeProducerGranuleId2',
         createdAt: now,
         statusCode: 201,
       },
@@ -1113,6 +1260,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
           dataType: 'FakeGranuleType',
           version: '000',
           provider: 'FakeProvider',
+          producerGranuleId: 'FakeProducerGranuleId1',
           createdAt: now,
           files: [
             {
@@ -1160,6 +1308,7 @@ test.serial('backupGranulesToLzards returns failed record (by default) or throws
           dataType: 'FakeGranuleType',
           version: '000',
           provider: 'FakeProvider',
+          producerGranuleId: 'FakeProducerGranuleId1',
           createdAt: now,
           files: [
             {
@@ -1199,6 +1348,7 @@ test.serial('backupGranulesToLzards returns failed record (by default) or throws
         granuleId: 'FakeGranule1',
         collectionId: 'FakeGranuleType___000',
         provider: 'FakeProvider',
+        producerGranuleId: 'FakeProducerGranuleId1',
         createdAt: now,
       },
     ],
@@ -1376,6 +1526,7 @@ test.serial('backupGranulesToLzards returns failed record (by default) or throws
     collectionId: collectionId1,
     filename: `s3://${fakeBucket1}/path/to/granule1/foo.jpg`,
     provider: 'FakeProvider',
+    producerGranuleId: 'FakeProducerGranuleId1',
     createdAt: now,
     body: 'fake body',
     status: 'COMPLETED',
@@ -1385,6 +1536,7 @@ test.serial('backupGranulesToLzards returns failed record (by default) or throws
     collectionId: collectionId2,
     filename: `s3://${fakeBucket2}/path/to/granule2/foo.jpg`,
     provider: 'FakeProvider',
+    producerGranuleId: 'FakeProducerGranuleId2',
     createdAt: now,
     body: JSON.stringify(backupError),
     status: 'FAILED',
@@ -1399,6 +1551,7 @@ test.serial('backupGranulesToLzards returns failed record (by default) or throws
           collectionId: collectionId1,
           provider: 'FakeProvider',
           createdAt: now,
+          producerGranuleId: 'FakeProducerGranuleId1',
           files: [
             {
               bucket: fakeBucket1,
