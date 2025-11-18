@@ -46,9 +46,7 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
   moddedXml.Granule ??= {};
   moddedXml.Granule.GranuleUR = granuleUr;
 
-  if (!moddedXml.Granule.DataGranule) {
-    moddedXml.Granule.DataGranule = {};
-  }
+  moddedXml.Granule.DataGranule ??= {};
 
   const dataGranule = moddedXml.Granule.DataGranule as any;
   const orderedDataGranule = new Map<string, any>();
