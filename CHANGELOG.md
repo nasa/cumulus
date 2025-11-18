@@ -19,6 +19,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-4346**
+  - Updated package overrides for dev env to use `glob` "^11.1.0" to address reported CVE
+- **CUMULUS-4279**
+  - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
+    on the public schema of the user database to the database user.
+    This change is required because, starting with PostgreSQL 15, new databases assign ownership
+    of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
+    prior to v15 preserve the previous ownership of the public schema.
 - **CUMULUS-4275**
   - Fixed unit tests broken by updated HTTP error messages in got
 

@@ -1,5 +1,7 @@
+import cloneDeep from 'lodash/cloneDeep';
+import set from 'lodash/set';
 import { SecretsManager } from '@aws-sdk/client-secrets-manager';
-import { Knex } from 'knex';
+import { knex, Knex } from 'knex';
 
 import { getKnexConfig, getKnexClient } from '@cumulus/db';
 
@@ -12,11 +14,11 @@ export interface HandlerEvent {
   dbRecreation?: boolean
 }
 
-export const dbExists = async (tableName: string, knex: Knex) =>
-  await knex('pg_database').select('datname').where(knex.raw(`datname = CAST('${tableName}' as name)`));
+export const dbExists = async (tableName: string, knexClient: Knex) =>
+  await knexClient('pg_database').select('datname').where(knexClient.raw(`datname = CAST('${tableName}' as name)`));
 
-export const userExists = async (userName: string, knex: Knex) =>
-  await knex('pg_catalog.pg_user').where(knex.raw(`usename = CAST('${userName}' as name)`));
+export const userExists = async (userName: string, knexClient: Knex) =>
+  await knexClient('pg_catalog.pg_user').where(knexClient.raw(`usename = CAST('${userName}' as name)`));
 
 const validateEvent = (event: HandlerEvent): void => {
   if (event.dbPassword === undefined || event.prefix === undefined) {
@@ -36,10 +38,10 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     secretsManager,
   });
 
-  let knex;
+  let knexClient;
 
   try {
-    knex = await getKnexClient({
+    knexClient = await getKnexClient({
       env: {
         databaseCredentialSecretArn: event.rootLoginSecret,
         KNEX_DEBUG: process.env.KNEX_DEBUG,
@@ -53,42 +55,52 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         throw new Error(`Attempted to create database user ${dbUser} - username/password must be [a-zA-Z0-9_] only`);
       }
     });
+    const dbName = `${dbUser}_db`;
 
-    const userExistsResults = await userExists(dbUser, knex);
-    const dbExistsResults = await dbExists(`${dbUser}_db`, knex);
+    const userExistsResults = await userExists(dbUser, knexClient);
+    const dbExistsResults = await dbExists(dbName, knexClient);
 
     if (userExistsResults.length === 0) {
-      await knex.raw(`create user "${dbUser}" with encrypted password '${event.dbPassword}'`);
+      await knexClient.raw(`create user "${dbUser}" with encrypted password '${event.dbPassword}'`);
     } else {
-      await knex.raw(`alter user "${dbUser}" with encrypted password '${event.dbPassword}'`);
+      await knexClient.raw(`alter user "${dbUser}" with encrypted password '${event.dbPassword}'`);
     }
 
     if (event.dbRecreation) {
       if (dbExistsResults.length !== 0) {
-        await knex.raw(`alter database "${dbUser}_db" connection limit 0;`);
-        await knex.raw(`select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg_stat_activity.datname = '${dbUser}_db'`);
-        await knex.raw(`drop database "${dbUser}_db";`);
+        await knexClient.raw(`alter database "${dbName}" connection limit 0;`);
+        await knexClient.raw(`select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg_stat_activity.datname = '${dbName}'`);
+        await knexClient.raw(`drop database "${dbName}";`);
       }
-      await knex.raw(`create database "${dbUser}_db";`);
+      await knexClient.raw(`create database "${dbName}";`);
     } else if (dbExistsResults.length === 0) {
-      await knex.raw(`create database "${dbUser}_db";`);
+      await knexClient.raw(`create database "${dbName}";`);
     }
-    await knex.raw(`grant all privileges on database "${dbUser}_db" to "${dbUser}"`);
+
+    await knexClient.raw(`grant all privileges on database "${dbName}" to "${dbUser}"`);
+
+    await knexClient.destroy();
+
+    // connect to user database
+    const userDbKnexConfig = cloneDeep(rootKnexConfig);
+    set(userDbKnexConfig, 'connection.database', dbName);
+    knexClient = knex(userDbKnexConfig);
+    await knexClient.raw(`grant create, usage on schema public to "${dbUser}"`);
 
     await secretsManager.putSecretValue({
       SecretId: event.userLoginSecret,
       SecretString: JSON.stringify({
         username: dbUser,
         password: event.dbPassword,
-        database: `${dbUser}_db`,
+        database: dbName,
         host: (rootKnexConfig.connection as Knex.PgConnectionConfig).host,
         port: (rootKnexConfig.connection as Knex.PgConnectionConfig).port,
         rejectUnauthorized: 'false',
       }),
     });
   } finally {
-    if (knex) {
-      await knex.destroy();
+    if (knexClient) {
+      await knexClient.destroy();
     }
   }
 };
