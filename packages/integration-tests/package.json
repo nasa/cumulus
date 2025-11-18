@@ -56,6 +56,6 @@
     "p-wait-for": "^2.0.1",
     "uuid": "^3.2.1",
     "xml2js": "0.5.0",
-    "js2xmlparser": "^4.0.2"
+    "js2xmlparser": "^5.0.0"
   }
 }
