@@ -1,5 +1,5 @@
 output "security_group_id" {
-  description = "The final security group ID attached to the RDS cluster."
+  description = "The security group ID attached to the RDS cluster."
   value = local.rds_security_group_id
 }
 

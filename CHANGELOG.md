@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4272**
   - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
-    preserving or reusing their existing security groups, ensuring compatibility with existing
+    reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
 
 ### Added
