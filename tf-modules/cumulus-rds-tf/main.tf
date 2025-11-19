@@ -39,7 +39,7 @@ locals {
   effective_security_group_id = try(
     local.rds_security_group_id != null
       ? local.rds_security_group_id
-      : aws_rds_cluster.cumulus.vpc_security_group_ids[0],
+      : tolist(aws_rds_cluster.cumulus.vpc_security_group_ids)[0],
     null
   )
 }
