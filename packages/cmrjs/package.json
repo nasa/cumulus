@@ -45,7 +45,7 @@
     "@cumulus/logger": "21.0.1",
     "@cumulus/message": "21.0.1",
     "got": "^11.8.1",
-    "js2xmlparser": "^4.0.0",
+    "js2xmlparser": "^5.0.0",
     "lodash": "^4.17.21",
     "public-ip": "^5.0.0",
     "url-join": "^1.0.0",
