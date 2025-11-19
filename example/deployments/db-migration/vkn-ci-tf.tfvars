@@ -1,1 +1,0 @@
-prefix = "vkn-ci-tf"
