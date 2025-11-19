@@ -4,13 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-boto3 = "~=1.26.90"
-cumulus-process = "==1.5.0"
-cumulus-message-adapter-python = "==2.3.0"
-six = "==1.12.0"
+boto3 = "~=1.40.29"
+cumulus-process = "==1.6.0"
+cumulus-message-adapter-python = "==2.4.0"
+six = ">=1.17.0"
 
 [dev-packages]
 pylint = ">=1.8.2"
 
 [requires]
-python_version = "3.10"
+python_version = "3.12"

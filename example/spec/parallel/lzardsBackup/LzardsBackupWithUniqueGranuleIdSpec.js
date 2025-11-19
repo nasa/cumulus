@@ -18,6 +18,12 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
+const commonSearchParams = {
+  requestSummary: false,
+  includeEvents: true,
+  status: '',
+};
+
 describe('The Lzards Backup Task for duplicate granule with producerGranuleId and uniquified granuleId', () => {
   let beforeAllFailed;
   let granuleId;
@@ -245,8 +251,9 @@ describe('The Lzards Backup Task for duplicate granule with producerGranuleId an
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
-            'metadata[collection]': `${collection.name}___${collection.version}`,
+            collection: `${collection.name}___${collection.version}`,
             'metadata[producerGranuleId]': producerGranuleId,
+            ...commonSearchParams,
           },
         }));
         const lzardsApiGetOutput = await pTimeout(

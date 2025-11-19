@@ -67,12 +67,12 @@ This is for installation for Cumulus development. See the [Cumulus deployment se
 
 ### Prerequisites
 
-- [NVM](https://github.com/creationix/nvm) and node version 16.19.0
+- [NVM](https://github.com/creationix/nvm) and node version 20.12.2
 - [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 - Bash
 - [Docker](https://www.docker.com/) (only required for testing)
 - docker-compose (only required for testing `pip install docker-compose`)
-- Python 3.10
+- Python 3.12
 - [pipenv](https://pypi.org/project/pipenv/)
 
 > You may use `brew` to install the prerequisites. Visit [Homebrew documentation](https://brew.sh/) for guidance.
