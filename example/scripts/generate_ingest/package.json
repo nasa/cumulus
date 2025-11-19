@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/generate_ingest",
   "private": true,
-  "version": "21.0.0",
+  "version": "21.0.0-echo10",
   "description": "Script to generate test data for scaled ingest",
   "keywords": [
     "GIBS",
@@ -22,8 +22,8 @@
     "directory": "packages/types"
   },
   "dependencies": {
-    "@cumulus/aws-client": "21.0.0",
-    "@cumulus/common": "21.0.0"
+    "@cumulus/aws-client": "21.0.0-echo10",
+    "@cumulus/common": "21.0.0-echo10"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"

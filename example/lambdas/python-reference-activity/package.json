@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/python-reference-activity",
   "private": true,
-  "version": "21.0.0",
+  "version": "21.0.0-echo10",
   "description": "Python reference activity",
   "homepage": "https://github.com/nasa/cumulus/tree/master/example/lambdas/python-reference-activity",
   "repository": {

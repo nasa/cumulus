@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## [v21.0.0-echo10] 2025-11-19
+
+## Migration Notes
+
+Please note that this release is an out-of-cycle release, you cannot upgrade from it to the next release in the v21.0.x release series due to CUMULUS-4325 not being present in v21.0.1+.    Upgrades from this release should be done with care to ensure the target release includes these updates, either to a release following 21.1.0 *or* a release in 21.0.x series that includes CUMULUS-4325
+
+## Changed
 
 - **CUMULUS-4325**
   - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
