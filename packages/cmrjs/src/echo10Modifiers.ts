@@ -45,8 +45,47 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
 
   moddedXml.Granule ??= {};
   moddedXml.Granule.GranuleUR = granuleUr;
+
   moddedXml.Granule.DataGranule ??= {};
-  moddedXml.Granule.DataGranule.ProducerGranuleId = producerGranuleId;
+
+  const dataGranule = moddedXml.Granule.DataGranule as any;
+  const orderedDataGranule = new Map<string, any>();
+
+  // ECHO10 DataGranule element order as defined in the XSD schema
+  // https://git.earthdata.nasa.gov/projects/EMFD/repos/echo-schemas/browse/schemas/10.0/Granule.xsd
+  const echo10DataGranuleOrder = [
+    'DataGranuleSizeInBytes',
+    'SizeMBDataGranule',
+    'Checksum',
+    'ReprocessingPlanned',
+    'ReprocessingActual',
+    'ProducerGranuleId',
+    'DayNightFlag',
+    'ProductionDateTime',
+    'LocalVersionId',
+    'AdditionalFile',
+  ];
+
+  const existingKeys = Object.keys(dataGranule);
+  const unexpectedKeys = existingKeys.filter((key) => !echo10DataGranuleOrder.includes(key));
+
+  if (unexpectedKeys.length > 0) {
+    throw new Error(
+      `Unexpected DataGranule key(s) found: ${unexpectedKeys.join(', ')}. `
+      + `Valid keys are: ${echo10DataGranuleOrder.join(', ')}. `
+      + `GranuleUR: ${moddedXml.Granule.GranuleUR}`
+    );
+  }
+
+  echo10DataGranuleOrder.forEach((key) => {
+    if (key === 'ProducerGranuleId') {
+      orderedDataGranule.set(key, producerGranuleId);
+    } else if (dataGranule[key] !== undefined) {
+      orderedDataGranule.set(key, dataGranule[key]);
+    }
+  });
+
+  moddedXml.Granule.DataGranule = orderedDataGranule as any;
 
   return moddedXml;
 }
