@@ -1,6 +1,6 @@
 output "security_group_id" {
   description = "The final security group ID attached to the RDS cluster."
-  value = local.effective_security_group_id
+  value = local.rds_security_group_id
 }
 
 output "rds_endpoint" {

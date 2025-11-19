@@ -15,31 +15,10 @@ provider "aws" {
 }
 
 locals {
-  # Determine if snapshot SGs should be used
-  use_snapshot_sg = (
-    var.snapshot_identifier != null && var.use_snapshot_security_group
-  )
-
-  # Determine the SG to pass into aws_rds_cluster
-  # - If input_security_group_id is provided, use it.
-  # - If snapshot is being restored and use_snapshot_security_group = true, don't specify (null).
-  # - Otherwise, use the new SG created by this module.
   rds_security_group_id = try(
     var.input_security_group_id != null
       ? var.input_security_group_id
-      : (
-          local.use_snapshot_sg
-          ? null
-          : aws_security_group.rds_cluster_access.id
-        ),
-    null
-  )
-
-  # The actual SG attached to the cluster
-  effective_security_group_id = try(
-    local.rds_security_group_id != null
-      ? local.rds_security_group_id
-      : tolist(aws_rds_cluster.cumulus.vpc_security_group_ids)[0],
+      : aws_security_group.rds_cluster_access.id,
     null
   )
 }
@@ -122,8 +101,8 @@ resource "aws_rds_cluster" "cumulus" {
   engine                  = "aurora-postgresql"
   engine_version          = var.engine_version
   database_name           = "postgres"
-  master_username         = var.snapshot_identifier == null ? var.db_admin_username : null
-  master_password         = var.snapshot_identifier == null ? var.db_admin_password : null
+  master_username         = var.db_admin_username
+  master_password         = var.db_admin_password
   backup_retention_period = var.backup_retention_period
   preferred_backup_window = var.backup_window
   db_subnet_group_name    = aws_db_subnet_group.default.id
@@ -135,7 +114,7 @@ resource "aws_rds_cluster" "cumulus" {
     min_capacity = var.min_capacity
   }
 
-  vpc_security_group_ids = local.rds_security_group_id == null ? null : [local.rds_security_group_id]
+  vpc_security_group_ids = [local.rds_security_group_id]
 
   deletion_protection             = var.deletion_protection
   enable_http_endpoint            = true

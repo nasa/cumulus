@@ -12,25 +12,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
 - **CUMULUS-4272**
-  - Enhanced the `tf-modules/cumulus-rds-tf` module to support flexible security group resolution
-    when creating or restoring an Aurora PostgreSQL RDS cluster.
-  - The module now correctly:
-    - Uses a `user-provided security group` when supplied.
-    - `Inherits (by default) the security group from a snapshot` when restoring a cluster from a snapshot.
-    - Falls back to the `module-created security group` for new cluster deployments.
-  - This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
+  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
+    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
     preserving or reusing their existing security groups, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
 
 ### Added
 
 - **CUMULUS-4272**
-  - Updated `tf-modules/cumulus-rds-tf`
-    - Added `input_security_group_id` to allow specifying an existing security group; this always
-      takes precedence, including when restoring from a snapshot.
-    - Added `use_snapshot_security_group` (default: `true`) to allow using security groups from a
-      snapshot when `snapshot_identifier` is set and no `input_security_group_id` is provided.
-    - Updated `security_group_id` output to return the effective security group attached to the cluster.
+  - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
+    specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
 
 ### Changed
 
