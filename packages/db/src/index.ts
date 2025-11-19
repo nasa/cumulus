@@ -130,6 +130,7 @@ export {
 
 export {
   getFilesAndGranuleInfoQuery,
+  getGranuleIdAndCollectionIdFromFile,
 } from './lib/file';
 
 export {

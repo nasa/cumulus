@@ -210,8 +210,20 @@ variable "launchpad_passphrase" {
 }
 
 variable "metrics_es_host" {
-  type = string
-  default = null
+  description = "Domain name (not URL) of the Cloud Metrics API."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = (
+     var.metrics_es_host == null ||
+     (
+       !startswith(trimspace(var.metrics_es_host), "https://") &&
+       !startswith(trimspace(var.metrics_es_host), "http://")
+     )
+    )
+    error_message = "metrics_es_host should be a domain name only (e.g., `abcdef123.metrics.com`) and must not start with `http://` or `https://`."
+  }
 }
 
 variable "metrics_es_password" {
@@ -326,9 +338,27 @@ variable "payload_timeout" {
 }
 
 variable "update_limit" {
-type = number
+  type = number
   default = 10000
   description = "number of executions to cleanup in one lambda run"
+}
+
+variable "archive_records_config" {
+  type = object({
+    deploy_rule = optional(bool, true), # deploy the archive records cron eventBridgeRule
+    update_limit = optional(number, 100000), # number of granules or executions to archive in one run
+    batch_size = optional(number, 10000), # number of granules or executions to archive call to the /archive endpoint
+    expiration_days = optional(number, 365), # age (in days) after which granules or executions should be archived
+    schedule_expression = optional(string, "cron(0 4 * * ? *)"), # CloudWatch cron schedule for the record archival lambda
+  })
+  description = "config object for archive-records tooling"
+  default = {
+    deploy_rule = true,
+    update_limit = 100000,
+    batch_size = 10000,
+    expiration_days = 365,
+    schedule_expression = "cron(0 4 * * ? *)",
+  }
 }
 
 variable "log_destination_arn" {
@@ -367,3 +397,4 @@ variable "dead_letter_recovery_memory" {
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
+

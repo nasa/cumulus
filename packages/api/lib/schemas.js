@@ -58,15 +58,18 @@ module.exports.asyncOperation = {
     operationType: {
       type: 'string',
       enum: [
+        'Bulk Execution Archive',
+        'Bulk Execution Delete',
+        'Bulk Granules',
+        'Bulk Granule Archive',
         'Bulk Granule Delete',
         'Bulk Granule Reingest',
-        'Bulk Granules',
-        'Bulk Execution Delete',
         'Data Migration',
         'Dead-Letter Processing',
         'DLA Migration',
         'ES Index',
         'Kinesis Replay',
+        'Migration Count Report',
         'Reconciliation Report',
         'SQS Replay',
       ],
@@ -289,6 +292,11 @@ module.exports.granule = {
       type: 'string',
       readonly: true,
     },
+    producerGranuleId: {
+      title: 'Producer Granule ID',
+      type: 'string',
+      readonly: true,
+    },
     pdrName: {
       title: 'PDR associated with the granule',
       type: 'string',
@@ -396,6 +404,7 @@ module.exports.granule = {
   required: [
     'granuleId',
     'collectionId',
+    'producerGranuleId',
     'status',
     'updatedAt',
   ],

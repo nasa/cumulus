@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/errors",
-  "version": "20.3.0",
+  "version": "21.0.1",
   "description": "Provides error classes for Cumulus",
   "keywords": [
     "GIBS",
@@ -26,10 +26,17 @@
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
+    "test": "../../node_modules/.bin/ava",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
-    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "author": "Cumulus Authors",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "lodash": "~4.17.21"
+  }
 }

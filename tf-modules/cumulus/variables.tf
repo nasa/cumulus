@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:53"
+  default = "cumuluss/async-operation:54"
 }
 
 variable "cmr_client_id" {
@@ -223,6 +223,12 @@ variable "default_s3_multipart_chunksize_mb" {
   default = 256
 }
 
+variable "sync_granule_s3_jitter_max_ms" {
+  description = "Maximum random jitter in milliseconds to apply before S3 operations in SyncGranule task (0-59000). Set to 0 to disable jitter."
+  type        = number
+  default     = 0
+}
+
 variable "deploy_distribution_s3_credentials_endpoint" {
   description = "Whether or not to include the S3 credentials endpoint in the Thin Egress App"
   type        = bool
@@ -369,6 +375,7 @@ variable "log_destination_arn" {
 }
 
 variable "metrics_es_host" {
+  description = "Domain name (not URL) of the Cloud Metrics API."
   type    = string
   default = null
 }
@@ -612,4 +619,65 @@ variable "deploy_cumulus_workflows" {
   type = map(string)
   default = { change_granule_collections_workflow: true }
   description = "for each workflow, if true deploy that workflow"
+}
+
+variable "workflow_configurations" {
+  description = <<EOF
+    A general-purpose map of workflow-specific configurations.
+    This object may include one or more configuration fields used to influence workflow behavior.
+
+    - `sf_event_sqs_to_db_records_types`: An optional nested map that controls which record types
+      ("execution", "granule", "pdr") should be written to the database for each workflow and
+      workflow status ("running", "completed", "failed").
+      This configuration is used by the `@cumulus/api/sfEventSqsToDbRecords` Lambda.
+
+      Currently, both "execution" and "pdr" must be written to the database, so the record type list must include both.
+
+      If this field is not provided, or if a specific workflow/status combination is not defined,
+      all record types will be written to the database by default.
+
+      Structure:
+        {
+          <workflow_name> = {
+            <status> = [<record_type>, ...]
+          }
+        }
+
+      Example:
+        {
+          sf_event_sqs_to_db_records_types = {
+            IngestAndPublishGranule = {
+              running = ["execution", "pdr"]
+            }
+          }
+        }
+  EOF
+
+  type = object({
+    sf_event_sqs_to_db_records_types = optional(map(map(list(string))), {})
+  })
+
+  default = {
+    sf_event_sqs_to_db_records_types = {}
+  }
+}
+
+## Record Archival Configuration
+
+variable "archive_records_config" {
+  type = object({
+    deploy_rule = optional(bool, true), # deploy the archive records cron eventBridgeRule
+    update_limit = optional(number, 100000), # number of granules or executions to archive in one run
+    batch_size = optional(number, 10000), # number of granules or executions to archive call to the /archive endpoint
+    expiration_days = optional(number, 365), # age (in days) after which granules or executions should be archived
+    schedule_expression = optional(string, "cron(0 4 * * ? *)"), # CloudWatch cron schedule for the record archival lambda
+  })
+  description = "config object for archive-records tooling"
+  default = {
+    deploy_rule = true,
+    update_limit = 100000,
+    batch_size = 10000,
+    expiration_days = 365,
+    schedule_expression = "cron(0 4 * * ? *)",
+  }
 }

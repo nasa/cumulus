@@ -50,11 +50,15 @@ import {
 import Logger from '@cumulus/logger';
 
 import * as S3MultipartUploads from './lib/S3MultipartUploads';
+import { applyS3Jitter } from './s3-jitter';
 import { s3 } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
 const log = new Logger({ sender: 'aws-client/s3' });
+
+// S3 jitter configuration from environment variable
+const s3JitterMaxMs = Number(process.env.S3_JITTER_MAX_MS || 0);
 
 export type GetObjectMethod = (params: GetObjectCommandInput) => Promise<GetObjectOutput>;
 
@@ -177,6 +181,7 @@ export const headObject = (
 ): Promise<HeadObjectOutput> =>
   pRetry(
     async () => {
+      await applyS3Jitter(s3JitterMaxMs, `headObject(${Bucket}/${Key})`);
       try {
         return await s3().headObject({ Bucket, Key });
       } catch (error) {
@@ -203,15 +208,28 @@ export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
     });
 
 /**
- * Wait for an object to exist in S3
- * @param params.interval=1000 - interval before retries, in ms
- * @param params.timeout=30000 - timeout, in ms
+ * Asynchronously waits for an S3 object to exist at a specified location.
+ *
+ * This function uses `p-wait-for` to repeatedly check for the object's existence
+ * until it's found or a timeout is reached. It provides configurable `interval`
+ * between checks and a total `timeout` duration.
+ *
+ * @param params - The parameters for waiting for the object.
+ * @param params.bucket - The name of the S3 bucket where the object is expected.
+ * @param params.key - The key (path) of the S3 object within the bucket.
+ * @param params.interval - The time in milliseconds to wait between checks.
+ * Defaults to 1000ms (1 second).
+ * @param params.timeout - The maximum time in milliseconds to wait before
+ * giving up and throwing a `TimeoutError`. Defaults to 30000ms (30 seconds).
+ * @returns A Promise that resolves when the S3 object is found.
+ * @throws {TimeoutError} If the object does not exist within the specified `timeout` period.
+ * @throws {Error} If an unexpected error occurs during the S3 existence check.
  */
 export const waitForObjectToExist = async (params: {
   bucket: string,
   key: string,
-  interval: number,
-  timeout: number
+  interval?: number,
+  timeout?: number
 }) => {
   const {
     bucket,
@@ -240,9 +258,12 @@ export const waitForObjectToExist = async (params: {
 *
 * @param params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 **/
-export const s3PutObject = (
+export const s3PutObject = async (
   params: PutObjectCommandInput
-): Promise<PutObjectCommandOutput> => s3().putObject(params);
+): Promise<PutObjectCommandOutput> => {
+  await applyS3Jitter(s3JitterMaxMs, `putObject(${params.Bucket}/${params.Key})`);
+  return s3().putObject(params);
+};
 
 /**
  * Upload a file to S3
@@ -261,12 +282,15 @@ export const putFile = (
 /**
 * Copy an object from one location on S3 to another
 **/
-export const s3CopyObject = (
+export const s3CopyObject = async (
   params: CopyObjectCommandInput
-): Promise<CopyObjectCommandOutput> => s3().copyObject({
-  TaggingDirective: 'COPY',
-  ...params,
-});
+): Promise<CopyObjectCommandOutput> => {
+  await applyS3Jitter(s3JitterMaxMs, `copyObject(${params.Bucket}/${params.Key})`);
+  return s3().copyObject({
+    TaggingDirective: 'COPY',
+    ...params,
+  });
+};
 
 /**
  * Upload data to S3
@@ -276,6 +300,8 @@ export const s3CopyObject = (
 export const promiseS3Upload = async (
   params: Omit<UploadOptions, 'client'>
 ): Promise<{ ETag?: string, [key: string]: any }> => {
+  await applyS3Jitter(s3JitterMaxMs, `upload(${params.params?.Bucket}/${params.params?.Key})`);
+
   const parallelUploads = new Upload({
     ...params,
     client: s3(),
@@ -345,6 +371,8 @@ export const downloadS3File = async (
     throw new Error('Bucket and Key are required');
   }
 
+  await applyS3Jitter(s3JitterMaxMs, `downloadS3File(${s3Obj.Bucket}/${s3Obj.Key})`);
+
   const fileWriteStream = fs.createWriteStream(filepath);
 
   const objectStream = await getObjectReadStream({
@@ -372,6 +400,9 @@ export const getObjectSize = async (
   }
 ): Promise<number | undefined> => {
   // eslint-disable-next-line no-shadow
+
+  await applyS3Jitter(s3JitterMaxMs, `getObjectSize(${params.bucket}/${params.key})`);
+
   const { s3: s3Client, bucket, key } = params;
 
   const headObjectResponse = await s3Client.headObject({
@@ -427,10 +458,13 @@ export const s3PutObjectTagging = (
 /**
  * Gets an object from S3.
  */
-export const getObject = (
+export const getObject = async (
   s3Client: S3,
   params: GetObjectCommandInput
-): Promise<GetObjectOutput> => s3Client.getObject(params);
+): Promise<GetObjectOutput> => {
+  await applyS3Jitter(s3JitterMaxMs, `getObject(${params.Bucket}/${params.Key})`);
+  return s3Client.getObject(params);
+};
 
 /**
  * Get an object from S3, waiting for it to exist and, if specified, have the
@@ -996,6 +1030,8 @@ export const multipartCopyObject = async (
     copyTags = false,
     chunkSize,
   } = params;
+
+  await applyS3Jitter(s3JitterMaxMs, `multipartCopyObject(${destinationBucket}/${destinationKey})`);
 
   const sourceObject = params.sourceObject ?? await headObject(sourceBucket, sourceKey);
 

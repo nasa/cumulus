@@ -80,10 +80,11 @@ module "archive" {
   daily_execution_payload_cleanup_schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
   cleanup_running        = var.cleanup_running
   cleanup_non_running     = var.cleanup_non_running
-
   payload_timeout        = var.payload_timeout
-
   update_limit          = var.update_limit
+
+  archive_records_config = var.archive_records_config
+
   background_queue_url = module.ingest.background_queue_url
 
   distribution_api_id = var.tea_rest_api_id
