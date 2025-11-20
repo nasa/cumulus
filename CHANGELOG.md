@@ -24,6 +24,10 @@ v21.0.0 documentation should be used for this release.
       for correct XML serialization
     - Added unit tests to verify ECHO10 schema element ordering
     - Resolves CMR validation error when ProducerGranuleId appears out of sequence
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
 
 ## [v21.0.0] 2025-09-09
 
