@@ -36,7 +36,8 @@ module "provision_database" {
   permissions_boundary_arn               = var.permissions_boundary_arn
   rds_user_password                      = var.rds_user_password == "" ? random_string.db_pass.result : var.rds_user_password
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
-  dbRecreation                           = true
+  # dbRecreation should not be enabled in production
+  dbRecreation                           = var.dbRecreation
   lambda_timeouts                        = var.lambda_timeouts
   lambda_memory_sizes                    = var.lambda_memory_sizes
 }
