@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## [v21.0.0-echo10] 2025-11-19
+
+## Migration Notes
+
+Please note that this release is an out-of-cycle release, you cannot upgrade from it to the next release in the v21.0.x release series due to CUMULUS-4325 not being present in v21.0.1+.    Upgrades from this release should be done with care to ensure the target release includes these updates, either to a release following 21.1.0 *or* a release in 21.0.x series that includes CUMULUS-4325.
+
+v21.0.0 documentation should be used for this release.
 
 ### Fixed
 
@@ -8887,8 +8893,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.0.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.0.0-echo10...HEAD
+[v21.0.0-echo10]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.0-echo10
 [v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.0...v21.0.0
 [v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.3.0
 [v20.2.1]: https://github.com/nasa/cumulus/compare/v20.2.0...v20.2.1
