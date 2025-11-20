@@ -14,6 +14,10 @@ v21.0.0 documentation should be used for this release.
 
 ## Changed
 
+### Fixed
+
+- **CUMULUS-4275**
+  - Fixed unit tests broken by updated HTTP error messages in got
 - **CUMULUS-4325**
   - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
     - Updated `@cumulus/cmrjs` to use Map for guaranteed element ordering in
