@@ -36,7 +36,7 @@
     "@cumulus/db": "21.0.1",
     "@cumulus/errors": "21.0.1",
     "@cumulus/es-client": "21.0.1",
-    "@cumulus/logger": "21.0.1",
+    "@cumulus/logger": "21.1.0",
     "@cumulus/types": "21.0.1",
     "knex": "2.4.1",
     "uuid": "8.3.2"
