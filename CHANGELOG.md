@@ -12,8 +12,6 @@ Please note that this release is an out-of-cycle release, you cannot upgrade fro
 
 v21.0.0 documentation should be used for this release.
 
-## Changed
-
 ### Fixed
 
 - **CUMULUS-4275**
