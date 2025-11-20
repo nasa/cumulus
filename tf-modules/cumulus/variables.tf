@@ -297,6 +297,12 @@ variable "ecs_service_alarms" {
   default     = []
 }
 
+variable "enable_mismatch" {
+  description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
+  type = string
+  default = 'true'
+}
+
 variable "key_name" {
   description = "Name of EC2 key pair for accessing EC2 instances"
   type        = string

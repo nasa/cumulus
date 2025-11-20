@@ -39,6 +39,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added unit tests to verify ECHO10 schema element ordering
     - Resolves CMR validation error when ProducerGranuleId appears out of sequence
 
+### Added 
+
+- **CUMULUS-4354**
+  - Added an optional lambda level env variable to `message-consumer` and `sqs-message-consumer` to check
+  whether to consider rule/message provider mismatches
+  - Added a `rule.meta.enableMismatch` check to `filterRulesByRuleParams` as a rule-level fallback to check
+  whether to consider rule/message provider mismatches for the specific rule
+
 ## [v21.1.0]
 
 ### Migration Notes

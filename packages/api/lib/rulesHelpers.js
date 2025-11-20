@@ -112,7 +112,8 @@ const filterRulesByRuleParams = (rules, ruleParams) => rules.filter(
   (rule) => {
     const typeMatch = ruleParams.type ? get(ruleParams, 'type') === rule.rule.type : true;
     const collectionMatch = collectionRuleMatcher(rule, ruleParams);
-    const providerMatch = rule.provider && ruleParams.provider
+    const checkMismatch = ruleParams.enableMismatch ?? rule.meta.enableMismatch ?? true;
+    const providerMatch = rule.provider && ruleParams.provider && checkMismatch
       ? ruleParams.provider === rule.provider
       : true;
     if (!providerMatch) {
