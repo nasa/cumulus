@@ -122,6 +122,7 @@ module "cumulus" {
   cmr_oauth_provider = var.cmr_oauth_provider
 
   default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
+  sync_granule_s3_jitter_max_ms     = var.sync_granule_s3_jitter_max_ms
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
@@ -161,21 +162,21 @@ module "cumulus" {
   token_secret = var.token_secret
   archive_api_users = [
     "acyu",
+    "awisdom",
     "chuang14",
-    "ds_jennifertran",
+    "cdurbin",
     "ecarton",
-    "efenollal",
-    "filipgraniczny",
     "jasmine",
     "jennyhliu",
     "jmccoy_uat",
+    "jnorton1",
     "kkelly",
     "kovarik",
     "mobrien84",
     "nnageswa",
     "npauzenga",
-    "vnguyen",
-    "rkwarten"
+    "terrafirma13",
+    "yliu10"
   ]
 
   archive_api_url             = var.archive_api_url
