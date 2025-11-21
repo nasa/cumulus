@@ -1,5 +1,6 @@
 output "security_group_id" {
-  value = aws_security_group.rds_cluster_access.id
+  description = "The security group ID attached to the RDS cluster."
+  value = local.rds_security_group_id
 }
 
 output "rds_endpoint" {

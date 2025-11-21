@@ -11,6 +11,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
+- **CUMULUS-4272**
+  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
+    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
+    reusing their existing security group, ensuring compatibility with existing
+    `data-persistence-tf` and `cumulus-tf` modules.
+
+### Added
+
+- **CUMULUS-4272**
+  - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
+    specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
 
 ### Changed
 

@@ -10,7 +10,7 @@ module "provision_database" {
   prefix                                 = var.prefix
   rds_admin_access_secret_arn            = aws_secretsmanager_secret_version.rds_login.arn
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
-  rds_security_group                     = aws_security_group.rds_cluster_access.id
+  rds_security_group                     = local.rds_security_group_id
   rds_user_password                      = var.rds_user_password == "" ? random_string.db_pass.result : var.rds_user_password
   source                                 = "./db-provision-user-database"
   subnet_ids                             = var.subnets
