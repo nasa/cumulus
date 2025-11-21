@@ -16,7 +16,7 @@ v21.0.0 documentation should be used for this release.
 
 - **CUMULUS-4356**
   - Pin build-related lerna transitive dependency `make-fetch-happen` to 14.0.3 pending lerna upgrade/refactor
-  - Pin `npm-packlist` `glob` dependency to 9.0.0 pending lerna upgrade/refactor
+  - Pin `npm-packlist`/`read-package-json` `glob` dependency to 8.1.0 pending lerna upgrade/refactor
 - **CUMULUS-4325**
   - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
     - Updated `@cumulus/cmrjs` to use Map for guaranteed element ordering in

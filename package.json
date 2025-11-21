@@ -171,7 +171,10 @@
       "make-fetch-happen": "14.0.3"
     },
     "npm-packlist": {
-      "glob": "^8.1.0"
+      "glob": "8.1.0"
+    },
+    "read-package-json": {
+      "glob": "8.1.0"
     },
     "form-data": "^4.0.4",
     "glob": "^11.1.0",
