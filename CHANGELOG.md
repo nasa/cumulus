@@ -29,7 +29,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
 
 - **CUMULUS-4188**
-  - Updated `@cumulus/example/cumulus-tf/orca` Upgraded ORCA to latest version 10.1.5.
+  - Updated `@cumulus/example/cumulus-tf/orca` to latest ORCA version 10.1.5.
 
 ### Fixed
 
