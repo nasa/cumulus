@@ -14,8 +14,8 @@ v21.0.0 documentation should be used for this release.
 
 ### Fixed
 
-- **CUMULUS-4275**
-  - Fixed unit tests broken by updated HTTP error messages in got
+- **CUMULUS-4356**
+  - Pin build-related lerna transitive dependency `make-fetch-happen` to 14.0.3 pending lerna upgrade/refactor
 - **CUMULUS-4325**
   - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
     - Updated `@cumulus/cmrjs` to use Map for guaranteed element ordering in
@@ -24,6 +24,8 @@ v21.0.0 documentation should be used for this release.
       for correct XML serialization
     - Added unit tests to verify ECHO10 schema element ordering
     - Resolves CMR validation error when ProducerGranuleId appears out of sequence
+- **CUMULUS-4275**
+  - Fixed unit tests broken by updated HTTP error messages in got
 - **CUMULUS-4242**
   - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
   - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
