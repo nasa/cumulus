@@ -63,3 +63,5 @@ lambda_timeouts = {
   queue_granules_task_timeout: 900,
   discover_granules_task_timeout: 900
 }
+
+dbRecreation = false
