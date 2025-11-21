@@ -47,7 +47,7 @@
     "@cumulus/errors": "21.0.1",
     "@cumulus/ingest": "21.0.1",
     "@cumulus/message": "21.0.1",
-    "@cumulus/types": "21.0.1",
+    "@cumulus/types": "21.1.0",
     "lodash": "^4.17.21",
     "p-map": "^2.1.0",
     "uuid": "^3.4.0"
