@@ -71,4 +71,7 @@ module "ingest" {
 
   # workflow config
   workflow_configurations = var.workflow_configurations
+
+  # For message consumer lambdas in order to disable rule/message mismatches
+  enable_mismatch = var.enable_mismatch
 }
