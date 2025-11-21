@@ -14,6 +14,8 @@ v21.0.0 documentation should be used for this release.
 
 ### Fixed
 
+- **CUMULUS-4356**
+  - Pin build-related lerna transitive dependency `make-fetch-happen` to 14.0.3 pending lerna upgrade/refactor
 - **CUMULUS-4275**
   - Fixed unit tests broken by updated HTTP error messages in got
 - **CUMULUS-4325**
