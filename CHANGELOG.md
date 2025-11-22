@@ -123,7 +123,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
 
-## [v21.0.0-echo10] 2025-11-19
+## [v21.0.0-echo10] 2025-11-19 - [BACKPORT]
 
 ## Migration Notes
 
@@ -353,50 +353,6 @@ Please follow the instructions before upgrading Cumulus
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
 
-## [v20.3.1] 2025-10-14
-
-### Changed
-
-- **CUMULUS-4191**
-  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
-    based on the provider from the record message.
-  - Updated `messageConsumer` lambda handler to async/await style
-
-- **CUMULUS-4242**
-  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
-  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
-
-- **CUMULUS-4252**
-  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
-    `@aws-sdk/lib-storage@3.896.0`
-
-- **CUMULUS-4254**
-  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
-  - Used `errorify` instead of `JSON.stringify` for AWS errors
-  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
-
-## [v20.2.2] 2025-10-08
-
-### Changed
-
-- **CUMULUS-4191**
-  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
-    based on the provider from the record message.
-  - Updated `messageConsumer` lambda handler to async/await style
-
-- **CUMULUS-4242**
-  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
-  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
-
-- **CUMULUS-4252**
-  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
-    `@aws-sdk/lib-storage@3.896.0`
-
-- **CUMULUS-4254**
-  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
-  - Used `errorify` instead of `JSON.stringify` for AWS errors
-  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
-
 ## [v21.0.0] 2025-09-09
 
 ### **CUMULUS-4058** Epic: Handle Granules with Identical producerGranuleId in Different Collections
@@ -585,6 +541,29 @@ Please follow the instructions before upgrading Cumulus
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
 
+## [v20.3.1] 2025-10-14  - [BACKPORT]
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+
 ## [v20.3.0] 2025-08-18
 
 ### Notable Changes
@@ -618,6 +597,28 @@ Please follow the instructions before upgrading Cumulus
   - Fix broken CreateReconciliationReportSpec test cleanup
 - **CUMULUS-4170**
   - Upgrade Node Docker image from buster to bullseye for a compatible debian version
+
+## [v20.2.2] 2025-10-08 - [BACKPORT]
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
 
 ## [v20.2.1] 2025-08-14
 
