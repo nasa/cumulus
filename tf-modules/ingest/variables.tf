@@ -66,8 +66,8 @@ variable "default_s3_multipart_chunksize_mb" {
 
 variable "enable_mismatch" {
   description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
-  type = string
-  default = 'true'
+  type = bool
+  default = true
 }
 
 variable "distribution_url" {

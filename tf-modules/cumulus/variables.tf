@@ -299,8 +299,8 @@ variable "ecs_service_alarms" {
 
 variable "enable_mismatch" {
   description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
-  type = string
-  default = 'true'
+  type = bool
+  default = true
 }
 
 variable "key_name" {
