@@ -419,13 +419,14 @@ test('filterRulesByRuleParams filters on provider', (t) => {
   t.deepEqual(resultsFilterWoProvider, [rule1, rule2, ruleWoProvider]);
 });
 
-test('filterRulesByRuleParams does not filter if enableMismatch is set to false', (t) => {
+test('filterRulesByRuleParams does not filter if allowProviderMismatchOnRuleFilter is set to true', (t) => {
   const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'fake_provider' });
   const rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'another_fake_provider' });
   const ruleWoProvider = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  const allowProviderMismatchOnRuleFilter = true;
   delete ruleWoProvider.provider;
 
-  let ruleParamsToSelectRule1 = { provider: rule1.provider, enableMismatch: false };
+  let ruleParamsToSelectRule1 = { provider: rule1.provider, allowProviderMismatchOnRuleFilter };
 
   const resultsFilterWithProvider = rulesHelpers.filterRulesByRuleParams(
     [rule1, rule2, ruleWoProvider],
@@ -442,9 +443,20 @@ test('filterRulesByRuleParams does not filter if enableMismatch is set to false'
   t.deepEqual(resultsFilterWoProvider, [rule1, ruleWoProvider]);
 });
 
-test('filterRulesByRuleParams does not filter if rule.meta.enableMismatch is set to false', (t) => {
+test('filterRulesByRuleParams does not filter if rule.meta.allowProviderMismatchOnRuleFilter is set to true', (t) => {
   const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'fake_provider' });
-  let rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString(), meta: { enableMismatch: false } }, provider: 'another_fake_provider' });
+  const allowProviderMismatchOnRuleFilter = true;
+  let rule2 = fakeRuleFactoryV2({
+    rule: {
+      type: 'sqs',
+      sourceArn: randomString(),
+      meta: {
+        allowProviderMismatchOnRuleFilter,
+      },
+    },
+    provider: 'another_fake_provider',
+  });
+
   const ruleWoProvider = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
   delete ruleWoProvider.provider;
 

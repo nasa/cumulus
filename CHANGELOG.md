@@ -55,7 +55,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4354**
   - Added an optional lambda level env variable to `message-consumer` and `sqs-message-consumer` to check
   whether to consider rule/message provider mismatches
-  - Added a `rule.meta.enableMismatch` check to `filterRulesByRuleParams` as a rule-level fallback to check
+  - Added a `rule.meta.allowProviderMismatchOnRuleFilter` check to `filterRulesByRuleParams` as a rule-level fallback to check
   whether to consider rule/message provider mismatches for the specific rule
 
 ## [v21.1.0]

@@ -297,10 +297,10 @@ variable "ecs_service_alarms" {
   default     = []
 }
 
-variable "enable_mismatch" {
+variable "allow_provider_mismatch_on_rule_filter" {
   description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
   type = bool
-  default = true
+  default = false
 }
 
 variable "key_name" {

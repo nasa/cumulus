@@ -219,7 +219,7 @@ module "cumulus" {
   tags = local.tags
 
   # For message consumer lambdas in order to disable rule/message mismatches
-  enable_mismatch = var.enable_mismatch
+  allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {
