@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3574**
   - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
+- **CUMULUS-4188**
+  - Updated `example/cumulus-tf/orca.tf` to use v10.1.2
 
 ### Fixed
 
