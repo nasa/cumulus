@@ -96,8 +96,6 @@ async function incrementAndDispatch(queueUrl, queueMessage) {
  * @param {string} event.queueUrl - AWS SQS url
  * @param {string} event.messageLimit - number of messages to read from SQS for
  *   this execution (default 1)
- * @param {string} event.timeLimit - how many seconds the lambda function will
- *   remain active and query the queue (default 240 s)
  * @param {function} dispatchFn - the function to dispatch to process each message
  * @param {number} visibilityTimeout - how many seconds messages received from
  *   the queue will be invisible before they can be read again
@@ -105,13 +103,13 @@ async function incrementAndDispatch(queueUrl, queueMessage) {
  * @throws {Error}
  */
 async function handleEvent(event, context, dispatchFn, visibilityTimeout) {
-  // This extra processing time is added to account for all additional time not spent "waiting" during rate-limited processing
-  // e.g., time spent starting executions, incrementing/decrementing semaphores, polling SQS etc.
-  const extraProcessingTimeSeconds = 10;
-  const timeLimit = context.getRemainingTimeInMillis() - (extraProcessingTimeSeconds * 1000);
   const rateLimitPerSecond = get(event, 'rateLimitPerSecond', 5);
-  const messageLimit = Math.floor(timeLimit / 1000 * rateLimitPerSecond);
-  logger.info(`Setting messageLimit to ${messageLimit} based on rateLimitPerSecond of ${rateLimitPerSecond} and remaining time of ${timeLimit} ms`);
+  // defaultMessageLimit is the upper limit of messages that can be processed
+  // in the time remaining for the lambda to run at the given rateLimitPerSecond
+  const defaultMessageLimit = Math.floor((context.getRemainingTimeInMillis() / 1000) * rateLimitPerSecond);
+  const messageLimit = get(event, 'messageLimit', defaultMessageLimit);
+  logger.info(`Setting messageLimit to ${messageLimit}`);
+  logger.info(`Starting processing for queue ${event.queueUrl}`)
 
   if (!event.queueUrl) {
     throw new Error('queueUrl is missing');
@@ -120,7 +118,7 @@ async function handleEvent(event, context, dispatchFn, visibilityTimeout) {
   const consumer = new Consumer({
     queueUrl: event.queueUrl,
     messageLimit,
-    timeLimit,
+    timeRemainingFunc: context.getRemainingTimeInMillis,
     visibilityTimeout,
     rateLimitPerSecond,
   });

@@ -654,3 +654,21 @@ variable "workflow_configurations" {
     sf_event_sqs_to_db_records_types = {}
   }
 }
+
+variable "sf_start_limit" {
+  type    = number
+  default = null
+  description = <<EOF
+    The maximum number of messages each invocation of the throttled Step Function will pull
+    from SQS queues.  If not specified, no limit will be applied and the Step Function will
+    attempt to process as many messages as possible within the Lambda timeout period.
+  EOF
+}
+
+variable "sf_start_rate" {
+  type    = number
+  default = null
+  description = <<EOF
+    The maximum rate at which the throttled Step Function will start executions.
+  EOF
+}

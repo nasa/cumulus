@@ -276,8 +276,7 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
   handler          = "index.sqs2sfThrottleHandler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"
-  # To avoid overlapping invocations of this lambda, set this to a default of 60 seconds
-  timeout          = lookup(var.lambda_timeouts, "sqs2sfThrottle", 60)
+  timeout          = lookup(var.lambda_timeouts, "sqs2sfThrottle", 90)
   memory_size      = lookup(var.lambda_memory_sizes, "sqs2sfThrottle", 512)
   environment {
     variables = {

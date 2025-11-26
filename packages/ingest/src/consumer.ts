@@ -9,7 +9,7 @@ const log = new Logger({ sender: '@cumulus/ingest/consumer' });
 export interface ConsumerConstructorParams {
   queueUrl: string,
   messageLimit?: number,
-  timeLimit?: number,
+  timeRemainingFunc?: () => number,
   visibilityTimeout: number,
   deleteProcessedMessage?: boolean,
   rateLimitPerSecond?: number;
@@ -18,17 +18,15 @@ export interface ConsumerConstructorParams {
 export class Consumer {
   private readonly deleteProcessedMessage: boolean;
   private readonly messageLimit: number;
-  private readonly now: number;
   private readonly queueUrl: string;
-  private timeLapsed: boolean;
-  private readonly timeLimit: number;
+  private readonly timeRemainingFunc?: () => number;
   private readonly visibilityTimeout: number;
   private readonly rateLimitPerSecond?: number;
 
   constructor({
     queueUrl,
     messageLimit = 1,
-    timeLimit = 90,
+    timeRemainingFunc,
     visibilityTimeout,
     deleteProcessedMessage = true,
     rateLimitPerSecond = 5,
@@ -36,9 +34,7 @@ export class Consumer {
     this.queueUrl = queueUrl;
     this.messageLimit = messageLimit;
     this.visibilityTimeout = visibilityTimeout;
-    this.timeLimit = timeLimit * 1000;
-    this.now = Date.now();
-    this.timeLapsed = false;
+    this.timeRemainingFunc = timeRemainingFunc;
     this.deleteProcessedMessage = deleteProcessedMessage;
     this.rateLimitPerSecond = rateLimitPerSecond;
   }
@@ -105,7 +101,7 @@ export class Consumer {
     let sum = 0;
     /* eslint-disable no-await-in-loop */
     // Only request up to the original messageLimit messages on subsequent `processMessages` calls
-    while (messageLimit > 0 && !this.timeLapsed) {
+    while (messageLimit > 0) {
       let results = 0;
       if (messageLimit > 10) {
         results = await this.processMessages(fn, 10, this.visibilityTimeout);
@@ -115,11 +111,9 @@ export class Consumer {
         messageLimit -= messageLimit;
       }
       sum += results;
-      // if the function is running for longer than the timeLimit, stop it
-      const timeSpent = (Date.now() - this.now);
-      if (timeSpent > this.timeLimit) {
-        this.timeLapsed = true;
-        log.warn(`${this.timeLimit / 1000}-second time limit reached, exiting...`);
+      if (this.timeRemainingFunc && this.timeRemainingFunc() < 5000) {
+        log.info(`${Math.floor(this.timeRemainingFunc() / 1000)} seconds remaining in lambda, exiting...`);
+        break;
       }
     }
     /* eslint-enable no-await-in-loop */
