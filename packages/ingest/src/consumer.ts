@@ -12,7 +12,7 @@ export interface ConsumerConstructorParams {
   timeLimit?: number,
   visibilityTimeout: number,
   deleteProcessedMessage?: boolean,
-  processSynchronously?: boolean;
+  rateLimitPerSecond?: number;
 }
 
 export class Consumer {
@@ -23,7 +23,7 @@ export class Consumer {
   private timeLapsed: boolean;
   private readonly timeLimit: number;
   private readonly visibilityTimeout: number;
-  private readonly processSynchronously: boolean;
+  private readonly rateLimitPerSecond?: number;
 
   constructor({
     queueUrl,
@@ -31,7 +31,7 @@ export class Consumer {
     timeLimit = 90,
     visibilityTimeout,
     deleteProcessedMessage = true,
-    processSynchronously = false,
+    rateLimitPerSecond = 5,
   }: ConsumerConstructorParams) {
     this.queueUrl = queueUrl;
     this.messageLimit = messageLimit;
@@ -40,7 +40,7 @@ export class Consumer {
     this.now = Date.now();
     this.timeLapsed = false;
     this.deleteProcessedMessage = deleteProcessedMessage;
-    this.processSynchronously = processSynchronously;
+    this.rateLimitPerSecond = rateLimitPerSecond;
   }
 
   private async processMessage(
@@ -80,8 +80,11 @@ export class Consumer {
     if (messages.length > 0) {
       log.info(`processing ${messages.length} messages`);
       // If rate limiting is enabled, process sequentially to honor global rate limit
-      if (this.processSynchronously) {
+      if (this.rateLimitPerSecond) {
         for (const message of messages) {
+          const waitTime = 1000/this.rateLimitPerSecond;
+          log.info(`Waiting for ${waitTime} ms`);
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
           const result = await this.processMessage(message, fn);
           counter += result;
         }

@@ -47,20 +47,11 @@ async function dispatch(queueUrl, message) {
   );
   logger.info(`Starting execution ARN ${executionArn} from queue ${queueUrl}`);
 
-  const startExecutionPromise = await sfn().startExecution({
+  return await sfn().startExecution({
     stateMachineArn: input.cumulus_meta.state_machine,
     input: JSON.stringify(input),
     name: input.cumulus_meta.execution_name,
   });
-
-  // TODO; update this to use actual rate limit from event or config
-  const ratePerSecond = 5;
-  const waitTime = 1000/ratePerSecond;
-  logger.info(`Waiting for ${waitTime} ms`);
-  await new Promise((resolve) => setTimeout(resolve, waitTime));
-
-  return startExecutionPromise;
-
 }
 
 /**
@@ -114,9 +105,13 @@ async function incrementAndDispatch(queueUrl, queueMessage) {
  * @throws {Error}
  */
 async function handleEvent(event, context, dispatchFn, visibilityTimeout) {
-  const messageLimit = event.messageLimit || 1;
-  const timeLimit = get(event, 'timeLimit', 240);
+  // This extra processing time is added to account for all additional time not spent "waiting" during rate-limited processing
+  // e.g., time spent starting executions, incrementing/decrementing semaphores, polling SQS etc.
+  const extraProcessingTimeSeconds = 10;
+  const timeLimit = context.getRemainingTimeInMillis() - (extraProcessingTimeSeconds * 1000);
   const rateLimitPerSecond = get(event, 'rateLimitPerSecond', 5);
+  const messageLimit = Math.floor(timeLimit / 1000 * rateLimitPerSecond);
+  logger.info(`Setting messageLimit to ${messageLimit} based on rateLimitPerSecond of ${rateLimitPerSecond} and remaining time of ${timeLimit} ms`);
 
   if (!event.queueUrl) {
     throw new Error('queueUrl is missing');
@@ -127,7 +122,7 @@ async function handleEvent(event, context, dispatchFn, visibilityTimeout) {
     messageLimit,
     timeLimit,
     visibilityTimeout,
-    processSynchronously: true,
+    rateLimitPerSecond,
   });
   return await consumer.consume(dispatchFn);
 }
@@ -192,21 +187,6 @@ async function sqs2sfThrottleHandler(event, context) {
 async function sqs2sfEventSourceHandler(event) {
   return await handleSourceMappingEvent(event);
 }
-
-function calculateSubmissionInterval(granuleCount, maxGranulesPerSecond, minGranulesPerSecond, remainingTime) {
-    // Calculate the optimal submission rate based on remaining time and granule count
-    const optimalRate = granuleCount / (remainingTime / 1000); // granules per second
-    let clampedRate = optimalRate;
-    // Clamp the rate between min and max
-    if (optimalRate < minGranulesPerSecond) {
-      clampedRate = minGranulesPerSecond;
-    }
-
-    if (optimalRate > maxGranulesPerSecond) throw new Error(`Cannot stage ${granuleCount} granules with a remaining time of ${remainingTime}ms because that would exceed the max rate of ${maxGranulesPerSecond} granules/second`);
-
-    // Convert rate to interval (milliseconds between submissions)
-    return 1000 / clampedRate;
-  }
 
 module.exports = {
   dispatch,
