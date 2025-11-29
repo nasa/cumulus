@@ -452,6 +452,58 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
   });
 });
 
+test.serial('SQS message consumer queues correct number of workflows for rules not matching the event provider when lambda var allow_provider_mismatch_on_rule_filter is set to true', async (t) => {
+  const { queueMessageStub } = t.context;
+  process.env.allow_provider_mismatch_on_rule_filter = true;
+  const queue = await createSqsQueues(randomId('queue'));
+  const provider = randomId('provider');
+  const provider2 = randomId('provider2');
+  // Set visibility timeout to 0 for testing to ensure that message is
+  // read when processing all rules
+  const visibilityTimeout = 0;
+  const rules = [
+    fakeRuleFactoryV2({
+      name: randomId('matchingRule'),
+      provider,
+      rule: {
+        type: 'sqs',
+        value: queue.queueUrl,
+      },
+      meta: {
+        visibilityTimeout,
+      },
+      state: 'ENABLED',
+      workflow,
+    }),
+    fakeRuleFactoryV2({
+      rule: {
+        type: 'sqs',
+        value: queue.queueUrl,
+      },
+      meta: {
+        visibilityTimeout,
+      },
+      state: 'ENABLED',
+      workflow,
+    }),
+  ];
+  t.context.fetchRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
+
+  await SQS.sendSQSMessage(
+    queue.queueUrl,
+    { provider2 }
+  );
+
+  await handler(event);
+
+  t.is(queueMessageStub.callCount, 2);
+
+  t.teardown(async () => {
+    await cleanupQueues([queue]);
+    delete process.env.allow_provider_mismatch_on_rule_filter;
+  });
+});
+
 test.serial('processQueues archives messages from the ENABLED sqs rule only', async (t) => {
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();
