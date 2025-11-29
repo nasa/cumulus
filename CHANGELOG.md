@@ -55,7 +55,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added 
 
 - **CUMULUS-4354**
-  - Added an optional lambda level env variable to `message-consumer` and `sqs-message-consumer` to check
+  - Added an optional terraform-configurable lambda level env variable `allow_provider_mismatch_on_rule_filter` to `message-consumer` and `sqs-message-consumer` to check
   whether to consider rule/message provider mismatches
   - Added a `rule.meta.allowProviderMismatchOnRuleFilter` check to `filterRulesByRuleParams` as a rule-level fallback to check
   whether to consider rule/message provider mismatches for the specific rule

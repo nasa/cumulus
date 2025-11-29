@@ -1,0 +1,940 @@
+{
+  "version": 4,
+  "terraform_version": "1.12.2",
+  "serial": 263,
+  "lineage": "6930a279-6612-d5c3-afac-78bbf84d2344",
+  "outputs": {
+    "database_credentials_secret_arn": {
+      "value": "arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW",
+      "type": "string"
+    },
+    "dynamo_tables": {
+      "value": {
+        "access_tokens": {
+          "arn": "arn:aws:dynamodb:us-east-1:596205514787:table/nnaga-AccessTokensTable",
+          "name": "nnaga-AccessTokensTable"
+        },
+        "semaphores": {
+          "arn": "arn:aws:dynamodb:us-east-1:596205514787:table/nnaga-SemaphoresTable",
+          "name": "nnaga-SemaphoresTable"
+        }
+      },
+      "type": [
+        "object",
+        {
+          "access_tokens": [
+            "object",
+            {
+              "arn": "string",
+              "name": "string"
+            }
+          ],
+          "semaphores": [
+            "object",
+            {
+              "arn": "string",
+              "name": "string"
+            }
+          ]
+        }
+      ]
+    },
+    "rds_security_group": {
+      "value": "sg-07c360accc7f5265a",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "data",
+      "type": "aws_subnets",
+      "name": "subnet_ids",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "mode": "data",
+      "type": "aws_vpc",
+      "name": "application_vpc",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "mode": "managed",
+      "type": "random_string",
+      "name": "db_pass",
+      "provider": "provider[\"registry.terraform.io/hashicorp/random\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "id": "SlLB81waMk0sMszOgUC0tQECQMpbuDP242AKu9DgzSzgG123c4",
+            "keepers": null,
+            "length": 50,
+            "lower": true,
+            "min_lower": 0,
+            "min_numeric": 0,
+            "min_special": 0,
+            "min_upper": 0,
+            "number": true,
+            "override_special": null,
+            "result": "SlLB81waMk0sMszOgUC0tQECQMpbuDP242AKu9DgzSzgG123c4",
+            "special": false,
+            "upper": true
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ=="
+        }
+      ]
+    },
+    {
+      "module": "module.data_persistence",
+      "mode": "managed",
+      "type": "aws_dynamodb_table",
+      "name": "access_tokens_table",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:dynamodb:us-east-1:596205514787:table/nnaga-AccessTokensTable",
+            "attribute": [
+              {
+                "name": "accessToken",
+                "type": "S"
+              }
+            ],
+            "billing_mode": "PAY_PER_REQUEST",
+            "deletion_protection_enabled": false,
+            "global_secondary_index": [],
+            "hash_key": "accessToken",
+            "id": "nnaga-AccessTokensTable",
+            "import_table": [],
+            "local_secondary_index": [],
+            "name": "nnaga-AccessTokensTable",
+            "on_demand_throughput": [],
+            "point_in_time_recovery": [
+              {
+                "enabled": false,
+                "recovery_period_in_days": 0
+              }
+            ],
+            "range_key": null,
+            "read_capacity": 0,
+            "region": "us-east-1",
+            "replica": [],
+            "restore_date_time": null,
+            "restore_source_name": null,
+            "restore_source_table_arn": null,
+            "restore_to_latest_time": null,
+            "server_side_encryption": [],
+            "stream_arn": "",
+            "stream_enabled": false,
+            "stream_label": "",
+            "stream_view_type": "",
+            "table_class": "STANDARD",
+            "tags": {
+              "Deployment": "nnaga"
+            },
+            "tags_all": {
+              "Deployment": "nnaga"
+            },
+            "timeouts": null,
+            "ttl": [
+              {
+                "attribute_name": "expirationTime",
+                "enabled": true
+              }
+            ],
+            "write_capacity": 0
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjozNjAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "data.aws_subnets.subnet_ids",
+            "data.aws_vpc.application_vpc",
+            "module.provision_database.aws_iam_role.db_provision",
+            "module.provision_database.aws_lambda_function.provision_database",
+            "module.provision_database.aws_secretsmanager_secret.db_credentials",
+            "module.provision_database.aws_security_group.db_provision",
+            "module.provision_database.data.aws_iam_policy_document.lambda_assume_role_policy",
+            "module.provision_database.data.aws_lambda_invocation.provision_database",
+            "random_string.db_pass"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.data_persistence",
+      "mode": "managed",
+      "type": "aws_dynamodb_table",
+      "name": "semaphores_table",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:dynamodb:us-east-1:596205514787:table/nnaga-SemaphoresTable",
+            "attribute": [
+              {
+                "name": "key",
+                "type": "S"
+              }
+            ],
+            "billing_mode": "PAY_PER_REQUEST",
+            "deletion_protection_enabled": false,
+            "global_secondary_index": [],
+            "hash_key": "key",
+            "id": "nnaga-SemaphoresTable",
+            "import_table": [],
+            "local_secondary_index": [],
+            "name": "nnaga-SemaphoresTable",
+            "on_demand_throughput": [],
+            "point_in_time_recovery": [
+              {
+                "enabled": false,
+                "recovery_period_in_days": 0
+              }
+            ],
+            "range_key": null,
+            "read_capacity": 0,
+            "region": "us-east-1",
+            "replica": [],
+            "restore_date_time": null,
+            "restore_source_name": null,
+            "restore_source_table_arn": null,
+            "restore_to_latest_time": null,
+            "server_side_encryption": [],
+            "stream_arn": "",
+            "stream_enabled": false,
+            "stream_label": "",
+            "stream_view_type": "",
+            "table_class": "STANDARD",
+            "tags": {
+              "Deployment": "nnaga"
+            },
+            "tags_all": {
+              "Deployment": "nnaga"
+            },
+            "timeouts": null,
+            "ttl": [
+              {
+                "attribute_name": "",
+                "enabled": false
+              }
+            ],
+            "write_capacity": 0
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjozNjAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "data.aws_subnets.subnet_ids",
+            "data.aws_vpc.application_vpc",
+            "module.provision_database.aws_iam_role.db_provision",
+            "module.provision_database.aws_lambda_function.provision_database",
+            "module.provision_database.aws_secretsmanager_secret.db_credentials",
+            "module.provision_database.aws_security_group.db_provision",
+            "module.provision_database.data.aws_iam_policy_document.lambda_assume_role_policy",
+            "module.provision_database.data.aws_lambda_invocation.provision_database",
+            "random_string.db_pass"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.data_persistence.module.db_migration",
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "db_migration",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::596205514787:role/nnaga-postgres-db-migration",
+            "assume_role_policy": "{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\"}}],\"Version\":\"2012-10-17\"}",
+            "create_date": "2025-07-29T15:18:57Z",
+            "description": "",
+            "force_detach_policies": false,
+            "id": "nnaga-postgres-db-migration",
+            "inline_policy": [
+              {
+                "name": "nnaga_postgres_db_migration",
+                "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"logs:PutLogEvents\",\"logs:DescribeLogStreams\",\"logs:CreateLogStream\",\"logs:CreateLogGroup\",\"ec2:DescribeNetworkInterfaces\",\"ec2:DeleteNetworkInterface\",\"ec2:CreateNetworkInterface\"],\"Effect\":\"Allow\",\"Resource\":\"*\"},{\"Action\":\"secretsmanager:GetSecretValue\",\"Effect\":\"Allow\",\"Resource\":\"arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW\"}]}"
+              }
+            ],
+            "managed_policy_arns": [],
+            "max_session_duration": 3600,
+            "name": "nnaga-postgres-db-migration",
+            "name_prefix": "",
+            "path": "/",
+            "permissions_boundary": "arn:aws:iam::596205514787:policy/NGAPShNonProdRoleBoundary",
+            "tags": {
+              "Deployment": "nnaga"
+            },
+            "tags_all": {
+              "Deployment": "nnaga"
+            },
+            "unique_id": "AROAYVUE6GARTYRFVXQWT"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "596205514787",
+            "name": "nnaga-postgres-db-migration"
+          },
+          "private": "bnVsbA==",
+          "dependencies": [
+            "data.aws_subnets.subnet_ids",
+            "data.aws_vpc.application_vpc",
+            "module.data_persistence.module.db_migration.data.aws_iam_policy_document.lambda_assume_role_policy",
+            "module.provision_database.aws_iam_role.db_provision",
+            "module.provision_database.aws_lambda_function.provision_database",
+            "module.provision_database.aws_secretsmanager_secret.db_credentials",
+            "module.provision_database.aws_security_group.db_provision",
+            "module.provision_database.data.aws_iam_policy_document.lambda_assume_role_policy",
+            "module.provision_database.data.aws_lambda_invocation.provision_database",
+            "random_string.db_pass"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.data_persistence.module.db_migration",
+      "mode": "managed",
+      "type": "aws_iam_role_policy",
+      "name": "db_migration",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "nnaga-postgres-db-migration:nnaga_postgres_db_migration",
+            "name": "nnaga_postgres_db_migration",
+            "name_prefix": "",
+            "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"logs:PutLogEvents\",\"logs:DescribeLogStreams\",\"logs:CreateLogStream\",\"logs:CreateLogGroup\",\"ec2:DescribeNetworkInterfaces\",\"ec2:DeleteNetworkInterface\",\"ec2:CreateNetworkInterface\"],\"Effect\":\"Allow\",\"Resource\":\"*\"},{\"Action\":\"secretsmanager:GetSecretValue\",\"Effect\":\"Allow\",\"Resource\":\"arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW\"}]}",
+            "role": "nnaga-postgres-db-migration"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "596205514787",
+            "name": "nnaga_postgres_db_migration",
+            "role": "nnaga-postgres-db-migration"
+          },
+          "private": "bnVsbA==",
+          "dependencies": [
+            "data.aws_subnets.subnet_ids",
+            "data.aws_vpc.application_vpc",
+            "module.data_persistence.module.db_migration.aws_iam_role.db_migration",
+            "module.data_persistence.module.db_migration.data.aws_iam_policy_document.db_migration",
+            "module.data_persistence.module.db_migration.data.aws_iam_policy_document.lambda_assume_role_policy",
+            "module.provision_database.aws_iam_role.db_provision",
+            "module.provision_database.aws_lambda_function.provision_database",
+            "module.provision_database.aws_secretsmanager_secret.db_credentials",
+            "module.provision_database.aws_security_group.db_provision",
+            "module.provision_database.data.aws_iam_policy_document.lambda_assume_role_policy",
+            "module.provision_database.data.aws_lambda_invocation.provision_database",
+            "random_string.db_pass"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.data_persistence.module.db_migration",
+      "mode": "managed",
+      "type": "aws_lambda_function",
+      "name": "db_migration",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architectures": [
+              "x86_64"
+            ],
+            "arn": "arn:aws:lambda:us-east-1:596205514787:function:nnaga-postgres-db-migration",
+            "code_sha256": "jxJsZYwhr3IWJ5na6lkrBEjMeQ03Grt48hTjDep4PL0=",
+            "code_signing_config_arn": "",
+            "dead_letter_config": [],
+            "description": "",
+            "environment": [
+              {
+                "variables": {
+                  "databaseCredentialSecretArn": "arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW"
+                }
+              }
+            ],
+            "ephemeral_storage": [
+              {
+                "size": 512
+              }
+            ],
+            "file_system_config": [],
+            "filename": "../../lambdas/db-migration/dist/webpack/lambda.zip",
+            "function_name": "nnaga-postgres-db-migration",
+            "handler": "index.handler",
+            "id": "nnaga-postgres-db-migration",
+            "image_config": [],
+            "image_uri": "",
+            "invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:596205514787:function:nnaga-postgres-db-migration/invocations",
+            "kms_key_arn": "",
+            "last_modified": "2025-08-05T15:26:51.000+0000",
+            "layers": [],
+            "logging_config": [
+              {
+                "application_log_level": "",
+                "log_format": "Text",
+                "log_group": "/aws/lambda/nnaga-postgres-db-migration",
+                "system_log_level": ""
+              }
+            ],
+            "memory_size": 512,
+            "package_type": "Zip",
+            "publish": false,
+            "qualified_arn": "arn:aws:lambda:us-east-1:596205514787:function:nnaga-postgres-db-migration:$LATEST",
+            "qualified_invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:596205514787:function:nnaga-postgres-db-migration:$LATEST/invocations",
+            "region": "us-east-1",
+            "replace_security_groups_on_destroy": null,
+            "replacement_security_group_ids": null,
+            "reserved_concurrent_executions": -1,
+            "role": "arn:aws:iam::596205514787:role/nnaga-postgres-db-migration",
+            "runtime": "nodejs20.x",
+            "s3_bucket": null,
+            "s3_key": null,
+            "s3_object_version": null,
+            "signing_job_arn": "",
+            "signing_profile_version_arn": "",
+            "skip_destroy": false,
+            "snap_start": [],
+            "source_code_hash": "jxJsZYwhr3IWJ5na6lkrBEjMeQ03Grt48hTjDep4PL0=",
+            "source_code_size": 1020110,
+            "tags": {
+              "Deployment": "nnaga"
+            },
+            "tags_all": {
+              "Deployment": "nnaga"
+            },
+            "timeout": 900,
+            "timeouts": null,
+            "tracing_config": [
+              {
+                "mode": "PassThrough"
+              }
+            ],
+            "version": "$LATEST",
+            "vpc_config": [
+              {
+                "ipv6_allowed_for_dual_stack": false,
+                "security_group_ids": [
+                  "sg-07008085525b9ed91",
+                  "sg-07c360accc7f5265a"
+                ],
+                "subnet_ids": [
+                  "subnet-006462bcf62042ed2"
+                ],
+                "vpc_id": "vpc-0963b6aeebee016ad"
+              }
+            ]
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "data.aws_subnets.subnet_ids",
+            "data.aws_vpc.application_vpc",
+            "module.data_persistence.module.db_migration.aws_iam_role.db_migration",
+            "module.data_persistence.module.db_migration.aws_security_group.db_migration",
+            "module.data_persistence.module.db_migration.data.aws_iam_policy_document.lambda_assume_role_policy",
+            "module.provision_database.aws_iam_role.db_provision",
+            "module.provision_database.aws_lambda_function.provision_database",
+            "module.provision_database.aws_secretsmanager_secret.db_credentials",
+            "module.provision_database.aws_security_group.db_provision",
+            "module.provision_database.data.aws_iam_policy_document.lambda_assume_role_policy",
+            "module.provision_database.data.aws_lambda_invocation.provision_database",
+            "random_string.db_pass"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.data_persistence.module.db_migration",
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "db_migration",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:596205514787:security-group/sg-07008085525b9ed91",
+            "description": "Managed by Terraform",
+            "egress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 0,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "-1",
+                "security_groups": [],
+                "self": false,
+                "to_port": 0
+              }
+            ],
+            "id": "sg-07008085525b9ed91",
+            "ingress": [],
+            "name": "nnaga-postgres-db-migration",
+            "name_prefix": "",
+            "owner_id": "596205514787",
+            "region": "us-east-1",
+            "revoke_rules_on_delete": false,
+            "tags": {
+              "Deployment": "nnaga"
+            },
+            "tags_all": {
+              "Deployment": "nnaga"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0963b6aeebee016ad"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "596205514787",
+            "id": "sg-07008085525b9ed91",
+            "region": "us-east-1"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "data.aws_subnets.subnet_ids",
+            "data.aws_vpc.application_vpc",
+            "module.provision_database.aws_iam_role.db_provision",
+            "module.provision_database.aws_lambda_function.provision_database",
+            "module.provision_database.aws_secretsmanager_secret.db_credentials",
+            "module.provision_database.aws_security_group.db_provision",
+            "module.provision_database.data.aws_iam_policy_document.lambda_assume_role_policy",
+            "module.provision_database.data.aws_lambda_invocation.provision_database",
+            "random_string.db_pass"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.provision_database",
+      "mode": "data",
+      "type": "aws_iam_policy_document",
+      "name": "db_provision",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "3031711961",
+            "json": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"logs:PutLogEvents\",\n        \"logs:DescribeLogStreams\",\n        \"logs:CreateLogStream\",\n        \"logs:CreateLogGroup\",\n        \"ec2:DescribeNetworkInterfaces\",\n        \"ec2:DeleteNetworkInterface\",\n        \"ec2:CreateNetworkInterface\"\n      ],\n      \"Resource\": \"*\"\n    },\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"secretsmanager:PutSecretValue\",\n        \"secretsmanager:GetSecretValue\",\n        \"secretsmanager:CreateSecret\"\n      ],\n      \"Resource\": \"arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW\"\n    },\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"secretsmanager:GetSecretValue\",\n      \"Resource\": \"arn:aws:secretsmanager:us-east-1:596205514787:secret:cumulus_rds_db_cluster_login_secret-UaEa01\"\n    }\n  ]\n}",
+            "minified_json": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"logs:PutLogEvents\",\"logs:DescribeLogStreams\",\"logs:CreateLogStream\",\"logs:CreateLogGroup\",\"ec2:DescribeNetworkInterfaces\",\"ec2:DeleteNetworkInterface\",\"ec2:CreateNetworkInterface\"],\"Resource\":\"*\"},{\"Effect\":\"Allow\",\"Action\":[\"secretsmanager:PutSecretValue\",\"secretsmanager:GetSecretValue\",\"secretsmanager:CreateSecret\"],\"Resource\":\"arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW\"},{\"Effect\":\"Allow\",\"Action\":\"secretsmanager:GetSecretValue\",\"Resource\":\"arn:aws:secretsmanager:us-east-1:596205514787:secret:cumulus_rds_db_cluster_login_secret-UaEa01\"}]}",
+            "override_json": null,
+            "override_policy_documents": null,
+            "policy_id": null,
+            "source_json": null,
+            "source_policy_documents": null,
+            "statement": [
+              {
+                "actions": [
+                  "ec2:CreateNetworkInterface",
+                  "ec2:DeleteNetworkInterface",
+                  "ec2:DescribeNetworkInterfaces",
+                  "logs:CreateLogGroup",
+                  "logs:CreateLogStream",
+                  "logs:DescribeLogStreams",
+                  "logs:PutLogEvents"
+                ],
+                "condition": [],
+                "effect": "Allow",
+                "not_actions": [],
+                "not_principals": [],
+                "not_resources": [],
+                "principals": [],
+                "resources": [
+                  "*"
+                ],
+                "sid": ""
+              },
+              {
+                "actions": [
+                  "secretsmanager:CreateSecret",
+                  "secretsmanager:GetSecretValue",
+                  "secretsmanager:PutSecretValue"
+                ],
+                "condition": [],
+                "effect": "Allow",
+                "not_actions": [],
+                "not_principals": [],
+                "not_resources": [],
+                "principals": [],
+                "resources": [
+                  "arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW"
+                ],
+                "sid": ""
+              },
+              {
+                "actions": [
+                  "secretsmanager:GetSecretValue"
+                ],
+                "condition": [],
+                "effect": "Allow",
+                "not_actions": [],
+                "not_principals": [],
+                "not_resources": [],
+                "principals": [],
+                "resources": [
+                  "arn:aws:secretsmanager:us-east-1:596205514787:secret:cumulus_rds_db_cluster_login_secret-UaEa01"
+                ],
+                "sid": ""
+              }
+            ],
+            "version": "2012-10-17"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "module": "module.provision_database",
+      "mode": "data",
+      "type": "aws_iam_policy_document",
+      "name": "lambda_assume_role_policy",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "2690255455",
+            "json": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"sts:AssumeRole\",\n      \"Principal\": {\n        \"Service\": \"lambda.amazonaws.com\"\n      }\n    }\n  ]\n}",
+            "minified_json": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"sts:AssumeRole\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\"}}]}",
+            "override_json": null,
+            "override_policy_documents": null,
+            "policy_id": null,
+            "source_json": null,
+            "source_policy_documents": null,
+            "statement": [
+              {
+                "actions": [
+                  "sts:AssumeRole"
+                ],
+                "condition": [],
+                "effect": "Allow",
+                "not_actions": [],
+                "not_principals": [],
+                "not_resources": [],
+                "principals": [
+                  {
+                    "identifiers": [
+                      "lambda.amazonaws.com"
+                    ],
+                    "type": "Service"
+                  }
+                ],
+                "resources": [],
+                "sid": ""
+              }
+            ],
+            "version": "2012-10-17"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "module": "module.provision_database",
+      "mode": "data",
+      "type": "aws_lambda_invocation",
+      "name": "provision_database",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "module": "module.provision_database",
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "db_provision",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::596205514787:role/nnaga_db_provision20250729135036280400000003",
+            "assume_role_policy": "{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\"}}],\"Version\":\"2012-10-17\"}",
+            "create_date": "2025-07-29T13:50:38Z",
+            "description": "",
+            "force_detach_policies": false,
+            "id": "nnaga_db_provision20250729135036280400000003",
+            "inline_policy": [
+              {
+                "name": "nnaga_db_provision20250729135036655700000004",
+                "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"logs:PutLogEvents\",\"logs:DescribeLogStreams\",\"logs:CreateLogStream\",\"logs:CreateLogGroup\",\"ec2:DescribeNetworkInterfaces\",\"ec2:DeleteNetworkInterface\",\"ec2:CreateNetworkInterface\"],\"Effect\":\"Allow\",\"Resource\":\"*\"},{\"Action\":[\"secretsmanager:PutSecretValue\",\"secretsmanager:GetSecretValue\",\"secretsmanager:CreateSecret\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW\"},{\"Action\":\"secretsmanager:GetSecretValue\",\"Effect\":\"Allow\",\"Resource\":\"arn:aws:secretsmanager:us-east-1:596205514787:secret:cumulus_rds_db_cluster_login_secret-UaEa01\"}]}"
+              }
+            ],
+            "managed_policy_arns": [],
+            "max_session_duration": 3600,
+            "name": "nnaga_db_provision20250729135036280400000003",
+            "name_prefix": "nnaga_db_provision",
+            "path": "/",
+            "permissions_boundary": "arn:aws:iam::596205514787:policy/NGAPShNonProdRoleBoundary",
+            "tags": {},
+            "tags_all": {},
+            "unique_id": "AROAYVUE6GARZ2RRYRGSW"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "596205514787",
+            "name": "nnaga_db_provision20250729135036280400000003"
+          },
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.provision_database.data.aws_iam_policy_document.lambda_assume_role_policy"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.provision_database",
+      "mode": "managed",
+      "type": "aws_iam_role_policy",
+      "name": "db_provision",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "nnaga_db_provision20250729135036280400000003:nnaga_db_provision20250729135036655700000004",
+            "name": "nnaga_db_provision20250729135036655700000004",
+            "name_prefix": "nnaga_db_provision",
+            "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"logs:PutLogEvents\",\"logs:DescribeLogStreams\",\"logs:CreateLogStream\",\"logs:CreateLogGroup\",\"ec2:DescribeNetworkInterfaces\",\"ec2:DeleteNetworkInterface\",\"ec2:CreateNetworkInterface\"],\"Effect\":\"Allow\",\"Resource\":\"*\"},{\"Action\":[\"secretsmanager:PutSecretValue\",\"secretsmanager:GetSecretValue\",\"secretsmanager:CreateSecret\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW\"},{\"Action\":\"secretsmanager:GetSecretValue\",\"Effect\":\"Allow\",\"Resource\":\"arn:aws:secretsmanager:us-east-1:596205514787:secret:cumulus_rds_db_cluster_login_secret-UaEa01\"}]}",
+            "role": "nnaga_db_provision20250729135036280400000003"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "596205514787",
+            "name": "nnaga_db_provision20250729135036655700000004",
+            "role": "nnaga_db_provision20250729135036280400000003"
+          },
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.provision_database.aws_iam_role.db_provision",
+            "module.provision_database.aws_secretsmanager_secret.db_credentials",
+            "module.provision_database.data.aws_iam_policy_document.db_provision",
+            "module.provision_database.data.aws_iam_policy_document.lambda_assume_role_policy"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.provision_database",
+      "mode": "managed",
+      "type": "aws_lambda_function",
+      "name": "provision_database",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architectures": [
+              "x86_64"
+            ],
+            "arn": "arn:aws:lambda:us-east-1:596205514787:function:nnaga-ProvisionPostgresDatabase",
+            "code_sha256": "w5P0+uvltdoLiw7Okz/i7hxPWhynAU0pFMKz2SRsS94=",
+            "code_signing_config_arn": "",
+            "dead_letter_config": [],
+            "description": "Bootstrap lambda that adds user/database to RDS database",
+            "environment": [
+              {
+                "variables": {
+                  "acquireTimeoutMillis": "90000",
+                  "createRetryIntervalMillis": "30000",
+                  "createTimeoutMillis": "20000",
+                  "idleTimeoutMillis": "1000",
+                  "reapIntervalMillis": "1000"
+                }
+              }
+            ],
+            "ephemeral_storage": [
+              {
+                "size": 512
+              }
+            ],
+            "file_system_config": [],
+            "filename": "../../lambdas/db-provision-user-database/dist/webpack/lambda.zip",
+            "function_name": "nnaga-ProvisionPostgresDatabase",
+            "handler": "index.handler",
+            "id": "nnaga-ProvisionPostgresDatabase",
+            "image_config": [],
+            "image_uri": "",
+            "invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:596205514787:function:nnaga-ProvisionPostgresDatabase/invocations",
+            "kms_key_arn": "",
+            "last_modified": "2025-08-12T13:24:40.000+0000",
+            "layers": [],
+            "logging_config": [
+              {
+                "application_log_level": "",
+                "log_format": "Text",
+                "log_group": "/aws/lambda/nnaga-ProvisionPostgresDatabase",
+                "system_log_level": ""
+              }
+            ],
+            "memory_size": 384,
+            "package_type": "Zip",
+            "publish": false,
+            "qualified_arn": "arn:aws:lambda:us-east-1:596205514787:function:nnaga-ProvisionPostgresDatabase:$LATEST",
+            "qualified_invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:596205514787:function:nnaga-ProvisionPostgresDatabase:$LATEST/invocations",
+            "region": "us-east-1",
+            "replace_security_groups_on_destroy": null,
+            "replacement_security_group_ids": null,
+            "reserved_concurrent_executions": -1,
+            "role": "arn:aws:iam::596205514787:role/nnaga_db_provision20250729135036280400000003",
+            "runtime": "nodejs20.x",
+            "s3_bucket": null,
+            "s3_key": null,
+            "s3_object_version": null,
+            "signing_job_arn": "",
+            "signing_profile_version_arn": "",
+            "skip_destroy": false,
+            "snap_start": [],
+            "source_code_hash": "w5P0+uvltdoLiw7Okz/i7hxPWhynAU0pFMKz2SRsS94=",
+            "source_code_size": 380507,
+            "tags": {},
+            "tags_all": {},
+            "timeout": 600,
+            "timeouts": null,
+            "tracing_config": [
+              {
+                "mode": "PassThrough"
+              }
+            ],
+            "version": "$LATEST",
+            "vpc_config": [
+              {
+                "ipv6_allowed_for_dual_stack": false,
+                "security_group_ids": [
+                  "sg-07c360accc7f5265a",
+                  "sg-0b374569baf0ed409"
+                ],
+                "subnet_ids": [
+                  "subnet-006462bcf62042ed2"
+                ],
+                "vpc_id": "vpc-0963b6aeebee016ad"
+              }
+            ]
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "data.aws_subnets.subnet_ids",
+            "data.aws_vpc.application_vpc",
+            "module.provision_database.aws_iam_role.db_provision",
+            "module.provision_database.aws_security_group.db_provision",
+            "module.provision_database.data.aws_iam_policy_document.lambda_assume_role_policy"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.provision_database",
+      "mode": "managed",
+      "type": "aws_secretsmanager_secret",
+      "name": "db_credentials",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW",
+            "description": "Database Credentials Object for nnaga stack",
+            "force_overwrite_replica_secret": false,
+            "id": "arn:aws:secretsmanager:us-east-1:596205514787:secret:nnaga_db_login20250729135036279900000001-uFjJLW",
+            "kms_key_id": "",
+            "name": "nnaga_db_login20250729135036279900000001",
+            "name_prefix": "nnaga_db_login",
+            "policy": "",
+            "recovery_window_in_days": 30,
+            "region": "us-east-1",
+            "replica": [],
+            "tags": {},
+            "tags_all": {}
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "module": "module.provision_database",
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "db_provision",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:596205514787:security-group/sg-0b374569baf0ed409",
+            "description": "Managed by Terraform",
+            "egress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 0,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "-1",
+                "security_groups": [],
+                "self": false,
+                "to_port": 0
+              }
+            ],
+            "id": "sg-0b374569baf0ed409",
+            "ingress": [],
+            "name": "nnaga-db-provision20220728193239667500000003",
+            "name_prefix": "nnaga-db-provision",
+            "owner_id": "596205514787",
+            "region": "us-east-1",
+            "revoke_rules_on_delete": false,
+            "tags": {},
+            "tags_all": {},
+            "timeouts": null,
+            "vpc_id": "vpc-0963b6aeebee016ad"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "596205514787",
+            "id": "sg-0b374569baf0ed409",
+            "region": "us-east-1"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "data.aws_subnets.subnet_ids",
+            "data.aws_vpc.application_vpc"
+          ]
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}
+
