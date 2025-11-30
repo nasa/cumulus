@@ -114,6 +114,7 @@ test.beforeEach((t) => {
 test.afterEach.always((t) => {
   t.context.queueMessageStub.restore();
   t.context.fetchRulesStub.restore();
+  delete process.env.allow_provider_mismatch_on_rule_filter;
 });
 
 test.serial('processQueues does nothing when there is no message', async (t) => {
