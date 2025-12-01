@@ -11,11 +11,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
+- **CUMULUS-4272**
+  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
+    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
+    reusing their existing security group, ensuring compatibility with existing
+    `data-persistence-tf` and `cumulus-tf` modules.
+
+### Added
+
+- **CUMULUS-4272**
+  - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
+    specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
 
 ### Changed
 
 - **CUMULUS-3574**
   - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
+- **CUMULUS-4188**
+  - Updated `example/cumulus-tf/orca.tf` to use v10.1.2
 
 ### Fixed
 
@@ -38,6 +51,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       for correct XML serialization
     - Added unit tests to verify ECHO10 schema element ordering
     - Resolves CMR validation error when ProducerGranuleId appears out of sequence
+
+### Added 
+
+- **CUMULUS-4354**
+  - Added an optional terraform-configurable lambda level env variable `allow_provider_mismatch_on_rule_filter` to `message-consumer` and `sqs-message-consumer` to check
+  whether to consider rule/message provider mismatches
+  - Added a `rule.meta.allowProviderMismatchOnRuleFilter` check to `filterRulesByRuleParams` as a rule-level fallback to check
+  whether to consider rule/message provider mismatches for the specific rule
 
 ## [v21.1.0]
 
