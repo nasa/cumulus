@@ -67,4 +67,10 @@ module "ingest" {
   # Cloudwatch log retention config
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
   default_log_retention_days = var.default_log_retention_days
+
+  # workflow config
+  workflow_configurations = var.workflow_configurations
+
+  # For message consumer lambdas in order to disable rule/message mismatches
+  allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 }
