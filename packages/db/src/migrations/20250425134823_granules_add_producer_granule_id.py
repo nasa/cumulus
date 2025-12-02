@@ -1,12 +1,14 @@
-import os
 import getpass
-from datetime import datetime
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 
 import psycopg2
 
+
 def log(message):
     print(f"[{datetime.now().isoformat()}] {message}")
+
 
 def get_env_or_prompt(var_name, prompt_text, default=None, hide_input=False):
     val = os.getenv(var_name)
@@ -14,17 +16,29 @@ def get_env_or_prompt(var_name, prompt_text, default=None, hide_input=False):
         if hide_input:
             val = getpass.getpass(f"{prompt_text}: ")
         else:
-            val = input(f"{prompt_text} [{default if default else ''}]: ").strip() or default
+            val = (
+                input(f"{prompt_text} [{default if default else ''}]: ").strip()
+                or default
+            )
     return val
+
 
 DB_HOST = get_env_or_prompt("DB_HOST", "Enter DB host")
 DB_PORT = int(get_env_or_prompt("DB_PORT", "Enter DB port", "5432"))
 DB_NAME = get_env_or_prompt("DB_NAME", "Enter DB name")
 DB_USER = get_env_or_prompt("DB_USER", "Enter DB user")
 DB_PASSWORD = get_env_or_prompt("DB_PASSWORD", "Enter DB password", hide_input=True)
-BATCH_SIZE = int(get_env_or_prompt("BATCH_SIZE", "Enter BATCH SIZE for populating column", "100000"))
+BATCH_SIZE = int(
+    get_env_or_prompt("BATCH_SIZE", "Enter BATCH SIZE for populating column", "100000")
+)
 WORKERS = int(get_env_or_prompt("WORKERS", "Number of parallel workers", "1"))
-RECOVERY_MODE = get_env_or_prompt("RECOVERY_MODE", "Batch Update Recovery mode? (Y/N)", "N").strip().upper() == "Y"
+RECOVERY_MODE = (
+    get_env_or_prompt("RECOVERY_MODE", "Batch Update Recovery mode? (Y/N)", "N")
+    .strip()
+    .upper()
+    == "Y"
+)
+
 
 def get_conn(autocommit=False):
     conn = psycopg2.connect(
@@ -32,10 +46,11 @@ def get_conn(autocommit=False):
         port=DB_PORT,
         dbname=DB_NAME,
         user=DB_USER,
-        password=DB_PASSWORD
+        password=DB_PASSWORD,
     )
     conn.autocommit = autocommit
     return conn
+
 
 def check_for_duplicates():
     log("Checking for duplicate granule_id values...")
@@ -50,16 +65,17 @@ def check_for_duplicates():
                     LIMIT 1
                 );
             """)
-            exists, = cur.fetchone()
+            (exists,) = cur.fetchone()
             if exists:
                 raise Exception("Duplicate granule_id found. Exiting.")
     log("No duplicate granule_id values found.")
+
 
 def add_column_if_needed():
     log("Adding column producer_granule_id if not present...")
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(f"""
+            cur.execute("""
                 DO $$
                 BEGIN
                   IF NOT EXISTS (
@@ -75,6 +91,7 @@ def add_column_if_needed():
             conn.commit()
     log("Column check complete.")
 
+
 def disable_autovacuum():
     log("Disabling autovacuum on granules table...")
     with get_conn(autocommit=True) as conn:
@@ -83,6 +100,7 @@ def disable_autovacuum():
                 ALTER TABLE granules SET (autovacuum_enabled = false, toast.autovacuum_enabled = false);
             """)
         log("Autovacuum disabled.")
+
 
 def enable_autovacuum():
     log("Re-enabling autovacuum on granules table...")
@@ -93,41 +111,53 @@ def enable_autovacuum():
             """)
         log("Autovacuum re-enabled.")
 
+
 def get_min_max_ids():
-    log(f"Fetching min/max cumulus_id values ({'Recovery mode' if RECOVERY_MODE else 'Normal mode'})...")
+    log(
+        f"Fetching min/max cumulus_id values ({'Recovery mode' if RECOVERY_MODE else 'Normal mode'})..."
+    )
     with get_conn() as conn:
         with conn.cursor() as cur:
             if RECOVERY_MODE:
-                cur.execute(f"""
+                cur.execute("""
                     SELECT MIN(cumulus_id), MAX(cumulus_id)
                     FROM granules
                     WHERE producer_granule_id IS NULL;
                 """)
             else:
-                cur.execute(f"""
+                cur.execute("""
                     SELECT MIN(cumulus_id), MAX(cumulus_id)
                     FROM granules;
                 """)
             return cur.fetchone()
+
 
 def process_batch(batch_range):
     start_id, end_id = batch_range
     conn = get_conn(autocommit=True)
     try:
         with conn.cursor() as cur:
-            log(f"[Worker] Updating rows where cumulus_id BETWEEN {start_id} AND {end_id}")
-            cur.execute(f"""
+            log(
+                f"[Worker] Updating rows where cumulus_id BETWEEN {start_id} AND {end_id}"
+            )
+            cur.execute(
+                """
                 UPDATE granules
                 SET producer_granule_id = granule_id
                 WHERE cumulus_id BETWEEN %s AND %s;
-            """, (start_id, end_id))
+            """,
+                (start_id, end_id),
+            )
             updated = cur.rowcount
-            log(f"[Worker] Updated {updated} rows where cumulus_id BETWEEN {start_id} AND {end_id}")
+            log(
+                f"[Worker] Updated {updated} rows where cumulus_id BETWEEN {start_id} AND {end_id}"
+            )
     except Exception as e:
         log(f"[Worker] Failed batch {start_id}-{end_id}: {e}")
         raise
     finally:
         conn.close()
+
 
 def run_parallel_batch_update(min_id, max_id):
     log(f"Starting parallel batch update with {WORKERS} worker(s)...")
@@ -151,24 +181,26 @@ def run_parallel_batch_update(min_id, max_id):
                     raise
     log("Parallel batch update complete.")
 
+
 def set_column_not_null():
     log("Setting producer_granule_id column to NOT NULL...")
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(f"""
+            cur.execute("""
                 ALTER TABLE granules
                 ALTER COLUMN producer_granule_id SET NOT NULL;
             """)
             conn.commit()
     log("Column is now NOT NULL.")
 
+
 def create_index():
     log("Creating index on producer_granule_id...")
     # "CREATE INDEX CONCURRENTLY" cannot be executed inside a transaction block
-    conn =  get_conn(autocommit=True)
+    conn = get_conn(autocommit=True)
     try:
         cur = conn.cursor()
-        cur.execute(f"""
+        cur.execute("""
             CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_producer_granule_id_index
             ON granules (producer_granule_id);
         """)
@@ -177,19 +209,21 @@ def create_index():
     finally:
         conn.close()
 
+
 def vacuum_table():
     log("Vacuuming granules table...")
     # VACUUM cannot be executed inside a transaction block
-    conn =  get_conn(autocommit=True)
+    conn = get_conn(autocommit=True)
     try:
         cur = conn.cursor()
-        cur.execute(f"""
+        cur.execute("""
             VACUUM (VERBOSE, ANALYZE) granules;
         """)
         cur.close()
         log("Vacuum complete.")
     finally:
         conn.close()
+
 
 if __name__ == "__main__":
     try:

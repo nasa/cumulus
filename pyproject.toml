@@ -1,0 +1,49 @@
+# Repo wide linting rules.
+#
+# Ruff does not merge configurations by default, so adding a pyproject.toml file
+# elsewhere in this repo will take precedence over this configuration unless the
+# `extend` option is set explicitly:
+#
+# https://docs.astral.sh/ruff/settings/#extend
+
+[tool.ruff.lint]
+# https://docs.astral.sh/ruff/rules/
+select = [
+    # pycodestyle errors, ignore lints that are covered by the ruff formatter
+    "E4", "E7", "E9",
+    # line-too-long - the formatter doesn't always fix these
+    "E501",
+    # Pyflakes
+    "F",
+    # isort
+    "I",
+    # pylint
+    "PL",
+    # pep8-naming
+    "N",
+    # pydoclint
+    "DOC",
+    # pydocstyle
+    "D",
+]
+
+ignore = [
+    # blank-line-after-function
+    "D202",
+    # incorrect-blank-line-before-class - incompatible with D211
+    "D203",
+    # missing-blank-line-after-summary - false positives
+    "D205",
+    # multi-line-summary-second-line - incompatible with D212
+    "D213",
+    # error-suffix-on-exception-name
+    "N818",
+]
+
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore missing docstring rules for non-exported python code
+"**/example/**.py" = ["D1"]
+"**/migrations/**.py" = ["D1", "E501"]
+"**/test/**.py" = ["D1"]
+"scripts/**.py" = ["D1"]
