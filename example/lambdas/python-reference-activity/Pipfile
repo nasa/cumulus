@@ -10,7 +10,7 @@ cumulus-message-adapter-python = "==2.4.0"
 six = ">=1.17.0"
 
 [dev-packages]
-pylint = ">=1.8.2"
+ruff = "~=0.14.0"
 
 [requires]
 python_version = "3.12"
