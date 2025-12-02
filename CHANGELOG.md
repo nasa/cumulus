@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3574**
   - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
+- **CUMULUS-4188**
+  - Updated `example/cumulus-tf/orca.tf` to use v10.1.5
 
 ### Fixed
 
@@ -49,6 +51,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       for correct XML serialization
     - Added unit tests to verify ECHO10 schema element ordering
     - Resolves CMR validation error when ProducerGranuleId appears out of sequence
+
+### Added 
+
+- **CUMULUS-4354**
+  - Added an optional terraform-configurable lambda level env variable `allow_provider_mismatch_on_rule_filter` to `message-consumer` and `sqs-message-consumer` to check
+  whether to consider rule/message provider mismatches
+  - Added a `rule.meta.allowProviderMismatchOnRuleFilter` check to `filterRulesByRuleParams` as a rule-level fallback to check
+  whether to consider rule/message provider mismatches for the specific rule
 
 ## [v21.1.0]
 

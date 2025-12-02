@@ -217,6 +217,9 @@ module "cumulus" {
   workflow_configurations = var.workflow_configurations
 
   tags = local.tags
+
+  # For message consumer lambdas in order to disable rule/message mismatches
+  allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {
