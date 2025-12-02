@@ -103,7 +103,7 @@ async function incrementAndDispatch(queueUrl, queueMessage) {
  * @throws {Error}
  */
 async function handleEvent(event, context, dispatchFn, visibilityTimeout) {
-  const rateLimitPerSecond = get(event, 'rateLimitPerSecond', 5);
+  const rateLimitPerSecond = get(event, 'rateLimitPerSecond', 40);
   // defaultMessageLimit is the upper limit of messages that can be processed
   // in the time remaining for the lambda to run at the given rateLimitPerSecond
   const defaultMessageLimit = Math.floor((context.getRemainingTimeInMillis() / 1000) * rateLimitPerSecond);
