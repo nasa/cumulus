@@ -13,6 +13,16 @@ provider "aws" {
     key_prefixes = ["gsfc-ngap"]
   }
 }
+
+locals {
+  rds_security_group_id = try(
+    var.input_security_group_id != null
+      ? var.input_security_group_id
+      : aws_security_group.rds_cluster_access.id,
+    null
+  )
+}
+
 resource "aws_db_subnet_group" "default" {
   name_prefix = var.aws_db_subnet_group_prefix
   subnet_ids  = var.subnets
@@ -103,7 +113,9 @@ resource "aws_rds_cluster" "cumulus" {
     max_capacity = var.max_capacity
     min_capacity = var.min_capacity
   }
-  vpc_security_group_ids          = [aws_security_group.rds_cluster_access.id]
+
+  vpc_security_group_ids = [local.rds_security_group_id]
+
   deletion_protection             = var.deletion_protection
   enable_http_endpoint            = true
   tags                            = var.tags

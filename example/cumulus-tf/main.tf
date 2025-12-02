@@ -213,6 +213,9 @@ module "cumulus" {
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
 
   tags = local.tags
+
+  # For message consumer lambdas in order to disable rule/message mismatches
+  allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

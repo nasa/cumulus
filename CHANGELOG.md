@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v20.2.3] 2025-12-01
+
+### Notable Changes
+
+- **CUMULUS-4272**
+  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
+    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
+    reusing their existing security group, ensuring compatibility with existing
+    `data-persistence-tf` and `cumulus-tf` modules.
+
+### Fixed
+
+- **CUMULUS-4279**
+  - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
+    on the public schema of the user database to the database user.
+    This change is required because, starting with PostgreSQL 15, new databases assign ownership
+    of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
+    prior to v15 preserve the previous ownership of the public schema.
+- **CUMULUS-4275**
+  - Fixed unit tests broken by updated HTTP error messages in got
+
+### Added
+
+- **CUMULUS-4272**
+  - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
+    specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
+
+- **CUMULUS-4354**
+  - Added an optional terraform-configurable lambda level env variable `allow_provider_mismatch_on_rule_filter` to `message-consumer` and `sqs-message-consumer` to check
+  whether to consider rule/message provider mismatches
+  - Added a `rule.meta.allowProviderMismatchOnRuleFilter` check to `filterRulesByRuleParams` as a rule-level fallback to check
+  whether to consider rule/message provider mismatches for the specific rule
+
 ## [v20.2.2] 2025-10-08
 
 ### Changed
@@ -8666,7 +8699,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.2.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.2.3...HEAD
+[v20.2.3]: https://github.com/nasa/cumulus/compare/v20.2.2...v20.2.3
 [v20.2.2]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.2.2
 [v20.2.1]: https://github.com/nasa/cumulus/compare/v20.2.0...v20.2.1
 [v20.2.0]: https://github.com/nasa/cumulus/compare/v20.1.2...v20.2.0
