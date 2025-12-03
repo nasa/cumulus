@@ -46,6 +46,12 @@ variable "db_admin_password" {
   type = string
 }
 
+variable "input_security_group_id" {
+  description = "Optional existing security group ID to use for the RDS cluster"
+  type        = string
+  default     = null
+}
+
 variable "profile" {
   description = "AWS profile to use for authentication"
   type        = string

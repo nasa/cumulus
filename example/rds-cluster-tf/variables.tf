@@ -13,6 +13,12 @@ variable "db_admin_password" {
   type = string
 }
 
+variable "input_security_group_id" {
+  description = "Optional existing security group ID to use for the RDS cluster"
+  type        = string
+  default     = null
+}
+
 variable "region" {
   description = "Region to deploy to"
   type        = string
