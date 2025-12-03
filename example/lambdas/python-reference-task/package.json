@@ -11,7 +11,7 @@
   },
   "scripts": {
     "test": "true",
-    "python-lint": "pipenv run ruff check . && pipenv run mypy initial_task.py",
+    "python-lint": "pipenv run ruff check . && pipenv run ruff format --diff . && pipenv run mypy initial_task.py",
     "lint": "npm run python-lint",
     "clean": "rm -rf dist && rm -rf lib && rm -rf .venv && mkdir dist && mkdir lib",
     "build": "pip install pipenv && PIPENV_VENV_IN_PROJECT=1 PIPENV_NOSPIN=1 pipenv install -vvv --dev --deploy --ignore-pipfile",
