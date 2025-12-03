@@ -9,34 +9,34 @@ const log = new Logger({ sender: '@cumulus/ingest/consumer' });
 export interface ConsumerConstructorParams {
   queueUrl: string,
   messageLimit?: number,
-  timeRemainingFunc?: () => number,
+  timeLimit?: number,
   visibilityTimeout: number,
-  deleteProcessedMessage?: boolean,
-  rateLimitPerSecond?: number;
+  deleteProcessedMessage?: boolean
 }
 
 export class Consumer {
   private readonly deleteProcessedMessage: boolean;
   private readonly messageLimit: number;
+  private readonly now: number;
   private readonly queueUrl: string;
-  private readonly timeRemainingFunc?: () => number;
+  private timeLapsed: boolean;
+  private readonly timeLimit: number;
   private readonly visibilityTimeout: number;
-  private readonly rateLimitPerSecond?: number;
 
   constructor({
     queueUrl,
     messageLimit = 1,
-    timeRemainingFunc,
+    timeLimit = 90,
     visibilityTimeout,
     deleteProcessedMessage = true,
-    rateLimitPerSecond = 5,
   }: ConsumerConstructorParams) {
     this.queueUrl = queueUrl;
     this.messageLimit = messageLimit;
     this.visibilityTimeout = visibilityTimeout;
-    this.timeRemainingFunc = timeRemainingFunc;
+    this.timeLimit = timeLimit * 1000;
+    this.now = Date.now();
+    this.timeLapsed = false;
     this.deleteProcessedMessage = deleteProcessedMessage;
-    this.rateLimitPerSecond = rateLimitPerSecond;
   }
 
   private async processMessage(
@@ -75,21 +75,9 @@ export class Consumer {
     );
     if (messages.length > 0) {
       log.info(`processing ${messages.length} messages`);
-      // If rate limiting is enabled, process sequentially to honor global rate limit
-      if (this.rateLimitPerSecond) {
-        for (const message of messages) {
-          const waitTime = 1000/this.rateLimitPerSecond;
-          log.info(`Waiting for ${waitTime} ms`);
-          await new Promise((resolve) => setTimeout(resolve, waitTime));
-          const result = await this.processMessage(message, fn);
-          counter += result;
-        }
-      } else {
-        // No rate limiting - process all messages concurrently
-        const processes = messages.map((message) => this.processMessage(message, fn));
-        const results = await Promise.all(processes);
-        counter = results.reduce((total: number, value) => total + value, 0);
-      }
+      const processes = messages.map((message) => this.processMessage(message, fn));
+      const results = await Promise.all(processes);
+      counter = results.reduce((total: number, value) => total + value, 0);
     }
     return counter;
   }
@@ -101,7 +89,7 @@ export class Consumer {
     let sum = 0;
     /* eslint-disable no-await-in-loop */
     // Only request up to the original messageLimit messages on subsequent `processMessages` calls
-    while (messageLimit > 0) {
+    while (messageLimit > 0 && !this.timeLapsed) {
       let results = 0;
       if (messageLimit > 10) {
         results = await this.processMessages(fn, 10, this.visibilityTimeout);
@@ -111,9 +99,11 @@ export class Consumer {
         messageLimit -= messageLimit;
       }
       sum += results;
-      if (this.timeRemainingFunc && this.timeRemainingFunc() < 5000) {
-        log.info(`${Math.floor(this.timeRemainingFunc() / 1000)} seconds remaining in lambda, exiting...`);
-        break;
+      // if the function is running for longer than the timeLimit, stop it
+      const timeSpent = (Date.now() - this.now);
+      if (timeSpent > this.timeLimit) {
+        this.timeLapsed = true;
+        log.warn(`${this.timeLimit / 1000}-second time limit reached, exiting...`);
       }
     }
     /* eslint-enable no-await-in-loop */
