@@ -8,14 +8,9 @@ class Test(unittest.TestCase):
     def test_process(self):
         process_object = PythonProcess({})
 
-        process_object.clean_output = MagicMock()
-        process_object.clean_output.return_value = True
-
-        process_object.add_ancillary_file = MagicMock()
-        process_object.add_ancillary_file.return_value = "test_data_file.md5"
-
-        process_object.fetch = MagicMock()
-        process_object.fetch.return_value = ["test_data_file.hdf"]
+        process_object.clean_output = MagicMock(return_value=True)
+        process_object.add_ancillary_file = MagicMock(return_value="test_data_file.md5")
+        process_object.fetch = MagicMock(return_value=["test_data_file.hdf"])
 
         input = {
             "granules": [
@@ -55,11 +50,8 @@ class Test(unittest.TestCase):
             },
             "stack": "test-stack",
         }
-        process_object._write_md5sum_file = MagicMock()
-        process_object._get_md5_sum = MagicMock()
-
-        process_object._get_md5_sum.return_value = "fake_md5_hash"
-        process_object._write_md5sum_file.return_value = True
+        process_object._write_md5sum_file = MagicMock(return_value=True)
+        process_object._get_md5_sum = MagicMock(return_value="fake_md5_hash")
 
         actual = process_object.add_ancillary_file("test_data_file.hdf")
         expected = (
