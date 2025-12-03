@@ -47,3 +47,17 @@ ignore = [
 "**/migrations/**.py" = ["D1", "E501"]
 "**/test/**.py" = ["D1"]
 "scripts/**.py" = ["D1"]
+
+
+# Repo wide type checking rules
+# https://mypy.readthedocs.io/en/latest/config_file.html
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_unimported = true
+follow_untyped_imports = true
+local_partial_types = true
+strict_bytes = true
+strict_equality = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_unused_ignores = true
