@@ -173,7 +173,7 @@ If there is exists a PR in the cumulus-dashboard repo with a name containing: "V
 
 ### 4. Publish async_operations image to Docker Hub
 
-For consistency and security reasons, a [new docker image for async_operations should be created and published](https://github.com/nasa/cumulus/blob/master/packages/api/ecs/async-operation/README.md) for each release and pushed to Docker Hub and possibly AWS ECR. Make sure to follow the instructions for **Updating the Cumulus deployment configuration**
+For consistency and security reasons, a [new docker image for async_operations should be created and published](../../packages/api/ecs/async-operation/README.md) for each release and pushed to Docker Hub and possibly AWS ECR. Make sure to follow the instructions for **Updating the Cumulus deployment configuration**
 
 ### 5. Update CHANGELOG.md
 

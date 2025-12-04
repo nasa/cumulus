@@ -17,24 +17,6 @@ Add checksums to files in S3 which don't have one
 
 ---
 
-### [@cumulus/change-granule-collection-pg](https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-pg)
-
-Move granule files and postgres records to a new collection
-
-- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-pg/schemas).
-- Resources: [npm](https://npmjs.com/package/@cumulus/change-granule-collection-pg) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-pg)
-
----
-
-### [@cumulus/change-granule-collection-s3](https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-s3)
-
-Move granule files and postgres records to a new collection
-
-- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-s3/schemas).
-- Resources: [npm](https://npmjs.com/package/@cumulus/change-granule-collection-s3) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-s3)
-
----
-
 ### [@cumulus/discover-granules](https://github.com/nasa/cumulus/tree/master/tasks/discover-granules)
 
 Discover Granules in FTP/HTTP/HTTPS/SFTP/S3 endpoints
