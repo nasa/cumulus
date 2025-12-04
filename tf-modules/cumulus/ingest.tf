@@ -32,6 +32,7 @@ module "ingest" {
   cmr_custom_host    = var.cmr_custom_host
 
   default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
+  sync_granule_s3_jitter_max_ms     = var.sync_granule_s3_jitter_max_ms
 
   lambda_timeouts       = var.lambda_timeouts
   lambda_memory_sizes   = var.lambda_memory_sizes
@@ -67,4 +68,10 @@ module "ingest" {
   # Cloudwatch log retention config
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
   default_log_retention_days = var.default_log_retention_days
+
+  # workflow config
+  workflow_configurations = var.workflow_configurations
+
+  # For message consumer lambdas in order to disable rule/message mismatches
+  allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 }

@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = ">= 5.100, < 6.0.0"
     }
     null = {
       source  = "hashicorp/null"
@@ -122,6 +122,7 @@ module "cumulus" {
   cmr_oauth_provider = var.cmr_oauth_provider
 
   default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
+  sync_granule_s3_jitter_max_ms     = var.sync_granule_s3_jitter_max_ms
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
@@ -161,21 +162,22 @@ module "cumulus" {
   token_secret = var.token_secret
   archive_api_users = [
     "acyu",
+    "awisdom",
+    "cbanh",
     "chuang14",
-    "ds_jennifertran",
+    "cdurbin",
     "ecarton",
-    "efenollal",
-    "filipgraniczny",
     "jasmine",
     "jennyhliu",
     "jmccoy_uat",
+    "jnorton1",
     "kkelly",
     "kovarik",
     "mobrien84",
     "nnageswa",
     "npauzenga",
-    "vnguyen",
-    "rkwarten"
+    "terrafirma13",
+    "yliu10"
   ]
 
   archive_api_url             = var.archive_api_url
@@ -212,7 +214,13 @@ module "cumulus" {
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
 
+  # workflow configuration
+  workflow_configurations = var.workflow_configurations
+
   tags = local.tags
+
+  # For message consumer lambdas in order to disable rule/message mismatches
+  allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

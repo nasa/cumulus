@@ -200,9 +200,21 @@ variable "default_s3_multipart_chunksize_mb" {
   default = 256
 }
 
+variable "allow_provider_mismatch_on_rule_filter" {
+  description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
+  type = bool
+  default = false
+}
+
 variable "tea_distribution_url" {
   type    = string
   default = null
+}
+
+variable "sync_granule_s3_jitter_max_ms" {
+  description = "Maximum random jitter in milliseconds for SyncGranule S3 operations (0-59000). Set to 0 to disable."
+  type        = number
+  default     = 0
 }
 
 variable "ecs_cluster_instance_subnet_ids" {
@@ -275,6 +287,7 @@ variable "thin_egress_jwt_secret_name" {
 }
 
 variable "metrics_es_host" {
+  description = "Domain name (not URL) of the Cloud Metrics API."
   type    = string
   default = null
 }
@@ -326,13 +339,13 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "53"
+  default = "54"
 }
 
 variable "cumulus_process_activity_version" {
     description = "docker image version to use for python processing service"
     type = string
-    default = "4"
+    default = "5"
 }
 
 variable "ecs_task_image_version" {
@@ -344,7 +357,7 @@ variable "ecs_task_image_version" {
 variable "cumulus_test_ingest_image_version" {
     description = "docker image version to use for python test ingest processing service"
     type = string
-    default = "17"
+    default = "18"
 }
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"
@@ -474,4 +487,45 @@ variable "dead_letter_recovery_memory" {
   type = number
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
+}
+
+variable "workflow_configurations" {
+  description = <<EOF
+    A general-purpose map of workflow-specific configurations.
+    This object may include one or more configuration fields used to influence workflow behavior.
+
+    - `sf_event_sqs_to_db_records_types`: An optional nested map that controls which record types
+      ("execution", "granule", "pdr") should be written to the database for each workflow and
+      workflow status ("running", "completed", "failed").
+      This configuration is used by the `@cumulus/api/sfEventSqsToDbRecords` Lambda.
+
+      Currently, both "execution" and "pdr" must be written to the database, so the record type list must include both.
+
+      If this field is not provided, or if a specific workflow/status combination is not defined,
+      all record types will be written to the database by default.
+
+      Structure:
+        {
+          <workflow_name> = {
+            <status> = [<record_type>, ...]
+          }
+        }
+
+    Default:
+      {
+        sf_event_sqs_to_db_records_types = {}
+      }
+  EOF
+
+  type = object({
+    sf_event_sqs_to_db_records_types = optional(map(map(list(string))), {})
+  })
+
+  default = {
+    sf_event_sqs_to_db_records_types = {
+      IngestAndPublishGranuleUnique = {
+        running = ["execution", "pdr"]
+      }
+    }
+  }
 }

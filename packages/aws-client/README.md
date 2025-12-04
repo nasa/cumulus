@@ -299,7 +299,7 @@ Invoke a Lambda function
         * [~deleteS3Object(bucket, key)](#module_S3..deleteS3Object) ⇒ <code>Promise</code>
         * [~headObject(Bucket, Key, retryOptions)](#module_S3..headObject) ⇒
         * [~s3ObjectExists(params)](#module_S3..s3ObjectExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
-        * [~waitForObjectToExist()](#module_S3..waitForObjectToExist)
+        * [~waitForObjectToExist(params)](#module_S3..waitForObjectToExist) ⇒
         * [~s3PutObject(params)](#module_S3..s3PutObject)
         * [~putFile()](#module_S3..putFile)
         * [~s3CopyObject()](#module_S3..s3CopyObject)
@@ -479,15 +479,28 @@ Test if an object exists in S3
 
 <a name="module_S3..waitForObjectToExist"></a>
 
-### S3~waitForObjectToExist()
-Wait for an object to exist in S3
+### S3~waitForObjectToExist(params) ⇒
+Asynchronously waits for an S3 object to exist at a specified location.
+
+This function uses `p-wait-for` to repeatedly check for the object's existence
+until it's found or a timeout is reached. It provides configurable `interval`
+between checks and a total `timeout` duration.
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
+**Returns**: A Promise that resolves when the S3 object is found.  
+**Throws**:
 
-| Param | Default | Description |
-| --- | --- | --- |
-| params.interval | <code>1000</code> | interval before retries, in ms |
-| params.timeout | <code>30000</code> | timeout, in ms |
+- <code>TimeoutError</code> If the object does not exist within the specified `timeout` period.
+- <code>Error</code> If an unexpected error occurs during the S3 existence check.
+
+
+| Param | Description |
+| --- | --- |
+| params | The parameters for waiting for the object. |
+| params.bucket | The name of the S3 bucket where the object is expected. |
+| params.key | The key (path) of the S3 object within the bucket. |
+| params.interval | The time in milliseconds to wait between checks. Defaults to 1000ms (1 second). |
+| params.timeout | The maximum time in milliseconds to wait before giving up and throwing a `TimeoutError`. Defaults to 30000ms (30 seconds). |
 
 <a name="module_S3..s3PutObject"></a>
 

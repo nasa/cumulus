@@ -374,7 +374,7 @@ const Granules = require('@cumulus/message/Granules');
 ```
 
 * [Granules](#module_Granules)
-    * [getMessageGranules(message)](#exp_module_Granules--getMessageGranules) ⇒ <code>Array.&lt;Object&gt;</code> \| <code>undefined</code> ⏏
+    * [getMessageGranules(message)](#exp_module_Granules--getMessageGranules) ⇒ <code>Array.&lt;object&gt;</code> \| <code>undefined</code> ⏏
     * [messageHasGranules(message)](#exp_module_Granules--messageHasGranules) ⇒ <code>boolean</code> ⏏
     * [getGranuleStatus(workflowStatus, granule)](#exp_module_Granules--getGranuleStatus) ⇒ <code>string</code> ⏏
     * [getGranuleQueryFields(message)](#exp_module_Granules--getGranuleQueryFields) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
@@ -382,16 +382,16 @@ const Granules = require('@cumulus/message/Granules');
 
 <a name="exp_module_Granules--getMessageGranules"></a>
 
-#### getMessageGranules(message) ⇒ <code>Array.&lt;Object&gt;</code> \| <code>undefined</code> ⏏
+#### getMessageGranules(message) ⇒ <code>Array.&lt;object&gt;</code> \| <code>undefined</code> ⏏
 Get granules from payload?.granules of a workflow message.
 
 **Kind**: Exported function  
-**Returns**: <code>Array.&lt;Object&gt;</code> \| <code>undefined</code> - An array of granule objects, or
+**Returns**: <code>Array.&lt;object&gt;</code> \| <code>undefined</code> - An array of granule objects, or
   undefined if `message.payload.granules` is not set  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>MessageWithGranules</code> | A workflow message |
+| message | <code>Message.CumulusMessage</code> | A workflow message |
 
 <a name="exp_module_Granules--messageHasGranules"></a>
 
@@ -403,7 +403,7 @@ Determine if message has a granules object.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>MessageWithOptionalGranules</code> | A workflow message object |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
 
 <a name="exp_module_Granules--getGranuleStatus"></a>
 

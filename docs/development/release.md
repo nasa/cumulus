@@ -1,7 +1,8 @@
 ---
 id: release
+title: Versioning and Releases
+hide_title: false
 ---
-# Versioning and Releases
 
 ## Versioning
 
@@ -13,7 +14,7 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 :::note
 
-This is only necessary when preparing a release for a new major version of Cumulus (e.g. preparing to go from `6.x.x` to `7.0.0`).
+This is only necessary when preparing a release for a new major version of Cumulus (e.g., going from `6.x.x` to `7.0.0`) or for a minor version release that includes significant updates.
 
 :::
 
@@ -26,17 +27,20 @@ You should create an entirely new deployment for this testing to replicate the e
 Pre-release testing steps:
 
 1. Checkout the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo
-2. Update the deployment code to use the latest release artifacts if it wasn't done already. For example, assuming that the latest release was `5.0.1`, update the deployment files as follows:
+2. Update the deployment code to use the latest release artifacts if it wasn't done already. For example, assuming that the latest release was `20.0.1`, update the deployment files as follows:
 
     ```text
+     # in rds-cluster-tf/main.tf
+    source = "https://github.com/nasa/cumulus/releases/download/v20.0.1/terraform-aws-cumulus-rds.zip"
+
     # in data-persistence-tf/main.tf
-    source = "https://github.com/nasa/cumulus/releases/download/v5.0.1/terraform-aws-cumulus.zip//tf-modules/data-persistence"
+    source = "https://github.com/nasa/cumulus/releases/download/v20.0.1/terraform-aws-cumulus.zip//tf-modules/data-persistence"
 
     # in cumulus-tf/main.tf
-    source = "https://github.com/nasa/cumulus/releases/download/v5.0.1/terraform-aws-cumulus.zip//tf-modules/cumulus"
+    source = "https://github.com/nasa/cumulus/releases/download/v20.0.1/terraform-aws-cumulus.zip//tf-modules/cumulus"
     ```
 
-3. For both the `data-persistence-tf` and `cumulus-tf` modules:
+3. For the `rds-cluster-tf`, `data-persistence-tf` and `cumulus-tf` modules:
    1. Add the necessary backend configuration (`terraform.tf`) and variables (`terraform.tfvars`)
       - You should use an entirely new deployment for this testing, so make sure to use values for `key` in `terraform.tf` and `prefix` in `terraform.tfvars` that don't collide with existing deployments
    2. Run `terraform init`
@@ -44,10 +48,13 @@ Pre-release testing steps:
 4. Checkout the `master` branch of the `cumulus` repo
 5. Run a full bootstrap of the code: `npm run bootstrap`
 6. Build the pre-release artifacts: `./bamboo/create-release-artifacts.sh`
-7. For both the `data-persistence-tf` and `cumulus-tf` modules:
+7. For all three modules:
    1. Update the deployment to use the built release artifacts:
 
       ```text
+      # in rds-cluster-tf/main.tf
+      source = "[path]/cumulus/terraform-aws-cumulus-rds.zip"
+
       # in data-persistence-tf/main.tf
       source = "[path]/cumulus/terraform-aws-cumulus.zip//tf-modules/data-persistence"
 
@@ -59,7 +66,7 @@ Pre-release testing steps:
    3. Run `terraform init`
    4. Run `terraform apply`
 8. Review the `CHANGELOG.md` for any post-deployment migration steps and confirm that they are successful
-9. Delete your test deployment by running `terraform destroy` in `cumulus-tf` and `data-persistence-tf`
+9. Delete your test deployment by running `terraform destroy` in `cumulus-tf`, `data-persistence-tf` and `rds-cluster-tf`
 
 ## Updating Cumulus version and publishing to NPM
 
@@ -73,14 +80,15 @@ Pre-release testing steps:
 6. [Update DATA\_MODEL\_CHANGELOG.md](#6-update-data_model_changelogmd)
 7. [Update CONTRIBUTORS.md](#7-update-contributorsmd)
 8. [Update Cumulus package API documentation](#8-update-cumulus-package-api-documentation)
-9. [Cut new version of Cumulus Documentation](#9-cut-new-version-of-cumulus-documentation)
-10. [Create a pull request against the minor version branch](#10-create-a-pull-request-against-the-minor-version-branch)
-11. [Create a git tag for the release](#11-create-a-git-tag-for-the-release)
-12. [Publishing the release](#12-publishing-the-release)
-13. [Create a new Cumulus release on github](#13-create-a-new-cumulus-release-on-github)
-14. [Update Cumulus API document](#14-update-cumulus-api-document)
-15. [Update Cumulus Template Deploy](#15-update-cumulus-template-deploy)
-16. [Merge base branch back to master](#16-merge-base-branch-back-to-master)
+9. [Update database schema](#9-update-database-schema)
+10. [Cut new version of Cumulus Documentation](#10-cut-new-version-of-cumulus-documentation)
+11. [Create a pull request against the minor version branch](#11-create-a-pull-request-against-the-minor-version-branch)
+12. [Create a git tag for the release](#12-create-a-git-tag-for-the-release)
+13. [Publishing the release](#13-publishing-the-release)
+14. [Create a new Cumulus release on github](#14-create-a-new-cumulus-release-on-github)
+15. [Update Cumulus API document](#15-update-cumulus-api-document)
+16. [Update Cumulus Template Deploy](#16-update-cumulus-template-deploy)
+17. [Merge base branch back to master](#17-merge-base-branch-back-to-master)
 
 ### 1. Create a branch for the new release
 
@@ -204,7 +212,19 @@ npm run docs-build-packages
 
 Commit and push these changes, if any.
 
-### 9. Cut new version of Cumulus Documentation
+### 9. Update database schema
+
+Check the release updates for DB schema migrations.   If there are any, run the following generation using [schemaspy](https://schemaspy.org/) via the latest published container:
+
+```sh
+docker run --rm -v ~/output:/output  schemaspy/schemaspy:latest -t pgsql -host host.docker.internal -port 5432 -u postgres -p password -s public -db postgres
+```
+
+With "-v "(host output directory):/output" set to the local work/scratch directory you intend to use.
+
+Replace (project)/docs/assets/db_schema/relationships.real.large.png with the generated file from the schemapy output at `./diagrams/summary/relationships.real.large.png`, and commit the change.
+
+### 10. Cut new version of Cumulus Documentation
 
 Docusaurus v2 uses snapshot approach for [documentation versioning](https://docusaurus.io/docs/versioning). Every versioned docs
 does not depends on other version.
@@ -235,7 +255,7 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Commit and push these changes.
 
-### 10. Create a pull request against the minor version branch
+### 11. Create a pull request against the minor version branch
 
 1. Push the release branch (e.g. `release-1.2.3`) to GitHub.
 2. Create a PR against the minor version base branch (e.g. `release-1.2.x`).
@@ -256,7 +276,7 @@ Commit and push these changes.
     - It **is safe** to do a squash merge in this instance, but not required
 5. You may delete your release branch (`release-1.2.3`) after merging to the base branch.
 
-### 11. Create a git tag for the release
+### 12. Create a git tag for the release
 
 Check out the minor version base branch (`release-1.2.x`) now that your changes are merged in and do a `git pull`.
 
@@ -273,7 +293,7 @@ e.g.:
     git push origin v9.1.0
 ```
 
-### 12. Publishing the release
+### 13. Publishing the release
 
 Publishing of new releases is handled by a custom Bamboo branch plan and is manually triggered.
 
@@ -328,11 +348,12 @@ If this is a new minor version branch, then you will need to create a new Bamboo
 
 Bamboo will build and run lint and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
-### 13. Create a new Cumulus release on github
+### 14. Create a new Cumulus release on github
 
 The CI release scripts will automatically create a GitHub release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
 - A multi-module Terraform `.zip` artifact containing filtered copies of the `tf-modules`, `packages`, and `tasks` directories for use as Terraform module sources.
+- An RDS cluster module
 - A S3 replicator module
 - A workflow module
 - A distribution API module
@@ -357,13 +378,13 @@ The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM)
 
 :::
 
-### 14. Update Cumulus API document
+### 15. Update Cumulus API document
 
 There may be unreleased changes in the [Cumulus API document](https://github.com/nasa/cumulus-api) that are waiting on the Cumulus Core release.
 If there are unrelease changes in the cumulus-api repo, follow the release instruction to create the release, the release version should match
 the Cumulus Core release.
 
-### 15. Update Cumulus Template Deploy
+### 16. Update Cumulus Template Deploy
 
 Users are encouraged to use our [Cumulus Template Deploy Project](https://github.com/nasa/cumulus-template-deploy) for deployments. The Cumulus Core version should be updated in this repo when a new Cumulus Core version is released.
 
@@ -385,7 +406,9 @@ module "cumulus" {
 }
 ```
 
-### 16. Merge base branch back to master
+After updating all three modules with the correct release versions, deploy a stack and verify that the deployment is successful.
+
+### 17. Merge base branch back to master
 
 Finally, you need to reproduce the version update changes back to master.
 

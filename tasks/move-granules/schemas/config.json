@@ -41,7 +41,8 @@
       "type": "object",
       "required": [
         "files",
-        "name"
+        "name",
+        "version"
       ],
       "properties": {
         "name": { "type": "string" },
@@ -84,6 +85,21 @@
     "s3MultipartChunksizeMb": {
       "type": ["number", "null"],
       "description": "S3 multipart upload chunk size in MB.  If none is specified, the default default_s3_multipart_chunksize_mb is used."
+    },
+    "checkCrossCollectionCollisions": {
+      "type": "boolean",
+      "description": "If true, when moving files, check the database for cross-collection collisions in the database prior to moving files/utilizing collection duplicate rules. If false, no check will occur.",
+      "default": true
+    },
+    "collectionCheckRetryCount": {
+      "type": "number",
+      "description": "Number of times to retry checking for existing files in the collection when checkCrossCollectionCollisions is true. Default is 3.",
+      "default": 3
+    },
+    "crossCollectionThrowOnObjectNotFound": {
+      "type": "boolean",
+      "description": "If checkCrossCollectionCollisions is set to true, when checking for cross-collection collisions, throw an error if a file is not found in the database. If false, files not found in the database will assume an orphan that can be overwritten.",
+      "default": false
     }
   }
 }

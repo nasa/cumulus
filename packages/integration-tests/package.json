@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/integration-tests",
-  "version": "20.2.1",
+  "version": "21.0.1",
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"
@@ -31,16 +31,16 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.621.0",
-    "@cumulus/api": "20.2.1",
-    "@cumulus/api-client": "20.2.1",
-    "@cumulus/aws-client": "20.2.1",
-    "@cumulus/cmr-client": "20.2.1",
-    "@cumulus/cmrjs": "20.2.1",
-    "@cumulus/common": "20.2.1",
-    "@cumulus/launchpad-auth": "20.2.1",
-    "@cumulus/logger": "20.2.1",
-    "@cumulus/message": "20.2.1",
-    "@cumulus/oauth-client": "20.2.1",
+    "@cumulus/api": "21.0.1",
+    "@cumulus/api-client": "21.0.1",
+    "@cumulus/aws-client": "21.0.1",
+    "@cumulus/cmr-client": "21.0.1",
+    "@cumulus/cmrjs": "21.0.1",
+    "@cumulus/common": "21.0.1",
+    "@cumulus/launchpad-auth": "21.0.1",
+    "@cumulus/logger": "21.0.1",
+    "@cumulus/message": "21.0.1",
+    "@cumulus/oauth-client": "21.0.1",
     "base-64": "^0.1.0",
     "commander": "^2.15.0",
     "dotenv": "^8.2.0",
@@ -55,6 +55,7 @@
     "p-retry": "^2.0.0",
     "p-wait-for": "^2.0.1",
     "uuid": "^3.2.1",
-    "xml2js": "0.5.0"
+    "xml2js": "0.5.0",
+    "js2xmlparser": "^5.0.0"
   }
 }

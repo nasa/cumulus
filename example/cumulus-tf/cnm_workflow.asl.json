@@ -50,6 +50,51 @@
           "Next": "CnmResponseFail"
         }
       ],
+      "Next": "ChooseUniqueGranules"
+    },
+    "ChooseUniqueGranules": {
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.meta.collection.meta.uniquifyGranuleId",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.meta.collection.meta.uniquifyGranuleId",
+              "BooleanEquals": true
+            }
+          ],
+          "Next": "AddUniqueGranuleId"
+        }
+      ],
+      "Default": "SyncGranule",
+      "Type": "Choice"
+    },
+     "AddUniqueGranuleId": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "Path": "$.payload",
+            "TargetPath": "$.payload"
+          },
+          "task_config": {
+            "hashLength": "{$.meta.collection.meta.hashLength}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${add_unique_granule_id_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 3
+        }
+      ],
       "Next": "SyncGranule"
     },
     "SyncGranule": {
@@ -117,6 +162,7 @@
             "collection": "{$.meta.collection}",
             "cmrMetadataFormat": "{$.meta.cmrMetadataFormat}",
             "additionalUrls": "{$.meta.additionalUrls}",
+            "matchFilesWithProducerGranuleId": "{$.meta.collection.meta.uniquifyGranuleId}",
             "cumulus_message": {
               "outputs": [
                 {
@@ -162,7 +208,8 @@
           },
           "task_config": {
             "inputGranules": "{$.meta.input_granules}",
-            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}",
+            "matchFilesWithProducerGranuleId": "{$.meta.collection.meta.uniquifyGranuleId}"
           }
         }
       },
