@@ -4,7 +4,7 @@ import os
 import subprocess
 from argparse import ArgumentParser
 from copy import deepcopy
-from typing import Any, Dict, Union
+from typing import Any
 
 
 class TestException(Exception):
@@ -15,10 +15,10 @@ class CoverageUpdateRequired(Exception):
     pass
 
 
-CoverageDict = Dict[str, float]
+CoverageDict = dict[str, float]
 
 
-def truncate_float(value: float, precision: int) -> Union[float, int]:
+def truncate_float(value: float, precision: int) -> float | int:
     """Round down to the given precision.
 
     i.e.
@@ -103,7 +103,7 @@ def parse_coverage_values(
 
 def parse_coverage_config_file(
     file_path: str = ".nycrc.json",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Parse the current nyc configuration json file.
 
     Args:
@@ -147,7 +147,7 @@ def update_nycrc_file(
 
 def validate_coverage_against_config(
     coverage: CoverageDict,
-    configuration: Dict[str, Any],
+    configuration: dict[str, Any],
     grace: int,
 ) -> None:
     """Validate that currently configured coverage minimum is sufficient

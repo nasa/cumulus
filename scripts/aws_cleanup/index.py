@@ -1,8 +1,9 @@
 import json
 import logging
 import os
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable, List, TypedDict
+from typing import TypedDict
 
 import boto3
 
@@ -22,15 +23,15 @@ class TagObject(TypedDict):
 
 class InstanceObject(TypedDict):
     InstanceId: str
-    Tags: List[TagObject]
+    Tags: list[TagObject]
 
 
 class InstancesSubObject(TypedDict):
-    Instances: List[InstanceObject]
+    Instances: list[InstanceObject]
 
 
 class DescribeResponse(TypedDict):
-    Reservations: List[InstancesSubObject]
+    Reservations: list[InstancesSubObject]
 
 
 def should_be_cleaned_up(
@@ -66,7 +67,7 @@ def should_be_cleaned_up(
 def get_instances_to_clean(
     describe_func,
     today_func: Callable[[], datetime] = datetime.today,
-) -> List[str]:
+) -> list[str]:
     """Identify instances that should be cleaned.
 
     Args:

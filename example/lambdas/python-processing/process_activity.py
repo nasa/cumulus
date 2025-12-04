@@ -5,8 +5,8 @@ takes a payload and returns a mocked output for test purposes
 """
 
 import copy
+import hashlib
 import os
-from hashlib import md5
 
 from cumulus_process import Process
 from cumulus_process.s3 import upload
@@ -79,7 +79,7 @@ class PythonProcess(Process):
 
     def _get_md5_sum(self, local_file):
         with open(local_file, "rb") as file:
-            md5sum = md5(file.read()).hexdigest()
+            md5sum = hashlib.file_digest(file, hashlib.md5).hexdigest()
         return md5sum
 
 
