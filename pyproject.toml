@@ -19,6 +19,10 @@ select = [
     "I",
     # pylint
     "PL",
+    # pyupgrade
+    "UP",
+    # bandit
+    "S",
     # pep8-naming
     "N",
     # pydoclint
