@@ -167,6 +167,17 @@ variable "rds_scaling_timeout_action" {
   default = "ForceApplyCapacityChange"
 }
 
+variable "enabled_cloudwatch_logs_exports" {
+  description = "Set of log types to enable for exporting to CloudWatch logs"
+  type = list(string)
+  default = []
+}
+
+variable "db_log_min_duration_ms" {
+  description = "The threshold (in ms) for logging slow queries in RDS"
+  default     = 500
+}
+
 variable "db_parameters" {
   type = list(object({
     name = string,
