@@ -15,10 +15,10 @@ const {
   EarthdataLoginError,
 } = require('@cumulus/oauth-client');
 const {
-  createCookieOptions,
   getConfigurations,
   handleAuthBearerToken,
   isAuthBearTokenRequest,
+  useSecureCookies,
 } = require('@cumulus/api/lib/distribution');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const { handleCredentialRequest } = require('@cumulus/api/endpoints/s3credentials');
@@ -77,6 +77,8 @@ async function handleRedirectRequest(req, res) {
   const { code, state } = req.query;
 
   const getAccessTokenResponse = await oauthClient.getAccessToken(code);
+  // expirationTime is in seconds whereas Date is expecting milliseconds
+  const expirationTime = getAccessTokenResponse.expirationTime * 1000;
 
   await accessTokenModel.create({
     accessToken: getAccessTokenResponse.accessToken,
@@ -89,7 +91,11 @@ async function handleRedirectRequest(req, res) {
     .cookie(
       'accessToken',
       getAccessTokenResponse.accessToken,
-      createCookieOptions(getAccessTokenResponse.expirationTime)
+      {
+        expires: new Date(expirationTime),
+        httpOnly: true,
+        secure: useSecureCookies(),
+      }
     )
     .set({ Location: urljoin(distributionUrl, state) })
     .status(307)
@@ -174,13 +180,8 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   }
 
   if (!accessToken || !accessTokenRecord || isAccessTokenExpired(accessTokenRecord)) {
-    // No valid access token found or token is expired — redirect to obtain a new one
     return res.redirect(307, redirectURLForAuthorizationCode);
   }
-
-  // Authentication successful — delete the access token to prevent reuse
-  await accessTokenModel.delete({ accessToken });
-
   req.authorizedMetadata = { userName: accessTokenRecord.username };
   return next();
 }

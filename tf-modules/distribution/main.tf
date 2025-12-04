@@ -86,8 +86,7 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
   statement {
     actions = [
       "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:DeleteItem"
+      "dynamodb:PutItem"
     ]
     resources = [aws_dynamodb_table.access_tokens[0].arn]
   }
