@@ -46,6 +46,12 @@ variable "db_admin_password" {
   type = string
 }
 
+variable "input_security_group_id" {
+  description = "Optional existing security group ID to use for the RDS cluster"
+  type        = string
+  default     = null
+}
+
 variable "profile" {
   description = "AWS profile to use for authentication"
   type        = string
@@ -89,6 +95,18 @@ variable "engine_version" {
   description = "Postgres engine version for serverless cluster"
   type        = string
   default     = "17.4"
+}
+
+variable "parameter_group_family_v13" {
+  description = "Database family to use for creating database parameter group under postgres 13 upgrade conditions"
+  type = string
+  default = "aurora-postgresql13"
+}
+
+variable "enable_upgrade" {
+  description = "Flag to enable use of updated parameter group for postgres v17"
+  type = bool
+  default = true
 }
 
 variable "parameter_group_family_v17" {

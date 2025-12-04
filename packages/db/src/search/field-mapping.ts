@@ -5,6 +5,9 @@ const log = new Logger({ sender: '@cumulus/db/field-mapping' });
 
 // functions to map the api search string field name and value to postgres db field
 const granuleMapping: { [key: string]: Function } = {
+  archived: (value?: boolean) => ({
+    archived: value,
+  }),
   beginningDateTime: (value?: string) => ({
     beginning_date_time: value,
   }),
@@ -34,6 +37,9 @@ const granuleMapping: { [key: string]: Function } = {
   }),
   processingStartDateTime: (value?: string) => ({
     processing_start_date_time: value,
+  }),
+  producerGranuleId: (value?: string) => ({
+    producer_granule_id: value,
   }),
   productionDateTime: (value?: string) => ({
     production_date_time: value,
@@ -204,6 +210,9 @@ const executionMapping : { [key: string]: Function } = {
       collectionVersion: version,
     };
   },
+  archived: (value?: boolean) => ({
+    archived: value,
+  }),
 };
 
 const pdrMapping : { [key: string]: Function } = {

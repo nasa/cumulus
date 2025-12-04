@@ -64,6 +64,12 @@ variable "default_s3_multipart_chunksize_mb" {
   default = 256
 }
 
+variable "allow_provider_mismatch_on_rule_filter" {
+  description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
+  type = bool
+  default = false
+}
+
 variable "distribution_url" {
   type = string
 }
@@ -197,6 +203,17 @@ variable "default_log_retention_days" {
   description = "Optional default value that user chooses for their log retention periods"
 }
 
+variable "sync_granule_s3_jitter_max_ms" {
+  description = "Maximum random jitter in milliseconds to apply before S3 operations in SyncGranule task (0-59000). Set to 0 to disable jitter."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.sync_granule_s3_jitter_max_ms >= 0 && var.sync_granule_s3_jitter_max_ms <= 59000
+    error_message = "sync_granule_s3_jitter_max_ms must be between 0 and 59000 milliseconds."
+  }
+}
+
 variable "sqs_message_consumer_watcher_message_limit" {
   type = number
   default = 500
@@ -216,4 +233,73 @@ variable "sqs_message_consumer_watcher_time_limit" {
     should be less than the overall Lambda invocation timeout or else the Lambda may be terminated while still actively
     polling SQS. This value should be adjusted in conjunction with sqs_message_consumer_watcher_message_limit.
   EOF
+}
+variable "workflow_configurations" {
+  description = <<EOF
+    A general-purpose map of workflow-specific configurations.
+    This object may include one or more configuration fields used to influence workflow behavior.
+
+    - `sf_event_sqs_to_db_records_types`: An optional nested map that controls which record types
+      ("execution", "granule", "pdr") should be written to the database for each workflow and
+      workflow status ("running", "completed", "failed").
+      This configuration is used by the `@cumulus/api/sfEventSqsToDbRecords` Lambda.
+
+      Currently, both "execution" and "pdr" must be written to the database, so the record type list must include both.
+
+      If this field is not provided, or if a specific workflow/status combination is not defined,
+      all record types will be written to the database by default.
+
+      Structure:
+        {
+          <workflow_name> = {
+            <status> = [<record_type>, ...]
+          }
+        }
+
+      Example:
+        {
+          sf_event_sqs_to_db_records_types = {
+            IngestAndPublishGranule = {
+              running = ["execution", "pdr"]
+            }
+          }
+        }
+  EOF
+
+  type = object({
+    sf_event_sqs_to_db_records_types = optional(map(map(list(string))), {})
+  })
+
+  default = {
+    sf_event_sqs_to_db_records_types = {}
+  }
+
+  validation {
+    condition = alltrue([
+      for workflow in (
+        var.workflow_configurations.sf_event_sqs_to_db_records_types == null
+        ? []
+        : keys(var.workflow_configurations.sf_event_sqs_to_db_records_types)
+      ) :
+      alltrue([
+        for status in (
+          keys(var.workflow_configurations.sf_event_sqs_to_db_records_types[workflow])
+        ) :
+        contains(["running", "completed", "failed"], status) &&
+        alltrue([
+          for required_type in ["execution", "pdr"] :
+          contains(var.workflow_configurations.sf_event_sqs_to_db_records_types[workflow][status], required_type)
+        ]) &&
+        alltrue([
+          for record_type in var.workflow_configurations.sf_event_sqs_to_db_records_types[workflow][status] :
+          contains(["execution", "granule", "pdr"], record_type)
+        ])
+      ])
+    ])
+    error_message = <<EOF
+Each status must be one of "running", "completed", or "failed".
+Each record type list must contain both "execution" and "pdr".
+Only valid record types are: "execution", "granule", "pdr".
+EOF
+  }
 }

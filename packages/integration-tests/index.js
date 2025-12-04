@@ -349,7 +349,7 @@ const providerExists = async (stackName, id) => {
         });
       } catch (error) {
         if (error.statusCode === 404) {
-          console.log(`Error: ${error}. Failed to get provider with ID ${id}`);
+          console.log(`Error: ${JSON.stringify(error)}. Failed to get provider with ID ${id}`);
           return false;
         }
         throw error;
@@ -801,6 +801,7 @@ module.exports = {
   getExecutions,
   getExecutionInputObject,
   getOnlineResources: cmr.getOnlineResources,
+  getCmrMetadata: cmr.getCmrMetadata,
   getProviderHost,
   getProviderPort,
   granulesApi,

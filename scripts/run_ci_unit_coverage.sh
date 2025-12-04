@@ -4,7 +4,7 @@ touch ./test_output.txt
 tail -f ./test_output.txt &
 TAIL_PID=$!
 
-npm run test:ci > ./test_output.txt
+npm run test:ci:units-no-api > ./test_output.txt
 
 RESULT=$?
 # make sure tail has gotten everything out
@@ -17,5 +17,5 @@ then
     grep '✘' ./test_output.txt
     exit $RESULT
 fi
-npm run coverage -- --noRerun
+npm run coverage:no-api -- --noRerun
 exit $RESULT

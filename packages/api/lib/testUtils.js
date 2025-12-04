@@ -79,8 +79,10 @@ function fakeFileFactory(params = {}) {
  */
 function fakeGranuleFactory(status = 'completed') {
   return {
+    archived: false,
     granuleId: randomId('granule'),
     collectionId: constructCollectionId('fakeCollection', 'v1'),
+    producerGranuleId: randomId('producerGranuleId'),
     status,
     execution: getExecutionUrlFromArn(randomId('execution')),
     createdAt: Date.now(),
@@ -188,6 +190,7 @@ function fakeExecutionFactoryV2(params = {}) {
   const executionArn = buildExecutionArn(stateMachineArn, executionName);
   const executionUrl = getExecutionUrlFromArn(executionArn);
   const execution = {
+    archived: false,
     arn: executionArn,
     duration: 180.5,
     name: executionName,

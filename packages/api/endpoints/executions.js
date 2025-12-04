@@ -83,9 +83,7 @@ async function create(req, res) {
     return res.boom.conflict(`A record already exists for ${arn}`);
   }
 
-  execution.updatedAt = Date.now();
   execution.createdAt = Date.now();
-
   try {
     await writeExecutionRecordFromApi({
       record: execution,
@@ -134,7 +132,6 @@ async function update(req, res) {
     }
     return res.boom.notFound(`Execution '${arn}' not found`);
   }
-
   execution.updatedAt = Date.now();
   execution.createdAt = oldPgRecord.created_at.getTime();
 
@@ -359,6 +356,44 @@ async function bulkDeleteExecutionsByCollection(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+const bulkArchiveExecutionsSchema = z.object({
+  updateLimit: z.number().min(1).optional().default(10000),
+  batchSize: z.number().min(1).optional().default(1000),
+  expirationDays: z.number().optional().default(365),
+});
+const parseBulkArchiveExecutionsPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsSchema);
+/**
+ * Start an AsyncOperation that will archive a set of executions in ecs
+ */
+async function bulkArchiveExecutions(req, res) {
+  const payload = parseBulkArchiveExecutionsPayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
+  }
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
+    lambdaName: process.env.ArchiveRecordsLambda,
+    description: 'Launches an ecs task to archive a batch of executions',
+    operationType: 'Bulk Execution Archive',
+    payload: {
+      config: {
+        ...payload,
+        recordType: 'execution',
+      },
+    },
+  };
+  log.debug(
+    `About to invoke lambda to start async operation ${asyncOperationId}`
+  );
+  await startAsyncOperation.invokeStartAsyncOperationLambda(
+    asyncOperationEvent
+  );
+  return res.status(202).send({ id: asyncOperationId });
+}
+
+router.post('/bulkArchive', bulkArchiveExecutions);
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
 router.post(
@@ -375,5 +410,6 @@ router.delete('/:arn', del);
 module.exports = {
   del,
   router,
+  bulkArchiveExecutions,
   bulkDeleteExecutionsByCollection,
 };

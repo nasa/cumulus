@@ -372,6 +372,7 @@ describe('When there are granule differences and granule reconciliation is run',
       };
       extraGranuleInDb = {
         granuleId: randomId('extra-granule'),
+        producerGranuleId: randomId('extra-producerGranuleId'),
         collectionId,
         status: 'completed',
         files: [extraFileInDb],
@@ -393,6 +394,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       console.log('dbGranuleId', dbGranuleId);
       console.log('publishedGranuleId', publishedGranuleId);
+      console.log('cmrGranule', cmrGranule);
 
       console.log('XXXXX Waiting for collections in list');
       const collectionIds = [
@@ -901,7 +903,7 @@ describe('When there are granule differences and granule reconciliation is run',
       removeCollectionAndAllDependencies({ prefix: config.stackName, collection }),
       s3().deleteObject(extraS3Object),
       deleteFolder(config.bucket, testDataFolder),
-      cmrClient.deleteGranule(cmrGranule),
+      cmrClient.deleteGranule(cmrGranule.granuleId),
     ]);
     cleanupResults.forEach((result) => {
       if (result.status === 'rejected') {

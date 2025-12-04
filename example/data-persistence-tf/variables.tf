@@ -90,3 +90,10 @@ variable "lambda_timeouts" {
     ProvisionPostgresDatabase = 600 # data-persistence
   }
 }
+
+variable "dbRecreation" {
+  type        = bool
+  description = "**Warning** Data loss will occur if set to 'true'. Boolean flag to set user database to be wiped and recreated on provision for each deploy"
+  default     = true
+}
+

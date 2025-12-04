@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = ">= 5.100, < 6.0.0"
     }
   }
 }
@@ -13,6 +13,16 @@ provider "aws" {
     key_prefixes = ["gsfc-ngap"]
   }
 }
+
+locals {
+  rds_security_group_id = try(
+    var.input_security_group_id != null
+      ? var.input_security_group_id
+      : aws_security_group.rds_cluster_access.id,
+    null
+  )
+}
+
 resource "aws_db_subnet_group" "default" {
   name_prefix = var.aws_db_subnet_group_prefix
   subnet_ids  = var.subnets
@@ -69,6 +79,21 @@ resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v17" {
   }
 }
 
+resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
+  count = var.enable_upgrade ? 0 : 1
+  name   = "${var.prefix}-cluster-parameter-group-v13"
+  family = var.parameter_group_family_v13
+
+  dynamic "parameter" {
+    for_each = var.db_parameters
+    content {
+      apply_method = parameter.value["apply_method"]
+      name = parameter.value["name"]
+      value = parameter.value["value"]
+    }
+  }
+}
+
 resource "aws_rds_cluster" "cumulus" {
   depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group_v17]
   cluster_identifier      = var.cluster_identifier
@@ -88,13 +113,15 @@ resource "aws_rds_cluster" "cumulus" {
     max_capacity = var.max_capacity
     min_capacity = var.min_capacity
   }
-  vpc_security_group_ids          = [aws_security_group.rds_cluster_access.id]
+
+  vpc_security_group_ids = [local.rds_security_group_id]
+
   deletion_protection             = var.deletion_protection
   enable_http_endpoint            = true
   tags                            = var.tags
   final_snapshot_identifier       = "${var.cluster_identifier}-final-snapshot"
   snapshot_identifier             = var.snapshot_identifier
-  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.rds_cluster_group_v17.id
+  db_cluster_parameter_group_name = var.enable_upgrade ? aws_rds_cluster_parameter_group.rds_cluster_group_v17.id : aws_rds_cluster_parameter_group.rds_cluster_group_v13[0].id
 
   lifecycle {
     ignore_changes = [engine_version]

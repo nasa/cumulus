@@ -51,6 +51,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   pdr?: Pick<PostgresPdrRecord, 'name'>,
   providerPgRecord?: Pick<PostgresProviderRecord, 'name'>,
 }): ApiGranuleRecord => removeNilProperties({
+  archived: granulePgRecord.archived,
   beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
   cmrLink: granulePgRecord.cmr_link,
   collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
@@ -65,6 +66,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   pdrName: pdr ? pdr.name : undefined,
   processingEndDateTime: granulePgRecord.processing_end_date_time?.toISOString(),
   processingStartDateTime: granulePgRecord.processing_start_date_time?.toISOString(),
+  producerGranuleId: granulePgRecord.producer_granule_id,
   productionDateTime: granulePgRecord.production_date_time?.toISOString(),
   productVolume: granulePgRecord.product_volume,
   provider: providerPgRecord ? providerPgRecord.name : undefined,
@@ -171,8 +173,11 @@ const validateApiToPostgresGranuleObject = (apiGranule : ApiGranule) => {
   if (isNil(apiGranule.granuleId)) {
     throw new ValidationError('granuleId cannot be undefined on a granule, granules must have a collection and a granule ID');
   }
+  if (isNil(apiGranule.producerGranuleId)) {
+    throw new ValidationError('producerGranuleId cannot be undefined on a granule, granules must have a producerGranuleId');
+  }
   if (isNull(apiGranule.status)) {
-    throw new ValidationError('status cannot be null on a granule, granules must have a collection and a granule ID');
+    throw new ValidationError('status cannot be null on a granule, granules must have a status');
   }
 };
 
@@ -230,12 +235,14 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
   }
 
   const granuleRecord: PostgresGranule = {
+    archived: dynamoRecord.archived,
     granule_id: dynamoRecord.granuleId,
     status: dynamoRecord.status,
     collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
       knexOrTransaction,
       { name, version }
     ),
+    producer_granule_id: dynamoRecord.producerGranuleId,
     published: dynamoRecord.published,
     duration: dynamoRecord.duration,
     time_to_archive: dynamoRecord.timeToArchive,

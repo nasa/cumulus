@@ -298,6 +298,9 @@ describe('Ingesting from PDR', () => {
           expectedParsePdrOutput.granules[0].dataType += testSuffix;
           expectedParsePdrOutput.pdr.name = pdrFilename;
           expectedParsePdrOutput.granules[0].provider = nodeNameProviderId;
+          expectedParsePdrOutput.granules.forEach((granule) => {
+            granule.producerGranuleId = granule.granuleId;
+          });
           await waitForCompletedExecution(parsePdrExecutionArn);
         } catch (error) {
           beforeAllFailed = true;

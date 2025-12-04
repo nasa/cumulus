@@ -16,9 +16,12 @@ Config object fields:
 | buckets | object | (required) | | Object specifying AWS S3 buckets used by this task
 | collection | object | (required) | | The cumulus-api collection object
 | distribution_endpoint | string | (required) | | The API distribution endpoint
-| duplicateHandling | string | `error` | <ul><li>`error` - Throws an error on duplicates</li><li>`replace` - Replaces the existing file</li><li>`skip` - Skips the duplicate file</li><li>`version` - Adds a suffix to the existing filename to avoid a clash</li></ul> | Specifies how duplicate filenames should be handled
+| duplicateHandling | string | `error` | <ul><li>`error` - Throws an error on duplicates</li><li>`replace` - Replaces the existing file</li><li>`skip` - Skips the duplicate file</li><li>`version` - Adds a suffix to the existing filename to avoid a clash</li></ul> | Specifies how duplicate filenames should be handled.   In cases where an object collision results in duplicate evaluation, the task will check the database via API for a granuleId collision in another collection and `error` regardless of this configuration if one is found.
 | moveStagedFiles | boolean | `true` | | Can set to `false` to skip moving files from the staging location. Defaults to `true`.
 | s3MultipartChunksizeMb | number | | | S3 multipart upload chunk size in MB.  If none is specified, the default `default_s3_multipart_chunksize_mb` is used.
+| checkCrossCollectionCollisions | boolean | true | true/false | Default behavior configures MoveGranules to use the API to determine if a file collision is the result of a file registered to a granule in another collection, and if it is, fail (ignoring `duplicateHandling` configuration).     Setting this value to false disables that check and MoveGranules will not use database checks and assume all collisions are due to same-collection collisions.
+| collectionCheckRetryCount | number | 3 | |  "Number of times to retry checking for existing files in the collection when checkCrossCollectionCollisions is true. Default is 3.
+| crossCollectionThrowOnObjectNotFound | boolean | false | true/false | If checkCrossCollectionCollisions is set to true, when checking for cross-collection collisions, throw an error if a file is not found in the database.  If false, files not found in the database will assume an orphan that can be overwritten.  Default is false.
 
 ### Input
 
@@ -34,7 +37,7 @@ Output object fields:
 
 | field name | type | default | description
 | ---------- | ---- | ------- | -----------
-granules | array\<object\> | N/A | List of granule objects with updated S3 location information
+| granules | array\<object\> | N/A | List of granule objects with updated S3 location information
 
 ## About Cumulus
 

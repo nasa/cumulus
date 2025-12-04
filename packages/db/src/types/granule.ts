@@ -4,6 +4,8 @@ export interface PostgresGranuleUniqueColumns {
   collection_cumulus_id: number,
 }
 export interface PostgresGranule extends PostgresGranuleUniqueColumns {
+  archived: boolean,
+  producer_granule_id: string,
   status?: GranuleStatus,
   cmr_link?: string | null,
   error?: object | null,
@@ -31,7 +33,9 @@ export interface PostgresGranule extends PostgresGranuleUniqueColumns {
 // product_volume is stored as a BigInt in Postgres. It returns from PG to Node
 // as a "string" type.
 export interface PostgresGranuleRecord extends Omit<PostgresGranule, 'product_volume'> {
+  archived: boolean,
   cumulus_id: number,
+  producer_granule_id: string,
   product_volume?: string,
   created_at: Date,
   updated_at: Date,

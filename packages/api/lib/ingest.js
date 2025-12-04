@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const get = require('lodash/get');
 
 const Lambda = require('@cumulus/aws-client/Lambda');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -34,16 +35,22 @@ async function reingestGranule({
   updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
 }) {
   const knex = await getKnexClient();
-  await updateGranuleStatusToQueuedMethod({
-    apiGranule,
-    knex,
-    granulePgModel,
-  });
 
   const executionArn = path.basename(apiGranule.execution);
 
   const executionDescription = await StepFunctions.describeExecution({ executionArn });
   const originalMessage = JSON.parse(executionDescription.input);
+
+  // Only update the original granule to 'queued' if the original payload contains the granule.
+  // This avoids a situation where the original granule is updated to 'queued', but the
+  // reingest workflow creates a new granule, leaving the original granule stuck in 'queued'.
+  if (get(originalMessage, 'payload.granules.length', 0) > 0) {
+    await updateGranuleStatusToQueuedMethod({
+      apiGranule,
+      knex,
+      granulePgModel,
+    });
+  }
 
   const { name, version } = deconstructCollectionId(apiGranule.collectionId);
 
