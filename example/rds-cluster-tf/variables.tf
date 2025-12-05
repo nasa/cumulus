@@ -128,6 +128,12 @@ variable "parameter_group_family_v17" {
   default = "aurora-postgresql17"
 }
 
+variable "enabled_cloudwatch_logs_exports" {
+  description = "Set of log types to enable for exporting to CloudWatch logs"
+  type = list(string)
+  default = []
+}
+
 variable "postgresql_log_retention_days" {
   description = "Log retention period (days) for RDS PostgreSQL logs. Valid values: [0 1 3 5 7 14 30 60 90 120 150 180 365 400 545 731 1096 1827 2192 2557 2922 3288 3653]"
   type        = number
