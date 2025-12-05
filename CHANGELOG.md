@@ -6,11 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v21.2.0] 2025-12-05
+
 ### Notable Changes
 
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
+
 - **CUMULUS-4272**
   - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
@@ -27,6 +30,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3574**
   - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
+
 - **CUMULUS-4188**
   - Updated `example/cumulus-tf/orca.tf` to use v10.1.5
 
@@ -34,12 +38,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4346**
   - Updated package overrides for dev env to use `glob` "^11.1.0" to address reported CVE
+
 - **CUMULUS-4279**
   - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
     on the public schema of the user database to the database user.
     This change is required because, starting with PostgreSQL 15, new databases assign ownership
     of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
     prior to v15 preserve the previous ownership of the public schema.
+
 - **CUMULUS-4275**
   - Fixed unit tests broken by updated HTTP error messages in got
 
@@ -9136,7 +9142,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.0.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.2.0...HEAD
+[v21.2.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.2.0
 [v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
 [v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.2...v21.0.0
 [v20.3.2]: https://github.com/nasa/cumulus/compare/v20.3.1...v20.3.2
