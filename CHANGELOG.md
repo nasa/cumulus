@@ -21,8 +21,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4411**
   - The `tf-modules/cumulus-rds-tf` module now supports enabling RDS slow query logging in CloudWatch.
-    By setting `db_log_min_duration_ms` to a positive value (in milliseconds), RDS will log and export 
-    any database queries that take longer than that threshold.
+    By setting `db_log_min_duration_ms` to a positive value (in milliseconds) and `enabled_cloudwatch_logs_exports`
+    to `["postgresql"]`, RDS will log and export any database queries that take longer than that threshold.
     The module also configures the required RDS extensions and parameters necessary for slow query instrumentation.
 - **CUMULUS-4272**
   - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
