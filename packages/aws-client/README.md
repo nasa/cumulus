@@ -83,6 +83,10 @@ for allowed params and return value.</p>
 <dt><a href="#decryptBase64String">decryptBase64String(ciphertext)</a> ⇒ <code>string</code></dt>
 <dd><p>Decrypt a KMS-encrypted string, Base 64 encoded</p>
 </dd>
+<dt><a href="#applyS3Jitter">applyS3Jitter(maxJitterMs, operation)</a> ⇒</dt>
+<dd><p>Introduces random jitter delay to stagger concurrent S3 operations.
+This helps prevent AWS S3 SlowDown errors when many operations occur simultaneously.</p>
+</dd>
 </dl>
 
 <a name="module_CloudFormation"></a>
@@ -1121,6 +1125,20 @@ Decrypt a KMS-encrypted string, Base 64 encoded
 | Param | Type | Description |
 | --- | --- | --- |
 | ciphertext | <code>string</code> | a KMS-encrypted value, Base 64 encoded |
+
+<a name="applyS3Jitter"></a>
+
+## applyS3Jitter(maxJitterMs, operation) ⇒
+Introduces random jitter delay to stagger concurrent S3 operations.
+This helps prevent AWS S3 SlowDown errors when many operations occur simultaneously.
+
+**Kind**: global function  
+**Returns**: A Promise that resolves after the random delay  
+
+| Param | Description |
+| --- | --- |
+| maxJitterMs | Maximum jitter time in milliseconds (0-59000).   If 0, no delay is applied. |
+| operation | Optional operation name for logging context |
 
 
 ## About Cumulus
