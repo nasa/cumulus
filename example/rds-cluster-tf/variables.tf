@@ -129,7 +129,7 @@ variable "parameter_group_family_v17" {
 }
 
 variable "enabled_cloudwatch_logs_exports" {
-  description = "Set of log types to enable for exporting to CloudWatch logs"
+  description = "Set of log types to export to CloudWatch Logs. For Amazon Aurora PostgreSQL, the only valid value is [\"postgresql\"]."
   type = list(string)
   default = []
 }
