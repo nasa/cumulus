@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4411**
+  - Add capability to turn on RDS slow query logging in CloudWatch.
 - **CUMULUS-4272**
   - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
     specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
