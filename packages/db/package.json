@@ -39,6 +39,7 @@
     "@cumulus/logger": "21.0.1",
     "@cumulus/message": "21.0.1",
     "@cumulus/types": "21.0.1",
+    "@opentelemetry/api": "^1.4.0",
     "crypto-random-string": "^3.2.0",
     "is-valid-hostname": "1.0.2",
     "knex": "2.4.1",
