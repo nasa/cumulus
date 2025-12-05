@@ -21,6 +21,7 @@ locals {
       : aws_security_group.rds_cluster_access.id,
     null
   )
+  cluster_identifier = var.cluster_identifier
 }
 
 resource "aws_db_subnet_group" "default" {
@@ -106,9 +107,14 @@ resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "postgresql_logs" {
+  name              = "/aws/rds/cluster/${local.cluster_identifier}/postgresql"
+  retention_in_days = var.postgresql_log_retention_days
+}
+
 resource "aws_rds_cluster" "cumulus" {
-  depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group_v17]
-  cluster_identifier      = var.cluster_identifier
+  depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group_v17, aws_cloudwatch_log_group.postgresql_logs]
+  cluster_identifier      = local.cluster_identifier
   engine_mode             = "provisioned"
   engine                  = "aurora-postgresql"
   engine_version          = var.engine_version
@@ -132,7 +138,7 @@ resource "aws_rds_cluster" "cumulus" {
   deletion_protection             = var.deletion_protection
   enable_http_endpoint            = true
   tags                            = var.tags
-  final_snapshot_identifier       = "${var.cluster_identifier}-final-snapshot"
+  final_snapshot_identifier       = "${local.cluster_identifier}-final-snapshot"
   snapshot_identifier             = var.snapshot_identifier
   db_cluster_parameter_group_name = var.enable_upgrade ? aws_rds_cluster_parameter_group.rds_cluster_group_v17.id : aws_rds_cluster_parameter_group.rds_cluster_group_v13[0].id
 
