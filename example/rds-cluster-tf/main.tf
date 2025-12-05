@@ -29,6 +29,9 @@ module "rds_cluster" {
   lambda_timeouts            = var.lambda_timeouts
   lambda_memory_sizes        = var.lambda_memory_sizes
   enable_upgrade             = var.enable_upgrade
+  enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
+  postgresql_log_retention_days = var.postgresql_log_retention_days
+  db_log_min_duration_ms = var.db_log_min_duration_ms
   parameter_group_family_v13 = var.parameter_group_family_v13
   parameter_group_family_v17 = var.parameter_group_family_v17
 }
