@@ -1,10 +1,10 @@
 import json
-import subprocess
 import math
 import os
-from copy import deepcopy
-from typing import Dict, Any, Union
+import subprocess
 from argparse import ArgumentParser
+from copy import deepcopy
+from typing import Any
 
 
 class TestException(Exception):
@@ -15,15 +15,15 @@ class CoverageUpdateRequired(Exception):
     pass
 
 
-CoverageDict = Dict[str, float]
+CoverageDict = dict[str, float]
 
 
-def truncateFloat(value: float, precision: int) -> Union[float, int]:
-    """
-    round down to the given precision
+def truncate_float(value: float, precision: int) -> float | int:
+    """Round down to the given precision.
+
     i.e.
-        - truncateFloat(99.99, 1) -> 99.9
-        - truncateFloat(23.45, -1) -> 20.0
+        - truncate_float(99.99, 1) -> 99.9
+        - truncate_float(23.45, -1) -> 20.0
     Args:
         value (float): floating point value to be truncated
         precision (int): precision in digits to the right of the decimal
@@ -31,6 +31,7 @@ def truncateFloat(value: float, precision: int) -> Union[float, int]:
     Returns:
         float: floored value
         int: floored value if integer is equivalent for readability
+
     """
     shift = 10**precision
     out = math.floor(value * shift) / shift
@@ -39,9 +40,9 @@ def truncateFloat(value: float, precision: int) -> Union[float, int]:
     return out
 
 
-def generateCoverageReport(run: bool = True) -> str:
-    """
-    run nyc tests, generating a json-summary to get current coverage values
+def generate_coverage_report(run: bool = True) -> str:
+    """Run nyc tests, generating a json-summary to get current coverage values.
+
     Args:
         run (bool, optional): run the tests to get coverage. Defaults to True
 
@@ -50,18 +51,17 @@ def generateCoverageReport(run: bool = True) -> str:
 
     Returns:
         str: path to find coverage json file
+
     """
     env = deepcopy(os.environ)
     env["FAIL_ON_COVERAGE"] = "false"
     if run:
-        error = subprocess.call([
-            "nyc", "--reporter=json-summary", "--reporter=text",
-            "npm", "test"], env=env)
+        error = subprocess.call(
+            ["nyc", "--reporter=json-summary", "--reporter=text", "npm", "test"],
+            env=env,
+        )
     else:
-        error = subprocess.call([
-            "nyc", "--reporter=json-summary",
-            "report"
-        ], env=env)
+        error = subprocess.call(["nyc", "--reporter=json-summary", "report"], env=env)
 
     if error:
         raise TestException("nyc failed, see output above")
@@ -70,15 +70,14 @@ def generateCoverageReport(run: bool = True) -> str:
     return "coverage/coverage-summary.json"
 
 
-def parseCoverageValues(
-    filePath: str = "coverage/coverage-summary.json",
+def parse_coverage_values(
+    file_path: str = "coverage/coverage-summary.json",
     precision: int = 0,
 ) -> CoverageDict:
-    """
-    parse coverage values from nyc report
+    """Parse coverage values from nyc report.
 
     Args:
-        filePath (str, optional): coverage summary json file expected to exist.
+        file_path (str, optional): coverage summary json file expected to exist.
             - Defaults to 'coverage/coverage-summary.json'.
         precision (int, optional): precision in digits right of decimal.
             - Defaults to 0.
@@ -89,72 +88,70 @@ def parseCoverageValues(
 
     Returns:
         CoverageDict: current coverage values according to recent test
-    """
 
-    with open(filePath) as coverageFile:
-        unParsedCoverageDict = json.load(coverageFile)
+    """
+    with open(file_path) as coverage_file:
+        unparsed_coverage_dict = json.load(coverage_file)
 
     return {
-        covType: truncateFloat(
-            unParsedCoverageDict["total"][covType]["pct"],
-            precision
+        cov_type: truncate_float(
+            unparsed_coverage_dict["total"][cov_type]["pct"], precision
         )
-        for covType in ["lines", "branches", "statements", "functions"]
+        for cov_type in ["lines", "branches", "statements", "functions"]
     }
 
 
-def parseCoverageConfigFile(
-    filePath: str = ".nycrc.json",
-) -> Dict[str, Any]:
-    """
-    parse the current nyc configuration json file
+def parse_coverage_config_file(
+    file_path: str = ".nycrc.json",
+) -> dict[str, Any]:
+    """Parse the current nyc configuration json file.
 
     Args:
-        filePath (str, optional): nyc configuration file to parse.
+        file_path (str, optional): nyc configuration file to parse.
             -   Defaults to '.nycrc.json'.
 
     Raises:
         FileNotFoundError: expected json file not found
     Returns:
         Dict[str, Any]: json object nyc configuration
+
     """
-    with open(filePath) as nycFile:
-        config = json.load(nycFile)
+    with open(file_path) as nyc_file:
+        config = json.load(nyc_file)
     return config
 
 
-def updateNYCRCFile(
+def update_nycrc_file(
     coverage: CoverageDict,
-    nycConfigPath: str,
+    nyc_config_path: str,
     grace: int,
 ) -> None:
-    """
-    parse current .nycrc.json file and add/replace coverage values with new
+    """Parse current .nycrc.json file and add/replace coverage values with new.
 
     Args:
         coverage (CoverageDict): dict of coverage values by type
-        nycConfigPath (str): location of nyc config
+        nyc_config_path (str): location of nyc config
         grace (int): grace to give to future nyc tests
+
     """
-    grace_coverage = {key: value - (grace/2) for key, value in coverage.items()}
+    grace_coverage = {key: value - (grace / 2) for key, value in coverage.items()}
     try:
-        current = parseCoverageConfigFile(nycConfigPath)
+        current = parse_coverage_config_file(nyc_config_path)
         config = {**current, **grace_coverage}
     except FileNotFoundError:
         config = coverage
-    with open(nycConfigPath, "w") as nycFile:
-        jsonForm = json.dumps(config, indent=2)
-        nycFile.write(jsonForm)
+    with open(nyc_config_path, "w") as nyc_file:
+        json_form = json.dumps(config, indent=2)
+        nyc_file.write(json_form)
 
 
-def validateCoverageAgainstConfig(
+def validate_coverage_against_config(
     coverage: CoverageDict,
-    configuration: Dict[str, Any],
+    configuration: dict[str, Any],
     grace: int,
 ) -> None:
-    """
-    validate that currently configured coverage minimum is sufficient
-    for current code state
+    """Validate that currently configured coverage minimum is sufficient
+    for current code state.
 
     Args:
         coverage (CoverageDict): current coverage detected by nyc by type
@@ -163,63 +160,65 @@ def validateCoverageAgainstConfig(
 
     Raises:
         CoverageUpdateRequired: coverage thresholding is insufficient
+
     """
-    badCoverages = []
-    for coverageType, coverageValue in coverage.items():
-        if coverageType not in configuration:
+    bad_coverages = []
+    for coverage_type, coverage_value in coverage.items():
+        if coverage_type not in configuration:
             raise CoverageUpdateRequired(
-                f"coverage type {coverageType} not configured at all\n"
+                f"coverage type {coverage_type} not configured at all\n"
                 "set this value appropriately or run 'npm run coverage -- --update'"
             )
-        if coverageValue > (configuration[coverageType] + grace):
-            badCoverages.append(coverageType)
-    if badCoverages:
-        insufficientDict = {type: configuration[type] for type in badCoverages}
+        if coverage_value > (configuration[coverage_type] + grace):
+            bad_coverages.append(coverage_type)
+    if bad_coverages:
+        insufficient_dict = {type: configuration[type] for type in bad_coverages}
         raise CoverageUpdateRequired(
-            f"currently configured coverage {insufficientDict}\n"
+            f"currently configured coverage {insufficient_dict}\n"
             f"is low against current coverage is {coverage}\n"
             "set this configuration appropriately or run\n"
             "'npm run coverage -- --update'"
         )
 
 
-def validateCoverage(
-    precision: int, grace: int, noRerun: bool, nycConfigPath: str
+def validate_coverage(
+    precision: int, grace: int, no_rerun: bool, nyc_config_path: str
 ) -> None:
-    """check coverage and fail if configuration is too low
+    """Check coverage and fail if configuration is too low.
 
     Args:
         precision (int): precision in digits right of decimal.
         grace (int): grace to give to configured coverage values.
-        noRerun (bool): don't rerun the tests, use existing nyc_output.
-        nycConfigPath (str): nyc configuration path.
+        no_rerun (bool): don't rerun the tests, use existing nyc_output.
+        nyc_config_path (str): nyc configuration path.
+
     """
-    reportPath = generateCoverageReport(not noRerun)
-    coverage = parseCoverageValues(reportPath, precision)
-    configuration = parseCoverageConfigFile(nycConfigPath)
-    validateCoverageAgainstConfig(coverage, configuration, grace)
+    report_path = generate_coverage_report(not no_rerun)
+    coverage = parse_coverage_values(report_path, precision)
+    configuration = parse_coverage_config_file(nyc_config_path)
+    validate_coverage_against_config(coverage, configuration, grace)
 
 
-def updateCoverage(
-    precision: int, grace: int, noRerun: bool, nycConfigPath: str
+def update_coverage(
+    precision: int, grace: int, no_rerun: bool, nyc_config_path: str
 ) -> None:
-    """update configured coverage to current values
+    """Update configured coverage to current values.
 
     Args:
         precision (int): precision in digits right of decimal.
         grace (int): grace to give to configured coverage values before failing
-        noRerun (bool): don't rerun the tests, use existing nyc_output
-        nycConfigPath (str): nyc configuration path.
+        no_rerun (bool): don't rerun the tests, use existing nyc_output
+        nyc_config_path (str): nyc configuration path.
+
     """
-    reportPath = generateCoverageReport(not noRerun)
-    coverage = parseCoverageValues(reportPath, precision)
-    updateNYCRCFile(coverage, nycConfigPath, grace)
+    report_path = generate_coverage_report(not no_rerun)
+    coverage = parse_coverage_values(report_path, precision)
+    update_nycrc_file(coverage, nyc_config_path, grace)
 
 
 def main() -> None:
-    """
-    run the current directory's npm test routine and capture current coverage
-    then update the local nyc config to reflect these values
+    """Run the current directory's npm test routine and capture current coverage
+    then update the local nyc config to reflect these values.
     """
     parser = ArgumentParser(
         prog="coverage",
@@ -232,16 +231,14 @@ coverage runs 'nyc npm test' and sets thresholds in the local nyc config
         "--precision",
         type=int,
         default=0,
-        help="precision to use in figures to the right of decimal."
-        "defaults to 0",
+        help="precision to use in figures to the right of decimal.defaults to 0",
     )
     parser.add_argument(
         "-n",
-        "--nycConfigPath",
+        "--nyc_config_path",
         type=str,
         default=".nycrc.json",
-        help="nyc configuration filepath to use."
-        "defaults to .nycrc.json",
+        help="nyc configuration file_path to use.defaults to .nycrc.json",
     )
     parser.add_argument(
         "-g",
@@ -253,7 +250,7 @@ coverage runs 'nyc npm test' and sets thresholds in the local nyc config
         "if updating, set threshold to t-(g/2).",
     )
     parser.add_argument(
-        "--noRerun",
+        "--no_rerun",
         type=bool,
         const=True,
         default=False,
@@ -273,19 +270,19 @@ coverage runs 'nyc npm test' and sets thresholds in the local nyc config
     args = parser.parse_args()
     update: bool = args.update
     if update:
-        updateCoverage(
+        update_coverage(
             args.precision,
             args.grace,
-            args.noRerun,
-            args.nycConfigPath
+            args.no_rerun,
+            args.nyc_config_path,
         )
 
     else:
-        validateCoverage(
+        validate_coverage(
             args.precision,
             args.grace,
-            args.noRerun,
-            args.nycConfigPath
+            args.no_rerun,
+            args.nyc_config_path,
         )
 
 
