@@ -26,6 +26,9 @@ cumulus-lp:
 awisdom:
   bucket: awisdom-internal
 
+cbanh-tf:
+  bucket: cbanh-cumulus-tf-internal
+
 cdd-tf:
   bucket: cdd-test-sandbox-internal
 

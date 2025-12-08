@@ -21,8 +21,8 @@ scripts/test_output/
 *.tfplan
 *.tfstate*
 *backend.tf
-*terraform.tfvars
-*terraform.tf
+*terraform.tfvars*
+*terraform.tf*
 .terraform/
 test-output
 /lambdas/*/lambda.zip

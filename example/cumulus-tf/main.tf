@@ -163,6 +163,7 @@ module "cumulus" {
   archive_api_users = [
     "acyu",
     "awisdom",
+    "cbanh",
     "chuang14",
     "cdurbin",
     "ecarton",

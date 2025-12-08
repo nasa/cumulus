@@ -127,3 +127,20 @@ variable "parameter_group_family_v17" {
   type = string
   default = "aurora-postgresql17"
 }
+
+variable "enabled_cloudwatch_logs_exports" {
+  description = "Set of log types to export to CloudWatch Logs. For Amazon Aurora PostgreSQL, the only valid value is [\"postgresql\"]."
+  type = list(string)
+  default = []
+}
+
+variable "postgresql_log_retention_days" {
+  description = "Log retention period (days) for RDS PostgreSQL logs. Valid values: [0 1 3 5 7 14 30 60 90 120 150 180 365 400 545 731 1096 1827 2192 2557 2922 3288 3653]"
+  type        = number
+  default     = 30
+}
+
+variable "db_log_min_duration_ms" {
+  description = "The threshold (in ms) for logging slow queries in RDS. Default to -1 (disabled)"
+  default     = -1
+}
