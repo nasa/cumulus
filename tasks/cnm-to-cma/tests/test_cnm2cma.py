@@ -1,5 +1,5 @@
 from unittest.mock import patch
-from src.cnm2cma.cnm_to_cma import CNM2CMA
+from cnm_to_cma import CNM2CMA
 import json
 from typing import List
 
