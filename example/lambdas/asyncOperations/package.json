@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-async-operations",
-  "version": "21.0.1",
+  "version": "21.2.0",
   "description": "AsyncOperations Test Lambda",
   "main": "index.js",
   "private": true,
