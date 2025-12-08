@@ -144,11 +144,6 @@ variable "sf_event_sqs_to_db_records_sqs_queue_url" {
   type = string
 }
 
-variable "sf_start_limit" {
-  type    = number
-  default = null
-}
-
 variable "sf_start_rate" {
   type    = number
   default = null

@@ -71,7 +71,4 @@ module "ingest" {
   # workflow config
   workflow_configurations = var.workflow_configurations
 
-  # Throttled Step Function start configuration
-  sf_start_limit = var.sf_start_limit
-  sf_start_rate  = var.sf_start_rate
 }

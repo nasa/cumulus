@@ -10,11 +10,11 @@ resource "aws_cloudwatch_event_target" "background_processing_watcher" {
   target_id = "throttle_lambda_target"
   rule = aws_cloudwatch_event_rule.background_processing_watcher.name
   arn  = aws_lambda_function.sqs2sfThrottle.arn
-  input = jsonencode(merge(
-    {queueUrl  = aws_sqs_queue.background_processing.id},
-    var.sf_start_limit != null ? { messageLimit = var.sf_start_limit } : {}
-    var.sf_start_rate != null ? { rateLimitPerSecond = var.sf_start_rate } : {}
-  ))
+  input = jsonencode({
+    messageLimit = var.sf_start_rate == null ? 500 : var.sf_start_rate
+    queueUrl     = aws_sqs_queue.background_processing.id
+    timeLimit    = 60
+  })
 }
 
 resource "aws_lambda_permission" "background_processing_watcher" {
