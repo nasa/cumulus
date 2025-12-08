@@ -491,11 +491,8 @@ class GranuleFetcher {
     const granulePath = granuleId
       ? crypto.createHash('md5').update(granuleId).digest('hex')
       : '';
-    // Creates a stable prefix to help with S3 performance
-    const partitionedPrefix = `partition-${crypto.randomInt(0, 10)}`;
     const stagingPath = S3.s3Join(
       this.fileStagingDir,
-      partitionedPrefix,
       collectionId,
       granulePath
     );

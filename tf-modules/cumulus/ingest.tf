@@ -70,5 +70,4 @@ module "ingest" {
 
   # workflow config
   workflow_configurations = var.workflow_configurations
-
 }
