@@ -47,7 +47,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     prior to v15 preserve the previous ownership of the public schema.
 - **CUMULUS-4275**
   - Fixed unit tests broken by updated HTTP error messages in got
-
 - **CUMULUS-4325**
   - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
     - Updated `@cumulus/cmrjs` to use Map for guaranteed element ordering in
