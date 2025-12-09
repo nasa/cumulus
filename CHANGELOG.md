@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4387**
   - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
   `pyproject.toml` file.
+- **CUMULUS-4430**
+  - Updated GitHub Actions to run `ruff` linting on PRs.
 
 ### Fixed
 
