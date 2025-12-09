@@ -17,7 +17,8 @@ locals {
         auth_mode                      = "public"
         api_config_secret_id           = aws_secretsmanager_secret_version.api_config.arn
         OAUTH_PROVIDER                 = var.oauth_provider
-        AWS_LAMBDA_EXEC_WRAPPER        = "/opt/otel-instrument"
+        AWS_LAMBDA_EXEC_WRAPPER        = var.enable_otel_tracing ? "/opt/otel-instrument" : ""
+        OTEL_SDK_DISABLED              = var.enable_otel_tracing ? "false" : "true"
   }
   api_secret_env_variables = {
       acquireTimeoutMillis             = var.rds_connection_timing_configuration.acquireTimeoutMillis
@@ -149,9 +150,10 @@ resource "aws_lambda_function" "private_api" {
   timeout          = lookup(var.lambda_timeouts, "PrivateApiLambda", 100)
 
   # Add the OpenTelemetry layer
-  layers = [
+  layers = var.enable_otel_tracing ? [
     "arn:aws:lambda:${data.aws_region.current.name}:615299751070:layer:AWSOpenTelemetryDistroJs:10"
-  ]
+  ] : []
+
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="private"})
   }
@@ -165,9 +167,11 @@ resource "aws_lambda_function" "private_api" {
       security_group_ids =  concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
+
   tracing_config {
-    mode = "Active" # or "PassThrough"
+    mode = var.enable_otel_tracing ? "Active" : "PassThrough"
   }
+
 }
 
 resource "aws_lambda_function" "api" {
@@ -182,9 +186,10 @@ resource "aws_lambda_function" "api" {
   timeout          = lookup(var.lambda_timeouts, "ApiEndpoints", 100)
 
   # Add the OpenTelemetry layer
-  layers = [
+  layers = var.enable_otel_tracing ? [
     "arn:aws:lambda:${data.aws_region.current.name}:615299751070:layer:AWSOpenTelemetryDistroJs:10"
-  ]
+  ] : []
+
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="public"})
   }
@@ -199,6 +204,10 @@ resource "aws_lambda_function" "api" {
       subnet_ids = var.lambda_subnet_ids
       security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
+  }
+
+  tracing_config {
+    mode = var.enable_otel_tracing ? "Active" : "PassThrough"
   }
 }
 
@@ -291,7 +300,7 @@ resource "aws_api_gateway_stage" "api" {
   rest_api_id   = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   stage_name    = var.api_gateway_stage
 
-  xray_tracing_enabled = true
+  xray_tracing_enabled = var.enable_otel_tracing
 
   tags = var.tags
 }
