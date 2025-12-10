@@ -97,6 +97,8 @@ async function incrementAndDispatch(queueUrl, queueMessage) {
  * @param {string} event.queueUrl - AWS SQS url
  * @param {string} event.messageLimit - number of messages to read from SQS for
  *   this execution (default 1)
+ * @param {string} event.timeLimit - how many seconds the lambda function will
+ *   remain active and query the queue (default 240 s)
  * @param {function} dispatchFn - the function to dispatch to process each message
  * @param {number} visibilityTimeout - how many seconds messages received from
  *   the queue will be invisible before they can be read again
@@ -166,8 +168,8 @@ async function handleRateLimitedEvent(event, context, dispatchFn, visibilityTime
  * @returns {Promise} - A promise resolving to how many executions were started
  * @throws {Error}
  */
-function handleThrottledEvent(event, context, visibilityTimeout) {
-  return handleEvent(event, context, incrementAndDispatch, visibilityTimeout);
+function handleThrottledEvent(event, visibilityTimeout) {
+  return handleEvent(event, incrementAndDispatch, visibilityTimeout);
 }
 
 /**
@@ -227,8 +229,8 @@ async function sqs2sfThrottleRateLimitedHandler(event, context) {
  * @returns {Promise} - A promise resolving to how many executions were started
  * @throws {Error}
  */
-async function sqs2sfThrottleHandler(event, context) {
-  return await handleThrottledEvent(event, context);
+async function sqs2sfThrottleHandler(event) {
+  return await handleThrottledEvent(event);
 }
 
 /**
