@@ -34,6 +34,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
 - **CUMULUS-4188**
   - Updated `example/cumulus-tf/orca.tf` to use v10.1.5
+- **CUMULUS-4387**
+  - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
+  `pyproject.toml` file.
 
 ### Fixed
 
