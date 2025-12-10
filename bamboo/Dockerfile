@@ -1,5 +1,5 @@
 ## Dockerfile to create integration/unit test environment
-FROM node:24.10.0-bookworm
+FROM node:22.21.1-bookworm
 RUN apt update &&\
     apt install -y netcat-traditional zip jq rsync zip
 RUN apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev \

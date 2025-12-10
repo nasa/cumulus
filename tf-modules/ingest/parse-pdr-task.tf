@@ -5,7 +5,7 @@ resource "aws_lambda_function" "parse_pdr_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/parse-pdr/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs24.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "ParsePdr", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "ParsePdr", 1024)
 

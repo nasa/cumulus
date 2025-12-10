@@ -46,7 +46,7 @@ resource "aws_lambda_function" "api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/distribution/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_distribution_api_gateway.arn
-  runtime          = "nodejs24.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "DistributionApiEndpoints", 100)
   environment {
     variables = local.api_env_variables

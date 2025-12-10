@@ -6,7 +6,7 @@
     "cumulus-test": "./bin/cli.js"
   },
   "engines": {
-    "node": ">=24.12.0"
+    "node": ">=22.21.1"
   },
   "main": "index.js",
   "publishConfig": {
@@ -17,30 +17,10 @@
     "type": "git",
     "url": "https://github.com/nasa/cumulus"
   },
-  "scripts": {
-    "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
-    "build-docs": "../../node_modules/.bin/jsdoc2md --template README.hbs Collections.js Executions.js Granules.js Providers.js Rules.js > README.md",
-    "clean": "rm -rf dist",
-    "package": "npm run build",
-    "test": "../../node_modules/.bin/ava",
-    "test:ci": "../../scripts/run_package_ci_unit.sh",
-    "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "coverage": "python ../../scripts/coverage_handler/coverage.py"
-  },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.621.0",
-    "@cumulus/api": "21.0.1",
-    "@cumulus/api-client": "21.0.1",
-    "@cumulus/aws-client": "21.0.1",
-    "@cumulus/cmr-client": "21.0.1",
-    "@cumulus/cmrjs": "21.0.1",
-    "@cumulus/common": "21.0.1",
-    "@cumulus/launchpad-auth": "21.0.1",
-    "@cumulus/logger": "21.0.1",
-    "@cumulus/message": "21.0.1",
-    "@cumulus/oauth-client": "21.0.1",
     "base-64": "^0.1.0",
     "commander": "^2.15.0",
     "dotenv": "^8.2.0",
@@ -48,6 +28,7 @@
     "got": "^11.8.5",
     "handlebars": "^4.0.11",
     "js-yaml": "^3.13.1",
+    "js2xmlparser": "^5.0.0",
     "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
@@ -55,7 +36,6 @@
     "p-retry": "^2.0.0",
     "p-wait-for": "^2.0.1",
     "uuid": "^3.2.1",
-    "xml2js": "0.5.0",
-    "js2xmlparser": "^5.0.0"
+    "xml2js": "0.5.0"
   }
 }

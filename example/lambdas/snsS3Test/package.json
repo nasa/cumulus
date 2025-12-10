@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": true,
   "engines": {
-    "node": ">=24.12.0"
+    "node": ">=22.21.1"
   },
   "scripts": {
     "package": "rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js node_modules",

@@ -5,7 +5,7 @@
   "presets": [
     ["@babel/preset-env", {
       "targets": {
-        "node": "24.12.0"
+        "node": "22.21.1"
       }
     }]
   ],

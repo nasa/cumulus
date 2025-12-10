@@ -3,7 +3,7 @@
   "version": "21.0.1",
   "description": "Replicate S3 Events to alternate bucket. Solves same-region replication.",
   "engines": {
-    "node": ">=24.12.0"
+    "node": ">=22.21.1"
   },
   "main": "./dist/lambda/index.js",
   "scripts": {

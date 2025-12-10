@@ -5,7 +5,7 @@
   "description": "example project libs",
   "homepage": "https://github.com/nasa/cumulus/tree/master/example/scripts/lib",
   "engines": {
-    "node": ">=24.12.0"
+    "node": ">=22.21.1"
   },
   "repository": {
     "type": "git",
