@@ -37,11 +37,11 @@ export class ConsumerRateLimited {
     this.deleteProcessedMessage = deleteProcessedMessage;
     this.rateLimitPerSecond = rateLimitPerSecond;
     // The amount of time to stop processing messages before Lambda times out
-    this.timeBuffer = 5000;
+    this.timeBuffer = 1000;
     // The maximum number of messages to fetch in one request per queue
     this.messageLimitPerFetch = 10;
     // The amount of time to wait before retrying to fetch messages when none are found
-    this.waitTime = 1000;
+    this.waitTime = 5000;
   }
 
   private async processMessage(
@@ -74,7 +74,7 @@ export class ConsumerRateLimited {
     let counter = 0;
     for (const [message, queueUrl] of messagesWithQueueUrls) {
       const waitTime = 1000/this.rateLimitPerSecond;
-      log.info(`Waiting for ${waitTime} ms`);
+      log.debug(`Waiting for ${waitTime} ms`);
       await new Promise((resolve) => setTimeout(resolve, waitTime));
       const result = await this.processMessage(message, fn, queueUrl);
       counter += result;
@@ -101,7 +101,7 @@ export class ConsumerRateLimited {
       this.queueUrls.map(queueUrl => this.fetchMessages(queueUrl, this.messageLimitPerFetch))
     ).then((messageArrays) => messageArrays.flat());
 
-    while (this.timeRemainingFunc() < this.timeBuffer) {
+    while (this.timeRemainingFunc() > this.timeBuffer) {
       if (messages.length === 0) {
         log.info(`No messages fetched, waiting ${this.waitTime} ms before retrying`);
         await new Promise((resolve) => setTimeout(resolve, this.waitTime));

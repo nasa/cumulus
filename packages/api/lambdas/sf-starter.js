@@ -46,7 +46,7 @@ async function dispatch(queueUrl, message) {
     input.cumulus_meta.state_machine,
     input.cumulus_meta.execution_name
   );
-  logger.info(`Starting execution ARN ${executionArn} from queue ${queueUrl}`);
+  logger.debug(`Starting execution ARN ${executionArn} from queue ${queueUrl}`);
 
   return await sfn().startExecution({
     stateMachineArn: input.cumulus_meta.state_machine,
@@ -103,14 +103,9 @@ async function incrementAndDispatch(queueUrl, queueMessage) {
  * @returns {Promise} - A promise resolving to how many executions were started
  * @throws {Error}
  */
-async function handleEvent(event, context, dispatchFn, visibilityTimeout) {
-  const rateLimitPerSecond = get(event, 'rateLimitPerSecond', 40);
-  // defaultMessageLimit is the upper limit of messages that can be processed
-  // in the time remaining for the lambda to run at the given rateLimitPerSecond
-  const defaultMessageLimit = Math.floor((context.getRemainingTimeInMillis() / 1000) * rateLimitPerSecond);
-  const messageLimit = get(event, 'messageLimit', defaultMessageLimit);
-  logger.info(`Setting messageLimit to ${messageLimit}`);
-  logger.info(`Starting processing for queue ${event.queueUrl}`)
+async function handleEvent(event, dispatchFn, visibilityTimeout) {
+  const messageLimit = event.messageLimit || 1;
+  const timeLimit = get(event, 'timeLimit', 240);
 
   if (!event.queueUrl) {
     throw new Error('queueUrl is missing');
@@ -119,9 +114,8 @@ async function handleEvent(event, context, dispatchFn, visibilityTimeout) {
   const consumer = new Consumer({
     queueUrl: event.queueUrl,
     messageLimit,
-    timeRemainingFunc: context.getRemainingTimeInMillis,
+    timeLimit,
     visibilityTimeout,
-    rateLimitPerSecond,
   });
   return await consumer.consume(dispatchFn);
 }
