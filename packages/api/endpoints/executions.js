@@ -9,6 +9,10 @@ const isError = require('lodash/isError');
 
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
+
+// Import OpenTelemetry
+const { trace } = require('@opentelemetry/api');
+
 const {
   getKnexClient,
   getApiGranuleExecutionCumulusIds,
@@ -31,6 +35,9 @@ const { writeExecutionRecordFromApi } = require('../lib/writeRecords/write-execu
 const { validateGranuleExecutionRequest, getFunctionNameFromRequestContext } = require('../lib/request');
 
 const log = new Logger({ sender: '@cumulus/api/executions' });
+
+// Get the tracer
+const tracer = trace.getTracer('cumulus-api-executions');
 
 const BulkExecutionDeletePayloadSchema = z.object({
   esBatchSize: z.union([
@@ -67,39 +74,64 @@ const parseBulkDeletePayload = zodParser('Bulk Execution Delete Payload', BulkEx
  * @returns {Promise<Object>} the promise of express response object
  */
 async function create(req, res) {
-  const {
-    executionPgModel = new ExecutionPgModel(),
-    knex = await getKnexClient(),
-  } = req.testContext || {};
+  return tracer.startActiveSpan('executions.create', async (span) => {
+    try {
+      const {
+        executionPgModel = new ExecutionPgModel(),
+        knex = await getKnexClient(),
+      } = req.testContext || {};
 
-  const execution = req.body || {};
-  const { arn } = execution;
+      const execution = req.body || {};
+      const { arn } = execution;
 
-  if (!arn) {
-    return res.boom.badRequest('Field arn is missing');
-  }
+      span.setAttribute('execution.arn', arn);
 
-  if (await executionPgModel.exists(knex, { arn })) {
-    return res.boom.conflict(`A record already exists for ${arn}`);
-  }
+      if (!arn) {
+        span.setAttribute('execution.missing_arn', true);
+        return res.boom.badRequest('Field arn is missing');
+      }
 
-  execution.createdAt = Date.now();
-  try {
-    await writeExecutionRecordFromApi({
-      record: execution,
-      knex,
-    });
+      if (await executionPgModel.exists(knex, { arn })) {
+        span.setAttribute('execution.already_exists', true);
+        return res.boom.conflict(`A record already exists for ${arn}`);
+      }
 
-    return res.send({
-      message: `Successfully wrote execution with arn ${arn}`,
-    });
-  } catch (error) {
-    log.error('Error occurred while trying to create execution:', error);
-    if (isBadRequestError(error) || error instanceof RecordDoesNotExist) {
-      return res.boom.badRequest(error.message);
+      execution.createdAt = Date.now();
+
+      span.setAttribute('execution.status', execution.status);
+      span.setAttribute('execution.workflow', execution.name);
+
+      try {
+        await tracer.startActiveSpan('writeExecutionRecordFromApi', async (writeSpan) => {
+          try {
+            await writeExecutionRecordFromApi({
+              record: execution,
+              knex,
+            });
+          } finally {
+            writeSpan.end();
+          }
+        });
+
+        return res.send({
+          message: `Successfully wrote execution with arn ${arn}`,
+        });
+      } catch (error) {
+        log.error('Error occurred while trying to create execution:', error);
+        if (isBadRequestError(error) || error instanceof RecordDoesNotExist) {
+          span.setAttribute('execution.validation_error', true);
+          span.recordException(error);
+          span.setAttribute('error', true);
+          return res.boom.badRequest(error.message);
+        }
+        span.recordException(error);
+        span.setAttribute('error', true);
+        return res.boom.badImplementation(error.message);
+      }
+    } finally {
+      span.end();
     }
-    return res.boom.badImplementation(error.message);
-  }
+  });
 }
 
 /**
@@ -110,44 +142,75 @@ async function create(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function update(req, res) {
-  const arn = req.params.arn;
-  const execution = req.body || {};
+  return tracer.startActiveSpan('executions.update', async (span) => {
+    try {
+      const arn = req.params.arn;
+      const execution = req.body || {};
 
-  if (arn !== execution.arn) {
-    return res.boom.badRequest(`Expected execution arn to be '${arn}',`
-      + ` but found '${execution.arn}' in payload`);
-  }
+      span.setAttribute('execution.arn', arn);
 
-  const {
-    executionPgModel = new ExecutionPgModel(),
-    knex = await getKnexClient(),
-  } = req.testContext || {};
+      if (arn !== execution.arn) {
+        span.setAttribute('execution.arn_mismatch', true);
+        return res.boom.badRequest(`Expected execution arn to be '${arn}',`
+          + ` but found '${execution.arn}' in payload`);
+      }
 
-  let oldPgRecord;
-  try {
-    oldPgRecord = await executionPgModel.get(knex, { arn });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
+      const {
+        executionPgModel = new ExecutionPgModel(),
+        knex = await getKnexClient(),
+      } = req.testContext || {};
+
+      let oldPgRecord;
+      try {
+        oldPgRecord = await tracer.startActiveSpan('executionPgModel.get', async (dbSpan) => {
+          try {
+            return await executionPgModel.get(knex, { arn });
+          } finally {
+            dbSpan.end();
+          }
+        });
+      } catch (error) {
+        if (!(error instanceof RecordDoesNotExist)) {
+          throw error;
+        }
+        span.setAttribute('execution.not_found', true);
+        return res.boom.notFound(`Execution '${arn}' not found`);
+      }
+
+      execution.updatedAt = Date.now();
+      execution.createdAt = oldPgRecord.created_at.getTime();
+
+      span.setAttribute('execution.status', execution.status);
+      span.setAttribute('execution.workflow', execution.name);
+
+      try {
+        await tracer.startActiveSpan('writeExecutionRecordFromApi', async (writeSpan) => {
+          try {
+            await writeExecutionRecordFromApi({ record: execution, knex });
+          } finally {
+            writeSpan.end();
+          }
+        });
+
+        return res.send({
+          message: `Successfully updated execution with arn ${arn}`,
+        });
+      } catch (error) {
+        log.error('Error occurred while trying to update execution:', error);
+        if (isBadRequestError(error) || error instanceof RecordDoesNotExist) {
+          span.setAttribute('execution.validation_error', true);
+          span.recordException(error);
+          span.setAttribute('error', true);
+          return res.boom.badRequest(error.message);
+        }
+        span.recordException(error);
+        span.setAttribute('error', true);
+        return res.boom.badImplementation(error.message);
+      }
+    } finally {
+      span.end();
     }
-    return res.boom.notFound(`Execution '${arn}' not found`);
-  }
-  execution.updatedAt = Date.now();
-  execution.createdAt = oldPgRecord.created_at.getTime();
-
-  try {
-    await writeExecutionRecordFromApi({ record: execution, knex });
-
-    return res.send({
-      message: `Successfully updated execution with arn ${arn}`,
-    });
-  } catch (error) {
-    log.error('Error occurred while trying to update execution:', error);
-    if (isBadRequestError(error) || error instanceof RecordDoesNotExist) {
-      return res.boom.badRequest(error.message);
-    }
-    return res.boom.badImplementation(error.message);
-  }
+  });
 }
 
 /**
@@ -158,10 +221,27 @@ async function update(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  log.debug(`list query ${JSON.stringify(req.query)}`);
-  const search = new ExecutionSearch({ queryStringParameters: req.query });
-  const response = await search.query();
-  return res.send(response);
+  return tracer.startActiveSpan('executions.list', async (span) => {
+    try {
+      span.setAttribute('executions.has_query_params', Object.keys(req.query).length > 0);
+
+      log.debug(`list query ${JSON.stringify(req.query)}`);
+
+      const search = new ExecutionSearch({ queryStringParameters: req.query });
+      const response = await search.query();
+
+      span.setAttribute('executions.result_count', response?.meta?.count || 0);
+      span.setAttribute('executions.results_returned', response?.results?.length || 0);
+
+      return res.send(response);
+    } catch (error) {
+      span.recordException(error);
+      span.setAttribute('error', true);
+      throw error;
+    } finally {
+      span.end();
+    }
+  });
 }
 
 /**
@@ -172,21 +252,54 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
-  const arn = req.params.arn;
-  const knex = await getKnexClient({ env: process.env });
-  const executionPgModel = new ExecutionPgModel();
-  let executionRecord;
-  try {
-    executionRecord = await executionPgModel.get(knex, { arn });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
-    }
-    throw error;
-  }
+  return tracer.startActiveSpan('executions.get', async (span) => {
+    try {
+      const arn = req.params.arn;
 
-  const translatedRecord = await translatePostgresExecutionToApiExecution(executionRecord, knex);
-  return res.send(translatedRecord);
+      span.setAttribute('execution.arn', arn);
+
+      const knex = await getKnexClient({ env: process.env });
+      const executionPgModel = new ExecutionPgModel();
+
+      let executionRecord;
+      try {
+        executionRecord = await tracer.startActiveSpan('executionPgModel.get', async (dbSpan) => {
+          try {
+            return await executionPgModel.get(knex, { arn });
+          } finally {
+            dbSpan.end();
+          }
+        });
+      } catch (error) {
+        if (error instanceof RecordDoesNotExist) {
+          span.setAttribute('execution.not_found', true);
+          return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
+        }
+        throw error;
+      }
+
+      const translatedRecord = await tracer.startActiveSpan('translatePostgresExecutionToApiExecution', async (translateSpan) => {
+        try {
+          return await translatePostgresExecutionToApiExecution(executionRecord, knex);
+        } finally {
+          translateSpan.end();
+        }
+      });
+
+      span.setAttribute('execution.status', translatedRecord.status);
+      span.setAttribute('execution.workflow', translatedRecord.name);
+      span.setAttribute('execution.has_collection', !!translatedRecord.collectionId);
+      span.setAttribute('execution.has_parent', !!translatedRecord.parentArn);
+
+      return res.send(translatedRecord);
+    } catch (error) {
+      span.recordException(error);
+      span.setAttribute('error', true);
+      throw error;
+    } finally {
+      span.end();
+    }
+  });
 }
 
 /**
@@ -199,26 +312,51 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
-  const {
-    executionPgModel = new ExecutionPgModel(),
-    knex = await getKnexClient(),
-  } = req.testContext || {};
+  return tracer.startActiveSpan('executions.del', async (span) => {
+    try {
+      const {
+        executionPgModel = new ExecutionPgModel(),
+        knex = await getKnexClient(),
+      } = req.testContext || {};
 
-  const { arn } = req.params;
+      const { arn } = req.params;
 
-  try {
-    await executionPgModel.get(knex, { arn });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      log.info('Execution does not exist in PostgreSQL');
-      return res.boom.notFound('No record found');
+      span.setAttribute('execution.arn', arn);
+
+      try {
+        await tracer.startActiveSpan('executionPgModel.get', async (dbSpan) => {
+          try {
+            await executionPgModel.get(knex, { arn });
+          } finally {
+            dbSpan.end();
+          }
+        });
+      } catch (error) {
+        if (error instanceof RecordDoesNotExist) {
+          log.info('Execution does not exist in PostgreSQL');
+          span.setAttribute('execution.not_found', true);
+          return res.boom.notFound('No record found');
+        }
+        throw error;
+      }
+
+      await tracer.startActiveSpan('executionPgModel.delete', async (deleteSpan) => {
+        try {
+          await executionPgModel.delete(knex, { arn });
+        } finally {
+          deleteSpan.end();
+        }
+      });
+
+      return res.send({ message: 'Record deleted' });
+    } catch (error) {
+      span.recordException(error);
+      span.setAttribute('error', true);
+      throw error;
+    } finally {
+      span.end();
     }
-    throw error;
-  }
-
-  await executionPgModel.delete(knex, { arn });
-
-  return res.send({ message: 'Record deleted' });
+  });
 }
 
 /**
@@ -229,31 +367,78 @@ async function del(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function searchByGranules(req, res) {
-  const payload = req.body;
-  const knex = await getKnexClient();
-  const granules = await getGranulesForPayload(payload);
-  const { page = 1, limit = 1, ...sortParams } = req.query;
+  return tracer.startActiveSpan('executions.searchByGranules', async (span) => {
+    try {
+      const payload = req.body;
+      const knex = await getKnexClient();
 
-  const offset = page < 1 ? 0 : (page - 1) * limit;
+      const granules = await tracer.startActiveSpan('getGranulesForPayload', async (granulesSpan) => {
+        try {
+          granulesSpan.setAttribute('payload.has_ids', !!payload.ids);
+          granulesSpan.setAttribute('payload.has_query', !!payload.query);
+          return await getGranulesForPayload(payload);
+        } finally {
+          granulesSpan.end();
+        }
+      });
 
-  const executionPgModel = new ExecutionPgModel();
+      span.setAttribute('executions.granules_count', granules.length);
 
-  const executionCumulusIds = await getApiGranuleExecutionCumulusIds(knex, granules);
+      const { page = 1, limit = 1, ...sortParams } = req.query;
+      const offset = page < 1 ? 0 : (page - 1) * limit;
 
-  const executions = await executionPgModel
-    .searchByCumulusIds(knex, executionCumulusIds, { limit, offset, ...sortParams });
+      span.setAttribute('executions.page', page);
+      span.setAttribute('executions.limit', limit);
+      span.setAttribute('executions.offset', offset);
 
-  const apiExecutions = await Promise.all(executions
-    .map((execution) => translatePostgresExecutionToApiExecution(execution, knex)));
+      const executionPgModel = new ExecutionPgModel();
 
-  const response = {
-    meta: {
-      count: apiExecutions.length,
-    },
-    results: apiExecutions,
-  };
+      const executionCumulusIds = await tracer.startActiveSpan('getApiGranuleExecutionCumulusIds', async (idsSpan) => {
+        try {
+          return await getApiGranuleExecutionCumulusIds(knex, granules);
+        } finally {
+          idsSpan.end();
+        }
+      });
 
-  return res.send(response);
+      span.setAttribute('executions.execution_ids_count', executionCumulusIds.length);
+
+      const executions = await tracer.startActiveSpan('executionPgModel.searchByCumulusIds', async (searchSpan) => {
+        try {
+          return await executionPgModel
+            .searchByCumulusIds(knex, executionCumulusIds, { limit, offset, ...sortParams });
+        } finally {
+          searchSpan.end();
+        }
+      });
+
+      const apiExecutions = await tracer.startActiveSpan('translateExecutions', async (translateSpan) => {
+        try {
+          return await Promise.all(executions
+            .map((execution) => translatePostgresExecutionToApiExecution(execution, knex)));
+        } finally {
+          translateSpan.end();
+        }
+      });
+
+      span.setAttribute('executions.results_returned', apiExecutions.length);
+
+      const response = {
+        meta: {
+          count: apiExecutions.length,
+        },
+        results: apiExecutions,
+      };
+
+      return res.send(response);
+    } catch (error) {
+      span.recordException(error);
+      span.setAttribute('error', true);
+      throw error;
+    } finally {
+      span.end();
+    }
+  });
 }
 
 /**
@@ -264,15 +449,52 @@ async function searchByGranules(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function workflowsByGranules(req, res) {
-  const payload = req.body;
-  const knex = await getKnexClient();
-  const granules = await getGranulesForPayload(payload);
+  return tracer.startActiveSpan('executions.workflowsByGranules', async (span) => {
+    try {
+      const payload = req.body;
+      const knex = await getKnexClient();
 
-  const granuleCumulusIds = await getApiGranuleCumulusIds(knex, granules);
+      const granules = await tracer.startActiveSpan('getGranulesForPayload', async (granulesSpan) => {
+        try {
+          granulesSpan.setAttribute('payload.has_ids', !!payload.ids);
+          granulesSpan.setAttribute('payload.has_query', !!payload.query);
+          return await getGranulesForPayload(payload);
+        } finally {
+          granulesSpan.end();
+        }
+      });
 
-  const workflowNames = await getWorkflowNameIntersectFromGranuleIds(knex, granuleCumulusIds);
+      span.setAttribute('executions.granules_count', granules.length);
 
-  return res.send(workflowNames);
+      const granuleCumulusIds = await tracer.startActiveSpan('getApiGranuleCumulusIds', async (idsSpan) => {
+        try {
+          return await getApiGranuleCumulusIds(knex, granules);
+        } finally {
+          idsSpan.end();
+        }
+      });
+
+      span.setAttribute('executions.granule_ids_count', granuleCumulusIds.length);
+
+      const workflowNames = await tracer.startActiveSpan('getWorkflowNameIntersectFromGranuleIds', async (workflowSpan) => {
+        try {
+          return await getWorkflowNameIntersectFromGranuleIds(knex, granuleCumulusIds);
+        } finally {
+          workflowSpan.end();
+        }
+      });
+
+      span.setAttribute('executions.workflow_names_count', workflowNames.length);
+
+      return res.send(workflowNames);
+    } catch (error) {
+      span.recordException(error);
+      span.setAttribute('error', true);
+      throw error;
+    } finally {
+      span.end();
+    }
+  });
 }
 
 /**
@@ -293,67 +515,100 @@ async function workflowsByGranules(req, res) {
  * @param {Object} res - The response object.
  */
 async function bulkDeleteExecutionsByCollection(req, res) {
-  const invokeStartAsyncOperationLambda =
-    req?.testObject?.invokeStartAsyncOperationLambda ||
-    startAsyncOperation.invokeStartAsyncOperationLambda;
-  const payload = parseBulkDeletePayload(req.body);
-  if (isError(payload)) {
-    return returnCustomValidationErrors(res, payload);
-  }
+  return tracer.startActiveSpan('executions.bulkDeleteExecutionsByCollection', async (span) => {
+    try {
+      const invokeStartAsyncOperationLambda =
+        req?.testObject?.invokeStartAsyncOperationLambda ||
+        startAsyncOperation.invokeStartAsyncOperationLambda;
 
-  const dbBatchSize = payload.dbBatchSize || 10000;
-  const collectionId = req.body.collectionId;
-  const collectionPgModel = new CollectionPgModel();
+      const payload = parseBulkDeletePayload(req.body);
+      if (isError(payload)) {
+        span.setAttribute('execution.validation_error', true);
+        return returnCustomValidationErrors(res, payload);
+      }
 
-  if (!collectionId) {
-    res.boom.badRequest('Execution update must include a valid CollectionId');
-  }
-  try {
-    log.info(`Collection ID Is ${collectionId}`);
-    const knex = await getKnexClient();
-    await collectionPgModel.get(
-      knex,
-      deconstructCollectionId(collectionId)
-    );
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      log.error(
-        `collectionId ${collectionId} does not exist, cannot delete exeuctions`
+      const dbBatchSize = payload.dbBatchSize || 10000;
+      const collectionId = req.body.collectionId;
+      const collectionPgModel = new CollectionPgModel();
+
+      span.setAttribute('execution.collection_id', collectionId);
+      span.setAttribute('execution.db_batch_size', dbBatchSize);
+      span.setAttribute('execution.knex_debug', payload.knexDebug || false);
+
+      if (!collectionId) {
+        span.setAttribute('execution.missing_collection_id', true);
+        res.boom.badRequest('Execution update must include a valid CollectionId');
+      }
+
+      try {
+        log.info(`Collection ID Is ${collectionId}`);
+        const knex = await getKnexClient();
+        await tracer.startActiveSpan('collectionPgModel.get', async (dbSpan) => {
+          try {
+            await collectionPgModel.get(
+              knex,
+              deconstructCollectionId(collectionId)
+            );
+          } finally {
+            dbSpan.end();
+          }
+        });
+      } catch (error) {
+        if (error instanceof RecordDoesNotExist) {
+          log.error(
+            `collectionId ${collectionId} does not exist, cannot delete exeuctions`
+          );
+          span.setAttribute('execution.collection_not_found', true);
+          span.recordException(error);
+          span.setAttribute('error', true);
+          res.boom.badRequest(
+            `collectionId ${collectionId} is invalid`
+          );
+        } else {
+          span.recordException(error);
+          span.setAttribute('error', true);
+          res.boom.badRequest(error.message);
+        }
+      }
+
+      const asyncOperationId = uuidv4();
+      span.setAttribute('execution.async_operation_id', asyncOperationId);
+
+      const asyncOperationEvent = {
+        asyncOperationId,
+        cluster: process.env.EcsCluster,
+        callerLambdaName: getFunctionNameFromRequestContext(req),
+        lambdaName: process.env.BulkOperationLambda,
+        description: 'Bulk Execution Deletion by CollectionId',
+        operationType: 'Bulk Execution Delete',
+        payload: {
+          type: 'BULK_EXECUTION_DELETE',
+          payload: { ...payload, dbBatchSize, collectionId },
+          envVars: {
+            KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
+            stackName: process.env.stackName,
+            system_bucket: process.env.system_bucket,
+          },
+        },
+      };
+
+      log.debug(
+        `About to invoke lambda to start async operation ${asyncOperationId}`
       );
-      res.boom.badRequest(
-        `collectionId ${collectionId} is invalid`
-      );
-    } else {
-      res.boom.badRequest(error.message);
+
+      await tracer.startActiveSpan('invokeStartAsyncOperationLambda', async (lambdaSpan) => {
+        try {
+          await invokeStartAsyncOperationLambda(asyncOperationEvent);
+        } finally {
+          lambdaSpan.end();
+        }
+      });
+
+      return res.status(202).send({ id: asyncOperationId });
+    } finally {
+      span.end();
     }
-  }
-
-  const asyncOperationId = uuidv4();
-  const asyncOperationEvent = {
-    asyncOperationId,
-    cluster: process.env.EcsCluster,
-    callerLambdaName: getFunctionNameFromRequestContext(req),
-    lambdaName: process.env.BulkOperationLambda,
-    description: 'Bulk Execution Deletion by CollectionId',
-    operationType: 'Bulk Execution Delete',
-    payload: {
-      type: 'BULK_EXECUTION_DELETE',
-      payload: { ...payload, dbBatchSize, collectionId },
-      envVars: {
-        KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
-        stackName: process.env.stackName,
-        system_bucket: process.env.system_bucket,
-      },
-    },
-  };
-
-  log.debug(
-    `About to invoke lambda to start async operation ${asyncOperationId}`
-  );
-  await invokeStartAsyncOperationLambda(
-    asyncOperationEvent
-  );
-  return res.status(202).send({ id: asyncOperationId });
+  });
 }
 
 const bulkArchiveExecutionsSchema = z.object({
@@ -362,35 +617,57 @@ const bulkArchiveExecutionsSchema = z.object({
   expirationDays: z.number().optional().default(365),
 });
 const parseBulkArchiveExecutionsPayload = zodParser('bulkChangeCollection payload', bulkArchiveExecutionsSchema);
+
 /**
  * Start an AsyncOperation that will archive a set of executions in ecs
  */
 async function bulkArchiveExecutions(req, res) {
-  const payload = parseBulkArchiveExecutionsPayload(req.body);
-  if (isError(payload)) {
-    return returnCustomValidationErrors(res, payload);
-  }
-  const asyncOperationId = uuidv4();
-  const asyncOperationEvent = {
-    asyncOperationId,
-    callerLambdaName: getFunctionNameFromRequestContext(req),
-    lambdaName: process.env.ArchiveRecordsLambda,
-    description: 'Launches an ecs task to archive a batch of executions',
-    operationType: 'Bulk Execution Archive',
-    payload: {
-      config: {
-        ...payload,
-        recordType: 'execution',
-      },
-    },
-  };
-  log.debug(
-    `About to invoke lambda to start async operation ${asyncOperationId}`
-  );
-  await startAsyncOperation.invokeStartAsyncOperationLambda(
-    asyncOperationEvent
-  );
-  return res.status(202).send({ id: asyncOperationId });
+  return tracer.startActiveSpan('executions.bulkArchiveExecutions', async (span) => {
+    try {
+      const payload = parseBulkArchiveExecutionsPayload(req.body);
+      if (isError(payload)) {
+        span.setAttribute('execution.validation_error', true);
+        return returnCustomValidationErrors(res, payload);
+      }
+
+      span.setAttribute('execution.update_limit', payload.updateLimit);
+      span.setAttribute('execution.batch_size', payload.batchSize);
+      span.setAttribute('execution.expiration_days', payload.expirationDays);
+
+      const asyncOperationId = uuidv4();
+      span.setAttribute('execution.async_operation_id', asyncOperationId);
+
+      const asyncOperationEvent = {
+        asyncOperationId,
+        callerLambdaName: getFunctionNameFromRequestContext(req),
+        lambdaName: process.env.ArchiveRecordsLambda,
+        description: 'Launches an ecs task to archive a batch of executions',
+        operationType: 'Bulk Execution Archive',
+        payload: {
+          config: {
+            ...payload,
+            recordType: 'execution',
+          },
+        },
+      };
+
+      log.debug(
+        `About to invoke lambda to start async operation ${asyncOperationId}`
+      );
+
+      await tracer.startActiveSpan('invokeStartAsyncOperationLambda', async (lambdaSpan) => {
+        try {
+          await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
+        } finally {
+          lambdaSpan.end();
+        }
+      });
+
+      return res.status(202).send({ id: asyncOperationId });
+    } finally {
+      span.end();
+    }
+  });
 }
 
 router.post('/bulkArchive', bulkArchiveExecutions);

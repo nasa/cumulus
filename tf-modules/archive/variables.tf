@@ -403,5 +403,3 @@ variable "enable_otel_tracing" {
   type        = bool
   default     = false
 }
-
-
