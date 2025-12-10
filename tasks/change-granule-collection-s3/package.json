@@ -14,7 +14,7 @@
     "directory": "tasks/change-granule-collection-s3"
   },
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=24.12.0"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && npm run prepare && npm run package",

@@ -5,7 +5,7 @@ resource "aws_lambda_function" "orca_copy_to_archive_adapter_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/orca-copy-to-archive-adapter/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs24.x"
   timeout          = lookup(var.lambda_timeouts, "OrcaCopyToArchiveAdapter", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "OrcaCopyToArchiveAdapter", 512)
 

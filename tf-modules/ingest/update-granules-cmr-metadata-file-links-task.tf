@@ -4,7 +4,7 @@ resource "aws_lambda_function" "update_granules_cmr_metadata_file_links_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/update-granules-cmr-metadata-file-links/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs24.x"
   timeout          = lookup(var.lambda_timeouts, "UpdateGranulesCmrMetadataFileLinks", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "UpdateGranulesCmrMetadataFileLinks", 1024)
 

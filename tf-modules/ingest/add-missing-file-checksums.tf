@@ -4,7 +4,7 @@ resource "aws_lambda_function" "add_missing_file_checksums_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/add-missing-file-checksums/dist/webpack/lambda.zip")
   handler          = "index.cmaHandler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs24.x"
   timeout          = lookup(var.lambda_timeouts, "AddMissingFileChecksums", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "AddMissingFileChecksums", 512)
 
