@@ -31,3 +31,5 @@ buckets = {
 }
 system_bucket = "opex-nsidc-cumulus-internal"
 api_reserved_concurrency = 14
+archive_api_url = "https://d3cuh567loctll.cloudfront.net/"
+cumulus_distribution_url = "https://djidssf1tx775.cloudfront.net/"
