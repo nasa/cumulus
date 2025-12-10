@@ -1,17 +1,25 @@
-import boto3
+"""Task for archiving PDRs."""
+
 import json
 import logging
 import os
 from datetime import datetime
+
+import boto3
+from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = CumulusLogger('pdr-cleanup', logging.INFO)
 
-"""
-Handler to archive PDRs
-"""
-def cleanup_pdr(event, context):
+def cleanup_pdr(event: dict, context: dict):
+    """Task to archive PDRs.
+
+    Args:
+        event (dict): A lambda event object
+        context (dict): An AWS Lambda context
+
+    """
+
     logger.info('## EVENT OBJ \n' + json.dumps(event))
 
     provider = event['config']['provider']
@@ -26,10 +34,15 @@ def cleanup_pdr(event, context):
             f"Ingest Granule workflow failure count: {len(event['input']['failed'])}")
     return event['input']
 
-"""
-Move PDR to location <provider.host>/<PDRs>/
-"""
 def move_pdr(provider: dict, pdr: dict):
+    """Move PDR to location <provider.host>/<PDRs>/ .
+
+    Args:
+        provider (dict): Provider information
+        pdr (dict): PDR information
+
+    """
+
     curr_date = datetime.now().strftime('%Y.%m.%d')
     src_path = os.path.join(pdr['path'], pdr['name'])
     dest_path = os.path.join('PDRs', pdr['path'], curr_date, pdr['name'])
@@ -41,9 +54,13 @@ def move_pdr(provider: dict, pdr: dict):
             Bucket=provider['host'],
             Key=dest_path
         )
-        logger.info(f'COPIED FROM {provider["host"]}/{src_path} TO {provider["host"]}/{dest_path}')
-    except Exception as err:
-        logger.error(f'FAILED TO COPY FROM {provider["host"]}/{src_path} TO {provider["host"]}/{dest_path}')
+        logger.info(
+            f'COPIED FROM {provider["host"]}/{src_path} '
+            f'TO {provider["host"]}/{dest_path}')
+    except Exception:
+        logger.error(
+            f'FAILED TO COPY FROM {provider["host"]}/{src_path} '
+            f'TO {provider["host"]}/{dest_path}')
         raise
 
     try:
@@ -53,5 +70,16 @@ def move_pdr(provider: dict, pdr: dict):
         logger.error(err)
         raise
 
-def handler(event, context):
+def handler(event: dict, context: dict):
+    """Lambda handler that runs the task through CMA.
+
+    Args:
+        event (dict): A Cumulus Message
+        context (dict): An AWS Lambda context
+
+    Returns:
+        Returns output from task.
+
+    """
+
     return run_cumulus_task(cleanup_pdr, event, context)
