@@ -4,7 +4,7 @@
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
-    "node": ">=22.21.1"
+    "node": ">=24.12.0"
   },
   "scripts": {
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",

@@ -13,7 +13,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=22.21.1"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "build": "../../node_modules/.bin/webpack",

@@ -27,7 +27,7 @@
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "engines": {
-    "node": ">=22.21.1"
+    "node": ">=24.12.0"
   },
   "ava": {
     "timeout": "15m",

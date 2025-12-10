@@ -14,7 +14,7 @@
     "directory": "tasks/add-unique-granule-id"
   },
   "engines": {
-    "node": ">=22.21.1"
+    "node": ">=24.12.0"
   },
   "scripts": {
     "clean": "rm -rf dist",
