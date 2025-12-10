@@ -4,7 +4,7 @@ resource "aws_lambda_function" "send_pan_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/send-pan/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "SendPan", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "SendPan", 512)
 
