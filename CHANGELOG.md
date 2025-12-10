@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `pyproject.toml` file.
 - **CUMULUS-4430**
   - Updated GitHub Actions to run `ruff` linting on PRs.
+  - Updated GitHub Actions to run `eslint`, `markdownlint`, and `npm-package-json-lint` on PRs.
 
 ### Fixed
 
