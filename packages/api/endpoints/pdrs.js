@@ -25,12 +25,12 @@ const tracer = trace.getTracer('cumulus-api-pdrs');
 /**
  * List and search pdrs
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function list(req, res) {
-  return tracer.startActiveSpan('pdrs.list', async (span) => {
+  return await tracer.startActiveSpan('pdrs.list', async (span) => {
     try {
       span.setAttribute('pdrs.has_query_params', Object.keys(req.query).length > 0);
 
@@ -54,12 +54,12 @@ async function list(req, res) {
 /**
  * get a single PDR
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function get(req, res) {
-  return tracer.startActiveSpan('pdrs.get', async (span) => {
+  return await tracer.startActiveSpan('pdrs.get', async (span) => {
     try {
       const pdrName = req.params.pdrName;
 
@@ -111,22 +111,20 @@ async function get(req, res) {
 /**
  * delete a given PDR
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function del(req, res) {
-  return tracer.startActiveSpan('pdrs.del', async (span) => {
+  return await tracer.startActiveSpan('pdrs.del', async (span) => {
     try {
       const {
         pdrPgModel = new PdrPgModel(),
         knex = await getKnexClient(),
         s3Utils = S3UtilsLib,
       } = req.testContext || {};
-
       const pdrName = req.params.pdrName;
       const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
-
       span.setAttribute('pdr.name', pdrName);
       span.setAttribute('pdr.s3_key', pdrS3Key);
       span.setAttribute('pdr.s3_bucket', process.env.system_bucket);
@@ -146,7 +144,7 @@ async function del(req, res) {
 
               if (deleteResultsCount === 0) {
                 span.setAttribute('pdr.not_found', true);
-                return res.boom.notFound('No record found');
+                throw new RecordDoesNotExist('No record found');
               }
 
               span.setAttribute('pdr.db_deleted', true);
@@ -155,7 +153,7 @@ async function del(req, res) {
                 try {
                   s3Span.setAttribute('s3.bucket', process.env.system_bucket);
                   s3Span.setAttribute('s3.key', pdrS3Key);
-                  return await s3Utils.deleteS3Object(process.env.system_bucket, pdrS3Key);
+                  await s3Utils.deleteS3Object(process.env.system_bucket, pdrS3Key);
                 } finally {
                   s3Span.end();
                 }
@@ -168,6 +166,10 @@ async function del(req, res) {
           }
         });
       } catch (error) {
+        if (error instanceof RecordDoesNotExist) {
+          log.debug(`PDR with name ${pdrName} not found.`);
+          return res.boom.notFound('No record found');
+        }
         log.debug(`Failed to delete PDR with name ${pdrName}. Error ${errorify(error)}.`);
         span.recordException(error);
         span.setAttribute('error', true);

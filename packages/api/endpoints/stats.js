@@ -44,7 +44,7 @@ function getType(req) {
  * @returns {Promise<object>} the promise of express response object
  */
 async function summary(req, res) {
-  return tracer.startActiveSpan('stats.summary', async (span) => {
+  return await tracer.startActiveSpan('stats.summary', async (span) => {
     try {
       const params = req.query;
 
@@ -96,7 +96,7 @@ async function summary(req, res) {
  * @returns {Promise<object>} the promise of express response object
  */
 async function aggregate(req, res) {
-  return tracer.startActiveSpan('stats.aggregate', async (span) => {
+  return await tracer.startActiveSpan('stats.aggregate', async (span) => {
     try {
       const typeRequested = get(req, 'params.type') || get(req, 'query.type');
       const type = getType(req);

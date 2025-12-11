@@ -4,17 +4,16 @@ import pick from 'lodash/pick';
 
 import Logger from '@cumulus/logger';
 import { CollectionRecord } from '@cumulus/types/api/collections';
-
 // Import OpenTelemetry
 import { trace } from '@opentelemetry/api';
 
-import { BaseSearch } from './BaseSearch';
-import { convertQueryStringToDbQueryParameters } from './queries';
-import { GranuleSearch } from './GranuleSearch';
-import { DbQueryParameters, QueryEvent } from '../types/search';
+import { TableNames } from '../tables';
 import { translatePostgresCollectionToApiCollection } from '../translate/collections';
 import { PostgresCollectionRecord } from '../types/collection';
-import { TableNames } from '../tables';
+import { DbQueryParameters, QueryEvent } from '../types/search';
+import { BaseSearch } from './BaseSearch';
+import { GranuleSearch } from './GranuleSearch';
+import { convertQueryStringToDbQueryParameters } from './queries';
 
 const log = new Logger({ sender: '@cumulus/db/CollectionSearch' });
 
@@ -109,7 +108,9 @@ export class CollectionSearch extends BaseSearch {
         const granulesTable = TableNames.granules;
         span.setAttribute('db.granules_table', granulesTable);
 
-        const granuleSearch = new GranuleSearch({ queryStringParameters: this.queryStringParameters });
+        const granuleSearch = new GranuleSearch(
+          { queryStringParameters: this.queryStringParameters }
+        );
         const { countQuery: subQuery } = granuleSearch.buildSearchForActiveCollections(knex);
 
         subQuery

@@ -1,16 +1,16 @@
 import { Knex } from 'knex';
-import Logger from '@cumulus/logger';
 import pick from 'lodash/pick';
-import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
 
+import Logger from '@cumulus/logger';
+import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
 // Import OpenTelemetry
 import { trace } from '@opentelemetry/api';
 
-import { BaseSearch } from './BaseSearch';
-import { DbQueryParameters, QueryEvent } from '../types/search';
+import { TableNames } from '../tables';
 import { translatePostgresReconReportToApiReconReport } from '../translate/reconciliation_reports';
 import { PostgresReconciliationReportRecord } from '../types/reconciliation_report';
-import { TableNames } from '../tables';
+import { DbQueryParameters, QueryEvent } from '../types/search';
+import { BaseSearch } from './BaseSearch';
 
 const log = new Logger({ sender: '@cumulus/db/ReconciliationReportSearch' });
 
@@ -128,7 +128,7 @@ export class ReconciliationReportSearch extends BaseSearch {
         span.setAttribute('translation.records_count', apiRecords.length);
 
         // Track reconciliation report characteristics
-        const reportsWithStatus = pgRecords.filter(r => r.status).length;
+        const reportsWithStatus = pgRecords.filter((r) => r.status).length;
         span.setAttribute('reconciliation_reports.with_status', reportsWithStatus);
 
         return apiRecords;

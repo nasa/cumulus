@@ -1,19 +1,19 @@
 import { Knex } from 'knex';
-import Logger from '@cumulus/logger';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
+
+import Logger from '@cumulus/logger';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { ApiExecutionRecord } from '@cumulus/types/api/executions';
-
 // Import OpenTelemetry
 import { trace } from '@opentelemetry/api';
 
-import { BaseSearch } from './BaseSearch';
-import { DbQueryParameters, QueryEvent } from '../types/search';
-import { translatePostgresExecutionToApiExecutionWithoutDbQuery } from '../translate/executions';
-import { PostgresExecutionRecord } from '../types/execution';
 import { TableNames } from '../tables';
+import { translatePostgresExecutionToApiExecutionWithoutDbQuery } from '../translate/executions';
 import { BaseRecord } from '../types/base';
+import { PostgresExecutionRecord } from '../types/execution';
+import { DbQueryParameters, QueryEvent } from '../types/search';
+import { BaseSearch } from './BaseSearch';
 
 const log = new Logger({ sender: '@cumulus/db/ExecutionSearch' });
 
@@ -202,7 +202,8 @@ export class ExecutionSearch extends BaseSearch {
         const translationStartTime = Date.now();
 
         const apiRecords = pgRecords.map((executionRecord: ExecutionRecord) => {
-          const { collectionName, collectionVersion, asyncOperationId, parentArn } = executionRecord;
+          const { collectionName, collectionVersion, asyncOperationId, parentArn }
+            = executionRecord;
           const collectionId = collectionName && collectionVersion
             ? constructCollectionId(collectionName, collectionVersion) : undefined;
           const apiRecord = translatePostgresExecutionToApiExecutionWithoutDbQuery({
@@ -220,9 +221,9 @@ export class ExecutionSearch extends BaseSearch {
         span.setAttribute('translation.records_count', apiRecords.length);
 
         // Track execution characteristics
-        const executionsWithCollections = pgRecords.filter(r => r.collectionName).length;
-        const executionsWithAsyncOps = pgRecords.filter(r => r.asyncOperationId).length;
-        const executionsWithParents = pgRecords.filter(r => r.parentArn).length;
+        const executionsWithCollections = pgRecords.filter((r) => r.collectionName).length;
+        const executionsWithAsyncOps = pgRecords.filter((r) => r.asyncOperationId).length;
+        const executionsWithParents = pgRecords.filter((r) => r.parentArn).length;
 
         span.setAttribute('executions.with_collections', executionsWithCollections);
         span.setAttribute('executions.without_collections', recordCount - executionsWithCollections);

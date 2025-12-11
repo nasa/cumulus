@@ -1,18 +1,17 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
 
-import { ApiPdrRecord } from '@cumulus/types/api/pdrs';
 import Logger from '@cumulus/logger';
-
+import { ApiPdrRecord } from '@cumulus/types/api/pdrs';
 // Import OpenTelemetry
 import { trace } from '@opentelemetry/api';
 
-import { BaseRecord } from '../types/base';
-import { BaseSearch } from './BaseSearch';
-import { DbQueryParameters, QueryEvent } from '../types/search';
-import { PostgresPdrRecord } from '../types/pdr';
-import { translatePostgresPdrToApiPdrWithoutDbQuery } from '../translate/pdr';
 import { TableNames } from '../tables';
+import { translatePostgresPdrToApiPdrWithoutDbQuery } from '../translate/pdr';
+import { BaseRecord } from '../types/base';
+import { PostgresPdrRecord } from '../types/pdr';
+import { DbQueryParameters, QueryEvent } from '../types/search';
+import { BaseSearch } from './BaseSearch';
 
 const log = new Logger({ sender: '@cumulus/db/PdrSearch' });
 
@@ -178,7 +177,7 @@ export class PdrSearch extends BaseSearch {
         span.setAttribute('translation.records_count', apiRecords.length);
 
         // Track how many PDRs have executions
-        const pdrsWithExecutions = pgRecords.filter(r => r.executionArn).length;
+        const pdrsWithExecutions = pgRecords.filter((r) => r.executionArn).length;
         span.setAttribute('pdrs.with_executions', pdrsWithExecutions);
         span.setAttribute('pdrs.without_executions', recordCount - pdrsWithExecutions);
 

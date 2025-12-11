@@ -31,12 +31,12 @@ const tracer = trace.getTracer('cumulus-api-providers');
 /**
  * List all providers
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function list(req, res) {
-  return tracer.startActiveSpan('providers.list', async (span) => {
+  return await tracer.startActiveSpan('providers.list', async (span) => {
     try {
       span.setAttribute('providers.has_query_params', Object.keys(req.query).length > 0);
 
@@ -62,12 +62,12 @@ async function list(req, res) {
 /**
  * Query a single provider
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function get(req, res) {
-  return tracer.startActiveSpan('providers.get', async (span) => {
+  return await tracer.startActiveSpan('providers.get', async (span) => {
     try {
       const id = req.params.id;
 
@@ -108,12 +108,12 @@ async function get(req, res) {
 /**
  * Creates a new provider
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function post(req, res) {
-  return tracer.startActiveSpan('providers.post', async (span) => {
+  return await tracer.startActiveSpan('providers.post', async (span) => {
     try {
       const {
         providerPgModel = new ProviderPgModel(),
@@ -183,12 +183,12 @@ async function post(req, res) {
 /**
  * Updates an existing provider
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function put(req, res) {
-  return tracer.startActiveSpan('providers.put', async (span) => {
+  return await tracer.startActiveSpan('providers.put', async (span) => {
     try {
       const {
         providerPgModel = new ProviderPgModel(),
@@ -261,12 +261,12 @@ async function put(req, res) {
 /**
  * Delete a provider
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function del(req, res) {
-  return tracer.startActiveSpan('providers.del', async (span) => {
+  return await tracer.startActiveSpan('providers.del', async (span) => {
     try {
       const {
         providerPgModel = new ProviderPgModel(),

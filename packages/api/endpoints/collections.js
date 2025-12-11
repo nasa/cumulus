@@ -40,12 +40,12 @@ const tracer = trace.getTracer('cumulus-api-collections');
 /**
  * List all collections.
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function list(req, res) {
-  return tracer.startActiveSpan('collections.list', async (span) => {
+  return await tracer.startActiveSpan('collections.list', async (span) => {
     try {
       log.debug(`list query ${JSON.stringify(req.query)}`);
       const { getMMT, ...queryStringParameters } = req.query;
@@ -87,12 +87,12 @@ async function list(req, res) {
  * If time params are specified the query will return collections
  * that have granules that have been updated in that time frame.
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function activeList(req, res) {
-  return tracer.startActiveSpan('collections.activeList', async (span) => {
+  return await tracer.startActiveSpan('collections.activeList', async (span) => {
     try {
       log.debug(`activeList query ${JSON.stringify(req.query)}`);
       const { getMMT, ...queryStringParameters } = req.query;
@@ -131,12 +131,12 @@ async function activeList(req, res) {
 /**
  * Query a single collection.
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function get(req, res) {
-  return tracer.startActiveSpan('collections.get', async (span) => {
+  return await tracer.startActiveSpan('collections.get', async (span) => {
     try {
       const name = req.params.name;
       const version = req.params.version;
@@ -174,12 +174,12 @@ async function get(req, res) {
 /**
  * Creates a new collection
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function post(req, res) {
-  return tracer.startActiveSpan('collections.post', async (span) => {
+  return await tracer.startActiveSpan('collections.post', async (span) => {
     try {
       const {
         collectionPgModel = new CollectionPgModel(),
@@ -216,7 +216,8 @@ async function post(req, res) {
             try {
               await createRejectableTransaction(knex, async (trx) => {
                 const [pgCollection] = await collectionPgModel.create(trx, dbRecord);
-                translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
+                translatedCollection
+                  = await translatePostgresCollectionToApiCollection(pgCollection);
 
                 await tracer.startActiveSpan('publishCollectionCreateSnsMessage', async (snsSpan) => {
                   try {
@@ -275,12 +276,12 @@ async function post(req, res) {
 /**
  * Updates an existing collection
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function put(req, res) {
-  return tracer.startActiveSpan('collections.put', async (span) => {
+  return await tracer.startActiveSpan('collections.put', async (span) => {
     try {
       const {
         collectionPgModel = new CollectionPgModel(),
@@ -373,12 +374,12 @@ async function put(req, res) {
 /**
  * Delete a collection record
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function del(req, res) {
-  return tracer.startActiveSpan('collections.del', async (span) => {
+  return await tracer.startActiveSpan('collections.del', async (span) => {
     try {
       const {
         collectionPgModel = new CollectionPgModel(),

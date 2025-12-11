@@ -2,21 +2,20 @@ import { Knex } from 'knex';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
 
-import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import Logger from '@cumulus/logger';
-
+import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 // Import OpenTelemetry
 import { trace } from '@opentelemetry/api';
 
-import { BaseRecord } from '../types/base';
-import { BaseSearch } from './BaseSearch';
-import { DbQueryParameters, QueryEvent } from '../types/search';
-import { PostgresGranuleRecord } from '../types/granule';
-import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
-import { TableNames } from '../tables';
-import { FilePgModel } from '../models/file';
-import { PostgresFileRecord } from '../types/file';
 import { getExecutionInfoByGranuleCumulusIds } from '../lib/execution';
+import { FilePgModel } from '../models/file';
+import { TableNames } from '../tables';
+import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
+import { BaseRecord } from '../types/base';
+import { PostgresFileRecord } from '../types/file';
+import { PostgresGranuleRecord } from '../types/granule';
+import { DbQueryParameters, QueryEvent } from '../types/search';
+import { BaseSearch } from './BaseSearch';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 

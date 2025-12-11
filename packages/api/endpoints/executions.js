@@ -69,12 +69,12 @@ const parseBulkDeletePayload = zodParser('Bulk Execution Delete Payload', BulkEx
 /**
  * create an execution
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function create(req, res) {
-  return tracer.startActiveSpan('executions.create', async (span) => {
+  return await tracer.startActiveSpan('executions.create', async (span) => {
     try {
       const {
         executionPgModel = new ExecutionPgModel(),
@@ -137,12 +137,12 @@ async function create(req, res) {
 /**
  * update an existing execution
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function update(req, res) {
-  return tracer.startActiveSpan('executions.update', async (span) => {
+  return await tracer.startActiveSpan('executions.update', async (span) => {
     try {
       const arn = req.params.arn;
       const execution = req.body || {};
@@ -216,12 +216,12 @@ async function update(req, res) {
 /**
  * List and search executions
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function list(req, res) {
-  return tracer.startActiveSpan('executions.list', async (span) => {
+  return await tracer.startActiveSpan('executions.list', async (span) => {
     try {
       span.setAttribute('executions.has_query_params', Object.keys(req.query).length > 0);
 
@@ -247,12 +247,12 @@ async function list(req, res) {
 /**
  * get a single execution
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function get(req, res) {
-  return tracer.startActiveSpan('executions.get', async (span) => {
+  return await tracer.startActiveSpan('executions.get', async (span) => {
     try {
       const arn = req.params.arn;
 
@@ -307,12 +307,12 @@ async function get(req, res) {
  *
  * Does *not* publish execution deletion event to SNS topic
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function del(req, res) {
-  return tracer.startActiveSpan('executions.del', async (span) => {
+  return await tracer.startActiveSpan('executions.del', async (span) => {
     try {
       const {
         executionPgModel = new ExecutionPgModel(),
@@ -362,12 +362,12 @@ async function del(req, res) {
 /**
  * Get execution history for a single granule or multiple granules
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function searchByGranules(req, res) {
-  return tracer.startActiveSpan('executions.searchByGranules', async (span) => {
+  return await tracer.startActiveSpan('executions.searchByGranules', async (span) => {
     try {
       const payload = req.body;
       const knex = await getKnexClient();
@@ -444,12 +444,12 @@ async function searchByGranules(req, res) {
 /**
  * Get workflows for a single granule or intersection of workflows for multiple granules
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function workflowsByGranules(req, res) {
-  return tracer.startActiveSpan('executions.workflowsByGranules', async (span) => {
+  return await tracer.startActiveSpan('executions.workflowsByGranules', async (span) => {
     try {
       const payload = req.body;
       const knex = await getKnexClient();
@@ -502,24 +502,24 @@ async function workflowsByGranules(req, res) {
  *
  * Does *not* publish execution deletion event to SNS topic
  *
- * @param {Object} req - The request object.
- * @param {Object} req.params - The request parameters.
- * @param {Object} req.body - The request body.
+ * @param {object} req - The request object.
+ * @param {object} req.params - The request parameters.
+ * @param {object} req.body - The request body.
  * @param {number|string} [req.body.dbBatchSize=10000] - The number of records to delete
  * in each batch.
  * @param {string} req.body.collectionId - The CollectionID to delete execution records for.
  * @param {string} [req.body.knexDebug=false] - Boolean to enabled Knex Debugging for the request
- * @param {Object} [req.testObject] - Object to allow for dependency injection in tests
+ * @param {object} [req.testObject] - Object to allow for dependency injection in tests
  * @Param {Function} [req.testObject.invokeStartAsyncOperationLambda] - Function to invoke
  * the startAsyncOperation Lambda
- * @param {Object} res - The response object.
+ * @param {object} res - The response object.
  */
 async function bulkDeleteExecutionsByCollection(req, res) {
-  return tracer.startActiveSpan('executions.bulkDeleteExecutionsByCollection', async (span) => {
+  return await tracer.startActiveSpan('executions.bulkDeleteExecutionsByCollection', async (span) => {
     try {
-      const invokeStartAsyncOperationLambda =
-        req?.testObject?.invokeStartAsyncOperationLambda ||
-        startAsyncOperation.invokeStartAsyncOperationLambda;
+      const invokeStartAsyncOperationLambda
+        = req?.testObject?.invokeStartAsyncOperationLambda
+        || startAsyncOperation.invokeStartAsyncOperationLambda;
 
       const payload = parseBulkDeletePayload(req.body);
       if (isError(payload)) {
@@ -620,9 +620,12 @@ const parseBulkArchiveExecutionsPayload = zodParser('bulkChangeCollection payloa
 
 /**
  * Start an AsyncOperation that will archive a set of executions in ecs
+ *
+ * @param req
+ * @param res
  */
 async function bulkArchiveExecutions(req, res) {
-  return tracer.startActiveSpan('executions.bulkArchiveExecutions', async (span) => {
+  return await tracer.startActiveSpan('executions.bulkArchiveExecutions', async (span) => {
     try {
       const payload = parseBulkArchiveExecutionsPayload(req.body);
       if (isError(payload)) {

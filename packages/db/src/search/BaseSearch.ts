@@ -1,15 +1,17 @@
 import { Knex } from 'knex';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
-import Logger from '@cumulus/logger';
 
+import Logger from '@cumulus/logger';
 // Import OpenTelemetry
 import { trace } from '@opentelemetry/api';
 
-import { BaseRecord } from '../types/base';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
-import { DbQueryParameters, QueriableType, QueryEvent, QueryStringParameters } from '../types/search';
+import { BaseRecord } from '../types/base';
+import {
+  DbQueryParameters, QueriableType, QueryEvent, QueryStringParameters,
+} from '../types/search';
 import { convertQueryStringToDbQueryParameters } from './queries';
 
 const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
@@ -563,7 +565,7 @@ abstract class BaseSearch {
 
         if (sort && sort.length > 0) {
           span.setAttribute('query.sort_fields_count', sort.length);
-          span.setAttribute('query.sort_fields', sort.map(s => s.column).join(','));
+          span.setAttribute('query.sort_fields', sort.map((s) => s.column).join(','));
         }
 
         sort?.forEach((key) => {

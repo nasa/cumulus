@@ -67,13 +67,13 @@ function handleJwtVerificationError(err, response) {
 /**
  * Handles token requests
  *
- * @param {Object} event - an express request object
- * @param {Object} oAuth2Provider - an oAuth provider object
- * @param {Object} response - an express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} event - an express request object
+ * @param {object} oAuth2Provider - an oAuth provider object
+ * @param {object} response - an express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function token(event, oAuth2Provider, response) {
-  return tracer.startActiveSpan('token', async (span) => {
+  return await tracer.startActiveSpan('token', async (span) => {
     try {
       const code = get(event, 'query.code');
       const state = get(event, 'query.state');
@@ -84,7 +84,10 @@ async function token(event, oAuth2Provider, response) {
       // Code contains the value from the Earthdata Login redirect. We use it to get a token.
       if (code) {
         try {
-          let accessToken, refreshToken, username, expirationTime;
+          let accessToken;
+          let refreshToken;
+          let username;
+          let expirationTime;
 
           // Use callback pattern to get span
           await tracer.startActiveSpan('oAuth2Provider.getAccessToken', async (accessTokenSpan) => {
@@ -155,13 +158,13 @@ async function token(event, oAuth2Provider, response) {
 /**
  * Handle refreshing tokens with OAuth provider
  *
- * @param {Object} request - an API Gateway request
+ * @param {object} request - an API Gateway request
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
- * @param {Object} response - an API Gateway response object
- * @returns {Object} an API Gateway response
+ * @param {object} response - an API Gateway response object
+ * @returns {object} an API Gateway response
  */
 async function refreshAccessToken(request, oAuth2Provider, response) {
-  return tracer.startActiveSpan('refreshAccessToken', async (span) => {
+  return await tracer.startActiveSpan('refreshAccessToken', async (span) => {
     try {
       const requestJwtToken = get(request, 'body.token');
 
@@ -265,12 +268,12 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
 /**
  * Handle token deletion
  *
- * @param {Object} request - an express request object
- * @param {Object} response - an express request object
- * @returns {Promise<Object>} a promise of an express response
+ * @param {object} request - an express request object
+ * @param {object} response - an express request object
+ * @returns {Promise<object>} a promise of an express response
  */
 async function deleteTokenEndpoint(request, response) {
-  return tracer.startActiveSpan('deleteTokenEndpoint', async (span) => {
+  return await tracer.startActiveSpan('deleteTokenEndpoint', async (span) => {
     try {
       const requestJwtToken = get(request.params, 'token');
 
@@ -324,7 +327,7 @@ async function deleteTokenEndpoint(request, response) {
  * @returns {Promise<object>} a promise of an express response
  */
 async function login(request, oAuth2Provider, response) {
-  return tracer.startActiveSpan('login', async (span) => {
+  return await tracer.startActiveSpan('login', async (span) => {
     try {
       const code = get(request, 'query.code');
       const state = get(request, 'query.state');
@@ -389,7 +392,7 @@ function buildOAuth2ProviderFromEnv() {
  * @returns {Promise<object>} the promise of express response object
  */
 async function tokenEndpoint(req, res) {
-  return tracer.startActiveSpan('tokenEndpoint', async (span) => {
+  return await tracer.startActiveSpan('tokenEndpoint', async (span) => {
     try {
       const oAuth2Provider = buildOAuth2ProviderFromEnv();
       span.setAttribute('oauth.provider', process.env.OAUTH_PROVIDER || 'earthdata');
@@ -408,7 +411,7 @@ async function tokenEndpoint(req, res) {
  * @returns {Promise<object>} the promise of express response object
  */
 async function refreshEndpoint(req, res) {
-  return tracer.startActiveSpan('refreshEndpoint', async (span) => {
+  return await tracer.startActiveSpan('refreshEndpoint', async (span) => {
     try {
       const oAuth2Provider = buildOAuth2ProviderFromEnv();
       span.setAttribute('oauth.provider', process.env.OAUTH_PROVIDER || 'earthdata');

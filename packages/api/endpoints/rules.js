@@ -53,7 +53,7 @@ const tracer = trace.getTracer('cumulus-api-rules');
  * @returns {Promise<object>} the promise of express response object
  */
 async function list(req, res) {
-  return tracer.startActiveSpan('rules.list', async (span) => {
+  return await tracer.startActiveSpan('rules.list', async (span) => {
     try {
       span.setAttribute('rules.has_query_params', Object.keys(req.query).length > 0);
 
@@ -85,7 +85,7 @@ async function list(req, res) {
  * @returns {Promise<object>} the promise of express response object
  */
 async function get(req, res) {
-  return tracer.startActiveSpan('rules.get', async (span) => {
+  return await tracer.startActiveSpan('rules.get', async (span) => {
     try {
       const name = req.params.name;
 
@@ -142,7 +142,7 @@ async function get(req, res) {
  * @returns {Promise<object>} the promise of express response object
  */
 async function post(req, res) {
-  return tracer.startActiveSpan('rules.post', async (span) => {
+  return await tracer.startActiveSpan('rules.post', async (span) => {
     try {
       const {
         rulePgModel = new RulePgModel(),
@@ -229,7 +229,7 @@ async function post(req, res) {
  * @returns {Promise<object>} - promise of an express response object.
  */
 async function patchRule(params) {
-  return tracer.startActiveSpan('rules.patchRule', async (span) => {
+  return await tracer.startActiveSpan('rules.patchRule', async (span) => {
     try {
       const {
         res,
@@ -323,7 +323,7 @@ async function patchRule(params) {
  *    with the specified name
  */
 async function patch(req, res) {
-  return tracer.startActiveSpan('rules.patch', async (span) => {
+  return await tracer.startActiveSpan('rules.patch', async (span) => {
     try {
       const {
         rulePgModel = new RulePgModel(),
@@ -390,7 +390,7 @@ async function patch(req, res) {
  *    with the specified name
  */
 async function put(req, res) {
-  return tracer.startActiveSpan('rules.put', async (span) => {
+  return await tracer.startActiveSpan('rules.put', async (span) => {
     try {
       const {
         rulePgModel = new RulePgModel(),
@@ -464,7 +464,7 @@ async function put(req, res) {
  * @returns {Promise<object>} the promise of express response object
  */
 async function del(req, res) {
-  return tracer.startActiveSpan('rules.del', async (span) => {
+  return await tracer.startActiveSpan('rules.del', async (span) => {
     try {
       const {
         rulePgModel = new RulePgModel(),

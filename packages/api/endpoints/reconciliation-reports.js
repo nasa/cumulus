@@ -42,19 +42,19 @@ const tracer = trace.getTracer('cumulus-api-reconciliation-reports');
 const maxResponsePayloadSizeBytes = 6 * 1000 * 1000;
 
 /**
-* @typedef {import('../lib/types').NormalizedRecReportParams} NormalizedRecReportParams
-* @typedef {import('../lib/types').RecReportParams} RecReportParams
-*/
+ * @typedef {import('../lib/types').NormalizedRecReportParams} NormalizedRecReportParams
+ * @typedef {import('../lib/types').RecReportParams} RecReportParams
+ */
 
 /**
  * List all reconciliation reports
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function listReports(req, res) {
-  return tracer.startActiveSpan('reconciliation-reports.list', async (span) => {
+  return await tracer.startActiveSpan('reconciliation-reports.list', async (span) => {
     try {
       span.setAttribute('reconciliation_reports.has_query_params', Object.keys(req.query).length > 0);
 
@@ -80,12 +80,12 @@ async function listReports(req, res) {
 /**
  * get a reconciliation report
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function getReport(req, res) {
-  return tracer.startActiveSpan('reconciliation-reports.get', async (span) => {
+  return await tracer.startActiveSpan('reconciliation-reports.get', async (span) => {
     try {
       const name = req.params.name;
 
@@ -160,7 +160,9 @@ async function getReport(req, res) {
           });
 
           const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
-          const maxSize = Number(process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes);
+          const maxSize = Number(
+            process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes
+          );
 
           span.setAttribute('reconciliation_report.estimated_payload_size', estimatedPayloadSize);
           span.setAttribute('reconciliation_report.max_payload_size', maxSize);
@@ -171,40 +173,39 @@ async function getReport(req, res) {
               presignedS3Url,
               data: `Error: Report ${name} exceeded maximum allowed payload size`,
             });
-          } else {
-            const file = await tracer.startActiveSpan('getObject', async (getSpan) => {
-              try {
-                getSpan.setAttribute('s3.bucket', Bucket);
-                getSpan.setAttribute('s3.key', Key);
-                return await getObject(s3(), { Bucket, Key });
-              } finally {
-                getSpan.end();
-              }
-            });
-
-            logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
-            span.setAttribute('reconciliation_report.content_length', file.ContentLength);
-
-            if (!file.Body) {
-              span.setAttribute('reconciliation_report.missing_body', true);
-              return res.boom.badRequest('Report file does not have a body.');
-            }
-
-            const fileBody = await tracer.startActiveSpan('getObjectStreamContents', async (streamSpan) => {
-              try {
-                return await getObjectStreamContents(file.Body);
-              } finally {
-                streamSpan.end();
-              }
-            });
-
-            span.setAttribute('reconciliation_report.body_length', fileBody.length);
-
-            return res.json({
-              presignedS3Url,
-              data: Key.endsWith('.json') ? JSON.parse(fileBody) : fileBody,
-            });
           }
+          const file = await tracer.startActiveSpan('getObject', async (getSpan) => {
+            try {
+              getSpan.setAttribute('s3.bucket', Bucket);
+              getSpan.setAttribute('s3.key', Key);
+              return await getObject(s3(), { Bucket, Key });
+            } finally {
+              getSpan.end();
+            }
+          });
+
+          logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
+          span.setAttribute('reconciliation_report.content_length', file.ContentLength);
+
+          if (!file.Body) {
+            span.setAttribute('reconciliation_report.missing_body', true);
+            return res.boom.badRequest('Report file does not have a body.');
+          }
+
+          const fileBody = await tracer.startActiveSpan('getObjectStreamContents', async (streamSpan) => {
+            try {
+              return await getObjectStreamContents(file.Body);
+            } finally {
+              streamSpan.end();
+            }
+          });
+
+          span.setAttribute('reconciliation_report.body_length', fileBody.length);
+
+          return res.json({
+            presignedS3Url,
+            data: Key.endsWith('.json') ? JSON.parse(fileBody) : fileBody,
+          });
         }
 
         span.setAttribute('reconciliation_report.unhandled_type', true);
@@ -231,12 +232,12 @@ async function getReport(req, res) {
 /**
  * delete a reconciliation report
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function deleteReport(req, res) {
-  return tracer.startActiveSpan('reconciliation-reports.delete', async (span) => {
+  return await tracer.startActiveSpan('reconciliation-reports.delete', async (span) => {
     try {
       const name = req.params.name;
       let record;
@@ -328,23 +329,22 @@ async function deleteReport(req, res) {
 /**
  * Creates a new report
  *
- * @param {Object} req - express request object
+ * @param {object} req - express request object
  * @param {RecReportParams} req.body
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function createReport(req, res) {
-  return tracer.startActiveSpan('reconciliation-reports.create', async (span) => {
+  return await tracer.startActiveSpan('reconciliation-reports.create', async (span) => {
     try {
       /** @type NormalizedRecReportParams */
       let validatedInput;
-
       try {
         validatedInput = await tracer.startActiveSpan('normalizeEvent', async (normalizeSpan) => {
           try {
             normalizeSpan.setAttribute('reconciliation_report.has_report_name', !!req.body.reportName);
             normalizeSpan.setAttribute('reconciliation_report.has_report_type', !!req.body.reportType);
-            return normalizeEvent(req.body);
+            return await normalizeEvent(req.body);
           } finally {
             normalizeSpan.end();
           }
@@ -356,13 +356,10 @@ async function createReport(req, res) {
         span.setAttribute('error', true);
         return res.boom.badRequest(error.message, error);
       }
-
       span.setAttribute('reconciliation_report.report_name', validatedInput.reportName);
       span.setAttribute('reconciliation_report.report_type', validatedInput.reportType);
-
       const asyncOperationId = uuidv4();
       span.setAttribute('reconciliation_report.async_operation_id', asyncOperationId);
-
       const asyncOperationEvent = {
         asyncOperationId,
         callerLambdaName: getFunctionNameFromRequestContext(req),
@@ -371,9 +368,7 @@ async function createReport(req, res) {
         operationType: 'Reconciliation Report',
         payload: validatedInput,
       };
-
       logger.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
-
       await tracer.startActiveSpan('invokeStartAsyncOperationLambda', async (lambdaSpan) => {
         try {
           await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
@@ -381,8 +376,11 @@ async function createReport(req, res) {
           lambdaSpan.end();
         }
       });
-
       return res.status(202).send({ id: asyncOperationId });
+    } catch (error) {
+      span.recordException(error);
+      span.setAttribute('error', true);
+      throw error;
     } finally {
       span.end();
     }
