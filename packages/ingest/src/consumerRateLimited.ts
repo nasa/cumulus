@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { receiveSQSMessages, SQSMessage } from '@cumulus/aws-client/SQS';
 import * as sqs from '@cumulus/aws-client/SQS';
 import { ExecutionAlreadyExists } from '@cumulus/aws-client/StepFunctions';
@@ -73,7 +74,7 @@ export class ConsumerRateLimited {
   ): Promise<number> {
     let counter = 0;
     for (const [message, queueUrl] of messagesWithQueueUrls) {
-      const waitTime = 1000/this.rateLimitPerSecond;
+      const waitTime = 1000 / this.rateLimitPerSecond;
       log.debug(`Waiting for ${waitTime} ms`);
       await new Promise((resolve) => setTimeout(resolve, waitTime));
       const result = await this.processMessage(message, fn, queueUrl);
@@ -82,49 +83,61 @@ export class ConsumerRateLimited {
     return counter;
   }
 
-  private async fetchMessages(queueUrl: string, messageLimit: number): Promise<Array<[SQSMessage, string]>> {
-    const messages = await receiveSQSMessages(
-      queueUrl,
-      { numOfMessages: messageLimit, visibilityTimeout: this.visibilityTimeout }
-    );
+  private async fetchMessages(
+    queueUrl: string,
+    messageLimit: number
+  ): Promise<Array<[SQSMessage, string]>> {
+    const messages = await receiveSQSMessages(queueUrl, {
+      numOfMessages: messageLimit,
+      visibilityTimeout: this.visibilityTimeout,
+    });
     return messages.map((message) => [message, queueUrl]);
   }
 
   async consume(fn: MessageConsumerFunction): Promise<number> {
     let messageCounter = 0;
-    let processingPromise: Promise<number> | null = null;
+    let processingPromise: Promise<number> | undefined;
 
-    // The below block of code attempts to always have a batch of messages available for `processMessages` to process,
-    // so, after the initial fetch, we'll immediately start fetching the next batch while processing the current one
+    // The below block of code attempts to always have a batch of messages
+    // available for `processMessages` to process, so, after the initial fetch,
+    // we'll immediately start fetching the next batch while processing the
+    // current one
 
     let messages = await Promise.all(
-      this.queueUrls.map(queueUrl => this.fetchMessages(queueUrl, this.messageLimitPerFetch))
+      this.queueUrls.map((queueUrl) =>
+        this.fetchMessages(queueUrl, this.messageLimitPerFetch))
     ).then((messageArrays) => messageArrays.flat());
 
     while (this.timeRemainingFunc() > this.timeBuffer) {
       if (messages.length === 0) {
-        log.info(`No messages fetched, waiting ${this.waitTime} ms before retrying`);
+        log.info(
+          `No messages fetched, waiting ${this.waitTime} ms before retrying`
+        );
         await new Promise((resolve) => setTimeout(resolve, this.waitTime));
         messages = await Promise.all(
-          this.queueUrls.map(queueUrl => this.fetchMessages(queueUrl, this.messageLimitPerFetch))
+          this.queueUrls.map((queueUrl) =>
+            this.fetchMessages(queueUrl, this.messageLimitPerFetch))
         ).then((messageArrays) => messageArrays.flat());
       } else {
         // Start processing current batch and immediately fetch next batch
         processingPromise = this.processMessages(fn, messages);
         const fetchPromise = Promise.all(
-          this.queueUrls.map(queueUrl => this.fetchMessages(queueUrl, this.messageLimitPerFetch))
+          this.queueUrls.map((queueUrl) =>
+            this.fetchMessages(queueUrl, this.messageLimitPerFetch))
         ).then((messageArrays) => messageArrays.flat());
 
         // Wait for processing to complete and increment counter
         messageCounter += await processingPromise;
-        processingPromise = null;
+        processingPromise = undefined;
 
         // Get the next batch that was fetched concurrently
         messages = await fetchPromise;
       }
     }
 
-    log.info(`${messageCounter} messages successfully processed from ${this.queueUrls}`);
+    log.info(
+      `${messageCounter} messages successfully processed from ${this.queueUrls}`
+    );
     return messageCounter;
   }
 }

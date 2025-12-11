@@ -5,7 +5,7 @@ const test = require('ava');
 
 const { sleep } = require('@cumulus/common');
 const SQS = require('@cumulus/aws-client/SQS');
-const SFN = require('@cumulus/aws-client/StepFunctions')
+const SFN = require('@cumulus/aws-client/StepFunctions');
 
 const { ConsumerRateLimited } = require('../consumerRateLimited');
 
@@ -26,7 +26,6 @@ sinon.stub(SQS, 'receiveSQSMessages').callsFake(stubReceiveSQSMessages);
 function processFn() { }
 
 const sandbox = sinon.createSandbox();
-let messageSpy;
 
 test.beforeEach(() => {
   // need to reinstantiate because this.now = Date.now()
@@ -34,7 +33,6 @@ test.beforeEach(() => {
   testConsumer.messageLimit = 40; // initial messagelimit
   testConsumer.queueUrls = [fakeQueueName];
   SQS.deleteSQSMessage.resetHistory();
-  messageSpy = sandbox.spy(testConsumer, 'processMessage');
 });
 test.afterEach.always(() => sandbox.restore());
 
@@ -47,12 +45,13 @@ test.serial('consume exits when timeRemainingFunc is less than timeBuffer', asyn
 });
 
 test.serial('processMessages throws error on large batch sizes', async (t) => {
-  const fakeMessage = { Body: 'message_body', MessageId: 'message_id'};
+  const fakeMessage = { Body: 'message_body', MessageId: 'message_id' };
   await t.throwsAsync(
-    () => testConsumer.processMessages(processFn, [fakeMessage, 'test-queue-url'])),
+    () => testConsumer.processMessages(processFn, [fakeMessage, 'test-queue-url']),
     {
       message: 'Cannot process more than 10 messages per function call. Received limit: 20',
     }
+  );
 });
 
 test.serial('processMessages respects rateLimitPerSecond', async (t) => {
@@ -60,7 +59,10 @@ test.serial('processMessages respects rateLimitPerSecond', async (t) => {
   const numberOfMessages = 30;
   const minExpectedDurationInSeconds = numberOfMessages / testConsumer.rateLimitPerSecond;
   const startTime = Date.now();
-  const result = await testConsumer.processMessages(processFn, Array(numberOfMessages).fill([sqsMessage, fakeQueueName]));
+  const result = await testConsumer.processMessages(
+    processFn,
+    new Array(numberOfMessages).fill([sqsMessage, fakeQueueName])
+  );
   const endTime = Date.now();
 
   const durationInSeconds = (endTime - startTime) / 1000;
