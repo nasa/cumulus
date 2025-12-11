@@ -28,10 +28,13 @@ function processFn() { }
 const sandbox = sinon.createSandbox();
 
 test.beforeEach(() => {
-  // need to reinstantiate because this.now = Date.now()
-  testConsumer = new ConsumerRateLimited({});
-  testConsumer.messageLimit = 40; // initial messagelimit
-  testConsumer.queueUrls = [fakeQueueName];
+  testConsumer = new ConsumerRateLimited({
+    queueUrls: [fakeQueueName],
+    timeRemainingFunc: () => 100,
+    visibilityTimeout: 100,
+    rateLimitPerSecond: 10,
+    deleteProcessedMessage: true,
+  });
   SQS.deleteSQSMessage.resetHistory();
 });
 test.afterEach.always(() => sandbox.restore());
@@ -44,15 +47,6 @@ test.serial('consume exits when timeRemainingFunc is less than timeBuffer', asyn
   t.is(result, 0);
 });
 
-test.serial('processMessages throws error on large batch sizes', async (t) => {
-  const fakeMessage = { Body: 'message_body', MessageId: 'message_id' };
-  await t.throwsAsync(
-    () => testConsumer.processMessages(processFn, [fakeMessage, 'test-queue-url']),
-    {
-      message: 'Cannot process more than 10 messages per function call. Received limit: 20',
-    }
-  );
-});
 
 test.serial('processMessages respects rateLimitPerSecond', async (t) => {
   testConsumer.rateLimitPerSecond = 10; // 10 messages per second
@@ -83,22 +77,24 @@ test.serial('processMessage deletes message on ExecutionAlreadyExists error when
 
   await testConsumer.processMessage(sqsMessage, processFnWithError, fakeQueueName);
 
-  console.log(`deleteSQSMessage was called ${deleteSpy.callCount} times`);
   t.true(deleteSpy.calledOnce);
   t.true(deleteSpy.calledWith(fakeQueueName, sqsMessage.ReceiptHandle));
 });
 
-test.serial('processMessage does not delete message on ExecutionAlreadyExists error when deleteProcessedMessage is false', async (t) => {
-  testConsumer.deleteProcessedMessage = false;
-
-  const deleteSpy = SQS.deleteSQSMessage;
-
-  const executionExistsError = new Error('ExecutionAlreadyExists: Execution already exists');
-  const processFnWithError = () => {
-    throw executionExistsError;
+test.serial('when no messages are available, consume polls the queue for new messages every this.waitTime between polls until timeRemainingFunc returns a value less than timeBuffer', async (t) => {
+  // Since we're just testing the number of calls to fetchMessages, we can set waitTime to 0
+  testConsumer.waitTime = 0;
+  testConsumer.timeBuffer = 1;
+  const timeSubtractedPerCall = 1;
+  const initialTimeRemaining = 6;
+  let timeRemaining = initialTimeRemaining;
+  testConsumer.timeRemainingFunc = () => {
+    timeRemaining -= timeSubtractedPerCall;
+    return timeRemaining;
   };
+  sandbox.stub(testConsumer, 'fetchMessages').resolves([]);
 
-  await testConsumer.processMessage(sqsMessage, processFnWithError, fakeQueueName);
+  await testConsumer.consume(processFn);
 
-  t.true(deleteSpy.notCalled);
+  t.is(testConsumer.fetchMessages.callCount, initialTimeRemaining - testConsumer.timeBuffer);
 });

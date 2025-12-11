@@ -3,6 +3,7 @@ import { receiveSQSMessages, SQSMessage } from '@cumulus/aws-client/SQS';
 import * as sqs from '@cumulus/aws-client/SQS';
 import { ExecutionAlreadyExists } from '@cumulus/aws-client/StepFunctions';
 import Logger from '@cumulus/logger';
+import { sleep } from '@cumulus/common';
 
 export type MessageConsumerFunction = (queueUrl: string, message: SQSMessage) => Promise<void>;
 
@@ -49,23 +50,23 @@ export class ConsumerRateLimited {
     message: SQSMessage,
     fn: MessageConsumerFunction,
     queueUrl: string
-  ): Promise<0 | 1> {
+  ): Promise<boolean> {
     try {
       await fn(queueUrl, message);
-      if (this.deleteProcessedMessage) {
-        await sqs.deleteSQSMessage(queueUrl, message.ReceiptHandle);
-      }
-      return 1;
     } catch (error) {
       if (error instanceof ExecutionAlreadyExists) {
         log.debug('Deleting message for execution that already exists...');
         await sqs.deleteSQSMessage(queueUrl, message.ReceiptHandle);
         log.debug('Completed deleting message.');
-        return 1;
+        return true;
       }
       log.error(error);
-      return 0;
+      return false;
     }
+    if (this.deleteProcessedMessage) {
+      await sqs.deleteSQSMessage(queueUrl, message.ReceiptHandle);
+    }
+    return true;
   }
 
   private async processMessages(
@@ -76,9 +77,10 @@ export class ConsumerRateLimited {
     for (const [message, queueUrl] of messagesWithQueueUrls) {
       const waitTime = 1000 / this.rateLimitPerSecond;
       log.debug(`Waiting for ${waitTime} ms`);
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
-      const result = await this.processMessage(message, fn, queueUrl);
-      counter += result;
+      await sleep(waitTime); // eslint-disable-line no-await-in-loop
+      if (await this.processMessage(message, fn, queueUrl)) {
+        counter++;
+      }
     }
     return counter;
   }
@@ -113,7 +115,7 @@ export class ConsumerRateLimited {
         log.info(
           `No messages fetched, waiting ${this.waitTime} ms before retrying`
         );
-        await new Promise((resolve) => setTimeout(resolve, this.waitTime));
+        await sleep(this.waitTime);
         messages = await Promise.all(
           this.queueUrls.map((queueUrl) =>
             this.fetchMessages(queueUrl, this.messageLimitPerFetch))
