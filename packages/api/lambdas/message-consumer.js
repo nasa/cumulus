@@ -11,6 +11,7 @@ const {
   fetchEnabledRules,
   filterRulesByRuleParams,
   lookupCollectionInEvent,
+  lookupProviderInEvent,
   queueMessageForRule,
 } = require('../lib/rulesHelpers');
 
@@ -119,6 +120,7 @@ async function processRecord(record, fromSNS, enabledRules) {
     ruleParams = {
       type: originalMessageSource,
       ...lookupCollectionInEvent(eventObject),
+      provider: lookupProviderInEvent(eventObject),
       sourceArn: get(record, 'Sns.TopicArn'),
     };
   } else {
@@ -138,6 +140,8 @@ async function processRecord(record, fromSNS, enabledRules) {
         type: originalMessageSource,
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN'),
+        provider: lookupProviderInEvent(eventObject),
+        allowProviderMismatchOnRuleFilter: process.env.allow_provider_mismatch_on_rule_filter === 'true',
       };
     } catch (error) {
       log.error('Caught error parsing JSON:', error);
@@ -148,7 +152,7 @@ async function processRecord(record, fromSNS, enabledRules) {
 
   try {
     await validateMessage(eventObject, originalMessageSource, validationSchema);
-    const applicableRules = await filterRulesByRuleParams(enabledRules, ruleParams);
+    const applicableRules = filterRulesByRuleParams(enabledRules, ruleParams);
     return await Promise.all(applicableRules.map((rule) => {
       if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParams.sourceArn);
       return queueMessageForRule(rule, eventObject);
@@ -160,27 +164,26 @@ async function processRecord(record, fromSNS, enabledRules) {
 }
 
 /**
- * `handler` Looks up enabled 'kinesis'-type rules associated with the collection
- * in the event argument. It enqueues a message for each kinesis-type rule to trigger
- * the associated workflow.
+ * Lambda handler that processes incoming event records and matches them against
+ * enabled 'kinesis' and 'sns' type rules. It enqueues a message
+ * for each matched rule to trigger the associated workflow.
  *
- * @param {*} event - lambda event
- * @param {*} context - lambda context
- * @param {*} cb - callback function to explicitly return information back to the caller.
- * @returns {(error|string)} Success message or error
+ * @param {Object} event - The Lambda event payload containing `Records` array
+ * @returns {Promise<Array>} Array of results for successfully processed records
+ * @throws {Error} Propagates errors to fail the Lambda invocation
  */
-function handler(event, context, cb) {
+async function handler(event) {
   const records = event.Records;
 
-  // fetch enabled rules from the API and cache in memory so we don't need a ton of DB connections
-  return fetchEnabledRules()
-    .then((rules) => Promise.all(records.map(
-      (record) => processRecord(record, (record.EventSource === 'aws:sns'), rules)
-    )))
-    .then((results) => cb(null, results.filter((r) => r !== undefined)))
-    .catch((error) => {
-      cb(error);
-    });
+  // Fetch enabled rules from the API and cache in memory to minimize DB connections
+  const rules = await fetchEnabledRules();
+
+  const results = await Promise.all(
+    records.map((record) =>
+      processRecord(record, record.EventSource === 'aws:sns', rules))
+  );
+
+  return results.filter((r) => r !== undefined);
 }
 
 module.exports = {

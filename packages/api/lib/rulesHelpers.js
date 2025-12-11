@@ -112,10 +112,18 @@ const filterRulesByRuleParams = (rules, ruleParams) => rules.filter(
   (rule) => {
     const typeMatch = ruleParams.type ? get(ruleParams, 'type') === rule.rule.type : true;
     const collectionMatch = collectionRuleMatcher(rule, ruleParams);
+    const skipMismatch = ruleParams?.allowProviderMismatchOnRuleFilter
+      ?? rule.rule.meta?.allowProviderMismatchOnRuleFilter ?? false;
+    const providerMatch = rule.provider && ruleParams.provider && !skipMismatch
+      ? ruleParams.provider === rule.provider
+      : true;
+    if (!providerMatch) {
+      log.info(`Rule provider name - ${rule.provider} - does not match provider - ${ruleParams.provider}`);
+    }
     const sourceArnMatch = ruleParams.sourceArn
       ? get(ruleParams, 'sourceArn') === rule.rule.value
       : true;
-    return typeMatch && collectionMatch && sourceArnMatch;
+    return typeMatch && collectionMatch && providerMatch && sourceArnMatch;
   }
 );
 
@@ -139,6 +147,9 @@ function lookupCollectionInEvent(eventObject) {
     dataType: get(eventObject, 'collection.dataType'),
   });
 }
+
+const lookupProviderInEvent = (eventObject) =>
+  get(eventObject, 'provider.id', get(eventObject, 'provider'));
 
 /**
  * Build payload from rule for lambda invocation
@@ -774,6 +785,7 @@ module.exports = {
   invokeRerun,
   isEventSourceMappingShared,
   lookupCollectionInEvent,
+  lookupProviderInEvent,
   queueMessageForRule,
   updateRuleTrigger,
 };

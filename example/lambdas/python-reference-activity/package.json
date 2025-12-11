@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/python-reference-activity",
   "private": true,
-  "version": "21.0.0",
+  "version": "21.0.1",
   "description": "Python reference activity",
   "homepage": "https://github.com/nasa/cumulus/tree/master/example/lambdas/python-reference-activity",
   "repository": {
@@ -10,7 +10,7 @@
   },
   "scripts": {
     "test": "true",
-    "python-lint": "pipenv run pylint *.py",
+    "python-lint": "pipenv run ruff check . && pipenv run ruff format --diff . && pipenv run mypy process_activity.py",
     "lint": "npm run python-lint",
     "clean": "rm -rf .venv",
     "build": "pip install pipenv && PIPENV_VENV_IN_PROJECT=1 pipenv install --dev --deploy --ignore-pipfile",

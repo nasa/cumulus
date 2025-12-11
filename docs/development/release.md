@@ -80,14 +80,15 @@ Pre-release testing steps:
 6. [Update DATA\_MODEL\_CHANGELOG.md](#6-update-data_model_changelogmd)
 7. [Update CONTRIBUTORS.md](#7-update-contributorsmd)
 8. [Update Cumulus package API documentation](#8-update-cumulus-package-api-documentation)
-9. [Cut new version of Cumulus Documentation](#9-cut-new-version-of-cumulus-documentation)
-10. [Create a pull request against the minor version branch](#10-create-a-pull-request-against-the-minor-version-branch)
-11. [Create a git tag for the release](#11-create-a-git-tag-for-the-release)
-12. [Publishing the release](#12-publishing-the-release)
-13. [Create a new Cumulus release on github](#13-create-a-new-cumulus-release-on-github)
-14. [Update Cumulus API document](#14-update-cumulus-api-document)
-15. [Update Cumulus Template Deploy](#15-update-cumulus-template-deploy)
-16. [Merge base branch back to master](#16-merge-base-branch-back-to-master)
+9. [Update database schema](#9-update-database-schema)
+10. [Cut new version of Cumulus Documentation](#10-cut-new-version-of-cumulus-documentation)
+11. [Create a pull request against the minor version branch](#11-create-a-pull-request-against-the-minor-version-branch)
+12. [Create a git tag for the release](#12-create-a-git-tag-for-the-release)
+13. [Publishing the release](#13-publishing-the-release)
+14. [Create a new Cumulus release on github](#14-create-a-new-cumulus-release-on-github)
+15. [Update Cumulus API document](#15-update-cumulus-api-document)
+16. [Update Cumulus Template Deploy](#16-update-cumulus-template-deploy)
+17. [Merge base branch back to master](#17-merge-base-branch-back-to-master)
 
 ### 1. Create a branch for the new release
 
@@ -211,7 +212,19 @@ npm run docs-build-packages
 
 Commit and push these changes, if any.
 
-### 9. Cut new version of Cumulus Documentation
+### 9. Update database schema
+
+Check the release updates for DB schema migrations.   If there are any, run the following generation using [schemaspy](https://schemaspy.org/) via the latest published container:
+
+```sh
+docker run --rm -v ~/output:/output  schemaspy/schemaspy:latest -t pgsql -host host.docker.internal -port 5432 -u postgres -p password -s public -db postgres
+```
+
+With "-v "(host output directory):/output" set to the local work/scratch directory you intend to use.
+
+Replace (project)/docs/assets/db_schema/relationships.real.large.png with the generated file from the schemapy output at `./diagrams/summary/relationships.real.large.png`, and commit the change.
+
+### 10. Cut new version of Cumulus Documentation
 
 Docusaurus v2 uses snapshot approach for [documentation versioning](https://docusaurus.io/docs/versioning). Every versioned docs
 does not depends on other version.
@@ -242,7 +255,7 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Commit and push these changes.
 
-### 10. Create a pull request against the minor version branch
+### 11. Create a pull request against the minor version branch
 
 1. Push the release branch (e.g. `release-1.2.3`) to GitHub.
 2. Create a PR against the minor version base branch (e.g. `release-1.2.x`).
@@ -263,7 +276,7 @@ Commit and push these changes.
     - It **is safe** to do a squash merge in this instance, but not required
 5. You may delete your release branch (`release-1.2.3`) after merging to the base branch.
 
-### 11. Create a git tag for the release
+### 12. Create a git tag for the release
 
 Check out the minor version base branch (`release-1.2.x`) now that your changes are merged in and do a `git pull`.
 
@@ -280,7 +293,7 @@ e.g.:
     git push origin v9.1.0
 ```
 
-### 12. Publishing the release
+### 13. Publishing the release
 
 Publishing of new releases is handled by a custom Bamboo branch plan and is manually triggered.
 
@@ -335,7 +348,7 @@ If this is a new minor version branch, then you will need to create a new Bamboo
 
 Bamboo will build and run lint and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
-### 13. Create a new Cumulus release on github
+### 14. Create a new Cumulus release on github
 
 The CI release scripts will automatically create a GitHub release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
@@ -365,13 +378,13 @@ The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM)
 
 :::
 
-### 14. Update Cumulus API document
+### 15. Update Cumulus API document
 
 There may be unreleased changes in the [Cumulus API document](https://github.com/nasa/cumulus-api) that are waiting on the Cumulus Core release.
 If there are unrelease changes in the cumulus-api repo, follow the release instruction to create the release, the release version should match
 the Cumulus Core release.
 
-### 15. Update Cumulus Template Deploy
+### 16. Update Cumulus Template Deploy
 
 Users are encouraged to use our [Cumulus Template Deploy Project](https://github.com/nasa/cumulus-template-deploy) for deployments. The Cumulus Core version should be updated in this repo when a new Cumulus Core version is released.
 
@@ -395,7 +408,7 @@ module "cumulus" {
 
 After updating all three modules with the correct release versions, deploy a stack and verify that the deployment is successful.
 
-### 16. Merge base branch back to master
+### 17. Merge base branch back to master
 
 Finally, you need to reproduce the version update changes back to master.
 
