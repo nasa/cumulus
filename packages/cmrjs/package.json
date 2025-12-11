@@ -38,7 +38,7 @@
   "dependencies": {
     "@cumulus/aws-client": "21.0.1",
     "@cumulus/cmr-client": "21.0.1",
-    "@cumulus/common": "21.0.1",
+    "@cumulus/common": "21.1.0",
     "@cumulus/distribution-utils": "21.0.1",
     "@cumulus/errors": "21.0.1",
     "@cumulus/launchpad-auth": "21.0.1",
