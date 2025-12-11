@@ -14,6 +14,7 @@ const {
   getMaximumExecutions,
 } = require('@cumulus/message/Queue');
 const { Consumer } = require('@cumulus/ingest/consumer');
+const { ConsumerRateLimited } = require('@cumulus/ingest/consumerRateLimited');
 
 const {
   decrementQueueSemaphore,
@@ -29,7 +30,7 @@ const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-starter' });
  * @param {Object} message - incoming SQS message object
  * @returns {Promise} - AWS SF Start Execution response
  */
-function dispatch(queueUrl, message) {
+async function dispatch(queueUrl, message) {
   const input = sqs.parseSQSMessageBody(message);
 
   input.cumulus_meta.workflow_start_time = Date.now();
@@ -45,9 +46,9 @@ function dispatch(queueUrl, message) {
     input.cumulus_meta.state_machine,
     input.cumulus_meta.execution_name
   );
-  logger.info(`Starting execution ARN ${executionArn} from queue ${queueUrl}`);
+  logger.debug(`Starting execution ARN ${executionArn} from queue ${queueUrl}`);
 
-  return sfn().startExecution({
+  return await sfn().startExecution({
     stateMachineArn: input.cumulus_meta.state_machine,
     input: JSON.stringify(input),
     name: input.cumulus_meta.execution_name,
@@ -122,6 +123,39 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
 }
 
 /**
+ * This is an SQS queue consumer.
+ *
+ * It reads messages from a given SQS queue based on the configuration provided
+ * in the event object. It is a rate-limited version of the throttled consumer.
+ *
+ *
+ * @param {Object} event - lambda input message
+ * @param {string} event.queueUrl - AWS SQS url
+ * @param {string} event.messageLimit - number of messages to read from SQS for
+ *   this execution (default 1)
+ * @param {function} dispatchFn - the function to dispatch to process each message
+ * @param {number} visibilityTimeout - how many seconds messages received from
+ *   the queue will be invisible before they can be read again
+ * @returns {Promise} - A promise resolving to how many executions were started
+ * @throws {Error}
+ */
+async function handleRateLimitedEvent(event, context, dispatchFn, visibilityTimeout) {
+  const rateLimitPerSecond = get(event, 'rateLimitPerSecond', 40);
+
+  if (!event.queueUrls) {
+    throw new Error('queueUrls is missing');
+  }
+
+  const consumer = new ConsumerRateLimited({
+    queueUrls: event.queueUrls,
+    timeRemainingFunc: context.getRemainingTimeInMillis,
+    visibilityTimeout,
+    rateLimitPerSecond,
+  });
+  return await consumer.consume(dispatchFn);
+}
+
+/**
  * Wrapper for handler of priority SQS messages.
  *
  * Using a wrapper function allows injecting optional parameters
@@ -136,6 +170,23 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
  */
 function handleThrottledEvent(event, visibilityTimeout) {
   return handleEvent(event, incrementAndDispatch, visibilityTimeout);
+}
+
+/**
+ * Wrapper for handler of priority SQS messages.
+ *
+ * Using a wrapper function allows injecting optional parameters
+ * in testing, such as the visibility timeout when reading SQS
+ * messages.
+ *
+ * @param {Object} event - Lambda input message from SQS
+ * @param {number} visibilityTimeout - Optional visibility timeout to use when reading
+ *   SQS messages
+ * @returns {Promise} - A promise resolving to how many executions were started
+ * @throws {Error}
+ */
+function handleThrottledRateLimitedEvent(event, context, visibilityTimeout) {
+  return handleRateLimitedEvent(event, context, incrementAndDispatch, visibilityTimeout);
 }
 
 async function handleSourceMappingEvent(event) {
@@ -167,6 +218,17 @@ async function handleSourceMappingEvent(event) {
  * @returns {Promise} - A promise resolving to how many executions were started
  * @throws {Error}
  */
+async function sqs2sfThrottleRateLimitedHandler(event, context) {
+  return await handleThrottledRateLimitedEvent(event, context);
+}
+
+/**
+ * Handler for messages from priority SQS queues.
+ *
+ * @param {Object} event - Lambda input message from SQS
+ * @returns {Promise} - A promise resolving to how many executions were started
+ * @throws {Error}
+ */
 async function sqs2sfThrottleHandler(event) {
   return await handleThrottledEvent(event);
 }
@@ -187,6 +249,7 @@ module.exports = {
   incrementAndDispatch,
   sqs2sfEventSourceHandler,
   sqs2sfThrottleHandler,
+  sqs2sfThrottleRateLimitedHandler,
   handleEvent,
   handleThrottledEvent,
   handleSourceMappingEvent,
