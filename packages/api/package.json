@@ -69,7 +69,7 @@
     "@cumulus/ingest": "21.0.1",
     "@cumulus/launchpad-auth": "21.0.1",
     "@cumulus/logger": "21.0.1",
-    "@cumulus/message": "21.0.1",
+    "@cumulus/message": "21.1.0",
     "@cumulus/oauth-client": "21.0.1",
     "@cumulus/object-store": "21.0.1",
     "@cumulus/pvl": "21.0.1",
