@@ -180,6 +180,10 @@ output "sqs2sfThrottle_lambda_function_arn" {
   value = aws_lambda_function.sqs2sfThrottle.arn
 }
 
+output "sqs2sfThrottleRateLimited_lambda_function_arn" {
+  value = aws_lambda_function.sqs2sfThrottleRateLimited.arn
+}
+
 output "sync_granule_task" {
   value = {
     task_arn           = aws_lambda_function.sync_granule_task.arn

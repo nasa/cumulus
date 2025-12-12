@@ -1,0 +1,161 @@
+/* eslint-disable no-await-in-loop */
+import { receiveSQSMessages, SQSMessage } from '@cumulus/aws-client/SQS';
+import * as sqs from '@cumulus/aws-client/SQS';
+import { ExecutionAlreadyExists } from '@cumulus/aws-client/StepFunctions';
+import Logger from '@cumulus/logger';
+import { sleep } from '@cumulus/common';
+
+export type MessageConsumerFunction = (queueUrl: string, message: SQSMessage) => Promise<void>;
+
+const log = new Logger({ sender: '@cumulus/ingest/consumer' });
+/**
+ * Configuration parameters for the rate-limited consumer.
+ */
+export interface ConsumerConstructorParams {
+  /**
+   * URLs of the SQS queues to poll.
+   */
+  queueUrls: string[];
+  /**
+   * Function that returns the remaining time in milliseconds before Lambda timeout.
+   */
+  timeRemainingFunc: () => number;
+  /**
+   * The visibility timeout used when fetching messages from the SQS queues.
+   */
+  visibilityTimeout: number;
+  /**
+   * Whether to delete messages after successful processing. Defaults to true.
+   */
+  deleteProcessedMessage?: boolean;
+  /**
+   * Maximum number of messages to process per second.
+   */
+  rateLimitPerSecond: number;
+}
+
+export class ConsumerRateLimited {
+  private readonly deleteProcessedMessage: boolean;
+  private readonly queueUrls: string[];
+  private readonly timeRemainingFunc: () => number;
+  private readonly visibilityTimeout: number;
+  private readonly rateLimitPerSecond: number;
+  private readonly timeBuffer: number;
+  private readonly messageLimitPerFetch: number;
+  private readonly waitTime: number;
+
+  constructor({
+    queueUrls,
+    timeRemainingFunc,
+    visibilityTimeout,
+    rateLimitPerSecond,
+    deleteProcessedMessage = true,
+  }: ConsumerConstructorParams) {
+    this.queueUrls = queueUrls;
+    this.visibilityTimeout = visibilityTimeout;
+    this.timeRemainingFunc = timeRemainingFunc;
+    this.deleteProcessedMessage = deleteProcessedMessage;
+    this.rateLimitPerSecond = rateLimitPerSecond;
+    // The amount of time to stop processing messages before Lambda times out
+    this.timeBuffer = 1000;
+    // The maximum number of messages to fetch in one request per queue
+    this.messageLimitPerFetch = 10;
+    // The amount of time to wait before retrying to fetch messages when none are found
+    this.waitTime = 5000;
+  }
+
+  private async processMessage(
+    message: SQSMessage,
+    fn: MessageConsumerFunction,
+    queueUrl: string
+  ): Promise<boolean> {
+    try {
+      await fn(queueUrl, message);
+    } catch (error) {
+      if (error instanceof ExecutionAlreadyExists) {
+        log.debug('Deleting message for execution that already exists...');
+        await sqs.deleteSQSMessage(queueUrl, message.ReceiptHandle);
+        log.debug('Completed deleting message.');
+        return true;
+      }
+      log.error(error);
+      return false;
+    }
+    if (this.deleteProcessedMessage) {
+      await sqs.deleteSQSMessage(queueUrl, message.ReceiptHandle);
+    }
+    return true;
+  }
+
+  private async processMessages(
+    fn: MessageConsumerFunction,
+    messagesWithQueueUrls: Array<[SQSMessage, string]>
+  ): Promise<number> {
+    let counter = 0;
+    for (const [message, queueUrl] of messagesWithQueueUrls) {
+      const waitTime = 1000 / this.rateLimitPerSecond;
+      log.debug(`Waiting for ${waitTime} ms`);
+      await sleep(waitTime);
+      if (await this.processMessage(message, fn, queueUrl)) {
+        counter += 1;
+      }
+    }
+    return counter;
+  }
+
+  private async fetchMessages(
+    queueUrl: string,
+    messageLimit: number
+  ): Promise<Array<[SQSMessage, string]>> {
+    const messages = await receiveSQSMessages(queueUrl, {
+      numOfMessages: messageLimit,
+      visibilityTimeout: this.visibilityTimeout,
+    });
+    return messages.map((message) => [message, queueUrl]);
+  }
+
+  private async fetchMessagesFromAllQueues(): Promise<Array<[SQSMessage, string]>> {
+    return Promise.all(
+      this.queueUrls.map((queueUrl) =>
+        this.fetchMessages(queueUrl, this.messageLimitPerFetch))
+    ).then((messageArrays) => messageArrays.flat());
+  }
+
+  async consume(fn: MessageConsumerFunction): Promise<number> {
+    let messageCounter = 0;
+    let processingPromise: Promise<number> | undefined;
+
+    // The below block of code attempts to always have a batch of messages
+    // available for `processMessages` to process, so, after the initial fetch,
+    // we'll immediately start fetching the next batch while processing the
+    // current one
+
+    let messages = await this.fetchMessagesFromAllQueues();
+
+    while (this.timeRemainingFunc() > this.timeBuffer) {
+      if (messages.length === 0) {
+        log.info(
+          `No messages fetched, waiting ${this.waitTime} ms before retrying`
+        );
+        await sleep(this.waitTime);
+        messages = await this.fetchMessagesFromAllQueues();
+      } else {
+        // Start processing current batch and immediately fetch next batch
+        processingPromise = this.processMessages(fn, messages);
+        const fetchPromise = this.fetchMessagesFromAllQueues();
+
+        // Wait for processing to complete and increment counter
+        messageCounter += await processingPromise;
+        processingPromise = undefined;
+
+        // Get the next batch that was fetched concurrently
+        messages = await fetchPromise;
+      }
+    }
+
+    log.info(
+      `${messageCounter} messages successfully processed from ${this.queueUrls}`
+    );
+    return messageCounter;
+  }
+}
