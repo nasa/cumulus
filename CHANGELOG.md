@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `pyproject.toml` file.
 - **CUMULUS-4430**
   - Updated GitHub Actions to run `ruff` linting on PRs.
+- **CUMULUS-4374**
+  - Updated example python Lambdas to utilize `uv` as their package manager
 
 ### Fixed
 
