@@ -67,7 +67,7 @@
     "@cumulus/errors": "21.0.1",
     "@cumulus/es-client": "21.0.1",
     "@cumulus/ingest": "21.0.1",
-    "@cumulus/launchpad-auth": "21.0.1",
+    "@cumulus/launchpad-auth": "21.1.0",
     "@cumulus/logger": "21.0.1",
     "@cumulus/message": "21.0.1",
     "@cumulus/oauth-client": "21.0.1",
