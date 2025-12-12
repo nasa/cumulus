@@ -63,7 +63,7 @@
     "@cumulus/collection-config-store": "21.0.1",
     "@cumulus/common": "21.0.1",
     "@cumulus/db": "21.0.1",
-    "@cumulus/distribution-utils": "21.0.1",
+    "@cumulus/distribution-utils": "21.1.0",
     "@cumulus/errors": "21.0.1",
     "@cumulus/es-client": "21.0.1",
     "@cumulus/ingest": "21.0.1",
