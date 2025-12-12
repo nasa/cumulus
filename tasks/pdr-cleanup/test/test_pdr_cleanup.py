@@ -12,16 +12,16 @@ def successful_event():
         "config": {
             "provider": {
                 "host": "test-bucket",
-                "protocol": "s3"
-            }
+                "protocol": "s3",
+            },
         },
         "input": {
             "pdr": {
                 "name": "test-pdr.PDR",
-                "path": "dropbox"
+                "path": "dropbox",
             },
-            "failed": []
-        }
+            "failed": [],
+        },
     }
 
 
@@ -31,19 +31,19 @@ def failed_event():
         "config": {
             "provider": {
                 "host": "test-bucket",
-                "protocol": "s3"
-            }
+                "protocol": "s3",
+            },
         },
         "input": {
             "pdr": {
                 "name": "test-pdr.PDR",
-                "path": "dropbox"
+                "path": "dropbox",
             },
             "failed": [
                 {"arn": 123, "reason": "failure"},
-                {"arn": 456, "reason": "failure"}
-            ]
-        }
+                {"arn": 456, "reason": "failure"},
+            ],
+        },
     }
 
 
@@ -57,11 +57,11 @@ def test_cleanup_pdr_success(mock_move_pdr, successful_event, mock_context):
     output = cleanup_pdr(successful_event, mock_context)
 
     mock_move_pdr.assert_called_once_with(
-        successful_event["config"]["provider"],
-        successful_event["input"]["pdr"]
+        successful_event["config"]["provider"], successful_event["input"]["pdr"]
     )
 
     assert output == successful_event["input"]
+
 
 def test_cleanup_pdr_with_failed_workflows(failed_event, mock_context):
     with pytest.raises(Exception):
@@ -86,12 +86,11 @@ def test_move_pdr_success(mock_datetime, mock_boto3_client, successful_event):
     mock_s3_client.copy_object.assert_called_once_with(
         CopySource=os.path.join(provider["host"], src_path),
         Bucket=provider["host"],
-        Key=dest_path
+        Key=dest_path,
     )
 
     mock_s3_client.delete_object.assert_called_once_with(
-        Bucket=provider["host"], 
-        Key=src_path
+        Bucket=provider["host"], Key=src_path
     )
 
 
@@ -119,10 +118,8 @@ def test_move_pdr_non_s3_provider(mock_boto3_client, successful_event):
     provider["protocol"] = "sftp"
     pdr = successful_event["input"]["pdr"]
 
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(Exception, match=r"protocol is \(sftp\)"):
         move_pdr(provider, pdr)
-
-    assert "Provider protocol is (sftp)" in str(exc.value)
     mock_s3_client.delete_object.assert_not_called()
 
 
@@ -131,10 +128,10 @@ def test_move_pdr_delete_failure(mock_boto3_client, successful_event):
     mock_s3_client = MagicMock()
     mock_s3_client.delete_object.side_effect = Exception("Delete failed")
     mock_boto3_client.return_value = mock_s3_client
-    
+
     provider = successful_event["config"]["provider"]
     pdr = successful_event["input"]["pdr"]
-    
+
     with pytest.raises(Exception):
         move_pdr(provider, pdr)
 
