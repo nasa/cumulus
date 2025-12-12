@@ -8,11 +8,29 @@ import { sleep } from '@cumulus/common';
 export type MessageConsumerFunction = (queueUrl: string, message: SQSMessage) => Promise<void>;
 
 const log = new Logger({ sender: '@cumulus/ingest/consumer' });
+/**
+ * Configuration parameters for the rate-limited consumer.
+ */
 export interface ConsumerConstructorParams {
-  queueUrls: string[],
-  timeRemainingFunc: () => number,
-  visibilityTimeout: number,
-  deleteProcessedMessage?: boolean,
+  /**
+   * URLs of the SQS queues to poll.
+   */
+  queueUrls: string[];
+  /**
+   * Function that returns the remaining time in milliseconds before Lambda timeout.
+   */
+  timeRemainingFunc: () => number;
+  /**
+   * The visibility timeout used when fetching messages from the SQS queues.
+   */
+  visibilityTimeout: number;
+  /**
+   * Whether to delete messages after successful processing. Defaults to true.
+   */
+  deleteProcessedMessage?: boolean;
+  /**
+   * Maximum number of messages to process per second.
+   */
   rateLimitPerSecond: number;
 }
 
@@ -77,9 +95,9 @@ export class ConsumerRateLimited {
     for (const [message, queueUrl] of messagesWithQueueUrls) {
       const waitTime = 1000 / this.rateLimitPerSecond;
       log.debug(`Waiting for ${waitTime} ms`);
-      await sleep(waitTime); // eslint-disable-line no-await-in-loop
+      await sleep(waitTime);
       if (await this.processMessage(message, fn, queueUrl)) {
-        counter++;
+        counter += 1;
       }
     }
     return counter;
@@ -96,6 +114,13 @@ export class ConsumerRateLimited {
     return messages.map((message) => [message, queueUrl]);
   }
 
+  private async fetchMessagesFromAllQueues(): Promise<Array<[SQSMessage, string]>> {
+    return Promise.all(
+      this.queueUrls.map((queueUrl) =>
+        this.fetchMessages(queueUrl, this.messageLimitPerFetch))
+    ).then((messageArrays) => messageArrays.flat());
+  }
+
   async consume(fn: MessageConsumerFunction): Promise<number> {
     let messageCounter = 0;
     let processingPromise: Promise<number> | undefined;
@@ -105,10 +130,7 @@ export class ConsumerRateLimited {
     // we'll immediately start fetching the next batch while processing the
     // current one
 
-    let messages = await Promise.all(
-      this.queueUrls.map((queueUrl) =>
-        this.fetchMessages(queueUrl, this.messageLimitPerFetch))
-    ).then((messageArrays) => messageArrays.flat());
+    let messages = await this.fetchMessagesFromAllQueues();
 
     while (this.timeRemainingFunc() > this.timeBuffer) {
       if (messages.length === 0) {
@@ -116,17 +138,11 @@ export class ConsumerRateLimited {
           `No messages fetched, waiting ${this.waitTime} ms before retrying`
         );
         await sleep(this.waitTime);
-        messages = await Promise.all(
-          this.queueUrls.map((queueUrl) =>
-            this.fetchMessages(queueUrl, this.messageLimitPerFetch))
-        ).then((messageArrays) => messageArrays.flat());
+        messages = await this.fetchMessagesFromAllQueues();
       } else {
         // Start processing current batch and immediately fetch next batch
         processingPromise = this.processMessages(fn, messages);
-        const fetchPromise = Promise.all(
-          this.queueUrls.map((queueUrl) =>
-            this.fetchMessages(queueUrl, this.messageLimitPerFetch))
-        ).then((messageArrays) => messageArrays.flat());
+        const fetchPromise = this.fetchMessagesFromAllQueues();
 
         // Wait for processing to complete and increment counter
         messageCounter += await processingPromise;

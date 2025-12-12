@@ -1,5 +1,5 @@
 'use strict';
-
+//@ts-check
 const uuidv4 = require('uuid/v4');
 const get = require('lodash/get');
 
@@ -22,6 +22,20 @@ const {
 } = require('../lib/SemaphoreUtils');
 
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-starter' });
+
+/**
+ * @typedef {Object} RateLimitedEvent
+ * @property {string[]} queueUrls - AWS SQS URLs
+ * @property {number} [rateLimitPerSecond] - Maximum messages per second (default 40)
+ */
+
+/**
+ * @typedef {import('aws-lambda').Context} LambdaContext
+ */
+
+/**
+ * @typedef {import('aws-lambda').SQSEvent} SQSEvent
+ */
 
 /**
  * Starts a new stepfunction with the given payload
@@ -95,11 +109,11 @@ async function incrementAndDispatch(queueUrl, queueMessage) {
  *
  * @param {Object} event - lambda input message
  * @param {string} event.queueUrl - AWS SQS url
- * @param {string} event.messageLimit - number of messages to read from SQS for
+ * @param {number} event.messageLimit - number of messages to read from SQS for
  *   this execution (default 1)
- * @param {string} event.timeLimit - how many seconds the lambda function will
+ * @param {number} event.timeLimit - how many seconds the lambda function will
  *   remain active and query the queue (default 240 s)
- * @param {function} dispatchFn - the function to dispatch to process each message
+ * @param {import('@cumulus/ingest/consumerRateLimited').MessageConsumerFunction} dispatchFn - the function to dispatch to process each message
  * @param {number} visibilityTimeout - how many seconds messages received from
  *   the queue will be invisible before they can be read again
  * @returns {Promise} - A promise resolving to how many executions were started
@@ -125,18 +139,15 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
 /**
  * This is an SQS queue consumer.
  *
- * It reads messages from a given SQS queue based on the configuration provided
+ * It reads messages from multiple SQS queues based on the configuration provided
  * in the event object. It is a rate-limited version of the throttled consumer.
  *
- *
- * @param {Object} event - lambda input message
- * @param {string} event.queueUrl - AWS SQS url
- * @param {string} event.messageLimit - number of messages to read from SQS for
- *   this execution (default 1)
- * @param {function} dispatchFn - the function to dispatch to process each message
+ * @param {RateLimitedEvent} event - lambda input message
+ * @param {LambdaContext} context - Lambda context
+ * @param {import('@cumulus/ingest/consumerRateLimited').MessageConsumerFunction} dispatchFn - the function to dispatch to process each message
  * @param {number} visibilityTimeout - how many seconds messages received from
  *   the queue will be invisible before they can be read again
- * @returns {Promise} - A promise resolving to how many executions were started
+ * @returns {Promise<number>} - A promise resolving to how many executions were started
  * @throws {Error}
  */
 async function handleRateLimitedEvent(event, context, dispatchFn, visibilityTimeout) {
@@ -179,10 +190,11 @@ function handleThrottledEvent(event, visibilityTimeout) {
  * in testing, such as the visibility timeout when reading SQS
  * messages.
  *
- * @param {Object} event - Lambda input message from SQS
+ * @param {RateLimitedEvent} event - Lambda input message from SQS
+ * @param {LambdaContext} context - Lambda context
  * @param {number} visibilityTimeout - Optional visibility timeout to use when reading
  *   SQS messages
- * @returns {Promise} - A promise resolving to how many executions were started
+ * @returns {Promise<number>} - A promise resolving to how many executions were started
  * @throws {Error}
  */
 function handleThrottledRateLimitedEvent(event, context, visibilityTimeout) {
@@ -214,12 +226,13 @@ async function handleSourceMappingEvent(event) {
 /**
  * Handler for messages from priority SQS queues.
  *
- * @param {Object} event - Lambda input message from SQS
- * @returns {Promise} - A promise resolving to how many executions were started
+ * @param {RateLimitedEvent} event - Lambda input message from SQS
+ * @param {LambdaContext} context - Lambda context
+ * @returns {Promise<number>} - A promise resolving to how many executions were started
  * @throws {Error}
  */
 async function sqs2sfThrottleRateLimitedHandler(event, context) {
-  return await handleThrottledRateLimitedEvent(event, context);
+  return await handleThrottledRateLimitedEvent(event, context, null);
 }
 
 /**
@@ -230,13 +243,13 @@ async function sqs2sfThrottleRateLimitedHandler(event, context) {
  * @throws {Error}
  */
 async function sqs2sfThrottleHandler(event) {
-  return await handleThrottledEvent(event);
+  return await handleThrottledEvent(event, null);
 }
 
 /**
  * Handler for messages from normal SQS queues read via Lambda EventSourceMapping.
  *
- * @param {Object} event - SQS input message from Lambda EventSourceMapping
+ * @param {SQSEvent} event - SQS input message from Lambda EventSourceMapping
  * @returns {Promise} - A promise resolving to how many executions were started
  * @throws {Error}
  */
