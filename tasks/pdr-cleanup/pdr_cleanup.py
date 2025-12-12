@@ -9,7 +9,8 @@ import boto3
 from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
 
-logger = CumulusLogger('pdr-cleanup', logging.INFO)
+logger = CumulusLogger("pdr-cleanup", logging.INFO)
+
 
 def cleanup_pdr(event: dict, context: dict):
     """Task to archive PDRs.
@@ -20,19 +21,21 @@ def cleanup_pdr(event: dict, context: dict):
 
     """
 
-    logger.info('## EVENT OBJ \n' + json.dumps(event))
+    logger.info("## EVENT OBJ \n" + json.dumps(event))
 
-    provider = event['config']['provider']
-    pdr = event['input']['pdr']
+    provider = event["config"]["provider"]
+    pdr = event["input"]["pdr"]
 
-    if (len(event['input']['failed']) == 0):
+    if len(event["input"]["failed"]) == 0:
         move_pdr(provider, pdr)
     else:
         logger.info("PDR failed to ingest all granules successfully, NOT archiving")
         raise Exception(
             "PDR failed to ingest all granules successfully\n"
-            f"Ingest Granule workflow failure count: {len(event['input']['failed'])}")
-    return event['input']
+            f"Ingest Granule workflow failure count: {len(event['input']['failed'])}"
+        )
+    return event["input"]
+
 
 def move_pdr(provider: dict, pdr: dict):
     """Move PDR to location <provider.host>/<PDRs>/ .
@@ -43,38 +46,41 @@ def move_pdr(provider: dict, pdr: dict):
 
     """
 
-    if provider['protocol'] != 's3':
+    if provider["protocol"] != "s3":
         raise Exception(
             f"Provider protocol is ({provider['protocol']}) "
-             "PDR cleanup only supports S3 providers"
+            "PDR cleanup only supports S3 providers"
         )
 
-    curr_date = datetime.now().strftime('%Y.%m.%d')
-    src_path = os.path.join(pdr['path'], pdr['name'])
-    dest_path = os.path.join('PDRs', pdr['path'], curr_date, pdr['name'])
+    curr_date = datetime.now().strftime("%Y.%m.%d")
+    src_path = os.path.join(pdr["path"], pdr["name"])
+    dest_path = os.path.join("PDRs", pdr["path"], curr_date, pdr["name"])
 
-    s3_client = boto3.client('s3')
+    s3_client = boto3.client("s3")
     try:
         s3_client.copy_object(
-            CopySource=os.path.join(provider['host'], src_path),
-            Bucket=provider['host'],
-            Key=dest_path
+            CopySource=os.path.join(provider["host"], src_path),
+            Bucket=provider["host"],
+            Key=dest_path,
         )
         logger.info(
-            f'COPIED FROM {provider["host"]}/{src_path} '
-            f'TO {provider["host"]}/{dest_path}')
+            f"COPIED FROM {provider['host']}/{src_path} "
+            f"TO {provider['host']}/{dest_path}"
+        )
     except Exception:
         logger.error(
-            f'FAILED TO COPY FROM {provider["host"]}/{src_path} '
-            f'TO {provider["host"]}/{dest_path}')
+            f"FAILED TO COPY FROM {provider['host']}/{src_path} "
+            f"TO {provider['host']}/{dest_path}"
+        )
         raise
 
     try:
-        s3_client.delete_object(Bucket=provider['host'], Key=src_path)
-        logger.info(f'DELETED: {provider["host"]}/{src_path}')
+        s3_client.delete_object(Bucket=provider["host"], Key=src_path)
+        logger.info(f"DELETED: {provider['host']}/{src_path}")
     except Exception as err:
         logger.error(err)
         raise
+
 
 def handler(event: dict, context: dict):
     """Lambda handler that runs the task through CMA.
