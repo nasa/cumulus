@@ -10,10 +10,10 @@
   },
   "scripts": {
     "test": "true",
-    "python-lint": "pipenv run ruff check . && pipenv run ruff format --diff . && pipenv run mypy process_activity.py",
+    "python-lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy process_activity.py",
     "lint": "npm run python-lint",
     "clean": "rm -rf .venv",
-    "build": "pip install pipenv && PIPENV_VENV_IN_PROJECT=1 pipenv install --dev --deploy --ignore-pipfile",
+    "build": "uv sync",
     "prepare": "npm run build",
     "package": "true",
     "install-python-deps": "npm run build"

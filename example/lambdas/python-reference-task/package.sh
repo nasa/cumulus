@@ -4,12 +4,12 @@ DIR=$1
 # find packages location
 echo "Entering $DIR"
 cd "$DIR" || exit 1
-# ensure packages are up to date
-export PIPENV_VENV_IN_PROJECT=1
-pip install pipenv
-pipenv install --deploy --ignore-pipfile
+
+# ensure packages are up to date using uv
+uv sync --frozen
+
 # package dependencies
-SITE_PACKAGES=$(ls -d "$DIR"/.venv/lib/python*/site-packages)
+SITE_PACKAGES=$(find "$DIR"/.venv/lib/python*/site-packages -type d | head -1)
 echo "Entering $SITE_PACKAGES"
 cd "$SITE_PACKAGES" || exit 1
 cp -R ./* "$DIR/dist/"
@@ -24,4 +24,5 @@ node ../../../../bin/zip.js lambda.zip $(ls | grep -v lambda.zip)
 
 cd .. || exit 1
 
-pipenv install --dev --deploy --ignore-pipfile
+# Re-sync dev dependencies for any post-packaging tasks
+uv sync
