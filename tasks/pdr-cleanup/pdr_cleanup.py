@@ -43,6 +43,12 @@ def move_pdr(provider: dict, pdr: dict):
 
     """
 
+    if provider['protocol'] != 's3':
+        raise Exception(
+            f"Provider protocol is ({provider['protocol']}) "
+             "PDR cleanup only supports S3 providers"
+        )
+
     curr_date = datetime.now().strftime('%Y.%m.%d')
     src_path = os.path.join(pdr['path'], pdr['name'])
     dest_path = os.path.join('PDRs', pdr['path'], curr_date, pdr['name'])

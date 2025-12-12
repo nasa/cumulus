@@ -11,7 +11,8 @@ def successful_event():
     return {
         "config": {
             "provider": {
-                "host": "test-bucket"
+                "host": "test-bucket",
+                "protocol": "s3"
             }
         },
         "input": {
@@ -29,7 +30,8 @@ def failed_event():
     return {
         "config": {
             "provider": {
-                "host": "test-bucket"
+                "host": "test-bucket",
+                "protocol": "s3"
             }
         },
         "input": {
@@ -105,6 +107,22 @@ def test_move_pdr_copy_failure(mock_boto3_client, successful_event):
     with pytest.raises(Exception):
         move_pdr(provider, pdr)
 
+    mock_s3_client.delete_object.assert_not_called()
+
+
+@patch("boto3.client")
+def test_move_pdr_non_s3_provider(mock_boto3_client, successful_event):
+    mock_s3_client = MagicMock()
+    mock_boto3_client.return_value = mock_s3_client
+
+    provider = successful_event["config"]["provider"]
+    provider["protocol"] = "sftp"
+    pdr = successful_event["input"]["pdr"]
+
+    with pytest.raises(Exception) as exc:
+        move_pdr(provider, pdr)
+
+    assert "Provider protocol is (sftp)" in str(exc.value)
     mock_s3_client.delete_object.assert_not_called()
 
 
