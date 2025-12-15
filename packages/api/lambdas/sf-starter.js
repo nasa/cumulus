@@ -152,14 +152,21 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
  */
 async function handleRateLimitedEvent(event, context, dispatchFn, visibilityTimeout) {
   const rateLimitPerSecond = get(event, 'rateLimitPerSecond', 40);
+  const maxTimeoutMs = get(event, 'stagingTimeLimit', 60) * 1000;
+  const startTime = Date.now();
 
   if (!event.queueUrls) {
     throw new Error('queueUrls is missing');
   }
 
+  const timeRemainingFunc = () => {
+    const countdownTimerValue = maxTimeoutMs - (Date.now() - startTime);
+    return Math.min(context.getRemainingTimeInMillis(), countdownTimerValue);
+  };
+
   const consumer = new ConsumerRateLimited({
     queueUrls: event.queueUrls,
-    timeRemainingFunc: context.getRemainingTimeInMillis,
+    timeRemainingFunc: timeRemainingFunc,
     visibilityTimeout,
     rateLimitPerSecond,
   });

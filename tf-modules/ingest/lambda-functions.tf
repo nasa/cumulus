@@ -305,8 +305,7 @@ resource "aws_lambda_function" "sqs2sfThrottleRateLimited" {
   handler          = "index.sqs2sfThrottleRateLimitedHandler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs20.x"
-  # This timeout must match the cadence of the event bridge rule that triggers it
-  timeout          = 60
+  timeout          = lookup(var.lambda_timeouts, "sqs2sfThrottleRateLimited", 240)
   memory_size      = lookup(var.lambda_memory_sizes, "sqs2sfThrottleRateLimited", 512)
   environment {
     variables = {
