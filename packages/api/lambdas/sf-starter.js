@@ -151,7 +151,8 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
  * @throws {Error}
  */
 async function handleRateLimitedEvent(event, context, dispatchFn, visibilityTimeout) {
-  const rateLimitPerSecond = get(event, 'rateLimitPerSecond', 40);
+  const maxRate = 100;
+  const rateLimitPerSecond = Math.min(get(event, 'rateLimitPerSecond', 40), maxRate);
   const maxTimeoutMs = get(event, 'stagingTimeLimit', 60) * 1000;
   const startTime = Date.now();
 

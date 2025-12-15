@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 import { receiveSQSMessages, SQSMessage } from '@cumulus/aws-client/SQS';
 import * as sqs from '@cumulus/aws-client/SQS';
 import { ExecutionAlreadyExists } from '@cumulus/aws-client/StepFunctions';
@@ -21,7 +20,7 @@ export interface ConsumerConstructorParams {
    */
   timeRemainingFunc: () => number;
   /**
-   * The visibility timeout used when fetching messages from the SQS queues.
+   * The visibility timeout in milliseconds used when fetching messages from the SQS queues.
    */
   visibilityTimeout: number;
   /**
