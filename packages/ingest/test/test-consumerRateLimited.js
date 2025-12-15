@@ -46,7 +46,6 @@ test.serial('consume exits when timeRemainingFunc is negative', async (t) => {
   t.is(result, 0);
 });
 
-
 test.serial('processMessages respects rateLimitPerSecond', async (t) => {
   testConsumer.rateLimitPerSecond = 10; // 10 messages per second
   const numberOfMessages = 30;
@@ -103,9 +102,7 @@ test.serial('Consume polls messages from each queueUrl in equal quantities', asy
   testConsumer.queueUrls = ['queueUrl1', 'queueUrl2', 'queueUrl3'];
   const lambdaTimeoutMilliseconds = 1000;
   const startTime = Date.now();
-  testConsumer.timeRemainingFunc = () => {
-    return lambdaTimeoutMilliseconds - (Date.now() - startTime);
-  };
+  testConsumer.timeRemainingFunc = () => lambdaTimeoutMilliseconds - (Date.now() - startTime);
 
   sandbox.stub(testConsumer, 'fetchMessages').resolves([]);
 
@@ -121,9 +118,6 @@ test.serial('Consume polls messages from each queueUrl in equal quantities', asy
   // Each queueUrl should have been called an equal number of times
   const callCounts = testConsumer.queueUrls.map((queueUrl) =>
     testConsumer.fetchMessages.getCalls()
-      .filter((call) => call.args[0] === queueUrl).length
-  );
-
+      .filter((call) => call.args[0] === queueUrl).length);
   t.true(callCounts.every((count) => count === callCounts[0]));
-
 });

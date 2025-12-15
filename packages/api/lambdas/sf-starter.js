@@ -1,4 +1,5 @@
 'use strict';
+
 //@ts-check
 const uuidv4 = require('uuid/v4');
 const get = require('lodash/get');
@@ -20,7 +21,6 @@ const {
   decrementQueueSemaphore,
   incrementQueueSemaphore,
 } = require('../lib/SemaphoreUtils');
-const { log } = require('console');
 
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-starter' });
 
@@ -114,7 +114,8 @@ async function incrementAndDispatch(queueUrl, queueMessage) {
  *   this execution (default 1)
  * @param {number} event.timeLimit - how many seconds the lambda function will
  *   remain active and query the queue (default 240 s)
- * @param {import('@cumulus/ingest/consumerRateLimited').MessageConsumerFunction} dispatchFn - the function to dispatch to process each message
+ * @param {import('@cumulus/ingest/consumerRateLimited').MessageConsumerFunction} dispatchFn - the
+ *   function to dispatch to process each message
  * @param {number} visibilityTimeout - how many seconds messages received from
  *   the queue will be invisible before they can be read again
  * @returns {Promise} - A promise resolving to how many executions were started
@@ -145,7 +146,8 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
  *
  * @param {RateLimitedEvent} event - lambda input message
  * @param {LambdaContext} context - Lambda context
- * @param {import('@cumulus/ingest/consumerRateLimited').MessageConsumerFunction} dispatchFn - the function to dispatch to process each message
+ * @param {import('@cumulus/ingest/consumerRateLimited').MessageConsumerFunction} dispatchFn - the
+ *   function to dispatch to process each message
  * @param {number} visibilityTimeout - how many seconds messages received from
  *   the queue will be invisible before they can be read again
  * @returns {Promise<number>} - A promise resolving to how many executions were started
@@ -164,7 +166,8 @@ async function handleRateLimitedEvent(event, context, dispatchFn, visibilityTime
 
   const timeRemainingFunc = () => {
     const countdownTimerValue = maxTimeoutMs - (Date.now() - startTime);
-    const lambdaTimeRemainingWithBuffer = context.getRemainingTimeInMillis() - lambdaBufferSeconds * 1000;
+    const lambdaTimeRemainingWithBuffer = context.getRemainingTimeInMillis()
+      - lambdaBufferSeconds * 1000;
     return Math.min(lambdaTimeRemainingWithBuffer, countdownTimerValue);
   };
 
