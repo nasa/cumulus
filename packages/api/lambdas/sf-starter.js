@@ -20,6 +20,7 @@ const {
   decrementQueueSemaphore,
   incrementQueueSemaphore,
 } = require('../lib/SemaphoreUtils');
+const { log } = require('console');
 
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-starter' });
 
@@ -155,6 +156,7 @@ async function handleRateLimitedEvent(event, context, dispatchFn, visibilityTime
   const rateLimitPerSecond = Math.min(get(event, 'rateLimitPerSecond', 40), maxRate);
   const maxTimeoutMs = get(event, 'stagingTimeLimit', 60) * 1000;
   const startTime = Date.now();
+  const lambdaBufferSeconds = 5;
 
   if (!event.queueUrls) {
     throw new Error('queueUrls is missing');
@@ -162,7 +164,8 @@ async function handleRateLimitedEvent(event, context, dispatchFn, visibilityTime
 
   const timeRemainingFunc = () => {
     const countdownTimerValue = maxTimeoutMs - (Date.now() - startTime);
-    return Math.min(context.getRemainingTimeInMillis(), countdownTimerValue);
+    const lambdaTimeRemainingWithBuffer = context.getRemainingTimeInMillis() - lambdaBufferSeconds * 1000;
+    return Math.min(lambdaTimeRemainingWithBuffer, countdownTimerValue);
   };
 
   const consumer = new ConsumerRateLimited({
@@ -273,5 +276,6 @@ module.exports = {
   sqs2sfThrottleRateLimitedHandler,
   handleEvent,
   handleThrottledEvent,
+  handleThrottledRateLimitedEvent,
   handleSourceMappingEvent,
 };

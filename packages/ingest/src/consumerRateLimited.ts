@@ -39,7 +39,6 @@ export class ConsumerRateLimited {
   private readonly timeRemainingFunc: () => number;
   private readonly visibilityTimeout: number;
   private readonly rateLimitPerSecond: number;
-  private readonly timeBuffer: number;
   private readonly messageLimitPerFetch: number;
   private readonly waitTime: number;
 
@@ -55,8 +54,6 @@ export class ConsumerRateLimited {
     this.timeRemainingFunc = timeRemainingFunc;
     this.deleteProcessedMessage = deleteProcessedMessage;
     this.rateLimitPerSecond = rateLimitPerSecond;
-    // The amount of time to stop processing messages before Lambda times out
-    this.timeBuffer = 1000;
     // The maximum number of messages to fetch in one request per queue
     this.messageLimitPerFetch = 10;
     // The amount of time to wait before retrying to fetch messages when none are found
@@ -131,7 +128,7 @@ export class ConsumerRateLimited {
 
     let messages = await this.fetchMessagesFromAllQueues();
 
-    while (this.timeRemainingFunc() > this.timeBuffer) {
+    while (this.timeRemainingFunc() > 0) {
       if (messages.length === 0) {
         log.info(
           `No messages fetched, waiting ${this.waitTime} ms before retrying`

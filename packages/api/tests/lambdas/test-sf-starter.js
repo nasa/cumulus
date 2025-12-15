@@ -20,6 +20,8 @@ const { randomId } = require('@cumulus/common/test-utils');
 const Semaphore = require('../../lib/Semaphore');
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
+const { log } = require('console');
+const { exit } = require('process');
 
 const {
   dispatch,
@@ -27,6 +29,7 @@ const {
   handleEvent,
   handleThrottledEvent,
   handleSourceMappingEvent,
+  handleThrottledRateLimitedEvent,
 } = sfStarter;
 
 class stubConsumer {
@@ -49,6 +52,12 @@ const createRuleInput = (queueUrl, timeLimit = 60) => ({
   queueUrl,
   messageLimit: 50,
   timeLimit,
+});
+
+const createRuleInputRateLimited = (queueUrls, rateLimitPerSecond, stagingTimeLimit) => ({
+  queueUrls,
+  rateLimitPerSecond,
+  stagingTimeLimit,
 });
 
 const createWorkflowMessage = (queueUrl, maxExecutions) => JSON.stringify({
@@ -89,6 +98,14 @@ test.beforeEach(async (t) => {
   );
   t.context.client = awsServices.dynamodbDocClient();
   t.context.queueUrl = await createQueue(randomId('queue'));
+  t.context.queueUrls = await Promise.all([
+    createQueue(randomId('queue')),
+    createQueue(randomId('queue')),
+    createQueue(randomId('queue')),
+  ]);
+  t.context.lambdaContext = {
+    getRemainingTimeInMillis: () => 240000,
+  };
 });
 
 test.afterEach.always(
@@ -209,6 +226,113 @@ test.serial('handleEvent deletes message if execution already exists', async (t)
 
   await handleEvent(ruleInput, dispatch);
   t.true(deleteMessageStub.called);
+});
+
+test.serial('handleThrottledRateLimitedEvent respects stagingTimeLimit', async (t) => {
+  const { queueUrls } = t.context;
+  const maxExecutions = 1000; // A large number to ensure we don't hit throttling from this
+  const stagingTimeLimit = 10;
+  const rateLimitPerSecond = 5;
+  // This should be enough that we don't work through all of them based on the rate, number of queues and time limit.
+  const testMessageCount = stagingTimeLimit * rateLimitPerSecond / queueUrls.length + 50;
+  const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
+  for (const queueUrl of queueUrls) {
+    const message = createWorkflowMessage(queueUrl, maxExecutions);
+    const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
+    await Promise.all(sendMessageTasks);
+
+    await sendSQSMessage(
+      queueUrl,
+      message
+    );
+  }
+
+  const startTime = Date.now();
+  const result = await handleThrottledRateLimitedEvent(ruleInput, t.context.lambdaContext);
+  const elapsedTime = Date.now() - startTime;
+
+  // Verify that the function completed within a reasonable time relative to the timeLimit
+  // The elapsed time should be close to the timeLimit, not significantly longer
+  t.true(elapsedTime >= stagingTimeLimit * 1000);
+  t.true(elapsedTime < (stagingTimeLimit * 1000) + 5000); // Allow buffer for processing
+
+  // Verify that not all messages were processed (proving timeLimit was respected)
+  t.true(testMessageCount * queueUrls.length > result);
+});
+
+test.serial('handleThrottledRateLimitedEvent respects rateLimitPerSecond', async (t) => {
+  const { queueUrls } = t.context;
+  const maxExecutions = 1000; // A large number to ensure we don't hit throttling from this
+  const stagingTimeLimit = 10;
+  const rateLimitPerSecond = 10;
+  // This should be enough that we don't work through all of them based on the rate, number of queues and time limit.
+  const testMessageCount = stagingTimeLimit * rateLimitPerSecond / queueUrls.length + 50;
+  const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
+  for (const queueUrl of queueUrls) {
+    const message = createWorkflowMessage(queueUrl, maxExecutions);
+    const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
+    await Promise.all(sendMessageTasks);
+
+    await sendSQSMessage(
+      queueUrl,
+      message
+    );
+  }
+
+  const startExecutionStub = sinon.stub().returns({
+    promise: () => Promise.resolve({}),
+  });
+  const stubSFNWithSpy = () => ({
+    startExecution: startExecutionStub,
+  });
+  const revert = sfStarter.__set__('sfn', stubSFNWithSpy);
+
+  t.teardown(() => {
+    revert();
+  });
+
+  const result = await handleThrottledRateLimitedEvent(ruleInput, t.context.lambdaContext);
+
+  // Verify that startExecution was called, limited by the rateLimitPerSecond
+  const expectedMaxCalls = Math.floor(stagingTimeLimit * rateLimitPerSecond * queueUrls.length);
+  t.true(startExecutionStub.callCount > 0);
+  t.true(startExecutionStub.callCount <= expectedMaxCalls);
+});
+
+test.serial('handleThrottledRateLimitedEvent ends prior to the lambda timeout', async (t) => {
+  const { queueUrls } = t.context;
+  const maxExecutions = 1000; // A large number to ensure we don't hit throttling from this
+  const stagingTimeLimit = 100;  // Setting a large value to make sure this isn't a limiting factor
+  const rateLimitPerSecond = 10;
+  const lambdaTimeoutMilliseconds = 8000;
+
+  const lambdaContext = {
+    getRemainingTimeInMillis: () => {
+      return lambdaTimeoutMilliseconds - (Date.now() - startTime);
+    }
+  };
+
+  // This should be enough that we don't work through all of them based on the rate, number of queues and time limit.
+  const testMessageCount = stagingTimeLimit * rateLimitPerSecond / queueUrls.length + 50;
+  const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
+  for (const queueUrl of queueUrls) {
+    const message = createWorkflowMessage(queueUrl, maxExecutions);
+    const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
+    await Promise.all(sendMessageTasks);
+
+    await sendSQSMessage(
+      queueUrl,
+      message
+    );
+  }
+
+  const startTime = Date.now();
+  await handleThrottledRateLimitedEvent(ruleInput, lambdaContext);
+  const elapsedTime = Date.now() - startTime;
+
+  // Verify that the function completed in less than the lambda timeout
+  t.true(elapsedTime < lambdaTimeoutMilliseconds);
+
 });
 
 test('incrementAndDispatch throws error for message without queue URL', async (t) => {

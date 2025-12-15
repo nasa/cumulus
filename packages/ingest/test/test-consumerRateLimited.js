@@ -39,9 +39,8 @@ test.beforeEach(() => {
 });
 test.afterEach.always(() => sandbox.restore());
 
-test.serial('consume exits when timeRemainingFunc is less than timeBuffer', async (t) => {
-  testConsumer.timeBuffer = 500;
-  testConsumer.timeRemainingFunc = () => 400;
+test.serial('consume exits when timeRemainingFunc is negative', async (t) => {
+  testConsumer.timeRemainingFunc = () => -100;
 
   const result = await testConsumer.consume(processFn);
   t.is(result, 0);
@@ -81,10 +80,9 @@ test.serial('processMessage deletes message on ExecutionAlreadyExists error when
   t.true(deleteSpy.calledWith(fakeQueueName, sqsMessage.ReceiptHandle));
 });
 
-test.serial('when no messages are available, consume polls the queue for new messages every this.waitTime between polls until timeRemainingFunc returns a value less than timeBuffer', async (t) => {
+test.serial('Consume polls the queue for new messages every this.waitTime between polls until timeRemainingFunc returns a value of 0 when no messages are available', async (t) => {
   // Since we're just testing the number of calls to fetchMessages, we can set waitTime to 0
   testConsumer.waitTime = 0;
-  testConsumer.timeBuffer = 1;
   const timeSubtractedPerCall = 1;
   const initialTimeRemaining = 6;
   let timeRemaining = initialTimeRemaining;
@@ -96,5 +94,36 @@ test.serial('when no messages are available, consume polls the queue for new mes
 
   await testConsumer.consume(processFn);
 
-  t.is(testConsumer.fetchMessages.callCount, initialTimeRemaining - testConsumer.timeBuffer);
+  t.is(testConsumer.fetchMessages.callCount, initialTimeRemaining);
+});
+
+test.serial('Consume polls messages from each queueUrl in equal quantities', async (t) => {
+  // Since we're just testing the number of calls to fetchMessages, we can set waitTime to 0
+  testConsumer.waitTime = 100;
+  testConsumer.queueUrls = ['queueUrl1', 'queueUrl2', 'queueUrl3'];
+  const lambdaTimeoutMilliseconds = 1000;
+  const startTime = Date.now();
+  testConsumer.timeRemainingFunc = () => {
+    return lambdaTimeoutMilliseconds - (Date.now() - startTime);
+  };
+
+  sandbox.stub(testConsumer, 'fetchMessages').resolves([]);
+
+  await testConsumer.consume(processFn);
+
+  // Each queueUrl should have been called at least once
+  testConsumer.queueUrls.forEach((queueUrl) => {
+    const callsForQueue = testConsumer.fetchMessages.getCalls()
+      .filter((call) => call.args[0] === queueUrl).length;
+    t.true(callsForQueue > 0);
+  });
+
+  // Each queueUrl should have been called an equal number of times
+  const callCounts = testConsumer.queueUrls.map((queueUrl) =>
+    testConsumer.fetchMessages.getCalls()
+      .filter((call) => call.args[0] === queueUrl).length
+  );
+
+  t.true(callCounts.every((count) => count === callCounts[0]));
+
 });
