@@ -512,7 +512,51 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
     producerGranuleId: 'TestFixtureGranuleUR',
   });
   t.is(metadataObject.Granule.GranuleUR, 'TestFixtureGranuleUR_uniq');
-  t.is(metadataObject.Granule.DataGranule.ProducerGranuleId, 'TestFixtureGranuleUR');
+  t.true(metadataObject.Granule.DataGranule instanceof Map, 'DataGranule should be a Map for element ordering');
+  t.is(metadataObject.Granule.DataGranule.get('ProducerGranuleId'), 'TestFixtureGranuleUR');
+});
+
+test.serial('UpdateEcho10XMLMetadata maintains ECHO10 DataGranule element order', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+  const cmrXml = await fs.readFile(
+    path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
+    'utf8'
+  );
+  const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
+  const distEndpoint = 'https://distendpoint.com';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
+
+  const { metadataObject } = await updateEcho10XMLMetadata({
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: [],
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    testOverrides: {
+      generateEcho10XMLStringMethod: () => 'testXmlString',
+      metadataObjectFromCMRXMLFileMethod: () => cmrMetadata,
+      uploadEcho10CMRFileMethod: uploadEchoSpy,
+    },
+    updateGranuleIdentifiers: true,
+    granuleId: 'TestFixtureGranuleUR_uniq',
+    producerGranuleId: 'NEW_PRODUCER_ID',
+  });
+
+  t.true(metadataObject.Granule.DataGranule instanceof Map);
+
+  const keys = Array.from(metadataObject.Granule.DataGranule.keys());
+  const expectedOrder = [
+    'SizeMBDataGranule',
+    'ReprocessingPlanned',
+    'ReprocessingActual',
+    'ProducerGranuleId',
+    'DayNightFlag',
+    'ProductionDateTime',
+    'LocalVersionId',
+  ];
+
+  t.deepEqual(keys, expectedOrder, 'DataGranule elements should be in ECHO10 XSD schema order');
+  t.is(metadataObject.Granule.DataGranule.get('ProducerGranuleId'), 'NEW_PRODUCER_ID');
 });
 
 test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {

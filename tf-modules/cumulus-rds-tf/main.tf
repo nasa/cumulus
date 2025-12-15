@@ -13,6 +13,16 @@ provider "aws" {
     key_prefixes = ["gsfc-ngap"]
   }
 }
+
+locals {
+  rds_security_group_id = try(
+    var.input_security_group_id != null
+      ? var.input_security_group_id
+      : aws_security_group.rds_cluster_access.id,
+    null
+  )
+}
+
 resource "aws_db_subnet_group" "default" {
   name_prefix = var.aws_db_subnet_group_prefix
   subnet_ids  = var.subnets
@@ -59,6 +69,18 @@ resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v17" {
   name   = "${var.prefix}-cluster-parameter-group-v17"
   family = var.parameter_group_family_v17
 
+  # Log any database queries that take longer than the configured threshold
+  parameter {
+    name  = "log_min_duration_statement"
+    value = var.db_log_min_duration_ms
+  }
+
+  parameter {
+    apply_method = "pending-reboot"
+    name         = "auto_explain.log_min_duration"
+    value        = var.db_log_min_duration_ms
+  }
+
   dynamic "parameter" {
     for_each = var.db_parameters
     content {
@@ -84,8 +106,13 @@ resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "postgresql_logs" {
+  name              = "/aws/rds/cluster/${var.cluster_identifier}/postgresql"
+  retention_in_days = var.postgresql_log_retention_days
+}
+
 resource "aws_rds_cluster" "cumulus" {
-  depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group_v17]
+  depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group_v17, aws_cloudwatch_log_group.postgresql_logs]
   cluster_identifier      = var.cluster_identifier
   engine_mode             = "provisioned"
   engine                  = "aurora-postgresql"
@@ -98,12 +125,15 @@ resource "aws_rds_cluster" "cumulus" {
   db_subnet_group_name    = aws_db_subnet_group.default.id
   apply_immediately       = var.apply_immediately
   storage_encrypted       = true
+  enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
 
   serverlessv2_scaling_configuration {
     max_capacity = var.max_capacity
     min_capacity = var.min_capacity
   }
-  vpc_security_group_ids          = [aws_security_group.rds_cluster_access.id]
+
+  vpc_security_group_ids = [local.rds_security_group_id]
+
   deletion_protection             = var.deletion_protection
   enable_http_endpoint            = true
   tags                            = var.tags

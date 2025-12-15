@@ -398,6 +398,86 @@ test('filterRulesByRuleParams filters on sourceArn', (t) => {
   t.deepEqual(results, [rule1]);
 });
 
+test('filterRulesByRuleParams filters on provider', (t) => {
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  const rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  const ruleWoProvider = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  delete ruleWoProvider.provider;
+
+  const ruleParamsToSelectRule1 = { provider: rule1.provider };
+
+  const resultsFilterWithProvider = rulesHelpers.filterRulesByRuleParams(
+    [rule1, rule2, ruleWoProvider],
+    ruleParamsToSelectRule1
+  );
+  t.deepEqual(resultsFilterWithProvider, [rule1, ruleWoProvider]);
+
+  const resultsFilterWoProvider = rulesHelpers.filterRulesByRuleParams(
+    [rule1, rule2, ruleWoProvider],
+    {}
+  );
+  t.deepEqual(resultsFilterWoProvider, [rule1, rule2, ruleWoProvider]);
+});
+
+test('filterRulesByRuleParams does not filter if allowProviderMismatchOnRuleFilter is set to true', (t) => {
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'fake_provider' });
+  const rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'another_fake_provider' });
+  const ruleWoProvider = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  const allowProviderMismatchOnRuleFilter = true;
+  delete ruleWoProvider.provider;
+
+  let ruleParamsToSelectRule1 = { provider: rule1.provider, allowProviderMismatchOnRuleFilter };
+
+  const resultsFilterWithProvider = rulesHelpers.filterRulesByRuleParams(
+    [rule1, rule2, ruleWoProvider],
+    ruleParamsToSelectRule1
+  );
+  t.deepEqual(resultsFilterWithProvider, [rule1, rule2, ruleWoProvider]);
+
+  ruleParamsToSelectRule1 = { provider: rule1.provider };
+
+  const resultsFilterWoProvider = rulesHelpers.filterRulesByRuleParams(
+    [rule1, rule2, ruleWoProvider],
+    ruleParamsToSelectRule1
+  );
+  t.deepEqual(resultsFilterWoProvider, [rule1, ruleWoProvider]);
+});
+
+test('filterRulesByRuleParams does not filter if rule.meta.allowProviderMismatchOnRuleFilter is set to true', (t) => {
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'fake_provider' });
+  const allowProviderMismatchOnRuleFilter = true;
+  let rule2 = fakeRuleFactoryV2({
+    rule: {
+      type: 'sqs',
+      sourceArn: randomString(),
+      meta: {
+        allowProviderMismatchOnRuleFilter,
+      },
+    },
+    provider: 'another_fake_provider',
+  });
+
+  const ruleWoProvider = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  delete ruleWoProvider.provider;
+
+  let ruleParamsToSelectRule1 = { provider: rule1.provider };
+
+  const resultsFilterWithProvider = rulesHelpers.filterRulesByRuleParams(
+    [rule1, rule2, ruleWoProvider],
+    ruleParamsToSelectRule1
+  );
+  t.deepEqual(resultsFilterWithProvider, [rule1, rule2, ruleWoProvider]);
+
+  ruleParamsToSelectRule1 = { provider: rule1.provider };
+  rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'another_fake_provider' });
+
+  const resultsFilterWoProvider = rulesHelpers.filterRulesByRuleParams(
+    [rule1, ruleWoProvider],
+    ruleParamsToSelectRule1
+  );
+  t.deepEqual(resultsFilterWoProvider, [rule1, ruleWoProvider]);
+});
+
 test('getMaxTimeoutForRules returns correct max timeout', (t) => {
   const rule1 = fakeRuleFactoryV2({
     meta: {
@@ -542,6 +622,29 @@ test('rulesHelpers.lookupCollectionInEvent returns collection for CNM case', (t)
 
 test('rulesHelpers.lookupCollectionInEvent returns empty object for empty case', (t) => {
   t.deepEqual(rulesHelpers.lookupCollectionInEvent({}), {});
+});
+
+test('rulesHelpers.lookupProviderInEvent returns provider for standard case', (t) => {
+  const event = {
+    provider: {
+      id: 'test',
+    },
+  };
+  t.deepEqual(rulesHelpers.lookupProviderInEvent(event), event.provider.id);
+});
+
+test('rulesHelpers.lookupProviderInEvent returns provider for CNM case', (t) => {
+  const event = {
+    provider: 'test',
+    product: {
+      name: 'productname',
+    },
+  };
+  t.deepEqual(rulesHelpers.lookupProviderInEvent(event), event.provider);
+});
+
+test('rulesHelpers.lookupProviderInEvent returns undefined for empty case', (t) => {
+  t.deepEqual(rulesHelpers.lookupProviderInEvent({}), undefined);
 });
 
 test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t) => {

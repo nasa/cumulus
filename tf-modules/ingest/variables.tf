@@ -64,6 +64,12 @@ variable "default_s3_multipart_chunksize_mb" {
   default = 256
 }
 
+variable "allow_provider_mismatch_on_rule_filter" {
+  description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
+  type = bool
+  default = false
+}
+
 variable "distribution_url" {
   type = string
 }
@@ -195,6 +201,17 @@ variable "default_log_retention_days" {
   type = number
   default = 30
   description = "Optional default value that user chooses for their log retention periods"
+}
+
+variable "sync_granule_s3_jitter_max_ms" {
+  description = "Maximum random jitter in milliseconds to apply before S3 operations in SyncGranule task (0-59000). Set to 0 to disable jitter."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.sync_granule_s3_jitter_max_ms >= 0 && var.sync_granule_s3_jitter_max_ms <= 59000
+    error_message = "sync_granule_s3_jitter_max_ms must be between 0 and 59000 milliseconds."
+  }
 }
 
 variable "sqs_message_consumer_watcher_message_limit" {

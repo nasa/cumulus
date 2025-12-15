@@ -135,6 +135,7 @@ resource "aws_lambda_function" "message_consumer" {
       system_bucket            = var.system_bucket
       FallbackTopicArn         = aws_sns_topic.kinesis_fallback.arn
       defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
+      allowProviderMismatchOnRuleFilter = var.allow_provider_mismatch_on_rule_filter
     }
   }
   tags = var.tags
@@ -341,6 +342,7 @@ resource "aws_lambda_function" "sqs_message_consumer" {
       stackName                = var.prefix
       system_bucket            = var.system_bucket
       defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
+      allowProviderMismatchOnRuleFilter = var.allow_provider_mismatch_on_rule_filter
     }
   }
   tags = var.tags

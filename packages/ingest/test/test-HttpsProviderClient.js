@@ -397,7 +397,7 @@ test('HttpsProviderClient.download() fails on redirect to different host if no a
   try {
     await t.throwsAsync(
       httpsProviderClient.download({ remotePath: protectedFile2, localPath }),
-      { message: /Response code 401/ }
+      { message: /Request failed with status code 401/ }
     );
     t.is(fs.readFileSync(localPath, 'utf-8'), '');
   } finally {
@@ -420,7 +420,7 @@ test('HttpsProviderClient.download() fails on redirect to different host if redi
   try {
     await t.throwsAsync(
       httpsProviderClient.download({ remotePath: protectedFile2, localPath }),
-      { message: /Response code 401/ }
+      { message: /Request failed with status code 401/ }
     );
     t.is(fs.readFileSync(localPath, 'utf-8'), '');
   } finally {
@@ -610,7 +610,7 @@ test('HttpsProviderClient.sync() fails on redirect to different host if redirect
       });
       t.fail();
     } catch (error) {
-      t.true(/Response code 401/.test(error.message));
+      t.true(/Request failed with status code 401/.test(error.message));
     }
     t.false(await s3ObjectExists({
       Bucket: destinationBucket,

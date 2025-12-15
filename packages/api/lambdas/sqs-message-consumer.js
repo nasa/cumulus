@@ -81,9 +81,14 @@ async function dispatch(queueUrl, message) {
   await archiveSqsMessageToS3(queueUrl, message);
 
   const eventObject = JSON.parse(message.Body);
-  const eventCollection = rulesHelpers.lookupCollectionInEvent(eventObject);
 
-  const rulesToSchedule = rulesHelpers.filterRulesbyCollection(rulesForQueue, eventCollection);
+  const ruleParams = {
+    type: 'sqs',
+    ...rulesHelpers.lookupCollectionInEvent(eventObject),
+    provider: rulesHelpers.lookupProviderInEvent(eventObject),
+    allowProviderMismatchOnRuleFilter: process.env.allow_provider_mismatch_on_rule_filter === 'true',
+  };
+  const rulesToSchedule = rulesHelpers.filterRulesByRuleParams(rulesForQueue, ruleParams);
 
   return await Promise.all(rulesToSchedule.map((rule) => {
     if (get(rule, 'meta.retries', 3) < messageReceiveCount - 1) {

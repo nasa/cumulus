@@ -14,14 +14,19 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
 
   upsert(
     knexOrTrx: Knex | Knex.Transaction,
-    file: PostgresFile
-  ) {
+    input: PostgresFile | PostgresFile[]
+  ): Promise<PostgresFileRecord[]> {
+    const files = Array.isArray(input) ? input : [input];
+
+    if (files.length === 0) return Promise.resolve([]);
+
     return knexOrTrx(this.tableName)
-      .insert(file)
+      .insert(files)
       .onConflict(['bucket', 'key'])
       .merge()
       .returning('*');
   }
+
   /**
    * Retrieves all files for all granules given
   */
