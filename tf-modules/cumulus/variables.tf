@@ -687,3 +687,9 @@ variable "archive_records_config" {
     schedule_expression = "cron(0 4 * * ? *)",
   }
 }
+
+variable "enable_otel_tracing" {
+  description = "Enable OpenTelemetry tracing and X-Ray"
+  type        = bool
+  default     = false
+}
