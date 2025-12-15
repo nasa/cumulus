@@ -235,16 +235,12 @@ test.serial('handleThrottledRateLimitedEvent respects stagingTimeLimit', async (
   // queues and time limit.
   const testMessageCount = (stagingTimeLimit * (rateLimitPerSecond / queueUrls.length)) + 50;
   const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
-  for (const queueUrl of queueUrls) {
+  await Promise.all(queueUrls.map(async (queueUrl) => {
     const message = createWorkflowMessage(queueUrl, maxExecutions);
     const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
     await Promise.all(sendMessageTasks);
-
-    await sendSQSMessage(
-      queueUrl,
-      message
-    );
-  }
+    await sendSQSMessage(queueUrl, message);
+  }));
 
   const startTime = Date.now();
   const result = await handleThrottledRateLimitedEvent(ruleInput, t.context.lambdaContext);
@@ -268,16 +264,12 @@ test.serial('handleThrottledRateLimitedEvent respects rateLimitPerSecond', async
   // queues and time limit.
   const testMessageCount = (stagingTimeLimit * (rateLimitPerSecond / queueUrls.length)) + 50;
   const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
-  for (const queueUrl of queueUrls) {
+  await Promise.all(queueUrls.map(async (queueUrl) => {
     const message = createWorkflowMessage(queueUrl, maxExecutions);
     const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
     await Promise.all(sendMessageTasks);
-
-    await sendSQSMessage(
-      queueUrl,
-      message
-    );
-  }
+    await sendSQSMessage(queueUrl, message);
+  }));
 
   const startExecutionStub = sinon.stub().returns({
     promise: () => Promise.resolve({}),
@@ -317,16 +309,12 @@ test.serial('handleThrottledRateLimitedEvent ends prior to the lambda timeout', 
   // queues and time limit.
   const testMessageCount = (stagingTimeLimit * (rateLimitPerSecond / queueUrls.length)) + 50;
   const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
-  for (const queueUrl of queueUrls) {
+  await Promise.all(queueUrls.map(async (queueUrl) => {
     const message = createWorkflowMessage(queueUrl, maxExecutions);
     const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
     await Promise.all(sendMessageTasks);
-
-    await sendSQSMessage(
-      queueUrl,
-      message
-    );
-  }
+    await sendSQSMessage(queueUrl, message);
+  }));
 
   await handleThrottledRateLimitedEvent(ruleInput, lambdaContext);
   const elapsedTime = Date.now() - startTime;

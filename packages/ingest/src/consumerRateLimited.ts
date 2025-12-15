@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { receiveSQSMessages, SQSMessage } from '@cumulus/aws-client/SQS';
 import * as sqs from '@cumulus/aws-client/SQS';
 import { ExecutionAlreadyExists } from '@cumulus/aws-client/StepFunctions';
