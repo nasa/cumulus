@@ -449,9 +449,9 @@ Please note changes in 20.2.3 may not yet be released in future versions, as thi
 
 ### Migration Notes
 
-#### CUMULUS-4069 Update granules table to include producer_granule_id column
-
 Please follow the instructions before upgrading Cumulus
+
+#### CUMULUS-4069 Update granules table to include producer_granule_id column
 
 - The updates in CUMULUS-4069 require a manual update to the PostgreSQL database
   in the production environment. Please follow the instructions in
