@@ -149,13 +149,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
-#### CUMULUS-4069 Update granules table to include producer_granule_id column
-
 Please follow the instructions before upgrading Cumulus
+
+#### CUMULUS-4069 Update granules table to include producer_granule_id column
 
 - The updates in CUMULUS-4069 require a manual update to the PostgreSQL database
   in the production environment. Please follow the instructions in
   [Update granules to include producer_granule_id](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-granules-to-include-producer_granule_id)
+
+#### CUMULUS-4123 Update granules table to include archived column
 
 - The updates in CUMULUS-4123 require a manual update to the PostgreSQL database
   in the production environment, please follow the instructions in [Record Archival](https://nasa.github.io/cumulus/docs/next/features/record_archival.md) and [Archived Column Indexing](https://nasa.github.io/cumulus/docs/next/upgrade-notes/archived_column_indexing.md)
