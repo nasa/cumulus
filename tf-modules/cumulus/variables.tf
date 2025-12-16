@@ -172,7 +172,25 @@ variable "archive_api_reserved_concurrency" {
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)
-  default     = []
+  default     = [
+    "acyu",
+    "awisdom",
+    "cbanh",
+    "chuang14",
+    "cdurbin",
+    "ecarton",
+    "jasmine",
+    "jennyhliu",
+    "jmccoy_uat",
+    "jnorton1",
+    "kkelly",
+    "kovarik",
+    "mobrien84",
+    "nnageswa",
+    "npauzenga",
+    "terrafirma13",
+    "yliu10"
+  ]
 }
 
 variable "buckets" {
