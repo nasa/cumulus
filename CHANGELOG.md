@@ -206,7 +206,7 @@ Please follow the instructions before upgrading Cumulus
   - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
   - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
   - Added a documentation page titled `"Generate Unique GranuleId"` to explain the algorithm for generating unique `granuleIds`.
-- **CUMULUS-4028**
+- **CUMULUS-4208**
   - Update AddUniqueGranuleId task to output the input payload in addition to the modified granules.
   - Added 'unique' version of ingest_and_publish granule workflow for 'uniquiy' feature ingest tests
 - **CUMULUS-4209**
