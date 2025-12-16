@@ -275,6 +275,30 @@ variable "archive_api_url" {
   description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
 }
 
+variable "archive_api_users" {
+  description = "Earthdata (URS) usernames that should be allowed to access the archive API"
+  type        = list(string)
+  default     = [
+    "acyu",
+    "awisdom",
+    "cbanh",
+    "chuang14",
+    "cdurbin",
+    "ecarton",
+    "jasmine",
+    "jennyhliu",
+    "jmccoy_uat",
+    "jnorton1",
+    "kkelly",
+    "kovarik",
+    "mobrien84",
+    "nnageswa",
+    "npauzenga",
+    "terrafirma13",
+    "yliu10"
+  ]
+}
+
 variable "private_archive_api_gateway" {
   type    = bool
   default = true

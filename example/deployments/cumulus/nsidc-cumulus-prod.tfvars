@@ -31,5 +31,35 @@ buckets = {
 }
 system_bucket = "opex-nsidc-cumulus-internal"
 api_reserved_concurrency = 14
+archive_api_users = [
+    "acyu",
+    "awisdom",
+    "cbanh",
+    "chuang14",
+    "cdurbin",
+    "ecarton",
+    "jasmine",
+    "jennyhliu",
+    "jmccoy_uat",
+    "jnorton1",
+    "kkelly",
+    "kovarik",
+    "mobrien84",
+    "nnageswa",
+    "npauzenga",
+    "terrafirma13",
+    "yliu10",
+    "hgrams",
+    "bishop_ross",
+    "marin",
+    "viviant",
+    "avluu",
+    "nathawat",
+    "mdcampbell",
+    "crumlyd",
+    "tbmcknig",
+    "ymchen",
+    "sflynn"
+]
 archive_api_url = "https://d3cuh567loctll.cloudfront.net/"
 cumulus_distribution_url = "https://djidssf1tx775.cloudfront.net/"
