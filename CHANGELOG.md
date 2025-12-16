@@ -285,6 +285,9 @@ Please follow the instructions before upgrading Cumulus
   in the production environment. Please follow the instructions in
   [Update granules to include producer_granule_id](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-granules-to-include-producer_granule_id)
 
+- The updates in CUMULUS-4123 require a manual update to the PostgreSQL database
+  in the production environment, please follow the instructions in [Record Archival](https://nasa.github.io/cumulus/docs/next/features/record_archival.md) and [Archived Column Indexing](https://nasa.github.io/cumulus/docs/next/upgrade-notes/archived_column_indexing.md)
+
 ### Breaking Changes
 
 - **CUMULUS-4078**
@@ -439,11 +442,16 @@ Please follow the instructions before upgrading Cumulus
 - **CUMULUS-4119**
   - Added assertions in `KinesisTestTriggerWithUniqueGranuleIdsSpec` to cover "duplicate"
     Granules in separate Collections.
+- **CUMULUS-4123**
+  - add "archived" column to granules and executions tables
+  - add "archived" field to associated data types and schemas
+  - add docs/upgrade-notes/archived_column_indexing.md docs page for database upgrade
+  - add docs/features/record_archival.md docs page for explanation
 - **CUMULUS-4162**
   - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
   - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
   - Added a documentation page titled `"Generate Unique GranuleId"` to explain the algorithm for generating unique `granuleIds`.
-- **CUMULUS-4028**
+- **CUMULUS-4208**
   - Update AddUniqueGranuleId task to output the input payload in addition to the modified granules.
   - Added 'unique' version of ingest_and_publish granule workflow for 'uniquiy' feature ingest tests
 - **CUMULUS-4209**
@@ -533,11 +541,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 
 - **CUMULUS-4108**
   - Added standalone lambda function code to scan and terminate old instances when they pass their 90 day expiration
-- **CUMULUS-4123**
-  - add "archived" column to granules and executions tables
-  - add "archived" field to associated data types and schemas
-  - add docs/upgrade-notes/archived_column_indexing.md docs page for database upgrade
-  - add docs/features/record_archival.md docs page for explanation
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
