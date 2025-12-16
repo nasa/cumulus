@@ -460,7 +460,7 @@ Please follow the instructions before upgrading Cumulus
 #### CUMULUS-4123 Update granules table to include archived column
 
 - The updates in CUMULUS-4123 require a manual update to the PostgreSQL database
-  in the production environment, please follow the instructions in [Record Archival](https://nasa.github.io/cumulus/docs/next/features/record_archival.md) and [Archived Column Indexing](https://nasa.github.io/cumulus/docs/next/upgrade-notes/archived_column_indexing.md)
+  in the production environment, please follow the instructions in [Record Archival](https://nasa.github.io/cumulus/docs/next/features/record_archival) and [Archived Column Indexing](https://nasa.github.io/cumulus/docs/next/upgrade-notes/archived_column_indexing)
 
 ### Breaking Changes
 
