@@ -166,6 +166,8 @@ module "cumulus" {
     "cbanh",
     "chuang14",
     "cdurbin",
+    "dhudelson",
+    "dmsorensen",
     "ecarton",
     "jasmine",
     "jennyhliu",
