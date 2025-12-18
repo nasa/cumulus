@@ -69,7 +69,7 @@
     "@aws-sdk/s3-request-presigner": "^3.621.0",
     "@aws-sdk/signature-v4-crt": "^3.621.0",
     "@aws-sdk/types": "^3.609.0",
-    "@cumulus/checksum": "21.0.1",
+    "@cumulus/checksum": "21.1.0",
     "@cumulus/errors": "21.0.1",
     "@cumulus/logger": "21.0.1",
     "@cumulus/types": "21.0.1",
