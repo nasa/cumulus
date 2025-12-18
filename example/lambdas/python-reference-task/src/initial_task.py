@@ -4,12 +4,13 @@ some values to the payloads for use with PythonReferenceSpec.js.
 
 from run_cumulus_task import run_cumulus_task
 
+
 def task(event, _context):
     """Task takes an event and returns it with test values added."""
     return {
-        "inputData": [event['input'][0]],
-        "configInputData": event['config']['configData'],
-        "newData": { "newKey1": "newData1" },
+        "inputData": [event["input"][0]],
+        "configInputData": event["config"]["configData"],
+        "newData": {"newKey1": "newData1"},
     }
 
 

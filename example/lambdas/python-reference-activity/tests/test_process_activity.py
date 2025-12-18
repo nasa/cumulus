@@ -1,6 +1,5 @@
-import pytest
-
 from process_activity import TestProcess
+
 
 def test_process():
     python_process = TestProcess({})

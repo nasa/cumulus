@@ -10,7 +10,7 @@
   },
   "scripts": {
     "test": "uv run pytest -q",
-    "lint": "uv run ruff check . && uv run ruff format --diff . && uv run process_activity.py",
+    "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy process_activity.py",
     "clean": "rm -rf .venv",
     "build": "uv sync",
     "prepare": "npm run build",
