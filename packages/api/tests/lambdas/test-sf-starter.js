@@ -68,6 +68,7 @@ const createWorkflowMessage = (queueUrl, maxExecutions) => JSON.stringify({
 });
 
 const createSendMessageTasks = (queueUrl, message, total) => {
+  console.log(`Creating ${total} messages in queue ${queueUrl}`);
   let count = 0;
   const tasks = [];
   while (count < total) {
@@ -112,6 +113,45 @@ test.afterEach.always(
 );
 
 test.after.always(() => manager.deleteTable());
+
+test.serial('handleThrottledRateLimitedEvent fetches the same number of messages it processes', async (t) => {
+  const { queueUrls } = t.context;
+  const maxExecutions = 1000;
+  const stagingTimeLimit = 10;
+  const rateLimitPerSecond = 5;
+  const testMessageCount = 15;
+
+  const endDateTime = Date.now() + 10000;
+  t.context.lambdaContext.getRemainingTimeInMillis = () => endDateTime - Date.now();
+  const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
+  await Promise.all(queueUrls.map(async (queueUrl) => {
+    const message = createWorkflowMessage(queueUrl, maxExecutions);
+    const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
+    await Promise.all(sendMessageTasks);
+  }));
+
+  const messagesReturned = await handleThrottledRateLimitedEvent(
+    ruleInput,
+    t.context.lambdaContext
+  );
+
+  const allRemainingMessages = await Promise.all(queueUrls.map(async (queueUrl) => {
+    let messageCount = 0;
+    while (messageCount < testMessageCount) {
+      // eslint-disable-next-line no-await-in-loop
+      const messagesReceived = await receiveSQSMessages(queueUrl, {
+        numOfMessages: Math.min(10, testMessageCount - messageCount),
+      });
+      if (messagesReceived.length === 0) break;
+      messageCount += messagesReceived.length;
+    }
+    return messageCount;
+  }));
+
+  const allRemainingMessagesCount = allRemainingMessages.reduce((sum, count) => sum + count, 0);
+
+  t.is(testMessageCount * queueUrls.length, allRemainingMessagesCount + messagesReturned);
+});
 
 test('dispatch() sets the workflow_start_time', async (t) => {
   const { queueUrl } = t.context;
@@ -230,7 +270,7 @@ test.serial('handleThrottledRateLimitedEvent respects stagingTimeLimit', async (
   const { queueUrls } = t.context;
   const maxExecutions = 1000; // A large number to ensure we don't hit throttling from this
   const stagingTimeLimit = 10;
-  const rateLimitPerSecond = 5;
+  const rateLimitPerSecond = 50;
   // This should be enough that we don't work through all of them based on the rate, number of
   // queues and time limit.
   const testMessageCount = (stagingTimeLimit * (rateLimitPerSecond / queueUrls.length)) + 50;
@@ -248,6 +288,7 @@ test.serial('handleThrottledRateLimitedEvent respects stagingTimeLimit', async (
 
   // Verify that the function completed within a reasonable time relative to the timeLimit
   // The elapsed time should be close to the timeLimit, not significantly longer
+  console.log(elapsedTime, stagingTimeLimit * 1000);
   t.true(elapsedTime >= stagingTimeLimit * 1000);
   t.true(elapsedTime < (stagingTimeLimit * 1000) + 5000); // Allow buffer for processing
 
@@ -299,11 +340,6 @@ test.serial('handleThrottledRateLimitedEvent ends prior to the lambda timeout', 
   const stagingTimeLimit = 100;
   const rateLimitPerSecond = 10;
   const lambdaTimeoutMilliseconds = 8000;
-  const startTime = Date.now();
-
-  const lambdaContext = {
-    getRemainingTimeInMillis: () => lambdaTimeoutMilliseconds - (Date.now() - startTime),
-  };
 
   // This should be enough that we don't work through all of them based on the rate, number of
   // queues and time limit.
@@ -315,6 +351,12 @@ test.serial('handleThrottledRateLimitedEvent ends prior to the lambda timeout', 
     await Promise.all(sendMessageTasks);
     await sendSQSMessage(queueUrl, message);
   }));
+
+  const startTime = Date.now();
+
+  const lambdaContext = {
+    getRemainingTimeInMillis: () => lambdaTimeoutMilliseconds - (Date.now() - startTime),
+  };
 
   await handleThrottledRateLimitedEvent(ruleInput, lambdaContext);
   const elapsedTime = Date.now() - startTime;

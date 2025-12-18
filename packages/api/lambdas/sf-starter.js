@@ -158,16 +158,17 @@ async function handleRateLimitedEvent(event, context, dispatchFn, visibilityTime
   const rateLimitPerSecond = Math.min(get(event, 'rateLimitPerSecond', 40), maxRate);
   const maxTimeoutMs = get(event, 'stagingTimeLimit', 60) * 1000;
   const startTime = Date.now();
-  const lambdaBufferSeconds = 5;
 
   if (!event.queueUrls) {
     throw new Error('queueUrls is missing');
   }
 
-  const timeRemainingFunc = () => {
+  const timeRemainingFunc = (bufferSeconds) => {
     const countdownTimerValue = maxTimeoutMs - (Date.now() - startTime);
     const lambdaTimeRemainingWithBuffer = context.getRemainingTimeInMillis()
-      - lambdaBufferSeconds * 1000;
+      - bufferSeconds * 1000;
+    logger.debug(`countdownTimerValue: ${countdownTimerValue}, ` +
+      `lambdaTimeRemainingWithBuffer: ${lambdaTimeRemainingWithBuffer}`);
     return Math.min(lambdaTimeRemainingWithBuffer, countdownTimerValue);
   };
 

@@ -47,7 +47,7 @@ test.serial('consume exits when timeRemainingFunc is negative', async (t) => {
 });
 
 test.serial('processMessages respects rateLimitPerSecond', async (t) => {
-  testConsumer.rateLimitPerSecond = 10; // 10 messages per second
+  testConsumer.rateLimitPerSecond = 10;
   const numberOfMessages = 30;
   const minExpectedDurationInSeconds = numberOfMessages / testConsumer.rateLimitPerSecond;
   const startTime = Date.now();
@@ -97,7 +97,6 @@ test.serial('Consume polls the queue for new messages every this.waitTime betwee
 });
 
 test.serial('Consume polls messages from each queueUrl in equal quantities', async (t) => {
-  // Since we're just testing the number of calls to fetchMessages, we can set waitTime to 0
   testConsumer.waitTime = 100;
   testConsumer.queueUrls = ['queueUrl1', 'queueUrl2', 'queueUrl3'];
   const lambdaTimeoutMilliseconds = 1000;

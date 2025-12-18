@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 import { receiveSQSMessages, SQSMessage } from '@cumulus/aws-client/SQS';
 import * as sqs from '@cumulus/aws-client/SQS';
 import { ExecutionAlreadyExists } from '@cumulus/aws-client/StepFunctions';
@@ -37,7 +36,7 @@ export interface ConsumerConstructorParams {
 export class ConsumerRateLimited {
   private readonly deleteProcessedMessage: boolean;
   private readonly queueUrls: string[];
-  private readonly timeRemainingFunc: () => number;
+  private readonly timeRemainingFunc: (bufferSeconds: number) => number;
   private readonly visibilityTimeout: number;
   private readonly rateLimitPerSecond: number;
   private readonly messageLimitPerFetch: number;
@@ -92,7 +91,12 @@ export class ConsumerRateLimited {
     for (const [message, queueUrl] of messagesWithQueueUrls) {
       const waitTime = 1000 / this.rateLimitPerSecond;
       log.debug(`Waiting for ${waitTime} ms`);
+      // We normally don't want to await in a loop due to decreased performance
+      // from running sequentially, but here we want to enforce rate limiting
+      // by specifically adding a delay to each loop iteration.
+      // eslint-disable-next-line no-await-in-loop
       await sleep(waitTime);
+      // eslint-disable-next-line no-await-in-loop
       if (await this.processMessage(message, fn, queueUrl)) {
         counter += 1;
       }
@@ -121,33 +125,55 @@ export class ConsumerRateLimited {
   async consume(fn: MessageConsumerFunction): Promise<number> {
     let messageCounter = 0;
     let processingPromise: Promise<number> | undefined;
+    let fetchPromise: Promise<Array<[SQSMessage, string]>> | undefined;
+    let messages: Array<[SQSMessage, string]> | undefined;
+    let fetchTimeMilliseconds: number = 0;
 
     // The below block of code attempts to always have a batch of messages
     // available for `processMessages` to process, so, after the initial fetch,
     // we'll immediately start fetching the next batch while processing the
     // current one
 
-    let messages = await this.fetchMessagesFromAllQueues();
-
-    while (this.timeRemainingFunc() > 0) {
+    // There are several await-in-loop instances below all required for flow control to assure
+    // we're submitting at a specified rate.
+    while (this.timeRemainingFunc(fetchTimeMilliseconds) > 0) {
+      if (messages === undefined) {
+        // This will be run in the first iteration, included in the loop in case of a small
+        // timeRemainingFunc value
+        // eslint-disable-next-line no-await-in-loop
+        const startTime = Date.now();
+        // eslint-disable-next-line no-await-in-loop
+        messages = await this.fetchMessagesFromAllQueues();
+        // add 20% buffer
+        fetchTimeMilliseconds = (Date.now() - startTime) + (Date.now() - startTime) * 0.2;
+        log.debug(`First fetch took ${fetchTimeMilliseconds} ms for ${messages.length} messages`);
+      }
       if (messages.length === 0) {
         log.info(
           `No messages fetched, waiting ${this.waitTime} ms before retrying`
         );
+        // eslint-disable-next-line no-await-in-loop
         await sleep(this.waitTime);
+        // eslint-disable-next-line no-await-in-loop
         messages = await this.fetchMessagesFromAllQueues();
       } else {
         // Start processing current batch and immediately fetch next batch
         processingPromise = this.processMessages(fn, messages);
-        const fetchPromise = this.fetchMessagesFromAllQueues();
+        fetchPromise = this.fetchMessagesFromAllQueues();
 
         // Wait for processing to complete and increment counter
+        // eslint-disable-next-line no-await-in-loop
         messageCounter += await processingPromise;
-        processingPromise = undefined;
 
         // Get the next batch that was fetched concurrently
+        // eslint-disable-next-line no-await-in-loop
         messages = await fetchPromise;
       }
+    }
+
+    // Process any remaining messages after time has expired
+    if (messages !== undefined && messages.length > 0) {
+      messageCounter += await this.processMessages(fn, messages);
     }
 
     log.info(
