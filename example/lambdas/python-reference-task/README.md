@@ -38,13 +38,9 @@ Example input:
 
 ```python
 {
-    "input": [
-        {
-            "initialData": "Hello input!"
-        }
-    ],
-    "config": {
-        "configData": "Hello Config!"
+    {
+        "input": {"initialData": "Hello input!"},
+        "config": {"configData": "Hello Config!"},
     }
 }
 ```
@@ -55,13 +51,11 @@ Example output:
 
 ```python
 {
-    "inputData": [{
-        "initialData": "Hello input!"
-    }],
-    "configInputData": "Hello Config!",
-    "newData": {
-        "newKey1": "newData1"
-    },
+    {
+        "inputData": "Hello input!",
+        "configInputData": "Hello Config!",
+        "newData": {"newKey1": "newData1"},
+    }
 }
 ```
 

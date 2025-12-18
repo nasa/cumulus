@@ -8,7 +8,7 @@ from run_cumulus_task import run_cumulus_task
 def task(event, _context):
     """Task takes an event and returns it with test values added."""
     return {
-        "inputData": [event["input"][0]],
+        "inputData": event["input"]["initialData"],
         "configInputData": event["config"]["configData"],
         "newData": {"newKey1": "newData1"},
     }
