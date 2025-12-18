@@ -51,7 +51,8 @@ module "data_persistence" {
   enable_point_in_time_tables    = var.enable_point_in_time_tables
 
   rds_security_group_id          = var.rds_security_group
-  rds_user_access_secret_arn     = module.provision_database.database_credentials_secret_arn
+  # lp stack uses postgres as user database
+  rds_user_access_secret_arn     = var.rds_admin_access_secret_arn
   permissions_boundary_arn       = var.permissions_boundary_arn
   tags                           = merge(var.tags, { Deployment = var.prefix })
   lambda_timeouts                = var.lambda_timeouts
