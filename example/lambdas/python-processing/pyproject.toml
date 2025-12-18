@@ -1,8 +1,9 @@
 [project]
 name = "cumulus-python-processing"
 version = "21.0.1"
-description = "Python reference activity"
+description = "Python reference activity that utilizes the Cumulus Process SDK."
 requires-python = "~=3.12.0"
+
 dependencies = [
     "boto3~=1.40.29",
     "cumulus-process==1.6.0",
@@ -13,6 +14,8 @@ dependencies = [
 [dependency-groups]
 dev = [
     "mypy~=1.19.0",
+    "pytest~=9.0.2",
+    "pytest-mock~=3.15.1",
     "ruff~=0.14.0",
 ]
 

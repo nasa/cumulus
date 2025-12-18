@@ -9,9 +9,8 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "test": "uv run python -m unittest",
-    "python-lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy process_activity.py",
-    "lint": "npm run python-lint",
+    "test": "uv run pytest -q",
+    "lint": "uv run ruff check . && uv run ruff format --diff . && uv run process_activity.py",
     "clean": "rm -rf .venv",
     "build": "uv sync",
     "prepare": "npm run build",
@@ -19,7 +18,7 @@
     "install-python-deps": "npm run build"
   },
   "publishConfig": {
-    "access": "private"
+    "access": "restricted"
   },
   "nyc": {
     "exclude": [

@@ -13,11 +13,16 @@ dependencies = [
 [dependency-groups]
 dev = [
     "mypy~=1.19.0",
+    "pytest~=9.0.2",
+    "pytest-mock~=3.15.1",
     "ruff~=0.14.0",
 ]
 
 [tool.ruff]
 extend = "../../../pyproject.toml"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
 
 [tool.mypy]
 check_untyped_defs = true

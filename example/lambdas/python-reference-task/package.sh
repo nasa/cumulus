@@ -6,7 +6,7 @@ echo "Entering $DIR"
 cd "$DIR" || exit 1
 
 # ensure packages are up to date using uv
-uv sync --frozen
+uv sync --no-dev --frozen
 
 # package dependencies
 SITE_PACKAGES=$(find "$DIR"/.venv/lib/python*/site-packages -type d | head -1)
@@ -16,7 +16,7 @@ cp -R ./* "$DIR/dist/"
 
 cd "$DIR" || exit 1
 
-cp ./*.py ./dist/
+cp ./src/*.py ./dist/
 
 cd ./dist || exit 1
 

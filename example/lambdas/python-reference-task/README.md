@@ -1,8 +1,6 @@
 # @cumulus/python-reference-task
 
- [`python_reference_workflow`]: https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/python_reference_workflow.tf
-
-This 'task' is a reference task that is included with Cumulus to allow integration testing of the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter) with a built python lambda.
+This is a [Cumulus](https://nasa.github.io/cumulus) task that is a reference activity implementation that is included to allow integration testing of the [`cumulus-message-adapter`](https://github.com/nasa/cumulus-message-adapter) with a built python lambda.
 
 ## Use
 
@@ -16,16 +14,65 @@ The spec test at [`PythonReferenceSpec`](https://github.com/nasa/cumulus/blob/ma
 
 ### Requirements
 
-To develop against this task, you should be using python > 3.6 (CMA compatibility is baselined at 3.6).    Once you have a python env enabled:
+To develop against this task, you should be using Python > 3.12 and managed by [uv](https://github.com/astral-sh/uv). See [package.json](package.json), [project.toml](pyproject.toml) for build setup, testing, and packaging. To install dependencies run the following command:
 
-```bash
-pip install -r requirements.txt
+```sh
+npm run prepare
 ```
 
 ### Build
 
-```bash
-npm run prepare
+```sh
+npm run package
 ```
 
 The above command will build the lambda and put a .zip for deployment in ./dist
+
+### Update
+
+Updates should generally consist of updates to the included [project.toml](pyproject.toml), as the purpose of this task is to ensure compatibility with updates to the [`cumulus-message-adapter-python`](https://github.com/nasa/cumulus-message-adapter-python) client library via [`cumulus-process-py`] dependencies.
+
+### Input
+
+Example input:
+
+```python
+{
+    "input": [
+        {
+            "initialData": "Hello input!"
+        }
+    ],
+    "config": {
+        "configData": "Hello Config!"
+    }
+}
+```
+
+### Output
+
+Example output:
+
+```python
+{
+    "inputData": [{
+        "initialData": "Hello input!"
+    }],
+    "configInputData": "Hello Config!",
+    "newData": {
+        "newKey1": "newData1"
+    },
+}
+```
+
+## About Cumulus
+
+Cumulus is a cloud-based data ingest, archive, distribution and management
+prototype for NASA's future Earth science data streams.
+
+[Cumulus Documentation](https://nasa.github.io/cumulus)
+
+## Contributing
+
+To make a contribution, please see our
+[contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
