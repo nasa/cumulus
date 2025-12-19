@@ -124,7 +124,8 @@ resource "aws_rds_cluster" "cumulus" {
   preferred_backup_window = var.backup_window
   db_subnet_group_name    = aws_db_subnet_group.default.id
   apply_immediately       = var.apply_immediately
-  storage_encrypted       = true
+  // lp snapshot not encrypted and we don't specify kms_key_id key
+  storage_encrypted       = false
   enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
 
   serverlessv2_scaling_configuration {
