@@ -284,6 +284,8 @@ variable "archive_api_users" {
     "cbanh",
     "chuang14",
     "cdurbin",
+    "dhudelson",
+    "dmsorensen",
     "ecarton",
     "jasmine",
     "jennyhliu",

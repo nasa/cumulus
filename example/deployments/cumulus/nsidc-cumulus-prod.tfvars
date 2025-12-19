@@ -37,6 +37,8 @@ archive_api_users = [
     "cbanh",
     "chuang14",
     "cdurbin",
+    "dhudelson",
+    "dmsorensen",
     "ecarton",
     "jasmine",
     "jennyhliu",
@@ -59,7 +61,8 @@ archive_api_users = [
     "crumlyd",
     "tbmcknig",
     "ymchen",
-    "sflynn"
+    "sflynn",
+    "zhutchison"
 ]
 archive_api_url = "https://d3cuh567loctll.cloudfront.net/"
 cumulus_distribution_url = "https://djidssf1tx775.cloudfront.net/"
