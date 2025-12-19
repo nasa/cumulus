@@ -288,7 +288,6 @@ test.serial('handleThrottledRateLimitedEvent respects stagingTimeLimit', async (
 
   // Verify that the function completed within a reasonable time relative to the timeLimit
   // The elapsed time should be close to the timeLimit, not significantly longer
-  console.log(elapsedTime, stagingTimeLimit * 1000);
   t.true(elapsedTime >= stagingTimeLimit * 1000);
   t.true(elapsedTime < (stagingTimeLimit * 1000) + 5000); // Allow buffer for processing
 

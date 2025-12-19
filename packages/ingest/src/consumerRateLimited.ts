@@ -127,7 +127,8 @@ export class ConsumerRateLimited {
     let processingPromise: Promise<number> | undefined;
     let fetchPromise: Promise<Array<[SQSMessage, string]>> | undefined;
     let messages: Array<[SQSMessage, string]> | undefined;
-    let fetchTimeMilliseconds: number = 0;
+    let processTimeMilliseconds: number = 0;
+    let startTime: number;
 
     // The below block of code attempts to always have a batch of messages
     // available for `processMessages` to process, so, after the initial fetch,
@@ -136,17 +137,12 @@ export class ConsumerRateLimited {
 
     // There are several await-in-loop instances below all required for flow control to assure
     // we're submitting at a specified rate.
-    while (this.timeRemainingFunc(fetchTimeMilliseconds) > 0) {
+    while (this.timeRemainingFunc(processTimeMilliseconds) > 0) {
       if (messages === undefined) {
         // This will be run in the first iteration, included in the loop in case of a small
         // timeRemainingFunc value
         // eslint-disable-next-line no-await-in-loop
-        const startTime = Date.now();
-        // eslint-disable-next-line no-await-in-loop
         messages = await this.fetchMessagesFromAllQueues();
-        // add 20% buffer
-        fetchTimeMilliseconds = (Date.now() - startTime) + (Date.now() - startTime) * 0.2;
-        log.debug(`First fetch took ${fetchTimeMilliseconds} ms for ${messages.length} messages`);
       }
       if (messages.length === 0) {
         log.info(
@@ -161,9 +157,15 @@ export class ConsumerRateLimited {
         processingPromise = this.processMessages(fn, messages);
         fetchPromise = this.fetchMessagesFromAllQueues();
 
+        startTime = Date.now();
         // Wait for processing to complete and increment counter
         // eslint-disable-next-line no-await-in-loop
         messageCounter += await processingPromise;
+        if (processTimeMilliseconds === 0) {
+          // First processing time measurement, add 50% buffer to account for possible longer
+          // processing time on the last iteration
+          processTimeMilliseconds = (Date.now() - startTime) + (Date.now() - startTime) * 0.5;
+        }
 
         // Get the next batch that was fetched concurrently
         // eslint-disable-next-line no-await-in-loop
