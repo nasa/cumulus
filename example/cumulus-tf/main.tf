@@ -160,27 +160,7 @@ module "cumulus" {
 
   # Archive API settings
   token_secret = var.token_secret
-  archive_api_users = [
-    "acyu",
-    "awisdom",
-    "cbanh",
-    "chuang14",
-    "cdurbin",
-    "dhudelson",
-    "dmsorensen",
-    "ecarton",
-    "jasmine",
-    "jennyhliu",
-    "jmccoy_uat",
-    "jnorton1",
-    "kkelly",
-    "kovarik",
-    "mobrien84",
-    "nnageswa",
-    "npauzenga",
-    "terrafirma13",
-    "yliu10"
-  ]
+  archive_api_users = var.archive_api_users
 
   archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port
