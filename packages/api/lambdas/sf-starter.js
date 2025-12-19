@@ -163,12 +163,10 @@ async function handleRateLimitedEvent(event, context, dispatchFn, visibilityTime
     throw new Error('queueUrls is missing');
   }
 
-  const timeRemainingFunc = (bufferSeconds) => {
+  const timeRemainingFunc = (bufferMilliseconds) => {
     const countdownTimerValue = maxTimeoutMs - (Date.now() - startTime);
     const lambdaTimeRemainingWithBuffer = context.getRemainingTimeInMillis()
-      - bufferSeconds * 1000;
-    logger.debug(`countdownTimerValue: ${countdownTimerValue}, ` +
-      `lambdaTimeRemainingWithBuffer: ${lambdaTimeRemainingWithBuffer}`);
+      - bufferMilliseconds;
     return Math.min(lambdaTimeRemainingWithBuffer, countdownTimerValue);
   };
 

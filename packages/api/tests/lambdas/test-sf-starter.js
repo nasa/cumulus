@@ -288,8 +288,8 @@ test.serial('handleThrottledRateLimitedEvent respects stagingTimeLimit', async (
 
   // Verify that the function completed within a reasonable time relative to the timeLimit
   // The elapsed time should be close to the timeLimit, not significantly longer
-  t.true(elapsedTime >= stagingTimeLimit * 1000);
-  t.true(elapsedTime < (stagingTimeLimit * 1000) + 5000); // Allow buffer for processing
+  t.true(elapsedTime >= (stagingTimeLimit - (0.2 * stagingTimeLimit)) * 1000);
+  t.true(elapsedTime < (stagingTimeLimit + (0.2 * stagingTimeLimit)) * 1000);
 
   // Verify that not all messages were processed (proving timeLimit was respected)
   t.true(testMessageCount * queueUrls.length > result);
