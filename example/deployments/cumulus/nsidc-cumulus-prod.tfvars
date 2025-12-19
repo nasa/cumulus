@@ -55,6 +55,7 @@ archive_api_users = [
     "bishop_ross",
     "marin",
     "viviant",
+    "alexrad71",
     "avluu",
     "nathawat",
     "mdcampbell",
