@@ -34,13 +34,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
 - **CUMULUS-4188**
   - Updated `example/cumulus-tf/orca.tf` to use v10.1.5
+- **CUMULUS-4374**
+  - Updated example python Lambdas to utilize `uv` as their package manager
 - **CUMULUS-4387**
   - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
   `pyproject.toml` file.
 - **CUMULUS-4430**
   - Updated GitHub Actions to run `ruff` linting on PRs.
-- **CUMULUS-4374**
-  - Updated example python Lambdas to utilize `uv` as their package manager
+- **CUMULUS-4438**
+  - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
+  - Made `archive_api_users` configurable in example/cumulus-tf
 
 ### Fixed
 
