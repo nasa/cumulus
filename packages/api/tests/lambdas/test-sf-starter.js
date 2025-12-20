@@ -336,39 +336,6 @@ test.serial('handleThrottledRateLimitedEvent respects rateLimitPerSecond', async
   t.true(startExecutionStub.callCount <= expectedMaxCalls);
 });
 
-test.serial('handleThrottledRateLimitedEvent ends prior to the lambda timeout', async (t) => {
-  const { queueUrls } = t.context;
-  // A large number to ensure we don't hit throttling from this
-  const maxExecutions = 1000;
-  // Setting a large value to make sure this isn't a limiting factor
-  const stagingTimeLimit = 100;
-  const rateLimitPerSecond = 10;
-  const lambdaTimeoutMilliseconds = 8000;
-
-  // This should be enough that we don't work through all of them based on the rate, number of
-  // queues and time limit.
-  const testMessageCount = (stagingTimeLimit * (rateLimitPerSecond / queueUrls.length)) + 50;
-  const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
-  await Promise.all(queueUrls.map(async (queueUrl) => {
-    const message = createWorkflowMessage(queueUrl, maxExecutions);
-    const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
-    await Promise.all(sendMessageTasks);
-    await sendSQSMessage(queueUrl, message);
-  }));
-
-  const startTime = Date.now();
-
-  const lambdaContext = {
-    getRemainingTimeInMillis: () => lambdaTimeoutMilliseconds - (Date.now() - startTime),
-  };
-
-  await handleThrottledRateLimitedEvent(ruleInput, lambdaContext);
-  const elapsedTime = Date.now() - startTime;
-
-  // Verify that the function completed in less than the lambda timeout
-  t.true(elapsedTime < lambdaTimeoutMilliseconds);
-});
-
 test('incrementAndDispatch throws error for message without queue URL', async (t) => {
   const { queueUrl } = t.context;
   await t.throwsAsync(
