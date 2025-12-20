@@ -113,7 +113,7 @@ test.afterEach.always(
 );
 
 test.after.always(() => manager.deleteTable());
-/*
+
 test.serial('handleThrottledRateLimitedEvent fetches the same number of messages it processes', async (t) => {
   const { queueUrls } = t.context;
   const maxExecutions = 1000;
@@ -265,7 +265,7 @@ test.serial('handleEvent deletes message if execution already exists', async (t)
   await handleEvent(ruleInput, dispatch);
   t.true(deleteMessageStub.called);
 });
-*/
+
 test.serial('handleThrottledRateLimitedEvent respects stagingTimeLimit', async (t) => {
   const { queueUrls } = t.context;
   const maxExecutions = 1000; // A large number to ensure we don't hit throttling from this
@@ -299,7 +299,7 @@ test.serial('handleThrottledRateLimitedEvent respects stagingTimeLimit', async (
   // Verify that not all messages were processed (proving timeLimit was respected)
   t.true(testMessageCount * queueUrls.length > result);
 });
-/*
+
 test.serial('handleThrottledRateLimitedEvent respects rateLimitPerSecond', async (t) => {
   const { queueUrls } = t.context;
   const maxExecutions = 1000; // A large number to ensure we don't hit throttling from this
@@ -594,4 +594,3 @@ test.serial('handleSourceMappingEvent calls dispatch on messages in an EventSour
   // Check that batchItemFailures contain the non ExecutionAlreadyExists error messageId.
   t.deepEqual(output, { batchItemFailures: [{ itemIdentifier: failedMessageId }] });
 });
-*/
