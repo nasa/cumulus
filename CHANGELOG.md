@@ -487,6 +487,11 @@ Please follow the instructions before upgrading Cumulus
     `producerGranuleId`.
   - Users must ensure that `cumulus-tf` includes `cnm_response_version  = "3.2.0"` or greater.
 
+### Changes
+
+- **CUMULUS-4416**
+  - sqs permissions granted to "\*" instead of "\<account\>/\*"
+
 ### Added
 
 - **CUMULUS-4059**
