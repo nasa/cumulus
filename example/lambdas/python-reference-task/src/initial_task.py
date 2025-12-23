@@ -19,4 +19,5 @@ def handler(event, _context):
 
     Run the task through the CMA `run_cumulus_task` method.
     """
+    foo = 1
     return run_cumulus_task(task, event, _context)

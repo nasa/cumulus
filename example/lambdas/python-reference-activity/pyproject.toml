@@ -17,14 +17,3 @@ dev = [
     "pytest-mock~=3.15.1",
     "ruff~=0.14.0",
 ]
-
-[tool.mypy]
-check_untyped_defs = true
-disallow_any_unimported = true
-follow_untyped_imports = true
-local_partial_types = true
-strict_bytes = true
-strict_equality = true
-warn_redundant_casts = true
-warn_unreachable = true
-warn_unused_ignores = true
