@@ -3,6 +3,10 @@ id: quality-and-coverage
 ---
 # Code Coverage and Quality
 
+Currently, code written in this repository leverages Python or TypeScript for most logic and work. The current CI tooling and standards are based on these two languages. Specifics related to the tooling, quality, and testing can be found in the language specific best practices documentation. Python best practices and tooling expectations can be found [here](development/python-best-practices.md). Typescript best practices and tooling can be found [here](development/typescript-best-practices.md).
+
+In addition to CI pipeline quality checks, it is highly recommended for developers to install and configure pre-commit in order to find simple quality issues early. Directions on installing and configuring pre-commit locally for use with this repo can be found here.
+
 ## Code Coverage
 
 Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The
@@ -12,15 +16,7 @@ The `npm test` command will output code coverage data for the entire Cumulus
 repository. To create an html report, run `nyc report --reporter html` and open
 the `index.html` file in the coverage folder.
 
-To run code coverage on an individual package during development, run
-`npm run test`. This will output the coverage in the terminal.
-
 ## Code quality checking
-
-This project uses [eslint](https://eslint.org/) to check code style and quality.
-The configured eslint rules can be found in the project's
-[.eslintrc.js](https://github.com/nasa/cumulus/blob/master/.eslintrc.js)
-file.
 
 To check the configured linting, run `npm run lint`.
 
@@ -34,9 +30,5 @@ all of our markdown for style and formatting. The configured rules can be found
 To run linting on the markdown files, run `npm run lint-md`.
 
 ## Audit
-
-This project uses `audit-ci` to run a security audit on the package dependency
-tree. This must pass prior to merge. The configured rules for `audit-ci` can be
-found [here](https://github.com/nasa/cumulus/blob/master/audit-ci.json).
 
 To execute an audit, run `npm run audit`.
