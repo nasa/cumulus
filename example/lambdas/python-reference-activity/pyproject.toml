@@ -18,9 +18,6 @@ dev = [
     "ruff~=0.14.0",
 ]
 
-[tool.ruff]
-extend = "../../../pyproject.toml"
-
 [tool.mypy]
 check_untyped_defs = true
 disallow_any_unimported = true
