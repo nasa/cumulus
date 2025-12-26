@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@cumulus/aws-client": "21.0.1",
-    "@cumulus/collection-config-store": "21.0.1",
+    "@cumulus/collection-config-store": "21.1.0",
     "@cumulus/common": "21.0.1",
     "@cumulus/cumulus-message-adapter-js": "2.3.0",
     "@cumulus/errors": "21.0.1",
