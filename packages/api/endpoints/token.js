@@ -108,9 +108,10 @@ async function token(event, oAuth2Provider, response) {
  * @param {Object} request - an API Gateway request
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
  * @param {Object} response - an API Gateway response object
+ * @param {number} [extensionSeconds] - number of seconds to extend token expiration (default: 43200)
  * @returns {Object} an API Gateway response
  */
-async function refreshAccessToken(request, oAuth2Provider, response) {
+async function refreshAccessToken(request, oAuth2Provider, response, extensionSeconds = 12 * 60 * 60) {
   const requestJwtToken = get(request, 'body.token');
 
   if (!requestJwtToken) {
@@ -135,6 +136,7 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
     }
   }
 
+  /*
   let newAccessToken;
   let newRefreshToken;
   let expirationTime;
@@ -146,19 +148,27 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
       username,
       expirationTime,
     } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
-  } finally {
-    // Delete old token record to prevent refresh with old tokens
-    await accessTokenModel.delete({
-      accessToken: accessTokenRecord.accessToken,
-    });
+  } catch (error) {
+    return response.boom.unauthorized(`Failed to refresh token: ${error.message}`);
   }
+  */
 
-  // Store new token record
-  await accessTokenModel.create({
-    accessToken: newAccessToken,
-    refreshToken: newRefreshToken,
-    expirationTime,
-  });
+  // Use existing token values and just extend expiration time
+  const newAccessToken = accessTokenRecord.accessToken;
+  const username = accessTokenRecord.username;
+
+  // Extend expiration time by the specified amount (default: 12 hours)
+  // If expirationTime is undefined, use current time as base
+  const baseTime = accessTokenRecord.expirationTime || Math.floor(Date.now() / 1000);
+  const expirationTime = baseTime + extensionSeconds;
+
+  // Update the existing record with new expiration time
+  await accessTokenModel.update(
+    { accessToken: accessTokenRecord.accessToken },
+    {
+      expirationTime,
+    }
+  );
 
   const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
   return response.send({ token: jwtToken });
