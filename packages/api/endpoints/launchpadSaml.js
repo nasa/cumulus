@@ -8,6 +8,10 @@ const { parseString } = require('xml2js');
 const { promisify } = require('util');
 const get = require('lodash/get');
 const moment = require('moment');
+const {
+  JsonWebTokenError,
+  TokenExpiredError,
+} = require('jsonwebtoken');
 
 const {
   getS3Object,
@@ -17,9 +21,14 @@ const {
   getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { AccessToken } = require('../models');
 const { createJwtToken } = require('../lib/token');
+const { verifyJwtAuthorization } = require('../lib/request');
+const {
+  TokenUnauthorizedUserError,
+} = require('../lib/errors');
 
 const parseXmlString = promisify(parseString);
 
@@ -286,12 +295,91 @@ const samlToken = (req, res) => {
   return res.redirect(redirectUrl.toString());
 };
 
-const notImplemented = (req, res) =>
-  res.boom.notImplemented(
-    `endpoint: "${req.path}" not implemented. Login with launchpad.`
+/**
+ * Handle API response for JWT verification errors
+ *
+ * @param {Error} err - error thrown by JWT verification
+ * @param {Object} response - an express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+function handleJwtVerificationError(err, response) {
+  if (err instanceof TokenExpiredError) {
+    return response.boom.unauthorized('Access token has expired');
+  }
+  if (err instanceof JsonWebTokenError) {
+    return response.boom.unauthorized('Invalid access token');
+  }
+  if (err instanceof TokenUnauthorizedUserError) {
+    return response.boom.unauthorized('User not authorized');
+  }
+  throw err;
+}
+
+/**
+ * Handle refreshing tokens for SAML authentication
+ *
+ * @param {Object} request - an API Gateway request
+ * @param {Object} response - an API Gateway response object
+ * @param {number} [extensionSeconds] - number of seconds to extend token expiration (default: 43200)
+ * @returns {Object} an API Gateway response
+ */
+async function refreshAccessToken(request, response, extensionSeconds = 12 * 60 * 60) {
+  const requestJwtToken = get(request, 'body.token');
+
+  if (!requestJwtToken) {
+    return response.boom.unauthorized('Request requires a token');
+  }
+
+  let accessToken;
+  try {
+    accessToken = await verifyJwtAuthorization(requestJwtToken);
+  } catch (error) {
+    return handleJwtVerificationError(error, response);
+  }
+
+  const accessTokenModel = new AccessToken();
+
+  let accessTokenRecord;
+  try {
+    accessTokenRecord = await accessTokenModel.get({ accessToken });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return response.boom.unauthorized('Invalid access token');
+    }
+    throw error;
+  }
+
+  // Use existing token values and just extend expiration time
+  const newAccessToken = accessTokenRecord.accessToken;
+  const username = accessTokenRecord.username;
+
+  // Extend expiration time by the specified amount (default: 12 hours)
+  // If expirationTime is undefined, use current time as base
+  const baseTime = accessTokenRecord.expirationTime || Math.floor(Date.now() / 1000);
+  const expirationTime = baseTime + extensionSeconds;
+
+  // Update the existing record with new expiration time
+  await accessTokenModel.update(
+    { accessToken: accessTokenRecord.accessToken },
+    {
+      expirationTime,
+    }
   );
 
-const refreshEndpoint = notImplemented;
+  const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
+  return response.send({ token: jwtToken });
+}
+
+/**
+ * Refreshes a SAML token
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function refreshEndpoint(req, res) {
+  return await refreshAccessToken(req, res);
+}
 
 module.exports = {
   auth,
