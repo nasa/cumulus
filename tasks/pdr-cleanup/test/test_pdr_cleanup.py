@@ -1,8 +1,8 @@
 import os
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
+from freezegun import freeze_time
 from pdr_cleanup import cleanup_pdr, move_pdr
 
 
@@ -60,7 +60,13 @@ def test_cleanup_pdr_success(mock_move_pdr, successful_event, mock_context):
         successful_event["config"]["provider"], successful_event["input"]["pdr"]
     )
 
-    assert output == successful_event["input"]
+    assert output == {
+        "pdr": {
+            "name": "test-pdr.PDR",
+            "path": "dropbox",
+        },
+        "failed": [],
+    }
 
 
 def test_cleanup_pdr_with_failed_workflows(failed_event, mock_context):
@@ -69,9 +75,8 @@ def test_cleanup_pdr_with_failed_workflows(failed_event, mock_context):
 
 
 @patch("pdr_cleanup.boto3.client")
-@patch("pdr_cleanup.datetime")
-def test_move_pdr_success(mock_datetime, mock_boto3_client, successful_event):
-    mock_datetime.now.return_value = datetime(2025, 4, 2, 1, 1)
+@freeze_time("2025-4-2 01:01:01")
+def test_move_pdr_success(mock_boto3_client, successful_event):
     mock_s3_client = MagicMock()
     mock_boto3_client.return_value = mock_s3_client
 
