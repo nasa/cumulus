@@ -21,6 +21,7 @@ const {
   translateApiCollectionToPostgresCollection,
   translateApiExecutionToPostgresExecution,
   translateApiGranuleToPostgresGranule,
+  translateApiFiletoPostgresFile,
   translateApiPdrToPostgresPdr,
   translateApiProviderToPostgresProvider,
   translateApiReconReportToPostgresReconReport,
@@ -124,6 +125,7 @@ async function addGranules(granules) {
   });
 
   const executionPgModel = new ExecutionPgModel();
+  const filePgModel = new FilePgModel();
   return await Promise.all(
     granules.map(async (apiGranule) => {
       const newGranule = fakeGranuleFactoryV2(
@@ -139,11 +141,43 @@ async function addGranules(granules) {
         url: newGranule.execution,
       });
 
-      await upsertGranuleWithExecutionJoinRecord({
+      const upsertedGranule = await upsertGranuleWithExecutionJoinRecord({
         knexTransaction: knex,
         granule: dbRecord,
         executionCumulusId,
       });
+
+      console.log(`Seeded granule record ${JSON.stringify(upsertedGranule, null, 4)}`);
+      console.log(`newGranule ${JSON.stringify(newGranule, undefined, 4)}, file length ${newGranule.files.length}`);
+      /***
+       * New code to seed files associated with granule
+       */
+      if (newGranule.files.length > 0) {
+        const postgresNewGranuleFiles = newGranule.files.map((file) => {
+          const translatedFile = translateApiFiletoPostgresFile(file);
+          translatedFile.granule_cumulus_id = upsertedGranule[0].cumulus_id;
+          return translatedFile;
+        });
+        console.log(`postgresNewGranuleFiles ${JSON.stringify(postgresNewGranuleFiles, undefined, 4)}`);
+        await Promise.all(
+          postgresNewGranuleFiles.map((file) => filePgModel.create(knex, file))
+        );
+
+        // await Promise.all(
+        //   newGranule.files.map((file) => {
+        //     const pgFile = {
+        //       bucket: file.bucket,
+        //       key: file.key,
+        //       file_name: file.fileName,
+        //       granule_cumulus_id: upsertedGranule[0].cumulus_id,
+        //       file_size: file.size,
+        //     };
+        //     console.log(`Transform pgFile ${JSON.stringify(pgFile, undefined, 4)}`);
+        //     const fileDbRecord = filePgModel.create(knex, pgFile);
+        //     console.log(`Seeded file record ${JSON.stringify(fileDbRecord, undefined, 4)}`);
+        //   })
+        // );
+      }
     })
   );
 }
