@@ -1,0 +1,30 @@
+{
+    "name": "@cumulus/pdr-cleanup",
+    "private": true,
+    "version": "21.0.1",
+    "description": "This task is for cleaning up PDRs after a successful ingest",
+    "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/pdr-cleanup",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/nasa/cumulus"
+    },
+    "scripts": {
+      "test": "uv run pytest -q",
+      "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy .",
+      "clean": "rm -rf .venv",
+      "build": "uv sync",
+      "prepare": "npm run build",
+      "package": "true",
+      "install-python-deps": "npm run build"
+    },
+    "publishConfig": {
+      "access": "restricted"
+    },
+    "nyc": {
+      "exclude": [
+        "tests"
+      ]
+    },
+    "author": "Cumulus Authors",
+    "license": "Apache-2.0"
+  }
