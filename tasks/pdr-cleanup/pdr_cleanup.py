@@ -21,19 +21,18 @@ def cleanup_pdr(event: dict, context: dict):
 
     """
 
-    logger.info("## EVENT OBJ \n" + json.dumps(event))
+    logger.debug("## EVENT OBJ \n" + json.dumps(event))
 
     provider = event["config"]["provider"]
     pdr = event["input"]["pdr"]
 
-    if len(event["input"]["failed"]) == 0:
-        move_pdr(provider, pdr)
-    else:
+    if event["input"]["failed"]:
         logger.info("PDR failed to ingest all granules successfully, NOT archiving")
         raise Exception(
             "PDR failed to ingest all granules successfully\n"
             f"Ingest Granule workflow failure count: {len(event['input']['failed'])}"
         )
+    move_pdr(provider, pdr)
     return event["input"]
 
 
@@ -70,7 +69,8 @@ def move_pdr(provider: dict, pdr: dict):
     except Exception:
         logger.error(
             f"FAILED TO COPY FROM {provider['host']}/{src_path} "
-            f"TO {provider['host']}/{dest_path}"
+            f"TO {provider['host']}/{dest_path}",
+            exc_info=True,
         )
         raise
 
