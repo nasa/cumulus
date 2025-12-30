@@ -54,6 +54,7 @@ def mock_context():
 
 @patch("pdr_cleanup.move_pdr")
 def test_cleanup_pdr_success(mock_move_pdr, successful_event, mock_context):
+    mock_move_pdr.return_value = "archive"
     output = cleanup_pdr(successful_event, mock_context)
 
     mock_move_pdr.assert_called_once_with(
@@ -64,6 +65,7 @@ def test_cleanup_pdr_success(mock_move_pdr, successful_event, mock_context):
         "pdr": {
             "name": "test-pdr.PDR",
             "path": "dropbox",
+            "archivePath": "archive",
         },
         "failed": [],
     }
