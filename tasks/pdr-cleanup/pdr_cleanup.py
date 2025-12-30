@@ -32,7 +32,7 @@ def cleanup_pdr(event: dict, context: dict):
             "PDR failed to ingest all granules successfully\n"
             f"Ingest Granule workflow failure count: {len(event['input']['failed'])}"
         )
-    move_pdr(provider, pdr)
+    event["input"]["pdr"]["archivePath"] = move_pdr(provider, pdr)
     return event["input"]
 
 
@@ -42,6 +42,9 @@ def move_pdr(provider: dict, pdr: dict):
     Args:
         provider (dict): Provider information
         pdr (dict): PDR information
+
+    Returns:
+        str: Returns the archive location of the PDR.
 
     """
 
@@ -80,6 +83,7 @@ def move_pdr(provider: dict, pdr: dict):
     except Exception as err:
         logger.error(err)
         raise
+    return dest_path
 
 
 def handler(event: dict, context: dict):
