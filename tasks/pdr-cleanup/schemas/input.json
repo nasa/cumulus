@@ -1,0 +1,43 @@
+{
+    "title": "PdrCleanupInput",
+    "description": "Describes the input expected by the pdr-cleanup task",
+    "type": "object",
+    "required": ["pdr", "failed"],
+    "properties": {
+      "pdr": {
+        "description": "Product Delivery Record",
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" }
+        }
+      }
+    },
+    "running": {
+      "description": "List of execution arns which are queued or running",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "completed": {
+      "description": "List of completed execution arns",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "failed": {
+      "description": "List of failed execution arns with reason",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["arn", "reason"],
+        "properties": {
+          "arn": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    }
+  }
