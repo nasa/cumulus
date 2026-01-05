@@ -29,11 +29,14 @@ module "cumulus_distribution" {
   cmr_environment                       = var.cmr_environment
   cmr_provider                          = var.cmr_provider
   lambda_subnet_ids                     = local.subnet_ids
-  oauth_client_id                       = var.csdap_client_id
-  oauth_client_password                 = var.csdap_client_password
-  oauth_host_url                        = var.csdap_host_url
-  #oauth_provider                        = "cognito"
   # TODO CHANGE for feature branch only
+  #oauth_client_id                       = var.csdap_client_id
+  #oauth_client_password                 = var.csdap_client_password
+  #oauth_host_url                        = var.csdap_host_url
+  #oauth_provider                        = "cognito"
+  oauth_client_id                       = var.urs_client_id
+  oauth_client_password                 = var.urs_client_password
+  oauth_host_url                        = "https://uat.urs.earthdata.nasa.gov"
   oauth_provider                        = "earthdata"
   permissions_boundary_arn              = var.permissions_boundary_arn
   buckets                               = var.buckets
