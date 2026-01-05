@@ -4,7 +4,6 @@ title: Contributing a Task
 hide_title: false
 ---
 
-
 We're tracking reusable Cumulus tasks [in this list](tasks.md) and, if you've got one you'd like to share with others, read on to learn how.
 
 ## The tasks.md file is generated in the build process
@@ -17,7 +16,6 @@ Do not edit the docs/tasks.md file directly.
 
 :::
 
-
 ## Software Best Practices and Expectations
 
 The repository uses lerna to manage the repository. Please reference the [Quality and Coverage documentation](development/quality-and-coverage.md) and the [Python Best Practices](development/python-best-practices.md) or [TypeScript Best Practices](development/typescript-best-practices.md) documentation for expectations and tooling for the specific language.
@@ -25,7 +23,6 @@ The repository uses lerna to manage the repository. Please reference the [Qualit
 ## Example Templates and Task Messaging
 
 Example templates have been created for both [Python](https://github.com/nasa/cumulus/tree/master/example/lambdas/python-reference-task) and [Typescript](https://github.com/nasa/cumulus/tree/master/tasks/add-missing-file-checksums) tasks for developers that exhibit the best practices and expectations for creating a Cumulus task. Tasks should conform to the Cumulus Message Adapter Schema for inter task messaging. This is the accepted input and output scheme.
-
 
 ## Task Layout and Standards
 
@@ -184,7 +181,7 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 #### `package.json` file
 
-The `package.json` file contains information on the task including executable commands for scripts to perform quality checking, building, and deploying of tasks. 
+The `package.json` file contains information on the task including executable commands for scripts to perform quality checking, building, and deploying of tasks.
 
 :::note
 
