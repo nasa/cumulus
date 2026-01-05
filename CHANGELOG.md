@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
     reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
+- **CUMULUS-4458**
+  - Fixed a small bug with `message_consumer` lambda env and function variable names to match so the lambda env var `allowProviderMismatchOnRuleFilter` can be properly used when set
 
 ### Added
 
