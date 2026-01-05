@@ -52,26 +52,32 @@ To migrate a current Python project to uv, perform the following steps.
 ### Updating PyProject.toml
 
 As a minimum, the following fields in the _pyproject.toml_ file should be filled out completely, as seen below.
-- name
-- version
-- description
-- readme
-- requires-python
 
-Additionally, project urls pointing to the homepage, documentation, and repository should also be populated.
+- Under `project`
+  - name
+  - version
+  - description
+  - readme
+  - requires-python
+- Under `project.urls`
+  - homepage
+  - documentation
+  - repository
+
+Below is an example of a minimally filled out _pyproject.toml_ file.
 
 ```toml
 [project]
 name = "example-app"
-version = "0.1.0"
+version = "0.0.1"
 description = "This is a long description of what the app is and what it does."
 readme = "README.md"
 requires-python = ">=3.14"
 
 [project.urls]
-homepage = "https://example.com"
-documentation = "https://example-app.readthedocs.org"
-repository = "https://github.com/me/example-app/tasls/my-app"
+homepage = "https://github.com/nasa/cumulus/blob/master/example-app/"
+documentation = "https://github.com/nasa/cumulus/blob/master/example-app/README.md"
+repository = "https://github.com/nasa/cumulus.git"
 
 ```
 
@@ -109,7 +115,7 @@ The testing framework for python projects in [pytest](https://docs.pytest.org/en
 
 To add `pytest` to the project run the command `uv add --dev pytest pytest-cov`.
 
-To configure `pytest` add commandline options for `pytest` in the `pyproject.toml` file like the example seen below. More `pytest` options are available in the [documentation](https://docs.pytest.org/en/stable/reference/reference.html#ini-options-ref). Additional options for `pytest-cov` are found in the [pytest-cov documentation](https://pytest-cov.readthedocs.io/en/latest/config.html). Note that since 
+To configure `pytest` add commandline options for `pytest` in the `pyproject.toml` file like the example seen below. More `pytest` options are available in the [documentation](https://docs.pytest.org/en/stable/reference/reference.html#ini-options-ref). Additional options for `pytest-cov` are found in the [pytest-cov documentation](https://pytest-cov.readthedocs.io/en/latest/config.html).
 
 ```toml
 [tool.pytest]
