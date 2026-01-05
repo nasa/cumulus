@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4370**
+  - The `tf-modules/cumulus` module now supports enabling OpenTelemetry and AWS X-Ray tracing.
+    By setting `enable_otel_tracing` to `true` the code in the `archive` API will generate and
+    send telemetry to AWS X-Ray. Most of the endpoints have been instrumented.
 - **CUMULUS-4411**
   - The `tf-modules/cumulus-rds-tf` module now supports enabling RDS slow query logging in CloudWatch.
     By setting `db_log_min_duration_ms` to a positive value (in milliseconds) and `enabled_cloudwatch_logs_exports`
