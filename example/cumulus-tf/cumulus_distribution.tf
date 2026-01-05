@@ -32,7 +32,9 @@ module "cumulus_distribution" {
   oauth_client_id                       = var.csdap_client_id
   oauth_client_password                 = var.csdap_client_password
   oauth_host_url                        = var.csdap_host_url
-  oauth_provider                        = "cognito"
+  #oauth_provider                        = "cognito"
+  # TODO CHANGE for feature branch only
+  oauth_provider                        = "earthdata"
   permissions_boundary_arn              = var.permissions_boundary_arn
   buckets                               = var.buckets
   sts_credentials_lambda_function_arn   = data.aws_lambda_function.sts_credentials.arn
