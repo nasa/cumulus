@@ -107,7 +107,7 @@ The task should contain the following files.
 
 The `README.md` file should provide sufficient documentation about the task. The template for the task README.md file can be found below. Those strings surrounded by `<>` are indicators where a developer should replace the information with that specific to the task.
 
-```md
+````md
 # @cumulus/<task-name>
 
 <Extended description of what the task does along with any unique use cases, corner cases, or functionality explained.>
@@ -180,7 +180,7 @@ To make a contribution, please [see our Cumulus contributing guidelines](https:/
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
 [Cumulus Documentation](https://nasa.github.io/cumulus)
-```
+````
 
 #### `package.json` file
 
