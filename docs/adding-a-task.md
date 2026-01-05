@@ -138,7 +138,26 @@ This lambda takes the following input and config objects, derived from workflow 
 
 ## Architecture
 
-<This section should provide a brief description of the task architecture. Ideally, an architectural drawing should be provided if able.>
+<This section should provide a brief description of the task architecture. Ideally, an architectural drawing should be provided if able. Below is an example of a mermaid diagram that GitHub renders natively. See the mermaid documentation on rendering various diagrams at https://mermaid.js.org/intro/syntax-reference.html>
+
+```mermaid
+architecture-beta
+    group trigger(cloud) [Starting Task]
+    group task(cloud)[Task]
+
+    service db(database)[Database] in task
+    service ps3(disk)[Provider S3 Storage] in task
+    service as3(disk)[Archive S3 Storage] in task
+    service lambda(server)[Lambda Task] in task
+    
+    service tlambda(server) [Lambda Task] in trigger
+
+    tlambda{group}:B --> T:lambda{group}
+    
+    lambda:R --> L:db
+    lambda:L --> R:ps3
+    lambda:B --> T:as3
+```
 
 ### Internal Dependencies
 
