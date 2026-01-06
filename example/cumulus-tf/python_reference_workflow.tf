@@ -32,6 +32,17 @@ module "python_processing_service" {
   ]
 }
 
+module "python_reference_task" {
+  source = "../lambdas/python-reference-task/tf-modules"
+
+  prefix                                         = var.prefix
+  lambda_processing_role_arn                     = module.cumulus.lambda_processing_role_arn
+  cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
+  lambda_subnet_ids                              = var.lambda_subnet_ids
+  lambda_security_group_id                       = aws_security_group.no_ingress_all_egress.id
+  tags                                           = local.tags
+}
+
 module "python_reference_workflow" {
   source = "../../tf-modules/workflow"
 
@@ -44,7 +55,7 @@ module "python_reference_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/python_reference_workflow.asl.json",
     {
-      python_reference_task_arn: aws_lambda_function.python_reference_task.arn,
+      python_reference_task_arn: module.python_reference_task.lambda_function_arn,
       python_processing_service_id: aws_sfn_activity.ecs_task_python_processing_service.id
     }
   )
