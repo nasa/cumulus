@@ -30,7 +30,7 @@ Example templates have been created for both [Python](https://github.com/nasa/cu
 
 To create a task, start by making a directory under the tasks directory. The new task directory name should be a descriptive name of the task. the name should be in lower case with `-` used in place of spaces. Copy the contents of the task language example to the new task directory.
 
-The new task directory should look something like the following. Note that the files may differ slightly depending on the language. Files marked with a `*` indicate a language specific file or folder.
+The new task directory should look something like the following. Note that the files may differ slightly depending on the language.
 
 ```text
 .
@@ -125,13 +125,9 @@ This lambda takes the following input and config objects, derived from workflow 
 
 <This section provides information on the task output. This section may include a schema for a valid output, and example of a message output, and any other example artifacts and/or descriptions related to the final products and functionality of the task.>
 
-### Example workflow configuration
+### Example workflow configuration and use
 
-<This section explains how the task should be configured in a workflow and provide a valid workflow configuration block example of using the task in a workflow.>
-
-### Example use in workflow
-
-<This section provides an example of the task in a workflow and ideally point to an workflow integration task that uses the task in the repository.>
+<This section explains how the task should be configured in a workflow and provide a valid workflow configuration block example of using the task in a workflow. Additionally, this section provides a real life example of the task in a workflow and will ideally point to an workflow integration task that uses the task in the repository.>
 
 ## Architecture
 

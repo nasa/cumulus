@@ -10,11 +10,11 @@ Package and project management in Python is managed using [uv](https://docs.astr
 
 ### Initializing a New Python Project
 
-To start a new project or module, under the proper directory run `uv init <name>` where `<name>` is the name of the project or module. The init will create the _`<name>` folder_, _pyproject.toml_, _README.md_, and _main.py_ files. It is recommended to layout the structure of the code like the image below. The _src_ folder contains the code for the module, library, or application. The _tests_ folder contains the unit and integration tests for the application. The _bin_ folder contains utility scripts for building, testing, deploying or performing other utilities with the code. The _terraform_ folder contains the infrastructure as code for deploying the project into AWS.
+To start a new project or module, under the proper directory run `uv init <name>` where `<name>` is the name of the project or module. The init will create the _`<name>` folder_, _pyproject.toml_, _README.md_, and _main.py_ files. It is recommended to layout the structure of the code like the image below. The _src_ folder contains the code for the module, library, or application. The _tests_ folder contains the unit and integration tests for the application. The _bin_ folder contains utility scripts for building, testing, deploying or performing other utilities with the code. The _terraform_ folder contains the infrastructure as code for deploying the project or task into AWS.
 
 ```text
 .
-└── python-refrence-task
+└── python-reference-task
     ├── bin
     │   └── package.sh
     ├── Dockerfile
@@ -23,7 +23,7 @@ To start a new project or module, under the proper directory run `uv init <name>
     ├── README.md
     ├── src
     │   ├── main.py
-    │   └── python_refrence_task
+    │   └── python_reference_task
     │       ├── __init__.py
     │       ├── schema.py
     │       └── task.py
@@ -47,7 +47,7 @@ To migrate a current Python project to uv, perform the following steps.
 
 1. `cd` to the app directory.
 2. Run the `uv init` command to create the _pyproject.toml_ file.
-3. Run the `uv add -r requirements.txt` to create the dependencies.
+3. Run the `uv add -r requirements.txt` to update the _pyproject.toml_ and lock dependency versions in the _uv.lock_ files.
 
 ### Updating PyProject.toml
 
@@ -83,7 +83,7 @@ repository = "https://github.com/nasa/cumulus.git"
 
 ## Code Quality and Format
 
-Python projects in this repo leverage [ruff](https://docs.astral.sh/ruff/) for code linting and formatting and [mypy](https://docs.astral.sh/ty/) for type checking.
+Python projects in this repo leverage [ruff](https://docs.astral.sh/ruff/) for code linting and formatting and [mypy](https://mypy.readthedocs.io/en/stable/) for type checking.
 
 To add `ruff` to the project run the command `uv tool install ruff`. To add `mypy` to the project, run `uv add --dev mypy`
 
