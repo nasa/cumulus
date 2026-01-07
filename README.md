@@ -4,17 +4,18 @@
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
 
 ## About Cumulus
+
 Cumulus is an open source cloud-based data ingest, archive, distribution, and management framework developed for NASA's future Earth Science data streams. This repo supports the development, deployment, and testing of Cumulus and supplies useful tips on configuration, workflow management, and operations.
 To learn more about Cumulus and NASA's Earth Observing System Data and Information System (EOSDIS) cloud initiatives go to [More Information](#more-information).
 
 ---
 
-
-# 🚀 Getting Started
+## 🚀 Getting Started
 
 Below is in-depth guidance to help get you started with your Cumulus development. To get a quick start on Cumulus deployment go to our [Getting Started](https://nasa.github.io/cumulus/docs/getting-started) section.
 
 ## Contents
+
 - [Documentation](#-documentation)
 - [Development](#-development)
   - [Installation](#installation)
@@ -42,7 +43,7 @@ Below is in-depth guidance to help get you started with your Cumulus development
 - Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/).
 - Documentation: [How To's](./docs/docs-how-to.md) when serving and updating the documentation.
 
-# 🔨 Development
+## 🔨 Development
 
 The Cumulus core repo is a [monorepo](https://en.wikipedia.org/wiki/Monorepo)
 managed by [Lerna](https://lerna.js.org/). Lerna is responsible for installing
@@ -74,6 +75,7 @@ This is for installation for Cumulus development. See the [Cumulus deployment se
 - docker-compose (only required for testing `pip install docker-compose`)
 - Python 3.12
 - [uv](https://docs.astral.sh/uv/)
+- [pre-commit](https://pre-commit.com/)
 
 > You may use `brew` to install the prerequisites. Visit [Homebrew documentation](https://brew.sh/) for guidance.
 
@@ -92,13 +94,22 @@ We use Lerna to manage multiple Cumulus packages in the same repo. You need to i
 npm install -g lerna
 ```
 
-### Unstall uv
+### Install uv
 
 We use uv to manage python packages and dependencies. It is recommended to install uv using
-the install scripts provided [here](https://docs.astral.sh/uv/getting-started/installation/)
+the install scripts provided in the [installation docs](https://docs.astral.sh/uv/getting-started/installation/)
 since uv can then be used to install python (similar to NVM for node).
 
-https://docs.astral.sh/uv/getting-started/installation/
+### Install pre-commit
+
+You can install pre-commit with the following command:
+
+```sh
+pip install pre-commit
+```
+
+Refer to the [pre-commit-setup](./docs/development/pre-commit-setup.md) for more information on how to configure and use
+pre-commit.
 
 ### Install Local Dependencies
 
@@ -248,23 +259,28 @@ npm test
 ### Coverage tests
 
 If tests are working, run coverage tests
+
 ```sh
 export LOCAL_ES_HOST=127.0.0.1
 export LOCALSTACK_HOST=127.0.0.1
 npm run test:coverage
 ```
+
 These tests will fail if coverage drops below certain thresholds _or_ if unit tests fail.
 
 an environment variable can be set to only measure and not threshold
+
 ```sh
 export FAIL_ON_COVERAGE=false
 npm run test:coverage
 ```
 
 Additionally, you can facilitate updating coverage values with the included coverage script
+
 ```sh
 npm run coverage -- --update
 ```
+
 ### Integration Tests
 
 For more information please [read this](docs/development/integration-tests.md).
@@ -299,7 +315,7 @@ npm run clean
 
 ## Contribution
 
-Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for more information.
+Please refer to [Contributing](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md) for more information.
 
 ## 🛒 Release
 
@@ -309,4 +325,4 @@ To release a new version of cumulus [read this](docs/development/release.md).
 
 ## More Information
 
-For more information about this project or more about NASA's Earth Observing System Data and Information System (EOSDIS) and its cloud work, please contact [Katie Baynes](mailto:katie.baynes@nasa.gov) or visit us at https://earthdata.nasa.gov.
+For more information about this project or more about NASA's Earth Observing System Data and Information System (EOSDIS) and its cloud work, please contact [Katie Baynes](mailto:katie.baynes@nasa.gov) or visit us at [https://earthdata.nasa.gov](https://earthdata.nasa.gov).

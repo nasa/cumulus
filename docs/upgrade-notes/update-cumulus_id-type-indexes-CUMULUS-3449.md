@@ -64,23 +64,23 @@ Basic commands for running SQL commands
 ```sh
 # Start a tmux session called CumulusUpgrade with a new window named Fix-DataTypes
 tmux new -s CumulusUpgrade -n Fix-DataTypes
- 
+
 # Start a PosgreSQL client section on the writer instance of the database cluster and prompt for password
 psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name or postgres> -U <database admin user or postgres> -W
-  
+
 # Open a new window to use for monitoring
 <Ctrl>-b c
- 
+
 # Switch between windows
 # Last window
 <Ctrl>-b l
 
 # Next Window
 <Ctrl>-b n
- 
+
 # Detach from tmux session
 <Ctrl>-b d
- 
+
 # List tmux sessions
 tmux ls
 
@@ -131,7 +131,7 @@ exit
     and click the Connect button.
 
     From AWS CLI: aws ssm start-session --target `EC2 Instance ID`.
-  
+
     :::note Remember to take a note on which instance you run the commands.
 
 3. Install tmux and postgres client
@@ -214,23 +214,23 @@ exit
     ```sh
     => \d executions;
 
-              Column           |           Type           | Collation | Nullable |                    Default                     
+              Column           |           Type           | Collation | Nullable |                    Default
     ----------------------------+--------------------------+-----------+----------+------------------------------------------------
     cumulus_id                 | bigint                   |           | not null | nextval('executions_cumulus_id_seq'::regclass)
-    parent_cumulus_id          | bigint                   |           |          | 
+    parent_cumulus_id          | bigint                   |           |          |
 
     => \d granules_executions;
 
-            Column        |  Type  | Collation | Nullable | Default 
+            Column        |  Type  | Collation | Nullable | Default
     ----------------------+--------+-----------+----------+---------
-    granule_cumulus_id   | bigint |           | not null | 
-    execution_cumulus_id | bigint |           | not null | 
+    granule_cumulus_id   | bigint |           | not null |
+    execution_cumulus_id | bigint |           | not null |
 
     => \d files;
-                                                   
-          Column       |           Type           | Collation | Nullable |                  Default                  
+
+          Column       |           Type           | Collation | Nullable |                  Default
     --------------------+--------------------------+-----------+----------+-------------------------------------------
-    granule_cumulus_id | bigint                   |           | not null | 
+    granule_cumulus_id | bigint                   |           | not null |
 
     => \d granules;
 
@@ -241,9 +241,9 @@ exit
 
     => \d pdrs
 
-            Column         |           Type           | Collation | Nullable |                 Default                  
+            Column         |           Type           | Collation | Nullable |                 Default
     -----------------------+--------------------------+-----------+----------+------------------------------------------
-    execution_cumulus_id  | bigint                   |           |          | 
+    execution_cumulus_id  | bigint                   |           |          |
     ```
 
 7. Close the Session

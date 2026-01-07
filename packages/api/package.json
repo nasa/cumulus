@@ -126,7 +126,7 @@
       "xml2js": "0.5.0"
     }
   },
-  "devDependencies": {    
+  "devDependencies": {
     "@cumulus/test-data": "21.0.1",
     "aws-sdk-client-mock": "^3.0.1",
     "proxyquire": "^2.1.3"

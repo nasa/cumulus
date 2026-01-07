@@ -1,0 +1,112 @@
+repos:
+  # Pre-commit hooks for general files
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
+      - id: end-of-file-fixer
+        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
+      - id: check-yaml
+        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
+      - id: check-json
+        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
+      - id: check-toml
+        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
+
+  # Use your existing npm scripts to leverage your .eslintrc.js configuration
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint (uses your .eslintrc.js)
+        entry: npm run eslint
+        language: system
+        files: \.(js|ts)$
+        pass_filenames: false
+        # Add --fix to automatically fix issues where possible
+        args: []
+
+  # Use your existing Python tooling that respects pyproject.toml
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff linting (uses your pyproject.toml)
+        entry: uv run ruff check --fix
+        language: system
+        files: \.py$
+        pass_filenames: false
+
+      - id: ruff-format
+        name: Ruff formatting (uses your pyproject.toml)
+        entry: uv run ruff format
+        language: system
+        files: \.py$
+        pass_filenames: false
+
+  # Use your existing markdown linting that respects .markdownlint.json
+  - repo: local
+    hooks:
+      - id: markdownlint
+        name: Markdown linting (uses your .markdownlint.json)
+        entry: npm run lint-md
+        language: system
+        files: \.(md|markdown)$
+        pass_filenames: false
+
+  # Package.json linting using your existing npm script
+  - repo: local
+    hooks:
+      - id: npm-package-json-lint
+        name: Package.json linting
+        entry: npm run lint-package-json
+        language: system
+        files: package\.json$
+        pass_filenames: false
+
+  # TypeScript compilation check using your existing npm script
+  - repo: local
+    hooks:
+      - id: typescript-compile
+        name: TypeScript compilation check
+        entry: npm run tsc
+        language: system
+        files: \.(ts|tsx)$
+        pass_filenames: false
+
+  # Optional: Full lint check (includes all your linting)
+  # Uncomment this if you want to run your complete lint suite
+  # - repo: local
+  #   hooks:
+  #     - id: full-lint
+  #       name: Full lint suite (all your npm lint scripts)
+  #       entry: npm run lint
+  #       language: system
+  #       pass_filenames: false
+  #       stages: [manual]
+
+# Configuration for pre-commit
+default_language_version:
+  python: python3.12
+  node: 20.12.2
+
+# Global exclude pattern (some hooks may need individual excludes too)
+exclude: |
+  (?x)^(
+    website/|
+    node_modules/|
+    \.venv/|
+    \.git/|
+    \.vscode/|
+    \.ruff_cache/|
+    build/|
+    dist/|
+    \.nyc_output/|
+    coverage/|
+    \.final_nyc_output/
+  )

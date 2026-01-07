@@ -39,4 +39,3 @@ resource "aws_cloudwatch_log_group" "hyrax_metadata_updates_task" {
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "HyraxMetadataUpdates", var.default_log_retention_days)
   tags              = var.tags
 }
-

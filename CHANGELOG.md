@@ -44,6 +44,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4430**
   - Updated GitHub Actions to run `ruff` linting on PRs.
   - Updated GitHub Actions to run `eslint`, `markdownlint`, and `npm-package-json-lint` on PRs.
+- **CUMULUS-4433**
+  - Adds pre-commit config and hooks to the repository. Developers are encouraged to install pre-commit and read
+  the [pre-commit setup docs](./docs/development/pre-commit-setup.md) to ensure they have the correct setup.
 - **CUMULUS-4438**
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf

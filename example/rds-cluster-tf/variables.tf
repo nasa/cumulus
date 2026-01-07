@@ -144,6 +144,7 @@ variable "db_log_min_duration_ms" {
   description = "The threshold (in ms) for logging slow queries in RDS. Default to -1 (disabled)"
   default     = -1
 }
+<<<<<<< Updated upstream
 
 variable "max_capacity" {
   type = number
@@ -154,3 +155,5 @@ variable "min_capacity" {
   type = number
   default = 2
 }
+=======
+>>>>>>> Stashed changes
