@@ -30,11 +30,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v21.2.0] 2025-12-06
 
+### Migration Notes
+
+- This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
+
 ### Notable Changes
 
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
+- **CUMULUS-4124**
+  When these changes are deployed, if no action is taken to reconfigure the cron, it will run once per day in the early morning, archiving
+
+  - 100k granules
+  - 100k executions
+  - that are more than 1 year old.
+
+  Being archived changes nothing about the record except to set a boolean flag (archived=true). this behavior can be reconfigured or turned off entirely. see features/record_archival.md for more details.
 - **CUMULUS-4272**
   - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
@@ -43,6 +55,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4032**
+  - Added S3 jitter functionality to prevent AWS S3 SlowDown errors during high-concurrency operations
+  - Added `sync_granule_s3_jitter_max_ms` Terraform variable to configure random jitter delay (0-59000ms) for SyncGranule task
+  - S3 operations in `@cumulus/aws-client` now support optional jitter via `S3_JITTER_MAX_MS` environment variable
+  - Jitter is applied to: `headObject`, `putObject`, `copyObject`, `getObject`, `downloadS3File`, `promiseS3Upload`, and `multipartCopyObject`
+- **CUMULUS-4124**
+  - Add api endpoint `granules/archive` to archive granules
+  - Add api endpoint `executions/archive` to archive executions
+  - Task lambda to call above api endpoints with configuration
+  - Add cron scheduler to call above endpoints and archive old records
 - **CUMULUS-4272**
   - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
     specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
@@ -57,69 +79,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
 - **CUMULUS-4188**
   - Updated `example/cumulus-tf/orca.tf` to use v10.1.5
-
-### Fixed
-
-- **CUMULUS-4346**
-  - Updated package overrides for dev env to use `glob` "^11.1.0" to address reported CVE
-- **CUMULUS-4279**
-  - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
-    on the public schema of the user database to the database user.
-    This change is required because, starting with PostgreSQL 15, new databases assign ownership
-    of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
-    prior to v15 preserve the previous ownership of the public schema.
-- **CUMULUS-4275**
-  - Fixed unit tests broken by updated HTTP error messages in got
-- **CUMULUS-4325**
-  - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
-    - Updated `@cumulus/cmrjs` to use Map for guaranteed element ordering in
-      `updateEcho10XMLGranuleUrAndGranuleIdentifier`
-    - Modified integration test helpers to use `js2xmlparser` instead of `xml2js.Builder`
-      for correct XML serialization
-    - Added unit tests to verify ECHO10 schema element ordering
-    - Resolves CMR validation error when ProducerGranuleId appears out of sequence
-
-## [v21.1.0]
-
-### Migration Notes
-
-- This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
-
-### Notable Changes
-
-- **CUMULUS-4124**
-  When these changes are deployed, if no action is taken to reconfigure the cron, it will run once per day in the early morning, archiving
-
-  - 100k granules
-  - 100k executions
-  - that are more than 1 year old.
-
-  Being archived changes nothing about the record except to set a boolean flag (archived=true). this behavior can be reconfigured or turned off entirely. see features/record_archival.md for more details.
-
-### Added
-
-- **CUMULUS-4124**
-  - Add api endpoint `granules/archive` to archive granules
-  - Add api endpoint `executions/archive` to archive executions
-  - Task lambda to call above api endpoints with configuration
-  - Add cron scheduler to call above endpoints and archive old records
-
-- **CUMULUS-4032**
-  - Added S3 jitter functionality to prevent AWS S3 SlowDown errors during high-concurrency operations
-  - Added `sync_granule_s3_jitter_max_ms` Terraform variable to configure random jitter delay (0-59000ms) for SyncGranule task
-  - S3 operations in `@cumulus/aws-client` now support optional jitter via `S3_JITTER_MAX_MS` environment variable
-  - Jitter is applied to: `headObject`, `putObject`, `copyObject`, `getObject`, `downloadS3File`, `promiseS3Upload`, and `multipartCopyObject`
-
-### Changed
-
-- **CUMULUS-4271**
-  - Updated release instructions to include schema updates
 - **CUMULUS-4244**
   - Improve logging for Ingest Granules
     - Upgrade log level from debug to error for 403/401 errors
     - Add detailed error context (status code, error type, bucket, key)
     - Add actionable remediation suggestions for permission issues
     - Add try-catch in write-granules.js for better error context
+- **CUMULUS-4271**
+  - Updated release instructions to include schema updates
 - **CUMULUS-4155**
   - Update Cumulus integration tests to utilize:
     - Cumulus Message Adapter: v2.0.5
@@ -151,6 +118,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+### Fixed
+
+- **CUMULUS-4346**
+  - Updated package overrides for dev env to use `glob` "^11.1.0" to address reported CVE
+- **CUMULUS-4279**
+  - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
+    on the public schema of the user database to the database user.
+    This change is required because, starting with PostgreSQL 15, new databases assign ownership
+    of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
+    prior to v15 preserve the previous ownership of the public schema.
+- **CUMULUS-4275**
+  - Fixed unit tests broken by updated HTTP error messages in got
+- **CUMULUS-4325**
+  - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
+    - Updated `@cumulus/cmrjs` to use Map for guaranteed element ordering in
+      `updateEcho10XMLGranuleUrAndGranuleIdentifier`
+    - Modified integration test helpers to use `js2xmlparser` instead of `xml2js.Builder`
+      for correct XML serialization
+    - Added unit tests to verify ECHO10 schema element ordering
+    - Resolves CMR validation error when ProducerGranuleId appears out of sequence
 
 ## [v21.0.0-echo10] 2025-11-19 - [BACKPORT]
 
