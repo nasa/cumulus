@@ -43,6 +43,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4438**
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
+- **CUMULUS-4406**
+  - Changed the `limit` variable inside the pdr-status-check task from an input variable to a config variable
 
 ### Fixed
 
