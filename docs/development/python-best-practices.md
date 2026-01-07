@@ -10,7 +10,7 @@ Package and project management in Python is managed using [uv](https://docs.astr
 
 ### Initializing a New Python Project
 
-To start a new project or module, under the proper directory run `uv init <name>` where `<name>` is the name of the project or module. The init will create the _`<name>` folder_, _pyproject.toml_, _README.md_, and _main.py_ files. It is recommended to layout the structure of the code like the image below. The _src_ folder contains the code for the module, library, or application. The _tests_ folder contains the unit and integration tests for the application. The _bin_ folder contains utility scripts for building, testing, deploying or performing other utilities with the code. The _terraform_ folder contains the infrastructure as code for deploying the project or task into AWS.
+To start a new project or module, under the proper directory run `uv init <name>` where `<name>` is the name of the project or module. The init will create the _`<name>` folder_, _pyproject.toml_, _README.md_, and _main.py_ files. It is recommended to layout the structure of the code like the image below. The _src_ folder contains the code for the module, library, or application. The _tests_ folder contains the unit and integration tests for the application. The _bin_ folder contains utility scripts for building, testing, deploying or performing other utilities with the code. The _deploy_ folder contains the infrastructure as code for deploying the project or task into AWS.
 
 ```text
 .
@@ -27,7 +27,7 @@ To start a new project or module, under the proper directory run `uv init <name>
     │       ├── __init__.py
     │       ├── schema.py
     │       └── task.py
-    ├── terraform
+    ├── deploy
     │   ├── main.tf
     │   ├── output.tf
     │   └── variables.tf
@@ -95,7 +95,13 @@ To check the quality of your code run `npm run lint`. To run the checks individu
 
 ### Configuring Ruff
 
-The Ruff configuration found in the [root pyproject.toml file](https://github.com/nasa/cumulus/blob/master/pyproject.toml) contains the ruff configuration for the project. Ruff configuration can be extended or overridden using the [extend feature](https://docs.astral.sh/ruff/settings/#extend)
+The Ruff configuration found in the [root pyproject.toml file](https://github.com/nasa/cumulus/blob/master/pyproject.toml) contains the ruff configuration for the project. Ruff configuration can be extended or overridden using the [extend feature](https://docs.astral.sh/ruff/settings/#extend).
+
+:::warning Extend Feature
+
+Use of the extend feature for ruff should generally be avoided so that the current global configuration is applied consistently everywhere. Only use the extend feature for when absolutely necessary, providing ample documentation for the deviation from the current global settings.
+
+:::
 
 ### Configuring MyPy
 
@@ -134,6 +140,8 @@ testpaths = [
 ```
 
 To run `pytest` use the command `uv run pytest`.
+
+In addition to `pytest`, developers should strongly consider using [moto](https://docs.getmoto.org/en/latest/) for mocking AWS services within code when using the boto3 SDK and the AWS API. The [moto](https://github.com/getmoto/moto?tab=readme-ov-file) library is the preferred library for performing unit tests against AWS mocked services.
 
 ## Code Documentation
 
