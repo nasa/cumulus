@@ -4882,3 +4882,41 @@ test.serial('writeGranuleFromApi() failes to overwrite granule with required fie
     { message: new RegExp('granule.\'producerGranuleId\' cannot be removed as it is required and/or set to a default value on PUT') }
   );
 });
+
+test.serial('writeGranuleFromApi() overrides granule when created_at is null', async (t) => {
+  const {
+    knex,
+    granule,
+    granuleId,
+  } = t.context;
+
+  const expectedCreatedAt = Date.now();
+  cumulusMessage.payload.granules[0].createdAt = expectedCreatedAt;
+
+  const result = await writeGranuleFromApi(granule, knex, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, createdAt: null, status: 'completed' }, knex, 'Create'),
+    t.is(pgGranule.created_at.getTime(), expectedCreatedAt)
+  );
+});
+
+test.serial('writeGranuleFromApi() overrides granule when updated_at is null', async (t) => {
+  const {
+    knex,
+    granule,
+    granuleId,
+  } = t.context;
+
+  const expectedUpdatedAt = Date.now();
+  cumulusMessage.payload.granules[0].updatedAt = expectedUpdatedAt;
+
+  const result = await writeGranuleFromApi(granule, knex, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, updatedAt: null, status: 'completed' }, knex, 'Create'),
+    t.is(pgGranule.updatedAt.getTime(), expectedUpdatedAt)
+  );
+});

@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
     reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
+- **CSD-61**
+  - Updated `PUT granules` endpoint to allow createdAt and updatedAt fields to be null.
 
 ### Added
 
