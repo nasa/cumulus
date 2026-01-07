@@ -6,8 +6,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration Notes
+
+Please complete the following steps before upgrading Cumulus.
+
+#### CUMULUS-4459 New index added to the granules table to improve Dashboard performance
+
+- The fix introduced in CUMULUS-4459 requires a manual database update in the production environment. 
+  This step ensures the new index is created successfully, even in the unlikely event that the database-migration 
+  Lambda function did not complete the index creation before timing out.
+
+  Please follow the standard procedures for running a production database migration, and execute the following SQL to create the index:
+  ```text
+  CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_provider_collection_updated_idx ON granules (provider_cumulus_id, collection_cumulus_id, updated_at);
+  ```
+
 ### Notable Changes
 
+- **CUMULUS-4459**
+  - Added new index to the granules table to improve Dashboard performance.
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
