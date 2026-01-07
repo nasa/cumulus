@@ -6,20 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [v21.2.0] 2025-12-06
-
-### Notable Changes
-
-- **CUMULUS-3574**
-  - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
-    now, if any granule file fails, none are written.
-
-- **CUMULUS-4272**
-  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
-    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
-    reusing their existing security group, ensuring compatibility with existing
-    `data-persistence-tf` and `cumulus-tf` modules.
-
 ### Added
 
 - **CUMULUS-4411**
@@ -27,17 +13,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     By setting `db_log_min_duration_ms` to a positive value (in milliseconds) and `enabled_cloudwatch_logs_exports`
     to `["postgresql"]`, RDS will log and export any database queries that take longer than that threshold.
     The module also configures the required RDS extensions and parameters necessary for slow query instrumentation.
-- **CUMULUS-4272**
-  - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
-    specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
 
 ### Changed
 
-- **CUMULUS-3574**
-  - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
-
-- **CUMULUS-4188**
-  - Updated `example/cumulus-tf/orca.tf` to use v10.1.5
 - **CUMULUS-4387**
   - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
   `pyproject.toml` file.
@@ -48,18 +26,46 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
 
+## [v21.2.0] 2025-12-06
+
+### Notable Changes
+
+- **CUMULUS-3574**
+  - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
+    now, if any granule file fails, none are written.
+- **CUMULUS-4272**
+  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
+    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
+    reusing their existing security group, ensuring compatibility with existing
+    `data-persistence-tf` and `cumulus-tf` modules.
+
+### Added
+
+- **CUMULUS-4272**
+  - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
+    specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
+- **CUMULUS-4354**
+  - Added an optional terraform-configurable lambda level env variable `allow_provider_mismatch_on_rule_filter` to `message-consumer` and `sqs-message-consumer` to check
+  whether to consider rule/message provider mismatches
+  - Added a `rule.meta.allowProviderMismatchOnRuleFilter` check to `filterRulesByRuleParams` as a rule-level fallback to check whether to consider rule/message provider mismatches for the specific rule
+
+### Changed
+
+- **CUMULUS-3574**
+  - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
+- **CUMULUS-4188**
+  - Updated `example/cumulus-tf/orca.tf` to use v10.1.5
+
 ### Fixed
 
 - **CUMULUS-4346**
   - Updated package overrides for dev env to use `glob` "^11.1.0" to address reported CVE
-
 - **CUMULUS-4279**
   - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
     on the public schema of the user database to the database user.
     This change is required because, starting with PostgreSQL 15, new databases assign ownership
     of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
     prior to v15 preserve the previous ownership of the public schema.
-
 - **CUMULUS-4275**
   - Fixed unit tests broken by updated HTTP error messages in got
 - **CUMULUS-4325**
@@ -70,14 +76,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       for correct XML serialization
     - Added unit tests to verify ECHO10 schema element ordering
     - Resolves CMR validation error when ProducerGranuleId appears out of sequence
-
-### Added
-
-- **CUMULUS-4354**
-  - Added an optional terraform-configurable lambda level env variable `allow_provider_mismatch_on_rule_filter` to `message-consumer` and `sqs-message-consumer` to check
-  whether to consider rule/message provider mismatches
-  - Added a `rule.meta.allowProviderMismatchOnRuleFilter` check to `filterRulesByRuleParams` as a rule-level fallback to check
-  whether to consider rule/message provider mismatches for the specific rule
 
 ## [v21.1.0]
 
