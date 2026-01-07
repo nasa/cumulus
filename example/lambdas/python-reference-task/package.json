@@ -15,7 +15,7 @@
     "clean": "rm -rf dist && rm -rf lib && rm -rf .venv && mkdir dist && mkdir lib",
     "build": "uv sync",
     "prepare": "npm run build",
-    "package": "npm run clean && ./package.sh $(pwd)",
+    "package": "npm run clean && ./bin/package.sh $(pwd)",
     "install-python-deps": "npm run build"
   },
   "publishConfig": {

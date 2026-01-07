@@ -33,7 +33,7 @@ module "python_processing_service" {
 }
 
 module "python_reference_task" {
-  source = "../lambdas/python-reference-task/tf-modules"
+  source = "../lambdas/python-reference-task/deploy"
 
   prefix                                         = var.prefix
   lambda_processing_role_arn                     = module.cumulus.lambda_processing_role_arn
