@@ -60,6 +60,8 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4438**
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
+- **CUMULUS-4406**
+  - Changed the `limit` variable inside the pdr-status-check task from an input variable to a config variable
 
 ### Fixed
 
