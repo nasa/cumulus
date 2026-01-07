@@ -8,20 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Notable Changes
 
-- **CUMULUS-3574**
-  - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
-    now, if any granule file fails, none are written.
-- **CUMULUS-4272**
-  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
-    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
-    reusing their existing security group, ensuring compatibility with existing
-    `data-persistence-tf` and `cumulus-tf` modules.
-
 ### Added
 
-- **CUMULUS-4272**
-  - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
-    specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
 - **CUMULUS-4411**
   - The `tf-modules/cumulus-rds-tf` module now supports enabling RDS slow query logging in CloudWatch.
     By setting `db_log_min_duration_ms` to a positive value (in milliseconds) and `enabled_cloudwatch_logs_exports`
@@ -30,10 +18,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-3574**
-  - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
-- **CUMULUS-4188**
-  - Updated `example/cumulus-tf/orca.tf` to use v10.1.5
 - **CUMULUS-4387**
   - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
   `pyproject.toml` file.
@@ -45,27 +29,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4438**
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
-
-### Fixed
-
-- **CUMULUS-4346**
-  - Updated package overrides for dev env to use `glob` "^11.1.0" to address reported CVE
-- **CUMULUS-4279**
-  - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
-    on the public schema of the user database to the database user.
-    This change is required because, starting with PostgreSQL 15, new databases assign ownership
-    of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
-    prior to v15 preserve the previous ownership of the public schema.
-- **CUMULUS-4275**
-  - Fixed unit tests broken by updated HTTP error messages in got
-- **CUMULUS-4325**
-  - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
-    - Updated `@cumulus/cmrjs` to use Map for guaranteed element ordering in
-      `updateEcho10XMLGranuleUrAndGranuleIdentifier`
-    - Modified integration test helpers to use `js2xmlparser` instead of `xml2js.Builder`
-      for correct XML serialization
-    - Added unit tests to verify ECHO10 schema element ordering
-    - Resolves CMR validation error when ProducerGranuleId appears out of sequence
 
 ## [v21.2.0] 2025-12-06
 
