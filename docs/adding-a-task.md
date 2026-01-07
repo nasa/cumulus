@@ -94,7 +94,7 @@ The `schemas` directory contains JSON schemas for the input, output , and config
 
 #### `bin` directory
 
-The `bin` directory contains various scripts, often written in bash, to help build, test, and deploy the task.
+The `bin` directory contains various scripts specific to this task, often written in bash, to help build, test, and deploy the task.
 
 ### Explanation of files
 
