@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4387**
   - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
   `pyproject.toml` file.
+- **CUMULUS-4406**
+  - Changed the `limit` variable inside the pdr-status-check task from an input variable to a config variable
 - **CUMULUS-4430**
   - Updated GitHub Actions to run `ruff` linting on PRs.
   - Updated GitHub Actions to run `eslint`, `markdownlint`, and `npm-package-json-lint` on PRs.
