@@ -73,7 +73,7 @@
     "@cumulus/oauth-client": "21.0.1",
     "@cumulus/object-store": "21.0.1",
     "@cumulus/pvl": "21.0.1",
-    "@cumulus/sftp-client": "21.0.1",
+    "@cumulus/sftp-client": "21.1.0",
     "@cumulus/types": "21.0.1",
     "@hapi/boom": "^10.0.0",
     "@mapbox/dyno": "^1.4.2",
