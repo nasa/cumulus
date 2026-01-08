@@ -8,9 +8,9 @@ repos:
       - id: end-of-file-fixer
         exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
       - id: check-yaml
-        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
+        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/|.*-cf\.ya?ml$)'
       - id: check-json
-        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
+        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/|\.vscode\.example/)'
       - id: check-toml
         exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
       - id: check-merge-conflict
@@ -19,6 +19,12 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
         exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
+
+  - repo: https://github.com/aws-cloudformation/cfn-lint
+    rev: v1.43.2  # Check for latest version
+    hooks:
+      - id: cfn-lint
+        files: '.*-cf\.ya?ml$'
 
   # Use your existing npm scripts to leverage your .eslintrc.js configuration
   - repo: local
@@ -32,34 +38,24 @@ repos:
         # Add --fix to automatically fix issues where possible
         args: []
 
-  # Use your existing Python tooling that respects pyproject.toml
-  - repo: local
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
     hooks:
-      - id: ruff-check
-        name: Ruff linting (uses your pyproject.toml)
-        entry: uv run ruff check --fix
-        language: system
-        files: \.py$
-        pass_filenames: false
-
+      - id: ruff
+        name: Ruff linting
+        args: []
       - id: ruff-format
-        name: Ruff formatting (uses your pyproject.toml)
-        entry: uv run ruff format
-        language: system
-        files: \.py$
-        pass_filenames: false
+        name: Ruff formatting
+        args: [--diff]
 
-  # Use your existing markdown linting that respects .markdownlint.json
-  - repo: local
+  # Markdown linting using the same library as package.json
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.31.1 # Using same version as in package.json
     hooks:
       - id: markdownlint
-        name: Markdown linting (uses your .markdownlint.json)
-        entry: npm run lint-md
-        language: system
-        files: \.(md|markdown)$
-        pass_filenames: false
+        files: '^(docs|tf-modules)/.*\.md$'
 
-  # Package.json linting using your existing npm script
+  # Package.json linting using our existing npm script
   - repo: local
     hooks:
       - id: npm-package-json-lint
@@ -69,7 +65,7 @@ repos:
         files: package\.json$
         pass_filenames: false
 
-  # TypeScript compilation check using your existing npm script
+  # TypeScript compilation check using our existing npm script
   - repo: local
     hooks:
       - id: typescript-compile
@@ -110,3 +106,8 @@ exclude: |
     coverage/|
     \.final_nyc_output/
   )
+
+# Configuration pre-commit.ci
+ci:
+  # Skip local hooks that depend on npm or uv since they're not supported by
+  skip: [eslint, npm-package-json-lint, typescript-compile]
