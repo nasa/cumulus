@@ -4902,10 +4902,8 @@ test.serial('writeGranuleFromApi() overrides granule when created_at is null', a
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
 
-  await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, createdAt: null, status: 'completed' }, knex, 'Create'),
-    t.is(granulePgRecord.created_at.getTime(), expectedCreatedAt)
-  );
+  await writeGranuleFromApi({ ...granule, createdAt: null, status: 'completed' }, knex, 'Create');
+  t.is(granulePgRecord.created_at.getTime(), expectedCreatedAt)
 });
 
 test.serial('writeGranuleFromApi() overrides granule when updated_at is null', async (t) => {
@@ -4927,8 +4925,6 @@ test.serial('writeGranuleFromApi() overrides granule when updated_at is null', a
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
 
-  await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, updatedAt: null, status: 'completed' }, knex, 'Create'),
-    t.is(granulePgRecord.updatedAt.getTime(), expectedUpdatedAt)
-  );
+  await writeGranuleFromApi({ ...granule, updatedAt: null, status: 'completed' }, knex, 'Create');
+  t.is(granulePgRecord.updatedAt.getTime(), expectedUpdatedAt);
 });
