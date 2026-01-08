@@ -24,7 +24,7 @@ const getCounterFromEvent = (event) => event.input.counter || 0;
  * @param {Object} event - a simple Cumulus event
  * @returns {integer} - the limit on how many times this check may be run
  */
-const getLimitFromEvent = (event) => event.input.limit || defaultRetryLimit;
+const getLimitFromEvent = (event) => event.config.limit || defaultRetryLimit;
 
 /**
  * Group Step Function executions into "completed", "aborted", "failed",
@@ -63,7 +63,6 @@ function logStatus(output) {
     completed: output.completed.length,
     failed: output.failed.length,
     counter: output.counter,
-    limit: output.limit,
   }, 'latest status');
 }
 
@@ -120,7 +119,6 @@ function buildOutput(event, groupedExecutions) {
 
   if (!output.isFinished) {
     output.counter = getCounterFromEvent(event) + 1;
-    output.limit = getLimitFromEvent(event);
   }
 
   return output;
