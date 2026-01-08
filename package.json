@@ -182,6 +182,9 @@
     "glob": "^11.1.0",
     "nyc": {
       "glob": "^9.0.0"
+    },
+    "request": {
+      "qs": "^6.14.1"
     }
   },
   "private": true
