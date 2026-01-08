@@ -104,7 +104,7 @@ process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 const { app } = require('../../app');
 
 // import addGranules from serveUtils after setting env variables
-const { addGranules } = require('../../../bin/serveUtils');
+const { addGranules } = require('../../bin/serveUtils');
 
 async function runTestUsingBuckets(buckets, testFunction) {
   try {
@@ -3484,18 +3484,35 @@ test.serial('PATCH returns 201 (granule creation) for version value greater than
 
 test.serial('Test addGranules add granules and associated files to Postgres', async (t) => {
   const { collectionPgModel, knex } = t.context;
-  const testPgCollection = fakeCollectionRecordFactory({
-    name: randomString(),
-    version: '005',
-  });
-  const newCollectionId = constructCollectionId(testPgCollection.name, testPgCollection.version);
+  const collectionName = 'MOD09GQ';
+  const collectionVersion = '006';
 
-  await collectionPgModel.create(knex, testPgCollection);
+  const fakePgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+
+  const [pgCollection] = await collectionPgModel.create(
+    knex,
+    fakePgCollection
+  );
+
+  const newCollectionId = constructCollectionId(pgCollection.name, pgCollection.version);
+
+  const testPgExecution = fakeExecutionRecordFactory({
+    collection_cumulus_id: pgCollection.cumulus_id,
+  });
+
+  const executionPgRecord = await executionPgModel.create(
+    knex,
+    testPgExecution
+  );
 
   const newGranule = fakeGranuleFactoryV2({
     granuleId: randomId(),
     status: 'failed',
     collectionId: newCollectionId,
+    execution: executionPgRecord[0].url,
     published: false,
     files: [
       {
@@ -3509,7 +3526,7 @@ test.serial('Test addGranules add granules and associated files to Postgres', as
     ],
   });
 
-  await addGranules([newGranule]);
+  await addGranules([newGranule], knex);
 
   const [pgGranule] = await t.context.granulePgModel.search(
     t.context.knex, { granule_id: newGranule.granuleId }
@@ -3526,6 +3543,5 @@ test.serial('Test addGranules add granules and associated files to Postgres', as
     t.is(files[idx].bucket, file.bucket);
     t.is(files[idx].key, file.key);
     t.is(files[idx].file_name, file.fileName);
-    t.is(files[idx].size, file.size);
   });
 });

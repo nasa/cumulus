@@ -116,8 +116,8 @@ async function addCollections(collections) {
   );
 }
 
-async function addGranules(granules) {
-  const knex = await getKnexClient({
+async function addGranules(granules, knexClient) {
+  const knex = knexClient || await getKnexClient({
     env: {
       ...envParams,
       ...localStackConnectionEnv,
