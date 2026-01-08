@@ -20,7 +20,7 @@
     "failFast": true
   },
   "dependencies": {
-    "@cumulus/api": "21.0.1",
+    "@cumulus/api": "21.1.0",
     "@cumulus/aws-client": "21.0.1",
     "@cumulus/cmrjs": "21.0.1",
     "@cumulus/errors": "21.0.1",
