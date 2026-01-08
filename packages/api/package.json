@@ -71,7 +71,7 @@
     "@cumulus/logger": "21.0.1",
     "@cumulus/message": "21.0.1",
     "@cumulus/oauth-client": "21.0.1",
-    "@cumulus/object-store": "21.0.1",
+    "@cumulus/object-store": "21.1.0",
     "@cumulus/pvl": "21.0.1",
     "@cumulus/sftp-client": "21.0.1",
     "@cumulus/types": "21.0.1",
