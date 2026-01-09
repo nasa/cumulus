@@ -18,8 +18,8 @@ npm run prepare
 
 To update the container for a PR, you should run:
 
-```bash
-docker build --platform linux/amd64,linux/arm64 -t cumulus-test-ingest-process:{VERSION} .
+```sh
+npm run package
 ```
 
 Then push to the configured ECR following the AWS console instructions for pushing to ECR for use in your build.

@@ -14,7 +14,7 @@
     "clean": "rm -rf .venv",
     "build": "uv sync",
     "prepare": "npm run build",
-    "package": "true",
+    "package": "npm run clean && npm run prepare && ./bin/package.sh $(pwd)",
     "install-python-deps": "npm run build"
   },
   "publishConfig": {
