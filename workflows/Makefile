@@ -39,13 +39,14 @@ base:
 	cp -R $(BASE_DEP_SRC)/python $(BASE_DEP_BUILD)/python
 	cd $(BASE_DEP_BUILD) && zip -r ../base_dependency_layer.zip .
 
+
 # ----------------------------
 # Opera dependency layer
 # ----------------------------
 deps:
 	rm -rf $(OPERA_DEP_BUILD)
 	mkdir -p $(OPERA_DEP_BUILD)/python
-	$(PIP) install -r requirements.txt -t $(OPERA_DEP_BUILD)/python
+	$(PIP) install -r lambdas/opera_dependency_layer/python/requirements.txt -t $(OPERA_DEP_BUILD)/python
 	cd $(OPERA_DEP_BUILD) && zip -r ../opera_dependency_layer.zip .
 
 # ----------------------------
@@ -54,7 +55,7 @@ deps:
 lambdas:
 	rm -rf $(LAMBDA_BUILD)
 	mkdir -p $(LAMBDA_BUILD)
-	cp -R $(LAMBDA_SRC)/* $(LAMBDA_BUILD)/
+	cp -R $(LAMBDA_SRC)/opera_lambdas/* $(LAMBDA_BUILD)/
 	cd $(LAMBDA_BUILD) && zip -r ../opera_lambdas.zip .
 
 # ----------------------------
