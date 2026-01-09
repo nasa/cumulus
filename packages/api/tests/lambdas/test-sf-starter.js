@@ -27,6 +27,7 @@ const {
   handleEvent,
   handleThrottledEvent,
   handleSourceMappingEvent,
+  handleThrottledRateLimitedEvent,
 } = sfStarter;
 
 class stubConsumer {
@@ -51,6 +52,12 @@ const createRuleInput = (queueUrl, timeLimit = 60) => ({
   timeLimit,
 });
 
+const createRuleInputRateLimited = (queueUrls, rateLimitPerSecond, stagingTimeLimit) => ({
+  queueUrls,
+  rateLimitPerSecond,
+  stagingTimeLimit,
+});
+
 const createWorkflowMessage = (queueUrl, maxExecutions) => JSON.stringify({
   cumulus_meta: {
     queueUrl,
@@ -61,6 +68,7 @@ const createWorkflowMessage = (queueUrl, maxExecutions) => JSON.stringify({
 });
 
 const createSendMessageTasks = (queueUrl, message, total) => {
+  console.log(`Creating ${total} messages in queue ${queueUrl}`);
   let count = 0;
   const tasks = [];
   while (count < total) {
@@ -89,6 +97,14 @@ test.beforeEach(async (t) => {
   );
   t.context.client = awsServices.dynamodbDocClient();
   t.context.queueUrl = await createQueue(randomId('queue'));
+  t.context.queueUrls = await Promise.all([
+    createQueue(randomId('queue')),
+    createQueue(randomId('queue')),
+    createQueue(randomId('queue')),
+  ]);
+  t.context.lambdaContext = {
+    getRemainingTimeInMillis: () => 240000,
+  };
 });
 
 test.afterEach.always(
@@ -97,6 +113,45 @@ test.afterEach.always(
 );
 
 test.after.always(() => manager.deleteTable());
+
+test.serial('handleThrottledRateLimitedEvent fetches the same number of messages it processes', async (t) => {
+  const { queueUrls } = t.context;
+  const maxExecutions = 1000;
+  const stagingTimeLimit = 10;
+  const rateLimitPerSecond = 5;
+  const testMessageCount = 15;
+
+  const endDateTime = Date.now() + 10000;
+  t.context.lambdaContext.getRemainingTimeInMillis = () => endDateTime - Date.now();
+  const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
+  await Promise.all(queueUrls.map(async (queueUrl) => {
+    const message = createWorkflowMessage(queueUrl, maxExecutions);
+    const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
+    await Promise.all(sendMessageTasks);
+  }));
+
+  const messagesReturned = await handleThrottledRateLimitedEvent(
+    ruleInput,
+    t.context.lambdaContext
+  );
+
+  const allRemainingMessages = await Promise.all(queueUrls.map(async (queueUrl) => {
+    let messageCount = 0;
+    while (messageCount < testMessageCount) {
+      // eslint-disable-next-line no-await-in-loop
+      const messagesReceived = await receiveSQSMessages(queueUrl, {
+        numOfMessages: Math.min(10, testMessageCount - messageCount),
+      });
+      if (messagesReceived.length === 0) break;
+      messageCount += messagesReceived.length;
+    }
+    return messageCount;
+  }));
+
+  const allRemainingMessagesCount = allRemainingMessages.reduce((sum, count) => sum + count, 0);
+
+  t.is(testMessageCount * queueUrls.length, allRemainingMessagesCount + messagesReturned);
+});
 
 test('dispatch() sets the workflow_start_time', async (t) => {
   const { queueUrl } = t.context;
@@ -209,6 +264,76 @@ test.serial('handleEvent deletes message if execution already exists', async (t)
 
   await handleEvent(ruleInput, dispatch);
   t.true(deleteMessageStub.called);
+});
+
+test.serial('handleThrottledRateLimitedEvent respects stagingTimeLimit', async (t) => {
+  const { queueUrls } = t.context;
+  const maxExecutions = 1000; // A large number to ensure we don't hit throttling from this
+  const stagingTimeLimit = 20;
+  const rateLimitPerSecond = 50;
+  // This should be enough that we don't work through all of them based on the rate, number of
+  // queues and time limit.
+  const testMessageCount = (stagingTimeLimit * (rateLimitPerSecond / queueUrls.length)) + 50;
+  const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
+  await Promise.all(queueUrls.map(async (queueUrl) => {
+    const message = createWorkflowMessage(queueUrl, maxExecutions);
+    const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
+    await Promise.all(sendMessageTasks);
+    await sendSQSMessage(queueUrl, message);
+  }));
+
+  const startTime = Date.now();
+  const result = await handleThrottledRateLimitedEvent(ruleInput, t.context.lambdaContext);
+  const elapsedTime = Date.now() - startTime;
+
+  // Verify that the function completed within a reasonable time relative to the timeLimit
+  // The elapsed time should be close to the timeLimit, not significantly longer
+
+  // 10 * queueUrls.length is the total number of messages staged per processMessage call
+  // divided by the rate gives us the number of seconds needed to stage this extra batch after
+  // we've run out of time.  Add 5 seconds for a bit more buffer room.
+  const bufferSeconds = ((10 * queueUrls.length) / rateLimitPerSecond) + 5;
+  t.true(elapsedTime >= (stagingTimeLimit - bufferSeconds) * 1000);
+  t.true(elapsedTime < (stagingTimeLimit + bufferSeconds) * 1000);
+  console.log(`right ${(stagingTimeLimit + bufferSeconds) * 1000} left ${elapsedTime}`);
+  // Verify that not all messages were processed (proving timeLimit was respected)
+  t.true(testMessageCount * queueUrls.length > result);
+});
+
+test.serial('handleThrottledRateLimitedEvent respects rateLimitPerSecond', async (t) => {
+  const { queueUrls } = t.context;
+  const maxExecutions = 1000; // A large number to ensure we don't hit throttling from this
+  const stagingTimeLimit = 10;
+  const rateLimitPerSecond = 10;
+  // This should be enough that we don't work through all of them based on the rate, number of
+  // queues and time limit.
+  const testMessageCount = (stagingTimeLimit * (rateLimitPerSecond / queueUrls.length)) + 50;
+  const ruleInput = createRuleInputRateLimited(queueUrls, rateLimitPerSecond, stagingTimeLimit);
+  await Promise.all(queueUrls.map(async (queueUrl) => {
+    const message = createWorkflowMessage(queueUrl, maxExecutions);
+    const sendMessageTasks = createSendMessageTasks(queueUrl, message, testMessageCount);
+    await Promise.all(sendMessageTasks);
+    await sendSQSMessage(queueUrl, message);
+  }));
+
+  const startExecutionStub = sinon.stub().returns({
+    promise: () => Promise.resolve({}),
+  });
+  const stubSFNWithSpy = () => ({
+    startExecution: startExecutionStub,
+  });
+  const revert = sfStarter.__set__('sfn', stubSFNWithSpy);
+
+  t.teardown(() => {
+    revert();
+  });
+
+  await handleThrottledRateLimitedEvent(ruleInput, t.context.lambdaContext);
+
+  // Verify that startExecution was called, limited by the rateLimitPerSecond
+  const expectedMaxCalls = Math.floor(stagingTimeLimit * rateLimitPerSecond * queueUrls.length);
+  t.true(startExecutionStub.callCount > 0);
+  t.true(startExecutionStub.callCount <= expectedMaxCalls);
 });
 
 test('incrementAndDispatch throws error for message without queue URL', async (t) => {
