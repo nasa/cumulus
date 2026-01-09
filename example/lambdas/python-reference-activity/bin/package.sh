@@ -2,6 +2,9 @@
 
 DIR=$1
 
+# Get version from second argument
+VERSION=${2:-"latest"}
+
 # Find source location
 echo "Entering $DIR..."
 cd "$DIR" || exit 1
