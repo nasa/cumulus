@@ -63,7 +63,7 @@ ignore = [
 # Ignore missing docstring rules for non-exported python code
 "**/example/**.py" = ["D1"]
 "**/migrations/**.py" = ["D1", "E501"]
-"**/test/**.py" = ["D1"]
+"**/tests/**.py" = ["D1"]
 "scripts/**.py" = ["D1"]
 
 
@@ -79,3 +79,6 @@ strict_equality = true
 warn_redundant_casts = true
 warn_unreachable = true
 warn_unused_ignores = true
+
+[tool.uv.workspace]
+exclude = ["tasks/*", "examples/*"]

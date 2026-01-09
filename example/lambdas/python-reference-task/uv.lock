@@ -88,7 +88,6 @@ dependencies = [
     { name = "boto3" },
     { name = "cumulus-message-adapter-python" },
     { name = "cumulus-process" },
-    { name = "six" },
 ]
 
 [package.dev-dependencies]
@@ -104,7 +103,6 @@ requires-dist = [
     { name = "boto3", specifier = "~=1.40" },
     { name = "cumulus-message-adapter-python", specifier = "==2.4.0" },
     { name = "cumulus-process", specifier = "==1.6.0" },
-    { name = "six", specifier = ">=1.12.0" },
 ]
 
 [package.metadata.requires-dev]
