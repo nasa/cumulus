@@ -299,6 +299,35 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
   tags = var.tags
 }
 
+resource "aws_lambda_function" "sqs2sfThrottleRateLimited" {
+  function_name    = "${var.prefix}-sqs2sfThrottleRateLimited"
+  filename         = "${path.module}/../../packages/api/dist/sfStarter/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfStarter/lambda.zip")
+  handler          = "index.sqs2sfThrottleRateLimitedHandler"
+  role             = var.lambda_processing_role_arn
+  runtime          = "nodejs20.x"
+  timeout          = lookup(var.lambda_timeouts, "sqs2sfThrottleRateLimited", 240)
+  memory_size      = lookup(var.lambda_memory_sizes, "sqs2sfThrottleRateLimited", 512)
+  environment {
+    variables = {
+      stackName       = var.prefix
+      SemaphoresTable = var.dynamo_tables.semaphores.name
+    }
+  }
+
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
+  }
+
+  tags = var.tags
+}
+
 resource "aws_lambda_function" "sqs_message_consumer" {
   function_name    = "${var.prefix}-sqsMessageConsumer"
   filename         = "${path.module}/../../packages/api/dist/sqsMessageConsumer/lambda.zip"
