@@ -531,7 +531,7 @@ The requirements are similar to the [Cumulus stack deployment requirements](#req
 :::
 
 - git
-- [node 12.18](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
+- [node 22.21.1](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
 - [npm](https://www.npmjs.com/get-npm)
 - zip
 - AWS CLI - [AWS Command Line Interface](https://aws.amazon.com/cli/)

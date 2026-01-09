@@ -6,7 +6,7 @@
     "cumulus-test": "./bin/cli.js"
   },
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "main": "index.js",
   "publishConfig": {
@@ -17,7 +17,7 @@
     "type": "git",
     "url": "https://github.com/nasa/cumulus"
   },
-  "scripts": {
+    "scripts": {
     "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
     "build-docs": "../../node_modules/.bin/jsdoc2md --template README.hbs Collections.js Executions.js Granules.js Providers.js Rules.js > README.md",
     "clean": "rm -rf dist",

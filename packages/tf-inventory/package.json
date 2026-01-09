@@ -4,7 +4,7 @@
   "description": "Package to help keep track of what resources are managed by Terraform in the AWS account",
   "main": "index.js",
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "bin": {
     "tf-inventory": "./bin/cli.js"
