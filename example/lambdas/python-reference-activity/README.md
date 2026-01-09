@@ -22,6 +22,12 @@ To update the container for a PR, you should run:
 npm run package
 ```
 
+By default package will tag the container as `latest`. You can pass an optional argument to `package` if you want a specific version. For example:
+
+```sh
+npm run package -- 1.2.3
+```
+
 Then push to the configured ECR following the AWS console instructions for pushing to ECR for use in your build.
 
 Then update the `python_processing_service` resource in [`python_reference_workflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/python_reference_workflow.tf) to utilize the correct image reference.
