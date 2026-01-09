@@ -27,15 +27,17 @@ To execute an audit, run `npm run audit`.
 
 ## Code Testing and Coverage
 
-Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The
-Bamboo build tests coverage. A summary can be viewed in the unit test build's output.
+Unit testing leverages [ava](https://github.com/avajs/ava). To perform unit tests,
+run the `<REPO ROOT DIR>/node_modules/.bin/ava` command. This command is usually
+aliased to `test` in the `package.json` file `scripts` section. Once aliased, to
+run code coverage on an individual package during development, run `npm run test`.
 
-The `npm test` command will output code coverage data for the entire Cumulus
-repository. To create an html report, run `nyc report --reporter html` and open
-the `index.html` file in the coverage folder.
-
-To run code coverage on an individual package during development, run
-`npm run test`. This will output the coverage in the terminal.
+Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). Generally
+code coverage is checked using the command `<REPO ROOT DIR>/node_modules/.bin/nyc npm test`.
+The command is usually aliased to `test:coverage` in the `package.json` file `scripts`
+section. Once aliased, to run code coverage on an individual package during development, run
+`npm run test:coverage`. This will output the coverage in the terminal. To create an html
+report, run `nyc report --reporter html` and open the `index.html` file in the coverage folder.
 
 ## Code Documentation
 
