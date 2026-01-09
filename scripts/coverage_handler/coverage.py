@@ -1,3 +1,8 @@
+# /// script
+# requires-python = ">=3.12.0
+# dependencies = []
+# ///
+
 import json
 import math
 import os

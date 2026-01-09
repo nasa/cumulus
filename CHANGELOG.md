@@ -24,6 +24,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-4374**
+  - Updated example python Lambdas to utilize `uv` as their package manager. This change removes references to
+    pipenv. Developers should migrate to using `uv` to manage python dependencies and virtual envs which may
+    require reinstalling python libraries.
 - **CUMULUS-4387**
   - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
   `pyproject.toml` file.

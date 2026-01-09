@@ -10,22 +10,16 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "test": "true",
-    "python-lint": "pipenv run ruff check . && pipenv run ruff format --diff . && pipenv run mypy initial_task.py",
-    "lint": "npm run python-lint",
+    "test": "uv run pytest -q",
+    "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src/initial_task.py",
     "clean": "rm -rf dist && rm -rf lib && rm -rf .venv && mkdir dist && mkdir lib",
-    "build": "pip install pipenv && PIPENV_VENV_IN_PROJECT=1 PIPENV_NOSPIN=1 pipenv install -vvv --dev --deploy --ignore-pipfile",
+    "build": "uv sync",
     "prepare": "npm run build",
-    "package": "npm run clean && ./package.sh $(pwd)",
+    "package": "npm run clean && ./bin/package.sh $(pwd)",
     "install-python-deps": "npm run build"
   },
-  "ava": {
-    "serial": true,
-    "timeout": "15m",
-    "failFast": true
-  },
   "publishConfig": {
-    "access": "private"
+    "access": "restricted"
   },
   "nyc": {
     "exclude": [
