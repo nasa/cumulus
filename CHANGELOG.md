@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Notable Changes
 
+- **CSD-61**
+  - Updated `PUT granules` endpoint to allow createdAt and updatedAt fields to be null.
+
 ### Added
 
 - **CUMULUS-4300**
