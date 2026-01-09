@@ -1,0 +1,17 @@
+{
+    "name": "OPERA_L2_CSLC-S1-STATIC_V1",
+    "version": "1.0",
+    "duplicateHandling": "replace",
+    "process": "CSLC-STATIC",
+    "url_path": "OPERA_L2_CSLC-S1_STATIC/{granule.granuleId}/",
+    "granuleId": "^OPERA_L2_CSLC-S1-STATIC_.*_\\d{8}_S1[A-Z]_v\\d\\.\\d$",
+    "granuleIdExtraction": "(OPERA_L2_CSLC-S1.*)(\\.h5)",
+    "sampleFileName": "OPERA_L2_CSLC-S1-STATIC_T064-135518-IW1_20140101_S1A_v1.0.h5",
+    "files": [
+        {
+            "bucket": "opera-products",
+            "regex": "^OPERA_L2_CSLC-S1.*$",
+            "sampleFileName": "OPERA_L2_CSLC-S1-STATIC_T064-135518-IW1_20140101_S1A_v1.0.h5"
+        }
+    ]
+}

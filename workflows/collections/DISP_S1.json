@@ -1,0 +1,22 @@
+{
+    "name": "OPERA_L3_DISP-S1_V1",
+    "version": "1",
+    "duplicateHandling": "replace",
+    "process": "DISP",
+    "url_path": "OPERA_L3_DISP-S1_V1/{granule.granuleId}/",
+    "granuleId": "^OPERA_L3_DISP-S1.*$",
+    "granuleIdExtraction": "(OPERA_L3_DISP-S1.*)(\\.nc)",
+    "sampleFileName": "OPERA_L3_DISP-S1_IW_F01234_VV_20190101T232711Z_20190906T232711Z_v0.1_20240125T152124Z.nc",
+    "files": [
+        {
+            "bucket": "opera-products",
+            "regex": "^OPERA_L3_DISP-S1_.*\\.(?:nc|iso\\.xml|zarr\\.json\\.gz)(?!png)(?:\\.md5)?$",
+            "sampleFileName": "OPERA_L3_DISP-S1_IW_F01234_VV_20190101T232711Z_20190906T232711Z_v0.1_20240125T152124Z.nc"
+        },
+        {
+            "bucket": "opera-browse",
+            "regex": "^OPERA_L3_DISP-S1_.*\\.(?!nc|iso\\.xml)(?:png)(?:\\.md5)?$",
+            "sampleFileName": "OPERA_L3_DISP-S1_IW_F01234_VV_20190101T232711Z_20190906T232711Z_v0.1_20240125T152124Z.png"
+        }
+    ]
+}
