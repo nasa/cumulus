@@ -26,4 +26,3 @@ resource "aws_lambda_function" "dla_migration" {
     }
   }
 }
-

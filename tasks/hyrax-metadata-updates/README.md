@@ -41,7 +41,7 @@ This url will be added to the Urls portion of the granule metadata as follows,
 The four properties we need to construct this url are as follows,
 | Property      | Source                              | Notes
 | ------------- | ----------------------------------- | -----
-| Provider ID   | Configuration `config.cmr.provider` | 
+| Provider ID   | Configuration `config.cmr.provider` |
 | Collection ID | Derived from retrieval of parent collection from CMR | This requires a call to the CMR search API
 | ShortName     | --//--                              | optional
 | Version       | --//--                              | optional
@@ -78,7 +78,7 @@ Output object fields:
 
 | field name | type            | default  | description
 | ---------- | ----            | -------  | -----------
-| granules   | array\<object\> | N/A      | List of granule objects 
+| granules   | array\<object\> | N/A      | List of granule objects
 
 ## About Cumulus
 

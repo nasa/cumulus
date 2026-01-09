@@ -128,5 +128,5 @@ Then, configure the `QueueWorkflow` task similarly to its configuration in the i
     ],
     "End": true
   }
-}  
+}
   ```

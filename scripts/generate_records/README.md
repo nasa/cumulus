@@ -13,7 +13,7 @@ This is the default script for uploading bulk data to a cumulus database. it is 
 ### Configuration
 the script can be configured either through command line arguments or environment variables (or both), preferring command line arguments if both are supplied
 
-| Argument    | Environment | Default | Description | 
+| Argument    | Environment | Default | Description |
 | --- | :----: | :----: | ---: |
 | --collections <br>-c | COLLECTIONS | 1 | number of collections. number of granules will be <br> for *each* collection, not divided among them |
 | --granulesK <br> -g| GRANULES_K | 10 | number of granules, in thousands |
@@ -29,10 +29,9 @@ This script is designed up upload a large number of executions. it will also add
 ### Configuration
 the script can be configured either through command line arguments or environment variables (or both), preferring command line arguments if both are supplied
 
-| Argument    | Environment | Default | Description | 
+| Argument    | Environment | Default | Description |
 | --- | :----: | :----: | ---: |
 | --collections <br>-c | COLLECTIONS | 1 | number of collections. number of executions will be <br> for *each* collection, not divided among them |
 | --executionsK <br> -g| EXECUTIONS_K | 10 | number of executions, in thousands |
 | --concurrency <br> -C | CONCURRENCY | 1 | how many threads of parallelization <br> concurrency should usually be >100 |
 | --swallowErrors <br> -s|SWALLOW_ERRORS| true | swallow and move on from data data upload errors |
-

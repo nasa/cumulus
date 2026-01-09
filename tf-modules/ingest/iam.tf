@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "step_policy" {
       "ecs:DescribeTasks",
       "events:PutTargets",
       "events:PutRule",
-      "events:DescribeRule", 
+      "events:DescribeRule",
       "autoscaling:Describe*",
       "cloudwatch:*",
       "logs:*",
