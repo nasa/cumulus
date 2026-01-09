@@ -1,0 +1,35 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "granules": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "granuleId": {
+                        "type": "string"
+                    },
+                    "collectionId": {
+                        "type": "string"
+                    }
+                },
+                "required": ["granuleId", "collectionId"]
+            },
+            "description": "Array of granules identified for removal with their collection information"
+        },
+        "forceRemoveFromCmr": {
+            "type": "boolean",
+            "description": "Flag indicating whether to force remove granules from CMR"
+        },
+        "granules_to_be_deleted_count": {
+            "type": "integer",
+            "description": "Total count of granules to be deleted"
+        },
+        "aggregated_stats": {
+            "type": "string",
+            "description": "Summary statistics including counts of granules to be removed and retained, broken down by invalidation type"
+        }
+    },
+    "required": ["granules", "forceRemoveFromCmr", "granules_to_be_deleted_count", "aggregated_stats"]
+}

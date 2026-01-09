@@ -1,29 +1,32 @@
 #!/usr/bin/env python
+"""Granule invalidation task for Cumulus.
+
+This module provides functionality to invalidate granules based on various
+criteria including science date, ingest date, and cross-collection.
+"""
 
 import asyncio
 import logging
 import os
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from cumulus_api import CumulusApi
 from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
 
-import invalidations
+from . import invalidations
 
 LOGGER = CumulusLogger(__name__, level=int(os.environ.get('LOGLEVEL', logging.DEBUG)))
 MAX_GRANULES_FETCHED = 100000
 schemas = {'config': 'schemas/config_schema.json'}
 
-EVENT_TYPING = Dict[Any, Any]
+EVENT_TYPING = dict[Any, Any]
 
 
 def lambda_handler(event: EVENT_TYPING, context: Any) -> Any:
-    """
-    Lambda handler.  Context - the second argument - is unused.
-    """
+    """Lambda handler."""
 
     # This is a function that AWS will call when we invoke the lambda
     LOGGER.setMetadata(event, context)
@@ -31,24 +34,24 @@ def lambda_handler(event: EVENT_TYPING, context: Any) -> Any:
     return cumulus_task_return
 
 
-def lambda_adapter(event: EVENT_TYPING, _: Any) -> Dict[str, Any]:
-    """
-    Lambda adapter function to handle granule invalidation.
+def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
+    """Handle granule invalidation.
 
     Args:
-        event (EVENT_TYPING): The event containing configuration details with the following
-            keys:
-            - collection (str): The collection shortname to apply invalidations to.
-            - version (str): The version of the collection to apply invalidations to.
+        event (EVENT_TYPING): Configuration details with keys:
+            - collection (str): Collection shortname to apply invalidations to.
+            - version (str): Collection version to apply invalidations to.
             - granule_invalidations (list): Array of invalidation criteria objects.
-            - page_length_ms (int, optional): Time window in milliseconds for pagination
-              when fetching granules. Defaults to 7 days (604800000 milliseconds). This
-              parameter controls how granules are batched during retrieval based on their
-              updatedAt timestamp.
+            - page_length_ms (int, optional): Time window in milliseconds for
+              pagination when fetching granules. Defaults to 7 days
+              (604800000 milliseconds). Controls how granules are batched during
+              retrieval based on updatedAt timestamp.
         _ (Any): Unused context argument.
 
     Returns:
-        Dict[str, Any]: Returns a dictionary containing granules to invalidate and statistics.
+        Dict[str, Any]: Dictionary containing granules to invalidate and
+            statistics.
+
     """
     config = event.get('config', {})
     granule_invalidations = config.get('granule_invalidations')
@@ -71,7 +74,9 @@ def lambda_adapter(event: EVENT_TYPING, _: Any) -> Dict[str, Any]:
         valid_granules, invalid_granules_this_run = run_invalidation(
             valid_granules, granule_invalidation
         )
-        aggregated_stats[granule_invalidation.get('type')] = len(invalid_granules_this_run)
+        aggregated_stats[granule_invalidation.get('type')] = (
+            len(invalid_granules_this_run)
+        )
         invalid_granules.extend(invalid_granules_this_run)
         LOGGER.info(
             f'Invalidated {len(invalid_granules_this_run)} granules out of '
@@ -80,7 +85,7 @@ def lambda_adapter(event: EVENT_TYPING, _: Any) -> Dict[str, Any]:
         )
         LOGGER.info(
             f'Type of invalidation: {granule_invalidation.get("type")} '
-            f'Granule IDs: {[granule["granuleId"] for granule in invalid_granules_this_run]}'
+            f'Granule IDs: {[g["granuleId"] for g in invalid_granules_this_run]}'
         )
     LOGGER.info(
         f'Invalidated a total of {len(invalid_granules)} granules '
@@ -96,7 +101,10 @@ def lambda_adapter(event: EVENT_TYPING, _: Any) -> Dict[str, Any]:
 
     return {
         'granules': [
-            {'granuleId': invalid_granule['granuleId'], 'collectionId': f'{collection}___{version}'}
+            {
+                'granuleId': invalid_granule['granuleId'],
+                'collectionId': f'{collection}___{version}',
+            }
             for invalid_granule in invalid_granules
         ],
         'forceRemoveFromCmr': True,
@@ -111,19 +119,18 @@ def lambda_adapter(event: EVENT_TYPING, _: Any) -> Dict[str, Any]:
 
 
 def run_invalidation(
-    granules: List[Dict], granule_invalidation: Dict
-) -> Tuple[List[Dict], List[Dict]]:
-    """
-    This maps a granule invalidation to the corresponding function and calls the invalidation
-    function.
+    granules: list[dict], granule_invalidation: dict
+) -> tuple[list[dict], list[dict]]:
+    """Map a granule invalidation to the corresponding function and call it.
 
     Args:
         granules: A list of granules returned by the cumulus API.
-        granule_invalidation: Information about the granule invalidation containing, at minimum,
-        the "type" key.
+        granule_invalidation: Granule invalidation information containing,
+            at minimum, the "type" key.
 
     Returns:
         Returns a list of invalid and valid granules.
+
     """
     try:
         invalidation_function = getattr(invalidations, granule_invalidation.get('type'))
@@ -137,13 +144,12 @@ def run_invalidation(
 
 async def _fetch_single_page(
     cml: CumulusApi,
-    args: Dict,
+    args: dict,
     page: int,
     granule_count: int,
     semaphore: asyncio.Semaphore,
-) -> List[Dict]:
-    """
-    Fetch a single page with semaphore protection.
+) -> list[dict]:
+    """Fetch a single page with semaphore protection.
 
     Args:
         cml: CumulusApi instance
@@ -154,6 +160,7 @@ async def _fetch_single_page(
 
     Returns:
         List of granules from the fetched page
+
     """
     async with semaphore:
         args_with_page = {**args, 'page': page}
@@ -164,17 +171,16 @@ async def _fetch_single_page(
         return results
 
 
-async def list_all_granules(**args) -> List[Dict]:
-    """
-    This is a helper function to list all granules from Cumulus for a specific collection and
-        version.
+async def list_all_granules(**args) -> list[dict]:
+    """List all granules from Cumulus for a specific collection and version.
 
     Args:
-        args: The arguments to pass to list_granules.  This will typically always include
-        collectionId and may include other args to filter the output.
+        args: Arguments to pass to list_granules. Typically includes collectionId
+            and may include other args to filter output.
 
     Returns:
         A list of granules from Cumulus.
+
     """
     cml = CumulusApi()
     grans = cml.list_granules(**args, **{'countOnly': 'true'})
@@ -200,19 +206,22 @@ async def list_all_granules(**args) -> List[Dict]:
     return granules_fetched
 
 
-def fetch_all_granules(args: Dict, page_length_ms: int = 7 * 24 * 60 * 60 * 1000) -> List[Dict]:
-    """
-    This retrieves all granules from Cumulus for a specific collection and version.
+def fetch_all_granules(
+    args: dict,
+    page_length_ms: int = 7 * 24 * 60 * 60 * 1000,  # 7 days in milliseconds
+) -> list[dict]:
+    """Retrieve all granules from Cumulus for a specific collection and version.
 
     Args:
-        args: The arguments to pass to list_granules.  This will typically always include
-        collectionId and may include other args to filter the output.
-        page_length_ms (int): Time window in milliseconds for pagination. Defaults to 7 days
-        (604800000 milliseconds). Granules are fetched in batches based on their updatedAt
-        timestamp within each time window.
+        args: Arguments to pass to list_granules. Typically includes collectionId
+            and may include other args to filter output.
+        page_length_ms (int): Time window in milliseconds for pagination. Defaults
+            to 7 days (604800000 milliseconds). Granules are fetched in batches
+            based on updatedAt timestamp within each time window.
 
     Returns:
         A list of granules from Cumulus.
+
     """
     cml = CumulusApi()
     grans = cml.list_granules(**args, **{'countOnly': 'true'})
@@ -245,10 +254,11 @@ def fetch_all_granules(args: Dict, page_length_ms: int = 7 * 24 * 60 * 60 * 1000
             f'{returned_granule_count}, waiting for: {granule_count}'
         )
         seconds = time.time() - start_timer
+        start_dt = datetime.fromtimestamp(start / 1000).isoformat()
+        end_dt = datetime.fromtimestamp(end / 1000).isoformat()
         LOGGER.debug(
-            f'Done with interval {datetime.fromtimestamp(start / 1000).isoformat()} - '
-            f'{datetime.fromtimestamp(end / 1000).isoformat()} in {seconds:.1f} seconds, '
-            f'{len(granules)} granules, args {full_arg_list}'
+            f'Done with interval {start_dt} - {end_dt} in {seconds:.1f} '
+            f'seconds, {len(granules)} granules, args {full_arg_list}'
         )
         if returned_granule_count >= granule_count:
             LOGGER.info(

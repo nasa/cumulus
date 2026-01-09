@@ -1,29 +1,34 @@
+"""Granule invalidation functions for different criteria.
+
+This module provides functions to identify and invalidate granules based on
+various criteria including science date, ingest date, and cross-collection.
+"""
+
 import logging
 import os
-from datetime import datetime, timedelta, timezone
-from typing import Callable, Dict, List, Tuple
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 
 from cumulus_logger import CumulusLogger
 
-import granule_invalidator
+from . import granule_invalidator
 
 LOGGER = CumulusLogger(__name__, level=int(os.environ.get('LOGLEVEL', logging.DEBUG)))
 
 
 def science_date(
-    granules: List[Dict], granule_invalidation_information: Dict
-) -> Tuple[List[Dict], List[Dict]]:
-    """
-    This identifies granules that are older than a specified age based on a productionDateTime in
-    the granule.
+    granules: list[dict], granule_invalidation_information: dict
+) -> tuple[list[dict], list[dict]]:
+    """Identify granules older than specified age based on productionDateTime.
 
     Args:
         granules: A list of granules returned by the cumulus API.
-        granule_invalidation_information: Information about the granule invalidation containing, at
-         minimum, the "type" key.
+        granule_invalidation_information: Information about the granule invalidation
+            containing, at minimum, the "type" key.
 
     Returns:
         Returns a list of invalid and valid granules.
+
     """
     expiration_timedelta = timedelta(
         minutes=granule_invalidation_information.get('maximum_minutes_old')
@@ -39,19 +44,18 @@ def science_date(
 
 
 def ingest_date(
-    granules: List[Dict], granule_invalidation_information: Dict
-) -> Tuple[List[Dict], List[Dict]]:
-    """
-    This identifies granules that are older than a specified age based on a createdAt datetime in
-    the granule.
+    granules: list[dict], granule_invalidation_information: dict
+) -> tuple[list[dict], list[dict]]:
+    """Identify granules older than specified age based on createdAt datetime.
 
     Args:
         granules: A list of granules returned by the cumulus API.
-        granule_invalidation_information: Information about the granule invalidation containing, at
-        minimum, the "type" key.
+        granule_invalidation_information: Information about the granule invalidation
+            containing, at minimum, the "type" key.
 
     Returns:
         Returns a list of invalid and valid granules.
+
     """
     expiration_timedelta = timedelta(
         minutes=granule_invalidation_information.get('maximum_minutes_old')
@@ -59,7 +63,7 @@ def ingest_date(
     comparison_key = 'createdAt'
 
     def comparison_key_transformation(datetime_representation):
-        return datetime.fromtimestamp(datetime_representation / 1000, timezone.utc)
+        return datetime.fromtimestamp(datetime_representation / 1000, UTC)
 
     return identify_granules_older_than(
         granules, comparison_key, comparison_key_transformation, expiration_timedelta
@@ -67,26 +71,27 @@ def ingest_date(
 
 
 def cross_collection(
-    granules: List[Dict], granule_invalidation_information: Dict
-) -> Tuple[List[Dict], List[Dict]]:
-    """
-    This identifies granules that are superseded by the presence of granules in another collection,
-      represented by identical productionDateTime values in both collections.
+    granules: list[dict], granule_invalidation_information: dict
+) -> tuple[list[dict], list[dict]]:
+    """Identify granules superseded by granules in another collection.
+
+    Granules are considered superseded when they have identical productionDateTime
+    values in both collections.
 
     Args:
         granules: A list of granules returned by the cumulus API.
-        granule_invalidation_information: Information about the granule invalidation containing,
-          at minimum, the "type" key.
+        granule_invalidation_information: Information about the granule invalidation
+            containing, at minimum, the "type" key.
 
     Returns:
         Returns a list of invalid and valid granules.
+
     """
-    granule_invalidation_coll = granule_invalidation_information.get('invalidating_collection')
-    granule_invalidation_version = granule_invalidation_information.get('invalidating_version')
+    coll = granule_invalidation_information.get('invalidating_collection')
+    version = granule_invalidation_information.get('invalidating_version')
     begin_date_key = 'beginningDateTime'
     end_date_key = 'endingDateTime'
-    # Identify the oldest date that we're interested in so we can filter on granules that are
-    # newer than that
+    # Identify the oldest date to filter on granules newer than that
     datetime_list = [
         datetime.fromisoformat(granule[begin_date_key])
         for granule in granules
@@ -102,7 +107,7 @@ def cross_collection(
 
     list_of_granules = granule_invalidator.fetch_all_granules(
         {
-            'collectionId': f'{granule_invalidation_coll}___{granule_invalidation_version}',
+            'collectionId': f'{coll}___{version}',
             'timestamp__from': int(oldest_date.timestamp() * 1000),
         }
     )
@@ -115,11 +120,11 @@ def cross_collection(
     invalid_granules = []
     valid_granules = []
     for granule in granules:
+        key = f'{granule[begin_date_key]}_{granule[end_date_key]}'
         if (
             granule.get(begin_date_key)
             and granule.get(end_date_key)
-            and invalidating_dictionary.get(f'{granule[begin_date_key]}_{granule[end_date_key]}')
-            is not None
+            and invalidating_dictionary.get(key) is not None
         ):
             invalid_granules.append(granule)
         else:
@@ -128,33 +133,31 @@ def cross_collection(
 
 
 def identify_granules_older_than(
-    granules: List[Dict],
+    granules: list[dict],
     comparison_key: str,
     comparison_key_transformation: Callable,
     expiration_time: timedelta,
-) -> Tuple[List[Dict], List[Dict]]:
-    """
-    This identifies granules in a list where a datetime in the granule is older than a specified
-    age.
+) -> tuple[list[dict], list[dict]]:
+    """Identify granules where datetime is older than specified age.
 
     Args:
         granules: A list of granules returned by the cumulus API.
-        comparison_key: The key to inspect in each granule that represents a datetime to be
-        compared
-        comparison_key_transformation: A function that transforms the datetime representation into
-        a datetime object (eg if `comparison_key` represents an ISO string)
-        expiration_time: A timedelta representing the maximum age of a granule to be considered
-        valid.
+        comparison_key: The key in each granule representing a datetime to compare.
+        comparison_key_transformation: Function transforming datetime representation
+            into a datetime object (e.g., ISO string to datetime).
+        expiration_time: Timedelta representing maximum age for valid granule.
 
     Returns:
         Returns a list of invalid and valid granules.
+
     """
-    expiration_threshold_datetime = datetime.now(timezone.utc) - expiration_time
+    expiration_threshold_datetime = datetime.now(UTC) - expiration_time
     invalid_granules = []
     valid_granules = []
     for granule in granules:
         value = granule.get(comparison_key)
-        if value is None or comparison_key_transformation(value) > expiration_threshold_datetime:
+        granule_datetime = comparison_key_transformation(value)
+        if value is None or granule_datetime > expiration_threshold_datetime:
             valid_granules.append(granule)
         else:
             invalid_granules.append(granule)

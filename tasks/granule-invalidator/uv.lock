@@ -315,6 +315,7 @@ dependencies = [
     { name = "cumulus-api" },
     { name = "cumulus-message-adapter" },
     { name = "cumulus-message-adapter-python" },
+    { name = "pytest" },
 ]
 
 [package.dev-dependencies]
@@ -326,8 +327,9 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cumulus-api", git = "https://github.com/ghrcdaac/cumulus-api?tag=v3.0.4" },
-    { name = "cumulus-message-adapter", specifier = "==2.0.5" },
-    { name = "cumulus-message-adapter-python", specifier = "==2.4.0" },
+    { name = "cumulus-message-adapter", specifier = ">=2.0.5" },
+    { name = "cumulus-message-adapter-python", specifier = ">=2.4.0" },
+    { name = "pytest", specifier = ">=9.0.2" },
 ]
 
 [package.metadata.requires-dev]
