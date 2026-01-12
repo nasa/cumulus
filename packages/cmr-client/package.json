@@ -3,7 +3,7 @@
   "version": "21.2.0",
   "description": "A Node.js client to NASA's Common Metadata Repository (CMR) API.",
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "scripts": {
     "build-docs": "../../node_modules/.bin/jsdoc2md --heading-depth 2 --template templates/API.hbs CMR.js CMRSearchConceptQueue.js > API.md",
