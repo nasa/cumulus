@@ -19,13 +19,13 @@ npm run prepare
 To update the container for a PR, you should run:
 
 ```sh
-npm run package
+./bin/package.sh .
 ```
 
 By default package will tag the container as `latest`. You can pass an optional argument to `package` if you want a specific version. For example:
 
 ```sh
-npm run package -- 1.2.3
+./bin/package.sh . 1.2.3
 ```
 
 Then push to the configured ECR following the AWS console instructions for pushing to ECR for use in your build.

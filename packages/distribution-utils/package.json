@@ -6,7 +6,7 @@
     "CUMULUS"
   ],
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

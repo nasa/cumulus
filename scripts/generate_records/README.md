@@ -5,7 +5,7 @@ These scripts (generate_db_records.js and generate_db_executions.js) are meant t
 ## Installation
 This can be installed with npm install in this directory (or will be installed as a part of cumulus when installing the whole of cumulus-core)
 
-generate_db_records.js and generate_db_executions.js are tested to run with both node v16.19.0 and v20.12.2
+generate_db_records.js and generate_db_executions.js are tested to run with both node v20/v22
 
 ## generate_db_records.js
 This is the default script for uploading bulk data to a cumulus database. it is granule oriented, handling files, executions and granule-executions with respect to granules and as such is well optimized for most database mocking applications. Its performance is dependent on there being a significant number (>= concurrency) of granules in order to parallelize well, and so will be sub-optimal for uploading only files, executions etc.
