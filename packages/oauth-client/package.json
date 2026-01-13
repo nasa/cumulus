@@ -14,7 +14,7 @@
     "Cumulus"
   ],
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "publishConfig": {
     "access": "public"
