@@ -136,3 +136,19 @@ test('GET /workflows/<name> returns the correct workflow', async (t) => {
   const stateNames = Object.keys(workflow.definition.States);
   t.deepEqual(stateNames.sort(), ['StartStatus', 'StopStatus']);
 });
+
+test('GET /workflows with queryStringParams returns the correct response', async (t) => {
+  const response = await request(app)
+    .get('/workflows?limit=1')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.body.length, 1);
+
+  // t.is(workflow.name, 'HelloWorldWorkflow');
+  // t.is(workflow.definition.Comment, 'Tests Lambda update after redeploy');
+
+  // const stateNames = Object.keys(workflow.definition.States);
+  // t.deepEqual(stateNames.sort(), ['StartStatus', 'StopStatus']);
+});
