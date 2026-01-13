@@ -11,7 +11,7 @@ resource "aws_lambda_function" "fallback_consumer" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/messageConsumer/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "fallbackConsumer", 100)
   memory_size      = lookup(var.lambda_memory_sizes, "fallbackConsumer", 512)
   dead_letter_config {
@@ -42,7 +42,7 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/payloadLogger/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "KinesisInboundEventLogger", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "KinesisInboundEventLogger", 512)
   environment {
@@ -69,7 +69,7 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/payloadLogger/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "KinesisOutboundEventLogger", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "KinesisOutboundEventLogger", 512)
   environment {
@@ -96,7 +96,7 @@ resource "aws_lambda_function" "manual_consumer" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/manualConsumer/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "manualConsumer", 100)
   memory_size      = lookup(var.lambda_memory_sizes, "manualConsumer", 512)
   environment {
@@ -126,7 +126,7 @@ resource "aws_lambda_function" "message_consumer" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/messageConsumer/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "messageConsumer", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "messageConsumer", 512)
   environment {
@@ -158,7 +158,7 @@ resource "aws_lambda_function" "schedule_sf" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfScheduler/lambda.zip")
   handler          = "index.handleScheduleEvent"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "ScheduleSF", 100)
   memory_size      = lookup(var.lambda_memory_sizes, "ScheduleSF", 512)
   dead_letter_config {
@@ -189,7 +189,7 @@ resource "aws_lambda_function" "sf_semaphore_down" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfSemaphoreDown/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "sfSemaphoreDown", 100)
   memory_size      = lookup(var.lambda_memory_sizes, "sfSemaphoreDown", 512)
   environment {
@@ -217,7 +217,7 @@ resource "aws_lambda_function" "sf_sqs_report_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/sf-sqs-report/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "SfSqsReport", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "SfSqsReport", 512)
 
@@ -249,7 +249,7 @@ resource "aws_lambda_function" "sqs2sf" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfStarter/lambda.zip")
   handler          = "index.sqs2sfEventSourceHandler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "sqs2sf", local.sqs2sf_timeout)
   memory_size      = lookup(var.lambda_memory_sizes, "sqs2sf", 512)
   environment {
@@ -276,7 +276,7 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfStarter/lambda.zip")
   handler          = "index.sqs2sfThrottleHandler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "sqs2sfThrottle", 200)
   memory_size      = lookup(var.lambda_memory_sizes, "sqs2sfThrottle", 512)
   environment {
@@ -334,7 +334,7 @@ resource "aws_lambda_function" "sqs_message_consumer" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sqsMessageConsumer/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "sqsMessageConsumer", 100)
   memory_size      = lookup(var.lambda_memory_sizes, "sqsMessageConsumer", 512)
   environment {
