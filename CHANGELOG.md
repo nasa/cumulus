@@ -18,7 +18,7 @@ Please complete the following steps before upgrading Cumulus.
 
   Please follow the standard procedures for running a production database migration, and execute the following SQL to create the index:
   ```text
-  CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_provider_collection_updated_idx ON granules (provider_cumulus_id, collection_cumulus_id, updated_at);
+  CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
   ```
 
 ### Notable Changes
