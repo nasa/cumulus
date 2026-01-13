@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from process_activity import PythonProcess
+from task import PythonProcess
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def test_add_ancillary_files(mocker, python_process):
     mocker.patch.object(python_process, "_write_md5sum_file", return_value=True)
     mocker.patch.object(python_process, "_get_md5_sum", return_value="fake_md5_hash")
 
-    mock_upload = mocker.patch("process_activity.upload")
+    mock_upload = mocker.patch("task.upload")
 
     actual = python_process.add_ancillary_file("test_data_file.hdf")
     expected = (

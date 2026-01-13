@@ -28,7 +28,7 @@ module "python_processing_service" {
   }
   command = [
     "/usr/local/bin/python",
-    "process_activity.py"
+    "src/task.py"
   ]
 }
 
