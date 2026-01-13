@@ -2,7 +2,7 @@ resource "aws_lambda_function" "python_reference_task" {
   function_name    = "${var.prefix}-PythonReferenceTask"
   filename         = "${path.module}/../dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../dist/lambda.zip")
-  handler          = "initial_task.handler"
+  handler          = "task.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "python3.12"
   timeout          = 300

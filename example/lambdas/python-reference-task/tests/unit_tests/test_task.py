@@ -1,4 +1,4 @@
-import initial_task
+import task
 
 
 def test_process():
@@ -13,5 +13,5 @@ def test_process():
         "newData": {"newKey1": "newData1"},
     }
 
-    actual = initial_task.task(event, {})
+    actual = task.task(event, {})
     assert expected == actual

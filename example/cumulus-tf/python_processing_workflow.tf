@@ -29,7 +29,7 @@ module "python_test_ingest_processing_service" {
   }
   command = [
     "/usr/local/bin/python",
-    "process_activity.py"
+    "src/task.py"
   ]
 }
 

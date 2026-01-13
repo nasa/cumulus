@@ -1,4 +1,4 @@
-from process_activity import TestProcess
+from task import TestProcess
 
 
 def test_process():
