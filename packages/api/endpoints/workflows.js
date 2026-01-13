@@ -8,29 +8,19 @@ const {
 const router = require('express-promise-router')();
 
 /**
- * List all providers.
+ * List workflows.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  // countonly -> handled
-  // limit -> handled
-  // order -> really only works with name alphabetically
-  // fields -> handled
-
-  // prefix -> handled
-  // infix -> handled
-
-  const countOnly = req.params.countOnly || false;
-  const prefix = req.params.prefix;
-  const infix = req.params.infix;
-  const arn = req.params.arn;
-  const name = req.params.name;
-  const template = req.params.template;
-  const limit = req.params.limit;
-  const orderBy = req.params.order;
+  const countOnly = req.query.countOnly || false;
+  const prefix = req.query.prefix;
+  const infix = req.query.infix;
+  const limit = req.query.limit;
+  const orderBy = req.query.order;
+  const fields = req.query.fields ? req.query.fields.split(',') : undefined;
 
   const workflows = await listS3ObjectsV2({
     Bucket: process.env.system_bucket,
@@ -47,13 +37,10 @@ async function list(req, res) {
     body = body.filter((workflow) => workflow.name.includes(infix));
   }
 
-  const fields = { arn, name, template };
-
-  Object.entries(fields).forEach(([field, value]) => {
-    if (value !== undefined) {
-      body = body.filter((workflow) => workflow[field] === value);
-    }
-  });
+  if (fields) {
+    body = body.map((workflow) =>
+      Object.fromEntries(fields.map((field) => [field, workflow[field]])));
+  }
 
   // we have to specify type json here because express
   // does not recognize an array as json automatically
@@ -67,7 +54,7 @@ async function list(req, res) {
 }
 
 /**
- * Query a single provider.
+ * Query a single workflow.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object

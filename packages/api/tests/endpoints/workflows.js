@@ -138,7 +138,7 @@ test('GET /workflows/<name> returns the correct workflow', async (t) => {
 });
 
 test('GET /workflows with queryStringParams returns the correct response', async (t) => {
-  const response = await request(app)
+  let response = await request(app)
     .get('/workflows?limit=1')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -146,9 +146,47 @@ test('GET /workflows with queryStringParams returns the correct response', async
 
   t.is(response.body.length, 1);
 
-  // t.is(workflow.name, 'HelloWorldWorkflow');
-  // t.is(workflow.definition.Comment, 'Tests Lambda update after redeploy');
+  response = await request(app)
+    .get('/workflows?countOnly=true')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  // const stateNames = Object.keys(workflow.definition.States);
-  // t.deepEqual(stateNames.sort(), ['StartStatus', 'StopStatus']);
+  t.deepEqual(response.body, { count: 2 });
+
+  response = await request(app)
+    .get('/workflows?prefix=Hello')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.body.length, 1);
+  t.is(response.body[0].name, 'HelloWorldWorkflow');
+
+  response = await request(app)
+    .get('/workflows?infix=TestWorkflow')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.body.length, 1);
+  t.is(response.body[0].name, 'SecondTestWorkflow');
+
+  response = await request(app)
+    .get('/workflows?order=desc')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.true(response.body[0].name === 'SecondTestWorkflow' && response.body[1].name === 'HelloWorldWorkflow');
+
+  const fields = ['name', 'template'];
+  response = await request(app)
+    .get(`/workflows?fields=${fields}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.deepEqual(response.body[0], { name: 'HelloWorldWorkflow', template: 's3://bucket/cumulus/workflows/HelloWorldWorkflow.json' });
+  t.deepEqual(response.body[1], { name: 'SecondTestWorkflow', template: 's3://bucket/cumulus/workflows/SecondTestWorkflow.json' });
 });
