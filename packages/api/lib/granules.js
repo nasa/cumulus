@@ -5,6 +5,8 @@ const isNil = require('lodash/isNil');
 const isNumber = require('lodash/isNumber');
 const uniqWith = require('lodash/uniqWith');
 
+const readline = require('readline');
+
 const awsClients = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -22,12 +24,13 @@ const {
   FilePgModel,
   getKnexClient,
   GranulePgModel,
+  ReconciliationReportPgModel,
 } = require('@cumulus/db');
 const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
-const { errorify } = require('@cumulus/errors');
+const { errorify, RecordDoesNotExist } = require('@cumulus/errors');
 const FileUtils = require('./FileUtils');
 
 /**
@@ -283,6 +286,75 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
   return granules;
 }
 
+// parse the csv file or file with only granuleId
+async function* getGranulesFromS3InBatches({
+  s3Uri,
+  batchSize = 100,
+}) {
+  const parsed = s3Utils.parseS3Uri(s3Uri);
+  const exists = await s3Utils.fileExists(parsed.Bucket, parsed.Key);
+  if (!exists) {
+    const msg = `Granules file does not exist ${s3Uri}`;
+    log.error(msg);
+    throw new Error(msg);
+  }
+  const response = await s3Utils.getObject(awsClients.s3(), parsed);
+
+  const rl = readline.createInterface({
+    input: response.Body,
+    crlfDelay: Infinity,
+  });
+
+  let batch = [];
+  let lineNumber = 0;
+
+  for await (const line of rl) {
+    lineNumber += 1;
+    const trimmed = line.trim();
+
+    if (trimmed) {
+      const isHeader =
+        lineNumber === 1 &&
+        (trimmed.startsWith('"granuleUr"'));
+
+      if (!isHeader) {
+        const [granuleId, collectionId] = trimmed.split(',');
+
+        if (granuleId) {
+          batch.push({ granuleId: granuleId.replace(/^"+|"+$/g, ''), collectionId: collectionId?.replace(/^"+|"+$/g, '') });
+        }
+      }
+
+      if (batch.length >= batchSize) {
+        yield batch;
+        batch = [];
+      }
+    }
+  }
+
+  if (batch.length > 0) {
+    yield batch;
+  }
+}
+
+async function resolveReportToS3Location(reportName) {
+  const reconciliationReportPgModel = new ReconciliationReportPgModel();
+  const knex = await getKnexClient();
+  let pgReport;
+  try {
+    pgReport = await reconciliationReportPgModel.get(knex, { name: reportName });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.error(
+        `granule inventory report ${reportName} does not exist`
+      );
+    } else {
+      throw error;
+    }
+  }
+  return pgReport?.location;
+}
+
 /**
  * Return a unique list of granules based on the provided list or the response from the
  * query to ES (Cloud Metrics) using the provided query and index.
@@ -292,12 +364,25 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
  * @param {Object} [payload.query] - Optional parameter of query to send to ES (Cloud Metrics)
  * @param {string} [payload.index] - Optional parameter of ES index to query (Cloud Metrics).
  * Must exist if payload.query exists.
- * @returns {Promise<Array<ApiGranule>>}
+ * @returns {AsyncGenerator<Array<ApiGranule>>}
  */
-async function getGranulesForPayload(payload) {
-  const { granules, index, query } = payload;
-  const queryGranules = granules || [];
+async function* getGranulesForPayload(payload) {
+  const { batchSize, granules, index, query, s3Granules, reportName } = payload;
 
+  // Direct S3 reference
+  if (s3Granules) {
+    yield* getGranulesFromS3InBatches({ s3Uri: s3Granules, batchSize });
+    return;
+  }
+
+  // Report-based S3 lookup
+  if (reportName) {
+    const report = await resolveReportToS3Location(reportName);
+    yield* getGranulesFromS3InBatches({ s3Uri: report, batchSize });
+    return;
+  }
+
+  const queryGranules = granules || [];
   // query ElasticSearch (Cloud Metrics) if needed
   if (queryGranules.length === 0 && query) {
     log.info('No granules detected. Searching for granules in ElasticSearch.');
@@ -317,7 +402,7 @@ async function getGranulesForPayload(payload) {
   // Remove duplicate Granule IDs
   // TODO: could we get unique IDs from the query directly?
   const uniqueGranules = uniqWith(queryGranules, isEqual);
-  return uniqueGranules;
+  yield uniqueGranules;
 }
 
 module.exports = {

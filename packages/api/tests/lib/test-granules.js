@@ -4,6 +4,14 @@ const proxyquire = require('proxyquire');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
+const {
+  localStackConnectionEnv,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  migrationDir,
+  fakeReconciliationReportRecordFactory,
+  ReconciliationReportPgModel,
+} = require('@cumulus/db');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search, getEsClient } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
@@ -40,6 +48,27 @@ const { getGranulesForPayload, translateGranule } = proxyquire(
     },
   }
 );
+
+const testDbName = randomId('test_granule');
+test.before(async (t) => {
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
+});
 
 test.afterEach.always(() => {
   sandbox.resetHistory();
@@ -289,9 +318,9 @@ test('getGranulesForPayload returns unique granules from payload', async (t) => 
     { granuleId: granuleId1, collectionId: collectionId2 },
     { granuleId: granuleId2, collectionId: collectionId2 },
   ];
-  const returnedGranules = await getGranulesForPayload({
+  const { value: returnedGranules } = await getGranulesForPayload({
     granules,
-  });
+  }).next() || {};
   t.deepEqual(
     returnedGranules.sort(),
     [
@@ -342,11 +371,11 @@ test.serial('getGranulesForPayload returns unique granules from query', async (t
       },
     },
   });
-  const returnedGranules = await getGranulesForPayload({
+  const { value: returnedGranules } = await getGranulesForPayload({
     granules: [],
     query: 'fake-query',
     index: 'fake-index',
-  });
+  }).next() || {};
   t.deepEqual(
     returnedGranules.sort(),
     [
@@ -402,17 +431,156 @@ test.serial('getGranulesForPayload handles query paging', async (t) => {
       },
     },
   });
+  const { value: returnedGranules } = await getGranulesForPayload({
+    query: 'fake-query',
+    index: 'fake-index',
+  }).next() || {};
   t.deepEqual(
-    await getGranulesForPayload({
-      query: 'fake-query',
-      index: 'fake-index',
-    }),
+    returnedGranules,
     [
       { granuleId: granuleId1, collectionId },
       { granuleId: granuleId2, collectionId },
       { granuleId: granuleId3, collectionId },
     ]
   );
+});
+
+test('getGranulesForPayload reads file with granuleIds in batches from S3', async (t) => {
+  const bucket = randomString();
+  const key = randomId('granules.txt');
+  const s3Uri = `s3://${bucket}/${key}`;
+  await awsServices.s3().createBucket({ Bucket: bucket });
+
+  // collectionId is optional
+  const testData = `
+G1,C1
+G2
+G3,C2
+G4
+G5
+`;
+
+  await awsServices.s3().putObject({
+    Bucket: bucket,
+    Key: key,
+    Body: testData,
+  });
+
+  const payload = {
+    s3Granules: s3Uri,
+  };
+
+  const expectedResult = [
+    [
+      { granuleId: 'G1', collectionId: 'C1' },
+      { granuleId: 'G2', collectionId: undefined },
+      { granuleId: 'G3', collectionId: 'C2' },
+      { granuleId: 'G4', collectionId: undefined },
+      { granuleId: 'G5', collectionId: undefined },
+    ],
+  ];
+  const results = [];
+  for await (const batch of getGranulesForPayload(payload)) {
+    results.push(batch);
+  }
+
+  t.deepEqual(results, expectedResult);
+
+  const payloadWithBatchSize = {
+    s3Granules: s3Uri,
+    batchSize: 2,
+  };
+  const expectedResultWithBatch = [
+    [
+      { granuleId: 'G1', collectionId: 'C1' },
+      { granuleId: 'G2', collectionId: undefined },
+    ],
+    [
+      { granuleId: 'G3', collectionId: 'C2' },
+      { granuleId: 'G4', collectionId: undefined },
+    ],
+    [
+      { granuleId: 'G5', collectionId: undefined },
+    ],
+  ];
+  const resultsWithBatch = [];
+  for await (const batch of getGranulesForPayload(payloadWithBatchSize)) {
+    resultsWithBatch.push(batch);
+  }
+  t.deepEqual(resultsWithBatch, expectedResultWithBatch);
+  await s3Utils.recursivelyDeleteS3Bucket(bucket);
+});
+
+test('getGranulesForPayload reads granule inventory report in batches from S3', async (t) => {
+  const bucket = randomString();
+  const key = randomId('granules.csv');
+  const s3Uri = `s3://${bucket}/${key}`;
+  await awsServices.s3().createBucket({ Bucket: bucket });
+
+  const csv = `"granuleUr","collectionId"
+"G1","C1"
+"G2","C1"
+"G3","C2"
+"G4","C2"
+"G5","C2"
+`;
+
+  await awsServices.s3().putObject({
+    Bucket: bucket,
+    Key: key,
+    Body: csv,
+    ContentType: 'text/csv',
+  });
+
+  const report = fakeReconciliationReportRecordFactory({
+    type: 'Granule Inventory',
+    location: s3Uri,
+  });
+
+  let [reportPgRecord] = await new ReconciliationReportPgModel().create(t.context.knex, report);
+  const payload = {
+    reportName: reportPgRecord.name,
+  };
+
+  const expectedResult = [
+    [
+      { granuleId: 'G1', collectionId: 'C1' },
+      { granuleId: 'G2', collectionId: 'C1' },
+      { granuleId: 'G3', collectionId: 'C2' },
+      { granuleId: 'G4', collectionId: 'C2' },
+      { granuleId: 'G5', collectionId: 'C2' },
+    ],
+  ];
+  const results = [];
+  for await (const batch of getGranulesForPayload(payload)) {
+    results.push(batch);
+  }
+
+  t.deepEqual(results, expectedResult);
+
+  const payloadWithBatchSize = {
+    s3Granules: s3Uri,
+    batchSize: 2,
+  };
+  const expectedResultWithBatch = [
+    [
+      { granuleId: 'G1', collectionId: 'C1' },
+      { granuleId: 'G2', collectionId: 'C1' },
+    ],
+    [
+      { granuleId: 'G3', collectionId: 'C2' },
+      { granuleId: 'G4', collectionId: 'C2' },
+    ],
+    [
+      { granuleId: 'G5', collectionId: 'C2' },
+    ],
+  ];
+  const resultsWithBatch = [];
+  for await (const batch of getGranulesForPayload(payloadWithBatchSize)) {
+    resultsWithBatch.push(batch);
+  }
+  t.deepEqual(resultsWithBatch, expectedResultWithBatch);
+  await s3Utils.recursivelyDeleteS3Bucket(bucket);
 });
 
 test('translateGranule() will translate an old-style granule file and numeric productVolume into the new schema', async (t) => {
