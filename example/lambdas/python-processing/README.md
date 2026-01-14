@@ -16,19 +16,11 @@ npm run prepare
 
 ### Build
 
-To update the container for a PR, you should run:
+To update the container for a PR, you can run the package.sh script which will build and push a Docker container to ECR:
 
 ```sh
-./bin/package.sh .
+ECR_REGISTRY={ECR_REGISTRY_URI} ./bin/package.sh . cumulus-test-ingest-process {VERSION} push
 ```
-
-By default package will tag the container as `latest`. You can pass an optional argument to `package` if you want a specific version. For example:
-
-```sh
-./bin/package.sh . 1.2.3
-```
-
-Then push to the configured ECR following the AWS console instructions for pushing to ECR for use in your build.
 
 Then update the `python_processing_service` resource in [`python_reference_workflow`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/python_reference_workflow.tf) to utilize the correct image reference.
 
