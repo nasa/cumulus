@@ -81,6 +81,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added integration testing for CnmResponse task.
   - Updated example workflows to include the exception message in the
   `WorkflowFailed` state.
+- **CUMULUS-4427**
+  - Added pdr-cleanup task into cumulus core from ASDC
 
 ### Changed
 
