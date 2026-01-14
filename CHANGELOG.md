@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload.
+- **CUMULUS-4427**
+  - Added pdr-cleanup task into cumulus core from ASDC
 
 ### Changed
 
