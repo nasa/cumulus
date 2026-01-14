@@ -4883,7 +4883,7 @@ test.serial('writeGranuleFromApi() failes to overwrite granule with required fie
   );
 });
 
-test.serial('writeGranuleFromApi() overrides granule when created_at is null', async (t) => {
+test.serial('writeGranuleFromApi() sets createdAt when field is null', async (t) => {
   const {
     collectionCumulusId,
     knex,
@@ -4891,27 +4891,32 @@ test.serial('writeGranuleFromApi() overrides granule when created_at is null', a
     granuleId,
     granulePgModel,
   } = t.context;
-
-  const expectedCreatedAt = Date.now();
-
-  const result = await writeGranuleFromApi({ ...granule, createdAt: expectedCreatedAt }, knex, 'Create');
+  let result = await writeGranuleFromApi({ ...granule, createdAt: null }, knex, 'Create');
   t.is(result, `Wrote Granule ${granuleId}`);
 
-  const granulePgRecord = await granulePgModel.get(
-    knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  let granulePgRecord = await granulePgModel.get(
+    knex, { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
 
-  const translatedPgRecord = await translatePostgresGranuleToApiGranule({
-    granulePgRecord,
-    knexOrTransaction: knex,
+  let translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord, knexOrTransaction: knex,
   });
+  t.not(translatedPgRecord.createdAt, null);
 
-  await writeGranuleFromApi({ ...granule, createdAt: null, status: 'completed' }, knex, 'Create');
-  t.is(translatedPgRecord.createdAt, expectedCreatedAt);
+  result = await writeGranuleFromApi({ ...granule, createdAt: null, status: 'completed' }, knex, 'Update');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  granulePgRecord = await granulePgModel.get(
+    knex, { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord, knexOrTransaction: knex,
+  });
+  t.not(translatedPgRecord.createdAt, null);
 });
 
-test.serial('writeGranuleFromApi() overrides granule when updated_at is null', async (t) => {
+test.serial('writeGranuleFromApi() sets updatedAt when field is null', async (t) => {
   const {
     collectionCumulusId,
     knex,
@@ -4919,22 +4924,44 @@ test.serial('writeGranuleFromApi() overrides granule when updated_at is null', a
     granuleId,
     granulePgModel,
   } = t.context;
-
-  const expectedUpdatedAt = Date.now();
-
-  const result = await writeGranuleFromApi({ ...granule, updatedAt: expectedUpdatedAt }, knex, 'Create');
+  let result = await writeGranuleFromApi({ ...granule, updatedAt: null }, knex, 'Create');
   t.is(result, `Wrote Granule ${granuleId}`);
 
-  const granulePgRecord = await granulePgModel.get(
-    knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  let granulePgRecord = await granulePgModel.get(
+    knex, { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
 
-  const translatedPgRecord = await translatePostgresGranuleToApiGranule({
-    granulePgRecord,
-    knexOrTransaction: knex,
+  let translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord, knexOrTransaction: knex,
   });
+  t.not(translatedPgRecord.updatedAt, null);
 
-  await writeGranuleFromApi({ ...granule, updatedAt: null, status: 'completed' }, knex, 'Create');
-  t.is(translatedPgRecord.updatedAt, expectedUpdatedAt);
+  result = await writeGranuleFromApi({ ...granule, updatedAt: null, status: 'completed' }, knex, 'Update');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  granulePgRecord = await granulePgModel.get(
+    knex, { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord, knexOrTransaction: knex,
+  });
+  t.not(translatedPgRecord.updatedAt, null);
+});
+
+test.serial('writeGranuleFromApi() does not throw errors when createdAt or updatedAt is null', async (t) => {
+  const {
+    knex,
+    granule,
+  } = t.context;
+
+  await t.notThrowsAsync(
+    writeGranuleFromApi({ ...granule, createdAt: null }, knex, 'Create'),
+    'granule.\'createdAt\' cannot be removed as it is required and/or set to a default value on PUT.  Please set a value and try your request again'
+  );
+
+  await t.notThrowsAsync(
+    writeGranuleFromApi({ ...granule, updatedAt: null }, knex, 'Create'),
+    'granule.\'updatedAt\' cannot be removed as it is required and/or set to a default value on PUT.  Please set a value and try your request again'
+  );
 });

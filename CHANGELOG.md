@@ -8,9 +8,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Notable Changes
 
-- **CSD-61**
-  - Updated `PUT granules` endpoint to allow createdAt and updatedAt fields to be null.
-
 ### Added
 
 - **CUMULUS-4300**
@@ -38,6 +35,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4438**
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
+- **CSD-61**
+  - Updated `PUT granules` endpoint to allow createdAt and updatedAt fields to be null.
 
 ## [v21.2.0] 2025-12-06
 
