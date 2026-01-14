@@ -28,7 +28,7 @@ module "python_test_ingest_processing_service" {
     ACTIVITY_ARN = aws_sfn_activity.ecs_task_python_test_ingest_processing_service.id
   }
   command = [
-    "/usr/local/bin/python",
+    "python",
     "src/task.py"
   ]
 }

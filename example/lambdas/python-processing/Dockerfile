@@ -1,4 +1,18 @@
 FROM python:3.12.11-slim-bookworm
-ADD . /source
+
 WORKDIR /source
-RUN pip install uv && uv sync --frozen
+
+# Install uv
+RUN pip install uv
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies
+RUN uv sync --frozen --no-dev
+
+# Copy the task source
+COPY src/ ./src/
+
+# Update PATH
+ENV PATH="/source/.venv/bin:$PATH"
