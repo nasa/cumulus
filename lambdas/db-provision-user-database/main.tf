@@ -1,3 +1,4 @@
+data "aws_caller_identity" "current" {}
 terraform {
   required_providers {
     aws = {
@@ -85,18 +86,28 @@ data "aws_iam_policy_document" "lambda_assume_role_policy" {
 }
 
 data "aws_iam_policy_document" "db_provision" {
-  statement {
+    statement {
     actions = [
       "ec2:CreateNetworkInterface",
       "ec2:DeleteNetworkInterface",
-      "ec2:DescribeNetworkInterfaces",
+      "ec2:DescribeNetworkInterfaces"
+    ]
+   resources = [
+  "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:network-interface/*"
+]
+}
+
+  statement {
+    actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:DescribeLogStreams",
       "logs:PutLogEvents"
     ]
-    resources = ["*"]
-  }
+resources = [
+  "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.prefix}-ProvisionPostgresDatabase:*"
+]
+}
   statement {
     actions = [
       "secretsmanager:GetSecretValue",
