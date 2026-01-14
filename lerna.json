@@ -7,6 +7,7 @@
     "example/scripts/*",
     "lambdas/*",
     "packages/*",
+    "packages/cumulus-message-adapter-js",
     "packages/api/ecs/async-operation",
     "tasks/*",
     "tf-modules/*",
