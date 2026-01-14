@@ -3,6 +3,7 @@ export interface GranuleFile {
   checksum?: string,
   bucket: string,
   key: string,
+  size: number,
   [key: string]: unknown
 }
 

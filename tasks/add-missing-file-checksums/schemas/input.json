@@ -21,7 +21,8 @@
               "type": "object",
               "required": [
                 "bucket",
-                "key"
+                "key",
+                "size"
               ],
               "properties": {
                 "bucket": {
