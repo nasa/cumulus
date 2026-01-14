@@ -28,7 +28,7 @@ Example templates have been created for both [Python](https://github.com/nasa/cu
 
 ### Creating a task
 
-To create a task, start by making a directory under the tasks directory. The new task directory name should be a descriptive name of the task. the name should be in lower case with `-` used in place of spaces. Copy the contents of the task language example to the new task directory.
+To create a task, start by making a directory under the tasks directory. The new task directory name should be a descriptive name of the task. The name should be in lower case with `-` used in place of spaces. Copy the contents of the task language example to the new task directory.
 
 The new task directory should look something like the following. Note that the files may differ slightly depending on the language.
 

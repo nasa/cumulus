@@ -48,6 +48,7 @@ To migrate a current Python project to uv, perform the following steps.
 1. `cd` to the app directory.
 2. Run the `uv init` command to create the _pyproject.toml_ file.
 3. Run the `uv add -r requirements.txt` to update the _pyproject.toml_ and lock dependency versions in the _uv.lock_ files.
+4. Remove the _requirements.txt_ file as the requirements are now tracked by `uv`.
 
 ### Updating PyProject.toml
 
