@@ -16,7 +16,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "scripts": {
     "build-lambda-zips": "(cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
@@ -37,7 +37,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "21.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.3.0",
+    "@cumulus/cumulus-message-adapter-js": "2.4.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {

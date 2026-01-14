@@ -13,7 +13,7 @@
     "directory": "tasks/hello-world"
   },
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
@@ -38,6 +38,6 @@
   "dependencies": {
     "@cumulus/aws-client": "21.2.0",
     "@cumulus/common": "21.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.3.0"
+    "@cumulus/cumulus-message-adapter-js": "2.4.0"
   }
 }

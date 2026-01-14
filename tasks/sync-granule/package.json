@@ -16,7 +16,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "scripts": {
     "generate-task-schemas": "npx generate-task-schemas . files",
@@ -43,7 +43,7 @@
     "@cumulus/aws-client": "21.2.0",
     "@cumulus/collection-config-store": "21.2.0",
     "@cumulus/common": "21.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.3.0",
+    "@cumulus/cumulus-message-adapter-js": "2.4.0",
     "@cumulus/errors": "21.2.0",
     "@cumulus/ingest": "21.2.0",
     "@cumulus/message": "21.2.0",
