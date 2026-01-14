@@ -43,6 +43,8 @@ select = [
 ]
 
 ignore = [
+  # undocumented-magic-method
+  "D105",
   # blank-line-after-function
   "D202",
   # incorrect-blank-line-before-class - incompatible with D211
