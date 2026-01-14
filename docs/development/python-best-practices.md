@@ -136,7 +136,6 @@ addopts = [
 ]
 testpaths = [
     "tests",
-    "integration",
 ]
 ```
 
