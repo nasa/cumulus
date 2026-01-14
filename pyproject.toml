@@ -65,7 +65,8 @@ ignore = [
 # Ignore missing docstring rules for non-exported python code
 "**/example/**.py" = ["D1"]
 "**/migrations/**.py" = ["D1", "E501"]
-"**/test/**.py" = ["D1"]
+"**/test/**.py" = ["D1", "PLR0913"]
+"**/tests/**.py" = ["D1", "PLR0913"]
 "scripts/**.py" = ["D1"]
 
 
