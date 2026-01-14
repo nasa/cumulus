@@ -45,7 +45,7 @@
     "@cumulus/api-client": "21.2.0",
     "@cumulus/aws-client": "21.2.0",
     "@cumulus/common": "21.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.2.0",
+    "@cumulus/cumulus-message-adapter-js": "2.4.0",
     "@cumulus/errors": "21.2.0",
     "@cumulus/message": "21.2.0",
     "@cumulus/types": "21.2.0"

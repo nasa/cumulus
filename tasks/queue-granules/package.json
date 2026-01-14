@@ -48,7 +48,7 @@
     "@cumulus/api-client": "21.2.0",
     "@cumulus/aws-client": "21.2.0",
     "@cumulus/common": "21.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.3.0",
+    "@cumulus/cumulus-message-adapter-js": "2.4.0",
     "@cumulus/ingest": "21.2.0",
     "@cumulus/message": "21.2.0",
     "lodash": "^4.17.21",
