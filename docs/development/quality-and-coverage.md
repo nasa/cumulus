@@ -5,7 +5,7 @@ id: quality-and-coverage
 
 Currently, code written in this repository leverages Python or TypeScript for most logic and work. The current CI tooling and standards are based on these two languages. Specifics related to the tooling, quality, and testing can be found in the language specific best practices documentation. Python best practices and tooling expectations can be found [here](development/python-best-practices.md). Typescript best practices and tooling can be found [here](development/typescript-best-practices.md).
 
-In addition to CI pipeline quality checks, it is highly recommended for developers to install and configure pre-commit in order to find simple quality issues early. Directions on installing and configuring pre-commit locally for use with this repo can be found here.
+In addition to CI pipeline quality checks, it is highly recommended for developers to install and configure [pre-commit](https://pre-commit.com) in order to find simple quality issues early. Directions on installing and configuring pre-commit locally for use with this repo can be found [here](docs/development/pre-commit-setup.md).
 
 ## Code Coverage
 
