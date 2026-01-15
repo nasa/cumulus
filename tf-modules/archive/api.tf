@@ -146,7 +146,7 @@ resource "aws_lambda_function" "private_api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "PrivateApiLambda", 100)
 
   # Add the OpenTelemetry layer
@@ -182,7 +182,7 @@ resource "aws_lambda_function" "api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "ApiEndpoints", 100)
 
   # Add the OpenTelemetry layer
