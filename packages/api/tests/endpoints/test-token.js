@@ -15,6 +15,7 @@ const {
 const assertions = require('../../lib/assertions');
 const {
   createJwtToken,
+  verifyJwtToken,
 } = require('../../lib/token');
 const {
   fakeAccessTokenFactory,
@@ -131,7 +132,10 @@ test.serial('GET /token with a code but no state returns the access token', asyn
     .expect(200);
 
   t.is(response.status, 200);
-  t.is(response.body.message.token, jwtToken);
+  const decodedToken = verifyJwtToken(response.body.message.token);
+  t.is(decodedToken.username, getAccessTokenResponse.username);
+  t.is(decodedToken.accessToken, getAccessTokenResponse.accessToken);
+  t.is(decodedToken.exp, getAccessTokenResponse.expirationTime);
   stub.restore();
 });
 
@@ -178,7 +182,10 @@ test.serial('GET /token with a code and state results in a redirect containing t
 
   t.is(locationHeader.origin, 'http://www.example.com');
   t.is(locationHeader.pathname, '/state');
-  t.is(locationHeader.searchParams.get('token'), jwtToken);
+  const decodedToken = verifyJwtToken(locationHeader.searchParams.get('token'));
+  t.is(decodedToken.username, getAccessTokenResponse.username);
+  t.is(decodedToken.accessToken, getAccessTokenResponse.accessToken);
+  t.is(decodedToken.exp, getAccessTokenResponse.expirationTime);
   stub.restore();
 });
 
@@ -302,7 +309,10 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
 
   t.is(response.status, 200);
 
-  t.is(response.body.token, refreshedJwtToken);
+  const decodedToken = verifyJwtToken(response.body.token);
+  t.is(decodedToken.username, refreshedTokenRecord.username);
+  t.is(decodedToken.accessToken, refreshedTokenRecord.accessToken);
+  t.is(decodedToken.exp, refreshedTokenRecord.expirationTime);
 
   t.false(await accessTokenModel.exists({
     accessToken: initialTokenRecord.accessToken,

@@ -7,7 +7,6 @@ const createJwtToken = ({ accessToken, expirationTime, username }) =>
     username,
   }, process.env.TOKEN_SECRET, {
     algorithm: 'HS256',
-    noTimestamp: true,
   });
 
 const verifyJwtToken = (jwtToken, params = {}) => {
