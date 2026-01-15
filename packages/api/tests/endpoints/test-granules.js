@@ -12,6 +12,7 @@ const {
   CollectionPgModel,
   destroyLocalTestDb,
   ExecutionPgModel,
+  fakeFileRecordFactory,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
@@ -3482,9 +3483,9 @@ test.serial('PATCH returns 201 (granule creation) for version value greater than
   t.is(response.status, 201);
 });
 
-test.serial('Test ServeUtils.addGranules is adding associated files to Postgres', async (t) => {
+test.only('Test ServeUtils.addGranules is adding associated files to Postgres', async (t) => {
   const { collectionPgModel, knex } = t.context;
-  const collectionName = 'MOD09GQ';
+  const collectionName = randomString();
   const collectionVersion = '006';
 
   const fakePgCollection = fakeCollectionRecordFactory({
@@ -3508,21 +3509,23 @@ test.serial('Test ServeUtils.addGranules is adding associated files to Postgres'
     testPgExecution
   );
 
+  const newGranuleId = randomId();
+
   const newGranule = fakeGranuleFactoryV2({
-    granuleId: randomId(),
+    granuleId: newGranuleId,
     status: 'failed',
     collectionId: newCollectionId,
     execution: executionPgRecord[0].url,
     published: false,
     files: [
-      {
-        bucket: 'cumulus-test-sandbox-protected-2',
-        key: 'MOD09GQ___006/MOD/MOD09GQ.A4622742.B7A8Ma.006.7857260550036.cmr.xml',
-        fileName: 'MOD09GQ.A4622742.B7A8Ma.006.7857260550036.cmr.xml',
-        size: 2488,
-        source: 's3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4622742.B7A8Ma.006.7857260550036.cmr.xml',
-        type: 'metadata',
-      },
+      fakeFileRecordFactory({
+        fileName: `${newGranuleId}.hdf`,
+        updated_at: new Date().toISOString(),
+        bucket: `${newCollectionId}--bucket`,
+        key: `${newCollectionId}${newGranuleId}/key-hdf.pem`,
+        path: `${newCollectionId}/${newGranuleId}`,
+        source: `s3://${newCollectionId}--bucket/${collectionName}___${collectionVersion}/.cmr.xml`,
+      }),
     ],
   });
 
@@ -3544,4 +3547,28 @@ test.serial('Test ServeUtils.addGranules is adding associated files to Postgres'
     t.is(files[idx].key, file.key);
     t.is(files[idx].file_name, file.fileName);
   });
+
+  // Test granule with no files
+  const newGranuleId2 = randomId();
+
+  const newGranule2 = fakeGranuleFactoryV2({
+    granuleId: newGranuleId2,
+    status: 'failed',
+    collectionId: newCollectionId,
+    execution: executionPgRecord[0].url,
+    published: false,
+    files: [],
+  });
+
+  await addGranules([newGranule2], knex);
+
+  const [pgGranule2] = await t.context.granulePgModel.search(
+    t.context.knex, { granule_id: newGranule2.granuleId }
+  );
+  t.truthy(pgGranule2, 'Granule should exist in Postgres');
+
+  const files2 = await filePgModel.search(
+    t.context.knex, { granule_cumulus_id: pgGranule2.cumulus_id }
+  );
+  t.is(files2.length, 0, 'No files should be created in Postgres');
 });

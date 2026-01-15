@@ -148,15 +148,11 @@ async function addGranules(granules, knexClient) {
       });
 
       if (newGranule.files.length > 0) {
-        const postgresNewGranuleFiles = newGranule.files.map((file) => {
+        await filePgModel.insert(knex, newGranule.files.map((file) => {
           const translatedFile = translateApiFiletoPostgresFile(file);
           translatedFile.granule_cumulus_id = upsertedGranule[0].cumulus_id;
           return translatedFile;
-        });
-
-        await Promise.all(
-          postgresNewGranuleFiles.map((file) => filePgModel.create(knex, file))
-        );
+        }));
       }
     })
   );
