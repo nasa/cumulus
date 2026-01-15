@@ -86,7 +86,7 @@ async function dispatch(queueUrl, message) {
     type: 'sqs',
     ...rulesHelpers.lookupCollectionInEvent(eventObject),
     provider: rulesHelpers.lookupProviderInEvent(eventObject),
-    allowProviderMismatchOnRuleFilter: process.env.allow_provider_mismatch_on_rule_filter === 'true',
+    allowProviderMismatchOnRuleFilter: process.env.allowProviderMismatchOnRuleFilter === 'true',
   };
   const rulesToSchedule = rulesHelpers.filterRulesByRuleParams(rulesForQueue, ruleParams);
 

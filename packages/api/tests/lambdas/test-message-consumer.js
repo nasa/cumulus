@@ -43,7 +43,7 @@ test.beforeEach((t) => {
 test.afterEach.always((t) => {
   t.context.sandbox.restore();
   t.context.snsMock.reset();
-  delete process.env.allow_provider_mismatch_on_rule_filter;
+  delete process.env.allowProviderMismatchOnRuleFilter;
 });
 
 test.serial('handler correctly processes mixed record types and handles errors via fallback', async (t) => {
@@ -207,9 +207,9 @@ test.serial('handler processes records only when record and rule have matching p
   t.is(queueMessageStub.callCount, 2);
 });
 
-test.serial('handler processes records with mismatched rule/message providers when lambda var allow_provider_mismatch_on_rule_filter is set to true', async (t) => {
+test.serial('handler processes records with mismatched rule/message providers when lambda var allowProviderMismatchOnRuleFilter is set to true', async (t) => {
   const { fetchEnabledRulesStub, queueMessageStub, messageConsumer } = t.context;
-  process.env.allow_provider_mismatch_on_rule_filter = true;
+  process.env.allowProviderMismatchOnRuleFilter = true;
   const collection = {
     name: 'ABC',
     version: '1.2.3',
