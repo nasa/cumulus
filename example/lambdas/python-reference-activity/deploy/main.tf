@@ -8,7 +8,7 @@ data "aws_ecr_repository" "cumulus_process_activity" {
 }
 
 module "python_processing_service" {
-  source = "../../../tf-modules/cumulus_ecs_service"
+  source = "../../../../tf-modules/cumulus_ecs_service"
 
   prefix = var.prefix
   name   = "PythonProcess"
