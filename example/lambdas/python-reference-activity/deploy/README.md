@@ -26,6 +26,7 @@ module "python_processing_service" {
 | ------ | ------------- | ------ | --------- | :--------: |
 | prefix | The prefix for resource names | `string` | n/a | yes |
 | cumulus_ecs_cluster_arn | ARN of the Cumulus ECS cluster to target for this service | `string` | n/a | yes |
+| cumulus_process_activity_version | Docker image version to use for this service | `string` | n/a | yes |
 | tags | Tags to be applied to resources | `map(string)` | `{}` | no |
 
 ## Outputs

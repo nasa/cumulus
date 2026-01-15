@@ -5,6 +5,7 @@ module "python_processing_service" {
   tags   = local.tags
 
   cumulus_ecs_cluster_arn                           = module.cumulus.ecs_cluster_arn
+  cumulus_process_activity_version                  = var.cumulus_process_activity_version
 }
 
 module "python_reference_task" {
