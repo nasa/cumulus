@@ -66,6 +66,7 @@ ignore = [
 "**/test/**.py" = ["D1"]
 "**/tests/**.py" = ["D1"]
 "scripts/**.py" = ["D1"]
+"__init__.py" = ["D104"]
 
 
 # Repo wide type checking rules
