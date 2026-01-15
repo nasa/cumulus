@@ -22,7 +22,7 @@ module "python_processing_service" {
   memory_reservation = 700
 
   environment = {
-    AWS_DEFAULT_REGION = data.aws_region.current.name
+    AWS_DEFAULT_REGION = var.aws_region
     ACTIVITY_ARN = aws_sfn_activity.ecs_task_python_processing_service.id
   }
 

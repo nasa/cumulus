@@ -1,8 +1,9 @@
 module "python_processing_service" {
   source = "../lambdas/python-reference-activity/deploy"
 
-  prefix = var.prefix
-  tags   = local.tags
+  aws_region                                       = data.aws_region.current.name
+  prefix                                           = var.prefix
+  tags                                             = local.tags
 
   cumulus_ecs_cluster_arn                           = module.cumulus.ecs_cluster_arn
   cumulus_process_activity_version                  = var.cumulus_process_activity_version

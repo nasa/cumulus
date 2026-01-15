@@ -24,6 +24,7 @@ module "python_processing_service" {
 
 | Name | Description | Type | Default | Required |
 | ------ | ------------- | ------ | --------- | :--------: |
+| aws_region | AWS region | `string` | us-east-1 | no |
 | prefix | The prefix for resource names | `string` | n/a | yes |
 | cumulus_ecs_cluster_arn | ARN of the Cumulus ECS cluster to target for this service | `string` | n/a | yes |
 | cumulus_process_activity_version | Docker image version to use for this service | `string` | n/a | yes |
