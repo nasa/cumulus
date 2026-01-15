@@ -34,3 +34,6 @@ module "python_processing_service" {
 
 | Name | Description |
 | ------ | ------------- |
+| activity_arn | ARN of the Step Functions activity |
+| activity_id | ID of the Step Functions activity |
+| service_name | Name of the ECS service |
