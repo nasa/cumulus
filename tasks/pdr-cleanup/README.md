@@ -14,6 +14,12 @@ This lambda takes the following input and config objects, derived from workflow 
 | provider.protocol | string | N/A | yes | `http`, `https`, `ftp`, `sftp`, `s3` | The Cumulus provider protocol (task only supports s3)
 | provider.host | string | N/A | yes | N/A | The Cumulus provider host
 
+Example task config:
+```json
+"task_config": {
+    "provider": "{$.meta.provider}"
+}
+```
 ### Input
 
 | field name | type | default | required | values | description
@@ -29,18 +35,33 @@ This lambda takes the following input and config objects, derived from workflow 
 
 ### Output
 
-This task outputs the archive path of the cleaned up PDR
+This task outputs the archive path of the cleaned up PDR, along with the previous input.
+
+| field name | type | default | required | values | description
+| ---------- | ---- | ------- | -------- | ------ | -----------
+| pdr | object | N/A | yes | N/A | Product Delivery Record
+| pdr.name | string | N/A | yes | N/A | Filename of the PDR
+| pdr.path | string | N/A | yes | N/A | Location of the PDR
+| pdr.archivePath | string | N/A | yes | N/A | Archive Location of the PDR
+| running | array[string] | N/A | no | N/A | List of execution arns which are queued or running
+| completed | array[string]  | N/A | no | N/A | List of completed execution arns
+| failed | arry[object] | N/A | yes | N/A | List of failed execution arns with reason
+| failed[].arn | string | N/A | yes | N/A | AWS failed ARN
+| failed[].reason | string | N/A | no | N/A | Reason for workflow failure
 
 ### Example workflow configuration and use
+
+This task should take place after all child granule ingest workflows are completed. 
+
 ```json
 "CleanupPDR": {
     "Type": "Task",
     "Parameters": {
         "cma": {
-        "event.$": "$",
-        "task_config": {
-            "provider": "{$.meta.provider}"
-        }
+            "event.$": "$",
+            "task_config": {
+                "provider": "{$.meta.provider}"
+            }
         }
     },
     "Resource": "${cleanup_pdr_task_arn}",
@@ -73,10 +94,20 @@ This task outputs the archive path of the cleaned up PDR
 ### Internal Dependencies
 
 This task relies on AWS S3 and the Cumulus Message Adapter
-
+    
 ### External Dependencies
 
 N/A
+
+## Development and Deployment
+
+#### Deploying Stand alone
+
+1. `cd deploy`
+2. Copy the `terraform.tfvars.sample` file to a new `terraform.tfvars` file
+3. Fill out the `terraform.tfvars` with your respective values
+3. `terraform init`
+4. `terraform apply`
 
 ## Contributing
 
