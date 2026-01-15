@@ -200,6 +200,12 @@ variable "default_s3_multipart_chunksize_mb" {
   default = 256
 }
 
+variable "allow_provider_mismatch_on_rule_filter" {
+  description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
+  type = bool
+  default = false
+}
+
 variable "tea_distribution_url" {
   type    = string
   default = null
@@ -267,6 +273,32 @@ variable "archive_api_url" {
   type        = string
   default     = null
   description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
+}
+
+variable "archive_api_users" {
+  description = "Earthdata (URS) usernames that should be allowed to access the archive API"
+  type        = list(string)
+  default     = [
+    "acyu",
+    "awisdom",
+    "cbanh",
+    "chuang14",
+    "cdurbin",
+    "dhudelson",
+    "dmsorensen",
+    "ecarton",
+    "jasmine",
+    "jennyhliu",
+    "jmccoy_uat",
+    "jnorton1",
+    "kkelly",
+    "kovarik",
+    "mobrien84",
+    "nnageswa",
+    "npauzenga",
+    "terrafirma13",
+    "yliu10"
+  ]
 }
 
 variable "private_archive_api_gateway" {

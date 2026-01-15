@@ -160,24 +160,7 @@ module "cumulus" {
 
   # Archive API settings
   token_secret = var.token_secret
-  archive_api_users = [
-    "acyu",
-    "awisdom",
-    "chuang14",
-    "cdurbin",
-    "ecarton",
-    "jasmine",
-    "jennyhliu",
-    "jmccoy_uat",
-    "jnorton1",
-    "kkelly",
-    "kovarik",
-    "mobrien84",
-    "nnageswa",
-    "npauzenga",
-    "terrafirma13",
-    "yliu10"
-  ]
+  archive_api_users = var.archive_api_users
 
   archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port
@@ -217,6 +200,9 @@ module "cumulus" {
   workflow_configurations = var.workflow_configurations
 
   tags = local.tags
+
+  # For message consumer lambdas in order to disable rule/message mismatches
+  allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

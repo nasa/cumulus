@@ -141,6 +141,7 @@ async function processRecord(record, fromSNS, enabledRules) {
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN'),
         provider: lookupProviderInEvent(eventObject),
+        allowProviderMismatchOnRuleFilter: process.env.allowProviderMismatchOnRuleFilter === 'true',
       };
     } catch (error) {
       log.error('Caught error parsing JSON:', error);
