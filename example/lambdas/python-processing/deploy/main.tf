@@ -16,7 +16,7 @@ module "python_test_ingest_processing_service" {
   default_log_retention_days                     = var.default_log_retention_days
   cloudwatch_log_retention_periods               = var.cloudwatch_log_retention_periods
 
-  cluster_arn                           = module.cumulus.ecs_cluster_arn
+  cluster_arn                           = var.cumulus_ecs_cluster_arn
   desired_count                         = 1
   image                                 = "${data.aws_ecr_repository.cumulus_test_ingest_process.repository_url}:${var.cumulus_test_ingest_image_version}"
 
