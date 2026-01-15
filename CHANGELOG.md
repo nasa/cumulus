@@ -6,9 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-- **CUMULUS-4112**
-  - Updated `serveUtils.addGranules` to include writing granule files.
-
 ### Migration Notes
 
 Please complete the following steps before upgrading Cumulus.
@@ -6712,6 +6709,8 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Added `@cumulus/api-client/reconciliationReports`
 - **CUMULUS-1999**
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
+- **CUMULUS-4112**
+  - Updated `serveUtils.addGranules` to include writing granule files.
 
 ### Fixed
 
