@@ -8,11 +8,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4112**
   - Update `serveUtils.addGranules` to also include writing granule files.
+  
+### Migration Notes
+
+Please complete the following steps before upgrading Cumulus.
+
+#### CUMULUS-4459 New index added to the granules table to improve Dashboard performance
+
+- The fix introduced in CUMULUS-4459 requires a manual database update in the production environment. 
+  This step ensures the new index is created successfully, even in the unlikely event that the database-migration 
+  Lambda function did not complete the index creation before timing out.
+
+  Please follow the standard procedures for running a production database migration, and execute the following SQL to create the index:
+  ```text
+  CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
+  ```
 
 ### Notable Changes
 
+- **CUMULUS-4459**
+  - Added new index to the granules table to improve Dashboard performance.
 - **CUMULUS-4446**
   - Updated all node lambdas/Core build environments to utilize node v22
+  - Updated cma-js dependency to 2.4.0
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
@@ -54,7 +72,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
-- This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
+- This release updates all core integration deployments to target [cumulus-message-adapter v2.0.5](https://github.com/nasa/cumulus-message-adapter/releases/tag/v2.0.5).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
 
 ### Notable Changes
 
