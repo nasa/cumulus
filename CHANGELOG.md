@@ -7,8 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 - **CUMULUS-4112**
-  - Update `serveUtils.addGranules` to also include writing granule files.
-  
+  - Updated `serveUtils.addGranules` to include writing granule files.
+
 ### Migration Notes
 
 Please complete the following steps before upgrading Cumulus.

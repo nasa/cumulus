@@ -3483,7 +3483,7 @@ test.serial('PATCH returns 201 (granule creation) for version value greater than
   t.is(response.status, 201);
 });
 
-test.only('Test ServeUtils.addGranules is adding associated files to Postgres', async (t) => {
+test.serial('ServeUtils.addGranules adds associated files to Postgres', async (t) => {
   const { collectionPgModel, knex } = t.context;
   const collectionName = randomString();
   const collectionVersion = '006';
