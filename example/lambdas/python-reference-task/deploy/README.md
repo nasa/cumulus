@@ -6,7 +6,7 @@ This module creates the Python Reference Task Lambda function used in Cumulus wo
 
 ```hcl
 module "python_reference_task" {
-  source = "../lambdas/python-reference-task/terraform"
+  source = "../lambdas/python-reference-task/deploy"
 
   prefix                                         = var.prefix
   lambda_processing_role_arn                     = module.cumulus.lambda_processing_role_arn
@@ -26,7 +26,7 @@ module "python_reference_task" {
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ------ | ------------- | ------ | --------- | :--------: |
 | prefix | The prefix for resource names | `string` | n/a | yes |
 | lambda_processing_role_arn | ARN of the IAM role for Lambda execution | `string` | n/a | yes |
 | cumulus_message_adapter_lambda_layer_version_arn | ARN of the Cumulus Message Adapter Lambda layer | `string` | n/a | yes |
@@ -37,7 +37,7 @@ module "python_reference_task" {
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ------ | ------------- |
 | lambda_function_arn | ARN of the Python reference task Lambda function |
 | lambda_function_name | Name of the Python reference task Lambda function |
 | lambda_function_invoke_arn | Invoke ARN of the Python reference task Lambda function |
