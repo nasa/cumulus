@@ -202,6 +202,8 @@ const sidebars = {
         'docs-how-to',
         'development/pre-commit-setup',
         'development/release',
+        'development/typescript-best-practices',
+        'development/python-best-practices',
       ],
     },
     {

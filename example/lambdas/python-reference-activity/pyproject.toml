@@ -17,20 +17,15 @@ dev = [
     "ruff~=0.14.0",
 ]
 
-[pytest]
+[tool.pytest]
 minversion = "9.0"
 addopts = [
     "--maxfail=1",
     "-ra",
-    "-q",
-    "--cov=myproject",
-    "--cov-report=lcov:.nyc_output"
+]
+pythonpath = [
+    "src"
 ]
 testpaths = [
     "tests"
-]
-
-[tool.pytest.ini_options]
-pythonpath = [
-    "src"
 ]
