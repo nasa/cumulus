@@ -9,7 +9,6 @@ const {
   destroyLocalTestDb,
   CollectionPgModel,
   fakeCollectionRecordFactory,
-  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');

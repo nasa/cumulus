@@ -428,7 +428,7 @@ test.serial('getGranulesForPayload handles query paging', async (t) => {
 
 test('getGranulesForPayload reads file with granuleIds in batches from S3', async (t) => {
   const bucket = randomString();
-  const key = randomId('granules.txt');
+  const key = `${randomId('path')}/${randomId('granules.txt')}`;
   const s3Uri = `s3://${bucket}/${key}`;
   await awsServices.s3().createBucket({ Bucket: bucket });
 
@@ -447,7 +447,7 @@ G5
   });
 
   const payload = {
-    s3Granules: s3Uri,
+    s3GranuleIdInputFile: s3Uri,
   };
 
   const expectedResult = [['G1', 'G2', 'G3', 'G4', 'G5']];
@@ -459,7 +459,7 @@ G5
   t.deepEqual(results, expectedResult);
 
   const payloadWithBatchSize = {
-    s3Granules: s3Uri,
+    s3GranuleIdInputFile: s3Uri,
     batchSize: 2,
   };
   const expectedResultWithBatch = [['G1', 'G2'], ['G3', 'G4'], ['G5']];
@@ -473,7 +473,7 @@ G5
 
 test('getGranulesForPayload reads granule inventory report in batches from S3', async (t) => {
   const bucket = randomString();
-  const key = randomId('granules.csv');
+  const key = `${randomId('path')}/${randomId('granuleInventoryReport.csv')}`;
   const s3Uri = `s3://${bucket}/${key}`;
   await awsServices.s3().createBucket({ Bucket: bucket });
 
@@ -499,7 +499,7 @@ test('getGranulesForPayload reads granule inventory report in batches from S3', 
 
   const [reportPgRecord] = await new ReconciliationReportPgModel().create(t.context.knex, report);
   const payload = {
-    reportName: reportPgRecord.name,
+    granuleInventoryReportName: reportPgRecord.name,
   };
 
   const expectedResult = [['G1', 'G2', 'G3', 'G4', 'G5']];
@@ -511,7 +511,7 @@ test('getGranulesForPayload reads granule inventory report in batches from S3', 
   t.deepEqual(results, expectedResult);
 
   const payloadWithBatchSize = {
-    s3Granules: s3Uri,
+    s3GranuleIdInputFile: s3Uri,
     batchSize: 2,
   };
   const expectedResultWithBatch = [['G1', 'G2'], ['G3', 'G4'], ['G5']];

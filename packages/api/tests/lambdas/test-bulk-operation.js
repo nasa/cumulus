@@ -2,7 +2,6 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
-const isError = require('lodash/isError');
 const isObject = require('lodash/isObject');
 const omit = require('lodash/omit');
 
@@ -19,9 +18,11 @@ const {
   ExecutionPgModel,
   GranulePgModel,
   GranulesExecutionsPgModel,
+  ReconciliationReportPgModel,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
+  fakeReconciliationReportRecordFactory,
   generateLocalTestDb,
   getUniqueGranuleByGranuleId,
   destroyLocalTestDb,
@@ -158,6 +159,47 @@ const setUpExistingDatabaseRecords = async (t) => {
   );
 
   t.context.granuleIds = t.context.granules.map((granule) => granule.granuleId);
+
+  const csvFileKey = `${randomId('path')}/${randomId('granuleInventoryReport.csv')}`;
+  const csvFileS3Uri = `s3://${envVars.system_bucket}/${csvFileKey}`;
+
+  const csv = `"granuleUr","collectionId"
+  "${t.context.granules[0].granuleId}","${t.context.granules[0].collectionId}"
+  "${t.context.granules[1].granuleId}","${t.context.granules[1].collectionId}"
+  "G3","C2"
+  "G4","C2"
+  "G5","C2"
+  `;
+
+  await awsServices.s3().putObject({
+    Bucket: envVars.system_bucket,
+    Key: csvFileKey,
+    Body: csv,
+    ContentType: 'text/csv',
+  });
+
+  const report = fakeReconciliationReportRecordFactory({
+    type: 'Granule Inventory',
+    location: csvFileS3Uri,
+  });
+
+  const [reportPgRecord] = await new ReconciliationReportPgModel().create(t.context.knex, report);
+  t.context.granuleInventoryReportName = reportPgRecord.name;
+
+  const testData = `
+${t.context.granules[0].granuleId}
+${t.context.granules[1].granuleId}
+G3
+G4
+G5
+`;
+  const textFileKey = `${randomId('path')}/${randomId('granules.txt')}`;
+  t.context.s3GranuleIdInputFile = `s3://${envVars.system_bucket}/${textFileKey}`;
+  await awsServices.s3().putObject({
+    Bucket: envVars.system_bucket,
+    Key: textFileKey,
+    Body: testData,
+  });
   console.log('done');
 };
 
@@ -395,6 +437,59 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granules returned b
   await verifyGranulesQueuedStatus(t);
 });
 
+test.serial('bulk operation BULK_GRANULE applies workflow to granules in granule inventory report', async (t) => {
+  await setUpExistingDatabaseRecords(t);
+
+  const workflowName = randomId('workflow');
+  const results = await bulkOperation.handler({
+    type: 'BULK_GRANULE',
+    envVars,
+    payload: {
+      granuleInventoryReportName: t.context.granuleInventoryReportName,
+      workflowName,
+      batchSize: 2,
+    },
+    applyWorkflowHandler: applyWorkflowStub,
+  });
+  t.is(results.length, 5);
+  t.true(t.context.granuleIds.every((granuleId) => results.includes(granuleId)));
+  t.is(applyWorkflowStub.callCount, 2);
+  // Can't guarantee processing order so test against granule matching by ID
+  applyWorkflowStub.args.forEach((callArgs) => {
+    const matchingGranule = t.context.granules.find((granule) =>
+      granule.granuleId === callArgs[0].apiGranule.granuleId);
+
+    t.deepEqual(matchingGranule, callArgs[0].apiGranule);
+    t.is(callArgs[0].workflow, workflowName);
+  });
+});
+
+test.serial('bulk operation BULK_GRANULE applies workflow to granules in s3GranuleIdInputFile', async (t) => {
+  await setUpExistingDatabaseRecords(t);
+
+  const workflowName = randomId('workflow');
+  const results = await bulkOperation.handler({
+    type: 'BULK_GRANULE',
+    envVars,
+    payload: {
+      s3GranuleIdInputFile: t.context.s3GranuleIdInputFile,
+      workflowName,
+    },
+    applyWorkflowHandler: applyWorkflowStub,
+  });
+  t.is(results.length, 5);
+  t.true(t.context.granuleIds.every((granuleId) => results.includes(granuleId)));
+  t.is(applyWorkflowStub.callCount, 2);
+  // Can't guarantee processing order so test against granule matching by ID
+  applyWorkflowStub.args.forEach((callArgs) => {
+    const matchingGranule = t.context.granules.find((granule) =>
+      granule.granuleId === callArgs[0].apiGranule.granuleId);
+
+    t.deepEqual(matchingGranule, callArgs[0].apiGranule);
+    t.is(callArgs[0].workflow, workflowName);
+  });
+});
+
 test.serial('applyWorkflowToGranules sets the granules status to queued', async (t) => {
   await setUpExistingDatabaseRecords(t);
   const workflowName = 'test-workflow';
@@ -501,16 +596,12 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
   // tried to delete 6 times, but failed 3 times
   t.is(deleteStub.callCount, 6);
   const errors = results.filter(
-    (item) => isObject(item) && isError(item?.err)
+    (item) => isObject(item) && item?.err
   );
   t.is(errors.length, 3);
   t.deepEqual(
-    errors.map((error) => error?.err?.message),
-    [
-      errorMessage,
-      errorMessage,
-      errorMessage,
-    ]
+    errors.map((error) => error?.err),
+    new Array(3).fill(`Error: ${errorMessage}`)
   );
 
   const s3Buckets = granules[0].s3Buckets;
@@ -573,7 +664,54 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not throw error for granule
       granules: [granuleId],
     },
   });
-  t.deepEqual(results, []);
+  t.is(results.length, 1);
+  t.is(results[0].granuleId, granuleId);
+  t.truthy(results[0].err);
+});
+
+test.serial('bulk operation BULK_GRANULE_DELETE deletes granules in granule inventory report', async (t) => {
+  const granulePgModel = new GranulePgModel();
+  await setUpExistingDatabaseRecords(t);
+
+  const results = await bulkOperation.handler({
+    type: 'BULK_GRANULE_DELETE',
+    envVars,
+    payload: {
+      granuleInventoryReportName: t.context.granuleInventoryReportName,
+      batchSize: 2,
+    },
+  });
+
+  t.is(results.length, 5);
+  t.true(t.context.granuleIds.every((granuleId) => results.includes(granuleId)));
+
+  await Promise.all(t.context.granuleIds.map(async (granuleId) =>
+    t.false(await granulePgModel.exists(
+      t.context.knex,
+      { granule_id: granuleId }
+    ))));
+});
+
+test.serial('bulk operation BULK_GRANULE_DELETE deletes granules in s3GranuleIdInputFile', async (t) => {
+  const granulePgModel = new GranulePgModel();
+  await setUpExistingDatabaseRecords(t);
+
+  const results = await bulkOperation.handler({
+    type: 'BULK_GRANULE_DELETE',
+    envVars,
+    payload: {
+      s3GranuleIdInputFile: t.context.s3GranuleIdInputFile,
+    },
+  });
+
+  t.is(results.length, 5);
+  t.true(t.context.granuleIds.every((granuleId) => results.includes(granuleId)));
+
+  await Promise.all(t.context.granuleIds.map(async (granuleId) =>
+    t.false(await granulePgModel.exists(
+      t.context.knex,
+      { granule_id: granuleId }
+    ))));
 });
 
 test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules', async (t) => {
@@ -706,9 +844,75 @@ test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if 
   });
 
   t.deepEqual(
-    Array.from(result).map(((error) => error.err instanceof RecordDoesNotExist)),
+    Array.from(result).map(((error) => error?.err?.startsWith('RecordDoesNotExist'))),
     [true, true]
   );
 
   t.is(reingestStub.callCount, 0);
+});
+
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules in granule inventory report', async (t) => {
+  await setUpExistingDatabaseRecords(t);
+  const { granules, knex } = t.context;
+
+  const payload = {
+    granuleInventoryReportName: t.context.granuleInventoryReportName,
+    batchSize: 2,
+  };
+
+  const results = await bulkOperation.handler({
+    type: 'BULK_GRANULE_REINGEST',
+    envVars,
+    payload,
+    reingestHandler: reingestStub,
+  });
+
+  t.is(results.length, 5);
+  t.is(reingestStub.callCount, 2);
+  reingestStub.args.forEach(async (callArgs) => {
+    const matchingGranule = granules.find((granule) =>
+      granule.granuleId === callArgs[0].apiGranule.granuleId);
+
+    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const translatedGranule = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+    });
+
+    t.deepEqual(translatedGranule, callArgs[0].granule);
+    t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
+  });
+});
+
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules in s3GranuleIdInputFile', async (t) => {
+  await setUpExistingDatabaseRecords(t);
+  const { granules, knex } = t.context;
+
+  const payload = {
+    s3GranuleIdInputFile: t.context.s3GranuleIdInputFile,
+    batchSize: 2,
+  };
+
+  const results = await bulkOperation.handler({
+    type: 'BULK_GRANULE_REINGEST',
+    envVars,
+    payload,
+    reingestHandler: reingestStub,
+  });
+
+  t.is(results.length, 5);
+  t.is(reingestStub.callCount, 2);
+  reingestStub.args.forEach(async (callArgs) => {
+    const matchingGranule = granules.find((granule) =>
+      granule.granuleId === callArgs[0].apiGranule.granuleId);
+
+    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const translatedGranule = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+    });
+
+    t.deepEqual(translatedGranule, callArgs[0].granule);
+    t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
+  });
 });

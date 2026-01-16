@@ -287,10 +287,11 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
 }
 
 /**
- * Reads a CSV file from S3 and yields granuleIds in batches.
+ * Reads a comma-separated granule inventory report or text file from S3
+ * where each record starts with granuleId, and yields granuleIds in batches.
  *
  * The S3 object is expected to be a line-delimited file where:
- * - The first line may be a header
+ * - The first line may be a header starting with "granuleUr".
  * - Each subsequent line contains a granuleId as the first column
  *
  * @param {Object} params
@@ -380,7 +381,7 @@ async function resolveReportToS3Location(reportName) {
  *
  * Granules may be resolved from:
  * - A direct S3 URI
- * - A reconciliation report name (resolved to S3)
+ * - A granule inventory report name (resolved to S3)
  * - An explicit list of granuleIds
  * - An ElasticSearch (Cloud Metrics) query
  *
@@ -392,22 +393,26 @@ async function resolveReportToS3Location(reportName) {
  * @param {Array<string>} [payload.granules] - Optional list of granuleIds
  * @param {Object} [payload.query] - Optional ElasticSearch query (Cloud Metrics)
  * @param {string} [payload.index] - ElasticSearch index (required if query is provided)
- * @param {string} [payload.s3Granules] - S3 URI pointing to a granules file
- * @param {string} [payload.reportName] - Reconciliation report name resolving to S3
+ * @param {string} [payload.s3GranuleIdInputFile] - S3 URI of an input file where each record
+ *   starts with a granuleId and may include additional fields.
+ * @param {string} [payload.granuleInventoryReportName] - Logical name of a granule inventory
+ *   report. The name is resolved via the database to obtain the report’s S3 URI.
  * @yields {Array<string>} A list or batch of granuleIds
  */
 async function* getGranulesForPayload(payload) {
-  const { batchSize, granules, index, query, s3Granules, reportName } = payload;
+  const {
+    batchSize, granules, index, query, s3GranuleIdInputFile, granuleInventoryReportName,
+  } = payload;
 
   // Direct S3 reference
-  if (s3Granules) {
-    yield* getGranulesFromS3InBatches({ s3Uri: s3Granules, batchSize });
+  if (s3GranuleIdInputFile) {
+    yield* getGranulesFromS3InBatches({ s3Uri: s3GranuleIdInputFile, batchSize });
     return;
   }
 
   // Report-based S3 lookup
-  if (reportName) {
-    const report = await resolveReportToS3Location(reportName);
+  if (granuleInventoryReportName) {
+    const report = await resolveReportToS3Location(granuleInventoryReportName);
     yield* getGranulesFromS3InBatches({ s3Uri: report, batchSize });
     return;
   }

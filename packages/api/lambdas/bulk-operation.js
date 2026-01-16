@@ -62,7 +62,7 @@ async function applyWorkflowToGranules({
         return granuleId;
       } catch (error) {
         log.error(`Granule ${granuleId} encountered an error`, error);
-        return { granuleId, err: error };
+        return { granuleId, err: String(error) };
       }
     })
   );
@@ -143,10 +143,10 @@ async function bulkGranuleDelete(
         } catch (error) {
           if (error instanceof RecordDoesNotExist) {
             log.info(error.message);
-            return undefined;
+            return { granuleId, err: 'RecordDoesNotExist' };
           }
           log.error(`Granule ${granuleId} encountered an error`, error);
-          return { granuleId, err: error };
+          return { granuleId, err: String(error) };
         }
       },
       {
@@ -154,7 +154,7 @@ async function bulkGranuleDelete(
         stopOnError: false,
       }
     );
-    results.push(...batchResults.filter(Boolean));
+    results.push(...batchResults);
   }
   return results;
 }
@@ -244,7 +244,7 @@ async function bulkGranuleReingest(
           return granuleId;
         } catch (error) {
           log.error(`Granule ${granuleId} encountered an error`, error);
-          return { granuleId, err: error };
+          return { granuleId, err: String(error) };
         }
       },
       {
