@@ -17,13 +17,10 @@ Please complete the following steps before upgrading Cumulus.
   Lambda function did not complete the index creation before timing out.
 
   Please follow the standard procedures for running a production database migration, and execute the following SQL to create the index:
+
   ```text
   CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
   ```
-
-#### CUMULUS-4374 Updated Python example tasks and refactored their deployment Terraform modules
-
-- The refactoring introduced in CUMULUS-4374 may require manual deletion of the `PythonTestIngestProcessEcsLogs` and `PythonPythonProcessEcsLogs` CloudWatch log groups. There is a race condition in Terraform where it may try to recreate the log groups before the ECS services are deleted and cleaned up. Since these are just example services you can manually delete the log groups from CloudWatch prior to deployment.
 
 ### Notable Changes
 
@@ -60,7 +57,8 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4374**
   - Updated example python Lambdas to utilize `uv` as their package manager. This change removes references to
     pipenv. Developers should migrate to using `uv` to manage python dependencies and virtual envs which may
-    require reinstalling python libraries.
+    require reinstalling python libraries. This change also updates the names of the example python task services
+    because of a deployment race condition. These services are only used for integration tests.
 - **CUMULUS-4387**
   - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
   `pyproject.toml` file.
