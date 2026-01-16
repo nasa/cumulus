@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
 - **CSD-61**
-  - Updated `PUT granules` endpoint to allow createdAt and updatedAt fields to be null.
+  - Updated writeGranuleFromApi() endpoint to allow createdAt and updatedAt fields to be null.
 
 ## [v21.2.0] 2025-12-06
 
