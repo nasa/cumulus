@@ -11,7 +11,6 @@ const {
 const { verifyJwtToken } = require('./token');
 const { isAuthorizedOAuthUser } = require('../app/auth');
 
-
 /**
  * @typedef { import("express").Request } Request
  * @typedef { import("express").Response } Response
