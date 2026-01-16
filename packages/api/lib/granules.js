@@ -5,6 +5,8 @@ const isNil = require('lodash/isNil');
 const isNumber = require('lodash/isNumber');
 const uniqWith = require('lodash/uniqWith');
 
+const readline = require('readline');
+
 const awsClients = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -22,12 +24,13 @@ const {
   FilePgModel,
   getKnexClient,
   GranulePgModel,
+  ReconciliationReportPgModel,
 } = require('@cumulus/db');
 const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
-const { errorify } = require('@cumulus/errors');
+const { errorify, RecordDoesNotExist } = require('@cumulus/errors');
 const FileUtils = require('./FileUtils');
 
 /**
@@ -284,20 +287,137 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
 }
 
 /**
- * Return a unique list of granules based on the provided list or the response from the
- * query to ES (Cloud Metrics) using the provided query and index.
+ * Reads a comma-separated granule inventory report or text file from S3
+ * where each record starts with granuleId, and yields granuleIds in batches.
+ *
+ * The S3 object is expected to be a line-delimited file where:
+ * - The first line may be a header starting with "granuleUr".
+ * - Each subsequent line contains a granuleId as the first column
+ *
+ * @param {Object} params
+ * @param {string} params.s3Uri - S3 URI pointing to the granules file
+ * @param {number} [params.batchSize=100] - Number of granuleIds to include per batch
+ * @yields {Array<string>} A batch of granuleIds
+ * @throws {Error} If the S3 object does not exist
+ */
+async function* getGranulesFromS3InBatches({
+  s3Uri,
+  batchSize = 100,
+}) {
+  const parsed = s3Utils.parseS3Uri(s3Uri);
+  const exists = await s3Utils.fileExists(parsed.Bucket, parsed.Key);
+  if (!exists) {
+    const msg = `Granules file does not exist ${s3Uri}`;
+    log.error(msg);
+    throw new Error(msg);
+  }
+  const response = await s3Utils.getObject(awsClients.s3(), parsed);
+
+  const rl = readline.createInterface({
+    input: response.Body,
+    crlfDelay: Infinity,
+  });
+
+  let batch = [];
+  let lineNumber = 0;
+
+  for await (const line of rl) {
+    lineNumber += 1;
+    const trimmed = line.trim();
+
+    if (trimmed) {
+      const isHeader = (lineNumber === 1) && (trimmed.startsWith('"granuleUr"'));
+
+      if (!isHeader) {
+        const [granuleId] = trimmed.split(',');
+
+        if (granuleId) {
+          batch.push(granuleId.replace(/^"+|"+$/g, ''));
+        }
+      }
+
+      if (batch.length >= batchSize) {
+        yield batch;
+        batch = [];
+      }
+    }
+  }
+
+  if (batch.length > 0) {
+    yield batch;
+  }
+}
+
+/**
+ * Resolves a reconciliation report name to its S3 location.
+ *
+ * Looks up the report record in PostgreSQL and returns the associated
+ * S3 location, if it exists.
+ *
+ * @param {string} reportName - Name of the reconciliation report
+ * @returns {Promise<string|undefined>} The S3 location of the report, or undefined if not found
+ * @throws {Error} Rethrows unexpected database errors
+ */
+async function resolveReportToS3Location(reportName) {
+  const reconciliationReportPgModel = new ReconciliationReportPgModel();
+  const knex = await getKnexClient();
+  let pgReport;
+  try {
+    pgReport = await reconciliationReportPgModel.get(knex, { name: reportName });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.error(
+        `granule inventory report ${reportName} does not exist`
+      );
+    } else {
+      throw error;
+    }
+  }
+  return pgReport?.location;
+}
+
+/**
+ * Returns granuleIds based on the provided payload.
+ *
+ * Granules may be resolved from:
+ * - A direct S3 URI
+ * - A granule inventory report name (resolved to S3)
+ * - An explicit list of granuleIds
+ * - An ElasticSearch (Cloud Metrics) query
+ *
+ * Results are yielded as batches when sourced from S3, or as a single
+ * deduplicated list otherwise.
  *
  * @param {Object} payload
- * @param {Object} [payload.granules] - Optional list of granules with granuleId and collectionId
- * @param {Object} [payload.query] - Optional parameter of query to send to ES (Cloud Metrics)
- * @param {string} [payload.index] - Optional parameter of ES index to query (Cloud Metrics).
- * Must exist if payload.query exists.
- * @returns {Promise<Array<ApiGranule>>}
+ * @param {number} [payload.batchSize] - Batch size for yielded granuleIds
+ * @param {Array<string>} [payload.granules] - Optional list of granuleIds
+ * @param {Object} [payload.query] - Optional ElasticSearch query (Cloud Metrics)
+ * @param {string} [payload.index] - ElasticSearch index (required if query is provided)
+ * @param {string} [payload.s3GranuleIdInputFile] - S3 URI of an input file where each record
+ *   starts with a granuleId and may include additional fields.
+ * @param {string} [payload.granuleInventoryReportName] - Logical name of a granule inventory
+ *   report. The name is resolved via the database to obtain the report’s S3 URI.
+ * @yields {Array<string>} A list or batch of granuleIds
  */
-async function getGranulesForPayload(payload) {
-  const { granules, index, query } = payload;
-  const queryGranules = granules || [];
+async function* getGranulesForPayload(payload) {
+  const {
+    batchSize, granules, index, query, s3GranuleIdInputFile, granuleInventoryReportName,
+  } = payload;
 
+  // Direct S3 reference
+  if (s3GranuleIdInputFile) {
+    yield* getGranulesFromS3InBatches({ s3Uri: s3GranuleIdInputFile, batchSize });
+    return;
+  }
+
+  // Report-based S3 lookup
+  if (granuleInventoryReportName) {
+    const report = await resolveReportToS3Location(granuleInventoryReportName);
+    yield* getGranulesFromS3InBatches({ s3Uri: report, batchSize });
+    return;
+  }
+
+  const queryGranules = granules || [];
   // query ElasticSearch (Cloud Metrics) if needed
   if (queryGranules.length === 0 && query) {
     log.info('No granules detected. Searching for granules in ElasticSearch.');
@@ -309,15 +429,12 @@ async function getGranulesForPayload(payload) {
     });
 
     esGranules.map((granule) =>
-      queryGranules.push({
-        granuleId: granule.granuleId,
-        collectionId: granule.collectionId,
-      }));
+      queryGranules.push(granule.granuleId));
   }
   // Remove duplicate Granule IDs
   // TODO: could we get unique IDs from the query directly?
   const uniqueGranules = uniqWith(queryGranules, isEqual);
-  return uniqueGranules;
+  yield uniqueGranules;
 }
 
 module.exports = {

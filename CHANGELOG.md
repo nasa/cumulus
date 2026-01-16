@@ -37,6 +37,11 @@ Please complete the following steps before upgrading Cumulus.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
     reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
+- **CUMULUS-4473**
+  - Bulk Operations API endpoints now support Granule Inventory Reports and `s3GranuleIdInputFile`.
+  - Updated Bulk Operations API endpoints to accept a list of granuleIds instead of granule objects in the payload.
+  - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints to accept
+    granuleIds instead of granule objects in the payload.
 
 ### Added
 

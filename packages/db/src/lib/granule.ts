@@ -15,7 +15,6 @@ import { GranulesExecutionsPgModel } from '../models/granules-executions';
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
 import { UpdatedAtRange } from '../types/record';
-const { deprecate } = require('@cumulus/common/util');
 
 const { TableNames } = require('../tables');
 
@@ -85,37 +84,19 @@ export const upsertGranuleWithExecutionJoinRecord = async ({
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction -
  *  DB client or transaction
- * @param {Array<Object>} granules - array of granules with collectionId and granuleId
- * @param {Object} [collectionPgModel] - Collection PG model class instance
+ * @param {Array<string>} granules - array of granuleIds
  * @param {Object} [granulePgModel] - Granule PG model class instance
  * @returns {Promise<number[]>}
  */
 export const getApiGranuleCumulusIds = async (
   knexOrTransaction: Knex | Knex.Transaction,
-  granules: Array<{ collectionId: string, granuleId: string }>,
-  collectionPgModel = new CollectionPgModel(),
+  granules: Array<string>,
   granulePgModel = new GranulePgModel()
 ) => {
-  const collectionMap: { [key: string]: number } = {};
-
-  const granuleCumulusIds: Array<number> = await Promise.all(granules.map(async (granule) => {
-    const { collectionId } = granule;
-    let collectionCumulusId = collectionMap[collectionId];
-
-    if (!collectionCumulusId) {
-      const { name, version } = deconstructCollectionId(collectionId);
-      collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-        knexOrTransaction,
-        { name, version }
-      );
-      collectionMap[collectionId] = collectionCumulusId;
-    }
-
-    return await granulePgModel.getRecordCumulusId(knexOrTransaction, {
-      granule_id: granule.granuleId,
-      collection_cumulus_id: collectionCumulusId,
-    });
-  }));
+  const granuleCumulusIds: Array<number> = await Promise.all(granules.map(async (granuleId) =>
+    granulePgModel.getRecordCumulusId(knexOrTransaction, {
+      granule_id: granuleId,
+    })));
   return [...new Set(granuleCumulusIds)];
 };
 
@@ -132,48 +113,10 @@ export const getUniqueGranuleByGranuleId = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleId: string,
   granulePgModel = new GranulePgModel()
-): Promise<PostgresGranuleRecord> => {
-  deprecate(
-    '@cumulus/db/getUniqueGranuleByGranuleId',
-    'RDS-Phase-3',
-    '@cumulus/db/getGranuleByUniqueColumns'
-  );
-
-  const logger = new Logger({ sender: '@cumulus/api/granules' });
-
-  const PgGranuleRecords = await granulePgModel.search(knexOrTransaction, {
-    granule_id: granuleId,
-  });
-  if (PgGranuleRecords.length > 1) {
-    logger.warn(`Granule ID ${granuleId} is not unique across collections, cannot make an update action based on granule Id alone`);
-    throw new Error(`Failed to write ${granuleId} due to granuleId duplication on postgres granule record`);
-  }
-  if (PgGranuleRecords.length === 0) {
-    throw new RecordDoesNotExist(`Granule ${granuleId} does not exist or was already deleted`);
-  }
-
-  return PgGranuleRecords[0];
-};
-
-/**
- * Get one Granule for a granule_id and collection_cumulus_id
- *
- * @param {Knex | Knex.Transaction} knexOrTransaction -
- *  DB client or transaction
- * @param {string} granuleId - a granule.granule_id
- * @param {number} collectionCumulusId - a granule.collection_cumulus_id
- * @param {GranulePgModel} granulePgModel - Granule PG model class instance
- * @returns {Promise<PostgresGranuleRecord>}
- */
-export const getGranuleByUniqueColumns = (
-  knexOrTransaction: Knex | Knex.Transaction,
-  granuleId: string,
-  collectionCumulusId: number,
-  granulePgModel = new GranulePgModel()
 ): Promise<PostgresGranuleRecord> =>
   granulePgModel.get(
     knexOrTransaction,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    { granule_id: granuleId }
   );
 
 /**
@@ -181,8 +124,7 @@ export const getGranuleByUniqueColumns = (
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction -
  *  DB client or transaction
- * @param {Array<Object>} granules - array of granules with collectionId and granuleId
- * @param {Object} [collectionPgModel] - Collection PG model class instance
+ * @param {Array<string>} granules - array of granuleIds
  * @param {Object} [granulePgModel] - Granule PG model class instance
  * @param {Object} [granulesExecutionsPgModel]
  *   Granules/executions PG model class instance
@@ -190,13 +132,12 @@ export const getGranuleByUniqueColumns = (
  */
 export const getApiGranuleExecutionCumulusIds = async (
   knexOrTransaction: Knex | Knex.Transaction,
-  granules: Array<{ collectionId: string, granuleId: string }>,
-  collectionPgModel = new CollectionPgModel(),
+  granules: Array<string>,
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel()
 ): Promise<Array<number>> => {
   const granuleCumulusIds = await getApiGranuleCumulusIds(
-    knexOrTransaction, granules, collectionPgModel, granulePgModel
+    knexOrTransaction, granules, granulePgModel
   );
   const executionCumulusIds = await granulesExecutionsPgModel
     .searchByGranuleCumulusIds(knexOrTransaction, granuleCumulusIds);
@@ -315,7 +256,7 @@ export const getGranuleAndCollection = async (
 
     pgGranule = await granulePgModel.get(
       knexOrTransaction,
-      { granule_id: granuleId, collection_cumulus_id: pgCollection.cumulus_id }
+      { granule_id: granuleId }
     );
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
