@@ -1,0 +1,4 @@
+# Required
+lambda_processing_role_arn = <>
+prefix = <>
+cumulus_message_adapter_lambda_layer_version_arn = <>
