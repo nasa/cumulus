@@ -310,24 +310,13 @@ test('moveGranuleFilesAndUpdateDatastore throws if granulePgModel.getRecordCumul
 test('getGranulesForPayload returns unique granules from payload', async (t) => {
   const granuleId1 = randomId('granule');
   const granuleId2 = randomId('granule');
-  const collectionId1 = randomId('collection');
-  const collectionId2 = randomId('collection');
-  const granules = [
-    { granuleId: granuleId1, collectionId: collectionId1 },
-    { granuleId: granuleId1, collectionId: collectionId1 },
-    { granuleId: granuleId1, collectionId: collectionId2 },
-    { granuleId: granuleId2, collectionId: collectionId2 },
-  ];
+  const granules = [granuleId1, granuleId1, granuleId1, granuleId2];
   const { value: returnedGranules } = await getGranulesForPayload({
     granules,
   }).next() || {};
   t.deepEqual(
     returnedGranules.sort(),
-    [
-      { granuleId: granuleId1, collectionId: collectionId1 },
-      { granuleId: granuleId1, collectionId: collectionId2 },
-      { granuleId: granuleId2, collectionId: collectionId2 },
-    ].sort()
+    [granuleId1, granuleId2].sort()
   );
 });
 
@@ -378,11 +367,7 @@ test.serial('getGranulesForPayload returns unique granules from query', async (t
   }).next() || {};
   t.deepEqual(
     returnedGranules.sort(),
-    [
-      { granuleId: granuleId1, collectionId: collectionId1 },
-      { granuleId: granuleId1, collectionId: collectionId2 },
-      { granuleId: granuleId2, collectionId: collectionId2 },
-    ].sort()
+    [granuleId1, granuleId2].sort()
   );
 });
 
@@ -437,11 +422,7 @@ test.serial('getGranulesForPayload handles query paging', async (t) => {
   }).next() || {};
   t.deepEqual(
     returnedGranules,
-    [
-      { granuleId: granuleId1, collectionId },
-      { granuleId: granuleId2, collectionId },
-      { granuleId: granuleId3, collectionId },
-    ]
+    [granuleId1, granuleId2, granuleId3]
   );
 });
 
@@ -451,11 +432,10 @@ test('getGranulesForPayload reads file with granuleIds in batches from S3', asyn
   const s3Uri = `s3://${bucket}/${key}`;
   await awsServices.s3().createBucket({ Bucket: bucket });
 
-  // collectionId is optional
   const testData = `
-G1,C1
+G1
 G2
-G3,C2
+G3
 G4
 G5
 `;
@@ -470,15 +450,7 @@ G5
     s3Granules: s3Uri,
   };
 
-  const expectedResult = [
-    [
-      { granuleId: 'G1', collectionId: 'C1' },
-      { granuleId: 'G2', collectionId: undefined },
-      { granuleId: 'G3', collectionId: 'C2' },
-      { granuleId: 'G4', collectionId: undefined },
-      { granuleId: 'G5', collectionId: undefined },
-    ],
-  ];
+  const expectedResult = [['G1', 'G2', 'G3', 'G4', 'G5']];
   const results = [];
   for await (const batch of getGranulesForPayload(payload)) {
     results.push(batch);
@@ -490,19 +462,7 @@ G5
     s3Granules: s3Uri,
     batchSize: 2,
   };
-  const expectedResultWithBatch = [
-    [
-      { granuleId: 'G1', collectionId: 'C1' },
-      { granuleId: 'G2', collectionId: undefined },
-    ],
-    [
-      { granuleId: 'G3', collectionId: 'C2' },
-      { granuleId: 'G4', collectionId: undefined },
-    ],
-    [
-      { granuleId: 'G5', collectionId: undefined },
-    ],
-  ];
+  const expectedResultWithBatch = [['G1', 'G2'], ['G3', 'G4'], ['G5']];
   const resultsWithBatch = [];
   for await (const batch of getGranulesForPayload(payloadWithBatchSize)) {
     resultsWithBatch.push(batch);
@@ -537,20 +497,12 @@ test('getGranulesForPayload reads granule inventory report in batches from S3', 
     location: s3Uri,
   });
 
-  let [reportPgRecord] = await new ReconciliationReportPgModel().create(t.context.knex, report);
+  const [reportPgRecord] = await new ReconciliationReportPgModel().create(t.context.knex, report);
   const payload = {
     reportName: reportPgRecord.name,
   };
 
-  const expectedResult = [
-    [
-      { granuleId: 'G1', collectionId: 'C1' },
-      { granuleId: 'G2', collectionId: 'C1' },
-      { granuleId: 'G3', collectionId: 'C2' },
-      { granuleId: 'G4', collectionId: 'C2' },
-      { granuleId: 'G5', collectionId: 'C2' },
-    ],
-  ];
+  const expectedResult = [['G1', 'G2', 'G3', 'G4', 'G5']];
   const results = [];
   for await (const batch of getGranulesForPayload(payload)) {
     results.push(batch);
@@ -562,19 +514,7 @@ test('getGranulesForPayload reads granule inventory report in batches from S3', 
     s3Granules: s3Uri,
     batchSize: 2,
   };
-  const expectedResultWithBatch = [
-    [
-      { granuleId: 'G1', collectionId: 'C1' },
-      { granuleId: 'G2', collectionId: 'C1' },
-    ],
-    [
-      { granuleId: 'G3', collectionId: 'C2' },
-      { granuleId: 'G4', collectionId: 'C2' },
-    ],
-    [
-      { granuleId: 'G5', collectionId: 'C2' },
-    ],
-  ];
+  const expectedResultWithBatch = [['G1', 'G2'], ['G3', 'G4'], ['G5']];
   const resultsWithBatch = [];
   for await (const batch of getGranulesForPayload(payloadWithBatchSize)) {
     resultsWithBatch.push(batch);

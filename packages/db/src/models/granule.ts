@@ -83,9 +83,9 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     params: PostgresGranuleUniqueColumns | RecordSelect
   ): Promise<PostgresGranuleRecord> {
     if (!isRecordSelect(params)) {
-      if (!(params.granule_id && params.collection_cumulus_id)) {
+      if (!params.granule_id) {
         throw new InvalidArgument(
-          `Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(
+          `Cannot find granule, must provide either granule_id or cumulus_id: params(${JSON.stringify(
             params
           )})`
         );

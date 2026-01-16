@@ -1,6 +1,7 @@
 // @ts-check
 
 const get = require('lodash/get');
+const isString = require('lodash/isString');
 
 const log = require('@cumulus/common/log');
 
@@ -9,6 +10,7 @@ const {
 } = require('./errors');
 const { verifyJwtToken } = require('./token');
 const { isAuthorizedOAuthUser } = require('../app/auth');
+
 
 /**
  * @typedef { import("express").Request } Request
@@ -100,16 +102,9 @@ function validateGranuleExecutionRequest(req, res, next) {
       return res.boom.badRequest('no values provided for granules');
     }
 
-    payload.granules.forEach((granule) => {
-      const granuleString = JSON.stringify(granule);
-      if (!granule.collectionId) {
-        return res.boom.badRequest(`no collectionId provided for ${granuleString}`);
-      }
-      if (!granule.granuleId) {
-        return res.boom.badRequest(`no granuleId provided for ${granuleString}`);
-      }
-      return true;
-    });
+    if (payload.granules.some((g) => !isString(g))) {
+      return res.boom.badRequest(`granules must be an array of strings, received ${payload.granules}`);
+    }
   } else {
     if (payload.query
     && !(process.env.METRICS_ES_HOST

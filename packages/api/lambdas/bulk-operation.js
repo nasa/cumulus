@@ -40,11 +40,11 @@ async function applyWorkflowToGranules({
 }) {
   return await pMap(
     granules,
-    (async (granule) => {
+    (async (granuleId) => {
       try {
         const pgGranule = await getUniqueGranuleByGranuleId(
           knex,
-          granule.granuleId,
+          granuleId,
           granulePgModel
         );
         const apiGranule = await granuleTranslateMethod({
@@ -59,10 +59,10 @@ async function applyWorkflowToGranules({
           queueUrl,
           asyncOperationId: process.env.asyncOperationId,
         });
-        return granule.granuleId;
+        return granuleId;
       } catch (error) {
-        log.error(`Granule ${granule.granuleId} encountered an error`, error);
-        return { granuleId: granule.granuleId, err: error };
+        log.error(`Granule ${granuleId} encountered an error`, error);
+        return { granuleId, err: error };
       }
     })
   );
@@ -106,52 +106,57 @@ async function bulkGranuleDelete(
   const dbPoolMax = payload.maxDbConnections || concurrency;
   process.env.dbMaxPool = `${dbPoolMax}`;
 
-  const deletedGranules = [];
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
-  const granules = await getGranulesForPayload(payload);
   const knex = await getKnexClient();
 
-  await pMap(
-    granules,
-    async (granule) => {
-      let pgGranule;
-      const granulePgModel = new GranulePgModel();
+  const results = [];
+  for await (
+    const granuleBatch of getGranulesForPayload(payload)
+  ) {
+    log.info(`Processing batch of ${granuleBatch.length} granules, for ${JSON.stringify(granuleBatch)}`);
+    const batchResults = await pMap(
+      granuleBatch,
+      async (granuleId) => {
+        let pgGranule;
+        const granulePgModel = new GranulePgModel();
 
-      try {
-        pgGranule = await getUniqueGranuleByGranuleId(
-          knex,
-          granule.granuleId,
-          granulePgModel
-        );
-      } catch (error) {
-        // PG Granule being undefined will be caught by deleteGranulesAndFiles
-        if (error instanceof RecordDoesNotExist) {
-          log.info(error.message);
+        try {
+          pgGranule = await getUniqueGranuleByGranuleId(
+            knex,
+            granuleId,
+            granulePgModel
+          );
+
+          if (pgGranule.published && forceRemoveFromCmr) {
+            ({ pgGranule } = await unpublishGranuleFunc({
+              knex,
+              pgGranuleRecord: pgGranule,
+              removeGranuleFromCmrFunction,
+            }));
+          }
+
+          await deleteGranuleAndFiles({
+            knex,
+            pgGranule,
+          });
+          return granuleId;
+        } catch (error) {
+          if (error instanceof RecordDoesNotExist) {
+            log.info(error.message);
+            return undefined;
+          }
+          log.error(`Granule ${granuleId} encountered an error`, error);
+          return { granuleId, err: error };
         }
-        return;
+      },
+      {
+        concurrency,
+        stopOnError: false,
       }
-
-      if (pgGranule.published && forceRemoveFromCmr) {
-        ({ pgGranule } = await unpublishGranuleFunc({
-          knex,
-          pgGranuleRecord: pgGranule,
-          removeGranuleFromCmrFunction,
-        }));
-      }
-
-      await deleteGranuleAndFiles({
-        knex,
-        pgGranule,
-      });
-
-      deletedGranules.push(granule.granuleId);
-    },
-    {
-      concurrency,
-      stopOnError: false,
-    }
-  );
-  return { deletedGranules };
+    );
+    results.push(...batchResults.filter(Boolean));
+  }
+  return results;
 }
 
 /**
@@ -173,15 +178,23 @@ async function bulkGranuleDelete(
 async function bulkGranule(payload, applyWorkflowHandler) {
   const knex = await getKnexClient();
   const { queueUrl, workflowName, meta } = payload;
-  const granules = await getGranulesForPayload(payload);
-  return await applyWorkflowToGranules({
-    knex,
-    granules,
-    meta,
-    queueUrl,
-    workflowName,
-    applyWorkflowHandler,
-  });
+  const results = [];
+  for await (
+    const granuleBatch of getGranulesForPayload(payload)
+  ) {
+    log.info(`Processing batch of ${granuleBatch.length} granules, for ${JSON.stringify(granuleBatch)}`);
+
+    const batchResults = await applyWorkflowToGranules({
+      knex,
+      granules: granuleBatch,
+      meta,
+      queueUrl,
+      workflowName,
+      applyWorkflowHandler,
+    });
+    results.push(...batchResults);
+  }
+  return results;
 }
 
 async function bulkGranuleReingest(
@@ -201,13 +214,13 @@ async function bulkGranuleReingest(
 
     const batchResults = await pMap(
       granuleBatch,
-      async (granule) => {
+      async (granuleId) => {
         const granulePgModel = new GranulePgModel();
 
         try {
           const pgGranule = await getUniqueGranuleByGranuleId(
             knex,
-            granule.granuleId,
+            granuleId,
             granulePgModel
           );
 
@@ -217,7 +230,7 @@ async function bulkGranuleReingest(
           });
 
           const targetExecution = await chooseTargetExecution({
-            granuleId: granule.granuleId,
+            granuleId,
             workflowName,
           });
           const apiGranuleToReingest = {
@@ -228,10 +241,10 @@ async function bulkGranuleReingest(
             apiGranule: apiGranuleToReingest,
             asyncOperationId: process.env.asyncOperationId,
           });
-          return granule.granuleId;
+          return granuleId;
         } catch (error) {
-          log.error(`Granule ${granule.granuleId} encountered an error`, error);
-          return { granuleId: granule.granuleId, err: error };
+          log.error(`Granule ${granuleId} encountered an error`, error);
+          return { granuleId, err: error };
         }
       },
       {
@@ -239,9 +252,9 @@ async function bulkGranuleReingest(
         stopOnError: false,
       }
     );
-    // TODO only save the result of last 2 batches to avoid memory issue
     results.push(...batchResults);
   }
+  return results;
 }
 
 /**

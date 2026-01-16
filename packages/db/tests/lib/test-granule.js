@@ -1,10 +1,9 @@
 const test = require('ava');
-const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 const orderBy = require('lodash/orderBy');
 
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   ExecutionPgModel,
@@ -21,7 +20,6 @@ const {
   getGranulesByGranuleId,
   getApiGranuleExecutionCumulusIds,
   getUniqueGranuleByGranuleId,
-  getGranuleByUniqueColumns,
   migrationDir,
   getGranulesByApiPropertiesQuery,
   createRejectableTransaction,
@@ -369,19 +367,15 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
   );
 });
 
-test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
+test('getApiGranuleExecutionCumulusIds() returns correct values for one granule', async (t) => {
   const {
     knex,
-    collection,
     collectionCumulusId,
-    collectionPgModel,
     executionCumulusId,
     executionPgModel,
     granulePgModel,
     granulesExecutionsPgModel,
   } = t.context;
-
-  const collectionId = constructCollectionId(collection.name, collection.version);
 
   const granule = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
@@ -412,17 +406,11 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
     })
   );
 
-  const granules = [
-    {
-      granuleId: granule.granule_id,
-      collectionId,
-    },
-  ];
+  const granules = [granule.granule_id];
 
   const results = await getApiGranuleExecutionCumulusIds(
     knex,
     granules,
-    collectionPgModel,
     granulePgModel,
     granulesExecutionsPgModel
   );
@@ -430,25 +418,15 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
   t.deepEqual(results.sort(), [executionCumulusId, secondExecutionCumulusId].sort());
 });
 
-test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not in map', async (t) => {
+test('getApiGranuleExecutionCumulusIds() returns correct values for multiple granules', async (t) => {
   const {
     knex,
-    collection,
     collectionCumulusId,
-    collectionPgModel,
     executionCumulusId,
     executionPgModel,
     granulePgModel,
     granulesExecutionsPgModel,
   } = t.context;
-
-  const getCollectionRecordCumulusIdSpy = sinon.spy(CollectionPgModel.prototype, 'getRecordCumulusId');
-
-  t.teardown(() => {
-    getCollectionRecordCumulusIdSpy.restore();
-  });
-
-  const collectionId = constructCollectionId(collection.name, collection.version);
 
   const granule1 = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
@@ -491,25 +469,11 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
     })
   );
 
-  const granules = [
-    {
-      granuleId: granule1.granule_id,
-      collectionId,
-    },
-    {
-      granuleId: granule2.granule_id,
-      collectionId,
-    },
-  ];
-
-  const { name, version } = deconstructCollectionId(collectionId);
-  // we should only query collection once since the two granules have the same collection
-  t.true(getCollectionRecordCumulusIdSpy.calledOnceWith(knex, { name, version }));
+  const granules = [granule1.granule_id, granule2.granule_id];
 
   const results = await getApiGranuleExecutionCumulusIds(
     knex,
     granules,
-    collectionPgModel,
     granulePgModel,
     granulesExecutionsPgModel
   );
@@ -1029,82 +993,6 @@ test('getUniqueGranuleByGranuleId() returns a single granule', async (t) => {
   t.deepEqual(
     await getUniqueGranuleByGranuleId(knex, pgGranule.granule_id, granulePgModel),
     pgGranule
-  );
-});
-
-test('getGranuleByUniqueColumns() returns a single granule', async (t) => {
-  const {
-    knex,
-    collectionCumulusId,
-    granulePgModel,
-    collectionPgModel,
-  } = t.context;
-
-  // Create the granule
-  const fakeGranule = fakeGranuleRecordFactory({
-    collection_cumulus_id: collectionCumulusId,
-  });
-  const [createdPgGranule] = await granulePgModel.create(knex, fakeGranule);
-  const pgGranule = await granulePgModel.get(knex, { cumulus_id: createdPgGranule.cumulus_id });
-
-  // Create a new collection
-  const fakeCollection = fakeCollectionRecordFactory();
-  const [createdPgCollection] = await collectionPgModel.create(knex, fakeCollection);
-
-  // Create a second granule with the same granule ID but the new collection Cumulus ID
-  // to ensure that the granule we fetch is the correct one
-  const fakeGranule2 = fakeGranuleRecordFactory({
-    granule_id: createdPgGranule.granule_id,
-    collection_cumulus_id: createdPgCollection.cumulus_id,
-  });
-  await granulePgModel.create(knex, fakeGranule2);
-
-  t.deepEqual(
-    await getGranuleByUniqueColumns(
-      knex,
-      pgGranule.granule_id,
-      collectionCumulusId,
-      granulePgModel
-    ),
-    pgGranule
-  );
-});
-
-test('getUniqueGranuleByGranuleId() throws an error if more than one granule is found', async (t) => {
-  const {
-    knex,
-    collectionCumulusId,
-    collectionPgModel,
-    granulePgModel,
-  } = t.context;
-
-  const granuleId = 1;
-
-  const collection = fakeCollectionRecordFactory({ name: 'collectionName2', version: 'collectionVersion2' });
-  const [collectionPgRecord] = await collectionPgModel.create(knex, collection);
-  const collectionCumulusId2 = collectionPgRecord.cumulus_id;
-
-  // 2 records. Same granule ID, different collections
-  const fakeGranules = [
-    fakeGranuleRecordFactory({
-      collection_cumulus_id: collectionCumulusId,
-      granule_id: granuleId,
-    }),
-    fakeGranuleRecordFactory({
-      collection_cumulus_id: collectionCumulusId2,
-      granule_id: granuleId,
-    }),
-  ];
-
-  const granules = await Promise.all(fakeGranules.map((fakeGranule) =>
-    granulePgModel.create(knex, fakeGranule)));
-  const granuleIds = granules.map(([granule]) => granule.cumulus_id);
-
-  const pgGranule = await granulePgModel.get(knex, { cumulus_id: granuleIds[0] });
-
-  await t.throwsAsync(
-    getUniqueGranuleByGranuleId(knex, pgGranule.granule_id, granulePgModel),
-    { instanceOf: Error }
   );
 });
 

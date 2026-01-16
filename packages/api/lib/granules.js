@@ -286,7 +286,19 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
   return granules;
 }
 
-// parse the csv file or file with only granuleId
+/**
+ * Reads a CSV file from S3 and yields granuleIds in batches.
+ *
+ * The S3 object is expected to be a line-delimited file where:
+ * - The first line may be a header
+ * - Each subsequent line contains a granuleId as the first column
+ *
+ * @param {Object} params
+ * @param {string} params.s3Uri - S3 URI pointing to the granules file
+ * @param {number} [params.batchSize=100] - Number of granuleIds to include per batch
+ * @yields {Array<string>} A batch of granuleIds
+ * @throws {Error} If the S3 object does not exist
+ */
 async function* getGranulesFromS3InBatches({
   s3Uri,
   batchSize = 100,
@@ -313,15 +325,13 @@ async function* getGranulesFromS3InBatches({
     const trimmed = line.trim();
 
     if (trimmed) {
-      const isHeader =
-        lineNumber === 1 &&
-        (trimmed.startsWith('"granuleUr"'));
+      const isHeader = (lineNumber === 1) && (trimmed.startsWith('"granuleUr"'));
 
       if (!isHeader) {
-        const [granuleId, collectionId] = trimmed.split(',');
+        const [granuleId] = trimmed.split(',');
 
         if (granuleId) {
-          batch.push({ granuleId: granuleId.replace(/^"+|"+$/g, ''), collectionId: collectionId?.replace(/^"+|"+$/g, '') });
+          batch.push(granuleId.replace(/^"+|"+$/g, ''));
         }
       }
 
@@ -337,6 +347,16 @@ async function* getGranulesFromS3InBatches({
   }
 }
 
+/**
+ * Resolves a reconciliation report name to its S3 location.
+ *
+ * Looks up the report record in PostgreSQL and returns the associated
+ * S3 location, if it exists.
+ *
+ * @param {string} reportName - Name of the reconciliation report
+ * @returns {Promise<string|undefined>} The S3 location of the report, or undefined if not found
+ * @throws {Error} Rethrows unexpected database errors
+ */
 async function resolveReportToS3Location(reportName) {
   const reconciliationReportPgModel = new ReconciliationReportPgModel();
   const knex = await getKnexClient();
@@ -356,15 +376,25 @@ async function resolveReportToS3Location(reportName) {
 }
 
 /**
- * Return a unique list of granules based on the provided list or the response from the
- * query to ES (Cloud Metrics) using the provided query and index.
+ * Returns granuleIds based on the provided payload.
+ *
+ * Granules may be resolved from:
+ * - A direct S3 URI
+ * - A reconciliation report name (resolved to S3)
+ * - An explicit list of granuleIds
+ * - An ElasticSearch (Cloud Metrics) query
+ *
+ * Results are yielded as batches when sourced from S3, or as a single
+ * deduplicated list otherwise.
  *
  * @param {Object} payload
- * @param {Object} [payload.granules] - Optional list of granules with granuleId and collectionId
- * @param {Object} [payload.query] - Optional parameter of query to send to ES (Cloud Metrics)
- * @param {string} [payload.index] - Optional parameter of ES index to query (Cloud Metrics).
- * Must exist if payload.query exists.
- * @returns {AsyncGenerator<Array<ApiGranule>>}
+ * @param {number} [payload.batchSize] - Batch size for yielded granuleIds
+ * @param {Array<string>} [payload.granules] - Optional list of granuleIds
+ * @param {Object} [payload.query] - Optional ElasticSearch query (Cloud Metrics)
+ * @param {string} [payload.index] - ElasticSearch index (required if query is provided)
+ * @param {string} [payload.s3Granules] - S3 URI pointing to a granules file
+ * @param {string} [payload.reportName] - Reconciliation report name resolving to S3
+ * @yields {Array<string>} A list or batch of granuleIds
  */
 async function* getGranulesForPayload(payload) {
   const { batchSize, granules, index, query, s3Granules, reportName } = payload;
@@ -394,10 +424,7 @@ async function* getGranulesForPayload(payload) {
     });
 
     esGranules.map((granule) =>
-      queryGranules.push({
-        granuleId: granule.granuleId,
-        collectionId: granule.collectionId,
-      }));
+      queryGranules.push(granule.granuleId));
   }
   // Remove duplicate Granule IDs
   // TODO: could we get unique IDs from the query directly?

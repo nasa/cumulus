@@ -2,6 +2,8 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
+const isError = require('lodash/isError');
+const isObject = require('lodash/isObject');
 const omit = require('lodash/omit');
 
 const { sns, sqs } = require('@cumulus/aws-client/services');
@@ -275,9 +277,10 @@ test.serial('applyWorkflowToGranules passed on queueUrl to applyWorkflow', async
     get: () => [{}],
   };
 
+  const granuleIds = t.context.granuleUniqueKeys.map((granule) => granule.granuleId);
   await bulkOperation.applyWorkflowToGranules({
     applyWorkflowHandler: applyWorkflowSpy,
-    granules: t.context.granuleUniqueKeys,
+    granules: granuleIds,
     granulePgModel: fakeGranulePgModel,
     granuleTranslateMethod: (_granule) => ({}),
     knex: t.context.knex,
@@ -308,7 +311,7 @@ test.serial('bulk operation lambda sets env vars provided in payload', async (t)
     type: 'BULK_GRANULE',
     envVars,
     payload: {
-      granules: [granule],
+      granules: [granule.granuleId],
       workflowName,
     },
   });
@@ -325,7 +328,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granules', 
     type: 'BULK_GRANULE',
     envVars,
     payload: {
-      granules: t.context.granules,
+      granules: t.context.granuleIds,
       workflowName,
     },
     applyWorkflowHandler: applyWorkflowStub,
@@ -397,7 +400,7 @@ test.serial('applyWorkflowToGranules sets the granules status to queued', async 
   const workflowName = 'test-workflow';
 
   await bulkOperation.applyWorkflowToGranules({
-    granules: t.context.granules,
+    granules: t.context.granuleIds,
     workflowName,
     knex: t.context.knex,
     applyWorkflowHandler: applyWorkflowStub,
@@ -426,27 +429,19 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granules from Pos
   const apiGranuleId1 = granules[0].newPgGranule.granule_id;
   const apiGranuleId2 = granules[1].newPgGranule.granule_id;
 
-  const apiGranules = await Promise.all(
-    granules.map((granule) => translatePostgresGranuleToApiGranule({
-      granulePgRecord: granule.newPgGranule,
-      knexOrTransaction: t.context.knex,
-    }))
-  );
+  const granuleIds = [apiGranuleId1, apiGranuleId2];
 
-  const { deletedGranules } = await bulkOperation.handler({
+  const results = await bulkOperation.handler({
     type: 'BULK_GRANULE_DELETE',
     envVars,
     payload: {
-      granules: apiGranules,
+      granules: granuleIds,
     },
   });
 
   t.deepEqual(
-    deletedGranules.sort(),
-    [
-      apiGranuleId1,
-      apiGranuleId2,
-    ].sort()
+    results.sort(),
+    granuleIds.sort()
   );
 
   // Granules should have been deleted from Postgres
@@ -493,25 +488,24 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
     createGranuleAndFiles({ dbClient: t.context.knex }),
   ]);
 
-  const apiGranules = await Promise.all(
-    granules.map((granule) => translatePostgresGranuleToApiGranule({
-      granulePgRecord: granule.newPgGranule,
-      knexOrTransaction: t.context.knex,
-    }))
-  );
+  const granuleIds = granules.map((granule) => granule.newPgGranule.granule_id);
 
-  const aggregateError = await t.throwsAsync(bulkOperation.handler({
+  const results = await bulkOperation.handler({
     type: 'BULK_GRANULE_DELETE',
     envVars,
     payload: {
-      granules: apiGranules,
+      granules: granuleIds,
     },
-  }));
+  });
 
   // tried to delete 6 times, but failed 3 times
   t.is(deleteStub.callCount, 6);
+  const errors = results.filter(
+    (item) => isObject(item) && isError(item?.err)
+  );
+  t.is(errors.length, 3);
   t.deepEqual(
-    Array.from(aggregateError).map((error) => error.message),
+    errors.map((error) => error?.err?.message),
     [
       errorMessage,
       errorMessage,
@@ -551,7 +545,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granules returned by que
     },
   });
 
-  const { deletedGranules } = await bulkOperation.handler({
+  const results = await bulkOperation.handler({
     type: 'BULK_GRANULE_DELETE',
     envVars,
     payload: {
@@ -562,7 +556,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granules returned by que
 
   t.true(esSearchStub.called);
   t.deepEqual(
-    deletedGranules.sort(),
+    results.sort(),
     [
       t.context.granules[0].granuleId,
       t.context.granules[1].granuleId,
@@ -571,37 +565,15 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granules returned by que
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE does not throw error for granules that were already removed', async (t) => {
-  const collectionPgModel = new CollectionPgModel();
-  const collection = fakeCollectionRecordFactory();
-  const [collectionPgRecord] = await collectionPgModel.create(
-    t.context.knex,
-    collection
-  );
-
-  const { deletedGranules } = await bulkOperation.handler({
+  const granuleId = randomId('deleted-granule-id');
+  const results = await bulkOperation.handler({
     type: 'BULK_GRANULE_DELETE',
     envVars,
     payload: {
-      granules: [{
-        granuleId: 'deleted-granule-id',
-        collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
-      }],
+      granules: [granuleId],
     },
   });
-  t.deepEqual(deletedGranules, []);
-});
-
-test.serial('bulk operation BULK_GRANULE_DELETE throws an error if the collection cannot be found', async (t) => {
-  await t.throwsAsync(bulkOperation.handler({
-    type: 'BULK_GRANULE_DELETE',
-    envVars,
-    payload: {
-      granules: [{
-        granuleId: 'deleted-granule-id',
-        collectionId: 'fake-collection-id',
-      }],
-    },
-  }));
+  t.deepEqual(results, []);
 });
 
 test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules', async (t) => {
@@ -609,7 +581,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules', a
   const { granules, knex } = t.context;
 
   const payload = {
-    granules,
+    granules: t.context.granuleIds,
   };
 
   await bulkOperation.handler({
@@ -639,6 +611,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules wit
   await setUpExistingDatabaseRecords(t);
   const {
     granules,
+    granuleIds,
     workflowName,
   } = t.context;
 
@@ -646,7 +619,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules wit
     type: 'BULK_GRANULE_REINGEST',
     envVars,
     payload: {
-      granules,
+      granules: granuleIds,
       workflowName,
     },
     reingestHandler: reingestStub,
@@ -723,34 +696,11 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules returned by
 });
 
 test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if they do not exist in PostgreSQL', async (t) => {
-  const collectionPgModel = new CollectionPgModel();
-
-  const collection = fakeCollectionRecordFactory();
-  const [collectionPgRecord] = await collectionPgModel.create(
-    t.context.knex,
-    collection
-  );
-
   const result = await bulkOperation.handler({
     type: 'BULK_GRANULE_REINGEST',
     envVars,
     payload: {
-      granules: [
-        {
-          granuleId: randomGranuleId(),
-          collectionId: constructCollectionId(
-            collectionPgRecord.name,
-            collectionPgRecord.version
-          ),
-        },
-        {
-          granuleId: randomGranuleId(),
-          collectionId: constructCollectionId(
-            collectionPgRecord.name,
-            collectionPgRecord.version
-          ),
-        },
-      ],
+      granules: [randomGranuleId(), randomGranuleId()],
     },
     reingestHandler: reingestStub,
   });

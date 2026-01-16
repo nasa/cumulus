@@ -138,7 +138,6 @@ export {
   getApiGranuleExecutionCumulusIds,
   getGranuleCollectionId,
   getUniqueGranuleByGranuleId,
-  getGranuleByUniqueColumns,
   upsertGranuleWithExecutionJoinRecord,
   getGranulesByApiPropertiesQuery,
   getGranulesByGranuleId,

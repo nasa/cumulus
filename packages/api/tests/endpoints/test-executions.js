@@ -550,10 +550,7 @@ test.serial('POST /executions/search-by-granules returns 1 record by default', a
   const response = await request(app)
     .post('/executions/search-by-granules')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -573,10 +570,7 @@ test.serial('POST /executions/search-by-granules supports paging', async (t) => 
   const page1 = await request(app)
     .post('/executions/search-by-granules?limit=2&page=1')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -584,10 +578,7 @@ test.serial('POST /executions/search-by-granules supports paging', async (t) => 
   const page2 = await request(app)
     .post('/executions/search-by-granules?limit=2&page=2')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -609,10 +600,7 @@ test.serial('POST /executions/search-by-granules supports sorting', async (t) =>
   const response = await request(app)
     .post('/executions/search-by-granules?sort_by=arn&order=asc&limit=10')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -628,10 +616,7 @@ test.serial('POST /executions/search-by-granules returns correct executions when
   const response = await request(app)
     .post('/executions/search-by-granules?limit=10')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -764,44 +749,6 @@ test.serial('POST /executions/search-by-granules returns 400 when granules is an
   t.regex(response.body.message, /no values provided for granules/);
 });
 
-test.serial('POST /executions/search-by-granules returns 400 when granules do not have collectionId', async (t) => {
-  const expectedIndex = 'my-index';
-  const granule = { granuleId: randomId('granuleId') };
-
-  const body = {
-    index: expectedIndex,
-    granules: [granule],
-  };
-
-  const response = await request(app)
-    .post('/executions/search-by-granules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(body)
-    .expect(400);
-
-  t.regex(response.body.message, new RegExp(`no collectionId provided for ${JSON.stringify(granule)}`));
-});
-
-test.serial('POST /executions/search-by-granules returns 400 when granules do not have granuleId', async (t) => {
-  const expectedIndex = 'my-index';
-  const granule = { collectionId: randomId('granuleId') };
-
-  const body = {
-    index: expectedIndex,
-    granules: [granule],
-  };
-
-  const response = await request(app)
-    .post('/executions/search-by-granules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(body)
-    .expect(400);
-
-  t.regex(response.body.message, new RegExp(`no granuleId provided for ${JSON.stringify(granule)}`));
-});
-
 test.serial('POST /executions/search-by-granules returns 400 when the Metrics ELK stack is not configured', async (t) => {
   const expectedIndex = 'my-index';
   const expectedQuery = { query: 'fake-query' };
@@ -828,15 +775,12 @@ test.serial('POST /executions/search-by-granules returns 400 when the Metrics EL
 });
 
 test.serial('POST /executions/workflows-by-granules returns correct executions when granules array is passed', async (t) => {
-  const { collectionId, fakeGranules, fakePGExecutions } = t.context;
+  const { fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
     .post('/executions/workflows-by-granules')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -854,7 +798,6 @@ test.serial('POST /executions/workflows-by-granules returns correct executions w
 test.serial('POST /executions/workflows-by-granules returns executions by descending timestamp when a single granule is passed', async (t) => {
   const {
     knex,
-    collectionId,
     executionPgModel,
     fakeGranules,
     fakePGGranules,
@@ -873,9 +816,7 @@ test.serial('POST /executions/workflows-by-granules returns executions by descen
   const response = await request(app)
     .post('/executions/workflows-by-granules')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
