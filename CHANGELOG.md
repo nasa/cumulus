@@ -12,14 +12,18 @@ Please complete the following steps before upgrading Cumulus.
 
 #### CUMULUS-4459 New index added to the granules table to improve Dashboard performance
 
-- The fix introduced in CUMULUS-4459 requires a manual database update in the production environment. 
-  This step ensures the new index is created successfully, even in the unlikely event that the database-migration 
+- The fix introduced in CUMULUS-4459 requires a manual database update in the production environment.
+  This step ensures the new index is created successfully, even in the unlikely event that the database-migration
   Lambda function did not complete the index creation before timing out.
 
   Please follow the standard procedures for running a production database migration, and execute the following SQL to create the index:
   ```text
   CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
   ```
+
+#### CUMULUS-4374 Updated Python example tasks and refactored their deployment Terraform modules
+
+- The refactoring introduced in CUMULUS-4374 may require manual deletion of the `PythonTestIngestProcessEcsLogs` and `PythonPythonProcessEcsLogs` CloudWatch log groups. There is a race condition in Terraform where it may try to recreate the log groups before the ECS services are deleted and cleaned up. Since these are just example services you can manually delete the log groups from CloudWatch prior to deployment.
 
 ### Notable Changes
 
