@@ -1,9 +1,9 @@
 resource "aws_lambda_function" "python_reference_task" {
   function_name    = "${var.prefix}-PythonReferenceTask"
-  filename         = "${path.module}/../lambdas/python-reference-task/dist/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../lambdas/python-reference-task/dist/lambda.zip")
-  handler          = "initial_task.handler"
-  role             = module.cumulus.lambda_processing_role_arn
+  filename         = "${path.module}/../dist/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../dist/lambda.zip")
+  handler          = "task.handler"
+  role             = var.lambda_processing_role_arn
   runtime          = "python3.12"
   timeout          = 300
   memory_size      = 1556
@@ -21,7 +21,7 @@ resource "aws_lambda_function" "python_reference_task" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+      security_group_ids = [var.lambda_security_group_id]
     }
   }
 
