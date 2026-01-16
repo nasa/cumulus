@@ -11,7 +11,7 @@ module "python_processing_service" {
   source = "../../../../tf-modules/cumulus_ecs_service"
 
   prefix = var.prefix
-  name   = "PythonProcess"
+  name   = "PythonProcess-v2"
   tags   = var.tags
 
   cluster_arn                           = var.cumulus_ecs_cluster_arn

@@ -11,7 +11,7 @@ module "python_test_ingest_processing_service" {
   source = "../../../../tf-modules/cumulus_ecs_service"
 
   prefix = var.prefix
-  name   = "PythonTestIngestProcess"
+  name   = "PythonTestIngestProcess-v2"
   tags   = var.tags
   default_log_retention_days                     = var.default_log_retention_days
   cloudwatch_log_retention_periods               = var.cloudwatch_log_retention_periods
