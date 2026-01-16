@@ -69,6 +69,14 @@ Please complete the following steps before upgrading Cumulus.
   - Updated documentation file `docs/development/quality-and-coverage.md` to be more repo wide and reference language best practices.
   - Updated `docs/adding-a-task.md` to include instructions and expectations when adding a task.
 
+
+### Fixed
+
+- **CUMULUS-4486**
+  - Fixed a small bug with `rulesHelpers` in which `rule.rule.meta.allowProviderMismatchOnRuleFilter` was erroring due to
+    database validation errors to instead refer to `rule.meta.allowProviderMismatchOnRuleFilter`
+  - Added `allowProviderMismatchOnRuleFilter` to the `meta` field of `rules` in `/api/lib/schemas`s
+
 ## [v21.2.0] 2025-12-06
 
 ### Migration Notes
