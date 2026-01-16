@@ -37,7 +37,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "21.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.3.0",
+    "@cumulus/cumulus-message-adapter-js": "2.4.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
