@@ -96,4 +96,3 @@ variable "dbRecreation" {
   description = "**Warning** Data loss will occur if set to 'true'. Boolean flag to set user database to be wiped and recreated on provision for each deploy"
   default     = true
 }
-

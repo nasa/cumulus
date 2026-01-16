@@ -41,8 +41,8 @@ Utility functions for generating and validating Launchpad tokens
 #### getLaunchpadToken(params) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
 Get a Launchpad token
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;string&gt;</code> - - the Launchpad token  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;string&gt;</code> - - the Launchpad token
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -56,11 +56,11 @@ Get a Launchpad token
 #### validateLaunchpadToken(params, token, [userGroup]) ⇒ <code>Promise.&lt;ValidateTokenResult&gt;</code> ⏏
 Validate a Launchpad token
 
-**Kind**: Exported function  
+**Kind**: Exported function
 **Returns**: <code>Promise.&lt;ValidateTokenResult&gt;</code> - - the validate result object with
 { status: 'success or failed', message: 'reason for failure',
 session_maxtimeout: number second, session_starttime: number millisecond,
-owner_auid: string}  
+owner_auid: string}
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -76,7 +76,7 @@ owner_auid: string}
 ### LaunchpadToken
 A class for sending requests to Launchpad token service endpoints
 
-**Kind**: global class  
+**Kind**: global class
 
 * [LaunchpadToken](#LaunchpadToken)
     * [new LaunchpadToken(params)](#new_LaunchpadToken_new)
@@ -94,7 +94,7 @@ A class for sending requests to Launchpad token service endpoints
 | params.passphrase | <code>string</code> | the passphrase of the Launchpad PKI certificate |
 | params.certificate | <code>string</code> | the name of the Launchpad PKI pfx certificate |
 
-**Example**  
+**Example**
 ```js
 const LaunchpadToken = require('@cumulus/launchpad-auth/LaunchpadToken');
 
@@ -109,15 +109,15 @@ const launchpadToken = new LaunchpadToken({
 #### launchpadToken.requestToken() ⇒ <code>Promise.&lt;Object&gt;</code>
 Get a token from Launchpad
 
-**Kind**: instance method of [<code>LaunchpadToken</code>](#LaunchpadToken)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - the Launchpad gettoken response object  
+**Kind**: instance method of [<code>LaunchpadToken</code>](#LaunchpadToken)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - the Launchpad gettoken response object
 <a name="LaunchpadToken+validateToken"></a>
 
 #### launchpadToken.validateToken(token) ⇒ <code>Promise.&lt;Object&gt;</code>
 Validate a Launchpad token
 
-**Kind**: instance method of [<code>LaunchpadToken</code>](#LaunchpadToken)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - the Launchpad validate token response object  
+**Kind**: instance method of [<code>LaunchpadToken</code>](#LaunchpadToken)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - the Launchpad validate token response object
 
 | Param | Type | Description |
 | --- | --- | --- |

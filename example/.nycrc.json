@@ -2,4 +2,3 @@
     "extends": "../nyc.config.js",
     "include": ["scripts"]
 }
-  

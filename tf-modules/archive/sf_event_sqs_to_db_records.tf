@@ -241,4 +241,3 @@ resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
 
   tags = var.tags
 }
-
