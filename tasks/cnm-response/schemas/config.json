@@ -1,0 +1,33 @@
+{
+  "title": "CnmResponseConfig",
+  "description": "Describes the config used by the cnm-response task",
+  "type": "object",
+  "required": [
+    "cnm_s",
+    "responseArns",
+    "exception",
+    "region"
+  ],
+  "properties": {
+    "cnm_s": {
+      "type": "object",
+      "description": "The input CNM to the workflow"
+    },
+    "responseArns": {
+      "type": "array",
+      "description": "The ARN of the stream to write out to"
+    },
+    "exception": {
+      "type": "string",
+      "description": "The 'exception' field from the workflow"
+    },
+    "region": {
+      "type": "string",
+      "description": "The region of AWS that the ResponseStream resides in"
+    },
+    "distribution_endpoint": {
+      "type": "string",
+      "description": "HTTP endpoint to use for file URIs. If not provided, s3 URIs will be used instead."
+    }
+  }
+}
