@@ -201,6 +201,8 @@ const sidebars = {
         'adding-a-task',
         'docs-how-to',
         'development/release',
+        'development/typescript-best-practices',
+        'development/python-best-practices',
       ],
     },
     {
