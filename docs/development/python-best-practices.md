@@ -128,10 +128,10 @@ To configure `pytest` add commandline options for `pytest` in the `pyproject.tom
 [tool.pytest]
 minversion = "9.0"
 addopts = [
-    "--maxfail=1", 
-    "-ra", 
-    "-q", 
-    "--cov=myproject", 
+    "--maxfail=1",
+    "-ra",
+    "-q",
+    "--cov=myproject",
     "--cov-report=lcov:.nyc_output"
 ]
 testpaths = [

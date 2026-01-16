@@ -142,11 +142,11 @@ architecture-beta
     service ps3(disk)[Provider S3 Storage] in task
     service as3(disk)[Archive S3 Storage] in task
     service lambda(server)[Lambda Task] in task
-    
+
     service tlambda(server) [Lambda Task] in trigger
 
     tlambda{group}:B --> T:lambda{group}
-    
+
     lambda:R --> L:db
     lambda:L --> R:ps3
     lambda:B --> T:as3
