@@ -50,3 +50,4 @@ yarn.lock
 *.tsbuildinfo
 unit-logs/
 test_output.txt
+__pycache__/
