@@ -1,21 +1,47 @@
 'use strict';
 
+const { z } = require('zod');
+const isError = require('lodash/isError');
 const { getJsonS3Object, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const {
   getWorkflowsListKeyPrefix,
   getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
 const router = require('express-promise-router')();
+const { zodParser } = require('../src/zod-utils');
+const { returnCustomValidationErrors } = require('../lib/endpoints');
+
+/**
+ * @typedef {import('express').Request} Request
+ * @typedef {import('express').Response} Response
+ */
+
+const ListWorkflowsSchema = z.object({
+  prefix: z.string().optional(),
+  infix: z.string().optional(),
+  limit: z.coerce.number().positive().optional(),
+  order: z.enum(['asc', 'desc']).optional(),
+  fields: z.string().optional(),
+  countOnly: z.enum(['true', 'false']).optional(),
+}).catchall(z.unknown());
+
+const listWorkflowsPayloadParser = zodParser('ListWorkflows payload', ListWorkflowsSchema);
 
 /**
  * List workflows.
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const countOnly = req.query.countOnly || false;
+  const query = listWorkflowsPayloadParser(req.query);
+
+  if (isError(query)) {
+    return returnCustomValidationErrors(res, query);
+  }
+
+  const countOnly = req.query.countOnly === 'true' || false;
   const prefix = req.query.prefix;
   const infix = req.query.infix;
   const limit = req.query.limit;
@@ -33,7 +59,8 @@ async function list(req, res) {
   // filter the body here
   if (prefix) {
     body = body.filter((workflow) => workflow.name.startsWith(prefix));
-  } else if (infix) {
+  }
+  if (infix) {
     body = body.filter((workflow) => workflow.name.includes(infix));
   }
 

@@ -145,6 +145,7 @@ test('GET /workflows with queryStringParams returns the correct response', async
     .expect(200);
 
   t.is(response.body.length, 1);
+  t.deepEqual(response.body[0], workflowList[0], 'Response with limit queryParam does not return the expected workflow');
 
   response = await request(app)
     .get('/workflows?countOnly=true')
@@ -152,7 +153,7 @@ test('GET /workflows with queryStringParams returns the correct response', async
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.deepEqual(response.body, { count: 2 });
+  t.deepEqual(response.body, { count: 2 }, 'Response with countOnly=true did not return the expected count object');
 
   response = await request(app)
     .get('/workflows?prefix=Hello')
@@ -161,7 +162,7 @@ test('GET /workflows with queryStringParams returns the correct response', async
     .expect(200);
 
   t.is(response.body.length, 1);
-  t.is(response.body[0].name, 'HelloWorldWorkflow');
+  t.deepEqual(response.body[0], workflowList[0], 'Response with prefix queryParam does not return the expected workflow');
 
   response = await request(app)
     .get('/workflows?infix=TestWorkflow')
@@ -170,7 +171,7 @@ test('GET /workflows with queryStringParams returns the correct response', async
     .expect(200);
 
   t.is(response.body.length, 1);
-  t.is(response.body[0].name, 'SecondTestWorkflow');
+  t.deepEqual(response.body[0], workflowList[1], 'Response with infix queryParam does not return the expected workflow');
 
   response = await request(app)
     .get('/workflows?order=desc')
@@ -179,6 +180,8 @@ test('GET /workflows with queryStringParams returns the correct response', async
     .expect(200);
 
   t.true(response.body[0].name === 'SecondTestWorkflow' && response.body[1].name === 'HelloWorldWorkflow');
+  t.deepEqual(response.body[0], workflowList[1], 'Response with descending order does not return the expected workflow');
+  t.deepEqual(response.body[1], workflowList[0], 'Response with descending order does not return the expected workflow');
 
   const fields = ['name', 'template'];
   response = await request(app)
@@ -187,6 +190,6 @@ test('GET /workflows with queryStringParams returns the correct response', async
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.deepEqual(response.body[0], { name: 'HelloWorldWorkflow', template: 's3://bucket/cumulus/workflows/HelloWorldWorkflow.json' });
-  t.deepEqual(response.body[1], { name: 'SecondTestWorkflow', template: 's3://bucket/cumulus/workflows/SecondTestWorkflow.json' });
+  t.deepEqual(response.body[0], { name: 'HelloWorldWorkflow', template: 's3://bucket/cumulus/workflows/HelloWorldWorkflow.json' }, 'Response using fields queryParam does not return the expected workflow');
+  t.deepEqual(response.body[1], { name: 'SecondTestWorkflow', template: 's3://bucket/cumulus/workflows/SecondTestWorkflow.json' }, 'Response using fields queryParam does not return the expected workflow');
 });
