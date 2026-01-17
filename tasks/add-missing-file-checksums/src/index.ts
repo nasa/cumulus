@@ -4,6 +4,7 @@ import * as S3 from '@cumulus/aws-client/S3';
 import { Context } from 'aws-lambda';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { Granule, GranuleFile, HandlerInput, HandlerEvent } from './types';
+import crypto from 'crypto'
 
 const calculateGranuleFileChecksum = async (params: {
   s3: { getObject: S3.GetObjectMethod },
@@ -11,11 +12,78 @@ const calculateGranuleFileChecksum = async (params: {
   granuleFile: GranuleFile
 }) => {
   const { s3, algorithm, granuleFile } = params;
-
-  const { bucket, key } = granuleFile;
+  const { bucket, key, size } = granuleFile;
+  
+  const thresholdMb = Number(process.env.MULTIPART_CHECKSUM_THRESHOLD_MEGABYTES);
+  const partMb = Number(process.env.MULTIPART_CHECKSUM_PART_MEGABYTES);
+  const thresholdBytes = thresholdMb * 1024 * 1024;
+  const partSizeBytes = partMb * 1024 * 1024;
+  
+  const partitioningEnabled = (thresholdMb > 0 && partMb > 0) && (granuleFile.size > thresholdBytes);
+  
+  if (partitioningEnabled && (granuleFile.size > thresholdMb)) {
+    console.log("Calculating hash by partitioning.")
+    return await calculateObjectHashByRanges({
+      s3,
+      algorithm,
+      bucket,
+      key,
+      sizeBytes: size,
+      partSizeBytes: partSizeBytes
+    });
+  }
 
   return await S3.calculateObjectHash({ s3, algorithm, bucket, key });
 };
+
+const calculateObjectHashByRanges = async (params: {
+  s3: { getObject: S3.GetObjectMethod },
+  algorithm: string,
+  bucket: string,
+  key: string,
+  sizeBytes: number,
+  partSizeBytes: number
+}) => {
+    const { s3, algorithm, bucket, key, sizeBytes, partSizeBytes } = params;
+
+    const hash = crypto.createHash(algorithm);
+
+    for (let start = 0; start < sizeBytes; start += partSizeBytes) {
+      const end = Math.min(start + partSizeBytes - 1, sizeBytes - 1);
+
+      console.log('Requesting range: ', { start, end });
+      const resp: any = await s3.getObject({
+        Bucket: bucket,
+        Key: key,
+        Range: `bytes=${start}-${end}`,
+      });
+
+      console.log('Recieved ranged response: ', { start, end });
+
+      await updateHashFromBody(hash, resp.Body);
+
+      console.log('Updated object hash for ranges ', {start, end})
+  }
+
+  return hash.digest('hex');
+}
+
+const updateHashFromBody = async (hash: crypto.Hash, body: any) => {
+  if (!body) return;
+
+  // Node readable stream
+  if (typeof body.on === 'function') {
+    await new Promise<void>((resolve, reject) => {
+      body.on('data', (chunk: any) => hash.update(chunk as any));
+      body.on('end', resolve);
+      body.on('error', reject);
+    });
+    return;
+  }
+
+  // Fallback if it is a non-stream
+  hash.update(Buffer.isBuffer(body) ? body : Buffer.from(body));
+}
 
 const granuleFileHasPartialChecksum = (granuleFile: GranuleFile) =>
   (granuleFile.checksumType && !granuleFile.checksum)
