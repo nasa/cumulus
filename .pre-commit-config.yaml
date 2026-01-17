@@ -1,0 +1,25 @@
+# Cấu hình "Surgical Exclusion" - Chỉ quét đúng những gì mình thay đổi để tránh nhiễu từ repo gốc
+exclude: ^(?!bamboo/docker-compose\.yml|.pre-commit-config\.yaml)
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff
+      - id: ruff-format
+
+# Configuration pre-commit.ci
+ci:
+  autofix_prs: false
+  autoupdate_schedule: monthly
