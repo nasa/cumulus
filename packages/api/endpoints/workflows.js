@@ -41,12 +41,14 @@ async function list(req, res) {
     return returnCustomValidationErrors(res, query);
   }
 
-  const countOnly = req.query.countOnly === 'true' || false;
-  const prefix = req.query.prefix;
-  const infix = req.query.infix;
+  const {
+    prefix,
+    infix,
+    order,
+  } = req.query;
+  const countOnly = req.query.countOnly === 'true';
   const limit = req.query.limit;
-  const orderBy = req.query.order;
-  const fields = req.query.fields ? req.query.fields.split(',') : undefined;
+  const fields = req.query.fields?.split(',');
 
   const workflows = await listS3ObjectsV2({
     Bucket: process.env.system_bucket,
@@ -74,7 +76,7 @@ async function list(req, res) {
   if (countOnly) {
     return res.type('json').send({ count: body.length });
   }
-  body = orderBy === 'desc' ? body.sort((a, b) => b.name.localeCompare(a.name))
+  body = order === 'desc' ? body.sort((a, b) => b.name.localeCompare(a.name))
     : body.sort((a, b) => a.name.localeCompare(b.name));
   body = limit ? body.slice(0, limit) : body;
   return res.type('json').send(body);
