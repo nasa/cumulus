@@ -13,8 +13,8 @@ export function parseXMLString(xmlString: string): Promise<unknown> {
 
 export function redactAuthorization(headers: Record<string, any>): Record<string, any> {
   const redactedHeaders = { ...headers };
-  if ('Authorization' in redactedHeaders) {
-    redactedHeaders['Authorization'] = 'REDACTED';
+  if (redactedHeaders['Authorization']) {
+    redactedHeaders['Authorization'] = '[REDACTED]';
   }
   return redactedHeaders;
 }
