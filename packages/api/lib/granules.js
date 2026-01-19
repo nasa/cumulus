@@ -1,3 +1,5 @@
+// @ts-check
+
 'use strict';
 
 const isEqual = require('lodash/isEqual');
@@ -32,6 +34,10 @@ const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const { errorify, RecordDoesNotExist } = require('@cumulus/errors');
 const FileUtils = require('./FileUtils');
+
+/**
+ * @typedef {import('./request').GranuleExecutionPayload} GranuleExecutionPayload
+ */
 
 /**
  * translate an old-style granule file and numeric productVolume into the new schema
@@ -369,9 +375,8 @@ async function resolveReportToS3Location(reportName) {
       log.error(
         `granule inventory report ${reportName} does not exist`
       );
-    } else {
-      throw error;
     }
+    throw error;
   }
   return pgReport?.location;
 }
@@ -388,15 +393,7 @@ async function resolveReportToS3Location(reportName) {
  * Results are yielded as batches when sourced from S3, or as a single
  * deduplicated list otherwise.
  *
- * @param {Object} payload
- * @param {number} [payload.batchSize] - Batch size for yielded granuleIds
- * @param {Array<string>} [payload.granules] - Optional list of granuleIds
- * @param {Object} [payload.query] - Optional ElasticSearch query (Cloud Metrics)
- * @param {string} [payload.index] - ElasticSearch index (required if query is provided)
- * @param {string} [payload.s3GranuleIdInputFile] - S3 URI of an input file where each record
- *   starts with a granuleId and may include additional fields.
- * @param {string} [payload.granuleInventoryReportName] - Logical name of a granule inventory
- *   report. The name is resolved via the database to obtain the report’s S3 URI.
+ * @param {GranuleExecutionPayload} payload - request payload
  * @yields {Array<string>} A list or batch of granuleIds
  */
 async function* getGranulesForPayload(payload) {

@@ -79,12 +79,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    granules: [
-      {
-        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version',
-      },
-    ],
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
     forceRemoveFromCmr: true,
   };
 
@@ -141,12 +136,7 @@ test.serial('bulkDelete() uses correct caller lambda function name', async (t) =
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    granules: [
-      {
-        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version',
-      },
-    ],
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
     forceRemoveFromCmr: true,
   };
 
@@ -253,7 +243,8 @@ test.serial('POST /granules/bulkDelete returns 400 when no granules or Query is 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /One of granules or query is required/);
+    .expect(400,
+      /One of granules, query, granuleInventoryReportName or s3GranuleIdInputFile is required/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -316,12 +307,7 @@ test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is 
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    granules: [
-      {
-        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version',
-      },
-    ],
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
     forceRemoveFromCmr: 'true',
   };
 
@@ -338,12 +324,7 @@ test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is 
 test.serial('POST /granules/bulkDelete returns a 400 when maxDbConnections is not an integer', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const body = {
-    granules: [
-      {
-        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version',
-      },
-    ],
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
     maxDbConnections: 'one hundred',
   };
 
@@ -360,12 +341,7 @@ test.serial('POST /granules/bulkDelete returns a 400 when maxDbConnections is no
 test.serial('POST /granules/bulkDelete returns a 400 when concurrency is not an integer', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const body = {
-    granules: [
-      {
-        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version',
-      },
-    ],
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
     concurrency: 'one hundred',
   };
 
@@ -388,6 +364,121 @@ test.serial('POST /granules/bulkDelete returns a 401 status code if valid author
   t.is(response.status, 401);
 });
 
+test.serial('POST /granules/bulkDelete starts an async-operation with the correct payload and granule inventory report', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+    knexDebug: false,
+    forceRemoveFromCmr: true,
+  };
+
+  const response = await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(202);
+
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
+
+  const {
+    lambdaName,
+    description,
+    payload,
+  } = asyncOperationStartStub.args[0][0];
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.BulkOperationLambda);
+  t.is(description, 'Bulk granule deletion');
+  t.deepEqual(payload, {
+    payload: {
+      ...body,
+      concurrency: 10,
+      maxDbConnections: 10,
+    },
+    type: 'BULK_GRANULE_DELETE',
+    envVars: {
+      cmr_client_id: process.env.cmr_client_id,
+      CMR_ENVIRONMENT: process.env.CMR_ENVIRONMENT,
+      cmr_oauth_provider: process.env.cmr_oauth_provider,
+      cmr_password_secret_name: process.env.cmr_password_secret_name,
+      cmr_provider: process.env.cmr_provider,
+      cmr_username: process.env.cmr_username,
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+      KNEX_DEBUG: 'false',
+      launchpad_api: process.env.launchpad_api,
+      launchpad_certificate: process.env.launchpad_certificate,
+      launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
+      METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+      METRICS_ES_USER: process.env.METRICS_ES_USER,
+      METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+      stackName: process.env.stackName,
+      system_bucket: process.env.system_bucket,
+    },
+  });
+  Object.keys(omit(payload.envVars, ['KNEX_DEBUG'])).forEach((envVarKey) => {
+    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
+  });
+});
+
+test.serial('POST /granules/bulkDelete starts an async-operation with the correct payload and s3GranuleIdInputFile', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    s3GranuleIdInputFile: randomId('s3GranuleIdInputFile'),
+    forceRemoveFromCmr: true,
+  };
+
+  const response = await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(202);
+
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
+
+  const {
+    lambdaName,
+    description,
+    payload,
+  } = asyncOperationStartStub.args[0][0];
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.BulkOperationLambda);
+  t.is(description, 'Bulk granule deletion');
+  t.deepEqual(payload, {
+    payload: {
+      ...body,
+      concurrency: 10,
+      maxDbConnections: 10,
+    },
+    type: 'BULK_GRANULE_DELETE',
+    envVars: {
+      cmr_client_id: process.env.cmr_client_id,
+      CMR_ENVIRONMENT: process.env.CMR_ENVIRONMENT,
+      cmr_oauth_provider: process.env.cmr_oauth_provider,
+      cmr_password_secret_name: process.env.cmr_password_secret_name,
+      cmr_provider: process.env.cmr_provider,
+      cmr_username: process.env.cmr_username,
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+      KNEX_DEBUG: 'false',
+      launchpad_api: process.env.launchpad_api,
+      launchpad_certificate: process.env.launchpad_certificate,
+      launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
+      METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+      METRICS_ES_USER: process.env.METRICS_ES_USER,
+      METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+      stackName: process.env.stackName,
+      system_bucket: process.env.system_bucket,
+    },
+  });
+  Object.keys(omit(payload.envVars, ['KNEX_DEBUG'])).forEach((envVarKey) => {
+    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
+  });
+});
+
 test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking StartAsyncOperation lambda throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
   t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').throws(
@@ -395,12 +486,7 @@ test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking St
   );
 
   const body = {
-    granules: [
-      {
-        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version',
-      },
-    ],
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
   };
 
   const response = await request(app)

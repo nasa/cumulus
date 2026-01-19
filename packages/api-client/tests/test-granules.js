@@ -536,8 +536,7 @@ test('associateExecutionWithGranule calls the callback with the expected object'
 test('bulkOperation calls the callback with the expected object', async (t) => {
   const workflowName = randomId('workflowName');
   const granuleId = t.context.granuleId;
-  const collectionId = randomId('collectionId');
-  const granules = [{ granuleId, collectionId }];
+  const granules = [granuleId];
 
   const expected = {
     prefix: t.context.testPrefix,

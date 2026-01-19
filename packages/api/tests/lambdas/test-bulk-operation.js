@@ -595,11 +595,11 @@ test.serial('bulk operation BULK_GRANULE_DELETE processes all granules that do n
   // tried to delete 6 times, but failed 3 times
   t.is(deleteStub.callCount, 6);
   const errors = results.filter(
-    (item) => isObject(item) && item?.err
+    (item) => isObject(item) && item?.error
   );
   t.is(errors.length, 3);
   t.deepEqual(
-    errors.map((error) => error?.err),
+    errors.map((error) => error?.error),
     new Array(3).fill(`Error: ${errorMessage}`)
   );
 
@@ -665,7 +665,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not throw error for granule
   });
   t.is(results.length, 1);
   t.is(results[0].granuleId, granuleId);
-  t.truthy(results[0].err);
+  t.truthy(results[0].error);
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE deletes granules in granule inventory report', async (t) => {
@@ -843,7 +843,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if 
   });
 
   t.deepEqual(
-    Array.from(result).map(((error) => error?.err?.startsWith('RecordDoesNotExist'))),
+    Array.from(result).map(((error) => error?.error?.startsWith('RecordDoesNotExist'))),
     [true, true]
   );
 

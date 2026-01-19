@@ -70,12 +70,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
   const body = {
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
-    granules: [
-      {
-        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version',
-      },
-    ],
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
     knexDebug: false,
   };
 
@@ -120,12 +115,7 @@ test.serial('bulkOperations() uses correct caller lambda function name', async (
   const body = {
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
-    granules: [
-      {
-        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version',
-      },
-    ],
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
   };
 
   const functionName = randomId('lambda');
@@ -234,7 +224,8 @@ test.serial('POST /granules/bulk returns 400 when no granules or query are provi
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /One of granules or query is required/);
+    .expect(400,
+      /One of granules, query, granuleInventoryReportName or s3GranuleIdInputFile is required/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -333,6 +324,98 @@ test.serial('POST /granules/bulk returns 400 when the Metrics ELK stack is not c
   t.true(asyncOperationStartStub.notCalled);
 });
 
+test.serial('POST /granules/bulk starts an async-operation with the correct payload and granule inventory report', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedQueueName = 'backgroundProcessing';
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+
+  const body = {
+    queueName: expectedQueueName,
+    workflowName: expectedWorkflowName,
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+    knexDebug: false,
+  };
+
+  const response = await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(202);
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
+  const {
+    lambdaName,
+    description,
+    payload,
+  } = asyncOperationStartStub.args[0][0];
+
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.BulkOperationLambda);
+  t.is(description, `Bulk run on ${expectedWorkflowName}`);
+  t.deepEqual(payload, {
+    payload: body,
+    type: 'BULK_GRANULE',
+    envVars: {
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+      system_bucket: process.env.system_bucket,
+      stackName: process.env.stackName,
+      invoke: process.env.invoke,
+      KNEX_DEBUG: 'false',
+      METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+      METRICS_ES_USER: process.env.METRICS_ES_USER,
+      METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+    },
+  });
+  testBulkPayloadEnvVarsMatchSetEnvVars(t, payload);
+});
+
+test.serial('POST /granules/bulk starts an async-operation with the correct payload and s3GranuleIdInputFile', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedQueueName = 'backgroundProcessing';
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+
+  const body = {
+    queueName: expectedQueueName,
+    workflowName: expectedWorkflowName,
+    s3GranuleIdInputFile: randomId('s3GranuleIdInputFile'),
+    knexDebug: false,
+  };
+
+  const response = await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(202);
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
+  const {
+    lambdaName,
+    description,
+    payload,
+  } = asyncOperationStartStub.args[0][0];
+
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.BulkOperationLambda);
+  t.is(description, `Bulk run on ${expectedWorkflowName}`);
+  t.deepEqual(payload, {
+    payload: body,
+    type: 'BULK_GRANULE',
+    envVars: {
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+      system_bucket: process.env.system_bucket,
+      stackName: process.env.stackName,
+      invoke: process.env.invoke,
+      KNEX_DEBUG: 'false',
+      METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+      METRICS_ES_USER: process.env.METRICS_ES_USER,
+      METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+    },
+  });
+  testBulkPayloadEnvVarsMatchSetEnvVars(t, payload);
+});
+
 test.serial('POST /granules/bulk returns 500 if invoking StartAsyncOperation lambda throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
   t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').throws(
@@ -345,11 +428,7 @@ test.serial('POST /granules/bulk returns 500 if invoking StartAsyncOperation lam
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
       workflowName: 'workflowName',
-      granules: [
-        { granuleId: 1, collectionId: 1 },
-        { granuleId: 2, collectionId: 1 },
-        { granuleId: 3, collectionId: 1 },
-      ],
+      granules: ['1', '2', '3'],
     });
   t.is(response.status, 500);
 });

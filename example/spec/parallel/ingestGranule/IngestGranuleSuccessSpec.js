@@ -958,16 +958,7 @@ describe('The S3 Ingest Granules workflow', () => {
             bulkReingestResponse = await bulkReingestGranules({
               prefix: config.stackName,
               body: {
-                granules: [
-                  {
-                    collectionId,
-                    granuleId: reingestGranuleId,
-                  },
-                  {
-                    collectionId,
-                    granuleId: fakeGranuleId,
-                  },
-                ],
+                granules: [reingestGranuleId, fakeGranuleId],
               },
             });
           } catch (error) {

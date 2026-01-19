@@ -74,7 +74,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     postBulkDeleteResponse = await bulkDeleteGranules({
       prefix: config.stackName,
       body: {
-        granules: [{ granuleId: granule.granuleId, collectionId: granule.collectionId }],
+        granules: [granule.granuleId],
       },
     });
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
@@ -159,7 +159,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
       asyncOperationId: postBulkDeleteBody.id,
     });
 
-    expect(asyncOperation.status).toEqual('TASK_FAILED');
+    expect(asyncOperation.status).toEqual('SUCCEEDED');
 
     let output;
     try {
@@ -168,8 +168,8 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
       throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${asyncOperation.output}`);
     }
 
-    expect(output.name).toBe('AggregateError');
-    expect(output.message).toContain('DeletePublishedGranule');
-    expect(output.stack).toBeDefined();
+    expect(output.length).toBe(1);
+    expect(output[0]?.granuleId).toBe(granule.granuleId);
+    expect(output[0]?.err).toContain('DeletePublishedGranule');
   });
 });

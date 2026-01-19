@@ -4,6 +4,7 @@ const proxyquire = require('proxyquire');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const {
   localStackConnectionEnv,
   generateLocalTestDb,
@@ -511,7 +512,7 @@ test('getGranulesForPayload reads granule inventory report in batches from S3', 
   t.deepEqual(results, expectedResult);
 
   const payloadWithBatchSize = {
-    s3GranuleIdInputFile: s3Uri,
+    granuleInventoryReportName: reportPgRecord.name,
     batchSize: 2,
   };
   const expectedResultWithBatch = [['G1', 'G2'], ['G3', 'G4'], ['G5']];
@@ -521,6 +522,45 @@ test('getGranulesForPayload reads granule inventory report in batches from S3', 
   }
   t.deepEqual(resultsWithBatch, expectedResultWithBatch);
   await s3Utils.recursivelyDeleteS3Bucket(bucket);
+});
+
+test('getGranulesForPayload throws error when granule inventory report does not exist', async (t) => {
+  const payload = {
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+  };
+  await t.throwsAsync(
+    async () => {
+      // eslint-disable-next-line no-unused-vars
+      for await (const _ of getGranulesForPayload(payload)) {
+        // consume generator only
+      }
+    },
+    {
+      instanceOf: RecordDoesNotExist,
+      message: (msg) =>
+        msg.includes(payload.granuleInventoryReportName) &&
+        msg.includes('does not exist'),
+    }
+  );
+});
+
+test('getGranulesForPayload throws error when s3GranuleIdInputFile does not exist', async (t) => {
+  const payload = {
+    s3GranuleIdInputFile: `s3://${randomId('bucket')}/${randomId('key')}`,
+  };
+  await t.throwsAsync(
+    async () => {
+      // eslint-disable-next-line no-unused-vars
+      for await (const _ of getGranulesForPayload(payload)) {
+        // consume generator only
+      }
+    },
+    {
+      message: (msg) =>
+        msg.includes(payload.s3GranuleIdInputFile)
+        && msg.includes('does not exist'),
+    }
+  );
 });
 
 test('translateGranule() will translate an old-style granule file and numeric productVolume into the new schema', async (t) => {
