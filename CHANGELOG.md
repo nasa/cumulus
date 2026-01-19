@@ -78,6 +78,8 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4438**
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
+- **CSD-61**
+  - Updated writeGranuleFromApi() endpoint to allow createdAt and updatedAt fields to be null.
 - **CUMULUS-4436**
   - Created new documentation files for language best practices `docs/development/python-best-practices.md` and `docs/development/typescript-best-practices.md`.
   - Updated documentation file `docs/development/quality-and-coverage.md` to be more repo wide and reference language best practices.
