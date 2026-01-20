@@ -6723,6 +6723,8 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 - **CUMULUS-4112**
   - Updated `serveUtils.addGranules` to include writing granule files.
+- **CSD-84**
+  - Update error logging in `@cumulus/packages/cmr-client/searchConcept` to redact the authorization header value.
 
 ### Fixed
 

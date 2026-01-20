@@ -163,13 +163,12 @@ test.serial(
   }
 );
 
-test.only('searchConcept logs redacted Authorization header on error', async (t) => {
-  const { testConsole } = t.context;
+test.serial('searchConcept logs redacted Authorization header on error', async (t) => {
   const headers = { Authorization: `Bearer ${randomId('secret')}`, 'Client-Id': 'any' };
 
   const stub = sinon.stub(got, 'get').throws(new Error('CMR request failed'));
 
-  const writeStub = sinon.stub(Logger.prototype, 'writeLogEvent').callsFake(function (level, messageArgs, additionalKeys) {
+  const writeStub = sinon.stub(Logger.prototype, 'writeLogEvent').callsFake(function writeLogEventFake(level, messageArgs, additionalKeys) {
     const msg = this.buildLogEventMessage(level, messageArgs, additionalKeys);
     if (level === 'error') t.context.testConsole.error(msg);
     else t.context.testConsole.log(msg);
@@ -190,7 +189,7 @@ test.only('searchConcept logs redacted Authorization header on error', async (t)
   } catch {
     // Expected error
   }
-  const errorLogs = testConsole.stderrLogEntries;
+  const errorLogs = t.context.testConsole.stderrLogEntries;
   const headerAuthorizationLog = errorLogs.find((log) => log.message.includes('Authorization'));
   t.true(headerAuthorizationLog.message.includes('"Authorization":"[REDACTED]"'));
 
