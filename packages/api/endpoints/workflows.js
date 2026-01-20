@@ -45,10 +45,10 @@ async function list(req, res) {
     prefix,
     infix,
     order,
-  } = req.query;
-  const countOnly = req.query.countOnly === 'true';
-  const limit = req.query.limit;
-  const fields = req.query.fields?.split(',');
+    limit,
+  } = query;
+  const countOnly = query.countOnly === 'true';
+  const fields = query.fields?.split(',');
 
   const workflows = await listS3ObjectsV2({
     Bucket: process.env.system_bucket,
