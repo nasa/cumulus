@@ -96,9 +96,9 @@ npm install -g lerna
 
 ### Install uv
 
-We use uv to manage python packages and dependencies. It is recommended to install uv using
-the install scripts provided in the [installation docs](https://docs.astral.sh/uv/getting-started/installation/)
-since uv can then be used to install python (similar to NVM for node).
+We use `uv` to manage python packages and dependencies. You need to install `uv` using either `brew` or
+the install scripts provided [here](https://docs.astral.sh/uv/getting-started/installation/)
+since `uv` can then be used to install python (similar to NVM for node).
 
 ### Install pre-commit
 
