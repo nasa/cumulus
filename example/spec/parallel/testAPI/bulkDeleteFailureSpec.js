@@ -170,6 +170,6 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
 
     expect(output.length).toBe(1);
     expect(output[0]?.granuleId).toBe(granule.granuleId);
-    expect(output[0]?.err).toContain('DeletePublishedGranule');
+    expect(output[0]?.error).toContain('DeletePublishedGranule');
   });
 });
