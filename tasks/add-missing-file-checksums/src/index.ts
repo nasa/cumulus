@@ -3,70 +3,8 @@ import * as awsClients from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
 import { Context } from 'aws-lambda';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
+import crypto from 'crypto';
 import { Granule, GranuleFile, HandlerInput, HandlerEvent } from './types';
-import crypto from 'crypto'
-
-const calculateGranuleFileChecksum = async (params: {
-  s3: { getObject: S3.GetObjectMethod },
-  algorithm: string,
-  granuleFile: GranuleFile
-}) => {
-  const { s3, algorithm, granuleFile } = params;
-  const { bucket, key, size } = granuleFile;
-  
-  const thresholdMb = Number(process.env.MULTIPART_CHECKSUM_THRESHOLD_MEGABYTES);
-  const partMb = Number(process.env.MULTIPART_CHECKSUM_PART_MEGABYTES);
-  const thresholdBytes = thresholdMb * 1024 * 1024;
-  const partSizeBytes = partMb * 1024 * 1024;
-  
-  const partitioningEnabled = (thresholdMb > 0 && partMb > 0) && (granuleFile.size > thresholdBytes);
-  
-  if (partitioningEnabled && (granuleFile.size > thresholdMb)) {
-    console.log("Calculating hash by partitioning.")
-    return await calculateObjectHashByRanges({
-      s3,
-      algorithm,
-      bucket,
-      key,
-      sizeBytes: size,
-      partSizeBytes: partSizeBytes
-    });
-  }
-
-  return await S3.calculateObjectHash({ s3, algorithm, bucket, key });
-};
-
-const calculateObjectHashByRanges = async (params: {
-  s3: { getObject: S3.GetObjectMethod },
-  algorithm: string,
-  bucket: string,
-  key: string,
-  sizeBytes: number,
-  partSizeBytes: number
-}) => {
-    const { s3, algorithm, bucket, key, sizeBytes, partSizeBytes } = params;
-
-    const hash = crypto.createHash(algorithm);
-
-    for (let start = 0; start < sizeBytes; start += partSizeBytes) {
-      const end = Math.min(start + partSizeBytes - 1, sizeBytes - 1);
-
-      console.log('Requesting range: ', { start, end });
-      const resp: any = await s3.getObject({
-        Bucket: bucket,
-        Key: key,
-        Range: `bytes=${start}-${end}`,
-      });
-
-      console.log('Recieved ranged response: ', { start, end });
-
-      await updateHashFromBody(hash, resp.Body);
-
-      console.log('Updated object hash for ranges ', {start, end})
-  }
-
-  return hash.digest('hex');
-}
 
 const updateHashFromBody = async (hash: crypto.Hash, body: any) => {
   if (!body) return;
@@ -83,7 +21,73 @@ const updateHashFromBody = async (hash: crypto.Hash, body: any) => {
 
   // Fallback if it is a non-stream
   hash.update(Buffer.isBuffer(body) ? body : Buffer.from(body));
-}
+};
+
+const calculateObjectHashByRanges = async (params: {
+  s3: { getObject: S3.GetObjectMethod },
+  algorithm: string,
+  bucket: string,
+  key: string,
+  sizeBytes: number,
+  partSizeBytes: number
+}) => {
+  const {
+    s3, algorithm, bucket, key, sizeBytes, partSizeBytes,
+  } = params;
+
+  const hash = crypto.createHash(algorithm);
+
+  const ranges: { start: number; end: number }[] = [];
+
+  for (let start = 0; start < sizeBytes; start += partSizeBytes) {
+    const end = Math.min(start + partSizeBytes - 1, sizeBytes - 1);
+    ranges.push({ start, end });
+  }
+
+  await ranges.reduce<Promise<void>>(
+    (p, { start, end }) =>
+      p.then(() => s3.getObject({
+        Bucket: bucket,
+        Key: key,
+        Range: `bytes=${start}-${end}`,
+      })
+        .then((resp: any) => updateHashFromBody(hash, resp.Body))),
+    Promise.resolve()
+  );
+
+  return hash.digest('hex');
+};
+
+const calculateGranuleFileChecksum = async (params: {
+  s3: { getObject: S3.GetObjectMethod },
+  algorithm: string,
+  granuleFile: GranuleFile
+}) => {
+  const { s3, algorithm, granuleFile } = params;
+  const { bucket, key, size } = granuleFile;
+
+  const thresholdMb = Number(process.env.MULTIPART_CHECKSUM_THRESHOLD_MEGABYTES);
+  const partMb = Number(process.env.MULTIPART_CHECKSUM_PART_MEGABYTES);
+  const thresholdBytes = thresholdMb * 1024 * 1024;
+  const partSizeBytes = partMb * 1024 * 1024;
+
+  const partitioningEnabled = (thresholdMb > 0 && partMb > 0)
+    && (granuleFile.size > thresholdBytes);
+
+  if (partitioningEnabled) {
+    console.log('Calculating hash by partitioning.');
+    return await calculateObjectHashByRanges({
+      s3,
+      algorithm,
+      bucket,
+      key,
+      sizeBytes: size,
+      partSizeBytes: partSizeBytes,
+    });
+  }
+
+  return await S3.calculateObjectHash({ s3, algorithm, bucket, key });
+};
 
 const granuleFileHasPartialChecksum = (granuleFile: GranuleFile) =>
   (granuleFile.checksumType && !granuleFile.checksum)

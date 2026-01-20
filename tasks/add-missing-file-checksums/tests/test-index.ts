@@ -42,13 +42,13 @@ test('addChecksumToGranuleFile() does not update a granule file if checksumType 
     bucket: 'bucket',
     key: 'key',
     checksumType: 'md5',
-    size: 123
+    size: 123,
   };
 
   const result = await addChecksumToGranuleFile({
     s3: t.context.stubS3,
     algorithm: 'md5',
-    granuleFile
+    granuleFile,
   });
 
   t.deepEqual(result, granuleFile);
@@ -59,7 +59,7 @@ test('addChecksumToGranuleFile() does not update a granule file if checksum is s
     bucket: 'bucket',
     key: 'key',
     checksum: 'asdf',
-    size: 123
+    size: 123,
   };
 
   const result = await addChecksumToGranuleFile({
@@ -90,7 +90,7 @@ test('addChecksumToGranuleFile() returns the file if checksumType and checksum a
     key: 'key',
     checksumType: 'md5',
     checksum: 'asdf',
-    size: 123
+    size: 123,
   };
 
   const result = await addChecksumToGranuleFile({
@@ -104,12 +104,12 @@ test('addChecksumToGranuleFile() returns the file if checksumType and checksum a
 
 test('addChecksumToGranuleFile() adds the checksumType and checksum to the file if they are missing', async (t) => {
   // Forces only using one get request
-  process.env.MULTIPART_CHECKSUM_THRESHOLD_BYTES = `${Number.MAX_SAFE_INTEGER}`; 
+  process.env.MULTIPART_CHECKSUM_THRESHOLD_BYTES = `${Number.MAX_SAFE_INTEGER}`;
 
   const granuleFile = {
     bucket: 'bucket',
     key: 'path/to/file.txt',
-    size: 123
+    size: 123,
   };
 
   const fakeGetObject = sinon.fake.resolves({
@@ -154,7 +154,7 @@ test('The handler does not update files that already have a checksum', async (t)
               key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
-              size: 123
+              size: 123,
             },
           ],
         },
@@ -182,7 +182,7 @@ test('The handler updates files that do not have a checksum', async (t) => {
     Body: 'asdf',
   });
 
-  const size = Buffer.byteLength('asdf')
+  const size = Buffer.byteLength('asdf');
 
   const event = {
     config: {
@@ -222,7 +222,7 @@ test('The handler preserves extra input properties', async (t) => {
               key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
-              size: 123
+              size: 123,
             },
           ],
         },
@@ -251,7 +251,7 @@ test('The handler preserves extra granule properties', async (t) => {
               key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
-              size: 123
+              size: 123,
             },
           ],
         },
@@ -280,7 +280,7 @@ test('The handler preserves extra granule file properties', async (t) => {
               key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
-              size: 123
+              size: 123,
             },
           ],
         },
@@ -295,7 +295,7 @@ test('The handler preserves extra granule file properties', async (t) => {
 
 test('addChecksumToGranuleFile() uses ranged GETs for large files and computes correct checksum', async (t) => {
   process.env.MULTIPART_CHECKSUM_THRESHOLD_MEGABYTES = '2'; // anything > 2 MB triggers multipart
-  process.env.MULTIPART_CHECKSUM_PART_MEGABYTES = `1`;   // 1 MB ranges
+  process.env.MULTIPART_CHECKSUM_PART_MEGABYTES = '1'; // 1 MB ranges
 
   // Ensure multiple ranges (4 MB)
   const full = Buffer.alloc(4 * 1024 * 1024, 'a');
@@ -315,7 +315,7 @@ test('addChecksumToGranuleFile() uses ranged GETs for large files and computes c
   const rangedCalls = (s3.getObject as any).getCalls().filter((c: any) => c.args[0].Range);
 
   // Verify ranges look correct
-  t.true(rangedCalls.length > 1); 
+  t.true(rangedCalls.length > 1);
   t.is(result.checksumType, 'md5');
   t.is(result.checksum, crypto.createHash('md5').update(full).digest('hex'));
 });
