@@ -258,8 +258,8 @@ async function bulkGranuleReingest(
   log.info('Starting bulkGranuleReingest');
   const knex = await getKnexClient();
 
-  const concurrency = payload.concurrency || 10;
-  const workflowName = payload.workflowName;
+  const { concurrency = 10, queueUrl, workflowName } = payload;
+
   const results = [];
   for await (
     const granuleBatch of getGranulesForPayload(payload)
@@ -293,6 +293,7 @@ async function bulkGranuleReingest(
           };
           await reingestHandler({
             apiGranule: apiGranuleToReingest,
+            queueUrl,
             asyncOperationId: process.env.asyncOperationId,
           });
           return granuleId;

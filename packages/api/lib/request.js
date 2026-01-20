@@ -57,6 +57,17 @@ async function verifyJwtAuthorization(requestJwtToken) {
 }
 
 /**
+* Validate request has header matching expected minimum version
+* @param {Request} req - express Request object
+* @param {number} minVersion - Minimum API version to allow
+* @returns {boolean}
+*/
+function isMinVersionApi(req, minVersion) {
+  const requestVersion = Number(req.headers['cumulus-api-version']);
+  return Number.isFinite(requestVersion) && minVersion <= requestVersion;
+}
+
+/**
  * Validate the payload for a granule execution request.
  *
  * @param {GranuleExecutionPayload} payload - Request body payload
@@ -108,22 +119,12 @@ function validateGranuleExecutionPayload(payload) {
 }
 
 /**
-* Validate request has header matching expected minimum version
-* @param {Request} req - express Request object
-* @param {number} minVersion - Minimum API version to allow
-* @returns {boolean}
-*/
-function isMinVersionApi(req, minVersion) {
-  const requestVersion = Number(req.headers['cumulus-api-version']);
-  return Number.isFinite(requestVersion) && minVersion <= requestVersion;
-}
-
-/**
  * Express middleware that validates a bulk granule request.
  *
  * @param {Request} req
  * @param {Response} res
  * @param {NextFunction} next
+ * @returns {void}
  */
 function validateBulkGranulesRequest(req, res, next) {
   const error = validateGranuleExecutionPayload(req.body);
@@ -137,6 +138,7 @@ function validateBulkGranulesRequest(req, res, next) {
  * @param {Request} req
  * @param {Response} res
  * @param {NextFunction} next
+ * @returns {void}
  */
 function validateGranuleExecutionRequest(req, res, next) {
   const error = validateGranuleExecutionPayload(req.body);
