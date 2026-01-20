@@ -3,57 +3,15 @@
 const got = require('got');
 const sinon = require('sinon');
 const test = require('ava');
-const { Console } = require('console');
-const { Writable } = require('stream');
 
 const { randomId } = require('@cumulus/common/test-utils');
 const Logger = require('@cumulus/logger');
 const { searchConcept } = require('../searchConcept');
+const { TestConsole } = require('../../logger/tests/test-consoleUtils');
 
 process.env.CMR_ENVIRONMENT = 'SIT';
 
 const clientId = 'cumulus-test-client';
-
-class TestStream extends Writable {
-  constructor(options) {
-    super(options);
-
-    this.output = '';
-  }
-
-  _write(chunk, _encoding, callback) {
-    this.output += chunk;
-    callback();
-  }
-}
-
-class TestConsole extends Console {
-  constructor() {
-    const stdoutStream = new TestStream();
-    const stderrStream = new TestStream();
-
-    super(stdoutStream, stderrStream);
-
-    this.stdoutStream = stdoutStream;
-    this.stderrStream = stderrStream;
-  }
-
-  get stdoutLogEntries() {
-    return this.stdoutStream.output
-      .trim()
-      .split('\n')
-      .filter((line) => line.length > 0)
-      .map(JSON.parse);
-  }
-
-  get stderrLogEntries() {
-    return this.stderrStream.output
-      .trim()
-      .split('\n')
-      .filter((line) => line.length > 0)
-      .map(JSON.parse);
-  }
-}
 
 test.beforeEach((t) => {
   t.context.testConsole = new TestConsole();
