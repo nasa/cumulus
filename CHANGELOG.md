@@ -27,7 +27,7 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4459**
   - Added new index to the granules table to improve Dashboard performance.
 - **CUMULUS-4446**
-  - Updated all node lambdas/Core build environments to utilize node v22
+  - Updated all node lambdas/Core build environments to utilize node v22.
   - Updated cma-js dependency to 2.4.0
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
