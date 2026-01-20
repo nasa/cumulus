@@ -40,6 +40,12 @@ const FileUtils = require('./FileUtils');
  */
 
 /**
+ * @typedef {Object} EsGranuleSource
+ * @property {string} granuleId
+ * @property {string} [collectionId]
+ */
+
+/**
  * translate an old-style granule file and numeric productVolume into the new schema
  *
  * @param {Object} granule - granule object to be translated
@@ -248,11 +254,11 @@ function getTotalHits(bodyHits) {
  *
  * @param {Object} payload
  * @param {string} [payload.index] - ES index to query (Cloud Metrics)
- * @param {string} [payload.query] - ES query
+ * @param {Object} [payload.query] - ES query
  * @param {Object} [payload.source] - List of IDs to operate on
  * @param {Object} [payload.testBodyHits] - Optional body.hits for testing.
  *  Some ES such as Cloud Metrics returns `hits.total.value` rather than `hits.total`
- * @returns {Promise<Array<Object>>}
+ * @returns {Promise<EsGranuleSource[]>}
  */
 async function granuleEsQuery({ index, query, source, testBodyHits }) {
   const granules = [];
@@ -320,7 +326,7 @@ async function* getGranulesFromS3InBatches({
   const response = await s3Utils.getObject(awsClients.s3(), parsed);
 
   const rl = readline.createInterface({
-    input: response.Body,
+    input: /** @type {NodeJS.ReadableStream} */ (response.Body),
     crlfDelay: Infinity,
   });
 
@@ -361,7 +367,7 @@ async function* getGranulesFromS3InBatches({
  * S3 location, if it exists.
  *
  * @param {string} reportName - Name of the reconciliation report
- * @returns {Promise<string|undefined>} The S3 location of the report, or undefined if not found
+ * @returns {Promise<string>} The S3 location of the report, or undefined if not found
  * @throws {Error} Rethrows unexpected database errors
  */
 async function resolveReportToS3Location(reportName) {
@@ -378,7 +384,13 @@ async function resolveReportToS3Location(reportName) {
     }
     throw error;
   }
-  return pgReport?.location;
+
+  if (!pgReport.location) {
+    throw new RecordDoesNotExist(
+      `Granule inventory report ${reportName} does not have an S3 location`
+    );
+  }
+  return pgReport.location;
 }
 
 /**

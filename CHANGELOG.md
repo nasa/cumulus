@@ -22,6 +22,14 @@ Please complete the following steps before upgrading Cumulus.
   CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
   ```
 
+### Breaking Changes
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
+    granule objects in the payload.
+  - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints
+    to accept granuleIds instead of granule objects in the payload.
+
 ### Notable Changes
 
 - **CUMULUS-4459**
@@ -40,11 +48,8 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to:
     - Support `granuleInventoryReportName` and `s3GranuleIdInputFile` in the payload.
-    - Accept a list of granuleIds instead of granule objects in the payload.
     - Return consistent output formats across endpoints (previously, some endpoints aggregated errors
       while others returned per-granule errors)
-  - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints to accept
-    granuleIds instead of granule objects in the payload.
 
 ### Added
 
@@ -82,6 +87,9 @@ Please complete the following steps before upgrading Cumulus.
   - Created new documentation files for language best practices `docs/development/python-best-practices.md` and `docs/development/typescript-best-practices.md`.
   - Updated documentation file `docs/development/quality-and-coverage.md` to be more repo wide and reference language best practices.
   - Updated `docs/adding-a-task.md` to include instructions and expectations when adding a task.
+
+- **Audit Issues**
+  - Updated package overrides for dev env to use `tar` "^7.5.3" to address reported CVE
 
 ## [v21.2.0] 2025-12-06
 
