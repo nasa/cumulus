@@ -1,11 +1,11 @@
 {
   "name": "@cumulus/test-sns-s3",
-  "version": "21.0.1",
+  "version": "21.2.0",
   "description": "SNS to S3 Test Lambda",
   "main": "index.js",
   "private": true,
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "scripts": {
     "package": "rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js node_modules",

@@ -1,12 +1,13 @@
 {
   "lerna": "3.20.2",
-  "version": "21.0.1",
+  "version": "21.2.0",
   "packages": [
     "example",
     "example/lambdas/*",
     "example/scripts/*",
     "lambdas/*",
     "packages/*",
+    "packages/cumulus-message-adapter-js",
     "packages/api/ecs/async-operation",
     "tasks/*",
     "tf-modules/*",
