@@ -67,6 +67,8 @@ Please complete the following steps before upgrading Cumulus.
 
 ### Changed
 
+- **CSD-82**
+  - Updated `/workflows/list` endpoint to accept `countOnly`, `prefix`, `infix`, `fields`, `limit`, and `order` query string params
 - **CUMULUS-4374**
   - Updated example python Lambdas to utilize `uv` as their package manager. This change removes references to
     pipenv. Developers should migrate to using `uv` to manage python dependencies and virtual envs which may
@@ -89,6 +91,9 @@ Please complete the following steps before upgrading Cumulus.
   - Created new documentation files for language best practices `docs/development/python-best-practices.md` and `docs/development/typescript-best-practices.md`.
   - Updated documentation file `docs/development/quality-and-coverage.md` to be more repo wide and reference language best practices.
   - Updated `docs/adding-a-task.md` to include instructions and expectations when adding a task.
+- **OTHER**
+  - Corrected misspelling in README.md related to installing `uv`.
+  - Added override for `tar` in package.json.
 
 - **Audit Issues**
   - Updated package overrides for dev env to use `tar` "^7.5.3" to address reported CVE
