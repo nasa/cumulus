@@ -95,9 +95,6 @@ Please complete the following steps before upgrading Cumulus.
   - Corrected misspelling in README.md related to installing `uv`.
   - Added override for `tar` in package.json.
 
-- **Audit Issues**
-  - Updated package overrides for dev env to use `tar` "^7.5.3" to address reported CVE
-
 ## [v21.2.0] 2025-12-06
 
 ### Migration Notes
