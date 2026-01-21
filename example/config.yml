@@ -40,6 +40,9 @@ cdd-tf:
 ecarton:
   bucket: ecarton-internal
 
+dms-opex-sbx:
+  bucket: dms-opex-sbx-internal
+
 jl-tf:
   bucket: jl-test-integration-internal
 

@@ -1,10 +1,10 @@
 {
   "name": "@cumulus/api",
-  "version": "21.0.1",
+  "version": "21.2.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "scripts": {
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",
@@ -51,32 +51,34 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@aws-lambda-powertools/tracer": "^1.12.0",
     "@aws-sdk/client-lambda": "^3.621.0",
     "@aws-sdk/client-sfn": "^3.621.0",
     "@aws-sdk/client-sns": "^3.621.0",
     "@aws-sdk/client-sqs": "^3.621.0",
-    "@cumulus/api-client": "21.0.1",
-    "@cumulus/async-operations": "21.0.1",
-    "@cumulus/aws-client": "21.0.1",
-    "@cumulus/cmr-client": "21.0.1",
-    "@cumulus/cmrjs": "21.0.1",
-    "@cumulus/collection-config-store": "21.0.1",
-    "@cumulus/common": "21.0.1",
-    "@cumulus/db": "21.0.1",
-    "@cumulus/distribution-utils": "21.0.1",
-    "@cumulus/errors": "21.0.1",
-    "@cumulus/es-client": "21.0.1",
-    "@cumulus/ingest": "21.0.1",
-    "@cumulus/launchpad-auth": "21.0.1",
-    "@cumulus/logger": "21.0.1",
-    "@cumulus/message": "21.0.1",
-    "@cumulus/oauth-client": "21.0.1",
-    "@cumulus/object-store": "21.0.1",
-    "@cumulus/pvl": "21.0.1",
-    "@cumulus/sftp-client": "21.0.1",
-    "@cumulus/types": "21.0.1",
+    "@cumulus/api-client": "21.2.0",
+    "@cumulus/async-operations": "21.2.0",
+    "@cumulus/aws-client": "21.2.0",
+    "@cumulus/cmr-client": "21.2.0",
+    "@cumulus/cmrjs": "21.2.0",
+    "@cumulus/collection-config-store": "21.2.0",
+    "@cumulus/common": "21.2.0",
+    "@cumulus/db": "21.2.0",
+    "@cumulus/distribution-utils": "21.2.0",
+    "@cumulus/errors": "21.2.0",
+    "@cumulus/es-client": "21.2.0",
+    "@cumulus/ingest": "21.2.0",
+    "@cumulus/launchpad-auth": "21.2.0",
+    "@cumulus/logger": "21.2.0",
+    "@cumulus/message": "21.2.0",
+    "@cumulus/oauth-client": "21.2.0",
+    "@cumulus/object-store": "21.2.0",
+    "@cumulus/pvl": "21.2.0",
+    "@cumulus/sftp-client": "21.2.0",
+    "@cumulus/types": "21.2.0",
     "@hapi/boom": "^10.0.0",
     "@mapbox/dyno": "^1.4.2",
+    "@opentelemetry/api": "^1.4.0",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
     "aws-serverless-express": "^3.3.5",
@@ -126,8 +128,8 @@
       "xml2js": "0.5.0"
     }
   },
-  "devDependencies": {    
-    "@cumulus/test-data": "21.0.1",
+  "devDependencies": {
+    "@cumulus/test-data": "21.2.0",
     "aws-sdk-client-mock": "^3.0.1",
     "proxyquire": "^2.1.3"
   }
