@@ -1,3 +1,4 @@
+"""Send a CNM response message"""
 import json
 import logging
 import os
@@ -19,7 +20,7 @@ ENCODER = json.JSONEncoder(indent=2)
 
 
 def get_sqs_client_and_url(cnm: dict) -> tuple[str, botocore.client.BaseClient]:
-    """Gets the SQS client and URL from the given CNM dict.
+    """Get the SQS client and URL from the given CNM dict.
 
     Args:
         cnm (dict): CNM message from SQS
@@ -97,7 +98,7 @@ def _send_message(sqs: boto3.Session, payload: str, sqs_url: str) -> None:
 
 
 def handle_sqs_dlq_record(record: dict):
-    """Handles a SQS DLQ record
+    """Handle a SQS DLQ record.
 
     Args:
         record (dict): SQS DLQ record
@@ -136,7 +137,7 @@ def handle_sqs_dlq_record(record: dict):
 
 
 def response_task(event: dict, _context) -> dict:
-    """Sends a response message to provider
+    """Send a response message to provider.
 
     Args:
         event (dict): AWS Lambda event
@@ -206,7 +207,7 @@ def response_task(event: dict, _context) -> dict:
 
 
 def lambda_handler(event: dict, _context) -> dict | None:
-    """Lambda handler
+    """Lambda handler.
 
     Args:
         event (dict): AWS Lambda event

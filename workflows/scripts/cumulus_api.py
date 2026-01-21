@@ -1,3 +1,4 @@
+"""Cumulus API"""
 import json
 import logging
 import urllib.parse
@@ -11,7 +12,7 @@ log = logging.getLogger(__name__)
 
 @dataclass
 class ApiRequest:
-    """Models an HTTP request and transforms it into an AWS API Gateway event.
+    """Model an HTTP request and transforms it into an AWS API Gateway event.
 
     Attributes:
         path (str): The URL path for the request (e.g., '/users').
