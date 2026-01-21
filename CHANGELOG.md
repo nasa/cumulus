@@ -54,6 +54,8 @@ Please complete the following steps before upgrading Cumulus.
 
 ### Changed
 
+- **CSD-82**
+  - Updated `/workflows/list` endpoint to accept `countOnly`, `prefix`, `infix`, `fields`, `limit`, and `order` query string params
 - **CUMULUS-4374**
   - Updated example python Lambdas to utilize `uv` as their package manager. This change removes references to
     pipenv. Developers should migrate to using `uv` to manage python dependencies and virtual envs which may
