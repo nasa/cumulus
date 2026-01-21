@@ -1,3 +1,4 @@
+"""CNM SQS Logger"""
 import logging
 import os
 
@@ -8,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 def send_message_workflow_sqs(sqs_messages):
-    """Sends SQS messages to SQS queue
+    """Sends SQS messages to SQS queue.
 
     Args:
         sqs_messages (list): SQS messages to send
@@ -25,7 +26,7 @@ def send_message_workflow_sqs(sqs_messages):
 
 
 def lambda_handler(event: dict, _context):
-    """Lambda handler
+    """Lambda handler.
     Args:
         event (dict): Lambda event
         _context (Context): Lambda context
