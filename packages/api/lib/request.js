@@ -68,6 +68,35 @@ function isMinVersionApi(req, minVersion) {
 }
 
 /**
+ * Validate granules field in the payload
+ *
+ * @param {GranuleExecutionPayload} payload - payload
+ * @returns {string|undefined} Error message if validation fails, otherwise null
+ */
+function validateGranulesInPayload(payload) {
+  const {
+    granules,
+    query,
+    granuleInventoryReportName,
+    s3GranuleIdInputFile,
+  } = payload;
+
+  if (!granules) return undefined;
+
+  if (!Array.isArray(granules) || granules.some((g) => !isString(g))) {
+    return `granules should be an array of values, received ${granules}`;
+  }
+
+  const hasAlternateInput =
+        query || granuleInventoryReportName || s3GranuleIdInputFile;
+  if (granules.length === 0 && !hasAlternateInput) {
+    return 'granules is empty and no alternative input source was provided';
+  }
+
+  return undefined;
+}
+
+/**
  * Validate the payload for a granule execution request.
  *
  * @param {GranuleExecutionPayload} payload - Request body payload
@@ -86,19 +115,8 @@ function validateGranuleExecutionPayload(payload) {
     return 'One of granules, query, granuleInventoryReportName or s3GranuleIdInputFile is required';
   }
 
-  if (granules !== undefined) {
-    if (!Array.isArray(granules)) {
-      return `granules should be an array of values, received ${granules}`;
-    }
-
-    if (!query && granules.length === 0) {
-      return 'no values provided for granules';
-    }
-
-    if (granules.some((g) => !isString(g))) {
-      return `granules must be an array of strings, received ${granules}`;
-    }
-  }
+  const granulesError = validateGranulesInPayload(payload);
+  if (granulesError) return granulesError;
 
   if (query) {
     const metricsConfigured

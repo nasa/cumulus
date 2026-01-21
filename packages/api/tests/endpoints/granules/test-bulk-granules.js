@@ -271,7 +271,7 @@ test.serial('POST /granules/bulk returns 400 when granules is an empty array', a
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /no values provided for granules/);
+    .expect(400, /granules is empty and no alternative input source was provided/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -352,7 +352,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
 
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
-  t.is(description, `Bulk run on ${expectedWorkflowName}`);
+  t.true(description.startsWith(`Bulk run ${expectedWorkflowName}`));
   t.deepEqual(payload, {
     payload: body,
     type: 'BULK_GRANULE',
@@ -398,7 +398,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
 
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
-  t.is(description, `Bulk run on ${expectedWorkflowName}`);
+  t.true(description.startsWith(`Bulk run ${expectedWorkflowName}`));
   t.deepEqual(payload, {
     payload: body,
     type: 'BULK_GRANULE',

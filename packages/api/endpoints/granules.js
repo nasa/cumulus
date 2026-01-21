@@ -1179,14 +1179,9 @@ async function bulkOperations(req, res) {
     return res.boom.badRequest('workflowName is required.');
   }
 
-  let description;
-  if (payload.query) {
-    description = `Bulk run ${payload.workflowName} on ${payload.query.size} granules`;
-  } else if (payload.granules) {
-    description = `Bulk run ${payload.workflowName} on ${payload.granules.length} granules`;
-  } else {
-    description = `Bulk run on ${payload.workflowName}`;
-  }
+  const numOfGranules = (payload.query && payload.query.size)
+    || (payload.granules && payload.granules.length);
+  const description = `Bulk run ${payload.workflowName} on ${numOfGranules || ''} granules`;
 
   const asyncOperationId = uuidv4();
   const asyncOperationEvent = {

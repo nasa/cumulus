@@ -750,7 +750,7 @@ test.serial('POST /executions/search-by-granules returns 400 when granules is an
     .send(body)
     .expect(400);
 
-  t.regex(response.body.message, /no values provided for granules/);
+  t.regex(response.body.message, /granules is empty and no alternative input source was provided/);
 });
 
 test.serial('POST /executions/search-by-granules returns 400 when the Metrics ELK stack is not configured', async (t) => {

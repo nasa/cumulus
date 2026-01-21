@@ -276,7 +276,7 @@ test.serial('POST /granules/bulkDelete returns 400 when granules is an empty arr
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /no values provided for granules/);
+    .expect(400, /granules is empty and no alternative input source was provided/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
