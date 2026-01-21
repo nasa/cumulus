@@ -82,6 +82,14 @@ Please complete the following steps before upgrading Cumulus.
   - Corrected misspelling in README.md related to installing `uv`.
   - Added override for `tar` in package.json.
 
+
+### Fixed
+
+- **CUMULUS-4486**
+  - Fixed a small bug with `rulesHelpers` in which `rule.rule.meta.allowProviderMismatchOnRuleFilter` was erroring due to
+    database validation errors to instead refer to `rule.meta.allowProviderMismatchOnRuleFilter`
+  - Added `allowProviderMismatchOnRuleFilter` to the `meta` field of `rules` in `/api/lib/schemas`s
+
 ## [v21.2.0] 2025-12-06
 
 ### Migration Notes

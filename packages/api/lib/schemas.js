@@ -487,6 +487,10 @@ module.exports.rule = {
           description: 'VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only.  Default to the visibility timeout of the SQS queue when the rule is created.',
           type: 'number',
         },
+        allowProviderMismatchOnRuleFilter: {
+          description: 'Allow provider mismatch on rule filter',
+          type: 'boolean',
+        },
       },
       additionalProperties: true,
     },
