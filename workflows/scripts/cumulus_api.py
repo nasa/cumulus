@@ -11,6 +11,18 @@ log = logging.getLogger(__name__)
 
 @dataclass
 class ApiRequest:
+    """Models an HTTP request and transforms it into an AWS API Gateway event.
+
+    Attributes:
+        path (str): The URL path for the request (e.g., '/users').
+        body (str): The raw request body string. Defaults to "".
+        method (str): The HTTP verb (e.g., 'GET', 'POST'). Defaults to "GET".
+        headers (dict): HTTP headers. Defaults to an empty dict.
+        params (dict): Query string parameters (multivalue). Defaults to an empty dict.
+        payload (dict): The constructed API Gateway event dictionary, generated
+            automatically during initialization.
+    """
+
     path: str
     body: str = ""
     method: str = "GET"
@@ -56,12 +68,14 @@ class ApiRequest:
 
 @dataclass
 class ApiResponse:
+    """API Response Object."""
     request: ApiRequest
     lambda_response: dict
 
     _json: dict = None
 
     def json(self):
+        """Converts the API response into a JSON string."""
         if self._json is None:
             self._json = json.load(self.lambda_response["Payload"])
 
@@ -70,6 +84,16 @@ class ApiResponse:
 
 @dataclass
 class ApiClient:
+    """Wraps an AWS Lambda client to simulate HTTP requests against a specific function.
+
+    This client handles the serialization of requests, invocation of the
+    underlying Lambda function, and parsing of the response payload.
+
+    Attributes:
+        client (Any): An instantiated boto3 Lambda client (or compatible interface).
+        function_name (str): The name or ARN of the target Lambda function.
+    """
+
     client: Any
     function_name: str
 
@@ -81,6 +105,22 @@ class ApiClient:
         headers: dict = {},
         params: dict = {},
     ) -> ApiResponse:
+        """Executes a single simulated HTTP request via Lambda invocation.
+
+        Constructs an ApiRequest, serializes it to JSON, and invokes the
+        configured Lambda function with a 'RequestResponse' invocation type.
+
+        Args:
+            method: The HTTP verb (e.g., 'GET', 'POST').
+            path: The resource path (e.g., '/users/123').
+            body: The raw string body of the request. Defaults to "".
+            headers: A dictionary of HTTP headers. Defaults to None.
+            params: A dictionary of query string parameters. Defaults to None.
+
+        Returns:
+            ApiResponse: An object containing the original request and the
+            raw Lambda response.
+        """
         request = ApiRequest(
             path=path,
             body=body,
@@ -120,6 +160,23 @@ class ApiClient:
         headers: dict = {},
         params: dict = {},
     ) -> Generator[ApiResponse, None, None]:
+        """Iterates through pages of results using the API's cursor logic.
+
+        Args:
+            method: The HTTP verb (e.g., 'GET', 'POST').
+            path: The resource path.
+            body: The raw string body of the request. Defaults to "".
+            headers: A dictionary of HTTP headers. Defaults to None.
+            params: A dictionary of query string parameters. Defaults to None.
+
+        Yields:
+            ApiResponse: The response object for each individual page requested.
+
+        Stop Iteration:
+            Stops automatically when:
+            1. The response status code is not 200.
+            2. The 'results' list in the response body is empty.
+        """
         response = self.request(
             method=method,
             path=path,

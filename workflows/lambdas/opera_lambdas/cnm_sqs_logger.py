@@ -8,6 +8,12 @@ log = logging.getLogger(__name__)
 
 
 def send_message_workflow_sqs(sqs_messages):
+    """Sends SQS messages to SQS queue
+
+    Args:
+        sqs_messages (list): SQS messages to send
+
+    """
     sqs_client = boto3.client("sqs")
     workflow_sqs_url = os.getenv("WORKFLOW_SQS")
     for sqs_message in sqs_messages:
@@ -19,6 +25,11 @@ def send_message_workflow_sqs(sqs_messages):
 
 
 def lambda_handler(event: dict, _context):
+    """Lambda handler
+    Args:
+        event (dict): Lambda event
+        _context (Context): Lambda context
+    """
     init_root_logger()
     init_custom_log_record_factory(event)
     with log_errors():

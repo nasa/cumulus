@@ -3,7 +3,6 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Optional, Tuple
 
 import boto3
 import botocore
@@ -19,7 +18,13 @@ ERROR_TYPE_MAP = {"ClientError": "TRANSFER_ERROR"}
 ENCODER = json.JSONEncoder(indent=2)
 
 
-def get_sqs_client_and_url(cnm: dict) -> Tuple[str, botocore.client.BaseClient]:
+def get_sqs_client_and_url(cnm: dict) -> tuple[str, botocore.client.BaseClient]:
+    """Gets the SQS client and URL from the given CNM dict.
+
+    Args:
+        cnm (dict): CNM message from SQS
+
+    """
     try:
         sqs_url_map = json.loads(os.getenv("RESPONSE_SQS_MAP"))
     except (json.JSONDecodeError, TypeError) as e:
@@ -44,7 +49,7 @@ def get_sqs_client_and_url(cnm: dict) -> Tuple[str, botocore.client.BaseClient]:
     return boto3.client("sqs", region_name=region), sqs_url
 
 
-def _get_uri_from_file(file: dict) -> Optional[str]:
+def _get_uri_from_file(file: dict) -> str | None:
     bucket = file.get("bucket")
     key = file.get("key")
 
@@ -92,6 +97,12 @@ def _send_message(sqs: boto3.Session, payload: str, sqs_url: str) -> None:
 
 
 def handle_sqs_dlq_record(record: dict):
+    """Handles a SQS DLQ record
+
+    Args:
+        record (dict): SQS DLQ record
+
+    """
     cnm = json.loads(record["body"])
     attributes = record["attributes"]
     sqs, sqs_url = get_sqs_client_and_url(cnm)
@@ -103,9 +114,13 @@ def handle_sqs_dlq_record(record: dict):
 
     response_message = {
         "version": CNM_VERSION,
-        "receivedTime": datetime.utcfromtimestamp(received_time).strftime(CNM_TIME_FORMAT),
+        "receivedTime": datetime.utcfromtimestamp(received_time).strftime(
+            CNM_TIME_FORMAT
+        ),
         "processCompleteTime": datetime.utcnow().strftime(CNM_TIME_FORMAT),
-        "product": {"name": cnm["product"]["name"], "files": cnm["product"]["files"]},
+        "product": {
+            "name": cnm["product"]["name"], "files": cnm["product"]["files"],
+        },
         "submissionTime": cnm["submissionTime"],
         "identifier": cnm["identifier"],
         "collection": cnm["collection"],
@@ -121,6 +136,13 @@ def handle_sqs_dlq_record(record: dict):
 
 
 def response_task(event: dict, _context) -> dict:
+    """Sends a response message to provider
+
+    Args:
+        event (dict): AWS Lambda event
+        _context (dict): AWS Lambda context
+
+    """
     payload = event.get("input") or {}
     task_config = event.get("config") or {}
 
@@ -129,7 +151,9 @@ def response_task(event: dict, _context) -> dict:
     received_time = task_config.get("received_time")
     # If CnmToGranules fails, the CNM won't have been moved to the meta section yet
     original_cnm = cnm or payload
-    original_cnm["receivedTime"] = datetime.utcfromtimestamp(received_time / 1000).strftime(CNM_TIME_FORMAT)
+    original_cnm["receivedTime"] = datetime.utcfromtimestamp(
+        received_time / 1000
+    ).strftime(CNM_TIME_FORMAT)
 
     granules = payload.get("granules")
     if granules is None:
@@ -139,7 +163,9 @@ def response_task(event: dict, _context) -> dict:
         granule = granules[0]
         files = granule.get("files") or []
     else:
-        raise RuntimeError(f"Received wrong number of granules {len(granules)} expected 1")
+        raise RuntimeError(
+            f"Received wrong number of granules {len(granules)} expected 1"
+        )
 
     log.info("attempting to parse SQS")
     if cnm.get("trace") == "ASF-TOOLS":
@@ -168,7 +194,10 @@ def response_task(event: dict, _context) -> dict:
 
     granule_response = {
         "status": "SUCCESS",
-        "ingestionMetadata": {"catalogId": granule.get("cmrConceptId"), "catalogUrl": granule.get("cmrLink")},
+        "ingestionMetadata": {
+            "catalogId": granule.get("cmrConceptId"),
+            "catalogUrl": granule.get("cmrLink"),
+        },
     }
     message = _generate_message(original_cnm, files, granule_response)
     _send_message(sqs, ENCODER.encode(message), sqs_url)
@@ -176,7 +205,13 @@ def response_task(event: dict, _context) -> dict:
     return payload
 
 
-def lambda_handler(event: dict, context) -> Optional[dict]:
+def lambda_handler(event: dict, _context) -> dict | None:
+    """Lambda handler
+
+    Args:
+        event (dict): AWS Lambda event
+        _context (dict): AWS Lambda context
+    """
     init_root_logger()
     init_custom_log_record_factory(event)
     with log_errors():
