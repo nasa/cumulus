@@ -8,8 +8,11 @@ from datetime import datetime
 
 import boto3
 import botocore
-from mandible.log import (init_custom_log_record_factory, init_root_logger,
-                          log_errors)
+from mandible.log import (
+    init_custom_log_record_factory,
+    init_root_logger,
+    log_errors,
+)
 from run_cumulus_task import run_cumulus_task
 
 log = logging.getLogger(__name__)

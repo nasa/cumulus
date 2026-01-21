@@ -1,4 +1,4 @@
-"""Cumulus API"""
+"""Cumulus API."""
 
 import json
 import logging
