@@ -7,7 +7,7 @@ const test = require('ava');
 const { randomId } = require('@cumulus/common/test-utils');
 const Logger = require('@cumulus/logger');
 const { searchConcept } = require('../searchConcept');
-const { TestConsole } = require('../../logger/tests/test-consoleUtils');
+const { TestConsole } = require('../../logger/tests');
 
 process.env.CMR_ENVIRONMENT = 'SIT';
 
