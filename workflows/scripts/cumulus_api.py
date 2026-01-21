@@ -3,9 +3,10 @@ import json
 import logging
 import urllib.parse
 import uuid
+from collections.abc import Generator
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Generator
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class ApiRequest:
         params (dict): Query string parameters (multivalue). Defaults to an empty dict.
         payload (dict): The constructed API Gateway event dictionary, generated
             automatically during initialization.
+
     """
 
     path: str
@@ -32,7 +34,8 @@ class ApiRequest:
     payload: dict = field(init=False)
 
     def __post_init__(self):
-        now = datetime.now(timezone.utc)
+        """Initialize payload."""
+        now = datetime.datetime.now(datetime.UTC)
         self.payload = {
             "body": self.body,
             "headers": {
@@ -70,6 +73,7 @@ class ApiRequest:
 @dataclass
 class ApiResponse:
     """API Response Object."""
+
     request: ApiRequest
     lambda_response: dict
 
@@ -85,7 +89,7 @@ class ApiResponse:
 
 @dataclass
 class ApiClient:
-    """Wraps an AWS Lambda client to simulate HTTP requests against a specific function.
+    """Wrap an AWS Lambda client to simulate HTTP requests against a specific function.
 
     This client handles the serialization of requests, invocation of the
     underlying Lambda function, and parsing of the response payload.
@@ -93,6 +97,7 @@ class ApiClient:
     Attributes:
         client (Any): An instantiated boto3 Lambda client (or compatible interface).
         function_name (str): The name or ARN of the target Lambda function.
+
     """
 
     client: Any
@@ -106,7 +111,7 @@ class ApiClient:
         headers: dict = {},
         params: dict = {},
     ) -> ApiResponse:
-        """Executes a single simulated HTTP request via Lambda invocation.
+        """Execute a single simulated HTTP request via Lambda invocation.
 
         Constructs an ApiRequest, serializes it to JSON, and invokes the
         configured Lambda function with a 'RequestResponse' invocation type.
@@ -118,9 +123,6 @@ class ApiClient:
             headers: A dictionary of HTTP headers. Defaults to None.
             params: A dictionary of query string parameters. Defaults to None.
 
-        Returns:
-            ApiResponse: An object containing the original request and the
-            raw Lambda response.
         """
         request = ApiRequest(
             path=path,
@@ -161,7 +163,7 @@ class ApiClient:
         headers: dict = {},
         params: dict = {},
     ) -> Generator[ApiResponse, None, None]:
-        """Iterates through pages of results using the API's cursor logic.
+        """Iterate through pages of results using the API's cursor logic.
 
         Args:
             method: The HTTP verb (e.g., 'GET', 'POST').
@@ -177,6 +179,7 @@ class ApiClient:
             Stops automatically when:
             1. The response status code is not 200.
             2. The 'results' list in the response body is empty.
+
         """
         response = self.request(
             method=method,
@@ -185,11 +188,12 @@ class ApiClient:
             headers=headers,
             params=params,
         )
+        http_success = 200
         while True:
             yield response
 
             payload = response.json()
-            if payload["statusCode"] != 200:
+            if payload["statusCode"] != http_success:
                 return
 
             response_body = json.loads(payload["body"])

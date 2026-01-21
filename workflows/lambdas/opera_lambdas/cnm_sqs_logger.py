@@ -3,7 +3,8 @@ import logging
 import os
 
 import boto3
-from mandible.log import init_custom_log_record_factory, init_root_logger, log_errors
+from mandible.log import (init_custom_log_record_factory, init_root_logger,
+                          log_errors)
 
 log = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ def lambda_handler(event: dict, _context):
     Args:
         event (dict): Lambda event
         _context (Context): Lambda context
+
     """
     init_root_logger()
     init_custom_log_record_factory(event)

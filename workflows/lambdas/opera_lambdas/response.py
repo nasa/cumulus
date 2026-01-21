@@ -1,4 +1,4 @@
-"""Send a CNM response message"""
+"""Send a CNM response message."""
 import json
 import logging
 import os
@@ -7,7 +7,8 @@ from datetime import datetime
 
 import boto3
 import botocore
-from mandible.log import init_custom_log_record_factory, init_root_logger, log_errors
+from mandible.log import (init_custom_log_record_factory, init_root_logger,
+                          log_errors)
 from run_cumulus_task import run_cumulus_task
 
 log = logging.getLogger(__name__)
@@ -212,6 +213,7 @@ def lambda_handler(event: dict, _context) -> dict | None:
     Args:
         event (dict): AWS Lambda event
         _context (dict): AWS Lambda context
+
     """
     init_root_logger()
     init_custom_log_record_factory(event)
@@ -220,4 +222,4 @@ def lambda_handler(event: dict, _context) -> dict | None:
             for record in event["Records"]:
                 handle_sqs_dlq_record(record)
         else:
-            return run_cumulus_task(response_task, event, context)
+            return run_cumulus_task(response_task, event, _context)
