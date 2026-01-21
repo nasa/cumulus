@@ -1,4 +1,5 @@
 """CNM SQS Logger."""
+
 import logging
 import os
 

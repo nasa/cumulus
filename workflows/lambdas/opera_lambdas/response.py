@@ -1,4 +1,5 @@
 """Send a CNM response message."""
+
 import json
 import logging
 import os
@@ -121,7 +122,8 @@ def handle_sqs_dlq_record(record: dict):
         ),
         "processCompleteTime": datetime.utcnow().strftime(CNM_TIME_FORMAT),
         "product": {
-            "name": cnm["product"]["name"], "files": cnm["product"]["files"],
+            "name": cnm["product"]["name"],
+            "files": cnm["product"]["files"],
         },
         "submissionTime": cnm["submissionTime"],
         "identifier": cnm["identifier"],

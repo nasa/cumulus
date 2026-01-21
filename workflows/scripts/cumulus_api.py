@@ -1,11 +1,12 @@
 """Cumulus API"""
+
 import json
 import logging
 import urllib.parse
 import uuid
 from collections.abc import Generator
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 log = logging.getLogger(__name__)
@@ -80,7 +81,7 @@ class ApiResponse:
     _json: dict = None
 
     def json(self):
-        """Converts the API response into a JSON string."""
+        """Convert the API response into a JSON string."""
         if self._json is None:
             self._json = json.load(self.lambda_response["Payload"])
 
