@@ -54,6 +54,8 @@ Please complete the following steps before upgrading Cumulus.
 
 ### Changed
 
+- **CSD-82**
+  - Updated `/workflows/list` endpoint to accept `countOnly`, `prefix`, `infix`, `fields`, `limit`, and `order` query string params
 - **CUMULUS-4374**
   - Updated example python Lambdas to utilize `uv` as their package manager. This change removes references to
     pipenv. Developers should migrate to using `uv` to manage python dependencies and virtual envs which may
@@ -79,6 +81,14 @@ Please complete the following steps before upgrading Cumulus.
 - **OTHER**
   - Corrected misspelling in README.md related to installing `uv`.
   - Added override for `tar` in package.json.
+
+
+### Fixed
+
+- **CUMULUS-4486**
+  - Fixed a small bug with `rulesHelpers` in which `rule.rule.meta.allowProviderMismatchOnRuleFilter` was erroring due to
+    database validation errors to instead refer to `rule.meta.allowProviderMismatchOnRuleFilter`
+  - Added `allowProviderMismatchOnRuleFilter` to the `meta` field of `rules` in `/api/lib/schemas`s
 
 ## [v21.2.0] 2025-12-06
 
