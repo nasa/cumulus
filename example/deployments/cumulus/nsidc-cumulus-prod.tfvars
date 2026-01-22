@@ -60,6 +60,7 @@ archive_api_users = [
     "hgrams",
     "jdcarlso",
     "kjohnson_32",
+    "macrouch",
     "marin",
     "mdcampbell",
     "nathawat",
