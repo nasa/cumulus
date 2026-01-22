@@ -15,7 +15,7 @@ Config object fields:
 
 | field name          | type   | default    | description
 |---------------------|--------|------------| -----------
-| collection          | object | (optional) | collection.granuleIdExtraction:Regex used to extract granuleId from filenames 
+| collection          | object | (optional) | collection.granuleIdExtraction:Regex used to extract granuleId from filenames
 
 
 ```angular2html
@@ -82,19 +82,19 @@ module "cnm_to_cma_module" {
    region = var.region
    lambda_role = module.cumulus.lambda_processing_role_arn
    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
-  
+
     subnet_ids = var.subnet_ids
     memory_size = 128
     timeout = 180
  }
- 
+
  resource "aws_cloudwatch_log_group" "cnm_to_cma_task" {
-    name              = "/aws/lambda/${module.cnm_to_cma_module.cnm_to_cma_name}"  
+    name              = "/aws/lambda/${module.cnm_to_cma_module.cnm_to_cma_name}"
    retention_in_days = var.task_logs_retention_in_days
    tags              = merge(local.tags, { Project = var.prefix })
  }
 ```
-      
+
 ### Input
 
 Input array specification:
@@ -103,7 +103,7 @@ Input array specification:
 | ---------- |--------| ------- | -----------
 | N/A | object | (required) | cnm message
 
-the lambda's event.get('input') is the cnm message.  
+the lambda's event.get('input') is the cnm message.
 
 ### Output
 
