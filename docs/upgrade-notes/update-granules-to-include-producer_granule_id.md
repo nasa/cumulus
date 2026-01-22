@@ -103,7 +103,7 @@ other issues that would result in the client being killed.
     and click the Connect button.
 
     From AWS CLI: aws ssm start-session --target `EC2 Instance ID`.
-  
+
     :::note Remember to take a note on which instance you run the commands.
 
 3. Install tmux, postgres client and python packages

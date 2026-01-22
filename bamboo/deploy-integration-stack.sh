@@ -30,4 +30,3 @@ set -e
 echo "Running Terraform deployment $DEPLOYMENT"
 
 . ../bamboo/bootstrap-tf-deployment.sh
-
