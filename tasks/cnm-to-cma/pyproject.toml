@@ -1,7 +1,7 @@
 [project]
-name = "cnm2cma"
+name = "cnm-to-cma"
 version = "0.1.0"
-description = ""
+description = "Translate CNM message to CMA"
 authors = [
     { name = "ESHINDavid Yen", email = "david.yen@jpl.nasa.gov" }
 ]
@@ -14,14 +14,16 @@ dependencies = [
     "pydantic-core (>=2.41.5,<3.0.0)"
 ]
 
-[tool.poetry]
-packages = [{ include = "cnm2cma", from = "src" }]
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
 [dependency-groups]
 dev = [
     "pytest (>=9.0.1,<10.0.0)"
 ]
+
+[tool.pytest]
+packages = [{ include = "cnm2cma", from = "src" }]
+
+pythonpath = ["src"]
+testpaths = [
+    "tests",
+]
+
