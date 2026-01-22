@@ -22,6 +22,20 @@ class CoverageUpdateRequired(Exception):
 
 CoverageDict = dict[str, float]
 
+def getRoot() -> str:
+    return os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+
+def mergeCoverage() -> None:
+    root = getRoot()
+    cwd = os.getcwd()
+    outFile = '_'.join(cwd.split("/")[-2:])
+    error = subprocess.call([
+        "nyc", "merge",
+        f"{cwd}/.nyc_output",
+        f"{root}/.nyc_output/{outFile}.json"
+    ])
+    if error:
+        raise TestException("nyc merge failed, see output above")
 
 def truncate_float(value: float, precision: int) -> float | int:
     """Round down to the given precision.
@@ -271,6 +285,14 @@ coverage runs 'nyc npm test' and sets thresholds in the local nyc config
         nargs="?",
         help="update nyc thresholds to current code coverage",
     )
+    parser.add_argument(
+        "--merge",
+        type=bool,
+        const=True,
+        default=False,
+        nargs="?",
+        help="collect coverage reports into root",
+    )
 
     args = parser.parse_args()
     update: bool = args.update
@@ -289,6 +311,9 @@ coverage runs 'nyc npm test' and sets thresholds in the local nyc config
             args.no_rerun,
             args.nyc_config_path,
         )
+    if args.merge:
+        mergeCoverage()
+        
 
 
 if __name__ == "__main__":
