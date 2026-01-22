@@ -1,0 +1,31 @@
+[project]
+name = "cumulus-python-reference-task"
+version = "21.0.1"
+description = "Python reference task"
+requires-python = "~=3.12.0"
+dependencies = [
+    "boto3~=1.40",
+    "cumulus-process==1.6.0",
+    "cumulus-message-adapter-python==2.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy~=1.19.0",
+    "pytest~=9.0.2",
+    "pytest-mock~=3.15.1",
+    "ruff~=0.14.0",
+]
+
+[tool.pytest]
+minversion = "9.0"
+addopts = [
+    "--maxfail=1",
+    "-ra",
+]
+pythonpath = [
+    "src"
+]
+testpaths = [
+    "tests"
+]

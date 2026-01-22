@@ -6,10 +6,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration Notes
+
+Please complete the following steps before upgrading Cumulus.
+
+#### CUMULUS-4459 New index added to the granules table to improve Dashboard performance
+
+- The fix introduced in CUMULUS-4459 requires a manual database update in the production environment.
+  This step ensures the new index is created successfully, even in the unlikely event that the database-migration
+  Lambda function did not complete the index creation before timing out.
+
+  Please follow the standard procedures for running a production database migration, and execute the following SQL to create the index:
+
+  ```text
+  CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
+  ```
+
 ### Notable Changes
 
+- **CUMULUS-4459**
+  - Added new index to the granules table to improve Dashboard performance.
 - **CUMULUS-4446**
   - Updated all node lambdas/Core build environments to utilize node v22
+  - Updated cma-js dependency to 2.4.0
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
@@ -37,6 +56,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CSD-82**
+  - Updated `/workflows/list` endpoint to accept `countOnly`, `prefix`, `infix`, `fields`, `limit`, and `order` query string params
+- **CUMULUS-4374**
+  - Updated example python Lambdas to utilize `uv` as their package manager. This change removes references to
+    pipenv. Developers should migrate to using `uv` to manage python dependencies and virtual envs which may
+    require reinstalling python libraries. This change also updates the names of the example python task services
+    because of a deployment race condition. These services are only used for integration tests.
 - **CUMULUS-4387**
   - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
   `pyproject.toml` file.
@@ -48,6 +74,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4438**
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
+- **CSD-61**
+  - Updated writeGranuleFromApi() endpoint to allow createdAt and updatedAt fields to be null.
+- **CUMULUS-4436**
+  - Created new documentation files for language best practices `docs/development/python-best-practices.md` and `docs/development/typescript-best-practices.md`.
+  - Updated documentation file `docs/development/quality-and-coverage.md` to be more repo wide and reference language best practices.
+  - Updated `docs/adding-a-task.md` to include instructions and expectations when adding a task.
+- **OTHER**
+  - Corrected misspelling in README.md related to installing `uv`.
+  - Added override for `tar` in package.json.
+
+
+### Fixed
+
+- **CUMULUS-4486**
+  - Fixed a small bug with `rulesHelpers` in which `rule.rule.meta.allowProviderMismatchOnRuleFilter` was erroring due to
+    database validation errors to instead refer to `rule.meta.allowProviderMismatchOnRuleFilter`
+  - Added `allowProviderMismatchOnRuleFilter` to the `meta` field of `rules` in `/api/lib/schemas`s
 
 ## [v21.2.0] 2025-12-06
 
@@ -6693,6 +6736,8 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Added `@cumulus/api-client/reconciliationReports`
 - **CUMULUS-1999**
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
+- **CUMULUS-4112**
+  - Updated `serveUtils.addGranules` to include writing granule files.
 
 ### Fixed
 
