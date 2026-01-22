@@ -18,7 +18,7 @@ Utilities for storing and retrieving collection config in S3
 ### CollectionConfigStore ⏏
 Store and retrieve collection configs in S3
 
-**Kind**: Exported class  
+**Kind**: Exported class
 <a name="new_module_collection-config-store--CollectionConfigStore_new"></a>
 
 #### new CollectionConfigStore(bucket, stackName)
@@ -30,7 +30,7 @@ Initialize a CollectionConfigStore instance
 | bucket | <code>string</code> | the bucket where collection configs are stored |
 | stackName | <code>string</code> | the Cumulus deployment stack name |
 
-**Example**  
+**Example**
 ```js
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 
@@ -44,8 +44,8 @@ const collectionConfigStore = new CollectionConfigStore(
 #### collectionConfigStore.get(name, version) ⇒ <code>Promise.&lt;Object&gt;</code>
 Fetch a collection config from S3 (or cache if available)
 
-**Kind**: instance method of [<code>CollectionConfigStore</code>](#exp_module_collection-config-store--CollectionConfigStore)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the fetched collection config  
+**Kind**: instance method of [<code>CollectionConfigStore</code>](#exp_module_collection-config-store--CollectionConfigStore)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the fetched collection config
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -57,9 +57,9 @@ Fetch a collection config from S3 (or cache if available)
 #### collectionConfigStore.put(name, version, config) ⇒ <code>Promise.&lt;null&gt;</code>
 Store a collection config to S3
 
-**Kind**: instance method of [<code>CollectionConfigStore</code>](#exp_module_collection-config-store--CollectionConfigStore)  
+**Kind**: instance method of [<code>CollectionConfigStore</code>](#exp_module_collection-config-store--CollectionConfigStore)
 **Returns**: <code>Promise.&lt;null&gt;</code> - resolves when the collection config has been written
-  to S3  
+  to S3
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -72,9 +72,9 @@ Store a collection config to S3
 #### collectionConfigStore.delete(name, version) ⇒ <code>Promise.&lt;null&gt;</code>
 Delete a collection config from S3
 
-**Kind**: instance method of [<code>CollectionConfigStore</code>](#exp_module_collection-config-store--CollectionConfigStore)  
+**Kind**: instance method of [<code>CollectionConfigStore</code>](#exp_module_collection-config-store--CollectionConfigStore)
 **Returns**: <code>Promise.&lt;null&gt;</code> - resolves when the collection config has been deleted
-  to S3  
+  to S3
 
 | Param | Type | Description |
 | --- | --- | --- |

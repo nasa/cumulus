@@ -35,4 +35,3 @@ the script can be configured either through command line arguments or environmen
 | --executionsK <br> -g| EXECUTIONS_K | 10 | number of executions, in thousands |
 | --concurrency <br> -C | CONCURRENCY | 1 | how many threads of parallelization <br> concurrency should usually be >100 |
 | --swallowErrors <br> -s|SWALLOW_ERRORS| true | swallow and move on from data data upload errors |
-
