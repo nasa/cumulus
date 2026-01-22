@@ -36,4 +36,3 @@ orca_default_bucket = "jl-test-integration-orca-glacier"
 
 tea_distribution_url = "https://2yzme66sf7.execute-api.us-east-1.amazonaws.com:7000/DEV/"
 cumulus_distribution_url = "https://iprjmr5yuc.execute-api.us-east-1.amazonaws.com:9000/dev/"
-

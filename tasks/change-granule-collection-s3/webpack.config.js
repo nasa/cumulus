@@ -51,7 +51,7 @@ module.exports = {
       tedious: 'tedious'
     }
   ],
-  
+
   devtool: 'inline-source-map',
   target: 'node',
   optimization: {

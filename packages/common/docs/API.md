@@ -16,7 +16,7 @@
 ## URLUtils
 A collection of utilities for working with URLs
 
-**Example**  
+**Example**
 ```js
 const { buildURL } = require('@cumulus/common/URLUtils');
 
@@ -27,8 +27,8 @@ buildURL({ protocol: 'http', host: 'example.com' }); // => 'http://example.com'
 ### buildURL(params) ⇒ <code>string</code> ⏏
 Build a URL
 
-**Kind**: Exported function  
-**Returns**: <code>string</code> - a URL  
+**Kind**: Exported function
+**Returns**: <code>string</code> - a URL
 **Throws**:
 
 - <code>TypeError</code> if protocol or host are not specified
@@ -42,7 +42,7 @@ Build a URL
 | [params.port] | <code>string</code> \| <code>integer</code> | the port |
 | [params.path] | <code>string</code> \| <code>Array.&lt;string&gt;</code> | path segment(s) to add to the end of   the URL.  Can be either a string or an array of strings, which will be   joined together. |
 
-**Example**  
+**Example**
 ```js
 buildURL({
   protocol: 'http'
@@ -70,7 +70,7 @@ Mark a piece of code as deprecated.
 Each deprecation notice for a given name and version combination will
 only be printed once.
 
-**Kind**: Exported member  
+**Kind**: Exported member
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -83,9 +83,9 @@ only be printed once.
 ### removeNilProperties(obj) ⇒ <code>Object</code> ⏏
 Remove properties whose values are `null` or `undefined`
 
-**Kind**: Exported function  
+**Kind**: Exported function
 **Returns**: <code>Object</code> - a shallow clone of the object with `null` and `undefined`
-  properties removed  
+  properties removed
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -98,7 +98,7 @@ Test if a value is included in a list of items
 
 This is a curried function - https://lodash.com/docs/4.17.11#curry
 
-**Kind**: Exported function  
+**Kind**: Exported function
 
 | Param | Type | Description |
 | --- | --- | --- |
