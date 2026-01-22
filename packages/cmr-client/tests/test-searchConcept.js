@@ -13,10 +13,6 @@ process.env.CMR_ENVIRONMENT = 'SIT';
 
 const clientId = 'cumulus-test-client';
 
-test.beforeEach((t) => {
-  t.context.testConsole = new TestConsole();
-});
-
 test.serial('searchConcept request includes CMR client id', async (t) => {
   let request;
   const stub = sinon.stub(got, 'get').callsFake((_url, opt) => {
@@ -122,14 +118,18 @@ test.serial(
 );
 
 test.serial('searchConcept logs redacted Authorization header on error', async (t) => {
-  const headers = { Authorization: `Bearer ${randomId('secret')}`, 'Client-Id': 'any' };
+  t.context.testConsole = new TestConsole();
 
+  const headers = { Authorization: `Bearer ${randomId('secret')}`, 'Client-Id': 'any' };
   const stub = sinon.stub(got, 'get').throws(new Error('CMR request failed'));
 
   const writeStub = sinon.stub(Logger.prototype, 'writeLogEvent').callsFake(function writeLogEventFake(level, messageArgs, additionalKeys) {
     const msg = this.buildLogEventMessage(level, messageArgs, additionalKeys);
-    if (level === 'error') t.context.testConsole.error(msg);
-    else t.context.testConsole.log(msg);
+    if (level === 'error') {
+      t.context.testConsole.error(msg);
+    } else {
+      t.context.testConsole.log(msg);
+    }
   });
 
   const searchParams = new URLSearchParams({
@@ -137,16 +137,14 @@ test.serial('searchConcept logs redacted Authorization header on error', async (
     otherKey: 'otherValue',
   });
 
-  try {
-    await searchConcept({
+  await t.throwsAsync(() =>
+    searchConcept({
       type: 'granule',
       searchParams,
       previousResults: [],
-      headers: headers,
-    });
-  } catch {
-    // Expected error
-  }
+      headers,
+    }));
+
   const errorLogs = t.context.testConsole.stderrLogEntries;
   const headerAuthorizationLog = errorLogs.find((log) => log.message.includes('Authorization'));
   t.true(headerAuthorizationLog.message.includes('"Authorization":"[REDACTED]"'));
