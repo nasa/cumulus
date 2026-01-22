@@ -1,1 +1,1 @@
-prefix="cdd-ci-tf"
+prefix="cdd-ci-tfvars"

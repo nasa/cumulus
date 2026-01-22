@@ -10,5 +10,3 @@ output "database_credentials_secret_arn" {
 output "rds_security_group" {
   value = var.rds_security_group
 }
-
-

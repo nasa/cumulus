@@ -1,7 +1,7 @@
 module "lzards_backup_workflow" {
     source = "../../tf-modules/workflow/"
 
-    prefix          = var.prefix 
+    prefix          = var.prefix
     name            = "LzardsBackupTest"
     workflow_config = module.cumulus.workflow_config
     system_bucket   = var.system_bucket

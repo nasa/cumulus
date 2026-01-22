@@ -25,4 +25,3 @@ module "migration_helper_async_operation" {
   tags                       = var.tags
   vpc_id                     = var.vpc_id
 }
-
