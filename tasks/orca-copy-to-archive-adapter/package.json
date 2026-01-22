@@ -14,7 +14,7 @@
     "directory": "orca-copy-to-archive-adapter"
   },
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "scripts": {
     "clean": "rm -rf dist",
@@ -42,7 +42,7 @@
   "dependencies": {
     "@cumulus/aws-client": "21.2.0",
     "@cumulus/common": "21.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.3.0",
+    "@cumulus/cumulus-message-adapter-js": "2.4.0",
     "@cumulus/logger": "21.2.0",
     "lodash": "^4.17.15"
   },

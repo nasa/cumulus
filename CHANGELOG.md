@@ -6,10 +6,46 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration Notes
+
+Please complete the following steps before upgrading Cumulus.
+
+#### CUMULUS-4459 New index added to the granules table to improve Dashboard performance
+
+- The fix introduced in CUMULUS-4459 requires a manual database update in the production environment.
+  This step ensures the new index is created successfully, even in the unlikely event that the database-migration
+  Lambda function did not complete the index creation before timing out.
+
+  Please follow the standard procedures for running a production database migration, and execute the following SQL to create the index:
+
+  ```text
+  CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
+  ```
+
 ### Notable Changes
+
+- **CUMULUS-4459**
+  - Added new index to the granules table to improve Dashboard performance.
+- **CUMULUS-4446**
+  - Updated all node lambdas/Core build environments to utilize node v22
+  - Updated cma-js dependency to 2.4.0
+- **CUMULUS-3574**
+  - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
+    now, if any granule file fails, none are written.
+- **CUMULUS-4272**
+  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
+    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
+    reusing their existing security group, ensuring compatibility with existing
+    `data-persistence-tf` and `cumulus-tf` modules.
 
 ### Added
 
+- **CUMULUS-4300**
+  - Added a new rate-limited consumer class in the Node/TypeScript code to control how many executions are submitted per second across multiple queues - helping improve and smooth out step function submission.
+    - Created a new ConsumerRateLimited class that is able to submit executions at a specified, even maximum rate as defined by rateLimitPerSecond. In order to enforce this limit across all throttled queues, this class accepts a list of queue URLs instead of a single throttled queue URL. Unlike its non-rate-limited counterpart, to simplify configuration, this new class does not limit the number of messages staged - that can now be indirectly controlled by increasing or decreasing the rate.
+    - Added calls to the new ConsumerRateLimited class in sf-starter.js in the handleRateLimitedEvent function. This uses the incrementAndDispatch dispatcher.
+    - Added a new Lambda named "sqs2sfThrottleRateLimited" that can be called with a list of queueURLs in an EventBridge scheduled rule.
+    - Added sqs2sfThrottleRateLimited_lambda_function_arn outputs to both ingest and cumulus modules.
 - **CUMULUS-4411**
   - The `tf-modules/cumulus-rds-tf` module now supports enabling RDS slow query logging in CloudWatch.
     By setting `db_log_min_duration_ms` to a positive value (in milliseconds) and `enabled_cloudwatch_logs_exports`
@@ -20,6 +56,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CSD-82**
+  - Updated `/workflows/list` endpoint to accept `countOnly`, `prefix`, `infix`, `fields`, `limit`, and `order` query string params
+- **CUMULUS-4374**
+  - Updated example python Lambdas to utilize `uv` as their package manager. This change removes references to
+    pipenv. Developers should migrate to using `uv` to manage python dependencies and virtual envs which may
+    require reinstalling python libraries. This change also updates the names of the example python task services
+    because of a deployment race condition. These services are only used for integration tests.
 - **CUMULUS-4387**
   - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
   `pyproject.toml` file.
@@ -31,12 +74,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4438**
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
+- **CSD-61**
+  - Updated writeGranuleFromApi() endpoint to allow createdAt and updatedAt fields to be null.
+- **CUMULUS-4436**
+  - Created new documentation files for language best practices `docs/development/python-best-practices.md` and `docs/development/typescript-best-practices.md`.
+  - Updated documentation file `docs/development/quality-and-coverage.md` to be more repo wide and reference language best practices.
+  - Updated `docs/adding-a-task.md` to include instructions and expectations when adding a task.
+- **OTHER**
+  - Corrected misspelling in README.md related to installing `uv`.
+  - Added override for `tar` in package.json.
+
+
+### Fixed
+
+- **CUMULUS-4486**
+  - Fixed a small bug with `rulesHelpers` in which `rule.rule.meta.allowProviderMismatchOnRuleFilter` was erroring due to
+    database validation errors to instead refer to `rule.meta.allowProviderMismatchOnRuleFilter`
+  - Added `allowProviderMismatchOnRuleFilter` to the `meta` field of `rules` in `/api/lib/schemas`s
 
 ## [v21.2.0] 2025-12-06
 
 ### Migration Notes
 
-- This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
+- This release updates all core integration deployments to target [cumulus-message-adapter v2.0.5](https://github.com/nasa/cumulus-message-adapter/releases/tag/v2.0.5).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
 
 ### Notable Changes
 
@@ -56,6 +116,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
     reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
+- **CUMULUS-4458**
+  - Fixed a small bug with `message_consumer` lambda env and function variable names to match so the lambda env var `allowProviderMismatchOnRuleFilter` can be properly used when set
 
 ### Added
 
@@ -6674,6 +6736,8 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Added `@cumulus/api-client/reconciliationReports`
 - **CUMULUS-1999**
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
+- **CUMULUS-4112**
+  - Updated `serveUtils.addGranules` to include writing granule files.
 
 ### Fixed
 

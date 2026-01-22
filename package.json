@@ -61,7 +61,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
@@ -185,7 +185,8 @@
     },
     "request": {
       "qs": "^6.14.1"
-    }
+    },
+    "tar": "^7.5.3"
   },
   "private": true
 }
