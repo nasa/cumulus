@@ -73,7 +73,6 @@ This is for installation for Cumulus development. See the [Cumulus deployment se
 - [Docker](https://www.docker.com/) (only required for testing)
 - docker-compose (only required for testing `pip install docker-compose`)
 - Python 3.12
-- [pipenv](https://pypi.org/project/pipenv/)
 - [uv](https://docs.astral.sh/uv/)
 
 > You may use `brew` to install the prerequisites. Visit [Homebrew documentation](https://brew.sh/) for guidance.
@@ -93,13 +92,12 @@ We use Lerna to manage multiple Cumulus packages in the same repo. You need to i
 npm install -g lerna
 ```
 
-### Unstall uv
+### Install uv
 
-We use uv to manage python packages and dependencies. It is recommended to install uv using
+We use `uv` to manage python packages and dependencies. You need to install `uv` using either `brew` or
 the install scripts provided [here](https://docs.astral.sh/uv/getting-started/installation/)
-since uv can then be used to install python (similar to NVM for node).
+since `uv` can then be used to install python (similar to NVM for node).
 
-https://docs.astral.sh/uv/getting-started/installation/
 
 ### Install Local Dependencies
 
