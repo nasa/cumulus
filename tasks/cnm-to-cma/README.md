@@ -63,13 +63,16 @@ Config object fields:
         "Next": "Report"
       },
 ```
-Example:
-     Please refer to the above task definition within Step Functions. Under task_config
-"collection": "{$.meta.collection}", is the config input.  user could use
-collection.granuleIdExtraction (regex) to extract granuleId from cnm's product.name field.
+The Step Function task definition utilizes a task_config object to manage dynamic inputs. Within this configuration, the collection field is mapped using JSONPath to the metadata:
 
-     This task is intent to be a module to be loaded by terraform script as an example below:
+    Config Input: "collection": "{$.meta.collection}"
 
+Granule ID Extraction
+
+Users can define a regular expression via collection.granuleIdExtraction. This regex is applied to the product.name field within the Cloud Notification Mechanism (CNM) to accurately extract the unique granuleId.
+Terraform Implementation
+
+This task is designed as a modular component. You can load it into your infrastructure using the following Terraform example:
 ```angular2html
 
 module "cnm_to_cma_module" {
@@ -112,9 +115,13 @@ Output object fields:
 | cnm        | object          | N/A | the original cnm message.
 
 
-Please refer to the task example in "Config" section.  The output area
-where 'output_granules' shall be map to the payload and cnm (original cnm)
-could be attached under meta.
+Data Mapping and Payload Configuration
+
+When configuring the task, please refer to the example provided in the "Config" section. Ensure the output is mapped according to the following structure:
+
+    Granule Mapping: The output_granules field must be mapped directly to the primary payload.
+
+    Metadata Attachment: The original Cloud Notification Mechanism (CNM) message should be nested under the meta object.
 
 ## About Cumulus
 
