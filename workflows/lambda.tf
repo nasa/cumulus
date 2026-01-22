@@ -1,24 +1,3 @@
-data "archive_file" "base_dependency_layer_zip" {
-  type        = "zip"
-  output_path = "${var.DIST_DIR}/opera/base_dependency_layer.zip"
-
-  source_dir = "${var.DIST_DIR}/opera/base_dependency_layer/"
-}
-
-data "archive_file" "opera_dependency_layer_zip" {
-  type        = "zip"
-  output_path = "${var.DIST_DIR}/opera/opera_dependency_layer.zip"
-
-  source_dir = "${var.DIST_DIR}/opera/opera_dependency_layer/"
-}
-
-data "archive_file" "opera_lambdas_zip" {
-  type        = "zip"
-  output_path = "${var.DIST_DIR}/opera/opera_lambdas.zip"
-
-  source_dir = "${var.DIST_DIR}/opera/opera_lambdas/"
-}
-
 resource "aws_lambda_layer_version" "lambda_base_dependencies" {
   // Layer is created using requirements.txt
   filename            = "${var.DIST_DIR}/opera/base_dependency_layer.zip"

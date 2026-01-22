@@ -1,3 +1,5 @@
+"""Script to deploy Providers, Collections, and Rules."""
+
 import argparse
 import http
 import json
@@ -5,7 +7,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import boto3
 
@@ -17,6 +19,7 @@ log = logging.getLogger(__name__)
 def add_parser(
     subparsers: argparse._SubParsersAction,
 ) -> argparse.ArgumentParser:
+    """Add parser to subparsers."""
     parser_deploy = subparsers.add_parser(
         "deploy",
         help="deploy providers/collections/rules",
@@ -36,6 +39,7 @@ def add_parser(
 
 
 def deploy_pcrs(args: argparse.Namespace):
+    """Deploy providers/collections/rules."""
     session = boto3.Session(profile_name=args.profile)
     client = session.client("lambda")
     caller_identity = session.client("sts").get_caller_identity()
@@ -52,7 +56,7 @@ def deploy_pcrs(args: argparse.Namespace):
 
     any_failed = False
     for path in discover_pcrs(args.path.resolve()):
-        with open(path, "r") as f:
+        with open(path) as f:
             text = substitute(f.read(), variables=variables)
             try:
                 obj = json.loads(text)
@@ -113,6 +117,7 @@ def deploy_pcrs(args: argparse.Namespace):
 
 
 def discover_pcrs(path: Path):
+    """Discover providers/collections/rules."""
     if path.is_file() and path.suffix.lower() == ".json":
         yield path
     elif path.is_dir():
@@ -120,7 +125,8 @@ def discover_pcrs(path: Path):
             yield from discover_pcrs(path / sub_path)
 
 
-def get_object_type(obj: Any) -> Optional[str]:
+def get_object_type(obj: Any) -> str | None:
+    """Determine the object type from the JSON object."""
     if not isinstance(obj, dict):
         return None
 
@@ -134,7 +140,8 @@ def get_object_type(obj: Any) -> Optional[str]:
     return None
 
 
-def get_object_id(obj: Any) -> Optional[str]:
+def get_object_id(obj: Any) -> str | None:
+    """Determine the object id from the JSON object."""
     if not isinstance(obj, dict):
         return None
 
@@ -154,6 +161,8 @@ def substitute(
     variables: dict = {},
     regex: re.Pattern = re.compile(r"\$[\w_]+", re.MULTILINE),
 ) -> str:
+    """Substitute variables in data."""
+
     def repl(match: re.Match) -> str:
         text = match.group()
         # Strip off the leading $
@@ -161,7 +170,3 @@ def substitute(
         return os.getenv(name) or variables.get(name, text)
 
     return regex.sub(repl, data)
-
-
-if __name__ == "__main__":
-    print("What is going on here")
