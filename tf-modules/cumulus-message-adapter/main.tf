@@ -24,4 +24,3 @@ resource "aws_lambda_layer_version" "cumulus_message_adapter" {
   layer_name  = "Cumulus_Message_Adapter"
   description = "Layer supporting the Cumulus Message Adapter https://github.com/nasa/cumulus-message-adapter"
 }
-
