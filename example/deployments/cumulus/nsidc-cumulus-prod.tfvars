@@ -58,6 +58,7 @@ archive_api_users = [
     "ckhoward",
     "crumlyd",
     "hgrams",
+    "jdcarlso",
     "kjohnson_32",
     "marin",
     "mdcampbell",
