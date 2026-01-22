@@ -1,0 +1,22 @@
+{
+    "name": "OPERA_L3_DIST-ALERT-S1_PROVISIONAL_V0",
+    "version": "0",
+    "duplicateHandling": "replace",
+    "process": "DIST",
+    "url_path": "OPERA_L3_DIST-ALERT-S1_PROVISIONAL_V0/{granule.granuleId}/",
+    "granuleId": "^OPERA_L3_DIST-ALERT-S1.*$",
+    "granuleIdExtraction": "(OPERA_L3_DIST-ALERT-S1.*)(\\.tif)",
+    "sampleFileName": "OPERA_L3_DIST-ALERT-S1_T10SGD_20250102T015857Z_20250418T194347Z_S1_30_v0.1_GEN-METRIC.tif",
+    "files": [
+        {
+            "bucket": "opera-products",
+            "regex": "^OPERA_L3_DIST-ALERT-S1_.*(?:\\.tif|\\.iso\\.xml)(?!\\.png)(?:\\.md5)?$",
+            "sampleFileName": "OPERA_L3_DIST-ALERT-S1_T10SGD_20250102T015857Z_20250418T194347Z_S1_30_v0.1_GEN-METRIC.tif"
+        },
+        {
+            "bucket": "opera-browse",
+            "regex": "^OPERA_L3_DIST-ALERT-S1_.*(?!:\\.tif|\\.iso\\.xml)(?:\\.png)(?:\\.md5)?$",
+            "sampleFileName": "OPERA_L3_DIST-ALERT-S1_T10SGD_20250102T015857Z_20250418T194347Z_S1_30_v0.1.png"
+        }
+    ]
+}
