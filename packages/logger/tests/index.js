@@ -1,10 +1,9 @@
 'use strict';
 
-const moment = require('moment');
-const test = require('ava');
-
 const { Console } = require('console');
 const { Writable } = require('stream');
+const moment = require('moment');
+const test = require('ava');
 
 const Logger = require('..');
 
