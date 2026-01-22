@@ -447,12 +447,12 @@ test('filterRulesByRuleParams does not filter if rule.meta.allowProviderMismatch
   const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'fake_provider' });
   const allowProviderMismatchOnRuleFilter = true;
   let rule2 = fakeRuleFactoryV2({
+    meta: {
+      allowProviderMismatchOnRuleFilter,
+    },
     rule: {
       type: 'sqs',
       sourceArn: randomString(),
-      meta: {
-        allowProviderMismatchOnRuleFilter,
-      },
     },
     provider: 'another_fake_provider',
   });
