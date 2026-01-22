@@ -51,7 +51,8 @@ Please complete the following steps before upgrading Cumulus.
     By setting `db_log_min_duration_ms` to a positive value (in milliseconds) and `enabled_cloudwatch_logs_exports`
     to `["postgresql"]`, RDS will log and export any database queries that take longer than that threshold.
     The module also configures the required RDS extensions and parameters necessary for slow query instrumentation.
-
+- **CUMULUS-4388**
+  - Migrate cnm2cma module from PODAAC to Cumulus Core
 ### Changed
 
 - **CSD-82**
