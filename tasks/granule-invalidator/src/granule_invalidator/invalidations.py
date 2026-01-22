@@ -13,7 +13,7 @@ from cumulus_logger import CumulusLogger
 
 from . import granule_invalidator
 
-LOGGER = CumulusLogger(__name__, level=int(os.environ.get('LOGLEVEL', logging.DEBUG)))
+LOGGER = CumulusLogger(__name__, level=int(os.environ.get("LOGLEVEL", logging.DEBUG)))
 
 
 def science_date(
@@ -31,9 +31,9 @@ def science_date(
 
     """
     expiration_timedelta = timedelta(
-        minutes=granule_invalidation_information.get('maximum_minutes_old')
+        minutes=granule_invalidation_information.get("maximum_minutes_old")
     )
-    comparison_key = 'productionDateTime'
+    comparison_key = "productionDateTime"
 
     def comparison_key_transformation(datetime_representation):
         return datetime.fromisoformat(datetime_representation)
@@ -58,9 +58,9 @@ def ingest_date(
 
     """
     expiration_timedelta = timedelta(
-        minutes=granule_invalidation_information.get('maximum_minutes_old')
+        minutes=granule_invalidation_information.get("maximum_minutes_old")
     )
-    comparison_key = 'createdAt'
+    comparison_key = "createdAt"
 
     def comparison_key_transformation(datetime_representation):
         return datetime.fromtimestamp(datetime_representation / 1000, UTC)
@@ -87,10 +87,10 @@ def cross_collection(
         Returns a list of invalid and valid granules.
 
     """
-    coll = granule_invalidation_information.get('invalidating_collection')
-    version = granule_invalidation_information.get('invalidating_version')
-    begin_date_key = 'beginningDateTime'
-    end_date_key = 'endingDateTime'
+    coll = granule_invalidation_information.get("invalidating_collection")
+    version = granule_invalidation_information.get("invalidating_version")
+    begin_date_key = "beginningDateTime"
+    end_date_key = "endingDateTime"
     # Identify the oldest date to filter on granules newer than that
     datetime_list = [
         datetime.fromisoformat(granule[begin_date_key])
@@ -99,28 +99,28 @@ def cross_collection(
     ]
     if not datetime_list:
         LOGGER.info(
-            'No granules with valid beginningDateTime found, '
-            'skipping cross collection invalidation'
+            "No granules with valid beginningDateTime found, "
+            "skipping cross collection invalidation"
         )
         return granules, []
     oldest_date = min(datetime_list)
 
     list_of_granules = granule_invalidator.fetch_all_granules(
         {
-            'collectionId': f'{coll}___{version}',
-            'timestamp__from': int(oldest_date.timestamp() * 1000),
+            "collectionId": f"{coll}___{version}",
+            "timestamp__from": int(oldest_date.timestamp() * 1000),
         }
     )
 
     invalidating_dictionary = {
-        f'{granule[begin_date_key]}_{granule[end_date_key]}': granule
+        f"{granule[begin_date_key]}_{granule[end_date_key]}": granule
         for granule in list_of_granules
         if granule.get(begin_date_key) and granule.get(end_date_key)
     }
     invalid_granules = []
     valid_granules = []
     for granule in granules:
-        key = f'{granule[begin_date_key]}_{granule[end_date_key]}'
+        key = f"{granule[begin_date_key]}_{granule[end_date_key]}"
         if (
             granule.get(begin_date_key)
             and granule.get(end_date_key)

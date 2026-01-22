@@ -18,9 +18,9 @@ from run_cumulus_task import run_cumulus_task
 
 from . import invalidations
 
-LOGGER = CumulusLogger(__name__, level=int(os.environ.get('LOGLEVEL', logging.DEBUG)))
+LOGGER = CumulusLogger(__name__, level=int(os.environ.get("LOGLEVEL", logging.DEBUG)))
 MAX_GRANULES_FETCHED = 100000
-schemas = {'config': 'schemas/config_schema.json'}
+schemas = {"config": "schemas/config_schema.json"}
 
 EVENT_TYPING = dict[Any, Any]
 
@@ -53,67 +53,67 @@ def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
             statistics.
 
     """
-    config = event.get('config', {})
-    granule_invalidations = config.get('granule_invalidations')
-    collection = config.get('collection')
-    version = config.get('version')
+    config = event.get("config", {})
+    granule_invalidations = config.get("granule_invalidations")
+    collection = config.get("collection")
+    version = config.get("version")
     page_length_ms = config.get(
-        'page_length_ms', 7 * 24 * 60 * 60 * 1000
+        "page_length_ms", 7 * 24 * 60 * 60 * 1000
     )  # default to one week in milliseconds
 
     list_of_granules = fetch_all_granules(
-        {'collectionId': f'{collection}___{version}'}, page_length_ms
+        {"collectionId": f"{collection}___{version}"}, page_length_ms
     )
     valid_granules = list_of_granules
     invalid_granules = []
     aggregated_stats = {}
     for granule_invalidation in granule_invalidations:
         if not valid_granules:
-            LOGGER.info('No valid granules remaining, returning')
+            LOGGER.info("No valid granules remaining, returning")
             break
         valid_granules, invalid_granules_this_run = run_invalidation(
             valid_granules, granule_invalidation
         )
-        aggregated_stats[granule_invalidation.get('type')] = (
-            len(invalid_granules_this_run)
+        aggregated_stats[granule_invalidation.get("type")] = len(
+            invalid_granules_this_run
         )
         invalid_granules.extend(invalid_granules_this_run)
         LOGGER.info(
-            f'Invalidated {len(invalid_granules_this_run)} granules out of '
-            f'{len(valid_granules) + len(invalid_granules)} granules '
-            f'after running {granule_invalidation.get("type")} invalidation'
+            f"Invalidated {len(invalid_granules_this_run)} granules out of "
+            f"{len(valid_granules) + len(invalid_granules)} granules "
+            f"after running {granule_invalidation.get('type')} invalidation"
         )
         LOGGER.info(
-            f'Type of invalidation: {granule_invalidation.get("type")} '
-            f'Granule IDs: {[g["granuleId"] for g in invalid_granules_this_run]}'
+            f"Type of invalidation: {granule_invalidation.get('type')} "
+            f"Granule IDs: {[g['granuleId'] for g in invalid_granules_this_run]}"
         )
     LOGGER.info(
-        f'Invalidated a total of {len(invalid_granules)} granules '
-        f'out of {len(valid_granules) + len(invalid_granules)} granules'
+        f"Invalidated a total of {len(invalid_granules)} granules "
+        f"out of {len(valid_granules) + len(invalid_granules)} granules"
     )
 
-    granules_to_be_removed_by_invalidation_type = '\n'.join(
+    granules_to_be_removed_by_invalidation_type = "\n".join(
         [
-            f'{invalidation_type} - {invalidation_count} granules'
+            f"{invalidation_type} - {invalidation_count} granules"
             for invalidation_type, invalidation_count in aggregated_stats.items()
         ]
     )
 
     return {
-        'granules': [
+        "granules": [
             {
-                'granuleId': invalid_granule['granuleId'],
-                'collectionId': f'{collection}___{version}',
+                "granuleId": invalid_granule["granuleId"],
+                "collectionId": f"{collection}___{version}",
             }
             for invalid_granule in invalid_granules
         ],
-        'forceRemoveFromCmr': True,
-        'granules_to_be_deleted_count': len(invalid_granules),
-        'aggregated_stats': (
-            f'Total number of granules to be removed: {len(invalid_granules)}\n'
-            f'Total number of granules to be retained: {len(valid_granules)}\n'
-            f'Granules to be removed by invalidation type:\n'
-            f'{granules_to_be_removed_by_invalidation_type}\n'
+        "forceRemoveFromCmr": True,
+        "granules_to_be_deleted_count": len(invalid_granules),
+        "aggregated_stats": (
+            f"Total number of granules to be removed: {len(invalid_granules)}\n"
+            f"Total number of granules to be retained: {len(valid_granules)}\n"
+            f"Granules to be removed by invalidation type:\n"
+            f"{granules_to_be_removed_by_invalidation_type}\n"
         ),
     }
 
@@ -133,10 +133,10 @@ def run_invalidation(
 
     """
     try:
-        invalidation_function = getattr(invalidations, granule_invalidation.get('type'))
+        invalidation_function = getattr(invalidations, granule_invalidation.get("type"))
     except AttributeError:
         raise ValueError(
-            f'Invalid type {granule_invalidation.get("type")} for granule invalidation'
+            f"Invalid type {granule_invalidation.get('type')} for granule invalidation"
         )
 
     return invalidation_function(granules, granule_invalidation)
@@ -163,11 +163,11 @@ async def _fetch_single_page(
 
     """
     async with semaphore:
-        args_with_page = {**args, 'page': page}
-        LOGGER.debug(f'Fetching page {page} with args {args_with_page}')
+        args_with_page = {**args, "page": page}
+        LOGGER.debug(f"Fetching page {page} with args {args_with_page}")
         grans = await asyncio.to_thread(lambda: cml.list_granules(**args_with_page))
-        results = grans.get('results', [])
-        LOGGER.debug(f'Fetched {len(results)} granules of {granule_count}')
+        results = grans.get("results", [])
+        LOGGER.debug(f"Fetched {len(results)} granules of {granule_count}")
         return results
 
 
@@ -183,11 +183,11 @@ async def list_all_granules(**args) -> list[dict]:
 
     """
     cml = CumulusApi()
-    grans = cml.list_granules(**args, **{'countOnly': 'true'})
-    granule_count = grans.get('meta', {}).get('count', 0)
-    page_limit = grans.get('meta', {}).get('limit', 100)
+    grans = cml.list_granules(**args, **{"countOnly": "true"})
+    granule_count = grans.get("meta", {}).get("count", 0)
+    page_limit = grans.get("meta", {}).get("limit", 100)
     if granule_count == 0:
-        LOGGER.debug(f'No granules found with {args}')
+        LOGGER.debug(f"No granules found with {args}")
         return []
 
     granules_fetched = []
@@ -224,8 +224,8 @@ def fetch_all_granules(
 
     """
     cml = CumulusApi()
-    grans = cml.list_granules(**args, **{'countOnly': 'true'})
-    granule_count = min(grans.get('meta', {}).get('count', 0), MAX_GRANULES_FETCHED)
+    grans = cml.list_granules(**args, **{"countOnly": "true"})
+    granule_count = min(grans.get("meta", {}).get("count", 0), MAX_GRANULES_FETCHED)
 
     start_time = int(time.time() * 1000)
     end_time = 0
@@ -240,50 +240,50 @@ def fetch_all_granules(
         full_arg_list = {
             **args,
             **{
-                'limit': 100,
-                'updatedAt__to': start,
-                'updatedAt__from': end,
-                'sort_key[]': '-timestamp',
+                "limit": 100,
+                "updatedAt__to": start,
+                "updatedAt__from": end,
+                "sort_key[]": "-timestamp",
             },
         }
         granules = asyncio.run(list_all_granules(**full_arg_list))
         results.extend(granules)
         returned_granule_count = len(results)
         LOGGER.debug(
-            f'Fetched {len(granules)} granules in this batch, total so far: '
-            f'{returned_granule_count}, waiting for: {granule_count}'
+            f"Fetched {len(granules)} granules in this batch, total so far: "
+            f"{returned_granule_count}, waiting for: {granule_count}"
         )
         seconds = time.time() - start_timer
         start_dt = datetime.fromtimestamp(start / 1000).isoformat()
         end_dt = datetime.fromtimestamp(end / 1000).isoformat()
         LOGGER.debug(
-            f'Done with interval {start_dt} - {end_dt} in {seconds:.1f} '
-            f'seconds, {len(granules)} granules, args {full_arg_list}'
+            f"Done with interval {start_dt} - {end_dt} in {seconds:.1f} "
+            f"seconds, {len(granules)} granules, args {full_arg_list}"
         )
         if returned_granule_count >= granule_count:
             LOGGER.info(
-                f'Fetched all requested granules ({returned_granule_count} found, '
-                f'{granule_count} expected), breaking'
+                f"Fetched all requested granules ({returned_granule_count} found, "
+                f"{granule_count} expected), breaking"
             )
             break
     return results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     lambda_adapter(
         {
-            'config': {
-                'granule_invalidations': [
-                    {'type': 'science_date', 'maximum_minutes_old': 1000000},
-                    {'type': 'ingest_date', 'maximum_minutes_old': 1},
+            "config": {
+                "granule_invalidations": [
+                    {"type": "science_date", "maximum_minutes_old": 1000000},
+                    {"type": "ingest_date", "maximum_minutes_old": 1},
                     {
-                        'type': 'cross_collection',
-                        'invalidating_collection': 'ATL09',
-                        'invalidating_version': '006',
+                        "type": "cross_collection",
+                        "invalidating_collection": "ATL09",
+                        "invalidating_version": "006",
                     },
                 ],
-                'collection': 'ATL08',
-                'version': '006',
+                "collection": "ATL08",
+                "version": "006",
             }
         },
         None,
