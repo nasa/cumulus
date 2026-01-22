@@ -149,7 +149,3 @@ class TestCNMToCMA:
             assert(forth_cnm_file.checksumType == models_cnm.ChecksumType.md5)
             assert(forth_cnm_file.checksum == "addjd872342bfbf")
             assert(forth_cnm_file.size == 12345)
-
-
-
-
