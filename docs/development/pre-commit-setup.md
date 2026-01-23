@@ -14,9 +14,15 @@ The pre-commit configuration uses your existing project tools and configuration 
 
 ## Installation
 
-The hooks are already installed if you've run the setup. If you need to reinstall them:
+You can install pre-commit by running the following command in the root directory (where the root pyproject.toml sits):
 
-```bash
+```sh
+uv sync --group lint
+```
+
+Next, install the required pre-commit hooks:
+
+```sh
 npm run precommit:install
 ```
 
@@ -32,7 +38,7 @@ Once installed, the hooks will run automatically on each commit. If any issues a
 
 ### Manual Runs
 
-```bash
+```sh
 # Run on all files
 npm run precommit:run
 
@@ -44,9 +50,9 @@ uv run pre-commit run eslint
 uv run pre-commit run ruff-check
 ```
 
-### Skip Hooks (use sparingly)
+### Skip Hooks (not recommended)
 
-```bash
+```sh
 # Skip all hooks for a commit
 git commit --no-verify -m "commit message"
 
@@ -54,11 +60,11 @@ git commit --no-verify -m "commit message"
 SKIP=eslint git commit -m "commit message"
 ```
 
-## Uninstallation
+## Uninstall
 
 If you need to remove the pre-commit hooks:
 
-```bash
+```sh
 npm run precommit:uninstall
 ```
 
@@ -86,6 +92,6 @@ All rules are centralized in these existing configuration files, so there's no d
 
 ### Updating Hooks
 
-```bash
+```sh
 uv run pre-commit autoupdate
 ```
