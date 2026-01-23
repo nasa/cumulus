@@ -357,3 +357,5 @@ test('Logger.info() allows an empty message to be logged', (t) => {
   t.is(testConsole.stdoutLogEntries.length, 1);
   t.is(testConsole.stdoutLogEntries[0].message, '');
 });
+
+module.exports = { TestConsole };

@@ -305,7 +305,7 @@ resource "aws_lambda_function" "sqs2sfThrottleRateLimited" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfStarter/lambda.zip")
   handler          = "index.sqs2sfThrottleRateLimitedHandler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "sqs2sfThrottleRateLimited", 240)
   memory_size      = lookup(var.lambda_memory_sizes, "sqs2sfThrottleRateLimited", 512)
   environment {
