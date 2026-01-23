@@ -31,12 +31,6 @@ const makeRangeS3Mock = (full: Buffer) => ({
   }),
 });
 
-test.beforeEach(() => {
-  // Default: effectively disable multipart for most tests
-  process.env.MULTIPART_CHECKSUM_THRESHOLD_MEGABYTES = `${Number.MAX_SAFE_INTEGER}`;
-  process.env.MULTIPART_CHECKSUM_PART_MEGABYTES = `${64}`;
-});
-
 test('addChecksumToGranuleFile() does not update a granule file if checksumType is set but checksum is not', async (t) => {
   const granuleFile = {
     bucket: 'bucket',
@@ -103,9 +97,6 @@ test('addChecksumToGranuleFile() returns the file if checksumType and checksum a
 });
 
 test('addChecksumToGranuleFile() adds the checksumType and checksum to the file if they are missing', async (t) => {
-  // Forces only using one get request
-  process.env.MULTIPART_CHECKSUM_THRESHOLD_BYTES = `${Number.MAX_SAFE_INTEGER}`;
-
   const granuleFile = {
     bucket: 'bucket',
     key: 'path/to/file.txt',

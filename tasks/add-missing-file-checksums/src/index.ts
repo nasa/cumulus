@@ -6,6 +6,10 @@ import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import crypto from 'crypto';
 import { Granule, GranuleFile, HandlerInput, HandlerEvent } from './types';
 
+process.env.AWS_MAX_ATTEMPTS ??= '3';
+process.env.AWS_RETRY_MODE ??= 'standard';
+process.env.S3_JITTER_MAX_MS ??= '500';
+
 const updateHashFromBody = async (hash: crypto.Hash, body: any) => {
   if (!body) return;
 
@@ -24,7 +28,7 @@ const updateHashFromBody = async (hash: crypto.Hash, body: any) => {
 };
 
 const calculateObjectHashByRanges = async (params: {
-  s3: { getObject: S3.GetObjectMethod },
+  s3: { getObject: S3.GetObjectMethod }
   algorithm: string,
   bucket: string,
   key: string,
@@ -46,12 +50,15 @@ const calculateObjectHashByRanges = async (params: {
 
   await ranges.reduce<Promise<void>>(
     (p, { start, end }) =>
-      p.then(() => s3.getObject({
-        Bucket: bucket,
-        Key: key,
-        Range: `bytes=${start}-${end}`,
-      })
-        .then((resp: any) => updateHashFromBody(hash, resp.Body))),
+      p.then(async () => {
+        const resp = await s3.getObject({
+          Bucket: bucket,
+          Key: key,
+          Range: `bytes=${start}-${end}`,
+        });
+
+        return updateHashFromBody(hash, (resp as any).Body);
+      }),
     Promise.resolve()
   );
 
@@ -75,7 +82,6 @@ const calculateGranuleFileChecksum = async (params: {
     && (granuleFile.size > thresholdBytes);
 
   if (partitioningEnabled) {
-    console.log('Calculating hash by partitioning.');
     return await calculateObjectHashByRanges({
       s3,
       algorithm,
@@ -116,7 +122,7 @@ export const addChecksumToGranuleFile = async (params: {
   }
 
   const checksum = await calculateGranuleFileChecksum({
-    s3,
+    s3: s3,
     algorithm,
     granuleFile,
   });
@@ -153,10 +159,12 @@ const addFileChecksumsToGranule = async (params: {
 
 export const handler = async (event: HandlerEvent) => {
   const { config, input } = event;
+  
+  const s3Client = awsClients.s3();
   const granulesWithChecksums = await Promise.all(
     input.granules.map(
       (granule) => addFileChecksumsToGranule({
-        s3: awsClients.s3(),
+        s3: { getObject: (params: any) => S3.getObject(s3Client, params) },
         algorithm: config.algorithm,
         granule,
       })
