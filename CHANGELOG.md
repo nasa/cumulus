@@ -35,7 +35,7 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4459**
   - Added new index to the granules table to improve Dashboard performance.
 - **CUMULUS-4446**
-  - Updated all node lambdas/Core build environments to utilize node v22
+  - Updated all node lambdas/Core build environments to utilize node v22.
   - Updated cma-js dependency to 2.4.0
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
@@ -6752,6 +6752,8 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 - **CUMULUS-4112**
   - Updated `serveUtils.addGranules` to include writing granule files.
+- **CSD-84**
+  - Update error logging in `@cumulus/packages/cmr-client/searchConcept` to redact the authorization header value.
 
 ### Fixed
 
