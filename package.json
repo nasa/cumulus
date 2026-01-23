@@ -22,7 +22,7 @@
     "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
     "lint-package-json": "npmPkgJsonLint .",
     "lint-python": "uv run ruff check . && uv run ruff format --diff .",
-    "precommit:install": "uv run pre-commit install -f",
+    "precommit:install": "uv run pre-commit install",
     "precommit:uninstall": "uv run pre-commit uninstall",
     "precommit:run": "uv run pre-commit run --all-files",
     "test": "lerna run --ignore @cumulus/cumulus-integration-tests --stream --concurrency 1 test",

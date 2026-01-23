@@ -105,11 +105,19 @@ since `uv` can then be used to install python (similar to NVM for node).
 You can install pre-commit with the following command:
 
 ```sh
-pip install pre-commit
+uv sync --group lint
 ```
 
 Refer to the [pre-commit-setup](./docs/development/pre-commit-setup.md) for more information on how to configure and use
 pre-commit.
+
+Because pre-commit and pre-commit ci may add commits that include only whitespace or other trivial formatting changes it's recommended to
+configure `git blame` to ignore specific commits. The [.git-blame-ignore-revs](.git-blame-ignore-revs) file tells `git blame` which
+commit revisions to ignore when displaying blame results. You should configure your local git to respect this file:
+
+```sh
+git config --global blame.ignoreRevsFile .git-blame-ignore-revs
+```
 
 ### Install Local Dependencies
 
