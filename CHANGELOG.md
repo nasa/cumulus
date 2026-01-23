@@ -27,7 +27,7 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4459**
   - Added new index to the granules table to improve Dashboard performance.
 - **CUMULUS-4446**
-  - Updated all node lambdas/Core build environments to utilize node v22
+  - Updated all node lambdas/Core build environments to utilize node v22.
   - Updated cma-js dependency to 2.4.0
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
@@ -54,6 +54,8 @@ Please complete the following steps before upgrading Cumulus.
 
 ### Changed
 
+- **CSD-82**
+  - Updated `/workflows/list` endpoint to accept `countOnly`, `prefix`, `infix`, `fields`, `limit`, and `order` query string params
 - **CUMULUS-4374**
   - Updated example python Lambdas to utilize `uv` as their package manager. This change removes references to
     pipenv. Developers should migrate to using `uv` to manage python dependencies and virtual envs which may
@@ -67,6 +69,9 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4430**
   - Updated GitHub Actions to run `ruff` linting on PRs.
   - Updated GitHub Actions to run `eslint`, `markdownlint`, and `npm-package-json-lint` on PRs.
+- **CUMULUS-4433**
+  - Adds pre-commit config and hooks to the repository. Developers are encouraged to install pre-commit and read
+  the [pre-commit setup docs](./docs/development/pre-commit-setup.md) to ensure they have the correct setup.
 - **CUMULUS-4438**
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
@@ -76,6 +81,17 @@ Please complete the following steps before upgrading Cumulus.
   - Created new documentation files for language best practices `docs/development/python-best-practices.md` and `docs/development/typescript-best-practices.md`.
   - Updated documentation file `docs/development/quality-and-coverage.md` to be more repo wide and reference language best practices.
   - Updated `docs/adding-a-task.md` to include instructions and expectations when adding a task.
+- **OTHER**
+  - Corrected misspelling in README.md related to installing `uv`.
+  - Added override for `tar` in package.json.
+
+
+### Fixed
+
+- **CUMULUS-4486**
+  - Fixed a small bug with `rulesHelpers` in which `rule.rule.meta.allowProviderMismatchOnRuleFilter` was erroring due to
+    database validation errors to instead refer to `rule.meta.allowProviderMismatchOnRuleFilter`
+  - Added `allowProviderMismatchOnRuleFilter` to the `meta` field of `rules` in `/api/lib/schemas`s
 
 ## [v21.2.0] 2025-12-06
 
@@ -6723,6 +6739,8 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 - **CUMULUS-4112**
   - Updated `serveUtils.addGranules` to include writing granule files.
+- **CSD-84**
+  - Update error logging in `@cumulus/packages/cmr-client/searchConcept` to redact the authorization header value.
 
 ### Fixed
 

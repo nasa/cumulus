@@ -33,7 +33,7 @@
     "counter": { "type": "integer" },
     "isFinished": {
       "description": "Indicates whether all the step function executions of the PDR are in terminal states",
-      "type": "boolean" 
+      "type": "boolean"
     },
     "pdr": {
       "description": "Product Delivery Record",
