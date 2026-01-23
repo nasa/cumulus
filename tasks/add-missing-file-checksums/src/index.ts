@@ -159,7 +159,7 @@ const addFileChecksumsToGranule = async (params: {
 
 export const handler = async (event: HandlerEvent) => {
   const { config, input } = event;
-  
+
   const s3Client = awsClients.s3();
   const granulesWithChecksums = await Promise.all(
     input.granules.map(
