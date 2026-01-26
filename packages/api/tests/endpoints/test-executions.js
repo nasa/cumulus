@@ -698,7 +698,7 @@ test.serial('POST /executions/search-by-granules returns 400 when a query is pro
   t.regex(response.body.message, /Index is required if query is sent/);
 });
 
-test.serial('POST /executions/search-by-granules returns 400 when no granules or query is provided', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when no granules or alternative input source is provided', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -735,7 +735,7 @@ test.serial('POST /executions/search-by-granules returns 400 when granules is no
   t.regex(response.body.message, /granules should be an array of values/);
 });
 
-test.serial('POST /executions/search-by-granules returns 400 when granules is an empty array', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when granules is empty and no alternative input source was provided', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {

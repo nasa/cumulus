@@ -193,7 +193,7 @@ test.serial('POST /granules/bulkReingest returns 400 when a query is provided wi
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkReingest returns 400 when no granules or query is provided', async (t) => {
+test.serial('POST /granules/bulkReingest returns 400 when no granules or alternative input source is provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedIndex = 'my-index';
 
@@ -231,7 +231,7 @@ test.serial('POST /granules/bulkReingest returns 400 when granules is not an arr
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkReingest returns 400 when granules is an empty array', async (t) => {
+test.serial('POST /granules/bulkReingest returns 400 when granules is empty and no alternative input source was provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedIndex = 'my-index';
 

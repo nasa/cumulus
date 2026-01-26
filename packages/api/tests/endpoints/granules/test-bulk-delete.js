@@ -234,7 +234,7 @@ test.serial('POST /granules/bulkDelete returns a 400 when a query is provided wi
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkDelete returns 400 when no granules or Query is provided', async (t) => {
+test.serial('POST /granules/bulkDelete returns 400 when no granules or alternative input source is provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
 
   const body = {};
@@ -265,7 +265,7 @@ test.serial('POST /granules/bulkDelete returns 400 when granules are not an arra
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkDelete returns 400 when granules is an empty array of values', async (t) => {
+test.serial('POST /granules/bulkDelete returns 400 when granules is empty and no alternative input source was provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
 
   const body = {

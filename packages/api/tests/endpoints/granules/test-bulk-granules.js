@@ -207,7 +207,7 @@ test.serial('POST /granules/bulk returns 400 when a query is provided with no in
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulk returns 400 when no granules or query are provided', async (t) => {
+test.serial('POST /granules/bulk returns 400 when no granules or alternative input source is provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
@@ -253,7 +253,7 @@ test.serial('POST /granules/bulk returns 400 when granules is not an array', asy
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulk returns 400 when granules is an empty array', async (t) => {
+test.serial('POST /granules/bulk returns 400 when granules is empty and no alternative input source was provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
