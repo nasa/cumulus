@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
+    granule objects in the payload.
+  - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints
+    to accept granuleIds instead of granule objects in the payload.
+
+### Added
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
+    `s3GranuleIdInputFile` in the payload.
+
+### Changed
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations return consistent output formats across different bulk opertions
+    (previously, some bulk operation aggregated errors while others returned per-granule errors)
+  - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
+    `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
+
+## [Unreleased]
+
 ### Migration Notes
 
 Please complete the following steps before upgrading Cumulus.
@@ -21,16 +45,6 @@ Please complete the following steps before upgrading Cumulus.
   ```text
   CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
   ```
-
-### Breaking Changes
-
-- **CUMULUS-4473**
-  - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
-    granule objects in the payload.
-  - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints
-    to accept granuleIds instead of granule objects in the payload.
-  - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
-    `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
 
 ### Notable Changes
 
