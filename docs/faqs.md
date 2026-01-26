@@ -24,7 +24,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 - docker-compose (only required for testing `pip install docker-compose`)
 - Python
 - [pipenv](https://pypi.org/project/pipenv/)
-  
+
 :::info login credentials
 
 Keep in mind you will need access to the AWS console and an [Earthdata account](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
