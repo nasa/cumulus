@@ -75,14 +75,14 @@ const client = new CognitoClient({
 ## CognitoClient
 A client for the Cognito API. Extents OAuthClient.
 
-**Kind**: global class  
+**Kind**: global class
 <a name="CognitoClient+getUserInfo"></a>
 
 ### cognitoClient.getUserInfo(params) ⇒ <code>Promise.&lt;Object&gt;</code>
 Query the API for the user object associated with an access token.
 
-**Kind**: instance method of [<code>CognitoClient</code>](#CognitoClient)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - The user object (see example)  
+**Kind**: instance method of [<code>CognitoClient</code>](#CognitoClient)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - The user object (see example)
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -90,7 +90,7 @@ Query the API for the user object associated with an access token.
 | params.token | <code>string</code> | The access token for Authorization header |
 | [params.xRequestId] | <code>string</code> | a string to help identify the request |
 
-**Example**  
+**Example**
 ```js
 {
  "username": "janedoe",
@@ -106,7 +106,7 @@ Query the API for the user object associated with an access token.
 ## EarthdataLoginClient
 A client for the Earthdata Login API. Extents OAuthClient.
 
-**Kind**: global class  
+**Kind**: global class
 
 * [EarthdataLoginClient](#EarthdataLoginClient)
     * [.getUserInfo(params)](#EarthdataLoginClient+getUserInfo) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -117,8 +117,8 @@ A client for the Earthdata Login API. Extents OAuthClient.
 ### earthdataLoginClient.getUserInfo(params) ⇒ <code>Promise.&lt;Object&gt;</code>
 Query the API for the user object associated with a user.
 
-**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - The user object (see example)  
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - The user object (see example)
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -127,7 +127,7 @@ Query the API for the user object associated with a user.
 | params.username | <code>string</code> | The uid of the registered user |
 | [params.xRequestId] | <code>string</code> | a string to help identify the request |
 
-**Example**  
+**Example**
 ```js
 {
  "uid": "janedoe",
@@ -158,8 +158,8 @@ Query the API for the user object associated with a user.
 ### earthdataLoginClient.getTokenUsername(params) ⇒ <code>Promise.&lt;string&gt;</code>
 Query the Earthdata Login API for the UID associated with a token
 
-**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the UID associated with the token  
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#EarthdataLoginClient)
+**Returns**: <code>Promise.&lt;string&gt;</code> - the UID associated with the token
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -173,7 +173,7 @@ Query the Earthdata Login API for the UID associated with a token
 ## OAuthClient
 A generic authorization client
 
-**Kind**: global class  
+**Kind**: global class
 
 * [OAuthClient](#OAuthClient)
     * [new OAuthClient(params)](#new_OAuthClient_new)
@@ -195,7 +195,7 @@ A generic authorization client
 | params.loginUrl | <code>string</code> | see example |
 | params.redirectUri | <code>string</code> | see example |
 
-**Example**  
+**Example**
 ```js
 const oAuth2Provider = new OAuthClient({
   clientId: 'my-client-id',
@@ -209,8 +209,8 @@ const oAuth2Provider = new OAuthClient({
 ### oAuthClient.getAuthorizationUrl([state]) ⇒ <code>string</code>
 Get a URL of the Login authorization endpoint
 
-**Kind**: instance method of [<code>OAuthClient</code>](#OAuthClient)  
-**Returns**: <code>string</code> - the Login authorization URL  
+**Kind**: instance method of [<code>OAuthClient</code>](#OAuthClient)
+**Returns**: <code>string</code> - the Login authorization URL
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -229,8 +229,8 @@ Returns an object with the following properties:
 - username (optional, if "endpoint" is provided by client API response)
 - expirationTime (in seconds)
 
-**Kind**: instance method of [<code>OAuthClient</code>](#OAuthClient)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information  
+**Kind**: instance method of [<code>OAuthClient</code>](#OAuthClient)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -241,8 +241,8 @@ Returns an object with the following properties:
 ### oAuthClient.postRequest(params) ⇒ <code>CancelableRequest.&lt;Response.&lt;unknown&gt;&gt;</code>
 Make an HTTP POST request to the login service
 
-**Kind**: instance method of [<code>OAuthClient</code>](#OAuthClient)  
-**Returns**: <code>CancelableRequest.&lt;Response.&lt;unknown&gt;&gt;</code> - The return of the POST call  
+**Kind**: instance method of [<code>OAuthClient</code>](#OAuthClient)
+**Returns**: <code>CancelableRequest.&lt;Response.&lt;unknown&gt;&gt;</code> - The return of the POST call
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -256,8 +256,8 @@ Make an HTTP POST request to the login service
 ### oAuthClient.getRequest(params) ⇒ <code>CancelableRequest.&lt;Response.&lt;unknown&gt;&gt;</code>
 Make an HTTP GET request to the login service
 
-**Kind**: instance method of [<code>OAuthClient</code>](#OAuthClient)  
-**Returns**: <code>CancelableRequest.&lt;Response.&lt;unknown&gt;&gt;</code> - The return of the GET call  
+**Kind**: instance method of [<code>OAuthClient</code>](#OAuthClient)
+**Returns**: <code>CancelableRequest.&lt;Response.&lt;unknown&gt;&gt;</code> - The return of the GET call
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -280,8 +280,8 @@ Returns an object with the following properties:
 - username (optional, if "endpoint" is provided by client API response)
 - expirationTime (in seconds)
 
-**Kind**: instance method of [<code>OAuthClient</code>](#OAuthClient)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information  
+**Kind**: instance method of [<code>OAuthClient</code>](#OAuthClient)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - access token information
 
 | Param | Type | Description |
 | --- | --- | --- |
