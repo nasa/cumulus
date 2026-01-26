@@ -1,0 +1,73 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "granule_invalidations": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": ["science_date", "ingest_date", "cross_collection"]
+                    },
+                    "maximum_minutes_old": {
+                        "type": "integer"
+                    },
+                    "invalidating_collection": {
+                        "type": "string"
+                    },
+                    "invalidating_version": {
+                        "type": "string"
+                    }
+                },
+                "required": ["type"],
+                "oneOf": [
+                    {
+                        "properties": {
+                            "type": {
+                                "enum": ["science_date"]
+                            },
+                            "maximum_minutes_old": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": ["maximum_minutes_old"]
+                    },
+                    {
+                        "properties": {
+                            "type": {
+                                "enum": ["ingest_date"]
+                            },
+                            "maximum_minutes_old": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": ["maximum_minutes_old"]
+                    },
+                    {
+                        "properties": {
+                            "type": {
+                                "enum": ["cross_collection"]
+                            },
+                            "invalidating_collection": {
+                                "type": "string"
+                            },
+                            "invalidating_version": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["invalidating_collection", "invalidating_version"]
+                    }
+                ]
+            }
+        },
+        "collection": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
+        }
+    },
+    "required": ["granule_invalidations", "collection", "version"]
+}
