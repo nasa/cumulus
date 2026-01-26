@@ -42,7 +42,7 @@ resource "aws_glue_catalog_table" "dla_glue_table" {
         "serialization.format" = 1
       }
     }
-  
+
     columns {
       name = "executionarn"
       type = "string"

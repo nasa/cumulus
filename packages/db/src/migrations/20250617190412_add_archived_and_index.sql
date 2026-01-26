@@ -2,4 +2,3 @@ ALTER TABLE granules ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT 
 ALTER TABLE executions ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_archived_index ON executions (archived);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_archived_index ON granules (archived);
-
