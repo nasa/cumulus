@@ -6,13 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v21.3.0] 2026-01-26
+
 ### Migration Notes
 
 Please complete the following steps before upgrading Cumulus.
 
-#### CUMULUS-4459 New index added to the granules table to improve Dashboard performance
-
-- The fix introduced in CUMULUS-4459 requires a manual database update in the production environment.
+- **CUMULUS-4459 New index added to the granules table to improve Dashboard performance**
+  - The fix introduced in CUMULUS-4459 requires a manual database update in the production environment.
   This step ensures the new index is created successfully, even in the unlikely event that the database-migration
   Lambda function did not complete the index creation before timing out.
 
@@ -21,6 +22,8 @@ Please complete the following steps before upgrading Cumulus.
   ```text
   CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
   ```
+- **CUMULUS-4313**
+  - Update Async Operation container to new version 55, `cumuluss/async-operation:55`. Users should update their references to `async-operation` with the new version.
 
 ### Notable Changes
 
@@ -9430,7 +9433,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.2.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.0...HEAD
+[v21.3.0]: https://github.com/nasa/cumulus/compare/v21.0.2...v21.3.0
 [v21.2.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.2.0
 [v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
 [v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.2...v21.0.0
