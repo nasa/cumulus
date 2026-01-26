@@ -2,7 +2,6 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const orderBy = require('lodash/orderBy');
 
-const { RecordDoesNotExist } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
@@ -19,7 +18,6 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   getGranulesByGranuleId,
   getApiGranuleExecutionCumulusIds,
-  getUniqueGranuleByGranuleId,
   migrationDir,
   getGranulesByApiPropertiesQuery,
   createRejectableTransaction,
@@ -973,38 +971,6 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated
       collectionVersion: collection.version,
     }],
     records2
-  );
-});
-
-test('getUniqueGranuleByGranuleId() returns a single granule', async (t) => {
-  const {
-    knex,
-    collectionCumulusId,
-    granulePgModel,
-  } = t.context;
-
-  const fakeGranule = fakeGranuleRecordFactory({
-    collection_cumulus_id: collectionCumulusId,
-  });
-  const [createdPgGranule] = await granulePgModel.create(knex, fakeGranule);
-
-  const pgGranule = await granulePgModel.get(knex, { cumulus_id: createdPgGranule.cumulus_id });
-
-  t.deepEqual(
-    await getUniqueGranuleByGranuleId(knex, pgGranule.granule_id, granulePgModel),
-    pgGranule
-  );
-});
-
-test('getUniqueGranuleByGranuleId() throws an error if no granules are found', async (t) => {
-  const {
-    knex,
-    granulePgModel,
-  } = t.context;
-
-  await t.throwsAsync(
-    getUniqueGranuleByGranuleId(knex, 99999, granulePgModel),
-    { instanceOf: RecordDoesNotExist }
   );
 });
 

@@ -26,7 +26,6 @@ const {
   getGranuleIdAndCollectionIdFromFile,
   getGranulesByGranuleId,
   getKnexClient,
-  getUniqueGranuleByGranuleId,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -563,12 +562,7 @@ async function patchByGranuleId(req, res) {
     );
   }
 
-  const pgGranule = await getUniqueGranuleByGranuleId(
-    knex,
-    req.params.granuleId,
-    granulePgModel
-  );
-
+  const pgGranule = await granulePgModel.get(knex, { granule_id: req.params.granuleId });
   const collectionPgModel = new CollectionPgModel();
   const pgCollection = await collectionPgModel.get(knex, {
     cumulus_id: pgGranule.collection_cumulus_id,
@@ -840,7 +834,7 @@ async function delByGranuleId(req, res) {
 
   let pgGranule;
   try {
-    pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
+    pgGranule = await new GranulePgModel().get(knex, { granule_id: granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       log.info('Granule does not exist');
@@ -1148,7 +1142,7 @@ async function getByGranuleId(req, res) {
   let granule;
 
   try {
-    granule = await getUniqueGranuleByGranuleId(knex, granuleId);
+    granule = await new GranulePgModel().get(knex, { granule_id: granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       if (granule === undefined) {

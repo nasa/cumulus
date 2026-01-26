@@ -101,25 +101,6 @@ export const getApiGranuleCumulusIds = async (
 };
 
 /**
- * Get one Granule for a granule_id. If more than one or none are found, throw an error
- *
- * @param {Knex | Knex.Transaction} knexOrTransaction -
- *  DB client or transaction
- * @param {string} granuleId - a Granule ID
- * @param {GranulePgModel} granulePgModel - Granule PG model class instance
- * @returns {Promise<PostgresGranuleRecord>}
- */
-export const getUniqueGranuleByGranuleId = async (
-  knexOrTransaction: Knex | Knex.Transaction,
-  granuleId: string,
-  granulePgModel = new GranulePgModel()
-): Promise<PostgresGranuleRecord> =>
-  granulePgModel.get(
-    knexOrTransaction,
-    { granule_id: granuleId }
-  );
-
-/**
  * Get cumulus IDs for all executions associated to a set of granules
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction -

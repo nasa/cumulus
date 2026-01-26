@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 
 const pMap = require('p-map');
 
@@ -7,7 +7,6 @@ const {
   GranulePgModel,
   getKnexClient,
   translatePostgresGranuleToApiGranule,
-  getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
@@ -110,11 +109,7 @@ async function applyWorkflowToGranules({
     granules,
     (async (granuleId) => {
       try {
-        const pgGranule = await getUniqueGranuleByGranuleId(
-          knex,
-          granuleId,
-          granulePgModel
-        );
+        const pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
         const apiGranule = await granuleTranslateMethod({
           granulePgRecord: pgGranule,
           knexOrTransaction: knex,
@@ -175,11 +170,7 @@ async function bulkGranuleDelete(
         const granulePgModel = new GranulePgModel();
 
         try {
-          pgGranule = await getUniqueGranuleByGranuleId(
-            knex,
-            granuleId,
-            granulePgModel
-          );
+          pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
 
           if (pgGranule.published && forceRemoveFromCmr) {
             ({ pgGranule } = await unpublishGranuleFunc({
@@ -272,12 +263,7 @@ async function bulkGranuleReingest(
         const granulePgModel = new GranulePgModel();
 
         try {
-          const pgGranule = await getUniqueGranuleByGranuleId(
-            knex,
-            granuleId,
-            granulePgModel
-          );
-
+          const pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
           const apiGranule = await translatePostgresGranuleToApiGranule({
             granulePgRecord: pgGranule,
             knexOrTransaction: knex,

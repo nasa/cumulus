@@ -29,6 +29,8 @@ Please complete the following steps before upgrading Cumulus.
     granule objects in the payload.
   - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints
     to accept granuleIds instead of granule objects in the payload.
+  - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
+    `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
 
 ### Notable Changes
 

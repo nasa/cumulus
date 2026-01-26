@@ -24,7 +24,6 @@ const {
   fakeGranuleRecordFactory,
   fakeReconciliationReportRecordFactory,
   generateLocalTestDb,
-  getUniqueGranuleByGranuleId,
   destroyLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
@@ -714,6 +713,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes granules in s3GranuleIdI
 });
 
 test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules', async (t) => {
+  const granulePgModel = new GranulePgModel();
   await setUpExistingDatabaseRecords(t);
   const { granules, knex } = t.context;
 
@@ -733,7 +733,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules', a
     const matchingGranule = granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 
-    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const pgGranule = await granulePgModel.get(knex, { granule_id: matchingGranule.granuleId });
     const translatedGranule = await translatePostgresGranuleToApiGranule({
       granulePgRecord: pgGranule,
       knexOrTransaction: knex,
@@ -782,6 +782,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules wit
 });
 
 test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules returned by query', async (t) => {
+  const granulePgModel = new GranulePgModel();
   await setUpExistingDatabaseRecords(t);
 
   esSearchStub.resolves({
@@ -822,7 +823,9 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules returned by
     const matchingGranule = t.context.granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 
-    const pgGranule = await getUniqueGranuleByGranuleId(t.context.knex, matchingGranule.granuleId);
+    const pgGranule = await granulePgModel.get(
+      t.context.knex, { granule_id: matchingGranule.granuleId }
+    );
     const translatedGranule = await translatePostgresGranuleToApiGranule({
       granulePgRecord: pgGranule,
       knexOrTransaction: t.context.knex,
@@ -851,6 +854,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if 
 });
 
 test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules in granule inventory report', async (t) => {
+  const granulePgModel = new GranulePgModel();
   await setUpExistingDatabaseRecords(t);
   const { granules, knex } = t.context;
 
@@ -872,7 +876,9 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules in granule 
     const matchingGranule = granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 
-    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const pgGranule = await granulePgModel.get(
+      t.context.knex, { granule_id: matchingGranule.granuleId }
+    );
     const translatedGranule = await translatePostgresGranuleToApiGranule({
       granulePgRecord: pgGranule,
       knexOrTransaction: knex,
@@ -884,6 +890,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules in granule 
 });
 
 test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules in s3GranuleIdInputFile', async (t) => {
+  const granulePgModel = new GranulePgModel();
   await setUpExistingDatabaseRecords(t);
   const { granules, knex } = t.context;
 
@@ -905,7 +912,9 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules in s3Granul
     const matchingGranule = granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 
-    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const pgGranule = await granulePgModel.get(
+      t.context.knex, { granule_id: matchingGranule.granuleId }
+    );
     const translatedGranule = await translatePostgresGranuleToApiGranule({
       granulePgRecord: pgGranule,
       knexOrTransaction: knex,
