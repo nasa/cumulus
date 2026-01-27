@@ -82,6 +82,8 @@ Please complete the following steps before upgrading Cumulus.
     The module also configures the required RDS extensions and parameters necessary for slow query instrumentation.
 - **CUMULUS-4382**
   - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
+- **CUMULUS-4385**
+  - Added supporting Terraform for the granule-invalidator task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
 
 ### Changed
 
