@@ -1,4 +1,4 @@
-//@ts-check
+// @ts-check
 
 const pMap = require('p-map');
 
@@ -7,12 +7,9 @@ const {
   GranulePgModel,
   getKnexClient,
   translatePostgresGranuleToApiGranule,
-  getGranuleByUniqueColumns,
-  CollectionPgModel,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { chooseTargetExecution } = require('../lib/executions');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
@@ -27,15 +24,82 @@ const log = new Logger({ sender: '@cumulus/bulk-operation' });
 /**
  *
  * @typedef {import('../lib/ingest').reingestGranule } reingestGranule
+ * @typedef {import('../lib/request').GranuleExecutionPayload} GranuleExecutionPayload
  */
 
+/**
+ * Payload for bulk deletion of granules.
+ * Extends GranuleExecutionPayload with bulk-delete-specific options.
+ *
+ * @typedef {GranuleExecutionPayload & {
+ *   concurrency?: number,
+ *   maxDbConnections?: number,
+ *   forceRemoveFromCmr?: boolean
+ * }} BulkGranuleDeletePayload
+ * @property {number} [concurrency] - Granule concurrency for the bulk operations.
+ *   Defaults to 10
+ * @property {number} [maxDbConnections] - Maximum number of PostgreSQL connections allocated
+ *   to Knex. Defaults to `concurrency`.
+ * @property {boolean} [forceRemoveFromCmr] - If true, published granules are deleted from
+ *   CMR before local removal.
+ */
+
+/**
+ * Payload for bulk workflow application to granules.
+ * Extends GranuleExecutionPayload with bulk-specific options.
+ *
+ * @typedef {GranuleExecutionPayload & {
+ *   concurrency?: number,
+ *   workflowName: string,
+ *   meta?: Object,
+ *   queueUrl?: string,
+ * }} BulkGranulePayload
+ * @property {number} [concurrency] - Granule concurrency for the bulk operations. Defaults to 10.
+ * @property {string} workflowName - Name of the workflow to apply to each granule.
+ * @property {Object} [meta] - Optional meta information to add to workflow input.
+ * @property {string} [queueUrl] - Optional queue name used to start workflows.
+ */
+
+/**
+ * Payload for bulk granule reingest.
+ * Extends GranuleExecutionPayload with bulk-specific options.
+ *
+ * @typedef {GranuleExecutionPayload & {
+ *   concurrency?: number,
+ *   workflowName: string,
+ *   queueUrl?: string,
+ * }} BulkGranuleReingestPayload
+ * @property {number} [concurrency] - Granule concurrency for the bulk operations. Defaults to 10.
+ * @property {string} workflowName - Workflow name that allows different workflow and initial input
+ * to be used during reingest.
+ * @property {string} [queueUrl] - Optional queue name used to start workflows.
+ */
+
+/**
+ * Apply a workflow to a batch of granules.
+ *
+ * @param {Object} params
+ * @param {string[]} params.granules - List of granule IDs to process.
+ * @param {string} params.workflowName - Name of the workflow to apply to each granule.
+ * @param {Object} [params.meta] - Optional metadata to attach to workflow input.
+ * @param {string} [params.queueUrl] - Optional queue name used to start workflows.
+ * @param {GranulePgModel} [params.granulePgModel=new GranulePgModel()] - postgreSQL granule model
+ * @param {Function} [params.granuleTranslateMethod=translatePostgresGranuleToApiGranule]
+ *   - Function to translate Postgres granule to API granule format.
+ * @param {Function} [params.applyWorkflowHandler=applyWorkflow]
+ *   - Function to actually apply the workflow (can be overridden for testing).
+ * @param {Function} [params.updateGranulesToQueuedMethod=updateGranuleStatusToQueued]
+ *   - Function to update granules to "queued" status after workflow is applied.
+ * @param {import('knex').Knex} params.knex - Knex database client instance.
+ * @returns {Promise<Array<string | { granuleId: string; error: string }>>}
+ *   Results of applying the workflow to each granule.
+ */
 async function applyWorkflowToGranules({
   granules,
   workflowName,
   meta,
   queueUrl,
   granulePgModel = new GranulePgModel(),
-  collectionPgModel = new CollectionPgModel(),
   granuleTranslateMethod = translatePostgresGranuleToApiGranule,
   applyWorkflowHandler = applyWorkflow,
   updateGranulesToQueuedMethod = updateGranuleStatusToQueued,
@@ -43,19 +107,9 @@ async function applyWorkflowToGranules({
 }) {
   return await pMap(
     granules,
-    (async (granule) => {
+    (async (granuleId) => {
       try {
-        const collection = await collectionPgModel.get(
-          knex,
-          deconstructCollectionId(granule.collectionId)
-        );
-
-        const pgGranule = await getGranuleByUniqueColumns(
-          knex,
-          granule.granuleId,
-          collection.cumulus_id,
-          granulePgModel
-        );
+        const pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
         const apiGranule = await granuleTranslateMethod({
           granulePgRecord: pgGranule,
           knexOrTransaction: knex,
@@ -68,10 +122,10 @@ async function applyWorkflowToGranules({
           queueUrl,
           asyncOperationId: process.env.asyncOperationId,
         });
-        return granule.granuleId;
+        return granuleId;
       } catch (error) {
-        log.error(`Granule ${granule.granuleId} encountered an error`, error);
-        return { granuleId: granule.granuleId, err: error };
+        log.error(`Granule ${granuleId} encountered an error`, error);
+        return { granuleId, error: String(error) };
       }
     })
   );
@@ -85,24 +139,10 @@ async function applyWorkflowToGranules({
  * Bulk delete granules based on either a list of granules (IDs) or the query response from
  * ES using the provided query and index.
  *
- * @param {Object} payload
- * @param {boolean} [payload.forceRemoveFromCmr]
- *   Whether published granule should be deleted from CMR before removal
- * @param {number} [payload.maxDbConnections]
- *   Maximum number of postgreSQL DB connections to make available for knex queries
- *   Defaults to `concurrency`
- * @param {number} [payload.concurrency]
- *   granule concurrency for the bulk deletion operation.  Defaults to 10
- * @param {Object} [payload.query] - Optional parameter of query to send to ES (Cloud Metrics)
- * @param {string} [payload.index] - Optional parameter of ES index to query (Cloud Metrics).
- * Must exist if payload.query exists.
- * @param {Object} [payload.granules] - Optional list of granule unique IDs to bulk operate on
- * e.g. { granuleId: xxx, collectionID: xxx }
+ * @param {BulkGranuleDeletePayload} payload
  * @param {RemoveGranuleFromCmrFn} [removeGranuleFromCmrFunction] - used for test mocking
  * @param {Function} [unpublishGranuleFunc] - Optional function to delete the
  * granule from CMR. Useful for testing.
- * @returns {Promise}
- *   Must exist if payload.query exists.
  * @returns {Promise<unknown>}
  */
 async function bulkGranuleDelete(
@@ -115,146 +155,147 @@ async function bulkGranuleDelete(
   const dbPoolMax = payload.maxDbConnections || concurrency;
   process.env.dbMaxPool = `${dbPoolMax}`;
 
-  const deletedGranules = [];
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
-  const granules = await getGranulesForPayload(payload);
   const knex = await getKnexClient();
 
-  await pMap(
-    granules,
-    async (granule) => {
-      let pgGranule;
-      const granulePgModel = new GranulePgModel();
-      const collectionPgModel = new CollectionPgModel();
+  const results = [];
+  for await (
+    const granuleBatch of getGranulesForPayload(payload)
+  ) {
+    log.info(`Processing batch of ${granuleBatch.length} granules, for ${JSON.stringify(granuleBatch)}`);
+    const batchResults = await pMap(
+      granuleBatch,
+      async (granuleId) => {
+        let pgGranule;
+        const granulePgModel = new GranulePgModel();
 
-      const collection = await collectionPgModel.get(
-        knex,
-        deconstructCollectionId(granule.collectionId)
-      );
+        try {
+          pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
 
-      try {
-        pgGranule = await getGranuleByUniqueColumns(
-          knex,
-          granule.granuleId,
-          collection.cumulus_id,
-          granulePgModel
-        );
-      } catch (error) {
-        // PG Granule being undefined will be caught by deleteGranulesAndFiles
-        if (error instanceof RecordDoesNotExist) {
-          log.info(error.message);
+          if (pgGranule.published && forceRemoveFromCmr) {
+            ({ pgGranule } = await unpublishGranuleFunc({
+              knex,
+              pgGranuleRecord: pgGranule,
+              removeGranuleFromCmrFunction,
+            }));
+          }
+
+          await deleteGranuleAndFiles({
+            knex,
+            pgGranule,
+          });
+          return granuleId;
+        } catch (error) {
+          if (error instanceof RecordDoesNotExist) {
+            log.info(error.message);
+            return { granuleId, error: 'RecordDoesNotExist' };
+          }
+          log.error(`Granule ${granuleId} encountered an error`, error);
+          return { granuleId, error: String(error) };
         }
-        return;
+      },
+      {
+        concurrency,
+        stopOnError: false,
       }
-
-      if (pgGranule.published && forceRemoveFromCmr) {
-        ({ pgGranule } = await unpublishGranuleFunc({
-          knex,
-          pgGranuleRecord: pgGranule,
-          removeGranuleFromCmrFunction,
-        }));
-      }
-
-      await deleteGranuleAndFiles({
-        knex,
-        pgGranule,
-      });
-
-      deletedGranules.push(granule.granuleId);
-    },
-    {
-      concurrency,
-      stopOnError: false,
-    }
-  );
-  return { deletedGranules };
+    );
+    results.push(...batchResults);
+  }
+  return results;
 }
 
 /**
  * Bulk apply workflow to either a list of granules (IDs) or to a list of responses from
  * ES using the provided query and index.
  *
- * @param {Object} payload
- * @param {string} payload.workflowName - name of the workflow that will be applied to each granule.
- * @param {Object} [payload.meta] - Optional meta to add to workflow input
- * @param {string} [payload.queueUrl] - Optional name of queue that will be used to start workflows
- * @param {Object} [payload.query] - Optional parameter of query to send to ES (Cloud Metrics)
- * @param {string} [payload.index] - Optional parameter of ES index to query (Cloud Metrics).
- * Must exist if payload.query exists.
- * @param {Object} [payload.granules] - Optional list of granule unique IDs to bulk operate on
- * e.g. { granuleId: xxx, collectionID: xxx }
- * @param {function} [applyWorkflowHandler] - Optional handler for testing
- * @returns {Promise}
+ * @param {BulkGranulePayload} payload
+ * @param {Function} [applyWorkflowHandler] - Optional handler for testing
+ * @returns {Promise<unknown>}
  */
 async function bulkGranule(payload, applyWorkflowHandler) {
   const knex = await getKnexClient();
   const { queueUrl, workflowName, meta } = payload;
-  const granules = await getGranulesForPayload(payload);
-  return await applyWorkflowToGranules({
-    knex,
-    granules,
-    meta,
-    queueUrl,
-    workflowName,
-    applyWorkflowHandler,
-  });
+  const results = [];
+  for await (
+    const granuleBatch of getGranulesForPayload(payload)
+  ) {
+    log.info(`Processing batch of ${granuleBatch.length} granules, for ${JSON.stringify(granuleBatch)}`);
+
+    const batchResults = await applyWorkflowToGranules({
+      knex,
+      granules: granuleBatch,
+      meta,
+      queueUrl,
+      workflowName,
+      applyWorkflowHandler,
+    });
+    results.push(...batchResults);
+  }
+  return results;
 }
 
+/**
+ * Bulk reingest granules based on either a list of granules (IDs) or to a list of responses from
+ * ES using the provided query and index.
+ *
+ * @param {BulkGranuleReingestPayload} payload
+ * @param {Function} [reingestHandler] - Optional handler for testing
+ * @returns {Promise<unknown>}
+ */
 async function bulkGranuleReingest(
   payload,
   reingestHandler = reingestGranule
 ) {
-  const granules = await getGranulesForPayload(payload);
-  log.info(`Starting bulkGranuleReingest for ${JSON.stringify(granules)}`);
+  log.info('Starting bulkGranuleReingest');
   const knex = await getKnexClient();
 
-  const workflowName = payload.workflowName;
-  return await pMap(
-    granules,
-    async (granule) => {
-      const granulePgModel = new GranulePgModel();
-      const collectionPgModel = new CollectionPgModel();
+  const { concurrency = 10, queueUrl, workflowName } = payload;
 
-      const collection = await collectionPgModel.get(
-        knex,
-        deconstructCollectionId(granule.collectionId)
-      );
+  const results = [];
+  for await (
+    const granuleBatch of getGranulesForPayload(payload)
+  ) {
+    log.info(`Processing batch of ${granuleBatch.length} granules, for ${JSON.stringify(granuleBatch)}`);
 
-      try {
-        const pgGranule = await getGranuleByUniqueColumns(
-          knex,
-          granule.granuleId,
-          collection.cumulus_id,
-          granulePgModel
-        );
-        const apiGranule = await translatePostgresGranuleToApiGranule({
-          granulePgRecord: pgGranule,
-          knexOrTransaction: knex,
-        });
+    const batchResults = await pMap(
+      granuleBatch,
+      async (granuleId) => {
+        const granulePgModel = new GranulePgModel();
 
-        const targetExecution = await chooseTargetExecution({
-          granuleId: granule.granuleId,
-          workflowName,
-        });
-        const apiGranuleToReingest = {
-          ...apiGranule,
-          ...(targetExecution && { execution: targetExecution }),
-        };
-        await reingestHandler({
-          apiGranule: apiGranuleToReingest,
-          asyncOperationId: process.env.asyncOperationId,
-        });
-        return granule.granuleId;
-      } catch (error) {
-        log.error(`Granule ${granule.granuleId} encountered an error`, error);
-        return { granuleId: granule.granuleId, err: error };
+        try {
+          const pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
+          const apiGranule = await translatePostgresGranuleToApiGranule({
+            granulePgRecord: pgGranule,
+            knexOrTransaction: knex,
+          });
+
+          const targetExecution = await chooseTargetExecution({
+            granuleId,
+            workflowName,
+          });
+          const apiGranuleToReingest = {
+            ...apiGranule,
+            ...(targetExecution && { execution: targetExecution }),
+          };
+          await reingestHandler({
+            apiGranule: apiGranuleToReingest,
+            queueUrl,
+            asyncOperationId: process.env.asyncOperationId,
+          });
+          return granuleId;
+        } catch (error) {
+          log.error(`Granule ${granuleId} encountered an error`, error);
+          return { granuleId, error: String(error) };
+        }
+      },
+      {
+        concurrency,
+        stopOnError: false,
       }
-    },
-    {
-      concurrency: 10,
-      stopOnError: false,
-    }
-  );
+    );
+    results.push(...batchResults);
+  }
+  return results;
 }
 
 /**
@@ -269,7 +310,7 @@ async function bulkGranuleReingest(
  * This is required if the type is 'BULK_GRANULE'.
  * @param {reingestGranule} [event.reingestHandler] - The handler function for reingesting granules.
  * This is required if the type is 'BULK_GRANULE_REINGEST'.
- * @returns {Promise} A promise that resolves when the bulk operation is complete.
+ * @returns {Promise<unknown>} A promise that resolves when the bulk operation is complete.
  * @throws {TypeError} Throws a TypeError if the event type does not
  * match any of the known bulk operation types.
  */
@@ -277,13 +318,20 @@ async function handler(event) {
   setEnvVarsForOperation(event);
   log.info(`bulkOperation asyncOperationId ${process.env.asyncOperationId} event type ${event.type}, payload: ${JSON.stringify(event.payload)}`);
   if (event.type === 'BULK_GRANULE') {
-    return await bulkGranule(event.payload, event.applyWorkflowHandler);
+    return await bulkGranule(
+      /** @type {BulkGranulePayload} */ (event.payload),
+      event.applyWorkflowHandler
+    );
   }
   if (event.type === 'BULK_GRANULE_DELETE') {
+    /** @type {BulkGranuleDeletePayload} */
     return await bulkGranuleDelete(event.payload);
   }
   if (event.type === 'BULK_GRANULE_REINGEST') {
-    return await bulkGranuleReingest(event.payload, event.reingestHandler);
+    return await bulkGranuleReingest(
+      /** @type {BulkGranuleReingestPayload} */ (event.payload),
+      event.reingestHandler
+    );
   }
   if (event.type === 'BULK_EXECUTION_DELETE') {
     return await batchDeleteExecutions(event.payload);
