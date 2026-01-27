@@ -64,7 +64,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('GranulePgModel.exists() finds granule by granule_id and collection_cumulus_id <PostgresGranuleUniqueColumns>', async (t) => {
+test('GranulePgModel.exists() finds granule by granule_id <PostgresGranuleUniqueColumns>', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -82,7 +82,6 @@ test('GranulePgModel.exists() finds granule by granule_id and collection_cumulus
     knex,
     {
       granule_id: granule.granule_id,
-      collection_cumulus_id: collectionCumulusId,
     }
   ));
 });
@@ -121,17 +120,17 @@ test('GranulePgModel.exists() throws error if params do not satisfy type Postgre
     collection_cumulus_id: collectionCumulusId,
     status: 'running',
   });
-  const searchParams = { granule_id: granule.granule_id };
+  const searchParams = { no_granule_id: granule.granule_id };
 
   await granulePgModel.upsert({ knexOrTrx: knex, granule, executionCumulusId });
 
   await t.throwsAsync(
     granulePgModel.exists(knex, searchParams),
-    { message: `Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(searchParams)})` }
+    { message: `Cannot find granule, must provide either granule_id or cumulus_id: params(${JSON.stringify(searchParams)})` }
   );
 });
 
-test('GranulePgModel.get() returns granule by granule_id and collection_cumulus_id <PostgresGranuleUniqueColumns>', async (t) => {
+test('GranulePgModel.get() returns granule by granule_id <PostgresGranuleUniqueColumns>', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -150,7 +149,6 @@ test('GranulePgModel.get() returns granule by granule_id and collection_cumulus_
       knex,
       {
         granule_id: granule.granule_id,
-        collection_cumulus_id: collectionCumulusId,
       }
     ),
     granule
@@ -192,13 +190,13 @@ test('GranulePgModel.get() throws error if params do not satisfy type PostgresGr
     collection_cumulus_id: collectionCumulusId,
     status: 'running',
   });
-  const searchParams = { granule_id: granule.granule_id };
+  const searchParams = { no_granule_id: granule.granule_id };
 
   await granulePgModel.upsert({ knexOrTrx: knex, granule, executionCumulusId });
 
   await t.throwsAsync(
     async () => await granulePgModel.get(knex, searchParams),
-    { message: `Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(searchParams)})` }
+    { message: `Cannot find granule, must provide either granule_id or cumulus_id: params(${JSON.stringify(searchParams)})` }
   );
 });
 
@@ -309,7 +307,6 @@ test('GranulePgModel.upsert() will only overwrite allowed fields of a granule if
   t.like(
     await granulePgModel.get(knex, {
       granule_id: granule.granule_id,
-      collection_cumulus_id: collectionCumulusId,
     }),
     {
       ...granule,
@@ -375,7 +372,6 @@ test('GranulePgModel.upsert() overwrites all fields of a granule if update is to
   t.like(
     await granulePgModel.get(knex, {
       granule_id: granule.granule_id,
-      collection_cumulus_id: collectionCumulusId,
     }),
     updatedGranule
   );
@@ -423,7 +419,6 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
   t.like(
     await granulePgModel.get(knex, {
       granule_id: granule.granule_id,
-      collection_cumulus_id: collectionCumulusId,
     }),
     updatedGranule
   );
@@ -471,7 +466,6 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
   t.like(
     await granulePgModel.get(knex, {
       granule_id: granule.granule_id,
-      collection_cumulus_id: collectionCumulusId,
     }),
     updatedGranule
   );
@@ -532,7 +526,7 @@ test('GranulePgModel.upsert() overwrites a completed granule if writeConstraints
 
   t.like(
     await granulePgModel.get(knex, {
-      granule_id: granule.granule_id, collection_cumulus_id: collectionCumulusId,
+      granule_id: granule.granule_id,
     }),
     {
       ...updatedGranule,
@@ -575,7 +569,7 @@ test('GranulePgModel.upsert() overwrites a completed granule if writeConstraints
 
   t.like(
     await granulePgModel.get(knex, {
-      granule_id: granule.granule_id, collection_cumulus_id: collectionCumulusId,
+      granule_id: granule.granule_id,
     }),
     {
       ...updatedGranule,
@@ -613,7 +607,6 @@ test('GranulePgModel.upsert() will allow a completed status to replace a running
   t.like(
     await granulePgModel.get(knex, {
       granule_id: granule.granule_id,
-      collection_cumulus_id: collectionCumulusId,
     }),
     updatedGranule
   );
@@ -648,7 +641,6 @@ test('GranulePgModel.upsert() will allow a completed status to replace a running
   t.like(
     await granulePgModel.get(knex, {
       granule_id: granule.granule_id,
-      collection_cumulus_id: collectionCumulusId,
     }),
     updatedGranule
   );
@@ -687,7 +679,6 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.like(record, granule);
   t.is(record.status, 'completed');
@@ -726,7 +717,6 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.like(record, updatedGranule);
   t.is(record.status, 'running');
@@ -772,7 +762,6 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.like(record, updatedGranule);
   t.is(record.status, 'running');
@@ -818,7 +807,6 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.like(record, updatedGranule);
   t.is(record.status, 'running');
@@ -866,7 +854,6 @@ test('GranulePgModel.upsert() will allow a newer running status to replace an ol
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'running');
   t.like(record, updatedGranule);
@@ -915,7 +902,6 @@ test('GranulePgModel.upsert() will allow a newer running status to replace an ol
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'running');
   t.like(record, updatedGranule);
@@ -963,7 +949,6 @@ test('GranulePgModel.upsert() will allow an older running status to replace a ne
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'running');
   t.like(record, updatedGranule);
@@ -1011,7 +996,6 @@ test('GranulePgModel.upsert() will not allow an older running status to replace 
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'completed');
   t.like(record, granule);
@@ -1052,7 +1036,6 @@ test('GranulePgModel.upsert() will not allow a queued status to replace a comple
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.like(record, granule);
   t.is(record.status, 'completed');
@@ -1091,7 +1074,6 @@ test('GranulePgModel.upsert() will allow a queued status to replace a completed 
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.like(record, updatedGranule);
   t.is(record.status, 'queued');
@@ -1126,7 +1108,6 @@ test('GranulePgModel.upsert() will not allow a queued status to replace a runnin
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'running');
   t.like(record, granule);
@@ -1165,7 +1146,6 @@ test('GranulePgModel.upsert() will allow a queued status to replace a running st
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'queued');
   t.like(record, updatedGranule);
@@ -1211,7 +1191,6 @@ test('GranulePgModel.upsert() will allow a queued status to replace a non-queued
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'queued');
 });
@@ -1257,7 +1236,6 @@ test('GranulePgModel.upsert() will allow a queued status to replace a non-queued
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'queued');
 });
@@ -1294,7 +1272,6 @@ test('GranulePgModel.upsert() will allow a completed status to replace a queued 
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'completed');
 });
@@ -1331,7 +1308,6 @@ test('GranulePgModel.upsert() will allow a completed status to replace a queued 
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'completed');
 });
@@ -1365,7 +1341,6 @@ test('GranulePgModel.upsert() will allow a running granule status to replace a q
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'running');
 });
@@ -1399,7 +1374,6 @@ test('GranulePgModel.upsert() will allow a running granule status to replace a q
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'running');
 });
@@ -1445,7 +1419,6 @@ test('GranulePgModel.upsert() will not allow a final granule status from an olde
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.like(record, granule);
   t.is(record.status, 'completed');
@@ -1492,7 +1465,6 @@ test('GranulePgModel.upsert() will allow a final granule status from an older co
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'failed');
   t.like(record, updatedGranule);
@@ -1539,7 +1511,6 @@ test.serial('GranulePgModel.upsert() will not allow a running granule linked to 
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'completed');
   t.like(record, granule);
@@ -1586,7 +1557,6 @@ test.serial('GranulePgModel.upsert() will allow a running granule linked to a co
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'running');
   t.like(record, updatedGranule);
@@ -1632,7 +1602,6 @@ test.serial('GranulePgModel.upsert() will not allow a running granule linked to 
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'completed');
 });
@@ -1681,7 +1650,6 @@ test.serial('GranulePgModel.upsert() throws if a granule upsert is attempted for
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.like(record, granule);
 });
@@ -1730,7 +1698,6 @@ test.serial('GranulePgModel.upsert() throws if a granule upsert is attempted for
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.like(record, granule);
 });
@@ -1775,7 +1742,6 @@ test.serial('GranulePgModel.upsert() will allow a running state granule referenc
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'running');
   t.like(record, updatedGranule);
@@ -1822,7 +1788,6 @@ test.serial('GranulePgModel.upsert() will not allow a running state granule refe
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
-    collection_cumulus_id: collectionCumulusId,
   });
   t.is(record.status, 'completed');
   t.like(record, granule);
@@ -1945,7 +1910,6 @@ test('GranulePgModel.delete() deletes granule and granule/execution join records
       knex,
       {
         granule_id: granule.granule_id,
-        collection_cumulus_id: collectionCumulusId,
       }
     )
   );
@@ -1972,7 +1936,6 @@ test('GranulePgModel.delete() deletes granule and granule/execution join records
       knex,
       {
         granule_id: granule.granule_id,
-        collection_cumulus_id: collectionCumulusId,
       }
     )
   );
@@ -2015,7 +1978,6 @@ test('GranulePgModel.delete() deletes granule and file records', async (t) => {
       knex,
       {
         granule_id: granule.granule_id,
-        collection_cumulus_id: collectionCumulusId,
       }
     )
   );
@@ -2039,7 +2001,6 @@ test('GranulePgModel.delete() deletes granule and file records', async (t) => {
       knex,
       {
         granule_id: granule.granule_id,
-        collection_cumulus_id: collectionCumulusId,
       }
     )
   );

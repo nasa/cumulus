@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
+    granule objects in the payload.
+  - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints
+    to accept granuleIds instead of granule objects in the payload.
+
+### Added
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
+    `s3GranuleIdInputFile` in the payload.
+
+### Changed
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations return consistent output formats across different bulk opertions
+    (previously, some bulk operation aggregated errors while others returned per-granule errors)
+  - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
+    `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
+
+## [Unreleased]
+
 ### Migration Notes
 
 Please complete the following steps before upgrading Cumulus.
@@ -27,7 +51,7 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4459**
   - Added new index to the granules table to improve Dashboard performance.
 - **CUMULUS-4446**
-  - Updated all node lambdas/Core build environments to utilize node v22
+  - Updated all node lambdas/Core build environments to utilize node v22.
   - Updated cma-js dependency to 2.4.0
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
@@ -37,6 +61,11 @@ Please complete the following steps before upgrading Cumulus.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
     reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to:
+    - Support `granuleInventoryReportName` and `s3GranuleIdInputFile` in the payload.
+    - Return consistent output formats across endpoints (previously, some endpoints aggregated errors
+      while others returned per-granule errors)
 
 ### Added
 
@@ -55,6 +84,8 @@ Please complete the following steps before upgrading Cumulus.
     By setting `db_log_min_duration_ms` to a positive value (in milliseconds) and `enabled_cloudwatch_logs_exports`
     to `["postgresql"]`, RDS will log and export any database queries that take longer than that threshold.
     The module also configures the required RDS extensions and parameters necessary for slow query instrumentation.
+- **CUMULUS-4382**
+  - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
 
 ### Changed
 
@@ -73,6 +104,9 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4430**
   - Updated GitHub Actions to run `ruff` linting on PRs.
   - Updated GitHub Actions to run `eslint`, `markdownlint`, and `npm-package-json-lint` on PRs.
+- **CUMULUS-4433**
+  - Adds pre-commit config and hooks to the repository. Developers are encouraged to install pre-commit and read
+  the [pre-commit setup docs](./docs/development/pre-commit-setup.md) to ensure they have the correct setup.
 - **CUMULUS-4438**
   - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
   - Made `archive_api_users` configurable in example/cumulus-tf
@@ -6740,6 +6774,8 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 - **CUMULUS-4112**
   - Updated `serveUtils.addGranules` to include writing granule files.
+- **CSD-84**
+  - Update error logging in `@cumulus/packages/cmr-client/searchConcept` to redact the authorization header value.
 
 ### Fixed
 

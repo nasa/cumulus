@@ -11,4 +11,3 @@ module "dla_migration_lambda" {
   tags                = var.tags
   vpc_id              = var.vpc_id
 }
-
