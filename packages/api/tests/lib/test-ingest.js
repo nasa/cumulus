@@ -20,7 +20,6 @@ const {
   translateApiGranuleToPostgresGranule,
   CollectionPgModel,
   fakeCollectionRecordFactory,
-  getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
 const {
   fakeGranuleFactoryV2,
@@ -166,10 +165,11 @@ test.serial('reingestGranule pushes a message with the correct queueUrl, and upd
   // to that function.
   t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await granulePgModel.get(
     t.context.knex,
-    apiGranule.granuleId
+    { granule_id: apiGranule.granuleId }
   );
+
   t.is(updatedPgGranule.status, 'queued');
 });
 
@@ -214,9 +214,9 @@ test.serial('reingestGranule does not update granule status if the original payl
 
   t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await granulePgModel.get(
     t.context.knex,
-    apiGranule.granuleId
+    { granule_id: apiGranule.granuleId }
   );
   t.is(updatedPgGranule.status, 'completed');
 });

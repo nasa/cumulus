@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
+    granule objects in the payload.
+  - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints
+    to accept granuleIds instead of granule objects in the payload.
+
+### Added
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
+    `s3GranuleIdInputFile` in the payload.
+
+### Changed
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations return consistent output formats across different bulk opertions
+    (previously, some bulk operation aggregated errors while others returned per-granule errors)
+  - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
+    `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
+
+## [Unreleased]
+
 ### Migration Notes
 
 Please complete the following steps before upgrading Cumulus.
@@ -27,7 +51,7 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4459**
   - Added new index to the granules table to improve Dashboard performance.
 - **CUMULUS-4446**
-  - Updated all node lambdas/Core build environments to utilize node v22
+  - Updated all node lambdas/Core build environments to utilize node v22.
   - Updated cma-js dependency to 2.4.0
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
@@ -37,6 +61,11 @@ Please complete the following steps before upgrading Cumulus.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
     reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to:
+    - Support `granuleInventoryReportName` and `s3GranuleIdInputFile` in the payload.
+    - Return consistent output formats across endpoints (previously, some endpoints aggregated errors
+      while others returned per-granule errors)
 
 ### Added
 
@@ -6741,6 +6770,8 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
 - **CUMULUS-4112**
   - Updated `serveUtils.addGranules` to include writing granule files.
+- **CSD-84**
+  - Update error logging in `@cumulus/packages/cmr-client/searchConcept` to redact the authorization header value.
 
 ### Fixed
 
