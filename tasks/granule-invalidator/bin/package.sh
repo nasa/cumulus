@@ -5,7 +5,7 @@ PYTHON_VERSION=$(echo $RUNTIME | sed 's/^python//')
 ARCHITECTURE=$(echo $CONFIG | jq -r '.architecture')
 UV_VERSION=$(echo $CONFIG | jq -r '.uv_version')
 
-docker build \
+/usr/bin/docker build \
     --platform linux/${ARCHITECTURE} \
     --build-arg UV_TAG=${UV_VERSION} \
     --build-arg LAMBDA_TAG=${PYTHON_VERSION}-${ARCHITECTURE} \
