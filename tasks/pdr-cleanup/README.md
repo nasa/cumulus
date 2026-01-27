@@ -51,7 +51,7 @@ This task outputs the archive path of the cleaned up PDR, along with the previou
 
 ### Example workflow configuration and use
 
-This task should take place after all child granule ingest workflows are completed. 
+This task should take place after all child granule ingest workflows are completed.
 
 ```json
 "CleanupPDR": {
@@ -68,24 +68,24 @@ This task should take place after all child granule ingest workflows are complet
     "Next": "AddInputGranules",
     "Catch": [
         {
-        "ErrorEquals": [
-            "States.ALL"
-        ],
-        "Next": "WorkflowFailed",
-        "ResultPath": "$.exception"
+            "ErrorEquals": [
+                "States.ALL"
+            ],
+            "Next": "WorkflowFailed",
+            "ResultPath": "$.exception"
         }
     ],
     "Retry": [
         {
-        "BackoffRate": 2,
-        "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.TooManyRequestsException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-        ],
-        "IntervalSeconds": 5,
-        "MaxAttempts": 10
+            "BackoffRate": 2,
+            "ErrorEquals": [
+                "Lambda.ServiceException",
+                "Lambda.TooManyRequestsException",
+                "Lambda.AWSLambdaException",
+                "Lambda.SdkClientException"
+            ],
+            "IntervalSeconds": 5,
+            "MaxAttempts": 10
         }
     ]
 },
@@ -94,7 +94,7 @@ This task should take place after all child granule ingest workflows are complet
 ### Internal Dependencies
 
 This task relies on AWS S3 and the Cumulus Message Adapter
-    
+
 ### External Dependencies
 
 N/A
