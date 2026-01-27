@@ -1,0 +1,55 @@
+ARG UV_TAG="0.9"
+ARG LAMBDA_TAG="3.14"
+
+FROM ghcr.io/astral-sh/uv:${UV_TAG} AS uv
+
+# First, bundle the dependencies into the task root.
+FROM public.ecr.aws/lambda/python:${LAMBDA_TAG} AS builder
+
+#ENV OUTPUT_FILENAME="python_reference_task-${PACKAGE_VERSION}-${ARCHITECTURE}.zip"
+ARG OUTPUT_FILENAME
+
+# Enable bytecode compilation, to improve cold-start performance.
+ENV UV_COMPILE_BYTECODE=1
+
+# Disable installer metadata, to create a deterministic layer.
+ENV UV_NO_INSTALLER_METADATA=1
+
+# Enable copy mode to support bind mount caching.
+ENV UV_LINK_MODE=copy
+
+# Install a compiler for packages
+RUN dnf install -y gcc git
+
+# Copies for debugging
+COPY --from=uv /uv /bin/uv
+COPY uv.lock pyproject.toml README.md ./
+COPY src ./src
+COPY schemas ./schemas
+
+# Bundle the dependencies into the Lambda task root via `uv pip install --target`.
+#
+# Omit any local packages (`--no-emit-workspace`) and development dependencies (`--no-dev`).
+# This ensures that the Docker layer cache is only invalidated when the `pyproject.toml` or `uv.lock`
+# files change, but remains robust to changes in the application code.
+RUN mkdir -p /dist/{dist,packages,final} \
+    && ls -ls \
+    && uv export \
+       --frozen \
+       --no-emit-workspace \
+       --all-extras \
+       --no-dev \
+       --no-editable \
+       -o /dist/requirements.txt \
+    && uv build \
+       --clear \
+       --wheel \
+       -o /dist/dist \
+    && uv pip install \
+       --requirements /dist/requirements.txt \
+       --target /dist/packages \
+    && uv pip install /dist/dist/*.whl --target /dist/packages \
+    && cd /dist/packages; zip -r /dist/final/${OUTPUT_FILENAME} .
+
+FROM scratch
+COPY --from=builder /dist/final /

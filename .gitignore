@@ -51,3 +51,4 @@ yarn.lock
 unit-logs/
 test_output.txt
 __pycache__/
+*.egg-info/
