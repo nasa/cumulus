@@ -72,7 +72,11 @@ def test_cleanup_pdr_success(mock_move_pdr, successful_event, mock_context):
 
 
 def test_cleanup_pdr_with_failed_workflows(failed_event, mock_context):
-    with pytest.raises(Exception):
+    with pytest.raises(
+        Exception,
+        match="PDR failed to ingest all granules successfully\n"
+        "Ingest Granule workflow failure count: 2",
+    ):
         cleanup_pdr(failed_event, mock_context)
 
 
@@ -110,7 +114,7 @@ def test_move_pdr_copy_failure(mock_boto3_client, successful_event):
     provider = successful_event["config"]["provider"]
     pdr = successful_event["input"]["pdr"]
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Copy failed"):
         move_pdr(provider, pdr)
 
     mock_s3_client.delete_object.assert_not_called()
@@ -139,7 +143,7 @@ def test_move_pdr_delete_failure(mock_boto3_client, successful_event):
     provider = successful_event["config"]["provider"]
     pdr = successful_event["input"]["pdr"]
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Delete failed"):
         move_pdr(provider, pdr)
 
     mock_s3_client.copy_object.assert_called_once()

@@ -6,7 +6,7 @@
     "properties": {
       "provider": {
         "type": "object",
-        "description": "A provider object to send the PAN response to.  The PAN response will be sent via the same protocol and authentication method to the host configured in the provider."
+        "description": "A provider object. The host configured is used in the archive location for the PDR"
       }
     }
   }

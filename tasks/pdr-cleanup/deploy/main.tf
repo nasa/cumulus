@@ -4,7 +4,7 @@ resource "aws_lambda_function" "pdr_cleanup_task" {
   source_code_hash = filebase64sha256("${path.module}/../dist/lambda.zip")
   handler          = "pdr_cleanup.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "python3.13"
+  runtime          = "python3.12"
   timeout          = 300
   memory_size      = 512
 
