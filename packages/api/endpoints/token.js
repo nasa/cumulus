@@ -16,11 +16,13 @@ const {
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
   createJwtToken,
+  verifyJwtToken,
 } = require('../lib/token');
 
 const { verifyJwtAuthorization } = require('../lib/request');
 
 const { AccessToken } = require('../models');
+const { isAuthorizedOAuthUser } = require('../app/auth');
 
 const buildPermanentRedirectResponse = (location, response) =>
   response
@@ -118,11 +120,20 @@ async function refreshAccessToken(request, oAuth2Provider, response, extensionSe
     return response.boom.unauthorized('Request requires a token');
   }
 
+  let decodedToken;
   let accessToken;
+  let username;
   try {
-    accessToken = await verifyJwtAuthorization(requestJwtToken);
+    decodedToken = verifyJwtToken(requestJwtToken);
+    accessToken = decodedToken.accessToken;
+    username = decodedToken.username;
   } catch (error) {
     return handleJwtVerificationError(error, response);
+  }
+
+  // Check if the user is authorized
+  if (!(await isAuthorizedOAuthUser(username))) {
+    return response.boom.unauthorized('User not authorized');
   }
 
   const accessTokenModel = new AccessToken();
@@ -155,7 +166,6 @@ async function refreshAccessToken(request, oAuth2Provider, response, extensionSe
 
   // Use existing token values and just extend expiration time
   const newAccessToken = accessTokenRecord.accessToken;
-  const username = accessTokenRecord.username;
 
   // Extend expiration time by the specified amount (default: 12 hours)
   // If expirationTime is undefined, use current time as base
@@ -170,7 +180,13 @@ async function refreshAccessToken(request, oAuth2Provider, response, extensionSe
     }
   );
 
-  const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
+  // Preserve the original iat from the token to prevent indefinite authentication
+  const jwtToken = createJwtToken({
+    accessToken: newAccessToken,
+    username,
+    expirationTime,
+    iat: decodedToken.iat,
+  });
   return response.send({ token: jwtToken });
 }
 
