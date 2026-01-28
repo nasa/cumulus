@@ -1,0 +1,12 @@
+{
+    "title": "PdrStatusCheckConfig",
+    "description": "Describes the configuration of the pdr-status-check task",
+    "type": "object",
+    "required": [],
+    "properties": {
+      "limit": {
+        "type": "integer",
+        "description": "The number of times the status check can be performed."
+      }
+    }
+  }

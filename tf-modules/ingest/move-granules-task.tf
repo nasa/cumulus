@@ -4,7 +4,7 @@ resource "aws_lambda_function" "move_granules_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/move-granules/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "MoveGranules", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "MoveGranules", 1024)
 

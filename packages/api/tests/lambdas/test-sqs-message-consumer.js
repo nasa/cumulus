@@ -114,7 +114,7 @@ test.beforeEach((t) => {
 test.afterEach.always((t) => {
   t.context.queueMessageStub.restore();
   t.context.fetchRulesStub.restore();
-  delete process.env.allow_provider_mismatch_on_rule_filter;
+  delete process.env.allowProviderMismatchOnRuleFilter;
 });
 
 test.serial('processQueues does nothing when there is no message', async (t) => {
@@ -453,9 +453,9 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
   });
 });
 
-test.serial('SQS message consumer queues correct number of workflows for rules not matching the event provider when lambda var allow_provider_mismatch_on_rule_filter is set to true', async (t) => {
+test.serial('SQS message consumer queues correct number of workflows for rules not matching the event provider when lambda var allowProviderMismatchOnRuleFilter is set to true', async (t) => {
   const { queueMessageStub } = t.context;
-  process.env.allow_provider_mismatch_on_rule_filter = true;
+  process.env.allowProviderMismatchOnRuleFilter = true;
   const queue = await createSqsQueues(randomId('queue'));
   const provider = randomId('provider');
   const provider2 = randomId('provider2');
@@ -501,7 +501,7 @@ test.serial('SQS message consumer queues correct number of workflows for rules n
 
   t.teardown(async () => {
     await cleanupQueues([queue]);
-    delete process.env.allow_provider_mismatch_on_rule_filter;
+    delete process.env.allowProviderMismatchOnRuleFilter;
   });
 });
 

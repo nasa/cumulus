@@ -1,11 +1,11 @@
 {
   "name": "@cumulus/migration-helper-async-operation",
-  "version": "21.0.1",
+  "version": "21.2.0",
   "description": "Lambda function helps with various migrations",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "private": true,
   "main": "./dist/lambda/index.js",
@@ -31,12 +31,12 @@
     "failFast": true
   },
   "dependencies": {
-    "@cumulus/api": "21.0.1",
-    "@cumulus/async-operations": "21.0.1",
-    "@cumulus/aws-client": "21.0.1",
-    "@cumulus/common": "21.0.1",
-    "@cumulus/logger": "21.0.1",
-    "@cumulus/types": "21.0.1",
+    "@cumulus/api": "21.2.0",
+    "@cumulus/async-operations": "21.2.0",
+    "@cumulus/aws-client": "21.2.0",
+    "@cumulus/common": "21.2.0",
+    "@cumulus/logger": "21.2.0",
+    "@cumulus/types": "21.2.0",
     "lodash": "^4.17.21"
   }
 }

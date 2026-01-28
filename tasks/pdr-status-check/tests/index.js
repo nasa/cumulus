@@ -6,6 +6,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const isEqual = require('lodash/isEqual');
 const some = require('lodash/some');
 const {
+  validateConfig,
   validateInput,
   validateOutput,
 } = require('@cumulus/common/test-utils');
@@ -18,9 +19,11 @@ test('valid output when no running executions', async (t) => {
       running: [],
       pdr: { name: 'test.PDR', path: 'test-path' },
     },
+    config: {},
   };
 
   await validateInput(t, event.input);
+  await validateConfig(t, event.config);
 
   const output = await checkPdrStatuses(event);
 
@@ -41,12 +44,15 @@ test.serial('error thrown when limit exceeded', async (t) => {
     input: {
       running: ['arn:123'],
       counter: 2,
-      limit: 3,
       pdr: { name: 'test.PDR', path: 'test-path' },
+    },
+    config: {
+      limit: 3,
     },
   };
 
   await validateInput(t, event.input);
+  await validateConfig(t, event.config);
 
   const sfn = awsServices.sfn();
   try {
@@ -70,12 +76,15 @@ test.serial('returns the correct results in the nominal case', async (t) => {
       completed: ['arn:5'],
       failed: [{ arn: 'arn:6', reason: 'OutOfCheese' }],
       counter: 5,
-      limit: 10,
       pdr: { name: 'test.PDR', path: 'test-path' },
+    },
+    config: {
+      limit: 10,
     },
   };
 
   await validateInput(t, event.input);
+  await validateConfig(t, event.config);
 
   const executionStatuses = {
     'arn:1': 'RUNNING',
@@ -108,7 +117,6 @@ test.serial('returns the correct results in the nominal case', async (t) => {
   await validateOutput(t, output);
   t.false(output.isFinished);
   t.is(output.counter, 6);
-  t.is(output.limit, 10);
 
   t.deepEqual(output.running, ['arn:1', 'arn:7']);
   t.deepEqual(output.completed.sort(), ['arn:2', 'arn:5'].sort());

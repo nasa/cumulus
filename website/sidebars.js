@@ -200,7 +200,10 @@ const sidebars = {
       items: [
         'adding-a-task',
         'docs-how-to',
+        'development/pre-commit-setup',
         'development/release',
+        'development/typescript-best-practices',
+        'development/python-best-practices',
       ],
     },
     {

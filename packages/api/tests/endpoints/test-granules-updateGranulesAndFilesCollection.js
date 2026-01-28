@@ -12,7 +12,6 @@ const {
   fakeGranuleRecordFactory,
   FilePgModel,
   generateLocalTestDb,
-  getUniqueGranuleByGranuleId,
   GranulePgModel,
   localStackConnectionEnv,
   migrationDir,
@@ -250,7 +249,7 @@ test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates gra
   const { message } = response.body;
   t.true(message.includes('Successfully wrote granules'));
   const returnedGranules = await Promise.all(granuleIds.map((id) =>
-    getUniqueGranuleByGranuleId(knex, id, granulePgModel)));
+    granulePgModel.get(knex, { granule_id: id })));
 
   for (const granule of returnedGranules) {
     t.is(granule.collection_cumulus_id, collectionCumulusId2);
@@ -308,7 +307,7 @@ test.serial('PATCH /granules/bulkPatch successfully updates a batch of granules'
     .expect(200);
 
   const returnedGranules = await Promise.all(
-    granuleIds.map((id) => getUniqueGranuleByGranuleId(knex, id, granulePgModel))
+    granuleIds.map((id) => granulePgModel.get(knex, { granule_id: id }))
   );
 
   for (const granule of returnedGranules) {

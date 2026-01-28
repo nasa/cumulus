@@ -275,6 +275,32 @@ variable "archive_api_url" {
   description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
 }
 
+variable "archive_api_users" {
+  description = "Earthdata (URS) usernames that should be allowed to access the archive API"
+  type        = list(string)
+  default     = [
+    "acyu",
+    "awisdom",
+    "cbanh",
+    "chuang14",
+    "cdurbin",
+    "dhudelson",
+    "dmsorensen",
+    "ecarton",
+    "jasmine",
+    "jennyhliu",
+    "jmccoy_uat",
+    "jnorton1",
+    "kkelly",
+    "kovarik",
+    "mobrien84",
+    "nnageswa",
+    "npauzenga",
+    "terrafirma13",
+    "yliu10"
+  ]
+}
+
 variable "private_archive_api_gateway" {
   type    = bool
   default = true
@@ -345,7 +371,7 @@ variable "async_operation_image_version" {
 variable "cumulus_process_activity_version" {
     description = "docker image version to use for python processing service"
     type = string
-    default = "5"
+    default = "6"
 }
 
 variable "ecs_task_image_version" {
@@ -357,7 +383,7 @@ variable "ecs_task_image_version" {
 variable "cumulus_test_ingest_image_version" {
     description = "docker image version to use for python test ingest processing service"
     type = string
-    default = "18"
+    default = "19"
 }
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"

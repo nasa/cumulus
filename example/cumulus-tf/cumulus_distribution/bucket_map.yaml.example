@@ -3,11 +3,11 @@ MAP:
     bucket: bucket-path-1
     headers:
         Content-Type: "text/plain"
-  
+
   path2:
     path2a: bucket-path-2a
     path2b: bucket-path-2b
-    
+
   path3:
     path3a:
       path3ai: bucket-path-3ai

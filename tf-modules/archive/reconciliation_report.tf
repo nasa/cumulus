@@ -6,7 +6,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/createReconciliationReport/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "CreateReconciliationReport", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "CreateReconciliationReport", 512)
   environment {

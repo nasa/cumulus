@@ -151,6 +151,10 @@ output "sqs2sfThrottle_lambda_function_arn" {
   value = module.ingest.sqs2sfThrottle_lambda_function_arn
 }
 
+output "sqs2sfThrottleRateLimited_lambda_function_arn" {
+  value = module.ingest.sqs2sfThrottleRateLimited_lambda_function_arn
+}
+
 # IAM outputs
 
 output "lambda_processing_role_arn" {

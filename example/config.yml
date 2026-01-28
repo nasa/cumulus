@@ -26,11 +26,17 @@ cumulus-lp:
 awisdom:
   bucket: awisdom-internal
 
+cbanh-tf:
+  bucket: cbanh-cumulus-tf-internal
+
 cdd-tf:
   bucket: cdd-test-sandbox-internal
 
 ecarton:
   bucket: ecarton-internal
+
+dms-opex-sbx:
+  bucket: dms-opex-sbx-internal
 
 jl-tf:
   bucket: jl-test-integration-internal

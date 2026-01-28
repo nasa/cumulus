@@ -14,7 +14,7 @@ resource "aws_lambda_function" "provision_database" {
   source_code_hash = filebase64sha256("${path.module}/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.db_provision.arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   memory_size      = lookup(var.lambda_memory_sizes, "ProvisionPostgresDatabase", 512)
   timeout          = lookup(var.lambda_timeouts, "ProvisionPostgresDatabase", 500)
   environment {
