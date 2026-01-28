@@ -24,7 +24,7 @@ const log = require('@cumulus/common/log');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { AccessToken } = require('../models');
-const { createJwtToken } = require('../lib/token');
+const { createJwtToken, verifyJwtToken } = require('../lib/token');
 const { verifyJwtAuthorization } = require('../lib/request');
 const {
   TokenUnauthorizedUserError,
@@ -330,9 +330,13 @@ async function refreshAccessToken(request, response, extensionSeconds = 12 * 60 
     return response.boom.unauthorized('Request requires a token');
   }
 
+  let decodedToken;
   let accessToken;
+  let username;
   try {
-    accessToken = await verifyJwtAuthorization(requestJwtToken);
+    decodedToken = verifyJwtToken(requestJwtToken);
+    accessToken = decodedToken.accessToken;
+    username = decodedToken.username;
   } catch (error) {
     return handleJwtVerificationError(error, response);
   }
@@ -351,7 +355,6 @@ async function refreshAccessToken(request, response, extensionSeconds = 12 * 60 
 
   // Use existing token values and just extend expiration time
   const newAccessToken = accessTokenRecord.accessToken;
-  const username = accessTokenRecord.username;
 
   // Extend expiration time by the specified amount (default: 12 hours)
   // If expirationTime is undefined, use current time as base
@@ -366,7 +369,13 @@ async function refreshAccessToken(request, response, extensionSeconds = 12 * 60 
     }
   );
 
-  const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
+  // Preserve the original iat from the token to prevent indefinite authentication
+  const jwtToken = createJwtToken({
+    accessToken: newAccessToken,
+    username,
+    expirationTime,
+    iat: decodedToken.iat,
+  });
   return response.send({ token: jwtToken });
 }
 
