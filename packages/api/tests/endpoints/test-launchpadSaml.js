@@ -363,3 +363,68 @@ test.serial('/token endpoint without API_BASE_URL environment variable returns 5
 
   t.is(response.statusCode, 500);
 });
+
+test.serial('/refresh without a token returns 401 error', async (t) => {
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .expect(401);
+
+  t.is(response.body.message, 'Request requires a token');
+});
+
+test.serial('/refresh with an invalid token returns 401 error', async (t) => {
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: 'InvalidToken' })
+    .expect(401);
+
+  t.is(response.body.message, 'Invalid access token');
+});
+
+test.serial('/refresh with a non-existent token returns 401 error', async (t) => {
+  const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
+  // Delete the token from the database to simulate a non-existent token
+  await accessTokenModel.delete({ accessToken: t.context.validIndex });
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: jwt })
+    .expect(401);
+
+  t.is(response.body.message, 'Invalid access token');
+});
+
+test.serial('/refresh with a valid token returns a refreshed token', async (t) => {
+  const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
+  const decodedOriginalToken = verifyJwtToken(jwt);
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: jwt })
+    .expect(200);
+
+  const decodedRefreshedToken = verifyJwtToken(response.body.token);
+  t.is(decodedRefreshedToken.username, t.context.validUser);
+  t.is(decodedRefreshedToken.accessToken, t.context.validIndex);
+  t.true(decodedRefreshedToken.exp > decodedOriginalToken.exp, 'exp should be extended when refreshing token');
+});
+
+test.serial('/refresh preserves the original iat from the token', async (t) => {
+  const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
+  const decodedOriginalToken = verifyJwtToken(jwt);
+  const originalIat = decodedOriginalToken.iat;
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: jwt })
+    .expect(200);
+
+  const decodedRefreshedToken = verifyJwtToken(response.body.token);
+  t.is(decodedRefreshedToken.iat, originalIat, 'iat should be preserved when refreshing token');
+  t.not(decodedRefreshedToken.exp, decodedOriginalToken.exp, 'exp should be extended when refreshing token');
+});

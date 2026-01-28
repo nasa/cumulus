@@ -323,6 +323,50 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   stub.restore();
 });
 
+test.serial('GET /refresh preserves the original iat from the token', async (t) => {
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  const initialTokenRecord = fakeAccessTokenFactory({ username });
+  await accessTokenModel.create(initialTokenRecord);
+
+  const requestJwtToken = createJwtToken(initialTokenRecord);
+  const decodedOriginalToken = verifyJwtToken(requestJwtToken);
+  const originalIat = decodedOriginalToken.iat;
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: requestJwtToken })
+    .expect(200);
+
+  t.is(response.status, 200);
+
+  const decodedRefreshedToken = verifyJwtToken(response.body.token);
+  t.is(decodedRefreshedToken.iat, originalIat, 'iat should be preserved when refreshing token');
+  t.not(decodedRefreshedToken.exp, decodedOriginalToken.exp, 'exp should be extended when refreshing token');
+});
+
+test.serial('createJwtToken accepts and uses the iat parameter', async (t) => {
+  const username = randomString();
+  const accessToken = randomString();
+  const expirationTime = Math.floor(Date.now() / 1000) + 3600;
+  const customIat = Math.floor(Date.now() / 1000) - 1000; // 1000 seconds ago
+
+  const jwtToken = createJwtToken({
+    accessToken,
+    expirationTime,
+    username,
+    iat: customIat,
+  });
+
+  const decodedToken = verifyJwtToken(jwtToken);
+  t.is(decodedToken.iat, customIat, 'iat should be set to the custom value');
+  t.is(decodedToken.accessToken, accessToken);
+  t.is(decodedToken.username, username);
+  t.is(decodedToken.exp, expirationTime);
+});
+
 test.serial('DELETE /tokenDelete without a token returns a 404 response', async (t) => {
   const response = await request(app)
     .delete('/token')
