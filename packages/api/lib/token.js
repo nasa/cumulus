@@ -27,8 +27,42 @@ function isAccessTokenExpired({ expirationTime }) {
   return ((Date.now() / 1000) > expirationTime);
 }
 
+/**
+ * Gets the maximum session duration from environment variable
+ * Defaults to 12 hours (43200 seconds) if not set
+ *
+ * @returns {number} Maximum session duration in seconds
+ */
+function getMaxSessionDuration() {
+  const maxDuration = process.env.MAX_SESSION_DURATION;
+  if (maxDuration) {
+    const parsed = Number.parseInt(maxDuration, 10);
+    if (!Number.isNaN(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  // Default to 12 hours
+  return 12 * 60 * 60;
+}
+
+/**
+ * Checks if a session has exceeded the maximum allowed duration
+ *
+ * @param {Object} decodedToken - the decoded JWT token
+ * @param {number} decodedToken.iat - Issued at timestamp in seconds since epoch
+ * @returns {boolean} true indicates the session has exceeded max duration
+ */
+function isSessionExpired(decodedToken) {
+  const maxSessionDuration = getMaxSessionDuration();
+  const currentTime = Math.floor(Date.now() / 1000);
+  const sessionAge = currentTime - decodedToken.iat;
+  return sessionAge > maxSessionDuration;
+}
+
 module.exports = {
   createJwtToken,
   verifyJwtToken,
   isAccessTokenExpired,
+  getMaxSessionDuration,
+  isSessionExpired,
 };

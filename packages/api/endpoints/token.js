@@ -17,6 +17,7 @@ const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
   createJwtToken,
   verifyJwtToken,
+  isSessionExpired,
 } = require('../lib/token');
 
 const { verifyJwtAuthorization } = require('../lib/request');
@@ -135,6 +136,11 @@ async function refreshAccessToken(
     username = decodedToken.username;
   } catch (error) {
     return handleJwtVerificationError(error, response);
+  }
+
+  // Check if the session has exceeded the maximum duration
+  if (isSessionExpired(decodedToken)) {
+    return response.boom.unauthorized('Session has exceeded maximum duration');
   }
 
   // Check if the user is authorized

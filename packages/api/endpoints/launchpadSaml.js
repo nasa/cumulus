@@ -24,7 +24,7 @@ const log = require('@cumulus/common/log');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { AccessToken } = require('../models');
-const { createJwtToken, verifyJwtToken } = require('../lib/token');
+const { createJwtToken, verifyJwtToken, isSessionExpired } = require('../lib/token');
 const {
   TokenUnauthorizedUserError,
 } = require('../lib/errors');
@@ -339,6 +339,11 @@ async function refreshAccessToken(request, response, extensionSeconds = 12 * 60 
     username = decodedToken.username;
   } catch (error) {
     return handleJwtVerificationError(error, response);
+  }
+
+  // Check if the session has exceeded the maximum duration
+  if (isSessionExpired(decodedToken)) {
+    return response.boom.unauthorized('Session has exceeded maximum duration');
   }
 
   const accessTokenModel = new AccessToken();

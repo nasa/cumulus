@@ -16,6 +16,7 @@ const assertions = require('../../lib/assertions');
 const {
   createJwtToken,
   verifyJwtToken,
+  getMaxSessionDuration,
 } = require('../../lib/token');
 const {
   fakeAccessTokenFactory,
@@ -410,4 +411,71 @@ test.serial('DELETE /tokenDelete with a valid token results in a successful dele
   t.false(await accessTokenModel.exists({ accessToken: accessTokenRecord.accessToken }));
   t.is(response.status, 200);
   t.is(response.body.message, 'Token record was deleted');
+});
+
+test.serial('getMaxSessionDuration returns default value when MAX_SESSION_DURATION is not set', (t) => {
+  delete process.env.MAX_SESSION_DURATION;
+  const maxDuration = getMaxSessionDuration();
+  t.is(maxDuration, 12 * 60 * 60, 'Default should be 12 hours');
+});
+
+test.serial('getMaxSessionDuration returns custom value when MAX_SESSION_DURATION is set', (t) => {
+  process.env.MAX_SESSION_DURATION = '86400'; // 1 day
+  const maxDuration = getMaxSessionDuration();
+  t.is(maxDuration, 86400, 'Should return custom value');
+  delete process.env.MAX_SESSION_DURATION;
+});
+
+test.serial('GET /refresh with an expired session returns 401', async (t) => {
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  // Set a short max session duration
+  process.env.MAX_SESSION_DURATION = '3600'; // 1 hour
+
+  const initialTokenRecord = fakeAccessTokenFactory({ username });
+  await accessTokenModel.create(initialTokenRecord);
+
+  // Create a token with an iat that is 2 hours ago (exceeds max session duration)
+  const oldIat = Math.floor(Date.now() / 1000) - 7200; // 2 hours ago
+  const jwtToken = createJwtToken({
+    ...initialTokenRecord,
+    iat: oldIat,
+  });
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: jwtToken })
+    .expect(401);
+
+  t.is(response.body.message, 'Session has exceeded maximum duration');
+  delete process.env.MAX_SESSION_DURATION;
+});
+
+test.serial('GET /refresh with a valid session succeeds', async (t) => {
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  // Set a short max session duration
+  process.env.MAX_SESSION_DURATION = '86400'; // 1 day
+
+  const initialTokenRecord = fakeAccessTokenFactory({ username });
+  await accessTokenModel.create(initialTokenRecord);
+
+  // Create a token with an iat that is 1 hour ago (within max session duration)
+  const recentIat = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
+  const jwtToken = createJwtToken({
+    ...initialTokenRecord,
+    iat: recentIat,
+  });
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: jwtToken })
+    .expect(200);
+
+  t.is(response.status, 200);
+  delete process.env.MAX_SESSION_DURATION;
 });
