@@ -4,8 +4,8 @@ locals {
 
 resource "aws_lambda_function" "granule_invalidator_task" {
   function_name    = "${var.prefix}-granule-invalidator-task"
-  filename         = "${path.module}/../dist/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../dist/lambda.zip")
+  filename         = "${path.module}/../dist/final/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../dist/final/lambda.zip")
   handler          = "granule_invalidator.granule_invalidator.lambda_handler"
   role             = var.role
   runtime          = local.build_config.runtime
