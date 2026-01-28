@@ -118,7 +118,6 @@ test.serial('GET /token with a code but no state returns the access token', asyn
     refreshToken: 'my-refresh-token',
     expirationTime: 12345,
   };
-  const jwtToken = createJwtToken(getAccessTokenResponse);
 
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
@@ -163,7 +162,6 @@ test.serial('GET /token with a code and state results in a redirect to that stat
 
 test.serial('GET /token with a code and state results in a redirect containing the access token', async (t) => {
   const getAccessTokenResponse = fakeAccessTokenFactory();
-  const jwtToken = createJwtToken(getAccessTokenResponse);
 
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
@@ -294,7 +292,6 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   const requestJwtToken = createJwtToken(initialTokenRecord);
 
   const refreshedTokenRecord = fakeAccessTokenFactory();
-  const refreshedJwtToken = createJwtToken(refreshedTokenRecord);
 
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
@@ -347,7 +344,7 @@ test.serial('GET /refresh preserves the original iat from the token', async (t) 
   t.not(decodedRefreshedToken.exp, decodedOriginalToken.exp, 'exp should be extended when refreshing token');
 });
 
-test.serial('createJwtToken accepts and uses the iat parameter', async (t) => {
+test.serial('createJwtToken accepts and uses the iat parameter', (t) => {
   const username = randomString();
   const accessToken = randomString();
   const expirationTime = Math.floor(Date.now() / 1000) + 3600;

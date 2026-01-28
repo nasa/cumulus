@@ -110,10 +110,16 @@ async function token(event, oAuth2Provider, response) {
  * @param {Object} request - an API Gateway request
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
  * @param {Object} response - an API Gateway response object
- * @param {number} [extensionSeconds] - number of seconds to extend token expiration (default: 43200)
+ * @param {number} [extensionSeconds] - number of seconds to extend token
+ *   expiration (default: 43200)
  * @returns {Object} an API Gateway response
  */
-async function refreshAccessToken(request, oAuth2Provider, response, extensionSeconds = 12 * 60 * 60) {
+async function refreshAccessToken(
+  request,
+  oAuth2Provider,
+  response,
+  extensionSeconds = 12 * 60 * 60
+) {
   const requestJwtToken = get(request, 'body.token');
 
   if (!requestJwtToken) {

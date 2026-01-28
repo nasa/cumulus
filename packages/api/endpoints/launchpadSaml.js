@@ -25,7 +25,6 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { AccessToken } = require('../models');
 const { createJwtToken, verifyJwtToken } = require('../lib/token');
-const { verifyJwtAuthorization } = require('../lib/request');
 const {
   TokenUnauthorizedUserError,
 } = require('../lib/errors');
@@ -320,7 +319,8 @@ function handleJwtVerificationError(err, response) {
  *
  * @param {Object} request - an API Gateway request
  * @param {Object} response - an API Gateway response object
- * @param {number} [extensionSeconds] - number of seconds to extend token expiration (default: 43200)
+ * @param {number} [extensionSeconds] - number of seconds to extend token
+ *   expiration (default: 43200)
  * @returns {Object} an API Gateway response
  */
 async function refreshAccessToken(request, response, extensionSeconds = 12 * 60 * 60) {
