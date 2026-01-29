@@ -1,3 +1,5 @@
+# TODO; this is currently unused since the Cumulus Bamboo build runs in a Docker runner and using docker-in-docker is difficult to configure.
+
 ARG UV_TAG="0.9"
 ARG LAMBDA_TAG="3.14"
 

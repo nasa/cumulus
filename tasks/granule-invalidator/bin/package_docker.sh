@@ -1,3 +1,5 @@
+# TODO; this is currently unused since the Cumulus Bamboo build runs in a Docker runner and using docker-in-docker is difficult to configure.
+
 #!/bin/bash
 CONFIG=$(jq -r '.' build-config.json)
 RUNTIME=$(echo $CONFIG | jq -r '.runtime')
