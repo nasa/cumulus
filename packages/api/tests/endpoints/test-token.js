@@ -113,11 +113,12 @@ test.serial('GET /token with an invalid code results in an authorization failure
 });
 
 test.serial('GET /token with a code but no state returns the access token', async (t) => {
+  const futureTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
   const getAccessTokenResponse = {
     username: 'my-username',
     accessToken: 'my-access-token',
     refreshToken: 'my-refresh-token',
-    expirationTime: 12345,
+    expirationTime: futureTime,
   };
 
   const stub = sinon.stub(
@@ -259,12 +260,7 @@ test.serial('GET /refresh with an unauthorized user results in an authorization 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('GET /refresh returns 400 if refresh token request fails', async (t) => {
-  const stub = sinon.stub(
-    EarthdataLoginClient.prototype,
-    'refreshAccessToken'
-  ).callsFake(() => Promise.reject(new Error('Refresh token request failed')));
-
+test.serial('GET /refresh returns 400 if refresh token update fails', async (t) => {
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -272,6 +268,10 @@ test.serial('GET /refresh returns 400 if refresh token request fails', async (t)
   await accessTokenModel.create(initialTokenRecord);
 
   const requestJwtToken = createJwtToken(initialTokenRecord);
+
+  // Stub the update method to simulate a database failure
+  const stub = sinon.stub(AccessToken.prototype, 'update')
+    .callsFake(() => Promise.reject(new Error('Database update failed')));
 
   const response = await request(app)
     .post('/refresh')
@@ -283,6 +283,31 @@ test.serial('GET /refresh returns 400 if refresh token request fails', async (t)
   stub.restore();
 });
 
+test.serial('GET /refresh extends token expiration time', async (t) => {
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  const initialTokenRecord = fakeAccessTokenFactory({ username });
+  await accessTokenModel.create(initialTokenRecord);
+
+  const requestJwtToken = createJwtToken(initialTokenRecord);
+  const decodedOriginalToken = verifyJwtToken(requestJwtToken);
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: requestJwtToken })
+    .expect(200);
+
+  t.is(response.status, 200);
+
+  const decodedRefreshedToken = verifyJwtToken(response.body.token);
+  // exp should be extended (larger than original)
+  t.true(decodedRefreshedToken.exp > decodedOriginalToken.exp, 'Expiration time should be extended');
+  // username should remain the same
+  t.is(decodedRefreshedToken.username, username);
+});
+
 test.serial('GET /refresh with a valid token returns a refreshed token', async (t) => {
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -291,13 +316,7 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   await accessTokenModel.create(initialTokenRecord);
 
   const requestJwtToken = createJwtToken(initialTokenRecord);
-
-  const refreshedTokenRecord = fakeAccessTokenFactory();
-
-  const stub = sinon.stub(
-    EarthdataLoginClient.prototype,
-    'refreshAccessToken'
-  ).callsFake(() => Promise.resolve(refreshedTokenRecord));
+  const decodedOriginalToken = verifyJwtToken(requestJwtToken);
 
   const response = await request(app)
     .post('/refresh')
@@ -308,17 +327,16 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   t.is(response.status, 200);
 
   const decodedToken = verifyJwtToken(response.body.token);
-  t.is(decodedToken.username, refreshedTokenRecord.username);
-  t.is(decodedToken.accessToken, refreshedTokenRecord.accessToken);
-  t.is(decodedToken.exp, refreshedTokenRecord.expirationTime);
+  // Username and access token should remain the same since we're just extending expiration
+  t.is(decodedToken.username, initialTokenRecord.username);
+  t.is(decodedToken.accessToken, initialTokenRecord.accessToken);
+  // Expiration should be extended
+  t.true(decodedToken.exp > decodedOriginalToken.exp);
 
-  t.false(await accessTokenModel.exists({
+  // The original token record should still exist with updated expiration
+  t.true(await accessTokenModel.exists({
     accessToken: initialTokenRecord.accessToken,
   }));
-  t.true(await accessTokenModel.exists({
-    accessToken: refreshedTokenRecord.accessToken,
-  }));
-  stub.restore();
 });
 
 test.serial('GET /refresh preserves the original iat from the token', async (t) => {
@@ -458,7 +476,7 @@ test.serial('GET /refresh with a valid session succeeds', async (t) => {
   await setAuthorizedOAuthUsers([username]);
 
   // Set a short max session duration
-  process.env.MAX_SESSION_DURATION = '86400'; // 1 day
+  process.env.MAX_SESSION_DURATION = '43200'; // 12 hours
 
   const initialTokenRecord = fakeAccessTokenFactory({ username });
   await accessTokenModel.create(initialTokenRecord);
