@@ -24,7 +24,9 @@ Please complete the following steps before upgrading Cumulus.
   ```
 - **CUMULUS-4313**
   - Update Async Operation container to new version 55, `cumuluss/async-operation:55`. Users should update their references to `async-operation` with the new version.
-
+  - Updated lerna dev-dependency to v8
+  - Added CI shim script to allow `lerna publish` to work with tar pinned to `^7.5.3`
+  
 ### Notable Changes
 
 - **CUMULUS-4459**
