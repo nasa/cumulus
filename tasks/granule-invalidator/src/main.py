@@ -2,6 +2,7 @@
 
 This file provides the Lambda handler for invalidating granules in the Cumulus workflow.
 """
+
 import logging
 import os
 from typing import Any
@@ -12,6 +13,7 @@ from run_cumulus_task import run_cumulus_task
 
 EVENT_TYPING = dict[Any, Any]
 LOGGER = CumulusLogger(__name__, level=int(os.environ.get("LOGLEVEL", logging.DEBUG)))
+
 
 def lambda_handler(event: EVENT_TYPING, context: Any) -> Any:
     """Lambda handler.
