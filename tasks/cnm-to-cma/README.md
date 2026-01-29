@@ -95,7 +95,27 @@ module "cnm_to_cma_module" {
  }
 ```
 
+#### Developer Notes
+- Build : Temporarily use build.sh which depends on poetry to build the lambda.zip file.
+-- poetry self add poetry-plugin-export to enable poetry export.
+-- alternatively, download pydantic_core wheel from here : https://pypi.org/project/pydantic_core/#files by
+-  using the manylinux wheel with python version close to this project's
+- About json schema compiling to Plaint Python classes:
+   - used datamodel-code-generator tool: https://koxudaxi.github.io/datamodel-code-generator/ to generate pydantic models from json schema files.
+   - example below
+```angular2html
+pip install datamodel-code-generator
+# Or with HTTP support for remote references
+pip install "datamodel-code-generator[http]"
+
+datamodel-codegen \
+    --input cumulus_sns_schema.json \
+    --input-file-type jsonschema \
+    --output models_cnm.py \
+    --output-model-type pydantic_v2.BaseModel
+```
 ### Input
+
 
 Input array specification:
 

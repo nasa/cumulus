@@ -4,8 +4,8 @@ from typing import List
 import pytest
 import pydantic
 from cnm2cma import models_cnm
-from cnm2cma import models_cma_file
-from cnm2cma.cnm_to_cma import  get_cnm_input_files, create_cma_files
+from cnm2cma import models_granule
+from cnm2cma.cnm_to_cma import  get_cnm_input_files, create_granule_files
 
 
 class TestCNMToCMA:
@@ -24,29 +24,24 @@ class TestCNMToCMA:
                     "granuleIdExtraction": None,
                 }
             }
-            granule = mapper(data, config)
-            assert(granule.get('granuleId') =='sampleGranuleName001')
-            assert(granule.get('version') =='001')
-            cma_files = granule.get('files')
-            assert(len(cma_files) == 2)
-            assert(cma_files[0].get('fileName') == "production_file.nc")
-            assert(cma_files[0].get('type') == "data")
-            assert(cma_files[0].get('size') == 123456)
-            assert(cma_files[0].get('checksumType') == "md5")
-            assert(cma_files[0].get('checksum') == "4241jafkjaj14jasjf")
-            assert(cma_files[0].get('bucket') == "sampleIngestBucket")
-            assert(cma_files[0].get('key') == "prod_20170926T11:30:36/production_file.nc")
-            assert(cma_files[0].get('source') == "s3")
+            granule:models_granule.Granule = mapper(data, config)
+            assert(granule.granuleId =='sampleGranuleName001')
+            assert granule.producerGranuleId == "producerGranuleId_from_data_provider"
+            assert(granule.version =='001')
+            granule_files:List[models_granule.File] = granule.files
+            assert(len(granule_files) == 2)
+            assert granule_files[0].name == "production_file.nc"
+            assert granule_files[0].filename == "production_file.nc"
+            assert granule_files[0].type == "data"
+            assert granule_files[0].source_bucket == "sampleIngestBucket"
+            assert granule_files[0].path == "prod_20170926T11:30:36/production_file.nc"
 
             # Use another type of assert syntax for variety
-            assert cma_files[1].get('fileName') == "production_file.png"
-            assert cma_files[1].get('type') == "browse"
-            assert cma_files[1].get('size') == 12345
-            assert cma_files[1].get('checksumType') == "md5"
-            assert cma_files[1].get('checksum') == "addjd872342bfbf"
-            assert cma_files[1].get('bucket') == "sampleIngestBucket"
-            assert cma_files[1].get('key') == "prod_20170926T11:30:36/production_file.png"
-            assert cma_files[1].get('source') == "s3"
+            assert granule_files[1].name == "production_file.png"
+            assert granule_files[1].filename == "production_file.png"
+            assert granule_files[1].type == "browse"
+            assert granule_files[1].source_bucket == "sampleIngestBucket"
+            assert granule_files[1].path == "prod_20170926T11:30:36/production_file.png"
 
     def test_granule_extraction(self):
         with open(
@@ -62,8 +57,8 @@ class TestCNMToCMA:
             }
             # 'JA1_GPN_2PeP001_002_20020115_060706_20020115_070316'
             granule = mapper(data, config)
-            assert len(granule.get('files')) == 2
-            assert granule.get('granuleId') == "JA1_GPN_2PeP001_002_20020115_060706_20020115_070316"
+            assert len(granule.files) == 2
+            assert granule.granuleId == "JA1_GPN_2PeP001_002_20020115_060706_20020115_070316"
 
     def test_mapper_with_wrong_formatted_json(self):
         with open(
@@ -85,44 +80,34 @@ class TestCNMToCMA:
         ) as f:
             cnm = json.load(f)
             cnm_model = models_cnm.CloudNotificationMessageCnm12.model_validate(cnm)
-            # cnm_model = CloudNotificationMessageCnm12.parse_obj(cnm)
             cnm_files = get_cnm_input_files(cnm_model.root.product)
             assert(len(cnm_files) ==4)
-            cma_files:List[models_cma_file.ModelItem]=create_cma_files(cnm_files)
-            assert(len(cma_files) ==4)
+            granule_files:List[models_granule.File]=create_granule_files(cnm_files)
+            assert(len(granule_files) ==4)
             # verify every item
-            assert(cma_files[0].fileName=='production_file.nc')
-            assert(cma_files[0].type=='data')
-            assert(cma_files[0].size==123456)
-            assert(cma_files[0].checksumType=='md5')
-            assert(cma_files[0].checksum=='4241jafkjaj14jasjf')
-            assert(cma_files[0].bucket=='bucket_1')
-            assert(cma_files[0].key=='prod_20170926T11:30:36/production_file.nc')
-            assert(cma_files[0].source=='s3')
+            assert(granule_files[0].name=='production_file.nc')
+            assert(granule_files[0].filename=='production_file.nc')
+            assert(granule_files[0].type=='data')
+            assert(granule_files[0].source_bucket=='bucket_1')
+            assert(granule_files[0].path=='prod_20170926T11:30:36/production_file.nc')
 
-            assert(cma_files[1].fileName=='production_http_file.png')
-            assert(cma_files[1].type=='browse')
-            assert(cma_files[1].size==11225)
-            assert(cma_files[1].checksumType=='md5')
-            assert(cma_files[1].checksum=='addjd872342bfbeee')
-            assert(cma_files[1].bucket=='')
-            assert(cma_files[1].key=='')
-            assert(cma_files[1].source=='http')
+            assert granule_files[1].name == "production_http_file.png"
+            assert granule_files[1].filename == "production_http_file.png"
+            assert granule_files[1].type == "browse"
+            assert granule_files[1].source_bucket == None
+            assert granule_files[1].path == "http/path"
 
-            assert(cma_files[2].fileName=='production_https_file.png')
-            assert(cma_files[2].type=='browse')
-            assert(cma_files[2].size==22334)
-            assert(cma_files[2].checksumType.lower()=='sha256')
-            assert(cma_files[2].checksum=='addjd872342bfbfjjj')
-            assert(cma_files[2].bucket=='')
-            assert(cma_files[2].key=='')
+            assert granule_files[2].name == "production_https_file.png"
+            assert granule_files[2].filename == "production_https_file.png"
+            assert granule_files[2].type == "browse"
+            assert granule_files[2].source_bucket == None
+            assert granule_files[2].path == "http/path"
 
-            assert(cma_files[3].source=='sftp')
-            assert(cma_files[3].fileName=='sftp_file.nc')
-            assert(cma_files[3].type=='data')
-            assert(cma_files[3].size==7854321)
-            assert(cma_files[3].checksumType.lower()=='sha512')
-            assert(cma_files[3].checksum=='addwwmm22342bfbf')
+            assert granule_files[3].name == "sftp_file.nc"
+            assert granule_files[3].filename == "sftp_file.nc"
+            assert granule_files[3].type == "data"
+            assert granule_files[3].source_bucket == None
+            assert granule_files[3].path == "sftp_path"
 
 
     def test_get_cnm_input_files(self):

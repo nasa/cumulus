@@ -1,10 +1,10 @@
 """lambda function used to translate CNM messages to CMA messages in aws lambda with cumulus"""
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Optional
 from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
 from cnm2cma import models_cnm
-from cnm2cma import models_cma_file
+from cnm2cma import models_granule
 import pydantic
 import re
 from datetime import datetime, timezone
@@ -29,14 +29,14 @@ def task(event: Dict[str, Union[List[str], Dict]], context: object) -> Dict[str,
 
     LOGGER.info(f"cnm message: {cnm} config: {config}")
     granule = mapper(cnm, config)
-    granule_array = [granule]
+    output: models_granule.SyncGranuleInput = models_granule.SyncGranuleInput(granules=[granule])
     now_as_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     cnm["receivedTime"] = now_as_iso
-    output = {"cnm": cnm, "output_granules": {"granules": granule_array}}
-    return output
+    output_dict = {"cnm": cnm, "output_granules": output.model_dump()}
+    return output_dict
 
 
-def mapper(cnm: Dict, config: Dict) -> Dict:
+def mapper(cnm: Dict, config: Dict) -> models_granule.Granule:
     """
     Maps CNM to CMA message
 
@@ -65,16 +65,13 @@ def mapper(cnm: Dict, config: Dict) -> Dict:
                 granule_id = matcher.group(1)
         LOGGER.info(f"Granule ID: {granule_id}")
         cnm_input_files: List[models_cnm.File] = get_cnm_input_files(product)
-        cma_files: List[models_cma_file.ModelItem] = create_cma_files(cnm_input_files)
-        # Constructing the return message in normal List, Dict but not Pydantic models
-        granule = {
-            "granuleId": granule_id,
-            "version": config.get("collection", {}).get("version"),
-            "dataType": config.get("collection", {}).get("name"),
-            "files": [
-                item.model_dump() for item in cma_files
-            ],  # cma_files to normal List
-        }
+        cma_files:List[models_cnm.File] = create_granule_files(cnm_input_files)
+        granule = models_granule.Granule(granuleId =granule_id,
+                                         producerGranuleId=cnm_model.root.product.producerGranuleId,
+                                         files=cma_files,
+                                         dataType=config.get("collection", {}).get("name"),
+                                         version=config.get("collection", {}).get("version"))
+        LOGGER.info(f"Granule Model in mapper: {granule}")
         return granule
     except pydantic.ValidationError as pydan_error:
         LOGGER.error("pydantic schema validation failed:", pydan_error)
@@ -90,83 +87,61 @@ def get_cnm_input_files(product: Any) -> List[models_cnm.File]:
             input_files.extend(fg.files or [])
     return input_files
 
-
-def create_cma_files(
+def create_granule_files(
     input_files: List[models_cnm.File],
-) -> List[models_cma_file.ModelItem]:
-    cma_files = models_cma_file.Model(root=[])
+) -> List[models_granule.File]:
+    granule_files: List[models_granule.File] = []
     for cnm_file in input_files:
         uri = cnm_file.uri.strip()
+        granule_file: models_granule.File = None
         if uri.lower().startswith("s3://"):
-            cma_file = build_granule_file(cnm_file, "s3")
+            granule_file = build_granule_file(cnm_file, "s3")
         elif uri.lower().startswith("https://") or uri.lower().startswith("http://"):
             protocol = "https" if uri.lower().startswith("https://") else "http"
-            cma_file = build_granule_file(cnm_file, protocol)
+            granule_file = build_granule_file(cnm_file, protocol)
         elif uri.lower().startswith("sftp://"):
-            cma_file = build_granule_file(cnm_file, "sftp")
+            granule_file = build_granule_file(cnm_file, "sftp")
         else:
-            cma_file = None
-        if cma_file:
-            cma_files.root.append(cma_file)
-    return cma_files.root
+            LOGGER.error(f'Got problem here while granule file is NONE. '
+                         ' Probably due to unsupported protocol in uri: {uri}')
+        if granule_file:
+            granule_files.append(granule_file)
+    return granule_files
 
 
-def build_granule_file(cnm_file: Any, protocol: str) -> models_cma_file.ModelItem:
+def build_granule_file(cnm_file: Any, protocol: str) -> models_granule.File:
+    """
+    Builds a granule file from a CNM file based on the protocol.
+    Args:
+        cnm_file: cnm file object
+        protocol: s3, http, https, sftp
+
+    Returns:
+        a single  models_granule.File object
+    """
     uri = cnm_file.uri.strip() if cnm_file.uri else ""
-    # Set defaults for required fields
-    bucket = ""
-    key = ""
-    source = protocol
+    # Set defaults
+    source_bucket = None  # only used when protocol is s3
+    key = None
+    path = None
     if protocol == "s3":
         bucket_key = uri[5:].split("/", 1)
-        bucket = bucket_key[0]
+        source_bucket = bucket_key[0]
         key = bucket_key[1] if len(bucket_key) > 1 else ""
-        source = "s3"
-    elif protocol in ("http", "https"):
-        source = "https" if uri.lower().startswith("https://") else "http"
-    elif protocol == "sftp":
-        source = "sftp"
+    elif protocol in ("http", "https", "sftp"):
+        path = uri.replace("sftp://", "").replace("https://", "").replace("http://", "")
+        path = path[path.index("/") + 1 : path.rindex("/")]
+    else:
+        LOGGER.error("Unsupported protocol:", protocol)
 
-    cma_file = models_cma_file.ModelItem(
-        size=cnm_file.size,
+    granule_file = models_granule.File(
+        name=cnm_file.name,
+        filename=cnm_file.name,
         type=cnm_file.type,
-        fileName=cnm_file.name,
-        checksum=getattr(cnm_file, "checksum", None),
-        checksumType=getattr(cnm_file, "checksumType", None),
-        source=source,
-        bucket=bucket,
-        key=key,
+        source_bucket=source_bucket,
+        path=key if source_bucket else path,
     )
-    return cma_file
-
-
-def build_granule_file_NotWorking(
-    cnm_file: Any, protocol: str
-) -> models_cma_file.ModelItem:
-    uri = cnm_file.uri.strip() if cnm_file.uri else ""
-    cma_file = models_cma_file.ModelItem()
-    cma_file.name = cnm_file.name
-    cma_file.size = cnm_file.size
-    cma_file.type = cnm_file.type
-    cma_file.fileName = cnm_file.name
-    if cnm_file.checksum:
-        cma_file.checksum = cnm_file.checksum
-    if cnm_file.checksumType:
-        cma_file.checksumType = cnm_file.checksumType
-
-    if protocol == "s3":
-        bucket_key = uri[5:].split("/", 1)
-        cma_file.source = "s3"
-        cma_file.bucket = bucket_key[0]
-        cma_file.key = bucket_key[1] if len(bucket_key) > 1 else ""
-    elif protocol in ("http", "https"):
-        cma_file.source = "https" if uri.lower().startswith("https://") else "http"
-        # Add more protocol-specific logic if needed
-    elif protocol == "sftp":
-        cma_file.source = "sftp"
-        # Add more protocol-specific logic if needed
-
-    return cma_file
+    return granule_file
 
 
 # handler that is provided to aws lambda

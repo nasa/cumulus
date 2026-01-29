@@ -202,6 +202,10 @@
           "description": "Identifier/name of the product",
           "type": "string"
         },
+        "producerGranuleId": {
+          "description": "Optional producer granule identifier.",
+          "type": "string"
+        },
         "dataVersion": {
           "description": "Version of this product",
           "type": "string"
