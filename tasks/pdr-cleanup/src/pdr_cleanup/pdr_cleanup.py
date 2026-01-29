@@ -66,20 +66,21 @@ def move_pdr(provider: dict, pdr: dict):
             Key=dest_path,
         )
         logger.info(
-            f"COPIED FROM {provider['host']}/{src_path} "
-            f"TO {provider['host']}/{dest_path}"
+            "COPIED FROM {0}/{1} TO {0}/{2}", provider["host"], src_path, dest_path
         )
     except Exception:
         logger.error(
-            f"FAILED TO COPY FROM {provider['host']}/{src_path} "
-            f"TO {provider['host']}/{dest_path}",
+            "FAILED TO COPY FROM {0}/{1} TO {0}/{2}",
+            provider["host"],
+            src_path,
+            dest_path,
             exc_info=True,
         )
         raise
 
     try:
         s3_client.delete_object(Bucket=provider["host"], Key=src_path)
-        logger.info(f"DELETED: {provider['host']}/{src_path}")
+        logger.info("DELETED: {0}/{1}", provider["host"], src_path)
     except Exception as err:
         logger.error(err)
         raise

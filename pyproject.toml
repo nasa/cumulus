@@ -59,6 +59,8 @@ ignore = [
   "S101",
   # start-process-with-partial-path
   "S607",
+  # logging-too-many-args - false positives
+  "PLE1205",
 ]
 
 
