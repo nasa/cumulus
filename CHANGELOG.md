@@ -97,6 +97,8 @@ Please complete the following steps before upgrading Cumulus.
   - Fixed a small bug with `rulesHelpers` in which `rule.rule.meta.allowProviderMismatchOnRuleFilter` was erroring due to
     database validation errors to instead refer to `rule.meta.allowProviderMismatchOnRuleFilter`
   - Added `allowProviderMismatchOnRuleFilter` to the `meta` field of `rules` in `/api/lib/schemas`s
+- **CUMULUS-4458**
+  - Fixed a small bug with `message_consumer` lambda env and function variable names to match so the lambda env var `allowProviderMismatchOnRuleFilter` can be properly used when set
 
 ## [v21.2.0] 2025-12-06
 
@@ -122,8 +124,6 @@ Please complete the following steps before upgrading Cumulus.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
     reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
-- **CUMULUS-4458**
-  - Fixed a small bug with `message_consumer` lambda env and function variable names to match so the lambda env var `allowProviderMismatchOnRuleFilter` can be properly used when set
 
 ### Added
 
