@@ -16,11 +16,14 @@ const {
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
   createJwtToken,
+  verifyJwtToken,
+  isSessionExpired,
 } = require('../lib/token');
 
 const { verifyJwtAuthorization } = require('../lib/request');
 
 const { AccessToken } = require('../models');
+const { isAuthorizedOAuthUser } = require('../app/auth');
 
 const buildPermanentRedirectResponse = (location, response) =>
   response
@@ -108,20 +111,41 @@ async function token(event, oAuth2Provider, response) {
  * @param {Object} request - an API Gateway request
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
  * @param {Object} response - an API Gateway response object
+ * @param {number} [extensionSeconds] - number of seconds to extend token
+ *   expiration (default: 43200)
  * @returns {Object} an API Gateway response
  */
-async function refreshAccessToken(request, oAuth2Provider, response) {
+async function refreshAccessToken(
+  request,
+  oAuth2Provider,
+  response,
+  extensionSeconds = 12 * 60 * 60
+) {
   const requestJwtToken = get(request, 'body.token');
 
   if (!requestJwtToken) {
     return response.boom.unauthorized('Request requires a token');
   }
 
+  let decodedToken;
   let accessToken;
+  let username;
   try {
-    accessToken = await verifyJwtAuthorization(requestJwtToken);
+    decodedToken = verifyJwtToken(requestJwtToken);
+    accessToken = decodedToken.accessToken;
+    username = decodedToken.username;
   } catch (error) {
     return handleJwtVerificationError(error, response);
+  }
+
+  // Check if the session has exceeded the maximum duration
+  if (isSessionExpired(decodedToken)) {
+    return response.boom.unauthorized('Session has exceeded maximum duration');
+  }
+
+  // Check if the user is authorized
+  if (!(await isAuthorizedOAuthUser(username))) {
+    return response.boom.unauthorized('User not authorized');
   }
 
   const accessTokenModel = new AccessToken();
@@ -135,6 +159,7 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
     }
   }
 
+  /*
   let newAccessToken;
   let newRefreshToken;
   let expirationTime;
@@ -146,21 +171,34 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
       username,
       expirationTime,
     } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
-  } finally {
-    // Delete old token record to prevent refresh with old tokens
-    await accessTokenModel.delete({
-      accessToken: accessTokenRecord.accessToken,
-    });
+  } catch (error) {
+    return response.boom.unauthorized(`Failed to refresh token: ${error.message}`);
   }
+  */
 
-  // Store new token record
-  await accessTokenModel.create({
+  // Use existing token values and just extend expiration time
+  const newAccessToken = accessTokenRecord.accessToken;
+
+  // Extend expiration time by the specified amount (default: 12 hours)
+  // If expirationTime is undefined, use current time as base
+  const baseTime = accessTokenRecord.expirationTime || Math.floor(Date.now() / 1000);
+  const expirationTime = baseTime + extensionSeconds;
+
+  // Update the existing record with new expiration time
+  await accessTokenModel.update(
+    { accessToken: accessTokenRecord.accessToken },
+    {
+      expirationTime,
+    }
+  );
+
+  // Preserve the original iat from the token to prevent indefinite authentication
+  const jwtToken = createJwtToken({
     accessToken: newAccessToken,
-    refreshToken: newRefreshToken,
+    username,
     expirationTime,
+    iat: decodedToken.iat,
   });
-
-  const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
   return response.send({ token: jwtToken });
 }
 
