@@ -20,7 +20,6 @@ const {
   fakeProviderRecordFactory,
   FilePgModel,
   generateLocalTestDb,
-  getUniqueGranuleByGranuleId,
   GranulePgModel,
   GranulesExecutionsPgModel,
   localStackConnectionEnv,
@@ -118,6 +117,7 @@ async function runTestUsingBuckets(buckets, testFunction) {
 
 /**
  * Helper for creating and uploading bucket configuration for 'move' tests.
+ *
  * @returns {Object} with keys of internalBucket, and publicBucket.
  */
 async function setupBucketsConfig() {
@@ -557,9 +557,9 @@ test.serial('PATCH reingests a granule with granules in payload', async (t) => {
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await t.context.granulePgModel.get(
     t.context.knex,
-    t.context.fakePGGranules[0].granule_id
+    { granule_id: t.context.fakePGGranules[0].granule_id }
   );
   t.is(updatedPgGranule.status, 'queued');
 });
@@ -595,9 +595,9 @@ test.serial('PATCH reingests a granule without granules in payload', async (t) =
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await t.context.granulePgModel.get(
     t.context.knex,
-    t.context.fakePGGranules[0].granule_id
+    { granule_id: t.context.fakePGGranules[0].granule_id }
   );
   t.is(updatedPgGranule.status, t.context.fakePGGranules[0].status);
 });
@@ -649,9 +649,9 @@ test.serial('PATCH applies an in-place workflow to an existing granule', async (
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await t.context.granulePgModel.get(
     t.context.knex,
-    t.context.fakePGGranules[0].granule_id
+    { granule_id: t.context.fakePGGranules[0].granule_id }
   );
 
   t.is(updatedPgGranule.status, 'queued');
@@ -685,7 +685,10 @@ test.serial('PATCH removes a granule from CMR', async (t) => {
     t.is(body.action, 'removeFromCmr');
 
     // Should have updated the Postgres granule
-    const updatedPgGranule = await getUniqueGranuleByGranuleId(t.context.knex, granuleId);
+    const updatedPgGranule = await t.context.granulePgModel.get(
+      t.context.knex,
+      { granule_id: granuleId }
+    );
     t.is(updatedPgGranule.published, false);
     t.is(updatedPgGranule.cmrLink, undefined);
   } finally {
