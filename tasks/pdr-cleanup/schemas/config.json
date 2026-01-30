@@ -1,0 +1,12 @@
+{
+    "title": "PdrCleanupConfig",
+    "description": "Describes the configuration the pdr-cleanup task",
+    "type": "object",
+    "required": ["provider"],
+    "properties": {
+      "provider": {
+        "type": "object",
+        "description": "A provider object. The host configured is used in the archive location for the PDR"
+      }
+    }
+  }
