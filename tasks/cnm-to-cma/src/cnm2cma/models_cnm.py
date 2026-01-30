@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional, Union
+from typing import Union
 
 from pydantic import AwareDatetime, BaseModel, Field, RootModel
 
@@ -29,8 +29,8 @@ class Status(Enum):
 
 
 class IngestionMetadata(BaseModel):
-    catalogId: Optional[str] = Field(None, description='Identifier for catalog')
-    catalogUrl: Optional[str] = Field(None, description='URL of catalog entry')
+    catalogId: str | None = Field(None, description='Identifier for catalog')
+    catalogUrl: str | None = Field(None, description='URL of catalog entry')
 
 
 class ErrorCode(Enum):
@@ -41,14 +41,14 @@ class ErrorCode(Enum):
 
 class Response(BaseModel):
     status: Status = Field(..., description='Successful or error.')
-    ingestionMetadata: Optional[IngestionMetadata] = Field(
+    ingestionMetadata: IngestionMetadata | None = Field(
         None,
         description='Object defining ingestion metadata, like CMR Concept IDs, URLS, etc',
     )
-    errorCode: Optional[ErrorCode] = Field(
+    errorCode: ErrorCode | None = Field(
         None, description='Error message. Success messages can be ignored.'
     )
-    errorMessage: Optional[str] = Field(
+    errorMessage: str | None = Field(
         None, description='The message error for the failure that occured.'
     )
 
@@ -60,14 +60,14 @@ class DataProcessingType(Enum):
 
 class Response1(BaseModel):
     status: Status = Field(..., description='Successful or error.')
-    ingestionMetadata: Optional[IngestionMetadata] = Field(
+    ingestionMetadata: IngestionMetadata | None = Field(
         None,
         description='Object defining ingestion metadata, like CMR Concept IDs, URLS, etc',
     )
-    errorCode: Optional[ErrorCode] = Field(
+    errorCode: ErrorCode | None = Field(
         None, description='Error message. Success messages can be ignored.'
     )
-    errorMessage: Optional[str] = Field(
+    errorMessage: str | None = Field(
         None, description='The message error for the failure that occured.'
     )
 
@@ -93,7 +93,7 @@ class File(BaseModel):
         ...,
         description="The type of file. science files (netcdf, HDF, binary) should use the 'data' type. More can be added if need and consensus demand.",
     )
-    subtype: Optional[str] = Field(
+    subtype: str | None = Field(
         None,
         description="An optional, specific implmentation of the file::type. e.g. NetCDF for a file of type 'data'",
     )
@@ -101,8 +101,8 @@ class File(BaseModel):
     name: str = Field(
         ..., description='The human readable filename that this file represents. '
     )
-    checksumType: Optional[ChecksumType] = None
-    checksum: Optional[str] = Field(None, description='Checksum of the file.')
+    checksumType: ChecksumType | None = None
+    checksum: str | None = Field(None, description='Checksum of the file.')
     size: float = Field(..., description='Size, in bytes, of the file.')
 
 
@@ -110,7 +110,7 @@ class Filegroup(BaseModel):
     id: str = Field(
         ..., description='string id of the filegroup by which all files are associated.'
     )
-    files: List[File] = Field(
+    files: list[File] = Field(
         ..., description='array of files that make up this product'
     )
 
@@ -122,46 +122,46 @@ class Collection(BaseModel):
 
 class Product(BaseModel):
     name: str = Field(..., description='Identifier/name of the product')
-    producerGranuleId: Optional[str] = Field(
+    producerGranuleId: str | None = Field(
         None, description='Optional producer granule identifier.'
     )
-    dataVersion: Optional[str] = Field(None, description='Version of this product')
-    dataProcessingType: Optional[DataProcessingType] = Field(
+    dataVersion: str | None = Field(None, description='Version of this product')
+    dataProcessingType: DataProcessingType | None = Field(
         None,
         description='The type of data processing stream that generated the product',
     )
-    files: List[File] = Field(
+    files: list[File] = Field(
         ..., description='array of files that make up this product'
     )
-    filegroups: Optional[List[Filegroup]] = Field(
+    filegroups: list[Filegroup] | None = Field(
         None, description='array of filegroups that make up this product'
     )
 
 
 class Product1(BaseModel):
     name: str = Field(..., description='Identifier/name of the product')
-    producerGranuleId: Optional[str] = Field(
+    producerGranuleId: str | None = Field(
         None, description='Optional producer granule identifier.'
     )
-    dataVersion: Optional[str] = Field(None, description='Version of this product')
-    dataProcessingType: Optional[DataProcessingType] = Field(
+    dataVersion: str | None = Field(None, description='Version of this product')
+    dataProcessingType: DataProcessingType | None = Field(
         None,
         description='The type of data processing stream that generated the product',
     )
-    files: Optional[List[File]] = Field(
+    files: list[File] | None = Field(
         None, description='array of files that make up this product'
     )
-    filegroups: List[Filegroup] = Field(
+    filegroups: list[Filegroup] = Field(
         ..., description='array of filegroups that make up this product'
     )
 
 
 class CloudNotificationMessageCnm121(BaseModel):
     version: Version = Field(..., description="The CNM Version used. e.g. '1.3'")
-    receivedTime: Optional[AwareDatetime] = Field(
+    receivedTime: AwareDatetime | None = Field(
         None, description='Time message was received by the ingest system'
     )
-    processCompleteTime: Optional[AwareDatetime] = Field(
+    processCompleteTime: AwareDatetime | None = Field(
         None, description='The time processing completed by the receiving entity.'
     )
     submissionTime: AwareDatetime = Field(
@@ -172,55 +172,55 @@ class CloudNotificationMessageCnm121(BaseModel):
         ...,
         description='Unique identifier for the message as a whole. It is the senders responsibility to ensure uniqueness. This identifier can be used in response messages to provide tracability.',
     )
-    collection: Union[str, Collection] = Field(
+    collection: str | Collection = Field(
         ..., description='The collection to which these granules will belong.'
     )
-    provider: Optional[str] = Field(
+    provider: str | None = Field(
         None,
         description='the name of the provider (e.g. SIP, SDS, etc. ) producing these files.',
     )
-    trace: Optional[str] = Field(
+    trace: str | None = Field(
         None, description='Information on the message or who is sending it.'
     )
-    response: Optional[Response] = Field(
+    response: Response | None = Field(
         None,
         description='The response message type sent. Can be a success message or error message. Akin to both the PAN and PDRD',
     )
-    product: Union[Product, Product1]
+    product: Product | Product1
 
 
 class Product2(BaseModel):
     name: str = Field(..., description='Identifier/name of the product')
-    producerGranuleId: Optional[str] = Field(
+    producerGranuleId: str | None = Field(
         None, description='Optional producer granule identifier.'
     )
-    dataVersion: Optional[str] = Field(None, description='Version of this product')
-    dataProcessingType: Optional[DataProcessingType] = Field(
+    dataVersion: str | None = Field(None, description='Version of this product')
+    dataProcessingType: DataProcessingType | None = Field(
         None,
         description='The type of data processing stream that generated the product',
     )
-    files: List[File] = Field(
+    files: list[File] = Field(
         ..., description='array of files that make up this product'
     )
-    filegroups: Optional[List[Filegroup]] = Field(
+    filegroups: list[Filegroup] | None = Field(
         None, description='array of filegroups that make up this product'
     )
 
 
 class Product3(BaseModel):
     name: str = Field(..., description='Identifier/name of the product')
-    producerGranuleId: Optional[str] = Field(
+    producerGranuleId: str | None = Field(
         None, description='Optional producer granule identifier.'
     )
-    dataVersion: Optional[str] = Field(None, description='Version of this product')
-    dataProcessingType: Optional[DataProcessingType] = Field(
+    dataVersion: str | None = Field(None, description='Version of this product')
+    dataProcessingType: DataProcessingType | None = Field(
         None,
         description='The type of data processing stream that generated the product',
     )
-    files: Optional[List[File]] = Field(
+    files: list[File] | None = Field(
         None, description='array of files that make up this product'
     )
-    filegroups: List[Filegroup] = Field(
+    filegroups: list[Filegroup] = Field(
         ..., description='array of filegroups that make up this product'
     )
 
@@ -241,27 +241,27 @@ class CloudNotificationMessageCnm122(BaseModel):
         ...,
         description='Unique identifier for the message as a whole. It is the senders responsibility to ensure uniqueness. This identifier can be used in response messages to provide tracability.',
     )
-    collection: Union[str, Collection] = Field(
+    collection: str | Collection = Field(
         ..., description='The collection to which these granules will belong.'
     )
-    provider: Optional[str] = Field(
+    provider: str | None = Field(
         None,
         description='the name of the provider (e.g. SIP, SDS, etc. ) producing these files.',
     )
-    trace: Optional[str] = Field(
+    trace: str | None = Field(
         None, description='Information on the message or who is sending it.'
     )
     response: Response1 = Field(
         ...,
         description='The response message type sent. Can be a success message or error message. Akin to both the PAN and PDRD',
     )
-    product: Optional[Union[Product2, Product3]] = None
+    product: Product2 | Product3 | None = None
 
 
 class CloudNotificationMessageCnm12(
     RootModel[Union[CloudNotificationMessageCnm121, CloudNotificationMessageCnm122]]
 ):
-    root: Union[CloudNotificationMessageCnm121, CloudNotificationMessageCnm122] = Field(
+    root: CloudNotificationMessageCnm121 | CloudNotificationMessageCnm122 = Field(
         ...,
         description='A message format to trigger or respond to processing. Version 1.2',
         title='Cloud Notification Message (cnm) 1.2 ',
