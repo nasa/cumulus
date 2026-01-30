@@ -12,13 +12,11 @@ from run_cumulus_task import run_cumulus_task
 logger = CumulusLogger("pdr-cleanup", logging.INFO)
 
 
-def cleanup_pdr(event: dict, context: dict):
+def cleanup_pdr(event: dict, context: dict) -> dict:
     """Task to archive PDRs.
 
-    Args:
-        event (dict): A lambda event object
-        context (dict): An AWS Lambda context
-
+    :param event: A lambda event object.
+    :param context: An AWS Lambda context.
     """
 
     logger.debug("## EVENT OBJ \n" + json.dumps(event))
@@ -36,16 +34,12 @@ def cleanup_pdr(event: dict, context: dict):
     return event["input"]
 
 
-def move_pdr(provider: dict, pdr: dict):
+def move_pdr(provider: dict, pdr: dict) -> str:
     """Move PDR to location <provider.host>/<PDRs>/ .
 
-    Args:
-        provider (dict): Provider information
-        pdr (dict): PDR information
-
-    Returns:
-        str: Returns the archive location of the PDR.
-
+    :param provider: Provider information.
+    :param pdr: PDR information.
+    :return: The archive location of the PDR.
     """
 
     if provider["protocol"] != "s3":
@@ -87,16 +81,12 @@ def move_pdr(provider: dict, pdr: dict):
     return dest_path
 
 
-def handler(event: dict, context: dict):
+def handler(event: dict, context: dict) -> dict:
     """Lambda handler that runs the task through CMA.
 
-    Args:
-        event (dict): A Cumulus Message
-        context (dict): An AWS Lambda context
-
-    Returns:
-        Returns output from task.
-
+    :param event: A Cumulus Message.
+    :param context: An AWS Lambda context.
+    :return: output from task.
     """
 
     return run_cumulus_task(cleanup_pdr, event, context)
