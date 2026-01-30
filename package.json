@@ -22,6 +22,9 @@
     "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
     "lint-package-json": "npmPkgJsonLint .",
     "lint-python": "uv run ruff check . && uv run ruff format --diff .",
+    "precommit:install": "uv run pre-commit install",
+    "precommit:uninstall": "uv run pre-commit uninstall",
+    "precommit:run": "uv run pre-commit run --all-files",
     "test": "lerna run --ignore @cumulus/cumulus-integration-tests --stream --concurrency 1 test",
     "test:coverage": "lerna run --ignore @cumulus/cumulus-integration-tests --stream --concurrency 1 test:coverage",
     "test:ci": "lerna run --ignore @cumulus/cumulus-integration-tests --stream --concurrency 1 test:ci",
@@ -130,7 +133,8 @@
     "js-yaml": "^3.13.1",
     "jsdoc-to-markdown": "7.1.1",
     "latest-version": "^9.0.0",
-    "lerna": "^6.6.2",
+    "lerna": "^8.2.4",
+    "@lerna/legacy-package-management": "^8.2.4",
     "lodash": "^4.17.21",
     "markdownlint-cli": "^0.31.1",
     "md5": "^2.2.1",
@@ -185,7 +189,8 @@
     },
     "request": {
       "qs": "^6.14.1"
-    }
+    },
+    "tar": "^7.5.3"
   },
   "private": true
 }
