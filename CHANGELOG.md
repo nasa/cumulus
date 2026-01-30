@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
+    granule objects in the payload.
+  - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints
+    to accept granuleIds instead of granule objects in the payload.
+
+### Added
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
+    `s3GranuleIdInputFile` in the payload.
+- **CUMULUS-4382**
+  - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
+
+### Changed
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations return consistent output formats across different bulk opertions
+    (previously, some bulk operation aggregated errors while others returned per-granule errors)
+  - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
+    `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
+
+### Notable Changes
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to:
+    - Support `granuleInventoryReportName` and `s3GranuleIdInputFile` in the payload.
+    - Return consistent output formats across endpoints (previously, some endpoints aggregated errors
+      while others returned per-granule errors)
+
 ## [v21.3.0] 2026-01-26
 
 ### Migration Notes
@@ -89,7 +121,6 @@ Please complete the following steps before upgrading Cumulus.
 - **OTHER**
   - Corrected misspelling in README.md related to installing `uv`.
   - Added override for `tar` in package.json.
-
 
 ### Fixed
 

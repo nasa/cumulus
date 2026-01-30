@@ -93,7 +93,7 @@ async function describeGranuleExecution(executionArn, stepFunctionUtils = StepFu
  * batchDeleteExecutionFromDatabaseByCumulusCollectionId.
  *
  * @param {Object} params - The parameters object.
- * @param {Object} params.knex - The Knex client object for interacting with the database.
+ * @param {Knex} params.knex - The Knex client object for interacting with the database.
  * @param {number} params.collectionCumulusId - The ID of the collection whose execution records
  *  are to be deleted.
  * @param {number} params.batchSize - The number of records to delete in each batch.
