@@ -29,7 +29,9 @@ def task(event: dict[str, list[str] | dict], context: object) -> dict[str, Any]:
 
     LOGGER.info(f"cnm message: {cnm} config: {config}")
     granule = mapper(cnm, config)
-    output: models_granule.SyncGranuleInput = models_granule.SyncGranuleInput(granules=[granule])
+    output: models_granule.SyncGranuleInput = models_granule.SyncGranuleInput(
+        granules=[granule]
+    )
     now_as_iso = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     cnm["receivedTime"] = now_as_iso
     output_dict = {"cnm": cnm, "output_granules": output.model_dump()}
@@ -65,12 +67,14 @@ def mapper(cnm: dict, config: dict) -> models_granule.Granule:
                 granule_id = matcher.group(1)
         LOGGER.info(f"Granule ID: {granule_id}")
         cnm_input_files: list[models_cnm.File] = get_cnm_input_files(product)
-        cma_files:list[models_cnm.File] = create_granule_files(cnm_input_files)
-        granule = models_granule.Granule(granuleId =granule_id,
-                                         producerGranuleId=cnm_model.root.product.producerGranuleId,
-                                         files=cma_files,
-                                         dataType=config.get("collection", {}).get("name"),
-                                         version=config.get("collection", {}).get("version"))
+        cma_files: list[models_cnm.File] = create_granule_files(cnm_input_files)
+        granule = models_granule.Granule(
+            granuleId=granule_id,
+            producerGranuleId=cnm_model.root.product.producerGranuleId,
+            files=cma_files,
+            dataType=config.get("collection", {}).get("name"),
+            version=config.get("collection", {}).get("version"),
+        )
         LOGGER.info(f"Granule Model in mapper: {granule}")
         return granule
     except pydantic.ValidationError as pydan_error:
@@ -87,6 +91,7 @@ def get_cnm_input_files(product: Any) -> list[models_cnm.File]:
             input_files.extend(fg.files or [])
     return input_files
 
+
 def create_granule_files(
     input_files: list[models_cnm.File],
 ) -> list[models_granule.File]:
@@ -102,8 +107,10 @@ def create_granule_files(
         elif uri.lower().startswith("sftp://"):
             granule_file = build_granule_file(cnm_file, "sftp")
         else:
-            LOGGER.error('Got problem here while granule file is NONE. '
-                         ' Probably due to unsupported protocol in uri: {uri}')
+            LOGGER.error(
+                "Got problem here while granule file is NONE. "
+                " Probably due to unsupported protocol in uri: {uri}"
+            )
         if granule_file:
             granule_files.append(granule_file)
     return granule_files
@@ -121,8 +128,12 @@ def build_granule_file(cnm_file: Any, protocol: str) -> models_granule.File:
 
     """
     uri = cnm_file.uri.strip() if cnm_file.uri else ""
-    uri_protocol_stripped = (uri.replace("s3://","").replace("sftp://", "")
-                             .replace("https://", "").replace("http://", ""))
+    uri_protocol_stripped = (
+        uri.replace("s3://", "")
+        .replace("sftp://", "")
+        .replace("https://", "")
+        .replace("http://", "")
+    )
     tokens = uri_protocol_stripped.split("/", 1)
     # the host represents the bucket name for s3 protocol or hosturl for http/sftp protocols
     host = tokens[0]

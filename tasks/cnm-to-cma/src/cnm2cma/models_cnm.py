@@ -11,81 +11,81 @@ from pydantic import AwareDatetime, BaseModel, Field, RootModel
 
 
 class Version(Enum):
-    field_1_0 = '1.0'
-    field_1_1 = '1.1'
-    field_1_2 = '1.2'
-    field_1_3 = '1.3'
-    field_1_4 = '1.4'
-    field_1_4_1 = '1.4.1'
-    field_1_5 = '1.5'
-    field_1_5_1 = '1.5.1'
-    field_1_6_0 = '1.6.0'
-    field_1_6_1_alpha_0 = '1.6.1-alpha.0'
+    field_1_0 = "1.0"
+    field_1_1 = "1.1"
+    field_1_2 = "1.2"
+    field_1_3 = "1.3"
+    field_1_4 = "1.4"
+    field_1_4_1 = "1.4.1"
+    field_1_5 = "1.5"
+    field_1_5_1 = "1.5.1"
+    field_1_6_0 = "1.6.0"
+    field_1_6_1_alpha_0 = "1.6.1-alpha.0"
 
 
 class Status(Enum):
-    SUCCESS = 'SUCCESS'
-    FAILURE = 'FAILURE'
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
 
 
 class IngestionMetadata(BaseModel):
-    catalogId: str | None = Field(None, description='Identifier for catalog')
-    catalogUrl: str | None = Field(None, description='URL of catalog entry')
+    catalogId: str | None = Field(None, description="Identifier for catalog")
+    catalogUrl: str | None = Field(None, description="URL of catalog entry")
 
 
 class ErrorCode(Enum):
-    VALIDATION_ERROR = 'VALIDATION_ERROR'
-    PROCESSING_ERROR = 'PROCESSING_ERROR'
-    TRANSFER_ERROR = 'TRANSFER_ERROR'
+    VALIDATION_ERROR = "VALIDATION_ERROR"
+    PROCESSING_ERROR = "PROCESSING_ERROR"
+    TRANSFER_ERROR = "TRANSFER_ERROR"
 
 
 class Response(BaseModel):
-    status: Status = Field(..., description='Successful or error.')
+    status: Status = Field(..., description="Successful or error.")
     ingestionMetadata: IngestionMetadata | None = Field(
         None,
-        description='Object defining ingestion metadata, like CMR Concept IDs, URLS, etc',
+        description="Object defining ingestion metadata, like CMR Concept IDs, URLS, etc",
     )
     errorCode: ErrorCode | None = Field(
-        None, description='Error message. Success messages can be ignored.'
+        None, description="Error message. Success messages can be ignored."
     )
     errorMessage: str | None = Field(
-        None, description='The message error for the failure that occured.'
+        None, description="The message error for the failure that occured."
     )
 
 
 class DataProcessingType(Enum):
-    forward = 'forward'
-    reprocessing = 'reprocessing'
+    forward = "forward"
+    reprocessing = "reprocessing"
 
 
 class Response1(BaseModel):
-    status: Status = Field(..., description='Successful or error.')
+    status: Status = Field(..., description="Successful or error.")
     ingestionMetadata: IngestionMetadata | None = Field(
         None,
-        description='Object defining ingestion metadata, like CMR Concept IDs, URLS, etc',
+        description="Object defining ingestion metadata, like CMR Concept IDs, URLS, etc",
     )
     errorCode: ErrorCode | None = Field(
-        None, description='Error message. Success messages can be ignored.'
+        None, description="Error message. Success messages can be ignored."
     )
     errorMessage: str | None = Field(
-        None, description='The message error for the failure that occured.'
+        None, description="The message error for the failure that occured."
     )
 
 
 class Type(Enum):
-    data = 'data'
-    browse = 'browse'
-    metadata = 'metadata'
-    ancillary = 'ancillary'
-    linkage = 'linkage'
+    data = "data"
+    browse = "browse"
+    metadata = "metadata"
+    ancillary = "ancillary"
+    linkage = "linkage"
 
 
 class ChecksumType(Enum):
-    SHA512 = 'SHA512'
-    SHA256 = 'SHA256'
-    SHA2 = 'SHA2'
-    SHA1 = 'SHA1'
-    md5 = 'md5'
+    SHA512 = "SHA512"
+    SHA256 = "SHA256"
+    SHA2 = "SHA2"
+    SHA1 = "SHA1"
+    md5 = "md5"
 
 
 class File(BaseModel):
@@ -97,163 +97,163 @@ class File(BaseModel):
         None,
         description="An optional, specific implmentation of the file::type. e.g. NetCDF for a file of type 'data'",
     )
-    uri: str = Field(..., description='the URI of the file (s3://...)')
+    uri: str = Field(..., description="the URI of the file (s3://...)")
     name: str = Field(
-        ..., description='The human readable filename that this file represents. '
+        ..., description="The human readable filename that this file represents. "
     )
     checksumType: ChecksumType | None = None
-    checksum: str | None = Field(None, description='Checksum of the file.')
-    size: float = Field(..., description='Size, in bytes, of the file.')
+    checksum: str | None = Field(None, description="Checksum of the file.")
+    size: float = Field(..., description="Size, in bytes, of the file.")
 
 
 class Filegroup(BaseModel):
     id: str = Field(
-        ..., description='string id of the filegroup by which all files are associated.'
+        ..., description="string id of the filegroup by which all files are associated."
     )
     files: list[File] = Field(
-        ..., description='array of files that make up this product'
+        ..., description="array of files that make up this product"
     )
 
 
 class Collection(BaseModel):
-    name: str = Field(..., description='collection short name.')
-    version: str = Field(..., description='collection version.')
+    name: str = Field(..., description="collection short name.")
+    version: str = Field(..., description="collection version.")
 
 
 class Product(BaseModel):
-    name: str = Field(..., description='Identifier/name of the product')
+    name: str = Field(..., description="Identifier/name of the product")
     producerGranuleId: str | None = Field(
-        None, description='Optional producer granule identifier.'
+        None, description="Optional producer granule identifier."
     )
-    dataVersion: str | None = Field(None, description='Version of this product')
+    dataVersion: str | None = Field(None, description="Version of this product")
     dataProcessingType: DataProcessingType | None = Field(
         None,
-        description='The type of data processing stream that generated the product',
+        description="The type of data processing stream that generated the product",
     )
     files: list[File] = Field(
-        ..., description='array of files that make up this product'
+        ..., description="array of files that make up this product"
     )
     filegroups: list[Filegroup] | None = Field(
-        None, description='array of filegroups that make up this product'
+        None, description="array of filegroups that make up this product"
     )
 
 
 class Product1(BaseModel):
-    name: str = Field(..., description='Identifier/name of the product')
+    name: str = Field(..., description="Identifier/name of the product")
     producerGranuleId: str | None = Field(
-        None, description='Optional producer granule identifier.'
+        None, description="Optional producer granule identifier."
     )
-    dataVersion: str | None = Field(None, description='Version of this product')
+    dataVersion: str | None = Field(None, description="Version of this product")
     dataProcessingType: DataProcessingType | None = Field(
         None,
-        description='The type of data processing stream that generated the product',
+        description="The type of data processing stream that generated the product",
     )
     files: list[File] | None = Field(
-        None, description='array of files that make up this product'
+        None, description="array of files that make up this product"
     )
     filegroups: list[Filegroup] = Field(
-        ..., description='array of filegroups that make up this product'
+        ..., description="array of filegroups that make up this product"
     )
 
 
 class CloudNotificationMessageCnm121(BaseModel):
     version: Version = Field(..., description="The CNM Version used. e.g. '1.3'")
     receivedTime: AwareDatetime | None = Field(
-        None, description='Time message was received by the ingest system'
+        None, description="Time message was received by the ingest system"
     )
     processCompleteTime: AwareDatetime | None = Field(
-        None, description='The time processing completed by the receiving entity.'
+        None, description="The time processing completed by the receiving entity."
     )
     submissionTime: AwareDatetime = Field(
         ...,
-        description='The time the message was created (and presumably sent) to the publication mechanism.',
+        description="The time the message was created (and presumably sent) to the publication mechanism.",
     )
     identifier: str = Field(
         ...,
-        description='Unique identifier for the message as a whole. It is the senders responsibility to ensure uniqueness. This identifier can be used in response messages to provide tracability.',
+        description="Unique identifier for the message as a whole. It is the senders responsibility to ensure uniqueness. This identifier can be used in response messages to provide tracability.",
     )
     collection: str | Collection = Field(
-        ..., description='The collection to which these granules will belong.'
+        ..., description="The collection to which these granules will belong."
     )
     provider: str | None = Field(
         None,
-        description='the name of the provider (e.g. SIP, SDS, etc. ) producing these files.',
+        description="the name of the provider (e.g. SIP, SDS, etc. ) producing these files.",
     )
     trace: str | None = Field(
-        None, description='Information on the message or who is sending it.'
+        None, description="Information on the message or who is sending it."
     )
     response: Response | None = Field(
         None,
-        description='The response message type sent. Can be a success message or error message. Akin to both the PAN and PDRD',
+        description="The response message type sent. Can be a success message or error message. Akin to both the PAN and PDRD",
     )
     product: Product | Product1
 
 
 class Product2(BaseModel):
-    name: str = Field(..., description='Identifier/name of the product')
+    name: str = Field(..., description="Identifier/name of the product")
     producerGranuleId: str | None = Field(
-        None, description='Optional producer granule identifier.'
+        None, description="Optional producer granule identifier."
     )
-    dataVersion: str | None = Field(None, description='Version of this product')
+    dataVersion: str | None = Field(None, description="Version of this product")
     dataProcessingType: DataProcessingType | None = Field(
         None,
-        description='The type of data processing stream that generated the product',
+        description="The type of data processing stream that generated the product",
     )
     files: list[File] = Field(
-        ..., description='array of files that make up this product'
+        ..., description="array of files that make up this product"
     )
     filegroups: list[Filegroup] | None = Field(
-        None, description='array of filegroups that make up this product'
+        None, description="array of filegroups that make up this product"
     )
 
 
 class Product3(BaseModel):
-    name: str = Field(..., description='Identifier/name of the product')
+    name: str = Field(..., description="Identifier/name of the product")
     producerGranuleId: str | None = Field(
-        None, description='Optional producer granule identifier.'
+        None, description="Optional producer granule identifier."
     )
-    dataVersion: str | None = Field(None, description='Version of this product')
+    dataVersion: str | None = Field(None, description="Version of this product")
     dataProcessingType: DataProcessingType | None = Field(
         None,
-        description='The type of data processing stream that generated the product',
+        description="The type of data processing stream that generated the product",
     )
     files: list[File] | None = Field(
-        None, description='array of files that make up this product'
+        None, description="array of files that make up this product"
     )
     filegroups: list[Filegroup] = Field(
-        ..., description='array of filegroups that make up this product'
+        ..., description="array of filegroups that make up this product"
     )
 
 
 class CloudNotificationMessageCnm122(BaseModel):
     version: Version = Field(..., description="The CNM Version used. e.g. '1.3'")
     receivedTime: AwareDatetime = Field(
-        ..., description='Time message was received by the ingest system'
+        ..., description="Time message was received by the ingest system"
     )
     processCompleteTime: AwareDatetime = Field(
-        ..., description='The time processing completed by the receiving entity.'
+        ..., description="The time processing completed by the receiving entity."
     )
     submissionTime: AwareDatetime = Field(
         ...,
-        description='The time the message was created (and presumably sent) to the publication mechanism.',
+        description="The time the message was created (and presumably sent) to the publication mechanism.",
     )
     identifier: str = Field(
         ...,
-        description='Unique identifier for the message as a whole. It is the senders responsibility to ensure uniqueness. This identifier can be used in response messages to provide tracability.',
+        description="Unique identifier for the message as a whole. It is the senders responsibility to ensure uniqueness. This identifier can be used in response messages to provide tracability.",
     )
     collection: str | Collection = Field(
-        ..., description='The collection to which these granules will belong.'
+        ..., description="The collection to which these granules will belong."
     )
     provider: str | None = Field(
         None,
-        description='the name of the provider (e.g. SIP, SDS, etc. ) producing these files.',
+        description="the name of the provider (e.g. SIP, SDS, etc. ) producing these files.",
     )
     trace: str | None = Field(
-        None, description='Information on the message or who is sending it.'
+        None, description="Information on the message or who is sending it."
     )
     response: Response1 = Field(
         ...,
-        description='The response message type sent. Can be a success message or error message. Akin to both the PAN and PDRD',
+        description="The response message type sent. Can be a success message or error message. Akin to both the PAN and PDRD",
     )
     product: Product2 | Product3 | None = None
 
@@ -263,6 +263,6 @@ class CloudNotificationMessageCnm12(
 ):
     root: CloudNotificationMessageCnm121 | CloudNotificationMessageCnm122 = Field(
         ...,
-        description='A message format to trigger or respond to processing. Version 1.2',
-        title='Cloud Notification Message (cnm) 1.2 ',
+        description="A message format to trigger or respond to processing. Version 1.2",
+        title="Cloud Notification Message (cnm) 1.2 ",
     )
