@@ -19,7 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload.
-
+- **CUMULUS-4388**
+  - Added cnm_to_cma task (lambda). 
+  - Original cnm_to_cma was written in Java.  Converted to Python. 
 ### Changed
 
 - **CUMULUS-4313**
