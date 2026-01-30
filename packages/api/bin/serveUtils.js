@@ -21,6 +21,7 @@ const {
   translateApiCollectionToPostgresCollection,
   translateApiExecutionToPostgresExecution,
   translateApiGranuleToPostgresGranule,
+  translateApiFiletoPostgresFile,
   translateApiPdrToPostgresPdr,
   translateApiProviderToPostgresProvider,
   translateApiReconReportToPostgresReconReport,
@@ -115,8 +116,8 @@ async function addCollections(collections) {
   );
 }
 
-async function addGranules(granules) {
-  const knex = await getKnexClient({
+async function addGranules(granules, knexClient) {
+  const knex = knexClient || await getKnexClient({
     env: {
       ...envParams,
       ...localStackConnectionEnv,
@@ -124,6 +125,7 @@ async function addGranules(granules) {
   });
 
   const executionPgModel = new ExecutionPgModel();
+  const filePgModel = new FilePgModel();
   return await Promise.all(
     granules.map(async (apiGranule) => {
       const newGranule = fakeGranuleFactoryV2(
@@ -139,11 +141,19 @@ async function addGranules(granules) {
         url: newGranule.execution,
       });
 
-      await upsertGranuleWithExecutionJoinRecord({
+      const upsertedGranule = await upsertGranuleWithExecutionJoinRecord({
         knexTransaction: knex,
         granule: dbRecord,
         executionCumulusId,
       });
+
+      if (newGranule.files.length > 0) {
+        await filePgModel.insert(knex, newGranule.files.map((file) => {
+          const translatedFile = translateApiFiletoPostgresFile(file);
+          translatedFile.granule_cumulus_id = upsertedGranule[0].cumulus_id;
+          return translatedFile;
+        }));
+      }
     })
   );
 }

@@ -372,11 +372,11 @@ async function searchByGranules(req, res) {
       const payload = req.body;
       const knex = await getKnexClient();
 
-      const granules = await tracer.startActiveSpan('getGranulesForPayload', async (granulesSpan) => {
+      const { value: granules } = await tracer.startActiveSpan('getGranulesForPayload', async (granulesSpan) => {
         try {
           granulesSpan.setAttribute('payload.has_ids', !!payload.ids);
           granulesSpan.setAttribute('payload.has_query', !!payload.query);
-          return await getGranulesForPayload(payload);
+          return await getGranulesForPayload(payload).next() || {};
         } finally {
           granulesSpan.end();
         }
@@ -454,11 +454,11 @@ async function workflowsByGranules(req, res) {
       const payload = req.body;
       const knex = await getKnexClient();
 
-      const granules = await tracer.startActiveSpan('getGranulesForPayload', async (granulesSpan) => {
+      const { value: granules } = await tracer.startActiveSpan('getGranulesForPayload', async (granulesSpan) => {
         try {
           granulesSpan.setAttribute('payload.has_ids', !!payload.ids);
           granulesSpan.setAttribute('payload.has_query', !!payload.query);
-          return await getGranulesForPayload(payload);
+          return await getGranulesForPayload(payload).next() || {};
         } finally {
           granulesSpan.end();
         }

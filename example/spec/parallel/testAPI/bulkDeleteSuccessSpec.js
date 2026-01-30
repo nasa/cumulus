@@ -166,7 +166,7 @@ describe('POST /granules/bulkDelete', () => {
           {
             prefix,
             body: {
-              granules: [{ granuleId, collectionId: constructCollectionId(collection.name, collection.version) }],
+              granules: [granuleId],
               // required to force removal of granules from CMR before deletion
               forceRemoveFromCmr: true,
             },
@@ -281,7 +281,7 @@ describe('POST /granules/bulkDelete', () => {
         throw new SyntaxError(`asyncOperation.output is not valid JSON: ${asyncOperation.output}`);
       }
 
-      expect(output).toEqual({ deletedGranules: [granuleId] });
+      expect(output).toEqual([granuleId]);
     });
 
     it('publishes a record to the granules reporting SNS topic on behalf of the deleted granule', async () => {

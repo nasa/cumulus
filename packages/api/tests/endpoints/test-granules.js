@@ -12,6 +12,7 @@ const {
   CollectionPgModel,
   destroyLocalTestDb,
   ExecutionPgModel,
+  fakeFileRecordFactory,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
@@ -19,7 +20,6 @@ const {
   fakeProviderRecordFactory,
   FilePgModel,
   generateLocalTestDb,
-  getUniqueGranuleByGranuleId,
   GranulePgModel,
   GranulesExecutionsPgModel,
   localStackConnectionEnv,
@@ -103,6 +103,9 @@ process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
+// import addGranules from serveUtils after setting env variables
+const { addGranules } = require('../../bin/serveUtils');
+
 async function runTestUsingBuckets(buckets, testFunction) {
   try {
     await createS3Buckets(buckets);
@@ -114,6 +117,7 @@ async function runTestUsingBuckets(buckets, testFunction) {
 
 /**
  * Helper for creating and uploading bucket configuration for 'move' tests.
+ *
  * @returns {Object} with keys of internalBucket, and publicBucket.
  */
 async function setupBucketsConfig() {
@@ -553,9 +557,9 @@ test.serial('PATCH reingests a granule with granules in payload', async (t) => {
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await t.context.granulePgModel.get(
     t.context.knex,
-    t.context.fakePGGranules[0].granule_id
+    { granule_id: t.context.fakePGGranules[0].granule_id }
   );
   t.is(updatedPgGranule.status, 'queued');
 });
@@ -591,9 +595,9 @@ test.serial('PATCH reingests a granule without granules in payload', async (t) =
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await t.context.granulePgModel.get(
     t.context.knex,
-    t.context.fakePGGranules[0].granule_id
+    { granule_id: t.context.fakePGGranules[0].granule_id }
   );
   t.is(updatedPgGranule.status, t.context.fakePGGranules[0].status);
 });
@@ -645,9 +649,9 @@ test.serial('PATCH applies an in-place workflow to an existing granule', async (
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await t.context.granulePgModel.get(
     t.context.knex,
-    t.context.fakePGGranules[0].granule_id
+    { granule_id: t.context.fakePGGranules[0].granule_id }
   );
 
   t.is(updatedPgGranule.status, 'queued');
@@ -681,7 +685,10 @@ test.serial('PATCH removes a granule from CMR', async (t) => {
     t.is(body.action, 'removeFromCmr');
 
     // Should have updated the Postgres granule
-    const updatedPgGranule = await getUniqueGranuleByGranuleId(t.context.knex, granuleId);
+    const updatedPgGranule = await t.context.granulePgModel.get(
+      t.context.knex,
+      { granule_id: granuleId }
+    );
     t.is(updatedPgGranule.published, false);
     t.is(updatedPgGranule.cmrLink, undefined);
   } finally {
@@ -3477,4 +3484,94 @@ test.serial('PATCH returns 201 (granule creation) for version value greater than
     .send({ granuleId, collectionId: t.context.collectionId, producerGranuleId: randomId('producerGranuleId'), status: 'completed' })
     .expect(201);
   t.is(response.status, 201);
+});
+
+test.serial('ServeUtils.addGranules adds associated files to Postgres', async (t) => {
+  const { collectionPgModel, knex } = t.context;
+  const collectionName = randomString();
+  const collectionVersion = '006';
+
+  const fakePgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+
+  const [pgCollection] = await collectionPgModel.create(
+    knex,
+    fakePgCollection
+  );
+
+  const newCollectionId = constructCollectionId(pgCollection.name, pgCollection.version);
+
+  const testPgExecution = fakeExecutionRecordFactory({
+    collection_cumulus_id: pgCollection.cumulus_id,
+  });
+
+  const executionPgRecord = await executionPgModel.create(
+    knex,
+    testPgExecution
+  );
+
+  const newGranuleId = randomId();
+
+  const newGranule = fakeGranuleFactoryV2({
+    granuleId: newGranuleId,
+    status: 'failed',
+    collectionId: newCollectionId,
+    execution: executionPgRecord[0].url,
+    published: false,
+    files: [
+      fakeFileRecordFactory({
+        fileName: `${newGranuleId}.hdf`,
+        updated_at: new Date().toISOString(),
+        bucket: `${newCollectionId}--bucket`,
+        key: `${newCollectionId}${newGranuleId}/key-hdf.pem`,
+        path: `${newCollectionId}/${newGranuleId}`,
+        source: `s3://${newCollectionId}--bucket/${collectionName}___${collectionVersion}/.cmr.xml`,
+      }),
+    ],
+  });
+
+  await addGranules([newGranule], knex);
+
+  const [pgGranule] = await t.context.granulePgModel.search(
+    t.context.knex, { granule_id: newGranule.granuleId }
+  );
+  t.truthy(pgGranule, 'Granule should exist in Postgres');
+
+  // Fetch associated files
+  const files = await filePgModel.search(
+    t.context.knex, { granule_cumulus_id: pgGranule.cumulus_id }
+  );
+
+  t.is(files.length, newGranule.files.length, 'All files should be created in Postgres');
+  newGranule.files.forEach((file, idx) => {
+    t.is(files[idx].bucket, file.bucket);
+    t.is(files[idx].key, file.key);
+    t.is(files[idx].file_name, file.fileName);
+  });
+
+  // Test granule with no files
+  const newGranuleId2 = randomId();
+
+  const newGranule2 = fakeGranuleFactoryV2({
+    granuleId: newGranuleId2,
+    status: 'failed',
+    collectionId: newCollectionId,
+    execution: executionPgRecord[0].url,
+    published: false,
+    files: [],
+  });
+
+  await addGranules([newGranule2], knex);
+
+  const [pgGranule2] = await t.context.granulePgModel.search(
+    t.context.knex, { granule_id: newGranule2.granuleId }
+  );
+  t.truthy(pgGranule2, 'Granule should exist in Postgres');
+
+  const files2 = await filePgModel.search(
+    t.context.knex, { granule_cumulus_id: pgGranule2.cumulus_id }
+  );
+  t.is(files2.length, 0, 'No files should be created in Postgres');
 });
