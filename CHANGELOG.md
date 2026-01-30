@@ -85,6 +85,8 @@ Please complete the following steps before upgrading Cumulus.
     The module also configures the required RDS extensions and parameters necessary for slow query instrumentation.
 - **CUMULUS-4382**
   - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
+- **CUMULUS-4394**
+  - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
 
 ### Changed
 
