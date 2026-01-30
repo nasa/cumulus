@@ -1,0 +1,4 @@
+exclude = [
+    "src/cnm2cma/models_cnm.py", # generated code, skip linting
+    "src/cnm2cma/models_granule.py" # generated code, skip linting
+]
