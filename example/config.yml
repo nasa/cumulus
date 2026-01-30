@@ -29,7 +29,7 @@ nsidc-cumulus-prod:
   pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
 lp-opex-sit:
-  bucket: opex-lp-cumulus-internal 
+  bucket: opex-lp-cumulus-internal
   apiUsername: jasmine
   pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
