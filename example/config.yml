@@ -60,6 +60,9 @@ jn-tf:
 kk2-tf:
   bucket: kk2-tf-internal
 
+mason-t-yates:
+  bucket: mason-t-yates-internal
+
 np:
   bucket: npauzenga-internal
 
