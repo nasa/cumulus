@@ -4,6 +4,7 @@
   "retry-count": 20,
   "allowlist": [
     "jsonpath-plus",
-    "semver"
+    "semver",
+    "fast-xml-parser"
   ]
 }
