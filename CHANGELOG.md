@@ -30,6 +30,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     (previously, some bulk operation aggregated errors while others returned per-granule errors)
   - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
     `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
+- **CUMULUS-4514**
+  - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
 
 ## [Unreleased]
 
