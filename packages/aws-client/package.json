@@ -83,7 +83,7 @@
     "uuid": "^8.2.0"
   },
   "overrides": {
-    "@aws-sdk/core": {
+    "@aws-sdk/xml-builder": {
       "fast-xml-parser": "5.3.4"
     }
   },
