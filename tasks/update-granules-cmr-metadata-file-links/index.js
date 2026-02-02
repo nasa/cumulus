@@ -72,6 +72,8 @@ async function updateEachCmrFileMetadata(
       cmrGranuleUrlType,
       distributionBucketMap,
       updateGranuleIdentifiers: true,
+      allowDataGranule: process.env.allow_data_granule === 'true',
+      productionDateTime: granule.productionDateTime,
     });
   }));
 }

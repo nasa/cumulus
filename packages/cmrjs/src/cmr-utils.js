@@ -890,6 +890,8 @@ async function updateUMMGMetadata({
   producerGranuleId,
   granuleId,
   updateGranuleIdentifiers = false,
+  allowDataGranule,
+  productionDateTime,
   testOverrides = {},
 }) {
   const {
@@ -913,6 +915,8 @@ async function updateUMMGMetadata({
       granuleUr: granuleId,
       producerGranuleId,
       metadataObject: updatedMetadataObject,
+      allowDataGranule,
+      productionDateTime,
     });
   }
   const { ETag: etag } = await uploadUMMGJSONCMRFileMethod(
@@ -1151,6 +1155,7 @@ async function updateEcho10XMLMetadata({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
   updateGranuleIdentifiers = false,
+  allowDataGranule,
   testOverrides = {},
 }) {
   const {
@@ -1186,6 +1191,7 @@ async function updateEcho10XMLMetadata({
       granuleUr: granuleId,
       producerGranuleId,
       xml: updatedMetadataObject,
+      allowDataGranule,
     });
   }
   const xml = generateEcho10XMLStringMethod(updatedMetadataObject.Granule);
@@ -1224,6 +1230,8 @@ async function updateCMRMetadata({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   updateGranuleIdentifiers = false,
+  allowDataGranule,
+  productionDateTime,
   distributionBucketMap,
   testOverrides = {},
 }) {
@@ -1247,6 +1255,7 @@ async function updateCMRMetadata({
     granuleId,
     producerGranuleId: producerGranuleId || granuleId,
     updateGranuleIdentifiers,
+    allowDataGranule,
   };
 
   let metadataObject;
@@ -1255,7 +1264,7 @@ async function updateCMRMetadata({
   if (isECHO10Filename(filename)) {
     ({ metadataObject, etag } = await updateEcho10XMLMetadata(params));
   } else if (isUMMGFilename(filename)) {
-    ({ metadataObject, etag } = await updateUMMGMetadata(params));
+    ({ metadataObject, etag } = await updateUMMGMetadata({ ...params, productionDateTime }));
   } else {
     throw new errors.CMRMetaFileNotFound(`Invalid CMR filetype: ${filename}`);
   }

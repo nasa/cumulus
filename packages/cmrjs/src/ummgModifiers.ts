@@ -37,10 +37,14 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
   metadataObject,
   granuleUr,
   producerGranuleId,
+  allowDataGranule,
+  productionDateTime,
 }: {
   metadataObject: unknown;
   granuleUr: string;
   producerGranuleId: string;
+  allowDataGranule: boolean;
+  productionDateTime?: string;
 }): UMMGGranule {
   if (!isUMMGGranule(metadataObject)) {
     throw new Error('Invalid UMM-G JSON metadata');
@@ -49,22 +53,28 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
   const moddedJson = structuredClone(metadataObject);
 
   moddedJson.GranuleUR = granuleUr;
-  moddedJson.DataGranule ??= {};
-  moddedJson.DataGranule.Identifiers ??= [];
 
-  const producerIndex = moddedJson.DataGranule.Identifiers.findIndex(
-    (id) => id.IdentifierType === 'ProducerGranuleId'
-  );
+  if (allowDataGranule) {
+    moddedJson.DataGranule ??= {};
+    moddedJson.DataGranule.Identifiers ??= [];
 
-  const producerGranuleIdIdentifier = {
-    Identifier: producerGranuleId,
-    IdentifierType: 'ProducerGranuleId',
-  };
+    const producerIndex = moddedJson.DataGranule.Identifiers.findIndex(
+      (id) => id.IdentifierType === 'ProducerGranuleId'
+    );
 
-  if (producerIndex !== -1) {
-    moddedJson.DataGranule.Identifiers[producerIndex] = producerGranuleIdIdentifier;
-  } else {
-    moddedJson.DataGranule.Identifiers.push(producerGranuleIdIdentifier);
+    const producerGranuleIdIdentifier = {
+      Identifier: producerGranuleId,
+      IdentifierType: 'ProducerGranuleId',
+    };
+
+    if (producerIndex !== -1) {
+      moddedJson.DataGranule.Identifiers[producerIndex] = producerGranuleIdIdentifier;
+    } else {
+      moddedJson.DataGranule.Identifiers.push(producerGranuleIdIdentifier);
+    }
+
+    moddedJson.DataGranule.DayNightFlag ??= 'UNSPECIFIED';
+    moddedJson.DataGranule.ProductionDateTime = productionDateTime ?? new Date().toISOString();
   }
 
   return moddedJson;
