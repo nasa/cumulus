@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4498**
   - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
 
+### Changed
+
+- **CUMULUS-4514**
+  - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
+
 ## [v21.3.0] 2026-01-26
 
 ### Migration Notes
