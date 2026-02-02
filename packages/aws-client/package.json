@@ -80,8 +80,12 @@
     "p-timeout": "^4.1.0",
     "p-wait-for": "^3.2.0",
     "pump": "^3.0.0",
-    "uuid": "^8.2.0",
-    "fast-xml-parser": "^5.3.4"
+    "uuid": "^8.2.0"
+  },
+  "overrides": {
+    "@aws-sdk/core": {
+      "fast-xml-parser": "5.3.4"
+    }
   },
   "devDependencies": {
     "@cumulus/test-data": "21.2.0",
