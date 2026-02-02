@@ -32,19 +32,19 @@ const calculateObjectHashByRanges = async (params: {
   algorithm: string,
   bucket: string,
   key: string,
-  sizeBytes: number,
+  size: number,
   partSizeBytes: number
 }) => {
   const {
-    s3, algorithm, bucket, key, sizeBytes, partSizeBytes,
+    s3, algorithm, bucket, key, size, partSizeBytes,
   } = params;
 
   const hash = crypto.createHash(algorithm);
 
   const ranges: { start: number; end: number }[] = [];
 
-  for (let start = 0; start < sizeBytes; start += partSizeBytes) {
-    const end = Math.min(start + partSizeBytes - 1, sizeBytes - 1);
+  for (let start = 0; start < size; start += partSizeBytes) {
+    const end = Math.min(start + partSizeBytes - 1, size - 1);
     ranges.push({ start, end });
   }
 
@@ -79,7 +79,7 @@ const calculateGranuleFileChecksum = async (params: {
   const partSizeBytes = partMb * 1024 * 1024;
 
   const partitioningEnabled = (thresholdMb > 0 && partMb > 0)
-    && (granuleFile.size > thresholdBytes);
+    && (size > thresholdBytes);
 
   if (partitioningEnabled) {
     return await calculateObjectHashByRanges({
@@ -87,7 +87,7 @@ const calculateGranuleFileChecksum = async (params: {
       algorithm,
       bucket,
       key,
-      sizeBytes: size,
+      size,
       partSizeBytes: partSizeBytes,
     });
   }
