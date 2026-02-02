@@ -82,11 +82,6 @@
     "pump": "^3.0.0",
     "uuid": "^8.2.0"
   },
-  "overrides": {
-    "@aws-sdk/xml-builder": {
-      "fast-xml-parser": "5.3.4"
-    }
-  },
   "devDependencies": {
     "@cumulus/test-data": "21.2.0",
     "@types/uuid": "^8.0.0"
