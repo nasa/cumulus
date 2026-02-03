@@ -10,7 +10,7 @@
     },
     "scripts": {
       "test": "uv run pytest -q",
-      "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src/pdr_cleanup/pdr_cleanup.py",
+      "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src/pdr_cleanup",
       "clean": "rm -rf dist && rm -rf lib && rm -rf .venv && mkdir dist && mkdir lib",
       "build": "uv sync",
       "prepare": "npm run build",

@@ -2,13 +2,11 @@ resource "aws_lambda_function" "pdr_cleanup_task" {
   function_name    = "${var.prefix}-PdrCleanup"
   filename         = "${path.module}/../dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../dist/lambda.zip")
-  handler          = "pdr_cleanup.handler"
+  handler          = "task.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "python3.12"
-  timeout          = 300
-  memory_size      = 512
-
-  layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
+  timeout          = var.lambda_timeout
+  memory_size      = var.lambda_memory_size
 
   environment {
     variables = {
