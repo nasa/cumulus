@@ -27,6 +27,14 @@ buckets = {
   dashboard = {
     name = "opex-nsidc-cumulus-dashboard"
     type = "dashboard"
+  },
+  opera-products = {
+    name = "opex-nsidc-cumulus-opera-products"
+    type = "protected"
+  },
+  opera-staging = {
+    name = "opex-nsidc-cumulus-opera-staging"
+    type = "workflow"
   }
 }
 system_bucket = "opex-nsidc-cumulus-internal"
