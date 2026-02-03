@@ -43,8 +43,8 @@ output "files_to_granules_task" {
 
 output "granule_invalidator_task" {
   value = {
-    task_arn           = aws_lambda_function.granule_invalidator_task.arn
-    last_modified_date = aws_lambda_function.granule_invalidator_task.last_modified
+    task_arn           = module.granule_invalidator_task.outputs.lambda_function_arn
+    last_modified_date = module.granule_invalidator_task.outputs.lambda_function_last_modified
   }
 }
 
