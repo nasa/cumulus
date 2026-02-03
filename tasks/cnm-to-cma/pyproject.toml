@@ -16,12 +16,18 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pytest (>=9.0.1,<10.0.0)"
+    "pytest (>=9.0.1,<10.0.0)",
+    "pytest-cov~=7.0",
+    "mypy~=1.19",
+    "ruff~=0.14.0",
 ]
 
 [tool.pytest]
 packages = [{ include = "cnm2cma", from = "src" }]
-
+addopts = [
+    "--cov=cnm2cma",
+    "--cov-report=lcov:.nyc_output",
+]
 pythonpath = ["src"]
 testpaths = [
     "tests",

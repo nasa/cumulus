@@ -95,25 +95,6 @@ module "cnm_to_cma_module" {
  }
 ```
 
-#### Developer Notes
-- Build : Temporarily use build.sh which depends on poetry to build the lambda.zip file.
--- poetry self add poetry-plugin-export to enable poetry export.
--- alternatively, download pydantic_core wheel from here : https://pypi.org/project/pydantic_core/#files by
--  using the manylinux wheel with python version close to this project's
-- About json schema compiling to Plaint Python classes:
-   - used datamodel-code-generator tool: https://koxudaxi.github.io/datamodel-code-generator/ to generate pydantic models from json schema files.
-   - example below
-```angular2html
-pip install datamodel-code-generator
-# Or with HTTP support for remote references
-pip install "datamodel-code-generator[http]"
-
-datamodel-codegen \
-    --input cumulus_sns_schema.json \
-    --input-file-type jsonschema \
-    --output models_cnm.py \
-    --output-model-type pydantic_v2.BaseModel
-```
 ### Input
 
 
@@ -142,6 +123,95 @@ When configuring the task, please refer to the example provided in the "Config" 
     Granule Mapping: The output_granules field must be mapped directly to the primary payload.
 
     Metadata Attachment: The original Cloud Notification Mechanism (CNM) message should be nested under the meta object.
+### Example workflow configuration and use
+The output key : output_granules should be mapped to the payload key in the workflow's output.
+Workflow developer could choose to the original cnm message to be stored in meta.cnm key.
+Example workflow:
+```angular2html
+"TranslateMessage": {
+        "Parameters": {
+          "cma": {
+            "event.$": "$",
+            "task_config": {
+              "collection": "{$.meta.collection}",
+              "cumulus_message": {
+                "outputs": [
+                  {
+                    "source": "{$.cnm}",
+                    "destination": "{$.meta.cnm}"
+                  },
+                  {
+                    "source": "{$.output_granules}",
+                    "destination": "{$.payload}"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Type": "Task",
+        "Resource": "${module.cnm_to_cma_module.cnm_to_cma_arn}",
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "IntervalSeconds": 10,
+            "MaxAttempts": 2
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "ResultPath": "$.exception",
+            "Next": "CnmResponseFailChoice"
+          }
+        ],
+        "Next": "Report"
+      },
+```
+## Architecture
+```mermaid
+architecture-cnm-2-cma
+    group trigger(cloud) [Starting Task]
+    translate task(cloud)[Task]
+
+    lambda:R --> L:db
+```
+
+## Internal Dependencies
+Python cumulus-message-adapter library
+
+### External Dependencies
+None
+
+## Development and Deployment
+#### Developer Notes
+- Build : Temporarily use build_lambda.sh which depends on poetry to build the lambda.zip file.
+-- poetry self add poetry-plugin-export to enable poetry export.
+-- alternatively, download pydantic_core wheel from here : https://pypi.org/project/pydantic_core/#files by
+-  using the manylinux wheel with python version close to this project's
+- About json schema compiling to Plaint Python classes:
+   - used datamodel-code-generator tool: https://koxudaxi.github.io/datamodel-code-generator/ to generate pydantic models from json schema files.
+   - example below
+```angular2html
+pip install datamodel-code-generator
+# Or with HTTP support for remote references
+pip install "datamodel-code-generator[http]"
+
+datamodel-codegen \
+    --input cumulus_sns_schema.json \
+    --input-file-type jsonschema \
+    --output models_cnm.py \
+    --output-model-type pydantic_v2.BaseModel
+```
+
+## Contributing
+
+To make a contribution, please [see our Cumulus contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md) and our documentation on [adding a task](https://nasa.github.io/cumulus/docs/adding-a-task)
+
 
 ## About Cumulus
 
