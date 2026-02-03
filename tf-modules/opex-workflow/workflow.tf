@@ -1,5 +1,5 @@
 module "example_workflow" {
-  source = "https://github.com/nasa/cumulus/releases/download/v21.0.1/terraform-aws-cumulus-workflow.zip" # Confirm which version We are on
+  source = "../../tf-modules/opex-workflow"
 
   prefix          = var.PREFIX
   name            = "OPERAWorkflow"
