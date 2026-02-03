@@ -293,6 +293,7 @@ variable "archive_api_users" {
     "jnorton1",
     "kkelly",
     "kovarik",
+    "masonyates97",
     "mobrien84",
     "mikedorfman",
     "nnageswa",
