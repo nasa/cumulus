@@ -43,9 +43,9 @@ function determineIntegrationTestStackName(cb) {
   };
 
   return git('.').log({ '--max-count': '2' }, (e, r) => {
-    const latest_author = r.latest.author_name;
-    const second_latest_author = r.all[1].author_name;
-    const author = (latest_author && latest_author.startsWith('pre-commit-ci')) ? second_latest_author : latest_author;
+    const latestAuthor = r.latest.author_name;
+    const secondLatestAuthor = r.all[1].author_name;
+    const author = (latestAuthor && latestAuthor.startsWith('pre-commit-ci')) ? secondLatestAuthor : latestAuthor;
 
     console.error(`Selecting build stack based on author name: "${author}"`);
 
