@@ -556,3 +556,9 @@ variable "workflow_configurations" {
     }
   }
 }
+
+variable "enable_otel_tracing" {
+  description = "Enable OpenTelemetry tracing and X-Ray"
+  type        = bool
+  default     = false
+}

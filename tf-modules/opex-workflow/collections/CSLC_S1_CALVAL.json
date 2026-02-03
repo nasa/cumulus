@@ -1,0 +1,22 @@
+{
+    "name": "OPERA_L2_CSLC-S1_CALVAL_V1",
+    "version": "1.0",
+    "duplicateHandling": "replace",
+    "process": "CSLC",
+    "url_path": "OPERA_L2_CSLC-S1_CALVAL/{granule.granuleId}/",
+    "granuleId": "^OPERA_L2_CSLC-S1_.*\\d{8}T\\d{6}Z_\\d{8}T\\d{6}Z_S1[A-Z]_(VV|VH|HH|HV)_v\\d\\.\\d$",
+    "granuleIdExtraction": "(OPERA_L2_CSLC-S1.*)(\\.h5)",
+    "sampleFileName": "OPERA_L2_CSLC-S1_T078-165495-IW3_20190906T232711Z_20230101T100506Z_S1A_VV_v1.0.h5",
+    "files": [
+        {
+            "bucket": "opera-products",
+            "regex": "^OPERA_L2_CSLC-S1_(?!.*BROWSE).*",
+            "sampleFileName": "OPERA_L2_CSLC-S1_T078-165495-IW3_20190906T232711Z_20230101T100506Z_S1A_VV_v1.0.h5"
+        },
+        {
+            "bucket": "opera-browse",
+            "regex": "^OPERA_L2_CSLC-S1.*_BROWSE.*",
+            "sampleFileName": "OPERA_L2_CSLC-S1_T078-165495-IW3_20190906T232711Z_20230101T100506Z_S1A_VV_v1.0_BROWSE.png"
+        }
+    ]
+}
