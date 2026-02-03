@@ -6,7 +6,7 @@
         "name": "OPERA_L2_CSLC-S1_CALVAL_V1",
         "version": "1.0"
     },
-    "provider": "ASFDAAC",
+    "provider": "ASF-TESTCNM",
     "rule": {
         "type": "sqs",
         "value": "https://sqs.$AWS_REGION.amazonaws.com/$AWS_ACCOUNT_ID/$PREFIX-opera-workflow-queue"

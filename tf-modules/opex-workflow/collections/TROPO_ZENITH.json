@@ -1,6 +1,6 @@
 {
     "name": "OPERA_L4_TROPO-ZENITH_V1",
-    "version": "1",
+    "version": "1.0",
     "duplicateHandling": "replace",
     "process": "TROPO",
     "url_path": "OPERA_L4_TROPO-ZENITH_V1/{granule.granuleId}/",
