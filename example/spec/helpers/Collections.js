@@ -5,7 +5,7 @@ const pRetry = require('p-retry');
 const { listGranules } = require('@cumulus/api-client/granules');
 const { getPdrs, deletePdr } = require('@cumulus/api-client/pdrs');
 const { deleteExecution, getExecutions } = require('@cumulus/api-client/executions');
-const { deleteCollection, getCollection } = require('@cumulus/api-client/collections');
+const { deleteCollection, getCollection, createCollection } = require('@cumulus/api-client/collections');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { deleteGranules } = require('./granuleUtils');
@@ -126,7 +126,15 @@ const removeCollectionAndAllDependencies = async (params) => {
   }
 };
 
+const registerNewCollection = async (prefix, collection) => {
+  return await createCollection({
+    prefix,
+    collection,
+  });
+}
+
 module.exports = {
   collectionExists,
+  registerNewCollection,
   removeCollectionAndAllDependencies,
 };

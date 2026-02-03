@@ -14,7 +14,6 @@ const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
-  createGranule,
   deleteGranule,
   getGranule,
   listGranules,
@@ -298,19 +297,11 @@ const waitForGranuleAndDelete = async (prefix, granuleId, collectionId, status, 
   });
 };
 
-const registerNewGranule = async (prefix, body) => {
-  return await createGranule({
-    prefix,
-    body,
-  });
-};
-
 module.exports = {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
   deleteGranules,
   loadFileWithUpdatedGranuleIdPathAndCollection,
-  registerNewGranule,
   setupTestGranuleForIngest,
   waitForGranuleRecordsInList,
   waitForGranuleRecordsNotInList,
