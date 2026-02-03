@@ -47,7 +47,8 @@ async function updateEachCmrFileMetadata(
   distEndpoint,
   bucketTypes,
   distributionBucketMap,
-  excludeFileRegexPattern
+  excludeFileRegexPattern,
+  allowDataGranule
 ) {
   return await Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
@@ -72,7 +73,7 @@ async function updateEachCmrFileMetadata(
       cmrGranuleUrlType,
       distributionBucketMap,
       updateGranuleIdentifiers: true,
-      allowDataGranule: process.env.allow_data_granule === 'true',
+      allowDataGranule,
       productionDateTime: granule.productionDateTime,
     });
   }));
@@ -113,6 +114,7 @@ async function updateGranulesCmrMetadata(event) {
   const granules = event.input.granules.map((g) => addEtagsToFileObjects(g, incomingETags));
   const cmrFiles = granulesToCmrFileObjects(granules);
   const granulesByGranuleId = keyBy(granules, 'granuleId');
+  const allowDataGranule = process.env.allow_data_granule === 'true';
 
   const distributionBucketMap = await fetchDistributionBucketMap();
   const updatedCmrFiles = await updateEachCmrFileMetadata(
@@ -122,7 +124,8 @@ async function updateGranulesCmrMetadata(event) {
     config.distribution_endpoint,
     bucketTypes,
     distributionBucketMap,
-    config.excludeFileRegex
+    config.excludeFileRegex,
+    allowDataGranule
   );
 
   const updatedGranulesByGranuleId = await updateCmrFileInfo(cmrFiles, granulesByGranuleId);

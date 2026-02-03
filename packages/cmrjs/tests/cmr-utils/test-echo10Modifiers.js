@@ -17,6 +17,7 @@ test('updates GranuleUR and updates ProducerGranuleId', (t) => {
     xml,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
+    allowDataGranule: true,
   });
 
   t.is(result.Granule.GranuleUR, 'NEW_ID');
@@ -35,6 +36,7 @@ test('adds ProducerGranuleId if not present', (t) => {
     xml,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'NEW_PRODUCER_ID',
+    allowDataGranule: true,
   });
 
   t.is(result.Granule.GranuleUR, 'NEW_ID');
@@ -70,6 +72,7 @@ test('does not mutate original object', (t) => {
     xml: original,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
+    allowDataGranule: true,
   });
 
   t.not(result, original);
@@ -95,6 +98,7 @@ test('maintains ECHO10 schema order for DataGranule elements', (t) => {
     xml,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_123',
+    allowDataGranule: true,
   });
 
   t.true(result.Granule.DataGranule instanceof Map);
@@ -136,6 +140,7 @@ test('ProducerGranuleId appears in correct position relative to other fields', (
     xml,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_456',
+    allowDataGranule: true,
   });
 
   const keys = Array.from(result.Granule.DataGranule.keys());
@@ -173,6 +178,7 @@ test('throws error when DataGranule contains unexpected keys', (t) => {
       xml,
       granuleUr: 'NEW_ID',
       producerGranuleId: 'PRODUCER_456',
+      allowDataGranule: true,
     }));
 
   t.true(error?.message.includes('Unexpected DataGranule key(s) found'));
@@ -180,4 +186,25 @@ test('throws error when DataGranule contains unexpected keys', (t) => {
   t.true(error?.message.includes('AnotherInvalidKey'));
   t.true(error?.message.includes('NEW_ID'));
   t.true(error?.message.includes('Valid keys are'));
+});
+
+test('does not add DataGranule when allowDataGranule is false', (t) => {
+  const xml = {
+    Granule: {
+      GranuleUR: 'OLD_ID',
+      DataGranule: {
+        ProducerGranuleId: 'OLD_PRODUCER_ID',
+      },
+    },
+  };
+
+  const result = updateEcho10XMLGranuleUrAndGranuleIdentifier({
+    xml,
+    granuleUr: 'NEW_ID',
+    producerGranuleId: 'PRODUCER_ID',
+    allowDataGranule: false,
+  });
+
+  t.is(result.Granule.GranuleUR, 'NEW_ID');
+  t.is(result.Granule.DataGranule, undefined);
 });
