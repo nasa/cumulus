@@ -203,6 +203,12 @@ variable "default_log_retention_days" {
   description = "Optional default value that user chooses for their log retention periods"
 }
 
+variable "default_update_granule_identifiers" {
+  description = "Whether or not to automatically update granule identifiers"
+  type        = bool
+  default     = true
+}
+
 variable "sync_granule_s3_jitter_max_ms" {
   description = "Maximum random jitter in milliseconds to apply before S3 operations in SyncGranule task (0-59000). Set to 0 to disable jitter."
   type        = number
