@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from freezegun import freeze_time
-from src.pdr_cleanup.pdr_cleanup import cleanup_pdr, move_pdr
+from src.pdr_cleanup.task import cleanup_pdr, move_pdr
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ def mock_context():
     return {}
 
 
-@patch("src.pdr_cleanup.pdr_cleanup.move_pdr")
+@patch("src.pdr_cleanup.task.move_pdr")
 def test_cleanup_pdr_success(mock_move_pdr, successful_event, mock_context):
     mock_move_pdr.return_value = "archive"
     output = cleanup_pdr(successful_event, mock_context)
@@ -80,7 +80,7 @@ def test_cleanup_pdr_with_failed_workflows(failed_event, mock_context):
         cleanup_pdr(failed_event, mock_context)
 
 
-@patch("src.pdr_cleanup.pdr_cleanup.boto3.client")
+@patch("src.pdr_cleanup.task.boto3.client")
 @freeze_time("2025-4-2 01:01:01")
 def test_move_pdr_success(mock_boto3_client, successful_event):
     mock_s3_client = MagicMock()
