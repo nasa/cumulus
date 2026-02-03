@@ -42,10 +42,19 @@ function determineIntegrationTestStackName(cb) {
     'Yonggang Liu': 'yliu10-ci',
   };
 
-  return git('.').log({ '--max-count': '2' }, (e, r) => {
-    const latestAuthor = r.latest.author_name;
-    const secondLatestAuthor = r.all[1].author_name;
-    const author = (latestAuthor && latestAuthor.startsWith('pre-commit-ci')) ? secondLatestAuthor : latestAuthor;
+  return git('.').log({ '--max-count': '10' }, (e, r) => {
+    // Find the first commit not authored by pre-commit-ci[bot]
+    const commits = r.all || [r.latest];
+    const firstNonBotCommit = commits.find(
+      (commit) => commit.author_name !== 'pre-commit-ci[bot]'
+    );
+
+    if (!firstNonBotCommit) {
+      console.error('No non-bot commits found, using default stack');
+      return cb('cumulus-from-pr');
+    }
+
+    const author = firstNonBotCommit.author_name;
 
     console.error(`Selecting build stack based on author name: "${author}"`);
 
