@@ -36,6 +36,10 @@ buckets = {
     name = "opex-nsidc-cumulus-opera-staging"
     type = "workflow"
   }
+  opex-e2e = {
+    name = "opex-e2e-test-bucket"
+    type = "workflow"
+  }
 }
 system_bucket = "opex-nsidc-cumulus-internal"
 api_reserved_concurrency = 14
