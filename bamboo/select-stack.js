@@ -30,6 +30,7 @@ function determineIntegrationTestStackName(cb) {
     'Jonathan Kovarik': 'jk',
     kkelly51: 'kk-int',
     'Katherine Kelly': 'kk-int',
+    'Mason Yates': 'mason-t-yates-ci',
     mckadesorensen: 'dms-opex-sbx-ci',
     mikedorfman: 'mikedorfman-ci',
     'Nate Pauzenga': 'np-ci',
