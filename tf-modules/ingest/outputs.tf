@@ -41,6 +41,13 @@ output "files_to_granules_task" {
   }
 }
 
+output "granule_invalidator_task" {
+  value = {
+    task_arn           = aws_lambda_function.granule_invalidator_task.arn
+    last_modified_date = aws_lambda_function.granule_invalidator_task.last_modified
+  }
+}
+
 output "hello_world_task" {
   value = {
     task_arn           = aws_lambda_function.hello_world_task.arn
