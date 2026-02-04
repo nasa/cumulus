@@ -295,6 +295,7 @@ variable "archive_api_users" {
     "kovarik",
     "masonyates97",
     "mobrien84",
+    "mikedorfman",
     "nnageswa",
     "npauzenga",
     "terrafirma13",
