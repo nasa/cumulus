@@ -12,3 +12,8 @@ output "lambda_function_invoke_arn" {
   description = "Invoke ARN of the Lambda function"
   value       = aws_lambda_function.granule_invalidator_task.invoke_arn
 }
+
+output "lambda_function_last_modified" {
+  description = "Last modified date of the Lambda function"
+  value       = aws_lambda_function.granule_invalidator_task.last_modified
+}
