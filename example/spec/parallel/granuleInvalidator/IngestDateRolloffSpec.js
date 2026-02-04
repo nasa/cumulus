@@ -2,7 +2,7 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
 
-const { buildWorkflow, executeWorkflow} = require('../../helpers/workflowUtils');
+const { buildAndExecuteWorkflow} = require('../../helpers/workflowUtils');
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 const { sleep } = require('@cumulus/common');
@@ -26,18 +26,18 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
   let config;
   let collectionName;
   let collectionVersion;
-  let createdAtBeforeCutoffId;
-  let createdAtAfterCutoffId;
+  let ingestDateBeforeCutoffId;
+  let ingestDateAfterCutoffId;
 
   beforeAll(async () => {
     config = await loadConfig();
 
     // This postfix is a random string to assure unique collection names
-    let randomPostfix = uuidv4();
+    let randomPostfix = uuidv4().slice(0, 8);
     collectionName = `test-collection-${randomPostfix}`;
     collectionVersion = '001';
-    createdAtBeforeCutoffId = `before-created-at-cutoff-${randomPostfix}`;
-    createdAtAfterCutoffId = `after-created-at-cutoff-${randomPostfix}`;
+    ingestDateBeforeCutoffId = `before-created-at-cutoff-${randomPostfix}`;
+    ingestDateAfterCutoffId = `after-created-at-cutoff-${randomPostfix}`;
 
     const collectionConfig = {
       name: collectionName,
@@ -61,8 +61,8 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
     // Register granules that are on either side of a date threshold based on endingDateTime
     await createGranule({prefix: config.stackName,
       body: {
-        granuleId: createdAtBeforeCutoffId,
-        producerGranuleId: createdAtBeforeCutoffId,
+        granuleId: ingestDateBeforeCutoffId,
+        producerGranuleId: ingestDateBeforeCutoffId,
         collectionId: `${collectionName}___${collectionVersion}`,
         status: 'completed',
       }
@@ -70,8 +70,8 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
 
     await createGranule({prefix: config.stackName,
       body: {
-        granuleId: createdAtAfterCutoffId,
-        producerGranuleId: createdAtAfterCutoffId,
+        granuleId: ingestDateAfterCutoffId,
+        producerGranuleId: ingestDateAfterCutoffId,
         collectionId: `${collectionName}___${collectionVersion}`,
         status: 'completed',
       }
@@ -83,11 +83,11 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
 
     await updateGranule({
       prefix: config.stackName,
-      granuleId: createdAtBeforeCutoffId,
+      granuleId: ingestDateBeforeCutoffId,
       collectionId: `${collectionName}___${collectionVersion}`,
       body: {
-        granuleId: createdAtBeforeCutoffId,
-        producerGranuleId: createdAtBeforeCutoffId,
+        granuleId: ingestDateBeforeCutoffId,
+        producerGranuleId: ingestDateBeforeCutoffId,
         collectionId: `${collectionName}___${collectionVersion}`,
         createdAt: oneHourAgo,
         status: 'completed',
@@ -96,11 +96,11 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
 
     await updateGranule({
       prefix: config.stackName,
-      granuleId: createdAtAfterCutoffId,
+      granuleId: ingestDateAfterCutoffId,
       collectionId: `${collectionName}___${collectionVersion}`,
       body: {
-        granuleId: createdAtAfterCutoffId,
-        producerGranuleId: createdAtAfterCutoffId,
+        granuleId: ingestDateAfterCutoffId,
+        producerGranuleId: ingestDateAfterCutoffId,
         collectionId: `${collectionName}___${collectionVersion}`,
         createdAt: now,
         status: 'completed',
@@ -123,9 +123,9 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
       collection: collectionConfig,
     });
 
-    const workflowName = 'Passthrough';
+    const workflowName = 'GranuleInvalidatorWorkflow';
 
-    standardWorkflowMessage = await buildWorkflow(
+    workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
       workflowName,
@@ -134,19 +134,7 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
         version: collectionVersion,
       },
       config.provider,
-      config.payload,
-      {}
-    );
-
-    invalidationConfiguration = {
-
-    }
-
-    workflowExecution = await executeWorkflow(
-      config.stackName,
-      config.bucket,
-      workflowName,
-      standardWorkflowMessage
+      config.payload
     );
   });
 
@@ -154,24 +142,24 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
     expect(workflowExecution.status).toEqual('completed');
   });
 
-  it('CreatedAtDateTime rolloff configuration is honored', async () => {
+  it('ingestDateDateTime rolloff configuration is honored', async () => {
 
     await expectAsync(getGranule(
       {
         prefix: config.stackName,
-        granuleId: 'abc',//createdAtBeforeCutoffId,
+        granuleId: ingestDateBeforeCutoffId,
         collectionId: `${collectionName}___${collectionVersion}`
       }
     )).toBeRejectedWithError(CumulusApiClientError, /404/);
 
-    const afterCreatedAtDateTimeCutoffGranule = await getGranule(
+    const afteringestDateDateTimeCutoffGranule = await getGranule(
       {
         prefix: config.stackName,
-        granuleId: createdAtAfterCutoffId,
+        granuleId: ingestDateAfterCutoffId,
         collectionId: `${collectionName}___${collectionVersion}`
       }
     );
-    expect(afterCreatedAtDateTimeCutoffGranule.status).toEqual('completed');
+    expect(afteringestDateDateTimeCutoffGranule.status).toEqual('completed');
   });
 
   afterAll(async () => {

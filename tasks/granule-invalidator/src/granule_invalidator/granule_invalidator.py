@@ -91,10 +91,7 @@ def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
 
     return {
         "granules": [
-            {
-                "granuleId": invalid_granule["granuleId"],
-                "collectionId": f"{collection}___{version}",
-            }
+            invalid_granule["granuleId"]
             for invalid_granule in invalid_granules
         ],
         "forceRemoveFromCmr": True,

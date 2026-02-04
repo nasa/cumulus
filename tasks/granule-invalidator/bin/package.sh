@@ -1,31 +1,38 @@
 #!/bin/bash
-
 set -xe
+CONFIG=$(jq -r '.' build-config.json)
+RUNTIME=$(echo $CONFIG | jq -r '.runtime')
+PYTHON_VERSION=$(echo $RUNTIME | sed 's/^python//')
 
-DIR=$1
-# find packages location
-echo "Entering $DIR"
-echo $PWD
-cd "$DIR" || exit 1
+mkdir -p dist/{dist,packages,final};
 
-# ensure packages are up to date using uv
-uv sync --no-dev --frozen
+uv export \
+    --frozen \
+    --no-emit-workspace \
+    --all-extras \
+    --no-dev \
+    --no-editable \
+    -o dist/requirements.txt;
 
-# package dependencies
-SITE_PACKAGES=$(find "$DIR"/.venv/lib/python*/site-packages -type d | head -1)
-echo "Entering $SITE_PACKAGES"
-cd "$SITE_PACKAGES" || exit 1
-cp -R ./* "$DIR/dist/"
+uv build \
+    --clear \
+    --wheel \
+    -o dist/dist;
 
-cd "$DIR" || exit 1
+uv venv --python ${PYTHON_VERSION};
 
-cp -R ./src/* schemas/ ./dist/
+uv pip install \
+    --python-platform x86_64-manylinux_2_17 \
+    --python ${PYTHON_VERSION} \
+    --requirements dist/requirements.txt \
+    --target dist/packages;
 
-cd ./dist || exit 1
+uv pip install \
+    --only-binary :all: \
+    --python-platform x86_64-manylinux_2_17 \
+    --python ${PYTHON_VERSION} \
+    --target dist/packages \
+    dist/dist/*.whl;
 
-node ../../../bin/zip.js lambda.zip $(ls | grep -v lambda.zip)
-
-cd .. || exit 1
-
-# Re-sync dev dependencies for any post-packaging tasks
-uv sync
+cd dist/packages;
+zip -r ../final/lambda.zip .;

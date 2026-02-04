@@ -8,9 +8,6 @@
             "Parameters": {
                 "cma": {
                     "event.$": "$",
-                    "ReplaceConfig": {
-                        "Path": "$.payload.granules"
-                    },
                     "task_config": {
                         "granule_invalidations": "{$.meta.collection.meta.granule_invalidations}",
                         "collection": "{$.meta.collection.name}",
@@ -129,7 +126,7 @@
         },
         "Wait for Bulk Delete to Finish": {
             "Type": "Wait",
-            "Seconds": 60,
+            "Seconds": 10,
             "Next": "Check Bulk Delete Status"
         },
         "Workflow Failed": {
