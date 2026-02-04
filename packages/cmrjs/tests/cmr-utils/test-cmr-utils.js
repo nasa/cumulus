@@ -666,6 +666,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       metadataObjectFromCMRXMLFileMethod: () => cmrMetadata,
       uploadEcho10CMRFileMethod: uploadEchoSpy,
     },
+    allowDataGranule: true,
   });
 
   t.is(etag, expectedEtag, "ETag doesn't match");
@@ -750,6 +751,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
       uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
       metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
     },
+    allowDataGranule: true,
   });
   t.is(etag, expectedEtag, "ETag doesn't match");
   t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
@@ -825,6 +827,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
       uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
       metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
     },
+    allowDataGranule: true,
   });
 
   t.is(etag, expectedEtag, "ETag doesn't match");

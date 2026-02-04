@@ -58,6 +58,7 @@ test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile pr
       updatedFiles,
       distEndpoint,
       published,
+      allowDataGranule: true,
     });
 
     t.falsy(results);
@@ -134,6 +135,7 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
       updatedFiles,
       distEndpoint,
       published,
+      allowDataGranule: true,
     });
 
     t.falsy(results);
@@ -357,6 +359,7 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
       distEndpoint,
       published,
       bucketTypes: {},
+      allowDataGranule: true,
     }),
     {
       name: 'CMRMetaFileNotFound',

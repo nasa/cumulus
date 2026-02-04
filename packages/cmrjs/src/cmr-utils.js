@@ -827,6 +827,7 @@ function shouldUseDirectS3Type(metadataObject) {
  * @param {string} [params.cmrGranuleUrlType='both'] - Type of URLs to generate: 'distribution',
  * 's3', or 'both'
  * @param {DistributionBucketMap} params.distributionBucketMap - Mapping of bucket names to
+ * @param {boolean} params.allowDataGranule - Whether to add or update a DataGranule in the metadata
  * distribution paths
  *
  * @returns {Object} - A deep clone of the original metadata object with updated RelatedUrls
@@ -857,6 +858,8 @@ function updateUMMGMetadataObject({
   const originalURLs = get(updatedMetadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   set(updatedMetadataObject, 'RelatedUrls', mergedURLs);
+
+  // remove the DataGranule if allowDataGranule is false
   if (!allowDataGranule) {
     delete updatedMetadataObject.DataGranule;
   }
@@ -879,6 +882,8 @@ function updateUMMGMetadataObject({
  * @param {string} params.granuleId - granule id
  * @param {boolean} [params.updateGranuleIdentifiers=false] - whether to update the granule UR/add
  * producerGranuleID to the CMR metadata object
+ * @param {boolean} params.allowDataGranule - Whether to add or update a DataGranule in the metadata
+ * @param {string} params.productionDateTime - granule's production date time
  * @param {any} [params.testOverrides] - overrides for testing
  * @returns {Promise<{ metadataObject: Object, etag: string | undefined}>} an object
  *    containing a `metadataObject` (the updated UMMG metadata object) and the
@@ -1144,6 +1149,7 @@ function updateEcho10XMLMetadataObjectUrls({
  * - Maps buckets to distribution paths
  * @param {boolean} [params.updateGranuleIdentifiers]
  * - If true, update the GranuleUR and ProducerGranuleId in metadata
+ * @param {boolean} params.allowDataGranule - Whether to add or update a DataGranule in the metadata
  * @param {any} [params.testOverrides]
  * - Optional test overrides for internal functions
  * @returns {Promise<{ metadataObject: any, etag: string }>}
@@ -1218,6 +1224,8 @@ async function updateEcho10XMLMetadata({
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
  * @param {boolean} [params.updateGranuleIdentifiers]
  * - If true, update the GranuleUR and ProducerGranuleId in metadata
+ * @param {boolean} params.allowDataGranule - Whether to add or update a DataGranule in the metadata
+ * @param {string} params.productionDateTime - granule's production date time
  * @param {any} [params.testOverrides]
  * - Optional test overrides for internal functions
  * @param {DistributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path
@@ -1301,6 +1309,9 @@ async function updateCMRMetadata({
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution buckets
+ * @param {boolean} params.allowDataGranule - Whether to add or update a DataGranule in the metadata
+ * @param {string} params.productionDateTime - granule's production date time
+ * @returns {Promise<void>} - resolves when CMR metadata is updated
  */
 async function reconcileCMRMetadata({
   granuleId,

@@ -54,6 +54,7 @@ test('throws error if input is not Echo10XmlBaseGranule', (t) => {
       xml: invalid,
       granuleUr: 'ID',
       producerGranuleId: 'PRODUCER_ID',
+      allowDataGranule: true,
     }));
 
   t.true(error?.message.includes('Invalid XML input'));

@@ -121,6 +121,7 @@ test('does not updates UMMG metadata granule identifiers when updateGranuleIdent
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
     updateGranuleIdentifiers: false,
+    allowDataGranule: true,
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
   const expectedObject = {

@@ -29,6 +29,8 @@ function isUMMGGranule(obj: any): obj is UMMGGranule {
  * @param metadataObject - The parsed UMM-G metadata object to be modified.
  * @param granuleUr - The new GranuleUR value to assign.
  * @param producerGranuleId - The ProducerGranuleId to store in the Identifiers list.
+ * @param allowDataGranule - Whether to add or update a DataGranule in the metadata
+ * @param productionDateTime - The production date time for the granule (required CMR UMMG field)
  * @returns A deep-cloned and updated copy of the UMM-G metadata object.
  * @throws If the input does not match the expected UMM-G granule structure.
  */
@@ -44,7 +46,7 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
   granuleUr: string;
   producerGranuleId: string;
   allowDataGranule: boolean;
-  productionDateTime?: string;
+  productionDateTime: string;
 }): UMMGGranule {
   if (!isUMMGGranule(metadataObject)) {
     throw new Error('Invalid UMM-G JSON metadata');
