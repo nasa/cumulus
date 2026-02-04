@@ -143,9 +143,7 @@ async function buildWorkflow(
   payload,
   meta
 ) {
-  console.log(`Getting template s3://${bucketName}/${templateKey(stackName)}`);
   const template = await getJsonS3Object(bucketName, templateKey(stackName));
-  console.log(`Building workflow message for workflow ${workflowName}`);
 
   if (collection) {
     const collectionsApiResponse = await collectionsApi.getCollection({
