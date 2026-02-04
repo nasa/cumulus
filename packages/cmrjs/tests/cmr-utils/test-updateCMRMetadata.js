@@ -63,6 +63,7 @@ test.afterEach.always(async (t) => {
 
 test('updates UMMG metadata with Granule Identifier update, when publish is set to false', async (t) => {
   const cmrFile = t.context.cmrFileJson;
+  const productionDateTime = new Date().toISOString();
   const result = await updateCMRMetadata({
     granuleId: 'new-granule',
     producerGranuleId: 'original-id',
@@ -74,6 +75,8 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
+    allowDataGranule: true,
+    productionDateTime,
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
   const expectedObject = {
@@ -85,6 +88,8 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
           IdentifierType: 'ProducerGranuleId',
         },
       ],
+      DayNightFlag: 'UNSPECIFIED',
+      ProductionDateTime: productionDateTime,
     },
     RelatedUrls: [
       {
@@ -176,6 +181,7 @@ test('updates Echo10 metadata with UR update, when publish is set to false', asy
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
+    allowDataGranule: true,
   });
 
   const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
@@ -208,9 +214,12 @@ test('updateCMRMetadata does not updates ECHO10 metadata granule identifiers whe
 
 test('publishes UMMG metadata when publish is set to true', async (t) => {
   const cmrFile = t.context.cmrFileJson;
+  const productionDateTime = new Date().toISOString();
   const result = await updateCMRMetadata({
     granuleId: 'new-granule',
     producerGranuleId: 'original-id',
+    allowDataGranule: true,
+    productionDateTime,
     cmrFile: t.context.cmrFileJson,
     files: [],
     distEndpoint: 'https://fake-dist-endpoint',
@@ -240,6 +249,8 @@ test('publishes UMMG metadata when publish is set to true', async (t) => {
           IdentifierType: 'ProducerGranuleId',
         },
       ],
+      DayNightFlag: 'UNSPECIFIED',
+      ProductionDateTime: productionDateTime,
     },
     RelatedUrls: [
       {
@@ -278,6 +289,7 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
   const result = await updateCMRMetadata({
     granuleId: 'updated-id',
     producerGranuleId: 'original-id',
+    allowDataGranule: true,
     cmrFile,
     files: [],
     distEndpoint: 'https://example.com',

@@ -510,6 +510,7 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
     updateGranuleIdentifiers: true,
     granuleId: 'TestFixtureGranuleUR_uniq',
     producerGranuleId: 'TestFixtureGranuleUR',
+    allowDataGranule: true,
   });
   t.is(metadataObject.Granule.GranuleUR, 'TestFixtureGranuleUR_uniq');
   t.true(metadataObject.Granule.DataGranule instanceof Map, 'DataGranule should be a Map for element ordering');
@@ -540,6 +541,7 @@ test.serial('UpdateEcho10XMLMetadata maintains ECHO10 DataGranule element order'
     updateGranuleIdentifiers: true,
     granuleId: 'TestFixtureGranuleUR_uniq',
     producerGranuleId: 'NEW_PRODUCER_ID',
+    allowDataGranule: true,
   });
 
   t.true(metadataObject.Granule.DataGranule instanceof Map);
@@ -578,6 +580,7 @@ test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correct
   const { metadataObject } = await updateUMMGMetadata({
     granuleId: 'TestFixtureGranuleUR_uniq',
     producerGranuleId: 'TestFixtureGranuleUR',
+    allowDataGranule: true,
     cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
     files: filesObject,
     distEndpoint,

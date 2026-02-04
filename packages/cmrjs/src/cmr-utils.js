@@ -1305,11 +1305,15 @@ async function reconcileCMRMetadata({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
+  allowDataGranule,
+  productionDateTime,
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
     return await updateCMRMetadata({
       granuleId,
+      allowDataGranule,
+      productionDateTime,
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,
       distEndpoint,
