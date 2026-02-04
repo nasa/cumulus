@@ -1,11 +1,3 @@
-const { deleteExecution } = require('@cumulus/api-client/executions');
-const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
-const { getExecution } = require('@cumulus/api-client/executions');
-
-const { buildAndExecuteWorkflow} = require('../../helpers/workflowUtils');
-const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
-const { loadConfig } = require('../../helpers/testUtils');
-const { sleep } = require('@cumulus/common');
 const { v4: uuidv4 } = require('uuid');
 
 const {
@@ -15,11 +7,14 @@ const {
 } = require('@cumulus/api-client/granules');
 
 const {
-  updateCollection
+  updateCollection,
 } = require('@cumulus/api-client/collections');
 
 const { createCollection } = require('@cumulus/api-client/collections');
 const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError');
+const { loadConfig } = require('../../helpers/testUtils');
+const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 
 describe('The granule-invalidator deployed within a Cumulus workflow', () => {
   let workflowExecution;
@@ -33,7 +28,7 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
     config = await loadConfig();
 
     // This postfix is a random string to assure unique collection names
-    let randomPostfix = uuidv4().slice(0, 8);
+    const randomPostfix = uuidv4().slice(0, 8);
     collectionName = `test-collection-${randomPostfix}`;
     collectionVersion = '001';
     ingestDateBeforeCutoffId = `before-created-at-cutoff-${randomPostfix}`;
@@ -52,29 +47,29 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
           sampleFileName: 'sample.h5',
         },
       ],
-    }
+    };
 
-    await createCollection({prefix: config.stackName,
-      collection: collectionConfig
+    await createCollection({ prefix: config.stackName,
+      collection: collectionConfig,
     });
 
     // Register granules that are on either side of a date threshold based on endingDateTime
-    await createGranule({prefix: config.stackName,
+    await createGranule({ prefix: config.stackName,
       body: {
         granuleId: ingestDateBeforeCutoffId,
         producerGranuleId: ingestDateBeforeCutoffId,
         collectionId: `${collectionName}___${collectionVersion}`,
         status: 'completed',
-      }
+      },
     });
 
-    await createGranule({prefix: config.stackName,
+    await createGranule({ prefix: config.stackName,
       body: {
         granuleId: ingestDateAfterCutoffId,
         producerGranuleId: ingestDateAfterCutoffId,
         collectionId: `${collectionName}___${collectionVersion}`,
         status: 'completed',
-      }
+      },
     });
 
     const now = Date.now();
@@ -91,7 +86,7 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
         collectionId: `${collectionName}___${collectionVersion}`,
         createdAt: oneHourAgo,
         status: 'completed',
-      }
+      },
     });
 
     await updateGranule({
@@ -104,17 +99,17 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
         collectionId: `${collectionName}___${collectionVersion}`,
         createdAt: now,
         status: 'completed',
-      }
+      },
     });
 
     const rolloffConfiguration = {
-      'granule_invalidations': [
+      granule_invalidations: [
         {
-          'type': 'ingest_date',
-          'maximum_minutes_old': beforeCutoffMinutesOld / 2,
-        }
-      ]
-    }
+          type: 'ingest_date',
+          maximum_minutes_old: beforeCutoffMinutesOld / 2,
+        },
+      ],
+    };
 
     collectionConfig.meta = rolloffConfiguration;
 
@@ -143,12 +138,11 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
   });
 
   it('ingestDateDateTime rolloff configuration is honored', async () => {
-
     await expectAsync(getGranule(
       {
         prefix: config.stackName,
         granuleId: ingestDateBeforeCutoffId,
-        collectionId: `${collectionName}___${collectionVersion}`
+        collectionId: `${collectionName}___${collectionVersion}`,
       }
     )).toBeRejectedWithError(CumulusApiClientError, /404/);
 
@@ -156,21 +150,21 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
       {
         prefix: config.stackName,
         granuleId: ingestDateAfterCutoffId,
-        collectionId: `${collectionName}___${collectionVersion}`
+        collectionId: `${collectionName}___${collectionVersion}`,
       }
     );
     expect(afteringestDateDateTimeCutoffGranule.status).toEqual('completed');
   });
 
   afterAll(async () => {
-    removeCollectionAndAllDependencies({
+    await removeCollectionAndAllDependencies({
       prefix: config.stackName,
       collection: {
         name: collectionName,
         version: collectionVersion,
       },
     });
-    removeCollectionAndAllDependencies({
+    await removeCollectionAndAllDependencies({
       prefix: config.stackName,
       collection: {
         name: collectionName,
