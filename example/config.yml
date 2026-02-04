@@ -50,6 +50,12 @@ jn-tf:
 kk2-tf:
   bucket: kk2-tf-internal
 
+mikedorfman:
+  bucket: mikedorfman-internal
+
+mason-t-yates:
+  bucket: mason-t-yates-internal
+
 np:
   bucket: npauzenga-internal
 
