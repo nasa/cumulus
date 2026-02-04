@@ -7,7 +7,6 @@ resource "aws_lambda_function" "update_granules_cmr_metadata_file_links_task" {
   runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "UpdateGranulesCmrMetadataFileLinks", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "UpdateGranulesCmrMetadataFileLinks", 1024)
-  allow_data_granule = var.allow_data_granule
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 
@@ -18,6 +17,7 @@ resource "aws_lambda_function" "update_granules_cmr_metadata_file_links_task" {
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
       system_bucket               = var.system_bucket
+      allow_data_granule          = var.allow_data_granule
     }
   }
 

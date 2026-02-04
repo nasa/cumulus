@@ -838,6 +838,7 @@ function updateUMMGMetadataObject({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
+  allowDataGranule,
 }) {
   const updatedMetadataObject = cloneDeep(metadataObject);
   const useDirectS3Type = shouldUseDirectS3Type(updatedMetadataObject);
@@ -856,6 +857,9 @@ function updateUMMGMetadataObject({
   const originalURLs = get(updatedMetadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   set(updatedMetadataObject, 'RelatedUrls', mergedURLs);
+  if (!allowDataGranule) {
+    delete updatedMetadataObject.DataGranule;
+  }
   return updatedMetadataObject;
 }
 
@@ -907,6 +911,7 @@ async function updateUMMGMetadata({
     bucketTypes,
     cmrGranuleUrlType,
     distributionBucketMap,
+    allowDataGranule,
   });
   if (updateGranuleIdentifiers) {
     // Type checks are needed as this callers/API are not all typed/ts converted yet
