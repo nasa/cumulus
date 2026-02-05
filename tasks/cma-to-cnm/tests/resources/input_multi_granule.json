@@ -1,0 +1,104 @@
+{
+    "cumulus_meta": {
+        "cumulus_version": "9.9.0",
+        "message_source": "sfn",
+        "system_bucket": "dummy_bucket"
+    },
+    "exception": "None",
+    "meta": {
+        "collection": {
+            "name": "VIIRS_NPP-NAVO-L2P-v3.0",
+            "meta": {
+                "provider_path": "/cumulus-test/gds2/NAVO/"
+            }
+        },
+        "provider": {
+            "globalConnectionLimit": 1,
+            "host": "ops-metis.jpl.nasa.gov",
+            "id": "podaac-test-sftp",
+            "password": "password",
+            "protocol": "sftp",
+            "username": "cumulus-test"
+        },
+        "provider_path": "/cumulus-test/gds2/NAVO/"
+    },
+    "payload": {
+        "granules": [
+            {
+                "granuleId": "20220111135009-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0",
+                "dataType": "VIIRS_NPP-NAVO-L2P-v3.0",
+                "version": "3.0",
+                "files": [
+                    {
+                        "name": "20220111135009-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0.nc",
+                        "path": "/cumulus-test/gds2/NAVO",
+                        "size": 18167706,
+                        "time": 1641930305000,
+                        "bucket": "hryeung-ia-podaac-protected",
+                        "url_path": "{cmrMetadata.CollectionReference.ShortName}",
+                        "type": "data"
+                    },
+                    {
+                        "name": "20220111135009-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0.nc.md5",
+                        "path": "/cumulus-test/gds2/NAVO",
+                        "size": 97,
+                        "time": 1641930305000,
+                        "bucket": "hryeung-ia-podaac-public",
+                        "url_path": "{cmrMetadata.CollectionReference.ShortName}",
+                        "type": "metadata"
+                    }
+                ]
+            },
+            {
+                "granuleId": "20220111135133-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0",
+                "dataType": "VIIRS_NPP-NAVO-L2P-v3.0",
+                "version": "3.0",
+                "files": [
+                    {
+                        "name": "20220111135133-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0.nc",
+                        "path": "/cumulus-test/gds2/NAVO",
+                        "size": 18294159,
+                        "time": 1641930305000,
+                        "bucket": "hryeung-ia-podaac-protected",
+                        "url_path": "{cmrMetadata.CollectionReference.ShortName}",
+                        "type": "data"
+                    },
+                    {
+                        "name": "20220111135133-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0.nc.md5",
+                        "path": "/cumulus-test/gds2/NAVO",
+                        "size": 97,
+                        "time": 1641930305000,
+                        "bucket": "hryeung-ia-podaac-public",
+                        "url_path": "{cmrMetadata.CollectionReference.ShortName}",
+                        "type": "metadata"
+                    }
+                ]
+            },
+            {
+                "granuleId": "20220111135258-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0",
+                "dataType": "VIIRS_NPP-NAVO-L2P-v3.0",
+                "version": "3.0",
+                "files": [
+                    {
+                        "name": "20220111135258-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0.nc",
+                        "path": "/cumulus-test/gds2/NAVO",
+                        "size": 17146221,
+                        "time": 1641930305000,
+                        "bucket": "hryeung-ia-podaac-protected",
+                        "url_path": "{cmrMetadata.CollectionReference.ShortName}",
+                        "type": "data"
+                    },
+                    {
+                        "name": "20220111135258-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0.nc.md5",
+                        "path": "/cumulus-test/gds2/NAVO",
+                        "size": 97,
+                        "time": 1641930305000,
+                        "bucket": "hryeung-ia-podaac-public",
+                        "url_path": "{cmrMetadata.CollectionReference.ShortName}",
+                        "type": "metadata"
+                    }
+                ]
+            }
+        ]
+    }
+}
