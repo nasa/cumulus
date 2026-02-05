@@ -156,9 +156,9 @@ Workflow **error-handling** can be configured as discussed in the [Error-Handlin
 
 The granule-invalidator task is provided for you as part of the `cumulus` terraform module, no specific configuration is needed.  In order to provide the critera that defines the behavior of this rolloff functionality, one of three patterns can be configured;
 
- - science_date; Identify granules that are older than a specified number of minutes based on their stored ProductionDateTime.
- - ingest_date; Identify granules that are older than a specified number of minutes based on their CreatedAt time (eg when they were initially ingested into Cumulus).
- - cross_collection; Identify granules that have a begin and end datetime that match exactly those of another specified collection.
+- science_date; Identify granules that are older than a specified number of minutes based on their stored ProductionDateTime.
+- ingest_date; Identify granules that are older than a specified number of minutes based on their CreatedAt time (eg when they were initially ingested into Cumulus).
+- cross_collection; Identify granules that have a begin and end datetime that match exactly those of another specified collection.
 
 Example: The following sample configuration lists all AMSR_E_L2_Rain v13 granules older than 525600 minutes and all granules that have a corresponding granule in the AMSR_E_L2_Ocean v13 collection that match beginning and end time:
 
