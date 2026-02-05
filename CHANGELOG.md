@@ -22,26 +22,38 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4388**
   - Added cnm_to_cma task (lambda).
   - Original cnm_to_cma was written in Java.  Converted to Python.
+- **CUMULUS-4382**
+  - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
+- **CUMULUS-4382**
+  - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
+- **CUMULUS-4385**
+  - Added supporting Terraform for the granule-invalidator task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
+
+>>>>>>> master
 ### Changed
 
-- **CUMULUS-4313**
-  - Updated lerna dev-dependency to v8
-  - Added CI shim script to allow `lerna publish` to work with tar pinned to `^7.5.3`
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations return consistent output formats across different bulk opertions
     (previously, some bulk operation aggregated errors while others returned per-granule errors)
   - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
     `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
 
-## [Unreleased]
+### Notable Changes
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to:
+    - Support `granuleInventoryReportName` and `s3GranuleIdInputFile` in the payload.
+    - Return consistent output formats across endpoints (previously, some endpoints aggregated errors
+      while others returned per-granule errors)
+
+## [v21.3.0] 2026-01-26
 
 ### Migration Notes
 
 Please complete the following steps before upgrading Cumulus.
 
-#### CUMULUS-4459 New index added to the granules table to improve Dashboard performance
-
-- The fix introduced in CUMULUS-4459 requires a manual database update in the production environment.
+- **CUMULUS-4459 New index added to the granules table to improve Dashboard performance**
+  - The fix introduced in CUMULUS-4459 requires a manual database update in the production environment.
   This step ensures the new index is created successfully, even in the unlikely event that the database-migration
   Lambda function did not complete the index creation before timing out.
 
@@ -50,6 +62,10 @@ Please complete the following steps before upgrading Cumulus.
   ```text
   CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
   ```
+- **CUMULUS-4313**
+  - Update Async Operation container to new version 55, `cumuluss/async-operation:55`. Users should update their references to `async-operation` with the new version.
+  - Updated lerna dev-dependency to v8
+  - Added CI shim script to allow `lerna publish` to work with tar pinned to `^7.5.3`
 
 ### Notable Changes
 
@@ -66,11 +82,6 @@ Please complete the following steps before upgrading Cumulus.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
     reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
-- **CUMULUS-4473**
-  - Updated Granules Bulk Operations API endpoints to:
-    - Support `granuleInventoryReportName` and `s3GranuleIdInputFile` in the payload.
-    - Return consistent output formats across endpoints (previously, some endpoints aggregated errors
-      while others returned per-granule errors)
 
 ### Added
 
@@ -85,8 +96,6 @@ Please complete the following steps before upgrading Cumulus.
     By setting `db_log_min_duration_ms` to a positive value (in milliseconds) and `enabled_cloudwatch_logs_exports`
     to `["postgresql"]`, RDS will log and export any database queries that take longer than that threshold.
     The module also configures the required RDS extensions and parameters necessary for slow query instrumentation.
-- **CUMULUS-4382**
-  - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
 
 ### Changed
 
@@ -121,13 +130,14 @@ Please complete the following steps before upgrading Cumulus.
   - Corrected misspelling in README.md related to installing `uv`.
   - Added override for `tar` in package.json.
 
-
 ### Fixed
 
 - **CUMULUS-4486**
   - Fixed a small bug with `rulesHelpers` in which `rule.rule.meta.allowProviderMismatchOnRuleFilter` was erroring due to
     database validation errors to instead refer to `rule.meta.allowProviderMismatchOnRuleFilter`
   - Added `allowProviderMismatchOnRuleFilter` to the `meta` field of `rules` in `/api/lib/schemas`s
+- **CUMULUS-4458**
+  - Fixed a small bug with `message_consumer` lambda env and function variable names to match so the lambda env var `allowProviderMismatchOnRuleFilter` can be properly used when set
 
 ## [v21.2.0] 2025-12-06
 
@@ -153,8 +163,6 @@ Please complete the following steps before upgrading Cumulus.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
     reusing their existing security group, ensuring compatibility with existing
     `data-persistence-tf` and `cumulus-tf` modules.
-- **CUMULUS-4458**
-  - Fixed a small bug with `message_consumer` lambda env and function variable names to match so the lambda env var `allowProviderMismatchOnRuleFilter` can be properly used when set
 
 ### Added
 
@@ -9466,7 +9474,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.2.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.0...HEAD
+[v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.3.0
 [v21.2.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.2.0
 [v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
 [v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.2...v21.0.0
