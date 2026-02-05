@@ -53,7 +53,7 @@ export class GranuleSearch extends BaseSearch {
       pdrs: pdrsTable,
     } = TableNames;
     const countQuery = knex(this.tableName)
-      .count('*');
+      .count('* as count');
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)

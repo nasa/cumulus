@@ -103,7 +103,7 @@ abstract class BaseSearch {
    * @returns whether an estimated row count should be returned
    */
   protected shouldEstimateRowcount(countSql: string): boolean {
-    const isBasicQuery = (countSql === `select count(*) from "${this.tableName}"`);
+    const isBasicQuery = (countSql === `select count(* as count) from "${this.tableName}"`);
     return this.dbQueryParameters.estimateTableRowCount === true && isBasicQuery;
   }
 
@@ -140,7 +140,7 @@ abstract class BaseSearch {
    *
    * @returns metadata template
    */
-  private _metaTemplate(): Meta {
+  protected _metaTemplate(): Meta {
     return {
       name: 'cumulus-api',
       stack: process.env.stackName,
@@ -159,7 +159,7 @@ abstract class BaseSearch {
     searchQuery: Knex.QueryBuilder,
   } {
     const countQuery = knex(this.tableName)
-      .count('*');
+      .count('* as count');
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`);

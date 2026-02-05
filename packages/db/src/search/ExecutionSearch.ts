@@ -86,7 +86,7 @@ export class ExecutionSearch extends BaseSearch {
     }
 
     const countQuery = knex(this.tableName)
-      .count('*');
+      .count('* as count');
 
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
