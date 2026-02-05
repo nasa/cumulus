@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/cnm-to-cma",
   "version": "21.0.1",
-  "description": "CNM Response task",
+  "description": "CNM to CMA task",
   "main": "index.js",
   "directories": {
     "test": "tests"
@@ -24,7 +24,7 @@
     "prepare": "npm run build",
     "test": "uv run pytest -q"
   },
-  "author": "Cumulus Authors",
+  "author": "Cumulus Author : ESHIN D YEn",
   "license": "Apache-2.0",
   "devDependencies": {
     "@cumulus/schemas": "21.0.1"
