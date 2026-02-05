@@ -1,6 +1,6 @@
 import { NewCollectionRecord, CollectionRecord } from '@cumulus/types/api/collections';
 import { PostgresCollection, PostgresCollectionRecord } from '../types/collection';
-const { removeNilProperties } = require('@cumulus/common/util');
+const { parseIfJson, removeNilProperties } = require('@cumulus/common/util');
 
 /**
 * Translates a PostgresCollectionRecord object to a `CollectionRecord` API collection object
@@ -19,12 +19,12 @@ export const translatePostgresCollectionToApiCollection = (
   duplicateHandling: collectionRecord.duplicate_handling,
   granuleId: collectionRecord.granule_id_validation_regex,
   granuleIdExtraction: collectionRecord.granule_id_extraction_regex,
-  files: collectionRecord.files,
+  files: parseIfJson(collectionRecord.files),
   reportToEms: collectionRecord.report_to_ems,
   sampleFileName: collectionRecord.sample_file_name,
   ignoreFilesConfigForDiscovery: collectionRecord.ignore_files_config_for_discovery,
-  meta: collectionRecord.meta,
-  tags: collectionRecord.tags,
+  meta: parseIfJson(collectionRecord.meta),
+  tags: parseIfJson(collectionRecord.tags),
 }));
 
 /**

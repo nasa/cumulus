@@ -15,6 +15,8 @@ import type {
 import isPlainObject from 'lodash/isPlainObject';
 import curry from 'lodash/curry';
 import isNil from 'lodash/isNil';
+import isObject from 'lodash/isObject';
+import isString from 'lodash/isString';
 import omitBy from 'lodash/omitBy';
 import * as log from './log';
 
@@ -131,3 +133,28 @@ export const omitDeepBy: OmitDeepBy = (object: any, cb: any) => {
 
   return omitByDeepByOnOwnProps(object);
 };
+
+/**
+ * Safely parses a value if it is a JSON string resulting in an Object or Array.
+ * Returns the parsed collection or the original input.
+ *
+ * @param val
+ * @returns
+ */
+export const parseIfJson = (val: unknown): any => {
+  if (!isString(val)) return val;
+
+  try {
+    const result = JSON.parse(val);
+    return isObject(result) ? result : val;
+  } catch (e) {
+    return val;
+  }
+};
+
+// Quick Test Results:
+// parseIfJson('{"a":1}') -> { a: 1 }  (Parsed Object)
+// parseIfJson('[1, 2]')   -> [1, 2]    (Parsed Array)
+// parseIfJson('123')      -> "123"     (Strict: keeps string)
+// parseIfJson(true)       -> true      (Bypassed)
+// parseIfJson(null)       -> null      (Bypassed)
