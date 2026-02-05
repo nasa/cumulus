@@ -3,7 +3,6 @@ const { v4: uuidv4 } = require('uuid');
 const {
   createGranule,
   getGranule,
-  updateGranule,
 } = require('@cumulus/api-client/granules');
 
 const {
@@ -21,8 +20,8 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
   let config;
   let collectionName;
   let collectionVersion;
-  let ingestDateBeforeCutoffId;
-  let ingestDateAfterCutoffId;
+  let scienceDateBeforeCutoffId;
+  let scienceDateAfterCutoffId;
   let collectionId;
 
   beforeAll(async () => {
@@ -33,8 +32,8 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
     collectionName = `test-collection-${randomPostfix}`;
     collectionVersion = '001';
     collectionId = `${collectionName}___${collectionVersion}`;
-    ingestDateBeforeCutoffId = `before-created-at-cutoff-${randomPostfix}`;
-    ingestDateAfterCutoffId = `after-created-at-cutoff-${randomPostfix}`;
+    scienceDateBeforeCutoffId = `before-created-at-cutoff-${randomPostfix}`;
+    scienceDateAfterCutoffId = `after-created-at-cutoff-${randomPostfix}`;
 
     const collectionConfig = {
       name: collectionName,
@@ -55,62 +54,52 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
       collection: collectionConfig,
     });
 
-    // Register granules that are on either side of a date threshold based on createdAt time
-    // While createdAt cannot be specified at creation time, it can be updated after
+    const cutoffDate = '2026-01-29T00:00:00.000Z';
+    const cutoffMinutesOld = Math.floor((Date.now() - Date.parse(cutoffDate)) / (60 * 1000));
+    const afterCutoffDate = new Date(Date.parse(cutoffDate) + 24 * 60 * 60 * 1000).toISOString();
+    const beforeCutoffDate = new Date(Date.parse(cutoffDate) - 24 * 60 * 60 * 1000).toISOString();
+
+    // Register granules that are on either side of a date threshold based on productionDateTime
+    console.log(beforeCutoffDate);
+    console.log(afterCutoffDate);
     await createGranule({ prefix: config.stackName,
       body: {
-        granuleId: ingestDateBeforeCutoffId,
-        producerGranuleId: ingestDateBeforeCutoffId,
+        granuleId: scienceDateAfterCutoffId,
+        producerGranuleId: scienceDateAfterCutoffId,
         collectionId: collectionId,
         status: 'completed',
+        productionDateTime: afterCutoffDate,
+
+        // In order to have `productionDateTime` get written to the granule,
+        // these other fields must accompany it (although they don't have to be set to a
+        // valid date)
+        beginningDateTime: '',
+        endingDateTime: '',
+        lastUpdateDateTime: '',
       },
     });
 
     await createGranule({ prefix: config.stackName,
       body: {
-        granuleId: ingestDateAfterCutoffId,
-        producerGranuleId: ingestDateAfterCutoffId,
+        granuleId: scienceDateBeforeCutoffId,
+        producerGranuleId: scienceDateBeforeCutoffId,
         collectionId: collectionId,
         status: 'completed',
-      },
-    });
+        productionDateTime: beforeCutoffDate,
 
-    const now = Date.now();
-    const beforeCutoffMinutesOld = 60;
-    // Halfway between "now" (0 minutes old) and the oldest granule (60 minutes old)
-    const cutoffMinutesOld = 30;
-    const oneHourAgo = new Date(now - beforeCutoffMinutesOld * 60 * 1000).getTime();
-
-    await updateGranule({
-      prefix: config.stackName,
-      granuleId: ingestDateBeforeCutoffId,
-      collectionId: collectionId,
-      body: {
-        granuleId: ingestDateBeforeCutoffId,
-        producerGranuleId: ingestDateBeforeCutoffId,
-        collectionId: collectionId,
-        createdAt: oneHourAgo,
-        status: 'completed',
-      },
-    });
-
-    await updateGranule({
-      prefix: config.stackName,
-      granuleId: ingestDateAfterCutoffId,
-      collectionId: collectionId,
-      body: {
-        granuleId: ingestDateAfterCutoffId,
-        producerGranuleId: ingestDateAfterCutoffId,
-        collectionId: collectionId,
-        createdAt: now,
-        status: 'completed',
+        // In order to have `productionDateTime` get written to the granule,
+        // these other fields must accompany it (although they don't have to be set to a
+        // valid date)
+        beginningDateTime: '',
+        endingDateTime: '',
+        lastUpdateDateTime: '',
       },
     });
 
     const rolloffConfiguration = {
       granule_invalidations: [
         {
-          type: 'ingest_date',
+          type: 'science_date',
           maximum_minutes_old: cutoffMinutesOld,
         },
       ],
@@ -142,23 +131,23 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
     expect(workflowExecution.status).toEqual('completed');
   });
 
-  it('ingestDateDate rolloff configuration is honored', async () => {
+  it('scienceDateDate rolloff configuration is honored', async () => {
     await expectAsync(getGranule(
       {
         prefix: config.stackName,
-        granuleId: ingestDateBeforeCutoffId,
+        granuleId: scienceDateBeforeCutoffId,
         collectionId: collectionId,
       }
     )).toBeRejectedWithError(CumulusApiClientError, /404/);
 
-    const afteringestDateDateTimeCutoffGranule = await getGranule(
+    const afterscienceDateDateTimeCutoffGranule = await getGranule(
       {
         prefix: config.stackName,
-        granuleId: ingestDateAfterCutoffId,
+        granuleId: scienceDateAfterCutoffId,
         collectionId: collectionId,
       }
     );
-    expect(afteringestDateDateTimeCutoffGranule.status).toEqual('completed');
+    expect(afterscienceDateDateTimeCutoffGranule.status).toEqual('completed');
   });
 
   afterAll(async () => {
