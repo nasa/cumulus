@@ -71,6 +71,10 @@ output "files_to_granules_task" {
   value = module.ingest.files_to_granules_task
 }
 
+output "granule_invalidator_task" {
+  value = module.ingest.granule_invalidator_task
+}
+
 output "hello_world_task" {
   value = module.ingest.hello_world_task
 }
