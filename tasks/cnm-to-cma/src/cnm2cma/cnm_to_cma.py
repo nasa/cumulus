@@ -52,7 +52,6 @@ def mapper(cnm: dict, config: dict) -> models_granule.Granule:
     try:
         cnm_model = models_cnm.CloudNotificationMessageCnm12.model_validate(cnm)
         LOGGER.info(f"CNM Model in mapper: {cnm_model}")
-        granule_id = cnm_model.root.product.name
         granule_id_extraction = config.get("collection", {}).get("granuleIdExtraction")
         # retrieve granule_id from product.names
         product = cnm_model.root.product
@@ -65,6 +64,11 @@ def mapper(cnm: dict, config: dict) -> models_granule.Granule:
             matcher = re.search(granule_id_extraction, granule_id)
             if matcher:
                 granule_id = matcher.group(1)
+            else:
+                LOGGER.warn(
+                    f"granuleIdExtraction regex: {granule_id_extraction} did not match the "
+                    f"granuleId: {granule_id} but program will continue"
+                )
         LOGGER.info(f"Granule ID: {granule_id}")
         cnm_input_files: list[models_cnm.File] = get_cnm_input_files(product)
         cma_files: list[models_cnm.File] = create_granule_files(cnm_input_files)
@@ -99,26 +103,13 @@ def create_granule_files(
     for cnm_file in input_files:
         if not cnm_file.uri or len(cnm_file.uri.strip()) == 0:
             raise ValueError("File uri is empty or None")
-        uri = cnm_file.uri.strip()
-        granule_file: models_granule.File = None
-        if uri.lower().startswith("s3://"):
-            granule_file = build_granule_file(cnm_file, "s3")
-        elif uri.lower().startswith("https://") or uri.lower().startswith("http://"):
-            protocol = "https" if uri.lower().startswith("https://") else "http"
-            granule_file = build_granule_file(cnm_file, protocol)
-        elif uri.lower().startswith("sftp://"):
-            granule_file = build_granule_file(cnm_file, "sftp")
-        else:
-            LOGGER.error(
-                "Got problem here while granule file is NONE. "
-                f" Probably due to unsupported protocol in uri: {uri}"
-            )
+        granule_file: models_granule.File = build_granule_file(cnm_file)
         if granule_file:
             granule_files.append(granule_file)
     return granule_files
 
 
-def build_granule_file(cnm_file: Any, protocol: str) -> models_granule.File:
+def build_granule_file(cnm_file: Any) -> models_granule.File:
     """Builds a granule file from a CNM file based on the protocol.
 
     Args:
@@ -131,12 +122,15 @@ def build_granule_file(cnm_file: Any, protocol: str) -> models_granule.File:
     """
     uri = cnm_file.uri
     match = re.match(
-        r"^(?:s3|https?|sftp)://(?P<host>[^/]+)(?:/(?P<full_path>.*))?$", uri
+        r"^(?P<protocol>.*?)://(?P<host>[^/]+)(?:/(?P<full_path>.*))?$", uri
     )
     if not match:
         LOGGER.error(f"Invalid URI format: {uri}")
-        return None
+        raise ValueError(f"Invalid URI format: {uri}")
     groups = match.groupdict()
+    protocol = groups["protocol"]
+    if protocol not in ["http", "https", "sftp", "s3"]:
+        raise ValueError(f"Unsupported protocol: {protocol}")
     host = groups["host"]
     full_path = groups["full_path"] or ""
     path = full_path.rsplit("/", 1)[0] if full_path else ""

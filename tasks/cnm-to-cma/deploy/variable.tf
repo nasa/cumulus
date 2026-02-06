@@ -34,3 +34,8 @@ variable "timeout" {
   type = number
   default = 120
 }
+
+variable "default_log_retention_days" {
+  description = "The number of days to retain logs in CloudWatch"
+  type        = number
+}

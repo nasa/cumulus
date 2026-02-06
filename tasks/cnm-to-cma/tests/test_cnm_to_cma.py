@@ -73,6 +73,16 @@ class TestCNMToCMA:
                 config = {}
                 mapper(data, config)
 
+    def test_mapper_with_unsupported_protocol(self):
+        with open(
+            "tests/resources/cumulus_sns_v1.0_notification_unsupported_protocols.json"
+        ) as f:
+            data = json.load(f)
+            with pytest.raises(ValueError) as exc_info:
+                config = {}
+                mapper(data, config)
+            assert "Unsupported protocol: as4" in str(exc_info.value)
+
     def test_build_granule_file(self):
         """Test case is using a input file which is nearly impossible to happen
         i.e.. the sns file containing data source from different protodols -

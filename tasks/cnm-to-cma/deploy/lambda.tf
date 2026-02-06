@@ -15,3 +15,9 @@ resource "aws_lambda_function" "cnm_to_cma" {
 
   tags = local.tags
 }
+
+resource "aws_cloudwatch_log_group" "granule_invalidator_task" {
+  name              = "/aws/lambda/${aws_lambda_function.cnm_to_cma.function_name}"
+  retention_in_days = var.default_log_retention_days
+  tags              = local.tags
+}
