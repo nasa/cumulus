@@ -1,0 +1,39 @@
+{
+  "title": "CnmResponseConfig",
+  "description": "Describes the config used by the cnm-response task",
+  "type": "object",
+  "required": [
+    "cnm_s",
+    "responseArns",
+    "exception"
+  ],
+  "properties": {
+    "cnm_s": {
+      "description": "The input CNM to the workflow",
+      "oneOf": [{ "type": "object" }, { "type": "null" }]
+    },
+    "responseArns": {
+      "type": "array",
+      "description": "The ARN of the stream to write out to",
+      "items": { "type": "string" }
+    },
+    "exception": {
+      "description": "The 'exception' field from the workflow",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "required": ["Error", "Cause"],
+          "properties": {
+            "Error": { "type": "string" },
+            "Cause": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "distribution_endpoint": {
+      "type": "string",
+      "description": "HTTP endpoint to use for file URIs. If not provided, s3 URIs will be used instead."
+    }
+  }
+}
