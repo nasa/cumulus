@@ -159,6 +159,11 @@ variable "system_bucket" {
   type = string
 }
 
+variable "private_api_lambda_arn" {
+  description = "The ARN of the private API lambda function"
+  type        = string
+}
+
 variable "tags" {
   description = "Tags to be applied to managed resources"
   type        = map(string)

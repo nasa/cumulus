@@ -53,3 +53,8 @@ variable "default_log_retention_days" {
   description = "The number of days to retain logs in CloudWatch"
   type        = number
 }
+
+variable "private_api_lambda_arn" {
+  description = "The ARN of the private API lambda function"
+  type        = string
+}

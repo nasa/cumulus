@@ -8,7 +8,7 @@ import os
 from typing import Any
 
 from cumulus_logger import CumulusLogger
-from granule_invalidator import lambda_adapter, schemas
+from granule_invalidator.granule_invalidator import lambda_adapter, schemas
 from run_cumulus_task import run_cumulus_task
 
 EVENT_TYPING = dict[Any, Any]
