@@ -53,7 +53,7 @@ async function handleScheduleEvent(event) {
     name: workflowDefinition.name,
     arn: workflowDefinition.arn,
   };
-  const collectionCustomMeta = get(collection, 'meta', {})
+  const collectionCustomMeta = get(collection, 'meta', {});
   const eventCustomMeta = get(event, 'meta', {});
 
   const message = buildQueueMessageFromTemplate({
@@ -67,8 +67,8 @@ async function handleScheduleEvent(event) {
         collection,
         provider,
         cmr: {
-          provider: collection.cmrProvider
-        }
+          provider: collection.cmrProvider,
+        },
       }
     ),
     payload: get(event, 'payload', {}),

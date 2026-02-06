@@ -4,7 +4,7 @@ export const up = async (knex: Knex): Promise<void> => {
   if (!await knex.schema.hasColumn('collections', 'cmr_provider')) {
     await knex.schema.table('collections', (table) => {
       table.text('cmr_provider')
-      .comment('CMR Provider for this collection');
+        .comment('CMR Provider for this collection');
     });
   }
 };
