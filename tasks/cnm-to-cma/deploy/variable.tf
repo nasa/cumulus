@@ -2,7 +2,8 @@ variable "prefix" {
   type = string
 }
 
-# The location of footprint dataset-config file. Ex. s3://my-internal/datset-config/
+# The ARN of the IAM role that the Lambda function will assume when it executes.
+# This role must have the necessary permissions to perform its tasks.
 variable "lambda_role" {
   type = string
 }
@@ -15,22 +16,13 @@ variable "subnet_ids" {
   type = list(string)
 }
 
-variable "region" {
-  type = string
-}
-
 variable "app_name" {
-  default = "workflow-normalizer"
+  default = "cnm_to_cma"
 }
 
 variable "default_tags" {
   type = map(string)
   default = {}
-}
-
-variable "log_level" {
-  type = string
-  default = "info"
 }
 
 variable "memory_size" {
@@ -41,4 +33,9 @@ variable "memory_size" {
 variable "timeout" {
   type = number
   default = 120
+}
+
+variable "default_log_retention_days" {
+  description = "The number of days to retain logs in CloudWatch"
+  type        = number
 }

@@ -8,16 +8,16 @@ resource "aws_lambda_function" "cnm_to_cma" {
   timeout       = var.timeout
   memory_size   = var.memory_size
 
-  environment {
-    variables = {
-      LOGGING_LEVEL               = var.log_level
-    }
-  }
-
   vpc_config {
     subnet_ids         = var.subnet_ids
     security_group_ids = var.security_group_ids
   }
 
   tags = local.tags
+}
+
+resource "aws_cloudwatch_log_group" "granule_invalidator_task" {
+  name              = "/aws/lambda/${aws_lambda_function.cnm_to_cma.function_name}"
+  retention_in_days = var.default_log_retention_days
+  tags              = local.tags
 }

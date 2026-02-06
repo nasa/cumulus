@@ -66,6 +66,23 @@ class TestCNMToCMA:
                 config = {}
                 mapper(data, config)
 
+    def test_mapper_with_empty_uri(self):
+        with open("tests/resources/cumulus_sns_v1.0_notification_empty_uri.json") as f:
+            data = json.load(f)
+            with pytest.raises(ValueError):
+                config = {}
+                mapper(data, config)
+
+    def test_mapper_with_unsupported_protocol(self):
+        with open(
+            "tests/resources/cumulus_sns_v1.0_notification_unsupported_protocols.json"
+        ) as f:
+            data = json.load(f)
+            with pytest.raises(ValueError) as exc_info:
+                config = {}
+                mapper(data, config)
+            assert "Unsupported protocol: as4" in str(exc_info.value)
+
     def test_build_granule_file(self):
         """Test case is using a input file which is nearly impossible to happen
         i.e.. the sns file containing data source from different protodols -
@@ -116,20 +133,20 @@ class TestCNMToCMA:
             fist_cnm_file: models_cnm.File = cnm_files[0]
             assert (
                 fist_cnm_file.uri
-                == "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file.nc"
+                == "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file1.nc"
             )
             assert fist_cnm_file.type == models_cnm.Type.data
-            assert fist_cnm_file.name == "production_file.nc"
+            assert fist_cnm_file.name == "production_file1.nc"
             assert fist_cnm_file.checksumType == models_cnm.ChecksumType.md5
             assert fist_cnm_file.checksum == "4241jafkjaj14jasjf"  # noqa: PLR2004
             assert fist_cnm_file.size == 123456  # noqa: PLR2004
             forth_cnm_file = cnm_files[3]
             assert (
                 forth_cnm_file.uri
-                == "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file.png"
+                == "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file2.png"
             )
             assert forth_cnm_file.type == models_cnm.Type.browse
-            assert forth_cnm_file.name == "production_file.png"
+            assert forth_cnm_file.name == "production_file2.png"
             assert forth_cnm_file.checksumType == models_cnm.ChecksumType.md5
-            assert forth_cnm_file.checksum == "addjd872342bfbf"
-            assert forth_cnm_file.size == 12345  # noqa: PLR2004
+            assert forth_cnm_file.checksum == "aaddjd872342bfbf"
+            assert forth_cnm_file.size == 22345  # noqa: PLR2004
