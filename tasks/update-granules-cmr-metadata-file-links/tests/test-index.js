@@ -87,6 +87,7 @@ test.beforeEach(async (t) => {
   ]);
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
+  process.env.allow_data_granule = 'true';
   putJsonS3Object(
     t.context.systemBucket,
     getDistributionBucketMapKey(t.context.stackName),
@@ -242,7 +243,7 @@ test.serial('update-granules-cmr-metadata-file-links properly handles a case whe
   t.deepEqual(message.granules, newPayload.input.granules);
 });
 
-test.serial('update-granules-cmr-metadata-file-links properly filters files using the excludeFileRegex', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links properly filters files using the excludeFileRegex and adds Data Granule if lambda var allow_data_granule is true', async (t) => {
   const newPayload = buildPayload(t);
 
   const ext = '.some.extension';
@@ -280,6 +281,42 @@ test.serial('update-granules-cmr-metadata-file-links properly filters files usin
     const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
     const payloadContents = await getObjectStreamContents(payloadResponse.Body);
     t.true(!payloadContents.includes(ext));
+    t.true(payloadContents.includes('DataGranule') && payloadContents.includes('DayNightFlag') && payloadContents.includes('ProductionDateTime'));
+  }));
+});
+
+test.serial('update-granules-cmr-metadata-file-links does not add Data Granule if lambda var allow_data_granule is set to false', async (t) => {
+  const newPayload = buildPayload(t);
+  process.env.allow_data_granule = 'false';
+
+  newPayload.input.granules.forEach((granule) => {
+    const newFile = {
+      bucket: t.context.publicBucket,
+      key: 'some/prefix/some_filename.json',
+      type: 'data',
+    };
+    granule.files.push(newFile);
+  });
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  await updateGranulesCmrMetadata(newPayload);
+
+  const cmrFiles = [];
+  await newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if (isCMRFile(file)) {
+        cmrFiles.push(file);
+      }
+    });
+  });
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
+    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
+    t.true(!payloadContents.includes('DataGranule'));
   }));
 });
 

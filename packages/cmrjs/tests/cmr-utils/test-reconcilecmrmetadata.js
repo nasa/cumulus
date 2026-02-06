@@ -58,6 +58,7 @@ test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile pr
       updatedFiles,
       distEndpoint,
       published,
+      allowDataGranule: true,
     });
 
     t.falsy(results);
@@ -79,11 +80,13 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
 
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restoreUpdateCMRMetadata = cmrUtils.__set__('updateCMRMetadata', fakeUpdateCMRMetadata);
-
+  const productionDateTime = new Date().toISOString();
   const bucketTypes = {};
 
   const params = {
     granuleId: granId,
+    allowDataGranule: true,
+    productionDateTime,
     updatedFiles,
     distEndpoint,
     published,
@@ -98,6 +101,8 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
     t.true(
       fakeUpdateCMRMetadata.calledOnceWith({
         granuleId: granId,
+        allowDataGranule: true,
+        productionDateTime,
         cmrFile: updatedFiles[1],
         files: updatedFiles,
         distEndpoint,
@@ -130,6 +135,7 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
       updatedFiles,
       distEndpoint,
       published,
+      allowDataGranule: true,
     });
 
     t.falsy(results);
@@ -159,6 +165,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   try {
     await cmrUtils.reconcileCMRMetadata({
       granuleId: granId,
+      allowDataGranule: true,
       updatedFiles,
       distEndpoint,
       published,
@@ -175,6 +182,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
       distributionBucketMap,
       granuleId: granId,
       producerGranuleId: granId,
+      allowDataGranule: true,
       updateGranuleIdentifiers: false,
     };
 
@@ -224,6 +232,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   try {
     await cmrUtils.reconcileCMRMetadata({
       granuleId: granId,
+      allowDataGranule: true,
       updatedFiles,
       distEndpoint,
       published,
@@ -240,6 +249,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
       distributionBucketMap,
       granuleId: granId,
       producerGranuleId: granId,
+      allowDataGranule: true,
       updateGranuleIdentifiers: false,
     };
 
@@ -277,7 +287,7 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
     metadataObject: { fake: 'metadata' },
   });
   const restoreUpdateUMMGMetadata = cmrUtils.__set__('updateUMMGMetadata', fakeUpdateUMMGMetadata);
-
+  const productionDateTime = new Date().toISOString();
   const fakePublishUMMGJSON2CMR = sinon.fake.resolves({});
   const restorePublishUMMGJSON2CMR = cmrUtils.__set__('publishUMMGJSON2CMR', fakePublishUMMGJSON2CMR);
   const publishObject = {
@@ -300,6 +310,8 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
       published,
       distributionBucketMap,
       bucketTypes,
+      allowDataGranule: true,
+      productionDateTime,
     });
 
     const paramsIntoUpdateUMMG = {
@@ -311,6 +323,8 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
       distributionBucketMap,
       granuleId: granId,
       producerGranuleId: granId,
+      productionDateTime,
+      allowDataGranule: true,
       updateGranuleIdentifiers: false,
     };
 
@@ -345,6 +359,7 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
       distEndpoint,
       published,
       bucketTypes: {},
+      allowDataGranule: true,
     }),
     {
       name: 'CMRMetaFileNotFound',

@@ -12,6 +12,7 @@ test('updates GranuleUR and adds ProducerGranuleId when Identifiers is missing',
     metadataObject: metadata,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
+    allowDataGranule: true,
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -39,6 +40,7 @@ test('overwrites existing ProducerGranuleId while preserving other identifiers',
     metadataObject: metadata,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'NEW_PRODUCER_ID',
+    allowDataGranule: true,
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -76,6 +78,7 @@ test('appends ProducerGranuleId if not present', (t) => {
     metadataObject: metadata,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
+    allowDataGranule: true,
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -99,6 +102,7 @@ test('throws error if input is not UMMGGranule', (t) => {
       metadataObject: invalid,
       granuleUr: 'ID',
       producerGranuleId: 'PRODUCER_ID',
+      allowDataGranule: true,
     }));
 
   t.true(error?.message.includes('Invalid UMM-G JSON metadata'));
@@ -115,8 +119,44 @@ test('does not mutate original object', (t) => {
     metadataObject: original,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
+    allowDataGranule: true,
   });
 
   t.not(result, original);
   t.deepEqual(original, copy);
+});
+
+test('does not add DataGranule when allowDataGranule is false', (t) => {
+  const metadata = {
+    GranuleUR: 'OLD_ID',
+  };
+
+  const result = updateUMMGGranuleURAndGranuleIdentifier({
+    metadataObject: metadata,
+    granuleUr: 'NEW_ID',
+    producerGranuleId: 'PRODUCER_ID',
+    allowDataGranule: false,
+  });
+
+  t.is(result.GranuleUR, 'NEW_ID');
+  t.is(result.DataGranule, undefined);
+});
+
+test('adds DataGranule when allowDataGranule is true and populates DayNightFlag and ProductionDateTime', (t) => {
+  const metadata = {
+    GranuleUR: 'OLD_ID',
+  };
+
+  const result = updateUMMGGranuleURAndGranuleIdentifier({
+    metadataObject: metadata,
+    granuleUr: 'NEW_ID',
+    producerGranuleId: 'PRODUCER_ID',
+    productionDateTime: '2024-01-01T00:00:00Z',
+    allowDataGranule: true,
+  });
+
+  t.is(result.GranuleUR, 'NEW_ID');
+  t.truthy(result.DataGranule);
+  t.is(result.DataGranule.ProductionDateTime, '2024-01-01T00:00:00Z');
+  t.is(result.DataGranule.DayNightFlag, 'UNSPECIFIED');
 });

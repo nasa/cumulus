@@ -303,6 +303,12 @@ variable "allow_provider_mismatch_on_rule_filter" {
   default = false
 }
 
+variable "allow_data_granule" {
+  description = "optional variable to be used in update_granules_cmr_metadata_file_links task for disabling the creation of a DataGranule"
+  type = bool
+  default = true
+}
+
 variable "key_name" {
   description = "Name of EC2 key pair for accessing EC2 instances"
   type        = string
