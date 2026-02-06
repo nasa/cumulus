@@ -860,7 +860,7 @@ function updateUMMGMetadataObject({
   set(updatedMetadataObject, 'RelatedUrls', mergedURLs);
 
   // remove the DataGranule if allowDataGranule is false
-  if (!allowDataGranule) {
+  if (allowDataGranule === false) {
     delete updatedMetadataObject.DataGranule;
   }
   return updatedMetadataObject;

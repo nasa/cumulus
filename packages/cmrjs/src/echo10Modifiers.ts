@@ -49,7 +49,7 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
   moddedXml.Granule ??= {};
   moddedXml.Granule.GranuleUR = granuleUr;
 
-  if (!allowDataGranule) {
+  if (allowDataGranule === false) {
     delete moddedXml.Granule.DataGranule;
     return moddedXml;
   }
