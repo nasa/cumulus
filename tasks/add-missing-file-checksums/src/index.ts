@@ -4,27 +4,26 @@ import * as S3 from '@cumulus/aws-client/S3';
 import { Context } from 'aws-lambda';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import crypto from 'crypto';
+import type { Readable } from 'stream';
 import { Granule, GranuleFile, HandlerInput, HandlerEvent } from './types';
 
-process.env.AWS_MAX_ATTEMPTS ??= '3';
-process.env.AWS_RETRY_MODE ??= 'standard';
-process.env.S3_JITTER_MAX_MS ??= '500';
-
-const updateHashFromBody = async (hash: crypto.Hash, body: any) => {
+const updateHashFromBody = async (hash: crypto.Hash,
+  body: Readable | Buffer | Uint8Array | string) => {
   if (!body) return;
 
   // Node readable stream
-  if (typeof body.on === 'function') {
+  if (typeof (body as Readable).on === 'function') {
     await new Promise<void>((resolve, reject) => {
-      body.on('data', (chunk: any) => hash.update(chunk as any));
-      body.on('end', resolve);
-      body.on('error', reject);
+      (body as Readable).on('data', (chunk: any) => hash.update(chunk as any));
+      (body as Readable).on('end', resolve);
+      (body as Readable).on('error', reject);
     });
     return;
   }
 
-  // Fallback if it is a non-stream
-  hash.update(Buffer.isBuffer(body) ? body : Buffer.from(body));
+  // Set to Uint8Array if not a stream
+  const buf = Buffer.isBuffer(body) ? body : Buffer.from(body);
+  hash.update(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength));
 };
 
 const calculateObjectHashByRanges = async (params: {
@@ -73,14 +72,15 @@ const calculateGranuleFileChecksum = async (params: {
   const { s3, algorithm, granuleFile } = params;
   const { bucket, key, size } = granuleFile;
 
-  const thresholdMb = Number(process.env.MULTIPART_CHECKSUM_THRESHOLD_MEGABYTES);
-  const partMb = Number(process.env.MULTIPART_CHECKSUM_PART_MEGABYTES);
+  const thresholdMb = Number(process.env.MULTIPART_CHECKSUM_THRESHOLD_MEGABYTES || 0);
+  const partMb = Number(process.env.MULTIPART_CHECKSUM_PART_MEGABYTES || 0);
   const thresholdBytes = thresholdMb * 1024 * 1024;
   const partSizeBytes = partMb * 1024 * 1024;
 
   const partitioningEnabled = (thresholdMb > 0 && partMb > 0)
     && (size > thresholdBytes);
 
+  // Calculate checksum by partitioning
   if (partitioningEnabled) {
     return await calculateObjectHashByRanges({
       s3,
