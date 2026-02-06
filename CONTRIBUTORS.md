@@ -5,9 +5,11 @@
 * Adithya Krishna
 * Aimee Barciauskas
 * Alin Vlad
+* Allan Yu
 * Andrew Pawloski
 * Anthony Lukach
 * Anthony Ortega
+* Bradley J. Hazuka
 * Brian Tennity
 * Bryan Wexler
 * Charles Huang
@@ -44,6 +46,8 @@
 * Patrick Quinn
 * Paul Pilone
 * Phil Osip
+* Robert Swanson
+* Rohan Weeden
 * Sara Chaparro Diaz
 * Sean Quinlan
 * Seth Vincent
@@ -53,3 +57,4 @@
 * Tobias Nießen
 * Vanh Khuyen Nguyen
 * Vanh Nguyen
+* Yonggang Liu
