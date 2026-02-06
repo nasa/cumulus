@@ -16,6 +16,7 @@ export interface PostgresCollection {
   tags?: string,
   created_at?: Date,
   updated_at?: Date,
+  cmr_provider?: string,
 }
 
 export interface PostgresCollectionRecord extends Omit<PostgresCollection, 'tags'> {

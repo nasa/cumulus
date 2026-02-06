@@ -24,6 +24,7 @@ export const translatePostgresCollectionToApiCollection = (
   sampleFileName: collectionRecord.sample_file_name,
   ignoreFilesConfigForDiscovery: collectionRecord.ignore_files_config_for_discovery,
   meta: collectionRecord.meta,
+  cmrProvider: collectionRecord.cmr_provider,
   tags: collectionRecord.tags,
 }));
 
@@ -50,6 +51,7 @@ export const translateApiCollectionToPostgresCollection = (
     sample_file_name: record.sampleFileName,
     ignore_files_config_for_discovery: record.ignoreFilesConfigForDiscovery,
     meta: record.meta,
+    cmr_provider: record.cmrProvider,
     // have to stringify on an array of values
     tags: (record.tags ? JSON.stringify(record.tags) : undefined),
   };
