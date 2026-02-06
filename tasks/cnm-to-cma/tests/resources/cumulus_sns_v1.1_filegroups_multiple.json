@@ -13,16 +13,16 @@
         "files": [
           {
             "type": "data",
-            "uri": "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file.nc",
-            "name":"production_file.nc",
+            "uri": "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file1.nc",
+            "name":"production_file1.nc",
             "checksumType": "md5",
             "checksum": "4241jafkjaj14jasjf",
             "size": 123456
           },
           {
             "type": "browse",
-            "uri": "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file.png",
-            "name":"production_file.png",
+            "uri": "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file1.png",
+            "name":"production_file1.png",
             "checksumType": "md5",
             "checksum": "addjd872342bfbf",
             "size": 12345
@@ -34,19 +34,19 @@
         "files": [
           {
             "type": "data",
-            "uri": "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file.nc",
-            "name":"production_file.nc",
+            "uri": "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file2.nc",
+            "name":"production_file2.nc",
             "checksumType": "md5",
-            "checksum": "4241jafkjaj14jasjf",
-            "size": 123456
+            "checksum": "54241jafkjaj14jasjf",
+            "size": 223456
           },
           {
             "type": "browse",
-            "uri": "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file.png",
-            "name":"production_file.png",
+            "uri": "s3://sampleIngestBucket/prod_20170926T11:30:36/production_file2.png",
+            "name":"production_file2.png",
             "checksumType": "md5",
-            "checksum": "addjd872342bfbf",
-            "size": 12345
+            "checksum": "aaddjd872342bfbf",
+            "size": 22345
           }
         ]
       }]

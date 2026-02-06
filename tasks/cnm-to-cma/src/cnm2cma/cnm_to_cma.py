@@ -32,9 +32,9 @@ def task(event: dict[str, list[str] | dict], context: object) -> dict[str, Any]:
     output: models_granule.SyncGranuleInput = models_granule.SyncGranuleInput(
         granules=[granule]
     )
-    now_as_iso = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    now_as_iso = datetime.now(UTC).isoformat(timespec="milliseconds") + "Z"
     cnm["receivedTime"] = now_as_iso
-    output_dict = {"cnm": cnm, "output_granules": output.model_dump()}
+    output_dict = {"cnm": cnm, "output_granules": output.model_dump(mode="json")}
     return output_dict
 
 
@@ -53,7 +53,7 @@ def mapper(cnm: dict, config: dict) -> models_granule.Granule:
         cnm_model = models_cnm.CloudNotificationMessageCnm12.model_validate(cnm)
         LOGGER.info(f"CNM Model in mapper: {cnm_model}")
         granule_id = cnm_model.root.product.name
-        granule_id_extraction = config.get("collection").get("granuleIdExtraction")
+        granule_id_extraction = config.get("collection", {}).get("granuleIdExtraction")
         # retrieve granule_id from product.names
         product = cnm_model.root.product
         granule_id = product.name
@@ -97,6 +97,8 @@ def create_granule_files(
 ) -> list[models_granule.File]:
     granule_files: list[models_granule.File] = []
     for cnm_file in input_files:
+        if not cnm_file.uri or len(cnm_file.uri.strip()) == 0:
+            raise ValueError("File uri is empty or None")
         uri = cnm_file.uri.strip()
         granule_file: models_granule.File = None
         if uri.lower().startswith("s3://"):
@@ -109,7 +111,7 @@ def create_granule_files(
         else:
             LOGGER.error(
                 "Got problem here while granule file is NONE. "
-                " Probably due to unsupported protocol in uri: {uri}"
+                f" Probably due to unsupported protocol in uri: {uri}"
             )
         if granule_file:
             granule_files.append(granule_file)
@@ -127,17 +129,17 @@ def build_granule_file(cnm_file: Any, protocol: str) -> models_granule.File:
         a single  models_granule.File object
 
     """
-    uri = cnm_file.uri.strip() if cnm_file.uri else ""
-    uri_protocol_stripped = (
-        uri.replace("s3://", "")
-        .replace("sftp://", "")
-        .replace("https://", "")
-        .replace("http://", "")
+    uri = cnm_file.uri
+    match = re.match(
+        r"^(?:s3|https?|sftp)://(?P<host>[^/]+)(?:/(?P<full_path>.*))?$", uri
     )
-    tokens = uri_protocol_stripped.split("/", 1)
-    # the host represents the bucket name for s3 protocol or hosturl for http/sftp protocols
-    host = tokens[0]
-    path = tokens[1].rsplit("/", 1)[0] if len(tokens) > 1 and "/" in tokens[1] else ""
+    if not match:
+        LOGGER.error(f"Invalid URI format: {uri}")
+        return None
+    groups = match.groupdict()
+    host = groups["host"]
+    full_path = groups["full_path"] or ""
+    path = full_path.rsplit("/", 1)[0] if full_path else ""
     granule_file = models_granule.File(
         name=cnm_file.name,
         filename=cnm_file.name,

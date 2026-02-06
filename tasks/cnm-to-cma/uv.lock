@@ -65,13 +65,13 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cumulus-message-adapter-python", specifier = ">=2.4.0,<3.0.0" },
+    { name = "cumulus-message-adapter-python", specifier = "==2.4.0" },
     { name = "pydantic", specifier = ">=2.12.5,<3.0.0" },
     { name = "pydantic-core", specifier = ">=2.41.5,<3.0.0" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=9.0.1,<10.0.0" }]
+dev = [{ name = "pytest", specifier = ">=9.0.2,<10.0.0" }]
 
 [[package]]
 name = "colorama"

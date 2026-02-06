@@ -8,12 +8,6 @@ resource "aws_lambda_function" "cnm_to_cma" {
   timeout       = var.timeout
   memory_size   = var.memory_size
 
-  environment {
-    variables = {
-      LOGGING_LEVEL               = var.log_level
-    }
-  }
-
   vpc_config {
     subnet_ids         = var.subnet_ids
     security_group_ids = var.security_group_ids
