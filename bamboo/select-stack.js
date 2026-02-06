@@ -37,6 +37,7 @@ function determineIntegrationTestStackName(cb) {
     'Naga Nages': 'nnaga-ci',
     'Paul Pilone': 'ppilone-ci',
     'Robert Swanson': 'rs-ci',
+    'Rohan Weeden': 'reweeden-ci',
     'Tim Clark': 'teclark-ci',
     wisdomaj: 'awisdom-ci',
     'Yonggang Liu': 'yliu10-ci',

@@ -62,6 +62,9 @@ np:
 nnaga-tf:
   bucket: nnaga-internal
 
+reweeden:
+  bucket: reweeden-internal
+
 rs:
   bucket: rs-internal
 
