@@ -151,10 +151,3 @@ export const parseIfJson = (val: unknown): any => {
     return val;
   }
 };
-
-// Quick Test Results:
-// parseIfJson('{"a":1}') -> { a: 1 }  (Parsed Object)
-// parseIfJson('[1, 2]')   -> [1, 2]    (Parsed Array)
-// parseIfJson('123')      -> "123"     (Strict: keeps string)
-// parseIfJson(true)       -> true      (Bypassed)
-// parseIfJson(null)       -> null      (Bypassed)

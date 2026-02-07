@@ -17,7 +17,7 @@ import { getExecutionInfoByGranuleCumulusIds } from '../lib/execution';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
-interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
+export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   collectionName: string,
   collectionVersion: string,
   pdrName?: string,

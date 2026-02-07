@@ -1,18 +1,15 @@
 import { knex, Knex } from 'knex';
-//import omitBy from 'lodash/omitBy';
 import pick from 'lodash/pick';
 import { DuckDBConnection } from '@duckdb/node-api';
 
 import Logger from '@cumulus/logger';
-//import { CollectionRecord } from '@cumulus/types/api/collections';
-import { CollectionSearch, Statuses, StatsRecords, CollectionRecordApi } from '../search/CollectionSearch';
-//import { convertQueryStringToDbQueryParameters } from '../search/queries';
-import { GranuleSearch } from '../search/GranuleSearch';
-import { QueryEvent } from '../types/search';
-import { translatePostgresCollectionToApiCollection } from '../translate/collections';
-import { PostgresCollectionRecord } from '../types/collection';
-import { TableNames } from '../tables';
 import { prepareBindings } from './duckdbHelpers';
+import { GranuleS3Search } from './GranuleS3Search';
+import { CollectionSearch, Statuses, StatsRecords, CollectionRecordApi } from '../search/CollectionSearch';
+import { TableNames } from '../tables';
+import { translatePostgresCollectionToApiCollection } from '../translate/collections';
+import { QueryEvent } from '../types/search';
+import { PostgresCollectionRecord } from '../types/collection';
 
 const log = new Logger({ sender: '@cumulus/db/CollectionS3Search' });
 
@@ -43,10 +40,11 @@ export class CollectionS3Search extends CollectionSearch {
     let statsQuery = knexClient(granulesTable);
 
     if (this.active) {
-      const granuleSearch = new GranuleSearch({
-        queryStringParameters: this.queryStringParameters,
-      });
-      const { countQuery } = granuleSearch.buildSearchForActiveCollections(knexClient);
+      const granuleS3Search = new GranuleS3Search(
+        { queryStringParameters: this.queryStringParameters },
+        this.duckDbConn
+      );
+      const { countQuery } = granuleS3Search.buildSearchForActiveCollections(knexClient);
       statsQuery = countQuery.clear('select');
     }
 
@@ -156,8 +154,6 @@ export class CollectionS3Search extends CollectionSearch {
       });
 
       const [countResult, pgRecords] = await Promise.all(executionPromises);
-      console.log('countResult', countResult);
-      console.log('pgRecords', pgRecords);
 
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;

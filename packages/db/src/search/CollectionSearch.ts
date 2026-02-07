@@ -93,8 +93,7 @@ export class CollectionSearch extends BaseSearch {
     subQuery
       .clear('select')
       .select(1)
-      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`))
-      .limit(1);
+      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`));
     return subQuery;
   }
 
