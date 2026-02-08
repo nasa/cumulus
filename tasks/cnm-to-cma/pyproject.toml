@@ -1,0 +1,28 @@
+[project]
+name = "cnm-to-cma"
+version = "0.1.0"
+description = "Translate CNM message to CMA"
+authors = [
+    { name = "ESHINDavid Yen", email = "david.yen@jpl.nasa.gov" }
+]
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+
+dependencies = [
+    "pydantic (>=2.12.5,<3.0.0)",
+    "cumulus-message-adapter-python==2.4.0",
+    "pydantic-core (>=2.41.5,<3.0.0)"
+]
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)"
+]
+
+[tool.pytest]
+packages = [{ include = "cnm2cma", from = "src" }]
+
+pythonpath = ["src"]
+testpaths = [
+    "tests",
+]
