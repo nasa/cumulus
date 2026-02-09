@@ -142,7 +142,7 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
     expect(workflowExecution.status).toEqual('completed');
   });
 
-  it('ingestDateDate rolloff configuration is honored', async () => {
+  it('ingestDate rolloff configuration is honored', async () => {
     await expectAsync(getGranule(
       {
         prefix: config.stackName,
@@ -151,14 +151,14 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
       }
     )).toBeRejectedWithError(CumulusApiClientError, /404/);
 
-    const afteringestDateDateTimeCutoffGranule = await getGranule(
+    const afteringestDateTimeCutoffGranule = await getGranule(
       {
         prefix: config.stackName,
         granuleId: ingestDateAfterCutoffId,
         collectionId: collectionId,
       }
     );
-    expect(afteringestDateDateTimeCutoffGranule.status).toEqual('completed');
+    expect(afteringestDateTimeCutoffGranule.status).toEqual('completed');
   });
 
   afterAll(async () => {
