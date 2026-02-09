@@ -18,16 +18,16 @@ const fakeMessageResponse = {
   },
   meta: {
     cmr: {
-      oauthProvider: "dummy_oauth",
-      username: "uname",
-      provider: "unaltered_provider",
-      clientId: "clientId",
-      passwordSecretName: "passwordSecretName",
-      cmrEnvironment: "cmrEnvironment",
-      cmrLimit: "cmrLimit",
-      cmrPageSize: "cmr_page_size"
-    }
-  }
+      oauthProvider: 'dummy_oauth',
+      username: 'uname',
+      provider: 'unaltered_provider',
+      clientId: 'clientId',
+      passwordSecretName: 'passwordSecretName',
+      cmrEnvironment: 'cmrEnvironment',
+      cmrLimit: 'cmrLimit',
+      cmrPageSize: 'cmr_page_size',
+    },
+  },
 };
 const scheduleEventTemplate = {
   collection: 'fakeCollection',
@@ -44,8 +44,8 @@ const fakeCollection = {
 const collectionWithAlteredProvider = {
   name: 'fakeCollection',
   version: '001',
-  cmrProvider: "altered_provider"
-}
+  cmrProvider: 'altered_provider',
+};
 const fakeProvider = {
   id: 'fakeProviderId',
   host: 'fakeHost',
@@ -55,14 +55,17 @@ const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
 
 const fakeGetCollection = (item) => {
   const collections = {
-    'fakeCollection___000': fakeCollection,
-    'fakeCollection___001': collectionWithAlteredProvider
-  }
-  const collection = get(collections, constructCollectionId(item.collectionName, item.collectionVersion))
+    fakeCollection___000: fakeCollection,
+    fakeCollection___001: collectionWithAlteredProvider,
+  };
+  const collection = get(
+    collections,
+    constructCollectionId(item.collectionName, item.collectionVersion)
+  );
   if (!collection) {
     return Promise.reject(new Error('Collection could not be found'));
   }
-  
+
   return Promise.resolve(collection);
 };
 
@@ -156,5 +159,5 @@ test.serial('Sends an SQS message with cmrProvider as overridden by collection',
   t.is(targetQueueUrl, defaultQueueUrl);
   t.deepEqual(targetMessage.meta.collection, collectionWithAlteredProvider);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
-  t.deepEqual(targetMessage.meta.cmr.provider, collectionWithAlteredProvider.cmrProvider)
+  t.deepEqual(targetMessage.meta.cmr.provider, collectionWithAlteredProvider.cmrProvider);
 });
