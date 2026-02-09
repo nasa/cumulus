@@ -41,7 +41,7 @@ const fakeCollection = {
   name: 'fakeCollection',
   version: '000',
 };
-const collectionWithAlteredProvider = {
+const fakeCollectionWithAlteredProvider = {
   name: 'fakeCollection',
   version: '001',
   cmrProvider: 'altered_provider',
@@ -56,7 +56,7 @@ const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
 const fakeGetCollection = (item) => {
   const collections = {
     fakeCollection___000: fakeCollection,
-    fakeCollection___001: collectionWithAlteredProvider,
+    fakeCollection___001: fakeCollectionWithAlteredProvider,
   };
   const collection = get(
     collections,
