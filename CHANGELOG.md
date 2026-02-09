@@ -7,7 +7,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Breaking Changes
-
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
     granule objects in the payload.
@@ -30,6 +29,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-4534**
+  - collection db model has added optional cmr_provider field
+  - collection translate functions pass cmr_provider/cmrProvider back and forth
+  - sf-scheduler lambda function uses collection cmr_provider to override provider from cmr portion of message_template (if configured)
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations return consistent output formats across different bulk opertions
     (previously, some bulk operation aggregated errors while others returned per-granule errors)
