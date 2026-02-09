@@ -3,10 +3,10 @@
 const rewire = require('rewire');
 const sinon = require('sinon');
 const test = require('ava');
-
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const SQS = require('@cumulus/aws-client/SQS');
 const schedule = rewire('../../lambdas/sf-scheduler');
-
+const get = require('lodash/get');
 const defaultQueueUrl = 'defaultQueueUrl';
 const customQueueUrl = 'userDefinedQueueUrl';
 
@@ -16,6 +16,18 @@ const fakeMessageResponse = {
       [customQueueUrl]: 5,
     },
   },
+  meta: {
+    cmr: {
+      oauthProvider: "dummy_oauth",
+      username: "uname",
+      provider: "unaltered_provider",
+      clientId: "clientId",
+      passwordSecretName: "passwordSecretName",
+      cmrEnvironment: "cmrEnvironment",
+      cmrLimit: "cmrLimit",
+      cmrPageSize: "cmr_page_size"
+    }
+  }
 };
 const scheduleEventTemplate = {
   collection: 'fakeCollection',
@@ -29,6 +41,11 @@ const fakeCollection = {
   name: 'fakeCollection',
   version: '000',
 };
+const collectionWithAlteredProvider = {
+  name: 'fakeCollection',
+  version: '001',
+  cmrProvider: "altered_provider"
+}
 const fakeProvider = {
   id: 'fakeProviderId',
   host: 'fakeHost',
@@ -37,11 +54,16 @@ const fakeProvider = {
 const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
 
 const fakeGetCollection = (item) => {
-  if (item.collectionName !== fakeCollection.name
-      || item.collectionVersion !== fakeCollection.version) {
+  const collections = {
+    'fakeCollection___000': fakeCollection,
+    'fakeCollection___001': collectionWithAlteredProvider
+  }
+  const collection = get(collections, constructCollectionId(item.collectionName, item.collectionVersion))
+  if (!collection) {
     return Promise.reject(new Error('Collection could not be found'));
   }
-  return Promise.resolve(fakeCollection);
+  
+  return Promise.resolve(collection);
 };
 
 const fakeGetProvider = ({ providerId }) => {
@@ -116,13 +138,13 @@ test.serial('Sends an SQS message to the custom queue URL if queueUrl is defined
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
 });
 
-test.serial('Sends an SQS message to the default queue if queueUrl is not defined', async (t) => {
+test.serial('Sends an SQS message with cmrProvider as overridden by collection', async (t) => {
   const scheduleInput = {
     ...scheduleEventTemplate,
     provider: fakeProvider.id,
     collection: {
-      name: fakeCollection.name,
-      version: fakeCollection.version,
+      name: collectionWithAlteredProvider.name,
+      version: collectionWithAlteredProvider.version,
     },
   };
 
@@ -132,6 +154,7 @@ test.serial('Sends an SQS message to the default queue if queueUrl is not define
 
   const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
   t.is(targetQueueUrl, defaultQueueUrl);
-  t.deepEqual(targetMessage.meta.collection, fakeCollection);
+  t.deepEqual(targetMessage.meta.collection, collectionWithAlteredProvider);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
+  t.deepEqual(targetMessage.meta.cmr.provider, collectionWithAlteredProvider.cmrProvider)
 });
