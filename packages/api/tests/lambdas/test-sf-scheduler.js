@@ -146,8 +146,8 @@ test.serial('Sends an SQS message with cmrProvider as overridden by collection',
     ...scheduleEventTemplate,
     provider: fakeProvider.id,
     collection: {
-      name: collectionWithAlteredProvider.name,
-      version: collectionWithAlteredProvider.version,
+      name: fakeCollectionWithAlteredProvider.name,
+      version: fakeCollectionWithAlteredProvider.version,
     },
   };
 
@@ -157,7 +157,7 @@ test.serial('Sends an SQS message with cmrProvider as overridden by collection',
 
   const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
   t.is(targetQueueUrl, defaultQueueUrl);
-  t.deepEqual(targetMessage.meta.collection, collectionWithAlteredProvider);
+  t.deepEqual(targetMessage.meta.collection, fakeCollectionWithAlteredProvider);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
-  t.deepEqual(targetMessage.meta.cmr.provider, collectionWithAlteredProvider.cmrProvider);
+  t.deepEqual(targetMessage.meta.cmr.provider, fakeCollectionWithAlteredProvider.cmrProvider);
 });
