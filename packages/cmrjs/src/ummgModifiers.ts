@@ -29,7 +29,7 @@ function isUMMGGranule(obj: any): obj is UMMGGranule {
  * @param metadataObject - The parsed UMM-G metadata object to be modified.
  * @param granuleUr - The new GranuleUR value to assign.
  * @param producerGranuleId - The ProducerGranuleId to store in the Identifiers list.
- * @param allowDataGranule - Whether to add or update a DataGranule in the metadata
+ * @param excludeDataGranule - Whether to exclude a DataGranule in the metadata
  * @param productionDateTime - The production date time for the granule (required CMR UMMG field)
  * @returns A deep-cloned and updated copy of the UMM-G metadata object.
  * @throws If the input does not match the expected UMM-G granule structure.
@@ -39,13 +39,13 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
   metadataObject,
   granuleUr,
   producerGranuleId,
-  allowDataGranule,
+  excludeDataGranule,
   productionDateTime,
 }: {
   metadataObject: unknown;
   granuleUr: string;
   producerGranuleId: string;
-  allowDataGranule: boolean;
+  excludeDataGranule: boolean;
   productionDateTime: string;
 }): UMMGGranule {
   if (!isUMMGGranule(metadataObject)) {
@@ -56,7 +56,7 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
 
   moddedJson.GranuleUR = granuleUr;
 
-  if (allowDataGranule === true) {
+  if (excludeDataGranule === false) {
     moddedJson.DataGranule ??= {};
     moddedJson.DataGranule.Identifiers ??= [];
 

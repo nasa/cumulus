@@ -75,7 +75,7 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
-    allowDataGranule: true,
+    excludeDataGranule: false,
     productionDateTime,
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
@@ -121,7 +121,7 @@ test('does not updates UMMG metadata granule identifiers when updateGranuleIdent
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
     updateGranuleIdentifiers: false,
-    allowDataGranule: true,
+    excludeDataGranule: false,
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
   const expectedObject = {
@@ -129,6 +129,41 @@ test('does not updates UMMG metadata granule identifiers when updateGranuleIdent
     DataGranule: {
       Identifiers: [],
     },
+    RelatedUrls: [
+      {
+        URL: 'https://fake-dist-endpoint/s3credentials',
+        Description:
+          'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+        Type: 'VIEW RELATED INFORMATION',
+      },
+    ],
+  };
+
+  t.deepEqual(actualObject, expectedObject);
+  t.deepEqual(result, {
+    ...cmrFile,
+    etag: result.etag,
+  });
+});
+
+test('does not updates UMMG metadata DataGranule when excludeDataGranule is set to true', async (t) => {
+  const cmrFile = t.context.cmrFileJson;
+  const result = await updateCMRMetadata({
+    granuleId: 'new-granule',
+    producerGranuleId: 'original-id',
+    cmrFile: t.context.cmrFileJson,
+    files: [],
+    distEndpoint: 'https://fake-dist-endpoint',
+    published: false,
+    bucketTypes: {},
+    cmrGranuleUrlType: 'both',
+    distributionBucketMap: {},
+    updateGranuleIdentifiers: false,
+    excludeDataGranule: true,
+  });
+  const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
+  const expectedObject = {
+    GranuleUR: 'original-id',
     RelatedUrls: [
       {
         URL: 'https://fake-dist-endpoint/s3credentials',
@@ -182,14 +217,43 @@ test('updates Echo10 metadata with UR update, when publish is set to false', asy
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
-    allowDataGranule: true,
+    excludeDataGranule: false,
   });
 
   const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
   t.deepEqual(actual, expected);
 });
 
-test('updateCMRMetadata does not updates ECHO10 metadata granule identifiers when updateGranuleIdentifiers is set to false', async (t) => {
+test('does not update Echo10 DataGranule metadata when excludeDataGranule is set to true', async (t) => {
+  const cmrFile = t.context.cmrFileXml;
+  const { cmrXmlFixture } = t.context;
+
+  const expected = await parseXmlString(cmrXmlFixture);
+  expected.Granule.GranuleUR = 'updated-id';
+  expected.Granule.DataGranule.ProducerGranuleId = 'original-id';
+  expected.Granule.AssociatedBrowseImageUrls = '';
+
+  await updateCMRMetadata({
+    granuleId: 'updated-id',
+    producerGranuleId: 'original-id',
+    cmrFile,
+    files: [],
+    distEndpoint: 'https://example.com',
+    published: false,
+    bucketTypes: {},
+    cmrGranuleUrlType: 'both',
+    distributionBucketMap: {},
+    updateGranuleIdentifiers: true,
+    excludeDataGranule: true,
+  });
+
+  const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
+  t.deepEqual(actual.Granule.GranuleUR, expected.Granule.GranuleUR);
+  t.is(actual.Granule.DataGranule, undefined);
+  t.deepEqual(actual.Granule.AssociatedBrowseImageUrls, expected.Granule.AssociatedBrowseImageUrls);
+});
+
+test('updateCMRMetadata does not update ECHO10 metadata granule identifiers when updateGranuleIdentifiers is set to false', async (t) => {
   const cmrFile = t.context.cmrFileXml;
   const { cmrXmlFixture } = t.context;
 
@@ -219,7 +283,7 @@ test('publishes UMMG metadata when publish is set to true', async (t) => {
   const result = await updateCMRMetadata({
     granuleId: 'new-granule',
     producerGranuleId: 'original-id',
-    allowDataGranule: true,
+    excludeDataGranule: false,
     productionDateTime,
     cmrFile: t.context.cmrFileJson,
     files: [],
@@ -290,7 +354,7 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
   const result = await updateCMRMetadata({
     granuleId: 'updated-id',
     producerGranuleId: 'original-id',
-    allowDataGranule: true,
+    excludeDataGranule: false,
     cmrFile,
     files: [],
     distEndpoint: 'https://example.com',

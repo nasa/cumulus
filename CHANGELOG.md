@@ -36,10 +36,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
     `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
 - **CSD-85**
-  - Changed `update-granules-cmr-metadata-file-links` lambda to accept an environment variable `allow_data_granule`
-    for whether or not to add a Data Granule as part of the lambda, for users who do not want to add one (defaults to true)
+  - Changed `update-granules-cmr-metadata-file-links` lambda to accept an environment variable `exclude_data_granule`
+    for whether or not to add a Data Granule as part of the lambda, for users who do not want to add one (defaults to false)
   - If a Data Granule is being added as part of the lambda then `DayNightFlag` and `ProductionDateTime` values will be
-    defaultly filled if they are not provided since they are required CMR UMMG-Granule fields
+    defaultly filled for CMR UMMG-Granule fields if they are not provided since they are required
 
 ### Notable Changes
 

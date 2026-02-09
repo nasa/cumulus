@@ -17,7 +17,7 @@ resource "aws_lambda_function" "update_granules_cmr_metadata_file_links_task" {
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
       system_bucket               = var.system_bucket
-      allow_data_granule          = var.allow_data_granule
+      exclude_data_granule        = var.exclude_data_granule
     }
   }
 

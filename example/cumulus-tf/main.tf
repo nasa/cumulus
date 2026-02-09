@@ -205,7 +205,7 @@ module "cumulus" {
   allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 
   # For update_granules_cmr_metadata_file_links task in order to disable adding a DataGranule or not
-  allow_data_granule = var.allow_data_granule
+  exclude_data_granule = var.exclude_data_granule
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

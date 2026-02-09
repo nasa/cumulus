@@ -87,7 +87,7 @@ test.beforeEach(async (t) => {
   ]);
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
-  process.env.allow_data_granule = 'true';
+  process.env.exclude_data_granule = 'false';
   putJsonS3Object(
     t.context.systemBucket,
     getDistributionBucketMapKey(t.context.stackName),
@@ -243,7 +243,7 @@ test.serial('update-granules-cmr-metadata-file-links properly handles a case whe
   t.deepEqual(message.granules, newPayload.input.granules);
 });
 
-test.serial('update-granules-cmr-metadata-file-links properly filters files using the excludeFileRegex and adds Data Granule if lambda var allow_data_granule is true', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links properly filters files using the excludeFileRegex and adds Data Granule if lambda var exclude_data_granule is false', async (t) => {
   const newPayload = buildPayload(t);
 
   const ext = '.some.extension';
@@ -285,9 +285,9 @@ test.serial('update-granules-cmr-metadata-file-links properly filters files usin
   }));
 });
 
-test.serial('update-granules-cmr-metadata-file-links does not add Data Granule if lambda var allow_data_granule is set to false', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links does not add Data Granule if lambda var exclude_data_granule is set to true', async (t) => {
   const newPayload = buildPayload(t);
-  process.env.allow_data_granule = 'false';
+  process.env.exclude_data_granule = 'true';
 
   newPayload.input.granules.forEach((granule) => {
     const newFile = {

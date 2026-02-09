@@ -25,7 +25,7 @@ function isEcho10XmlBaseGranule(obj: any): obj is Echo10XmlBaseGranule {
  * @param params.xml - The parsed XML object (e.g., from xml2js) representing ECHO10 metadata.
  * @param params.granuleUr - The new GranuleUR value to apply to the metadata.
  * @param params.producerGranuleId - The original identifier value to be set as ProducerGranuleId.
- * @param params.allowDataGranule - Whether to add or update a DataGranule in the metadata
+ * @param params.excludeDataGranule - Whether to exclude a DataGranule in the metadata
  * @returns A deep-cloned and updated copy of the original ECHO10 metadata object.
  * @throws If the input object does not conform to the expected ECHO10 structure.
  */
@@ -33,12 +33,12 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
   xml, // The parsed XML object (e.g., from xml2js)
   granuleUr, // The new GranuleUR value
   producerGranuleId, // The original identifier to store
-  allowDataGranule, // Boolean for whether or not to add/update DataGranule
+  excludeDataGranule, // Boolean for whether or not to exclude DataGranule
 }: {
   xml: unknown;
   granuleUr: string;
   producerGranuleId: string;
-  allowDataGranule: boolean;
+  excludeDataGranule: boolean;
 }): any {
   if (!isEcho10XmlBaseGranule(xml)) {
     throw new Error('Invalid XML input - expected an object with GranuleUR');
@@ -49,7 +49,7 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
   moddedXml.Granule ??= {};
   moddedXml.Granule.GranuleUR = granuleUr;
 
-  if (allowDataGranule === false) {
+  if (excludeDataGranule === true) {
     delete moddedXml.Granule.DataGranule;
     return moddedXml;
   }
