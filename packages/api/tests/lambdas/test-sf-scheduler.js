@@ -62,7 +62,7 @@ const fakeGetCollection = (item) => {
   if (!collection) {
     return Promise.reject(new Error('Collection could not be found'));
   }
-  
+
   return Promise.resolve(collection);
 };
 
