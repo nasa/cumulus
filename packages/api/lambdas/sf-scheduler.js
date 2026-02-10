@@ -1,7 +1,6 @@
 'use strict';
 
 const get = require('lodash/get');
-const merge = require('lodash/merge');
 const isNil = require('lodash/isNil');
 
 const { getCollection } = require('@cumulus/api-client/collections');
@@ -53,6 +52,7 @@ async function handleScheduleEvent(event) {
     name: workflowDefinition.name,
     arn: workflowDefinition.arn,
   };
+
   const eventCustomMeta = get(event, 'meta', {});
 
   const message = buildQueueMessageFromTemplate({
