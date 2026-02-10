@@ -3,6 +3,8 @@ const {
   JsonWebTokenError,
   TokenExpiredError,
 } = require('jsonwebtoken');
+const get = require('lodash/get');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { TokenUnauthorizedUserError } = require('./errors');
 
 const createJwtToken = ({ accessToken, expirationTime, username, iat }) =>
@@ -78,7 +80,6 @@ function isSessionExpired(decodedToken) {
  * @throws {Error} with property 'sessionExpired' if session duration exceeded
  */
 function verifyAndDecodeTokenFromRequest(request) {
-  const get = require('lodash/get');
   const requestJwtToken = get(request, 'body.token');
 
   if (!requestJwtToken) {
@@ -154,9 +155,8 @@ async function refreshTokenAndJwt(
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
   } catch (error) {
-    const { RecordDoesNotExist } = require('@cumulus/errors');
     if (error instanceof RecordDoesNotExist) {
-      throw new Error('Invalid access token');
+      throw new TypeError('Invalid access token');
     }
     throw error;
   }

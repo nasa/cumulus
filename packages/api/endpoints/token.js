@@ -8,7 +8,6 @@ const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
   createJwtToken,
-  isSessionExpired,
   refreshTokenAndJwt,
   verifyAndDecodeTokenFromRequest,
   handleJwtVerificationError,
