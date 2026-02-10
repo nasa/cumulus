@@ -1,0 +1,31 @@
+[project]
+name = "cnm-response"
+version = "21.0.1"
+description = "CNM Response task"
+requires-python = "~=3.12.0"
+dependencies = [
+    "boto3~=1.40",
+    "cumulus-process~=1.6",
+]
+
+[dependency-groups]
+dev = [
+    "freezegun~=1.5",
+    "moto~=5.1",
+    "mypy~=1.19",
+    "pytest~=9.0",
+    "pytest-cov~=7.0",
+    "pytest-mock~=3.15",
+    "ruff~=0.14.0",
+]
+
+[tool.pytest]
+minversion = "9.0"
+addopts = [
+    "--cov=cnm_response",
+    "--cov-report=lcov:.nyc_output",
+]
+pythonpath = ["src"]
+testpaths = [
+    "tests",
+]
