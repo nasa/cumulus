@@ -6,13 +6,7 @@ const path = require('path');
 const { JSONPath } = require('jsonpath-plus');
 const { parseString } = require('xml2js');
 const { promisify } = require('util');
-const get = require('lodash/get');
 const moment = require('moment');
-const {
-  JsonWebTokenError,
-  TokenExpiredError,
-} = require('jsonwebtoken');
-
 const {
   getS3Object,
   parseS3Uri,
@@ -21,10 +15,9 @@ const {
   getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { AccessToken } = require('../models');
-const { createJwtToken, verifyJwtToken, isSessionExpired } = require('../lib/token');
+const { createJwtToken, verifyJwtToken, isSessionExpired, refreshTokenAndJwt, verifyAndDecodeTokenFromRequest, handleJwtVerificationError } = require('../lib/token');
 const { TokenUnauthorizedUserError } = require('../lib/errors');
 
 const parseXmlString = promisify(parseString);
@@ -293,26 +286,6 @@ const samlToken = (req, res) => {
 };
 
 /**
- * Handle API response for JWT verification errors
- *
- * @param {Error} err - error thrown by JWT verification
- * @param {Object} response - an express response object
- * @returns {Promise<Object>} the promise of express response object
- */
-function handleJwtVerificationError(err, response) {
-  if (err instanceof TokenExpiredError) {
-    return response.boom.unauthorized('Access token has expired');
-  }
-  if (err instanceof JsonWebTokenError) {
-    return response.boom.unauthorized('Invalid access token');
-  }
-  if (err instanceof TokenUnauthorizedUserError) {
-    return response.boom.unauthorized('User not authorized');
-  }
-  throw err;
-}
-
-/**
  * Handle refreshing tokens for SAML authentication
  *
  * @param {Object} request - an API Gateway request
@@ -322,64 +295,33 @@ function handleJwtVerificationError(err, response) {
  * @returns {Object} an API Gateway response
  */
 async function refreshAccessToken(request, response, extensionSeconds = 12 * 60 * 60) {
-  const requestJwtToken = get(request, 'body.token');
-
-  if (!requestJwtToken) {
-    return response.boom.unauthorized('Request requires a token');
-  }
-
-  let decodedToken;
-  let accessToken;
-  let username;
   try {
-    decodedToken = verifyJwtToken(requestJwtToken);
-    accessToken = decodedToken.accessToken;
-    username = decodedToken.username;
-  } catch (error) {
-    return handleJwtVerificationError(error, response);
-  }
+    const decodedToken = verifyAndDecodeTokenFromRequest(request);
 
-  // Check if the session has exceeded the maximum duration
-  if (isSessionExpired(decodedToken)) {
-    return response.boom.unauthorized('Session has exceeded maximum duration');
-  }
+    const accessTokenModel = new AccessToken();
 
-  const accessTokenModel = new AccessToken();
-
-  let accessTokenRecord;
-  try {
-    accessTokenRecord = await accessTokenModel.get({ accessToken });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return response.boom.unauthorized('Invalid access token');
+    try {
+      const jwtToken = await refreshTokenAndJwt(
+        decodedToken,
+        accessTokenModel,
+        extensionSeconds
+      );
+      return response.send({ token: jwtToken });
+    } catch (error) {
+      if (error.message === 'Invalid access token') {
+        return response.boom.unauthorized(error.message);
+      }
+      throw error;
     }
-    throw error;
-  }
-
-  // Use existing token values and just extend expiration time
-  const newAccessToken = accessTokenRecord.accessToken;
-
-  // Extend expiration time by the specified amount (default: 12 hours)
-  // If expirationTime is undefined, use current time as base
-  const baseTime = accessTokenRecord.expirationTime || Math.floor(Date.now() / 1000);
-  const expirationTime = baseTime + extensionSeconds;
-
-  // Update the existing record with new expiration time
-  await accessTokenModel.update(
-    { accessToken: accessTokenRecord.accessToken },
-    {
-      expirationTime,
+  } catch (error) {
+    if (error.noToken) {
+      return response.boom.unauthorized(error.message);
     }
-  );
-
-  // Preserve the original iat from the token to prevent indefinite authentication
-  const jwtToken = createJwtToken({
-    accessToken: newAccessToken,
-    username,
-    expirationTime,
-    iat: decodedToken.iat,
-  });
-  return response.send({ token: jwtToken });
+    if (error.sessionExpired) {
+      return response.boom.unauthorized(error.message);
+    }
+    return handleJwtVerificationError(error.jwtError || error, response);
+  }
 }
 
 /**
