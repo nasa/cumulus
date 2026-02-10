@@ -10,6 +10,12 @@ terraform {
 provider "aws" {
   region  = var.region
   profile = var.aws_profile
+
+  default_tags {
+    tags = {
+      Deployment = var.prefix
+    }
+  }
 }
 
 module "rds_cluster" {
@@ -24,7 +30,7 @@ module "rds_cluster" {
   deletion_protection        = true
   cluster_identifier         = var.cluster_identifier
   cluster_instance_count     = var.cluster_instance_count
-  tags                       = var.tags
+  tags                       = merge(var.tags, { Deployment = var.prefix })
   snapshot_identifier        = var.snapshot_identifier
   lambda_timeouts            = var.lambda_timeouts
   lambda_memory_sizes        = var.lambda_memory_sizes
