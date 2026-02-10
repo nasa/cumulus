@@ -25,9 +25,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { AccessToken } = require('../models');
 const { createJwtToken, verifyJwtToken, isSessionExpired } = require('../lib/token');
-const {
-  TokenUnauthorizedUserError,
-} = require('../lib/errors');
+const { TokenUnauthorizedUserError } = require('../lib/errors');
 
 const parseXmlString = promisify(parseString);
 
