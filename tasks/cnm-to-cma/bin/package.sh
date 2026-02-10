@@ -1,53 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 DIR=$1
-PYTHON_VERSION=3.13
-IMAGE="public.ecr.aws/lambda/python:${PYTHON_VERSION}"
-BUILD_DIR="../build/lambda"
-ZIP_NAME="cnm2cma.zip"
-
-SRC_DIR="src/cnm2cma"                # adjust if needed
-HANDLER_FILE="cnm_to_cma.py" # adjust if needed
-
-echo "▶ Cleaning old build..."
-rm -rf BUILD_DIR ../requirements.txt ../${ZIP_NAME}
-mkdir -p ${BUILD_DIR}
-
-#echo "▶ Exporting Poetry dependencies..."
-#poetry export \
-#  -f requirements.txt \
-#  --without-hashes \
-#  -o requirements.txt
+echo "Entering $DIR"
+echo $PWD
+cd "$DIR" || exit 1
 
 # use uv to generate requirements.txt
 echo "▶ Exporting uv dependencies..."
 uv export --format requirements-txt --no-dev --no-hashes -o requirements.txt
 
-# use python 3.14 if possible
 uv pip install \
-  --platform linux \
-  --arch aarch64 \
+  --python-platform aarch64-unknown-linux-gnu\
   --python-version 3.13 \
-  --target ${BUILD_DIR} \
+  --target "${DIR}/.venv" \
   -r requirements.txt
 
-echo "▶ Installing dependencies inside Lambda Docker..."
-docker run --rm \
-  --entrypoint "" \
-  -v "$PWD":/var/task \
-  ${IMAGE} \
-  pip install -r requirements.txt -t ${BUILD_DIR}
+cp -r "${DIR}/../src/cnm2cma" "${DIR}/.venv"
 
-echo "▶ Copying project source..."
-cp -r ${SRC_DIR}/* ${BUILD_DIR}
+cd ./.venv || exit 1
 
-#if [[ -f "${HANDLER_FILE}" ]]; then
-#  cp ${HANDLER_FILE} ${BUILD_DIR}
-#fi
+node ../../../bin/zip.js lambda.zip $(ls | grep -v lambda.zip)
 
-echo "▶ Creating zip..."
-cd BUILD_DIR
-zip -r ../${ZIP_NAME} .
-cd ..
+cd .. || exit 1
 
-echo "✅ Build complete: ${ZIP_NAME}"
+# Re-sync dev dependencies for any post-packaging tasks
+uv sync

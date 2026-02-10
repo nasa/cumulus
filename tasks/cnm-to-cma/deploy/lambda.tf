@@ -7,6 +7,7 @@ resource "aws_lambda_function" "cnm_to_cma" {
   runtime       = "python3.13"
   timeout       = var.timeout
   memory_size   = var.memory_size
+  architectures = ["arm64"]
 
   vpc_config {
     subnet_ids         = var.subnet_ids
