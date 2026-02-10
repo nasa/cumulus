@@ -53,24 +53,20 @@ async function handleScheduleEvent(event) {
     name: workflowDefinition.name,
     arn: workflowDefinition.arn,
   };
-  const collectionCustomMeta = get(collection, 'meta', {});
   const eventCustomMeta = get(event, 'meta', {});
 
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
     asyncOperationId: get(event, 'asyncOperationId'),
     customCumulusMeta: get(event, 'cumulus_meta', {}),
-    customMeta: merge(
-      eventCustomMeta,
-      collectionCustomMeta,
-      {
-        collection,
-        provider,
-        cmr: {
-          provider: collection.cmrProvider,
-        },
-      }
-    ),
+    customMeta: {
+      ...eventCustomMeta,
+      collection,
+      provider,
+      cmr: {
+        provider: collection.cmrProvider,
+      },
+    },
     payload: get(event, 'payload', {}),
     workflow,
     executionNamePrefix: event.executionNamePrefix,
