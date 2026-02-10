@@ -35,4 +35,4 @@ uv pip install \
     dist/dist/*.whl;
 
 cd dist/packages;
-zip -r ../final/lambda.zip .;
+node ../../../../bin/zip.js lambda.zip $(ls | grep -v lambda.zip)

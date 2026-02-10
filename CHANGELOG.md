@@ -37,6 +37,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added granule-invalidator workflow deployment and tests to the example deployment.
   - Resolved several integration issues with the granule-invalidator lambda.
   - Updated packaging script for granule-invalidator to use `uv pip install` instead of `uv sync`.
+  - Added `private_api_lambda_arn` output to the archive module and `private_api_lambda_arn` variable to the ingest module.
 
 ### Notable Changes
 
