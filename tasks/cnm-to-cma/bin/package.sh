@@ -23,6 +23,14 @@ mkdir -p ${BUILD_DIR}
 echo "▶ Exporting uv dependencies..."
 uv export --format requirements-txt --no-dev --no-hashes -o requirements.txt
 
+# use python 3.14 if possible
+uv pip install \
+  --platform linux \
+  --arch aarch64 \
+  --python-version 3.13 \
+  --target ${BUILD_DIR} \
+  -r requirements.txt
+
 echo "▶ Installing dependencies inside Lambda Docker..."
 docker run --rm \
   --entrypoint "" \
