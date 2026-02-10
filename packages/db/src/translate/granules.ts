@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 
 import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
 import { ApiGranule, ApiGranuleRecord, GranuleStatus } from '@cumulus/types/api/granules';
-import { removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
+import { parseIfJson, removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
 import isNil from 'lodash/isNil';
 import isNull from 'lodash/isNull';
@@ -58,7 +58,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   createdAt: granulePgRecord.created_at?.getTime(),
   duration: granulePgRecord.duration,
   endingDateTime: granulePgRecord.ending_date_time?.toISOString(),
-  error: granulePgRecord.error,
+  error: parseIfJson(granulePgRecord.error),
   execution: executionUrls[0] ? executionUrls[0].url : undefined,
   files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : [],
   granuleId: granulePgRecord.granule_id,
@@ -71,7 +71,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   productVolume: granulePgRecord.product_volume,
   provider: providerPgRecord ? providerPgRecord.name : undefined,
   published: granulePgRecord.published,
-  queryFields: granulePgRecord.query_fields,
+  queryFields: parseIfJson(granulePgRecord.query_fields),
   status: granulePgRecord.status as GranuleStatus,
   timestamp: granulePgRecord.timestamp?.getTime(),
   timeToArchive: granulePgRecord.time_to_archive,

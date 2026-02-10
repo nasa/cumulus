@@ -455,9 +455,11 @@ abstract class BaseSearch {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
   }) {
+    const customColumns = ['collectionName', 'collectionVersion', 'executionArn', 'providerName', 'pdrName', 'asyncOperationId', 'parentArn'];
     const { searchQuery, dbQueryParameters } = params;
     const { sort } = dbQueryParameters || this.dbQueryParameters;
     sort?.forEach((key) => {
+      const prefixedColumn = `${this.tableName}.${key.column}`;
       if (key.column.startsWith('error')) {
         searchQuery.orderByRaw(
           `${this.tableName}.error ->> 'Error' ${key.order}`
@@ -466,8 +468,10 @@ abstract class BaseSearch {
         searchQuery.orderByRaw(
           `${key} collate \"${dbQueryParameters.collate}\"`
         );
-      } else {
+      } else if (customColumns.includes(key.column)) {
         searchQuery.orderBy([key]);
+      } else {
+        searchQuery.orderBy(prefixedColumn, key.order);
       }
     });
   }

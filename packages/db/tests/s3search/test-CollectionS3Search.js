@@ -1,6 +1,7 @@
 const test = require('ava');
 const knex = require('knex');
 const cryptoRandomString = require('crypto-random-string');
+const random = require('lodash/random');
 const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
@@ -10,7 +11,7 @@ const {
   collectionsS3TableSql,
   granulesS3TableSql,
   providersS3TableSql,
-} = require('../../dist/search/s3TableSchemas');
+} = require('../../dist/s3search/s3TableSchemas');
 
 const {
   fakeCollectionRecordFactory,
@@ -44,7 +45,7 @@ test.before(async (t) => {
 
   // Create provider
   t.context.provider = fakeProviderRecordFactory({
-    cumulus_id: 1,
+    cumulus_id: random(1, 100),
   });
   const sanitizedProvider = {
     ...t.context.provider,
@@ -70,11 +71,11 @@ test.before(async (t) => {
         : new Date(t.context.granuleSearchTmestamp + (num % 99)),
     })
   ));
-  const sanitizedGranules = t.context.granules.map((c) => ({
-    ...c,
+  const sanitizedGranules = t.context.granules.map((g) => ({
+    ...g,
     // Ensure dates are in ISO format
-    created_at: c.created_at.toISOString(),
-    updated_at: c.updated_at.toISOString(),
+    created_at: g.created_at.toISOString(),
+    updated_at: g.updated_at.toISOString(),
   }));
 
   const { instance, connection } = await createDuckDBWithS3();
@@ -98,19 +99,19 @@ test.before(async (t) => {
   await createDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
-    'granules',
-    granulesS3TableSql,
-    sanitizedGranules,
-    `${duckdbS3Prefix}granules.parquet`
+    'providers',
+    providersS3TableSql,
+    sanitizedProvider,
+    `${duckdbS3Prefix}providers.parquet`
   );
 
   await createDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
-    'providers',
-    providersS3TableSql,
-    sanitizedProvider,
-    `${duckdbS3Prefix}providers.parquet`
+    'granules',
+    granulesS3TableSql,
+    sanitizedGranules,
+    `${duckdbS3Prefix}granules.parquet`
   );
 });
 
@@ -135,7 +136,7 @@ test.serial('CollectionSearch supports page and limit params', async (t) => {
     page: 2,
   };
   let dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  let response = await dbSearch.query(knex);
+  let response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 20);
 
@@ -144,7 +145,7 @@ test.serial('CollectionSearch supports page and limit params', async (t) => {
     page: 10,
   };
   dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  response = await dbSearch.query(knex);
+  response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 1);
 
@@ -153,7 +154,7 @@ test.serial('CollectionSearch supports page and limit params', async (t) => {
     page: 11,
   };
   dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  response = await dbSearch.query(knex);
+  response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 0);
 });
@@ -165,7 +166,7 @@ test.serial('CollectionSearch supports infix search', async (t) => {
     infix: 'test',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 20);
 });
@@ -177,7 +178,7 @@ test.serial('CollectionSearch supports prefix search', async (t) => {
     prefix: 'fake',
   };
   const dbSearch2 = new CollectionS3Search({ queryStringParameters }, connection);
-  const response2 = await dbSearch2.query(knex);
+  const response2 = await dbSearch2.query();
   t.is(response2.meta.count, 50);
   t.is(response2.results?.length, 20);
 });
@@ -189,7 +190,7 @@ test.serial('CollectionSearch supports term search for boolean field', async (t)
     reportToEms: 'false',
   };
   const dbSearch4 = new CollectionS3Search({ queryStringParameters }, connection);
-  const response4 = await dbSearch4.query(knex);
+  const response4 = await dbSearch4.query();
   t.is(response4.meta.count, 50);
   t.is(response4.results?.length, 50);
 });
@@ -201,7 +202,7 @@ test.serial('CollectionSearch supports term search for date field', async (t) =>
     updatedAt: `${t.context.collectionSearchTmestamp + 1}`,
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
@@ -213,7 +214,7 @@ test.serial('CollectionSearch supports term search for number field', async (t) 
     version: '2',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
@@ -225,7 +226,7 @@ test.serial('CollectionSearch supports term search for string field', async (t) 
     _id: 'fakeCollection___71',
   };
   const dbSearch2 = new CollectionS3Search({ queryStringParameters }, connection);
-  const response2 = await dbSearch2.query(knex);
+  const response2 = await dbSearch2.query();
   t.is(response2.meta.count, 1);
   t.is(response2.results?.length, 1);
 
@@ -234,7 +235,7 @@ test.serial('CollectionSearch supports term search for string field', async (t) 
     process: 'publish',
   };
   const dbSearch3 = new CollectionS3Search({ queryStringParameters }, connection);
-  const response3 = await dbSearch3.query(knex);
+  const response3 = await dbSearch3.query();
   t.is(response3.meta.count, 50);
   t.is(response3.results?.length, 50);
 
@@ -243,7 +244,7 @@ test.serial('CollectionSearch supports term search for string field', async (t) 
     granuleId: 'testGranuleId',
   };
   const dbSearch4 = new CollectionS3Search({ queryStringParameters }, connection);
-  const response4 = await dbSearch4.query(knex);
+  const response4 = await dbSearch4.query();
   t.is(response4.meta.count, 50);
   t.is(response4.results?.length, 50);
 });
@@ -256,7 +257,7 @@ test.serial('CollectionSearch supports range search', async (t) => {
     timestamp__to: `${t.context.collectionSearchTmestamp + 2}`,
   };
   let dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  let response = await dbSearch.query(knex);
+  let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 
@@ -265,7 +266,7 @@ test.serial('CollectionSearch supports range search', async (t) => {
     active: 'true',
   };
   dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  response = await dbSearch.query(knex);
+  response = await dbSearch.query();
   t.is(response.meta.count, 0);
   t.is(response.results?.length, 0);
 });
@@ -281,7 +282,7 @@ test.serial('CollectionSearch supports search for multiple fields', async (t) =>
     reportToEms: 'true',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
@@ -294,7 +295,7 @@ test.serial('CollectionSearch non-existing fields are ignored', async (t) => {
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
 });
@@ -306,7 +307,7 @@ test.serial('CollectionSearch returns fields specified', async (t) => {
     fields,
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 10);
   response.results.forEach((collection) => t.deepEqual(Object.keys(collection), fields.split(',')));
@@ -320,7 +321,7 @@ test.serial('CollectionSearch supports sorting', async (t) => {
     order: 'asc',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
   t.true(response.results[0].name < response.results[99].name);
@@ -331,7 +332,7 @@ test.serial('CollectionSearch supports sorting', async (t) => {
     sort_key: ['-name'],
   };
   const dbSearch2 = new CollectionS3Search({ queryStringParameters }, connection);
-  const response2 = await dbSearch2.query(knex);
+  const response2 = await dbSearch2.query();
   t.is(response2.meta.count, 100);
   t.is(response2.results?.length, 100);
   t.true(response2.results[0].name > response2.results[99].name);
@@ -342,7 +343,7 @@ test.serial('CollectionSearch supports sorting', async (t) => {
     sort_by: 'version',
   };
   const dbSearch3 = new CollectionS3Search({ queryStringParameters }, connection);
-  const response3 = await dbSearch3.query(knex);
+  const response3 = await dbSearch3.query();
   t.is(response3.meta.count, 100);
   t.is(response3.results?.length, 100);
   t.true(response3.results[0].version < response3.results[99].version);
@@ -356,7 +357,7 @@ test.serial('CollectionSearch supports terms search', async (t) => {
     process__in: ['ingest', 'archive'].join(','),
   };
   let dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  let response = await dbSearch.query(knex);
+  let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 
@@ -366,7 +367,7 @@ test.serial('CollectionSearch supports terms search', async (t) => {
     _id__in: ['testCollection___0', 'fakeCollection___1'].join(','),
   };
   dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  response = await dbSearch.query(knex);
+  response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 
@@ -375,7 +376,7 @@ test.serial('CollectionSearch supports terms search', async (t) => {
     granuleId__in: ['testGranuleId', 'non-existent'].join(','),
   };
   dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  response = await dbSearch.query(knex);
+  response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
@@ -387,7 +388,7 @@ test.serial('CollectionSearch supports search when collection field does not mat
     process__not: 'publish',
   };
   let dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  let response = await dbSearch.query(knex);
+  let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 
@@ -397,7 +398,7 @@ test.serial('CollectionSearch supports search when collection field does not mat
     version__not: 18,
   };
   dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  response = await dbSearch.query(knex);
+  response = await dbSearch.query();
   t.is(response.meta.count, 49);
   t.is(response.results?.length, 49);
 });
@@ -409,7 +410,7 @@ test.serial('CollectionSearch supports search which checks existence of collecti
     url_path__exists: 'true',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
@@ -421,7 +422,7 @@ test.serial('CollectionSearch supports includeStats', async (t) => {
     includeStats: 'true',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
 
   const expectedStats0 = { queued: 3, completed: 3, failed: 2, running: 3, total: 11 };
   const expectedStats98 = { queued: 2, completed: 3, failed: 3, running: 2, total: 10 };
@@ -442,7 +443,7 @@ test.serial('CollectionSearch supports search for active collections', async (t)
     includeStats: 'true',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
 
   const expectedStats0 = { queued: 3, completed: 3, failed: 2, running: 3, total: 11 };
   const expectedStats10 = { queued: 2, completed: 3, failed: 3, running: 2, total: 10 };
@@ -464,7 +465,7 @@ test.serial('CollectionSearch supports search for active collections by infix/pr
     prefix: 'fake',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
 
   // collection_cumulus_id 1
   const expectedStats0 = { queued: 3, completed: 2, failed: 3, running: 3, total: 11 };
@@ -488,7 +489,7 @@ test.serial('CollectionSearch support search for active collections and stats wi
     sort_by: 'version',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
 
   const expectedStats0 = { queued: 2, completed: 3, failed: 3, running: 2, total: 10 };
   // collection with cumulus_id 98 has 9 granules in the time frame
@@ -511,7 +512,7 @@ test.serial('CollectionSearch support search for active collections and stats wi
     sort_by: 'version',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
 
   // collection_cumulus_id 1
   const expectedStats0 = { queued: 3, completed: 2, failed: 3, running: 3, total: 11 };
@@ -534,7 +535,7 @@ test.serial('CollectionSearch support search for active collections and stats wi
     sort_by: 'version',
   };
   const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
-  const response = await dbSearch.query(knex);
+  const response = await dbSearch.query();
 
   // collection_cumulus_id 0
   const expectedStats0 = { queued: 1, completed: 0, failed: 0, running: 0, total: 1 };

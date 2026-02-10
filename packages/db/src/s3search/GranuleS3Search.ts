@@ -5,15 +5,18 @@ import { DuckDBConnection } from '@duckdb/node-api';
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import Logger from '@cumulus/logger';
 
-import { prepareBindings } from './duckdbHelpers';
+import {
+  prepareBindings,
+  getExecutionInfoByGranuleCumulusIds,
+  getFilesByGranuleCumulusIds,
+} from './duckdbHelpers';
 import { GranuleRecord, GranuleSearch } from '../search/GranuleSearch';
 import { QueryEvent } from '../types/search';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
-import { FilePgModel } from '../models/file';
 import { PostgresFileRecord } from '../types/file';
-import { getExecutionInfoByGranuleCumulusIds } from '../lib/execution';
+import { toDateOrNull } from '../lib/timestamp';
 
-const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
+const log = new Logger({ sender: '@cumulus/db/GranuleS3Search' });
 
 /**
  * Class to build and execute db search query for granules
@@ -46,9 +49,12 @@ export class GranuleS3Search extends GranuleSearch {
     const executionMapping: { [key: number]: { url: string, granule_cumulus_id: number } } = {};
     const cumulusIds = pgRecords.map((record) => record.cumulus_id);
     if (includeFullRecord) {
-      //get Files
-      const fileModel = new FilePgModel();
-      const files = await fileModel.searchByGranuleCumulusIds(knexClient, cumulusIds);
+      //get files
+      const files = await getFilesByGranuleCumulusIds({
+        connection: this.duckDbConn,
+        granuleCumulusIds: cumulusIds,
+        knexBuilder: knexClient,
+      });
       files.forEach((file) => {
         if (!(file.granule_cumulus_id in fileMapping)) {
           fileMapping[file.granule_cumulus_id] = [];
@@ -58,8 +64,9 @@ export class GranuleS3Search extends GranuleSearch {
 
       //get Executions
       const executions = await getExecutionInfoByGranuleCumulusIds({
-        knexOrTransaction: knexClient,
+        connection: this.duckDbConn,
         granuleCumulusIds: cumulusIds,
+        knexBuilder: knexClient,
       });
       executions.forEach((execution) => {
         if (!(execution.granule_cumulus_id in executionMapping)) {
@@ -68,7 +75,19 @@ export class GranuleS3Search extends GranuleSearch {
       });
     }
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
-      const granulePgRecord = item;
+      const granulePgRecord = {
+        ...item,
+        created_at: new Date(item.created_at),
+        updated_at: new Date(item.updated_at),
+        beginning_date_time: toDateOrNull(item.beginning_date_time),
+        ending_date_time: toDateOrNull(item.ending_date_time),
+        last_update_date_time: toDateOrNull(item.last_update_date_time),
+        processing_end_date_time: toDateOrNull(item.processing_end_date_time),
+        processing_start_date_time: toDateOrNull(item.processing_start_date_time),
+        production_date_time: toDateOrNull(item.production_date_time),
+        timestamp: toDateOrNull(item.timestamp),
+      };
+      //console.log(granulePgRecord);
       const collectionPgRecord = {
         cumulus_id: item.collection_cumulus_id,
         name: item.collectionName,
@@ -88,6 +107,7 @@ export class GranuleS3Search extends GranuleSearch {
         files: fileRecords,
         executionUrls,
       });
+      //console.log(apiRecord);
       return fields ? pick(apiRecord, fields) : apiRecord;
     });
     return apiRecords;
@@ -104,10 +124,12 @@ export class GranuleS3Search extends GranuleSearch {
     const shouldReturnCountOnly = this.dbQueryParameters.countOnly === true;
 
     try {
-      const queryConfigs = [
-        { key: 'count', query: countQuery },
-        ...(!shouldReturnCountOnly ? [{ key: 'records', query: searchQuery }] : []),
-      ];
+      const queryConfigs = shouldReturnCountOnly
+        ? [{ key: 'count', query: countQuery }]
+        : [
+          { key: 'count', query: countQuery },
+          { key: 'records', query: searchQuery },
+        ];
 
       const executionPromises = queryConfigs.map(async (config) => {
         if (!config.query) return [];
@@ -122,7 +144,7 @@ export class GranuleS3Search extends GranuleSearch {
         return reader.getRowObjectsJson();
       });
 
-      const [countResult, pgRecords] = await Promise.all(executionPromises);
+      const [countResult, pgRecords = []] = await Promise.all(executionPromises);
 
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;

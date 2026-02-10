@@ -1,5 +1,18 @@
 import type { Knex } from 'knex';
 import { DuckDBInstance, DuckDBConnection } from '@duckdb/node-api';
+import {
+  asyncOperationsS3TableSql,
+  collectionsS3TableSql,
+  executionsS3TableSql,
+  filesS3TableSql,
+  granulesS3TableSql,
+  granulesExecutionsS3TableSql,
+  providersS3TableSql,
+  pdrsS3TableSql,
+  reconciliationReportsS3TableSql,
+  rulesS3TableSql,
+} from './s3search/s3TableSchemas';
+import { prepareBindings } from './s3search/duckdbHelpers';
 
 /**
  * Creates a DuckDB in-memory instance and sets up S3/httpfs for testing.
@@ -28,7 +41,7 @@ export async function createDuckDBWithS3(): Promise<{
 }
 
 export async function createDuckDBTableFromData<T>(
-  connection: { run(sql: string, params?: readonly unknown[]): Promise<unknown> },
+  connection: DuckDBConnection,
   knexBuilder: Knex,
   tableName: string,
   tableSql: (tableName: string) => string,
@@ -46,7 +59,7 @@ export async function createDuckDBTableFromData<T>(
     .toSQL()
     .toNative();
 
-  await connection.run(insertQuery.sql, insertQuery.bindings);
+  await connection.run(insertQuery.sql, prepareBindings(insertQuery.bindings));
 
   await connection.run(`
     COPY ${tmpTableName}
@@ -62,4 +75,19 @@ export async function createDuckDBTableFromData<T>(
     FROM '${s3Path}'
     (FORMAT PARQUET);
   `);
+}
+
+export async function createDuckDBTables(
+  connection: DuckDBConnection
+): Promise<void> {
+  await connection.run(asyncOperationsS3TableSql());
+  await connection.run(collectionsS3TableSql());
+  await connection.run(providersS3TableSql());
+  await connection.run(granulesS3TableSql());
+  await connection.run(filesS3TableSql());
+  await connection.run(executionsS3TableSql());
+  await connection.run(granulesExecutionsS3TableSql());
+  await connection.run(pdrsS3TableSql());
+  await connection.run(reconciliationReportsS3TableSql());
+  await connection.run(rulesS3TableSql());
 }

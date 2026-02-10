@@ -1,4 +1,4 @@
-export const asyncOperationsS3TableSql = (tableName: string) => `
+export const asyncOperationsS3TableSql = (tableName: string = 'async_operations') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     id UUID NOT NULL,
@@ -36,7 +36,7 @@ export const asyncOperationsS3TableSql = (tableName: string) => `
         ))
 );`;
 
-export const collectionsS3TableSql = (tableName: string) => `
+export const collectionsS3TableSql = (tableName: string = 'collections') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -58,7 +58,7 @@ export const collectionsS3TableSql = (tableName: string) => `
     CHECK (duplicate_handling IN ('error', 'replace', 'skip', 'version'))
 );`;
 
-export const executionsS3TableSql = (tableName: string) => `
+export const executionsS3TableSql = (tableName: string = 'executions') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id BIGINT PRIMARY KEY,
     arn TEXT NOT NULL,
@@ -88,13 +88,12 @@ export const executionsS3TableSql = (tableName: string) => `
         REFERENCES collections (cumulus_id),
     CONSTRAINT executions_parent_cumulus_id_foreign
         FOREIGN KEY (parent_cumulus_id)
-        REFERENCES executions (cumulus_id)
-        ON DELETE SET NULL,
+        REFERENCES executions (cumulus_id),
     CONSTRAINT executions_status_check
         CHECK (status IN ('running', 'completed', 'failed', 'unknown'))
 );`;
 
-export const filesS3TableSql = (tableName: string) => `
+export const filesS3TableSql = (tableName: string = 'files') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id BIGINT PRIMARY KEY,
     granule_cumulus_id BIGINT NOT NULL,
@@ -113,10 +112,9 @@ export const filesS3TableSql = (tableName: string) => `
     CONSTRAINT files_granule_cumulus_id_foreign
         FOREIGN KEY (granule_cumulus_id)
         REFERENCES granules (cumulus_id)
-        ON DELETE CASCADE
 );`;
 
-export const granulesS3TableSql = (tableName: string) => `
+export const granulesS3TableSql = (tableName: string = 'granules') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id BIGINT PRIMARY KEY,
     granule_id TEXT NOT NULL,
@@ -140,14 +138,14 @@ export const granulesS3TableSql = (tableName: string) => `
     processing_start_date_time TIMESTAMPTZ,
     production_date_time TIMESTAMPTZ,
     query_fields JSON,
-    \"timestamp\" TIMESTAMPTZ,
+    "timestamp" TIMESTAMPTZ,
     producer_granule_id TEXT NOT NULL,
     archived BOOLEAN NOT NULL DEFAULT FALSE,
     UNIQUE (collection_cumulus_id, granule_id),
     CHECK (status IN ('running', 'completed', 'failed', 'queued'))
 );`;
 
-export const granulesExecutionsS3TableSql = (tableName: string) => `
+export const granulesExecutionsS3TableSql = (tableName: string = 'granules_executions') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     granule_cumulus_id BIGINT NOT NULL,
     execution_cumulus_id BIGINT NOT NULL,
@@ -155,15 +153,13 @@ export const granulesExecutionsS3TableSql = (tableName: string) => `
         UNIQUE (granule_cumulus_id, execution_cumulus_id),
     CONSTRAINT granules_executions_execution_cumulus_id_foreign
         FOREIGN KEY (execution_cumulus_id)
-        REFERENCES executions (cumulus_id)
-        ON DELETE CASCADE,
+        REFERENCES executions (cumulus_id),
     CONSTRAINT granules_executions_granule_cumulus_id_foreign
         FOREIGN KEY (granule_cumulus_id)
         REFERENCES granules (cumulus_id)
-        ON DELETE CASCADE
 );`;
 
-export const pdrsS3TableSql = (tableName: string) => `
+export const pdrsS3TableSql = (tableName: string = 'pdrs') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     collection_cumulus_id INTEGER NOT NULL,
@@ -195,7 +191,7 @@ export const pdrsS3TableSql = (tableName: string) => `
         CHECK (status IN ('running', 'failed', 'completed'))
 );`;
 
-export const providersS3TableSql = (tableName: string) => `
+export const providersS3TableSql = (tableName: string = 'providers') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -217,7 +213,7 @@ export const providersS3TableSql = (tableName: string) => `
         CHECK (protocol IN ('http', 'https', 'ftp', 'sftp', 's3'))
 );`;
 
-export const reconciliationReportsS3TableSql = (tableName: string) => `
+export const reconciliationReportsS3TableSql = (tableName: string = 'reconciliation_reports') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -240,7 +236,7 @@ export const reconciliationReportsS3TableSql = (tableName: string) => `
         CHECK (status IN ('Generated', 'Pending', 'Failed'))
 );`;
 
-export const rulesS3TableSql = (tableName: string) => `
+export const rulesS3TableSql = (tableName: string = 'rules') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
