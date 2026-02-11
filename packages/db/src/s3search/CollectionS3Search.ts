@@ -135,10 +135,12 @@ export class CollectionS3Search extends CollectionSearch {
     const shouldReturnCountOnly = this.dbQueryParameters.countOnly === true;
 
     try {
-      const queryConfigs = [
-        { key: 'count', query: countQuery },
-        ...(!shouldReturnCountOnly ? [{ key: 'records', query: searchQuery }] : []),
-      ];
+      const queryConfigs = shouldReturnCountOnly
+        ? [{ key: 'count', query: countQuery }]
+        : [
+          { key: 'count', query: countQuery },
+          { key: 'records', query: searchQuery },
+        ];
 
       const executionPromises = queryConfigs.map(async (config) => {
         if (!config.query) return [];
@@ -153,7 +155,7 @@ export class CollectionS3Search extends CollectionSearch {
         return reader.getRowObjectsJson();
       });
 
-      const [countResult, pgRecords] = await Promise.all(executionPromises);
+      const [countResult, pgRecords = []] = await Promise.all(executionPromises);
 
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;
