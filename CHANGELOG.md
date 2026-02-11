@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-4498**
+  - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+
 ## [v21.3.0] 2026-01-26
 
 ### Migration Notes
