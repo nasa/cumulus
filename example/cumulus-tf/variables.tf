@@ -304,6 +304,7 @@ variable "archive_api_users" {
     "mikedorfman",
     "nnageswa",
     "npauzenga",
+    "reweeden",
     "terrafirma13",
     "yliu10"
   ]
