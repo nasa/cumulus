@@ -23,7 +23,7 @@ function determineIntegrationTestStackName(cb) {
     dhudelson: 'dh-ci',
     etcart: 'ecarton-ci',
     ecarton: 'ecarton-ci',
-    'eyen': 'eyen-ci',
+    eyen: 'eyen-ci',
     'Filip Graniczny': 'fg-ci',
     'James Norton': 'jn-ci',
     'Jenny Liu': 'jl-rds',
