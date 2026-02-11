@@ -1,0 +1,81 @@
+{
+  "$defs": {
+    "SNSPublishParameters": {
+      "description": "Schema for SNS publish parameters.",
+      "properties": {
+        "TopicArn": {
+          "title": "Topicarn",
+          "type": "string"
+        },
+        "Message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "TopicArn",
+        "Message"
+      ],
+      "title": "SNSPublishParameters",
+      "type": "object"
+    },
+    "SNSService": {
+      "description": "Schema for SNS service configuration.",
+      "properties": {
+        "service": {
+          "const": "sns",
+          "title": "Service",
+          "type": "string"
+        },
+        "action": {
+          "const": "publish",
+          "title": "Action",
+          "type": "string"
+        },
+        "parameters": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SNSPublishParameters"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "parameters_list": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/SNSPublishParameters"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parameters List"
+        }
+      },
+      "required": [
+        "service",
+        "action"
+      ],
+      "title": "SNSService",
+      "type": "object"
+    }
+  },
+  "description": "Configuration schema for granule invalidator task.",
+  "properties": {
+    "sns_service": {
+      "$ref": "#/$defs/SNSService"
+    }
+  },
+  "required": [
+    "sns_service"
+  ],
+  "title": "Model",
+  "type": "object"
+}
