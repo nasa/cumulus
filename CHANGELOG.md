@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Breaking Changes
 
 - **CUMULUS-4473**
+  - Changed "_doc" type to "undefined" for ElasticSearch v8.x query parameter . The ES client will omit undefined values from the request. This doesn't touch the other callers.
+- **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
     granule objects in the payload.
   - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints
