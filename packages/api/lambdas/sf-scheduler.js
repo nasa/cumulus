@@ -52,7 +52,7 @@ async function handleScheduleEvent(event) {
     name: workflowDefinition.name,
     arn: workflowDefinition.arn,
   };
-
+  logger.warn(messageTemplate)
   const eventCustomMeta = get(event, 'meta', {});
   const cmrProvider = collection.cmrProvider || messageTemplate.cmr.provider;
   const message = buildQueueMessageFromTemplate({
