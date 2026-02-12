@@ -77,6 +77,7 @@ archive_api_users = [
     "mdcampbell",
     "nathawat",
     "ppiatko",
+    "richard.l.clark",
     "sflynn",
     "tbmcknig",
     "viviant",
