@@ -71,7 +71,7 @@ async function updateEachCmrFileMetadata(
       bucketTypes,
       cmrGranuleUrlType,
       distributionBucketMap,
-      updateGranuleIdentifiers: process.env.update_granule_identifiers,
+      updateGranuleIdentifiers: process.env.update_granule_identifiers === 'true',
     });
   }));
 }
