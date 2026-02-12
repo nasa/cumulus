@@ -1223,7 +1223,7 @@ async function updateCMRMetadata({
   published,
   bucketTypes,
   cmrGranuleUrlType = 'both',
-  updateGranuleIdentifiers,
+  updateGranuleIdentifiers = false,
   distributionBucketMap,
   testOverrides = {},
 }) {
