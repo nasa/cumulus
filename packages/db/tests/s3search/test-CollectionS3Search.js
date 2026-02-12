@@ -1,3 +1,5 @@
+'use strict';
+
 const test = require('ava');
 const knex = require('knex');
 const cryptoRandomString = require('crypto-random-string');
@@ -36,22 +38,10 @@ test.before(async (t) => {
     })
   ));
 
-  const sanitizedCollections = collections.map((c) => ({
-    ...c,
-    // Ensure dates are in ISO format
-    created_at: c.created_at.toISOString(),
-    updated_at: c.updated_at.toISOString(),
-  }));
-
   // Create provider
   t.context.provider = fakeProviderRecordFactory({
     cumulus_id: random(1, 100),
   });
-  const sanitizedProvider = {
-    ...t.context.provider,
-    created_at: t.context.provider.created_at.toISOString(),
-    updated_at: t.context.provider.updated_at.toISOString(),
-  };
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
   t.context.granuleSearchTmestamp = 1688888800000;
@@ -71,12 +61,6 @@ test.before(async (t) => {
         : new Date(t.context.granuleSearchTmestamp + (num % 99)),
     })
   ));
-  const sanitizedGranules = t.context.granules.map((g) => ({
-    ...g,
-    // Ensure dates are in ISO format
-    created_at: g.created_at.toISOString(),
-    updated_at: g.updated_at.toISOString(),
-  }));
 
   const { instance, connection } = await createDuckDBWithS3();
   t.context.instance = instance;
@@ -92,7 +76,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'collections',
     collectionsS3TableSql,
-    sanitizedCollections,
+    collections,
     `${duckdbS3Prefix}collections.parquet`
   );
 
@@ -101,7 +85,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'providers',
     providersS3TableSql,
-    sanitizedProvider,
+    t.context.provider,
     `${duckdbS3Prefix}providers.parquet`
   );
 
@@ -110,7 +94,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'granules',
     granulesS3TableSql,
-    sanitizedGranules,
+    t.context.granules,
     `${duckdbS3Prefix}granules.parquet`
   );
 });

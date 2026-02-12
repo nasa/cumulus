@@ -10,7 +10,7 @@ import { BaseSearch } from './BaseSearch';
 
 const log = new Logger({ sender: '@cumulus/db/StatsSearch' });
 
-type TotalSummary = {
+export type TotalSummary = {
   count_errors: number,
   count_collections: number,
   count_granules: number,
@@ -30,7 +30,7 @@ type Summary = {
   unit: string,
 };
 
-type SummaryResult = {
+export type SummaryResult = {
   errors: Summary,
   granules: Summary,
   collections: Summary,
@@ -48,7 +48,7 @@ type AggregateRes = {
   count: number,
 };
 
-type ApiAggregateResult = {
+export type ApiAggregateResult = {
   meta: Meta,
   count: AggregateRes[]
 };
@@ -80,7 +80,7 @@ class StatsSearch extends BaseSearch {
    * @param result - the postgres query results
    * @returns the api object with the aggregate statistics
    */
-  private formatAggregateResult(result: Record<string, Aggregate>): ApiAggregateResult {
+  protected formatAggregateResult(result: Record<string, Aggregate>): ApiAggregateResult {
     let totalCount = 0;
     const responses = [];
     for (const row of Object.keys(result)) {
@@ -108,7 +108,7 @@ class StatsSearch extends BaseSearch {
    * @param result - the knex summary query results
    * @returns the api object with the summary statistics
    */
-  private formatSummaryResult(result: TotalSummary): SummaryResult {
+  protected formatSummaryResult(result: TotalSummary): SummaryResult {
     const timestampTo = this.dbQueryParameters.range?.updated_at?.lte ?? new Date();
     const timestampFrom = this.dbQueryParameters.range?.updated_at?.gte ?? new Date(0);
     const dateto = (timestampTo as Date).toISOString();
@@ -145,6 +145,19 @@ class StatsSearch extends BaseSearch {
     };
   }
 
+  protected buildSummaryQuery(knex: Knex): Knex.QueryBuilder {
+    const aggregateQuery: Knex.QueryBuilder = knex(this.tableName);
+
+    this.buildRangeQuery({ searchQuery: aggregateQuery });
+    aggregateQuery.select(
+      knex.raw(`COUNT(CASE WHEN ${this.tableName}.error ->> 'Error' is not null THEN 1 END) AS count_errors`),
+      knex.raw('COUNT(*) AS count_granules'),
+      knex.raw(`AVG(${this.tableName}.duration) AS avg_processing_time`),
+      knex.raw(`COUNT(DISTINCT ${this.tableName}.collection_cumulus_id) AS count_collections`)
+    );
+    return aggregateQuery;
+  }
+
   /**
    * Queries postgres for a summary of statistics around the granules in the system
    *
@@ -153,14 +166,7 @@ class StatsSearch extends BaseSearch {
    */
   public async summary(testKnex?: Knex): Promise<SummaryResult> {
     const knex = testKnex ?? await getKnexClient();
-    const aggregateQuery: Knex.QueryBuilder = knex(this.tableName);
-    this.buildRangeQuery({ searchQuery: aggregateQuery });
-    aggregateQuery.select(
-      knex.raw(`COUNT(CASE WHEN ${this.tableName}.error ->> 'Error' is not null THEN 1 END) AS count_errors`),
-      knex.raw('COUNT(*) AS count_granules'),
-      knex.raw(`AVG(${this.tableName}.duration) AS avg_processing_time`),
-      knex.raw(`COUNT(DISTINCT ${this.tableName}.collection_cumulus_id) AS count_collections`)
-    );
+    const aggregateQuery = this.buildSummaryQuery(knex);
     log.debug(`summary about to execute query: ${aggregateQuery?.toSQL().sql}`);
     const aggregateQueryRes: TotalSummary[] = await aggregateQuery;
     return this.formatSummaryResult(aggregateQueryRes[0]);

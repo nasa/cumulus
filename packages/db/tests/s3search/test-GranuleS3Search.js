@@ -1,3 +1,5 @@
+'use strict';
+
 const test = require('ava');
 const knex = require('knex');
 const cryptoRandomString = require('crypto-random-string');
@@ -69,15 +71,9 @@ test.before(async (t) => {
     version: collectionVersion2,
   });
 
-  const sanitizedCollections = [
+  const collections = [
     t.context.testPgCollection,
-    t.context.testPgCollection2]
-    .map((c) => ({
-      ...c,
-      // Ensure dates are in ISO format
-      created_at: c.created_at.toISOString(),
-      updated_at: c.updated_at.toISOString(),
-    }));
+    t.context.testPgCollection2];
 
   t.context.collectionCumulusId = t.context.testPgCollection.cumulus_id;
   t.context.collectionCumulusId2 = t.context.testPgCollection2.cumulus_id;
@@ -87,11 +83,6 @@ test.before(async (t) => {
     cumulus_id: random(1, 100),
   });
   t.context.providerCumulusId = t.context.provider.cumulus_id;
-  const sanitizedProvider = {
-    ...t.context.provider,
-    created_at: t.context.provider.created_at.toISOString(),
-    updated_at: t.context.provider.updated_at.toISOString(),
-  };
 
   // Create PDR
   t.context.pdr = fakePdrRecordFactory({
@@ -100,11 +91,6 @@ test.before(async (t) => {
     provider_cumulus_id: t.context.providerCumulusId,
   });
   t.context.pdrCumulusId = t.context.pdr.cumulus_id;
-  const sanitizedPdr = {
-    ...t.context.pdr,
-    created_at: t.context.provider.created_at.toISOString(),
-    updated_at: t.context.provider.updated_at.toISOString(),
-  };
 
   // Create Granule
   t.context.granuleSearchFields = {
@@ -157,16 +143,6 @@ test.before(async (t) => {
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
       archived: Boolean(num % 2),
     }));
-
-  const sanitizedGranules = t.context.granules.map((g) => ({
-    ...g,
-    // Ensure dates are in ISO format
-    beginning_date_time: g.beginning_date_time?.toISOString(),
-    created_at: g.created_at?.toISOString(),
-    ending_date_time: g.ending_date_time?.toISOString(),
-    last_update_date_time: g.last_update_date_time?.toISOString(),
-    updated_at: g.updated_at?.toISOString(),
-  }));
 
   const files = t.context.granules
     .flatMap((granule, i) => [
@@ -254,7 +230,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'collections',
     collectionsS3TableSql,
-    sanitizedCollections,
+    collections,
     `${duckdbS3Prefix}collections.parquet`
   );
 
@@ -264,7 +240,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'providers',
     providersS3TableSql,
-    sanitizedProvider,
+    t.context.provider,
     `${duckdbS3Prefix}providers.parquet`
   );
 
@@ -274,7 +250,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'granules',
     granulesS3TableSql,
-    sanitizedGranules,
+    t.context.granules,
     `${duckdbS3Prefix}granules.parquet`
   );
 
@@ -314,7 +290,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'pdrs',
     pdrsS3TableSql,
-    sanitizedPdr,
+    t.context.pdr,
     `${duckdbS3Prefix}pdrs.parquet`
   );
 });
@@ -324,7 +300,7 @@ test.after.always(async (t) => {
   await t.context.connection.closeSync();
 });
 
-test('GranuleS3Search returns 10 granule records by default', async (t) => {
+test.serial('GranuleS3Search returns 10 granule records by default', async (t) => {
   const { connection } = t.context;
   const dbSearch = new GranuleS3Search({}, connection);
   const response = await dbSearch.query();
@@ -341,7 +317,7 @@ test('GranuleS3Search returns 10 granule records by default', async (t) => {
   //TODO verify json fields
 });
 
-test('GranuleS3Search supports page and limit params', async (t) => {
+test.serial('GranuleS3Search supports page and limit params', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     estimateTableRowCount: 'false',
@@ -374,7 +350,7 @@ test('GranuleS3Search supports page and limit params', async (t) => {
   t.is(response.results?.length, 0);
 });
 
-test('GranuleS3Search supports infix search', async (t) => {
+test.serial('GranuleS3Search supports infix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -386,7 +362,7 @@ test('GranuleS3Search supports infix search', async (t) => {
   t.is(response.results?.length, 3);
 });
 
-test('GranuleS3Search supports prefix search', async (t) => {
+test.serial('GranuleS3Search supports prefix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -398,7 +374,7 @@ test('GranuleS3Search supports prefix search', async (t) => {
   t.is(response.results?.length, 2);
 });
 
-test('GranuleS3Search supports collectionId term search', async (t) => {
+test.serial('GranuleS3Search supports collectionId term search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -410,7 +386,7 @@ test('GranuleS3Search supports collectionId term search', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports provider term search', async (t) => {
+test.serial('GranuleS3Search supports provider term search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -422,7 +398,7 @@ test('GranuleS3Search supports provider term search', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports pdrName term search', async (t) => {
+test.serial('GranuleS3Search supports pdrName term search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -434,7 +410,7 @@ test('GranuleS3Search supports pdrName term search', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports term search for boolean field', async (t) => {
+test.serial('GranuleS3Search supports term search for boolean field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -446,7 +422,7 @@ test('GranuleS3Search supports term search for boolean field', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports term search for date field', async (t) => {
+test.serial('GranuleS3Search supports term search for date field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -461,7 +437,7 @@ test('GranuleS3Search supports term search for date field', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports term search for number field', async (t) => {
+test.serial('GranuleS3Search supports term search for number field', async (t) => {
   const { connection } = t.context;
 
   let queryStringParameters = {
@@ -488,7 +464,7 @@ test('GranuleS3Search supports term search for number field', async (t) => {
   t.is(response.results?.length, 5);
 });
 
-test('GranuleS3Search supports term search for string field', async (t) => {
+test.serial('GranuleS3Search supports term search for string field', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -509,7 +485,7 @@ test('GranuleS3Search supports term search for string field', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-test('GranuleS3Search supports term search for timestamp', async (t) => {
+test.serial('GranuleS3Search supports term search for timestamp', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -521,7 +497,7 @@ test('GranuleS3Search supports term search for timestamp', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports term search for nested error.Error', async (t) => {
+test.serial('GranuleS3Search supports term search for nested error.Error', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -533,7 +509,7 @@ test('GranuleS3Search supports term search for nested error.Error', async (t) =>
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports range search', async (t) => {
+test.serial('GranuleS3Search supports range search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -568,7 +544,7 @@ test('GranuleS3Search supports range search', async (t) => {
   t.is(response.results?.length, 0);
 });
 
-test('GranuleS3Search supports search for multiple fields', async (t) => {
+test.serial('GranuleS3Search supports search for multiple fields', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -588,7 +564,7 @@ test('GranuleS3Search supports search for multiple fields', async (t) => {
   t.is(response.results?.length, 49);
 });
 
-test('GranuleS3Search non-existing fields are ignored', async (t) => {
+test.serial('GranuleS3Search non-existing fields are ignored', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     estimateTableRowCount: 'false',
@@ -602,7 +578,7 @@ test('GranuleS3Search non-existing fields are ignored', async (t) => {
   t.is(response.results?.length, 100);
 });
 
-test('GranuleS3Search returns fields specified', async (t) => {
+test.serial('GranuleS3Search returns fields specified', async (t) => {
   const { connection } = t.context;
   const fields = 'granuleId,endingDateTime,collectionId,published,status';
   const queryStringParameters = {
@@ -616,7 +592,7 @@ test('GranuleS3Search returns fields specified', async (t) => {
   response.results.forEach((granule) => t.deepEqual(Object.keys(granule), fields.split(',')));
 });
 
-test('GranuleS3Search supports sorting', async (t) => {
+test.serial('GranuleS3Search supports sorting', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     estimateTableRowCount: 'false',
@@ -696,7 +672,7 @@ test('GranuleS3Search supports sorting', async (t) => {
   t.true(response6.results[1].updatedAt < response6.results[50].updatedAt);
 });
 
-test('GranuleS3Search supports sorting by CollectionId', async (t) => {
+test.serial('GranuleS3Search supports sorting by CollectionId', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     estimateTableRowCount: 'false',
@@ -724,7 +700,7 @@ test('GranuleS3Search supports sorting by CollectionId', async (t) => {
   t.true(response9.results[0].collectionId > response9.results[50].collectionId);
 });
 
-test('GranuleS3Search supports sorting by Error', async (t) => {
+test.serial('GranuleS3Search supports sorting by Error', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -746,7 +722,7 @@ test('GranuleS3Search supports sorting by Error', async (t) => {
   t.is(response10.results[99].error, undefined);
 });
 
-test('GranuleS3Search supports terms search', async (t) => {
+test.serial('GranuleS3Search supports terms search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -769,7 +745,7 @@ test('GranuleS3Search supports terms search', async (t) => {
   t.is(response.results?.length, 1);
 });
 
-test('GranuleS3Search supports collectionId terms search', async (t) => {
+test.serial('GranuleS3Search supports collectionId terms search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -790,7 +766,7 @@ test('GranuleS3Search supports collectionId terms search', async (t) => {
   t.is(response.results?.length, 100);
 });
 
-test('GranuleS3Search supports provider terms search', async (t) => {
+test.serial('GranuleS3Search supports provider terms search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -802,7 +778,7 @@ test('GranuleS3Search supports provider terms search', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports pdrName terms search', async (t) => {
+test.serial('GranuleS3Search supports pdrName terms search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -814,7 +790,7 @@ test('GranuleS3Search supports pdrName terms search', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports error.Error terms search', async (t) => {
+test.serial('GranuleS3Search supports error.Error terms search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -835,7 +811,7 @@ test('GranuleS3Search supports error.Error terms search', async (t) => {
   t.is(response.results?.length, 0);
 });
 
-test('GranuleS3Search supports search when granule field does not match the given value', async (t) => {
+test.serial('GranuleS3Search supports search when granule field does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -858,7 +834,7 @@ test('GranuleS3Search supports search when granule field does not match the give
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports search which collectionId does not match the given value', async (t) => {
+test.serial('GranuleS3Search supports search which collectionId does not match the given value', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -870,7 +846,7 @@ test('GranuleS3Search supports search which collectionId does not match the give
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports search which provider does not match the given value', async (t) => {
+test.serial('GranuleS3Search supports search which provider does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -891,7 +867,7 @@ test('GranuleS3Search supports search which provider does not match the given va
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports search which pdrName does not match the given value', async (t) => {
+test.serial('GranuleS3Search supports search which pdrName does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -912,7 +888,7 @@ test('GranuleS3Search supports search which pdrName does not match the given val
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports search which error.Error does not match the given value', async (t) => {
+test.serial('GranuleS3Search supports search which error.Error does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -933,7 +909,7 @@ test('GranuleS3Search supports search which error.Error does not match the given
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports search which checks existence of granule field', async (t) => {
+test.serial('GranuleS3Search supports search which checks existence of granule field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -945,7 +921,7 @@ test('GranuleS3Search supports search which checks existence of granule field', 
   t.is(response.results?.length, 1);
 });
 
-test('GranuleS3Search supports search which checks existence of collectionId', async (t) => {
+test.serial('GranuleS3Search supports search which checks existence of collectionId', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -965,7 +941,7 @@ test('GranuleS3Search supports search which checks existence of collectionId', a
   t.is(response.results?.length, 0);
 });
 
-test('GranuleS3Search supports search which checks existence of provider', async (t) => {
+test.serial('GranuleS3Search supports search which checks existence of provider', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -986,7 +962,7 @@ test('GranuleS3Search supports search which checks existence of provider', async
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports search which checks existence of pdrName', async (t) => {
+test.serial('GranuleS3Search supports search which checks existence of pdrName', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -1007,7 +983,7 @@ test('GranuleS3Search supports search which checks existence of pdrName', async 
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search supports search which checks existence of error', async (t) => {
+test.serial('GranuleS3Search supports search which checks existence of error', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -1028,7 +1004,7 @@ test('GranuleS3Search supports search which checks existence of error', async (t
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search estimates the rowcount of the table by default', async (t) => {
+test.serial('GranuleS3Search estimates the rowcount of the table by default', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
@@ -1039,7 +1015,7 @@ test('GranuleS3Search estimates the rowcount of the table by default', async (t)
   t.is(response.results?.length, 50);
 });
 
-test('GranuleS3Search only returns count if countOnly is set to true', async (t) => {
+test.serial('GranuleS3Search only returns count if countOnly is set to true', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     countOnly: 'true',
@@ -1050,7 +1026,7 @@ test('GranuleS3Search only returns count if countOnly is set to true', async (t)
   t.is(response.results?.length, 0);
 });
 
-test('GranuleS3Search with includeFullRecord true retrieves associated file objects for granules', async (t) => {
+test.serial('GranuleS3Search with includeFullRecord true retrieves associated file objects for granules', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -1067,7 +1043,7 @@ test('GranuleS3Search with includeFullRecord true retrieves associated file obje
     t.true('key' in granuleRecord.files[1]);
   });
 });
-test('GranuleS3Search with includeFullRecord true retrieves associated file translated to api key format', async (t) => {
+test.serial('GranuleS3Search with includeFullRecord true retrieves associated file translated to api key format', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -1087,7 +1063,7 @@ test('GranuleS3Search with includeFullRecord true retrieves associated file tran
   });
 });
 
-test('GranuleS3Search with includeFullRecord true retrieves one associated Url object for granules', async (t) => {
+test.serial('GranuleS3Search with includeFullRecord true retrieves one associated Url object for granules', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -1101,7 +1077,7 @@ test('GranuleS3Search with includeFullRecord true retrieves one associated Url o
   });
 });
 
-test('GranuleS3Search with includeFullRecord true retrieves latest associated Url object for granules', async (t) => {
+test.serial('GranuleS3Search with includeFullRecord true retrieves latest associated Url object for granules', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -1120,7 +1096,7 @@ test('GranuleS3Search with includeFullRecord true retrieves latest associated Ur
   });
 });
 
-test('GranuleS3Search with includeFullRecord true retrieves granules, files and executions, with limit specifying number of granules', async (t) => {
+test.serial('GranuleS3Search with includeFullRecord true retrieves granules, files and executions, with limit specifying number of granules', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 4,
@@ -1138,7 +1114,7 @@ test('GranuleS3Search with includeFullRecord true retrieves granules, files and 
   });
 });
 
-test('GranuleS3Search with archived: true pulls only archive granules', async (t) => {
+test.serial('GranuleS3Search with archived: true pulls only archive granules', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     archived: true,
@@ -1150,7 +1126,7 @@ test('GranuleS3Search with archived: true pulls only archive granules', async (t
   });
 });
 
-test('GranuleS3Search with archived: false pulls only non-archive granules', async (t) => {
+test.serial('GranuleS3Search with archived: false pulls only non-archive granules', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     archived: false,
