@@ -76,5 +76,5 @@ module "ingest" {
   allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 
   # For update-granules-cmr-metadata-file-links-task in order to update granule identifiers or not
-  update_granule_identifiers = var.default_update_granule_identifiers
+  update_granule_identifiers = var.update_granule_identifiers
 }

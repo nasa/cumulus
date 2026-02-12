@@ -223,7 +223,7 @@ variable "default_s3_multipart_chunksize_mb" {
   default = 256
 }
 
-variable "default_update_granule_identifiers" {
+variable "update_granule_identifiers" {
   description = "Whether or not to automatically update granule identifiers"
   type        = bool
   default     = true

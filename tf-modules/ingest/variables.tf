@@ -203,7 +203,7 @@ variable "default_log_retention_days" {
   description = "Optional default value that user chooses for their log retention periods"
 }
 
-variable "default_update_granule_identifiers" {
+variable "update_granule_identifiers" {
   description = "Whether or not to automatically update granule identifiers"
   type        = bool
   default     = true

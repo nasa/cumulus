@@ -36,6 +36,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
     `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
 
+- **CSD-91**
+  - Change update-granules-cmr-metadata-file-links task's updateGranuleIdentifiers flag from true to configurable environment variable `update_granule_identifiers`.
+
 ### Notable Changes
 
 - **CUMULUS-4473**

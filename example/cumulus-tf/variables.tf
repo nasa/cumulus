@@ -211,7 +211,7 @@ variable "tea_distribution_url" {
   default = null
 }
 
-variable "default_update_granule_identifiers" {
+variable "update_granule_identifiers" {
   description = "Whether or not to automatically update granule identifiers"
   type        = bool
   default     = true
