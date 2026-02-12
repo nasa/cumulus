@@ -30,12 +30,14 @@ async def run_with_limit(method, parameters_list, max_concurrency=5):
             # Since boto3 is not async, run it in a thread
             return await asyncio.to_thread(method, **parameters)
 
-    return await asyncio.gather(*(worker(parameters) for parameters in parameters_list))
+    results = await asyncio.gather(
+        *(worker(parameters) for parameters in parameters_list), return_exceptions=True
+    )
+    return results
 
 
 def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
     """Handle AWS API Proxy requests."""
-    LOGGER.info(f"Received event: {event}")
     config = event.get("config", {})
     service = config.get("service")
     action = config.get("action")

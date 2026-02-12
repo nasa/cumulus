@@ -16,33 +16,6 @@ SNS_CLIENT = boto3.client("sns")
 SQS_CLIENT = boto3.client("sqs")
 
 
-def set_up_sns_tests(count=1) -> None:
-    """Set up SNS topics and subscriptions for testing.  Create one or more SNS topics
-    and corresponding SQS queues, subscribe the latter to the former and return the
-    identifiers for each resource created.
-    """
-    arn_list = []
-    for _ in range(count):
-        topic = SNS_CLIENT.create_topic(Name=uuid.uuid4().hex)
-        topic_arn = topic["TopicArn"]
-
-        queue = SQS_CLIENT.create_queue(QueueName=uuid.uuid4().hex)
-        queue_url = queue["QueueUrl"]
-
-        attrs = SQS_CLIENT.get_queue_attributes(
-            QueueUrl=queue_url, AttributeNames=["QueueArn"]
-        )
-        queue_arn = attrs["Attributes"]["QueueArn"]
-
-        SNS_CLIENT.subscribe(
-            TopicArn=topic_arn,
-            Protocol="sqs",
-            Endpoint=queue_arn,
-        )
-        arn_list.append({"TopicArn": topic_arn, "QueueUrl": queue_url})
-    return arn_list
-
-
 @mock_aws
 def test_lambda_adapter_list_publish() -> None:
     """Verify that lambda_adapter calls the AWS API with a list as expected."""
@@ -197,6 +170,24 @@ def test_run_with_limit_respects_max_concurrency() -> None:
 
     # If the total time is significantly more, we may not be running in parallel
     assert total_time <= expected_total_time + extra_time
+
+
+def test_partial_failure() -> None:
+    """Verify run_with_limit caps concurrent calls and runs calls in parallel."""
+
+    count = 10
+    cutoff = count / 2
+
+    def task(num):
+        if num >= cutoff:
+            raise ValueError("Simulated failure")
+
+    results = asyncio.run(
+        run_with_limit(task, [{"num": i} for i in range(count)], max_concurrency=2)
+    )
+    assert len(results) == count
+    assert len([r for r in results if isinstance(r, Exception)]) == count - cutoff
+    assert len([r for r in results if r is None]) == count - cutoff
 
 
 def test_lambda_handler_prohibits_additional_parameters() -> None:
