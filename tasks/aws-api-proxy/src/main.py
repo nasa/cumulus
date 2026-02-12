@@ -1,6 +1,6 @@
-"""Granule invalidator Lambda function.
+"""aws-api-proxy Lambda function.
 
-This file provides the Lambda handler for invalidating granules in the Cumulus workflow.
+This file provides the Lambda handler for the AWS API proxy task.
 """
 
 import logging
