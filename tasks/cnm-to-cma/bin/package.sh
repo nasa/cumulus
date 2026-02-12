@@ -15,7 +15,7 @@ uv pip install \
   --target "${DIR}/.venv" \
   -r requirements.txt
 
-cp -r "${DIR}/../src/cnm2cma" "${DIR}/.venv"
+cp -r "${DIR}/src/cnm2cma" "${DIR}/.venv"
 
 cd ./.venv || exit 1
 
