@@ -1,12 +1,14 @@
 """Tests for aws api proxy module."""
 
+import asyncio
 import json
+import time
 import uuid
 
 import boto3
 import jsonschema
 import pytest
-from aws_api_proxy.aws_api_proxy import lambda_adapter
+from aws_api_proxy.aws_api_proxy import lambda_adapter, run_with_limit
 from main import lambda_handler
 from moto import mock_aws
 
@@ -42,66 +44,159 @@ def set_up_sns_tests(count=1) -> None:
 
 
 @mock_aws
-def test_lambda_adapter_single_publish() -> None:
-    """Verify that lambda_adapter calls the AWS API as expected."""
-    arn_list = set_up_sns_tests()
+def test_lambda_adapter_list_publish() -> None:
+    """Verify that lambda_adapter calls the AWS API with a list as expected."""
+    topic = SNS_CLIENT.create_topic(Name=uuid.uuid4().hex)
+    topic_arn = topic["TopicArn"]
 
-    message_contents = json.dumps({"a": "b", "c": 1})
+    queue = SQS_CLIENT.create_queue(QueueName=uuid.uuid4().hex)
+    queue_url = queue["QueueUrl"]
+
+    attrs = SQS_CLIENT.get_queue_attributes(
+        QueueUrl=queue_url, AttributeNames=["QueueArn"]
+    )
+    queue_arn = attrs["Attributes"]["QueueArn"]
+
+    SNS_CLIENT.subscribe(
+        TopicArn=topic_arn,
+        Protocol="sqs",
+        Endpoint=queue_arn,
+    )
+
+    messages = [
+        {"m": "first message"},
+        {"m": "second message"},
+    ]
+
     event = {
         "config": {
             "service": "sns",
             "action": "publish",
             "parameters": {
-                "TopicArn": arn_list[0]["TopicArn"],
-                "Message": message_contents,
+                "TopicArn": topic_arn,
+                "Message": messages,
             },
-        }
-    }
-
-    response = lambda_adapter(event, None)
-
-    assert "MessageId" in response
-
-    messages = SQS_CLIENT.receive_message(
-        QueueUrl=arn_list[0]["QueueUrl"], MaxNumberOfMessages=1
-    )
-
-    body = json.loads(messages["Messages"][0]["Body"])
-
-    assert body["Message"] == message_contents
-
-
-@mock_aws
-def test_lambda_adapter_list_publish() -> None:
-    """Verify that lambda_adapter calls the AWS API with a list as expected."""
-    arn_list = set_up_sns_tests(count=2)
-    topic_arns = [arn["TopicArn"] for arn in arn_list]
-    queue_urls = [arn["QueueUrl"] for arn in arn_list]
-    event = {
-        "config": {
-            "service": "sns",
-            "action": "publish",
-            "parameters_list": [
+            "iterate_by": "Message",
+            "parameter_filters": [
                 {
-                    "TopicArn": topic_arn,
-                    "Message": json.dumps({"topic": topic_arn}),
+                    "name": "json.dumps",
+                    "field": "Message",
                 }
-                for topic_arn in topic_arns
             ],
         }
     }
     responses = lambda_adapter(event, None)
 
-    assert all("MessageId" in response for response in responses["responses"])
+    assert len(responses) == len(messages)
+    assert all("MessageId" in response for response in responses)
 
-    for queue_url in queue_urls:
-        messages = SQS_CLIENT.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1)
+    receive_message_response = SQS_CLIENT.receive_message(
+        QueueUrl=queue_url, MaxNumberOfMessages=len(messages)
+    )
 
-        body = json.loads(messages["Messages"][0]["Body"])
+    # The JSON we want is encoded within an encoded portion of the response
+    decoded_sqs_responses = [
+        json.loads(m["Body"]) for m in receive_message_response.get("Messages")
+    ]
+    decoded_sqs_messages = [json.loads(m["Message"]) for m in decoded_sqs_responses]
 
-        assert body["Message"] in [
-            json.dumps({"topic": topic_arn}) for topic_arn in topic_arns
-        ]
+    assert decoded_sqs_messages == messages
+
+
+def test_lambda_adapter_no_filter_mapping() -> None:
+    """Verify an exception is raised when no filter match is found."""
+
+    messages = [
+        {"m": "first message"},
+        {"m": "second message"},
+    ]
+
+    event = {
+        "config": {
+            "service": "sns",
+            "action": "publish",
+            "parameters": {
+                "TopicArn": "arn:aws:sns:us-east-1:123456789012:MyTopic",
+                "Message": messages,
+            },
+            "iterate_by": "Message",
+            "parameter_filters": [
+                {
+                    "name": "nonexistent_filter",
+                    "field": "Message",
+                }
+            ],
+        }
+    }
+    with pytest.raises(ValueError):
+        lambda_adapter(event, None)
+
+
+def test_lambda_adapter_iterate_by_nonexistent_field() -> None:
+    """Verify an exception is raised when the iterate_by field does not exist."""
+
+    event = {
+        "config": {
+            "service": "sns",
+            "action": "publish",
+            "parameters": {
+                "TopicArn": "arn:aws:sns:us-east-1:123456789012:MyTopic",
+                "Message": "abc",
+            },
+            "iterate_by": "nonexistent_field",
+        }
+    }
+    with pytest.raises(ValueError):
+        lambda_adapter(event, None)
+
+
+def test_lambda_adapter_iterate_by_not_list() -> None:
+    """Verify an exception is raised when the iterate_by field is not a list."""
+
+    event = {
+        "config": {
+            "service": "sns",
+            "action": "publish",
+            "parameters": {
+                "TopicArn": "arn:aws:sns:us-east-1:123456789012:MyTopic",
+                "Message": "abc",
+            },
+            "iterate_by": "Message",
+        }
+    }
+    with pytest.raises(ValueError):
+        lambda_adapter(event, None)
+
+
+def test_run_with_limit_respects_max_concurrency() -> None:
+    """Verify run_with_limit caps concurrent calls and runs calls in parallel."""
+
+    concurrency = 2
+    count = 10
+    sleep_time = 0.5
+    expected_total_time = (count / concurrency) * sleep_time
+
+    # Add this buffer to the expected time to account for any overhead in scheduling
+    # tasks and running them in parallel.
+    extra_time = 0.1
+
+    def blocking_task():
+        time.sleep(sleep_time)
+
+    start_time = time.time()
+    results = asyncio.run(
+        run_with_limit(blocking_task, [{}] * count, max_concurrency=2)
+    )
+    total_time = time.time() - start_time
+
+    # We should get a result for each call
+    assert len(results) == count
+
+    # If the total time is less, our semaphore/parallelism limit isn't working
+    assert total_time >= expected_total_time
+
+    # If the total time is significantly more, we may not be running in parallel
+    assert total_time <= expected_total_time + extra_time
 
 
 def test_lambda_handler_prohibits_additional_parameters() -> None:

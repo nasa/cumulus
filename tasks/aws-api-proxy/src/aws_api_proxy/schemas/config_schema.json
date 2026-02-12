@@ -1,15 +1,43 @@
 {
   "$defs": {
+    "ParameterFilter": {
+      "description": "Schema for parameter filters.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "field"
+      ],
+      "title": "ParameterFilter",
+      "type": "object"
+    },
     "SNSPublishParameters": {
       "description": "Schema for SNS publish parameters.",
       "properties": {
         "TopicArn": {
-          "title": "Topicarn",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Topicarn"
         },
         "Message": {
-          "title": "Message",
-          "type": "string"
+          "title": "Message"
         }
       },
       "required": [
@@ -33,21 +61,25 @@
           "type": "string"
         },
         "parameters": {
+          "$ref": "#/$defs/SNSPublishParameters"
+        },
+        "iterate_by": {
           "anyOf": [
             {
-              "$ref": "#/$defs/SNSPublishParameters"
+              "type": "string"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Iterate By"
         },
-        "parameters_list": {
+        "parameter_filters": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/SNSPublishParameters"
+                "$ref": "#/$defs/ParameterFilter"
               },
               "type": "array"
             },
@@ -56,18 +88,19 @@
             }
           ],
           "default": null,
-          "title": "Parameters List"
+          "title": "Parameter Filters"
         }
       },
       "required": [
         "service",
-        "action"
+        "action",
+        "parameters"
       ],
       "title": "SNSService",
       "type": "object"
     }
   },
-  "description": "Configuration schema for granule invalidator task.",
+  "description": "Configuration schema for AWS API proxy task.",
   "properties": {
     "sns_service": {
       "$ref": "#/$defs/SNSService"
