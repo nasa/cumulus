@@ -1,6 +1,6 @@
-output "lambda_function_arn" {
-  description = "ARN of the Lambda function"
-  value = aws_lambda_function.cnm_to_cma.arn
+output "lambda_function" {
+  description = "The task lambda function"
+  value       = aws_lambda_function.cnm_to_cma
 }
 
 output "lambda_function_name" {
@@ -17,7 +17,9 @@ output "lambda_function_last_modified" {
   description = "Last modified date of the Lambda function"
   value       = aws_lambda_function.cnm_to_cma.last_modified
 }
-output "lambda_log_group_name" {
+
+output "log_group" {
   description = "Name of the Lambda's CloudWatch log group"
-  value       = aws_cloudwatch_log_group.cnm_to_cma.name
+  value       = aws_cloudwatch_log_group.cnm_to_cma
 }
+
