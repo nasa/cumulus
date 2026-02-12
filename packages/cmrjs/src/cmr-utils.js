@@ -889,7 +889,7 @@ async function updateUMMGMetadata({
   distributionBucketMap,
   producerGranuleId,
   granuleId,
-  updateGranuleIdentifiers,
+  updateGranuleIdentifiers = false,
   testOverrides = {},
 }) {
   const {
