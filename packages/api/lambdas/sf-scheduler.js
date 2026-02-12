@@ -43,6 +43,7 @@ async function handleScheduleEvent(event) {
     getApiProvider(event.provider),
     getApiCollection(event.collection),
   ]);
+  logger.warn(collection)
 
   const provider = providerRecord ? JSON.parse(providerRecord.body) : undefined;
   const messageTemplate = get(event, 'template');
