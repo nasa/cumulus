@@ -593,6 +593,64 @@ test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correct
   t.is(metadataObject.DataGranule.Identifiers[0].Identifier, 'TestFixtureGranuleUR');
 });
 
+test.only('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is using update_granule_identifiers environment variable', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+  const originalUpdateGranuleIdentifiers = process.env.update_granule_identifiers;
+  process.env.update_granule_identifiers = false;
+
+  // Yes, ETag values always include enclosing double-quotes
+  const distEndpoint = 'https://distendpoint.com';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
+
+  const cmrJSON = await fs.readFile(
+    path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_v1.6.2.cmr.json'),
+    'utf8'
+  );
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const filesObject = await readJsonFixture(
+    path.join(__dirname, '../fixtures/UMMGFilesObjectFixture.json')
+  );
+
+  const { metadataObject } = await updateUMMGMetadata({
+    granuleId: 'TestFixtureGranuleUR_uniq',
+    producerGranuleId: 'TestFixtureGranuleUR',
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: filesObject,
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    updateGranuleIdentifiers: process.env.update_granule_identifiers === 'true',
+    testOverrides: {
+      uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
+      metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
+    },
+  });
+
+  t.is(metadataObject.GranuleUR, cmrMetadata.GranuleUR);
+  t.false('Identifiers' in metadataObject.DataGranule, 'Identifiers should not be exist in DataGranule');
+
+  process.env.update_granule_identifiers = true;
+  const { metadataObject: updatedMetadataObject } = await updateUMMGMetadata({
+    granuleId: 'TestFixtureGranuleUR_uniq',
+    producerGranuleId: 'TestFixtureGranuleUR',
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: filesObject,
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    updateGranuleIdentifiers: process.env.update_granule_identifiers === 'true',
+    testOverrides: {
+      uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
+      metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
+    },
+  });
+  console.log(`updatedMetadataObject: ${JSON.stringify(updatedMetadataObject, null, 2)}`);
+  t.is(updatedMetadataObject.GranuleUR, 'TestFixtureGranuleUR_uniq');
+  t.is(updatedMetadataObject.DataGranule.Identifiers[0].Identifier, 'TestFixtureGranuleUR');
+
+  process.env.update_granule_identifiers = originalUpdateGranuleIdentifiers;
+});
+
 test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 

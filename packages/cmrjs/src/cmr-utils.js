@@ -889,7 +889,7 @@ async function updateUMMGMetadata({
   distributionBucketMap,
   producerGranuleId,
   granuleId,
-  updateGranuleIdentifiers = false,
+  updateGranuleIdentifiers,
   testOverrides = {},
 }) {
   const {
@@ -1223,7 +1223,7 @@ async function updateCMRMetadata({
   published,
   bucketTypes,
   cmrGranuleUrlType = 'both',
-  updateGranuleIdentifiers = false,
+  updateGranuleIdentifiers,
   distributionBucketMap,
   testOverrides = {},
 }) {
