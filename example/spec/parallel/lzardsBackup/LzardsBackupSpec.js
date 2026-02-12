@@ -271,7 +271,6 @@ describe('The Lzards Backup Task ', () => {
             ...commonSearchParams,
           },
         }));
-        console.log(`payload: ${JSON.stringify(lzardsGetPayload)}`);
         const lzardsApiGetOutput = await pTimeout(
           lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
           (functionConfig.Timeout + 50) * 1000
