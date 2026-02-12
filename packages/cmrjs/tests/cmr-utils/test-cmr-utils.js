@@ -593,7 +593,7 @@ test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correct
   t.is(metadataObject.DataGranule.Identifiers[0].Identifier, 'TestFixtureGranuleUR');
 });
 
-test.only('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is using update_granule_identifiers environment variable', async (t) => {
+test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is using update_granule_identifiers environment variable', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
   const originalUpdateGranuleIdentifiers = process.env.update_granule_identifiers;
   process.env.update_granule_identifiers = false;
