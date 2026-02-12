@@ -32,17 +32,30 @@ function determineIntegrationTestStackName(cb) {
     'Katherine Kelly': 'kk-int',
     'Mason Yates': 'mason-t-yates-ci',
     mckadesorensen: 'dms-opex-sbx-ci',
+    mikedorfman: 'mikedorfman-ci',
     'Nate Pauzenga': 'np-ci',
     'Naga Nages': 'nnaga-ci',
     'Paul Pilone': 'ppilone-ci',
     'Robert Swanson': 'rs-ci',
+    'Rohan Weeden': 'reweeden-ci',
     'Tim Clark': 'teclark-ci',
     wisdomaj: 'awisdom-ci',
     'Yonggang Liu': 'yliu10-ci',
   };
 
-  return git('.').log({ '--max-count': '1' }, (e, r) => {
-    const author = r.latest.author_name;
+  return git('.').log({ '--max-count': '10' }, (e, r) => {
+    // Find the first commit not authored by pre-commit-ci[bot]
+    const commits = r.all || [r.latest];
+    const firstNonBotCommit = commits.find(
+      (commit) => commit.author_name !== 'pre-commit-ci[bot]'
+    );
+
+    if (!firstNonBotCommit) {
+      console.error('No non-bot commits found, using default stack');
+      return cb('cumulus-from-pr');
+    }
+
+    const author = firstNonBotCommit.author_name;
 
     console.error(`Selecting build stack based on author name: "${author}"`);
 
