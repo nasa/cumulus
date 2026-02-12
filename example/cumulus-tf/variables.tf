@@ -301,8 +301,10 @@ variable "archive_api_users" {
     "kovarik",
     "masonyates97",
     "mobrien84",
+    "mikedorfman",
     "nnageswa",
     "npauzenga",
+    "reweeden",
     "terrafirma13",
     "yliu10"
   ]
@@ -372,7 +374,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "54"
+  default = "55"
 }
 
 variable "cumulus_process_activity_version" {

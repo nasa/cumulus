@@ -175,7 +175,7 @@ echo GIT_PR is $GIT_PR
 ## Exporting the commit message as an env variable to be brought in
 ## for yes/no toggles on build
 if [[ -z $COMMIT_MESSAGE ]]; then
-  COMMIT_MESSAGE=$(git log --pretty='format:%Creset%s' -1)
+  COMMIT_MESSAGE="$(git log --pretty='format:%Creset%s' -1)"
   export COMMIT_MESSAGE
   echo export COMMIT_MESSAGE=\""$COMMIT_MESSAGE"\" >> .bamboo_env_vars
 fi
