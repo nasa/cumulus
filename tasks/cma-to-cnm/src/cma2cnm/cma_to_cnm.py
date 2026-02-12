@@ -1,11 +1,11 @@
-"""lambda function used to translate CMA messages to CNM messages in aws lambda with cumulus"""
+"""lambda function used to translate CMA message to CNM messages with cumulus"""
 
 from datetime import datetime, timezone
 from typing import Any, List, cast
 import uuid
 
 import pydantic
-from cma2cnm import models_cnm
+from cma2cnm import models_cnm, models_cma
 from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
 
@@ -31,45 +31,50 @@ def task(event: dict[str, list[str] | dict], context: object) -> dict[str, Any]:
     meta_provider = config.get("provider", [])
     meta_collection = config.get("collection")
     meta_cumulus = config.get("cumulus_meta", {})
-
-    LOGGER.debug("provider: {}", meta_provider)
-
-    # Building the URI from info provided by provider since the granule itself might not have it
-    uri = f"{meta_provider['protocol']}://{meta_provider['host']}/"
-
-    # if has granules, read first item and find collection
-    if "granules" not in input.keys():
-        raise Exception('"granules" is missing from input')
-
     LOGGER.debug(
         "collection: {} | granules found: {}",
         meta_collection.get("name"),
         len(input["granules"]),
     )
 
-    cnm_json_dicts: List[dict] = []  # this is the final array of cnm messages to return
+    LOGGER.debug("provider: {}", meta_provider)
+    # if has granules, read first item and find collection
+    if "granules" not in input.keys():
+        raise Exception('"granules" is missing from input')
+    # Building the URI from info provided by provider since the granule itself might not have it
+    uri = f"{meta_provider['protocol']}://{meta_provider['host']}/"
     try:
-        for granule in input["granules"]:
-            LOGGER.debug("granuleId: {}", granule["granuleId"])
+        # json dict to granule pydantic model
+        granule_model = models_cma.DiscoverGranulesOutput.model_validate(input)
+        granules: List[models_cma.Granule] = granule_model.granules
+        cnm_json_dicts: List[dict] = []
+        for granule in granules:
+            LOGGER.debug("granuleId: {}", granule.granuleId)
             cnm_provider = meta_provider.get("id", "")
-            cnm_dataset = granule["dataType"]
-            cnm_data_version = granule["version"]
+            cnm_dataset = granule.dataType
+            cnm_data_version = granule.version
             cnm_files: list[models_cnm.File] = []
 
-            for file in granule["files"]:
+            granule_file: models_cma.File
+            for granule_file in granule.files:
+                LOGGER.debug(
+                    f"file name: {granule_file.name} | file path: {granule_file.path} "
+                    f"| file size: {granule_file.size}"
+                )
                 cnm_file: models_cnm.File = models_cnm.File(
-                    name=file.get("name", ""),
-                    type=file.get("type", "") or "",
+                    name=granule_file.name,
+                    type=granule_file.type or "",
                     uri=uri
-                    + (file.get("path", "")).lstrip("/")
+                    + (granule_file.path or "").lstrip("/")
                     + "/"
-                    + file.get("name", "")
-                    or "",
-                    size=file.get("size", 0) or 0,
+                    + granule_file.name
+                    if granule_file.path is not None
+                    else uri + granule_file.name,
+                    size=granule_file.size or 0,
                 )
                 cnm_files.append(cnm_file)
             cnm_product = models_cnm.Product(
-                name=granule["granuleId"],
+                name=granule.granuleId,
                 dataVersion=cnm_data_version,
                 files=cnm_files,
                 producerGranuleId="",
@@ -90,7 +95,6 @@ def task(event: dict[str, list[str] | dict], context: object) -> dict[str, Any]:
                 trace=f"source: {meta_cumulus.get('state_machine', '')} | "
                 f"execution_name: {meta_cumulus.get('execution_name', '')}",
             )
-
             cnm_message = models_cnm.CloudNotificationMessageCnm12(root=msg)
             cnm_json_dicts.append(
                 cnm_message.model_dump(
@@ -102,7 +106,6 @@ def task(event: dict[str, list[str] | dict], context: object) -> dict[str, Any]:
         raise pydan_error
 
     return_data = {"cnm_list": cnm_json_dicts}
-
     return return_data
 
 

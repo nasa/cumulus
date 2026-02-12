@@ -1,4 +1,4 @@
-# @cumulus/files-to-granules
+# @cumulus/granule-to-cnm
 
 This lambda function converts Cloud Notification Mechanism format to CMA message
 format.
@@ -128,49 +128,49 @@ The output key : output_granules should be mapped to the payload key in the work
 Workflow developer could choose to the original cnm message to be stored in meta.cnm key.
 Example workflow:
 ```angular2html
-"TranslateMessage": {
-        "Parameters": {
-          "cma": {
-            "event.$": "$",
-            "task_config": {
-              "collection": "{$.meta.collection}",
-              "cumulus_message": {
-                "outputs": [
-                  {
-                    "source": "{$.cnm}",
-                    "destination": "{$.meta.cnm}"
-                  },
-                  {
-                    "source": "{$.output_granules}",
-                    "destination": "{$.payload}"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "Type": "Task",
-        "Resource": "${module.cnm_to_cma_module.cnm_to_cma_arn}",
-        "Retry": [
-          {
-            "ErrorEquals": [
-              "States.ALL"
-            ],
-            "IntervalSeconds": 10,
-            "MaxAttempts": 2
-          }
-        ],
-        "Catch": [
-          {
-            "ErrorEquals": [
-              "States.ALL"
-            ],
-            "ResultPath": "$.exception",
-            "Next": "CnmResponseFailChoice"
-          }
-        ],
-        "Next": "Report"
-      },
+"GranuleToCNM": {
+                "Parameters": {
+                    "cma": {
+                        "event.$": "$",
+                        "task_config": {
+                            "provider": "{$.meta.provider}",
+                            "provider_path": "{$.meta.collection.meta.provider_path}",
+                            "collection": "{$.meta.collection}",
+                            "cumulus_meta": "{$.cumulus_meta}",
+                            "cumulus_message": ""
+                        },
+                        "ReplaceConfig": {
+                            "MaxSize": 10000,
+                            "Path": "$",
+                            "TargetPath": "$"
+                        }
+                    }
+                },
+                "Type": "Task",
+                "Resource": "${aws_lambda_function.cumulus_granule_to_cnm_task.arn}",
+                "Retry": [
+                    {
+                        "ErrorEquals": [
+                            "Lambda.ServiceException",
+                            "Lambda.AWSLambdaException",
+                            "Lambda.SdkClientException"
+                        ],
+                        "IntervalSeconds": 3,
+                        "MaxAttempts": 1,
+                        "BackoffRate": 3
+                    }
+                ],
+                "Catch": [
+                    {
+                        "ErrorEquals": [
+                            "States.ALL"
+                        ],
+                        "ResultPath": "$.exception",
+                        "Next": "WorkflowFailed"
+                    }
+                ],
+                "Next": "QueueCNMs"
+            },
 ```
 ## Architecture
 ```mermaid
@@ -202,9 +202,9 @@ pip install datamodel-code-generator
 pip install "datamodel-code-generator[http]"
 
 datamodel-codegen \
-    --input cumulus_sns_schema.json \
+    --input input.json \
     --input-file-type jsonschema \
-    --output models_cnm.py \
+    --output models_cma.py \
     --output-model-type pydantic_v2.BaseModel
 ```
 

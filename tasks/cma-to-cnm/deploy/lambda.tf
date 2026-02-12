@@ -21,3 +21,9 @@ resource "aws_lambda_function" "cma_to_cnm" {
 
   tags = local.tags
 }
+
+resource "aws_cloudwatch_log_group" "cma_to_cnm" {
+  name              = "/aws/lambda/${aws_lambda_function.cma_to_cnm.function_name}"
+  retention_in_days = var.default_log_retention_days
+  tags              = local.tags
+}

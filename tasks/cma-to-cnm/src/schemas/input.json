@@ -1,0 +1,40 @@
+{
+  "title": "DiscoverGranulesOutput",
+  "description": "Describes the output produced by the discover-granules task",
+  "type": "object",
+  "required": [ "granules" ],
+  "additionalProperties": false,
+  "properties": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [ "granuleId", "dataType", "version", "files" ],
+        "properties": {
+          "granuleId": { "type": "string" },
+          "dataType": { "type": "string" },
+          "version": { "type": "string"},
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [ "name", "path" ],
+              "properties": {
+                "name": { "type": "string", "description": "The filename portion of path/filename" },
+                "path": { "type": "string", "description": "The path portion of path/filename" },
+                "size": { "type": "integer" },
+                "type": { "type": "string" },
+                "time": {
+                  "description": "The number of milliseconds since January 1, 1970, 00:00:00 UTC",
+                  "type": "integer"
+                },
+                "bucket": { "type": "string" },
+                "url_path": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
