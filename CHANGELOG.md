@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
 - **CUMULUS-4498**
   - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+- **CUMULUS-4542**
+  - Created the `aws-api-proxy` coreified task, which provides the functionality to post a list of CNM messages to a specified SNS topic.
 
 ### Changed
 
