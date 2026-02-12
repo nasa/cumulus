@@ -17,7 +17,7 @@ output "lambda_function_last_modified" {
   description = "Last modified date of the Lambda function"
   value       = aws_lambda_function.cnm_to_cma.last_modified
 }
-output "lambda_log_group_arn" {
-  description = "ARN of the Lambda's CloudWatch log group"
-  value       = aws_cloudwatch_log_group.granule_invalidator_task.arn
+output "lambda_log_group_name" {
+  description = "Name of the Lambda's CloudWatch log group"
+  value       = aws_cloudwatch_log_group.cnm_to_cma.name
 }
