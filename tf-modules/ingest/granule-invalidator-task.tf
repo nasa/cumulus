@@ -8,5 +8,6 @@ module "granule_invalidator_task" {
   timeout                    = lookup(var.lambda_timeouts, "GranuleInvalidator", 60 * 15)
   memory_size                = lookup(var.lambda_memory_sizes, "GranuleInvalidator", 4096)
   default_log_retention_days = var.default_log_retention_days
+  private_api_lambda_arn     = var.private_api_lambda_arn
   tags                       = var.tags
 }

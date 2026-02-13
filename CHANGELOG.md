@@ -38,6 +38,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     (previously, some bulk operation aggregated errors while others returned per-granule errors)
   - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
     `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
+- **CUMULUS-4384**
+  - Added granule-invalidator workflow deployment and tests to the example deployment.
+  - Resolved several integration issues with the granule-invalidator lambda.
+  - Updated packaging script for granule-invalidator to use `uv pip install` instead of `uv sync`.
+  - Added `private_api_lambda_arn` output to the archive module and `private_api_lambda_arn` variable to the ingest module.
 - **CSD-85**
   - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
     for whether or not to add or update a Data Granule as part of the task, for users who do not want one added or updated
