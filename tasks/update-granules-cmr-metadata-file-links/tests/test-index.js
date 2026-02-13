@@ -5,6 +5,10 @@ const path = require('path');
 const test = require('ava');
 const cloneDeep = require('lodash/cloneDeep');
 
+const sinon = require('sinon');
+const rewire = require('rewire');
+const updateGranulesCmrMetadataFileLinks = rewire('../index.js');
+
 const {
   buildS3Uri,
   getObject,
@@ -299,4 +303,46 @@ test('updateCmrFileInfo - throws error when CMR file not found', async (t) => {
   await t.throwsAsync(() => updateCmrFileInfo(cmrFiles, granulesByGranuleId), {
     message: 'CMR file not found for granule with ID granule1',
   });
+});
+
+test('Call to updateGranulesCmrMetadata should be using environment variable to set updateGranuleIdentifier flag', async (t) => {
+  const originalUpdateGranuleIdentifiers = process.env.update_granule_identifiers;
+
+  const fakeFetchDistributionBucketMap = sinon.fake.resolves({});
+  const restoreFetch = updateGranulesCmrMetadataFileLinks.__set__('fetchDistributionBucketMap', fakeFetchDistributionBucketMap);
+
+  const fakeGetObjectSize = sinon.fake.resolves(123);
+  const restoreGetObjectSize = updateGranulesCmrMetadataFileLinks.__set__('getObjectSize', fakeGetObjectSize);
+
+  const fakeUpdateCMRMetadata = sinon.fake.resolves({});
+  const restoreUpdateCMRMetadata = updateGranulesCmrMetadataFileLinks.__set__('updateCMRMetadata', fakeUpdateCMRMetadata);
+
+  const fakeMapFileEtags = sinon.fake.resolves({});
+  const restoreMapFileEtags = updateGranulesCmrMetadataFileLinks.__set__('mapFileEtags', fakeMapFileEtags);
+
+  const newPayload = buildPayload(t);
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  process.env.update_granule_identifiers = false;
+  await updateGranulesCmrMetadataFileLinks.updateGranulesCmrMetadata(newPayload);
+
+  const fakeUpdateCMRMetadataCheckFalseFlag = fakeUpdateCMRMetadata.firstCall.args[0];
+  t.false(fakeUpdateCMRMetadataCheckFalseFlag.updateGranuleIdentifiers, 'updateGranuleIdentifiers should be false when the environment variable is set to false');
+
+  process.env.update_granule_identifiers = true;
+  fakeUpdateCMRMetadata.resetHistory();
+  await updateGranulesCmrMetadataFileLinks.updateGranulesCmrMetadata(newPayload);
+  const fakeUpdateCMRMetadataCheckTrueFlag = fakeUpdateCMRMetadata.firstCall.args[0];
+  t.true(fakeUpdateCMRMetadataCheckTrueFlag.updateGranuleIdentifiers, 'updateGranuleIdentifiers should be true when the environment variable is set to true');
+
+  restoreFetch();
+  restoreGetObjectSize();
+  restoreMapFileEtags();
+  restoreUpdateCMRMetadata();
+  sinon.restore();
+
+  process.env.update_granule_identifiers = originalUpdateGranuleIdentifiers;
 });
