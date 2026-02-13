@@ -30,7 +30,6 @@ function isUMMGGranule(obj: any): obj is UMMGGranule {
  * @param granuleUr - The new GranuleUR value to assign.
  * @param producerGranuleId - The ProducerGranuleId to store in the Identifiers list.
  * @param excludeDataGranule - Whether to exclude a DataGranule in the metadata
- * @param productionDateTime - The production date time for the granule (required CMR UMMG field)
  * @returns A deep-cloned and updated copy of the UMM-G metadata object.
  * @throws If the input does not match the expected UMM-G granule structure.
  */
@@ -40,13 +39,11 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
   granuleUr,
   producerGranuleId,
   excludeDataGranule,
-  productionDateTime,
 }: {
   metadataObject: unknown;
   granuleUr: string;
   producerGranuleId: string;
   excludeDataGranule: boolean;
-  productionDateTime: string;
 }): UMMGGranule {
   if (!isUMMGGranule(metadataObject)) {
     throw new Error('Invalid UMM-G JSON metadata');
@@ -76,9 +73,7 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
     }
 
     moddedJson.DataGranule.DayNightFlag ??= 'UNSPECIFIED';
-
-    const trueProductionDateTime = productionDateTime || new Date().toISOString();
-    moddedJson.DataGranule.ProductionDateTime ??= trueProductionDateTime;
+    moddedJson.DataGranule.ProductionDateTime ??= new Date().toISOString();
   }
 
   return moddedJson;

@@ -13,6 +13,13 @@ const mockMetadataObject = {
   DataGranule: { Identifiers: [] },
 };
 
+// Mocking the date for ProductionDateTime
+global.Date = class extends Date {
+  constructor() {
+    super('2024-01-01T00:00:00Z');
+  }
+};
+
 test.beforeEach(async (t) => {
   t.context.cmrFileBucket = randomId('bucket');
   await createBucket(t.context.cmrFileBucket);
@@ -59,11 +66,11 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.cmrFileBucket);
+  global.Date = Date;
 });
 
 test('updates UMMG metadata with Granule Identifier update, when publish is set to false', async (t) => {
   const cmrFile = t.context.cmrFileJson;
-  const productionDateTime = new Date().toISOString();
   const result = await updateCMRMetadata({
     granuleId: 'new-granule',
     producerGranuleId: 'original-id',
@@ -76,7 +83,6 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
     excludeDataGranule: false,
-    productionDateTime,
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
   const expectedObject = {
@@ -89,7 +95,7 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
         },
       ],
       DayNightFlag: 'UNSPECIFIED',
-      ProductionDateTime: productionDateTime,
+      ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
     },
     RelatedUrls: [
       {
@@ -122,7 +128,6 @@ test('does not updates UMMG metadata granule identifiers when updateGranuleIdent
     distributionBucketMap: {},
     updateGranuleIdentifiers: false,
     excludeDataGranule: true,
-    productionDateTime: new Date().toISOString(),
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
   const expectedObject = {
@@ -161,7 +166,6 @@ test('does not updates UMMG metadata DataGranule when excludeDataGranule is set 
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
     excludeDataGranule: true,
-    productionDateTime: new Date().toISOString(),
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
   const expectedObject = {
@@ -197,7 +201,6 @@ test('throws on invalid CMR file extension', async (t) => {
       bucketTypes: {},
       cmrGranuleUrlType: 'both',
       distributionBucketMap: {},
-      productionDateTime: new Date().toISOString(),
       excludeDataGranule: false,
     }),
     { message: /Invalid CMR filetype/ }
@@ -225,7 +228,6 @@ test('updates Echo10 metadata with UR update, when publish is set to false', asy
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
     excludeDataGranule: false,
-    productionDateTime: new Date().toISOString(),
   });
 
   const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
@@ -252,7 +254,6 @@ test('does not update Echo10 DataGranule metadata when excludeDataGranule is set
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
     excludeDataGranule: true,
-    productionDateTime: new Date().toISOString(),
   });
 
   const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
@@ -280,7 +281,6 @@ test('updateCMRMetadata does not update ECHO10 metadata granule identifiers when
     distributionBucketMap: {},
     updateGranuleIdentifiers: false,
     excludeDataGranule: true,
-    productionDateTime: new Date().toISOString(),
   });
 
   const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
@@ -289,12 +289,10 @@ test('updateCMRMetadata does not update ECHO10 metadata granule identifiers when
 
 test('publishes UMMG metadata when publish is set to true', async (t) => {
   const cmrFile = t.context.cmrFileJson;
-  const productionDateTime = new Date().toISOString();
   const result = await updateCMRMetadata({
     granuleId: 'new-granule',
     producerGranuleId: 'original-id',
     excludeDataGranule: false,
-    productionDateTime,
     cmrFile: t.context.cmrFileJson,
     files: [],
     distEndpoint: 'https://fake-dist-endpoint',
@@ -325,7 +323,7 @@ test('publishes UMMG metadata when publish is set to true', async (t) => {
         },
       ],
       DayNightFlag: 'UNSPECIFIED',
-      ProductionDateTime: productionDateTime,
+      ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
     },
     RelatedUrls: [
       {
@@ -365,7 +363,6 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
     granuleId: 'updated-id',
     producerGranuleId: 'original-id',
     excludeDataGranule: false,
-    productionDateTime: new Date().toISOString(),
     cmrFile,
     files: [],
     distEndpoint: 'https://example.com',

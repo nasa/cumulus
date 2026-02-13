@@ -876,7 +876,6 @@ function updateUMMGMetadataObject({
  * @param {boolean} [params.updateGranuleIdentifiers=false] - whether to update the granule UR/add
  * producerGranuleID to the CMR metadata object
  * @param {boolean} params.excludeDataGranule - whether to exclude a DataGranule in the metadata
- * @param {string} params.productionDateTime - granule's production date time
  * @param {any} [params.testOverrides] - overrides for testing
  * @returns {Promise<{ metadataObject: Object, etag: string | undefined}>} an object
  *    containing a `metadataObject` (the updated UMMG metadata object) and the
@@ -893,7 +892,6 @@ async function updateUMMGMetadata({
   granuleId,
   updateGranuleIdentifiers = false,
   excludeDataGranule,
-  productionDateTime,
   testOverrides = {},
 }) {
   const {
@@ -918,7 +916,6 @@ async function updateUMMGMetadata({
       producerGranuleId,
       metadataObject: updatedMetadataObject,
       excludeDataGranule,
-      productionDateTime,
     });
   }
   const { ETag: etag } = await uploadUMMGJSONCMRFileMethod(
@@ -1217,7 +1214,6 @@ async function updateEcho10XMLMetadata({
  * @param {boolean} [params.updateGranuleIdentifiers]
  * - If true, update the GranuleUR and ProducerGranuleId in metadata
  * @param {boolean} params.excludeDataGranule - whether to exclude a DataGranule in the metadata
- * @param {string} params.productionDateTime - granule's production date time
  * @param {any} [params.testOverrides]
  * - Optional test overrides for internal functions
  * @param {DistributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path
@@ -1236,7 +1232,6 @@ async function updateCMRMetadata({
   cmrGranuleUrlType = 'both',
   updateGranuleIdentifiers = false,
   excludeDataGranule,
-  productionDateTime,
   distributionBucketMap,
   testOverrides = {},
 }) {
@@ -1269,7 +1264,7 @@ async function updateCMRMetadata({
   if (isECHO10Filename(filename)) {
     ({ metadataObject, etag } = await updateEcho10XMLMetadata(params));
   } else if (isUMMGFilename(filename)) {
-    ({ metadataObject, etag } = await updateUMMGMetadata({ ...params, productionDateTime }));
+    ({ metadataObject, etag } = await updateUMMGMetadata(params));
   } else {
     throw new errors.CMRMetaFileNotFound(`Invalid CMR filetype: ${filename}`);
   }
@@ -1302,7 +1297,6 @@ async function updateCMRMetadata({
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution buckets
  * @param {boolean} params.excludeDataGranule - whether to exclude a DataGranule in the metadata
- * @param {string} params.productionDateTime - granule's production date time
  * @returns {Promise<void>} - resolves when CMR metadata is updated
  */
 async function reconcileCMRMetadata({
@@ -1314,14 +1308,12 @@ async function reconcileCMRMetadata({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
   excludeDataGranule,
-  productionDateTime,
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
     return await updateCMRMetadata({
       granuleId,
       excludeDataGranule,
-      productionDateTime,
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,
       distEndpoint,

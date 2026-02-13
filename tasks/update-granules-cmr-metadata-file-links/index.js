@@ -19,7 +19,6 @@ const {
   mapFileEtags,
   removeEtagsFromFileObjects,
   updateCMRMetadata,
-  getGranuleTemporalInfo,
 } = require('@cumulus/cmrjs');
 
 const logger = new Logger({ sender: '@cumulus/update-granules-cmr-metadata-file-links' });
@@ -56,7 +55,6 @@ async function updateEachCmrFileMetadata(
   return await Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
-    const granuleTemporalInfo = await getGranuleTemporalInfo(granule);
     let files = granule.files;
     if (excludeFileRegexPattern) {
       const excludeFileRegex = new RegExp(excludeFileRegexPattern);
@@ -78,7 +76,6 @@ async function updateEachCmrFileMetadata(
       distributionBucketMap,
       updateGranuleIdentifiers: true,
       excludeDataGranule,
-      productionDateTime: granuleTemporalInfo.productionDateTime,
     });
   }));
 }
