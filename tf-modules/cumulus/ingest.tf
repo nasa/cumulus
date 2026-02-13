@@ -77,4 +77,6 @@ module "ingest" {
 
   # For update-granules-cmr-metadata-file-links-task in order to update granule identifiers or not
   update_granule_identifiers = var.update_granule_identifiers
+  
+  private_api_lambda_arn = module.archive.private_api_lambda_arn
 }
