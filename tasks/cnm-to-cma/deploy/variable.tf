@@ -20,9 +20,10 @@ variable "app_name" {
   default = "cnm_to_cma"
 }
 
-variable "default_tags" {
-  type = map(string)
-  default = {}
+variable "tags" {
+  description = "Tags to be applied to resources"
+  type        = map(string)
+  default     = {}
 }
 
 variable "memory_size" {
