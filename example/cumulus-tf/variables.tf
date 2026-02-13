@@ -293,6 +293,7 @@ variable "archive_api_users" {
     "dhudelson",
     "dmsorensen",
     "ecarton",
+    "eyen",
     "jasmine",
     "jennyhliu",
     "jmccoy_uat",
