@@ -1,8 +1,16 @@
 'use strict';
 
+const { invokeApi } = require('@cumulus/api-client');
 const isMatch = require('lodash/isMatch');
 const isNil = require('lodash/isNil');
 const pRetry = require('p-retry');
+
+function invokeApiNoRetry(params) {
+  invokeApi({
+    ...params,
+    pRetryOptions: { retries: 0 },
+  });
+}
 
 function setDistributionApiEnvVars() {
   process.env.PORT = 5002;
@@ -55,6 +63,7 @@ async function waitForApiStatus(getMethod, params, status, retryConfig = {}) {
 }
 
 module.exports = {
+  invokeApiNoRetry,
   setDistributionApiEnvVars,
   waitForApiRecord,
   waitForApiStatus,

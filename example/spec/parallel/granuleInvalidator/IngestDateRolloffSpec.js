@@ -12,6 +12,7 @@ const {
 
 const { createCollection } = require('@cumulus/api-client/collections');
 const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError');
+const { invokeApiNoRetry } = require('../../helpers/apiUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
@@ -148,6 +149,7 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
         prefix: config.stackName,
         granuleId: ingestDateBeforeCutoffId,
         collectionId: collectionId,
+        callback: invokeApiNoRetry,
       }
     )).toBeRejectedWithError(CumulusApiClientError, /404/);
 

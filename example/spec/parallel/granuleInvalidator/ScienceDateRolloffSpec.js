@@ -11,6 +11,7 @@ const {
 
 const { createCollection } = require('@cumulus/api-client/collections');
 const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError');
+const { invokeApiNoRetry } = require('../../helpers/apiUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
@@ -60,8 +61,6 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
     const beforeCutoffDate = new Date(Date.parse(cutoffDate) - 24 * 60 * 60 * 1000).toISOString();
 
     // Register granules that are on either side of a date threshold based on productionDateTime
-    console.log(beforeCutoffDate);
-    console.log(afterCutoffDate);
     await createGranule({ prefix: config.stackName,
       body: {
         granuleId: scienceDateAfterCutoffId,
@@ -131,23 +130,24 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
     expect(workflowExecution.status).toEqual('completed');
   });
 
-  it('scienceDateDate rolloff configuration is honored', async () => {
+  it('scienceDate rolloff configuration is honored', async () => {
     await expectAsync(getGranule(
       {
         prefix: config.stackName,
         granuleId: scienceDateBeforeCutoffId,
         collectionId: collectionId,
+        callback: invokeApiNoRetry,
       }
     )).toBeRejectedWithError(CumulusApiClientError, /404/);
 
-    const afterscienceDateDateTimeCutoffGranule = await getGranule(
+    const afterscienceDateTimeCutoffGranule = await getGranule(
       {
         prefix: config.stackName,
         granuleId: scienceDateAfterCutoffId,
         collectionId: collectionId,
       }
     );
-    expect(afterscienceDateDateTimeCutoffGranule.status).toEqual('completed');
+    expect(afterscienceDateTimeCutoffGranule.status).toEqual('completed');
   });
 
   afterAll(async () => {

@@ -5,17 +5,12 @@ const {
   getGranule,
 } = require('@cumulus/api-client/granules');
 
-const { invokeApi } = require('@cumulus/api-client');
 const { createCollection } = require('@cumulus/api-client/collections');
 const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError');
 const { loadConfig } = require('../../helpers/testUtils');
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
-
-const invokeApiNoRetry = (params) => invokeApi({
-  ...params,
-  pRetryOptions: { retries: 0 },
-});
+const { invokeApiNoRetry } = require('../../helpers/apiUtils');
 
 describe('The granule-invalidator deployed within a Cumulus workflow', () => {
   let workflowExecution;
