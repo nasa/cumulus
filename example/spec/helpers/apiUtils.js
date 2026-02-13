@@ -6,7 +6,7 @@ const isNil = require('lodash/isNil');
 const pRetry = require('p-retry');
 
 function invokeApiNoRetry(params) {
-  invokeApi({
+  return invokeApi({
     ...params,
     pRetryOptions: { retries: 0 },
   });
