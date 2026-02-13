@@ -827,7 +827,6 @@ function shouldUseDirectS3Type(metadataObject) {
  * @param {string} [params.cmrGranuleUrlType='both'] - Type of URLs to generate: 'distribution',
  * 's3', or 'both'
  * @param {DistributionBucketMap} params.distributionBucketMap - Mapping of bucket names to
- * @param {boolean} params.excludeDataGranule - Whether to exclude a DataGranule in the metadata
  * distribution paths
  *
  * @returns {Object} - A deep clone of the original metadata object with updated RelatedUrls
@@ -839,7 +838,6 @@ function updateUMMGMetadataObject({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
-  excludeDataGranule,
 }) {
   const updatedMetadataObject = cloneDeep(metadataObject);
   const useDirectS3Type = shouldUseDirectS3Type(updatedMetadataObject);
@@ -859,10 +857,6 @@ function updateUMMGMetadataObject({
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   set(updatedMetadataObject, 'RelatedUrls', mergedURLs);
 
-  // remove the DataGranule if excludeDataGranule is true
-  if (excludeDataGranule === true) {
-    delete updatedMetadataObject.DataGranule;
-  }
   return updatedMetadataObject;
 }
 
@@ -916,7 +910,6 @@ async function updateUMMGMetadata({
     bucketTypes,
     cmrGranuleUrlType,
     distributionBucketMap,
-    excludeDataGranule,
   });
   if (updateGranuleIdentifiers) {
     // Type checks are needed as this callers/API are not all typed/ts converted yet

@@ -74,7 +74,4 @@ module "ingest" {
 
   # For message consumer lambdas in order to disable rule/message mismatches
   allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
-
-  # For update_granules_cmr_metadata_file_links in order to disable using a DataGranule or not
-  exclude_data_granule = var.exclude_data_granule
 }

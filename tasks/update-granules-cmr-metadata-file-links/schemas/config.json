@@ -44,6 +44,11 @@
     "excludeFileRegex": {
       "type": "string",
       "description": "A regex string to match files that should be excluded from the CMR metadata file"
+    },
+    "excludeDataGranule": {
+      "type": "boolean",
+      "description": "Whether to exclude the DataGranule section from the CMR metadata",
+      "default": false
     }
   }
 }

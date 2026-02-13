@@ -3,6 +3,7 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
+const isBoolean = require('lodash/isBoolean');
 const Logger = require('@cumulus/logger');
 const { getObjectSize } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -55,6 +56,7 @@ async function updateEachCmrFileMetadata(
   return await Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
+    const granuleTemporalInfo = await getGranuleTemporalInfo(granule);
     let files = granule.files;
     if (excludeFileRegexPattern) {
       const excludeFileRegex = new RegExp(excludeFileRegexPattern);
@@ -76,7 +78,7 @@ async function updateEachCmrFileMetadata(
       distributionBucketMap,
       updateGranuleIdentifiers: true,
       excludeDataGranule,
-      productionDateTime: getGranuleTemporalInfo(granule).productionDateTime,
+      productionDateTime: granuleTemporalInfo.productionDateTime,
     });
   }));
 }
@@ -116,7 +118,8 @@ async function updateGranulesCmrMetadata(event) {
   const granules = event.input.granules.map((g) => addEtagsToFileObjects(g, incomingETags));
   const cmrFiles = granulesToCmrFileObjects(granules);
   const granulesByGranuleId = keyBy(granules, 'granuleId');
-  const excludeDataGranule = process.env.exclude_data_granule === 'true';
+  const excludeDataGranule = isBoolean(event.config.excludeDataGranule) ?
+    event.config.excludeDataGranule : false;
 
   const distributionBucketMap = await fetchDistributionBucketMap();
   const updatedCmrFiles = await updateEachCmrFileMetadata(

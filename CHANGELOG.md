@@ -39,7 +39,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed `update-granules-cmr-metadata-file-links` lambda to accept an environment variable `exclude_data_granule`
     for whether or not to add a Data Granule as part of the lambda, for users who do not want to add one (defaults to false)
   - If a Data Granule is being added as part of the lambda then `DayNightFlag` and `ProductionDateTime` values will be
-    defaultly filled for CMR UMMG-Granule fields if they are not provided since they are required
+    filled with default values (`Unspecified` for `DayNightFlag` and the granule's `production_date_time` or current time the
+    task is ran for if that is not provided for `ProductionDateTime`) in CMR UMMG-Granule fields as they
+    are required by the CMR schema.
 
 ### Notable Changes
 

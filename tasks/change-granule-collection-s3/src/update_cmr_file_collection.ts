@@ -91,7 +91,6 @@ export const updateCmrFileLinks = ({
     return updateUMMGMetadataObject({
       ...params,
       metadataObject: cmrObject,
-      excludeDataGranule: false,
     });
   }
   throw new AssertionError({ message: 'cmr file in unknown format' });

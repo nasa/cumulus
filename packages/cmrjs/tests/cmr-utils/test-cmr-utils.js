@@ -517,13 +517,14 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
   t.is(metadataObject.Granule.DataGranule.get('ProducerGranuleId'), 'TestFixtureGranuleUR');
 });
 
-test.serial('UpdateEcho10XMLMetadata excludes DataGranule from metadata when excludeDataGranule is set to true', async (t) => {
+test.serial('UpdateEcho10XMLMetadata does not update metadata when excludeDataGranule is set to true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
   const cmrXml = await fs.readFile(
     path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
     'utf8'
   );
   const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
+
   // Remove producerGranuleId from cmrMetadata.  We expect granuleUR = producerGranuleId
   // in this case
   // that granuleUR will after = granuleId, and producerGranuleId will be updated
@@ -546,8 +547,9 @@ test.serial('UpdateEcho10XMLMetadata excludes DataGranule from metadata when exc
     producerGranuleId: 'TestFixtureGranuleUR',
     excludeDataGranule: true,
   });
+
   t.is(metadataObject.Granule.GranuleUR, 'TestFixtureGranuleUR_uniq');
-  t.is(metadataObject.Granule.DataGranule, undefined);
+  t.deepEqual(metadataObject.Granule.DataGranule, cmrMetadata.Granule.DataGranule);
 });
 
 test.serial('UpdateEcho10XMLMetadata maintains ECHO10 DataGranule element order', async (t) => {
@@ -661,7 +663,7 @@ test.serial('updateUMMG Metadata does not update DataGranule in metadata when ex
     },
   });
   t.is(metadataObject.GranuleUR, 'TestFixtureGranuleUR_uniq');
-  t.is(metadataObject.DataGranule, undefined);
+  t.deepEqual(metadataObject.DataGranule, cmrMetadata.DataGranule);
 });
 
 test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
