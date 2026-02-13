@@ -59,6 +59,7 @@ test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile pr
       distEndpoint,
       published,
       excludeDataGranule: false,
+      productionDateTime: new Date().toISOString(),
     });
 
     t.falsy(results);
@@ -136,6 +137,7 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
       distEndpoint,
       published,
       excludeDataGranule: false,
+      productionDateTime: new Date().toISOString(),
     });
 
     t.falsy(results);
@@ -152,6 +154,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
   const { granId, distEndpoint, distributionBucketMap } = t.context;
   const published = false;
+  const productionDateTime = new Date().toISOString();
 
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restoreUpdateEcho10XMLMetadata = cmrUtils.__set__('updateEcho10XMLMetadata', fakeUpdateCMRMetadata);
@@ -166,6 +169,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
     await cmrUtils.reconcileCMRMetadata({
       granuleId: granId,
       excludeDataGranule: false,
+      productionDateTime,
       updatedFiles,
       distEndpoint,
       published,
@@ -208,6 +212,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   } = t.context;
 
   const fakeMetadataObject = { fake: 'metadata' };
+  const productionDateTime = new Date().toISOString();
 
   const fakeUpdateCMRMetadata = sinon.fake.resolves({
     metadataObject: fakeMetadataObject,
@@ -233,6 +238,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
     await cmrUtils.reconcileCMRMetadata({
       granuleId: granId,
       excludeDataGranule: false,
+      productionDateTime,
       updatedFiles,
       distEndpoint,
       published,
@@ -360,6 +366,7 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
       published,
       bucketTypes: {},
       excludeDataGranule: false,
+      productionDateTime: new Date().toISOString(),
     }),
     {
       name: 'CMRMetaFileNotFound',

@@ -203,7 +203,6 @@ test('does not add DataGranule when excludeDataGranule is true', (t) => {
     excludeDataGranule: true,
   });
 
-  t.is(result.Granule.GranuleUR, 'NEW_ID');
   t.is(result.Granule.DataGranule, undefined);
 });
 
@@ -241,6 +240,32 @@ test('adds a DataGranule when excludeDataGranule is false', (t) => {
     excludeDataGranule: false,
   });
 
-  t.is(result.Granule.GranuleUR, 'NEW_ID');
+  const expectedResult = {
+    Granule: {
+      GranuleUR: 'NEW_ID',
+      DataGranule: new Map([['ProducerGranuleId', 'NEW_PRODUCER_ID']]),
+    },
+  };
+
+  t.deepEqual(result, expectedResult);
+});
+
+test('updates DataGranule when excludeDataGranule is false', (t) => {
+  const xml = {
+    Granule: {
+      GranuleUR: 'OLD_ID',
+      DataGranule: {
+        ProducerGranuleId: 'OLD_PRODUCER_ID',
+      },
+    },
+  };
+
+  const result = updateEcho10XMLGranuleUrAndGranuleIdentifier({
+    xml,
+    granuleUr: 'NEW_ID',
+    producerGranuleId: 'NEW_PRODUCER_ID',
+    excludeDataGranule: false,
+  });
+
   t.is(result.Granule.DataGranule.get('ProducerGranuleId'), 'NEW_PRODUCER_ID');
 });

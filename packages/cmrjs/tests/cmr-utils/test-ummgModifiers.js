@@ -13,6 +13,7 @@ test('updates GranuleUR and adds ProducerGranuleId when Identifiers is missing',
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
     excludeDataGranule: false,
+    productionDateTime: '2024-01-01T00:00:00Z',
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -41,6 +42,7 @@ test('overwrites existing ProducerGranuleId while preserving other identifiers',
     granuleUr: 'NEW_ID',
     producerGranuleId: 'NEW_PRODUCER_ID',
     excludeDataGranule: false,
+    productionDateTime: '2024-01-01T00:00:00Z',
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -79,6 +81,7 @@ test('appends ProducerGranuleId if not present', (t) => {
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
     excludeDataGranule: false,
+    productionDateTime: '2024-01-01T00:00:00Z',
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -103,6 +106,7 @@ test('throws error if input is not UMMGGranule', (t) => {
       granuleUr: 'ID',
       producerGranuleId: 'PRODUCER_ID',
       excludeDataGranule: false,
+      productionDateTime: '2024-01-01T00:00:00Z',
     }));
 
   t.true(error?.message.includes('Invalid UMM-G JSON metadata'));
@@ -120,6 +124,7 @@ test('does not mutate original object', (t) => {
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
     excludeDataGranule: false,
+    productionDateTime: '2024-01-01T00:00:00Z',
   });
 
   t.not(result, original);
@@ -136,27 +141,112 @@ test('does not add DataGranule when excludeDataGranule is true', (t) => {
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
     excludeDataGranule: true,
+    productionDateTime: '2024-01-01T00:00:00Z',
   });
 
-  t.is(result.GranuleUR, 'NEW_ID');
   t.is(result.DataGranule, undefined);
 });
 
-test('adds DataGranule when excludeDataGranule is false and populates DayNightFlag and ProductionDateTime', (t) => {
+test('does not update DataGranule when excludeDataGranule is true', (t) => {
+  const metadata = {
+    GranuleUR: 'SAME_ID',
+    DataGranule: {
+      Identifiers: [
+        { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
+      ],
+      ProductionDateTime: '2023-12-31T23:59:59Z',
+      DayNightFlag: 'DAY',
+    },
+  };
+
+  const result = updateUMMGGranuleURAndGranuleIdentifier({
+    metadataObject: metadata,
+    granuleUr: 'SAME_ID',
+    producerGranuleId: 'NEW_PRODUCER_ID',
+    excludeDataGranule: true,
+    productionDateTime: '2024-01-01T00:00:00Z',
+  });
+
+  t.deepEqual(result.DataGranule, metadata.DataGranule);
+});
+
+test('updates DataGranule with new identifiers and required default values when excludeDataGranule is false', (t) => {
+  const productionDateTime = new Date().toISOString();
   const metadata = {
     GranuleUR: 'OLD_ID',
+    DataGranule: {
+      Identifiers: [
+        { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
+      ],
+    },
+  };
+
+  const result = updateUMMGGranuleURAndGranuleIdentifier({
+    metadataObject: metadata,
+    granuleUr: 'NEW_ID',
+    producerGranuleId: 'NEW_PRODUCER_ID',
+    excludeDataGranule: false,
+    productionDateTime,
+  });
+
+  const expectedDataGranule = {
+    Identifiers: [
+      { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
+      { Identifier: 'NEW_PRODUCER_ID', IdentifierType: 'ProducerGranuleId' },
+    ],
+    ProductionDateTime: productionDateTime,
+    DayNightFlag: 'UNSPECIFIED',
+  };
+
+  t.deepEqual(result.DataGranule, expectedDataGranule);
+});
+
+test('does not overwrite DataGranule values when excludeDataGranule is false', (t) => {
+  const productionDateTime = new Date().toISOString();
+  const metadata = {
+    GranuleUR: 'OLD_ID',
+    DataGranule: {
+      Identifiers: [
+        { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
+        { Identifier: 'PRODUCER_ID', IdentifierType: 'ProducerGranuleId' },
+      ],
+      DayNightFlag: 'DAY',
+      ProductionDateTime: '2022-12-31T23:59:59Z',
+    },
   };
 
   const result = updateUMMGGranuleURAndGranuleIdentifier({
     metadataObject: metadata,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
-    productionDateTime: '2024-01-01T00:00:00Z',
+    excludeDataGranule: false,
+    productionDateTime,
+  });
+
+  t.deepEqual(result.DataGranule, metadata.DataGranule);
+});
+
+test('adds DataGranule when excludeDataGranule is false and populates required defaults', (t) => {
+  const metadata = {
+    GranuleUR: 'ID',
+  };
+  const productionDateTime = '2024-01-01T00:00:00Z';
+
+  const result = updateUMMGGranuleURAndGranuleIdentifier({
+    metadataObject: metadata,
+    granuleUr: 'ID',
+    producerGranuleId: 'NEW_PRODUCER_ID',
+    productionDateTime,
     excludeDataGranule: false,
   });
 
-  t.is(result.GranuleUR, 'NEW_ID');
-  t.truthy(result.DataGranule);
-  t.is(result.DataGranule.ProductionDateTime, '2024-01-01T00:00:00Z');
-  t.is(result.DataGranule.DayNightFlag, 'UNSPECIFIED');
+  const expectedDataGranule = {
+    Identifiers: [
+      { Identifier: 'NEW_PRODUCER_ID', IdentifierType: 'ProducerGranuleId' },
+    ],
+    ProductionDateTime: productionDateTime,
+    DayNightFlag: 'UNSPECIFIED',
+  };
+
+  t.deepEqual(result.DataGranule, expectedDataGranule);
 });

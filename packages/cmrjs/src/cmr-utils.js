@@ -856,7 +856,6 @@ function updateUMMGMetadataObject({
   const originalURLs = get(updatedMetadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   set(updatedMetadataObject, 'RelatedUrls', mergedURLs);
-
   return updatedMetadataObject;
 }
 
