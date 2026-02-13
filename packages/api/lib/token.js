@@ -146,7 +146,7 @@ function handleJwtVerificationError(err, response) {
 async function refreshTokenAndJwt(
   decodedToken,
   accessTokenModel,
-  extensionSeconds = 12 * 60 * 60
+  extensionSeconds = 60 * 60
 ) {
   const { accessToken, username, iat } = decodedToken;
 
@@ -164,7 +164,7 @@ async function refreshTokenAndJwt(
   // Use existing token value and extend expiration time
   const newAccessToken = accessTokenRecord.accessToken;
 
-  // Extend expiration time by the specified amount (default: 12 hours)
+  // Extend expiration time by the specified amount (default: 1 hour)
   // If expirationTime is undefined, use current time as base
   const baseTime = accessTokenRecord.expirationTime || Math.floor(Date.now() / 1000);
   const expirationTime = baseTime + extensionSeconds;
