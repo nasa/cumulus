@@ -19,17 +19,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload.
-- **CUMULUS-4388**
-  - Added cnm_to_cma task (lambda).
-  - Original cnm_to_cma was written in Java.  Converted to Python.
 - **CUMULUS-4382**
   - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
 - **CUMULUS-4385**
   - Added supporting Terraform for the granule-invalidator task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
+- **CUMULUS-4388**
+  - Added cnm_to_cma task (lambda).
+  - Original cnm_to_cma was written in Java.  Converted to Python.
 - **CUMULUS-4394**
   - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
 - **CUMULUS-4498**
   - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+- **CUMULUS-4502**
+  - cnm-to-cma CI stack
 
 ### Changed
 
