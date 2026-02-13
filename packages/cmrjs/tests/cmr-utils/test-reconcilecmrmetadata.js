@@ -80,6 +80,7 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
 
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restoreUpdateCMRMetadata = cmrUtils.__set__('updateCMRMetadata', fakeUpdateCMRMetadata);
+
   const bucketTypes = {};
 
   const params = {
@@ -284,6 +285,7 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
     metadataObject: { fake: 'metadata' },
   });
   const restoreUpdateUMMGMetadata = cmrUtils.__set__('updateUMMGMetadata', fakeUpdateUMMGMetadata);
+
   const fakePublishUMMGJSON2CMR = sinon.fake.resolves({});
   const restorePublishUMMGJSON2CMR = cmrUtils.__set__('publishUMMGJSON2CMR', fakePublishUMMGJSON2CMR);
   const publishObject = {

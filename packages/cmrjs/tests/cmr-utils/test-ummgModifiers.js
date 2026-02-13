@@ -3,6 +3,19 @@ const {
   updateUMMGGranuleURAndGranuleIdentifier,
 } = require('../../ummgModifiers');
 
+test.before(() => {
+  // Mocking the date for ProductionDateTime value checks
+  global.Date = class extends Date {
+    constructor() {
+      super('2024-01-01T00:00:00Z');
+    }
+  };
+});
+
+test.after.always(() => {
+  global.Date = Date;
+});
+
 test('updates GranuleUR and adds ProducerGranuleId when Identifiers is missing', (t) => {
   const metadata = {
     GranuleUR: 'OLD_ID',
@@ -232,7 +245,9 @@ test('adds DataGranule when excludeDataGranule is false and populates required d
     Identifiers: [
       { Identifier: 'NEW_PRODUCER_ID', IdentifierType: 'ProducerGranuleId' },
     ],
-    ProductionDateTime: new Date().toISOString(),
+    // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+    // despite actually being the time the task is ran (which is what is mocked, Date.now())
+    ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
     DayNightFlag: 'UNSPECIFIED',
   };
 

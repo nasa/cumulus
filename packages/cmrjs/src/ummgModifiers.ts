@@ -29,7 +29,7 @@ function isUMMGGranule(obj: any): obj is UMMGGranule {
  * @param metadataObject - The parsed UMM-G metadata object to be modified.
  * @param granuleUr - The new GranuleUR value to assign.
  * @param producerGranuleId - The ProducerGranuleId to store in the Identifiers list.
- * @param excludeDataGranule - Whether to exclude a DataGranule in the metadata
+ * @param excludeDataGranule - Whether to add or update a DataGranule in the metadata
  * @returns A deep-cloned and updated copy of the UMM-G metadata object.
  * @throws If the input does not match the expected UMM-G granule structure.
  */

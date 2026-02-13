@@ -875,7 +875,7 @@ function updateUMMGMetadataObject({
  * @param {string} params.granuleId - granule id
  * @param {boolean} [params.updateGranuleIdentifiers=false] - whether to update the granule UR/add
  * producerGranuleID to the CMR metadata object
- * @param {boolean} params.excludeDataGranule - whether to exclude a DataGranule in the metadata
+ * @param {boolean} params.excludeDataGranule - whether to add/update a DataGranule in the metadata
  * @param {any} [params.testOverrides] - overrides for testing
  * @returns {Promise<{ metadataObject: Object, etag: string | undefined}>} an object
  *    containing a `metadataObject` (the updated UMMG metadata object) and the
@@ -1138,7 +1138,7 @@ function updateEcho10XMLMetadataObjectUrls({
  * - Maps buckets to distribution paths
  * @param {boolean} [params.updateGranuleIdentifiers]
  * - If true, update the GranuleUR and ProducerGranuleId in metadata
- * @param {boolean} params.excludeDataGranule - Whether to exclude a DataGranule in the metadata
+ * @param {boolean} params.excludeDataGranule - Whether to add/update a DataGranule in the metadata
  * @param {any} [params.testOverrides]
  * - Optional test overrides for internal functions
  * @returns {Promise<{ metadataObject: any, etag: string }>}
@@ -1213,7 +1213,7 @@ async function updateEcho10XMLMetadata({
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
  * @param {boolean} [params.updateGranuleIdentifiers]
  * - If true, update the GranuleUR and ProducerGranuleId in metadata
- * @param {boolean} params.excludeDataGranule - whether to exclude a DataGranule in the metadata
+ * @param {boolean} params.excludeDataGranule - Whether to add/update a DataGranule in the metadata
  * @param {any} [params.testOverrides]
  * - Optional test overrides for internal functions
  * @param {DistributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path
@@ -1296,7 +1296,7 @@ async function updateCMRMetadata({
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution buckets
- * @param {boolean} params.excludeDataGranule - whether to exclude a DataGranule in the metadata
+ * @param {boolean} params.excludeDataGranule - Whether to add/update a DataGranule in the metadata
  * @returns {Promise<void>} - resolves when CMR metadata is updated
  */
 async function reconcileCMRMetadata({

@@ -25,7 +25,7 @@ function isEcho10XmlBaseGranule(obj: any): obj is Echo10XmlBaseGranule {
  * @param params.xml - The parsed XML object (e.g., from xml2js) representing ECHO10 metadata.
  * @param params.granuleUr - The new GranuleUR value to apply to the metadata.
  * @param params.producerGranuleId - The original identifier value to be set as ProducerGranuleId.
- * @param params.excludeDataGranule - Whether to exclude a DataGranule in the metadata
+ * @param params.excludeDataGranule - Whether to add or update a DataGranule in the metadata
  * @returns A deep-cloned and updated copy of the original ECHO10 metadata object.
  * @throws If the input object does not conform to the expected ECHO10 structure.
  */
@@ -33,7 +33,7 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
   xml, // The parsed XML object (e.g., from xml2js)
   granuleUr, // The new GranuleUR value
   producerGranuleId, // The original identifier to store
-  excludeDataGranule, // Boolean for whether or not to exclude DataGranule
+  excludeDataGranule, // Boolean for whether or not to add or update a DataGranule in the metadata
 }: {
   xml: unknown;
   granuleUr: string;

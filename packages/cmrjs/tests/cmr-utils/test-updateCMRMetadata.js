@@ -13,13 +13,6 @@ const mockMetadataObject = {
   DataGranule: { Identifiers: [] },
 };
 
-// Mocking the date for ProductionDateTime
-global.Date = class extends Date {
-  constructor() {
-    super('2024-01-01T00:00:00Z');
-  }
-};
-
 test.beforeEach(async (t) => {
   t.context.cmrFileBucket = randomId('bucket');
   await createBucket(t.context.cmrFileBucket);
@@ -62,11 +55,17 @@ test.beforeEach(async (t) => {
       },
     }),
   ]);
+  // Mocking the date for ProductionDateTime
+  global.Date = class extends Date {
+    constructor() {
+      super('2024-01-01T00:00:00Z');
+    }
+  };
 });
 
 test.afterEach.always(async (t) => {
-  await recursivelyDeleteS3Bucket(t.context.cmrFileBucket);
   global.Date = Date;
+  await recursivelyDeleteS3Bucket(t.context.cmrFileBucket);
 });
 
 test('updates UMMG metadata with Granule Identifier update, when publish is set to false', async (t) => {
@@ -95,6 +94,8 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
         },
       ],
       DayNightFlag: 'UNSPECIFIED',
+      // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+      // despite actually being the time the task is ran (which is what is mocked, Date.now())
       ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
     },
     RelatedUrls: [
@@ -114,7 +115,7 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
   });
 });
 
-test('does not updates UMMG metadata granule identifiers when updateGranuleIdentifiers is set to false', async (t) => {
+test('does not update UMMG metadata granule identifiers when updateGranuleIdentifiers is set to false', async (t) => {
   const cmrFile = t.context.cmrFileJson;
   const result = await updateCMRMetadata({
     granuleId: 'new-granule',
@@ -152,7 +153,7 @@ test('does not updates UMMG metadata granule identifiers when updateGranuleIdent
   });
 });
 
-test('does not updates UMMG metadata DataGranule when excludeDataGranule is set to true', async (t) => {
+test('does not update UMMG metadata DataGranule when excludeDataGranule is set to true', async (t) => {
   const cmrFile = t.context.cmrFileJson;
   const result = await updateCMRMetadata({
     granuleId: 'new-granule',
@@ -323,6 +324,8 @@ test('publishes UMMG metadata when publish is set to true', async (t) => {
         },
       ],
       DayNightFlag: 'UNSPECIFIED',
+      // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+      // despite actually being the time the task is ran (which is what is mocked, Date.now())
       ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
     },
     RelatedUrls: [
