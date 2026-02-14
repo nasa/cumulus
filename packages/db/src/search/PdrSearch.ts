@@ -13,7 +13,7 @@ import { TableNames } from '../tables';
 
 const log = new Logger({ sender: '@cumulus/db/PdrSearch' });
 
-interface PdrRecord extends BaseRecord, PostgresPdrRecord {
+export interface PdrRecord extends BaseRecord, PostgresPdrRecord {
   collectionName: string,
   collectionVersion: string,
   executionArn?: string,

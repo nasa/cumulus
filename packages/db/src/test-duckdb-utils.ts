@@ -40,7 +40,9 @@ export async function createDuckDBWithS3(): Promise<{
   return { instance, connection };
 }
 
-export async function createDuckDBTableFromData<T>(
+export async function createDuckDBTableFromData<
+  T extends Record<string, any>
+>(
   connection: DuckDBConnection,
   knexBuilder: Knex,
   tableName: string,
@@ -50,31 +52,77 @@ export async function createDuckDBTableFromData<T>(
 ): Promise<void> {
   if (!data || (Array.isArray(data) && data.length === 0)) return;
 
+  const rows: T[] = Array.isArray(data) ? data : [data];
   const tmpTableName = `${tableName}_tmp`;
 
+  // Create temporary table
   await connection.run(tableSql(tmpTableName));
 
-  const insertQuery = knexBuilder(tmpTableName)
-    .insert(data)
-    .toSQL()
-    .toNative();
+  // Insert into temp table
+  if (tableName === 'executions') {
+    // Execution rows need parent → child ordering
+    type ExecutionRow = { parent_cumulus_id?: number | null; [key: string]: any };
+    const execRows = rows as ExecutionRow[];
 
-  await connection.run(insertQuery.sql, prepareBindings(insertQuery.bindings));
+    const parentRows = execRows.filter((r) => !r.parent_cumulus_id);
+    const childRows = execRows.filter((r) => r.parent_cumulus_id);
 
+    if (parentRows.length > 0) {
+      const parentInsert = knexBuilder(tmpTableName)
+        .insert(parentRows)
+        .toSQL()
+        .toNative();
+      await connection.run(parentInsert.sql, prepareBindings(parentInsert.bindings));
+    }
+
+    if (childRows.length > 0) {
+      const childInsert = knexBuilder(tmpTableName)
+        .insert(childRows)
+        .toSQL()
+        .toNative();
+      await connection.run(childInsert.sql, prepareBindings(childInsert.bindings));
+    }
+  } else {
+    // Generic insert for other tables
+    const insertQuery = knexBuilder(tmpTableName)
+      .insert(rows)
+      .toSQL()
+      .toNative();
+    await connection.run(insertQuery.sql, prepareBindings(insertQuery.bindings));
+  }
+
+  // Export temp table to Parquet (safe)
   await connection.run(`
     COPY ${tmpTableName}
     TO '${s3Path}'
     (FORMAT PARQUET);
   `);
 
-  await connection.run(`DROP TABLE IF EXISTS ${tmpTableName}`);
-  await connection.run(tableSql(tableName));
+  // Load into formal table
+  if (tableName === 'executions') {
+    // Insert parents first
+    await connection.run(`
+      INSERT INTO ${tableName}
+      SELECT * FROM ${tmpTableName}
+      WHERE parent_cumulus_id IS NULL;
+    `);
 
-  await connection.run(`
-    COPY ${tableName}
-    FROM '${s3Path}'
-    (FORMAT PARQUET);
-  `);
+    // Insert children next
+    await connection.run(`
+      INSERT INTO ${tableName}
+      SELECT * FROM ${tmpTableName}
+      WHERE parent_cumulus_id IS NOT NULL;
+    `);
+  } else {
+    // Generic table: direct COPY FROM temp table
+    await connection.run(`
+      INSERT INTO ${tableName}
+      SELECT * FROM ${tmpTableName};
+    `);
+  }
+
+  // Drop temp table
+  await connection.run(`DROP TABLE IF EXISTS ${tmpTableName};`);
 }
 
 export async function createDuckDBTables(

@@ -14,12 +14,12 @@ const log = new Logger({ sender: '@cumulus/db/StatsSearch' });
  * A class to query postgres for the STATS and STATS/AGGREGATE endpoints
  */
 class StatsS3Search extends StatsSearch {
-  private duckDbConn: DuckDBConnection;
+  private dbConnection: DuckDBConnection;
   private knexBuilder: Knex;
 
-  constructor(event: QueryEvent, type: string, duckDbConn: DuckDBConnection) {
+  constructor(event: QueryEvent, type: string, dbConnection: DuckDBConnection) {
     super(event, type);
-    this.duckDbConn = duckDbConn;
+    this.dbConnection = dbConnection;
     // Use 'pg' dialect to generate DuckDB-compatible SQL ($1, $2, etc.)
     this.knexBuilder = knex({ client: 'pg' });
   }
@@ -34,7 +34,7 @@ class StatsS3Search extends StatsSearch {
     log.debug(`summary about to execute query: ${aggregateQuery?.toSQL().sql}`);
 
     const { sql, bindings } = aggregateQuery.toSQL().toNative();
-    const reader = await this.duckDbConn.runAndReadAll(
+    const reader = await this.dbConnection.runAndReadAll(
       sql,
       prepareBindings([...bindings]) // prepareBindings must be imported/defined in scope
     );
@@ -51,7 +51,7 @@ class StatsS3Search extends StatsSearch {
   async aggregate(): Promise<ApiAggregateResult> {
     const { searchQuery } = this.buildSearch(this.knexBuilder);
     const { sql, bindings } = searchQuery.toSQL().toNative();
-    const reader = await this.duckDbConn.runAndReadAll(
+    const reader = await this.dbConnection.runAndReadAll(
       sql,
       prepareBindings([...bindings]) // prepareBindings must be imported/defined in scope
     );

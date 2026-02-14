@@ -8,11 +8,11 @@ import { PostgresRule, PostgresRuleRecord } from '../types/rule';
 import { PostgresProviderRecord } from '../types/provider';
 import { PostgresCollectionRecord } from '../types/collection';
 
-export const translatePostgresRuleToApiRuleWithoutDbQuery = async (
+export const translatePostgresRuleToApiRuleWithoutDbQuery = (
   pgRule: PostgresRuleRecord,
   collectionPgRecord?: Pick<PostgresCollectionRecord, 'name' | 'version'>,
   providerPgRecord?: Partial<PostgresProviderRecord>
-): Promise<RuleRecord> => {
+): RuleRecord => {
   const apiRule: RuleRecord = {
     name: pgRule.name,
     workflow: pgRule.workflow,
@@ -33,8 +33,8 @@ export const translatePostgresRuleToApiRuleWithoutDbQuery = async (
     executionNamePrefix: pgRule.execution_name_prefix,
     queueUrl: pgRule.queue_url,
     tags: pgRule.tags,
-    createdAt: pgRule.created_at.getTime(),
-    updatedAt: pgRule.updated_at.getTime(),
+    createdAt: new Date(pgRule.created_at).getTime(),
+    updatedAt: new Date(pgRule.updated_at).getTime(),
   };
   return <RuleRecord>removeNilProperties(apiRule);
 };

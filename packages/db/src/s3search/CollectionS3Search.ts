@@ -3,13 +3,14 @@ import pick from 'lodash/pick';
 import { DuckDBConnection } from '@duckdb/node-api';
 
 import Logger from '@cumulus/logger';
-import { prepareBindings } from './duckdbHelpers';
-import { GranuleS3Search } from './GranuleS3Search';
+
 import { CollectionSearch, Statuses, StatsRecords, CollectionRecordApi } from '../search/CollectionSearch';
 import { TableNames } from '../tables';
 import { translatePostgresCollectionToApiCollection } from '../translate/collections';
-import { QueryEvent } from '../types/search';
 import { PostgresCollectionRecord } from '../types/collection';
+import { QueryEvent } from '../types/search';
+import { prepareBindings } from './duckdbHelpers';
+import { GranuleS3Search } from './GranuleS3Search';
 
 const log = new Logger({ sender: '@cumulus/db/CollectionS3Search' });
 
@@ -17,12 +18,12 @@ const log = new Logger({ sender: '@cumulus/db/CollectionS3Search' });
  * Class to build and execute db search query for collections
  */
 export class CollectionS3Search extends CollectionSearch {
-  private duckDbConn: DuckDBConnection;
+  private dbConnection: DuckDBConnection;
   private knexBuilder: Knex;
 
-  constructor(event: QueryEvent, duckDbConn: DuckDBConnection) {
+  constructor(event: QueryEvent, dbConnection: DuckDBConnection) {
     super(event);
-    this.duckDbConn = duckDbConn;
+    this.dbConnection = dbConnection;
     // Use 'pg' dialect to generate DuckDB-compatible SQL ($1, $2, etc.)
     this.knexBuilder = knex({ client: 'pg' });
   }
@@ -42,7 +43,7 @@ export class CollectionS3Search extends CollectionSearch {
     if (this.active) {
       const granuleS3Search = new GranuleS3Search(
         { queryStringParameters: this.queryStringParameters },
-        this.duckDbConn
+        this.dbConnection
       );
       const { countQuery } = granuleS3Search.buildSearchForActiveCollections(knexClient);
       statsQuery = countQuery.clear('select');
@@ -56,7 +57,7 @@ export class CollectionS3Search extends CollectionSearch {
 
     log.debug(`retrieveGranuleStats statsQuery: ${statsQuery?.toSQL().sql}`);
     const { sql, bindings } = statsQuery.toSQL().toNative();
-    const reader = await this.duckDbConn.runAndReadAll(
+    const reader = await this.dbConnection.runAndReadAll(
       sql,
       prepareBindings(bindings)
     );
@@ -147,7 +148,7 @@ export class CollectionS3Search extends CollectionSearch {
 
         const { sql, bindings } = config.query.toSQL().toNative();
 
-        const reader = await this.duckDbConn.runAndReadAll(
+        const reader = await this.dbConnection.runAndReadAll(
           sql,
           prepareBindings(bindings)
         );
@@ -163,7 +164,7 @@ export class CollectionS3Search extends CollectionSearch {
       meta.count = Number(countResult[0]?.count ?? 0);
 
       const apiRecords = await this.translatePostgresRecordsToApiRecords(
-        pgRecords as unknown as PostgresCollectionRecord[], this.knexBuilder
+        pgRecords as unknown[] as PostgresCollectionRecord[], this.knexBuilder
       );
 
       return {

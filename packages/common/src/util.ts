@@ -78,7 +78,7 @@ export const isOneOf = curry(
 );
 
 export const returnNullOrUndefinedOrDate = (
-  dateVal: string | number | null | undefined
+  dateVal: string | Date | number | null | undefined
 ) => (isNil(dateVal) ? dateVal : new Date(dateVal));
 
 /**

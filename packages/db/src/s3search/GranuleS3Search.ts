@@ -3,6 +3,7 @@ import pick from 'lodash/pick';
 import { DuckDBConnection } from '@duckdb/node-api';
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
+import { returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import Logger from '@cumulus/logger';
 
 import {
@@ -14,7 +15,6 @@ import { GranuleRecord, GranuleSearch } from '../search/GranuleSearch';
 import { QueryEvent } from '../types/search';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
 import { PostgresFileRecord } from '../types/file';
-import { toDateOrNull } from '../lib/timestamp';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleS3Search' });
 
@@ -22,12 +22,12 @@ const log = new Logger({ sender: '@cumulus/db/GranuleS3Search' });
  * Class to build and execute db search query for granules
  */
 export class GranuleS3Search extends GranuleSearch {
-  private duckDbConn: DuckDBConnection;
+  private dbConnection: DuckDBConnection;
   private knexBuilder: Knex;
 
-  constructor(event: QueryEvent, duckDbConn: DuckDBConnection) {
-    super(event);
-    this.duckDbConn = duckDbConn;
+  constructor(event: QueryEvent, dbConnection: DuckDBConnection) {
+    super(event, false); // disables estimateTableRowCount
+    this.dbConnection = dbConnection;
     // Use 'pg' dialect to generate DuckDB-compatible SQL ($1, $2, etc.)
     this.knexBuilder = knex({ client: 'pg' });
   }
@@ -51,7 +51,7 @@ export class GranuleS3Search extends GranuleSearch {
     if (includeFullRecord) {
       //get files
       const files = await getFilesByGranuleCumulusIds({
-        connection: this.duckDbConn,
+        connection: this.dbConnection,
         granuleCumulusIds: cumulusIds,
         knexBuilder: knexClient,
       });
@@ -64,7 +64,7 @@ export class GranuleS3Search extends GranuleSearch {
 
       //get Executions
       const executions = await getExecutionInfoByGranuleCumulusIds({
-        connection: this.duckDbConn,
+        connection: this.dbConnection,
         granuleCumulusIds: cumulusIds,
         knexBuilder: knexClient,
       });
@@ -79,15 +79,15 @@ export class GranuleS3Search extends GranuleSearch {
         ...item,
         created_at: new Date(item.created_at),
         updated_at: new Date(item.updated_at),
-        beginning_date_time: toDateOrNull(item.beginning_date_time),
-        ending_date_time: toDateOrNull(item.ending_date_time),
-        last_update_date_time: toDateOrNull(item.last_update_date_time),
-        processing_end_date_time: toDateOrNull(item.processing_end_date_time),
-        processing_start_date_time: toDateOrNull(item.processing_start_date_time),
-        production_date_time: toDateOrNull(item.production_date_time),
-        timestamp: toDateOrNull(item.timestamp),
+        beginning_date_time: returnNullOrUndefinedOrDate(item.beginning_date_time),
+        ending_date_time: returnNullOrUndefinedOrDate(item.ending_date_time),
+        last_update_date_time: returnNullOrUndefinedOrDate(item.last_update_date_time),
+        processing_end_date_time: returnNullOrUndefinedOrDate(item.processing_end_date_time),
+        processing_start_date_time: returnNullOrUndefinedOrDate(item.processing_start_date_time),
+        production_date_time: returnNullOrUndefinedOrDate(item.production_date_time),
+        timestamp: returnNullOrUndefinedOrDate(item.timestamp),
       };
-      //console.log(granulePgRecord);
+
       const collectionPgRecord = {
         cumulus_id: item.collection_cumulus_id,
         name: item.collectionName,
@@ -107,7 +107,7 @@ export class GranuleS3Search extends GranuleSearch {
         files: fileRecords,
         executionUrls,
       });
-      //console.log(apiRecord);
+
       return fields ? pick(apiRecord, fields) : apiRecord;
     });
     return apiRecords;
@@ -136,7 +136,7 @@ export class GranuleS3Search extends GranuleSearch {
 
         const { sql, bindings } = config.query.toSQL().toNative();
 
-        const reader = await this.duckDbConn.runAndReadAll(
+        const reader = await this.dbConnection.runAndReadAll(
           sql,
           prepareBindings(bindings)
         );

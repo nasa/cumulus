@@ -28,9 +28,9 @@ export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
  * Class to build and execute db search query for granules
  */
 export class GranuleSearch extends BaseSearch {
-  constructor(event: QueryEvent) {
+  constructor(event: QueryEvent, enableEstimate = true) {
     // estimate the table rowcount by default
-    if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
+    if (enableEstimate && event?.queryStringParameters?.estimateTableRowCount !== 'false') {
       set(event, 'queryStringParameters.estimateTableRowCount', 'true');
     }
     super(event, 'granule');

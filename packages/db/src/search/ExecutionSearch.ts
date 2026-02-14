@@ -13,7 +13,7 @@ import { BaseRecord } from '../types/base';
 
 const log = new Logger({ sender: '@cumulus/db/ExecutionSearch' });
 
-interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
+export interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
   collectionName?: string,
   collectionVersion?: string,
   asyncOperationId?: string;
@@ -24,9 +24,9 @@ interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
  * Class to build and execute db search query for executions
  */
 export class ExecutionSearch extends BaseSearch {
-  constructor(event: QueryEvent) {
+  constructor(event: QueryEvent, enableEstimate = true) {
     // estimate the table rowcount by default
-    if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
+    if (enableEstimate && event?.queryStringParameters?.estimateTableRowCount !== 'false') {
       set(event, 'queryStringParameters.estimateTableRowCount', 'true');
     }
     super(event, 'execution');

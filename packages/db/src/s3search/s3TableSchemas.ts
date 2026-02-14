@@ -88,7 +88,7 @@ export const executionsS3TableSql = (tableName: string = 'executions') => `
         REFERENCES collections (cumulus_id),
     CONSTRAINT executions_parent_cumulus_id_foreign
         FOREIGN KEY (parent_cumulus_id)
-        REFERENCES executions (cumulus_id),
+        REFERENCES ${tableName} (cumulus_id),
     CONSTRAINT executions_status_check
         CHECK (status IN ('running', 'completed', 'failed', 'unknown'))
 );`;
