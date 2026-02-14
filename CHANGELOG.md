@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [s3 table search]
+
+### Added
+
+- **CUMULUS-4517**
+  - Added the `@cumulus/db/s3search` module to enable Cumulus record search via S3-backed tables.
+
 ## [Unreleased]
 
 ### Breaking Changes
