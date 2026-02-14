@@ -23,14 +23,9 @@ variable "app_name" {
   default = "workflow-normalizer"
 }
 
-variable "default_tags" {
+variable "tags" {
   type = map(string)
   default = {}
-}
-
-variable "log_level" {
-  type = string
-  default = "info"
 }
 
 variable "memory_size" {

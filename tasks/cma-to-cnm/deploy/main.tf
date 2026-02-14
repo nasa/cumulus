@@ -1,28 +1,33 @@
-terraform {
-  required_providers {
-    aws  = ">= 2.31.0"
-    null = "~> 2.1"
-  }
-}
-
-provider "aws" {
-  region  = var.region
-
-  ignore_tags {
-    key_prefixes = ["gsfc-ngap"]
-  }
-}
-
-data "aws_caller_identity" "current" {}
-
 locals {
-  name = var.app_name
-  environment = var.prefix
+  build_config = jsondecode(file("${path.module}/../build-config.json"))
+}
 
-  tags = length(var.default_tags) == 0 ? {
-    team: "Cumulus Coreification Engineering",
-    application: var.app_name,
-  } : var.default_tags
+resource "aws_lambda_function" "cma_to_cnm" {
+  filename      = "${path.module}/../dist/final/lambda.zip"
+  function_name = "${var.prefix}-CMAToCNM"
+  filebase64sha256("${path.module}/../dist/final/lambda.zip")
+  handler       = "cma2cnm.cma_to_cnm.handler"
+  role          = var.lambda_role
+  runtime       = "python3.13"
+  timeout       = var.timeout
+  memory_size   = var.memory_size
 
-  lambda_resources_name = terraform.workspace == "default" ? "svc-${local.name}-${local.environment}" : "svc-${local.name}-${local.environment}-${terraform.workspace}"
+  environment {
+    variables = {
+      LOGGING_LEVEL               = var.log_level
+    }
+  }
+
+  vpc_config {
+    subnet_ids         = var.subnet_ids
+    security_group_ids = var.security_group_ids
+  }
+
+  tags = local.tags
+}
+
+resource "aws_cloudwatch_log_group" "cma_to_cnm" {
+  name              = "/aws/lambda/${aws_lambda_function.cma_to_cnm.function_name}"
+  retention_in_days = var.default_log_retention_days
+  tags              = local.tags
 }

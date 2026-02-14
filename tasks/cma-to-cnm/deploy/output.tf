@@ -1,7 +1,9 @@
-output "cnm_to_cma_arn" {
-  value = aws_lambda_function.cma_to_cnm.arn
+output "lambda_function" {
+  description = "The task lambda function"
+  value       = aws_lambda_function.cma_to_cnm
 }
 
-output "cnm_to_cma_name" {
-  value = aws_lambda_function.cma_to_cnm.function_name
+output "log_group" {
+  description = "Name of the Lambda's CloudWatch log group"
+  value       = aws_cloudwatch_log_group.cma_to_cnm
 }
