@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "description": "Optional protocol (e.g., s3, ftp, http)"
+        },
+        "host": {
+          "type": "string",
+          "description": "Optional host address"
+        },
+        "id": {
+          "type": "string",
+          "description": "This is provider id"
+        }
+      },
+      "required": ["id"],
+      "additionalProperties": false
+    },
+    "collection": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "cumulus_meta": {
+      "type": "object",
+      "properties": {
+        "state_machine": {
+          "type": "string",
+          "description": "Optional state machine name"
+        },
+        "execution_name": {
+          "type": "string",
+          "description": "Optional execution name"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  "required": ["provider", "collection"],
+  "additionalProperties": false
+}
+
