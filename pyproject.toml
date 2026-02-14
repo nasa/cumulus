@@ -43,6 +43,8 @@ select = [
 ]
 
 ignore = [
+  # undocumented-magic-method
+  "D105",
   # blank-line-after-function
   "D202",
   # incorrect-blank-line-before-class - incompatible with D211
@@ -64,7 +66,7 @@ ignore = [
 # Ignore missing docstring rules for non-exported python code
 "**/example/**.py" = ["D1"]
 "**/migrations/**.py" = ["D1", "E501"]
-"**/tests/**.py" = ["D1"]
+"**/tests/**.py" = ["D1", "PLR0913"]
 "scripts/**.py" = ["D1"]
 
 
