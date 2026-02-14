@@ -3,8 +3,8 @@
 This lambda function converts Cloud Notification Mechanism format to CMA message
 format.
 
-CNM schema is defined in schemas/cumulus_sns_schema.json
-payload file schema defined in schema/files.schea.json
+CNM schema is defined in schemas/input.json
+payload file schema defined in schema/output.json
 ## Message configuration
 
 For more information on configuring a Cumulus Message Adapter task, see [the Cumulus workflow input/output documentation](https://nasa.github.io/cumulus/docs/workflows/input_output).
@@ -15,7 +15,7 @@ Config object fields:
 
 | field name          | type   | default    | description
 |---------------------|--------|------------| -----------
-| collection          | object | (optional) | collection.granuleIdExtraction:Regex used to extract granuleId from filenames
+| collection          | object | (optional) |  asdasf
 
 
 ```angular2html
