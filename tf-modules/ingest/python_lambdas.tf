@@ -9,7 +9,7 @@ module "aws_api_proxy" {
     source = "./python_lambda"
     prefix = var.prefix
     role = var.lambda_processing_role_arn
-    lambda_zip_path = "${local.task_root}/${local.aws_api_proxy_name}/${local.zip_subdir}"
+    lambda_zip_path = abspath("${local.task_root}/${local.aws_api_proxy_name}/${local.zip_subdir}")
     name = local.aws_api_proxy_name
     subnet_ids = var.lambda_subnet_ids
     security_group_id = local.security_group_id
