@@ -3,7 +3,7 @@
 from cumulus_process import Process
 
 from .create_cnm import CnmGenerator
-from .sender import Message, Sender, get_sender
+from .sender import Message, get_sender
 from .types import MessageAttributesDict
 
 
@@ -41,7 +41,7 @@ class CnmResponse(Process):
 
         cnm_s = {}
         try:
-            cnm_s = self.config["cnm_s"] or self.input
+            cnm_s = self.config["cnm"] or self.input
             cnm_r = self.cnm_generator.get_cnm_r(
                 cnm_s=cnm_s,
                 exception=self.config["exception"],

@@ -41,34 +41,31 @@ def test_lambda_handler_sns(
     response_sns_topic,
     response_sqs_queue,
 ):
-    lambda_handler(
+    output = lambda_handler(
         {
             "cma": {
                 "event": {"cnm": cnm_s},
                 "task_config": {
-                    "cnm_s": "{$.cnm}",
+                    "cnm": "{$.cnm}",
                     "responseArns": [response_sns_topic.arn],
                     "exception": "None",
+                    "distribution_endpoint": "https://unit.test-example.com/dev/",
                 },
                 "payload": {
                     "granules": granules,
                 },
             },
-        }
+        },
+        None,
     )
 
-    response = mock_sqs.receive_message(QueueUrl=response_sqs_queue.url)
-
-    message = response["Messages"][0]
-    body = json.loads(message["Body"])
-
-    assert json.loads(body["Message"]) == {
+    expected_cnm_r = {
         "product": {
             "files": [
                 {
                     "checksumType": "md5",
                     "checksum": "3b6de83e361a01867a9e541a4bf771dc",
-                    "uri": "s3://test-protected/Merged_TOPEX_Jason_OSTM_Jason-3_Cycle_945.V4_2.nc",
+                    "uri": "https://unit.test-example.com/dev/test-protected/Merged_TOPEX_Jason_OSTM_Jason-3_Cycle_945.V4_2.nc",
                     "name": "Merged_TOPEX_Jason_OSTM_Jason-3_Cycle_945.V4_2.nc",
                     "type": "data",
                     "size": 18795152,
@@ -76,7 +73,7 @@ def test_lambda_handler_sns(
                 {
                     "checksumType": "md5",
                     "checksum": "11236de83e361eesss332f771dc",
-                    "uri": "s3://test-public/Merged_TOPEX_Jason_OSTM_Jason-3_Cycle_945.V4_2.cmr.json",
+                    "uri": "https://unit.test-example.com/dev/test-public/Merged_TOPEX_Jason_OSTM_Jason-3_Cycle_945.V4_2.cmr.json",
                     "name": "Merged_TOPEX_Jason_OSTM_Jason-3_Cycle_945.V4_2.cmr.json",
                     "type": "metadata",
                     "size": 1236,
@@ -100,6 +97,32 @@ def test_lambda_handler_sns(
         },
         "processCompleteTime": "2026-01-01 20:50:35Z",
     }
+
+    assert output == {
+        "cnm": cnm_s,
+        "exception": "None",
+        "payload": {
+            "cnm": expected_cnm_r,
+            "input": {
+                "granules": granules,
+            },
+        },
+        "task_config": {
+            "cnm": "{$.cnm}",
+            "responseArns": [
+                response_sns_topic.arn,
+            ],
+            "exception": "None",
+            "distribution_endpoint": "https://unit.test-example.com/dev/",
+        },
+    }
+
+    response = mock_sqs.receive_message(QueueUrl=response_sqs_queue.url)
+
+    message = response["Messages"][0]
+    body = json.loads(message["Body"])
+
+    assert json.loads(body["Message"]) == expected_cnm_r
     assert body["MessageAttributes"] == {
         "CNM_RESPONSE_STATUS": {
             "Type": "String",
@@ -127,12 +150,12 @@ def test_lambda_handler_sns_no_cmr(
     del granules[0]["cmrConceptId"]
     del granules[0]["cmrLink"]
 
-    lambda_handler(
+    output = lambda_handler(
         {
             "cma": {
                 "event": {"cnm": cnm_s},
                 "task_config": {
-                    "cnm_s": "{$.cnm}",
+                    "cnm": "{$.cnm}",
                     "responseArns": [response_sns_topic.arn],
                     "exception": "None",
                 },
@@ -140,15 +163,11 @@ def test_lambda_handler_sns_no_cmr(
                     "granules": granules,
                 },
             },
-        }
+        },
+        None,
     )
 
-    response = mock_sqs.receive_message(QueueUrl=response_sqs_queue.url)
-
-    message = response["Messages"][0]
-    body = json.loads(message["Body"])
-
-    assert json.loads(body["Message"]) == {
+    expected_cnm_r = {
         "product": {
             "files": [
                 {
@@ -182,6 +201,31 @@ def test_lambda_handler_sns_no_cmr(
         },
         "processCompleteTime": "2026-01-01 20:50:35Z",
     }
+
+    assert output == {
+        "cnm": cnm_s,
+        "exception": "None",
+        "payload": {
+            "cnm": expected_cnm_r,
+            "input": {
+                "granules": granules,
+            },
+        },
+        "task_config": {
+            "cnm": "{$.cnm}",
+            "responseArns": [
+                response_sns_topic.arn,
+            ],
+            "exception": "None",
+        },
+    }
+
+    response = mock_sqs.receive_message(QueueUrl=response_sqs_queue.url)
+
+    message = response["Messages"][0]
+    body = json.loads(message["Body"])
+
+    assert json.loads(body["Message"]) == expected_cnm_r
     assert body["MessageAttributes"] == {
         "CNM_RESPONSE_STATUS": {
             "Type": "String",
@@ -213,7 +257,7 @@ def test_lambda_handler_sns_and_kinesis(
             "cma": {
                 "event": {"cnm": cnm_s},
                 "task_config": {
-                    "cnm_s": "{$.cnm}",
+                    "cnm": "{$.cnm}",
                     "responseArns": [
                         response_sns_topic.arn,
                         response_kinesis_stream.arn,
@@ -224,7 +268,8 @@ def test_lambda_handler_sns_and_kinesis(
                     "granules": granules,
                 },
             },
-        }
+        },
+        None,
     )
 
     expected_cnm_r = {
@@ -276,7 +321,7 @@ def test_lambda_handler_sns_and_kinesis(
             },
         },
         "task_config": {
-            "cnm_s": "{$.cnm}",
+            "cnm": "{$.cnm}",
             "responseArns": [
                 response_sns_topic.arn,
                 response_kinesis_stream.arn,
@@ -330,7 +375,7 @@ def test_lambda_handler_sns_unexpected_error(
                 "cma": {
                     "event": {"cnm": cnm_s},
                     "task_config": {
-                        "cnm_s": "{$.cnm}",
+                        "cnm": "{$.cnm}",
                         "responseArns": [response_sns_topic.arn],
                         "exception": "None",
                     },
@@ -338,7 +383,8 @@ def test_lambda_handler_sns_unexpected_error(
                         "granules": granules,
                     },
                 },
-            }
+            },
+            None,
         )
 
     response = mock_sqs.receive_message(QueueUrl=response_sqs_queue.url)
@@ -390,7 +436,7 @@ def test_lambda_handler_sns_does_not_exist(
                 "cma": {
                     "event": {"cnm": cnm_s},
                     "task_config": {
-                        "cnm_s": "{$.cnm}",
+                        "cnm": "{$.cnm}",
                         "responseArns": [
                             "arn:aws:sns:us-east-2:123456789012:TopicDoesNotExist",
                             response_sns_topic.arn,
@@ -401,7 +447,8 @@ def test_lambda_handler_sns_does_not_exist(
                         "granules": granules,
                     },
                 },
-            }
+            },
+            None,
         )
 
     response = mock_sqs.receive_message(QueueUrl=response_sqs_queue.url)
@@ -470,7 +517,7 @@ def test_lambda_handler_sns_cnm_payload(
     response_sns_topic,
     response_sqs_queue,
 ):
-    lambda_handler(
+    output = lambda_handler(
         {
             "cma": {
                 "event": {
@@ -483,21 +530,17 @@ def test_lambda_handler_sns_cnm_payload(
                     }
                 },
                 "task_config": {
-                    "cnm_s": "{$.cnm}",
+                    "cnm": "{$.cnm}",
                     "responseArns": [response_sns_topic.arn],
                     "exception": "{$.exception}",
                 },
                 "payload": cnm_s,
             },
-        }
+        },
+        None,
     )
 
-    response = mock_sqs.receive_message(QueueUrl=response_sqs_queue.url)
-
-    message = response["Messages"][0]
-    body = json.loads(message["Body"])
-
-    assert json.loads(body["Message"]) == {
+    expected_cnm_r = {
         "receivedTime": "2020-04-08T16:00:16.958Z",
         "collection": "MERGED_TP_J1_OSTM_OST_CYCLES_V42",
         "version": "1.1",
@@ -511,6 +554,13 @@ def test_lambda_handler_sns_cnm_payload(
         },
         "processCompleteTime": "2026-01-01 20:50:35Z",
     }
+
+    response = mock_sqs.receive_message(QueueUrl=response_sqs_queue.url)
+
+    message = response["Messages"][0]
+    body = json.loads(message["Body"])
+
+    assert json.loads(body["Message"]) == expected_cnm_r
     assert body["MessageAttributes"] == {
         "CNM_RESPONSE_STATUS": {
             "Type": "String",
@@ -523,6 +573,27 @@ def test_lambda_handler_sns_cnm_payload(
         "DATA_VERSION": {
             "Type": "String",
             "Value": "Unknown/Missing",
+        },
+    }
+
+    assert output == {
+        "exception": {
+            "Error": "SomeError",
+            "Cause": '{"errorMessage": "Exception error message", '
+            '"errorType": "SomeError", "requestId": '
+            '"01a70971-a946-42f5-a94b-38934ef995b1", "stackTrace": '
+            '["Sample Stack Trace"]}',
+        },
+        "payload": {
+            "cnm": expected_cnm_r,
+            "input": cnm_s,
+        },
+        "task_config": {
+            "cnm": "{$.cnm}",
+            "responseArns": [
+                response_sns_topic.arn,
+            ],
+            "exception": "{$.exception}",
         },
     }
 
@@ -539,9 +610,9 @@ def test_lambda_handler_sns_multiple_granules(
         lambda_handler(
             {
                 "cma": {
-                    "event": {},
+                    "event": {"cnm": cnm_s},
                     "task_config": {
-                        "cnm_s": cnm_s,
+                        "cnm": "{$.cnm}",
                         "responseArns": [response_sns_topic.arn],
                         "exception": "None",
                     },
@@ -552,7 +623,8 @@ def test_lambda_handler_sns_multiple_granules(
                         ],
                     },
                 },
-            }
+            },
+            None,
         )
 
     response = mock_sqs.receive_message(

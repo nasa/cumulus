@@ -423,12 +423,10 @@
         "cma": {
           "event.$": "$",
           "task_config": {
-            "OriginalCNM": "{$.meta.cnm}",
+            "cnm": "{$.meta.cnm}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
-            "response-endpoint": "{$.meta.cnmResponseStream}",
-            "region": "us-east-1",
-            "type": "{$.meta.cnmResponseMethod}",
-            "WorkflowException": "{$.exception}",
+            "exception": "{$.exception}",
+            "responseArns": ["{$.meta.cnmResponseStream}"],
             "cumulus_message": {
               "outputs": [
                 {
@@ -440,7 +438,7 @@
                   "destination": "{$.meta.cnmResponse}"
                 },
                 {
-                  "source": "{$.input.input}",
+                  "source": "{$.input}",
                   "destination": "{$.payload}"
                 }
               ]
@@ -478,11 +476,10 @@
         "cma": {
           "event.$": "$",
           "task_config": {
-            "OriginalCNM": "{$.meta.cnm}",
-            "response-endpoint": "{$.meta.cnmResponseStream}",
-            "region": "us-east-1",
-            "type": "{$.meta.cnmResponseMethod}",
-            "WorkflowException": "{$.exception}",
+            "cnm": "{$.meta.cnm}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "exception": "{$.exception}",
+            "responseArns": ["{$.meta.cnmResponseStream}"],
             "cumulus_message": {
               "outputs": [
                 {
@@ -490,7 +487,7 @@
                   "destination": "{$.meta.cnmResponse}"
                 },
                 {
-                  "source": "{$.input.input}",
+                  "source": "{$.input}",
                   "destination": "{$.payload}"
                 }
               ]

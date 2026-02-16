@@ -71,7 +71,7 @@ async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries
     async () => {
       stream = await describeStream({ StreamName: streamName });
       streamStatus = stream.StreamDescription.StreamStatus;
-      if (streamStatus === 'ACTIVE') return streamStatus;
+      if (streamStatus === 'ACTIVE') return stream;
       throw new Error(`Stream never became active:  status: ${streamStatus}: ${streamName}`);
     },
     {

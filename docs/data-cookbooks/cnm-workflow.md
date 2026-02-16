@@ -184,12 +184,10 @@ state_machine_definition = <<JSON
           "cma": {
             "event.$": "$",
             "task_config": {
-              "OriginalCNM": "{$.meta.cnm}",
+              "cnm": "{$.meta.cnm}",
               "distribution_endpoint": "{$.meta.distribution_endpoint}",
-              "response-endpoint": "ADD YOUR RESPONSE STREAM NAME HERE",
-              "region": "us-east-1",
-              "type": "kinesis",
-              "WorkflowException": "{$.exception}",
+              "exception": "{$.exception}",
+              "responseArns": ["ADD YOUR RESPONSE STREAM ARN HERE"],
               "cumulus_message": {
                 "outputs": [
                   {
@@ -197,7 +195,7 @@ state_machine_definition = <<JSON
                     "destination": "{$.meta.cnmResponse}"
                   },
                   {
-                    "source": "{$.input.input}",
+                    "source": "{$.input}",
                     "destination": "{$.payload}"
                   }
                 ]
@@ -206,7 +204,7 @@ state_machine_definition = <<JSON
           }
         },
         "Type": "Task",
-        "Resource": "${aws_lambda_function.cnm_response_task.arn}",
+        "Resource": "${module.cumulus.cnm_response_task.task_arn}",
         "Retry": [
           {
             "ErrorEquals": [
