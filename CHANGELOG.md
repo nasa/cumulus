@@ -42,6 +42,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Return consistent output formats across endpoints (previously, some endpoints aggregated errors
       while others returned per-granule errors)
 
+## [v21.3.1] 2026-02-16
+
+### Added
+
+- **CUMULUS-4498**
+  - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+
+### Changed
+
+- **CUMULUS-4514**
+  - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
+
 ## [v21.3.0] 2026-01-26
 
 ### Migration Notes
