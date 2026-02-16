@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -xe
-
 DIR=$1
 # find packages location
 echo "Entering $DIR"
