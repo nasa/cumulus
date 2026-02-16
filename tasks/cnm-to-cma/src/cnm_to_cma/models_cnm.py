@@ -255,7 +255,7 @@ class CloudNotificationMessageCnm122(BaseModel):
         ...,
         description="The response message type sent. Can be a success message or error message. Akin to both the PAN and PDRD",
     )
-    product: Product2 | Product3 | None = None
+    product: Product2 | Product3
 
 
 class CloudNotificationMessageCnm12(
