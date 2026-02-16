@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v21.3.1] 2026-02-16
+
 ### Added
 
 - **CUMULUS-4498**
