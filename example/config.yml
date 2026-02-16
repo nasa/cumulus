@@ -35,6 +35,9 @@ cdd-tf:
 ecarton:
   bucket: ecarton-internal
 
+eyen:
+  bucket: eyen-internal
+
 dms-opex-sbx:
   bucket: dms-opex-sbx-internal
 
@@ -61,6 +64,9 @@ np:
 
 nnaga-tf:
   bucket: nnaga-internal
+
+reweeden:
+  bucket: reweeden-internal
 
 rs:
   bucket: rs-internal

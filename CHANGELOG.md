@@ -19,12 +19,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload.
-- **CUMULUS-4382**
-  - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
+- **CUMULUS-4388**
+  - Added cnm_to_cma task (lambda).
+  - Original cnm_to_cma was written in Java.  Converted to Python.
 - **CUMULUS-4382**
   - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
 - **CUMULUS-4385**
   - Added supporting Terraform for the granule-invalidator task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
+- **CUMULUS-4394**
+  - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
 
 ### Changed
 
@@ -33,6 +36,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     (previously, some bulk operation aggregated errors while others returned per-granule errors)
   - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
     `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
+- **CUMULUS-4384**
+  - Added granule-invalidator workflow deployment and tests to the example deployment.
+  - Resolved several integration issues with the granule-invalidator lambda.
+  - Updated packaging script for granule-invalidator to use `uv pip install` instead of `uv sync`.
+  - Added `private_api_lambda_arn` output to the archive module and `private_api_lambda_arn` variable to the ingest module.
 
 ### Notable Changes
 
