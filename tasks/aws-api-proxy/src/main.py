@@ -12,7 +12,6 @@ from aws_api_proxy.aws_api_proxy import lambda_adapter
 from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
 
-EVENT_TYPING = dict[Any, Any]
 LOGGER = CumulusLogger(__name__, level=int(os.environ.get("LOGLEVEL", logging.DEBUG)))
 SCHEMAS = {
     "config": str(
@@ -30,7 +29,7 @@ SCHEMAS = {
 }
 
 
-def lambda_handler(event: EVENT_TYPING, context: Any) -> Any:
+def lambda_handler(event: dict, context: Any) -> Any:
     """Lambda handler.
 
     AWS Lambda invokes this function when the Lambda is triggered.

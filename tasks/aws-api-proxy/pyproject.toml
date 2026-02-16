@@ -16,6 +16,8 @@ repository = "https://github.com/nasa/cumulus.git"
 
 [dependency-groups]
 dev = [
+    "mypy>=1.0.0",
+    "ruff>=0.0.241",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "moto>=4.1.3",
