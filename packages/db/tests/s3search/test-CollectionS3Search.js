@@ -7,7 +7,11 @@ const random = require('lodash/random');
 const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { createDuckDBWithS3, createDuckDBTableFromData } = require('../../dist/test-duckdb-utils');
+const {
+  createDuckDBTables,
+  setupDuckDBWithS3ForTesting,
+  stageAndLoadDuckDBTableFromData,
+} = require('../../dist/test-duckdb-utils');
 const { CollectionS3Search } = require('../../dist/s3search/CollectionS3Search');
 const {
   collectionsS3TableSql,
@@ -62,16 +66,17 @@ test.before(async (t) => {
     })
   ));
 
-  const { instance, connection } = await createDuckDBWithS3();
+  const { instance, connection } = await setupDuckDBWithS3ForTesting();
   t.context.instance = instance;
   t.context.connection = connection;
 
   t.context.testBucket = cryptoRandomString({ length: 10 });
   await s3().createBucket({ Bucket: t.context.testBucket });
+  await createDuckDBTables(connection);
 
   const duckdbS3Prefix = `s3://${t.context.testBucket}/duckdb/`;
 
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'collections',
@@ -80,7 +85,7 @@ test.before(async (t) => {
     `${duckdbS3Prefix}collections.parquet`
   );
 
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'providers',
@@ -89,7 +94,7 @@ test.before(async (t) => {
     `${duckdbS3Prefix}providers.parquet`
   );
 
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'granules',

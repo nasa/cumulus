@@ -16,13 +16,18 @@ import { prepareBindings } from './s3search/duckdbHelpers';
 
 /**
  * Creates a DuckDB in-memory instance and sets up S3/httpfs for testing.
- * Returns the instance and connection.
+ * Configures S3-related settings on the DuckDB instance.
+ *
+ * @param {string} dbFilePath - The path to the DuckDB database file. Defaults to in-memory
+ * @returns {Promise<{ instance: DuckDBInstance, connection: DuckDBConnection }>}
+ *   - The created DuckDB instance and the connection object for interacting with the database.
+ *   - The connection is configured with HTTPFS for S3.
  */
-export async function createDuckDBWithS3(): Promise<{
+export async function setupDuckDBWithS3ForTesting(dbFilePath: string = ':memory:'): Promise<{
   instance: DuckDBInstance;
   connection: DuckDBConnection;
 }> {
-  const instance = await DuckDBInstance.create(':memory:');
+  const instance = await DuckDBInstance.create(dbFilePath);
   const connection = await instance.connect();
 
   // Configure DuckDB HTTPFS for S3
@@ -40,7 +45,20 @@ export async function createDuckDBWithS3(): Promise<{
   return { instance, connection };
 }
 
-export async function createDuckDBTableFromData<
+/**
+ * Stages data into a temporary DuckDB table, exports it to Parquet (S3),
+ * and then loads it into the target table.
+ *
+ * @template T - Shape of the row object being inserted.
+ * @param connection - Active DuckDB connection.
+ * @param knexBuilder - Knex instance used to generate SQL insert statements.
+ * @param tableName - Name of the destination table.
+ * @param tableSql - Function that returns the CREATE TABLE SQL for a given table name.
+ * @param data - A single row or array of rows to insert.
+ * @param s3Path - Destination S3 path where the staged data will be exported as Parquet.
+ * @returns Promise that resolves when the staging, export, and load process completes.
+ */
+export async function stageAndLoadDuckDBTableFromData<
   T extends Record<string, any>
 >(
   connection: DuckDBConnection,
@@ -55,12 +73,12 @@ export async function createDuckDBTableFromData<
   const rows: T[] = Array.isArray(data) ? data : [data];
   const tmpTableName = `${tableName}_tmp`;
 
-  // Create temporary table
+  // Create temporary staging table
   await connection.run(tableSql(tmpTableName));
 
-  // Insert into temp table
+  // Insert into staging table
   if (tableName === 'executions') {
-    // Execution rows need parent → child ordering
+    // Execution rows require parent → child ordering
     type ExecutionRow = { parent_cumulus_id?: number | null; [key: string]: any };
     const execRows = rows as ExecutionRow[];
 
@@ -91,14 +109,14 @@ export async function createDuckDBTableFromData<
     await connection.run(insertQuery.sql, prepareBindings(insertQuery.bindings));
   }
 
-  // Export temp table to Parquet (safe)
+  // Export staging table to Parquet (S3)
   await connection.run(`
     COPY ${tmpTableName}
     TO '${s3Path}'
     (FORMAT PARQUET);
   `);
 
-  // Load into formal table
+  // Load from staging table into final table
   if (tableName === 'executions') {
     // Insert parents first
     await connection.run(`
@@ -114,14 +132,13 @@ export async function createDuckDBTableFromData<
       WHERE parent_cumulus_id IS NOT NULL;
     `);
   } else {
-    // Generic table: direct COPY FROM temp table
     await connection.run(`
       INSERT INTO ${tableName}
       SELECT * FROM ${tmpTableName};
     `);
   }
 
-  // Drop temp table
+  //  Drop staging table
   await connection.run(`DROP TABLE IF EXISTS ${tmpTableName};`);
 }
 

@@ -6,7 +6,11 @@ const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { createDuckDBWithS3, createDuckDBTableFromData, createDuckDBTables } = require('../../dist/test-duckdb-utils');
+const {
+  createDuckDBTables,
+  setupDuckDBWithS3ForTesting,
+  stageAndLoadDuckDBTableFromData,
+} = require('../../dist/test-duckdb-utils');
 const {
   reconciliationReportsS3TableSql,
 } = require('../../dist/s3search/s3TableSchemas');
@@ -34,7 +38,7 @@ test.before(async (t) => {
     created_at: new Date(t.context.reconReportSearchTimestamp - (num % 2)),
   }));
 
-  const { instance, connection } = await createDuckDBWithS3();
+  const { instance, connection } = await setupDuckDBWithS3ForTesting();
   t.context.instance = instance;
   t.context.connection = connection;
 
@@ -45,7 +49,7 @@ test.before(async (t) => {
   const duckdbS3Prefix = `s3://${t.context.testBucket}/duckdb/`;
 
   console.log('create reconciliation reports');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'reconciliation_reports',

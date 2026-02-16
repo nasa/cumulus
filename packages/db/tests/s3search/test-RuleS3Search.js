@@ -8,7 +8,11 @@ const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { createDuckDBWithS3, createDuckDBTableFromData, createDuckDBTables } = require('../../dist/test-duckdb-utils');
+const {
+  createDuckDBTables,
+  setupDuckDBWithS3ForTesting,
+  stageAndLoadDuckDBTableFromData,
+} = require('../../dist/test-duckdb-utils');
 const {
   collectionsS3TableSql,
   providersS3TableSql,
@@ -85,7 +89,7 @@ test.before(async (t) => {
       ? t.context.providerCumulusId : t.context.providerCumulusId2,
   }));
 
-  const { instance, connection } = await createDuckDBWithS3();
+  const { instance, connection } = await setupDuckDBWithS3ForTesting();
   t.context.instance = instance;
   t.context.connection = connection;
 
@@ -97,7 +101,7 @@ test.before(async (t) => {
 
   console.log('create collections');
   const collections = [t.context.testPgCollection, t.context.testPgCollection2];
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'collections',
@@ -108,7 +112,7 @@ test.before(async (t) => {
 
   console.log('create providers');
   const providers = [t.context.testProvider, t.context.testProvider2];
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'providers',
@@ -118,7 +122,7 @@ test.before(async (t) => {
   );
 
   console.log('create rules');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'rules',

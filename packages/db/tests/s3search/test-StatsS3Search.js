@@ -6,7 +6,11 @@ const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { createDuckDBWithS3, createDuckDBTableFromData, createDuckDBTables } = require('../../dist/test-duckdb-utils');
+const {
+  createDuckDBTables,
+  setupDuckDBWithS3ForTesting,
+  stageAndLoadDuckDBTableFromData,
+} = require('../../dist/test-duckdb-utils');
 const {
   collectionsS3TableSql,
   executionsS3TableSql,
@@ -84,7 +88,7 @@ test.before(async (t) => {
     updated_at: (new Date(2024 + (num % 6), (num % 12), ((num + 1) % 29))),
   }));
 
-  const { instance, connection } = await createDuckDBWithS3();
+  const { instance, connection } = await setupDuckDBWithS3ForTesting();
   t.context.instance = instance;
   t.context.connection = connection;
 
@@ -95,7 +99,7 @@ test.before(async (t) => {
   const duckdbS3Prefix = `s3://${t.context.testBucket}/duckdb/`;
 
   console.log('create collections');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'collections',
@@ -105,7 +109,7 @@ test.before(async (t) => {
   );
 
   console.log('create providers');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'providers',
@@ -115,7 +119,7 @@ test.before(async (t) => {
   );
 
   console.log('create granules');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'granules',
@@ -125,7 +129,7 @@ test.before(async (t) => {
   );
 
   console.log('create executions');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'executions',
@@ -135,7 +139,7 @@ test.before(async (t) => {
   );
 
   console.log('create pdrs');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'pdrs',
@@ -145,7 +149,7 @@ test.before(async (t) => {
   );
 
   console.log('create reconciliation_reports');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'reconciliation_reports',

@@ -21,7 +21,7 @@ test('translatePostgresCollectionToApiCollection converts Postgres collection to
   const expected = {
     createdAt: collectionRecord.created_at.getTime(),
     updatedAt: collectionRecord.updated_at.getTime(),
-    files: collectionRecord.files,
+    files: JSON.parse(collectionRecord.files),
     granuleId: collectionRecord.granule_id_validation_regex,
     granuleIdExtraction: collectionRecord.granule_id_validation_regex,
     meta: collectionRecord.meta,

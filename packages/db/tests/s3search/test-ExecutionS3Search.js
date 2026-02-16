@@ -7,7 +7,11 @@ const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { createDuckDBWithS3, createDuckDBTableFromData, createDuckDBTables } = require('../../dist/test-duckdb-utils');
+const {
+  createDuckDBTables,
+  setupDuckDBWithS3ForTesting,
+  stageAndLoadDuckDBTableFromData,
+} = require('../../dist/test-duckdb-utils');
 const {
   asyncOperationsS3TableSql,
   collectionsS3TableSql,
@@ -71,7 +75,7 @@ test.before(async (t) => {
     })
   ));
 
-  const { instance, connection } = await createDuckDBWithS3();
+  const { instance, connection } = await setupDuckDBWithS3ForTesting();
   t.context.instance = instance;
   t.context.connection = connection;
 
@@ -82,7 +86,7 @@ test.before(async (t) => {
   const duckdbS3Prefix = `s3://${t.context.testBucket}/duckdb/`;
 
   console.log('create collections');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'collections',
@@ -92,7 +96,7 @@ test.before(async (t) => {
   );
 
   console.log('create asyncOperation');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'async_operations',
@@ -102,7 +106,7 @@ test.before(async (t) => {
   );
 
   console.log('create executions');
-  await createDuckDBTableFromData(
+  await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
     'executions',
