@@ -5,6 +5,7 @@ format.
 
 CNM schema is defined in schemas/cumulus_sns_schema.json
 payload file schema defined in schemas/files.scheam.json
+
 ## Message configuration
 
 For more information on configuring a Cumulus Message Adapter task, see [the Cumulus workflow input/output documentation](https://nasa.github.io/cumulus/docs/workflows/input_output).
@@ -13,10 +14,9 @@ For more information on configuring a Cumulus Message Adapter task, see [the Cum
 
 Config object fields:
 
-| field name          | type   | default    | description
-|---------------------|--------|------------| -----------
-| collection          | object | (optional) | collection.granuleIdExtraction:Regex used to extract granuleId from filenames
-
+| field name | type   | default    | description                                                                   |
+| ---------- | ------ | ---------- | ----------------------------------------------------------------------------- |
+| collection | object | (optional) | collection.granuleIdExtraction:Regex used to extract granuleId from filenames |
 
 ```angular2html
 "TranslateMessage": {
@@ -63,6 +63,7 @@ Config object fields:
         "Next": "Report"
       },
 ```
+
 The Step Function task definition utilizes a task_config object to manage dynamic inputs. Within this configuration, the collection field is mapped using JSONPath to the metadata:
 
     Config Input: "collection": "{$.meta.collection}"
@@ -73,6 +74,7 @@ Users can define a regular expression via collection.granuleIdExtraction. This r
 Terraform Implementation
 
 This task is designed as a modular component. You can load it into your infrastructure using the following Terraform example:
+
 ```angular2html
 
 module "cnm_to_cma_module" {
@@ -97,12 +99,11 @@ module "cnm_to_cma_module" {
 
 ### Input
 
-
 Input array specification:
 
-| field name | type   | default | description
-| ---------- |--------| ------- | -----------
-| N/A | object | (required) | cnm message
+| field name | type   | default    | description |
+| ---------- | ------ | ---------- | ----------- |
+| N/A        | object | (required) | cnm message |
 
 the lambda's event.get('input') is the cnm message.
 
@@ -110,11 +111,10 @@ the lambda's event.get('input') is the cnm message.
 
 Output object fields:
 
-| field name | type            | default | description
-|------------|-----------------| ------- | -----------
-| granules   | array\<object\> | N/A | cma payload with list of cma files
-| cnm        | object          | N/A | the original cnm message.
-
+| field name | type            | default | description                        |
+| ---------- | --------------- | ------- | ---------------------------------- |
+| granules   | array\<object\> | N/A     | cma payload with list of cma files |
+| cnm        | object          | N/A     | the original cnm message.          |
 
 Data Mapping and Payload Configuration
 
@@ -123,10 +123,13 @@ When configuring the task, please refer to the example provided in the "Config" 
     Granule Mapping: The output_granules field must be mapped directly to the primary payload.
 
     Metadata Attachment: The original Cloud Notification Mechanism (CNM) message should be nested under the meta object.
+
 ### Example workflow configuration and use
+
 The output key : output_granules should be mapped to the payload key in the workflow's output.
 Workflow developer could choose to the original cnm message to be stored in meta.cnm key.
 Example workflow:
+
 ```angular2html
 "TranslateMessage": {
         "Parameters": {
@@ -172,7 +175,9 @@ Example workflow:
         "Next": "Report"
       },
 ```
+
 ## Architecture
+
 ```mermaid
 architecture-cnm-2-cma
     group trigger(cloud) [Starting Task]
@@ -182,20 +187,25 @@ architecture-cnm-2-cma
 ```
 
 ## Internal Dependencies
+
 Python cumulus-message-adapter library
 
 ### External Dependencies
+
 None
 
 ## Development and Deployment
+
 #### Developer Notes
+
 - Build : Temporarily use build_lambda.sh which depends on poetry to build the lambda.zip file.
--- poetry self add poetry-plugin-export to enable poetry export.
--- alternatively, download pydantic_core wheel from here : https://pypi.org/project/pydantic_core/#files by
--  using the manylinux wheel with python version close to this project's
+  -- poetry self add poetry-plugin-export to enable poetry export.
+  -- alternatively, download pydantic_core wheel from here : https://pypi.org/project/pydantic_core/#files by
+- using the manylinux wheel with python version close to this project's
 - About json schema compiling to Plaint Python classes:
-   - used datamodel-code-generator tool: https://koxudaxi.github.io/datamodel-code-generator/ to generate pydantic models from json schema files.
-   - example below
+  - used datamodel-code-generator tool: https://koxudaxi.github.io/datamodel-code-generator/ to generate pydantic models from json schema files.
+  - example below
+
 ```angular2html
 pip install datamodel-code-generator
 # Or with HTTP support for remote references
@@ -211,7 +221,6 @@ datamodel-codegen \
 ## Contributing
 
 To make a contribution, please [see our Cumulus contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md) and our documentation on [adding a task](https://nasa.github.io/cumulus/docs/adding-a-task)
-
 
 ## About Cumulus
 

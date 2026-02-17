@@ -1,19 +1,9 @@
-output "lambda_function_arn" {
-  description = "ARN of the Lambda function"
-  value       = aws_lambda_function.granule_invalidator_task.arn
+output "lambda_function" {
+  description = "The task lambda function"
+  value       = aws_lambda_function.granule_invalidator_task
 }
 
-output "lambda_function_name" {
-  description = "Name of the Lambda function"
-  value       = aws_lambda_function.granule_invalidator_task.function_name
-}
-
-output "lambda_function_invoke_arn" {
-  description = "Invoke ARN of the Lambda function"
-  value       = aws_lambda_function.granule_invalidator_task.invoke_arn
-}
-
-output "lambda_function_last_modified" {
-  description = "Last modified date of the Lambda function"
-  value       = aws_lambda_function.granule_invalidator_task.last_modified
+output "log_group" {
+  description = "The task lambda function log group"
+  value       = aws_cloudwatch_log_group.granule_invalidator_task
 }
