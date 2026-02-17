@@ -59,6 +59,8 @@ ignore = [
   "S101",
   # start-process-with-partial-path
   "S607",
+  # logging-too-many-args - false positives
+  "PLE1205",
 ]
 
 
@@ -68,7 +70,7 @@ ignore = [
 "**/migrations/**.py" = ["D1", "E501"]
 "**/tests/**.py" = ["D1", "PLR0913"]
 "scripts/**.py" = ["D1"]
-
+"__init__.py" = ["D104"]
 
 # Repo wide type checking rules
 # https://mypy.readthedocs.io/en/latest/config_file.html
