@@ -1,5 +1,5 @@
 locals {
-  function_name = "${var.prefix}-granule-invalidator-task"
+  function_name = "${var.prefix}-GranuleInvalidator"
 }
 
 resource "aws_lambda_function" "granule_invalidator_task" {
