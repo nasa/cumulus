@@ -12,7 +12,7 @@ resource "null_resource" "get_cnmResponse" {
   }
 }
 
-resource aws_s3_bucket_object "cnm_response_lambda_zip" {
+resource "aws_s3_object" "cnm_response_lambda_zip" {
   depends_on = [null_resource.get_cnmResponse]
   bucket     = var.system_bucket
   key        = "${var.prefix}/${local.cnm_response_filename}"
@@ -20,16 +20,16 @@ resource aws_s3_bucket_object "cnm_response_lambda_zip" {
 }
 
 resource "aws_lambda_function" "cnm_response_task" {
-  depends_on       = [aws_s3_bucket_object.cnm_response_lambda_zip]
-  function_name    = "${var.prefix}-CnmResponse"
+  depends_on       = [aws_s3_object.cnm_response_lambda_zip]
+  function_name    = "${var.prefix}-CnmResponseJava"
   s3_bucket        = var.system_bucket
-  s3_key           = aws_s3_bucket_object.cnm_response_lambda_zip.id
+  s3_key           = aws_s3_object.cnm_response_lambda_zip.id
   handler          = "gov.nasa.cumulus.CNMResponse::handleRequestStreams"
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "java21"
   timeout          = 300
   memory_size      = 256
-  source_code_hash = aws_s3_bucket_object.cnm_response_lambda_zip.etag
+  source_code_hash = aws_s3_object.cnm_response_lambda_zip.etag
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 
@@ -43,7 +43,7 @@ resource "aws_lambda_function" "cnm_response_task" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = [aws_security_group.no_ingress_all_egress.id]
     }
   }
