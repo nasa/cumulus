@@ -295,7 +295,7 @@ const samlToken = (req, res) => {
  *   expiration (default: 43200)
  * @returns {Object} an API Gateway response
  */
-async function refreshAccessToken(request, response, extensionSeconds = 12 * 60 * 60) {
+async function refreshAccessToken(request, response, extensionSeconds = 60 * 60) {
   try {
     const decodedToken = verifyAndDecodeTokenFromRequest(request);
 

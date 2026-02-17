@@ -92,7 +92,7 @@ async function refreshAccessToken(
   request,
   oAuth2Provider,
   response,
-  extensionSeconds = 12 * 60 * 60
+  extensionSeconds = 60 * 60
 ) {
   try {
     const decodedToken = verifyAndDecodeTokenFromRequest(request);
