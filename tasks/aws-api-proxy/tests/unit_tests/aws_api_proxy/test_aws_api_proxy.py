@@ -34,8 +34,8 @@ def test_lambda_adapter_list_publish(setup_sns_test, mock_sqs) -> None:
             ],
         }
     }
-    responses = lambda_adapter(event, None)
-
+    lambda_adapter_response = lambda_adapter(event, None)
+    responses = lambda_adapter_response.get("result_list")
     assert len(responses) == len(messages)
     assert all("MessageId" in response for response in responses)
 

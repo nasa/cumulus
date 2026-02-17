@@ -87,3 +87,29 @@ def test_lambda_handler_no_filter_mapping() -> None:
     }
     with pytest.raises(jsonschema.exceptions.ValidationError):
         lambda_handler(event, None)
+
+
+def test_lambda_handler_output_validation(mock_sns) -> None:
+    """Verify no exception is raised when validating nominal output."""
+    topic = mock_sns.create_topic(Name="test-topic")
+    event = {
+        "task_config": {
+            "service": "sns",
+            "action": "publish",
+            "parameters": {
+                "TopicArn": topic["TopicArn"],
+                "Message": [
+                    {"m": "first message"},
+                    {"m": "second message"},
+                ],
+            },
+            "iterate_by": "Message",
+            "parameter_filters": [
+                {
+                    "name": "json.dumps",
+                    "field": "Message",
+                }
+            ],
+        }
+    }
+    lambda_handler(event, None)

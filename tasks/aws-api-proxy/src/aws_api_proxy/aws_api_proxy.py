@@ -86,4 +86,4 @@ def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
         f"with action {action}: {responses}"
     )
 
-    return responses
+    return {"result_list": responses}

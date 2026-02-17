@@ -12,7 +12,7 @@ class SNSPublishParameters(BaseModel):
     """Schema for SNS publish parameters."""
 
     TopicArn: str | list[str]
-    Message: Any
+    Message: Any | list[Any]
 
 
 class ParameterFilter(BaseModel):
@@ -25,8 +25,8 @@ class ParameterFilter(BaseModel):
     field: str
 
 
-class SNSService(BaseModel):
-    """Schema for SNS service configuration."""
+class Model(BaseModel):
+    """Configuration schema for AWS API proxy task."""
 
     service: Literal["sns"]
     action: Literal["publish"]
@@ -54,12 +54,6 @@ class SNSService(BaseModel):
                     f"in parameters '{self.parameters.model_fields}'."
                 )
         return self
-
-
-class Model(BaseModel):
-    """Configuration schema for AWS API proxy task."""
-
-    sns_service: SNSService
 
 
 def save(output_dir: str) -> None:
