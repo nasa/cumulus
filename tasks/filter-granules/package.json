@@ -1,0 +1,31 @@
+{
+  "name": "@cumulus/filter-granules-task",
+  "private": true,
+  "version": "21.3.0",
+  "description": "Filters out completed granules and returns their respective executions",
+  "main": "index.js",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/example/lambdas/python-reference-task",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "scripts": {
+    "test": "uv run pytest -q",
+    "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src",
+    "clean": "rm -rf dist && rm -rf .venv && mkdir -p dist/packages",
+    "build": "uv sync",
+    "prepare": "npm run build",
+    "package": "npm run clean && cp -r ./schemas ./dist/packages &&../../bin/package_uv.sh 3.12 ${PWD}",
+    "install-python-deps": "npm run build"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0"
+}
