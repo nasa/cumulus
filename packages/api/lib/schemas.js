@@ -225,7 +225,7 @@ module.exports.collection = {
     },
     createdAt: {
       type: 'integer',
-      readOnly: true,
+      readonly: true,
     },
     updatedAt: {
       type: 'integer',
@@ -285,27 +285,27 @@ module.exports.granule = {
     archived: {
       title: 'archived',
       type: 'boolean',
-      readOnly: false,
+      readonly: false,
     },
     granuleId: {
       title: 'Granule ID',
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     producerGranuleId: {
       title: 'Producer Granule ID',
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     pdrName: {
       title: 'PDR associated with the granule',
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     collectionId: {
       title: 'Collection associated with the granule',
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     status: {
       title: 'Ingest status of the granule',
@@ -315,21 +315,21 @@ module.exports.granule = {
     execution: {
       title: 'Step Function Execution link',
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     cmrLink: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     published: {
       type: 'boolean',
       description: 'shows whether the granule is published to CMR',
-      readOnly: true,
+      readonly: true,
     },
     duration: {
       title: 'Ingest duration',
       type: 'number',
-      readOnly: true,
+      readonly: true,
     },
     files: {
       title: 'Files',
@@ -357,39 +357,39 @@ module.exports.granule = {
     },
     productVolume: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     timeToPreprocess: {
       type: 'number',
-      readOnly: true,
+      readonly: true,
     },
     beginningDateTime: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     endingDateTime: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     processingStartDateTime: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     processingEndDateTime: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     lastUpdateDateTime: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     timeToArchive: {
       type: 'number',
-      readOnly: true,
+      readonly: true,
     },
     productionDateTime: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     timestamp: { type: 'integer' },
     createdAt: { type: 'integer' },
@@ -522,13 +522,13 @@ module.exports.rule = {
         arn: {
           title: 'Kinesis Scheduled Event ARN',
           type: 'string',
-          readOnly: true,
+          readonly: true,
         },
         // Kinesis scheduled log event arn
         logEventArn: {
           title: 'Kinesis Scheduled Log Event ARN',
           type: 'string',
-          readOnly: true,
+          readonly: true,
         },
       },
       required: ['type'],
@@ -541,7 +541,7 @@ module.exports.rule = {
     },
     createdAt: {
       type: 'integer',
-      readOnly: true,
+      readonly: true,
     },
     updatedAt: {
       type: 'integer',
@@ -572,42 +572,42 @@ module.exports.pdr = {
     pdrName: {
       title: 'PDR Name',
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     collectionId: {
       title: 'Collection Name',
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     provider: {
       title: 'Provider Name',
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     status: {
       type: 'string',
       enum: ['running', 'failed', 'completed'],
-      readOnly: true,
+      readonly: true,
     },
     progress: {
       type: 'number',
-      readOnly: true,
+      readonly: true,
     },
     execution: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     PANSent: {
       type: 'boolean',
-      readOnly: true,
+      readonly: true,
     },
     PANmessage: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     stats: {
       type: 'object',
-      readOnly: true,
+      readonly: true,
       properties: {
         total: {
           type: 'number',
@@ -625,17 +625,17 @@ module.exports.pdr = {
     },
     address: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     originalUrl: {
       type: 'string',
-      readOnly: true,
+      readonly: true,
     },
     timestamp: { type: 'integer' },
     duration: { type: 'number' },
     createdAt: {
       type: 'integer',
-      readOnly: true,
+      readonly: true,
     },
     updatedAt: { type: 'integer' },
   },
@@ -697,15 +697,15 @@ module.exports.provider = {
     },
     encrypted: {
       type: 'boolean',
-      readOnly: true,
+      readonly: true,
     },
     createdAt: {
       type: 'integer',
-      readOnly: true,
+      readonly: true,
     },
     updatedAt: {
       type: 'integer',
-      readOnly: true,
+      readonly: true,
     },
     privateKey: {
       type: 'string',
@@ -739,7 +739,7 @@ module.exports.execution = {
     archived: {
       title: 'archived',
       type: 'boolean',
-      readOnly: false,
+      readonly: false,
     },
     arn: {
       title: 'Execution arn (this field is unique)',
@@ -773,12 +773,12 @@ module.exports.execution = {
     },
     createdAt: {
       type: 'integer',
-      readOnly: true,
+      readonly: true,
     },
     updatedAt: { type: 'integer' },
     timestamp: {
       type: 'number',
-      readOnly: true,
+      readonly: true,
     },
     originalPayload: {
       title: 'The original payload for this workflow',
