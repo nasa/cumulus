@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """AWS API proxy task for Cumulus.
 
 This module provides a CMA-wrapped way to call a specified boto3 client within AWS
@@ -15,7 +14,6 @@ import boto3
 
 from . import LOGGER
 
-EVENT_TYPING = dict[Any, Any]
 PARAMETER_FILTERS = {
     "json.dumps": json.dumps,
 }
@@ -41,7 +39,7 @@ async def run_with_limit(method, parameters_list, max_concurrency=5):
     return results
 
 
-def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
+def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
     """Handle AWS API Proxy requests."""
     config = event.get("config", {})
     service = config.get("service")

@@ -68,7 +68,7 @@ def test_lambda_adapter_iterate_by_nonexistent_field() -> None:
     }
     with pytest.raises(
         ValueError,
-        match=("iterate_by field 'nonexistent_field' must be a list in parameters."),
+        match="iterate_by field 'nonexistent_field' must be a list in parameters\\.",
     ):
         lambda_adapter(event, None)
 

@@ -20,8 +20,19 @@ class SNSPublishParameters(BaseModel):
 class ParameterFilter(BaseModel):
     """Schema for parameter filters."""
 
-    name: Literal[*PARAMETER_FILTERS]  # type: ignore[valid-type]
+    name: str
     field: str
+
+    # In an ideal world, we would just specify `name: Literal[*PARAMETER_FILTERS]` above
+    # but mypy doesn't like that since it isn't supported at typecheck time.
+    # https://typing.python.org/en/latest/spec/literal.html#illegal-parameters-for-literal-at-type-check-time
+    @model_validator(mode="after")
+    def _validate_name(self):
+        if self.name not in PARAMETER_FILTERS:
+            raise ValueError(
+                f"parameter_filters.name must be one of: {', '.join(PARAMETER_FILTERS)}"
+            )
+        return self
 
 
 class SNSService(BaseModel):
