@@ -1,17 +1,16 @@
-import { knex, Knex } from 'knex';
+import { Knex } from 'knex';
 import pick from 'lodash/pick';
 import { DuckDBConnection } from '@duckdb/node-api';
-import pMap from 'p-map';
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import { returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import Logger from '@cumulus/logger';
 
 import {
-  prepareBindings,
   getExecutionInfoByGranuleCumulusIds,
   getFilesByGranuleCumulusIds,
 } from './duckdbHelpers';
+import { DuckDBSearchExecutor } from './DuckDBSearchExecutor';
 import { GranuleRecord, GranuleSearch } from '../search/GranuleSearch';
 import { QueryEvent } from '../types/search';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
@@ -24,13 +23,18 @@ const log = new Logger({ sender: '@cumulus/db/GranuleS3Search' });
  */
 export class GranuleS3Search extends GranuleSearch {
   private dbConnection: DuckDBConnection;
-  private knexBuilder: Knex;
+  private duckDBSearchExecutor: DuckDBSearchExecutor;
 
   constructor(event: QueryEvent, dbConnection: DuckDBConnection) {
     super(event, false); // disables estimateTableRowCount
     this.dbConnection = dbConnection;
-    // Use 'pg' dialect to generate DuckDB-compatible SQL ($1, $2, etc.)
-    this.knexBuilder = knex({ client: 'pg' });
+
+    this.duckDBSearchExecutor = new DuckDBSearchExecutor({
+      dbConnection,
+      dbQueryParameters: this.dbQueryParameters,
+      getMetaTemplate: this._metaTemplate.bind(this),
+      translateRecords: this.translatePostgresRecordsToApiRecords.bind(this),
+    });
   }
 
   /**
@@ -120,56 +124,7 @@ export class GranuleS3Search extends GranuleSearch {
    * @returns search result
    */
   async query() {
-    const { countQuery, searchQuery } = this.buildSearch(this.knexBuilder);
-
-    const shouldReturnCountOnly = this.dbQueryParameters.countOnly === true;
-
-    try {
-      const queryConfigs = shouldReturnCountOnly
-        ? [{ key: 'count', query: countQuery }]
-        : [
-          { key: 'count', query: countQuery },
-          { key: 'records', query: searchQuery },
-        ];
-
-      let countResult: any[] = [];
-      let pgRecords: any[] = [];
-
-      await pMap(
-        queryConfigs,
-        async (config) => {
-          if (!config.query) return;
-
-          const { sql, bindings } = config.query.clone().toSQL().toNative();
-          const reader = await this.dbConnection.runAndReadAll(
-            sql,
-            prepareBindings(bindings)
-          );
-
-          const result = reader.getRowObjectsJson();
-
-          if (config.key === 'count') countResult = result;
-          else if (config.key === 'records') pgRecords = result;
-        },
-        { concurrency: 1 } // ensures sequential execution
-      );
-
-      const meta = this._metaTemplate();
-      meta.limit = this.dbQueryParameters.limit;
-      meta.page = this.dbQueryParameters.page;
-      meta.count = Number(countResult[0]?.count ?? 0);
-
-      const apiRecords = await this.translatePostgresRecordsToApiRecords(
-        pgRecords as unknown as GranuleRecord[], this.knexBuilder
-      );
-
-      return {
-        meta,
-        results: apiRecords,
-      };
-    } catch (error) {
-      log.error(`Error caught in search query for ${JSON.stringify(this.queryStringParameters)}`, error);
-      return error;
-    }
+    return this.duckDBSearchExecutor.query((knexBuilder) =>
+      this.buildSearch(knexBuilder));
   }
 }
