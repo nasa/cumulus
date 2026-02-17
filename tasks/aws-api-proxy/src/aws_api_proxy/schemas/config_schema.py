@@ -7,8 +7,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, model_validator
 
-from ..aws_api_proxy import PARAMETER_FILTERS
-
 
 class SNSPublishParameters(BaseModel):
     """Schema for SNS publish parameters."""
@@ -20,19 +18,11 @@ class SNSPublishParameters(BaseModel):
 class ParameterFilter(BaseModel):
     """Schema for parameter filters."""
 
-    name: str
+    # This list must always match the keys in PARAMETER_FILTERS in ..aws_api_proxy
+    # We cannot reference this list since Literals must be statically analyzable and
+    # PARAMETER_FILTERS is a runtime dict; https://typing.python.org/en/latest/spec/literal.html#illegal-parameters-for-literal-at-type-check-time
+    name: Literal[("json.dumps")]
     field: str
-
-    # In an ideal world, we would just specify `name: Literal[*PARAMETER_FILTERS]` above
-    # but mypy doesn't like that since it isn't supported at typecheck time.
-    # https://typing.python.org/en/latest/spec/literal.html#illegal-parameters-for-literal-at-type-check-time
-    @model_validator(mode="after")
-    def _validate_name(self):
-        if self.name not in PARAMETER_FILTERS:
-            raise ValueError(
-                f"parameter_filters.name must be one of: {', '.join(PARAMETER_FILTERS)}"
-            )
-        return self
 
 
 class SNSService(BaseModel):

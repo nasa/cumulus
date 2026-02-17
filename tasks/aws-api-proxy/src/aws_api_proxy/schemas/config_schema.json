@@ -4,6 +4,7 @@
       "description": "Schema for parameter filters.",
       "properties": {
         "name": {
+          "const": "json.dumps",
           "title": "Name",
           "type": "string"
         },
