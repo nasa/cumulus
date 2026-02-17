@@ -35,6 +35,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added supporting Terraform for the granule-invalidator task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
 - **CUMULUS-4394**
   - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
+- **CUMULUS-4395**
+  - Added supporting Terraform for the CnmResponse task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
 - **CUMULUS-4498**
   - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
 

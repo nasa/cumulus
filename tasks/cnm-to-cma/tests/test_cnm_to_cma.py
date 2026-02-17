@@ -2,8 +2,9 @@ import json
 
 import pydantic
 import pytest
-from cnm2cma import models_cnm, models_granule
-from cnm2cma.cnm_to_cma import create_granule_files, get_cnm_input_files, mapper
+
+from cnm_to_cma import models_cnm, models_granule
+from cnm_to_cma.cnm_to_cma import create_granule_files, get_cnm_input_files, mapper
 
 
 class TestCNMToCMA:

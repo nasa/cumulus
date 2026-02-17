@@ -5,15 +5,16 @@ from datetime import UTC, datetime
 from typing import Any
 
 import pydantic
-from cnm2cma import models_cnm, models_granule
 from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
+
+from . import models_cnm, models_granule
 
 # Create Cumulus Logger instance
 LOGGER = CumulusLogger("cnm_to_cma")
 
 
-def task(event: dict[str, list[str] | dict], context: object) -> dict[str, Any]:
+def task(event: dict[str, Any], context: object) -> dict[str, Any]:
     """Entry point of the lambda
     Args:
         event: Passed through from {handler}
@@ -71,7 +72,7 @@ def mapper(cnm: dict, config: dict) -> models_granule.Granule:
                 )
         LOGGER.info(f"Granule ID: {granule_id}")
         cnm_input_files: list[models_cnm.File] = get_cnm_input_files(product)
-        cma_files: list[models_cnm.File] = create_granule_files(cnm_input_files)
+        cma_files: list[models_granule.File] = create_granule_files(cnm_input_files)
         granule = models_granule.Granule(
             granuleId=granule_id,
             producerGranuleId=cnm_model.root.product.producerGranuleId,
