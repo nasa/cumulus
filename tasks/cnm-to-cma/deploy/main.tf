@@ -1,5 +1,5 @@
 locals {
-  function_name = "${var.prefix}-CNMToCMA"
+  function_name = "${var.prefix}-CnmToCma"
 }
 
 resource "aws_lambda_function" "cnm_to_cma_task" {
