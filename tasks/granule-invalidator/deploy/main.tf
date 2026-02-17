@@ -1,7 +1,7 @@
 locals {
   build_config = jsondecode(file("${path.module}/../build-config.json"))
 
-  function_name = "${var.prefix}-granule-invalidator-task"
+  function_name = "${var.prefix}-GranuleInvalidator"
 }
 
 resource "aws_lambda_function" "granule_invalidator_task" {
