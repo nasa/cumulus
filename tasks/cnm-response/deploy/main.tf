@@ -1,5 +1,11 @@
+locals {
+  function_name = "${var.prefix}-CnmResponse"
+}
+
 resource "aws_lambda_function" "cnm_response_task" {
-  function_name    = "${var.prefix}-CnmResponse"
+  depends_on = [aws_cloudwatch_log_group.cnm_response_task]
+
+  function_name    = local.function_name
   filename         = "${path.module}/../dist/final/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../dist/final/lambda.zip")
   handler          = "cnm_response.lambda_handler"
@@ -27,7 +33,7 @@ resource "aws_lambda_function" "cnm_response_task" {
 }
 
 resource "aws_cloudwatch_log_group" "cnm_response_task" {
-  name              = "/aws/lambda/${aws_lambda_function.cnm_response_task.function_name}"
+  name              = "/aws/lambda/${local.function_name}"
   retention_in_days = var.default_log_retention_days
   tags              = var.tags
 }

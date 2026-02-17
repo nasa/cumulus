@@ -1,9 +1,13 @@
 locals {
   build_config = jsondecode(file("${path.module}/../build-config.json"))
+
+  function_name = "${var.prefix}-granule-invalidator-task"
 }
 
 resource "aws_lambda_function" "granule_invalidator_task" {
-  function_name    = "${var.prefix}-granule-invalidator-task"
+  depends_on = [aws_cloudwatch_log_group.granule_invalidator_task]
+
+  function_name    = local.function_name
   filename         = "${path.module}/../dist/final/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../dist/final/lambda.zip")
   handler          = "main.lambda_handler"
@@ -38,7 +42,7 @@ resource "aws_lambda_function" "granule_invalidator_task" {
 }
 
 resource "aws_cloudwatch_log_group" "granule_invalidator_task" {
-  name              = "/aws/lambda/${aws_lambda_function.granule_invalidator_task.function_name}"
+  name              = "/aws/lambda/${local.function_name}"
   retention_in_days = var.default_log_retention_days
   tags              = var.tags
 }
