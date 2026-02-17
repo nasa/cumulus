@@ -1,6 +1,7 @@
 import { knex, Knex } from 'knex';
 import pick from 'lodash/pick';
 import { DuckDBConnection } from '@duckdb/node-api';
+import pMap from 'p-map';
 
 import Logger from '@cumulus/logger';
 
@@ -143,20 +144,27 @@ export class CollectionS3Search extends CollectionSearch {
           { key: 'records', query: searchQuery },
         ];
 
-      const executionPromises = queryConfigs.map(async (config) => {
-        if (!config.query) return [];
+      let countResult: any[] = [];
+      let pgRecords: any[] = [];
 
-        const { sql, bindings } = config.query.toSQL().toNative();
+      await pMap(
+        queryConfigs,
+        async (config) => {
+          if (!config.query) return;
 
-        const reader = await this.dbConnection.runAndReadAll(
-          sql,
-          prepareBindings(bindings)
-        );
+          const { sql, bindings } = config.query.clone().toSQL().toNative();
+          const reader = await this.dbConnection.runAndReadAll(
+            sql,
+            prepareBindings(bindings)
+          );
 
-        return reader.getRowObjectsJson();
-      });
+          const result = reader.getRowObjectsJson();
 
-      const [countResult, pgRecords = []] = await Promise.all(executionPromises);
+          if (config.key === 'count') countResult = result;
+          else if (config.key === 'records') pgRecords = result;
+        },
+        { concurrency: 1 } // ensures sequential execution
+      );
 
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;
