@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4566**
 
   - Updated AJV to ^8.18.0 to address CVE findings
+  - Update aws-sdk versions to ^3.993.0 to address CVE findings
 
 ## [Unreleased]
 
