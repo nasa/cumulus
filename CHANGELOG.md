@@ -48,7 +48,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CSD-85**
   - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
     for whether or not to add or update a Data Granule as part of the task, for users who do not want one added or updated
-    from what their granule metadata already is (defaults to false)
+    from what their granule metadata already is (defaults to `false`)
   - If a Data Granule is being added as part of the lambda then `DayNightFlag` and `ProductionDateTime` values will be
     filled with default values (`Unspecified` for `DayNightFlag` and the current time the task is ran for `ProductionDateTime`)
     in CMR UMMG-Granule fields as they are required by the CMR schema.

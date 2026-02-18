@@ -517,7 +517,7 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
   t.is(metadataObject.Granule.DataGranule.get('ProducerGranuleId'), 'TestFixtureGranuleUR');
 });
 
-test.serial('UpdateEcho10XMLMetadata does not update metadata when excludeDataGranule is set to true', async (t) => {
+test.serial('UpdateEcho10XMLMetadata does not update metadata when excludeDataGranule is true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
   const cmrXml = await fs.readFile(
     path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),

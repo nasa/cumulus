@@ -269,7 +269,7 @@ test.serial('update-granules-cmr-metadata-file-links properly filters files usin
   await updateGranulesCmrMetadata(newPayload);
 
   const cmrFiles = [];
-  await newPayload.input.granules.forEach((granule) => {
+  newPayload.input.granules.forEach((granule) => {
     granule.files.forEach((file) => {
       if (isCMRFile(file)) {
         cmrFiles.push(file);
@@ -283,7 +283,7 @@ test.serial('update-granules-cmr-metadata-file-links properly filters files usin
   }));
 });
 
-test.serial('update-granules-cmr-metadata-file-links with task config var excludeDataGranule set to true does not change DataGranule metadata with granules that already have DataGranules', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links with task config var excludeDataGranule as true does not change granule.DataGranule metadata with granules that already have DataGranules', async (t) => {
   const newPayload = buildPayload(t);
 
   newPayload.input.granules.forEach((granule) => {
@@ -304,7 +304,7 @@ test.serial('update-granules-cmr-metadata-file-links with task config var exclud
   await updateGranulesCmrMetadata(newPayload);
 
   const cmrFiles = [];
-  await newPayload.input.granules.forEach((granule) => {
+  newPayload.input.granules.forEach((granule) => {
     granule.files.forEach((file) => {
       if (isCMRFile(file)) {
         cmrFiles.push(file);
