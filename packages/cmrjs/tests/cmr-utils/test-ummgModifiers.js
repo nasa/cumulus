@@ -198,6 +198,9 @@ test('updates DataGranule with new identifiers and required default values when 
       { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
       { Identifier: 'NEW_PRODUCER_ID', IdentifierType: 'ProducerGranuleId' },
     ],
+    // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+    // despite actually being the time the task is ran (which is what is mocked, Date.now())
+    ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
     DayNightFlag: 'UNSPECIFIED',
   };
 
