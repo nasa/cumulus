@@ -28,6 +28,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
     `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
 
+### Fixed
+
+- **CUMULUS-4566**
+
+  - Updated AJV to ^8.18.0 to address CVE findings
+
 ## [Unreleased]
 
 ### Migration Notes
