@@ -258,6 +258,10 @@ async function bulkGranuleReingest(
   reingestHandler = reingestGranule
 ) {
   log.info('Starting bulkGranuleReingest');
+
+  const concurrency = payload.concurrency || 10;
+  const dbPoolMax = payload.maxDbConnections || concurrency;
+  process.env.dbMaxPool = `${dbPoolMax}`;
   const knex = await getKnexClient();
 
   const { queueUrl, workflowName } = payload;
