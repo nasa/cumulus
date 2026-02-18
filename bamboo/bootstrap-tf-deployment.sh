@@ -42,6 +42,19 @@ else
   ROLE_BOUNDARY=NGAPShNonProdRoleBoundary
 fi
 
+echo "Destroying existing data-persistence stack for $DEPLOYMENT"
+../terraform destroy \
+  -auto-approve \
+  -input=false \
+  -var-file="../deployments/data-persistence/$BASE_VAR_FILE" \
+  -var-file="../deployments/data-persistence/$DEPLOYMENT.tfvars" \
+  -var "aws_region=$AWS_REGION" \
+  -var "subnet_ids=[\"$AWS_SUBNET\"]" \
+  -var "vpc_id=$VPC_ID" \
+  -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
+  -var "rds_security_group=$RDS_SECURITY_GROUP" \
+  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY"
+
 # Deploy data-persistence-tf via terraform
 echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
 ../terraform apply \
@@ -70,6 +83,36 @@ echo "terraform {
 # Initialize deployment
 ../terraform init \
   -input=false
+
+echo "Destroying existing cumulus stack for $DEPLOYMENT"
+../terraform destroy \
+  -auto-approve \
+  -input=false \
+  -var-file="../deployments/cumulus/$BASE_VAR_FILE" \
+  -var-file="../deployments/cumulus/$DEPLOYMENT.tfvars" \
+  -var "cumulus_message_adapter_lambda_layer_version_arn=arn:aws:lambda:us-east-1:$AWS_ACCOUNT_ID:layer:Cumulus_Message_Adapter:$CMA_LAYER_VERSION" \
+  -var "cmr_username=$CMR_USERNAME" \
+  -var "cmr_password=$CMR_PASSWORD" \
+  -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
+  -var "cmr_provider=CUMULUS" \
+  -var "cmr_environment=UAT" \
+  -var "csdap_client_id=$CSDAP_CLIENT_ID" \
+  -var "csdap_client_password=$CSDAP_CLIENT_PASSWORD" \
+  -var "launchpad_passphrase=$LAUNCHPAD_PASSPHRASE" \
+  -var "data_persistence_remote_state_config={ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
+  -var "region=$AWS_REGION" \
+  -var "vpc_id=$VPC_ID" \
+  -var "lambda_subnet_ids=[$AWS_LAMBDA_SUBNET]" \
+  -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
+  -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
+  -var "token_secret=$TOKEN_SECRET" \
+  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
+  -var "pdr_node_name_provider_bucket=$PDR_NODE_NAME_PROVIDER_BUCKET" \
+  -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
+  -var "orca_db_user_password=$ORCA_DATABASE_USER_PASSWORD" \
+  -var "metrics_es_host=$METRICS_ES_HOST" \
+  -var "metrics_es_username=$METRICS_ES_USER" \
+  -var "metrics_es_password=$METRICS_ES_PASS"
 
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
