@@ -43,7 +43,7 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
   metadataObject: unknown;
   granuleUr: string;
   producerGranuleId: string;
-  excludeDataGranule: boolean;
+  excludeDataGranule?: boolean;
 }): UMMGGranule {
   if (!isUMMGGranule(metadataObject)) {
     throw new Error('Invalid UMM-G JSON metadata');

@@ -38,7 +38,7 @@ export function updateEcho10XMLGranuleUrAndGranuleIdentifier({
   xml: unknown;
   granuleUr: string;
   producerGranuleId: string;
-  excludeDataGranule: boolean;
+  excludeDataGranule?: boolean;
 }): any {
   if (!isEcho10XmlBaseGranule(xml)) {
     throw new Error('Invalid XML input - expected an object with GranuleUR');

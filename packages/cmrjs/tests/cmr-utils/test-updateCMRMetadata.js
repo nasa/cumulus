@@ -55,16 +55,14 @@ test.beforeEach(async (t) => {
       },
     }),
   ]);
-  // Mocking the date for ProductionDateTime
-  global.Date = class extends Date {
-    constructor() {
-      super('2024-01-01T00:00:00Z');
-    }
-  };
+  // Mocking the date for ProductionDateTime value checks in tests as the function
+  // updateCMRMetadata sets this to the current time when adding a DataGranule when
+  // excludeDataGranule is false.
+  t.context.clock = sinon.useFakeTimers(new Date('2024-01-01T00:00:00Z').getTime());
 });
 
 test.afterEach.always(async (t) => {
-  global.Date = Date;
+  t.context.clock.restore();
   await recursivelyDeleteS3Bucket(t.context.cmrFileBucket);
 });
 

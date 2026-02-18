@@ -1299,7 +1299,6 @@ async function updateCMRMetadata({
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution buckets
- * @param {boolean} [params.excludeDataGranule=false] - Whether to add or update the DataGranule
  * node in the granule's metadata
  * @returns {Promise<void>} - resolves when CMR metadata is updated
  */
@@ -1311,13 +1310,11 @@ async function reconcileCMRMetadata({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
-  excludeDataGranule = false,
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
     return await updateCMRMetadata({
       granuleId,
-      excludeDataGranule,
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,
       distEndpoint,

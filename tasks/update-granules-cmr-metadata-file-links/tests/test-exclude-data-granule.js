@@ -188,7 +188,42 @@ test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule 
   }));
 });
 
-test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule and populates defalts for UMMG granules if task config var excludeDataGranule is false', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule if task config var excludeDataGranule is not the boolean true', async (t) => {
+  const newPayload = buildPayload(t);
+
+  newPayload.input.granules.forEach((granule) => {
+    const newFile = {
+      bucket: t.context.publicBucket,
+      key: 'some/prefix/some_filename.json',
+      type: 'data',
+    };
+    granule.files.push(newFile);
+  });
+  newPayload.config.excludeDataGranule = 'true';
+
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  await updateGranulesCmrMetadata(newPayload);
+
+  const cmrFiles = [];
+  newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if (isCMRFile(file)) {
+        cmrFiles.push(file);
+      }
+    });
+  });
+
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
+    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
+    t.true(payloadContents.includes('DataGranule'));
+  }));
+});
+
+test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule and populates defaults for UMMG granules if task config var excludeDataGranule is false', async (t) => {
   const newPayload = buildPayload(t);
 
   // exclude the ECHO10 granule for this test

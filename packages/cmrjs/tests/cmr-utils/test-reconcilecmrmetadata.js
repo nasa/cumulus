@@ -58,7 +58,6 @@ test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile pr
       updatedFiles,
       distEndpoint,
       published,
-      excludeDataGranule: false,
     });
 
     t.falsy(results);
@@ -85,7 +84,6 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
 
   const params = {
     granuleId: granId,
-    excludeDataGranule: false,
     updatedFiles,
     distEndpoint,
     published,
@@ -100,7 +98,6 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
     t.true(
       fakeUpdateCMRMetadata.calledOnceWith({
         granuleId: granId,
-        excludeDataGranule: false,
         cmrFile: updatedFiles[1],
         files: updatedFiles,
         distEndpoint,
@@ -133,7 +130,6 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
       updatedFiles,
       distEndpoint,
       published,
-      excludeDataGranule: false,
     });
 
     t.falsy(results);
@@ -163,7 +159,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   try {
     await cmrUtils.reconcileCMRMetadata({
       granuleId: granId,
-      excludeDataGranule: false,
       updatedFiles,
       distEndpoint,
       published,
@@ -230,7 +225,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   try {
     await cmrUtils.reconcileCMRMetadata({
       granuleId: granId,
-      excludeDataGranule: false,
       updatedFiles,
       distEndpoint,
       published,
@@ -247,8 +241,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
       distributionBucketMap,
       granuleId: granId,
       producerGranuleId: granId,
-      excludeDataGranule: false,
       updateGranuleIdentifiers: false,
+      excludeDataGranule: false,
     };
 
     t.deepEqual(fakeUpdateCMRMetadata.firstCall.args[0],
@@ -308,7 +302,6 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
       published,
       distributionBucketMap,
       bucketTypes,
-      excludeDataGranule: false,
     });
 
     const paramsIntoUpdateUMMG = {
@@ -320,8 +313,8 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
       distributionBucketMap,
       granuleId: granId,
       producerGranuleId: granId,
-      excludeDataGranule: false,
       updateGranuleIdentifiers: false,
+      excludeDataGranule: false,
     };
 
     // assert
@@ -355,7 +348,6 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
       distEndpoint,
       published,
       bucketTypes: {},
-      excludeDataGranule: false,
     }),
     {
       name: 'CMRMetaFileNotFound',

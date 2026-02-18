@@ -1,19 +1,19 @@
 const test = require('ava');
+const sinon = require('sinon');
+
 const {
   updateUMMGGranuleURAndGranuleIdentifier,
 } = require('../../ummgModifiers');
 
-test.before(() => {
-  // Mocking the date for ProductionDateTime value checks
-  global.Date = class extends Date {
-    constructor() {
-      super('2024-01-01T00:00:00Z');
-    }
-  };
+test.before((t) => {
+  // Mocking the date for ProductionDateTime value checks in tests as the function
+  // updateUMMGGranuleURAndGranuleIdentifier sets this to the current time when adding
+  // a DataGranule when excludeDataGranule is false.
+  t.context.clock = sinon.useFakeTimers(new Date('2024-01-01T00:00:00Z').getTime());
 });
 
-test.after.always(() => {
-  global.Date = Date;
+test.after.always((t) => {
+  t.context.clock.restore();
 });
 
 test('updates GranuleUR and adds ProducerGranuleId when Identifiers is missing', (t) => {
