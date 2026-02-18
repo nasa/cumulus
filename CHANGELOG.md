@@ -53,6 +53,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Support `granuleInventoryReportName` and `s3GranuleIdInputFile` in the payload.
     - Return consistent output formats across endpoints (previously, some endpoints aggregated errors
       while others returned per-granule errors)
+- **misc**
 
 ## [v21.3.0] 2026-01-26
 
