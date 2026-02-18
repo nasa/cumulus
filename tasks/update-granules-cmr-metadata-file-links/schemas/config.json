@@ -47,7 +47,7 @@
     },
     "excludeDataGranule": {
       "type": "boolean",
-      "description": "Whether to exclude the DataGranule section from the CMR metadata",
+      "description": "Whether to add or update the DataGranule node in the granule's metadata",
       "default": false
     }
   }

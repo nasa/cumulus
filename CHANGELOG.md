@@ -47,11 +47,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `private_api_lambda_arn` output to the archive module and `private_api_lambda_arn` variable to the ingest module.
 - **CSD-85**
   - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
-    for whether or not to add or update a Data Granule as part of the task, for users who do not want one added or updated
-    from what their granule metadata already is (defaults to `false`)
-  - If a Data Granule is being added as part of the lambda then `DayNightFlag` and `ProductionDateTime` values will be
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`)
+  - If a Data Granule is being added as part of the task then `DayNightFlag` and `ProductionDateTime` values will be
     filled with default values (`Unspecified` for `DayNightFlag` and the current time the task is ran for `ProductionDateTime`)
-    in CMR UMMG-Granule fields as they are required by the CMR schema.
+    in CMR UMMG-Granule fields as they are required by the CMR schema. For ECHO10 Granules, the required field `ProducerGranuleId` will
+    be populated as it was before. If `excludeDataGranule` is set to `true` none of these updates, for UMMG and ECHO10, will occur, keeping the original metadata sent in with the granule. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
 ### Notable Changes
 

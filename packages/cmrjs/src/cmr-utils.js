@@ -1299,8 +1299,6 @@ async function updateCMRMetadata({
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution buckets
- * node in the granule's metadata
- * @returns {Promise<void>} - resolves when CMR metadata is updated
  */
 async function reconcileCMRMetadata({
   granuleId,
