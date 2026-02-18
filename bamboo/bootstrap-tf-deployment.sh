@@ -71,6 +71,8 @@ echo "terraform {
 ../terraform init \
   -input=false
 
+../terraform state rm null_resource.get_cnmResponse || true
+
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
