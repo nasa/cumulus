@@ -185,12 +185,12 @@ const setUpExistingDatabaseRecords = async (t) => {
   t.context.granuleInventoryReportName = reportPgRecord.name;
 
   const testData = `
-${t.context.granules[0].granuleId}
-${t.context.granules[1].granuleId}
-G3
-G4
-G5
-`;
+  ${t.context.granules[0].granuleId}
+  ${t.context.granules[1].granuleId}
+  G3
+  G4
+  G5
+  `;
   const textFileKey = `${randomId('path')}/${randomId('granules.txt')}`;
   t.context.s3GranuleIdInputFile = `s3://${envVars.system_bucket}/${textFileKey}`;
   await awsServices.s3().putObject({

@@ -41,6 +41,7 @@ const { getCollectionCumulusId } = require('./writeRecords/utils');
  * @param {string} params.granuleId - granuleId
  * @param {string|undefined} [params.executionArn] - execution arn to use for reingest
  * @param {string|undefined} [params.workflowName] - workflow name to use for reingest
+ * @param {Knex} [params.knex] The Knex client object for interacting with the database.
  * @param {function|undefined} [params.dbFunction] - database function for
  *     testing. Defaults to executionArnsFromGranuleIdsAndWorkflowNames.
  * @returns {Promise<string | undefined>} - executionArn used in a
@@ -51,6 +52,7 @@ const chooseTargetExecution = async ({
   granuleId,
   executionArn = undefined,
   workflowName = undefined,
+  knex,
   dbFunction = newestExecutionArnFromGranuleIdWorkflowName,
 }) => {
   // if a user specified an executionArn, use that always
@@ -59,7 +61,7 @@ const chooseTargetExecution = async ({
   if (workflowName === undefined) return undefined;
 
   try {
-    return await dbFunction(granuleId, workflowName);
+    return await dbFunction(granuleId, workflowName, knex);
   } catch (error) {
     log.error(error);
     throw error;

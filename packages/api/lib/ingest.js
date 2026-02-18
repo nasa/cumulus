@@ -6,7 +6,6 @@ const get = require('lodash/get');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
-  getKnexClient,
   GranulePgModel,
 } = require('@cumulus/db');
 
@@ -15,27 +14,27 @@ const rulesHelpers = require('./rulesHelpers');
 const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules');
 
 /**
-   * start the re-ingest of a given granule object
-   *
-   * @param {Object} params
-   * @param {Object} params.apiGranule - the granule object
-   * @param {Object} params.queueUrl - SQS queue URL to use for sending messages
-   * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
-   * @param {GranulePgModel} [params.granulePgModel] - Postgres Granule model
-   * (optional, for testing)
-   * @param {updateGranuleStatusToQueuedMethod} [params.updateGranuleStatusToQueuedMethod]
-   *   - method to update granules to queue (optional, for testing)
-   * @returns {Promise<undefined>} - undefined
-   */
+ * start the re-ingest of a given granule object
+ *
+ * @param {object} params
+ * @param {object} params.apiGranule - the granule object
+ * @param {object} params.queueUrl - SQS queue URL to use for sending messages
+ * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
+ * @param {Knex} params.knex - Knex client instance
+ * @param {GranulePgModel} [params.granulePgModel] - Postgres Granule model
+ * (optional, for testing)
+ * @param {updateGranuleStatusToQueuedMethod} [params.updateGranuleStatusToQueuedMethod]
+ *   - method to update granules to queue (optional, for testing)
+ * @returns {Promise<undefined>} - undefined
+ */
 async function reingestGranule({
   apiGranule,
   queueUrl,
   asyncOperationId = undefined,
+  knex,
   granulePgModel = new GranulePgModel(),
   updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
 }) {
-  const knex = await getKnexClient();
-
   const executionArn = path.basename(apiGranule.execution);
 
   const executionDescription = await StepFunctions.describeExecution({ executionArn });
@@ -77,17 +76,17 @@ async function reingestGranule({
 }
 
 /**
-   * apply a workflow to a given granule object
-   *
-   * @param {Object} params
-   * @param {Object} params.apiGranule - the API granule object
-   * @param {string} params.workflow - the workflow name
-   * @param {Object} [params.meta] - optional meta object to insert in workflow message
-   * @param {string} [params.queueUrl] - URL for SQS queue to use for scheduling workflows
-   *   e.g. https://sqs.us-east-1.amazonaws.com/12345/queue-name
-   * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
-   * @returns {Promise<undefined>} undefined
-   */
+ * apply a workflow to a given granule object
+ *
+ * @param {object} params
+ * @param {object} params.apiGranule - the API granule object
+ * @param {string} params.workflow - the workflow name
+ * @param {object} [params.meta] - optional meta object to insert in workflow message
+ * @param {string} [params.queueUrl] - URL for SQS queue to use for scheduling workflows
+ *   e.g. https://sqs.us-east-1.amazonaws.com/12345/queue-name
+ * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
+ * @returns {Promise<undefined>} undefined
+ */
 async function applyWorkflow({
   apiGranule,
   workflow,

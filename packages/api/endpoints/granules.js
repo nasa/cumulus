@@ -436,6 +436,7 @@ const _handleUpdateAction = async (
         granuleId,
         executionArn: body.executionArn,
         workflowName: body.workflowName,
+        knex,
       });
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {
@@ -1166,8 +1167,21 @@ async function getByGranuleId(req, res) {
   return res.send({ ...result, recoveryStatus });
 }
 
+const BulkOperationsPayloadSchema = z.object({
+  workflowName: z.string(),
+  knexDebug: z.boolean().optional(),
+  concurrency: z.number().int().positive().optional(),
+  maxDbConnections: z.number().int().positive().optional(),
+  batchSize: z.number().int().positive().optional(),
+}).catchall(z.unknown());
+
+const parseBulkOperationsPayload = zodParser('Bulk operations payload', BulkOperationsPayloadSchema);
+
 async function bulkOperations(req, res) {
-  const payload = req.body;
+  const payload = parseBulkOperationsPayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
+  }
 
   if (!payload.workflowName) {
     return res.boom.badRequest('workflowName is required.');
@@ -1211,9 +1225,10 @@ async function bulkOperations(req, res) {
 
 const BulkDeletePayloadSchema = z.object({
   forceRemoveFromCmr: z.boolean().optional(),
+  knexDebug: z.boolean().optional(),
   concurrency: z.number().int().positive().optional(),
   maxDbConnections: z.number().int().positive().optional(),
-  knexDebug: z.boolean().optional(),
+  batchSize: z.number().int().positive().optional(),
 }).catchall(z.unknown());
 
 const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloadSchema);
@@ -1277,8 +1292,21 @@ async function bulkDelete(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+const BulkReingestPayloadSchema = z.object({
+  knexDebug: z.boolean().optional(),
+  concurrency: z.number().int().positive().optional(),
+  maxDbConnections: z.number().int().positive().optional(),
+  batchSize: z.number().int().positive().optional(),
+}).catchall(z.unknown());
+
+const parseBulkReingestPayload = zodParser('Bulk reingest payload', BulkReingestPayloadSchema);
+
 async function bulkReingest(req, res) {
-  const payload = req.body;
+  const payload = parseBulkReingestPayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
+  }
+
   const numOfGranules = (payload.query && payload.query.size)
     || (payload.granules && payload.granules.length);
   const description = `Bulk granule reingest run on ${numOfGranules || ''} granules`;

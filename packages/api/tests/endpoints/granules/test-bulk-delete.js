@@ -244,7 +244,28 @@ test.serial('POST /granules/bulkDelete returns 400 when no granules or alternati
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(400,
-      /One of granules, query, granuleInventoryReportName or s3GranuleIdInputFile is required/);
+      // eslint-disable-next-line max-len
+      /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkDelete returns 400 when more than one granules input source is provided', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+  };
+
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400,
+      // eslint-disable-next-line max-len
+      /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
