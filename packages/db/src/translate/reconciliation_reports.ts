@@ -1,7 +1,7 @@
 import { ApiReconciliationReportRecord } from '@cumulus/types/api/reconciliation_reports';
 import { PostgresReconciliationReport, PostgresReconciliationReportRecord } from '../types/reconciliation_report';
 
-const { removeNilProperties, returnNullOrUndefinedOrDate } = require('@cumulus/common/util');
+const { parseIfJson, removeNilProperties, returnNullOrUndefinedOrDate } = require('@cumulus/common/util');
 const pick = require('lodash/pick');
 
 /**
@@ -31,7 +31,8 @@ export const translatePostgresReconReportToApiReconReport = (
   pgReconciliationReport: PostgresReconciliationReportRecord
 ): ApiReconciliationReportRecord => {
   const apiReconciliationReport = removeNilProperties({
-    ...pick(pgReconciliationReport, ['name', 'type', 'status', 'location', 'error']),
+    ...pick(pgReconciliationReport, ['name', 'type', 'status', 'location']),
+    error: parseIfJson(pgReconciliationReport.error),
     createdAt: returnNullOrUndefinedOrDate(pgReconciliationReport.created_at)?.getTime(),
     updatedAt: returnNullOrUndefinedOrDate(pgReconciliationReport.updated_at)?.getTime(),
   });

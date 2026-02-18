@@ -3,7 +3,6 @@ import pick from 'lodash/pick';
 import { DuckDBConnection } from '@duckdb/node-api';
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
-import { returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import Logger from '@cumulus/logger';
 
 import {
@@ -80,19 +79,6 @@ export class GranuleS3Search extends GranuleSearch {
       });
     }
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
-      const granulePgRecord = {
-        ...item,
-        created_at: new Date(item.created_at),
-        updated_at: new Date(item.updated_at),
-        beginning_date_time: returnNullOrUndefinedOrDate(item.beginning_date_time),
-        ending_date_time: returnNullOrUndefinedOrDate(item.ending_date_time),
-        last_update_date_time: returnNullOrUndefinedOrDate(item.last_update_date_time),
-        processing_end_date_time: returnNullOrUndefinedOrDate(item.processing_end_date_time),
-        processing_start_date_time: returnNullOrUndefinedOrDate(item.processing_start_date_time),
-        production_date_time: returnNullOrUndefinedOrDate(item.production_date_time),
-        timestamp: returnNullOrUndefinedOrDate(item.timestamp),
-      };
-
       const collectionPgRecord = {
         cumulus_id: item.collection_cumulus_id,
         name: item.collectionName,
@@ -103,9 +89,9 @@ export class GranuleS3Search extends GranuleSearch {
         : [];
       const pdr = item.pdrName ? { name: item.pdrName } : undefined;
       const providerPgRecord = item.providerName ? { name: item.providerName } : undefined;
-      const fileRecords = fileMapping[granulePgRecord.cumulus_id] || [];
+      const fileRecords = fileMapping[item.cumulus_id] || [];
       const apiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
-        granulePgRecord,
+        granulePgRecord: item,
         collectionPgRecord,
         pdr,
         providerPgRecord,

@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { removeNilProperties } from '@cumulus/common/util';
+import { parseIfJson, removeNilProperties } from '@cumulus/common/util';
 import { RuleRecord, Rule } from '@cumulus/types/api/rules';
 
 import { CollectionPgModel } from '../models/collection';
@@ -28,11 +28,11 @@ export const translatePostgresRuleToApiRuleWithoutDbQuery = (
       value: pgRule.value,
     }),
     state: pgRule.enabled ? 'ENABLED' : 'DISABLED',
-    meta: pgRule.meta,
-    payload: pgRule.payload,
+    meta: parseIfJson(pgRule.meta),
+    payload: parseIfJson(pgRule.payload),
     executionNamePrefix: pgRule.execution_name_prefix,
     queueUrl: pgRule.queue_url,
-    tags: pgRule.tags,
+    tags: parseIfJson(pgRule.tags),
     createdAt: new Date(pgRule.created_at).getTime(),
     updatedAt: new Date(pgRule.updated_at).getTime(),
   };
