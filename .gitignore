@@ -15,6 +15,7 @@ _book
 *.code-workspace
 *.html
 *.map
+*.pyc
 **/.tern-port
 /.tern-project
 /example/app/efs-cf.yml
@@ -51,3 +52,4 @@ yarn.lock
 unit-logs/
 test_output.txt
 __pycache__/
+*.egg-info/

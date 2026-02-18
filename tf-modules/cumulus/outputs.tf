@@ -55,6 +55,10 @@ output "add_unique_granule_id_task" {
   value = module.ingest.add_unique_granule_id_task
 }
 
+output "cnm_response_task" {
+  value = module.ingest.cnm_response_task
+}
+
 output "discover_granules_task" {
   value = module.ingest.discover_granules_task
 }
@@ -69,6 +73,10 @@ output "fake_processing_task" {
 
 output "files_to_granules_task" {
   value = module.ingest.files_to_granules_task
+}
+
+output "granule_invalidator_task" {
+  value = module.ingest.granule_invalidator_task
 }
 
 output "hello_world_task" {
