@@ -329,6 +329,24 @@ test.serial('POST /granules/bulkReingest returns a 400 when concurrency is not a
   t.true(asyncOperationStartStub.notCalled);
 });
 
+test.serial('POST /granules/bulkReingest returns a 400 when batchSize is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+    batchSize: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at batchSize/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
 test.serial('POST /granules/bulkReingest starts an async-operation with the correct payload and and granule inventory report', async (t) => {
   const { asyncOperationStartStub } = t.context;
 

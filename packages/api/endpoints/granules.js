@@ -1131,9 +1131,9 @@ async function get(req, res) {
  * DEPRECATED: use get() instead to fetch granules by
  *   granuleId + collectionId
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {object} req - express request object
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function getByGranuleId(req, res) {
   const { knex = await getKnexClient() } = req.testContext || {};
@@ -1160,15 +1160,16 @@ async function getByGranuleId(req, res) {
     knexOrTransaction: knex,
   });
 
-  const recoveryStatus =
-    getRecoveryStatus === 'true'
+  const recoveryStatus
+    = getRecoveryStatus === 'true'
       ? await getOrcaRecoveryStatusByGranuleIdAndCollection(granuleId, result.collectionId)
       : undefined;
   return res.send({ ...result, recoveryStatus });
 }
 
 const BulkOperationsPayloadSchema = z.object({
-  workflowName: z.string(),
+  workflowName: z.string({ required_error: 'workflowName is required' })
+    .min(1, { message: 'workflowName is required' }),
   knexDebug: z.boolean().optional(),
   concurrency: z.number().int().positive().optional(),
   maxDbConnections: z.number().int().positive().optional(),
@@ -1177,6 +1178,14 @@ const BulkOperationsPayloadSchema = z.object({
 
 const parseBulkOperationsPayload = zodParser('Bulk operations payload', BulkOperationsPayloadSchema);
 
+/**
+ * Start an AsyncOperation that will perform a bulk operation
+ * by running the specified granules through a workflow
+ *
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
+ */
 async function bulkOperations(req, res) {
   const payload = parseBulkOperationsPayload(req.body);
   if (isError(payload)) {
@@ -1301,6 +1310,13 @@ const BulkReingestPayloadSchema = z.object({
 
 const parseBulkReingestPayload = zodParser('Bulk reingest payload', BulkReingestPayloadSchema);
 
+/**
+ * Start an AsyncOperation that will perform a bulk granules reingest
+ *
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
+ */
 async function bulkReingest(req, res) {
   const payload = parseBulkReingestPayload(req.body);
   if (isError(payload)) {

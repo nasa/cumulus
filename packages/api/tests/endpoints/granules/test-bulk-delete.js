@@ -376,6 +376,23 @@ test.serial('POST /granules/bulkDelete returns a 400 when concurrency is not an 
   t.true(asyncOperationStartStub.notCalled);
 });
 
+test.serial('POST /granules/bulkDelete returns a 400 when batchSize is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const body = {
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+    batchSize: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at batchSize/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
 test.serial('POST /granules/bulkDelete returns a 401 status code if valid authorization is not specified', async (t) => {
   const response = await request(app)
     .post('/granules/bulkDelete')

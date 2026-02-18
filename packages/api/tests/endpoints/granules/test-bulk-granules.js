@@ -389,6 +389,26 @@ test.serial('POST /granules/bulk returns a 400 when concurrency is not an intege
   t.true(asyncOperationStartStub.notCalled);
 });
 
+test.serial('POST /granules/bulk returns a 400 when batchSize is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+
+  const body = {
+    workflowName: expectedWorkflowName,
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+    batchSize: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at batchSize/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
 test.serial('POST /granules/bulk starts an async-operation with the correct payload and granule inventory report', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
