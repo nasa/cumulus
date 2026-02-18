@@ -107,14 +107,8 @@ export class CollectionS3Search extends CollectionSearch {
     }
 
     const apiRecords = pgRecords.map((record) => {
-      const parsedRecord = {
-        ...record,
-        created_at: new Date(record.created_at),
-        updated_at: new Date(record.updated_at),
-      };
-
       const apiRecord: CollectionRecordApi = translatePostgresCollectionToApiCollection(
-        parsedRecord
+        record
       );
       const apiRecordFinal = fields ? pick(apiRecord, fields) : apiRecord;
 

@@ -1,6 +1,6 @@
 import { NewCollectionRecord, CollectionRecord } from '@cumulus/types/api/collections';
 import { PostgresCollection, PostgresCollectionRecord } from '../types/collection';
-const { parseIfJson, removeNilProperties } = require('@cumulus/common/util');
+const { parseIfJson, returnNullOrUndefinedOrDate, removeNilProperties } = require('@cumulus/common/util');
 
 /**
 * Translates a PostgresCollectionRecord object to a `CollectionRecord` API collection object
@@ -10,8 +10,8 @@ const { parseIfJson, removeNilProperties } = require('@cumulus/common/util');
 export const translatePostgresCollectionToApiCollection = (
   collectionRecord: PostgresCollectionRecord
 ): CollectionRecord => removeNilProperties(({
-  createdAt: collectionRecord.created_at.getTime(),
-  updatedAt: collectionRecord.updated_at.getTime(),
+  createdAt: returnNullOrUndefinedOrDate(collectionRecord.created_at).getTime(),
+  updatedAt: returnNullOrUndefinedOrDate(collectionRecord.updated_at).getTime(),
   name: collectionRecord.name,
   version: collectionRecord.version,
   process: collectionRecord.process,
