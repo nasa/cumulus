@@ -1,8 +1,8 @@
 resource "aws_lambda_function" "pdr_cleanup_task" {
   function_name    = "${var.prefix}-PdrCleanup"
-  filename         = "${path.module}/../dist/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../dist/lambda.zip")
-  handler          = "task.handler"
+  filename         = "${path.module}/../dist/final/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../dist/final/lambda.zip")
+  handler          = "pdr_cleanup.task.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "python3.12"
   timeout          = var.lambda_timeout
@@ -24,4 +24,10 @@ resource "aws_lambda_function" "pdr_cleanup_task" {
   }
 
   tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "pdr_cleanup_task" {
+  name              = "/aws/lambda/${aws_lambda_function.pdr_cleanup_task.function_name}"
+  retention_in_days = var.default_log_retention_days
+  tags              = var.tags
 }

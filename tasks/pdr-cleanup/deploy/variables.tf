@@ -8,11 +8,6 @@ variable "lambda_processing_role_arn" {
   type        = string
 }
 
-variable "cumulus_message_adapter_lambda_layer_version_arn" {
-  description = "ARN of the Cumulus Message Adapter Lambda layer"
-  type        = string
-}
-
 variable "lambda_subnet_ids" {
   description = "List of subnet IDs for Lambda VPC configuration"
   type        = list(string)
@@ -41,4 +36,9 @@ variable "lambda_memory_size" {
   description = "Memory size for the Lambda function in MB"
   type        = number
   default     = 512
+}
+
+variable "default_log_retention_days" {
+  description = "The number of days to retain logs in CloudWatch"
+  type        = number
 }
