@@ -192,3 +192,7 @@ output "ecs_cluster_name" {
 output "start_sf_queue_url" {
   value = module.ingest.start_sf_queue_url
 }
+
+output "private_api_lambda_arn" {
+  value = module.archive.private_api_lambda_arn
+}
