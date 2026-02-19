@@ -517,17 +517,13 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
   t.is(metadataObject.Granule.DataGranule.get('ProducerGranuleId'), 'TestFixtureGranuleUR');
 });
 
-test.serial('UpdateEcho10XMLMetadata does not update metadata when excludeDataGranule is true', async (t) => {
+test.serial('UpdateEcho10XMLMetadata does not update granule DataGranule metadata when excludeDataGranule is true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
   const cmrXml = await fs.readFile(
     path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
     'utf8'
   );
   const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
-
-  // Remove producerGranuleId from cmrMetadata.  We expect granuleUR = producerGranuleId
-  // in this case
-  // that granuleUR will after = granuleId, and producerGranuleId will be updated
   const distEndpoint = 'https://distendpoint.com';
   const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
 
@@ -548,6 +544,9 @@ test.serial('UpdateEcho10XMLMetadata does not update metadata when excludeDataGr
     excludeDataGranule: true,
   });
 
+  // GranuleUR should be updated since that is distinct from the DataGranule
+  // and updateGranuleIdentifiers is true, but the DataGranule should not be
+  // updated since excludeDataGranule is true
   t.is(metadataObject.Granule.GranuleUR, 'TestFixtureGranuleUR_uniq');
   t.deepEqual(metadataObject.Granule.DataGranule, cmrMetadata.Granule.DataGranule);
 });
@@ -599,7 +598,6 @@ test.serial('UpdateEcho10XMLMetadata maintains ECHO10 DataGranule element order'
 test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
-  // Yes, ETag values always include enclosing double-quotes
   const distEndpoint = 'https://distendpoint.com';
   const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
 
@@ -631,10 +629,9 @@ test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correct
   t.is(metadataObject.DataGranule.Identifiers[0].Identifier, 'TestFixtureGranuleUR');
 });
 
-test.serial('updateUMMG Metadata does not update DataGranule in metadata when excludeDataGranule is true', async (t) => {
+test.serial('updateUMMG Metadata does not update the granule DataGranule metadata when excludeDataGranule is true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
-  // Yes, ETag values always include enclosing double-quotes
   const distEndpoint = 'https://distendpoint.com';
   const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
 
@@ -662,6 +659,10 @@ test.serial('updateUMMG Metadata does not update DataGranule in metadata when ex
       metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
     },
   });
+
+  // GranuleUR should be updated since that is distinct from the DataGranule
+  // and updateGranuleIdentifiers is true, but the DataGranule should not be
+  // updated since excludeDataGranule is true
   t.is(metadataObject.GranuleUR, 'TestFixtureGranuleUR_uniq');
   t.deepEqual(metadataObject.DataGranule, cmrMetadata.DataGranule);
 });

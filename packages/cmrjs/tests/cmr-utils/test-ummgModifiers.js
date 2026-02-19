@@ -8,7 +8,7 @@ const {
 test.before((t) => {
   // Mocking the date for ProductionDateTime value checks in tests as the function
   // updateUMMGGranuleURAndGranuleIdentifier sets this to the current time when adding
-  // a DataGranule when excludeDataGranule is false.
+  // a DataGranule to the Granule's metadata when excludeDataGranule is false.
   t.context.clock = sinon.useFakeTimers(new Date('2024-01-01T00:00:00Z').getTime());
 });
 
@@ -139,7 +139,7 @@ test('does not mutate original object', (t) => {
   t.deepEqual(original, copy);
 });
 
-test('does not add DataGranule when excludeDataGranule is true', (t) => {
+test('does not add DataGranule to the granule metadata when excludeDataGranule is true', (t) => {
   const metadata = {
     GranuleUR: 'OLD_ID',
   };
@@ -154,7 +154,7 @@ test('does not add DataGranule when excludeDataGranule is true', (t) => {
   t.is(result.DataGranule, undefined);
 });
 
-test('does not update DataGranule when excludeDataGranule is true', (t) => {
+test('does not update or overwrite granule DataGranule metadata when excludeDataGranule is true', (t) => {
   const metadata = {
     GranuleUR: 'SAME_ID',
     DataGranule: {
@@ -176,7 +176,7 @@ test('does not update DataGranule when excludeDataGranule is true', (t) => {
   t.deepEqual(result.DataGranule, metadata.DataGranule);
 });
 
-test('updates DataGranule with new identifiers and required default values when excludeDataGranule is false', (t) => {
+test('updates granule DataGranule metadata with new identifiers and required default values when excludeDataGranule is false', (t) => {
   const metadata = {
     GranuleUR: 'OLD_ID',
     DataGranule: {
@@ -207,7 +207,7 @@ test('updates DataGranule with new identifiers and required default values when 
   t.deepEqual(result.DataGranule, expectedDataGranule);
 });
 
-test('does not overwrite DataGranule values when excludeDataGranule is false', (t) => {
+test('does not overwrite granule DataGranule metadata values when excludeDataGranule is false', (t) => {
   const metadata = {
     GranuleUR: 'OLD_ID',
     DataGranule: {
@@ -230,7 +230,7 @@ test('does not overwrite DataGranule values when excludeDataGranule is false', (
   t.deepEqual(result.DataGranule, metadata.DataGranule);
 });
 
-test('adds DataGranule when excludeDataGranule is false and populates required defaults', (t) => {
+test('adds granule DataGranule to the metadata when excludeDataGranule is false and populates required defaults', (t) => {
   const metadata = {
     GranuleUR: 'ID',
   };
