@@ -79,6 +79,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added integration tests for the aws_api_proxy task
 - **CUMULUS-4400**
   - Added integration testing for CnmResponse task.
+  - Updated example workflows to include the exception message in the
+  `WorkflowFailed` state.
 
 ### Changed
 
