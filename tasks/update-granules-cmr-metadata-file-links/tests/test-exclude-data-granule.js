@@ -116,7 +116,7 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
 
-test.serial('update-granules-cmr-metadata-file-links does not add granule.DataGranule if task config var excludeDataGranule is true', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links does not add granule.DataGranule to the metadata for granules missing it if the task config var excludeDataGranule is true', async (t) => {
   const newPayload = buildPayload(t);
 
   newPayload.input.granules.forEach((granule) => {
@@ -152,7 +152,7 @@ test.serial('update-granules-cmr-metadata-file-links does not add granule.DataGr
   }));
 });
 
-test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule if task config var excludeDataGranule is false', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule to the metadata for granules missing it if the task config var excludeDataGranule is false', async (t) => {
   const newPayload = buildPayload(t);
 
   newPayload.input.granules.forEach((granule) => {
@@ -188,7 +188,7 @@ test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule 
   }));
 });
 
-test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule if task config var excludeDataGranule is not the boolean true', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule to the metadata for granules missing it if the task config var excludeDataGranule is not the boolean true', async (t) => {
   const newPayload = buildPayload(t);
 
   newPayload.input.granules.forEach((granule) => {
@@ -223,7 +223,7 @@ test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule 
   }));
 });
 
-test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule and populates defaults for UMMG granules if task config var excludeDataGranule is false', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule to the metadata for granules missing it and populates defaults for UMMG granules if the task config var excludeDataGranule is false', async (t) => {
   const newPayload = buildPayload(t);
 
   // exclude the ECHO10 granule for this test
@@ -264,7 +264,7 @@ test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule 
   }));
 });
 
-test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule and populates required field for ECHO10 granule if task config var excludeDataGranule is false', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule to the metadata for granules missing it and populates required field for ECHO10 granule if the task config var excludeDataGranule is false', async (t) => {
   const newPayload = buildPayload(t);
   const producerGranuleId = newPayload.input.granules[0].granuleId;
 

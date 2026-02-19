@@ -7,8 +7,8 @@ const {
 
 test.before((t) => {
   // Mocking the date for ProductionDateTime value checks in tests as the function
-  // updateUMMGGranuleURAndGranuleIdentifier sets this to the current time when adding
-  // a DataGranule to the Granule's metadata when excludeDataGranule is false.
+  // updateUMMGGranuleURAndGranuleIdentifier sets this to the current time for adding
+  // or updating a DataGranule to the Granule's metadata when excludeDataGranule is false.
   t.context.clock = sinon.useFakeTimers(new Date('2024-01-01T00:00:00Z').getTime());
 });
 

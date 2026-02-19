@@ -92,9 +92,8 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
         },
       ],
       DayNightFlag: 'UNSPECIFIED',
-      // Mocking the date for ProductionDateTime value checks in tests as the function
-      // updateCMRMetadata sets this to the current time for UMMG Granules for adding or updating a
-      // DataGranule when excludeDataGranule is false.
+      // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+      // despite actually being the time the task is ran (which is what is mocked, Date.now())
       ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
     },
     RelatedUrls: [
