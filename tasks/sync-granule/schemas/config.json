@@ -120,6 +120,7 @@
       }
     },
     "pdr": {
+      "type": "object",
       "required": [
         "name",
         "path"
