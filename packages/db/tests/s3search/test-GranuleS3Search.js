@@ -3,6 +3,7 @@
 const test = require('ava');
 const knex = require('knex');
 const cryptoRandomString = require('crypto-random-string');
+const omit = require('lodash/omit');
 const random = require('lodash/random');
 const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -23,6 +24,9 @@ const {
   providersS3TableSql,
   pdrsS3TableSql,
 } = require('../../dist/s3search/s3TableSchemas');
+const {
+  translatePostgresGranuleToApiGranuleWithoutDbQuery,
+} = require('../../dist/translate/granules');
 
 const {
   fakeCollectionRecordFactory,
@@ -148,7 +152,7 @@ test.before(async (t) => {
       archived: Boolean(num % 2),
     }));
 
-  const files = t.context.granules
+  t.context.files = t.context.granules
     .flatMap((granule, i) => [
       fakeFileRecordFactory(
         {
@@ -264,7 +268,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'files',
     filesS3TableSql,
-    files,
+    t.context.files,
     `${duckdbS3Prefix}files.parquet`
   );
 
@@ -318,7 +322,6 @@ test.serial('GranuleS3Search returns 10 granule records by default', async (t) =
     && (!granule.provider || granule.provider === t.context.provider.name)
     && (!granule.pdrName || granule.pdrName === t.context.pdr.name)));
   t.is(validatedRecords.length, apiGranules.length);
-  //TODO verify json fields
 });
 
 test.serial('GranuleS3Search supports page and limit params', async (t) => {
@@ -1140,4 +1143,30 @@ test.serial('GranuleS3Search with archived: false pulls only non-archive granule
   response.results.forEach((granuleRecord) => {
     t.is(granuleRecord.archived, false);
   });
+});
+
+test.serial('GranuleS3Search returns the correct record', async (t) => {
+  const { connection } = t.context;
+  const dbRecord = t.context.granules[2];
+  const queryStringParameters = {
+    limit: 200,
+    granuleId: dbRecord.granule_id,
+    duration__from: `${t.context.granuleSearchFields.duration - FLOAT_EPSILON}`,
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new GranuleS3Search({ queryStringParameters }, connection);
+  const { results, meta } = await dbSearch.query();
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+
+  const expectedApiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
+    granulePgRecord: dbRecord,
+    collectionPgRecord: t.context.testPgCollection2,
+    executionUrls: [{ url: 'laterUrl97' }],
+    files: t.context.files.filter((file) => file.granule_cumulus_id === dbRecord.cumulus_id),
+    pdr: t.context.pdr,
+    providerPgRecord: t.context.provider,
+  });
+  t.deepEqual(omit(results?.[0], ['createdAt', 'duration']), omit(expectedApiRecord, ['createdAt', 'duration']));
+  t.truthy(results?.[0]?.createdAt);
 });

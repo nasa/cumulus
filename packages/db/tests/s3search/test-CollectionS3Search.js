@@ -3,6 +3,7 @@
 const test = require('ava');
 const knex = require('knex');
 const cryptoRandomString = require('crypto-random-string');
+const omit = require('lodash/omit');
 const random = require('lodash/random');
 const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -18,6 +19,7 @@ const {
   granulesS3TableSql,
   providersS3TableSql,
 } = require('../../dist/s3search/s3TableSchemas');
+const { translatePostgresCollectionToApiCollection } = require('../../dist/translate/collections');
 
 const {
   fakeCollectionRecordFactory,
@@ -29,10 +31,10 @@ test.before(async (t) => {
   t.context.knexBuilder = knex({ client: 'pg' });
   t.context.collectionSearchTmestamp = 1579352700000;
 
-  const collections = range(100).map((num) => (
+  t.context.collections = range(100).map((num) => (
     fakeCollectionRecordFactory({
       name: num % 2 === 0 ? 'testCollection' : 'fakeCollection',
-      version: num,
+      version: String(num),
       cumulus_id: num,
       updated_at: new Date(t.context.collectionSearchTmestamp + (num % 2)),
       process: num % 2 === 0 ? 'ingest' : 'publish',
@@ -81,7 +83,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'collections',
     collectionsS3TableSql,
-    collections,
+    t.context.collections,
     `${duckdbS3Prefix}collections.parquet`
   );
 
@@ -115,10 +117,9 @@ test.serial('CollectionS3Search returns 10 collections by default', async (t) =>
   const results = await dbSearch.query();
   t.is(results.meta.count, 100);
   t.is(results.results.length, 10);
-  // TODO verify the query result json objects
 });
 
-test.serial('CollectionSearch supports page and limit params', async (t) => {
+test.serial('CollectionS3Search supports page and limit params', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 20,
@@ -148,7 +149,7 @@ test.serial('CollectionSearch supports page and limit params', async (t) => {
   t.is(response.results?.length, 0);
 });
 
-test.serial('CollectionSearch supports infix search', async (t) => {
+test.serial('CollectionS3Search supports infix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 20,
@@ -160,7 +161,7 @@ test.serial('CollectionSearch supports infix search', async (t) => {
   t.is(response.results?.length, 20);
 });
 
-test.serial('CollectionSearch supports prefix search', async (t) => {
+test.serial('CollectionS3Search supports prefix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 20,
@@ -172,7 +173,7 @@ test.serial('CollectionSearch supports prefix search', async (t) => {
   t.is(response2.results?.length, 20);
 });
 
-test.serial('CollectionSearch supports term search for boolean field', async (t) => {
+test.serial('CollectionS3Search supports term search for boolean field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -184,7 +185,7 @@ test.serial('CollectionSearch supports term search for boolean field', async (t)
   t.is(response4.results?.length, 50);
 });
 
-test.serial('CollectionSearch supports term search for date field', async (t) => {
+test.serial('CollectionS3Search supports term search for date field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -196,7 +197,7 @@ test.serial('CollectionSearch supports term search for date field', async (t) =>
   t.is(response.results?.length, 50);
 });
 
-test.serial('CollectionSearch supports term search for number field', async (t) => {
+test.serial('CollectionS3Search supports term search for number field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -208,7 +209,7 @@ test.serial('CollectionSearch supports term search for number field', async (t) 
   t.is(response.results?.length, 1);
 });
 
-test.serial('CollectionSearch supports term search for string field', async (t) => {
+test.serial('CollectionS3Search supports term search for string field', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -238,7 +239,7 @@ test.serial('CollectionSearch supports term search for string field', async (t) 
   t.is(response4.results?.length, 50);
 });
 
-test.serial('CollectionSearch supports range search', async (t) => {
+test.serial('CollectionS3Search supports range search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -260,7 +261,7 @@ test.serial('CollectionSearch supports range search', async (t) => {
   t.is(response.results?.length, 0);
 });
 
-test.serial('CollectionSearch supports search for multiple fields', async (t) => {
+test.serial('CollectionS3Search supports search for multiple fields', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -276,7 +277,7 @@ test.serial('CollectionSearch supports search for multiple fields', async (t) =>
   t.is(response.results?.length, 1);
 });
 
-test.serial('CollectionSearch non-existing fields are ignored', async (t) => {
+test.serial('CollectionS3Search non-existing fields are ignored', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -289,7 +290,7 @@ test.serial('CollectionSearch non-existing fields are ignored', async (t) => {
   t.is(response.results?.length, 100);
 });
 
-test.serial('CollectionSearch returns fields specified', async (t) => {
+test.serial('CollectionS3Search returns fields specified', async (t) => {
   const { connection } = t.context;
   const fields = 'name,version,reportToEms,process';
   const queryStringParameters = {
@@ -302,7 +303,7 @@ test.serial('CollectionSearch returns fields specified', async (t) => {
   response.results.forEach((collection) => t.deepEqual(Object.keys(collection), fields.split(',')));
 });
 
-test.serial('CollectionSearch supports sorting', async (t) => {
+test.serial('CollectionS3Search supports sorting', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -339,7 +340,7 @@ test.serial('CollectionSearch supports sorting', async (t) => {
   t.true(response3.results[49].version < response3.results[50].version);
 });
 
-test.serial('CollectionSearch supports terms search', async (t) => {
+test.serial('CollectionS3Search supports terms search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -370,7 +371,7 @@ test.serial('CollectionSearch supports terms search', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test.serial('CollectionSearch supports search when collection field does not match the given value', async (t) => {
+test.serial('CollectionS3Search supports search when collection field does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
@@ -392,7 +393,7 @@ test.serial('CollectionSearch supports search when collection field does not mat
   t.is(response.results?.length, 49);
 });
 
-test.serial('CollectionSearch supports search which checks existence of collection field', async (t) => {
+test.serial('CollectionS3Search supports search which checks existence of collection field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -404,7 +405,7 @@ test.serial('CollectionSearch supports search which checks existence of collecti
   t.is(response.results?.length, 50);
 });
 
-test.serial('CollectionSearch supports includeStats', async (t) => {
+test.serial('CollectionS3Search supports includeStats', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -424,7 +425,7 @@ test.serial('CollectionSearch supports includeStats', async (t) => {
   t.deepEqual(response.results[99].stats, expectedStats99);
 });
 
-test.serial('CollectionSearch supports search for active collections', async (t) => {
+test.serial('CollectionS3Search supports search for active collections', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: '200',
@@ -444,7 +445,7 @@ test.serial('CollectionSearch supports search for active collections', async (t)
   t.deepEqual(response.results[98].stats, expectedStats98);
 });
 
-test.serial('CollectionSearch supports search for active collections by infix/prefix', async (t) => {
+test.serial('CollectionS3Search supports search for active collections by infix/prefix', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: '200',
@@ -467,7 +468,7 @@ test.serial('CollectionSearch supports search for active collections by infix/pr
   t.deepEqual(response.results[48].stats, expectedStats48);
 });
 
-test.serial('CollectionSearch support search for active collections and stats with granules updated in the given time frame', async (t) => {
+test.serial('CollectionS3Search support search for active collections and stats with granules updated in the given time frame', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: '200',
@@ -491,7 +492,7 @@ test.serial('CollectionSearch support search for active collections and stats wi
   t.deepEqual(response.results[88].stats, expectedStats98);
 });
 
-test.serial('CollectionSearch support search for active collections and stats with granules from a given provider', async (t) => {
+test.serial('CollectionS3Search support search for active collections and stats with granules from a given provider', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: '200',
@@ -514,7 +515,7 @@ test.serial('CollectionSearch support search for active collections and stats wi
   t.deepEqual(response.results[48].stats, expectedStats48);
 });
 
-test.serial('CollectionSearch support search for active collections and stats with granules in the granuleId list', async (t) => {
+test.serial('CollectionS3Search support search for active collections and stats with granules in the granuleId list', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: '200',
@@ -535,4 +536,21 @@ test.serial('CollectionSearch support search for active collections and stats wi
   t.is(response.results?.length, 2);
   t.deepEqual(response.results[0].stats, expectedStats0);
   t.deepEqual(response.results[1].stats, expectedStats1);
+});
+
+test.serial('CollectionS3Search returns the correct record', async (t) => {
+  const { connection } = t.context;
+  const dbRecord = t.context.collections[2];
+  const queryStringParameters = {
+    limit: 200,
+    name: dbRecord.name,
+    version: dbRecord.version,
+  };
+  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const { results, meta } = await dbSearch.query();
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+  const expectedApiRecord = translatePostgresCollectionToApiCollection(dbRecord);
+  t.deepEqual(omit(results?.[0], 'createdAt'), omit(expectedApiRecord, 'createdAt'));
+  t.truthy(results?.[0]?.createdAt);
 });

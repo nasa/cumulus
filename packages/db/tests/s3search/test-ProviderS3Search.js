@@ -3,6 +3,7 @@
 const test = require('ava');
 const knex = require('knex');
 const cryptoRandomString = require('crypto-random-string');
+const omit = require('lodash/omit');
 const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
@@ -15,7 +16,9 @@ const {
   providersS3TableSql,
 } = require('../../dist/s3search/s3TableSchemas');
 const { ProviderS3Search } = require('../../dist/s3search/ProviderS3Search');
-
+const {
+  translatePostgresProviderToApiProvider,
+} = require('../../dist/translate/providers');
 const {
   fakeProviderRecordFactory,
 } = require('../../dist');
@@ -25,7 +28,7 @@ test.before(async (t) => {
 
   t.context.providerSearchTimestamp = 1579352700000;
 
-  const providers = range(100).map((num) => fakeProviderRecordFactory({
+  t.context.providers = range(100).map((num) => fakeProviderRecordFactory({
     cumulus_id: num,
     updated_at: new Date(t.context.providerSearchTimestamp + (num % 2)),
     created_at: new Date(t.context.providerSearchTimestamp - (num % 2)),
@@ -51,7 +54,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'providers',
     providersS3TableSql,
-    providers,
+    t.context.providers,
     `${duckdbS3Prefix}providers.parquet`
   );
 });
@@ -328,4 +331,20 @@ test.serial('ProviderS3Search supports search which checks existence of provider
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
   t.true(response.results?.every((provider) => provider.privateKey));
+});
+
+test.serial('ProviderS3Search returns the correct record', async (t) => {
+  const { connection } = t.context;
+  const dbRecord = t.context.providers[2];
+  const queryStringParameters = {
+    limit: 200,
+    name: dbRecord.name,
+  };
+  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const { results, meta } = await dbSearch.query();
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+  const expectedApiRecord = translatePostgresProviderToApiProvider(dbRecord);
+  t.deepEqual(omit(results?.[0], 'createdAt'), omit(expectedApiRecord, 'createdAt'));
+  t.truthy(results?.[0]?.createdAt);
 });

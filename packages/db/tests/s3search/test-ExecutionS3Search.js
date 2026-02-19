@@ -3,6 +3,7 @@
 const test = require('ava');
 const knex = require('knex');
 const cryptoRandomString = require('crypto-random-string');
+const omit = require('lodash/omit');
 const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
@@ -18,6 +19,9 @@ const {
   executionsS3TableSql,
 } = require('../../dist/s3search/s3TableSchemas');
 const { ExecutionS3Search } = require('../../dist/s3search/ExecutionS3Search');
+const {
+  translatePostgresExecutionToApiExecutionWithoutDbQuery,
+} = require('../../dist/translate/executions');
 const {
   fakeAsyncOperationRecordFactory,
   fakeCollectionRecordFactory,
@@ -49,7 +53,7 @@ test.before(async (t) => {
 
   t.context.duration = 100;
 
-  const executions = range(50).map((num) => (
+  t.context.executions = range(50).map((num) => (
     fakeExecutionRecordFactory({
       collection_cumulus_id: num % 2 === 0 ? t.context.collectionCumulusId : undefined,
       status: statuses[(num % 3) + 1],
@@ -111,7 +115,7 @@ test.before(async (t) => {
     t.context.knexBuilder,
     'executions',
     executionsS3TableSql,
-    executions,
+    t.context.executions,
     `${duckdbS3Prefix}executions.parquet`
   );
 });
@@ -670,4 +674,26 @@ test.serial('ExecutionS3Search with archived: false pulls only non-archive granu
   response.results.forEach((ExecutionRecord) => {
     t.is(ExecutionRecord.archived, false);
   });
+});
+
+test.serial('ExecutionS3Search returns the correct record', async (t) => {
+  const { connection } = t.context;
+  const dbRecord = t.context.executions[2];
+  const queryStringParameters = {
+    limit: 200,
+    arn: dbRecord.arn,
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const { results, meta } = await dbSearch.query();
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+  const expectedApiRecord = translatePostgresExecutionToApiExecutionWithoutDbQuery({
+    executionRecord: dbRecord,
+    collectionId: t.context.collectionId,
+    asyncOperationId: t.context.testAsyncOperation.id,
+    parentArn: undefined,
+  });
+  t.deepEqual(omit(results?.[0], 'createdAt'), omit(expectedApiRecord, 'createdAt'));
+  t.truthy(results?.[0]?.createdAt);
 });
