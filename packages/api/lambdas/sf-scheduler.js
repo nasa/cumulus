@@ -54,7 +54,7 @@ async function handleScheduleEvent(event) {
   };
 
   const eventCustomMeta = get(event, 'meta', {});
-  const cmrProvider = collection.cmrProvider || messageTemplate.cmr.provider;
+  const cmrProvider = collection.cmrProvider || messageTemplate.meta.cmr.provider;
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
     asyncOperationId: get(event, 'asyncOperationId'),
