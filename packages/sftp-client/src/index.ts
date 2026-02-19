@@ -155,18 +155,26 @@ export class SftpClient {
 
     const sftpReadStream = await this.sftp.createReadStream(remotePath);
 
-    const result = await S3.promiseS3Upload({
-      params: {
-        Bucket: bucket,
-        Key: key,
-        Body: sftpReadStream,
-        ContentType: mime.lookup(key) || undefined,
-      },
-    });
+    try {
+      const result = await S3.promiseS3Upload({
+        params: {
+          Bucket: bucket,
+          Key: key,
+          Body: sftpReadStream,
+          ContentType: mime.lookup(key) || undefined,
+        },
+      });
 
-    log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
+      log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
 
-    return { s3uri, etag: result.ETag };
+      return { s3uri, etag: result.ETag };
+    } finally {
+      // Explicitly destroy the SFTP read stream to ensure it's cleaned up
+      // on the SFTP side before end() is called. Without this, the stream
+      // may remain open and cause "No response from server" errors during
+      // connection cleanup when the server closes the channel.
+      sftpReadStream.destroy();
+    }
   }
 
   logProgress(total_transferred: number, chunk: number, total: number): void {
