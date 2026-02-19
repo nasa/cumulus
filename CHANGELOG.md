@@ -94,6 +94,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added pdr-cleanup task into cumulus core from ASDC
 - **CUMULUS-4563**
   - Added a Github action to generate requirements.txt files from coreified uv.lock files
+- **CUMULUS-4513**
+  - Added support for retries in PDR workflows
 
 ### Changed
 
