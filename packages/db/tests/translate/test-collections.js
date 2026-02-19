@@ -18,6 +18,14 @@ test('translatePostgresCollectionToApiCollection converts Postgres collection to
     created_at: new Date(),
   });
 
+  const duckDbCollectionRecord = {
+    ...collectionRecord,
+    created_at: collectionRecord.created_at.toISOString(),
+    updated_at: collectionRecord.updated_at.toISOString(),
+    meta: JSON.stringify(collectionRecord.meta),
+    tags: JSON.stringify(collectionRecord.tags),
+  };
+
   const expected = {
     createdAt: collectionRecord.created_at.getTime(),
     updatedAt: collectionRecord.updated_at.getTime(),
@@ -30,8 +38,11 @@ test('translatePostgresCollectionToApiCollection converts Postgres collection to
     tags: collectionRecord.tags,
     version: collectionRecord.version,
   };
-  const actual = translatePostgresCollectionToApiCollection(collectionRecord);
-  t.deepEqual(actual, expected);
+  const translation = translatePostgresCollectionToApiCollection(collectionRecord);
+  t.deepEqual(translation, expected);
+
+  const duckDbTranslation = translatePostgresCollectionToApiCollection(duckDbCollectionRecord);
+  t.deepEqual(duckDbTranslation, expected);
 });
 
 test('translateApiCollectionToPostgresCollection converts API collection to Postgres', (t) => {
