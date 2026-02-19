@@ -60,6 +60,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
   - Updated AJV to ^8.18.0 to address CVE findings
   - Update aws-sdk versions to ^3.993.0 to address CVE findings
+  - Updated minmatch to ^10.2.1
 
 ## [v21.3.0] 2026-01-26
 
