@@ -115,7 +115,7 @@
       }
     },
     "pdr": {
-      "type": "object",
+      "type": ["object", "null"],
       "required": [
         "name",
         "path"
