@@ -43,6 +43,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-4566**
+  - Updated sftp-client source to log/warn on server drop in `end()` event.
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations return consistent output formats across different bulk opertions
     (previously, some bulk operation aggregated errors while others returned per-granule errors)
