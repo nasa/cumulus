@@ -72,9 +72,17 @@ export class SftpClient {
 
   async end(): Promise<void> {
     if (this.connected) {
-      await this.sftpClient.end();
-
-      this.connected = false;
+      try {
+        await this.sftpClient.end();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.includes('No response from server')) {
+          throw error;
+        }
+        log.warn(`SFTP client end ignored: ${message}`);
+      } finally {
+        this.connected = false;
+      }
     }
   }
 
