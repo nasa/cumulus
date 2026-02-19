@@ -20,6 +20,9 @@ docker rm -f $(docker ps -q) || true
 
 echo 'Setting up Core containers'
 
+## Ensure SSH key has correct permissions for SSH security validation
+chmod 600 packages/test-data/keys/ssh_client_rsa_key
+
 ## Setup the compose stack
 docker compose -p ${container_id} down
 docker compose -p ${container_id} rm -f
