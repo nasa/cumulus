@@ -18,7 +18,7 @@ import { PostgresFileRecord } from '../types/file';
 const log = new Logger({ sender: '@cumulus/db/GranuleS3Search' });
 
 /**
- * Class to build and execute db search query for granules
+ * Class to build and execute DuckDB search query for granules
  */
 export class GranuleS3Search extends GranuleSearch {
   private dbConnection: DuckDBConnection;
@@ -26,8 +26,8 @@ export class GranuleS3Search extends GranuleSearch {
 
   constructor(event: QueryEvent, dbConnection: DuckDBConnection) {
     super(event, false); // disables estimateTableRowCount
-    this.dbConnection = dbConnection;
 
+    this.dbConnection = dbConnection;
     this.duckDBSearchExecutor = new DuckDBSearchExecutor({
       dbConnection,
       dbQueryParameters: this.dbQueryParameters,

@@ -5,7 +5,7 @@ import { ExecutionSearch } from '../search/ExecutionSearch';
 import { QueryEvent } from '../types/search';
 
 /**
- * Class to build and execute db search query for executions
+ * Class to build and execute DuckDB search query for executions
  */
 export class ExecutionS3Search extends ExecutionSearch {
   private duckDBSearchExecutor: DuckDBSearchExecutor;

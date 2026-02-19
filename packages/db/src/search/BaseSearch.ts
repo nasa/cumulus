@@ -32,9 +32,33 @@ export const typeToTable: { [key: string]: string } = {
 };
 
 /**
- * Class to build and execute db search query
+ * BaseSearch
+ *
+ * Abstract base class for building and executing database search queries.
+ *
+ * Responsibilities:
+ *  - Parse and normalize incoming query string parameters.
+ *  - Build database queries using Knex.
+ *  - Execute queries against PostgreSQL by default.
+ *  - Return standardized search API response format including metadata.
+ *
+ * Default Behavior:
+ *  - The `query()` method executes against PostgreSQL using a Knex client.
+ *
+ * DuckDB Support:
+ *  - Subclasses that query DuckDB (e.g., *S3Search classes) must override
+ *    the `query()` and related methods
+ *  - DuckDB subclasses are responsible for:
+ *      - Executing queries using a DuckDB connection.
+ *      - Handling sequential execution (to avoid prepared statement conflicts).
+ *      - Translating DuckDB result types (e.g., string dates/JSON) into proper API types.
+ *
+ * Design Notes:
+ *  - Query construction logic (e.g., `buildSearch`) is shared across Postgres
+ *    and DuckDB implementations.
+ *  - Execution strategy is delegated to subclasses when a different database
+ *    engine is required.
  */
-
 abstract class BaseSearch {
   readonly type: string;
   readonly tableName: string;

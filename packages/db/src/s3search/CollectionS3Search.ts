@@ -16,18 +16,15 @@ import { DuckDBSearchExecutor } from './DuckDBSearchExecutor';
 const log = new Logger({ sender: '@cumulus/db/CollectionS3Search' });
 
 /**
- * Class to build and execute db search query for collections
+ * Class to build and execute DuckDB search query for collections
  */
 export class CollectionS3Search extends CollectionSearch {
   private dbConnection: DuckDBConnection;
-  //private knexBuilder: Knex;
   private duckDBSearchExecutor: DuckDBSearchExecutor;
 
   constructor(event: QueryEvent, dbConnection: DuckDBConnection) {
     super(event);
     this.dbConnection = dbConnection;
-    // Use 'pg' dialect to generate DuckDB-compatible SQL ($1, $2, etc.)
-    //this.knexBuilder = knex({ client: 'pg' });
     this.duckDBSearchExecutor = new DuckDBSearchExecutor({
       dbConnection,
       dbQueryParameters: this.dbQueryParameters,

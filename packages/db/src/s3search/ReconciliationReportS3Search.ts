@@ -5,7 +5,7 @@ import { ReconciliationReportSearch } from '../search/ReconciliationReportSearch
 import { QueryEvent } from '../types/search';
 
 /**
- * Class to build and execute db search query for executions
+ * Class to build and execute DuckDB search query for Reconciliation Report
  */
 export class ReconciliationReportS3Search extends ReconciliationReportSearch {
   private duckDBSearchExecutor: DuckDBSearchExecutor;

@@ -18,7 +18,7 @@ export function prepareBindings(bindings: ReadonlyArray<any>): DuckDBValue[] {
  * Returns execution records sorted by most recent first for an input
  * set of Granule Cumulus IDs.
  *
- * @param {Object} params - The function parameters.
+ * @param {object} params - The function parameters.
  * @param {DuckDBConnection} params.connection - The active DuckDB connection.
  * @param {number[]} params.granuleCumulusIds - Array of granule IDs to filter by.
  * @param {Knex} [params.knexBuilder] - Optional Knex instance (defaults to 'pg' client).
@@ -66,6 +66,14 @@ export const getExecutionInfoByGranuleCumulusIds = async ({
 
 /**
  * Searches for file records by granule cumulus IDs using a DuckDB connection.
+ *
+ * @param params - Function parameters
+ * @param params.connection - Active DuckDB connection used to execute the query
+ * @param params.granuleCumulusIds - Array of granule Cumulus IDs to filter by
+ * @param [params.columns='*'] - Columns to select (string or string array)
+ * @param [params.knexBuilder] - Optional Knex instance (defaults to PostgreSQL dialect)
+ * @returns Promise resolving to an array of normalized `PostgresFileRecord` objects
+ * @throws If the DuckDB query execution fails
  */
 export const getFilesByGranuleCumulusIds = async ({
   connection,
@@ -75,7 +83,6 @@ export const getFilesByGranuleCumulusIds = async ({
 }: {
   connection: DuckDBConnection;
   granuleCumulusIds: number[];
-  tableName?: string;
   columns?: string | string[];
   knexBuilder?: Knex;
 }): Promise<PostgresFileRecord[]> => {

@@ -5,7 +5,7 @@ import { AsyncOperationSearch } from '../search/AsyncOperationSearch';
 import { QueryEvent } from '../types/search';
 
 /**
- * Class to build and execute db search query for asyncOperation
+ * Class to build and execute DuckDB search query for asyncOperation
  */
 export class AsyncOperationS3Search extends AsyncOperationSearch {
   private duckDBSearchExecutor: DuckDBSearchExecutor;

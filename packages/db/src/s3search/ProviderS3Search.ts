@@ -5,7 +5,7 @@ import { ProviderSearch } from '../search/ProviderSearch';
 import { QueryEvent } from '../types/search';
 
 /**
- * Class to build and execute db search query for PDRs
+ * Class to build and execute DuckDB search query for providers
  */
 export class ProviderS3Search extends ProviderSearch {
   private duckDBSearchExecutor: DuckDBSearchExecutor;

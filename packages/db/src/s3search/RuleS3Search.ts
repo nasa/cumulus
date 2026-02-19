@@ -5,7 +5,7 @@ import { RuleSearch } from '../search/RuleSearch';
 import { QueryEvent } from '../types/search';
 
 /**
- * Class to build and execute db search query for executions
+ * Class to build and execute DuckDB search query for rules
  */
 export class RuleS3Search extends RuleSearch {
   private duckDBSearchExecutor: DuckDBSearchExecutor;
