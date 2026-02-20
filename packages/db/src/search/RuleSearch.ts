@@ -11,7 +11,7 @@ import { TableNames } from '../tables';
 
 const log = new Logger({ sender: '@cumulus/db/RuleSearch' });
 
-export interface RuleRecordWithExternals extends PostgresRuleRecord {
+interface RuleRecordWithExternals extends PostgresRuleRecord {
   collectionName: string,
   collectionVersion: string,
   providerName?: string,

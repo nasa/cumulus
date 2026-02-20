@@ -13,7 +13,7 @@ import { BaseRecord } from '../types/base';
 
 const log = new Logger({ sender: '@cumulus/db/ExecutionSearch' });
 
-export interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
+interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
   collectionName?: string,
   collectionVersion?: string,
   asyncOperationId?: string;
