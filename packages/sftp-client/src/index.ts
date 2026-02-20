@@ -169,10 +169,12 @@ export class SftpClient {
 
       return { s3uri, etag: result.ETag };
     } finally {
-      // Explicitly destroy the SFTP read stream to ensure it's cleaned up
-      // on the SFTP side before end() is called. Without this, the stream
-      // may remain open and cause "No response from server" errors during
-      // connection cleanup when the server closes the channel.
+      // Explicitly destroy the SFTP read stream so the SFTP channel is
+      // torn down before end() is called.
+      sftpReadStream.once('error', (err: Error) => {
+        const message = err instanceof Error ? err.message : String(err);
+        log.warn(`SFTP read stream cleanup error (ignored): ${message}`);
+      });
       sftpReadStream.destroy();
     }
   }
