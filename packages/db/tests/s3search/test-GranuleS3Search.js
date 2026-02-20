@@ -167,8 +167,6 @@ test.before(async (t) => {
         : undefined,
     }));
 
-  console.log(t.context.granules[50]);
-
   t.context.files = t.context.granules
     .flatMap((granule, i) => [
       fakeFileRecordFactory(
