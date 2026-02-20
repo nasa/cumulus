@@ -1,6 +1,6 @@
 [project]
 name = "cma-to-cnm"
-version = "0.1.0"
+version = "1.0.0"
 description = "Translate CMA message to CNM format for ingestion into PODAAC Cumulus"
 authors = [
     { name = "ESHINDavid Yen", email = "david.yen@jpl.nasa.gov" }
@@ -23,9 +23,9 @@ dev = [
 ]
 
 [tool.pytest]
-packages = [{ include = "cma2cnm", from = "src" }]
+minversion = "9.0"
 addopts = [
-    "--cov=cma2cnm",
+    "--cov=cma_to_cnm",
     "--cov-report=lcov:.nyc_output",
 ]
 pythonpath = ["src"]

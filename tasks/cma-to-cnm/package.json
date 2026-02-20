@@ -19,7 +19,7 @@
     "build": "rm -rf dist && mkdir dist && npm run generate-task-schemas && cp -R src/schemas dist/",
     "clean": "rm -rf dist && rm -rf .venv && mkdir dist",
     "generate-task-schemas": "npx generate-task-schemas . files",
-    "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src/cnm_response",
+    "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src/cma_to_cnm",
     "package": "npm run clean && ../../bin/package_uv.sh 3.12 ${PWD}",
     "prepare": "npm run build",
     "test": "uv run pytest -q"

@@ -5,7 +5,7 @@ from typing import Any, List, cast
 import uuid
 
 import pydantic
-from cma2cnm import models_cnm, models_cma
+from cma_to_cnm import models_cnm, models_cma
 from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
 
@@ -13,7 +13,7 @@ from run_cumulus_task import run_cumulus_task
 LOGGER = CumulusLogger("cma_to_cnm")
 
 
-def task(event: dict[str, list[str] | dict], context: object) -> dict[str, Any]:
+def task(event: dict[str, Any], context: object) -> dict[str, Any]:
     """Entry point of the lambda
     Args:
         event: Passed through from {handler}

@@ -1,6 +1,6 @@
 import json
 
-from cma2cnm.cma_to_cnm import task
+from cma_to_cnm.cma_to_cnm import task
 
 
 class TestCmaToCnm:

@@ -50,7 +50,7 @@ wheels = [
 
 [[package]]
 name = "cma-to-cnm"
-version = "0.1.0"
+version = "21.0.1"
 source = { virtual = "." }
 dependencies = [
     { name = "cumulus-message-adapter-python" },

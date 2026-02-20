@@ -1,5 +1,5 @@
 {
-  "title": "DiscoverGranulesOutput",
+  "title": "CMAToCNMInput",
   "description": "Describes the output produced by the discover-granules task",
   "type": "object",
   "required": [ "granules" ],

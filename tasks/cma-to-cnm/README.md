@@ -11,12 +11,41 @@ For more information on configuring a Cumulus Message Adapter task, see [the Cum
 
 ### Config
 
-Config object fields:
+The following table describes the properties of the configuration object. Note that the top-level object requires both provider and collection to be valid.
 
-| field name          | type   | default    | description
-|---------------------|--------|------------| -----------
-| collection          | object | (optional) |  asdasf
+| field name                   | type   | default| required | description                                           |
+|------------------------------|--------|--------|----------|-------------------------------------------------------|
+| provier                      | Object | None   | Y        | Data source provider                                  |
+| provider.id                  | string | None   | Y        | (Required)he unique identifier for the provider.      |
+| provider.protocol            | string | None   | N        | The transfer protocol used (e.g.s3, ftp, http).       |
+| provider.host                | string | None   | N        | The network host address for the provider.            |
+| collection                   | object | None   | Y        | Contains metadata regarding the data collection.      |
+| collection.name              | string | None   | Y        | The name of the collection.                           |
+| cumulus_meta                 | object | None   | N        | Internal metadata for Cumulus execution tracking.     |
+| cumulus_meta.state_machine   | string | None   | N        | The name of the specific state machine being invoked. |
+| cumulus_meta.execution_name  | string | None   | N        | The specific identifier for the current execution.    | 
 
+##### Example of config input:
+
+```json
+{
+  "provider": {
+    "id": "PROV_123",
+    "protocol": "s3",
+    "host": "my-data-bucket"
+  },
+  "collection": {
+    "name": "landsat_8_records"
+  },
+  "cumulus_meta": {
+    "state_machine": "IngestWorkflow",
+    "execution_name": "exec-001-alpha"
+  }
+}
+```
+        
+
+Example of workflow configuraton:
 
 ```angular2html
             "GranuleToCNM": {
@@ -63,35 +92,33 @@ Config object fields:
                 "Next": "QueueCNMs"
             },
 ```
-The Step Function task definition utilizes a task_config object to manage dynamic inputs. Within this configuration, the collection field is mapped using JSONPath to the metadata:
+The Step Function task definition utilizes a task_config object to manage dynamic inputs. 
+As example, within this configuration, the collection field is mapped using JSONPath to the metadata:
 
     Config Input: "collection": "{$.meta.collection}"
 
-Granule ID Extraction
-
-Users can define a regular expression via collection.granuleIdExtraction. This regex is applied to the product.name field within the Cloud Notification Mechanism (CNM) to accurately extract the unique granuleId.
-Terraform Implementation
 
 This task is designed as a modular component. You can load it into your infrastructure using the following Terraform example:
 ```angular2html
 
-module "cnm_to_cma_module" {
+module "cma_to_cnm_module" {
 
-   source = "http://github.com/downloadpath/cnm2cma_module.zip"
+   source = "http://github.com/downloadpath/cma_to_cnm_module.zip"
    prefix = var.prefix
    region = var.region
    lambda_role = module.cumulus.lambda_processing_role_arn
    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
 
-    subnet_ids = var.subnet_ids
+    subnet_ids  = var.subnet_ids
     memory_size = 128
-    timeout = 180
+    timeout     = 180
+    tags        = merge(local.tags, { Project = var.prefix })
  }
 
- resource "aws_cloudwatch_log_group" "cnm_to_cma_task" {
+ resource "aws_cloudwatch_log_group" "cma_to_cnm_task" {
     name              = "/aws/lambda/${module.cnm_to_cma_module.cnm_to_cma_name}"
-   retention_in_days = var.task_logs_retention_in_days
-   tags              = merge(local.tags, { Project = var.prefix })
+    retention_in_days  = var.task_logs_retention_in_days
+    
  }
 ```
 
@@ -110,10 +137,10 @@ the lambda's event.get('input') is the cnm message.
 
 Output object fields:
 
-| field name | type            | default | description
-|------------|-----------------| ------- | -----------
-| granules   | array\<object\> | N/A | cma payload with list of cma files
-| cnm        | object          | N/A | the original cnm message.
+| field name | type            | default | description|
+|------------|-----------------| ------- | -----------|
+| cnm        | array\<object\> | N/A | cma payload with list of cma files|
+| cnm        | object          | N/A | the original cnm message.|
 
 
 Data Mapping and Payload Configuration
@@ -124,7 +151,7 @@ When configuring the task, please refer to the example provided in the "Config" 
 
     Metadata Attachment: The original Cloud Notification Mechanism (CNM) message should be nested under the meta object.
 ### Example workflow configuration and use
-The output key : output_granules should be mapped to the payload key in the workflow's output.
+The output key : cnm_list should be mapped to the payload key in the workflow's output.
 Workflow developer could choose to the original cnm message to be stored in meta.cnm key.
 Example workflow:
 ```angular2html
@@ -174,7 +201,7 @@ Example workflow:
 ```
 ## Architecture
 ```mermaid
-architecture-cnm-2-cma
+architecture-cma-to-cnm
     group trigger(cloud) [Starting Task]
     translate task(cloud)[Task]
 
@@ -189,10 +216,7 @@ None
 
 ## Development and Deployment
 #### Developer Notes
-- Build : Temporarily use build_lambda.sh which depends on poetry to build the lambda.zip file.
--- poetry self add poetry-plugin-export to enable poetry export.
--- alternatively, download pydantic_core wheel from here : https://pypi.org/project/pydantic_core/#files by
--  using the manylinux wheel with python version close to this project's
+
 - About json schema compiling to Plaint Python classes:
    - used datamodel-code-generator tool: https://koxudaxi.github.io/datamodel-code-generator/ to generate pydantic models from json schema files.
    - example below

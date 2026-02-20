@@ -3,18 +3,19 @@ locals {
 }
 
 resource "aws_lambda_function" "cma_to_cnm" {
-  filename      = "${path.module}/../dist/final/lambda.zip"
-  function_name = "${var.prefix}-CMAToCNM"
-  filebase64sha256("${path.module}/../dist/final/lambda.zip")
-  handler       = "cma2cnm.cma_to_cnm.handler"
-  role          = var.lambda_role
-  runtime       = "python3.13"
-  timeout       = var.timeout
-  memory_size   = var.memory_size
+  filename         = "${path.module}/../dist/final/lambda.zip"
+  function_name    = "${var.prefix}-CMAToCNM"
+  filebase64sha256 ="${path.module}/../dist/final/lambda.zip")
+  handler          = "cma_to_cnm.cma_to_cnm.handler"
+  role             = var.lambda_role
+  runtime          = "python3.12"
+  timeout          = var.timeout
+  memory_size      = var.memory_size
 
   environment {
     variables = {
-      LOGGING_LEVEL               = var.log_level
+      stackName                   = var.prefix
+      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }
   }
 
