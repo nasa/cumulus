@@ -3,6 +3,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { noop } = require('lodash');
 const S3 = require('@cumulus/aws-client/S3');
 const test = require('ava');
 const { promisify } = require('util');
@@ -189,6 +190,7 @@ test.serial('sftpClient.syncToS3() destroys read stream on upload failure', asyn
   const key = `${randomString()}.hdf`;
   let destroyed = false;
   const fakeStream = {
+    once: noop,
     destroy: () => {
       destroyed = true;
     },
@@ -218,6 +220,39 @@ test.serial('sftpClient.syncToS3() destroys read stream on upload failure', asyn
   }
 
   t.true(destroyed);
+});
+
+test.serial('sftpClient.syncToS3() swallows error emitted on read stream during cleanup', async (t) => {
+  const key = `${randomString()}.hdf`;
+  let errorListener;
+  const fakeStream = {
+    once: (event, cb) => {
+      if (event === 'error') errorListener = cb;
+    },
+    destroy: () => {
+      // Simulate ssh2 cleanupRequests() firing the error after destroy
+      if (errorListener) errorListener(new Error('No response from server'));
+    },
+  };
+
+  const originalCreateReadStream = t.context.sftpClient.sftp.createReadStream;
+  const originalPromiseS3Upload = S3.promiseS3Upload;
+
+  t.context.sftpClient.sftp.createReadStream = () => fakeStream;
+  S3.promiseS3Upload = () => Promise.resolve({ ETag: '"abc123"' });
+
+  try {
+    await t.notThrowsAsync(
+      () => t.context.sftpClient.syncToS3(
+        '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+        t.context.s3Bucket,
+        key
+      )
+    );
+  } finally {
+    t.context.sftpClient.sftp.createReadStream = originalCreateReadStream;
+    S3.promiseS3Upload = originalPromiseS3Upload;
+  }
 });
 
 test.serial('sftpClient.syncToS3Fast() transfers a file from SFTP to S3 with the correct content-type', async (t) => {
