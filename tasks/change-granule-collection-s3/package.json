@@ -56,6 +56,6 @@
   },
   "devDependencies": {
     "@aws-sdk/client-sns": "^3.993.0",
-    "@cumulus/api": "21.2.0"
+    "@cumulus/api": "21.3.0"
   }
 }
