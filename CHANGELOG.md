@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+
 ## [v21.3.1] 2026-02-16
 
 ### Added
@@ -17,6 +18,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4514**
   - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
+
+### Fixed
+
+- **CUMULUS-4566**
+  - Updated AJV to ^8.18.0
+    - Updated task components to resolve malformed/errant task schemas in the following lambdas:
+      - SyncGranules
+      - SendPan
+      - QueueGranules
+      - MoveGranules
+      - LzardsBackup
+      - ChangeGranuleCollectionS3
+  - Update aws-sdk versions to ^3.993.0
 
 ## [v21.3.0] 2026-01-26
 
@@ -1542,7 +1556,7 @@ degraded execution table operations.
 ### Fixed
 
 - **CUMULUS-3817**
-  - updated applicable @aws-sdk dependencies to 3.621.0 to remove inherited vulnerability from fast-xml-parser
+  - updated applicable @aws-sdk dependencies to 3.993.0 to remove inherited vulnerability from fast-xml-parser
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
