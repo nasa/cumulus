@@ -59,10 +59,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **CUMULUS-4566**
-
-  - Updated AJV to ^8.18.0 to address CVE findings
-  - Update aws-sdk versions to ^3.993.0 to address CVE findings
-  - Updated minmatch to ^10.2.1
+  - Updated AJV to ^8.18.0
+    - Updated task components to resolve malformed/errant task schemas in the following lambdas:
+      - SyncGranules
+      - SendPan
+      - QueueGranules
+      - MoveGranules
+      - LzardsBackup
+      - ChangeGranuleCollectionS3
+  - Update aws-sdk versions to ^3.993.0
+- **CUMULUS-4516**
+  - Updated sftp-client to explicitly tear down stream in sftp-client/syncFromS3
+  - Updated sftp-client to warn/log on `No response from server` errors in `end` method
 
 ## [v21.3.0] 2026-01-26
 
