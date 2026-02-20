@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable Changes
+
 ### Breaking Changes
 
 - **CUMULUS-4473**
@@ -48,13 +50,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated packaging script for granule-invalidator to use `uv pip install` instead of `uv sync`.
   - Added `private_api_lambda_arn` output to the archive module and `private_api_lambda_arn` variable to the ingest module.
 
-### Notable Changes
+### Fixed
 
-- **CUMULUS-4473**
-  - Updated Granules Bulk Operations API endpoints to:
-    - Support `granuleInventoryReportName` and `s3GranuleIdInputFile` in the payload.
-    - Return consistent output formats across endpoints (previously, some endpoints aggregated errors
-      while others returned per-granule errors)
+- **CUMULUS-4566**
+  - Updated AJV to ^8.18.0
+    - Updated task components to resolve malformed/errant task schemas in the following lambdas:
+      - SyncGranules
+      - SendPan
+      - QueueGranules
+      - MoveGranules
+      - LzardsBackup
+      - ChangeGranuleCollectionS3
+  - Update aws-sdk versions to ^3.993.0
+- **CUMULUS-4516**
+  - Updated sftp-client to explicitly tear down stream in sftp-client/syncFromS3
+  - Updated sftp-client to warn/log on `No response from server` errors in `end` method
 
 ## [v21.3.0] 2026-01-26
 
@@ -1579,7 +1589,7 @@ degraded execution table operations.
 ### Fixed
 
 - **CUMULUS-3817**
-  - updated applicable @aws-sdk dependencies to 3.621.0 to remove inherited vulnerability from fast-xml-parser
+  - updated applicable @aws-sdk dependencies to 3.993.0 to remove inherited vulnerability from fast-xml-parser
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
