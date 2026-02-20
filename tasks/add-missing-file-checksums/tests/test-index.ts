@@ -5,7 +5,7 @@ import * as S3 from '@cumulus/aws-client/S3';
 import cryptoRandomString from 'crypto-random-string';
 import * as crypto from 'crypto';
 
-import { handler, addChecksumToGranuleFile } from '../src';
+import { handler, addChecksumToGranuleFile, updateHashFromBody } from '../src';
 
 const randomString = () => cryptoRandomString({ length: 10 });
 
@@ -308,5 +308,30 @@ test('addChecksumToGranuleFile() uses ranged GETs for large files and computes c
   // Verify ranges look correct
   t.true(rangedCalls.length > 1);
   t.is(result.checksumType, 'md5');
-  t.is(result.checksum, crypto.createHash('md5').update(full).digest('hex'));
+  t.is(result.checksum, crypto.createHash('md5').update(new Uint8Array(full.buffer, full.byteOffset, full.byteLength)).digest('hex'));
+});
+
+test('updateHashFromBody() stream branch', async (t) => {
+  const hash = crypto.createHash('md5');
+  await updateHashFromBody(hash, Readable.from(['test']) as any);
+  t.is(hash.digest('hex'), crypto.createHash('md5').update('test').digest('hex'));
+});
+
+test('updateHashFromBody() Buffer branch', async (t) => {
+  const hash = crypto.createHash('md5');
+  const body = Buffer.from('test');
+  await updateHashFromBody(hash, Buffer.from('test'));
+  t.is(hash.digest('hex'), crypto.createHash('md5').update(new Uint8Array(body.buffer, body.byteOffset, body.byteLength)).digest('hex'));
+});
+
+test('updateHashFromBody() empty body branch', async (t) => {
+  const hash = crypto.createHash('md5');
+  await updateHashFromBody(hash, undefined);
+  t.is(hash.digest('hex'), crypto.createHash('md5').update('').digest('hex'));
+});
+
+test('updateHashFromBody() Uint8Array branch', async (t) => {
+  const hash = crypto.createHash('md5');
+  await updateHashFromBody(hash, new Uint8Array(Buffer.from('test')));
+  t.is(hash.digest('hex'), crypto.createHash('md5').update('test').digest('hex'));
 });

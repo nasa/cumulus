@@ -7,21 +7,22 @@ import crypto from 'crypto';
 import type { Readable } from 'stream';
 import { Granule, GranuleFile, HandlerInput, HandlerEvent } from './types';
 
-const updateHashFromBody = async (hash: crypto.Hash,
-  body: Readable | Buffer | Uint8Array | string) => {
+export const updateHashFromBody = async (hash: crypto.Hash,
+  body: Readable | Buffer | Uint8Array | undefined) => {
   if (!body) return;
 
   // Node readable stream
   if (typeof (body as Readable).on === 'function') {
+    const stream = body as Readable;
     await new Promise<void>((resolve, reject) => {
-      (body as Readable).on('data', (chunk: any) => hash.update(chunk as any));
-      (body as Readable).on('end', resolve);
-      (body as Readable).on('error', reject);
+      stream.on('data', (chunk: any) => hash.update(chunk as any));
+      stream.on('end', resolve);
+      stream.on('error', reject);
     });
     return;
   }
 
-  // Set to Uint8Array if not a stream
+  // Normalize into buffer and set to Uint8Array if not a stream
   const buf = Buffer.isBuffer(body) ? body : Buffer.from(body);
   hash.update(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength));
 };
