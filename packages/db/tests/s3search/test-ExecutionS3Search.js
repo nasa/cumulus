@@ -655,7 +655,7 @@ test.serial('ExecutionS3Search only returns count if countOnly is set to true', 
 test.serial('ExecutionS3Search with archived: true pulls only archive granules', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
-    archived: true,
+    archived: 'true',
   };
   const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
   const response = await dbSearch.query();
@@ -667,7 +667,7 @@ test.serial('ExecutionS3Search with archived: true pulls only archive granules',
 test.serial('ExecutionS3Search with archived: false pulls only non-archive granules', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
-    archived: false,
+    archived: 'false',
   };
   const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
   const response = await dbSearch.query();

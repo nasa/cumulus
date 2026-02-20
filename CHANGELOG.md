@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `@cumulus/db/search` module to build queries compatible with both PostgreSQL and DuckDB.
   - Updated the `@cumulus/db/translate` `translatePostgres*Record*ToApi*Record*` functions to
     correctly handle query results from both PostgreSQL and DuckDB.
+  - Updated the `@cumulus/db/search` module to support searching on nested JSON fields.
 
 ### Changed
 

@@ -132,6 +132,28 @@ abstract class BaseSearch {
   }
 
   /**
+   * Build a JSON query expression string for nested fields.
+   *
+   *
+   * @param fullFieldName - Dot-separated JSON path, e.g., 'query_fields.cnm.receivedTime'
+   * @returns The JSON query path string
+   * @example
+   * buildJsonQueryExpression('query_fields.cnm.receivedTime')
+   * // returns: query_fields -> 'cnm' ->> 'receivedTime'
+   */
+  protected buildJsonQueryExpression = (
+    fullFieldName: string
+  ) => {
+    const normalizedFieldName = fullFieldName === 'error.Error.keyword'
+      ? 'error.Error' : fullFieldName;
+    const [column, ...pathParts] = normalizedFieldName.split('.');
+
+    return `${column}${pathParts
+      .map((p, i) => (i === pathParts.length - 1 ? ` ->> '${p}'` : ` -> '${p}'`))
+      .join('')}`;
+  };
+
+  /**
    * Build the search query
    *
    * @param knex - DB client
@@ -226,6 +248,12 @@ abstract class BaseSearch {
     Object.entries(exists).forEach(([name, value]) => {
       const queryMethod = value ? 'whereNotNull' : 'whereNull';
       const checkNull = value ? 'not null' : 'null';
+      if (name.includes('.')) {
+        [countQuery, searchQuery].forEach((query) => query?.whereRaw(
+          `(${this.tableName}.${this.buildJsonQueryExpression(name)}) is ${checkNull}`
+        ));
+        return;
+      }
       switch (name) {
         case 'collectionName':
         case 'collectionVersion':
@@ -242,10 +270,6 @@ abstract class BaseSearch {
           break;
         case 'asyncOperationId':
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.async_operation_cumulus_id`));
-          break;
-        case 'error':
-        case 'error.Error':
-          [countQuery, searchQuery].forEach((query) => query?.whereRaw(`${this.tableName}.error ->> 'Error' is ${checkNull}`));
           break;
         case 'parentArn':
           [countQuery, searchQuery].forEach((query) => query?.[queryMethod](`${this.tableName}.parent_cumulus_id`));
@@ -274,9 +298,26 @@ abstract class BaseSearch {
   }) {
     const { countQuery, searchQuery, dbQueryParameters } = params;
     const { range = {} } = dbQueryParameters ?? this.dbQueryParameters;
+    const queries = [countQuery, searchQuery];
 
     Object.entries(range).forEach(([name, rangeValues]) => {
-      const { gte, lte } = rangeValues;
+      const { gte, lte } = rangeValues ?? {};
+      if (!gte && !lte) return;
+
+      if (name.includes('.')) {
+        const jsonExpr = `(${this.tableName}.${this.buildJsonQueryExpression(name)})`;
+        if (gte) {
+          queries.forEach((query) =>
+            query?.whereRaw(`${jsonExpr} >= ?`, [gte]));
+        }
+
+        if (lte) {
+          queries.forEach((query) =>
+            query?.whereRaw(`${jsonExpr} <= ?`, [lte]));
+        }
+        return;
+      }
+
       if (gte) {
         [countQuery, searchQuery].forEach((query) => query?.where(`${this.tableName}.${name}`, '>=', gte));
       }
@@ -311,6 +352,12 @@ abstract class BaseSearch {
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
     Object.entries(term).forEach(([name, value]) => {
+      if (name.includes('.')) {
+        [countQuery, searchQuery].forEach((query) => query?.whereRaw(
+          `(${this.tableName}.${this.buildJsonQueryExpression(name)}) = ?`, value
+        ));
+        return;
+      }
       switch (name) {
         case 'collectionName':
           [countQuery, searchQuery].forEach((query) => query?.where(`${collectionsTable}.name`, value));
@@ -326,10 +373,6 @@ abstract class BaseSearch {
           break;
         case 'pdrName':
           [countQuery, searchQuery].forEach((query) => query?.where(`${pdrsTable}.name`, value));
-          break;
-        case 'error.Error':
-          [countQuery, searchQuery]
-            .forEach((query) => value && query?.whereRaw(`${this.tableName}.error->>'Error' = ?`, value));
           break;
         case 'asyncOperationId':
           [countQuery, searchQuery].forEach((query) => query?.where(`${asyncOperationsTable}.id`, value));
@@ -383,6 +426,12 @@ abstract class BaseSearch {
     }
 
     Object.entries(omit(terms, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
+      if (name.includes('.')) {
+        [countQuery, searchQuery].forEach((query) => query?.whereRaw(
+          `(${this.tableName}.${this.buildJsonQueryExpression(name)}) in (${value.map(() => '?').join(',')})`, [...value]
+        ));
+        return;
+      }
       switch (name) {
         case 'executionArn':
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${executionsTable}.arn`, value));
@@ -392,10 +441,6 @@ abstract class BaseSearch {
           break;
         case 'pdrName':
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${pdrsTable}.name`, value));
-          break;
-        case 'error.Error':
-          [countQuery, searchQuery]
-            .forEach((query) => query?.whereRaw(`${this.tableName}.error->>'Error' in (${value.map(() => '?').join(',')})`, [...value]));
           break;
         case 'asyncOperationId':
           [countQuery, searchQuery].forEach((query) => query?.whereIn(`${asyncOperationsTable}.id`, value));
@@ -442,6 +487,12 @@ abstract class BaseSearch {
       }));
     }
     Object.entries(omit(term, ['collectionName', 'collectionVersion'])).forEach(([name, value]) => {
+      if (name.includes('.')) {
+        [countQuery, searchQuery].forEach((query) => query?.whereRaw(
+          `(${this.tableName}.${this.buildJsonQueryExpression(name)}) != ?`, value
+        ));
+        return;
+      }
       switch (name) {
         case 'executionArn':
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${executionsTable}.arn`, value));
@@ -457,9 +508,6 @@ abstract class BaseSearch {
           break;
         case 'parentArn':
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${executionsTable}_parent.arn`, value));
-          break;
-        case 'error.Error':
-          [countQuery, searchQuery].forEach((query) => value && query?.whereRaw(`${this.tableName}.error->>'Error' != ?`, value));
           break;
         default:
           [countQuery, searchQuery].forEach((query) => query?.whereNot(`${this.tableName}.${name}`, value));
@@ -484,9 +532,9 @@ abstract class BaseSearch {
     const { sort } = dbQueryParameters || this.dbQueryParameters;
     sort?.forEach((key) => {
       const prefixedColumn = `${this.tableName}.${key.column}`;
-      if (key.column.startsWith('error')) {
+      if (key.column.includes('.')) {
         searchQuery.orderByRaw(
-          `${this.tableName}.error ->> 'Error' ${key.order}`
+          `(${this.tableName}.${this.buildJsonQueryExpression(key.column)}) ${key.order}`
         );
       } else if (dbQueryParameters?.collate) {
         searchQuery.orderByRaw(

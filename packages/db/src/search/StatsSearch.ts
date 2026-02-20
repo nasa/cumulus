@@ -203,10 +203,12 @@ class StatsSearch extends BaseSearch {
    * @param knex - the knex client to be used
    */
   private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex) {
-    if (this.field?.includes('error.Error')) {
-      query.select(knex.raw("error ->> 'Error' as aggregatedfield"));
+    const normalizedKey = this.field === 'error.Error.keyword' ? 'error.Error' : this.field;
+    if (normalizedKey?.includes('.')) {
+      const [root, ...nested] = normalizedKey.split('.');
+      query.select(knex.raw(`${root} ->> '${nested.join('.')}' as aggregatedfield`));
     } else {
-      query.select(`${this.tableName}.${this.field} as aggregatedfield`);
+      query.select(`${this.tableName}.${normalizedKey} as aggregatedfield`);
     }
     query.modify((queryBuilder) => this.joinTables(queryBuilder))
       .count('* as count')

@@ -109,6 +109,9 @@ test.before(async (t) => {
     'error.Error': 'CumulusMessageAdapterExecutionError',
     lastUpdateDateTime: '2020-03-18T10:00:00.000Z',
     processingEndDateTime: '2020-03-16T10:00:00.000Z',
+    'queryFields.cnm.receivedTime': '2020-03-18T21:11:20.802Z',
+    'queryFields.cnm.processCompleteTime': '2020-03-18T21:12:30.916Z',
+    'queryFields.cnm.product.name': 'cnm_product_name',
     productVolume: '6000',
     timeToArchive: '700.29',
     timeToPreprocess: '800.18',
@@ -150,7 +153,21 @@ test.before(async (t) => {
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
       archived: Boolean(num % 2),
+      query_fields: num === 50
+        ? {
+          cnm: {
+            receivedTime: t.context.granuleSearchFields['queryFields.cnm.receivedTime'],
+            processCompleteTime:
+              t.context.granuleSearchFields['queryFields.cnm.processCompleteTime'],
+            product: {
+              name: t.context.granuleSearchFields['queryFields.cnm.product.name'],
+            },
+          },
+        }
+        : undefined,
     }));
+
+  console.log(t.context.granules[50]);
 
   t.context.files = t.context.granules
     .flatMap((granule, i) => [
@@ -1124,7 +1141,7 @@ test.serial('GranuleS3Search with includeFullRecord true retrieves granules, fil
 test.serial('GranuleS3Search with archived: true pulls only archive granules', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
-    archived: true,
+    archived: 'true',
   };
   const dbSearch = new GranuleS3Search({ queryStringParameters }, connection);
   const response = await dbSearch.query();
@@ -1136,7 +1153,7 @@ test.serial('GranuleS3Search with archived: true pulls only archive granules', a
 test.serial('GranuleS3Search with archived: false pulls only non-archive granules', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
-    archived: false,
+    archived: 'false',
   };
   const dbSearch = new GranuleS3Search({ queryStringParameters }, connection);
   const response = await dbSearch.query();
@@ -1169,4 +1186,60 @@ test.serial('GranuleS3Search returns the correct record', async (t) => {
   });
   t.deepEqual(omit(results?.[0], ['createdAt', 'duration']), omit(expectedApiRecord, ['createdAt', 'duration']));
   t.truthy(results?.[0]?.createdAt);
+});
+
+test.serial('GranuleS3Search supports term search on nested json field', async (t) => {
+  const { connection } = t.context;
+  const dbRecord = t.context.granules[50];
+  const queryStringParameters = {
+    limit: 200,
+    'queryFields.cnm.receivedTime': t.context.granuleSearchFields['queryFields.cnm.receivedTime'],
+    'queryFields.cnm.processCompleteTime': t.context.granuleSearchFields['queryFields.cnm.processCompleteTime'],
+    'queryFields.cnm.product.name__not': 'abc',
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new GranuleS3Search({ queryStringParameters }, connection);
+  const { results, meta } = await dbSearch.query();
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+
+  const expectedApiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
+    granulePgRecord: dbRecord,
+    collectionPgRecord: t.context.testPgCollection2,
+    executionUrls: [{ url: 'laterUrl50' }],
+    files: t.context.files.filter((file) => file.granule_cumulus_id === dbRecord.cumulus_id),
+    pdr: t.context.pdr,
+    providerPgRecord: t.context.provider,
+  });
+  // float fields won't match exactly
+  const omitFields = ['createdAt', 'duration', 'timeToArchive'];
+  t.deepEqual(omit(results?.[0], omitFields), omit(expectedApiRecord, omitFields));
+  t.truthy(results?.[0]?.createdAt);
+});
+
+test.serial('GranuleS3Search supports terms search on nested json field', async (t) => {
+  const { connection } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    'queryFields.cnm.product.name__in': [t.context.granuleSearchFields['queryFields.cnm.product.name'], 'abc'].join(','),
+  };
+  const dbSearch = new GranuleS3Search({ queryStringParameters }, connection);
+  const { results, meta } = await dbSearch.query();
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+});
+
+test.serial('GranuleS3Search supports existence checks and sorting for nested JSON fields', async (t) => {
+  const { connection } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    'queryFields.cnm.product.name__exists': 'true',
+    'queryFields.cnm.product.random__exists': 'false',
+    sort_by: 'queryFields.cnm.product.name',
+    order: 'asc',
+  };
+  const dbSearch = new GranuleS3Search({ queryStringParameters }, connection);
+  const { results, meta } = await dbSearch.query();
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
 });
