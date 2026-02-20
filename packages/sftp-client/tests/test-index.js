@@ -3,7 +3,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { noop } = require('lodash');
+const noop = require('lodash/noop');
 const S3 = require('@cumulus/aws-client/S3');
 const test = require('ava');
 const { promisify } = require('util');
