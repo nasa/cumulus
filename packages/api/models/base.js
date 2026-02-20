@@ -2,7 +2,7 @@
 
 const get = require('lodash/get');
 const isEqual = require('lodash/isEqual');
-const Ajv = require('ajv');
+const Ajv = require('ajv').default;
 const pWaitFor = require('p-wait-for');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -110,7 +110,7 @@ class Manager {
     const ajv = new Ajv({
       removeAdditional,
       useDefaults: true,
-      v5: true,
+      strict: false,
     });
     const validate = ajv.compile(schemaWithAdditionalPropertiesProhibited);
     const valid = validate(item);
