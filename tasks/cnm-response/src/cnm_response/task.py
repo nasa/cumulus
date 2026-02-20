@@ -42,6 +42,7 @@ class CnmResponse(Process):
         cnm_s = {}
         try:
             cnm_s = self.config["cnm"] or self.input
+            self.logger.info(f"Generating response for CNM-S: {cnm_s}")
             cnm_r = self.cnm_generator.get_cnm_r(
                 cnm_s=cnm_s,
                 exception=self.config["exception"],
@@ -56,8 +57,7 @@ class CnmResponse(Process):
                 cause=str(e),
             )
 
-            _send_to_senders(
-                self.senders,
+            self._send_message(
                 Message(
                     body=cnm_r,
                     attributes=_get_message_attributes(cnm_r),
@@ -68,8 +68,7 @@ class CnmResponse(Process):
         # TODO(reweeden): Handle retries... Only send response on last retry
         # to avoid getting multiple responses for a single request.
         # Send message
-        results = _send_to_senders(
-            self.senders,
+        results = self._send_message(
             Message(
                 body=cnm_r,
                 attributes=_get_message_attributes(cnm_r),
@@ -83,16 +82,18 @@ class CnmResponse(Process):
             "input": self.input,
         }
 
+    def _send_message(self, message: Message) -> list[Exception]:
+        self.logger.info("Sending CNM-R: {message}")
 
-def _send_to_senders(senders: list[Sender], message: Message) -> list[Exception]:
-    results = []
-    for sender in senders:
-        try:
-            sender.send(message)
-        except Exception as e:
-            results.append(e)
+        results = []
+        for sender in self.senders:
+            self.logger.info(f"Sending response to {sender.arn}")
+            try:
+                sender.send(message)
+            except Exception as e:
+                results.append(e)
 
-    return results
+        return results
 
 
 def _get_message_attributes(cnm_r: dict) -> MessageAttributesDict:
