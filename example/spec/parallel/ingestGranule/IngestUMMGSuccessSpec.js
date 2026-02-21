@@ -381,7 +381,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
       const expectedGranuleId = inputPayload.granules[0].granuleId;
       expect(metadataResults.items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(expectedGranuleId);
-      expect(metadataResults.items[0].umm.DataGranule.DayNightFlag).toEqual('UNSPECIFIED');
+      expect(metadataResults.items[0].umm.DataGranule.DayNightFlag).toEqual('Unspecified');
       expect(metadataResults.items[0].umm.DataGranule.ProductionDateTime).toBeInstanceOf(String);
       expect(new Date(metadataResults.items[0].umm.DataGranule.ProductionDateTime).toISOString()).not.toThrow();
       expect(metadataResults.items[0].umm.GranuleUR).toEqual(expectedGranuleId);

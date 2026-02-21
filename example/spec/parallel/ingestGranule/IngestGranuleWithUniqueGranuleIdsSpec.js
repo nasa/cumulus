@@ -555,9 +555,9 @@ describe('The S3 Ingest Granules workflow with uniquification enabled', () => {
 
     it('updates the CMR metadata with the expected producerGranuleId', () => {
       expect(metadataResults[1].items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(producerGranuleId);
-      expect(metadataResults.items[0].umm.DataGranule.DayNightFlag).toEqual('UNSPECIFIED');
-      expect(metadataResults.items[0].umm.DataGranule.ProductionDateTime).toBeInstanceOf(String);
-      expect(new Date(metadataResults.items[0].umm.DataGranule.ProductionDateTime).toISOString()).not.toThrow();
+      expect(metadataResults[1].items[0].umm.DataGranule.DayNightFlag).toEqual('Unspecified');
+      expect(metadataResults[1].items[0].umm.DataGranule.ProductionDateTime).toBeInstanceOf(String);
+      expect(new Date(metadataResults[1].items[0].umm.DataGranule.ProductionDateTime).toISOString()).not.toThrow();
       expect(metadataResults[1].items[0].umm.GranuleUR).toEqual(uniquifiedGranuleId);
     });
 
