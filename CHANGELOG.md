@@ -34,6 +34,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added supporting Terraform for the CnmResponse task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
 - **CUMULUS-4498**
   - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+- **CUMULUS-4517**
+  - Added the `@cumulus/db/s3search` module to enable Cumulus record search via S3-backed tables.
+    The S3Search subclasses inherit from search/BaseSearch, allowing them to reuse existing query
+    logic while executing search queries on DuckDB and providing custom record translation.
+  - Updated the `@cumulus/db/search` module to build queries compatible with both PostgreSQL and DuckDB.
+  - Updated the `@cumulus/db/search` module to support searching on nested JSON fields.
+  - Updated the `@cumulus/db/translate` `translatePostgres*Record*ToApi*Record*` functions to
+    correctly handle query results from both PostgreSQL and DuckDB.
 
 ### Changed
 
