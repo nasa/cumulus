@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 
 import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
 import { ApiGranule, ApiGranuleRecord, GranuleStatus } from '@cumulus/types/api/granules';
-import { removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
+import { parseIfJson, removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
 import isNil from 'lodash/isNil';
 import isNull from 'lodash/isNull';
@@ -52,31 +52,36 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   providerPgRecord?: Pick<PostgresProviderRecord, 'name'>,
 }): ApiGranuleRecord => removeNilProperties({
   archived: granulePgRecord.archived,
-  beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
+  beginningDateTime: returnNullOrUndefinedOrDate(granulePgRecord.beginning_date_time)
+    ?.toISOString(),
   cmrLink: granulePgRecord.cmr_link,
   collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
-  createdAt: granulePgRecord.created_at?.getTime(),
+  createdAt: new Date(granulePgRecord.created_at)?.getTime(),
   duration: granulePgRecord.duration,
-  endingDateTime: granulePgRecord.ending_date_time?.toISOString(),
-  error: granulePgRecord.error,
+  endingDateTime: returnNullOrUndefinedOrDate(granulePgRecord.ending_date_time)?.toISOString(),
+  error: parseIfJson(granulePgRecord.error),
   execution: executionUrls[0] ? executionUrls[0].url : undefined,
   files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : [],
   granuleId: granulePgRecord.granule_id,
-  lastUpdateDateTime: granulePgRecord.last_update_date_time?.toISOString(),
+  lastUpdateDateTime: returnNullOrUndefinedOrDate(granulePgRecord.last_update_date_time)
+    ?.toISOString(),
   pdrName: pdr ? pdr.name : undefined,
-  processingEndDateTime: granulePgRecord.processing_end_date_time?.toISOString(),
-  processingStartDateTime: granulePgRecord.processing_start_date_time?.toISOString(),
+  processingEndDateTime: returnNullOrUndefinedOrDate(granulePgRecord.processing_end_date_time)
+    ?.toISOString(),
+  processingStartDateTime: returnNullOrUndefinedOrDate(granulePgRecord.processing_start_date_time)
+    ?.toISOString(),
   producerGranuleId: granulePgRecord.producer_granule_id,
-  productionDateTime: granulePgRecord.production_date_time?.toISOString(),
+  productionDateTime: returnNullOrUndefinedOrDate(granulePgRecord.production_date_time)
+    ?.toISOString(),
   productVolume: granulePgRecord.product_volume,
   provider: providerPgRecord ? providerPgRecord.name : undefined,
   published: granulePgRecord.published,
-  queryFields: granulePgRecord.query_fields,
+  queryFields: parseIfJson(granulePgRecord.query_fields),
   status: granulePgRecord.status as GranuleStatus,
-  timestamp: granulePgRecord.timestamp?.getTime(),
+  timestamp: returnNullOrUndefinedOrDate(granulePgRecord.timestamp)?.getTime(),
   timeToArchive: granulePgRecord.time_to_archive,
   timeToPreprocess: granulePgRecord.time_to_process,
-  updatedAt: granulePgRecord.updated_at?.getTime(),
+  updatedAt: new Date(granulePgRecord.updated_at)?.getTime(),
 });
 
 /**

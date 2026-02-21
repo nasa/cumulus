@@ -1,48 +1,44 @@
 'use strict';
 
 const test = require('ava');
+const knex = require('knex');
 const cryptoRandomString = require('crypto-random-string');
+const omit = require('lodash/omit');
 const range = require('lodash/range');
+const { s3 } = require('@cumulus/aws-client/services');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { ExecutionSearch } = require('../../dist/search/ExecutionSearch');
-
 const {
-  generateLocalTestDb,
-  destroyLocalTestDb,
-  CollectionPgModel,
+  createDuckDBTables,
+  setupDuckDBWithS3ForTesting,
+  stageAndLoadDuckDBTableFromData,
+} = require('../../dist/test-duckdb-utils');
+const {
+  asyncOperationsS3TableSql,
+  collectionsS3TableSql,
+  executionsS3TableSql,
+} = require('../../dist/s3search/s3TableSchemas');
+const { ExecutionS3Search } = require('../../dist/s3search/ExecutionS3Search');
+const {
+  translatePostgresExecutionToApiExecutionWithoutDbQuery,
+} = require('../../dist/translate/executions');
+const {
   fakeAsyncOperationRecordFactory,
   fakeCollectionRecordFactory,
-  migrationDir,
   fakeExecutionRecordFactory,
-  ExecutionPgModel,
-  AsyncOperationPgModel,
 } = require('../../dist');
 
-const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
-
 test.before(async (t) => {
-  const { knexAdmin, knex } = await generateLocalTestDb(
-    testDbName,
-    migrationDir
-  );
-
-  t.context.knexAdmin = knexAdmin;
-  t.context.knex = knex;
+  t.context.knexBuilder = knex({ client: 'pg' });
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
   const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
 
   // Create a PG Collection
-  t.context.collectionPgModel = new CollectionPgModel();
   t.context.testPgCollection = fakeCollectionRecordFactory(
     { cumulus_id: 0,
       name: 'testCollection',
       version: 8 }
-  );
-
-  await t.context.collectionPgModel.insert(
-    t.context.knex,
-    t.context.testPgCollection
   );
 
   t.context.collectionCumulusId = t.context.testPgCollection.cumulus_id;
@@ -52,22 +48,13 @@ test.before(async (t) => {
     t.context.testPgCollection.version
   );
 
-  t.context.asyncOperationsPgModel = new AsyncOperationPgModel();
   t.context.testAsyncOperation = fakeAsyncOperationRecordFactory({ cumulus_id: 140 });
   t.context.asyncCumulusId = t.context.testAsyncOperation.cumulus_id;
 
-  await t.context.asyncOperationsPgModel.insert(
-    t.context.knex,
-    t.context.testAsyncOperation
-  );
-
   t.context.duration = 100;
 
-  const executions = [];
-  t.context.executionPgModel = new ExecutionPgModel();
-
-  range(50).map((num) => (
-    executions.push(fakeExecutionRecordFactory({
+  t.context.executions = range(50).map((num) => (
+    fakeExecutionRecordFactory({
       collection_cumulus_id: num % 2 === 0 ? t.context.collectionCumulusId : undefined,
       status: statuses[(num % 3) + 1],
       error: errors[num % 5],
@@ -89,28 +76,62 @@ test.before(async (t) => {
       cumulus_id: num,
       timestamp: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
       archived: Boolean(num % 2),
-    }))
+    })
   ));
-  await t.context.executionPgModel.insert(
-    t.context.knex,
-    executions
+
+  const { instance, connection } = await setupDuckDBWithS3ForTesting();
+  t.context.instance = instance;
+  t.context.connection = connection;
+
+  t.context.testBucket = cryptoRandomString({ length: 10 });
+  await s3().createBucket({ Bucket: t.context.testBucket });
+  await createDuckDBTables(connection);
+
+  const duckdbS3Prefix = `s3://${t.context.testBucket}/duckdb/`;
+
+  console.log('create collections');
+  await stageAndLoadDuckDBTableFromData(
+    connection,
+    t.context.knexBuilder,
+    'collections',
+    collectionsS3TableSql,
+    t.context.testPgCollection,
+    `${duckdbS3Prefix}collections.parquet`
+  );
+
+  console.log('create asyncOperation');
+  await stageAndLoadDuckDBTableFromData(
+    connection,
+    t.context.knexBuilder,
+    'async_operations',
+    asyncOperationsS3TableSql,
+    t.context.testAsyncOperation,
+    `${duckdbS3Prefix}async_operations.parquet`
+  );
+
+  console.log('create executions');
+  await stageAndLoadDuckDBTableFromData(
+    connection,
+    t.context.knexBuilder,
+    'executions',
+    executionsS3TableSql,
+    t.context.executions,
+    `${duckdbS3Prefix}executions.parquet`
   );
 });
 
 test.after.always(async (t) => {
-  await destroyLocalTestDb({
-    ...t.context,
-    testDbName,
-  });
+  await recursivelyDeleteS3Bucket(t.context.testBucket);
+  await t.context.connection.closeSync();
 });
 
-test('ExecutionSearch returns correct response for basic query', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search returns correct response for basic query', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     estimateTableRowCount: 'false',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const results = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const results = await dbSearch.query();
   t.is(results.meta.count, 50);
   t.is(results.results.length, 10);
   const expectedResponse1 = {
@@ -147,15 +168,15 @@ test('ExecutionSearch returns correct response for basic query', async (t) => {
   t.deepEqual(results.results[9], expectedResponse10);
 });
 
-test('ExecutionSearch supports page and limit params', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports page and limit params', async (t) => {
+  const { connection } = t.context;
   let queryStringParameters = {
     estimateTableRowCount: 'false',
     limit: 25,
     page: 2,
   };
-  let dbSearch = new ExecutionSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  let dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 25);
 
@@ -164,8 +185,8 @@ test('ExecutionSearch supports page and limit params', async (t) => {
     limit: 10,
     page: 5,
   };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
+  dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 10);
 
@@ -174,81 +195,81 @@ test('ExecutionSearch supports page and limit params', async (t) => {
     limit: 10,
     page: 11,
   };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
+  dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 0);
 });
 
-test('ExecutionSearch supports infix search', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports infix search', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
     infix: 'fake',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test('ExecutionSearch supports prefix search', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports prefix search', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
     prefix: 'test',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test('ExecutionSearch supports collectionId term search', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports collectionId term search', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
     collectionId: t.context.collectionId,
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test('ExecutionSearch supports asyncOperationId term search', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports asyncOperationId term search', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
     asyncOperationId: t.context.testAsyncOperation.id,
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
   t.is(response.results[0].asyncOperationId, t.context.testAsyncOperation.id);
 });
 
-test('ExecutionSearch supports term search for number field', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports term search for number field', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
     duration: 100,
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 24);
   t.is(response.results?.length, 24);
 });
 
-test('ExecutionSearch supports term search for string field', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports term search for string field', async (t) => {
+  const { connection } = t.context;
   let queryStringParameters = {
     limit: 50,
     status: 'completed',
   };
-  let dbSearch = new ExecutionSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  let dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  let response = await dbSearch.query();
   t.is(response.meta.count, 17);
   t.is(response.results?.length, 17);
 
@@ -256,33 +277,33 @@ test('ExecutionSearch supports term search for string field', async (t) => {
     limit: 50,
     type: 'testWorkflow__5',
   };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
+  dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test('ExecutionSearch supports term search for nested error.Error', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports term search for nested error.Error', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     'error.Error': 'CumulusMessageAdapterError',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 10);
   t.is(response.results?.length, 10);
 });
 
-test('ExecutionSearch supports range search', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports range search', async (t) => {
+  const { connection } = t.context;
   let queryStringParameters = {
     limit: 50,
     duration__from: 100,
     duration__to: 150,
   };
-  let dbSearch = new ExecutionSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  let dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  let response = await dbSearch.query();
   t.is(response.meta.count, 24);
   t.is(response.results?.length, 24);
 
@@ -290,63 +311,63 @@ test('ExecutionSearch supports range search', async (t) => {
     limit: 200,
     duration__from: 150,
   };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
+  dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test('ExecutionSearch non-existing fields are ignored', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search non-existing fields are ignored', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     estimateTableRowCount: 'false',
     limit: 200,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
 
-test('ExecutionSearch returns fields specified', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search returns fields specified', async (t) => {
+  const { connection } = t.context;
   const fields = 'status,arn,type,error';
   const queryStringParameters = {
     estimateTableRowCount: 'false',
     fields,
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 10);
   response.results.forEach((execution) => t.deepEqual(Object.keys(execution), fields.split(',')));
 });
 
-test('ExecutionSearch supports search for multiple fields', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports search for multiple fields', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     id: 13,
     workflow_name: 'testWorkflow__13',
     arn: 'fakeArn__13:fakeExecutionName',
     url: 'https://fake-execution13.com/',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test('ExecutionSearch supports sorting', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports sorting', async (t) => {
+  const { connection } = t.context;
   let queryStringParameters = {
     estimateTableRowCount: 'false',
     limit: 50,
     sort_by: 'timestamp',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
   t.true(response.results[0].updatedAt < response.results[49].updatedAt);
@@ -358,8 +379,8 @@ test('ExecutionSearch supports sorting', async (t) => {
     sort_by: 'timestamp',
     order: 'desc',
   };
-  const dbSearch2 = new ExecutionSearch({ queryStringParameters });
-  const response2 = await dbSearch2.query(knex);
+  const dbSearch2 = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response2 = await dbSearch2.query();
   t.is(response2.meta.count, 50);
   t.is(response2.results?.length, 50);
   t.true(response2.results[0].updatedAt > response2.results[49].updatedAt);
@@ -370,22 +391,22 @@ test('ExecutionSearch supports sorting', async (t) => {
     limit: 200,
     sort_key: ['-timestamp'],
   };
-  const dbSearch3 = new ExecutionSearch({ queryStringParameters });
-  const response3 = await dbSearch3.query(knex);
+  const dbSearch3 = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response3 = await dbSearch3.query();
   t.is(response3.meta.count, 50);
   t.is(response3.results?.length, 50);
   t.true(response3.results[0].updatedAt > response3.results[49].updatedAt);
   t.true(response3.results[1].updatedAt > response3.results[25].updatedAt);
 });
 
-test('ExecutionSearch supports sorting by Error', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports sorting by Error', async (t) => {
+  const { connection } = t.context;
   let queryStringParameters = {
     limit: 50,
     sort_by: 'error.Error',
   };
-  const dbSearch7 = new ExecutionSearch({ queryStringParameters });
-  const response7 = await dbSearch7.query(knex);
+  const dbSearch7 = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response7 = await dbSearch7.query();
   t.is(response7.results[0].error.Error, 'CmrFailure');
   t.is(response7.results[49].error.Error, undefined);
 
@@ -394,21 +415,23 @@ test('ExecutionSearch supports sorting by Error', async (t) => {
     sort_by: 'error.Error.keyword',
     order: 'desc',
   };
-  const dbSearch10 = new ExecutionSearch({ queryStringParameters });
-  const response10 = await dbSearch10.query(knex);
-  t.is(response10.results[0].error.Error, undefined);
-  t.is(response10.results[49].error.Error, 'CmrFailure');
+  const dbSearch10 = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response10 = await dbSearch10.query();
+
+  // Unlike PostgreSQL sorting, the {} error appears last
+  t.is(response10.results[0].error.Error, 'UnknownError');
+  t.is(response10.results[49].error.Error, undefined);
 });
 
-test('ExecutionSearch supports terms search', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports terms search', async (t) => {
+  const { connection } = t.context;
 
   let queryStringParameters = {
     limit: 50,
     type__in: ['testWorkflow__1', 'testWorkflow__2'].join(','),
   };
-  let dbSearch = new ExecutionSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  let dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  let response = await dbSearch.query();
   t.is(response.meta.count, 2);
   t.is(response.results?.length, 2);
 
@@ -417,19 +440,19 @@ test('ExecutionSearch supports terms search', async (t) => {
     type__in: ['testWorkflow__1', 'testWorkflow__2'].join(','),
     status__in: 'running',
   };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
+  dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test('ExecutionSearch supports parentArn term search', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports parentArn term search', async (t) => {
+  const { connection } = t.context;
   let queryStringParameters = {
     parentArn: 'fakeArn__21:fakeExecutionName',
   };
-  let dbSearch = new ExecutionSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  let dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  let response = await dbSearch.query();
   const expectedResponse = {
     name: 'testExecutionName',
     status: 'completed',
@@ -455,36 +478,36 @@ test('ExecutionSearch supports parentArn term search', async (t) => {
     limit: 50,
     parentArn__exists: 'true',
   };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
+  dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  response = await dbSearch.query();
   t.is(response.meta.count, 24);
   t.is(response.results?.length, 24);
   queryStringParameters = {
     limit: 50,
     parentArn__in: ['fakeArn__21:fakeExecutionName', 'testArn__22:testExecutionName'].join(','),
   };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
+  dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  response = await dbSearch.query();
   t.is(response.meta.count, 2);
   t.is(response.results?.length, 2);
   queryStringParameters = {
     limit: 50,
     parentArn__not: 'testArn__2:testExecutionName',
   };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
+  dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  response = await dbSearch.query();
   t.is(response.meta.count, 23);
   t.is(response.results?.length, 23);
 });
 
-test('ExecutionSearch supports error.Error terms search', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports error.Error terms search', async (t) => {
+  const { connection } = t.context;
   let queryStringParameters = {
     limit: 50,
     'error.Error__in': ['CumulusMessageAdapterError', 'UnknownError'].join(','),
   };
-  let dbSearch = new ExecutionSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  let dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  let response = await dbSearch.query();
   t.is(response.meta.count, 20);
   t.is(response.results?.length, 20);
 
@@ -492,44 +515,44 @@ test('ExecutionSearch supports error.Error terms search', async (t) => {
     limit: 50,
     'error.Error__in': 'unknownerror',
   };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
+  dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  response = await dbSearch.query();
   t.is(response.meta.count, 0);
   t.is(response.results?.length, 0);
 });
 
-test('ExecutionSearch supports search which checks existence of execution field', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports search which checks existence of execution field', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
     duration__exists: 'true',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 49);
   t.is(response.results?.length, 49);
 });
 
-test('ExecutionSearch supports search which execution field does not match the given value', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports search which execution field does not match the given value', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
     status__not: 'completed',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 33);
   t.is(response.results?.length, 33);
 });
 
-test('ExecutionSearch supports term search for timestamp', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports term search for timestamp', async (t) => {
+  const { connection } = t.context;
   let queryStringParameters = {
     limit: 50,
     timestamp: `${(new Date(2023, 11, 7)).getTime()}`,
   };
-  let dbSearch = new ExecutionSearch({ queryStringParameters });
-  let response = await dbSearch.query(knex);
+  let dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  let response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
   queryStringParameters = {
@@ -537,34 +560,34 @@ test('ExecutionSearch supports term search for timestamp', async (t) => {
     timestamp__from: `${(new Date(2019, 2, 21)).getTime()}`,
     timestamp__to: `${(new Date(2027, 1, 23)).getTime()}`,
   };
-  dbSearch = new ExecutionSearch({ queryStringParameters });
-  response = await dbSearch.query(knex);
+  dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  response = await dbSearch.query();
   t.is(response.meta.count, 36);
   t.is(response.results?.length, 36);
 });
 
-test('ExecutionSearch supports term search for date field', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search supports term search for date field', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
     updatedAt: `${new Date(2018, 0, 20).getTime()}`,
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test('ExecutionSearch includeFullRecord', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search includeFullRecord', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     estimateTableRowCount: 'false',
     limit: 50,
     includeFullRecord: 'true',
   };
 
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const results = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const results = await dbSearch.query();
   t.is(results.meta.count, 50);
   t.is(results.results.length, 50);
   const expectedResponse1 = {
@@ -607,48 +630,70 @@ test('ExecutionSearch includeFullRecord', async (t) => {
   t.deepEqual(results.results[40], expectedResponse40);
 });
 
-test('ExecutionSearch estimates the rowcount of the table by default', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search estimates the rowcount of the table by default', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
   t.is(response.results?.length, 50);
 });
 
-test('ExecutionSearch only returns count if countOnly is set to true', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search only returns count if countOnly is set to true', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     countOnly: 'true',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
   t.is(response.results?.length, 0);
 });
 
-test('ExecutionSearch with archived: true pulls only archive granules', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search with archived: true pulls only archive granules', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     archived: 'true',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   response.results.forEach((ExecutionRecord) => {
     t.is(ExecutionRecord.archived, true);
   });
 });
 
-test('ExecutionSearch with archived: false pulls only non-archive granules', async (t) => {
-  const { knex } = t.context;
+test.serial('ExecutionS3Search with archived: false pulls only non-archive granules', async (t) => {
+  const { connection } = t.context;
   const queryStringParameters = {
     archived: 'false',
   };
-  const dbSearch = new ExecutionSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const response = await dbSearch.query();
   response.results.forEach((ExecutionRecord) => {
     t.is(ExecutionRecord.archived, false);
   });
+});
+
+test.serial('ExecutionS3Search returns the correct record', async (t) => {
+  const { connection } = t.context;
+  const dbRecord = t.context.executions[2];
+  const queryStringParameters = {
+    limit: 200,
+    arn: dbRecord.arn,
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new ExecutionS3Search({ queryStringParameters }, connection);
+  const { results, meta } = await dbSearch.query();
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+  const expectedApiRecord = translatePostgresExecutionToApiExecutionWithoutDbQuery({
+    executionRecord: dbRecord,
+    collectionId: t.context.collectionId,
+    asyncOperationId: t.context.testAsyncOperation.id,
+    parentArn: undefined,
+  });
+  t.deepEqual(omit(results?.[0], 'createdAt'), omit(expectedApiRecord, 'createdAt'));
+  t.truthy(results?.[0]?.createdAt);
 });
