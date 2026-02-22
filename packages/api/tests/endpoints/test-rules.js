@@ -899,7 +899,7 @@ test('POST returns a 400 response if rule type is invalid', async (t) => {
     .expect(400);
   const { message } = response.body;
   t.is(response.status, 400);
-  const regexp = new RegExp('The record has validation errors:.*rule.type.*should be equal to one of the allowed values');
+  const regexp = new RegExp('The record has validation errors:.*rule/type.*must be equal to one of the allowed values');
   t.truthy(message.match(regexp));
 });
 
@@ -1293,7 +1293,7 @@ test('PATCH returns a 400 response if rule type is invalid', async (t) => {
     .expect(400);
 
   const { message } = response.body;
-  const regexp = new RegExp('The record has validation errors:.*rule.type.*should be equal to one of the allowed values');
+  const regexp = new RegExp('The record has validation errors:.*rule/type.*must be equal to one of the allowed values');
   t.truthy(message.match(regexp));
 });
 
@@ -1732,7 +1732,7 @@ test('PUT returns a 400 response if rule type is invalid', async (t) => {
     .expect(400);
 
   const { message } = response.body;
-  const regexp = new RegExp('The record has validation errors:.*rule.type.*should be equal to one of the allowed values');
+  const regexp = new RegExp('The record has validation errors:.*rule/type.*must be equal to one of the allowed values');
   t.truthy(message.match(regexp));
 });
 

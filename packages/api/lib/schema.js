@@ -1,6 +1,6 @@
 'use strict';
 
-const Ajv = require('ajv');
+const Ajv = require('ajv').default;
 const cloneDeep = require('lodash/cloneDeep');
 
 const recordIsValid = (incomingRecord, schema, removeAdditional = false) => {
@@ -30,7 +30,7 @@ const recordIsValid = (incomingRecord, schema, removeAdditional = false) => {
   const ajv = new Ajv({
     removeAdditional,
     useDefaults: true,
-    v5: true,
+    strict: false,
   });
   const validate = ajv.compile(schemaWithAdditionalPropertiesProhibited);
   const valid = validate(record);

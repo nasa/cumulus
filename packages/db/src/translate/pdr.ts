@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 
-import { removeNilProperties } from '@cumulus/common/util';
+import { parseIfJson, removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
 import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
 import { ApiPdr } from '@cumulus/types/api/pdrs';
@@ -85,17 +85,17 @@ export const translatePostgresPdrToApiPdrWithoutDbQuery = ({
   provider: providerPgRecord?.name,
   collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
   status: pdrPgRecord.status,
-  createdAt: pdrPgRecord.created_at.getTime(),
+  createdAt: returnNullOrUndefinedOrDate(pdrPgRecord.created_at)?.getTime(),
   progress: pdrPgRecord.progress,
   execution: executionArn ? getExecutionUrlFromArn(executionArn) : undefined,
   PANSent: pdrPgRecord.pan_sent,
   PANmessage: pdrPgRecord.pan_message,
-  stats: pdrPgRecord.stats,
+  stats: parseIfJson(pdrPgRecord.stats),
   address: pdrPgRecord.address,
   originalUrl: pdrPgRecord.original_url,
-  timestamp: (pdrPgRecord.timestamp ? pdrPgRecord.timestamp.getTime() : undefined),
+  timestamp: returnNullOrUndefinedOrDate(pdrPgRecord.timestamp)?.getTime(),
   duration: pdrPgRecord.duration,
-  updatedAt: pdrPgRecord.updated_at.getTime(),
+  updatedAt: returnNullOrUndefinedOrDate(pdrPgRecord.updated_at)?.getTime(),
 });
 
 /**
