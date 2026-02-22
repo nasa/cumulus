@@ -379,11 +379,17 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('updates the CMR metadata with the expected producerGranuleId', () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
+      expect(metadataResults.items[0].umm.DataGranule.DayNightFlag).toBeDefined();
+      expect(metadataResults.items[0].umm.DataGranule.ProductionDateTime).toBeDefined();
+
       const expectedGranuleId = inputPayload.granules[0].granuleId;
+      const productionDateTime = new Date(metadataResults.items[0].umm.DataGranule.ProductionDateTime);
+      console.log('DataGranule:', metadataResults.items[0].umm.DataGranule);
+
       expect(metadataResults.items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(expectedGranuleId);
       expect(metadataResults.items[0].umm.DataGranule.DayNightFlag).toEqual('Unspecified');
-      expect(metadataResults.items[0].umm.DataGranule.ProductionDateTime).toBeInstanceOf(String);
-      expect(new Date(metadataResults.items[0].umm.DataGranule.ProductionDateTime).toISOString()).not.toThrow();
+      expect(productionDateTime).toBeInstanceOf(Date);
+      expect(Number.isNaN(productionDateTime.getTime())).toBeFalse();
       expect(metadataResults.items[0].umm.GranuleUR).toEqual(expectedGranuleId);
     });
 
