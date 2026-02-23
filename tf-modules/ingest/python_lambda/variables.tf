@@ -1,3 +1,9 @@
+variable "handler" {
+  description = "The function within your code that Lambda calls to begin execution."
+  type        = string
+  default     = "main.handler"
+}
+
 variable "prefix" {
   description = "The prefix for resource names"
   type        = string

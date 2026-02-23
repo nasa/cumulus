@@ -2,7 +2,7 @@ resource "aws_lambda_function" "python_task" {
   function_name    = "${var.prefix}-${var.name}"
   filename         = var.lambda_zip_path
   source_code_hash = filebase64sha256(var.lambda_zip_path)
-  handler          = "main.handler"
+  handler          = var.handler
   role             = var.role
   runtime          = var.runtime
   architectures    = [var.architecture]
