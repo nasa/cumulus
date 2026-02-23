@@ -14,8 +14,8 @@ output "add_unique_granule_id_task" {
 
 output "aws_api_proxy_task" {
   value = {
-    task_arn           = aws_api_proxy.lambda_function.arn
-    last_modified_date = aws_api_proxy.lambda_function.last_modified
+    task_arn           = module.aws_api_proxy.lambda_function.arn
+    last_modified_date = module.aws_api_proxy.lambda_function.last_modified
   }
 }
 
