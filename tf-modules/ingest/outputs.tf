@@ -19,6 +19,14 @@ output "aws_api_proxy_task" {
   }
 }
 
+output "cnm_response_task" {
+  value = {
+    task_arn           = module.cnm_response_task.lambda_function.arn
+    task_log_group     = module.cnm_response_task.log_group.name
+    last_modified_date = module.cnm_response_task.lambda_function.last_modified
+  }
+}
+
 output "discover_granules_task" {
   value = {
     task_arn           = aws_lambda_function.discover_granules_task.arn
@@ -50,8 +58,9 @@ output "files_to_granules_task" {
 
 output "granule_invalidator_task" {
   value = {
-    task_arn           = module.granule_invalidator_task.lambda_function_arn
-    last_modified_date = module.granule_invalidator_task.lambda_function_last_modified
+    task_arn           = module.granule_invalidator_task.lambda_function.arn
+    task_log_group     = module.granule_invalidator_task.log_group.name
+    last_modified_date = module.granule_invalidator_task.lambda_function.last_modified
   }
 }
 

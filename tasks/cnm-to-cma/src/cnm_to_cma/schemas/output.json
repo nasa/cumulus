@@ -1,6 +1,6 @@
 {
-  "title": "SyncGranuleInput",
-  "description": "Describes the input expected by the sync-granule task",
+  "title": "CNMToCMAInput",
+  "description": "Describes the input expected by the cnm-to-cma task",
   "type": "object",
   "required": ["granules"],
   "properties": {

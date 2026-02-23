@@ -59,6 +59,10 @@ output "aws_api_proxy_task" {
   value = module.ingest.aws_api_proxy_task
 }
 
+output "cnm_response_task" {
+  value = module.ingest.cnm_response_task
+}
+
 output "discover_granules_task" {
   value = module.ingest.discover_granules_task
 }
