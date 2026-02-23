@@ -55,6 +55,10 @@ output "add_unique_granule_id_task" {
   value = module.ingest.add_unique_granule_id_task
 }
 
+output "aws_api_proxy_task" {
+  value = module.ingest.aws_api_proxy_task
+}
+
 output "discover_granules_task" {
   value = module.ingest.discover_granules_task
 }

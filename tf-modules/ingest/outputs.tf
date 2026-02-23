@@ -12,6 +12,13 @@ output "add_unique_granule_id_task" {
   }
 }
 
+output "aws_api_proxy_task" {
+  value = {
+    task_arn           = aws_api_proxy.lambda_function.arn
+    last_modified_date = aws_api_proxy.lambda_function.last_modified
+  }
+}
+
 output "discover_granules_task" {
   value = {
     task_arn           = aws_lambda_function.discover_granules_task.arn
