@@ -32,8 +32,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
 - **CUMULUS-4395**
   - Added supporting Terraform for the CnmResponse task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
-- **CUMULUS-4498**
-  - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
 - **CUMULUS-4517**
   - Added the `@cumulus/db/s3search` module to enable Cumulus record search via S3-backed tables.
     The S3Search subclasses inherit from search/BaseSearch, allowing them to reuse existing query
@@ -71,6 +69,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4516**
   - Updated sftp-client to explicitly tear down stream in sftp-client/syncFromS3
   - Updated sftp-client to warn/log on `No response from server` errors in `end` method
+
+## [v21.3.1] 2026-02-16
+
+### Added
+
+- **CUMULUS-4498**
+  - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+
+### Changed
+
+- **CUMULUS-4514**
+  - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
 
 ## [v21.3.0] 2026-01-26
 
@@ -9500,7 +9510,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.1...HEAD
+[v21.3.0]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1
 [v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.3.0
 [v21.2.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.2.0
 [v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
