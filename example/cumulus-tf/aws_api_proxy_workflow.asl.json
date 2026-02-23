@@ -1,0 +1,31 @@
+{
+    "StartAt": "Run AWS API Proxy",
+    "States": {
+        "Run AWS API Proxy": {
+            "Type": "Task",
+            "Resource": "${aws_api_proxy_arn}",
+            "Next": "Workflow Succeeded",
+            "Parameters": {
+                "cma": {
+                    "event.$": "$",
+                    "task_config.$": "$.test_task_config"
+                }
+            },
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Workflow Failed",
+                    "ResultPath": "$.error"
+                }
+            ]
+        },
+        "Workflow Failed": {
+            "Type": "Fail"
+        },
+        "Workflow Succeeded": {
+            "Type": "Succeed"
+        }
+    }
+}
