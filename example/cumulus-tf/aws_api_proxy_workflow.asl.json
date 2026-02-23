@@ -8,7 +8,7 @@
             "Parameters": {
                 "cma": {
                     "event.$": "$",
-                    "task_config.$": "$.test_task_config"
+                    "task_config.$": "$.meta.test_task_config"
                 }
             },
             "Catch": [
