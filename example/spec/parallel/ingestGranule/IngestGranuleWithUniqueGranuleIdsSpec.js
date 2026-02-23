@@ -553,12 +553,11 @@ describe('The S3 Ingest Granules workflow with uniquification enabled', () => {
       expect(result).not.toEqual(false);
     });
 
-    it('updates the CMR metadata with the expected producerGranuleId', () => {
+    it('updates the CMR metadata with the expected producerGranuleId and DataGranule values', () => {
       expect(metadataResults[1].items[0].umm.DataGranule.DayNightFlag).toBeDefined();
       expect(metadataResults[1].items[0].umm.DataGranule.ProductionDateTime).toBeDefined();
 
       const productionDateTime = new Date(metadataResults[1].items[0].umm.DataGranule.ProductionDateTime);
-      console.log('DataGranule:', metadataResults[1].items[0].umm.DataGranule);
 
       expect(metadataResults[1].items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(producerGranuleId);
       expect(metadataResults[1].items[0].umm.DataGranule.DayNightFlag).toEqual('Both');

@@ -2,8 +2,11 @@
 
 const fs = require('fs');
 const path = require('path');
+const sinon = require('sinon');
 const test = require('ava');
 const cloneDeep = require('lodash/cloneDeep');
+const xml2js = require('xml2js');
+const { promisify } = require('util');
 
 const {
   buildS3Uri,
@@ -87,7 +90,7 @@ test.beforeEach(async (t) => {
   ]);
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
-  putJsonS3Object(
+  await putJsonS3Object(
     t.context.systemBucket,
     getDistributionBucketMapKey(t.context.stackName),
     {
@@ -107,9 +110,14 @@ test.beforeEach(async (t) => {
   );
   t.context.filesToUpload = filesToUpload;
   process.env.REINGEST_GRANULE = false;
+  // Mocking the date for ProductionDateTime value checks in tests as the task
+  // sets this to the current time for UMMG Granules for adding or updating a
+  // DataGranule when excludeDataGranule is false.
+  t.context.clock = sinon.useFakeTimers(new Date('2024-01-01T00:00:00Z').getTime());
 });
 
 test.afterEach.always(async (t) => {
+  t.context.clock.restore();
   await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
@@ -255,13 +263,44 @@ test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule 
     });
   });
 
+  const expectedDataGranule1 = {
+    Identifiers: [
+      {
+        Identifier: 'MOD11A1.A2017200.h19v04.006.2017201090722',
+        IdentifierType: 'ProducerGranuleId',
+      },
+    ],
+    DayNightFlag: 'Unspecified',
+    // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+    // despite actually being the time the task is ran (which is what is mocked, Date.now())
+    ProductionDateTime: '2024-01-01T00:00:00.000Z',
+  };
+
+  const expectedDataGranule2 = {
+    Identifiers: [
+      {
+        Identifier: 'MOD11A1.A2017200.h19v04.006.2017201090723',
+        IdentifierType: 'ProducerGranuleId',
+      },
+    ],
+    DayNightFlag: 'Unspecified',
+    // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+    // despite actually being the time the task is ran (which is what is mocked, Date.now())
+    ProductionDateTime: '2024-01-01T00:00:00.000Z',
+  };
+
+  const payloadContentsTotal = [];
   await Promise.all(cmrFiles.map(async (cmrFile) => {
     const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
     const payloadContents = await getObjectStreamContents(payloadResponse.Body);
+    payloadContentsTotal.push(JSON.parse(payloadContents));
     t.true(payloadContents.includes('DataGranule'));
-    // required UMMG DataGranule fields
-    t.true(payloadContents.includes('DayNightFlag') && payloadContents.includes('ProductionDateTime'));
   }));
+
+  // sort to avoid test assertion order issues
+  payloadContentsTotal.sort((a, b) => a.GranuleUR.localeCompare(b.GranuleUR));
+  t.deepEqual(payloadContentsTotal[0].DataGranule, expectedDataGranule1);
+  t.deepEqual(payloadContentsTotal[1].DataGranule, expectedDataGranule2);
 });
 
 test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule to the metadata for granules missing it and populates required field for ECHO10 granule if the task config var excludeDataGranule is false', async (t) => {
@@ -293,11 +332,13 @@ test.serial('update-granules-cmr-metadata-file-links adds a granule.DataGranule 
     }
   });
 
-  await Promise.all(cmrFiles.map(async (cmrFile) => {
-    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
-    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
-    t.true(payloadContents.includes('<DataGranule>') && payloadContents.includes('</DataGranule>'));
-    // required ECHO10 DataGranule field
-    t.true(payloadContents.includes(`<ProducerGranuleId>${producerGranuleId}</ProducerGranuleId>`));
-  }));
+  const expectedDataGranule = { ProducerGranuleId: producerGranuleId };
+
+  const response = await getObject(s3(), { Bucket: cmrFiles[0].bucket, Key: cmrFiles[0].key });
+  const payloadContents = await getObjectStreamContents(response.Body);
+  const parseXmlString = promisify(xml2js.parseString);
+  const xmlParseOptions = { explicitArray: false };
+  const result = await parseXmlString(payloadContents, xmlParseOptions);
+
+  t.deepEqual(result.Granule.DataGranule, expectedDataGranule);
 });

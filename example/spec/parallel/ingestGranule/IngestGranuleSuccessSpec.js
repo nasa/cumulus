@@ -654,7 +654,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(result).not.toEqual(false);
     });
 
-    it('updates the CMR metadata with the expected producerGranuleId', () => {
+    it('updates the CMR metadata with the expected producerGranuleId and DataGranule values', () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
       expect(metadataResults[1].items[0].umm.DataGranule.DayNightFlag).toBeDefined();
       expect(metadataResults[1].items[0].umm.DataGranule.ProductionDateTime).toBeDefined();
@@ -662,7 +662,6 @@ describe('The S3 Ingest Granules workflow', () => {
       const expectedProducerGranuleId = inputPayload.granules[0].producerGranuleId;
       const expectedGranuleId = inputPayload.granules[0].granuleId;
       const productionDateTime = new Date(metadataResults[1].items[0].umm.DataGranule.ProductionDateTime);
-      console.log('Data Granule:', metadataResults[1].items[0].umm.DataGranule);
 
       expect(metadataResults[1].items[0].umm.DataGranule.Identifiers[0].Identifier).toEqual(expectedProducerGranuleId);
       expect(metadataResults[1].items[0].umm.DataGranule.DayNightFlag).toEqual('Both');

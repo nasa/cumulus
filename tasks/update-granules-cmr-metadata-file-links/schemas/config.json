@@ -47,7 +47,7 @@
     },
     "excludeDataGranule": {
       "type": "boolean",
-      "description": "Whether to add or update the DataGranule node in the granule's metadata",
+      "description": "Flag to set exclusion behavior of DataGranule metadata updates as part of this task. if True, will disable updates",
       "default": false
     }
   }

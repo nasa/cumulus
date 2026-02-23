@@ -87,7 +87,7 @@ test.beforeEach(async (t) => {
   ]);
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
-  putJsonS3Object(
+  await putJsonS3Object(
     t.context.systemBucket,
     getDistributionBucketMapKey(t.context.stackName),
     {
