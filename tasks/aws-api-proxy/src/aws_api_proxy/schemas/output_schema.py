@@ -5,20 +5,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 
 
 class Model(BaseModel):
     """Output schema for the task."""
 
-    result: dict[str, Any] | None = None
-    result_list: list[dict[str, Any]] | None = None
-
-    @model_validator(mode="after")
-    def _require_result_or_list(self):
-        if self.result is None and not self.result_list:
-            raise ValueError("Either result or result_list must be specified.")
-        return self
+    result_list: list[dict[str, Any]]
 
 
 def save(output_dir: str) -> None:

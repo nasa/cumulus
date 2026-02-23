@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """AWS API proxy task for Cumulus.
 
 This module provides a CMA-wrapped way to call a specified boto3 client within AWS
@@ -15,7 +14,6 @@ import boto3
 
 from . import LOGGER
 
-EVENT_TYPING = dict[Any, Any]
 PARAMETER_FILTERS = {
     "json.dumps": json.dumps,
 }
@@ -28,6 +26,11 @@ async def run_with_limit(method, parameters_list, max_concurrency=5):
     async def worker(parameters):
         async with semaphore:
             # Since boto3 is not async, run it in a thread
+            # There is also aiobotocore which allows doing real async for AWS API calls.
+            # However, I'm avoiding additional third-party libraries that aren't
+            # officially supported/endorsed by AWS. If this were more complicated,
+            # moving to aibotocore might make sense, but for now it's fairly
+            # straight-forward to do it this way.
             return await asyncio.to_thread(method, **parameters)
 
     results = await asyncio.gather(
@@ -36,7 +39,7 @@ async def run_with_limit(method, parameters_list, max_concurrency=5):
     return results
 
 
-def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
+def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
     """Handle AWS API Proxy requests."""
     config = event.get("config", {})
     service = config.get("service")
@@ -59,12 +62,9 @@ def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
     for parameter_filter in parameter_filters:
         parameter_filter_name = parameter_filter.get("name")
         parameter_filter_field = parameter_filter.get("field")
-        parameter_filter_func = PARAMETER_FILTERS.get(parameter_filter_name)
-        if not parameter_filter_func:
-            raise ValueError(
-                f"Unsupported parameter filter: {parameter_filter_name} "
-                f"acting on field {parameter_filter_field}"
-            )
+        parameter_filter_func = PARAMETER_FILTERS.get(
+            parameter_filter_name, lambda x: x
+        )
         parameters_list = [
             {
                 k: parameter_filter_func(v) if k == parameter_filter_field else v
@@ -86,20 +86,4 @@ def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
         f"with action {action}: {responses}"
     )
 
-    return responses
-
-
-if __name__ == "__main__":
-    lambda_adapter(
-        {
-            "config": {
-                "service": "sns",
-                "action": "publish",
-                "parameters": {
-                    "TopicArn": "arn:aws:sns:us-east-1:123456789012:MyTopic",
-                    "Message": "Test message",
-                },
-            }
-        },
-        None,
-    )
+    return {"result_list": responses}
