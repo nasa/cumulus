@@ -56,7 +56,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **CUMULUS-4566**
+- **CUMULUS-4556**
   - Updated AJV to ^8.18.0
     - Updated task components to resolve malformed/errant task schemas in the following lambdas:
       - SyncGranules
