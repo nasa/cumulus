@@ -72,7 +72,7 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
       moddedJson.DataGranule.Identifiers.push(producerGranuleIdIdentifier);
     }
 
-    moddedJson.DataGranule.DayNightFlag ??= 'UNSPECIFIED';
+    moddedJson.DataGranule.DayNightFlag ??= 'Unspecified';
     moddedJson.DataGranule.ProductionDateTime ??= new Date().toISOString();
   }
 

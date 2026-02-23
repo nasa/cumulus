@@ -162,7 +162,7 @@ test('does not update or overwrite granule DataGranule metadata when excludeData
         { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
       ],
       ProductionDateTime: '2023-12-31T23:59:59Z',
-      DayNightFlag: 'DAY',
+      DayNightFlag: 'Day',
     },
   };
 
@@ -201,7 +201,7 @@ test('updates granule DataGranule metadata with new identifiers and required def
     // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
     // despite actually being the time the task is ran (which is what is mocked, Date.now())
     ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
-    DayNightFlag: 'UNSPECIFIED',
+    DayNightFlag: 'Unspecified',
   };
 
   t.deepEqual(result.DataGranule, expectedDataGranule);
@@ -215,7 +215,7 @@ test('does not overwrite granule DataGranule metadata values when excludeDataGra
         { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
         { Identifier: 'PRODUCER_ID', IdentifierType: 'ProducerGranuleId' },
       ],
-      DayNightFlag: 'DAY',
+      DayNightFlag: 'Day',
       ProductionDateTime: '2022-12-31T23:59:59Z',
     },
   };
@@ -249,7 +249,7 @@ test('adds granule DataGranule to the metadata when excludeDataGranule is false 
     // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
     // despite actually being the time the task is ran (which is what is mocked, Date.now())
     ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
-    DayNightFlag: 'UNSPECIFIED',
+    DayNightFlag: 'Unspecified',
   };
 
   t.deepEqual(result.DataGranule, expectedDataGranule);
