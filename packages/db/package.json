@@ -32,13 +32,14 @@
     "node": ">=22.21.1"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.621.0",
+    "@aws-sdk/client-secrets-manager": "^3.993.0",
     "@cumulus/aws-client": "21.3.0",
     "@cumulus/common": "21.3.0",
     "@cumulus/errors": "21.3.0",
     "@cumulus/logger": "21.3.0",
     "@cumulus/message": "21.3.0",
     "@cumulus/types": "21.3.0",
+    "@duckdb/node-api": "^1.4.4-r.1",
     "crypto-random-string": "^3.2.0",
     "is-valid-hostname": "1.0.2",
     "knex": "2.4.1",
