@@ -38,6 +38,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added supporting Terraform for the CnmResponse task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
 - **CUMULUS-4498**
   - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+- **CUMULUS-4352**
+  - Implemented multi-part download support for checksum computation in addMissingFileChecksums task.
 - **CUMULUS-4542**
   - Created the `aws-api-proxy` coreified task, which provides the functionality to post a list of CNM messages to a specified SNS topic.
 - **CUMULUS-4517**
