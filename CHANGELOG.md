@@ -6,7 +6,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration Notes
+- **CUMULUS-4395 Core CnmResponse task lambda log group import**
+  - The lambda function name and log group name for this task are
+  `<prefix>-CnmResponse` which might conflict with the non-core version of
+  the task if you set that up in your terraform. In order to successfully deploy
+  the core task you may need to either:
+    - Delete the existing lambda and log group or
+    - Import the existing lambda and/or log group to allow terraform to modify
+    them.
+    ```
+    terraform import module.cumulus.module.ingest.module.cnm_response_task.aws_cloudwatch_log_group.cnm_response_task /aws/lambda/<prefix>-CnmResponse
+    terraform import module.cumulus.module.ingest.module.cnm_response_task.aws_lambda_function.cnm_response_task arn:aws:lambda:us-east-1:<account-number>:function:<prefix>-CnmResponse
+    ```
+
+    **NOTE: For cumulus core developer ci stacks you only need to import the log
+    group, since the lambda deployed in the example/cumulus-tf directory will be
+    renamed automatically.**
+
 ### Notable Changes
+
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
 ### Breaking Changes
 
@@ -61,6 +83,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Resolved several integration issues with the granule-invalidator lambda.
   - Updated packaging script for granule-invalidator to use `uv pip install` instead of `uv sync`.
   - Added `private_api_lambda_arn` output to the archive module and `private_api_lambda_arn` variable to the ingest module.
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
 ### Fixed
 
