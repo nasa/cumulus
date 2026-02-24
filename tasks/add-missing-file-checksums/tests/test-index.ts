@@ -3,7 +3,9 @@ import anyTest, { TestFn } from 'ava';
 import { Readable } from 'stream';
 import * as S3 from '@cumulus/aws-client/S3';
 import cryptoRandomString from 'crypto-random-string';
-import { handler, addChecksumToGranuleFile } from '../src';
+import * as crypto from 'crypto';
+
+import { handler, addChecksumToGranuleFile, updateHashFromBody } from '../src';
 
 const randomString = () => cryptoRandomString({ length: 10 });
 
@@ -19,11 +21,22 @@ test.before((t) => {
   };
 });
 
+const makeRangeS3Mock = (full: Buffer) => ({
+  getObject: sinon.fake(async ({ Range }: any) => {
+    const [, startStr, endStr] = /bytes=(\d+)-(\d+)/.exec(Range) ?? [];
+    const start = Number(startStr);
+    const end = Number(endStr);
+
+    return { Body: Readable.from([full.subarray(start, end + 1)]) };
+  }),
+});
+
 test('addChecksumToGranuleFile() does not update a granule file if checksumType is set but checksum is not', async (t) => {
   const granuleFile = {
     bucket: 'bucket',
     key: 'key',
     checksumType: 'md5',
+    size: 123,
   };
 
   const result = await addChecksumToGranuleFile({
@@ -40,6 +53,7 @@ test('addChecksumToGranuleFile() does not update a granule file if checksum is s
     bucket: 'bucket',
     key: 'key',
     checksum: 'asdf',
+    size: 123,
   };
 
   const result = await addChecksumToGranuleFile({
@@ -70,6 +84,7 @@ test('addChecksumToGranuleFile() returns the file if checksumType and checksum a
     key: 'key',
     checksumType: 'md5',
     checksum: 'asdf',
+    size: 123,
   };
 
   const result = await addChecksumToGranuleFile({
@@ -85,6 +100,7 @@ test('addChecksumToGranuleFile() adds the checksumType and checksum to the file 
   const granuleFile = {
     bucket: 'bucket',
     key: 'path/to/file.txt',
+    size: 123,
   };
 
   const fakeGetObject = sinon.fake.resolves({
@@ -129,6 +145,7 @@ test('The handler does not update files that already have a checksum', async (t)
               key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
+              size: 123,
             },
           ],
         },
@@ -156,6 +173,8 @@ test('The handler updates files that do not have a checksum', async (t) => {
     Body: 'asdf',
   });
 
+  const size = Buffer.byteLength('asdf');
+
   const event = {
     config: {
       algorithm: 'md5',
@@ -165,7 +184,7 @@ test('The handler updates files that do not have a checksum', async (t) => {
         {
           granuleId: 'g-1',
           files: [
-            { bucket, key },
+            { bucket, key, size },
           ],
         },
       ],
@@ -194,6 +213,7 @@ test('The handler preserves extra input properties', async (t) => {
               key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
+              size: 123,
             },
           ],
         },
@@ -222,6 +242,7 @@ test('The handler preserves extra granule properties', async (t) => {
               key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
+              size: 123,
             },
           ],
         },
@@ -250,6 +271,7 @@ test('The handler preserves extra granule file properties', async (t) => {
               key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
+              size: 123,
             },
           ],
         },
@@ -260,4 +282,56 @@ test('The handler preserves extra granule file properties', async (t) => {
   const result = await handler(event);
 
   t.is(result.granules[0].files[0].foo, 'bar');
+});
+
+test('addChecksumToGranuleFile() uses ranged GETs for large files and computes correct checksum', async (t) => {
+  process.env.MULTIPART_CHECKSUM_THRESHOLD_MEGABYTES = '2'; // anything > 2 MB triggers multipart
+  process.env.MULTIPART_CHECKSUM_PART_MEGABYTES = '1'; // 1 MB ranges
+
+  // Ensure multiple ranges (4 MB)
+  const full = Buffer.alloc(4 * 1024 * 1024, 'a');
+  const s3 = makeRangeS3Mock(full);
+
+  const result = await addChecksumToGranuleFile({
+    s3: s3 as any,
+    algorithm: 'md5',
+    granuleFile: {
+      bucket: 'bucket',
+      key: 'key',
+      size: full.length,
+    } as any,
+  });
+
+  // It should have called getObject multiple times with Range
+  const rangedCalls = (s3.getObject as any).getCalls().filter((c: any) => c.args[0].Range);
+
+  // Verify ranges look correct
+  t.true(rangedCalls.length > 1);
+  t.is(result.checksumType, 'md5');
+  t.is(result.checksum, crypto.createHash('md5').update(new Uint8Array(full.buffer, full.byteOffset, full.byteLength)).digest('hex'));
+});
+
+test('updateHashFromBody() stream branch', async (t) => {
+  const hash = crypto.createHash('md5');
+  await updateHashFromBody(hash, Readable.from(['test']) as any);
+  t.is(hash.digest('hex'), crypto.createHash('md5').update('test').digest('hex'));
+});
+
+test('updateHashFromBody() Buffer branch', async (t) => {
+  const hash = crypto.createHash('md5');
+  const body = Buffer.from('test');
+  await updateHashFromBody(hash, Buffer.from('test'));
+  t.is(hash.digest('hex'), crypto.createHash('md5').update(new Uint8Array(body.buffer, body.byteOffset, body.byteLength)).digest('hex'));
+});
+
+test('updateHashFromBody() empty body branch', async (t) => {
+  const hash = crypto.createHash('md5');
+  await updateHashFromBody(hash, undefined);
+  t.is(hash.digest('hex'), crypto.createHash('md5').update('').digest('hex'));
+});
+
+test('updateHashFromBody() Uint8Array branch', async (t) => {
+  const hash = crypto.createHash('md5');
+  await updateHashFromBody(hash, new Uint8Array(Buffer.from('test')));
+  t.is(hash.digest('hex'), crypto.createHash('md5').update('test').digest('hex'));
 });
