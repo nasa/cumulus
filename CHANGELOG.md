@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4564**
+  - Added private_api_lambda_arn as an output in the Cumulus terraform module
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload.
