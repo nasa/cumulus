@@ -10,7 +10,7 @@ module "aws_api_proxy_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/aws_api_proxy_workflow.asl.json",
     {
-      aws_api_proxy_arn = module.cumulus.aws_api_proxy_arn
+      aws_api_proxy_arn = module.cumulus.aws_api_proxy_task.task_arn
     }
   )
 }
