@@ -175,6 +175,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
       distributionBucketMap,
       granuleId: granId,
       producerGranuleId: granId,
+      excludeDataGranule: false,
       updateGranuleIdentifiers: false,
     };
 
@@ -241,6 +242,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
       granuleId: granId,
       producerGranuleId: granId,
       updateGranuleIdentifiers: false,
+      excludeDataGranule: false,
     };
 
     t.deepEqual(fakeUpdateCMRMetadata.firstCall.args[0],
@@ -312,6 +314,7 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
       granuleId: granId,
       producerGranuleId: granId,
       updateGranuleIdentifiers: false,
+      excludeDataGranule: false,
     };
 
     // assert
