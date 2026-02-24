@@ -50,6 +50,7 @@ const log = new Logger({ sender: '@cumulus/bulk-operation' });
  *
  * @typedef {GranuleExecutionPayload & {
  *   concurrency?: number,
+ *   maxDbConnections?: number,
  *   workflowName: string,
  *   meta?: Object,
  *   queueUrl?: string,
@@ -66,6 +67,7 @@ const log = new Logger({ sender: '@cumulus/bulk-operation' });
  *
  * @typedef {GranuleExecutionPayload & {
  *   concurrency?: number,
+ *   maxDbConnections?: number,
  *   workflowName: string,
  *   queueUrl?: string,
  * }} BulkGranuleReingestPayload
@@ -296,8 +298,8 @@ async function bulkGranuleReingest(
           await reingestHandler({
             apiGranule: apiGranuleToReingest,
             queueUrl,
+            passKnex: knex,
             asyncOperationId: process.env.asyncOperationId,
-            knex,
           });
           return granuleId;
         } catch (error) {

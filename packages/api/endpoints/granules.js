@@ -428,8 +428,8 @@ const _handleUpdateAction = async (
   log.info(`PUT request "action": ${action}`);
 
   if (action === 'reingest') {
-    const apiCollection =
-      translatePostgresCollectionToApiCollection(pgCollection);
+    const apiCollection
+      = translatePostgresCollectionToApiCollection(pgCollection);
     let targetExecution;
     try {
       targetExecution = await chooseTargetExecution({
@@ -457,6 +457,7 @@ const _handleUpdateAction = async (
         ...(targetExecution && { execution: targetExecution }),
       },
       queueUrl: process.env.backgroundQueueUrl,
+      passKnex: knex,
       updateGranuleStatusToQueuedMethod,
     });
 

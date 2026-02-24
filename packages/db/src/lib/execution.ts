@@ -8,8 +8,6 @@ import { PostgresExecutionRecord } from '../types/execution';
 
 const Logger = require('@cumulus/logger');
 
-const { getKnexClient } = require('../connection');
-
 export interface ArnRecord {
   arn: string;
 }

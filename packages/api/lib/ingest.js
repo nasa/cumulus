@@ -6,6 +6,7 @@ const get = require('lodash/get');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
+  getKnexClient,
   GranulePgModel,
 } = require('@cumulus/db');
 
@@ -19,8 +20,8 @@ const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules')
  * @param {object} params
  * @param {object} params.apiGranule - the granule object
  * @param {object} params.queueUrl - SQS queue URL to use for sending messages
+ * @param {Knex} params.passKnex - Knex client instance
  * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
- * @param {Knex} params.knex - Knex client instance
  * @param {GranulePgModel} [params.granulePgModel] - Postgres Granule model
  * (optional, for testing)
  * @param {updateGranuleStatusToQueuedMethod} [params.updateGranuleStatusToQueuedMethod]
@@ -30,11 +31,13 @@ const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules')
 async function reingestGranule({
   apiGranule,
   queueUrl,
+  passKnex,
   asyncOperationId = undefined,
-  knex,
   granulePgModel = new GranulePgModel(),
   updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
 }) {
+  const knex = passKnex ?? getKnexClient();
+
   const executionArn = path.basename(apiGranule.execution);
 
   const executionDescription = await StepFunctions.describeExecution({ executionArn });
