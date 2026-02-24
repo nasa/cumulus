@@ -88,6 +88,10 @@ deploy_cumulus_distribution = true
 # Set to a value between 1-59000 milliseconds. Recommended: 5000 (5 seconds) for high-concurrency environments.
 # sync_granule_s3_jitter_max_ms = 5000
 
+# Optional. Uncomment to change default update granule identifiers value.
+# Set to false to prevent update-granules-cmr-metadata-file-links task from updating granule identifer.
+# update_granule_identifiers = false
+
 launchpad_api = "launchpadApi"
 launchpad_certificate = "certificate"
 launchpad_passphrase = "passphrase"
