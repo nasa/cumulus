@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v21.2.1] 2025-03-17
+
+### Notable Changes
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+### Changed
+
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
 ## [v21.2.0] 2025-12-05
 
 ### Notable Changes
