@@ -13,7 +13,7 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "python-lint": "true",
-    "prepare": "npm run tsc",
+    "build": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "webpack": "../../node_modules/.bin/webpack",
