@@ -1,7 +1,7 @@
 variable "handler" {
   description = "The function within your code that Lambda calls to begin execution."
   type        = string
-  default     = "main.handler"
+  default     = "main.lambda_handler"
 }
 
 variable "prefix" {

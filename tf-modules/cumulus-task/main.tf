@@ -1,4 +1,13 @@
-resource "aws_lambda_function" "python_task" {
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.100, < 6.0.0"
+    }
+  }
+}
+
+resource "aws_lambda_function" "cumulus_task_lambda" {
   function_name    = "${var.prefix}-${var.name}"
   filename         = var.lambda_zip_path
   source_code_hash = filebase64sha256(var.lambda_zip_path)
@@ -32,8 +41,8 @@ resource "aws_lambda_function" "python_task" {
   tags = var.tags
 }
 
-resource "aws_cloudwatch_log_group" "python_task" {
-  name              = "/aws/lambda/${aws_lambda_function.python_task.function_name}"
+resource "aws_cloudwatch_log_group" "cumulus_task_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.cumulus_task_lambda.function_name}"
   retention_in_days = var.default_log_retention_days
   tags              = var.tags
 }
