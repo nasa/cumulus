@@ -79,7 +79,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `private_api_lambda_arn` output to the archive module and `private_api_lambda_arn` variable to the ingest module.
 - **CSD-91**
   - Change update-granules-cmr-metadata-file-links task's updateGranuleIdentifiers flag from true to configurable environment variable `update_granule_identifiers`.
-  
+
 ### Fixed
 
 - **CUMULUS-4566**
