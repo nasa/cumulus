@@ -47,8 +47,7 @@
     "@cumulus/logger": "21.3.1",
     "@cumulus/types": "21.3.1",
     "jsonpath-plus": "^10.0.0",
-    "lodash": "^4.17.21",
-    "uuidv4": "^6.2.13"
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@types/uuid": "^8.0.0"

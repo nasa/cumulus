@@ -34,8 +34,7 @@
     "crypto-random-string": "^3.2.0",
     "lodash": "^4.17.21",
     "minimist": "^1.2.8",
-    "p-map": "^4.0.0",
-    "tsc": "^2.0.4"
+    "p-map": "^4.0.0"
   },
   "devDependencies": {
     "knex": "2.4.1"

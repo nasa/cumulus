@@ -53,7 +53,7 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
   moddedJson.DataGranule.Identifiers ??= [];
 
   const producerIndex = moddedJson.DataGranule.Identifiers.findIndex(
-    (id) => id.IdentifierType === 'ProducerGranuleId'
+    (id: any) => id.IdentifierType === 'ProducerGranuleId'
   );
 
   const producerGranuleIdIdentifier = {

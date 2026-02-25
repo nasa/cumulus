@@ -20,6 +20,6 @@ npm install
 npm --version
 
 ## This is needed to ensure lock-stack has the expected dependencies
-npx lerna bootstrap --scope @cumulus/cumulus-integration-tests --scope @cumulus/aws-client --scope @cumulus/checksum --scope @cumulus/common --scope @cumulus/errors --scope @cumulus/logger
+npm install -w @cumulus/cumulus-integration-tests -w @cumulus/aws-client -w @cumulus/checksum -w @cumulus/common -w @cumulus/errors -w @cumulus/logger
 
 cd example && node ./scripts/lock-stack.js lock "$GIT_SHA" "$DEPLOYMENT" false

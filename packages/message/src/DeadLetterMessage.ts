@@ -2,7 +2,7 @@
 import { SQSRecord } from 'aws-lambda';
 import moment from 'moment';
 
-import { uuid } from 'uuidv4';
+import { v4 as uuidv4 } from 'uuid';
 import { isEventBridgeEvent, StepFunctionEventBridgeEvent } from '@cumulus/aws-client/Lambda';
 import { parseSQSMessageBody, isSQSRecordLike } from '@cumulus/aws-client/SQS';
 import { CumulusMessage } from '@cumulus/types/message';
@@ -181,7 +181,7 @@ export const extractDateString = (message: DLARecord): string => (
 export const extractFileName = (message: DLARecord): string => {
   // get token after the last / or :
   const executionName = message.executionArn ? message.executionArn.split(/[/:]/).pop() : 'unknown';
-  return `${executionName}-${uuid()}`;
+  return `${executionName}-${uuidv4()}`;
 };
 
 export const getDLAKey = (stackName: string, message: DLARecord): string => {
