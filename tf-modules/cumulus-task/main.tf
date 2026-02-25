@@ -29,7 +29,7 @@ resource "aws_lambda_function" "cumulus_task_lambda" {
     }
   }
 
-  tags = var.tags
+  tags = merge({ Deployment = "${var.prefix}" }, var.tags)
 }
 
 resource "aws_cloudwatch_log_group" "cumulus_task_log_group" {
