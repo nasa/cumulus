@@ -1,0 +1,19 @@
+{
+    "name": "OPERA_TROPO_ZENITH_PROV_sqsRule",
+    "workflow": "OPERAWorkflow",
+    "state": "ENABLED",
+    "collection": {
+        "name": "OPERA_L4_TROPO-ZENITH_PROVISIONAL_V0",
+        "version": "0"
+    },
+    "provider": "ASFDAAC",
+    "rule": {
+        "type": "sqs",
+        "value": "https://sqs.$AWS_REGION.amazonaws.com/$AWS_ACCOUNT_ID/$PREFIX-opera-workflow-queue"
+    },
+    "meta": {
+        "retries": 3,
+        "visibilityTimeout": 1800,
+        "provider_path": "/"
+    }
+}

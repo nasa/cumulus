@@ -107,4 +107,6 @@ module "archive" {
   tags = var.tags
 
   report_sns_topic_subscriber_arns = var.report_sns_topic_subscriber_arns
+
+  enable_otel_tracing = var.enable_otel_tracing
 }

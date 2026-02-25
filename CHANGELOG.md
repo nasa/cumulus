@@ -152,6 +152,10 @@ Please complete the following steps before upgrading Cumulus.
 
 ### Added
 
+- **CUMULUS-4370**
+  - The `tf-modules/cumulus` module now supports enabling OpenTelemetry and AWS X-Ray tracing.
+    By setting `enable_otel_tracing` to `true` the code in the `archive` API will generate and
+    send telemetry to AWS X-Ray. Most of the endpoints have been instrumented.
 - **CUMULUS-4300**
   - Added a new rate-limited consumer class in the Node/TypeScript code to control how many executions are submitted per second across multiple queues - helping improve and smooth out step function submission.
     - Created a new ConsumerRateLimited class that is able to submit executions at a specified, even maximum rate as defined by rateLimitPerSecond. In order to enforce this limit across all throttled queues, this class accepts a list of queue URLs instead of a single throttled queue URL. Unlike its non-rate-limited counterpart, to simplify configuration, this new class does not limit the number of messages staged - that can now be indirectly controlled by increasing or decreasing the rate.

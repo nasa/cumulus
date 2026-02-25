@@ -208,6 +208,16 @@ resource "aws_iam_role_policy" "lambda_api_gateway" {
   policy = data.aws_iam_policy_document.lambda_api_gateway_policy.json
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_api_gateway_xray" {
+  role       = aws_iam_role.lambda_api_gateway.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_api_gateway_application_signals" {
+  role       = aws_iam_role.lambda_api_gateway.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLambdaApplicationSignalsExecutionRolePolicy"
+}
+
 # ECS task execution role
 
 

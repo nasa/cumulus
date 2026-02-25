@@ -32,6 +32,7 @@
     "node": ">=22.21.1"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.4.0",
     "@aws-sdk/client-secrets-manager": "^3.993.0",
     "@cumulus/aws-client": "21.3.1",
     "@cumulus/common": "21.3.1",

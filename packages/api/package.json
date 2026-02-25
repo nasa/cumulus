@@ -51,6 +51,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@aws-lambda-powertools/tracer": "^1.12.0",
     "@aws-sdk/client-lambda": "^3.993.0",
     "@aws-sdk/client-sfn": "^3.993.0",
     "@aws-sdk/client-sns": "^3.993.0",
@@ -77,6 +78,7 @@
     "@cumulus/types": "21.3.1",
     "@hapi/boom": "^10.0.0",
     "@mapbox/dyno": "^1.4.2",
+    "@opentelemetry/api": "^1.4.0",
     "aggregate-error": "^3.1.0",
     "ajv": "^8.18.0",
     "aws-serverless-express": "^3.3.5",

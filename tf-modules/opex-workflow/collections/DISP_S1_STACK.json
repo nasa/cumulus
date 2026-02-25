@@ -1,0 +1,18 @@
+{
+    "name": "OPERA_L3_DISP-S1_STACK_V1",
+    "version": "1",
+    "duplicateHandling": "replace",
+    "process": "DISP-STACK",
+    "url_path": "OPERA_L3_DISP-S1_STACK_V1/{granule.granuleId}/",
+    "granuleId": "^OPERA_L3_DISP-S1_(IW|EW)_F\\d{5}_[VH]{2}_V1$",
+    "granuleIdExtraction": "(OPERA_L3_DISP-S1_(IW|EW)_F\\d{5}_[VH]{2}_V1).*(\\.zarr\\.json\\.gz)",
+    "reportToEms": false,
+    "sampleFileName": "OPERA_L3_DISP-S1_IW_F08622_VV_V1_fake.zarr.json.gz",
+    "files": [
+        {
+            "bucket": "opera-products",
+            "regex": "^OPERA_L3_DISP-S1_(IW|EW)_F\\d{5}_[VH]{2}.*\\.zarr\\.json\\.gz$",
+            "sampleFileName": "OPERA_L3_DISP-S1_IW_F08622_VV_short_wavelength_displacement.zarr.json.gz"
+        }
+    ]
+}
