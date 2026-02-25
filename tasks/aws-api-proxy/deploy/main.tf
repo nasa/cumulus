@@ -1,7 +1,7 @@
 locals {
   task_root = "${path.module}/../"
   zip_subdir = "dist/final/lambda.zip"
-  subnet_id_name = "Private application ${data.aws_region.current}a subnet"
+  subnet_id_name = "Private application ${data.aws_region.current.name}a subnet"
 
   # We may need to use this in the future if we don't have easy access to the role arn
   #lambda_processing_role_arn = one(data.aws_iam_roles.lambda_processing_role.arns)
