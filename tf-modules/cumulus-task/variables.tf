@@ -69,6 +69,7 @@ variable "tags" {
 variable "default_log_retention_days" {
   description = "The number of days to retain logs in CloudWatch"
   type        = number
+  default     = 365
 }
 
 variable "runtime" {

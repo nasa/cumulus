@@ -12,13 +12,6 @@ output "add_unique_granule_id_task" {
   }
 }
 
-output "aws_api_proxy_task" {
-  value = {
-    task_arn           = module.aws_api_proxy.lambda_function.arn
-    last_modified_date = module.aws_api_proxy.lambda_function.last_modified
-  }
-}
-
 output "cnm_response_task" {
   value = {
     task_arn           = module.cnm_response_task.lambda_function.arn
