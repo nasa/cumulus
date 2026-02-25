@@ -79,6 +79,10 @@ output "granule_invalidator_task" {
   value = module.ingest.granule_invalidator_task
 }
 
+output "aws_api_proxy_task" {
+  value = module.ingest.aws_api_proxy_task
+}
+
 output "hello_world_task" {
   value = module.ingest.hello_world_task
 }
