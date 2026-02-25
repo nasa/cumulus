@@ -45,6 +45,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4543**
   - Added supporting Terraform for the aws_api_proxy task
   - Added aws_api_proxy output to the Cumulus Terraform module
+- **CUMULUS-4544**
+  - Added integration tests for the aws_api_proxy task
 
 ### Changed
 
