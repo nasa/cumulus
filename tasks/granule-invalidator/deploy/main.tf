@@ -4,9 +4,9 @@ locals {
 
 resource "aws_lambda_function" "granule_invalidator_task" {
   function_name    = "${var.prefix}-granule-invalidator-task"
-  filename         = "${path.module}/../dist/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../dist/lambda.zip")
-  handler          = "main.handler"
+  filename         = "${path.module}/../dist/final/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../dist/final/lambda.zip")
+  handler          = "main.lambda_handler"
   role             = var.role
   runtime          = local.build_config.runtime
   architectures    = [local.build_config.architecture]
@@ -20,6 +20,7 @@ resource "aws_lambda_function" "granule_invalidator_task" {
       {
         stackName                   = var.prefix
         CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+        PRIVATE_API_LAMBDA_ARN      = var.private_api_lambda_arn
       },
       var.environment
     )

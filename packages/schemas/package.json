@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/schemas",
-  "version": "21.3.0",
+  "version": "21.3.1",
   "description": "Helpers for managing Cumulus task schemas",
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/schemas",
   "repository": {
@@ -43,8 +43,11 @@
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  },
   "dependencies": {
-    "json-schema-to-typescript": "^13.0.2",
+    "json-schema-to-typescript": "^15.0.4",
     "json-templates": "^4.1.0",
     "lodash": "^4.17.21"
   }
