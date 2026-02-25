@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Migration Notes
+- **CUMULUS-4395 Core CnmResponse task lambda log group import**
+  - The lambda function name and log group name for this task are
+  `<prefix>-CnmResponse` which might conflict with the non-core version of
+  the task if you set that up in your terraform. In order to successfully deploy
+  the core task you may need to either:
+    - Delete the existing lambda and log group or
+    - Import the existing lambda and/or log group to allow terraform to modify
+    them.
+    ```
+    terraform import module.cumulus.module.ingest.module.cnm_response_task.aws_cloudwatch_log_group.cnm_response_task /aws/lambda/<prefix>-CnmResponse
+    terraform import module.cumulus.module.ingest.module.cnm_response_task.aws_lambda_function.cnm_response_task arn:aws:lambda:us-east-1:<account-number>:function:<prefix>-CnmResponse
+    ```
+
+    **NOTE: For cumulus core developer ci stacks you only need to import the log
+    group, since the lambda deployed in the example/cumulus-tf directory will be
+    renamed automatically.**
+
+### Notable Changes
+
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
 ### Breaking Changes
 
 - **CUMULUS-4473**
@@ -32,6 +56,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added supporting Terraform for the CnmResponse task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
 - **CUMULUS-4498**
   - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+- **CUMULUS-4352**
+  - Implemented multi-part download support for checksum computation in addMissingFileChecksums task.
+- **CUMULUS-4542**
+  - Created the `aws-api-proxy` coreified task, which provides the functionality to post a list of CNM messages to a specified SNS topic.
+- **CUMULUS-4517**
+  - Added the `@cumulus/db/s3search` module to enable Cumulus record search via S3-backed tables.
+    The S3Search subclasses inherit from search/BaseSearch, allowing them to reuse existing query
+    logic while executing search queries on DuckDB and providing custom record translation.
+  - Updated the `@cumulus/db/search` module to build queries compatible with both PostgreSQL and DuckDB.
+  - Updated the `@cumulus/db/search` module to support searching on nested JSON fields.
+  - Updated the `@cumulus/db/translate` `translatePostgres*Record*ToApi*Record*` functions to
+    correctly handle query results from both PostgreSQL and DuckDB.
 
 ### Changed
 
@@ -49,14 +85,37 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - added `concurrency` utilization by `pMap` for granule `bulkOperations` `applyWorkflowToGranule`, which previously was missing
   - allow `concurrency` and `maxDbConnections` to be passed into granule `bulkOperations` and `bulkReingest` endpoints, which previously was only available for `bulkDelete`
   - updated enforcement of granule bulk operations endpoints to accept exactly one of `granules, query, granuleInventoryReportName, or s3GranuleIdInputFile`
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
-### Notable Changes
+### Fixed
 
-- **CUMULUS-4473**
-  - Updated Granules Bulk Operations API endpoints to:
-    - Support `granuleInventoryReportName` and `s3GranuleIdInputFile` in the payload.
-    - Return consistent output formats across endpoints (previously, some endpoints aggregated errors
-      while others returned per-granule errors)
+- **CUMULUS-4566**
+  - Updated AJV to ^8.18.0
+    - Updated task components to resolve malformed/errant task schemas in the following lambdas:
+      - SyncGranules
+      - SendPan
+      - QueueGranules
+      - MoveGranules
+      - LzardsBackup
+      - ChangeGranuleCollectionS3
+  - Update aws-sdk versions to ^3.993.0
+- **CUMULUS-4516**
+  - Updated sftp-client to explicitly tear down stream in sftp-client/syncFromS3
+  - Updated sftp-client to warn/log on `No response from server` errors in `end` method
+
+## [v21.3.1] 2026-02-16
+
+### Added
+
+- **CUMULUS-4498**
+  - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+
+### Changed
+
+- **CUMULUS-4514**
+  - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
 
 ## [v21.3.0] 2026-01-26
 
@@ -1581,7 +1640,7 @@ degraded execution table operations.
 ### Fixed
 
 - **CUMULUS-3817**
-  - updated applicable @aws-sdk dependencies to 3.621.0 to remove inherited vulnerability from fast-xml-parser
+  - updated applicable @aws-sdk dependencies to 3.993.0 to remove inherited vulnerability from fast-xml-parser
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
@@ -9486,7 +9545,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.1...HEAD
+[v21.3.0]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1
 [v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.3.0
 [v21.2.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.2.0
 [v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
