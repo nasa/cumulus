@@ -225,7 +225,7 @@ example [cnm_workflow.asl.json](../../example/cumulus-tf/cnm_workflow.asl.json).
                 "destination": "{$.meta.cnmResponse}"
               },
               {
-                "source": "{$.input}",
+                "source": "{$}",
                 "destination": "{$.payload}"
               }
             ]

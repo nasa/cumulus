@@ -195,7 +195,7 @@ state_machine_definition = <<JSON
                     "destination": "{$.meta.cnmResponse}"
                   },
                   {
-                    "source": "{$.input}",
+                    "source": "{$}",
                     "destination": "{$.payload}"
                   }
                 ]

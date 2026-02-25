@@ -76,7 +76,7 @@ def lambda_adapter(event: dict, context) -> dict:
 
     return {
         "cnm": cnm_r,
-        "input": input,
+        "granules": [granule] if granule else [],
     }
 
 

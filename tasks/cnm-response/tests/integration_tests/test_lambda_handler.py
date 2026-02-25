@@ -103,9 +103,7 @@ def test_lambda_handler_sns(
         "exception": "None",
         "payload": {
             "cnm": expected_cnm_r,
-            "input": {
-                "granules": granules,
-            },
+            "granules": granules,
         },
         "task_config": {
             "cnm": "{$.cnm}",
@@ -207,9 +205,7 @@ def test_lambda_handler_sns_no_cmr(
         "exception": "None",
         "payload": {
             "cnm": expected_cnm_r,
-            "input": {
-                "granules": granules,
-            },
+            "granules": granules,
         },
         "task_config": {
             "cnm": "{$.cnm}",
@@ -316,9 +312,7 @@ def test_lambda_handler_sns_and_kinesis(
         "exception": "None",
         "payload": {
             "cnm": expected_cnm_r,
-            "input": {
-                "granules": granules,
-            },
+            "granules": granules,
         },
         "task_config": {
             "cnm": "{$.cnm}",
@@ -586,7 +580,7 @@ def test_lambda_handler_sns_cnm_payload(
         },
         "payload": {
             "cnm": expected_cnm_r,
-            "input": cnm_s,
+            "granules": [],
         },
         "task_config": {
             "cnm": "{$.cnm}",
