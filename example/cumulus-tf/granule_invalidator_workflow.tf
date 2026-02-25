@@ -1,7 +1,3 @@
-data "aws_lambda_function" "private_api_lambda" {
-  function_name = "${var.prefix}-PrivateApiLambda"
-}
-
 module "granule_invalidator_workflow" {
   source = "../../tf-modules/workflow"
 
@@ -14,7 +10,7 @@ module "granule_invalidator_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/granule_invalidator_workflow.asl.json",
     {
-      cumulus_internal_api_arn : data.aws_lambda_function.private_api_lambda.arn,
+      cumulus_internal_api_arn : module.cumulus.private_api_lambda_arn
       granule_invalidator_arn : module.cumulus.granule_invalidator_task.task_arn
     }
   )
