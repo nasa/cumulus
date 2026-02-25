@@ -3,10 +3,14 @@ import Logger from '@cumulus/logger';
 
 const log = new Logger({ sender: '@cumulus/db/field-mapping' });
 
+type FieldMapper = (value?: string) => Record<string, any>;
+
+type TypeMapping = Record<string, FieldMapper>;
+
 // functions to map the api search string field name and value to postgres db field
-const granuleMapping: { [key: string]: Function } = {
-  archived: (value?: boolean) => ({
-    archived: value,
+const granuleMapping: TypeMapping = {
+  archived: (value?: string) => ({
+    archived: value === 'true',
   }),
   beginningDateTime: (value?: string) => ({
     beginning_date_time: value,
@@ -68,13 +72,6 @@ const granuleMapping: { [key: string]: Function } = {
   error: (value?: string) => ({
     error: value,
   }),
-  // nested error field
-  'error.Error': (value?: string) => ({
-    'error.Error': value,
-  }),
-  'error.Error.keyword': (value?: string) => ({
-    'error.Error': value,
-  }),
   // The following fields require querying other tables
   collectionId: (value?: string) => {
     const { name, version } = (value && deconstructCollectionId(value)) || {};
@@ -91,7 +88,7 @@ const granuleMapping: { [key: string]: Function } = {
   }),
 };
 
-const asyncOperationMapping : { [key: string]: Function } = {
+const asyncOperationMapping : TypeMapping = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
@@ -118,7 +115,7 @@ const asyncOperationMapping : { [key: string]: Function } = {
   }),
 };
 
-const collectionMapping : { [key: string]: Function } = {
+const collectionMapping : TypeMapping = {
   createdAt: (value?: string) => ({
     created_at: value && new Date(Number(value)),
   }),
@@ -164,7 +161,7 @@ const collectionMapping : { [key: string]: Function } = {
   }),
 };
 
-const executionMapping : { [key: string]: Function } = {
+const executionMapping : TypeMapping = {
   arn: (value?: string) => ({
     arn: value,
   }),
@@ -173,13 +170,6 @@ const executionMapping : { [key: string]: Function } = {
   }),
   duration: (value?: string) => ({
     duration: value && Number(value),
-  }),
-  // nested error field
-  'error.Error': (value?: string) => ({
-    'error.Error': value,
-  }),
-  'error.Error.keyword': (value?: string) => ({
-    'error.Error': value,
   }),
   execution: (value?: string) => ({
     url: value,
@@ -210,12 +200,12 @@ const executionMapping : { [key: string]: Function } = {
       collectionVersion: version,
     };
   },
-  archived: (value?: boolean) => ({
-    archived: value,
+  archived: (value?: string) => ({
+    archived: value === 'true',
   }),
 };
 
-const pdrMapping : { [key: string]: Function } = {
+const pdrMapping : TypeMapping = {
   address: (value?: string) => ({
     address: value,
   }),
@@ -265,7 +255,7 @@ const pdrMapping : { [key: string]: Function } = {
   }),
 };
 
-const providerMapping : { [key: string]: Function } = {
+const providerMapping : TypeMapping = {
   allowedRedirects: (value?: string) => ({
     allowed_redirects: value?.split(','),
   }),
@@ -313,7 +303,7 @@ const providerMapping : { [key: string]: Function } = {
   }),
 };
 
-const ruleMapping : { [key: string]: Function } = {
+const ruleMapping : TypeMapping = {
   arn: (value?: string) => ({
     arn: value,
   }),
@@ -363,7 +353,7 @@ const ruleMapping : { [key: string]: Function } = {
   }),
 };
 
-const reconciliationReportMapping: { [key: string]: Function } = {
+const reconciliationReportMapping: TypeMapping = {
   name: (value?: string) => ({
     name: value,
   }),
@@ -390,8 +380,15 @@ const reconciliationReportMapping: { [key: string]: Function } = {
   }),
 };
 
+const nestedRootsByType: Record<string, Set<string>> = {
+  execution: new Set(['error']),
+  granule: new Set(['error', 'queryFields']),
+  pdr: new Set(['stats']),
+  reconciliationReport: new Set(['error']),
+};
+
 // type and its mapping
-const supportedMappings: { [key: string]: any } = {
+const supportedMappings: Record<string, TypeMapping> = {
   granule: granuleMapping,
   asyncOperation: asyncOperationMapping,
   collection: collectionMapping,
@@ -400,6 +397,27 @@ const supportedMappings: { [key: string]: any } = {
   provider: providerMapping,
   rule: ruleMapping,
   reconciliationReport: reconciliationReportMapping,
+};
+
+const toSnakeCase = (str: string) =>
+  str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+
+const mapNestedKey = (
+  type: string,
+  key: string
+): string | undefined => {
+  const normalizedKey = key === 'error.Error.keyword' ? 'error.Error' : key;
+
+  const [root, ...nested] = normalizedKey.split('.');
+
+  const allowedRoots = nestedRootsByType[type];
+  if (!allowedRoots || !allowedRoots.has(root)) {
+    return undefined;
+  }
+
+  const mappedRoot = toSnakeCase(root);
+  if (nested.length === 0) return mappedRoot;
+  return [mappedRoot, ...nested].join('.');
 };
 
 /**
@@ -413,11 +431,33 @@ const supportedMappings: { [key: string]: any } = {
  */
 export const mapQueryStringFieldToDbField = (
   type: string,
-  queryField: { name: string, value?: string }
-): { [key: string]: any } | undefined => {
-  if (!(supportedMappings[type] && supportedMappings[type][queryField.name])) {
-    log.warn(`No db mapping field found for type: ${type}, field ${JSON.stringify(queryField)}`);
+  queryField: { name: string; value?: string }
+): Record<string, any> | undefined => {
+  const typeMapping = supportedMappings[type];
+
+  if (!typeMapping) {
+    log.warn(`No mapping found for type: ${type}`);
     return undefined;
   }
-  return supportedMappings[type] && supportedMappings[type][queryField.name](queryField.value);
+
+  // Exact match (typed + custom logic)
+  const exactMapper = typeMapping[queryField.name];
+  if (exactMapper) {
+    return exactMapper(queryField.value);
+  }
+
+  // Nested fallback with type inference
+  if (queryField.name.includes('.')) {
+    const mappedKey = mapNestedKey(type, queryField.name);
+    if (mappedKey) {
+      return {
+        [mappedKey]: queryField.value,
+      };
+    }
+  }
+
+  log.warn(
+    `No db mapping field found for type: ${type}, field ${JSON.stringify(queryField)}`
+  );
+  return undefined;
 };

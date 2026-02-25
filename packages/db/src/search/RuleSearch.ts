@@ -41,7 +41,7 @@ export class RuleSearch extends BaseSearch {
     } = TableNames;
 
     const countQuery = knex(this.tableName)
-      .count(`${this.tableName}.cumulus_id`);
+      .count('* as count');
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)
@@ -103,13 +103,13 @@ export class RuleSearch extends BaseSearch {
   ): Promise<Partial<RuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
-    const apiRecords = pgRecords.map(async (record) => {
+    const apiRecords = pgRecords.map((record) => {
       const providerPgRecord = record.providerName ? { name: record.providerName } : undefined;
       const collectionPgRecord = record.collectionName ? {
         name: record.collectionName,
         version: record.collectionVersion,
       } : undefined;
-      const apiRecord = await translatePostgresRuleToApiRuleWithoutDbQuery(
+      const apiRecord = translatePostgresRuleToApiRuleWithoutDbQuery(
         record,
         collectionPgRecord,
         providerPgRecord
@@ -118,6 +118,6 @@ export class RuleSearch extends BaseSearch {
         ? pick(apiRecord, this.dbQueryParameters.fields)
         : apiRecord;
     });
-    return await Promise.all(apiRecords);
+    return apiRecords;
   }
 }

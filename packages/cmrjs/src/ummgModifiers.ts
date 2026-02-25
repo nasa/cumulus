@@ -29,6 +29,7 @@ function isUMMGGranule(obj: any): obj is UMMGGranule {
  * @param metadataObject - The parsed UMM-G metadata object to be modified.
  * @param granuleUr - The new GranuleUR value to assign.
  * @param producerGranuleId - The ProducerGranuleId to store in the Identifiers list.
+ * @param excludeDataGranule - Whether to add or update the DataGranule node in the metadata
  * @returns A deep-cloned and updated copy of the UMM-G metadata object.
  * @throws If the input does not match the expected UMM-G granule structure.
  */
@@ -37,10 +38,12 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
   metadataObject,
   granuleUr,
   producerGranuleId,
+  excludeDataGranule = false,
 }: {
   metadataObject: unknown;
   granuleUr: string;
   producerGranuleId: string;
+  excludeDataGranule?: boolean;
 }): UMMGGranule {
   if (!isUMMGGranule(metadataObject)) {
     throw new Error('Invalid UMM-G JSON metadata');
@@ -49,22 +52,28 @@ export function updateUMMGGranuleURAndGranuleIdentifier({
   const moddedJson = structuredClone(metadataObject);
 
   moddedJson.GranuleUR = granuleUr;
-  moddedJson.DataGranule ??= {};
-  moddedJson.DataGranule.Identifiers ??= [];
 
-  const producerIndex = moddedJson.DataGranule.Identifiers.findIndex(
-    (id) => id.IdentifierType === 'ProducerGranuleId'
-  );
+  if (excludeDataGranule === false) {
+    moddedJson.DataGranule ??= {};
+    moddedJson.DataGranule.Identifiers ??= [];
 
-  const producerGranuleIdIdentifier = {
-    Identifier: producerGranuleId,
-    IdentifierType: 'ProducerGranuleId',
-  };
+    const producerIndex = moddedJson.DataGranule.Identifiers.findIndex(
+      (id) => id.IdentifierType === 'ProducerGranuleId'
+    );
 
-  if (producerIndex !== -1) {
-    moddedJson.DataGranule.Identifiers[producerIndex] = producerGranuleIdIdentifier;
-  } else {
-    moddedJson.DataGranule.Identifiers.push(producerGranuleIdIdentifier);
+    const producerGranuleIdIdentifier = {
+      Identifier: producerGranuleId,
+      IdentifierType: 'ProducerGranuleId',
+    };
+
+    if (producerIndex !== -1) {
+      moddedJson.DataGranule.Identifiers[producerIndex] = producerGranuleIdIdentifier;
+    } else {
+      moddedJson.DataGranule.Identifiers.push(producerGranuleIdIdentifier);
+    }
+
+    moddedJson.DataGranule.DayNightFlag ??= 'Unspecified';
+    moddedJson.DataGranule.ProductionDateTime ??= new Date().toISOString();
   }
 
   return moddedJson;
