@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 5.100, < 6.0.0"
-    }
-  }
-}
-
 resource "aws_lambda_function" "cumulus_task_lambda" {
   function_name    = "${var.prefix}-${var.name}"
   filename         = var.lambda_zip_path
