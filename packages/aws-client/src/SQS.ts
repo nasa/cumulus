@@ -48,7 +48,7 @@ export const getQueueUrlByName = async (queueName: string) => {
 export async function createQueue(QueueName: string, Attributes?: Record<string, string>) {
   const command = new CreateQueueCommand({
     QueueName,
-    ...(Attributes && { Attributes })
+    ...(Attributes && { Attributes }),
   });
 
   const createQueueResponse = await sqs().send(command)
