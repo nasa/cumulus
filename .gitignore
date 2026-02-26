@@ -1,5 +1,6 @@
 _book
 .bootstrapSha
+.coverage
 .DS_Store
 .env
 .envrc
