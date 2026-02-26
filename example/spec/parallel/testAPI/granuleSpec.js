@@ -335,6 +335,17 @@ describe('The Granules API', () => {
       }
     });
 
+    it('returns 404 on attempting to delete a granule that has already been deleted', async () => {
+      if (beforeAllError) {
+        fail('beforeAll() failed');
+      } else {
+        const timestamp = Date.now();
+        // this has been deleted in the test above
+        const response = await deleteGranule({ prefix, granuleId: modifiedGranule.granuleId, collectionId: modifiedGranule.collectionId });
+        expect(response.statusCode).toBe(404);
+      }
+    });
+
     it('errors creating a granule that already exists across a different collection', async () => {
       if (beforeAllError) {
         fail(beforeAllError);

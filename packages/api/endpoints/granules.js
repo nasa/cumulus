@@ -8,9 +8,7 @@ const pMap = require('p-map');
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
-const {
-  getWorkflowFileKey,
-} = require('@cumulus/common/workflows');
+const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 
 const Logger = require('@cumulus/logger');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
@@ -247,7 +245,7 @@ const patchGranule = async (req, res) => {
     collectionPgModel = new CollectionPgModel(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
-  const knex = req.knex ?? await getKnexClient();
+  const knex = req.knex ?? (await getKnexClient());
   let apiGranule = req.body || {};
   let pgCollection;
 
@@ -728,7 +726,10 @@ const BulkPatchSchema = z.object({
   dbMaxPool: z.number().positive(),
 }).catchall(z.unknown());
 
-const parseBulkPatchGranuleCollectionPayload = zodParser('BulkPatchGranuleCollection payload', BulkPatchGranuleCollectionSchema);
+const parseBulkPatchGranuleCollectionPayload = zodParser(
+  'BulkPatchGranuleCollection payload',
+  BulkPatchGranuleCollectionSchema
+);
 const parseBulkPatchPayload = zodParser('BulkPatchSchema payload', BulkPatchSchema);
 
 /**
@@ -868,32 +869,31 @@ async function del(req, res) {
   const granuleId = req.params.granuleId;
   const collectionId = req.params.collectionId;
 
-  log.info(
-    `granules.del granuleId: ${granuleId}, collectionId: ${collectionId}`
-  );
+  log.info(`granules.del granuleId: ${granuleId}, collectionId: ${collectionId}`);
 
   let pgGranule;
   let pgCollection;
   try {
-    pgCollection = await collectionPgModel.get(
-      knex,
-      deconstructCollectionId(collectionId)
-    );
+    pgCollection = await collectionPgModel.get(knex, deconstructCollectionId(collectionId));
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`No collection found for granuleId ${granuleId} with collectionId ${collectionId}`);
+    }
+    throw error;
+  }
 
+  try {
     pgGranule = await granulePgModel.get(knex, {
       granule_id: granuleId,
       collection_cumulus_id: pgCollection.cumulus_id,
     });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (collectionId && pgCollection === undefined) {
-        return res.boom.notFound(
-          `No collection found for granuleId ${granuleId} with collectionId ${collectionId}`
-        );
-      }
-    } else {
-      throw error;
+      return res.boom.notFound(
+        `Granule ${granuleId} does not exist for collection ${collectionId} or was already deleted`
+      );
     }
+    throw error;
   }
 
   const deletionDetails = await deleteGranuleAndFiles({
