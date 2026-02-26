@@ -23,7 +23,7 @@ The following table describes the properties of the configuration object. Note t
 | collection.name              | string | None   | Y        | The name of the collection.                           |
 | cumulus_meta                 | object | None   | N        | Internal metadata for Cumulus execution tracking.     |
 | cumulus_meta.state_machine   | string | None   | N        | The name of the specific state machine being invoked. |
-| cumulus_meta.execution_name  | string | None   | N        | The specific identifier for the current execution.    | 
+| cumulus_meta.execution_name  | string | None   | N        | The specific identifier for the current execution.    |
 
 ##### Example of config input:
 
@@ -43,7 +43,7 @@ The following table describes the properties of the configuration object. Note t
   }
 }
 ```
-        
+
 
 Example of workflow configuraton:
 
@@ -92,7 +92,7 @@ Example of workflow configuraton:
                 "Next": "QueueCNMs"
             },
 ```
-The Step Function task definition utilizes a task_config object to manage dynamic inputs. 
+The Step Function task definition utilizes a task_config object to manage dynamic inputs.
 As example, within this configuration, the collection field is mapped using JSONPath to the metadata:
 
     Config Input: "collection": "{$.meta.collection}"
@@ -117,7 +117,7 @@ module "cma_to_cnm_module" {
  resource "aws_cloudwatch_log_group" "cma_to_cnm_task" {
     name              = "/aws/lambda/${module.cnm_to_cma_module.cnm_to_cma_name}"
     retention_in_days  = var.task_logs_retention_in_days
-    
+
  }
 ```
 
