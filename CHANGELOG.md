@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4564**
+  - Added private_api_lambda_arn as an output in the Cumulus terraform module
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload.
@@ -92,6 +94,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-4564**
+  - hotfix for a terraform deployment issue found in the granule invalidator workflow causing the PrivateApiLambda to not be recreated
 - **CUMULUS-4566**
   - Updated AJV to ^8.18.0
     - Updated task components to resolve malformed/errant task schemas in the following lambdas:
