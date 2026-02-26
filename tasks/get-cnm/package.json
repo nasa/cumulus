@@ -1,0 +1,31 @@
+{
+  "name": "@cumulus/get-cnm-task",
+  "private": true,
+  "version": "21.2.0",
+  "description": "Get CNM task",
+  "main": "index.js",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/get-cnm",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "scripts": {
+    "test": "uv run pytest -q",
+    "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src",
+    "clean": "rm -rf dist && rm -rf .venv && mkdir dist",
+    "build": "uv sync",
+    "prepare": "npm run build",
+    "package": "npm run clean && ../../bin/package_uv.sh 3.12 ${PWD}",
+    "install-python-deps": "npm run build"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0"
+}
