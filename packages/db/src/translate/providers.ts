@@ -1,4 +1,4 @@
-import { removeNilProperties } from '@cumulus/common/util';
+import { removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { envUtils } from '@cumulus/common';
 import { KMS } from '@cumulus/aws-client';
 import { ApiProvider } from '@cumulus/types';
@@ -25,8 +25,8 @@ export const translatePostgresProviderToApiProvider = (
     port: record.port,
     host: record.host,
     protocol: record.protocol,
-    createdAt: record.created_at.getTime(),
-    updatedAt: record.updated_at.getTime(),
+    createdAt: returnNullOrUndefinedOrDate(record.created_at)?.getTime(),
+    updatedAt: returnNullOrUndefinedOrDate(record.updated_at)?.getTime(),
     username: record.username,
     password: record.password,
     allowedRedirects: record.allowed_redirects,
