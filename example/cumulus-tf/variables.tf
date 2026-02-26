@@ -281,6 +281,7 @@ variable "archive_api_users" {
   default     = [
     "acyu",
     "awisdom",
+    "blokey",
     "cbanh",
     "chuang14",
     "cdurbin",
