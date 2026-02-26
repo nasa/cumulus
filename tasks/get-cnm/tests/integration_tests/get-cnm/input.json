@@ -1,0 +1,103 @@
+{
+  "cma": {
+    "task_config": {
+      "provider": "{$.meta.provider}",
+      "queueUrl": "{$.meta.queue_granules_config.queue_url}",
+      "childWorkflowMeta": "{$.meta}",
+      "granuleIngestWorkflow": "{$.meta.ingest_workflow}",
+      "stackName": "{$.meta.stack}",
+      "internalBucket": "{$.meta.buckets.internal.name}",
+      "executionNamePrefix": "{$.meta.executionNamePrefix}"
+    },
+    "event": {
+      "cumulus_meta": {
+        "cumulus_version": "21.3.1",
+        "execution_name": "ATL08_006_KINESIS_SYSTEM_TEST-13374bb5-5388-4ab2-98a9-20822c2a8337",
+        "message_source": "sfn",
+        "queueExecutionLimits": {
+          "https://sqs.us-west-2.amazonaws.com/[acct-number]/[prefix]-ThrottledQueueNRT": 500,
+          "https://sqs.us-west-2.amazonaws.com/[acct-number]/[prefix]-ThrottledQueueRate200": 200,
+          "https://sqs.us-west-2.amazonaws.com/[acct-number]/[prefix]-ThrottledQueueRate5": 5,
+          "https://sqs.us-west-2.amazonaws.com/[acct-number]/[prefix]-ThrottledQueueRate500": 500,
+          "https://sqs.us-west-2.amazonaws.com/[acct-number]/[prefix]-ThrottledQueueRate750": 750,
+          "https://sqs.us-west-2.amazonaws.com/[acct-number]/[prefix]-backgroundJobQueue": 5,
+          "https://sqs.us-west-2.amazonaws.com/[acct-number]/[prefix]-backgroundProcessing": 5
+        },
+        "sf_event_sqs_to_db_records_types": {},
+        "state_machine": "arn:aws:states:us-west-2:[acct-number]:stateMachine:[prefix]-CNM",
+        "system_bucket": "[prefix]-internal",
+        "workflow_start_time": 1771986744960,
+        "queueUrl": "arn:aws:sqs:us-west-2:[acct-number]:[prefix]-startSF"
+      },
+      "exception": "None",
+      "meta": {
+        "stack": "[prefix]",
+        "template": "s3://[prefix]-internal/[prefix]/workflow_template.json",
+        "workflow_name": "CNM",
+        "workflow_tasks": {
+          "0": {
+            "name": "[prefix]-CumulusMessageManipulator",
+            "version": "$LATEST",
+            "arn": "arn:aws:lambda:us-west-2:[acct-number]:function:[prefix]-CumulusMessageManipulator"
+          },
+          "1": {
+            "name": "[prefix]-CnmToGranule",
+            "version": "$LATEST",
+            "arn": "arn:aws:lambda:us-west-2:[acct-number]:function:[prefix]-CnmToGranule"
+          },
+          "2": {
+            "name": "[prefix]-AddUniqueGranuleId",
+            "version": "$LATEST",
+            "arn": "arn:aws:lambda:us-west-2:[acct-number]:function:[prefix]-AddUniqueGranuleId"
+          }
+        },
+        "responseName": "[prefix]-external_response",
+        "responseType": "kinesis",
+        "executionNamePrefix": "ATL08_006_KINESIS_SYSTEM_TEST",
+        "cnm": {
+          "version": 1.3,
+          "submissionTime": "2026-02-25T02:32:12",
+          "identifier": "78b52d92-ff70-4633-94b1-94e10bf03d11",
+          "collection": "ATL08",
+          "provider": "SYSTEM_TEST",
+          "product": {
+            "name": "ATL08_20260222023208_00000000_006_02.h5",
+            "dataVersion": "006",
+            "files": [
+              {
+                "name": "ATL08_20260222023208_00000000_006_02.h5",
+                "type": "data",
+                "uri": "s3://[prefix]-ingest-staging/test/files/dynamic/ATL08/006/ATL08_20260222023208_00000000_006_02.h5",
+                "size": 8123425
+              },
+              {
+                "name": "ATL08_20260222023208_00000000_006_02.iso.xml",
+                "type": "metadata",
+                "uri": "s3://[prefix]-ingest-staging/test/files/dynamic/ATL08/006/ATL08_20260222023208_00000000_006_02.iso.xml",
+                "size": 10076
+              }
+            ]
+          },
+          "receivedTime": "2026-02-25T02:32:31.202Z"
+        },
+        "queue_granules_config": {
+          "queue_url": "https://sqs.us-west-2.amazonaws.com/[acct-number]/[prefix]-startSF"
+        }
+      },
+      "payload": {
+        "granules": [
+          {
+            "granuleId": "ATL08_20260222023208_00000000_006_02.h5_9UBgbmQK",
+            "version": "006",
+            "dataType": "ATL08",
+            "files": [],
+            "producerGranuleId": "ATL08_20260222023208_00000000_006_02.h5"
+          }
+        ]
+      },
+      "task_config": {
+        "cumulus_message": {}
+      }
+    }
+  }
+}

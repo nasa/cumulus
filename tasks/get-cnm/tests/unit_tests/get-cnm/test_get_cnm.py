@@ -13,7 +13,7 @@ def test_lambda_adapter_returns_one_cnm() -> None:
     input_event = {
         "input": {
             "granules": [
-                {"granuleId": input_granule_name, "collectionId": "ATL12___007"}
+                {"granuleId": input_granule_name, "dataType": "ATL12", "version": "007"}
             ]
         }
     }
@@ -35,7 +35,8 @@ def test_lambda_adapter_returns_one_cnm() -> None:
                         }
                     ],
                 },
-                "collectionId": "ATL12___007",
+                "dataType": "ATL12",
+                "version": "007",
             },
             {
                 # This execution should be ignored since it's newer than the first one
@@ -51,7 +52,8 @@ def test_lambda_adapter_returns_one_cnm() -> None:
                         }
                     ],
                 },
-                "collectionId": "ATL12___007",
+                "dataType": "ATL12",
+                "version": "007",
             },
         ],
     }
@@ -69,7 +71,7 @@ def test_lambda_adapter_returns_one_cnm_with_parent_arn() -> None:
     input_event = {
         "input": {
             "granules": [
-                {"granuleId": input_granule_name, "collectionId": "ATL12___007"}
+                {"granuleId": input_granule_name, "dataType": "ATL12", "version": "007"}
             ]
         }
     }
@@ -92,7 +94,8 @@ def test_lambda_adapter_returns_one_cnm_with_parent_arn() -> None:
                         }
                     ],
                 },
-                "collectionId": "ATL12___007",
+                "dataType": "ATL12",
+                "version": "007",
                 "parentArn": parent_execution_arn,
             }
         ],
@@ -110,7 +113,8 @@ def test_lambda_adapter_returns_one_cnm_with_parent_arn() -> None:
                 }
             ],
         },
-        "collectionId": "ATL12___007",
+        "dataType": "ATL12",
+        "version": "007",
     }
     with (
         patch(
@@ -136,8 +140,16 @@ def test_lambda_adapter_returns_multiple_cnm() -> None:
     input_event = {
         "input": {
             "granules": [
-                {"granuleId": first_input_granule_name, "collectionId": "ATL12___007"},
-                {"granuleId": second_input_granule_name, "collectionId": "ATL12___007"},
+                {
+                    "granuleId": first_input_granule_name,
+                    "dataType": "ATL12",
+                    "version": "007",
+                },
+                {
+                    "granuleId": second_input_granule_name,
+                    "dataType": "ATL12",
+                    "version": "007",
+                },
             ]
         }
     }
@@ -162,7 +174,8 @@ def test_lambda_adapter_returns_multiple_cnm() -> None:
                         }
                     ],
                 },
-                "collectionId": "ATL12___007",
+                "dataType": "ATL12",
+                "version": "007",
             },
             {
                 # This execution should be ignored since it's newer than the first one
@@ -178,7 +191,8 @@ def test_lambda_adapter_returns_multiple_cnm() -> None:
                         }
                     ],
                 },
-                "collectionId": "ATL12___007",
+                "dataType": "ATL12",
+                "version": "007",
             },
             {
                 "originalPayload": second_original_cnm_message,
@@ -193,7 +207,8 @@ def test_lambda_adapter_returns_multiple_cnm() -> None:
                         }
                     ],
                 },
-                "collectionId": "ATL12___007",
+                "dataType": "ATL12",
+                "version": "007",
             },
             {
                 # This execution should be ignored since it's newer than the first one
@@ -209,7 +224,8 @@ def test_lambda_adapter_returns_multiple_cnm() -> None:
                         }
                     ],
                 },
-                "collectionId": "ATL12___007",
+                "dataType": "ATL12",
+                "version": "007",
             },
         ],
     }
@@ -231,8 +247,16 @@ def test_lambda_adapter_raises_on_no_executions_found() -> None:
     input_event = {
         "input": {
             "granules": [
-                {"granuleId": first_input_granule_name, "collectionId": "ATL12___007"},
-                {"granuleId": second_input_granule_name, "collectionId": "ATL12___007"},
+                {
+                    "granuleId": first_input_granule_name,
+                    "dataType": "ATL12",
+                    "version": "007",
+                },
+                {
+                    "granuleId": second_input_granule_name,
+                    "dataType": "ATL12",
+                    "version": "007",
+                },
             ]
         }
     }
@@ -254,7 +278,8 @@ def test_lambda_adapter_raises_on_no_executions_found() -> None:
                         }
                     ],
                 },
-                "collectionId": "ATL12___007",
+                "dataType": "ATL12",
+                "version": "007",
             }
         ],
     }
@@ -279,7 +304,11 @@ def test_lambda_adapter_raises_on_cnm_granule_mismatch() -> None:
     input_event = {
         "input": {
             "granules": [
-                {"granuleId": first_input_granule_name, "collectionId": "ATL12___007"},
+                {
+                    "granuleId": first_input_granule_name,
+                    "dataType": "ATL12",
+                    "version": "007",
+                },
             ]
         }
     }
@@ -299,7 +328,8 @@ def test_lambda_adapter_raises_on_cnm_granule_mismatch() -> None:
                         }
                     ],
                 },
-                "collectionId": "ATL12___007",
+                "dataType": "ATL12",
+                "version": "007",
             }
         ],
     }
@@ -328,7 +358,11 @@ def test_lambda_adapter_raises_on_cnm_granule_missing() -> None:
     input_event = {
         "input": {
             "granules": [
-                {"granuleId": first_input_granule_name, "collectionId": "ATL12___007"},
+                {
+                    "granuleId": first_input_granule_name,
+                    "dataType": "ATL12",
+                    "version": "007",
+                },
             ]
         }
     }
@@ -348,7 +382,8 @@ def test_lambda_adapter_raises_on_cnm_granule_missing() -> None:
                         }
                     ],
                 },
-                "collectionId": "ATL12___007",
+                "dataType": "ATL12",
+                "version": "007",
             }
         ],
     }

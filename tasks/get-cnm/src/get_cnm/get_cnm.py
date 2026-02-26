@@ -26,7 +26,10 @@ def build_input(data: dict) -> dict:
     """Build the input for the search_executions_by_granules method."""
     return {
         "granules": [
-            {"granuleId": granule["granuleId"], "collectionId": granule["collectionId"]}
+            {
+                "granuleId": granule["granuleId"],
+                "collectionId": f"{granule['dataType']}___{granule['version']}",
+            }
             for granule in data["granules"]
         ]
     }
@@ -94,5 +97,5 @@ def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
                 f"Found differing granule IDs for granule in CNM message "
                 f"({cnm_granule_id}) and Cumulus message ({granule_id})"
             )
-
+    LOGGER.info(f"Successfully retrieved CNM messages: {list(execution_map)}")
     return execution_map
