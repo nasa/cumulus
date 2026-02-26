@@ -195,7 +195,7 @@ Note that, in the task, the `CmrStep.Parameters.cma.task_config.cmr` key will co
 },
 ```
 
-If you're not ingesting mock data matching the example, or would like to use modify the example to ingest your own data please see the [build-lambda](#build-lambda) section below. You will need to configure a different lambda entry for your lambda and utilize it in place of the `Resource` defined in the example workflow.
+If you're not ingesting mock data matching the example, or would like to use modify the example to ingest your own data please see the [build-processing-lambda](#build-processing-lambda) section below. You will need to configure a different lambda entry for your lambda and utilize it in place of the `Resource` defined in the example workflow.
 
 :::note
 

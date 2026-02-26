@@ -10,7 +10,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 
 ---
 
-### General
+## General
 
 <details>
   <summary>What prerequisites are needed to setup Cumulus?</summary>
@@ -75,7 +75,7 @@ For more information on how to submit an issue or contribute to Cumulus follow o
 
 ---
 
-### Workflows
+## Workflows
 
 <details>
   <summary>What is a Cumulus workflow?</summary>
@@ -103,7 +103,7 @@ For more information on how to submit an issue or contribute to Cumulus follow o
 
 ---
 
-### Integrators & Developers
+## Integrators & Developers
 
 <details>
   <summary>What is a Cumulus integrator?</summary>
@@ -153,7 +153,7 @@ For more information on how to submit an issue or contribute to Cumulus follow o
 
 ---
 
-### Operators
+## Operators
 
 <details>
   <summary>What is a Cumulus operator?</summary>
