@@ -11,10 +11,10 @@
     "scripts": {
       "test": "uv run pytest -q",
       "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src/pdr_cleanup",
-      "clean": "rm -rf dist && rm -rf .venv && mkdir dist",
+      "clean": "rm -rf dist && rm -rf .venv && mkdir -p dist/packages",
       "build": "uv sync",
       "prepare": "npm run build",
-      "package": "npm run clean && ../../bin/package_uv.sh 3.12 ${PWD}",
+      "package": "npm run clean && cp -r ./schemas ./dist/packages && ../../bin/package_uv.sh 3.12 ${PWD}",
       "install-python-deps": "npm run build"
     },
     "publishConfig": {

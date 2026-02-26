@@ -6,7 +6,20 @@
     "properties": {
       "provider": {
         "type": "object",
-        "description": "A provider object. The host configured is used in the archive location for the PDR"
+        "description": "A provider object. The host configured is used in the archive location for the PDR",
+        "required": [ "host", "protocol" ],
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "password": { "type": "string" },
+          "host": { "type": "string" },
+          "port": { "type": "integer" },
+          "globalConnectionLimit": { "type": "integer" },
+          "protocol": {
+            "type": "string",
+            "enum": ["s3"]
+          }
+        }
       }
     }
   }

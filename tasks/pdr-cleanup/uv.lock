@@ -240,6 +240,7 @@ name = "pdr-cleanup"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "boto3" },
     { name = "cumulus-message-adapter-python" },
 ]
 
@@ -253,7 +254,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "cumulus-message-adapter-python", specifier = "==2.4" }]
+requires-dist = [
+    { name = "boto3", specifier = "~=1.40" },
+    { name = "cumulus-message-adapter-python", specifier = "~=2.4" },
+]
 
 [package.metadata.requires-dev]
 dev = [

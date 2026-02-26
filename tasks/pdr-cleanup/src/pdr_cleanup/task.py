@@ -22,16 +22,22 @@ def cleanup_pdr(event: dict, context: dict) -> dict:
     logger.debug("## EVENT OBJ \n" + json.dumps(event))
 
     provider = event["config"]["provider"]
-    pdr = event["input"]["pdr"]
+    payload = event["input"]
+    pdr = payload["pdr"]
 
-    if event["input"]["failed"]:
+    if payload["failed"]:
         logger.info("PDR failed to ingest all granules successfully, NOT archiving")
         raise Exception(
             "PDR failed to ingest all granules successfully\n"
             f"Ingest Granule workflow failure count: {len(event['input']['failed'])}"
         )
-    event["input"]["pdr"]["archivePath"] = move_pdr(provider, pdr)
-    return event["input"]
+    return {
+        **payload,
+        "pdr": {
+            **payload["pdr"],
+            "archivePath": move_pdr(provider, pdr),
+        },
+    }
 
 
 def move_pdr(provider: dict, pdr: dict) -> str:
@@ -41,12 +47,6 @@ def move_pdr(provider: dict, pdr: dict) -> str:
     :param pdr: PDR information.
     :return: The archive location of the PDR.
     """
-
-    if provider["protocol"] != "s3":
-        raise Exception(
-            f"Provider protocol is ({provider['protocol']}) "
-            "PDR cleanup only supports S3 providers"
-        )
 
     curr_date = datetime.now().strftime("%Y.%m.%d")
     src_path = os.path.join(pdr["path"], pdr["name"])

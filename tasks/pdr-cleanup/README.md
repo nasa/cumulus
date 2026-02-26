@@ -16,8 +16,10 @@ This lambda takes the following input and config objects, derived from workflow 
 
 Example task config:
 ```json
-"task_config": {
-    "provider": "{$.meta.provider}"
+{
+    "task_config": {
+        "provider": "{$.meta.provider}"
+    }
 }
 ```
 ### Input
@@ -54,41 +56,43 @@ This task outputs the archive path of the cleaned up PDR, along with the previou
 This task should take place after all child granule ingest workflows are completed.
 
 ```json
-"CleanupPDR": {
-    "Type": "Task",
-    "Parameters": {
-        "cma": {
-            "event.$": "$",
-            "task_config": {
-                "provider": "{$.meta.provider}"
+{
+    "CleanupPDR": {
+        "Type": "Task",
+        "Parameters": {
+            "cma": {
+                "event.$": "$",
+                "task_config": {
+                    "provider": "{$.meta.provider}"
+                }
             }
-        }
-    },
-    "Resource": "${cleanup_pdr_task_arn}",
-    "Next": "AddInputGranules",
-    "Catch": [
-        {
-            "ErrorEquals": [
-                "States.ALL"
-            ],
-            "Next": "WorkflowFailed",
-            "ResultPath": "$.exception"
-        }
-    ],
-    "Retry": [
-        {
-            "BackoffRate": 2,
-            "ErrorEquals": [
-                "Lambda.ServiceException",
-                "Lambda.TooManyRequestsException",
-                "Lambda.AWSLambdaException",
-                "Lambda.SdkClientException"
-            ],
-            "IntervalSeconds": 5,
-            "MaxAttempts": 10
-        }
-    ]
-},
+        },
+        "Resource": "${cleanup_pdr_task_arn}",
+        "Next": "AddInputGranules",
+        "Catch": [
+            {
+                "ErrorEquals": [
+                    "States.ALL"
+                ],
+                "Next": "WorkflowFailed",
+                "ResultPath": "$.exception"
+            }
+        ],
+        "Retry": [
+            {
+                "BackoffRate": 2,
+                "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.TooManyRequestsException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException"
+                ],
+                "IntervalSeconds": 5,
+                "MaxAttempts": 10
+            }
+        ]
+    }
+}
 ```
 
 ### Internal Dependencies
