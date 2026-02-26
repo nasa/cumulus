@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4564**
+  - Added private_api_lambda_arn as an output in the Cumulus terraform module
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload.
@@ -68,6 +70,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `@cumulus/db/search` module to support searching on nested JSON fields.
   - Updated the `@cumulus/db/translate` `translatePostgres*Record*ToApi*Record*` functions to
     correctly handle query results from both PostgreSQL and DuckDB.
+- **CUMULUS-4543**
+  - Added supporting Terraform for the aws_api_proxy task
+  - Added aws_api_proxy output to the Cumulus Terraform module
+- **CUMULUS-4544**
+  - Added integration tests for the aws_api_proxy task
 
 ### Changed
 
@@ -87,6 +94,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-4564**
+  - hotfix for a terraform deployment issue found in the granule invalidator workflow causing the PrivateApiLambda to not be recreated
 - **CUMULUS-4566**
   - Updated AJV to ^8.18.0
     - Updated task components to resolve malformed/errant task schemas in the following lambdas:
