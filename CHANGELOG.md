@@ -75,6 +75,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added aws_api_proxy output to the Cumulus Terraform module
 - **CUMULUS-4544**
   - Added integration tests for the aws_api_proxy task
+- **CUMULUS-4545**
+  - Created integration tests for get_cnm task
+- **CUMULUS-4546**
+  - Created IaC needed to support get_cnm task
+- **CUMULUS-4547**
+  - Added get_cnm task to tasks directory
 
 ### Changed
 
