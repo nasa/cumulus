@@ -30,7 +30,3 @@ cumulus-api = { git = "https://github.com/ghrcdaac/cumulus-api", tag = "v3.0.4" 
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-
-[project.scripts]
-generate-config-schema = "get_cnm.schemas.config_schema:main"
-generate-output-schema = "get_cnm.schemas.output_schema:main"

@@ -31,7 +31,9 @@ This task does not require any task configuration.
 | ---------- | ---- | ------- | -------- | ------ | ----------- |
 | granules | array | N/A | yes | N/A | Array of granules to resolve back to originating CNM |
 | granules[].granuleId | string | N/A | yes | N/A | Cumulus granule identifier |
-| granules[].collectionId | string | N/A | yes | N/A | Collection ID in Cumulus format (for example: `ATL12___007`) |
+| granules[].dataType | string | N/A | yes | N/A | Collection short name used to derive the Cumulus collection ID |
+| granules[].version | string | N/A | yes | N/A | Collection version used to derive the Cumulus collection ID |
+| granules[].files | array | N/A | yes | N/A | Granule files array required by task input schema (not used by CNM lookup logic) |
 
 The following is an example of task input:
 
@@ -40,11 +42,15 @@ The following is an example of task input:
 	"granules": [
 		{
 			"granuleId": "ATL12_20181014154641_02450101_007_02.h5_-C-mRK2W",
-			"collectionId": "ATL12___007"
+			"dataType": "ATL12",
+			"version": "007",
+			"files": []
 		},
 		{
 			"granuleId": "ATL12_20181014155468_02450101_007_02.h5_-C-mRK2W",
-			"collectionId": "ATL12___007"
+			"dataType": "ATL12",
+			"version": "007",
+			"files": []
 		}
 	]
 }
