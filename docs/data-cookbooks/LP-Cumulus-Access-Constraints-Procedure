@@ -1,0 +1,276 @@
+---
+id: LP-Cumulus-Access-Constraints-Procedure
+title: LPDAAC Cumulus Access Constraints Procedure
+hide_title: false
+---
+
+## Purpose:
+
+The purpose of this SOP is to provide instruction on setting Access Constraints  (formerly known as Restriction Flags).
+
+## Scope:
+
+The scope of this SOP includes the System Engineer, System Operator, and Data Manager skillsets on the Cumulus project who will use the UpdateCmrAccessConstraints workflow. This SOP describes the steps needed to update multiple granules from  the dashboard, the process is applicable in SIT, UAT, and PROD. This SOP does not include troubleshooting steps if the process fails.
+
+## Procedure:
+
+Use the following steps for the Cumulus Dashboard UpdateCmrAccessConstraints functionality:
+
+1. Login to the Cumulus Dashboard in SIT, UAT, or PROD.
+   a. Cumulus instances are located at https://wiki.earthdata.nasa.gov/display/LPCUMULUS/Cumulus+Instances.
+   b. Users will need to connect to the NASA VPN and provide their Launchpad username and password.
+   c. Go to the “Granules” page by selecting “Granules”
+
+
+Option 1. You have a few granules on the dashboard to update
+
+1. Select the collection of the granules to be updated.
+2. Select the granules to be updated.  Users can select all granules on the page or use the “Search” field to search for specific granules.
+3. Click on the “Execute” button.
+4. Choose the "UpdateCmrAccessConstraints" workflow from the dropdown
+5. Click on the "Add Custom Workflow Meta" link
+6. Enter  json with the access constraint and description in this format and then click "Confirm"
+
+UpdateCmrAccessConstraints example
+{
+    "meta": {
+        "accessConstraints": {
+            "value": 6,
+            "description": "access constraint description"
+        }
+    }
+}
+
+Option 2. You have a list of granuleId's you want to update
+1. Select "Run Bulk Granules"
+2. Select "Run Bulk Operations"
+3. Enter the following json with the ids you want to update and then click the "Run Bulk Operations" button
+
+Bulk Granules list input
+{
+    "workflowName": "UpdateCmrAccessConstraints",
+    "index": "",
+    "query": "",
+    "ids": ["ASTGTMV003_N37E009", "ASTGTMV003_N12E021"],
+    "meta": {
+        "accessConstraints": {
+        "value": 6,
+        "description": "access constraint description"
+        }
+    }
+}
+
+Option 3. Bulk update using Elasticsearch query:
+
+1. If you have many granules to update, you can use an Elasticsearch query:
+   a. Determine the Elasticsearch index in the Cloud Metrics ELK stack for this Cumulus environment (See Cumulus Instances for the Kibana URL).  Normally, you should be able to use the globbed value 'lpdaac-granule-prod*'.
+   b. First, use the Cloud Metrics Kibana instance to generate the query
+      i. Navigate to the URL
+      ii. Go to the Discover tab, and select the index filter '*-granule-*'.
+      iii. Construct a Lucene query to select the granules you want to update.  You'll likely want to query by 'collectionId', and a temporal range.  Make sure to hit "Refresh" if you change the parameters.
+	  ![Execution graph of SIPS ParsePdr workflow in AWS Step Functions console](../assets/image2020-11-30_10-38-39.png)
+	  
+   c. Now, extract data for the 'query' object.  
+
+      i. Select the "Inspect" menu option, then select the "Request" tab.
+	  ![Execution graph of SIPS ParsePdr workflow in AWS Step Functions console](../assets/image2020-11-30_10-42-19.png)
+      ii. Locate the 'query' object, and extract it.
+
+   d. Create the bulk operation JSON object, and use the extracted 'query' object as the query value.  Below is an example:
+
+bulk UpdateCmrAccessConstraints example
+{
+  "workflowName": "UpdateCmrAccessConstraints",
+  "index": "lpdaac-granule-prod*",
+  "query": {
+    "query": {
+      "bool": {
+        "must": [],
+        "filter": [
+          {
+            "bool": {
+              "filter": [
+                {
+                  "bool": {
+                    "should": [
+                      {
+                        "match_phrase": {
+                          "collectionId": "HLSL30___1.5"
+                        }
+                      }
+                    ],
+                    "minimum_should_match": 1
+                  }
+                },
+                {
+                  "bool": {
+                    "should": [
+                      {
+                        "match_phrase": {
+                          "_index": "lpdaac-granule-prod*"
+                        }
+                      }
+                    ],
+                    "minimum_should_match": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "range": {
+              "@timestamp": {
+                "gte": "2020-01-01T06:00:00.000Z",
+                "lte": "2021-01-01T06:00:00.000Z",
+                "format": "strict_date_optional_time"
+              }
+            }
+          }
+        ],
+        "should": [],
+        "must_not": []
+      }
+    }
+  },
+  "ids": [],
+  "meta": {
+    "accessConstraints": {
+      "value": 6,
+      "description": "access constraint description"
+    }
+  }
+}
+   e. Click the “Run Bulk Operations” button.
+
+
+Option 4. Bulk update using scripts:
+
+   1. Logon to elpdvx3 as websvc user.
+   2. cd cumulus-utilities/operations/ops
+   3. Modal .env files are in  /home/websvc/cumulus-utilities/config/
+   4. Logs will be written to /home/websvc/cumulus-utilities/logs/
+   5. Output files will be created in /home/websvc/cumulus-utilities/output/
+   6. Verify the cumulus-utilities container is running: 
+      a. $ docker ps -a | grep ops_cumulus-utilities-app
+         ec5eb5bffd7f   elpdvx68.cr.usgs.gov:6000/lp-daac-cloud/cumulus/cumulus-utilities/cumulus-utilities-app:ops             "python3"                4 days ago       Up 4 days                                                                                                                                                                       ops_cumulus-utilities-app_1
+   7. Generate the collection files for a provider from CMR. These will contain the concept-id needed to get the granules for a collection. Note that you only need to run this once, unless collections are added to CMR:
+      a. $ sh cumulus_utilities_control.sh utility cmr_granule_search_to_file.py --action ACTION --dir DIR [--collfileid COLLFILEID] [--collfile COLLFILE] [--requireToken REQUIRETOKEN] 
+         i. ACTION:  populate_collection_file
+         ii. DIR:  /app/output/, the output directory inside the container.   This maps to /home/websvc/cumulus-utilities/output on elpdvx3
+         iii. COLLFILEID:  This can be a short code of your choosing to identify your files
+         iv. REQUIRETOKEN: true to login to CMR with the user identified in the <mode>.env (PROD.env) file under /home/websvc/cumulus-utilities/config, false to query as guest
+         v. ex: $ sh cumulus_utilities_control.sh utility cmr_granule_search_to_file.py --action populate_collection_file --dir /app/output --collfileid ACL --requireToken true 
+   8. Generate a file containing the list of granules for a collection. These will be the granules that you will run the UpdateCmrAccessConstraints workflow for:
+      a. choose one of the files produced by the previous command:
+         i. $ ls -l /home/websvc/cumulus-utilities/output
+         ii. $ cat /home/websvc/cumulus-utilities/output/PROD_<collfileid value>*token.json   ex:  cat /home/websvc/cumulus-utilities/output/PROD_ACL*token.json
+      b. $ sh cumulus_utilities_control.sh utility cmr_granule_search_to_file.py --action ACTION --dir DIR [--collfileid COLLFILEID] [--collfile COLLFILE] [--requireToken REQUIRETOKEN] [--pageSize PAGESIZE] [--cmrSearchAfter CMRSEARCHAFTER] [--startDate STARTDATE] [--endDate ENDDATE]
+      c. ACTION:  process_collection_file
+      d. DIR:  /app/output/, the output directory inside the container.   This maps to /home/websvc/cumulus-utilities/output on elpdvx3
+      e. COLLFILE:  The name of a collection file that was generated in the previous step
+      f. REQUIRETOKEN: true to login to CMR with the user identified in the <mode>.env (PROD.env) file under /home/websvc/cumulus-utilities/config, false to query as guest
+      g. PAGESIZE: The number of records to query from CMR in one call (calls will be in a loop). 
+      h. CMRSEARCHAFTER: Used for restarting a incomplete search. Before restarting, save off the granuleId output file so it's not overwritten. Then find the last cmr-search-after value from the log. Run the same command as you initially ran, except include this --cmrSearchAfter argument.
+      i. STARTDATE: optional. yyyy-MM-ddTHH:mm:ssZ format. Omit it to start at the beginning. Supplying a value will get granules having a Temporal.RangeDateTime in Cumulus, after and including this date
+      j. ENDDATE: optional. yyyy-MM-ddTHH:mm:ssZ format. Omit it to ignore. Supplying a value will get granules having a Temporal.RangeDateTime in Cumulus, up to and including this date
+      k. ex:  $ sh cumulus_utilities_control.sh utility cmr_granule_search_to_file.py --action process_collection_file --collfile PROD_ACL_ECO1BGEO_001_token.json --requireToken true --pageSize 500 --endDate 2018-08-07T20:24:23.070000Z --dir /app/output/
+      l. The filename containing the granules will have been written near the top of the log. You will need it for the next step. ex.  granule file name: /app/output/C1239578043-LPCLOUD_ECO1BGEO.001_PROD_1_1900.txt
+      m. Note that when you ran the previous step, a listing of commands was displayed. These were also captured in a file with 'process_cmds' in the name. This will have a listing of the commands that should be very similar to what you need to run:
+         i. $ ls -l /home/websvc/cumulus-utilities/output/*process_cmds.txt
+            -rw-r--r-- 1 17895 2030 8443 Nov  8 11:21 /home/websvc/cumulus-utilities/output/SIT_ACL_process_cmds.txt
+         ii. $ cat /home/websvc/cumulus-utilities/output/PROD_ACL_process_cmds.txt
+         iii. The commands are labeled 'local' and 'container'. Use the container version.
+   9. Run the run_bulk_operation.py script to run the UpdateCmrAccessConstraints workflow against the granules in the input file you created in the previous step:
+      a. $ sh cumulus_utilities_control.sh utility run_bulk_operation.py --workflow WORKFLOW [--meta META] [--granulelistfile GRANULELISTFILE] --dataset DATASET
+                             --dir DIR [--percent_failure_acceptable PERCENT_FAILURE_ACCEPTABLE]
+                             [--percent_running_acceptable PERCENT_RUNNING_ACCEPTABLE] [--limit LIMIT]
+         i. WORKFLOW:  UpdateCmrAccessConstraints
+         ii. META:   "'{\"accessConstraints\":{\"value\":101,\"description\":\"Restricted for limited public release\"}}'"      (enter your own values for the access constraint value and description)
+         iii. GRANULELISTFILE: The file created in the previous step which contains a list of granules for a collection
+         iv. DATASET: the dataset the GRANULELISTFILE is for.  It will be a shortname and version (which must match shortname and version on the collections tab of the Cumulus Dashboard) joined by 3 underscores. Ex ECO1BGEO___001
+         v. DIR:  /app/output/, the output directory inside the container.   This maps to /home/websvc/cumulus-utilities/output on elpdvx3
+         vi. PERCENT_FAILURE_ACCEPTABLE: The percentage of failed granules in a batch that is acceptable. Default is 2. ex. Using the default of 2%, if more than 2 of 100 granules fail, processing will stop. If you increase it to 10%, if more than 10 of 100 granules fail, processing will stop.
+         vii. PERCENT_RUNNING_ACCEPTABLE: The percentage of running granules in a batch that is acceptable before submitting another batch. Default is 0. ex. Using the default of 0%, another batch will not be submitted until all the granules in the current batch are done running. If you set it to 5%, if 5 or less of 100 granules are still running, another batch will be submitted. Otherwise, it will pause and then check again.
+         viii. LIMIT: The number of granules to stage in one batch. Default is 20.
+         viiii. Ex:  $ sh cumulus_utilities_control.sh utility run_bulk_operation.py --workflow UpdateCmrAccessConstraints --meta "'{\"accessConstraints\":{\"value\":101,\"description\":\"Restricted for limited public release\"}}'" --dataset ECO1BGEO___001 --granulelistfile C1239578043-LPCLOUD_ECO1BGEO.001_PROD_1_1900.txt --percent_failure_acceptable 10 --percent_running_acceptable 5 --limit 5 --dir /app/output/
+
+
+Restarting
+
+If the run_bulk_operation fails to process the entire granule input file, you can restart it using this guidance:
+
+You'll need the last granule processed:
+
+if you still have the output on your screen, look for a line like this:
+
+2022-11-15 17:25:57.109673 +0000         INFO      running bulk operation with this data: {'ids': '[ECOv002_L1A_BB_21239_014_20220405T002747_0700_01...ECOv002_L1A_BB_21241_012_20220405T032925_0700_01]', 'workflowName': 'UpdateCmrAccessConstraints', 'queueUrl': 'https://sqs.us-west-2.amazonaws.com/643705676985/lp-prod-forward-processing-throttled-queue', 'meta': {'accessConstraints': {'value': 101, 'description': 'Restricted for limited public release'}}} ...
+
+        if it's not on your screen, find the log from your run. It might help to locate your log by reverse sorting the log files by date:  ls -lrt . Search the log for the last entry containing "running bulk operation with this data:"
+
+        That entry shows the first and last granule from the range of granules submitted. Get the last granule. In this example it is ECOv002_L1A_BB_21241_012_20220405T032925_0700_01
+
+docker exec --user root -it ops_cumulus-utilities-app_1 /bin/bash
+
+cd output
+
+ls -l
+
+root@daa9f4032aff:/app/output# wc -l C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900.txt
+57776 C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900.txt
+
+root@daa9f4032aff:/app/output# grep -n ECOv002_L1A_BB_21241_012_20220405T032925_0700_01 C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900.txt
+1100:ECOv002_L1A_BB_21241_012_20220405T032925_0700_01
+
+root@daa9f4032aff:/app/output# head -n 1100 C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900.txt > C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900_done.txt
+
+root@daa9f4032aff:/app/output# tail -n +1101 C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900.txt > C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900_todo.txt
+
+root@daa9f4032aff:/app/output# wc -l C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900_done.txt
+1100 C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900_done.txt
+
+root@daa9f4032aff:/app/output# wc -l C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900_todo.txt
+56676 C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900_todo.txt
+
+root@daa9f4032aff:/app/output# cat C2076119270-LPCLOUD_ECO_L1A_BB.002_PROD_1_1900_done.txt
+The last line should be:  ECOv002_L1A_BB_21241_012_20220405T032925_0700_01
+
+You can now run the run_bulk_operation script using the 'todo' file as your input file
+
+403 errors
+
+If you see a 403 error similar to this trying to get a token, it might mean you have too many tokens. You can only have two:
+
+getting token for user lpdaac_bmgt_ts2
+making request to https://urs.earthdata.nasa.gov/api/users/token
+A request error occurred - <class 'requests.exceptions.HTTPError'>: 403 Client Error: Forbidden for url: https://urs.earthdata.nasa.gov/api/users/token
+
+Get the CMR_USER and CMR_PASSWORD and base64 encode them:
+
+   echo -n 'cmr_user:cmr_password' | base64
+
+To list your tokens:
+
+curl --request GET --url https://urs.earthdata.nasa.gov/api/users/tokens -H 'Authorization: Basic <base64encoded info here>'
+
+         To revoke a token:
+
+curl --request POST --url 'https://urs.earthdata.nasa.gov/api/users/revoke_token?token=<TOKEN here>' -H 'Authorization: Basic <base64encoded info here>'
+
+
+
+To edit files inside container:
+
+   a. docker exec --user root -it ops_cumulus-utilities-app_1 /bin/bash
+   b. apt-get install vim
+   c. cd output
+   d. ls -l
+
+## Monitoring execution for all Options:
+
+1. Click on the link to be directed to the Operations page.
+   a. Verify that the bulk action is running and the status of the event when completed.  For example:
+   ![Execution graph of SIPS ParsePdr workflow in AWS Step Functions console](../assets/image2020-11-30_10-57-12.png)
+ 
+## Removing an Access Constraint:
+
+Follow the same procedures, assigning an access constraint value of 0 (assuming 0 is not restricted). 
