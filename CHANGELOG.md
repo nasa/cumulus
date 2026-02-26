@@ -73,6 +73,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4543**
   - Added supporting Terraform for the aws_api_proxy task
   - Added aws_api_proxy output to the Cumulus Terraform module
+- **CUMULUS-4544**
+  - Added integration tests for the aws_api_proxy task
 
 ### Changed
 
@@ -152,6 +154,8 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
+- **CUMULUS-4087**
+  - Updated /refresh token endpoint and other functions to support automatic extension of cumulus dashboard user sessions by using iat claims and extending token expiration time. `MAX_SESSION_DURATION` environment variable defaults to 12 hours but can be overriden.
 - **CUMULUS-4272**
   - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
