@@ -19,6 +19,10 @@ output "archive_api_redirect_uri" {
   value = module.archive.api_redirect_uri
 }
 
+output "private_api_lambda_arn" {
+  value = module.archive.private_api_lambda_arn
+}
+
 output "provider_kms_key_id" {
   value = module.archive.provider_kms_key_id
 }
@@ -49,6 +53,10 @@ output "report_pdrs_sns_topic_arn" {
 
 output "add_missing_file_checksums_task" {
   value = module.ingest.add_missing_file_checksums_task
+}
+
+output "aws_api_proxy_task" {
+  value = module.ingest.aws_api_proxy_task
 }
 
 output "add_unique_granule_id_task" {
