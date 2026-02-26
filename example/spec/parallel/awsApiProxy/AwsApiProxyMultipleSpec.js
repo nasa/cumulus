@@ -5,7 +5,7 @@ const { createQueue, deleteQueue, receiveSQSMessages } = require('@cumulus/aws-c
 const { executeWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 
-describe('The aws_api_proxy deployed within a Cumulus workflow', () => {
+describe('The aws_api_proxy deployed within a Cumulus workflow for multiple messages', () => {
   let workflowExecution;
   let snsName;
   let createQueueUrl;
@@ -78,7 +78,7 @@ describe('The aws_api_proxy deployed within a Cumulus workflow', () => {
   });
 
   it('successfully publishes multiple messages to the SNS topic', async () => {
-    const options = { numOfMessages: 10, visibilityTimeout: 30 };
+    const options = { numOfMessages: 10, visibilityTimeout: 30, waitTimeSeconds: 10 };
     const maxPolls = 10;
     const results = await Promise.all(
       Array.from({ length: maxPolls }, () => receiveSQSMessages(createQueueUrl, options))

@@ -51,6 +51,10 @@ output "add_missing_file_checksums_task" {
   value = module.ingest.add_missing_file_checksums_task
 }
 
+output "aws_api_proxy_task" {
+  value = module.ingest.aws_api_proxy_task
+}
+
 output "add_unique_granule_id_task" {
   value = module.ingest.add_unique_granule_id_task
 }
@@ -77,10 +81,6 @@ output "files_to_granules_task" {
 
 output "granule_invalidator_task" {
   value = module.ingest.granule_invalidator_task
-}
-
-output "aws_api_proxy_task" {
-  value = module.ingest.aws_api_proxy_task
 }
 
 output "hello_world_task" {

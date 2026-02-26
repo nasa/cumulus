@@ -4,6 +4,6 @@ output "cumulus_task_lambda" {
 }
 
 output "cumulus_task_log_group_name" {
-  description = "Name of the CloudWatch log group for the Lambda function"
+  description = "The task lambda function log group"
   value       = aws_cloudwatch_log_group.cumulus_task_log_group.name
 }
