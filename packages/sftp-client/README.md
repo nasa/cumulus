@@ -21,7 +21,9 @@ const { SftpClient } = require("@cumulus/sftp-client");
     password: "my-password"
   });
 
+  await sftpClient.connect();
   console.log(await sftpClient.list("./"));
+  await sftpClient.end();
 })();
 ```
 
