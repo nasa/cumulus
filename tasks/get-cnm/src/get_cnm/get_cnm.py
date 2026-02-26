@@ -97,5 +97,4 @@ def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
                 f"Found differing granule IDs for granule in CNM message "
                 f"({cnm_granule_id}) and Cumulus message ({granule_id})"
             )
-    LOGGER.info(f"Successfully retrieved CNM messages: {list(execution_map)}")
     return execution_map
