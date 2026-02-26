@@ -5,7 +5,7 @@ from typing import Any, List, cast
 import uuid
 
 import pydantic
-from cma_to_cnm import models_cnm, models_cma
+from . import models_cnm, models_cma
 from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
 
@@ -23,12 +23,13 @@ def task(event: dict[str, Any], context: object) -> dict[str, Any]:
         A dict representing input and copied files. See schemas/output.json for more information.
 
     """
-    LOGGER.debug(event)
     input = event["input"]
     config = event["config"]
 
     # Config Content
-    meta_provider = config.get("provider", [])
+    meta_identifier = config["identifier"]
+    LOGGER.debug("meta_identifier: {}", meta_identifier)
+    meta_provider = config.get("provider")
     meta_collection = config.get("collection")
     meta_cumulus = config.get("cumulus_meta", {})
     LOGGER.debug(
@@ -38,9 +39,6 @@ def task(event: dict[str, Any], context: object) -> dict[str, Any]:
     )
 
     LOGGER.debug("provider: {}", meta_provider)
-    # if has granules, read first item and find collection
-    if "granules" not in input.keys():
-        raise Exception('"granules" is missing from input')
     # Building the URI from info provided by provider since the granule itself might not have it
     uri = f"{meta_provider['protocol']}://{meta_provider['host']}/"
     try:
@@ -70,7 +68,11 @@ def task(event: dict[str, Any], context: object) -> dict[str, Any]:
                     + granule_file.name
                     if granule_file.path is not None
                     else uri + granule_file.name,
-                    size=granule_file.size or 0,
+                    size=(
+                        granule_file.size
+                        if granule_file.size not in (None, 0, False)
+                        else (_ for _ in ()).throw(ValueError(f"granule file {granule_file.name} size illegal value: {granule_file.size}"))
+                    )
                 )
                 cnm_files.append(cnm_file)
             cnm_product = models_cnm.Product(
@@ -88,7 +90,7 @@ def task(event: dict[str, Any], context: object) -> dict[str, Any]:
                 receivedTime=now_aware,
                 processCompleteTime=now_aware,
                 submissionTime=now_aware,
-                identifier=str(uuid.uuid4()),
+                identifier=meta_identifier if meta_identifier is not None else str(uuid.uuid4()),
                 collection=cnm_dataset,
                 response=None,
                 product=cnm_product,

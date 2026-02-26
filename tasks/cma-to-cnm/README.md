@@ -105,7 +105,6 @@ module "cma_to_cnm_module" {
 
    source = "http://github.com/downloadpath/cma_to_cnm_module.zip"
    prefix = var.prefix
-   region = var.region
    lambda_role = module.cumulus.lambda_processing_role_arn
    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
 

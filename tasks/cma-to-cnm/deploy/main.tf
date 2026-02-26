@@ -1,7 +1,3 @@
-locals {
-  build_config = jsondecode(file("${path.module}/../build-config.json"))
-}
-
 resource "aws_lambda_function" "cma_to_cnm" {
   filename         = "${path.module}/../dist/final/lambda.zip"
   function_name    = "${var.prefix}-CMAToCNM"

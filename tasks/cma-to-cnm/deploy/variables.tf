@@ -2,7 +2,6 @@ variable "prefix" {
   type = string
 }
 
-# The location of footprint dataset-config file. Ex. s3://my-internal/datset-config/
 variable "lambda_role" {
   type = string
 }
@@ -13,14 +12,6 @@ variable "security_group_ids" {
 
 variable "subnet_ids" {
   type = list(string)
-}
-
-variable "region" {
-  type = string
-}
-
-variable "app_name" {
-  default = "workflow-normalizer"
 }
 
 variable "tags" {
