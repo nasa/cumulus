@@ -17,7 +17,7 @@
     "scripts/*"
   ],
   "scripts": {
-    "audit": "audit-ci --config ./audit-ci.json && lerna exec -- audit-ci --config $(pwd)/audit-ci.json",
+    "audit": "audit-ci --config ./audit-ci.json",
     "db:local:drop": "node bin/db-local-rollback.js --all",
     "db:local:migrate": "node bin/db-local-migrate.js",
     "db:local:reset": "npm run db:local:drop && npm run db:local:migrate",
@@ -53,7 +53,6 @@
     "bootstrap-python": "uv sync --all-groups",
     "bootstrap-no-build": "npm install && npm run bootstrap-python",
     "bootstrap-no-build-no-scripts": "npm install --ignore-scripts && npm run bootstrap-python",
-    "bootstrap-no-build-no-concurrency": "npm install --concurrency 1 && npm run bootstrap-python",
     "bootstrap-no-build-quiet": "npm install --loglevel error && npm run bootstrap-python",
     "ci:bootstrap": "npm install --ignore-scripts && npm run bootstrap-python && lerna run prepublish",
     "ci:bootstrap-no-scripts": "npm install --ignore-scripts && npm run bootstrap-python",
