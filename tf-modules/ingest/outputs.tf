@@ -57,6 +57,14 @@ output "granule_invalidator_task" {
   }
 }
 
+output "aws_api_proxy_task" {
+  value = {
+    task_arn           = module.aws_api_proxy.cumulus_task_lambda.arn
+    task_log_group     = module.aws_api_proxy.cumulus_task_log_group_name
+    last_modified_date = module.aws_api_proxy.cumulus_task_lambda.last_modified
+  }
+}
+
 output "hello_world_task" {
   value = {
     task_arn           = aws_lambda_function.hello_world_task.arn
