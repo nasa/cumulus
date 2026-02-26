@@ -1,7 +1,20 @@
 const test = require('ava');
+const sinon = require('sinon');
+
 const {
   updateUMMGGranuleURAndGranuleIdentifier,
 } = require('../../ummgModifiers');
+
+test.before((t) => {
+  // Mocking the date for ProductionDateTime value checks in tests as the function
+  // updateUMMGGranuleURAndGranuleIdentifier sets this to the current time for adding
+  // or updating a DataGranule to the Granule's metadata when excludeDataGranule is false.
+  t.context.clock = sinon.useFakeTimers(new Date('2024-01-01T00:00:00Z').getTime());
+});
+
+test.after.always((t) => {
+  t.context.clock.restore();
+});
 
 test('updates GranuleUR and adds ProducerGranuleId when Identifiers is missing', (t) => {
   const metadata = {
@@ -12,6 +25,7 @@ test('updates GranuleUR and adds ProducerGranuleId when Identifiers is missing',
     metadataObject: metadata,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
+    excludeDataGranule: false,
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -39,6 +53,7 @@ test('overwrites existing ProducerGranuleId while preserving other identifiers',
     metadataObject: metadata,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'NEW_PRODUCER_ID',
+    excludeDataGranule: false,
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -76,6 +91,7 @@ test('appends ProducerGranuleId if not present', (t) => {
     metadataObject: metadata,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
+    excludeDataGranule: false,
   });
 
   t.is(result.GranuleUR, 'NEW_ID');
@@ -99,6 +115,7 @@ test('throws error if input is not UMMGGranule', (t) => {
       metadataObject: invalid,
       granuleUr: 'ID',
       producerGranuleId: 'PRODUCER_ID',
+      excludeDataGranule: false,
     }));
 
   t.true(error?.message.includes('Invalid UMM-G JSON metadata'));
@@ -115,8 +132,125 @@ test('does not mutate original object', (t) => {
     metadataObject: original,
     granuleUr: 'NEW_ID',
     producerGranuleId: 'PRODUCER_ID',
+    excludeDataGranule: false,
   });
 
   t.not(result, original);
   t.deepEqual(original, copy);
+});
+
+test('does not add DataGranule to the granule metadata when excludeDataGranule is true', (t) => {
+  const metadata = {
+    GranuleUR: 'OLD_ID',
+  };
+
+  const result = updateUMMGGranuleURAndGranuleIdentifier({
+    metadataObject: metadata,
+    granuleUr: 'NEW_ID',
+    producerGranuleId: 'PRODUCER_ID',
+    excludeDataGranule: true,
+  });
+
+  t.is(result.DataGranule, undefined);
+});
+
+test('does not update or overwrite granule DataGranule metadata when excludeDataGranule is true', (t) => {
+  const metadata = {
+    GranuleUR: 'SAME_ID',
+    DataGranule: {
+      Identifiers: [
+        { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
+      ],
+      ProductionDateTime: '2023-12-31T23:59:59Z',
+      DayNightFlag: 'Day',
+    },
+  };
+
+  const result = updateUMMGGranuleURAndGranuleIdentifier({
+    metadataObject: metadata,
+    granuleUr: 'SAME_ID',
+    producerGranuleId: 'NEW_PRODUCER_ID',
+    excludeDataGranule: true,
+  });
+
+  t.deepEqual(result.DataGranule, metadata.DataGranule);
+});
+
+test('updates granule DataGranule metadata with new identifiers and required default values when excludeDataGranule is false', (t) => {
+  const metadata = {
+    GranuleUR: 'OLD_ID',
+    DataGranule: {
+      Identifiers: [
+        { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
+      ],
+    },
+  };
+
+  const result = updateUMMGGranuleURAndGranuleIdentifier({
+    metadataObject: metadata,
+    granuleUr: 'NEW_ID',
+    producerGranuleId: 'NEW_PRODUCER_ID',
+    excludeDataGranule: false,
+  });
+
+  const expectedDataGranule = {
+    Identifiers: [
+      { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
+      { Identifier: 'NEW_PRODUCER_ID', IdentifierType: 'ProducerGranuleId' },
+    ],
+    // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+    // despite actually being the time the task is ran (which is what is mocked, Date.now())
+    ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
+    DayNightFlag: 'Unspecified',
+  };
+
+  t.deepEqual(result.DataGranule, expectedDataGranule);
+});
+
+test('does not overwrite granule DataGranule metadata values when excludeDataGranule is false', (t) => {
+  const metadata = {
+    GranuleUR: 'OLD_ID',
+    DataGranule: {
+      Identifiers: [
+        { Identifier: 'LOCAL_ID', IdentifierType: 'LocalVersionId' },
+        { Identifier: 'PRODUCER_ID', IdentifierType: 'ProducerGranuleId' },
+      ],
+      DayNightFlag: 'Day',
+      ProductionDateTime: '2022-12-31T23:59:59Z',
+    },
+  };
+
+  const result = updateUMMGGranuleURAndGranuleIdentifier({
+    metadataObject: metadata,
+    granuleUr: 'NEW_ID',
+    producerGranuleId: 'PRODUCER_ID',
+    excludeDataGranule: false,
+  });
+
+  t.deepEqual(result.DataGranule, metadata.DataGranule);
+});
+
+test('adds granule DataGranule to the metadata when excludeDataGranule is false and populates required defaults', (t) => {
+  const metadata = {
+    GranuleUR: 'ID',
+  };
+
+  const result = updateUMMGGranuleURAndGranuleIdentifier({
+    metadataObject: metadata,
+    granuleUr: 'ID',
+    producerGranuleId: 'NEW_PRODUCER_ID',
+    excludeDataGranule: false,
+  });
+
+  const expectedDataGranule = {
+    Identifiers: [
+      { Identifier: 'NEW_PRODUCER_ID', IdentifierType: 'ProducerGranuleId' },
+    ],
+    // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+    // despite actually being the time the task is ran (which is what is mocked, Date.now())
+    ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
+    DayNightFlag: 'Unspecified',
+  };
+
+  t.deepEqual(result.DataGranule, expectedDataGranule);
 });
