@@ -4,11 +4,13 @@ export interface PostgresFile {
   granule_cumulus_id: number,
   checksum_type?: string,
   checksum_value?: string,
+  created_at?: Date | null,
   file_name?: string,
   file_size?: number,
   path?: string,
   source?: string,
   type?: string,
+  updated_at?: Date | null,
 }
 
 // file_size is stored as a BigInt in Postgres. It returns from PG to Node
