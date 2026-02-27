@@ -1,6 +1,7 @@
 // @ts-check
 
 const get = require('lodash/get');
+const isNil = require('lodash/isNil');
 const isString = require('lodash/isString');
 
 const log = require('@cumulus/common/log');
@@ -112,7 +113,7 @@ function validateGranuleExecutionPayload(payload) {
   } = payload;
 
   if ([granules, query, granuleInventoryReportName, s3GranuleIdInputFile].filter((el) =>
-    el !== undefined).length !== 1) {
+    !(isNil(el))).length !== 1) {
     return 'Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided';
   }
 

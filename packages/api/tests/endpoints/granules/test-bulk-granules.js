@@ -318,7 +318,7 @@ test.serial('POST /granules/bulk returns 400 when no workflowName is provided', 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /workflowName is required/);
+    .expect(400, /workflowName is required at workflowName/);
 
   t.true(asyncOperationStartStub.notCalled);
 });

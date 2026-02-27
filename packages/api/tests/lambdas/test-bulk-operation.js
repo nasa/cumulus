@@ -185,12 +185,12 @@ const setUpExistingDatabaseRecords = async (t) => {
   t.context.granuleInventoryReportName = reportPgRecord.name;
 
   const testData = `
-  ${t.context.granules[0].granuleId}
-  ${t.context.granules[1].granuleId}
-  G3
-  G4
-  G5
-  `;
+${t.context.granules[0].granuleId}
+${t.context.granules[1].granuleId}
+G3
+G4
+G5
+`;
   const textFileKey = `${randomId('path')}/${randomId('granules.txt')}`;
   t.context.s3GranuleIdInputFile = `s3://${envVars.system_bucket}/${textFileKey}`;
   await awsServices.s3().putObject({
@@ -304,31 +304,6 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
   sandbox.resetHistory();
   sandbox.restore();
-});
-
-test.serial('applyWorkflowToGranules passed on queueUrl to applyWorkflow', async (t) => {
-  await setUpExistingDatabaseRecords(t);
-  const workflowName = 'test-workflow';
-  const queueUrl = `${cryptoRandomString({ length: 5 })}_queue`;
-
-  const applyWorkflowSpy = sinon.spy();
-  const updateGranulesToQueuedMethod = () => Promise.resolve();
-  const fakeGranulePgModel = {
-    get: () => [{}],
-  };
-
-  const granuleIds = t.context.granuleUniqueKeys.map((granule) => granule.granuleId);
-  await bulkOperation.applyWorkflowToGranules({
-    applyWorkflowHandler: applyWorkflowSpy,
-    granules: granuleIds,
-    granulePgModel: fakeGranulePgModel,
-    granuleTranslateMethod: (_granule) => ({}),
-    knex: t.context.knex,
-    queueUrl,
-    updateGranulesToQueuedMethod,
-    workflowName,
-  });
-  t.is(applyWorkflowSpy.getCall(0).args[0].queueUrl, queueUrl);
 });
 
 test('bulk operation lambda throws error for unknown event type', async (t) => {
@@ -486,6 +461,83 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granules in s3Granu
     t.deepEqual(matchingGranule, callArgs[0].apiGranule);
     t.is(callArgs[0].workflow, workflowName);
   });
+});
+
+test.serial('applyWorkflowToGranules passed on queueUrl to applyWorkflow', async (t) => {
+  await setUpExistingDatabaseRecords(t);
+  const workflowName = 'test-workflow';
+  const queueUrl = `${cryptoRandomString({ length: 5 })}_queue`;
+
+  const applyWorkflowSpy = sinon.spy();
+  const updateGranulesToQueuedMethod = () => Promise.resolve();
+  const fakeGranulePgModel = {
+    get: () => [{}],
+  };
+
+  const granuleIds = t.context.granuleUniqueKeys.map((granule) => granule.granuleId);
+  await bulkOperation.applyWorkflowToGranules({
+    applyWorkflowHandler: applyWorkflowSpy,
+    granules: granuleIds,
+    granulePgModel: fakeGranulePgModel,
+    granuleTranslateMethod: (_granule) => ({}),
+    knex: t.context.knex,
+    queueUrl,
+    updateGranulesToQueuedMethod,
+    workflowName,
+  });
+  t.is(applyWorkflowSpy.getCall(0).args[0].queueUrl, queueUrl);
+});
+
+test.serial('applyWorkflowToGranules processes workflow submissions that do not error', async (t) => {
+  const workflowName = 'test-workflow';
+  const errorMessage = 'fail';
+  let count = 0;
+
+  applyWorkflowWithErrorStub = sinon.stub()
+    .callsFake(() => {
+      count += 1;
+      if (count > 3) {
+        throw new Error(errorMessage);
+      }
+      return Promise.resolve();
+    });
+
+  const granules = await Promise.all([
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+  ]);
+
+  const granuleIds = granules.map((granule) => granule.newPgGranule.granule_id);
+
+  const results = await bulkOperation.applyWorkflowToGranules({
+    granules: granuleIds,
+    workflowName,
+    knex: t.context.knex,
+    applyWorkflowHandler: applyWorkflowWithErrorStub,
+  });
+
+  // tried to run workflow 6 times, but failed 3 times
+  t.is(applyWorkflowWithErrorStub.callCount, 6);
+  applyWorkflowWithErrorStub.args.forEach((callArgs) => {
+    const matchingGranule = granules.find((granule) =>
+      granule.newPgGranule.granule_id === callArgs[0].apiGranule.granuleId);
+
+    t.deepEqual(matchingGranule.apiGranule, callArgs[0].apiGranule);
+    t.is(callArgs[0].workflow, workflowName);
+  });
+
+  const errors = results.filter(
+    (item) => isObject(item) && item?.error
+  );
+  t.is(errors.length, 3);
+  t.deepEqual(
+    errors.map((error) => error?.error),
+    new Array(3).fill(`Error: ${errorMessage}`)
+  );
 });
 
 test.serial('applyWorkflowToGranules sets the granules status to queued', async (t) => {
@@ -923,4 +975,64 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules in s3Granul
     t.deepEqual(translatedGranule, callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
+});
+
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules that do not error', async (t) => {
+  const granulePgModel = new GranulePgModel();
+  const errorMessage = 'fail';
+  let count = 0;
+
+  reingestWithErrorStub = sinon.stub()
+    .callsFake(() => {
+      count += 1;
+      if (count > 3) {
+        throw new Error(errorMessage);
+      }
+      return Promise.resolve();
+    });
+
+  const granules = await Promise.all([
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+    createGranuleAndFiles({ dbClient: t.context.knex }),
+  ]);
+
+  const granuleIds = granules.map((granule) => granule.newPgGranule.granule_id);
+
+  const results = await bulkOperation.handler({
+    type: 'BULK_GRANULE_REINGEST',
+    envVars,
+    payload: {
+      granules: granuleIds,
+    },
+    reingestHandler: reingestWithErrorStub,
+  });
+
+  // tried to delete 6 times, but failed 3 times
+  t.is(reingestWithErrorStub.callCount, 6);
+  reingestWithErrorStub.args.forEach(async (callArgs) => {
+    const matchingGranule = granules.find((granule) =>
+      granule.newPgGranule.granule_id === callArgs[0].apiGranule.granuleId);
+
+    const pgGranule = await granulePgModel.get(t.context.knex, { granule_id: matchingGranule.newPgGranule.granule_id });
+    const translatedGranule = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: t.context.knex,
+    });
+
+    t.deepEqual(translatedGranule, callArgs[0].apiGranule);
+    t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
+  });
+
+  const errors = results.filter(
+    (item) => isObject(item) && item?.error
+  );
+  t.is(errors.length, 3);
+  t.deepEqual(
+    errors.map((error) => error?.error),
+    new Array(3).fill(`Error: ${errorMessage}`)
+  );
 });

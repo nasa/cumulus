@@ -457,7 +457,7 @@ const _handleUpdateAction = async (
         ...(targetExecution && { execution: targetExecution }),
       },
       queueUrl: process.env.backgroundQueueUrl,
-      passKnex: knex,
+      knex,
       updateGranuleStatusToQueuedMethod,
     });
 
@@ -1132,8 +1132,8 @@ async function get(req, res) {
  * DEPRECATED: use get() instead to fetch granules by
  *   granuleId + collectionId
  *
- * @param {object} req - express request object
- * @param {object} res - express response object
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
  * @returns {Promise<object>} the promise of express response object
  */
 async function getByGranuleId(req, res) {
@@ -1191,10 +1191,6 @@ async function bulkOperations(req, res) {
   const payload = parseBulkOperationsPayload(req.body);
   if (isError(payload)) {
     return returnCustomValidationErrors(res, payload);
-  }
-
-  if (!payload.workflowName) {
-    return res.boom.badRequest('workflowName is required.');
   }
 
   const numOfGranules = (payload.query && payload.query.size)

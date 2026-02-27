@@ -20,7 +20,7 @@ const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules')
  * @param {object} params
  * @param {object} params.apiGranule - the granule object
  * @param {object} params.queueUrl - SQS queue URL to use for sending messages
- * @param {Knex} params.passKnex - Knex client instance
+ * @param {Knex} params.knex - Knex client instance
  * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
  * @param {GranulePgModel} [params.granulePgModel] - Postgres Granule model
  * (optional, for testing)
@@ -31,12 +31,12 @@ const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules')
 async function reingestGranule({
   apiGranule,
   queueUrl,
-  passKnex,
+  knex,
   asyncOperationId = undefined,
   granulePgModel = new GranulePgModel(),
   updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
 }) {
-  const knex = passKnex ?? getKnexClient();
+  const resolvedKnex = knex ?? await getKnexClient();
 
   const executionArn = path.basename(apiGranule.execution);
 
@@ -49,7 +49,7 @@ async function reingestGranule({
   if (get(originalMessage, 'payload.granules.length', 0) > 0) {
     await updateGranuleStatusToQueuedMethod({
       apiGranule,
-      knex,
+      resolvedKnex,
       granulePgModel,
     });
   }
