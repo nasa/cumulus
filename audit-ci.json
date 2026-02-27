@@ -4,6 +4,7 @@
   "retry-count": 20,
   "allowlist": [
     "jsonpath-plus",
-    "semver"
+    "semver",
+    "GHSA-3ppc-4f35-3m26"
   ]
 }

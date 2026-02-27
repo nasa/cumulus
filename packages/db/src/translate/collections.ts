@@ -1,6 +1,6 @@
 import { NewCollectionRecord, CollectionRecord } from '@cumulus/types/api/collections';
 import { PostgresCollection, PostgresCollectionRecord } from '../types/collection';
-const { removeNilProperties } = require('@cumulus/common/util');
+const { parseIfJson, returnNullOrUndefinedOrDate, removeNilProperties } = require('@cumulus/common/util');
 
 /**
 * Translates a PostgresCollectionRecord object to a `CollectionRecord` API collection object
@@ -10,8 +10,8 @@ const { removeNilProperties } = require('@cumulus/common/util');
 export const translatePostgresCollectionToApiCollection = (
   collectionRecord: PostgresCollectionRecord
 ): CollectionRecord => removeNilProperties(({
-  createdAt: collectionRecord.created_at.getTime(),
-  updatedAt: collectionRecord.updated_at.getTime(),
+  createdAt: returnNullOrUndefinedOrDate(collectionRecord.created_at).getTime(),
+  updatedAt: returnNullOrUndefinedOrDate(collectionRecord.updated_at).getTime(),
   name: collectionRecord.name,
   version: collectionRecord.version,
   process: collectionRecord.process,
@@ -19,12 +19,13 @@ export const translatePostgresCollectionToApiCollection = (
   duplicateHandling: collectionRecord.duplicate_handling,
   granuleId: collectionRecord.granule_id_validation_regex,
   granuleIdExtraction: collectionRecord.granule_id_extraction_regex,
-  files: collectionRecord.files,
+  files: parseIfJson(collectionRecord.files),
   reportToEms: collectionRecord.report_to_ems,
   sampleFileName: collectionRecord.sample_file_name,
   ignoreFilesConfigForDiscovery: collectionRecord.ignore_files_config_for_discovery,
-  meta: collectionRecord.meta,
-  tags: collectionRecord.tags,
+  meta: parseIfJson(collectionRecord.meta),
+  tags: parseIfJson(collectionRecord.tags),
+  cmrProvider: collectionRecord.cmr_provider,
 }));
 
 /**
@@ -50,6 +51,7 @@ export const translateApiCollectionToPostgresCollection = (
     sample_file_name: record.sampleFileName,
     ignore_files_config_for_discovery: record.ignoreFilesConfigForDiscovery,
     meta: record.meta,
+    cmr_provider: record.cmrProvider,
     // have to stringify on an array of values
     tags: (record.tags ? JSON.stringify(record.tags) : undefined),
   };

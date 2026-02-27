@@ -287,6 +287,7 @@ variable "archive_api_users" {
     "dhudelson",
     "dmsorensen",
     "ecarton",
+    "eyen",
     "jasmine",
     "jennyhliu",
     "jmccoy_uat",
@@ -298,6 +299,7 @@ variable "archive_api_users" {
     "mikedorfman",
     "nnageswa",
     "npauzenga",
+    "reweeden",
     "terrafirma13",
     "yliu10"
   ]

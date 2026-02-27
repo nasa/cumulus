@@ -1,9 +1,13 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const omit = require('lodash/omit');
 const range = require('lodash/range');
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { sleep } = require('@cumulus/common');
+const {
+  translatePostgresGranuleToApiGranuleWithoutDbQuery,
+} = require('../../dist/translate/granules');
 const {
   CollectionPgModel,
   fakeCollectionRecordFactory,
@@ -110,6 +114,9 @@ test.before(async (t) => {
     'error.Error': 'CumulusMessageAdapterExecutionError',
     lastUpdateDateTime: '2020-03-18T10:00:00.000Z',
     processingEndDateTime: '2020-03-16T10:00:00.000Z',
+    'queryFields.cnm.receivedTime': '2020-03-18T21:11:20.802Z',
+    'queryFields.cnm.processCompleteTime': '2020-03-18T21:12:30.916Z',
+    'queryFields.cnm.product.name': 'cnm_product_name',
     productVolume: '6000',
     timeToArchive: '700.29',
     timeToPreprocess: '800.18',
@@ -126,9 +133,8 @@ test.before(async (t) => {
   };
 
   t.context.granulePgModel = new GranulePgModel();
-  t.context.pgGranules = await t.context.granulePgModel.insert(
-    knex,
-    range(100).map((num) => fakeGranuleRecordFactory({
+  t.context.granules = range(100).map((num) => fakeGranuleRecordFactory(
+    {
       granule_id: t.context.granuleIds[num],
       collection_cumulus_id: (num % 2)
         ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
@@ -152,31 +158,45 @@ test.before(async (t) => {
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
       archived: Boolean(num % 2),
-    }))
-  );
+      query_fields: num === 50
+        ? {
+          cnm: {
+            receivedTime: t.context.granuleSearchFields['queryFields.cnm.receivedTime'],
+            processCompleteTime:
+              t.context.granuleSearchFields['queryFields.cnm.processCompleteTime'],
+            product: {
+              name: t.context.granuleSearchFields['queryFields.cnm.product.name'],
+            },
+          },
+        }
+        : undefined,
+    }
+  ));
+
+  t.context.pgGranules = await t.context.granulePgModel.insert(knex, t.context.granules);
 
   const filePgModel = new FilePgModel();
-  await filePgModel.insert(
-    knex,
-    t.context.pgGranules.map((granule) => fakeFileRecordFactory(
-      {
-        granule_cumulus_id: granule.cumulus_id,
-        path: 'a.txt',
-        checksum_type: 'md5',
-      }
-    ))
-  );
-  await filePgModel.insert(
-    knex,
-    t.context.pgGranules.map((granule) => fakeFileRecordFactory(
-      {
-        granule_cumulus_id: granule.cumulus_id,
-        path: 'b.txt',
-        checksum_type: 'sha256',
-      }
-    ))
-  );
+  t.context.files = t.context.pgGranules
+    .flatMap((granule, i) => [
+      fakeFileRecordFactory(
+        {
+          cumulus_id: i,
+          granule_cumulus_id: granule.cumulus_id,
+          path: 'a.txt',
+          checksum_type: 'md5',
+        }
+      ),
+      fakeFileRecordFactory(
+        {
+          cumulus_id: i + 100,
+          granule_cumulus_id: granule.cumulus_id,
+          path: 'b.txt',
+          checksum_type: 'sha256',
+        }
+      ),
+    ]);
 
+  await filePgModel.insert(knex, t.context.files);
   const executionPgModel = new ExecutionPgModel();
   const granuleExecutionPgModel = new GranulesExecutionsPgModel();
 
@@ -1035,7 +1055,7 @@ test('GranuleSearch with includeFullRecord true retrieves granules, files and ex
 test('GranuleSearch with archived: true pulls only archive granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    archived: true,
+    archived: 'true',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -1047,11 +1067,69 @@ test('GranuleSearch with archived: true pulls only archive granules', async (t) 
 test('GranuleSearch with archived: false pulls only non-archive granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    archived: false,
+    archived: 'false',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
   response.results.forEach((granuleRecord) => {
     t.is(granuleRecord.archived, false);
   });
+});
+
+test.serial('GranuleSearch supports term search on nested json field', async (t) => {
+  const { knex } = t.context;
+  const dbRecord = t.context.granules[50];
+  const granuleCumulusId = t.context.pgGranules[50].cumulus_id;
+  const queryStringParameters = {
+    limit: 200,
+    'queryFields.cnm.receivedTime': t.context.granuleSearchFields['queryFields.cnm.receivedTime'],
+    'queryFields.cnm.processCompleteTime': t.context.granuleSearchFields['queryFields.cnm.processCompleteTime'],
+    'queryFields.cnm.product.name__not': 'abc',
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+
+  const expectedApiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
+    granulePgRecord: dbRecord,
+    collectionPgRecord: t.context.testPgCollection2,
+    executionUrls: [{ url: 'laterUrl50' }],
+    files: t.context.files.filter((file) => file.granule_cumulus_id === granuleCumulusId),
+    pdr: t.context.pdr,
+    providerPgRecord: t.context.provider,
+  });
+
+  // float fields won't match exactly
+  const omitFields = ['createdAt', 'duration', 'timeToArchive'];
+  t.deepEqual(omit(results?.[0], omitFields), omit(expectedApiRecord, omitFields));
+  t.truthy(results?.[0]?.createdAt);
+});
+
+test.serial('GranuleSearch supports terms search on nested json field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    'queryFields.cnm.product.name__in': [t.context.granuleSearchFields['queryFields.cnm.product.name'], 'abc'].join(','),
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+});
+
+test.serial('GranuleSearch supports existence checks and sorting for nested JSON fields', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    'queryFields.cnm.product.name__exists': 'true',
+    'queryFields.cnm.product.random__exists': 'false',
+    sort_by: 'queryFields.cnm.product.name',
+    order: 'asc',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
 });
