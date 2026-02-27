@@ -1,0 +1,19 @@
+[project]
+name = "pdr-cleanup"
+version = "0.1.0"
+description = "This task is for cleaning up PDRs after a successful ingest"
+readme = "README.md"
+requires-python = ">=3.12.0"
+dependencies = [
+    "boto3~=1.40",
+    "cumulus-message-adapter-python~=2.4",
+]
+
+[dependency-groups]
+dev = [
+    "freezegun~=1.5.5",
+    "mypy~=1.19.0",
+    "pytest~=9.0.2",
+    "pytest-mock~=3.15.1",
+    "ruff~=0.14.0",
+]
