@@ -3,6 +3,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const noop = require('lodash/noop');
 const S3 = require('@cumulus/aws-client/S3');
 const test = require('ava');
 const { promisify } = require('util');
@@ -80,6 +81,55 @@ test('SftpClient supports ssh keypair authentication', async (t) => {
   t.true(fileNames.includes('index.html'));
 });
 
+test('SftpClient.sftp throws when not connected', (t) => {
+  const sftpClient = new SftpClient({
+    host: '127.0.0.1',
+    port: '2222',
+    username: 'user',
+    password: 'password',
+  });
+
+  const error = t.throws(() => sftpClient.sftp);
+  t.is(error.message, 'Client not connected');
+});
+
+test('SftpClient.buildRemoteUrl throws when host is missing', (t) => {
+  const sftpClient = new SftpClient({
+    host: '',
+    port: '2222',
+    username: 'user',
+    password: 'password',
+  });
+
+  const error = t.throws(() => sftpClient.buildRemoteUrl('/granules/file.hdf'));
+  t.is(error.message, 'host is not set');
+});
+
+test('SftpClient.end ignores "No response from server" errors', async (t) => {
+  const sftpClient = new SftpClient({
+    host: '127.0.0.1',
+    port: '2222',
+    username: 'user',
+    password: 'password',
+  });
+
+  const originalEnd = sftpClient.sftpClient.end;
+  sftpClient.connected = true;
+  sftpClient.sftpClient.end = () => {
+    throw new Error('No response from server');
+  };
+
+  try {
+    await t.notThrowsAsync(async () => {
+      await sftpClient.end();
+    });
+  } finally {
+    sftpClient.sftpClient.end = originalEnd;
+  }
+
+  t.false(sftpClient.connected);
+});
+
 test.serial('sftpClient.list() retrieves a list of files', async (t) => {
   const files = await t.context.sftpClient.list('/');
   t.true(files.length > 0);
@@ -134,6 +184,75 @@ test.serial('sftpClient.syncToS3() transfers a file from SFTP to S3 with the cor
   const s3HeadResponse = await S3.headObject(t.context.s3Bucket, key);
   t.is(s3HeadResponse.ContentLength, 1098034);
   t.is(s3HeadResponse.ContentType, 'application/x-hdf');
+});
+
+test.serial('sftpClient.syncToS3() destroys read stream on upload failure', async (t) => {
+  const key = `${randomString()}.hdf`;
+  let destroyed = false;
+  const fakeStream = {
+    once: noop,
+    destroy: () => {
+      destroyed = true;
+    },
+  };
+
+  const originalCreateReadStream = t.context.sftpClient.sftp.createReadStream;
+  const originalPromiseS3Upload = S3.promiseS3Upload;
+
+  t.context.sftpClient.sftp.createReadStream = () => fakeStream;
+  S3.promiseS3Upload = ({ params }) => {
+    t.is(params.Body, fakeStream);
+    throw new Error('upload failed');
+  };
+
+  try {
+    await t.throwsAsync(
+      () => t.context.sftpClient.syncToS3(
+        '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+        t.context.s3Bucket,
+        key
+      ),
+      { message: 'upload failed' }
+    );
+  } finally {
+    t.context.sftpClient.sftp.createReadStream = originalCreateReadStream;
+    S3.promiseS3Upload = originalPromiseS3Upload;
+  }
+
+  t.true(destroyed);
+});
+
+test.serial('sftpClient.syncToS3() swallows error emitted on read stream during cleanup', async (t) => {
+  const key = `${randomString()}.hdf`;
+  let errorListener;
+  const fakeStream = {
+    once: (event, cb) => {
+      if (event === 'error') errorListener = cb;
+    },
+    destroy: () => {
+      // Simulate ssh2 cleanupRequests() firing the error after destroy
+      if (errorListener) errorListener(new Error('No response from server'));
+    },
+  };
+
+  const originalCreateReadStream = t.context.sftpClient.sftp.createReadStream;
+  const originalPromiseS3Upload = S3.promiseS3Upload;
+
+  t.context.sftpClient.sftp.createReadStream = () => fakeStream;
+  S3.promiseS3Upload = () => Promise.resolve({ ETag: '"abc123"' });
+
+  try {
+    await t.notThrowsAsync(
+      () => t.context.sftpClient.syncToS3(
+        '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+        t.context.s3Bucket,
+        key
+      )
+    );
+  } finally {
+    t.context.sftpClient.sftp.createReadStream = originalCreateReadStream;
+    S3.promiseS3Upload = originalPromiseS3Upload;
+  }
 });
 
 test.serial('sftpClient.syncToS3Fast() transfers a file from SFTP to S3 with the correct content-type', async (t) => {
