@@ -340,9 +340,7 @@ test('updateCmrFileInfo - throws error when CMR file not found', async (t) => {
   });
 });
 
-test('Call to updateGranulesCmrMetadata should be using environment variable to set updateGranuleIdentifier flag', async (t) => {
-  const originalUpdateGranuleIdentifiers = process.env.update_granule_identifiers;
-
+test('Call to updateGranulesCmrMetadata should be using config variable to set updateGranuleIdentifier flag', async (t) => {
   const fakeFetchDistributionBucketMap = sinon.fake.resolves({});
   const restoreFetch = updateGranulesCmrMetadataFileLinks.__set__('fetchDistributionBucketMap', fakeFetchDistributionBucketMap);
 
@@ -356,18 +354,20 @@ test('Call to updateGranulesCmrMetadata should be using environment variable to 
   const restoreMapFileEtags = updateGranulesCmrMetadataFileLinks.__set__('mapFileEtags', fakeMapFileEtags);
 
   const newPayload = buildPayload(t);
+  newPayload.config.updateGranuleIdentifiers = false;
+
   await validateConfig(t, newPayload.config);
   await validateInput(t, newPayload.input);
+
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
-  process.env.update_granule_identifiers = false;
   await updateGranulesCmrMetadataFileLinks.updateGranulesCmrMetadata(newPayload);
 
   const fakeUpdateCMRMetadataCheckFalseFlag = fakeUpdateCMRMetadata.firstCall.args[0];
   t.false(fakeUpdateCMRMetadataCheckFalseFlag.updateGranuleIdentifiers, 'updateGranuleIdentifiers should be false when the environment variable is set to false');
 
-  process.env.update_granule_identifiers = true;
+  newPayload.config.updateGranuleIdentifiers = true;
   fakeUpdateCMRMetadata.resetHistory();
   await updateGranulesCmrMetadataFileLinks.updateGranulesCmrMetadata(newPayload);
   const fakeUpdateCMRMetadataCheckTrueFlag = fakeUpdateCMRMetadata.firstCall.args[0];
@@ -378,6 +378,4 @@ test('Call to updateGranulesCmrMetadata should be using environment variable to 
   restoreMapFileEtags();
   restoreUpdateCMRMetadata();
   sinon.restore();
-
-  process.env.update_granule_identifiers = originalUpdateGranuleIdentifiers;
 });

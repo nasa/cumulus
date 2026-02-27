@@ -49,6 +49,11 @@
       "type": "boolean",
       "description": "Flag to set exclusion behavior of DataGranule metadata updates as part of this task. if True, will disable updates",
       "default": false
+    },
+    "updateGranuleIdentifiers": {
+      "type": "boolean",
+      "description": "Flag to set whether to update granule identifiers as part of this task.",
+      "default": true
     }
   }
 }
