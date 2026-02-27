@@ -211,12 +211,6 @@ variable "tea_distribution_url" {
   default = null
 }
 
-variable "update_granule_identifiers" {
-  description = "Whether or not to automatically update granule identifiers"
-  type        = bool
-  default     = true
-}
-
 variable "sync_granule_s3_jitter_max_ms" {
   description = "Maximum random jitter in milliseconds for SyncGranule S3 operations (0-59000). Set to 0 to disable."
   type        = number

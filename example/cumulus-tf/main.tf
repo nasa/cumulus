@@ -136,9 +136,6 @@ module "cumulus" {
   default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
   sync_granule_s3_jitter_max_ms     = var.sync_granule_s3_jitter_max_ms
 
-  # For update-granules-cmr-metadata-file-links-task in order to update granule identifiers or not
-  update_granule_identifiers = var.update_granule_identifiers
-
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase

@@ -75,8 +75,5 @@ module "ingest" {
   # For message consumer lambdas in order to disable rule/message mismatches
   allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 
-  # For update-granules-cmr-metadata-file-links-task in order to update granule identifiers or not
-  update_granule_identifiers = var.update_granule_identifiers
-
   private_api_lambda_arn = module.archive.private_api_lambda_arn
 }

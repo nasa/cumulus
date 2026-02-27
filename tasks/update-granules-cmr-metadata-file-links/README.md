@@ -11,6 +11,8 @@ This Cumulus task component updates CMR metadata files to have correct values fo
 
 **Note** As default behavior for this task, for UMMG and ECHO10 granules, a `Granule.DataGranule` section will be added if not already present within the metadata. For UMMG granules (as of `CSD-85`), the required fields ([as seen here](https://git.earthdata.nasa.gov/projects/EMFD/repos/unified-metadata-model/browse/granule/v1.6.6/umm-g-json-schema.json#257)) of `ProductionDateTime` and `DayNightFlag` will be populated with default values (the time the task is ran for `ProductionDateTime` and `Unspecified` for `DayNightFlag`) if they are not already included, along with the other updates described above. For ECHO10 granules, the required field for DataGranules, `ProducerGranuleId` ([as seen here](https://git.earthdata.nasa.gov/projects/EMFD/repos/echo-schemas/browse/schemas/10.0/Granule.xsd#409)), will be populated, along with the other updates described above. To disable adding/updating the granule's metadata in this task for both ECHO10 and UMMG granules, set `excludeDataGranule` as `true` (boolean, not a string) (added as part of `CSD-85`) in the task config schema. If set to `true` this task will not change anything relating to the `Granule.DataGranule` in the granule's metadata, no adding or updating.
 
+**Note** To disable updating the granule's identifier in this task for both ECHO10 and UMMG, set `updateGranuleIdentifiers` to `false` (boolean, not a string) in the task config schema (added as part of `CSD-91`). By default, this task sets `updateGranuleIdentifiers` to `true` for both ECHO10 and UMMG.
+
 ## Input/Output Schema
 
 ### Input
