@@ -90,6 +90,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Resolved several integration issues with the granule-invalidator lambda.
   - Updated packaging script for granule-invalidator to use `uv pip install` instead of `uv sync`.
   - Added `private_api_lambda_arn` output to the archive module and `private_api_lambda_arn` variable to the ingest module.
+- **CUMULUS-4472**
+  - added `concurrency` utilization by `pMap` for granule `bulkOperations` `applyWorkflowToGranule`, which previously was missing
+  - allow `concurrency` and `maxDbConnections` to be passed into granule `bulkOperations` and `bulkReingest` endpoints, which previously was only available for `bulkDelete`
+  - updated enforcement of granule bulk operations endpoints to accept exactly one of `granules, query, granuleInventoryReportName, or s3GranuleIdInputFile`
 - **CSD-85**
   - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
     for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.

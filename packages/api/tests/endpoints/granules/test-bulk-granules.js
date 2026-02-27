@@ -49,7 +49,7 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
-test.beforeEach((t) => { // TODO - fix this mock
+test.beforeEach((t) => {
   t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
 });
 
@@ -68,7 +68,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
   const expectedWorkflowName = 'HelloWorldWorkflow';
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     workflowName: expectedWorkflowName,
     granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
     knexDebug: false,
@@ -113,7 +113,7 @@ test.serial('bulkOperations() uses correct caller lambda function name', async (
   const expectedWorkflowName = 'HelloWorldWorkflow';
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     workflowName: expectedWorkflowName,
     granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
   };
@@ -143,7 +143,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
   const expectedQuery = { query: 'fake-query', size: 2 };
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
     query: expectedQuery,
@@ -192,7 +192,7 @@ test.serial('POST /granules/bulk returns 400 when a query is provided with no in
   const expectedQuery = { query: 'fake-query' };
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     workflowName: expectedWorkflowName,
     query: expectedQuery,
   };
@@ -214,7 +214,7 @@ test.serial('POST /granules/bulk returns 400 when no granules or alternative inp
   const expectedIndex = 'my-index';
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
   };
@@ -225,7 +225,32 @@ test.serial('POST /granules/bulk returns 400 when no granules or alternative inp
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(400,
-      /One of granules, query, granuleInventoryReportName or s3GranuleIdInputFile is required/);
+      // eslint-disable-next-line max-len
+      /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulk returns 400 when more than one granules input source is provided', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedQueueName = 'backgroundProcessing';
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+
+  const body = {
+    queueUrl: expectedQueueName,
+    workflowName: expectedWorkflowName,
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+  };
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400,
+      // eslint-disable-next-line max-len
+      /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -237,7 +262,7 @@ test.serial('POST /granules/bulk returns 400 when granules is not an array', asy
   const expectedIndex = 'my-index';
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
     granules: 'bad-value',
@@ -260,7 +285,7 @@ test.serial('POST /granules/bulk returns 400 when granules is empty and no alter
   const expectedIndex = 'my-index';
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
     granules: [],
@@ -283,7 +308,7 @@ test.serial('POST /granules/bulk returns 400 when no workflowName is provided', 
   const expectedQuery = { query: 'fake-query' };
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     index: expectedIndex,
     query: expectedQuery,
   };
@@ -293,7 +318,7 @@ test.serial('POST /granules/bulk returns 400 when no workflowName is provided', 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /workflowName is required/);
+    .expect(400, /workflowName is required at workflowName/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -306,7 +331,7 @@ test.serial('POST /granules/bulk returns 400 when the Metrics ELK stack is not c
   const expectedQuery = { query: 'fake-query' };
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
     query: expectedQuery,
@@ -324,13 +349,73 @@ test.serial('POST /granules/bulk returns 400 when the Metrics ELK stack is not c
   t.true(asyncOperationStartStub.notCalled);
 });
 
+test.serial('POST /granules/bulk returns a 400 when maxDbConnections is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+
+  const body = {
+    workflowName: expectedWorkflowName,
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
+    maxDbConnections: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at maxDbConnections/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulk returns a 400 when concurrency is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+
+  const body = {
+    workflowName: expectedWorkflowName,
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
+    concurrency: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at concurrency/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulk returns a 400 when batchSize is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedWorkflowName = 'HelloWorldWorkflow';
+
+  const body = {
+    workflowName: expectedWorkflowName,
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+    batchSize: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulk')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at batchSize/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
 test.serial('POST /granules/bulk starts an async-operation with the correct payload and granule inventory report', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     workflowName: expectedWorkflowName,
     granuleInventoryReportName: randomId('granuleInventoryReportName'),
     knexDebug: false,
@@ -376,7 +461,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
   const expectedWorkflowName = 'HelloWorldWorkflow';
 
   const body = {
-    queueName: expectedQueueName,
+    queueUrl: expectedQueueName,
     workflowName: expectedWorkflowName,
     s3GranuleIdInputFile: randomId('s3GranuleIdInputFile'),
     knexDebug: false,

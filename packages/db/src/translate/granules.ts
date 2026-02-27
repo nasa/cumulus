@@ -92,6 +92,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
  * @param {PostgresCollectionRecord} [params.collectionPgRecord] - Optional Collection from Postgres
  * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
+ * @param {Object} [params.providerPgRecord] - Optional Provider from Postgres
  * @param {Object} [params.collectionPgModel] - Instance of the collection database model
  * @param {Object} [params.pdrPgModel] - Instance of the pdr database model
  * @param {Object} [params.providerPgModel] - Instance of the provider database model

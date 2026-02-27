@@ -50,6 +50,7 @@ const log = new Logger({ sender: '@cumulus/bulk-operation' });
  *
  * @typedef {GranuleExecutionPayload & {
  *   concurrency?: number,
+ *   maxDbConnections?: number,
  *   workflowName: string,
  *   meta?: Object,
  *   queueUrl?: string,
@@ -66,6 +67,7 @@ const log = new Logger({ sender: '@cumulus/bulk-operation' });
  *
  * @typedef {GranuleExecutionPayload & {
  *   concurrency?: number,
+ *   maxDbConnections?: number,
  *   workflowName: string,
  *   queueUrl?: string,
  * }} BulkGranuleReingestPayload
@@ -83,6 +85,7 @@ const log = new Logger({ sender: '@cumulus/bulk-operation' });
  * @param {string} params.workflowName - Name of the workflow to apply to each granule.
  * @param {Object} [params.meta] - Optional metadata to attach to workflow input.
  * @param {string} [params.queueUrl] - Optional queue name used to start workflows.
+ * @param {number} [params.concurrency] - Granule concurrency for the bulk operations.
  * @param {GranulePgModel} [params.granulePgModel=new GranulePgModel()] - postgreSQL granule model
  * @param {Function} [params.granuleTranslateMethod=translatePostgresGranuleToApiGranule]
  *   - Function to translate Postgres granule to API granule format.
@@ -99,6 +102,7 @@ async function applyWorkflowToGranules({
   workflowName,
   meta,
   queueUrl,
+  concurrency,
   granulePgModel = new GranulePgModel(),
   granuleTranslateMethod = translatePostgresGranuleToApiGranule,
   applyWorkflowHandler = applyWorkflow,
@@ -107,7 +111,7 @@ async function applyWorkflowToGranules({
 }) {
   return await pMap(
     granules,
-    (async (granuleId) => {
+    async (granuleId) => {
       try {
         const pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
         const apiGranule = await granuleTranslateMethod({
@@ -127,7 +131,11 @@ async function applyWorkflowToGranules({
         log.error(`Granule ${granuleId} encountered an error`, error);
         return { granuleId, error: String(error) };
       }
-    })
+    },
+    {
+      concurrency,
+      stopOnError: false,
+    }
   );
 }
 
@@ -151,12 +159,11 @@ async function bulkGranuleDelete(
   unpublishGranuleFunc = unpublishGranule
 ) {
   const concurrency = payload.concurrency || 10;
-
   const dbPoolMax = payload.maxDbConnections || concurrency;
   process.env.dbMaxPool = `${dbPoolMax}`;
+  const knex = await getKnexClient();
 
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
-  const knex = await getKnexClient();
 
   const results = [];
   for await (
@@ -213,8 +220,13 @@ async function bulkGranuleDelete(
  * @returns {Promise<unknown>}
  */
 async function bulkGranule(payload, applyWorkflowHandler) {
+  const concurrency = payload.concurrency || 10;
+  const dbPoolMax = payload.maxDbConnections || concurrency;
+  process.env.dbMaxPool = `${dbPoolMax}`;
   const knex = await getKnexClient();
+
   const { queueUrl, workflowName, meta } = payload;
+
   const results = [];
   for await (
     const granuleBatch of getGranulesForPayload(payload)
@@ -226,6 +238,7 @@ async function bulkGranule(payload, applyWorkflowHandler) {
       granules: granuleBatch,
       meta,
       queueUrl,
+      concurrency,
       workflowName,
       applyWorkflowHandler,
     });
@@ -247,9 +260,13 @@ async function bulkGranuleReingest(
   reingestHandler = reingestGranule
 ) {
   log.info('Starting bulkGranuleReingest');
+
+  const concurrency = payload.concurrency || 10;
+  const dbPoolMax = payload.maxDbConnections || concurrency;
+  process.env.dbMaxPool = `${dbPoolMax}`;
   const knex = await getKnexClient();
 
-  const { concurrency = 10, queueUrl, workflowName } = payload;
+  const { queueUrl, workflowName } = payload;
 
   const results = [];
   for await (
@@ -272,6 +289,7 @@ async function bulkGranuleReingest(
           const targetExecution = await chooseTargetExecution({
             granuleId,
             workflowName,
+            knex,
           });
           const apiGranuleToReingest = {
             ...apiGranule,
@@ -280,6 +298,7 @@ async function bulkGranuleReingest(
           await reingestHandler({
             apiGranule: apiGranuleToReingest,
             queueUrl,
+            passKnex: knex,
             asyncOperationId: process.env.asyncOperationId,
           });
           return granuleId;
