@@ -1,9 +1,9 @@
 const test = require('ava');
 
+const { randomString } = require('@cumulus/common/test-utils');
 const {
   fakeAsyncOperationRecordFactory,
 } = require('../../dist/test-utils');
-const { randomString } = require('../../../api/node_modules/@cumulus/common/test-utils');
 const {
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
