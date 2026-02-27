@@ -50,6 +50,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4388**
   - Added cnm_to_cma task (lambda).
   - Original cnm_to_cma was written in Java.  Converted to Python.
+- **CUMULUS-4381**
+  - Added cma_to_cnm task (lambda).
 - **CUMULUS-4382**
   - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
 - **CUMULUS-4385**
