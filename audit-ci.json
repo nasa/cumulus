@@ -3,6 +3,5 @@
   "pass-enoaudit": true,
   "retry-count": 20,
   "allowlist": [
-    "minimatch"
   ]
 }
