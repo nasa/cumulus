@@ -1,8 +1,3 @@
-variable "default_log_retention_days" {
-  description = "The number of days to retain logs in CloudWatch"
-  type        = number
-}
-
 variable "lambda_processing_role_arn" {
   type = string
 }
@@ -22,6 +17,11 @@ variable "lambda_memory_size" {
   description = "Memory size for the Lambda function in MB"
   type        = number
   default     = 512
+}
+
+variable "log_retention_days" {
+  description = "The number of days to retain logs in CloudWatch"
+  type        = number
 }
 
 variable "prefix" {

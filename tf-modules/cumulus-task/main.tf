@@ -1,9 +1,12 @@
 locals {
-  merged_tags = merge({ Deployment = "${var.prefix}" }, var.tags)
+  merged_tags   = merge({ Deployment = "${var.prefix}" }, var.tags)
+  function_name = "${var.prefix}-${var.name}"
 }
 
 resource "aws_lambda_function" "cumulus_task_lambda" {
-  function_name    = "${var.prefix}-${var.name}"
+  depends_on = [aws_cloudwatch_log_group.cumulus_task_log_group]
+
+  function_name    = local.function_name
   filename         = var.lambda_zip_path
   source_code_hash = filebase64sha256(var.lambda_zip_path)
   handler          = var.handler
@@ -37,7 +40,7 @@ resource "aws_lambda_function" "cumulus_task_lambda" {
 }
 
 resource "aws_cloudwatch_log_group" "cumulus_task_log_group" {
-  name              = "/aws/lambda/${aws_lambda_function.cumulus_task_lambda.function_name}"
-  retention_in_days = var.default_log_retention_days
+  name              = "/aws/lambda/${local.function_name}"
+  retention_in_days = var.log_retention_days
   tags              = local.merged_tags
 }
