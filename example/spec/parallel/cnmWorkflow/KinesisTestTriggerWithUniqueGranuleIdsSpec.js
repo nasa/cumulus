@@ -262,7 +262,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     streamName = `${testId}-KinesisTestTriggerStream`;
     cnmResponseStreamName = `${testId}-KinesisTestTriggerCnmResponseStream`;
     testConfig.streamName = streamName;
-    testConfig.cnmResponseStream = cnmResponseStreamName;
 
     // populate collections, providers and test data
     await Promise.all([
@@ -277,10 +276,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
         createOrUseTestStream(cnmResponseStreamName),
       ]);
       console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
-      await Promise.all([
+      const streams = await Promise.all([
         waitForActiveStream(streamName),
         waitForActiveStream(cnmResponseStreamName),
       ]);
+      testConfig.cnmResponseStream = streams[1].StreamDescription.StreamARN;
       const ruleList = await addRules(testConfig, initialRuleDirectory, initialRuleOverride);
       logEventSourceMapping = await getEventSourceMapping(ruleList[0].rule.logEventArn);
     });

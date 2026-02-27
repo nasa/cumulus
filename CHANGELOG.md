@@ -33,6 +33,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **CUMULUS-4107**
+  - Changed "_doc" type to "undefined" for ElasticSearch v8.x query parameter . The ES client will omit undefined values from the request. This doesn't touch the other callers.
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
     granule objects in the payload.
@@ -74,6 +76,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4543**
   - Added supporting Terraform for the aws_api_proxy task
   - Added aws_api_proxy output to the Cumulus Terraform module
+- **CUMULUS-4544**
+  - Added integration tests for the aws_api_proxy task
+- **CUMULUS-4400**
+  - Added integration testing for CnmResponse task.
+  - Updated example workflows to include the exception message in the
+  `WorkflowFailed` state.
 
 ### Changed
 
@@ -160,6 +168,8 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
+- **CUMULUS-4087**
+  - Updated /refresh token endpoint and other functions to support automatic extension of cumulus dashboard user sessions by using iat claims and extending token expiration time. `MAX_SESSION_DURATION` environment variable defaults to 12 hours but can be overriden.
 - **CUMULUS-4272**
   - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
