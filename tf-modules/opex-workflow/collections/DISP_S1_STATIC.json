@@ -1,6 +1,6 @@
 {
     "name": "OPERA_L3_DISP-S1-STATIC_V1",
-    "version": "1",
+    "version": "1.0",
     "duplicateHandling": "replace",
     "process": "DISP-STATIC",
     "url_path": "OPERA_L3_DISP-S1-STATIC_V1/{granule.granuleId}/",

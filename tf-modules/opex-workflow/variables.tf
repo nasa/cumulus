@@ -1,6 +1,11 @@
 variable "PREFIX" {
   type    = string
-  default = "dms-opex-sbx"  # TODO: Update
+  default = "nsidc-cumulus-prod"
+}
+
+variable "BUCKET_PREFIX" {
+  type    = string
+  default = "opex-nsidc-cumulus"
 }
 
 variable "DIST_DIR" {
