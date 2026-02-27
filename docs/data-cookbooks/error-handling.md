@@ -158,14 +158,14 @@ Some best practices for error handling in Cumulus Workflows are:
         "cma": {
           "event.$": "$",
           "task_config": {
-            "OriginalCNM": "{$.meta.cnm}",
-            "CNMResponseStream": "{$.meta.cnmResponseStream}",
-            "region": "us-east-1",
-            "WorkflowException": "{$.exception}",
+            "cnm": "{$.meta.cnm}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "exception": "{$.exception}",
+            "responseArns": ["{$.meta.cnmResponseStream}"],
             "cumulus_message": {
               "outputs": [
                 {
-                  "source": "{$}",
+                  "source": "{$.cnm}",
                   "destination": "{$.meta.cnmResponse}"
                 },
                 {
@@ -178,7 +178,7 @@ Some best practices for error handling in Cumulus Workflows are:
         }
       },
       "Type": "Task",
-      "Resource": "${aws_lambda_function.cnm_response_task.arn}",
+      "Resource": "${module.cumulus.cnm_response_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -205,14 +205,14 @@ Some best practices for error handling in Cumulus Workflows are:
         "cma": {
           "event.$": "$",
           "task_config": {
-            "OriginalCNM": "{$.meta.cnm}",
-            "CNMResponseStream": "{$.meta.cnmResponseStream}",
-            "region": "us-east-1",
-            "WorkflowException": "{$.exception}",
+            "cnm": "{$.meta.cnm}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "exception": "{$.exception}",
+            "responseArns": ["{$.meta.cnmResponseStream}"],
             "cumulus_message": {
               "outputs": [
                 {
-                  "source": "{$}",
+                  "source": "{$.cnm}",
                   "destination": "{$.meta.cnmResponse}"
                 },
                 {
@@ -225,7 +225,7 @@ Some best practices for error handling in Cumulus Workflows are:
         }
       },
       "Type": "Task",
-      "Resource": "${aws_lambda_function.cnm_response_task.arn}",
+      "Resource": "${module.cumulus.cnm_response_task.task_arn}",
       "Retry": [
         {
           "ErrorEquals": [

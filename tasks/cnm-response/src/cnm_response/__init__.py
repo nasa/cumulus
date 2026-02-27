@@ -1,5 +1,7 @@
 """CNM Response task."""
 
-from .task import CnmResponse
+from .task import lambda_handler
 
-lambda_handler = CnmResponse.cumulus_handler
+__all__ = [
+    "lambda_handler",
+]

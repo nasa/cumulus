@@ -5,7 +5,7 @@ description = "CNM Response task"
 requires-python = "~=3.12.0"
 dependencies = [
     "boto3~=1.40",
-    "cumulus-process~=1.6",
+    "cumulus-message-adapter-python~=2.4",
 ]
 
 [dependency-groups]
