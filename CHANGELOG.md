@@ -105,7 +105,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated CI (Docker + Bamboo) to ensure compatibility with the new Lerna version.
   - Applied necessary dependency and script adjustments across affected packages.
   - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
-  - Fixed security vulnerabilities related to uuid, fast-xml-parser packages.
+  - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
 
 ### Fixed
 
