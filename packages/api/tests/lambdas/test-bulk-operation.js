@@ -496,7 +496,7 @@ test.serial('applyWorkflowToGranules processes workflow submissions that do not 
   applyWorkflowWithErrorStub = sinon.stub()
     .callsFake(() => {
       count += 1;
-      if (count > 3) {
+      if (count % 2 === 0) {
         throw new Error(errorMessage);
       }
       return Promise.resolve();
@@ -985,7 +985,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules that do not
   reingestWithErrorStub = sinon.stub()
     .callsFake(() => {
       count += 1;
-      if (count > 3) {
+      if (count % 2 === 0) {
         throw new Error(errorMessage);
       }
       return Promise.resolve();
