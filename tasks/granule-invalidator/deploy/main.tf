@@ -1,48 +1,24 @@
 locals {
   build_config = jsondecode(file("${path.module}/../build-config.json"))
-
-  function_name = "${var.prefix}-GranuleInvalidator"
 }
 
-resource "aws_lambda_function" "granule_invalidator_task" {
-  depends_on = [aws_cloudwatch_log_group.granule_invalidator_task]
+module "granule_invalidator_task" {
+  source = "../../../tf-modules/cumulus-task"
 
-  function_name    = local.function_name
-  filename         = "${path.module}/../dist/final/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../dist/final/lambda.zip")
-  handler          = "main.lambda_handler"
-  role             = var.role
-  runtime          = local.build_config.runtime
-  architectures    = [local.build_config.architecture]
-  timeout          = var.timeout
-  memory_size      = var.memory_size
-
-  layers = var.layers
-
-  environment {
-    variables = merge(
-      {
-        stackName                   = var.prefix
-        CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
-        PRIVATE_API_LAMBDA_ARN      = var.private_api_lambda_arn
-      },
-      var.environment
-    )
-  }
-
-  dynamic "vpc_config" {
-    for_each = length(var.subnet_ids) == 0 ? [] : [1]
-    content {
-      subnet_ids         = var.subnet_ids
-      security_group_ids = [var.security_group_id]
-    }
+  name               = "GranuleInvalidator"
+  prefix             = var.prefix
+  role               = var.lambda_processing_role_arn
+  lambda_zip_path    = "${path.module}/../dist/final/lambda.zip"
+  subnet_ids         = var.lambda_subnet_ids
+  security_group_id  = var.security_group_id
+  timeout            = var.lambda_timeout
+  memory_size        = var.lambda_memory_size
+  architecture       = local.build_config.architecture
+  log_retention_days = var.log_retention_days
+  layers             = [var.cumulus_message_adapter_lambda_layer_version_arn]
+  environment = {
+    PRIVATE_API_LAMBDA_ARN = var.private_api_lambda_arn
   }
 
   tags = var.tags
-}
-
-resource "aws_cloudwatch_log_group" "granule_invalidator_task" {
-  name              = "/aws/lambda/${local.function_name}"
-  retention_in_days = var.default_log_retention_days
-  tags              = var.tags
 }

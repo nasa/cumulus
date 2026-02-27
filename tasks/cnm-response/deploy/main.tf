@@ -1,39 +1,15 @@
-locals {
-  function_name = "${var.prefix}-CnmResponse"
-}
+module "cnm_response_task" {
+  source = "../../../tf-modules/cumulus-task"
 
-resource "aws_lambda_function" "cnm_response_task" {
-  depends_on = [aws_cloudwatch_log_group.cnm_response_task]
-
-  function_name    = local.function_name
-  filename         = "${path.module}/../dist/final/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../dist/final/lambda.zip")
-  handler          = "cnm_response.lambda_handler"
-  role             = var.lambda_processing_role_arn
-  runtime          = "python3.12"
-  timeout          = var.lambda_timeout
-  memory_size      = var.lambda_memory_size
-
-  environment {
-    variables = {
-      stackName                   = var.prefix
-      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
-    }
-  }
-
-  dynamic "vpc_config" {
-    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
-    content {
-      subnet_ids         = var.lambda_subnet_ids
-      security_group_ids = [var.security_group_id]
-    }
-  }
+  name               = "CnmResponse"
+  prefix             = var.prefix
+  role               = var.lambda_processing_role_arn
+  lambda_zip_path    = "${path.module}/../dist/final/lambda.zip"
+  subnet_ids         = var.lambda_subnet_ids
+  security_group_id  = var.security_group_id
+  timeout            = var.lambda_timeout
+  memory_size        = var.lambda_memory_size
+  log_retention_days = var.log_retention_days
 
   tags = var.tags
-}
-
-resource "aws_cloudwatch_log_group" "cnm_response_task" {
-  name              = "/aws/lambda/${local.function_name}"
-  retention_in_days = var.default_log_retention_days
-  tags              = var.tags
 }

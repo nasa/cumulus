@@ -22,10 +22,15 @@ variable "lambda_memory_size" {
   type        = number
 }
 
+variable "log_retention_days" {
+  description = "The number of days to retain logs in CloudWatch"
+  type        = number
+}
+
 variable "security_group_id" {
-    description = "Security group ID for Lambda VPC configuration."
-    type        = string
-    default     = ""
+  description = "Security group ID for Lambda VPC configuration."
+  type        = string
+  default     = ""
 }
 
 # Specified in environment variables at deploy-time

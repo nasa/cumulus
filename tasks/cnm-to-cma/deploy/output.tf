@@ -1,9 +1,9 @@
-output "lambda_function" {
+output "cumulus_task_lambda" {
   description = "The task lambda function"
-  value       = aws_lambda_function.cnm_to_cma
+  value       = module.cnm_to_cma_task.cumulus_task_lambda
 }
 
-output "log_group" {
+output "cumulus_task_log_group_name" {
   description = "The task lambda function log group"
-  value       = aws_cloudwatch_log_group.cnm_to_cma
+  value       = module.cnm_to_cma_task.cumulus_task_log_group_name
 }
