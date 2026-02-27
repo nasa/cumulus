@@ -46,6 +46,7 @@ api_reserved_concurrency = 14
 archive_api_users = [
     "acyu",
     "awisdom",
+    "bhazuka",
     "cbanh",
     "chuang14",
     "cdurbin",
