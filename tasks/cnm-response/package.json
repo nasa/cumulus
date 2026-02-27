@@ -26,6 +26,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@cumulus/schemas": "21.0.1"
+    "@cumulus/schemas": "21.3.1"
   }
 }
