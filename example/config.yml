@@ -73,3 +73,6 @@ rs:
 
 yliu10-tf:
   bucket: yliu10-sandbox-internal
+
+blokey:
+  bucket: blokey-internal
