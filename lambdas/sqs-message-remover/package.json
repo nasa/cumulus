@@ -17,9 +17,9 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "prepare": "npm run clean && mkdir dist",
+    "build": "npm run clean && mkdir dist",
     "webpack": "../../node_modules/.bin/webpack",
-    "package": "npm run prepare && npm run webpack && (cd dist && node ../../../bin/zip.js lambda.zip index.js)",
+    "package": "npm run build && npm run webpack && (cd dist && node ../../../bin/zip.js lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",

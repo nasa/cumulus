@@ -1,4 +1,4 @@
-import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
+import { CumulusMessageWithAssignedPayload, runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import * as awsClients from '@cumulus/aws-client/services';
 import * as S3 from '@cumulus/aws-client/S3';
 import { Context } from 'aws-lambda';
@@ -181,4 +181,5 @@ export const handler = async (event: HandlerEvent) => {
 export const cmaHandler = async (
   event: CumulusMessage | CumulusRemoteMessage,
   context: Context
-) => await runCumulusTask(handler, event, context);
+): Promise<CumulusMessageWithAssignedPayload
+| CumulusRemoteMessage> => await runCumulusTask(handler, event, context);

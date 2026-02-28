@@ -17,10 +17,10 @@ The spec test at [`PythonReferenceSpec`](https://github.com/nasa/cumulus/blob/ma
 To develop against this task, you should be using Python > 3.12 and managed by [uv](https://github.com/astral-sh/uv). See [package.json](package.json), [project.toml](pyproject.toml) for build setup, testing, and packaging. To install dependencies run the following command:
 
 ```sh
-npm run prepare
+npm run build
 ```
 
-### Build
+### Packaging
 
 ```sh
 npm run package

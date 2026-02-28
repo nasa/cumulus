@@ -8,9 +8,12 @@
     "node": ">=22.21.1"
   },
   "scripts": {
+    "build-lambda-zip": "cd dist && node ../../../../bin/zip.js lambda.zip index.js",
+    "clean": "rm -rf dist",
+    "package": "npm run clean && npm run webpack && npm run build-lambda-zip",
+    "python-lint": "true",
     "test": "true",
-    "package": "rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js node_modules",
-    "python-lint": "true"
+    "webpack": "../../../node_modules/.bin/webpack"
   },
   "publishConfig": {
     "access": "private"

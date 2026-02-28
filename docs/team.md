@@ -4,7 +4,7 @@ title: Cumulus Team
 hide_title: false
 ---
 
-### Cumulus Core Team
+## Cumulus Core Team
 
 - Allan Yu ([@acyu](https://github.com/acyu))
 - Bryan Wexler ([@BWex-NASA](https://github.com/BWex-NASA))
@@ -19,7 +19,7 @@ hide_title: false
 - Nate Pauzenga ([@npauzenga](https://github.com/npauzenga))
 - Tim Clark ([@tclark-innovim](https://github.com/tclark-innovim))
 
-### Cumulus Emeritus Team
+## Cumulus Emeritus Team
 
 - Aimee Barciauskas ([@abarciauskas-bgse](https://github.com/abarciauskas-bgse))
 - Alireza Jazayeri ([@scisco](https://github.com/scisco))

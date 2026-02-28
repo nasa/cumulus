@@ -17,13 +17,12 @@
     "node": ">=22.21.1"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && npm run prepare && npm run package",
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && npm run tsc && npm run package",
     "clean": "rm -rf dist",
     "package": "./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",

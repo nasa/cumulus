@@ -17,7 +17,6 @@
     "lint": "true",
     "clean": "true",
     "build": "true",
-    "prepare": "true",
     "package": "true",
     "coverage": "python ../../../scripts/coverage_handler/coverage.py"
   },

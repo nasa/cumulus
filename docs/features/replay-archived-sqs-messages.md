@@ -19,7 +19,7 @@ The required and optional fields that should be part of the body of this request
 
 | Field | Type | Description |
 | ------ | ------ | ------ |
-| `queueName` | string | Any valid SQS queue name (*not* ARN) | |
+| `queueName` | string | Any valid SQS queue name (*not* ARN) |
 
 ## Status tracking
 

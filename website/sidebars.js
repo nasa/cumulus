@@ -284,6 +284,7 @@ const sidebars = {
             'data-cookbooks/choice-states',
             'data-cookbooks/browse-generation',
             'data-cookbooks/tracking-files',
+            'data-cookbooks/rolling-archive',
             'data-cookbooks/run-tasks-in-lambda-or-docker',
             'data-cookbooks/throttling-queued-executions',
             'data-cookbooks/queue-post-to-cmr',
