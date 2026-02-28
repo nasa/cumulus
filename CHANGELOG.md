@@ -100,6 +100,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-4556**
 - **CUMULUS-4564**
   - hotfix for a terraform deployment issue found in the granule invalidator workflow causing the PrivateApiLambda to not be recreated
 - **CUMULUS-4566**
