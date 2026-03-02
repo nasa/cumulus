@@ -14,7 +14,6 @@
 
 const get = require('lodash/get');
 const pAll = require('p-all');
-const querystring = require('querystring');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
@@ -65,7 +64,7 @@ describe('The MoveGranules task', () => {
         Bucket: sourceBucket,
         Key: sourceKey,
         Body: '',
-        Tagging: querystring.stringify({ granuleId }),
+        Tagging: new URLSearchParams({ granuleId }).toString(),
       });
 
       moveGranulesResponse = await moveGranules({
