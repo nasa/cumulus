@@ -1,0 +1,71 @@
+{
+    "title": "AddInputGranulesInput",
+    "description": "Describes the input expected by the add-input-granules task",
+    "type": "object",
+    "required": [
+        "pdr",
+        "running",
+        "completed",
+        "failed"
+    ],
+    "properties": {
+        "pdr": {
+            "description": "Product Delivery Record",
+            "type": "object",
+            "required": [
+                "name",
+                "path",
+                "archivePath"
+            ],
+            "properties": {
+                "name": {
+                    "description": "Filename of the PDR",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "Location of the PDR",
+                    "type": "string"
+                },
+                "archivePath": {
+                    "description": "Archive path of the PDR",
+                    "type": "string"
+                }
+            }
+        },
+        "running": {
+            "description": "List of execution ARNs which are queued or running",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "completed": {
+            "description": "List of completed execution ARNs",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "failed": {
+            "description": "List of failed execution ARNs with reason for failure",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "arn",
+                    "reason"
+                ],
+                "properties": {
+                    "arn": {
+                        "description": "ARN of the failed execution",
+                        "type": "string"
+                    },
+                    "reason": {
+                        "description": "Reason for the failed execution",
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}
