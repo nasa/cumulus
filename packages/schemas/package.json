@@ -22,7 +22,7 @@
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "build": "npm run tsc",
+    "build": "npm run tsc && chmod +x ./dist/generate-task-schemas.js",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
