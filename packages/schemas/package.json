@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/schemas",
-  "version": "21.3.1",
+  "version": "21.3.2-testlerna.0",
   "description": "Helpers for managing Cumulus task schemas",
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/schemas",
   "repository": {
@@ -24,7 +24,7 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "build": "npm run tsc && chmod +x ./dist/generate-task-schemas.js",
     "tsc": "../../node_modules/.bin/tsc",
-    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles && chmod +x ./dist/generate-task-schemas.js",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "bin": {
