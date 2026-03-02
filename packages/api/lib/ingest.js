@@ -49,7 +49,7 @@ async function reingestGranule({
   if (get(originalMessage, 'payload.granules.length', 0) > 0) {
     await updateGranuleStatusToQueuedMethod({
       apiGranule,
-      resolvedKnex,
+      knex: resolvedKnex,
       granulePgModel,
     });
   }
