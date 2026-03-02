@@ -298,7 +298,7 @@ async function bulkGranuleReingest(
           await reingestHandler({
             apiGranule: apiGranuleToReingest,
             queueUrl,
-            passKnex: knex,
+            knex,
             asyncOperationId: process.env.asyncOperationId,
           });
           return granuleId;
