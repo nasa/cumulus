@@ -1,0 +1,29 @@
+[project]
+name = "add-input-granules"
+version = "21.3.1"
+description = "Adds input granules to the output message using execution ARNs"
+readme = "README.md"
+requires-python = "~=3.12.0"
+dependencies = [
+    "cumulus-api",
+    "cumulus-message-adapter-python>=2.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy~=1.19",
+    "pytest~=9.0",
+    "ruff~=0.14.0",
+]
+
+[tool.pytest]
+minversion = "9.0"
+pythonpath = [
+    "src",
+]
+testpaths = [
+    "tests",
+]
+
+[tool.uv.sources]
+cumulus-api = { git = "https://github.com/nasa/Cumulus-API-Python", tag = "v3.1.0" }
