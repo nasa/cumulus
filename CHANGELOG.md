@@ -115,6 +115,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
   - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
   - Replaced legacy querystring module with URLSearchParams.
+- **CUMULUS-4570**
+  - Update corified tasks to use the common cumulus-task module
+  - Rename tasks to use PascalCase and update casing of acronyms to match existing core tasks
+    | old | new
+    | --- | ---
+    | aws-api-proxy | AwsApiProxy
+    | CNMToCMA | CnmToCma
+    | granule-invalidator-task | GranuleInvalidator
 
 ### Fixed
 
