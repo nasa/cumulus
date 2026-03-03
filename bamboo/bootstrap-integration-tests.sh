@@ -10,6 +10,8 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   echo "***Deploying stack with deployment packages"
 
   npm install
+  npm run build:lock-stack-deps
+  npm run package:lambdas
 
   ## Update cumulus-tf
   cd example/cumulus-tf
