@@ -4,7 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const cloneDeep = require('lodash/cloneDeep');
-
+const xml2js = require('xml2js');
+const { promisify } = require('util');
 const sinon = require('sinon');
 const rewire = require('rewire');
 const updateGranulesCmrMetadataFileLinks = rewire('../index.js');
@@ -25,7 +26,7 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
-const { isCMRFile } = require('@cumulus/cmrjs');
+const { isCMRFile, xmlParseOptions } = require('@cumulus/cmrjs');
 
 const { updateGranulesCmrMetadata, updateCmrFileInfo } = require('..');
 
@@ -340,7 +341,7 @@ test('updateCmrFileInfo - throws error when CMR file not found', async (t) => {
   });
 });
 
-test('Call to updateGranulesCmrMetadata should be using config variable to set updateGranuleIdentifier flag', async (t) => {
+test.serial('Call to updateGranulesCmrMetadata should be using config variable to set updateGranuleIdentifier flag', async (t) => {
   const fakeFetchDistributionBucketMap = sinon.fake.resolves({});
   const restoreFetch = updateGranulesCmrMetadataFileLinks.__set__('fetchDistributionBucketMap', fakeFetchDistributionBucketMap);
 
@@ -378,4 +379,94 @@ test('Call to updateGranulesCmrMetadata should be using config variable to set u
   restoreMapFileEtags();
   restoreUpdateCMRMetadata();
   sinon.restore();
+});
+
+test.serial('GranuleUr does not get updated when config variable to updateGranuleIdentifier flag is false', async (t) => {
+  const newPayload = buildPayload(t);
+
+  newPayload.input.granules.forEach((granule) => {
+    const newFile = {
+      bucket: t.context.publicBucket,
+      key: 'some/prefix/some_filename.json',
+      type: 'data',
+    };
+    granule.files.push(newFile);
+  });
+  newPayload.config.updateGranuleIdentifiers = false;
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  await updateGranulesCmrMetadata(newPayload);
+  const cmrFiles = [];
+  newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if (isCMRFile(file)) {
+        file.granuleId = granule.granuleId;
+        cmrFiles.push(file);
+      }
+    });
+  });
+
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
+    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
+    if (cmrFile.key.endsWith('.xml')) {
+      const metaData = await promisify(xml2js.parseString)(payloadContents, xmlParseOptions);
+      t.not(metaData.Granule.GranuleUR,
+        cmrFile.granuleId);
+    } else if (cmrFile.key.endsWith('.json')) {
+      const metaData = JSON.parse(payloadContents);
+      t.not(metaData.GranuleUR, cmrFile.granuleId);
+    }
+  }));
+});
+
+test.serial('GranuleUr is updated when config variable to updateGranuleIdentifier flag is true', async (t) => {
+  const newPayload = buildPayload(t);
+
+  newPayload.input.granules.forEach((granule) => {
+    const newFile = {
+      bucket: t.context.publicBucket,
+      key: 'some/prefix/some_filename.json',
+      type: 'data',
+    };
+    granule.files.push(newFile);
+  });
+  newPayload.config.updateGranuleIdentifiers = true;
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  await updateGranulesCmrMetadata(newPayload);
+  const cmrFiles = [];
+  newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if (isCMRFile(file)) {
+        cmrFiles.push(file);
+      }
+    });
+  });
+
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
+    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
+    if (cmrFile.key.endsWith('.xml')) {
+      const metaData = await promisify(xml2js.parseString)(payloadContents, xmlParseOptions);
+      t.deepEqual(metaData.Granule.GranuleUR,
+        metaData.Granule.DataGranule[0].ProducerGranuleId);
+    } else if (cmrFile.key.endsWith('.json')) {
+      const metaData = JSON.parse(payloadContents);
+      t.deepEqual(metaData.GranuleUR,
+        metaData.DataGranule.Identifiers[0].Identifier);
+    }
+  }));
 });
