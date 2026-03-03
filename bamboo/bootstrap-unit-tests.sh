@@ -40,7 +40,7 @@ docker cp bamboo/extract-ts-build-cache.sh "${container_id}-build_env-1:$UNIT_TE
 
 # Extract build cache of compiled TS files
 $docker_command "cd $UNIT_TEST_BUILD_DIR; TS_BUILD_CACHE_FILE=$TS_BUILD_CACHE_FILE ./bamboo/extract-ts-build-cache.sh"
-$docker_command "cd $UNIT_TEST_BUILD_DIR; npm install --error --no-progress; npm run ci:bootstrap-no-scripts-quiet || true; npm run ci:bootstrap-no-scripts-quiet"
+$docker_command "cd $UNIT_TEST_BUILD_DIR; npm install --error --no-progress; npm run ci:bootstrap-no-scripts-quiet"
 $docker_command "cd $UNIT_TEST_BUILD_DIR; npm run install-python-deps"
 
 # Wait for the FTP server to be available
