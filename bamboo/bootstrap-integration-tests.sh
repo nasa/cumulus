@@ -10,8 +10,8 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   echo "***Deploying stack with deployment packages"
 
   npm install
-  ## This is needed to ensure lock-stack has the expected dependencies
-  npx lerna run build --scope @cumulus/cumulus-integration-tests --scope @cumulus/aws-client --scope @cumulus/checksum --scope @cumulus/common --scope @cumulus/errors --scope @cumulus/logger
+  npm run build:lock-stack-deps
+  npm run package:lambdas
 
   ## Update cumulus-tf
   cd example/cumulus-tf
@@ -37,8 +37,7 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   ## Prepare repo lambdas
   cd ..
 
-  npm install
-  npm run package-deployment
+  npm install --no-workspaces && npm run package-deployment
   cd ..
 else
   echo "***Bootstrapping integration tests with source"
