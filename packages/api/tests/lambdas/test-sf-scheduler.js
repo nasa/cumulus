@@ -40,7 +40,7 @@ const scheduleEventTemplate = {
 const fakeCollection = {
   name: 'fakeCollection',
   version: '000',
-  cmrProvider: 'provider'
+  cmrProvider: 'provider',
 };
 const fakeCollectionWithoutProvider = {
   name: 'fakeCollection',
@@ -171,7 +171,7 @@ test.serial('throws if cmrProvider not defined in collection', async (t) => {
     },
   };
   await t.throwsAsync(schedule.handleScheduleEvent(scheduleInput), {
-    message: 'no cmr_provider found for collection fakeCollection___001 all collections must configure a cmr_provider for sf to be scheduled'
+    message: 'no cmr_provider found for collection fakeCollection___001 all collections must configure a cmr_provider for sf to be scheduled',
   });
 });
 
