@@ -25,13 +25,7 @@ from . import LOGGER
 def build_input(data: dict) -> dict:
     """Build the input for the search_executions_by_granules method."""
     return {
-        "granules": [
-            {
-                "granuleId": granule["granuleId"],
-                "collectionId": f"{granule['dataType']}___{granule['version']}",
-            }
-            for granule in data["granules"]
-        ]
+        "granules": [granule["granuleId"] for granule in data["granules"]]
     }
 
 
@@ -50,7 +44,7 @@ def handle_parent_execution(execution: dict, api: CumulusApi) -> dict | None:
 
 def get_oldest_execution(executions: list[dict]) -> dict:
     """Get the oldest execution from a list of executions."""
-    executions.sort(key=lambda x: x["finalPayload"]["granules"][0]["createdAt"])
+    executions.sort(key=lambda x: x["createdAt"])
     return executions[0]
 
 
@@ -64,11 +58,18 @@ def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
         }"
     )
 
-    executions = api.search_executions_by_granules(
+    api_response = api.search_executions_by_granules(
         build_input(event_input), limit=None
-    ).get("results", [])
+    )
+    if api_response.get("status_code", 200) != 200:
+        raise ValueError(
+            f"Error searching for executions associated with granules: "
+            f"{api_response}"
+        )
+    LOGGER.info(f"API response: {api_response}")
+    results = api_response.get("results", [])
     LOGGER.info(
-        f"Found {len(executions)} executions associated with the incoming granules"
+        f"Found {len(results)} executions associated with the incoming granules"
     )
 
     # These executions are not guaranteed to be in order, so we need to bin them by
@@ -76,9 +77,10 @@ def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
     executions_by_granule: dict[str, list[dict]] = {
         granule["granuleId"]: [] for granule in event_input["granules"]
     }
-    for execution in executions:
-        granule_id = execution["finalPayload"]["granules"][0]["granuleId"]
-        executions_by_granule[granule_id].append(execution)
+    for execution in results:
+        if "finalPayload" in execution:
+            granule_id = execution["finalPayload"]["granules"][0]["granuleId"]
+            executions_by_granule[granule_id].append(execution)
 
     execution_map = {}
     for granule_id, executions in executions_by_granule.items():

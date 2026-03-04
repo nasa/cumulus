@@ -47,4 +47,7 @@ module "get_cnm_task" {
     timeout = var.lambda_timeout
     memory_size = var.lambda_memory_size
     tags = var.tags
+    environment = {
+      PRIVATE_API_LAMBDA_ARN = var.private_api_lambda_arn
+    }
 }

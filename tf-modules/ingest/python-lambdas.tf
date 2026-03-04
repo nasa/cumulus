@@ -21,4 +21,5 @@ module "get_cnm" {
   lambda_timeout                 = lookup(var.lambda_timeouts, "get-cnm-task", 60 * 15)
   lambda_memory_size             = lookup(var.lambda_memory_sizes, "get-cnm-task", 4096)
   tags                           = var.tags
+  private_api_lambda_arn         = var.private_api_lambda_arn
 }

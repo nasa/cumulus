@@ -39,3 +39,8 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "private_api_lambda_arn" {
+  description = "The ARN of the private API lambda to call in this task"
+  type        = string
+}
