@@ -38,7 +38,7 @@ data "aws_subnets" "subnet_ids" {
 
 module "get_cnm_task" {
     source = "../../../tf-modules/cumulus-task"
-    name = "get-cnm-task"
+    name = "GetCnm"
     prefix = var.prefix
     role = var.lambda_processing_role_arn
     lambda_zip_path = abspath("${local.task_root}/${local.zip_subdir}")
