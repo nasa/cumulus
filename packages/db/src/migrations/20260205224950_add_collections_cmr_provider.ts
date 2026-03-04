@@ -3,8 +3,7 @@ import { Knex } from 'knex';
 export const up = async (knex: Knex): Promise<void> => {
   if (!await knex.schema.hasColumn('collections', 'cmr_provider')) {
     await knex.schema.table('collections', (table) => {
-      table.text('cmr_provider')
-        .notNullable()
+      table.text('cmr_provider') // .notNullable() optional until all pieces are updated to work with this
         .comment('CMR Provider for this collection');
     });
   }

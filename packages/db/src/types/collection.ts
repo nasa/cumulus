@@ -1,7 +1,7 @@
 import { DuplicateHandling } from '@cumulus/types';
 
 export interface PostgresCollection {
-  cmr_provider: string,
+  cmr_provider?: string, //optional until all pieces are updated to work with this
   created_at?: Date,
   duplicate_handling?: DuplicateHandling,
   files: string,

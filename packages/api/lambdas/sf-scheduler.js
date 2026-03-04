@@ -10,6 +10,18 @@ const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 
 const Logger = require('@cumulus/logger');
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-scheduler' });
+const CmrProviderNotConfiguredMessage = "all collections must configure a cmr_provider for sf to be scheduled"
+class CMRProviderNotConfiguredError extends Error {
+  constructor(error) {
+    console.log(`in constructor ${error}`);
+    super(`${error.message} ${CmrProviderNotConfiguredMessage}`);
+
+    this.name = 'CMRProviderNotConfiguredError';
+    this.code = error.code;
+
+    Error.captureStackTrace(this, CMRProviderNotConfiguredError);
+  }
+}
 
 const getApiProvider = (providerId) => {
   if (isNil(providerId)) return undefined;
@@ -54,7 +66,12 @@ async function handleScheduleEvent(event) {
   };
 
   const eventCustomMeta = get(event, 'meta', {});
-  const cmrProvider = collection.cmrProvider || messageTemplate.meta.cmr.provider;
+  const { cmrProvider } = collection;
+  if (!cmrProvider) {
+    throw new CMRProviderNotConfiguredError({
+      message: `no cmr_provider found for collection ${collection.name}___${collection.version}`
+    });
+  }
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
     asyncOperationId: get(event, 'asyncOperationId'),
