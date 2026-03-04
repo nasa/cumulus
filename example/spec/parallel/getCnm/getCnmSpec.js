@@ -80,8 +80,7 @@ async function cleanUp() {
       .map((arn) => deleteExecution({ prefix: config.stackName, executionArn: arn }))
   );
   await removePublishedGranule({ prefix: config.stackName,
-    granuleId,
-    collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
+    granuleId });
 
   await Promise.all([
     deleteFolder(config.bucket, testDataFolder),
@@ -107,6 +106,7 @@ describe('The Get CNM workflow setup', () => {
 
   beforeAll(async () => {
     config = await loadConfig();
+
     const testId = createTimestampedTestId(config.stackName, 'CnmSqsTest');
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
@@ -186,7 +186,7 @@ describe('The Get CNM workflow setup', () => {
       const meta = {};
       meta.collection = collection;
 
-      const granule = getGranule(record);
+      const granule = getGranule({prefix: config.stackName, granuleId: granuleId});
       granule.dataType = collection.name;
       granule.version = collection.version;
       granule.granuleId = granuleId;
