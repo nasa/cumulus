@@ -20,7 +20,7 @@ const fakeMessageResponse = {
     cmr: {
       oauthProvider: 'dummy_oauth',
       username: 'uname',
-      provider: 'unaltered_provider',
+      provider: 'should_never_be_seen',
       clientId: 'clientId',
       passwordSecretName: 'passwordSecretName',
       cmrEnvironment: 'cmrEnvironment',
@@ -40,11 +40,11 @@ const scheduleEventTemplate = {
 const fakeCollection = {
   name: 'fakeCollection',
   version: '000',
+  cmrProvider: 'provider'
 };
-const fakeCollectionWithAlteredProvider = {
+const fakeCollectionWithoutProvider = {
   name: 'fakeCollection',
   version: '001',
-  cmrProvider: 'altered_provider',
 };
 const fakeProvider = {
   id: 'fakeProviderId',
@@ -56,7 +56,7 @@ const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
 const fakeGetCollection = (item) => {
   const collections = {
     fakeCollection___000: fakeCollection,
-    fakeCollection___001: fakeCollectionWithAlteredProvider,
+    fakeCollection___001: fakeCollectionWithoutProvider,
   };
   const collection = get(
     collections,
@@ -161,7 +161,21 @@ test.serial('Sends an SQS message to the default queue if queueUrl is not define
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
 });
 
-test.serial('Sends an SQS message with default cmrProvider if not defined in collection', async (t) => {
+test.serial('throws if cmrProvider not defined in collection', async (t) => {
+  const scheduleInput = {
+    ...scheduleEventTemplate,
+    provider: fakeCollectionWithoutProvider.id,
+    collection: {
+      name: fakeCollectionWithoutProvider.name,
+      version: fakeCollectionWithoutProvider.version,
+    },
+  };
+  await t.throwsAsync(schedule.handleScheduleEvent(scheduleInput), {
+    message: 'no cmr_provider found for collection fakeCollection___001 all collections must configure a cmr_provider for sf to be scheduled'
+  });
+});
+
+test.serial('Sends an SQS message with cmrProvider from collection', async (t) => {
   const scheduleInput = {
     ...scheduleEventTemplate,
     provider: fakeProvider.id,
@@ -179,26 +193,5 @@ test.serial('Sends an SQS message with default cmrProvider if not defined in col
   t.is(targetQueueUrl, defaultQueueUrl);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
-  t.deepEqual(targetMessage.meta.cmr.provider, fakeMessageResponse.meta.cmr.provider);
-});
-
-test.serial('Sends an SQS message with cmrProvider as overridden by collection', async (t) => {
-  const scheduleInput = {
-    ...scheduleEventTemplate,
-    provider: fakeProvider.id,
-    collection: {
-      name: fakeCollectionWithAlteredProvider.name,
-      version: fakeCollectionWithAlteredProvider.version,
-    },
-  };
-
-  await schedule.handleScheduleEvent(scheduleInput);
-
-  t.is(sqsStub.calledOnce, true);
-
-  const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
-  t.is(targetQueueUrl, defaultQueueUrl);
-  t.deepEqual(targetMessage.meta.collection, fakeCollectionWithAlteredProvider);
-  t.deepEqual(targetMessage.meta.provider, fakeProvider);
-  t.deepEqual(targetMessage.meta.cmr.provider, fakeCollectionWithAlteredProvider.cmrProvider);
+  t.deepEqual(targetMessage.meta.cmr.provider, fakeCollection.cmrProvider);
 });
