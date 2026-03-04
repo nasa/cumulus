@@ -2,9 +2,8 @@
 
 const fs = require('fs-extra');
 const replace = require('lodash/replace');
-const pWaitFor = require('p-wait-for');
 
-const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
+const { createSqsQueues } = require('@cumulus/api/lib/testUtils');
 const { sns } = require('@cumulus/aws-client/services');
 const {
   DeleteTopicCommand,
@@ -20,9 +19,6 @@ const { deleteExecution, getExecution } = require('@cumulus/api-client/execution
 const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { randomId } = require('@cumulus/common/test-utils');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
-const {
-  buildAndExecuteWorkflow,
-} = require('../../helpers/workflowUtils');
 
 const {
   addCollections,
@@ -37,6 +33,10 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
+
+const {
+  buildAndExecuteWorkflow,
+} = require('../../helpers/workflowUtils');
 
 const { waitForTestSfForRecord } = require('../../helpers/kinesisHelpers');
 
@@ -60,19 +60,15 @@ let cnmResponseStream;
 let granuleId;
 let collection;
 let queues = {};
-let workflowExecutionArns = [];
 
+const workflowExecutionArns = [];
 const collectionsDir = './data/collections/ASCATB-L2-Coastal';
 const providersDir = './data/providers/PO.DAAC/';
-
 const workflowName = 'CNMExampleWorkflow';
-
 const ruleDirectory = './spec/parallel/cnmWorkflow/data/rules/sqs';
-
 const s3data = [
   '@cumulus/test-data/granules/ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2.nc',
 ];
-
 const passthroughWorkflowName = 'Passthrough';
 
 async function cleanUp() {
@@ -97,16 +93,15 @@ async function cleanUp() {
   ]);
 }
 
-
 describe('The Cloud Notification Mechanism SQS workflow', () => {
   let collections;
   let providers;
   let executionNamePrefix;
-  let executionStatuses = [];
   let record;
   let scheduleQueueUrl;
   let workflowArn;
 
+  const executionStatuses = [];
   const maxWaitForExecutionSecs = 60 * 5;
   const maxWaitForSFExistSecs = 60 * 4;
 
@@ -182,28 +177,29 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
   describe('is triggered successfully', () => {
     beforeAll(async () => {
       await sendSQSMessage(queues.sourceQueueUrl, record);
-      const workflowExecution = await waitForTestSfForRecord(record.identifier, workflowArn, maxWaitForSFExistSecs);
+      let workflowExecution = await waitForTestSfForRecord(record.identifier, workflowArn, maxWaitForSFExistSecs);
       workflowExecutionArns.push(workflowExecution.executionArn);
 
       const executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
       executionStatuses.push(executionStatus);
 
-      let meta = {};
+      const meta = {};
       meta.collection = collection;
 
-      let granule = getGranule(record);
+      const granule = getGranule(record);
       granule.dataType = collection.name;
       granule.version = collection.version;
       granule.granuleId = granuleId;
 
       for (let index = 0; index < 3; index += 1) {
-        const workflowExecution = await buildAndExecuteWorkflow(
+        // eslint-disable-next-line no-await-in-loop
+        workflowExecution = await buildAndExecuteWorkflow(
           config.stackName,
           config.bucket,
           passthroughWorkflowName,
           collections[0],
           providers[0],
-          {granules: [granule]},
+          { granules: [granule] },
           meta
         );
         executionStatuses.push(workflowExecution.status);
@@ -216,7 +212,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
         'GetCnmWorkflow',
         collections[0],
         providers[0],
-        {granules: [granule]},
+        { granules: [granule] },
         meta
       );
       const getCnmExecutionArn = getCnmWorkflowExecution.executionArn;
@@ -233,7 +229,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
       expect(executionStatuses.every((status) => ['SUCCEEDED', 'completed'].includes(status))).toBe(true);
     });
 
-    it('successfully retrieves the original CNM message', async () => {
+    it('successfully retrieves the original CNM message', () => {
       const returnedCnmMessage = getCnmExecutionRecord.finalPayload[granuleId];
 
       expect(returnedCnmMessage).toBeDefined();
