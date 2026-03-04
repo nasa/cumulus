@@ -93,7 +93,7 @@ async function cleanUp() {
   ]);
 }
 
-describe('The Cloud Notification Mechanism SQS workflow', () => {
+describe('The Get CNM workflow setup', () => {
   let collections;
   let providers;
   let executionNamePrefix;
@@ -174,7 +174,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
     await addRules(config, ruleDirectory, ruleOverride);
   });
 
-  describe('is triggered successfully', () => {
+  describe('is triggered successfully and resulting get cnm workflow triggered successfully', () => {
     beforeAll(async () => {
       await sendSQSMessage(queues.sourceQueueUrl, record);
       let workflowExecution = await waitForTestSfForRecord(record.identifier, workflowArn, maxWaitForSFExistSecs);
@@ -225,11 +225,11 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
       });
     });
 
-    it('executes successfully', () => {
+    it('all workflows execute successfully', () => {
       expect(executionStatuses.every((status) => ['SUCCEEDED', 'completed'].includes(status))).toBe(true);
     });
 
-    it('successfully retrieves the original CNM message', () => {
+    it('the get CNM workflowsuccessfully retrieves the original CNM message', () => {
       const returnedCnmMessage = getCnmExecutionRecord.finalPayload[granuleId];
 
       expect(returnedCnmMessage).toBeDefined();
