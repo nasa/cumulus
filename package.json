@@ -54,7 +54,7 @@
     "bootstrap-no-build": "npm install && npm run bootstrap-python",
     "bootstrap-no-build-no-scripts": "npm install --ignore-scripts && npm run bootstrap-python",
     "bootstrap-no-build-quiet": "npm install --loglevel error && npm run bootstrap-python",
-    "package:lambdas": "for x in lambdas/*; do (echo \"packaging $x\" && cd $x && test -e package.json && npm run package); done",
+    "package:lambdas": "for x in lambdas/*; do (echo \"packaging $x\" && cd $x && test -e package.json && npm install --no-workspaces && npm run package); done",
     "build:lock-stack-deps": "npx lerna run build --scope @cumulus/cumulus-integration-tests --scope @cumulus/aws-client --scope @cumulus/checksum --scope @cumulus/common --scope @cumulus/errors --scope @cumulus/logger",
     "ci:bootstrap": "npm install --ignore-scripts && lerna run build && npm run bootstrap-python && lerna run prepublish",
     "ci:bootstrap-no-scripts": "npm install --ignore-scripts && npm run bootstrap-python",
