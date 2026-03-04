@@ -38,8 +38,8 @@ const logger = new Logger({ sender: '@cumulus/update-granules-cmr-metadata-file-
  *                                           (e.g. { bucket: distribution path })
  * @param {Object} excludeFileRegexPattern - pattern by which to exclude files from processing
  * @param {boolean} excludeDataGranule       - Whether to add or update the DataGranule
- * @param {boolean} updateGranuleIdentifiers - Whether to update the Granule Identifier
- * node in the granule's metadata
+ * @param {boolean} updateGranuleIdentifiers - Whether to update the Granule's Identifiers
+ *                                             and granuleUR
  * @returns {Promise<Object[]>} Array of updated CMR files with etags of newly updated files.
  *
  */

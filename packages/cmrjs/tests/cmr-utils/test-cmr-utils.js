@@ -491,8 +491,7 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
   );
   const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
   // Remove producerGranuleId from cmrMetadata.  We expect granuleUR = producerGranuleId
-  // in this case
-  // that granuleUR will after = granuleId, and producerGranuleId will be updated
+  // in this case that granuleUR will after = granuleId, and producerGranuleId will be updated
   const distEndpoint = 'https://distendpoint.com';
   const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
 
@@ -525,8 +524,7 @@ test.serial('UpdateEcho10XMLMetadata should not update GranuleUR and ProducerGra
   );
   const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
   // Remove producerGranuleId from cmrMetadata.  We expect granuleUR = producerGranuleId
-  // in this case
-  // that granuleUR will after = granuleId, and producerGranuleId will be updated
+  // in this case that granuleUR will after = granuleId, and producerGranuleId will be updated
   const distEndpoint = 'https://distendpoint.com';
   const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
 
@@ -629,7 +627,7 @@ test.serial('UpdateEcho10XMLMetadata maintains ECHO10 DataGranule element order'
   t.is(metadataObject.Granule.DataGranule.get('ProducerGranuleId'), 'NEW_PRODUCER_ID');
 });
 
-test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
+test.serial('updateUMMGMetadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
   const distEndpoint = 'https://distendpoint.com';
@@ -663,7 +661,7 @@ test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correct
   t.is(metadataObject.DataGranule.Identifiers[0].Identifier, 'TestFixtureGranuleUR');
 });
 
-test.serial('updateUMMG Metadata does not updates GranuleUR and ProducerGranuleID when updateGranuleIdentifiers is false', async (t) => {
+test.serial('updateUMMGMetadata does not update Granule metadata when updateGranuleIdentifiers is false', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
   const distEndpoint = 'https://distendpoint.com';
@@ -698,7 +696,7 @@ test.serial('updateUMMG Metadata does not updates GranuleUR and ProducerGranuleI
   t.deepEqual(metadataObject.DataGranule, cmrMetadata.DataGranule);
 });
 
-test.serial('updateUMMG Metadata does not update the granule DataGranule metadata when excludeDataGranule is true', async (t) => {
+test.serial('updateUMMGMetadata does not update the granule DataGranule metadata when excludeDataGranule is true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
   const distEndpoint = 'https://distendpoint.com';
