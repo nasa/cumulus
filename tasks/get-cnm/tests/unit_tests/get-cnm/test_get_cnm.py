@@ -1,13 +1,12 @@
 """Tests for get cnm module."""
 
 import re
-from unittest.mock import patch
 
 import pytest
 from get_cnm.get_cnm import lambda_adapter
 
 
-def test_lambda_adapter_returns_one_cnm() -> None:
+def test_lambda_adapter_returns_one_cnm(mocked_api) -> None:
     """Verify lambda_adapter returns the CNM message associated with the granule."""
     input_granule_name = "ATL12_20181014154641_02450101_007_02.h5_-C-mRK2W"
     input_event = {
@@ -31,10 +30,10 @@ def test_lambda_adapter_returns_one_cnm() -> None:
                             "version": "007",
                             "dataType": "ATL12",
                             "granuleId": input_granule_name,
-                            "createdAt": 1,
                         }
                     ],
                 },
+                "createdAt": 1,
                 "dataType": "ATL12",
                 "version": "007",
             },
@@ -48,24 +47,23 @@ def test_lambda_adapter_returns_one_cnm() -> None:
                             "version": "007",
                             "dataType": "ATL12",
                             "granuleId": input_granule_name,
-                            "createdAt": 2,
                         }
                     ],
                 },
+                "createdAt": 2,
                 "dataType": "ATL12",
                 "version": "007",
             },
         ],
     }
-    with patch(
-        "cumulus_api.CumulusApi.search_executions_by_granules",
-        return_value=search_executions_by_granules_response,
-    ) as _:
-        result = lambda_adapter(input_event, None)
-        assert result == {input_granule_name: original_cnm_message}
+    mocked_api.return_value.search_executions_by_granules.return_value = (
+        search_executions_by_granules_response
+    )
+    result = lambda_adapter(input_event, None)
+    assert result == {input_granule_name: original_cnm_message}
 
 
-def test_lambda_adapter_returns_one_cnm_with_parent_arn() -> None:
+def test_lambda_adapter_returns_one_cnm_with_parent_arn(mocked_api) -> None:
     """Verify lambda_adapter returns the CNM message associated with the granule."""
     input_granule_name = "ATL12_20181014154641_02450101_007_02.h5_-C-mRK2W"
     input_event = {
@@ -90,10 +88,10 @@ def test_lambda_adapter_returns_one_cnm_with_parent_arn() -> None:
                             "version": "007",
                             "dataType": "ATL12",
                             "granuleId": input_granule_name,
-                            "createdAt": 1,
                         }
                     ],
                 },
+                "createdAt": 1,
                 "dataType": "ATL12",
                 "version": "007",
                 "parentArn": parent_execution_arn,
@@ -109,29 +107,23 @@ def test_lambda_adapter_returns_one_cnm_with_parent_arn() -> None:
                     "version": "007",
                     "dataType": "ATL12",
                     "granuleId": input_granule_name,
-                    "createdAt": 1,
                 }
             ],
         },
+        "createdAt": 1,
         "dataType": "ATL12",
         "version": "007",
     }
-    with (
-        patch(
-            "cumulus_api.CumulusApi.search_executions_by_granules",
-            return_value=search_executions_by_granules_response,
-        ),
-        patch(
-            "cumulus_api.CumulusApi.get_execution",
-            return_value=parent_execution_response,
-        ) as get_execution_patch,
-    ):
-        result = lambda_adapter(input_event, None)
-        assert result == {input_granule_name: original_cnm_message}
-        get_execution_patch.assert_called_once_with(parent_execution_arn)
+    mocked_api.return_value.search_executions_by_granules.return_value = (
+        search_executions_by_granules_response
+    )
+    mocked_api.return_value.get_execution.return_value = parent_execution_response
+    result = lambda_adapter(input_event, None)
+    assert result == {input_granule_name: original_cnm_message}
+    mocked_api.return_value.get_execution.assert_called_once_with(parent_execution_arn)
 
 
-def test_lambda_adapter_returns_multiple_cnm() -> None:
+def test_lambda_adapter_returns_multiple_cnm(mocked_api) -> None:
     """Verify that lambda_adapter returns the CNM message associated with the granule
     when multiple granules are specified.
     """
@@ -170,10 +162,10 @@ def test_lambda_adapter_returns_multiple_cnm() -> None:
                             "version": "007",
                             "dataType": "ATL12",
                             "granuleId": first_input_granule_name,
-                            "createdAt": 1,
                         }
                     ],
                 },
+                "createdAt": 1,
                 "dataType": "ATL12",
                 "version": "007",
             },
@@ -187,10 +179,10 @@ def test_lambda_adapter_returns_multiple_cnm() -> None:
                             "version": "007",
                             "dataType": "ATL12",
                             "granuleId": first_input_granule_name,
-                            "createdAt": 2,
                         }
                     ],
                 },
+                "createdAt": 2,
                 "dataType": "ATL12",
                 "version": "007",
             },
@@ -203,10 +195,10 @@ def test_lambda_adapter_returns_multiple_cnm() -> None:
                             "version": "007",
                             "dataType": "ATL12",
                             "granuleId": second_input_granule_name,
-                            "createdAt": 1,
                         }
                     ],
                 },
+                "createdAt": 1,
                 "dataType": "ATL12",
                 "version": "007",
             },
@@ -220,27 +212,26 @@ def test_lambda_adapter_returns_multiple_cnm() -> None:
                             "version": "007",
                             "dataType": "ATL12",
                             "granuleId": second_input_granule_name,
-                            "createdAt": 2,
                         }
                     ],
                 },
+                "createdAt": 2,
                 "dataType": "ATL12",
                 "version": "007",
             },
         ],
     }
-    with patch(
-        "cumulus_api.CumulusApi.search_executions_by_granules",
-        return_value=search_executions_by_granules_response,
-    ) as _:
-        result = lambda_adapter(input_event, None)
-        assert result == {
-            first_input_granule_name: first_original_cnm_message,
-            second_input_granule_name: second_original_cnm_message,
-        }
+    mocked_api.return_value.search_executions_by_granules.return_value = (
+        search_executions_by_granules_response
+    )
+    result = lambda_adapter(input_event, None)
+    assert result == {
+        first_input_granule_name: first_original_cnm_message,
+        second_input_granule_name: second_original_cnm_message,
+    }
 
 
-def test_lambda_adapter_raises_on_no_executions_found() -> None:
+def test_lambda_adapter_raises_on_no_executions_found(mocked_api) -> None:
     """Verify an exception is raised if an execution is not returned for a granule."""
     first_input_granule_name = "ATL12_20181014154641_02450101_007_02.h5_-C-mRK2W"
     second_input_granule_name = "ATL12_20181014155468_02450101_007_02.h5_-C-mRK2W"
@@ -274,29 +265,26 @@ def test_lambda_adapter_raises_on_no_executions_found() -> None:
                             "version": "007",
                             "dataType": "ATL12",
                             "granuleId": first_input_granule_name,
-                            "createdAt": 1,
                         }
                     ],
                 },
+                "createdAt": 1,
                 "dataType": "ATL12",
                 "version": "007",
             }
         ],
     }
-    with (
-        patch(
-            "cumulus_api.CumulusApi.search_executions_by_granules",
-            return_value=search_executions_by_granules_response,
-        ) as _,
-        pytest.raises(
-            ValueError,
-            match=f"No executions found for granule {second_input_granule_name}",
-        ),
+    mocked_api.return_value.search_executions_by_granules.return_value = (
+        search_executions_by_granules_response
+    )
+    with pytest.raises(
+        ValueError,
+        match=f"No executions found for granule {second_input_granule_name}",
     ):
         lambda_adapter(input_event, None)
 
 
-def test_lambda_adapter_raises_on_cnm_granule_mismatch() -> None:
+def test_lambda_adapter_raises_on_cnm_granule_mismatch(mocked_api) -> None:
     """Verify that an exception is raised if the CNM granule ID does not match the
     input granule ID.
     """
@@ -324,33 +312,30 @@ def test_lambda_adapter_raises_on_cnm_granule_mismatch() -> None:
                             "version": "007",
                             "dataType": "ATL12",
                             "granuleId": first_input_granule_name,
-                            "createdAt": 1,
                         }
                     ],
                 },
+                "createdAt": 1,
                 "dataType": "ATL12",
                 "version": "007",
             }
         ],
     }
-    with (
-        patch(
-            "cumulus_api.CumulusApi.search_executions_by_granules",
-            return_value=search_executions_by_granules_response,
-        ) as _,
-        pytest.raises(
-            ValueError,
-            match=re.escape(
-                f"Found differing granule IDs for granule in CNM message "
-                f"({first_original_cnm_message['product']['name']}) and "
-                f"Cumulus message ({first_input_granule_name})"
-            ),
+    mocked_api.return_value.search_executions_by_granules.return_value = (
+        search_executions_by_granules_response
+    )
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            f"Found differing granule IDs for granule in CNM message "
+            f"({first_original_cnm_message['product']['name']}) and "
+            f"Cumulus message ({first_input_granule_name})"
         ),
     ):
         lambda_adapter(input_event, None)
 
 
-def test_lambda_adapter_raises_on_cnm_granule_missing() -> None:
+def test_lambda_adapter_raises_on_cnm_granule_missing(mocked_api) -> None:
     """Verify that an exception is raised if the CNM granule ID does not match the
     input granule ID.
     """
@@ -378,26 +363,23 @@ def test_lambda_adapter_raises_on_cnm_granule_missing() -> None:
                             "version": "007",
                             "dataType": "ATL12",
                             "granuleId": first_input_granule_name,
-                            "createdAt": 1,
                         }
                     ],
                 },
+                "createdAt": 1,
                 "dataType": "ATL12",
                 "version": "007",
             }
         ],
     }
-    with (
-        patch(
-            "cumulus_api.CumulusApi.search_executions_by_granules",
-            return_value=search_executions_by_granules_response,
-        ) as _,
-        pytest.raises(
-            ValueError,
-            match=re.escape(
-                f"Found differing granule IDs for granule in CNM message (None) and "
-                f"Cumulus message ({first_input_granule_name})"
-            ),
+    mocked_api.return_value.search_executions_by_granules.return_value = (
+        search_executions_by_granules_response
+    )
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            f"Found differing granule IDs for granule in CNM message (None) and "
+            f"Cumulus message ({first_input_granule_name})"
         ),
     ):
         lambda_adapter(input_event, None)

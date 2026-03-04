@@ -15,6 +15,7 @@ message that corresponds to this granule.
 
 """
 
+from http import HTTPStatus
 from typing import Any
 
 from cumulus_api import CumulusApi
@@ -24,9 +25,7 @@ from . import LOGGER
 
 def build_input(data: dict) -> dict:
     """Build the input for the search_executions_by_granules method."""
-    return {
-        "granules": [granule["granuleId"] for granule in data["granules"]]
-    }
+    return {"granules": [granule["granuleId"] for granule in data["granules"]]}
 
 
 def handle_parent_execution(execution: dict, api: CumulusApi) -> dict | None:
@@ -61,10 +60,9 @@ def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
     api_response = api.search_executions_by_granules(
         build_input(event_input), limit=None
     )
-    if api_response.get("status_code", 200) != 200:
+    if api_response.get("status_code", HTTPStatus.OK) != HTTPStatus.OK:
         raise ValueError(
-            f"Error searching for executions associated with granules: "
-            f"{api_response}"
+            f"Error searching for executions associated with granules: {api_response}"
         )
     LOGGER.info(f"API response: {api_response}")
     results = api_response.get("results", [])
