@@ -32,8 +32,6 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
-const { constructCollectionId } = require('@cumulus/message/Collections');
-
 const {
   buildAndExecuteWorkflow,
 } = require('../../helpers/workflowUtils');
@@ -186,7 +184,7 @@ describe('The Get CNM workflow setup', () => {
       const meta = {};
       meta.collection = collection;
 
-      const granule = getGranule({prefix: config.stackName, granuleId: granuleId});
+      const granule = getGranule({ prefix: config.stackName, granuleId: granuleId });
       granule.dataType = collection.name;
       granule.version = collection.version;
       granule.granuleId = granuleId;
