@@ -15,7 +15,7 @@ export interface CollectionFile {
 }
 
 export interface PartialCollectionRecord {
-  cmrProvider?: string,
+  cmrProvider: string,
   createdAt?: number,
   createdAt?: number,
   duplicateHandling?: DuplicateHandling,
