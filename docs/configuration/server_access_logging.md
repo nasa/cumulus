@@ -7,6 +7,7 @@ hide_title: false
 ## Via AWS Console
 
 [Enable server access logging for an S3 bucket][howtologging]
+For deeper technical details, refer to the [Amazon S3 Server Access Logging guide][awslogging].
 
 ## Via [AWS Command Line Interface][cli]
 

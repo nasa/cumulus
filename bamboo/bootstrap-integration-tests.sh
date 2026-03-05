@@ -10,6 +10,8 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   echo "***Deploying stack with deployment packages"
 
   npm install
+  npm run build:lock-stack-deps
+  npm run package:lambdas
 
   ## Update cumulus-tf
   cd example/cumulus-tf
@@ -35,7 +37,7 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   ## Prepare repo lambdas
   cd ..
 
-  npm install && npm run package-deployment
+  npm install --no-workspaces && npm run package-deployment
   cd ..
 else
   echo "***Bootstrapping integration tests with source"
@@ -53,10 +55,7 @@ else
   ./bamboo/extract-ts-build-cache.sh
 
   npm install
-  ## Double bootstrapping required as workaround to
-  ## lerna re-bootstrapping issue in older releases
-  ## (similiar to  https://github.com/lerna/lerna/issues/1457)
-  (npm run ci:bootstrap-no-scripts || true) && npm run ci:bootstrap-no-scripts
+  npm run ci:bootstrap-no-scripts
   exit 0
 fi
 
