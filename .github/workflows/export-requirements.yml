@@ -1,7 +1,7 @@
 name: Export requirements.txt from changed uv.lock files
 
 on:
-  workflow_dispatch:
+  pull_request:
 
 jobs:
   export-requirements:
