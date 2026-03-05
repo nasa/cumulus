@@ -3,7 +3,7 @@ name: Export requirements.txt from changed uv.lock files.
 on:
   pull_request:
     paths:
-      - '**/uv.lock'
+      - '**uv.lock'
 
 jobs:
   export-requirements:
