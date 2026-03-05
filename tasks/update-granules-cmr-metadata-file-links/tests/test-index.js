@@ -33,6 +33,15 @@ function getGranuleURValue(obj) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+async function getCMRFileBodyContent(cmrFile) {
+  const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
+  const payloadContents = await getObjectStreamContents(payloadResponse.Body);
+  if (cmrFile.key.endsWith('.xml')) {
+    return await promisify(xml2js.parseString)(payloadContents, xmlParseOptions);
+  }
+  return JSON.parse(payloadContents);
+}
+
 function cmrReadStream(file) {
   return file.endsWith('.cmr.xml') ? fs.createReadStream('tests/data/meta.xml') : fs.createReadStream('tests/data/ummg-meta.json');
 }
@@ -374,14 +383,7 @@ test.serial('GranuleUr and Identifiers do not get updated when config variable t
 
   const preUpdateBodyContent = [];
   await Promise.all(preUpdateCmrFiles.map(async (cmrFile) => {
-    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
-    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
-    if (cmrFile.key.endsWith('.xml')) {
-      const metaData = await promisify(xml2js.parseString)(payloadContents, xmlParseOptions);
-      preUpdateBodyContent.push(metaData);
-    } else if (cmrFile.key.endsWith('.json')) {
-      preUpdateBodyContent.push(JSON.parse(payloadContents));
-    }
+    preUpdateBodyContent.push(await getCMRFileBodyContent(cmrFile));
   }));
 
   await updateGranulesCmrMetadata(newPayload);
@@ -397,14 +399,7 @@ test.serial('GranuleUr and Identifiers do not get updated when config variable t
 
   const updatedBodyContent = [];
   await Promise.all(cmrFiles.map(async (cmrFile) => {
-    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
-    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
-    if (cmrFile.key.endsWith('.xml')) {
-      const metaData = await promisify(xml2js.parseString)(payloadContents, xmlParseOptions);
-      updatedBodyContent.push(metaData);
-    } else if (cmrFile.key.endsWith('.json')) {
-      updatedBodyContent.push(JSON.parse(payloadContents));
-    }
+    updatedBodyContent.push(await getCMRFileBodyContent(cmrFile));
   }));
 
   // sort to avoid test assertion order issues
@@ -452,14 +447,7 @@ test.serial('GranuleUr and Identifiers get updated when config variable to updat
 
   const updatedBodyContent = [];
   await Promise.all(cmrFiles.map(async (cmrFile) => {
-    const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
-    const payloadContents = await getObjectStreamContents(payloadResponse.Body);
-    if (cmrFile.key.endsWith('.xml')) {
-      const metaData = await promisify(xml2js.parseString)(payloadContents, xmlParseOptions);
-      updatedBodyContent.push(metaData);
-    } else if (cmrFile.key.endsWith('.json')) {
-      updatedBodyContent.push(JSON.parse(payloadContents));
-    }
+    updatedBodyContent.push(await getCMRFileBodyContent(cmrFile));
   }));
 
   updatedBodyContent.sort((a, b) => getGranuleURValue(a).localeCompare(getGranuleURValue(b)));
