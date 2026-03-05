@@ -12,7 +12,7 @@ This task is intended to be used as part of PDR workflows. It is run after all i
 | pdr | object | N/A | yes | N/A | Product Delivery Record
 | pdr.name | string | N/A | yes | N/A | PDR filename
 | pdr.path | string | N/A | yes | N/A | PDR location
-| pdr.archivePath | string | N/A | yes | N/A | Archived PDR location
+| pdr.archivePath | string | N/A | no | N/A | Archived PDR location
 | running | array[string] | N/A | yes | N/A | List of queued and running workflow execution ARNS
 | completed | array[string]  | N/A | yes | N/A | List of completed workflow execution ARNs
 | failed | array[object] | N/A | yes | N/A | List of failed workflow ARNs and reason for failure

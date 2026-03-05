@@ -14,8 +14,7 @@
             "type": "object",
             "required": [
                 "name",
-                "path",
-                "archivePath"
+                "path"
             ],
             "properties": {
                 "name": {

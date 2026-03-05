@@ -4,10 +4,10 @@ import json
 import logging
 
 from cumulus_api import CumulusApi
+from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = CumulusLogger("add-input-granules", logging.INFO)
 
 
 def _get_granules_from_exc(executions: list) -> list:
@@ -15,7 +15,7 @@ def _get_granules_from_exc(executions: list) -> list:
 
     :param executions: List of execution ARNs or execution objects.
     """
-    cml = CumulusApi
+    cml = CumulusApi()
     input_granules = []
     for exc in executions:
         arn = exc["arn"] if isinstance(exc, dict) else exc
