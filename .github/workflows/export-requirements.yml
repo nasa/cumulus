@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -39,8 +41,6 @@ jobs:
 
       - name: Commit updated requirements.txt files
         run: |
-          # This should already be checked out, but depends on configuration of the checkout action
-          git checkout ${{ github.event.pull_request.head.ref }}
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A -- '**/requirements.txt'
