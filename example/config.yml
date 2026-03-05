@@ -23,6 +23,9 @@ cumulus-lp:
   apiUsername: jasmine
   pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
+atisdale:
+  bucket: atisdale-internal
+
 awisdom:
   bucket: awisdom-internal
 

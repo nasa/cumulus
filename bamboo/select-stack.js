@@ -16,6 +16,7 @@ function determineIntegrationTestStackName(cb) {
 
   // uses github name
   const stacks = {
+    'atisdal-ASDC': 'atisdale-ci',
     'Charles Huang': 'ch-ci',
     'Bryan Wexler': 'bwexler-ci',
     'Chris Durbin': 'cdd-ci',
