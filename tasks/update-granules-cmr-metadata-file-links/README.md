@@ -9,6 +9,8 @@ This Cumulus task component updates CMR metadata files to have correct values fo
 * CMR XML Metadata is updated with `granuleId` set as the value for `Granule.GranuleUR`
 * CMR XML Metadata updates the `OnlineResources` such that the CMR granule metadata has the correct URL based on the incoming `granule` object and Cumulus bucket configuration
 
+**Note** To disable updating the granule metadata's identifiers and granuleUr in this task for both ECHO10 and UMMG, set `updateGranuleIdentifiers` to `false` (boolean, not a string) in the task config schema (added as part of `CSD-91`). By default, this task sets `updateGranuleIdentifiers` to `true` for both ECHO10 and UMMG.
+
 ## Input/Output Schema
 
 ### Input

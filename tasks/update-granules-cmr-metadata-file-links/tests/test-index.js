@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const cloneDeep = require('lodash/cloneDeep');
+const xml2js = require('xml2js');
+const { promisify } = require('util');
 
 const {
   buildS3Uri,
@@ -21,9 +23,24 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
-const { isCMRFile } = require('@cumulus/cmrjs');
+const { isCMRFile, xmlParseOptions } = require('@cumulus/cmrjs');
 
 const { updateGranulesCmrMetadata, updateCmrFileInfo } = require('..');
+
+function getGranuleURValue(obj) {
+  const value = obj.GranuleUR ?? obj.Granule?.GranuleUR ?? '';
+  // Handle xml2js array wrapping (it converts values to arrays by default)
+  return Array.isArray(value) ? value[0] : value;
+}
+
+async function getCMRFileBodyContent(cmrFile) {
+  const payloadResponse = await getObject(s3(), { Bucket: cmrFile.bucket, Key: cmrFile.key });
+  const payloadContents = await getObjectStreamContents(payloadResponse.Body);
+  if (cmrFile.key.endsWith('.xml')) {
+    return await promisify(xml2js.parseString)(payloadContents, xmlParseOptions);
+  }
+  return JSON.parse(payloadContents);
+}
 
 function cmrReadStream(file) {
   return file.endsWith('.cmr.xml') ? fs.createReadStream('tests/data/meta.xml') : fs.createReadStream('tests/data/ummg-meta.json');
@@ -299,4 +316,114 @@ test('updateCmrFileInfo - throws error when CMR file not found', async (t) => {
   await t.throwsAsync(() => updateCmrFileInfo(cmrFiles, granulesByGranuleId), {
     message: 'CMR file not found for granule with ID granule1',
   });
+});
+
+test.serial('GranuleUr and Identifiers do not get updated when config variable to updateGranuleIdentifier flag is false', async (t) => {
+  const newPayload = buildPayload(t);
+
+  newPayload.input.granules.forEach((granule) => {
+    const newFile = {
+      bucket: t.context.publicBucket,
+      key: 'some/prefix/some_filename.json',
+      type: 'data',
+    };
+    granule.files.push(newFile);
+  });
+  newPayload.config.updateGranuleIdentifiers = false;
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  const preUpdateCmrFiles = [];
+  newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if (isCMRFile(file)) {
+        file.granuleId = granule.granuleId;
+        preUpdateCmrFiles.push(file);
+      }
+    });
+  });
+
+  const preUpdateBodyContent = [];
+  await Promise.all(preUpdateCmrFiles.map(async (cmrFile) => {
+    preUpdateBodyContent.push(await getCMRFileBodyContent(cmrFile));
+  }));
+
+  await updateGranulesCmrMetadata(newPayload);
+  const cmrFiles = [];
+  newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if (isCMRFile(file)) {
+        file.granuleId = granule.granuleId;
+        cmrFiles.push(file);
+      }
+    });
+  });
+
+  const updatedBodyContent = [];
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    updatedBodyContent.push(await getCMRFileBodyContent(cmrFile));
+  }));
+
+  // sort to avoid test assertion order issues
+  preUpdateBodyContent.sort((a, b) => getGranuleURValue(a).localeCompare(getGranuleURValue(b)));
+  updatedBodyContent.sort((a, b) => getGranuleURValue(a).localeCompare(getGranuleURValue(b)));
+  t.is(updatedBodyContent[0].GranuleUR, preUpdateBodyContent[0].GranuleUR);
+  t.is(updatedBodyContent[1].GranuleUR, preUpdateBodyContent[1].GranuleUR);
+  t.deepEqual(updatedBodyContent[2].Granule.GranuleUR,
+    updatedBodyContent[2].Granule.GranuleUR);
+  t.deepEqual(updatedBodyContent[0].DataGranule, preUpdateBodyContent[0].DataGranule);
+  t.deepEqual(updatedBodyContent[1].DataGranule, preUpdateBodyContent[1].DataGranule);
+  t.deepEqual(updatedBodyContent[2].Granule.DataGranule,
+    updatedBodyContent[2].Granule.DataGranule);
+});
+
+test.serial('GranuleUr and Identifiers get updated when config variable to updateGranuleIdentifier flag is true', async (t) => {
+  const newPayload = buildPayload(t);
+  newPayload.input.granules.sort((a, b) => a.granuleId.localeCompare(b.granuleId));
+  newPayload.input.granules.forEach((granule) => {
+    const newFile = {
+      bucket: t.context.publicBucket,
+      key: 'some/prefix/some_filename.json',
+      type: 'data',
+    };
+    granule.files.push(newFile);
+  });
+  newPayload.config.updateGranuleIdentifiers = true;
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  await updateGranulesCmrMetadata(newPayload);
+
+  const cmrFiles = [];
+  newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if (isCMRFile(file)) {
+        cmrFiles.push(file);
+      }
+    });
+  });
+
+  const updatedBodyContent = [];
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
+    updatedBodyContent.push(await getCMRFileBodyContent(cmrFile));
+  }));
+
+  updatedBodyContent.sort((a, b) => getGranuleURValue(a).localeCompare(getGranuleURValue(b)));
+  t.is(updatedBodyContent[0].GranuleUR, newPayload.input.granules[0].granuleId);
+  t.is(updatedBodyContent[1].GranuleUR, newPayload.input.granules[1].granuleId);
+  t.is(updatedBodyContent[2].Granule.GranuleUR[0],
+    newPayload.input.granules[2].granuleId);
+  t.is(updatedBodyContent[0].DataGranule.Identifiers[0].Identifier,
+    newPayload.input.granules[0].granuleId);
+  t.is(updatedBodyContent[1].DataGranule.Identifiers[0].Identifier,
+    newPayload.input.granules[1].granuleId);
+  t.is(updatedBodyContent[2].Granule.DataGranule[0].ProducerGranuleId[0],
+    newPayload.input.granules[2].granuleId);
 });
