@@ -1,15 +1,11 @@
-locals {
-  build_config = jsondecode(file("${path.module}/../build-config.json"))
-}
-
 resource "aws_lambda_function" "granule_invalidator_task" {
   function_name    = "${var.prefix}-granule-invalidator-task"
   filename         = "${path.module}/../dist/final/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../dist/final/lambda.zip")
   handler          = "main.lambda_handler"
   role             = var.role
-  runtime          = local.build_config.runtime
-  architectures    = [local.build_config.architecture]
+  runtime          = "python3.13"
+  architectures    = ["x86_64"]
   timeout          = var.timeout
   memory_size      = var.memory_size
 
