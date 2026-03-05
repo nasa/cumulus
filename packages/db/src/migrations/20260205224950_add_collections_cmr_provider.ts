@@ -20,5 +20,5 @@ export const down = async (knex: Knex): Promise<void> => {
 };
 
 exports.config = {
-  transaction: false
-}
+  transaction: false,
+};
