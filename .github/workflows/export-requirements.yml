@@ -39,15 +39,14 @@ jobs:
 
       - name: Commit updated requirements.txt files
         run: |
-          if git diff --quiet -- '**/requirements.txt'; then
-            echo "No requirements.txt changes to commit"
-            exit 0
-          fi
-
           # This should already be checked out, but depends on configuration of the checkout action
           git checkout ${{ github.event.pull_request.head.ref }}
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add '**/requirements.txt'
+          git add -A -- '**/requirements.txt'
+          if [ -z "$(git status -- '**/requirements.txt')" ]; then
+            echo "No staged requirements.txt changes to commit"
+            exit 0
+          fi
           git commit -m "Update requirements.txt from uv.lock changes"
           git push
