@@ -74,7 +74,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `@cumulus/db/search` module to support searching on nested JSON fields.
   - Updated the `@cumulus/db/translate` `translatePostgres*Record*ToApi*Record*` functions to
     correctly handle query results from both PostgreSQL and DuckDB.
-  - Replaced legacy querystring module with URLSearchParams.
 - **CUMULUS-4543**
   - Added supporting Terraform for the aws_api_proxy task
   - Added aws_api_proxy output to the Cumulus Terraform module
@@ -84,6 +83,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added integration testing for CnmResponse task.
   - Updated example workflows to include the exception message in the
   `WorkflowFailed` state.
+- **CUMULUS-4427**
+  - Added pdr-cleanup task into cumulus core from ASDC
 
 ### Changed
 
@@ -108,6 +109,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Applied necessary dependency and script adjustments across affected packages.
   - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
   - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
+  - Replaced legacy querystring module with URLSearchParams.
 
 ### Fixed
 
