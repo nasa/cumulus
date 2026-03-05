@@ -4331,6 +4331,15 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL 
     knexOrTransaction: knex,
   });
 
+  const { Messages: createMessages } = await sqs().receiveMessage({
+    QueueUrl,
+    WaitTimeSeconds: 10,
+  });
+  t.is(createMessages.length, 1);
+  const createMessageBody = JSON.parse(createMessages[0].Body);
+  const createPublishedMessage = JSON.parse(createMessageBody.Message);
+  t.is(createPublishedMessage.event, 'Create');
+
   await updateGranuleStatusToQueued({
     apiGranule: apiGranule,
     knex,
@@ -4350,17 +4359,16 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL 
   t.is(translatedPgGranule.execution, apiGranule.execution);
   t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
 
-  const { Messages } = await sqs().receiveMessage({
+  const { Messages: updateMessages } = await sqs().receiveMessage({
     QueueUrl,
-    MaxNumberOfMessages: 2,
     WaitTimeSeconds: 10,
   });
-  const snsMessageBody = JSON.parse(Messages[1].Body);
-  const publishedMessage = JSON.parse(snsMessageBody.Message);
+  t.is(updateMessages.length, 1);
+  const updateMessageBody = JSON.parse(updateMessages[0].Body);
+  const updatePublishedMessage = JSON.parse(updateMessageBody.Message);
 
-  t.is(Messages.length, 2);
-  t.deepEqual(publishedMessage.record, translatedPgGranule);
-  t.is(publishedMessage.event, 'Update');
+  t.deepEqual(updatePublishedMessage.record, translatedPgGranule);
+  t.is(updatePublishedMessage.event, 'Update');
 });
 
 test.serial('updateGranuleStatusToQueued() throws error if record does not exist in pg', async (t) => {
