@@ -57,7 +57,10 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         {
-          from: 'node_modules/xml-encryption/lib/templates',
+          from: path.join(
+            path.dirname(require.resolve('xml-encryption/package.json')),
+            'lib/templates'
+          ),
           to: 'app/templates'
         },
         {
