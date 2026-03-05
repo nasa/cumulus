@@ -2,6 +2,8 @@ name: Export requirements.txt from changed uv.lock files
 
 on:
   pull_request:
+    paths:
+      - '**/uv.lock'
 
 jobs:
   export-requirements:
@@ -46,5 +48,5 @@ jobs:
             echo "No staged requirements.txt changes to commit"
             exit 0
           fi
-          git commit -m "Update requirements.txt from uv.lock changes" || true
-          git push || true
+          git commit -m "Update requirements.txt from uv.lock changes"
+          git push
