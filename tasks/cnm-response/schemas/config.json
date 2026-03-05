@@ -3,13 +3,13 @@
   "description": "Describes the config used by the cnm-response task",
   "type": "object",
   "required": [
-    "cnm_s",
+    "cnm",
     "responseArns",
     "exception"
   ],
   "properties": {
-    "cnm_s": {
-      "description": "The input CNM to the workflow",
+    "cnm": {
+      "description": "The input CNM-S to the workflow",
       "oneOf": [{ "type": "object" }, { "type": "null" }]
     },
     "responseArns": {
