@@ -21,6 +21,7 @@ function determineIntegrationTestStackName(cb) {
     'Chris Durbin': 'cdd-ci',
     'Curtis Banh': 'cbanh-ci',
     dhudelson: 'dh-ci',
+    'dnorris-nasa': 'dnorris-ci',
     etcart: 'ecarton-ci',
     ecarton: 'ecarton-ci',
     eyen: 'eyen-ci',
