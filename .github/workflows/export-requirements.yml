@@ -2,8 +2,6 @@ name: Export requirements.txt from changed uv.lock files
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review]
-  workflow_dispatch:
 
 jobs:
   export-requirements:
