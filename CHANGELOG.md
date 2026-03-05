@@ -6,7 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-
 ## [v21.3.1] 2026-02-16
 
 ### Added
@@ -18,7 +17,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4514**
   - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
-
+- **CUMULUS-4562**
+  - Upgraded lerna to v9.
+  - Updated monorepo configuration and root package.json to align with Lerna v9.
+  - Removed prepare scripts from all package-level package.json files to prevent unintended lifecycle execution during install.
+  - Updated CI (Docker + Bamboo) to ensure compatibility with the new Lerna version.
+  - Applied necessary dependency and script adjustments across affected packages.
+  - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
+  - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
+  - Replaced legacy querystring module with URLSearchParams.
 ### Fixed
 
 - **CUMULUS-4566**
