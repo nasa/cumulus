@@ -47,8 +47,13 @@
     },
     "excludeDataGranule": {
       "type": "boolean",
-      "description": "Flag to set exclusion behavior of DataGranule metadata updates as part of this task. if True, will disable updates",
+      "description": "Flag to set exclusion behavior of DataGranule metadata updates as part of this task. If true, will disable updates",
       "default": false
+    },
+    "updateGranuleIdentifiers": {
+      "type": "boolean",
+      "description": "Flag to set exclusion behavior of Identifier and granuleUr metadata updates as part of this task. If false, will disable updates",
+      "default": true
     }
   }
 }
