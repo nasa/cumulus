@@ -240,6 +240,7 @@ which you can then query the Async Operations [API Endpoint](https://nasa.github
 #### Payload parameters
 
 The following optional parameters are used by this tool:
+
 | Variable      | Type   | Description                                                                                                                                                                                       | Default |
 |---------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
 | reportBucket  | string | Sets the bucket used for reporting. If this argument is used, a `reportPath` must be set to generate a report.                                                                                    |         |
