@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Migration Notes
+
 - **CUMULUS-4395 Core CnmResponse task lambda log group import**
   - The lambda function name and log group name for this task are
   `<prefix>-CnmResponse` which might conflict with the non-core version of
@@ -32,6 +33,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **CUMULUS-4107**
+  - Changed "_doc" type to "undefined" for ElasticSearch v8.x query parameter . The ES client will omit undefined values from the request. This doesn't touch the other callers.
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
     granule objects in the payload.
@@ -52,6 +55,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
 - **CUMULUS-4385**
   - Added supporting Terraform for the granule-invalidator task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
+  - Hard-coded values for architecture and python version which will later be dynamically referenced by a top-level build config.
 - **CUMULUS-4394**
   - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
 - **CUMULUS-4395**
@@ -75,6 +79,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added aws_api_proxy output to the Cumulus Terraform module
 - **CUMULUS-4544**
   - Added integration tests for the aws_api_proxy task
+- **CUMULUS-4400**
+  - Added integration testing for CnmResponse task.
+  - Updated example workflows to include the exception message in the
+  `WorkflowFailed` state.
+- **CUMULUS-4427**
+  - Added pdr-cleanup task into cumulus core from ASDC
 
 ### Changed
 
@@ -91,6 +101,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CSD-85**
   - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
     for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+- **CUMULUS-4562**
+  - Upgraded lerna to v9.
+  - Updated monorepo configuration and root package.json to align with Lerna v9.
+  - Removed prepare scripts from all package-level package.json files to prevent unintended lifecycle execution during install.
+  - Updated CI (Docker + Bamboo) to ensure compatibility with the new Lerna version.
+  - Applied necessary dependency and script adjustments across affected packages.
+  - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
+  - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
+  - Replaced legacy querystring module with URLSearchParams.
 
 ### Fixed
 
