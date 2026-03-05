@@ -46,5 +46,5 @@ jobs:
             echo "No staged requirements.txt changes to commit"
             exit 0
           fi
-          git commit -m "Update requirements.txt from uv.lock changes"
-          git push
+          git commit -m "Update requirements.txt from uv.lock changes" || true
+          git push || true
