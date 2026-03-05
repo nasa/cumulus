@@ -665,6 +665,7 @@ When configuring your ECS cluster consider:
 [^1]: To add another redirect URIs to your application. On Earthdata home page, select "My Applications". Scroll down to "Application Administration" and use the edit icon for your application. Then Manage -> Redirect URIs.
 [^2]: The API root can be found a number of ways. The easiest is to note it in the output of the app deployment step. But you can also find it from the `AWS console -> Amazon API Gateway -> APIs -> <prefix>-archive -> Dashboard`, and reading the URL at the top after "Invoke this API at"
 [^3]: Run `terraform init` if:
-      - This is the first time deploying the module
-      - You have added any additional child modules, including [Cumulus components](./components.md#available-cumulus-components)
-      - You have updated the `source` for any of the child modules
+
+    - This is the first time deploying the module
+    - You have added any additional child modules, including [Cumulus components](./components.md#available-cumulus-components)
+    - You have updated the `source` for any of the child modules

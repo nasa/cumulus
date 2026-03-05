@@ -1,7 +1,7 @@
 'use strict';
 
 //@ts-check
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const get = require('lodash/get');
 
 const { sfn } = require('@cumulus/aws-client/services');
