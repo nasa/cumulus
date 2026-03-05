@@ -13,7 +13,7 @@ set -ex
 # Extract cache of compiled TS files
 ./bamboo/extract-ts-build-cache.sh
 
-(npm run ci:bootstrap-no-scripts || true) && npm run ci:bootstrap-no-scripts
+npm run ci:bootstrap-no-scripts
 npm run lint
 
 if [[ $SKIP_CHANGELOG != "true" && ! $(git --no-pager diff --name-only origin/$PR_BRANCH:CHANGELOG.md -- CHANGELOG.md) =~ ^CHANGELOG.md$ ]]; then
