@@ -18,3 +18,7 @@ export const down = async (knex: Knex): Promise<void> => {
   }
   await knex.raw('DROP INDEX IF EXISTS collection_cmr_provider_index');
 };
+
+exports.config = {
+  transaction: false
+}
