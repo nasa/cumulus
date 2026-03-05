@@ -295,11 +295,10 @@ wheels = [
 
 [[package]]
 name = "cumulus-api"
-version = "3.0.0"
-source = { git = "https://github.com/ghrcdaac/cumulus-api?tag=v3.0.4#a2d8dc1eafc1dc8eab46763b27f6aa96965e3620" }
+version = "3.2.0"
+source = { git = "https://github.com/nasa/Cumulus-API-Python?tag=v3.2.1#9880988ba1a9bc6a671844a83f919f402cb755a3" }
 dependencies = [
     { name = "boto3" },
-    { name = "certifi" },
     { name = "cryptography" },
     { name = "pyopenssl" },
     { name = "requests" },
@@ -348,7 +347,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cumulus-api", git = "https://github.com/ghrcdaac/cumulus-api?tag=v3.0.4" },
+    { name = "cumulus-api", git = "https://github.com/nasa/Cumulus-API-Python?tag=v3.2.1" },
     { name = "cumulus-message-adapter", specifier = ">=2.0.5" },
     { name = "cumulus-message-adapter-python", specifier = ">=2.4.0" },
 ]
@@ -407,6 +406,9 @@ name = "jsonpath-ng"
 version = "1.8.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/32/58/250751940d75c8019659e15482d548a4aa3b6ce122c515102a4bfdac50e3/jsonpath_ng-1.8.0.tar.gz", hash = "sha256:54252968134b5e549ea5b872f1df1168bd7defe1a52fed5a358c194e1943ddc3", size = 74513, upload-time = "2026-02-24T14:42:06.182Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/03/99/33c7d78a3fb70d545fd5411ac67a651c81602cc09c9cf0df383733f068c5/jsonpath_ng-1.8.0-py3-none-any.whl", hash = "sha256:b8dde192f8af58d646fc031fac9c99fe4d00326afc4148f1f043c601a8cfe138", size = 67844, upload-time = "2026-02-28T00:53:19.637Z" },
+]
 
 [[package]]
 name = "jsonschema"

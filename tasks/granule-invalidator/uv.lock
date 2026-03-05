@@ -285,11 +285,10 @@ wheels = [
 
 [[package]]
 name = "cumulus-api"
-version = "3.0.0"
-source = { git = "https://github.com/ghrcdaac/cumulus-api?tag=v3.0.4#a2d8dc1eafc1dc8eab46763b27f6aa96965e3620" }
+version = "3.2.0"
+source = { git = "https://github.com/nasa/Cumulus-API-Python?tag=v3.2.1#9880988ba1a9bc6a671844a83f919f402cb755a3" }
 dependencies = [
     { name = "boto3" },
-    { name = "certifi" },
     { name = "cryptography" },
     { name = "pyopenssl" },
     { name = "requests" },
@@ -337,7 +336,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cumulus-api", git = "https://github.com/ghrcdaac/cumulus-api?tag=v3.0.4" },
+    { name = "cumulus-api", git = "https://github.com/nasa/Cumulus-API-Python?tag=v3.2.1" },
     { name = "cumulus-message-adapter", specifier = ">=2.0.5" },
     { name = "cumulus-message-adapter-python", specifier = ">=2.4.0" },
 ]
