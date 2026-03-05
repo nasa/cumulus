@@ -1017,7 +1017,10 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules that do not
     const matchingGranule = granules.find((granule) =>
       granule.newPgGranule.granule_id === callArgs[0].apiGranule.granuleId);
 
-    const pgGranule = await granulePgModel.get(t.context.knex, { granule_id: matchingGranule.newPgGranule.granule_id });
+    const pgGranule = await granulePgModel.get(
+      t.context.knex,
+      { granule_id: matchingGranule.newPgGranule.granule_id }
+    );
     const translatedGranule = await translatePostgresGranuleToApiGranule({
       granulePgRecord: pgGranule,
       knexOrTransaction: t.context.knex,
