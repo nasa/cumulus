@@ -711,10 +711,12 @@ test.serial('POST /executions/search-by-granules returns 400 when no granules or
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(400,
-      /One of granules, query, granuleInventoryReportName or s3GranuleIdInputFile is required/);
+      // eslint-disable-next-line max-len
+      /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
 
   t.regex(response.body.message,
-    /One of granules, query, granuleInventoryReportName or s3GranuleIdInputFile is required/);
+    // eslint-disable-next-line max-len
+    /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
 });
 
 test.serial('POST /executions/search-by-granules returns 400 when granules is not an array', async (t) => {
