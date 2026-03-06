@@ -49,6 +49,14 @@ output "files_to_granules_task" {
   }
 }
 
+output "get_cnm_task" {
+  value = {
+    task_arn           = module.get_cnm.cumulus_task_lambda.arn
+    task_log_group     = module.get_cnm.cumulus_task_log_group_name
+    last_modified_date = module.get_cnm.cumulus_task_lambda.last_modified
+  }
+}
+
 output "granule_invalidator_task" {
   value = {
     task_arn           = module.granule_invalidator_task.lambda_function.arn

@@ -1,7 +1,7 @@
 [project]
-name = "granule-invalidator"
+name = "get-cnm"
 version = "0.1.0"
-description = "Identifies granules that fulfill specific criteria"
+description = "Retrieves the originating CNM message for a specified granule"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -11,8 +11,8 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = "https://github.com/nasa/cumulus/blob/master/tasks/granule-invalidator"
-documentation = "https://github.com/nasa/cumulus/blob/master/tasks/granule-invalidator/README.md"
+homepage = "https://github.com/nasa/cumulus/blob/master/tasks/get-cnm"
+documentation = "https://github.com/nasa/cumulus/blob/master/tasks/get-cnm/README.md"
 repository = "https://github.com/nasa/cumulus.git"
 
 [dependency-groups]
@@ -21,6 +21,7 @@ dev = [
     "ruff~=0.14.0",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
+    "moto~=5.1",
     "pydantic>=2.10.4",
 ]
 

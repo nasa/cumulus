@@ -1,0 +1,14 @@
+{
+  "collection": {
+    "name": "MOD09GQ",
+    "version": "006"
+  },
+  "name": "MOD09GQ_kinesisHelloWorldRule",
+  "provider": "PODAAC_SWOT",
+  "rule": {
+    "type": "kinesis",
+    "value": "arn:aws:kinesis:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:stream/{{streamName}}"
+  },
+  "state": "ENABLED",
+  "workflow": "HelloWorldWorkflow"
+}
