@@ -13,7 +13,7 @@ from run_cumulus_task import run_cumulus_task
 LOGGER = CumulusLogger("cma_to_cnm")
 
 
-def task(event: dict[str, Any], context: object) -> dict[str, Any]:
+def lambda_adapter(event: dict[str, Any], context: object) -> dict[str, Any]:
     """Entry point of the lambda
     Args:
         event: Passed through from {handler}
@@ -27,8 +27,6 @@ def task(event: dict[str, Any], context: object) -> dict[str, Any]:
     config = event["config"]
 
     # Config Content
-    meta_identifier = config["identifier"]
-    LOGGER.debug("meta_identifier: {}", meta_identifier)
     meta_provider = config.get("provider")
     meta_collection = config.get("collection")
     meta_cumulus = config.get("cumulus_meta", {})
@@ -43,7 +41,7 @@ def task(event: dict[str, Any], context: object) -> dict[str, Any]:
     uri = f"{meta_provider['protocol']}://{meta_provider['host']}/"
     try:
         # json dict to granule pydantic model
-        granule_model = models_cma.DiscoverGranulesOutput.model_validate(input)
+        granule_model = models_cma.CMAToCNMInput.model_validate(input)
         granules: List[models_cma.Granule] = granule_model.granules
         cnm_json_dicts: List[dict] = []
         for granule in granules:
@@ -84,13 +82,16 @@ def task(event: dict[str, Any], context: object) -> dict[str, Any]:
                 filegroups=None,
             )
             now_aware = cast(pydantic.AwareDatetime, datetime.now(timezone.utc))
+            identifier = granule.identifier
+            if identifier:
+                LOGGER.debug(f"Using granule identifier from input granule: {identifier}")
             msg = models_cnm.CloudNotificationMessageCnm121(
                 version=models_cnm.Version.field_1_6_0,
                 provider=cnm_provider,
                 receivedTime=now_aware,
                 processCompleteTime=now_aware,
                 submissionTime=now_aware,
-                identifier=meta_identifier if meta_identifier is not None else str(uuid.uuid4()),
+                identifier=identifier if identifier is not None else str(uuid.uuid4()),
                 collection=cnm_dataset,
                 response=None,
                 product=cnm_product,

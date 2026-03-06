@@ -1,6 +1,6 @@
 output "lambda_function" {
   description = "The task lambda function"
-  value       = aws_lambda_function.cma_to_cnm
+  value       = module.cma_to_cnm aws_lambda_function.cma_to_cnm
 }
 
 output "log_group" {

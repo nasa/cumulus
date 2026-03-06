@@ -1,6 +1,6 @@
 import json
 
-from cma_to_cnm.cma_to_cnm import task
+from cma_to_cnm.cma_to_cnm import lambda_adapter
 
 
 class TestCmaToCnm:
@@ -36,7 +36,7 @@ class TestCmaToCnm:
         event: dict = {"config": config}
         intp_granules = data.get("payload").get("granules", [])
         event["input"] = {"granules": intp_granules}
-        returned_dict = task(event, {})
+        returned_dict = lambda_adapter(event, {})
         cnm_messages = returned_dict["cnm_list"]
         assert len(cnm_messages) == 3
         # 1st granule
@@ -168,11 +168,12 @@ class TestCmaToCnm:
         event: dict = {"config": config}
         intp_granules = data.get("payload").get("granules", [])
         event["input"] = {"granules": intp_granules}
-        returned_dict = task(event, {})
+        returned_dict = lambda_adapter(event, {})
         cnm_messages = returned_dict["cnm_list"]
         assert len(cnm_messages) == 3
         # 1st granule
         cnm_message = cnm_messages[0]
+        assert cnm_message["identifier"] == "1111-2222-3333-4444"
         assert cnm_message["provider"] == "podaac-test-sftp"
         assert cnm_message["version"] == "1.6.0"
         assert cnm_message["collection"] == "VIIRS_NPP-NAVO-L2P-v3.0"
@@ -201,6 +202,7 @@ class TestCmaToCnm:
         assert file["size"] == 18167706.0
         # 2nd granule
         cnm_message = cnm_messages[1]
+        assert cnm_message["identifier"] == "2222-2222-3333-4444"
         assert cnm_message["provider"] == "podaac-test-sftp"
         assert cnm_message["version"] == "1.6.0"
         assert cnm_message["collection"] == "VIIRS_NPP-NAVO-L2P-v3.0"

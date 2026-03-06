@@ -25,6 +25,7 @@
     "payload": {
         "granules": [
             {
+                "identifier": "1111-2222-3333-4444",
                 "granuleId": "20220111135009-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0",
                 "dataType": "VIIRS_NPP-NAVO-L2P-v3.0",
                 "version": "3.0",
@@ -50,6 +51,7 @@
                 ]
             },
             {
+                "identifier": "2222-2222-3333-4444",
                 "granuleId": "20220111135133-NAVO-L2P_GHRSST-SST1m-VIIRS_NPP-v02.0-fv03.0",
                 "dataType": "VIIRS_NPP-NAVO-L2P-v3.0",
                 "version": "3.0",

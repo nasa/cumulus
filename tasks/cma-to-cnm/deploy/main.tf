@@ -1,6 +1,6 @@
 resource "aws_lambda_function" "cma_to_cnm" {
   filename         = "${path.module}/../dist/final/lambda.zip"
-  function_name    = "${var.prefix}-CMAToCNM"
+  function_name    = "${var.prefix}-CmaToCnm"
   filebase64sha256 ="${path.module}/../dist/final/lambda.zip")
   handler          = "cma_to_cnm.cma_to_cnm.handler"
   role             = var.lambda_role
