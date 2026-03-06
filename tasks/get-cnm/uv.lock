@@ -350,6 +350,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/4a/92/8e97cc640181f72eb7b2fd6c0524b9c28720c5c06da264ed8e8fa0704ecf/cumulus_message_adapter_python-2.4.0.tar.gz", hash = "sha256:d53f8d5d01582ef5960a3c24846de5ea354abf1273f01002825c99f6b050e707", size = 22755, upload-time = "2025-09-15T18:53:51.024Z" }
 
 [[package]]
+name = "freezegun"
+version = "1.5.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "python-dateutil" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/95/dd/23e2f4e357f8fd3bdff613c1fe4466d21bfb00a6177f238079b17f7b1c84/freezegun-1.5.5.tar.gz", hash = "sha256:ac7742a6cc6c25a2c35e9292dfd554b897b517d2dec26891a2e8debf205cb94a", size = 35914, upload-time = "2025-08-09T10:39:08.338Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5e/2e/b41d8a1a917d6581fc27a35d05561037b048e47df50f27f8ac9c7e27a710/freezegun-1.5.5-py3-none-any.whl", hash = "sha256:cd557f4a75cf074e84bc374249b9dd491eaeacd61376b9eb3c423282211619d2", size = 19266, upload-time = "2025-08-09T10:39:06.636Z" },
+]
+
+[[package]]
 name = "get-cnm"
 version = "21.3.2"
 source = { virtual = "." }
@@ -361,12 +373,8 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "moto" },
-    { name = "mypy" },
     { name = "pydantic" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
+    { name = "python-common-dev-dependencies" },
 ]
 
 [package.metadata]
@@ -378,12 +386,8 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "moto", specifier = "~=5.1" },
-    { name = "mypy", specifier = ">=1.0.0" },
     { name = "pydantic", specifier = ">=2.10.4" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "ruff", specifier = "~=0.14.0" },
+    { name = "python-common-dev-dependencies", directory = "../../packages/python-common-dev-dependencies" },
 ]
 
 [[package]]
@@ -819,6 +823,43 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5e/f7/c933acc76f5208b3b00089573cf6a2bc26dc80a8aece8f52bb7d6b1855ca/pytest_cov-7.0.0.tar.gz", hash = "sha256:33c97eda2e049a0c5298e91f519302a1334c26ac65c1a483d6206fd458361af1", size = 54328, upload-time = "2025-09-09T10:57:02.113Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ee/49/1377b49de7d0c1ce41292161ea0f721913fa8722c19fb9c1e3aa0367eecb/pytest_cov-7.0.0-py3-none-any.whl", hash = "sha256:3b8e9558b16cc1479da72058bdecf8073661c7f57f7d3c5f22a1c23507f2d861", size = 22424, upload-time = "2025-09-09T10:57:00.695Z" },
+]
+
+[[package]]
+name = "pytest-mock"
+version = "3.15.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/68/14/eb014d26be205d38ad5ad20d9a80f7d201472e08167f0bb4361e251084a9/pytest_mock-3.15.1.tar.gz", hash = "sha256:1849a238f6f396da19762269de72cb1814ab44416fa73a8686deac10b0d87a0f", size = 34036, upload-time = "2025-09-16T16:37:27.081Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl", hash = "sha256:0a25e2eb88fe5168d535041d09a4529a188176ae608a6d249ee65abc0949630d", size = 10095, upload-time = "2025-09-16T16:37:25.734Z" },
+]
+
+[[package]]
+name = "python-common-dev-dependencies"
+version = "0.1.0"
+source = { directory = "../../packages/python-common-dev-dependencies" }
+dependencies = [
+    { name = "freezegun" },
+    { name = "moto" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "freezegun", specifier = "~=1.5" },
+    { name = "moto", specifier = "~=5.1" },
+    { name = "mypy", specifier = "~=1.19" },
+    { name = "pytest", specifier = "~=9.0" },
+    { name = "pytest-cov", specifier = "~=7.0" },
+    { name = "pytest-mock", specifier = "~=3.15" },
+    { name = "ruff", specifier = "~=0.14.0" },
 ]
 
 [[package]]

@@ -16,12 +16,7 @@ repository = "https://github.com/nasa/cumulus.git"
 
 [dependency-groups]
 dev = [
-    "mypy>=1.0.0",
-    "ruff~=0.14.0",
-    "pytest>=9.0.2",
-    "pytest-cov>=7.0.0",
-    "moto~=5.1",
-    "pydantic>=2.10.4",
+    "python-common-dev-dependencies",
 ]
 
 [tool.pytest.ini_options]
@@ -30,3 +25,6 @@ pythonpath = ["src"]
 [project.scripts]
 generate-config-schema = "aws_api_proxy.schemas.config_schema:main"
 generate-output-schema = "aws_api_proxy.schemas.output_schema:main"
+
+[tool.uv.sources]
+python-common-dev-dependencies = { path = "../../packages/python-common-dev-dependencies" }
