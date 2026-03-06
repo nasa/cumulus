@@ -15,7 +15,7 @@ module "cnm_workflow" {
     "${path.module}/cnm_workflow.asl.json",
     {
       add_unique_granule_id_arn: module.cumulus.add_unique_granule_id_task.task_arn,
-      cnm_to_cma_task_arn: aws_lambda_function.cnm_to_cma_task.arn,
+      cnm_to_cma_task_arn: module.cumulus.cnm_to_cma_task.task_arn,
       cnm_response_task_arn: module.cumulus.cnm_response_task.task_arn,
       fake_processing_task_arn: module.cumulus.fake_processing_task.task_arn,
       files_to_granules_task_arn: module.cumulus.files_to_granules_task.task_arn,

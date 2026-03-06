@@ -1,4 +1,4 @@
-module "granule_invalidator_task" {
+module "cnm_to_cma_task" {
   source                     = "../../tasks/cnm-to-cma/deploy"
   prefix                     = var.prefix
   role                       = var.lambda_processing_role_arn
