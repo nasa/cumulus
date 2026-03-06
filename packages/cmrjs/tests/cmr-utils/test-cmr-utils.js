@@ -591,7 +591,7 @@ test.serial('UpdateEcho10XMLMetadata maintains ECHO10 DataGranule element order'
   t.is(metadataObject.Granule.DataGranule.get('ProducerGranuleId'), 'NEW_PRODUCER_ID');
 });
 
-test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
+test.serial('updateUMMGMetadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
   // Yes, ETag values always include enclosing double-quotes

@@ -372,12 +372,14 @@ test.serial('GranuleUr and Identifiers do not get updated when config variable t
   updatedBodyContent.sort((a, b) => getGranuleURValue(a).localeCompare(getGranuleURValue(b)));
   t.is(updatedBodyContent[0].GranuleUR, preUpdateBodyContent[0].GranuleUR);
   t.is(updatedBodyContent[1].GranuleUR, preUpdateBodyContent[1].GranuleUR);
+  console.log('preUpdateBodyContent[2].Granule.GranuleUR:', preUpdateBodyContent[2].Granule.GranuleUR);
+  console.log('updatedBodyContent[2].Granule.GranuleUR:', updatedBodyContent[2].Granule.GranuleUR);
   t.deepEqual(updatedBodyContent[2].Granule.GranuleUR,
-    updatedBodyContent[2].Granule.GranuleUR);
+    preUpdateBodyContent[2].Granule.GranuleUR);
   t.deepEqual(updatedBodyContent[0].DataGranule, preUpdateBodyContent[0].DataGranule);
   t.deepEqual(updatedBodyContent[1].DataGranule, preUpdateBodyContent[1].DataGranule);
   t.deepEqual(updatedBodyContent[2].Granule.DataGranule,
-    updatedBodyContent[2].Granule.DataGranule);
+    preUpdateBodyContent[2].Granule.DataGranule);
 });
 
 test.serial('GranuleUr and Identifiers get updated when config variable to updateGranuleIdentifier flag is true', async (t) => {
