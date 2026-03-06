@@ -18,15 +18,12 @@
   "scripts": {
     "build": "rm -rf dist && mkdir dist && npm run generate-task-schemas && cp -R schemas dist/",
     "clean": "rm -rf dist && rm -rf .venv && mkdir dist",
-    "generate-task-schemas": "npx generate-task-schemas . files",
+    "generate-task-schemas": "uv run generate-task-schemas ./schemas",
     "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src/cnm_to_cma",
     "package": "npm run clean && ../../bin/package_uv.sh 3.12 ${PWD}",
     "update-python-version": "uv version --",
     "test": "uv run pytest -q"
   },
   "author": "Cumulus Author : Cumulus Coreification Team",
-  "license": "Apache-2.0",
-  "devDependencies": {
-    "@cumulus/schemas": "21.3.2"
-  }
+  "license": "Apache-2.0"
 }

@@ -5,7 +5,6 @@ This file provides the Lambda handler for the get_cnm task.
 
 import logging
 import os
-from pathlib import Path
 from typing import Any
 
 from cumulus_logger import CumulusLogger
@@ -13,14 +12,6 @@ from get_cnm.get_cnm import lambda_adapter
 from run_cumulus_task import run_cumulus_task
 
 LOGGER = CumulusLogger(__name__, level=int(os.environ.get("LOGLEVEL", logging.DEBUG)))
-SCHEMAS = {
-    "input": str(
-        Path(__file__).resolve().parent / "get_cnm" / "schemas" / "input.json"
-    ),
-    "output": str(
-        Path(__file__).resolve().parent / "get_cnm" / "schemas" / "output.json"
-    ),
-}
 
 
 def lambda_handler(event: dict, context: Any) -> Any:
@@ -38,5 +29,5 @@ def lambda_handler(event: dict, context: Any) -> Any:
 
     """
     LOGGER.setMetadata(event, context)
-    cumulus_task_return = run_cumulus_task(lambda_adapter, event, context, SCHEMAS)
+    cumulus_task_return = run_cumulus_task(lambda_adapter, event, context)
     return cumulus_task_return

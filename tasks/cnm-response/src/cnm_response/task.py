@@ -76,7 +76,16 @@ def lambda_adapter(event: dict, context) -> dict:
 
     return {
         "cnm": cnm_r,
-        "granules": [granule] if granule else [],
+        "granules": [
+            {
+                **granule,
+                "files": [
+                    _strip_extra_file_keys(file) for file in granule.get("files", ())
+                ],
+            }
+        ]
+        if granule
+        else [],
     }
 
 
@@ -118,6 +127,25 @@ def _get_message_attributes(cnm_r: dict) -> MessageAttributesDict:
         attributes["trace"] = val
 
     return attributes
+
+
+def _strip_extra_file_keys(file: dict) -> dict:
+    allowed_keys = (
+        "bucket",
+        "checksum",
+        "checksumType",
+        "fileName",
+        "key",
+        "size",
+        "source",
+        "type",
+    )
+    return {
+        # ruff hint
+        key: val
+        for key in allowed_keys
+        if (val := file.get(key)) is not None
+    }
 
 
 def lambda_handler(event: dict, context):

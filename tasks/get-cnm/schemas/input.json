@@ -1,0 +1,95 @@
+{
+  "$defs": {
+    "File": {
+      "additionalProperties": false,
+      "description": "CMA granule file model.",
+      "properties": {
+        "bucket": {
+          "description": "Bucket where file is archived in S3",
+          "title": "Bucket",
+          "type": "string"
+        },
+        "checksum": {
+          "description": "Checksum value for file",
+          "title": "Checksum",
+          "type": "string"
+        },
+        "checksumType": {
+          "description": "Type of checksum (e.g. md5, sha256, etc)",
+          "title": "ChecksumType",
+          "type": "string"
+        },
+        "fileName": {
+          "description": "Name of file (e.g. file.txt)",
+          "title": "FileName",
+          "type": "string"
+        },
+        "key": {
+          "description": "S3 Key for archived file",
+          "title": "Key",
+          "type": "string"
+        },
+        "size": {
+          "description": "Size of file (in bytes)",
+          "title": "Size",
+          "type": "number"
+        },
+        "source": {
+          "description": "Source URI of the file from origin system (e.g. S3, FTP, HTTP)",
+          "title": "Source",
+          "type": "string"
+        },
+        "type": {
+          "description": "Type of file (e.g. data, metadata, browse)",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "bucket",
+        "key"
+      ],
+      "title": "File",
+      "type": "object"
+    },
+    "Granule": {
+      "description": "CMA granule model.",
+      "properties": {
+        "granuleId": {
+          "title": "GranuleId",
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/File"
+          },
+          "title": "Files",
+          "type": "array"
+        }
+      },
+      "required": [
+        "granuleId",
+        "files"
+      ],
+      "title": "Granule",
+      "type": "object"
+    }
+  },
+  "description": "Describes the input expected by the get-cnm task, which is the standard\nCumulus message format for granules.",
+  "properties": {
+    "granules": {
+      "description": "Array of all granules",
+      "items": {
+        "$ref": "#/$defs/Granule"
+      },
+      "minItems": 1,
+      "title": "Granules",
+      "type": "array"
+    }
+  },
+  "required": [
+    "granules"
+  ],
+  "title": "GetCnmInput",
+  "type": "object"
+}

@@ -9,14 +9,13 @@ readme = "README.md"
 requires-python = "~=3.12.0"
 
 dependencies = [
-    "pydantic (>=2.12.5,<3.0.0)",
-    "cumulus-message-adapter-python==2.4.0",
-    "pydantic-core (>=2.41.5,<3.0.0)"
+    "cumulus-message-adapter-python~=2.4",
 ]
 
 [dependency-groups]
 dev = [
     "python-common-dev-dependencies",
+    "python-schemas",
 ]
 
 [tool.pytest]
@@ -32,3 +31,4 @@ testpaths = [
 
 [tool.uv.sources]
 python-common-dev-dependencies = { path = "../../packages/python-common-dev-dependencies" }
+python-schemas = { path = "../../packages/python-schemas" }

@@ -331,11 +331,6 @@ def test_lambda_handler_sns_and_kinesis(
 
     assert json.loads(body["Message"]) == expected_cnm_r
 
-    print(
-        "getting messages from",
-        response_kinesis_stream.arn,
-        response_kinesis_stream.name,
-    )
     shard_iterator = mock_kinesis.get_shard_iterator(
         StreamName=response_kinesis_stream.name,
         ShardId=response_kinesis_stream.shards[0]["ShardId"],
@@ -347,6 +342,137 @@ def test_lambda_handler_sns_and_kinesis(
     )["Records"]
 
     assert json.load(io.BytesIO(records[0]["Data"])) == expected_cnm_r
+
+
+@freeze_time("2026-01-01 20:50:35Z")
+def test_lambda_handler_sync_granule_error(
+    mock_sqs,
+    cnm_s,
+    response_sns_topic,
+    response_sqs_queue,
+):
+    # Sync granule has a non-standard granule input format. If the sync granule
+    # step fails, this input can be routed to the cnm response task
+    sync_granule_input_granule = {
+        "granuleId": "test-granule_id",
+        "version": "000",
+        "dataType": "test-data-type",
+        "files": [
+            {
+                "name": "L2_HR_PIXC_product_0001-of-4154.h5",
+                "path": "somepath",
+                "url_path": "s3://test-bucket/somepath/key-does-not-exist",
+                "bucket": "test-bucket",
+                "source_bucket": "test-bucket",
+                "size": 51,
+                "checksumType": "md5",
+                "checksum": "873baafd6d3a411561702e29576e4ac4",
+                "type": "data",
+                "fileName": "L2_HR_PIXC_product_0001-of-4154.h5",
+                "key": "somepath/L2_HR_PIXC_product_0001-of-4154.h5",
+            },
+        ],
+        "producerGranuleId": "test-granule_id",
+    }
+
+    output = lambda_handler(
+        {
+            "cma": {
+                "event": {"cnm": cnm_s},
+                "task_config": {
+                    "cnm": "{$.cnm}",
+                    "responseArns": [response_sns_topic.arn],
+                    "exception": "None",
+                },
+                "payload": {
+                    "granules": [sync_granule_input_granule],
+                },
+            },
+        },
+        None,
+    )
+
+    expected_cnm_r = {
+        "product": {
+            "files": [
+                {
+                    "checksumType": "md5",
+                    "checksum": "873baafd6d3a411561702e29576e4ac4",
+                    "uri": "s3://test-bucket/somepath/L2_HR_PIXC_product_0001-of-4154.h5",
+                    "name": "L2_HR_PIXC_product_0001-of-4154.h5",
+                    "type": "data",
+                    "size": 51,
+                },
+            ],
+            "name": "test-granule_id",
+            "dataVersion": "1.0",
+        },
+        "receivedTime": "2020-04-08T16:00:16.958Z",
+        "collection": "MERGED_TP_J1_OSTM_OST_CYCLES_V42",
+        "version": "1.1",
+        "provider": "NASA/JPL/PO.DAAC",
+        "submissionTime": "2020-04-08 15:59:15.186779",
+        "identifier": "c1f1be11-9cbd-4620-ad07-9a7f2afb8349",
+        "response": {
+            "status": "SUCCESS",
+        },
+        "processCompleteTime": "2026-01-01 20:50:35Z",
+    }
+
+    assert output == {
+        "cnm": cnm_s,
+        "exception": "None",
+        "payload": {
+            "cnm": expected_cnm_r,
+            "granules": [
+                {
+                    "dataType": "test-data-type",
+                    "files": [
+                        {
+                            "bucket": "test-bucket",
+                            "checksum": "873baafd6d3a411561702e29576e4ac4",
+                            "checksumType": "md5",
+                            "fileName": "L2_HR_PIXC_product_0001-of-4154.h5",
+                            "key": "somepath/L2_HR_PIXC_product_0001-of-4154.h5",
+                            "size": 51,
+                            "type": "data",
+                        },
+                    ],
+                    "granuleId": "test-granule_id",
+                    "producerGranuleId": "test-granule_id",
+                    "version": "000",
+                },
+            ],
+        },
+        "task_config": {
+            "cnm": "{$.cnm}",
+            "responseArns": [
+                response_sns_topic.arn,
+            ],
+            "exception": "None",
+        },
+    }
+
+    response = mock_sqs.receive_message(QueueUrl=response_sqs_queue.url)
+
+    message = response["Messages"][0]
+    body = json.loads(message["Body"])
+
+    assert json.loads(body["Message"]) == expected_cnm_r
+    assert body["MessageAttributes"] == {
+        "CNM_RESPONSE_STATUS": {
+            "Type": "String",
+            "Value": "SUCCESS",
+        },
+        "COLLECTION": {
+            "Type": "String",
+            "Value": "MERGED_TP_J1_OSTM_OST_CYCLES_V42",
+        },
+        "DATA_VERSION": {
+            "Type": "String",
+            "Value": "1.0",
+        },
+    }
 
 
 @freeze_time("2026-01-01 20:50:35Z")

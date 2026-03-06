@@ -1,77 +1,462 @@
 {
-  "title": "CnmResponseOutput",
-  "description": "Describes the output produced by the cnm-response task",
-  "type": "object",
+  "$defs": {
+    "ChecksumType": {
+      "description": "CNM file checksumType enum.",
+      "enum": [
+        "SHA512",
+        "SHA256",
+        "SHA2",
+        "SHA1",
+        "md5"
+      ],
+      "title": "ChecksumType",
+      "type": "string"
+    },
+    "CnmR": {
+      "description": "CNM-R model.",
+      "properties": {
+        "version": {
+          "description": "The CNM Version used. e.g. '1.3'",
+          "pattern": "[0-9]+\\.[0-9]+(\\.[0-9]+(-(alpha|beta)(\\.[0-9]+)?)?)?",
+          "title": "Version",
+          "type": "string"
+        },
+        "submissionTime": {
+          "description": "The time the message was created (and presumably sent) to the publication mechanism.",
+          "format": "date-time",
+          "title": "Submissiontime",
+          "type": "string"
+        },
+        "identifier": {
+          "description": "Unique identifier for the message as a whole. It is the senders responsibility to ensure uniqueness. This identifier can be used in response messages to provide tracability.",
+          "title": "Identifier",
+          "type": "string"
+        },
+        "collection": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Collection"
+            }
+          ],
+          "description": "The collection to which these granules will belong.",
+          "title": "Collection"
+        },
+        "provider": {
+          "description": "the name of the provider (e.g. SIP, SDS, etc. ) producing these files.",
+          "title": "Provider",
+          "type": "string"
+        },
+        "trace": {
+          "description": "Information on the message or who is sending it.",
+          "title": "Trace",
+          "type": "string"
+        },
+        "receivedTime": {
+          "description": "Time message was received by the ingest system",
+          "format": "date-time",
+          "title": "Receivedtime",
+          "type": "string"
+        },
+        "processCompleteTime": {
+          "description": "The time processing completed by the receiving entity.",
+          "format": "date-time",
+          "title": "Processcompletetime",
+          "type": "string"
+        },
+        "response": {
+          "$ref": "#/$defs/Response",
+          "description": "The response message type sent. Can be a success message or error message. Akin to both the PAN and PDRD"
+        },
+        "product": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProductWithFiles"
+            },
+            {
+              "$ref": "#/$defs/ProductWithFileGroups"
+            }
+          ],
+          "title": "Product"
+        }
+      },
+      "required": [
+        "version",
+        "submissionTime",
+        "identifier",
+        "collection",
+        "receivedTime",
+        "processCompleteTime",
+        "response"
+      ],
+      "title": "CnmR",
+      "type": "object"
+    },
+    "Collection": {
+      "description": "CNM collection model.",
+      "properties": {
+        "name": {
+          "description": "collection short name.",
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "description": "collection version.",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "Collection",
+      "type": "object"
+    },
+    "DataProcessingType": {
+      "description": "CNM dataProcessingType enum.",
+      "enum": [
+        "forward",
+        "reprocessing"
+      ],
+      "title": "DataProcessingType",
+      "type": "string"
+    },
+    "FileGroup": {
+      "description": "CNM filegroup model.",
+      "properties": {
+        "id": {
+          "description": "string id of the filegroup by which all files are associated.",
+          "title": "Id",
+          "type": "string"
+        },
+        "files": {
+          "description": "array of files that make up this product",
+          "items": {
+            "$ref": "#/$defs/python_schemas__models__cnm__File"
+          },
+          "title": "Files",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "files"
+      ],
+      "title": "FileGroup",
+      "type": "object"
+    },
+    "FileType": {
+      "description": "CNM file type enum.",
+      "enum": [
+        "data",
+        "browse",
+        "metadata",
+        "ancillary",
+        "linkage"
+      ],
+      "title": "FileType",
+      "type": "string"
+    },
+    "Granule": {
+      "description": "CMA granule model.",
+      "properties": {
+        "granuleId": {
+          "title": "GranuleId",
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/python_schemas__models__granule__File"
+          },
+          "title": "Files",
+          "type": "array"
+        }
+      },
+      "required": [
+        "granuleId",
+        "files"
+      ],
+      "title": "Granule",
+      "type": "object"
+    },
+    "IngestionMetadata": {
+      "description": "CNM ingestionMetadata model.",
+      "properties": {
+        "catalogId": {
+          "description": "Identifier for catalog",
+          "title": "Catalogid",
+          "type": "string"
+        },
+        "catalogUrl": {
+          "description": "URL of catalog entry",
+          "title": "Catalogurl",
+          "type": "string"
+        }
+      },
+      "title": "IngestionMetadata",
+      "type": "object"
+    },
+    "ProductWithFileGroups": {
+      "description": "CNM product model with required filegroups list.",
+      "properties": {
+        "name": {
+          "description": "Identifier/name of the product",
+          "title": "Name",
+          "type": "string"
+        },
+        "producerGranuleId": {
+          "description": "Optional producer granule identifier.",
+          "title": "Producergranuleid",
+          "type": "string"
+        },
+        "dataVersion": {
+          "description": "Version of this product",
+          "title": "Dataversion",
+          "type": "string"
+        },
+        "dataProcessingType": {
+          "$ref": "#/$defs/DataProcessingType",
+          "description": "The type of data processing stream that generated the product",
+          "title": "Dataprocessingtype"
+        },
+        "files": {
+          "description": "array of files that make up this product",
+          "items": {
+            "$ref": "#/$defs/python_schemas__models__cnm__File"
+          },
+          "title": "Files",
+          "type": "array"
+        },
+        "filegroups": {
+          "description": "array of filegroups that make up this product",
+          "items": {
+            "$ref": "#/$defs/FileGroup"
+          },
+          "title": "Filegroups",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "filegroups"
+      ],
+      "title": "ProductWithFileGroups",
+      "type": "object"
+    },
+    "ProductWithFiles": {
+      "description": "CNM product model with required files list.",
+      "properties": {
+        "name": {
+          "description": "Identifier/name of the product",
+          "title": "Name",
+          "type": "string"
+        },
+        "producerGranuleId": {
+          "description": "Optional producer granule identifier.",
+          "title": "Producergranuleid",
+          "type": "string"
+        },
+        "dataVersion": {
+          "description": "Version of this product",
+          "title": "Dataversion",
+          "type": "string"
+        },
+        "dataProcessingType": {
+          "$ref": "#/$defs/DataProcessingType",
+          "description": "The type of data processing stream that generated the product",
+          "title": "Dataprocessingtype"
+        },
+        "files": {
+          "description": "array of files that make up this product",
+          "items": {
+            "$ref": "#/$defs/python_schemas__models__cnm__File"
+          },
+          "title": "Files",
+          "type": "array"
+        },
+        "filegroups": {
+          "description": "array of filegroups that make up this product",
+          "items": {
+            "$ref": "#/$defs/FileGroup"
+          },
+          "title": "Filegroups",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "files"
+      ],
+      "title": "ProductWithFiles",
+      "type": "object"
+    },
+    "Response": {
+      "description": "CNM response model.",
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/ResponseStatus",
+          "description": "Successful or error."
+        },
+        "ingestionMetadata": {
+          "$ref": "#/$defs/IngestionMetadata",
+          "description": "Object defining ingestion metadata, like CMR Concept IDs, URLS, etc",
+          "title": "Ingestionmetadata"
+        },
+        "errorCode": {
+          "$ref": "#/$defs/ResponseErrorCode",
+          "description": "Error message. Success messages can be ignored.",
+          "title": "Errorcode"
+        },
+        "errorMessage": {
+          "description": "The message error for the failure that occurred.",
+          "title": "Errormessage",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "Response",
+      "type": "object"
+    },
+    "ResponseErrorCode": {
+      "description": "CNM response errorCode enum.",
+      "enum": [
+        "VALIDATION_ERROR",
+        "PROCESSING_ERROR",
+        "TRANSFER_ERROR"
+      ],
+      "title": "ResponseErrorCode",
+      "type": "string"
+    },
+    "ResponseStatus": {
+      "description": "CNM response status enum.",
+      "enum": [
+        "SUCCESS",
+        "FAILURE"
+      ],
+      "title": "ResponseStatus",
+      "type": "string"
+    },
+    "python_schemas__models__cnm__File": {
+      "description": "CNM file model.",
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/FileType",
+          "description": "The type of file. science files (netcdf, HDF, binary) should use the 'data' type. More can be added if need and consensus demand."
+        },
+        "subtype": {
+          "description": "An optional, specific implementation of the file::type. e.g. NetCDF for a file of type 'data'",
+          "title": "Subtype",
+          "type": "string"
+        },
+        "uri": {
+          "description": "the URI of the file (s3://...)",
+          "title": "Uri",
+          "type": "string"
+        },
+        "name": {
+          "description": "The human readable filename that this file represents.",
+          "title": "Name",
+          "type": "string"
+        },
+        "checksumType": {
+          "$ref": "#/$defs/ChecksumType",
+          "title": "Checksumtype"
+        },
+        "checksum": {
+          "description": "Checksum of the file.",
+          "title": "Checksum",
+          "type": "string"
+        },
+        "size": {
+          "description": "Size, in bytes, of the file.",
+          "title": "Size",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "uri",
+        "name",
+        "size"
+      ],
+      "title": "File",
+      "type": "object"
+    },
+    "python_schemas__models__granule__File": {
+      "additionalProperties": false,
+      "description": "CMA granule file model.",
+      "properties": {
+        "bucket": {
+          "description": "Bucket where file is archived in S3",
+          "title": "Bucket",
+          "type": "string"
+        },
+        "checksum": {
+          "description": "Checksum value for file",
+          "title": "Checksum",
+          "type": "string"
+        },
+        "checksumType": {
+          "description": "Type of checksum (e.g. md5, sha256, etc)",
+          "title": "ChecksumType",
+          "type": "string"
+        },
+        "fileName": {
+          "description": "Name of file (e.g. file.txt)",
+          "title": "FileName",
+          "type": "string"
+        },
+        "key": {
+          "description": "S3 Key for archived file",
+          "title": "Key",
+          "type": "string"
+        },
+        "size": {
+          "description": "Size of file (in bytes)",
+          "title": "Size",
+          "type": "number"
+        },
+        "source": {
+          "description": "Source URI of the file from origin system (e.g. S3, FTP, HTTP)",
+          "title": "Source",
+          "type": "string"
+        },
+        "type": {
+          "description": "Type of file (e.g. data, metadata, browse)",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "bucket",
+        "key"
+      ],
+      "title": "File",
+      "type": "object"
+    }
+  },
+  "description": "Output schema for the CnmResponse task.",
+  "properties": {
+    "cnm": {
+      "$ref": "#/$defs/CnmR"
+    },
+    "granules": {
+      "items": {
+        "$ref": "#/$defs/Granule"
+      },
+      "title": "Granules",
+      "type": "array"
+    }
+  },
   "required": [
     "cnm",
     "granules"
   ],
-  "properties": {
-    "cnm": {
-      "type": "object",
-      "description": "The output CNM-R generated in response to the input CNM-S."
-    },
-    "granules": {
-      "type": "array",
-      "description": "Array of all granules",
-      "items": {
-        "type": "object",
-        "required": [
-          "granuleId",
-          "files"
-        ],
-        "properties": {
-          "granuleId": {
-            "type": "string"
-          },
-          "files": {
-            "type": "array",
-            "items": {
-              "additionalProperties": false,
-              "type": "object",
-              "required": [
-                "bucket",
-                "key"
-              ],
-              "properties": {
-                "bucket": {
-                  "description": "Bucket where file is archived in S3",
-                  "type": "string"
-                },
-                "checksum": {
-                  "description": "Checksum value for file",
-                  "type": "string"
-                },
-                "checksumType": {
-                  "description": "Type of checksum (e.g. md5, sha256, etc)",
-                  "type": "string"
-                },
-                "fileName": {
-                  "description": "Name of file (e.g. file.txt)",
-                  "type": "string"
-                },
-                "key": {
-                  "description": "S3 Key for archived file",
-                  "type": "string"
-                },
-                "size": {
-                  "description": "Size of file (in bytes)",
-                  "type": "number"
-                },
-                "source": {
-                  "description": "Source URI of the file from origin system (e.g. S3, FTP, HTTP)",
-                  "type": "string"
-                },
-                "type": {
-                  "description": "Type of file (e.g. data, metadata, browse)",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "additionalProperties": false
+  "title": "CnmResponseOutput",
+  "type": "object"
 }

@@ -1,14 +1,12 @@
 """lambda function used to translate CNM messages to CMA messages in aws lambda with cumulus"""
 
 import re
+import urllib.parse
 from datetime import UTC, datetime
 from typing import Any
 
-import pydantic
 from cumulus_logger import CumulusLogger
 from run_cumulus_task import run_cumulus_task
-
-from . import models_cnm, models_granule
 
 # Create Cumulus Logger instance
 LOGGER = CumulusLogger("cnm_to_cma")
@@ -30,16 +28,17 @@ def task(event: dict[str, Any], context: object) -> dict[str, Any]:
 
     LOGGER.info(f"cnm message: {cnm} config: {config}")
     granule = mapper(cnm, config)
-    output: models_granule.SyncGranuleInput = models_granule.SyncGranuleInput(
-        granules=[granule]
-    )
+
     now_as_iso = datetime.now(UTC).isoformat(timespec="milliseconds") + "Z"
     cnm["receivedTime"] = now_as_iso
-    output_dict = {"cnm": cnm, "output_granules": output.model_dump(mode="json")}
-    return output_dict
+
+    return {
+        "cnm": cnm,
+        "granules": [granule],
+    }
 
 
-def mapper(cnm: dict, config: dict) -> models_granule.Granule:
+def mapper(cnm: dict, config: dict) -> dict:
     """Maps CNM to CMA message
 
     Args:
@@ -47,70 +46,74 @@ def mapper(cnm: dict, config: dict) -> models_granule.Granule:
         config: The configuration in Dict format. Come from workflow configuration.
 
     Returns:
-        The corresponding granule type.
+        The corresponding granule object.
 
     """
-    try:
-        cnm_model = models_cnm.CloudNotificationMessageCnm12.model_validate(cnm)
-        LOGGER.info(f"CNM Model in mapper: {cnm_model}")
-        granule_id_extraction = config.get("collection", {}).get("granuleIdExtraction")
-        # retrieve granule_id from product.names
-        product = cnm_model.root.product
-        granule_id = product.name
-        LOGGER.info(f"Raw granule_id: {granule_id}")
-        # Extract the last token after the last slash
-        granule_id = product.name.rsplit("/", 1)[-1]
-        # Apply regex extraction if provided
-        if granule_id_extraction:
-            matcher = re.search(granule_id_extraction, granule_id)
-            if matcher:
-                granule_id = matcher.group(1)
-            else:
-                LOGGER.warn(
-                    f"granuleIdExtraction regex: {granule_id_extraction} did not match the "
-                    f"granuleId: {granule_id} but program will continue"
-                )
-        LOGGER.info(f"Granule ID: {granule_id}")
-        cnm_input_files: list[models_cnm.File] = get_cnm_input_files(product)
-        cma_files: list[models_granule.File] = create_granule_files(cnm_input_files)
-        granule = models_granule.Granule(
-            granuleId=granule_id,
-            producerGranuleId=cnm_model.root.product.producerGranuleId,
-            files=cma_files,
-            dataType=config.get("collection", {}).get("name"),
-            version=config.get("collection", {}).get("version"),
-        )
-        LOGGER.info(f"Granule Model in mapper: {granule}")
-        return granule
-    except pydantic.ValidationError as pydan_error:
-        LOGGER.error("pydantic schema validation failed:", pydan_error)
-        raise pydan_error
+
+    granule_id_extraction = config.get("collection", {}).get("granuleIdExtraction")
+    # retrieve granule_id from product.names
+    product = cnm["product"]
+    granule_id = product["name"]
+
+    LOGGER.info(f"Raw granule_id: {granule_id}")
+    # Extract the last token after the last slash
+    granule_id = granule_id.rsplit("/", 1)[-1]
+
+    # Apply regex extraction if provided
+    if granule_id_extraction:
+        matcher = re.search(granule_id_extraction, granule_id)
+        if matcher:
+            granule_id = matcher.group(1)
+        else:
+            LOGGER.warn(
+                f"granuleIdExtraction regex: {granule_id_extraction} did not match the "
+                f"granuleId: {granule_id} but program will continue"
+            )
+
+    LOGGER.info(f"Granule ID: {granule_id}")
+    cnm_input_files = get_cnm_input_files(product)
+    cma_files = create_granule_files(cnm_input_files)
+    granule = {
+        "granuleId": granule_id,
+        "producerGranuleId": product.get("producerGranuleId"),
+        "files": cma_files,
+        "dataType": config.get("collection", {}).get("name"),
+        "version": config.get("collection", {}).get("version"),
+    }
+    LOGGER.info(f"Granule Model in mapper: {granule}")
+    return granule
 
 
-def get_cnm_input_files(product: Any) -> list[models_cnm.File]:
-    input_files = product.files
-    if input_files is None:
-        input_files = []
-        filegroups = product.filegroups or []
-        for fg in filegroups:
-            input_files.extend(fg.files or [])
-    return input_files
+def get_cnm_input_files(product: dict) -> list[dict]:
+    input_files = product.get("files")
+
+    if input_files is not None:
+        return input_files
+
+    return [
+        file
+        for file_group in product.get("filegroups") or []
+        for file in file_group.get("files") or []
+    ]
 
 
 def create_granule_files(
-    input_files: list[models_cnm.File],
-) -> list[models_granule.File]:
-    granule_files: list[models_granule.File] = []
+    input_files: list[dict],
+) -> list[dict]:
+    granule_files = []
     for cnm_file in input_files:
-        if not cnm_file.uri or len(cnm_file.uri.strip()) == 0:
+        uri = cnm_file.get("uri")
+        if not uri or not uri.strip():
             raise ValueError("File uri is empty or None")
-        granule_file: models_granule.File = build_granule_file(cnm_file)
+
+        granule_file = build_granule_file(cnm_file)
         if granule_file:
             granule_files.append(granule_file)
+
     return granule_files
 
 
-def build_granule_file(cnm_file: Any) -> models_granule.File:
+def build_granule_file(cnm_file: dict) -> dict:
     """Builds a granule file from a CNM file based on the protocol.
 
     Args:
@@ -118,31 +121,25 @@ def build_granule_file(cnm_file: Any) -> models_granule.File:
         protocol: s3, http, https, sftp
 
     Returns:
-        a single  models_granule.File object
+        a single file object
 
     """
-    uri = cnm_file.uri
-    match = re.match(
-        r"^(?P<protocol>.*?)://(?P<host>[^/]+)(?:/(?P<full_path>.*))?$", uri
-    )
-    if not match:
-        LOGGER.error(f"Invalid URI format: {uri}")
-        raise ValueError(f"Invalid URI format: {uri}")
-    groups = match.groupdict()
-    protocol = groups["protocol"]
-    if protocol not in ["http", "https", "sftp", "s3"]:
-        raise ValueError(f"Unsupported protocol: {protocol}")
-    host = groups["host"]
-    full_path = groups["full_path"] or ""
-    path = full_path.rsplit("/", 1)[0] if full_path else ""
-    granule_file = models_granule.File(
-        name=cnm_file.name,
-        filename=cnm_file.name,
-        type=cnm_file.type,
-        source_bucket=host if protocol == "s3" else None,
-        path=path,
-    )
-    return granule_file
+    uri = cnm_file["uri"].strip()
+    parsed_uri = urllib.parse.urlparse(uri)
+
+    if parsed_uri.scheme not in ["http", "https", "sftp", "s3"]:
+        raise ValueError(f"Unsupported protocol: {parsed_uri.scheme}")
+
+    host = parsed_uri.netloc
+    path = parsed_uri.path[1:].rsplit("/", 1)[0]
+
+    return {
+        "name": cnm_file["name"],
+        "filename": cnm_file["name"],
+        "type": cnm_file["type"],
+        "source_bucket": host if parsed_uri.scheme == "s3" else None,
+        "path": path,
+    }
 
 
 # handler that is provided to aws lambda

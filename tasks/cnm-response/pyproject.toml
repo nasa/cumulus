@@ -11,6 +11,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "python-common-dev-dependencies",
+    "python-schemas",
 ]
 
 [tool.pytest]
@@ -26,3 +27,4 @@ testpaths = [
 
 [tool.uv.sources]
 python-common-dev-dependencies = { path = "../../packages/python-common-dev-dependencies" }
+python-schemas = { path = "../../packages/python-schemas" }

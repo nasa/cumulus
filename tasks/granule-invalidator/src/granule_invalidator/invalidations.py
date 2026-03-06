@@ -17,7 +17,8 @@ LOGGER = CumulusLogger(__name__, level=int(os.environ.get("LOGLEVEL", logging.DE
 
 
 def science_date(
-    granules: list[dict], granule_invalidation_information: dict
+    granules: list[dict],
+    granule_invalidation_information: dict,
 ) -> tuple[list[dict], list[dict]]:
     """Identify granules older than specified age based on productionDateTime.
 
@@ -31,20 +32,23 @@ def science_date(
 
     """
     expiration_timedelta = timedelta(
-        minutes=granule_invalidation_information.get("maximum_minutes_old")
+        minutes=granule_invalidation_information["maximum_minutes_old"]
     )
-    comparison_key = "productionDateTime"
 
     def comparison_key_transformation(datetime_representation):
         return datetime.fromisoformat(datetime_representation)
 
     return identify_granules_older_than(
-        granules, comparison_key, comparison_key_transformation, expiration_timedelta
+        granules,
+        "productionDateTime",
+        comparison_key_transformation,
+        expiration_timedelta,
     )
 
 
 def ingest_date(
-    granules: list[dict], granule_invalidation_information: dict
+    granules: list[dict],
+    granule_invalidation_information: dict,
 ) -> tuple[list[dict], list[dict]]:
     """Identify granules older than specified age based on createdAt datetime.
 
@@ -58,20 +62,23 @@ def ingest_date(
 
     """
     expiration_timedelta = timedelta(
-        minutes=granule_invalidation_information.get("maximum_minutes_old")
+        minutes=granule_invalidation_information["maximum_minutes_old"],
     )
-    comparison_key = "createdAt"
 
     def comparison_key_transformation(datetime_representation):
         return datetime.fromtimestamp(datetime_representation / 1000, UTC)
 
     return identify_granules_older_than(
-        granules, comparison_key, comparison_key_transformation, expiration_timedelta
+        granules,
+        "createdAt",
+        comparison_key_transformation,
+        expiration_timedelta,
     )
 
 
 def cross_collection(
-    granules: list[dict], granule_invalidation_information: dict
+    granules: list[dict],
+    granule_invalidation_information: dict,
 ) -> tuple[list[dict], list[dict]]:
     """Identify granules superseded by granules in another collection.
 

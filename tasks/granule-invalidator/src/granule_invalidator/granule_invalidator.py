@@ -19,12 +19,9 @@ from . import invalidations
 
 LOGGER = CumulusLogger(__name__, level=int(os.environ.get("LOGLEVEL", logging.DEBUG)))
 MAX_GRANULES_FETCHED = 100000
-schemas = {"config": "schemas/config_schema.json"}
-
-EVENT_TYPING = dict[Any, Any]
 
 
-def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
+def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
     """Handle granule invalidation.
 
     Args:
@@ -105,7 +102,8 @@ def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
 
 
 def run_invalidation(
-    granules: list[dict], granule_invalidation: dict
+    granules: list[dict],
+    granule_invalidation: dict,
 ) -> tuple[list[dict], list[dict]]:
     """Map a granule invalidation to the corresponding function and call it.
 
@@ -253,24 +251,3 @@ def fetch_all_granules(
             )
             break
     return results
-
-
-if __name__ == "__main__":
-    lambda_adapter(
-        {
-            "config": {
-                "granule_invalidations": [
-                    {"type": "science_date", "maximum_minutes_old": 1000000},
-                    {"type": "ingest_date", "maximum_minutes_old": 1},
-                    {
-                        "type": "cross_collection",
-                        "invalidating_collection": "ATL09",
-                        "invalidating_version": "006",
-                    },
-                ],
-                "collection": "ATL08",
-                "version": "006",
-            }
-        },
-        None,
-    )

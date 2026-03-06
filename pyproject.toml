@@ -71,6 +71,9 @@ ignore = [
 "**/tests/**.py" = ["D1", "PLR0913"]
 "scripts/**.py" = ["D1"]
 "__init__.py" = ["D104"]
+# Schemas use non-snake case field names
+"**/schemas/**.py" = ["N815"]
+"packages/python-schemas/**/models/**.py" = ["N815"]
 
 
 # Repo wide type checking rules

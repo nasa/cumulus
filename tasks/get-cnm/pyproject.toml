@@ -18,12 +18,21 @@ repository = "https://github.com/nasa/cumulus.git"
 [dependency-groups]
 dev = [
     "python-common-dev-dependencies",
-    "pydantic>=2.10.4",
+    "python-schemas",
+]
+
+[tool.pytest]
+minversion = "9.0"
+addopts = [
+    "--cov=get_cnm",
+    "--cov-report=lcov:.nyc_output",
+]
+pythonpath = ["src"]
+testpaths = [
+    "tests",
 ]
 
 [tool.uv.sources]
 cumulus-api = { git = "https://github.com/nasa/Cumulus-API-Python", tag = "v3.2.1" }
 python-common-dev-dependencies = { path = "../../packages/python-common-dev-dependencies" }
-
-[tool.pytest.ini_options]
-pythonpath = ["src"]
+python-schemas = { path = "../../packages/python-schemas" }
