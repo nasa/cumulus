@@ -44,6 +44,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4564**
   - Added private_api_lambda_arn as an output in the Cumulus terraform module
+- **CUMULUS-4534**
+  - collection db model has added optional cmr_provider field
+  - update requires db-migration to add cmr_provider to collection model
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload.
@@ -84,6 +87,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-4534**
+  - collection translate functions pass cmr_provider/cmrProvider back and forth
+  - sf-scheduler lambda function uses collection cmr_provider to override provider from cmr portion of message_template (if configured)
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations return consistent output formats across different bulk opertions
     (previously, some bulk operation aggregated errors while others returned per-granule errors)
