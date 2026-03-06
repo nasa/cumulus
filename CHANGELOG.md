@@ -86,6 +86,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `WorkflowFailed` state.
 - **CUMULUS-4427**
   - Added pdr-cleanup task into cumulus core from ASDC
+- **CUMULUS-4513**
+  - Added support for retries in PDR workflows
 
 ### Changed
 
