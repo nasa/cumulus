@@ -207,7 +207,28 @@ test.serial('POST /granules/bulkReingest returns 400 when no granules or alterna
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(400,
-      /One of granules, query, granuleInventoryReportName or s3GranuleIdInputFile is required/);
+      // eslint-disable-next-line max-len
+      /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkReingest returns 400 when more than one granules input source is provided', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+  };
+
+  await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400,
+      // eslint-disable-next-line max-len
+      /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -268,6 +289,60 @@ test.serial('POST /granules/bulkReingest returns 400 when the Metrics ELK stack 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(400, /ELK Metrics stack not configured/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkReingest returns a 400 when maxDbConnections is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
+    maxDbConnections: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at maxDbConnections/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkReingest returns a 400 when concurrency is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
+    concurrency: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at concurrency/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkReingest returns a 400 when batchSize is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+    batchSize: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at batchSize/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
