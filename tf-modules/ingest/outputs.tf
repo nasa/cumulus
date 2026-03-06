@@ -12,6 +12,14 @@ output "add_unique_granule_id_task" {
   }
 }
 
+output "cnm_to_cma_task" {
+  value = {
+    task_arn           = module.cnm_to_cma_task.lambda_function.arn
+    task_log_group     = module.cnm_to_cma_task.log_group.name
+    last_modified_date = module.cnm_to_cma_task.lambda_function.last_modified
+  }
+}
+
 output "cnm_response_task" {
   value = {
     task_arn           = module.cnm_response_task.lambda_function.arn

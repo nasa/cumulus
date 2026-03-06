@@ -14,7 +14,7 @@ from . import models_cnm, models_granule
 LOGGER = CumulusLogger("cnm_to_cma")
 
 
-def task(event: dict[str, Any], context: object) -> dict[str, Any]:
+def lambda_adapter(event: dict[str, Any], context: object) -> dict[str, Any]:
     """Entry point of the lambda
     Args:
         event: Passed through from {handler}

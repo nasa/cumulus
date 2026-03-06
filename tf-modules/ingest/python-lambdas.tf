@@ -2,6 +2,7 @@ locals {
   task_root          = "${path.module}/../../tasks"
   zip_subdir         = "dist/final/lambda.zip"
   aws_api_proxy_name = "aws-api-proxy"
+  cnm_to_cma_name    = "cnm-to-cma"
   security_group_id  = length(var.lambda_subnet_ids) > 0 ? aws_security_group.no_ingress_all_egress[0].id : ""
 }
 
@@ -14,3 +15,14 @@ module "aws_api_proxy" {
   lambda_memory_size             = lookup(var.lambda_memory_sizes, local.aws_api_proxy_name, 4096)
   tags                           = var.tags
 }
+
+module "cnm_to_cma" {
+  source                         = "../../tasks/cnm-to-cma/deploy"
+  prefix                         = var.prefix
+  lambda_processing_role_arn     = var.lambda_processing_role_arn
+  security_group_id              = local.security_group_id
+  lambda_timeout                 = lookup(var.lambda_timeouts, local.cnm_to_cma_name, 60*3)
+  lambda_memory_size             = lookup(var.lambda_memory_sizes, local.cnm_to_cma_name, 512)
+  tags                           = var.tags
+}
+

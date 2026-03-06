@@ -1,33 +1,50 @@
-resource "aws_lambda_function" "cnm_to_cma_task" {
-  function_name    = "${var.prefix}-CNMToCMA"
-  filename         = "${path.module}/../dist/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../dist/lambda.zip")
-  handler          = "cnm_to_cma.cnm_to_cma.handler"
-  role             = var.lambda_processing_role_arn
-  runtime          = "python3.12"
-  timeout          = var.lambda_timeout
-  memory_size      = var.lambda_memory_size
+locals {
+  task_root      = "${path.module}/../"
+  zip_subdir     = "dist/final/lambda.zip"
+  subnet_id_name = "Private application ${data.aws_region.current.name}a subnet"
 
-  environment {
-    variables = {
-      stackName                   = var.prefix
-      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
-    }
-  }
-
-  dynamic "vpc_config" {
-    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
-    content {
-      subnet_ids         = var.lambda_subnet_ids
-      security_group_ids = [var.security_group_id]
-    }
-  }
-
-  tags = var.tags
+  # We may need to use this in the future if we don't have easy access to the role arn
+  #lambda_processing_role_arn = one(data.aws_iam_roles.lambda_processing_role.arns)
 }
 
-resource "aws_cloudwatch_log_group" "cnm_to_cma_task" {
-  name              = "/aws/lambda/${aws_lambda_function.cnm_to_cma_task.function_name}"
-  retention_in_days = var.default_log_retention_days
+# We may need to use this in the future if we don't have easy access to the role arn
+#check "lambda_processing_role_exists" {
+#  assert {
+#    condition = length(data.aws_iam_roles.lambda_processing_role.arns) == 1
+#    error_message = format("lambda_processing_role_pattern (%s) matched zero or more than one role.", var.lambda_processing_role_pattern)
+#  }
+#}
+
+check "subnet_id_exists" {
+  assert {
+    condition     = length(data.aws_subnets.subnet_ids.ids) > 0
+    error_message = format("No subnets found that match %s. Update your subnet configuration.", local.subnet_id_name)
+  }
+}
+
+data "aws_region" "current" {}
+
+# We may need to use this in the future if we don't have easy access to the role arn
+#data "aws_iam_roles" "lambda_processing_role" {
+#  name_regex = var.lambda_processing_role_pattern
+#}
+
+data "aws_subnets" "subnet_ids" {
+  tags = {
+    Name = local.subnet_id_name
+    # eg "Private application us-west-2a subnet"
+  }
+}
+
+module "cnm_to_cma" {
+  source            = "../../../tf-modules/cumulus-task"
+  name              = "CnmToCma"
+  prefix            = var.prefix
+  role              = var.lambda_processing_role_arn
+  lambda_zip_path   = abspath("${local.task_root}/${local.zip_subdir}")
+  subnet_ids        = data.aws_subnets.subnet_ids.ids
+  security_group_id = var.security_group_id
+  timeout           = var.lambda_timeout
+  memory_size       = var.lambda_memory_size
   tags              = var.tags
 }
