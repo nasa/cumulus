@@ -65,6 +65,7 @@ async function handleScheduleEvent(event) {
   };
 
   const eventCustomMeta = get(event, 'meta', {});
+  const templateCmr = get(messageTemplate, 'meta.cmr', {});
   const { cmrProvider } = collection;
   if (!cmrProvider) {
     throw new CMRProviderNotConfiguredError({
@@ -80,6 +81,7 @@ async function handleScheduleEvent(event) {
       collection,
       provider,
       cmr: {
+        ...templateCmr,
         provider: cmrProvider,
       },
     },
@@ -87,7 +89,6 @@ async function handleScheduleEvent(event) {
     workflow,
     executionNamePrefix: event.executionNamePrefix,
   });
-
   logger.info(`Sending message ${JSON.stringify(message)} to queue ${queueUrl}`);
 
   return SQS.sendSQSMessage(queueUrl, message);
