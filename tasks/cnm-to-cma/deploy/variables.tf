@@ -17,6 +17,11 @@ variable "lambda_memory_size" {
   type        = number
 }
 
+variable "log_retention_days" {
+  description = "The number of days to retain logs in CloudWatch"
+  type        = number
+}
+
 variable "prefix" {
   type = string
 }
