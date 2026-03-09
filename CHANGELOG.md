@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CSD-99**
+  - Changed CMR concept functions to exponential backoff and retry to bypass frequent authentication failures
+
 ## [v21.3.1] 2026-02-16
 
 ### Added
