@@ -1,0 +1,49 @@
+name: Export requirements.txt from changed uv.lock files.
+
+on:
+  pull_request:
+    paths:
+      - '**uv.lock'
+
+jobs:
+  export-requirements:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Find changed uv.lock files
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          git diff --name-only "$BASE_SHA" HEAD -- '**/uv.lock' > changed_lockfiles.txt || true
+          cat changed_lockfiles.txt
+
+      - name: Export requirements.txt
+        run: |
+          while read -r LOCKFILE; do
+            [ -z "$LOCKFILE" ] && continue
+            DIR=$(dirname "$LOCKFILE")
+            echo "Exporting in $DIR"
+            uv export --directory "$DIR" --format requirements-txt --output-file "$DIR/requirements.txt"
+          done < changed_lockfiles.txt
+
+      - name: Commit updated requirements.txt files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A -- '**/requirements.txt'
+          if [ -z "$(git status -- '**/requirements.txt')" ]; then
+            echo "No staged requirements.txt changes to commit"
+            exit 0
+          fi
+          git commit -m "Update requirements.txt from uv.lock changes" || true
+          git push || true
