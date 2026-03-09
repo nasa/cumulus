@@ -45,7 +45,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4564**
   - Added private_api_lambda_arn as an output in the Cumulus terraform module
 - **CUMULUS-4534**
-  - collection db model has added optional cmr_provider field
+  - collection db model has added non-optional cmr_provider field
   - update requires db-migration to add cmr_provider to collection model
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
