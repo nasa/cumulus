@@ -10,6 +10,8 @@ const {
 const router = require('express-promise-router')();
 const { zodParser } = require('../src/zod-utils');
 const { returnCustomValidationErrors } = require('../lib/endpoints');
+const Logger = require('@cumulus/logger');
+const log = new Logger({ sender: '@cumulus/api/workflows' });
 
 /**
  * @typedef {import('express').Request} Request
@@ -68,7 +70,13 @@ async function list(req, res) {
 
   if (fields) {
     body = body.map((workflow) =>
-      Object.fromEntries(fields.map((field) => [field, workflow[field]])));
+      Object.fromEntries(fields.map((field) => {
+        if (!(field in workflow)) {
+          log.warn(`Field "${field}" not found in workflow "${workflow.name}"`);
+          return [field, 'undefined name'];
+        }
+        return [field, workflow[field]];
+      })));
   }
 
   // we have to specify type json here because express
@@ -76,8 +84,13 @@ async function list(req, res) {
   if (countOnly) {
     return res.type('json').send({ count: body.length });
   }
-  body = order === 'desc' ? body.sort((a, b) => b.name.localeCompare(a.name))
-    : body.sort((a, b) => a.name.localeCompare(b.name));
+  body = body.sort((a, b) => {
+    const nameA = String(a.name);
+    const nameB = String(b.name);
+    return order === 'desc'
+      ? nameB.localeCompare(nameA)
+      : nameA.localeCompare(nameB);
+  });
   body = limit ? body.slice(0, limit) : body;
   return res.type('json').send(body);
 }
