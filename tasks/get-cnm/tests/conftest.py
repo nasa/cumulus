@@ -1,8 +1,21 @@
 """Pytest configuration for get-cnm tests."""
 
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
+
+@pytest.fixture(scope="session")
+def task_path():
+    """Return the absolute task root path."""
+    return Path(__file__).parent.parent.resolve()
+
+
+@pytest.fixture(scope="session")
+def data_path(task_path):
+    """Return the shared static test data directory."""
+    return task_path / "tests" / "data"
 
 
 @pytest.fixture
