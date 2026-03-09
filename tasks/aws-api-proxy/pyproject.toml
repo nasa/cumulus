@@ -1,6 +1,6 @@
 [project]
 name = "aws-api-proxy"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Makes specified AWS API calls wrapped the Cumulus Message Adapter"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -13,6 +13,9 @@ dependencies = [
 homepage = "https://github.com/nasa/cumulus/blob/master/tasks/aws-api-proxy"
 documentation = "https://github.com/nasa/cumulus/blob/master/tasks/aws-api-proxy/README.md"
 repository = "https://github.com/nasa/cumulus.git"
+
+[tool.setuptools.dynamic]
+version = { file = ["VERSION"] }
 
 [dependency-groups]
 dev = [
