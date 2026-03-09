@@ -15,10 +15,10 @@ from run_cumulus_task import run_cumulus_task
 LOGGER = CumulusLogger(__name__, level=int(os.environ.get("LOGLEVEL", logging.DEBUG)))
 SCHEMAS = {
     "input": str(
-        Path(__file__).resolve().parent / "get_cnm" / "schemas" / "input_schema.json"
+        Path(__file__).resolve().parent / "get_cnm" / "schemas" / "input.json"
     ),
     "output": str(
-        Path(__file__).resolve().parent / "get_cnm" / "schemas" / "output_schema.json"
+        Path(__file__).resolve().parent / "get_cnm" / "schemas" / "output.json"
     ),
 }
 

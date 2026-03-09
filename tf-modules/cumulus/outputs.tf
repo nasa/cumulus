@@ -86,6 +86,7 @@ output "files_to_granules_task" {
 output "get_cnm_task" {
   value = module.ingest.get_cnm_task
 }
+
 output "granule_invalidator_task" {
   value = module.ingest.granule_invalidator_task
 }

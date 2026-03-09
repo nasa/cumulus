@@ -43,8 +43,11 @@ def handle_parent_execution(execution: dict, api: CumulusApi) -> dict | None:
 
 def get_oldest_execution(executions: list[dict]) -> dict:
     """Get the oldest execution from a list of executions."""
-    executions.sort(key=lambda x: x["createdAt"])
-    return executions[0]
+    return min(
+        executions,
+        default=None,
+        key=lambda x: x["createdAt"],
+    )
 
 
 def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
@@ -61,7 +64,7 @@ def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
         build_input(event_input), limit=None
     )
     if api_response.get("status_code", HTTPStatus.OK) != HTTPStatus.OK:
-        raise ValueError(
+        raise RuntimeError(
             f"Error searching for executions associated with granules: {api_response}"
         )
     LOGGER.info(f"API response: {api_response}")
@@ -77,13 +80,15 @@ def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
     }
     for execution in results:
         if "finalPayload" in execution:
-            granule_id = execution["finalPayload"]["granules"][0]["granuleId"]
-            executions_by_granule[granule_id].append(execution)
+            for granule in execution.get("finalPayload", {}).get("granules", []):
+                granule_id = granule.get("granuleId")
+                if granule_id in executions_by_granule:
+                    executions_by_granule[granule_id].append(execution)
 
     execution_map = {}
     for granule_id, executions in executions_by_granule.items():
         if not executions:
-            raise ValueError(f"No executions found for granule {granule_id}")
+            raise RuntimeError(f"No executions found for granule {granule_id}")
         oldest_execution = get_oldest_execution(executions)
         execution_map[granule_id] = (
             handle_parent_execution(oldest_execution, api)
@@ -93,7 +98,7 @@ def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
         # sanity-check the granule ID in the CNM message matches the producer Granule ID
         cnm_granule_id = execution_map[granule_id].get("product", {}).get("name")
         if cnm_granule_id is None or cnm_granule_id not in granule_id:
-            raise ValueError(
+            raise RuntimeError(
                 f"Found differing granule IDs for granule in CNM message "
                 f"({cnm_granule_id}) and Cumulus message ({granule_id})"
             )

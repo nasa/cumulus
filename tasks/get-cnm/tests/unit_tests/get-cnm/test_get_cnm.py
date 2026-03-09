@@ -278,7 +278,7 @@ def test_lambda_adapter_raises_on_no_executions_found(mocked_api) -> None:
         search_executions_by_granules_response
     )
     with pytest.raises(
-        ValueError,
+        RuntimeError,
         match=f"No executions found for granule {second_input_granule_name}",
     ):
         lambda_adapter(input_event, None)
@@ -325,7 +325,7 @@ def test_lambda_adapter_raises_on_cnm_granule_mismatch(mocked_api) -> None:
         search_executions_by_granules_response
     )
     with pytest.raises(
-        ValueError,
+        RuntimeError,
         match=re.escape(
             f"Found differing granule IDs for granule in CNM message "
             f"({first_original_cnm_message['product']['name']}) and "
@@ -376,7 +376,7 @@ def test_lambda_adapter_raises_on_cnm_granule_missing(mocked_api) -> None:
         search_executions_by_granules_response
     )
     with pytest.raises(
-        ValueError,
+        RuntimeError,
         match=re.escape(
             f"Found differing granule IDs for granule in CNM message (None) and "
             f"Cumulus message ({first_input_granule_name})"
