@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import get from 'lodash/get';
 import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
@@ -13,6 +14,7 @@ import { getIngestUrl } from './getUrl';
 import { UmmMetadata, ummVersion } from './UmmUtils';
 const log = new Logger({ sender: 'cmr-client' });
 const { getRequiredEnvVar } = require('@cumulus/common/env');
+const launchpad = require('@cumulus/launchpad-auth');
 
 const logDetails: { [key: string]: string } = {
   file: 'cmr-client/CMR.js',
@@ -192,8 +194,37 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestCollection(xml: string): Promise<unknown> {
-    const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return await ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
+    //const headers = this.getWriteHeaders({ token: await this.getToken() });
+    //return await ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
+
+    const runs = 10;
+    const launchpadPassphraseSecretName = this.passwordSecretName
+      || process.env.launchpad_passphrase_secret_name || '';
+    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
+    for (let run = 0; run < runs; run += 1) {
+      try {
+        const headers = this.getWriteHeaders({ token: await this.getToken() });
+        return await ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
+      } catch (error) {
+        if (error.statusCode === 401) {
+          this.token = undefined;
+          // flush token somehow
+          if (this.oauthProvider === 'launchpad') {
+            const config = {
+              passphrase,
+              api: process.env.launchpad_api,
+              certificate: process.env.launchpad_certificate,
+            };
+            this.token = await launchpad.getLaunchpadToken(config);
+          }
+          const delay = 2 ** run * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw new Error('ingestCollection failed after retries');
   }
 
   /**
@@ -204,8 +235,37 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml: string, cmrRevisionId?: string): Promise<unknown> {
-    const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
-    return await ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
+    //const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
+    //return await ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
+
+    const runs = 10;
+    const launchpadPassphraseSecretName = this.passwordSecretName
+      || process.env.launchpad_passphrase_secret_name || '';
+    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
+    for (let run = 0; run < runs; run += 1) {
+      try {
+        const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
+        return await ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
+      } catch (error) {
+        if (error.statusCode === 401) {
+          this.token = undefined;
+          // flush token somehow
+          if (this.oauthProvider === 'launchpad') {
+            const config = {
+              passphrase,
+              api: process.env.launchpad_api,
+              certificate: process.env.launchpad_certificate,
+            };
+            this.token = await launchpad.getLaunchpadToken(config);
+          }
+          const delay = 2 ** run * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw new Error('ingestGranule failed after retries');
   }
 
   /**
@@ -264,8 +324,37 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteCollection(datasetID: string): Promise<unknown> {
-    const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return await deleteConcept('collections', datasetID, this.provider, headers);
+    // const headers = this.getWriteHeaders({ token: await this.getToken() });
+    // return await deleteConcept('collections', datasetID, this.provider, headers);
+
+    const runs = 10;
+    const launchpadPassphraseSecretName = this.passwordSecretName
+      || process.env.launchpad_passphrase_secret_name || '';
+    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
+    for (let run = 0; run < runs; run += 1) {
+      try {
+        const headers = this.getWriteHeaders({ token: await this.getToken() });
+        return await deleteConcept('collections', datasetID, this.provider, headers);
+      } catch (error) {
+        if (error.statusCode === 401) {
+          this.token = undefined;
+          // flush token somehow
+          if (this.oauthProvider === 'launchpad') {
+            const config = {
+              passphrase,
+              api: process.env.launchpad_api,
+              certificate: process.env.launchpad_certificate,
+            };
+            this.token = await launchpad.getLaunchpadToken(config);
+          }
+          const delay = 2 ** run * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw new Error('deleteCollection failed after retries');
   }
 
   /**
@@ -275,8 +364,37 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteGranule(granuleUR: string): Promise<unknown> {
-    const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return await deleteConcept('granules', granuleUR, this.provider, headers);
+    // const headers = this.getWriteHeaders({ token: await this.getToken() });
+    // return await deleteConcept('granules', granuleUR, this.provider, headers);
+
+    const runs = 10;
+    const launchpadPassphraseSecretName = this.passwordSecretName
+      || process.env.launchpad_passphrase_secret_name || '';
+    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
+    for (let run = 0; run < runs; run += 1) {
+      try {
+        const headers = this.getWriteHeaders({ token: await this.getToken() });
+        return await deleteConcept('granules', granuleUR, this.provider, headers);
+      } catch (error) {
+        if (error.statusCode === 401) {
+          this.token = undefined;
+          // flush token somehow
+          if (this.oauthProvider === 'launchpad') {
+            const config = {
+              passphrase,
+              api: process.env.launchpad_api,
+              certificate: process.env.launchpad_certificate,
+            };
+            this.token = await launchpad.getLaunchpadToken(config);
+          }
+          const delay = 2 ** run * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw new Error('deleteGranule failed after retries');
   }
 
   async searchConcept(
@@ -285,15 +403,51 @@ export class CMR {
     format = 'json',
     recursive = true
   ): Promise<unknown[]> {
-    const headers = this.getReadHeaders({ token: await this.getToken() });
-    return await searchConcept({
-      type,
-      searchParams,
-      previousResults: [],
-      headers,
-      format,
-      recursive,
-    });
+    // const headers = this.getReadHeaders({ token: await this.getToken() });
+    // return await searchConcept({
+    //   type,
+    //   searchParams,
+    //   previousResults: [],
+    //   headers,
+    //   format,
+    //   recursive,
+    // });
+
+    const runs = 10;
+    const launchpadPassphraseSecretName = this.passwordSecretName
+      || process.env.launchpad_passphrase_secret_name || '';
+    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
+    for (let run = 0; run < runs; run += 1) {
+      try {
+        const headers = this.getReadHeaders({ token: await this.getToken() });
+        return await searchConcept({
+          type,
+          searchParams,
+          previousResults: [],
+          headers,
+          format,
+          recursive,
+        });
+      } catch (error) {
+        if (error.statusCode === 401) {
+          this.token = undefined;
+          // flush token somehow
+          if (this.oauthProvider === 'launchpad') {
+            const config = {
+              passphrase,
+              api: process.env.launchpad_api,
+              certificate: process.env.launchpad_certificate,
+            };
+            this.token = await launchpad.getLaunchpadToken(config);
+          }
+          const delay = 2 ** run * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw new Error('searchConcept failed after retries');
   }
 
   /**
@@ -349,7 +503,36 @@ export class CMR {
    * @returns {Object} - metadata as a JS object, null if not found
    */
   async getGranuleMetadata(cmrLink: string): Promise<unknown> {
-    const headers = this.getReadHeaders({ token: await this.getToken() });
-    return await getConceptMetadata(cmrLink, headers);
+    // const headers = this.getReadHeaders({ token: await this.getToken() });
+    // return await getConceptMetadata(cmrLink, headers);
+
+    const runs = 10;
+    const launchpadPassphraseSecretName = this.passwordSecretName
+      || process.env.launchpad_passphrase_secret_name || '';
+    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
+    for (let run = 0; run < runs; run += 1) {
+      try {
+        const headers = this.getReadHeaders({ token: await this.getToken() });
+        return await getConceptMetadata(cmrLink, headers);
+      } catch (error) {
+        if (error.statusCode === 401) {
+          this.token = undefined;
+          // flush token somehow
+          if (this.oauthProvider === 'launchpad') {
+            const config = {
+              passphrase,
+              api: process.env.launchpad_api,
+              certificate: process.env.launchpad_certificate,
+            };
+            this.token = await launchpad.getLaunchpadToken(config);
+          }
+          const delay = 2 ** run * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw new Error('getGranuleMetadata failed after retries');
   }
 }
