@@ -33,10 +33,7 @@ jobs:
             [ -z "$LOCKFILE" ] && continue
             DIR=$(dirname "$LOCKFILE")
             echo "Exporting in $DIR"
-            (
-              cd "$DIR"
-              uv export --format requirements-txt --output-file requirements.txt
-            )
+            uv export --directory "$DIR" --format requirements-txt --output-file "$DIR/requirements.txt"
           done < changed_lockfiles.txt
 
       - name: Commit updated requirements.txt files
