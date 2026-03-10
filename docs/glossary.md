@@ -92,7 +92,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### Developer
 
-  Those who setup deployment and workflow management for Cumulus. Sometimes referred to as an integrator. *See [integrator](#integrator)*.
+  Those who setup deployment and workflow management for Cumulus. Sometimes referred to as an integrator. *See [integrator](#integratordeveloper)*.
 
 ### ECS
 

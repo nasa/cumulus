@@ -10,7 +10,6 @@ import pRetry from 'p-retry';
 import pWaitFor from 'p-wait-for';
 import TimeoutError from 'p-timeout';
 import pump from 'pump';
-import querystring from 'querystring';
 import { Readable, TransformOptions } from 'stream';
 import { deprecate } from 'util';
 
@@ -437,7 +436,7 @@ const getObjectTags = async (bucket: string, key: string) => {
 const getObjectTaggingString = async (bucket: string, key: string): Promise<string> => {
   const tags = await getObjectTags(bucket, key);
 
-  return querystring.stringify(tags);
+  return new URLSearchParams(tags).toString();
 };
 
 /**

@@ -2,10 +2,10 @@
   "title": "QueueGranulesInput",
   "description": "Describes the input and config used by the queue-granules task",
   "type": "object",
-  "require": [ "granules" ],
+  "required": [ "granules" ],
   "properties": {
     "pdr": {
-      "type": "object",
+      "type": ["object", "null"],
       "required": ["name", "path"],
       "properties": {
         "name": { "type": "string" },

@@ -22,9 +22,9 @@
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
+    "build": "npm run tsc && chmod +x ./dist/generate-task-schemas.js",
     "tsc": "../../node_modules/.bin/tsc",
-    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles && chmod +x ./dist/generate-task-schemas.js",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "bin": {
@@ -43,8 +43,11 @@
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  },
   "dependencies": {
-    "json-schema-to-typescript": "^13.0.2",
+    "json-schema-to-typescript": "^15.0.4",
     "json-templates": "^4.1.0",
     "lodash": "^4.17.21"
   }
