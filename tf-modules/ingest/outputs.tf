@@ -12,11 +12,19 @@ output "add_unique_granule_id_task" {
   }
 }
 
+output "aws_api_proxy_task" {
+  value = {
+    task_arn           = module.aws_api_proxy.cumulus_task_lambda.arn
+    task_log_group     = module.aws_api_proxy.cumulus_task_log_group_name
+    last_modified_date = module.aws_api_proxy.cumulus_task_lambda.last_modified
+  }
+}
+
 output "cnm_response_task" {
   value = {
-    task_arn           = module.cnm_response_task.lambda_function.arn
-    task_log_group     = module.cnm_response_task.log_group.name
-    last_modified_date = module.cnm_response_task.lambda_function.last_modified
+    task_arn           = module.cnm_response_task.cumulus_task_lambda.arn
+    task_log_group     = module.cnm_response_task.cumulus_task_log_group_name
+    last_modified_date = module.cnm_response_task.cumulus_task_lambda.last_modified
   }
 }
 
@@ -51,17 +59,9 @@ output "files_to_granules_task" {
 
 output "granule_invalidator_task" {
   value = {
-    task_arn           = module.granule_invalidator_task.lambda_function.arn
-    task_log_group     = module.granule_invalidator_task.log_group.name
-    last_modified_date = module.granule_invalidator_task.lambda_function.last_modified
-  }
-}
-
-output "aws_api_proxy_task" {
-  value = {
-    task_arn           = module.aws_api_proxy.cumulus_task_lambda.arn
-    task_log_group     = module.aws_api_proxy.cumulus_task_log_group_name
-    last_modified_date = module.aws_api_proxy.cumulus_task_lambda.last_modified
+    task_arn           = module.granule_invalidator_task.cumulus_task_lambda.arn
+    task_log_group     = module.granule_invalidator_task.cumulus_task_log_group_name
+    last_modified_date = module.granule_invalidator_task.cumulus_task_lambda.last_modified
   }
 }
 
