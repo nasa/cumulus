@@ -119,6 +119,48 @@ export class CMR {
   }
 
   /**
+  * Get the number of runs and launchpad passphrase for retrying CMR concept requests
+  * that require authentication
+  *
+  * @returns {Promise<{ runs: number, passphrase: string }>} Retry configuration containing
+  * the maximum number of retry attempts along with the launchpad passphrase.
+  */
+  async getRetryConceptConfig() {
+    const runs = 10;
+    const launchpadPassphraseSecretName = this.passwordSecretName || process.env.launchpad_passphrase_secret_name || '';
+    const passphrase = await secretsManagerUtils.getSecretString(
+      launchpadPassphraseSecretName
+    );
+    return { runs, passphrase };
+  }
+
+  /**
+  * Handle the error from CMR concept requests that require authentication
+  * @param {any} error - the error thrown from the CMR request
+  * @param {number} run - the current retry attempt
+  * @param {string} [passphrase] - launchpad passphrase for getting a new token
+  * @returns {Promise<void>}
+  */
+  async handleAuthRetry(error: any, run: number, passphrase: string | undefined) {
+    if (error.statusCode !== 401) {
+      throw error;
+    }
+
+    if (this.oauthProvider === 'launchpad') {
+      this.token = undefined;
+      const config = {
+        passphrase,
+        api: process.env.launchpad_api,
+        certificate: process.env.launchpad_certificate,
+      };
+      this.token = await launchpad.getLaunchpadToken(config);
+    }
+
+    const delay = 2 ** run * 1000;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+
+  /**
    * The method for getting the token
    *
    * @returns {Promise.<string | undefined>} the token
@@ -194,34 +236,13 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestCollection(xml: string): Promise<unknown> {
-    //const headers = this.getWriteHeaders({ token: await this.getToken() });
-    //return await ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
-
-    const runs = 10;
-    const launchpadPassphraseSecretName = this.passwordSecretName
-      || process.env.launchpad_passphrase_secret_name || '';
-    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
+    const { runs, passphrase } = await this.getRetryConceptConfig();
     for (let run = 0; run < runs; run += 1) {
       try {
         const headers = this.getWriteHeaders({ token: await this.getToken() });
         return await ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
       } catch (error) {
-        if (error.statusCode === 401) {
-          this.token = undefined;
-          // flush token somehow
-          if (this.oauthProvider === 'launchpad') {
-            const config = {
-              passphrase,
-              api: process.env.launchpad_api,
-              certificate: process.env.launchpad_certificate,
-            };
-            this.token = await launchpad.getLaunchpadToken(config);
-          }
-          const delay = 2 ** run * 1000;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else {
-          throw error;
-        }
+        await this.handleAuthRetry(error, run, passphrase);
       }
     }
     throw new Error('ingestCollection failed after retries');
@@ -235,34 +256,13 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml: string, cmrRevisionId?: string): Promise<unknown> {
-    //const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
-    //return await ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
-
-    const runs = 10;
-    const launchpadPassphraseSecretName = this.passwordSecretName
-      || process.env.launchpad_passphrase_secret_name || '';
-    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
+    const { runs, passphrase } = await this.getRetryConceptConfig();
     for (let run = 0; run < runs; run += 1) {
       try {
         const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
         return await ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
       } catch (error) {
-        if (error.statusCode === 401) {
-          this.token = undefined;
-          // flush token somehow
-          if (this.oauthProvider === 'launchpad') {
-            const config = {
-              passphrase,
-              api: process.env.launchpad_api,
-              certificate: process.env.launchpad_certificate,
-            };
-            this.token = await launchpad.getLaunchpadToken(config);
-          }
-          const delay = 2 ** run * 1000;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else {
-          throw error;
-        }
+        await this.handleAuthRetry(error, run, passphrase);
       }
     }
     throw new Error('ingestGranule failed after retries');
@@ -324,34 +324,14 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteCollection(datasetID: string): Promise<unknown> {
-    // const headers = this.getWriteHeaders({ token: await this.getToken() });
-    // return await deleteConcept('collections', datasetID, this.provider, headers);
+    const { runs, passphrase } = await this.getRetryConceptConfig();
 
-    const runs = 10;
-    const launchpadPassphraseSecretName = this.passwordSecretName
-      || process.env.launchpad_passphrase_secret_name || '';
-    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
     for (let run = 0; run < runs; run += 1) {
       try {
         const headers = this.getWriteHeaders({ token: await this.getToken() });
         return await deleteConcept('collections', datasetID, this.provider, headers);
       } catch (error) {
-        if (error.statusCode === 401) {
-          this.token = undefined;
-          // flush token somehow
-          if (this.oauthProvider === 'launchpad') {
-            const config = {
-              passphrase,
-              api: process.env.launchpad_api,
-              certificate: process.env.launchpad_certificate,
-            };
-            this.token = await launchpad.getLaunchpadToken(config);
-          }
-          const delay = 2 ** run * 1000;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else {
-          throw error;
-        }
+        await this.handleAuthRetry(error, run, passphrase);
       }
     }
     throw new Error('deleteCollection failed after retries');
@@ -364,34 +344,14 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteGranule(granuleUR: string): Promise<unknown> {
-    // const headers = this.getWriteHeaders({ token: await this.getToken() });
-    // return await deleteConcept('granules', granuleUR, this.provider, headers);
+    const { runs, passphrase } = await this.getRetryConceptConfig();
 
-    const runs = 10;
-    const launchpadPassphraseSecretName = this.passwordSecretName
-      || process.env.launchpad_passphrase_secret_name || '';
-    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
     for (let run = 0; run < runs; run += 1) {
       try {
         const headers = this.getWriteHeaders({ token: await this.getToken() });
         return await deleteConcept('granules', granuleUR, this.provider, headers);
       } catch (error) {
-        if (error.statusCode === 401) {
-          this.token = undefined;
-          // flush token somehow
-          if (this.oauthProvider === 'launchpad') {
-            const config = {
-              passphrase,
-              api: process.env.launchpad_api,
-              certificate: process.env.launchpad_certificate,
-            };
-            this.token = await launchpad.getLaunchpadToken(config);
-          }
-          const delay = 2 ** run * 1000;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else {
-          throw error;
-        }
+        await this.handleAuthRetry(error, run, passphrase);
       }
     }
     throw new Error('deleteGranule failed after retries');
@@ -403,20 +363,8 @@ export class CMR {
     format = 'json',
     recursive = true
   ): Promise<unknown[]> {
-    // const headers = this.getReadHeaders({ token: await this.getToken() });
-    // return await searchConcept({
-    //   type,
-    //   searchParams,
-    //   previousResults: [],
-    //   headers,
-    //   format,
-    //   recursive,
-    // });
+    const { runs, passphrase } = await this.getRetryConceptConfig();
 
-    const runs = 10;
-    const launchpadPassphraseSecretName = this.passwordSecretName
-      || process.env.launchpad_passphrase_secret_name || '';
-    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
     for (let run = 0; run < runs; run += 1) {
       try {
         const headers = this.getReadHeaders({ token: await this.getToken() });
@@ -429,22 +377,7 @@ export class CMR {
           recursive,
         });
       } catch (error) {
-        if (error.statusCode === 401) {
-          this.token = undefined;
-          // flush token somehow
-          if (this.oauthProvider === 'launchpad') {
-            const config = {
-              passphrase,
-              api: process.env.launchpad_api,
-              certificate: process.env.launchpad_certificate,
-            };
-            this.token = await launchpad.getLaunchpadToken(config);
-          }
-          const delay = 2 ** run * 1000;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else {
-          throw error;
-        }
+        await this.handleAuthRetry(error, run, passphrase);
       }
     }
     throw new Error('searchConcept failed after retries');
@@ -503,34 +436,14 @@ export class CMR {
    * @returns {Object} - metadata as a JS object, null if not found
    */
   async getGranuleMetadata(cmrLink: string): Promise<unknown> {
-    // const headers = this.getReadHeaders({ token: await this.getToken() });
-    // return await getConceptMetadata(cmrLink, headers);
+    const { runs, passphrase } = await this.getRetryConceptConfig();
 
-    const runs = 10;
-    const launchpadPassphraseSecretName = this.passwordSecretName
-      || process.env.launchpad_passphrase_secret_name || '';
-    const passphrase = await secretsManagerUtils.getSecretString(launchpadPassphraseSecretName);
     for (let run = 0; run < runs; run += 1) {
       try {
         const headers = this.getReadHeaders({ token: await this.getToken() });
         return await getConceptMetadata(cmrLink, headers);
       } catch (error) {
-        if (error.statusCode === 401) {
-          this.token = undefined;
-          // flush token somehow
-          if (this.oauthProvider === 'launchpad') {
-            const config = {
-              passphrase,
-              api: process.env.launchpad_api,
-              certificate: process.env.launchpad_certificate,
-            };
-            this.token = await launchpad.getLaunchpadToken(config);
-          }
-          const delay = 2 ** run * 1000;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else {
-          throw error;
-        }
+        await this.handleAuthRetry(error, run, passphrase);
       }
     }
     throw new Error('getGranuleMetadata failed after retries');
