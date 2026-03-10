@@ -7,7 +7,7 @@ const isNull = require('lodash/isNull');
 const sortBy = require('lodash/sortBy');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const sinon = require('sinon');
 
 const {
