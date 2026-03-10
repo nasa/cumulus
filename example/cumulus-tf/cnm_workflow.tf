@@ -1,6 +1,5 @@
 module "cnm_workflow" {
   depends_on = [
-    aws_lambda_function.cnm_response_task,
     aws_lambda_function.cnm_to_cma_task
   ]
 
@@ -17,7 +16,7 @@ module "cnm_workflow" {
     {
       add_unique_granule_id_arn: module.cumulus.add_unique_granule_id_task.task_arn,
       cnm_to_cma_task_arn: aws_lambda_function.cnm_to_cma_task.arn,
-      cnm_response_task_arn: aws_lambda_function.cnm_response_task.arn,
+      cnm_response_task_arn: module.cumulus.cnm_response_task.task_arn,
       fake_processing_task_arn: module.cumulus.fake_processing_task.task_arn,
       files_to_granules_task_arn: module.cumulus.files_to_granules_task.task_arn,
       hyrax_metadata_updates_task_arn: module.cumulus.hyrax_metadata_updates_task.task_arn,

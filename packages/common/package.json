@@ -28,7 +28,7 @@
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
+    "build": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
@@ -62,7 +62,7 @@
     "parseurl": "^1.3.3",
     "randexp": "^0.5.3",
     "url-join": "^4.0.0",
-    "uuid": "^3.2.1"
+    "uuid": "^8.2.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^5.0.0",

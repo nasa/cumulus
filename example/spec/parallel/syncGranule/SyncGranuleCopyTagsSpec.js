@@ -9,7 +9,6 @@
 
 const get = require('lodash/get');
 const pAll = require('p-all');
-const querystring = require('querystring');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
@@ -57,7 +56,7 @@ describe('The SyncGranule task', () => {
         Bucket: sourceBucket,
         Key: sourceKey,
         Body: 'asdf',
-        Tagging: querystring.stringify({ granuleId }),
+        Tagging: new URLSearchParams({ granuleId }).toString(),
       });
 
       // Call syncGranule

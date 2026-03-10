@@ -296,6 +296,7 @@ module.exports = {
   testWorkflow,
   buildAndStartWorkflow,
   buildAndExecuteWorkflow,
+  executeWorkflow,
   isReingestExecutionForGranuleId,
   stateMachineExists,
 };
