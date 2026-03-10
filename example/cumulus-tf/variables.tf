@@ -298,6 +298,7 @@ variable "archive_api_users" {
     "mobrien84",
     "mikedorfman",
     "nnageswa",
+    "norrisdj",
     "npauzenga",
     "reweeden",
     "terrafirma13",
