@@ -41,7 +41,7 @@ def handle_parent_execution(execution: dict, api: CumulusApi) -> dict | None:
     return None
 
 
-def get_oldest_execution(executions: list[dict]) -> dict:
+def get_oldest_execution(executions: list[dict]) -> dict | None:
     """Get the oldest execution from a list of executions."""
     return min(
         executions,
