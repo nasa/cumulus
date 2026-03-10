@@ -21,5 +21,6 @@
       "sampleFileName": "L2_HR_PIXC_product_0001-of-4154.cmr.xml",
       "type": "metadata"
     }
-  ]
+  ],
+  "cmrProvider": "PODAAC_SWOT"
 }

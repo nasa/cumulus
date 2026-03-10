@@ -25,5 +25,6 @@
   "meta": {
     "uniquifyGranuleId": true,
     "hashLength": 6
-  }
+  },
+  "cmrProvider": "PODAAC_SWOT"
 }
