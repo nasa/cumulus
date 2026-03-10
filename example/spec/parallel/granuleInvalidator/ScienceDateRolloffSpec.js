@@ -49,6 +49,7 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
           sampleFileName: 'sample.h5',
         },
       ],
+      cmrProvider: "PODAAC_SWOT",
     };
 
     await createCollection({ prefix: config.stackName,
