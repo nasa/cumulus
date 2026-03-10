@@ -2,18 +2,7 @@ locals {
   task_root = "${path.module}/../"
   zip_subdir = "dist/final/lambda.zip"
   subnet_id_name = "Private application ${data.aws_region.current.name}a subnet"
-
-  # We may need to use this in the future if we don't have easy access to the role arn
-  #lambda_processing_role_arn = one(data.aws_iam_roles.lambda_processing_role.arns)
 }
-
-# We may need to use this in the future if we don't have easy access to the role arn
-#check "lambda_processing_role_exists" {
-#  assert {
-#    condition = length(data.aws_iam_roles.lambda_processing_role.arns) == 1
-#    error_message = format("lambda_processing_role_pattern (%s) matched zero or more than one role.", var.lambda_processing_role_pattern)
-#  }
-#}
 
 check "subnet_id_exists" {
   assert {
@@ -23,11 +12,6 @@ check "subnet_id_exists" {
 }
 
 data "aws_region" "current" {}
-
-# We may need to use this in the future if we don't have easy access to the role arn
-#data "aws_iam_roles" "lambda_processing_role" {
-#  name_regex = var.lambda_processing_role_pattern
-#}
 
 data "aws_subnets" "subnet_ids" {
   tags = {
