@@ -160,8 +160,8 @@ const collectionMapping : TypeMapping = {
     url_path: value,
   }),
   cmrProvider: (value?: string) => ({
-    cmr_provider: value
-  })
+    cmr_provider: value,
+  }),
 };
 
 const executionMapping : TypeMapping = {
