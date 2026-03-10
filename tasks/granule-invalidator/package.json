@@ -9,14 +9,7 @@
     "type": "git",
     "url": "https://github.com/nasa/cumulus"
   },
-  "scripts": {
-    "test": "uv run pytest -q",
-    "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src",
-    "clean": "rm -rf dist && rm -rf .venv && mkdir dist",
-    "build": "uv sync",
-    "package": "npm run clean && ../../bin/package_uv.sh 3.13 ${PWD}",
-    "install-python-deps": "npm run build"
-  },
+  "scripts": {},
   "publishConfig": {
     "access": "restricted"
   },
