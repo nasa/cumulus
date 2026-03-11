@@ -2,6 +2,7 @@
 
 const { z } = require('zod');
 const isError = require('lodash/isError');
+const Logger = require('@cumulus/logger');
 const { getJsonS3Object, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const {
   getWorkflowsListKeyPrefix,
@@ -10,7 +11,6 @@ const {
 const router = require('express-promise-router')();
 const { zodParser } = require('../src/zod-utils');
 const { returnCustomValidationErrors } = require('../lib/endpoints');
-const Logger = require('@cumulus/logger');
 const log = new Logger({ sender: '@cumulus/api/workflows' });
 
 /**
