@@ -282,6 +282,7 @@ variable "archive_api_users" {
     "acyu",
     "atisdale",
     "awisdom",
+    "blokey",
     "cbanh",
     "chuang14",
     "cdurbin",
