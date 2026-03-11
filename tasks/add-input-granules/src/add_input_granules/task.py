@@ -16,11 +16,15 @@ def _get_granules_from_exc(executions: list) -> list:
     :param executions: List of execution ARNs or execution objects.
     """
     cml = CumulusApi()
+    arns = [exc["arn"] if isinstance(exc, dict) else exc for exc in executions]
+    response = cml.list_executions(
+        arn__in=",".join(arns), fields="finalPayload", limit=None
+    )
+    results = response.get("results", [])
+
     input_granules = []
-    for exc in executions:
-        arn = exc["arn"] if isinstance(exc, dict) else exc
-        exc_obj = cml.get_execution(arn)
-        granules = exc_obj["finalPayload"].get("granules", [])
+    for execution in results:
+        granules = execution["finalPayload"].get("granules", [])
         for granule in granules:
             input_granules.append(granule)
     logger.info("INPUT GRANULES \n" + json.dumps(input_granules))
