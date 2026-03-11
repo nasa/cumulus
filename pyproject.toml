@@ -91,6 +91,3 @@ warn_unused_ignores = true
 
 [tool.uv.workspace]
 exclude = ["tasks/*", "examples/*"]
-members = [
-    "packages",
-]
