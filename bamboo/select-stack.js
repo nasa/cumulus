@@ -20,6 +20,7 @@ function determineIntegrationTestStackName(cb) {
     'Charles Huang': 'ch-ci',
     'Brandon Lokey': 'blokey-ci',
     'Bryan Wexler': 'bwexler-ci',
+    'Charles Collins': 'ccollins-ci',
     'Chris Durbin': 'cdd-ci',
     'Curtis Banh': 'cbanh-ci',
     dhudelson: 'dh-ci',
