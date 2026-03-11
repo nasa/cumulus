@@ -127,7 +127,8 @@ Please complete the following steps before upgrading Cumulus.
 - **OTHER**
   - Corrected misspelling in README.md related to installing `uv`.
   - Added override for `tar` in package.json.
-
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
 ### Fixed
 
