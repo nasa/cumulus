@@ -258,6 +258,6 @@ test('GET /workflows with order and fields queryStringParams returns the correct
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.deepEqual(response.body[0], { name: 'HelloWorldWorkflow', asdf: 'undefined', cumulus: 'undefined' }, 'Response using fields queryParam does not return the expected workflow');
-  t.deepEqual(response.body[1], { name: 'SecondTestWorkflow', asdf: 'undefined', cumulus: 'undefined' }, 'Response using fields queryParam does not return the expected workflow');
+  t.deepEqual(response.body[0], { name: 'HelloWorldWorkflow', asdf: null, cumulus: null }, 'Response using fields queryParam does not return the expected workflow');
+  t.deepEqual(response.body[1], { name: 'SecondTestWorkflow', asdf: null, cumulus: null }, 'Response using fields queryParam does not return the expected workflow');
 });
