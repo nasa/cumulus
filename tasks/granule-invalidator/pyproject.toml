@@ -28,4 +28,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-cumulus-api = { git = "https://github.com/ghrcdaac/cumulus-api", tag = "v3.0.4" }
+cumulus-api = { git = "https://github.com/nasa/Cumulus-API-Python", tag = "v3.2.1" }
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

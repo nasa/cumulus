@@ -41,6 +41,9 @@ eyen:
 dms-opex-sbx:
   bucket: dms-opex-sbx-internal
 
+dnorris:
+  bucket: dnorris-internal
+
 jl-tf:
   bucket: jl-test-integration-internal
 
@@ -73,3 +76,6 @@ rs:
 
 yliu10-tf:
   bucket: yliu10-sandbox-internal
+
+blokey:
+  bucket: blokey-internal
