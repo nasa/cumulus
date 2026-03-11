@@ -16,7 +16,8 @@
     "build": "uv sync",
     "package": "npm run clean && ./bin/package.sh $(pwd)",
     "install-python-deps": "npm run build",
-    "update-python-version": "uv version --"
+    "update-python-version": "uv version --",
+    "uv-export": "uv export -q --no-header --format requirements-txt --output-file requirements.txt"
   },
   "publishConfig": {
     "access": "restricted"

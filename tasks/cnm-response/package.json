@@ -22,7 +22,8 @@
     "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src/cnm_response",
     "package": "npm run clean && ../../bin/package_uv.sh 3.12 ${PWD}",
     "update-python-version": "uv version --",
-    "test": "uv run pytest -q"
+    "test": "uv run pytest -q",
+    "uv-export": "uv export -q --no-header --format requirements-txt --output-file requirements.txt"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"
