@@ -73,7 +73,7 @@ async function list(req, res) {
       Object.fromEntries(fields.map((field) => {
         if (!(field in workflow)) {
           log.warn(`Field "${field}" not found in workflow "${workflow.name}"`);
-          return [field, 'undefined'];
+          return [field, null];
         }
         return [field, workflow[field]];
       })));
