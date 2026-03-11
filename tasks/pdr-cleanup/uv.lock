@@ -242,7 +242,6 @@ wheels = [
 
 [[package]]
 name = "pdr-cleanup"
-version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "boto3" },

@@ -15,7 +15,8 @@
     "clean": "rm -rf dist && rm -rf lib && rm -rf .venv && mkdir dist && mkdir lib",
     "build": "uv sync",
     "package": "npm run clean && ./bin/package.sh $(pwd)",
-    "install-python-deps": "npm run build"
+    "install-python-deps": "npm run build",
+    "update-python-version": "sh -c 'printf \"%s\" \"$1\" > VERSION && uv lock --upgrade' --"
   },
   "publishConfig": {
     "access": "restricted"

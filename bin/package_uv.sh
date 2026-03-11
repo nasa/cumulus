@@ -7,6 +7,7 @@ DIST_DIR="dist"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FULL_DIST_DIR=${TASK_DIR}/${DIST_DIR}
 
+
 mkdir -p "${FULL_DIST_DIR}"/{build,packages,final};
 
 uv export \
