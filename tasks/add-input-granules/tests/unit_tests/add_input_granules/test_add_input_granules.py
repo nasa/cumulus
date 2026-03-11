@@ -24,23 +24,28 @@ def mock_cumulus_api() -> Generator[MagicMock, None, None]:
     with patch("src.add_input_granules.task.CumulusApi") as mock_api:
         mock_api_instance = MagicMock()
         mock_api.return_value = mock_api_instance
-        mock_api_instance.get_execution.side_effect = lambda arn: {
-            "finalPayload": {
-                "granules": [
-                    {
-                        "granuleId": f"{arn.split(':')[-1]}-granule.nc",
-                        "files": [
+        mock_api_instance.list_executions.side_effect = lambda arn__in, fields, limit: {
+            "results": [
+                {
+                    "finalPayload": {
+                        "granules": [
                             {
-                                "fileName": f"{arn.split(':')[-1]}-granule.nc",
-                                "bucket": "test-bucket",
-                                "key": f"dir/{arn.split(':')[-1]}-granule.nc",
-                                "size": 12345,
-                                "type": "data",
+                                "granuleId": f"{arn.split(':')[-1]}-granule.nc",
+                                "files": [
+                                    {
+                                        "fileName": f"{arn.split(':')[-1]}-granule.nc",
+                                        "bucket": "test-bucket",
+                                        "key": f"dir/{arn.split(':')[-1]}-granule.nc",
+                                        "size": 12345,
+                                        "type": "data",
+                                    }
+                                ],
                             }
                         ],
                     }
-                ],
-            }
+                }
+                for arn in arn__in.split(",")
+            ]
         }
         yield mock_api_instance
 
