@@ -30,7 +30,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **CUMULUS-4608**
-  - Fixed bug where worfkow list endpoint /workflows would error if a workflow field was undefined.   The API response now returns null for undefined fields and the sort method converts the value to string before sorting.
+  - Fixed bug where workflow list endpoint /workflows would error if a workflow field was undefined.   The API response now returns null for undefined fields and the sort method converts the value to string before sorting.
 - **CUMULUS-4566**
   - Updated AJV to ^8.18.0
     - Updated task components to resolve malformed/errant task schemas in the following lambdas:
