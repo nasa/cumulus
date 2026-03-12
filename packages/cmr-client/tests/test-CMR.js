@@ -7,6 +7,7 @@ const some = require('lodash/some');
 
 const awsServices = require('@cumulus/aws-client/services');
 const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
+const launchpad = require('@cumulus/launchpad-auth');
 const { CMRInternalError } = require('@cumulus/errors');
 
 const { CMR } = require('../CMR');
@@ -16,17 +17,17 @@ const sandbox = sinon.createSandbox();
 test.before(() => {
   nock.disableNetConnect();
   nock.enableNetConnect(/(localhost|127.0.0.1)/);
-  sinon.stub(secretsManagerUtils, 'getSecretString')
-    .resolves('secretString');
+  sandbox.stub(secretsManagerUtils, 'getSecretString').resolves('secretString');
+  sandbox.stub(launchpad, 'getLaunchpadToken').resolves('launchpadToken');
 });
 
 test.afterEach.always(() => {
   nock.cleanAll();
-  sandbox.restore();
 });
 
 test.after.always(() => {
   nock.enableNetConnect();
+  sandbox.restore();
 });
 
 test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
@@ -278,4 +279,80 @@ test('getToken throws if no username is provided when using Earthdata Login', as
     () => cmrObj.getToken(),
     { message: 'Username not specified for non-launchpad CMR client' }
   );
+});
+
+test('getRetryConceptConfig returns current number of runs and launchpad passphrase secret name', async (t) => {
+  const cmrClient1 = new CMR({
+    provider: 'CUMULUS',
+    oauthProvider: 'launchpad',
+    clientId: 'clientId',
+    username: 'username',
+    password: 'password',
+    token: 'abcde',
+    passwordSecretName: 'secret-name',
+  });
+  const retryConfig1 = await cmrClient1.getRetryConceptConfig();
+  t.is(retryConfig1.runs, 10);
+  t.is(retryConfig1.passphrase, 'secretString');
+
+  process.env.launchpad_passphrase_secret_name = 'env-secret-name';
+  const cmrClient2 = new CMR({
+    provider: 'CUMULUS',
+    oauthProvider: 'launchpad',
+    clientId: 'clientId',
+    username: 'username',
+    password: 'password',
+    token: 'abcde',
+  });
+  const retryConfig2 = await cmrClient2.getRetryConceptConfig();
+  t.is(retryConfig2.runs, 10);
+  t.is(retryConfig2.passphrase, 'secretString');
+
+  delete process.env.launchpad_passphrase_secret_name;
+});
+
+test('handleAuthRetry throws an error when the error is not a 401', async (t) => {
+  const cmrClient = new CMR({
+    provider: 'CUMULUS',
+    oauthProvider: 'launchpad',
+    clientId: 'clientId',
+    username: 'username',
+    password: 'password',
+    token: 'abcde',
+    passwordSecretName: 'secret-name',
+  });
+
+  const retryConfig = await cmrClient.getRetryConceptConfig();
+
+  const error = {
+    statusCode: 500,
+    statusMessage: 'Internal Server Error',
+  };
+
+  const thrownError = await t.throwsAsync(
+    cmrClient.handleAuthRetry(error, 1, retryConfig.passphrase)
+  );
+  t.true(thrownError.statusCode !== 401);
+});
+
+test('handleAuthRetry throws the error when the error is not a 401', async (t) => {
+  const cmrClient = new CMR({
+    provider: 'CUMULUS',
+    oauthProvider: 'launchpad',
+    clientId: 'clientId',
+    username: 'username',
+    password: 'password',
+    token: 'abcde',
+    passwordSecretName: 'secret-name',
+  });
+
+  const retryConfig = await cmrClient.getRetryConceptConfig();
+
+  const error = {
+    statusCode: 401,
+    statusMessage: 'Authentication with launchpad failed',
+  };
+
+  await t.notThrowsAsync(() => cmrClient.handleAuthRetry(error, 1, retryConfig.passphrase));
+  t.true(cmrClient.token === 'launchpadToken');
 });

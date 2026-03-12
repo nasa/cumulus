@@ -14,7 +14,7 @@ import { getIngestUrl } from './getUrl';
 import { UmmMetadata, ummVersion } from './UmmUtils';
 const log = new Logger({ sender: 'cmr-client' });
 const { getRequiredEnvVar } = require('@cumulus/common/env');
-const { launchpad } = require('@cumulus/launchpad-auth');
+const launchpad = require('@cumulus/launchpad-auth');
 
 const logDetails: { [key: string]: string } = {
   file: 'cmr-client/CMR.js',
@@ -143,7 +143,7 @@ export class CMR {
   */
   async handleAuthRetry(error: any, run: number, passphrase: string | undefined) {
     if (error.statusCode !== 401) {
-      throw error;
+      throw new Error(error.statusMessage || error.message);
     }
 
     if (this.oauthProvider === 'launchpad') {
