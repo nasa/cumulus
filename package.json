@@ -59,7 +59,7 @@
     "ci:bootstrap": "npm install --ignore-scripts && lerna run build && npm run bootstrap-python && lerna run prepublish",
     "ci:bootstrap-no-scripts": "npm install --ignore-scripts && npm run bootstrap-python",
     "ci:bootstrap-no-scripts-quiet": "npm install --ignore-scripts --loglevel error && npm run bootstrap-python",
-    "update": "lerna version --exact --force-publish --no-git-tag-version --no-push && npm run update-python-version",
+    "update": "lerna version --exact --force-publish --no-git-tag-version --no-push && npm run update-python-version -- $(jq -r '.version' lerna.json)",
     "update-python-version": "lerna run update-python-version --",
     "clean": "lerna run clean && lerna clean --yes && npm run remove-locks && rm -rf ./node_modules && rm -f package-lock.json && rm -f .bootstrapSha",
     "build": "lerna run --ignore @cumulus/cumulus-integration-tests build",
