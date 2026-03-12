@@ -187,6 +187,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
       const snsTopicName = timestampedName(`${config.stackName}_CnmSqsTestTopic`);
       const { TopicArn } = await createSnsTopic(snsTopicName);
       cnmResponseStream = TopicArn;
+      console.log(`Created SNS topic ${snsTopicName} with ARN ${cnmResponseStream}`);
       config.cnmResponseStream = cnmResponseStream;
 
       ruleList = await addRules(config, ruleDirectory, ruleOverride);

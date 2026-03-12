@@ -10,11 +10,13 @@ variable "lambda_subnet_ids" {
 variable "lambda_timeout" {
   description = "The timeout value for the Lambda function in seconds"
   type        = number
+  default     = 300
 }
 
 variable "lambda_memory_size" {
   description = "The memory size for the Lambda function in MB"
   type        = number
+  default     = 512
 }
 
 variable "log_retention_days" {
