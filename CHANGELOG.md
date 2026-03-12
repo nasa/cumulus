@@ -113,6 +113,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4514**
   - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
 
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
 ## [v21.3.0] 2026-01-26
 
 ### Migration Notes
@@ -196,8 +199,6 @@ Please complete the following steps before upgrading Cumulus.
 - **OTHER**
   - Corrected misspelling in README.md related to installing `uv`.
   - Added override for `tar` in package.json.
-- **CSD-91**
-  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
 ### Fixed
 
