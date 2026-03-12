@@ -1,6 +1,6 @@
 [project]
 name = "granule-invalidator"
-dynamic = ["version"]
+version = "21.3.1"
 description = "Identifies granules that fulfill specific criteria"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -14,9 +14,6 @@ dependencies = [
 homepage = "https://github.com/nasa/cumulus/blob/master/tasks/granule-invalidator"
 documentation = "https://github.com/nasa/cumulus/blob/master/tasks/granule-invalidator/README.md"
 repository = "https://github.com/nasa/cumulus.git"
-
-[tool.setuptools.dynamic]
-version = { file = ["VERSION"] }
 
 [dependency-groups]
 dev = [

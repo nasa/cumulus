@@ -98,6 +98,7 @@ wheels = [
 
 [[package]]
 name = "cnm-response"
+version = "21.3.1"
 source = { virtual = "." }
 dependencies = [
     { name = "boto3" },

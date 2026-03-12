@@ -15,7 +15,7 @@
       "build": "uv sync",
       "package": "npm run clean && cp -r ./schemas ./dist/packages && ../../bin/package_uv.sh 3.12 ${PWD}",
       "install-python-deps": "npm run build",
-      "update-python-version": "sh -c 'printf \"%s\" \"$1\" > VERSION && uv lock --upgrade' --"
+      "update-python-version": "uv version --"
     },
     "publishConfig": {
       "access": "restricted"

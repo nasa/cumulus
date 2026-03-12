@@ -1,6 +1,6 @@
 [project]
 name = "cumulus"
-dynamic = ["version"]
+version = "21.3.1"
 requires-python = "~=3.12.0"
 
 [dependency-groups]
@@ -8,9 +8,6 @@ lint = [
   "pre-commit>=4.5.1",
   "ruff~=0.14.0",
 ]
-
-[tool.setuptools.dynamic]
-version = { file = ["VERSION"] }
 
 # Repo wide linting rules.
 #
