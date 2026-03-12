@@ -1,5 +1,4 @@
 // @ts-check
-
 'use strict';
 
 const { z } = require('zod');
