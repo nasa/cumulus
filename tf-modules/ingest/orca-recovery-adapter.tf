@@ -13,9 +13,9 @@ resource "aws_lambda_function" "orca_recovery_adapter_task" {
 
   environment {
     variables = {
-      stackName                   = var.prefix
-      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
-      orca_sfn_recovery_workflow_arn     = var.orca_sfn_recovery_workflow_arn
+      stackName                      = var.prefix
+      CUMULUS_MESSAGE_ADAPTER_DIR    = "/opt/"
+      orca_sfn_recovery_workflow_arn = var.orca_sfn_recovery_workflow_arn
     }
   }
 
@@ -33,7 +33,7 @@ resource "aws_lambda_function" "orca_recovery_adapter_task" {
 }
 
 resource "aws_cloudwatch_log_group" "orca_recovery_adapter_task" {
-  name = "/aws/lambda/${var.prefix}-OrcaRecoveryAdapter"
+  name              = "/aws/lambda/${var.prefix}-OrcaRecoveryAdapter"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "OrcaRecoveryAdapter", var.default_log_retention_days)
-  tags = var.tags
+  tags              = var.tags
 }

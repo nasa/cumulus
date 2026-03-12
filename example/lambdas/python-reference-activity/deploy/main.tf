@@ -14,16 +14,16 @@ module "python_processing_service" {
   name   = "PythonProcess-v2"
   tags   = var.tags
 
-  cluster_arn                           = var.cumulus_ecs_cluster_arn
-  desired_count                         = 1
-  image                                 = "${data.aws_ecr_repository.cumulus_process_activity.repository_url}:${var.cumulus_process_activity_version}"
+  cluster_arn   = var.cumulus_ecs_cluster_arn
+  desired_count = 1
+  image         = "${data.aws_ecr_repository.cumulus_process_activity.repository_url}:${var.cumulus_process_activity_version}"
 
   cpu                = 400
   memory_reservation = 700
 
   environment = {
     AWS_DEFAULT_REGION = var.aws_region
-    ACTIVITY_ARN = aws_sfn_activity.ecs_task_python_processing_service.id
+    ACTIVITY_ARN       = aws_sfn_activity.ecs_task_python_processing_service.id
   }
 
   command = [
