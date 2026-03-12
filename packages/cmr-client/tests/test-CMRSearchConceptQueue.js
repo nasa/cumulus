@@ -2,17 +2,25 @@
 
 const test = require('ava');
 const nock = require('nock');
+const sinon = require('sinon');
+
+const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 const {
   CMRSearchConceptQueue,
   providerParams,
 } = require('../CMRSearchConceptQueue');
 
+const sandbox = sinon.createSandbox();
+
 test.before(() => {
   nock.cleanAll();
+  sinon.stub(secretsManagerUtils, 'getSecretString')
+    .resolves('secretString');
 });
 
 test.after.always(() => {
   nock.cleanAll();
+  sandbox.restore();
 });
 
 test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
@@ -57,6 +65,7 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
       username: 'fakeUser',
       password: 'fakePassword',
       token: 'abcde',
+      passwordSecretName: 'secret-name',
     },
     type: 'granules',
     searchParams: new URLSearchParams(),

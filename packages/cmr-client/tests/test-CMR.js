@@ -2,20 +2,27 @@
 
 const test = require('ava');
 const nock = require('nock');
+const sinon = require('sinon');
 const some = require('lodash/some');
 
 const awsServices = require('@cumulus/aws-client/services');
+const secretsManagerUtils = require('@cumulus/aws-client/SecretsManager');
 const { CMRInternalError } = require('@cumulus/errors');
 
 const { CMR } = require('../CMR');
 
+const sandbox = sinon.createSandbox();
+
 test.before(() => {
   nock.disableNetConnect();
   nock.enableNetConnect(/(localhost|127.0.0.1)/);
+  sinon.stub(secretsManagerUtils, 'getSecretString')
+    .resolves('secretString');
 });
 
 test.afterEach.always(() => {
   nock.cleanAll();
+  sandbox.restore();
 });
 
 test.after.always(() => {
@@ -62,6 +69,7 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
     username: 'username',
     password: 'password',
     token: 'abcde',
+    passwordSecretName: 'secret-name',
   });
   const results = await cmrSearch.searchCollections();
 

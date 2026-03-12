@@ -14,7 +14,7 @@ import { getIngestUrl } from './getUrl';
 import { UmmMetadata, ummVersion } from './UmmUtils';
 const log = new Logger({ sender: 'cmr-client' });
 const { getRequiredEnvVar } = require('@cumulus/common/env');
-const launchpad = require('@cumulus/launchpad-auth');
+const { launchpad } = require('@cumulus/launchpad-auth');
 
 const logDetails: { [key: string]: string } = {
   file: 'cmr-client/CMR.js',
