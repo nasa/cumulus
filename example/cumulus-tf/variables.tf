@@ -275,6 +275,12 @@ variable "archive_api_url" {
   description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
 }
 
+variable "run_api_as_server" {
+  type        = bool
+  default     = false
+  description = "Whether to run the API as a server on ECS instead of Lambda"
+}
+
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)

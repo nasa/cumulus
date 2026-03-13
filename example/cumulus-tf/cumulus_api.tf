@@ -2,7 +2,7 @@ locals {
   api_env_variables  = {
         "OAUTH_PROVIDER": var.oauth_provider
         "api_config_secret_id": module.cumulus.api_config_secret_arn
-        "RUN_API_AS_SERVER": "true"
+        "RUN_API_AS_SERVER": tostring(var.run_api_as_server)
   }
 }
 
