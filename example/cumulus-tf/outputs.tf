@@ -6,6 +6,16 @@ output "archive_api_redirect_uri" {
   value = module.cumulus.archive_api_redirect_uri
 }
 
+output "app_load_balancer_id" {
+  description = "The application load balancer ID."
+  value       = aws_lb.api.id
+}
+
+output "app_load_balancer_dns_name" {
+  description = "The application load balancer DNS name."
+  value       = aws_lb.api.dns_name
+}
+
 # TEA-Specific outputs
 
 output "tea_distribution_url" {

@@ -23,6 +23,10 @@ output "private_api_lambda_arn" {
   value = module.archive.private_api_lambda_arn
 }
 
+output "api_config_secret_arn" {
+  value = module.archive.api_config_secret_arn
+}
+
 output "provider_kms_key_id" {
   value = module.archive.provider_kms_key_id
 }
@@ -187,6 +191,14 @@ output "lambda_processing_role_name" {
 
 output "scaling_role_arn" {
   value = module.ingest.scaling_role_arn
+}
+
+output "ecs_execution_role_arn" {
+  value = aws_iam_role.ecs_execution_role.arn
+}
+
+output "ecs_task_role_arn" {
+  value = aws_iam_role.ecs_task_role.arn
 }
 
 # ECS cluster

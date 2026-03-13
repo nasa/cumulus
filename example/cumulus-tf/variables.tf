@@ -568,3 +568,9 @@ variable "enable_otel_tracing" {
   type        = bool
   default     = false
 }
+
+variable "cumulus_search_api_image_version" {
+  description = "The version of the Cumulus Search API image to use"
+  type = string
+  default = "latest"
+}
