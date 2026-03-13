@@ -44,9 +44,9 @@ module "ecs_cluster" {
   region                     = var.region
   vpc_id                     = var.vpc_id
   subnets                    = var.subnets
-  security_group_name        = var.security_group_name
-  force_new_deployment       = var.force_new_deployment
+  rds_security_group         = local.rds_security_group
   rds_endpoint               = local.rds_endpoint
+  force_new_deployment       = var.force_new_deployment
   cpu                        = var.cpu
   cpu_architecture           = var.cpu_architecture
   volume_size_in_gb          = var.volume_size_in_gb

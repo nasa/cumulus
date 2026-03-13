@@ -6,11 +6,12 @@ resource "aws_ecs_service" "kafka" {
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0
   force_new_deployment               = var.force_new_deployment
+  launch_type                        = "FARGATE"
   depends_on                         = [aws_iam_role.ecs_infrastructure_role]
 
   network_configuration {
-    subnets          = aws_db_subnet_group.default.subnet_ids
-    security_groups  = [var.security_group_name]
+    subnets          =  var.subnets  #aws_db_subnet_group.default.subnet_ids
+    security_groups  = [var.rds_security_group, aws_security_group.no_ingress_all_egress.id]
     assign_public_ip = false # Fargate tasks in private subnets usually don't need public IPs
   }
 
@@ -56,7 +57,7 @@ resource "aws_ecs_task_definition" "default" {
         {name = "CLUSTER_ID", value = "kafka"},
         {name = "NODE_ROLE", value = "combined"},
         {name = "KAFKA_LISTENERS", value = "INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094"},
-        {name = "KAFKA_ADVERTISED_LISTENERS", value = "INTERNAL://kafka:9092,EXTERNAL://localhost:9093"},
+        {name = "KAFKA_ADVERTISED_LISTENERS", value = "INTERNAL://localhost:9092,EXTERNAL://localhost:9093"},
         {name = "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP", value = "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"},
         {name = "KAFKA_INTER_BROKER_LISTENER_NAME", value = "INTERNAL"}
       ]

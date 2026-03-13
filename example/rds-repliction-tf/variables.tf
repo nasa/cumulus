@@ -36,12 +36,6 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "security_group_name" {
-  description = "Name for RDS access security group"
-  type        = string
-
-}
-
 variable "subnets" {
   description = "Subnets for database cluster.  Requires at least 2 across multiple AZs"
   type    = list(string)

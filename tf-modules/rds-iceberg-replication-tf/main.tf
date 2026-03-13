@@ -18,10 +18,25 @@ locals {
   full_name = "${var.prefix}-replication"
 }
 
-resource "aws_db_subnet_group" "default" {
-  name_prefix = var.aws_db_subnet_group_prefix
-  subnet_ids  = var.subnets
-  tags        = var.tags
+resource "aws_security_group" "no_ingress_all_egress" {
+
+  name   = "${var.prefix}-replication-ecs-no-ingress-all-egress"
+  vpc_id = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  lifecycle {
+    # This prevents the "In Use" error by creating a new one
+    # before trying to kill the old one during updates
+    create_before_destroy = true
+  }
+
+  tags = var.tags
 }
 
 resource "aws_ecs_cluster" "default" {

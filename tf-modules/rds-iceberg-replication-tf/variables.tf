@@ -31,10 +31,9 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "security_group_name" {
-  description = "Name for RDS access security group"
+variable "rds_security_group" {
+  description = "RDS access security group"
   type        = string
-  default     = "cumulus_rds_cluster_acess_ingress"
 }
 
 variable "subnets" {
