@@ -26,8 +26,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
   - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
   - Replaced legacy querystring module with URLSearchParams.
+
 ### Fixed
 
+- **CUMULUS-4608**
+  - Fixed bug where workflow list endpoint /workflows would error if a workflow field was undefined.   The API response now returns null for undefined fields and the sort method converts the value to string before sorting.
 - **CUMULUS-4566**
   - Updated AJV to ^8.18.0
     - Updated task components to resolve malformed/errant task schemas in the following lambdas:
