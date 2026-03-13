@@ -280,22 +280,29 @@ variable "archive_api_users" {
   type        = list(string)
   default     = [
     "acyu",
+    "atisdale",
     "awisdom",
+    "blokey",
     "cbanh",
     "chuang14",
     "cdurbin",
     "dhudelson",
     "dmsorensen",
     "ecarton",
+    "eyen",
     "jasmine",
     "jennyhliu",
     "jmccoy_uat",
     "jnorton1",
     "kkelly",
     "kovarik",
+    "masonyates97",
     "mobrien84",
+    "mikedorfman",
     "nnageswa",
+    "norrisdj",
     "npauzenga",
+    "reweeden",
     "terrafirma13",
     "yliu10"
   ]
@@ -365,7 +372,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "54"
+  default = "55"
 }
 
 variable "cumulus_process_activity_version" {

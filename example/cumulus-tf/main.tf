@@ -15,6 +15,12 @@ provider "aws" {
   region  = var.region
   profile = var.aws_profile
 
+  default_tags {
+    tags = {
+      Deployment = var.prefix
+    }
+  }
+
   ignore_tags {
     key_prefixes = ["gsfc-ngap"]
   }
@@ -24,6 +30,12 @@ provider "aws" {
   alias   = "usw2"
   region  = "us-west-2"
   profile = var.aws_profile
+
+  default_tags {
+    tags = {
+      Deployment = var.prefix
+    }
+  }
 
   ignore_tags {
     key_prefixes = ["gsfc-ngap"]

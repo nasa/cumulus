@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/checksum",
-  "version": "21.2.0",
+  "version": "21.3.1",
   "description": "Cumulus checksum utilities",
   "engines": {
     "node": ">=22.21.1"
@@ -17,7 +17,7 @@
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
+    "build": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"

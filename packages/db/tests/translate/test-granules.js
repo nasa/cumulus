@@ -153,7 +153,7 @@ test.beforeEach(async (t) => {
     `file0-${cryptoRandomString({ length: 10 })}`,
     `file1-${cryptoRandomString({ length: 10 })}`,
   ].sort();
-  const files = [
+  t.context.files = [
     fakeFileRecordFactory({
       bucket: 'cumulus-test-sandbox-private',
       checksum_type: 'md5',
@@ -181,7 +181,9 @@ test.beforeEach(async (t) => {
       updated_at: updatedAt,
     }),
   ];
-  await Promise.all(files.map((file) => t.context.filePgModel.create(t.context.knex, file)));
+  await Promise.all(
+    t.context.files.map((file) => t.context.filePgModel.create(t.context.knex, file))
+  );
 });
 
 test('translatePostgresGranuleToApiGranule converts Postgres granule to API granule', async (t) => {
@@ -195,6 +197,21 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     fileKeys,
     executions,
   } = t.context;
+
+  const duckDbPostgresGranule = {
+    ...postgresGranule,
+    created_at: postgresGranule.created_at.toISOString(),
+    updated_at: postgresGranule.updated_at.toISOString(),
+    timestamp: postgresGranule.timestamp.toISOString(),
+    beginning_date_time: postgresGranule.beginning_date_time.toISOString(),
+    ending_date_time: postgresGranule.ending_date_time.toISOString(),
+    last_update_date_time: postgresGranule.last_update_date_time.toISOString(),
+    processing_end_date_time: postgresGranule.processing_end_date_time.toISOString(),
+    processing_start_date_time: postgresGranule.processing_start_date_time.toISOString(),
+    production_date_time: postgresGranule.production_date_time.toISOString(),
+    error: JSON.stringify(postgresGranule.error),
+    query_fields: JSON.stringify(postgresGranule.query_fields),
+  };
 
   const expectedApiGranule = {
     archived: false,
@@ -244,7 +261,7 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     ],
   };
 
-  const result = await translatePostgresGranuleToApiGranule({
+  const translation = await translatePostgresGranuleToApiGranule({
     granulePgRecord: postgresGranule,
     knexOrTransaction: knex,
     collectionPgModel,
@@ -252,12 +269,33 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     providerPgModel,
     filePgModel,
   });
-  result.files.sort((a, b) => (a.fileName > b.fileName ? 1 : -1));
+  translation.files.sort((a, b) => (a.fileName > b.fileName ? 1 : -1));
 
   t.deepEqual(
     {
-      ...result,
-      files: orderBy(result.files, ['bucket', 'key']),
+      ...translation,
+      files: orderBy(translation.files, ['bucket', 'key']),
+    },
+    {
+      ...expectedApiGranule,
+      files: orderBy(expectedApiGranule.files, ['bucket', 'key']),
+    }
+  );
+
+  const duckDbTranslation = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: duckDbPostgresGranule,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+    filePgModel,
+  });
+  duckDbTranslation.files.sort((a, b) => (a.fileName > b.fileName ? 1 : -1));
+
+  t.deepEqual(
+    {
+      ...duckDbTranslation,
+      files: orderBy(duckDbTranslation.files, ['bucket', 'key']),
     },
     {
       ...expectedApiGranule,

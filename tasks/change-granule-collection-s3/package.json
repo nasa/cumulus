@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/change-granule-collection-s3",
-  "version": "21.2.0",
+  "version": "21.3.1",
   "description": "Move granule files and postgres records to a new collection",
   "private": true,
   "main": "dist/index.js",
@@ -17,13 +17,12 @@
     "node": ">=22.21.1"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && npm run prepare && npm run package",
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && npm run tsc && npm run package",
     "clean": "rm -rf dist",
     "package": "./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
@@ -42,20 +41,20 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "21.2.0",
-    "@cumulus/aws-client": "21.2.0",
-    "@cumulus/cmrjs": "21.2.0",
-    "@cumulus/common": "21.2.0",
+    "@cumulus/api-client": "21.3.1",
+    "@cumulus/aws-client": "21.3.1",
+    "@cumulus/cmrjs": "21.3.1",
+    "@cumulus/common": "21.3.1",
     "@cumulus/cumulus-message-adapter-js": "2.4.0",
-    "@cumulus/distribution-utils": "21.2.0",
-    "@cumulus/errors": "21.2.0",
-    "@cumulus/ingest": "21.2.0",
-    "@cumulus/message": "21.2.0",
-    "@cumulus/types": "21.2.0",
+    "@cumulus/distribution-utils": "21.3.1",
+    "@cumulus/errors": "21.3.1",
+    "@cumulus/ingest": "21.3.1",
+    "@cumulus/message": "21.3.1",
+    "@cumulus/types": "21.3.1",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@aws-sdk/client-sns": "^3.621.0",
-    "@cumulus/api": "21.2.0"
+    "@aws-sdk/client-sns": "^3.993.0",
+    "@cumulus/api": "21.3.1"
   }
 }

@@ -17,9 +17,15 @@ repository = "https://github.com/nasa/cumulus.git"
 
 [dependency-groups]
 dev = [
+    "mypy>=1.0.0",
+    "ruff~=0.14.0",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
+    "pydantic>=2.10.4",
 ]
 
 [tool.uv.sources]
-cumulus-api = { git = "https://github.com/ghrcdaac/cumulus-api", tag = "v3.0.4" }
+cumulus-api = { git = "https://github.com/nasa/Cumulus-API-Python", tag = "v3.2.1" }
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

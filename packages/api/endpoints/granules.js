@@ -428,14 +428,15 @@ const _handleUpdateAction = async (
   log.info(`PUT request "action": ${action}`);
 
   if (action === 'reingest') {
-    const apiCollection =
-      translatePostgresCollectionToApiCollection(pgCollection);
+    const apiCollection
+      = translatePostgresCollectionToApiCollection(pgCollection);
     let targetExecution;
     try {
       targetExecution = await chooseTargetExecution({
         granuleId,
         executionArn: body.executionArn,
         workflowName: body.workflowName,
+        knex,
       });
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {
@@ -456,6 +457,7 @@ const _handleUpdateAction = async (
         ...(targetExecution && { execution: targetExecution }),
       },
       queueUrl: process.env.backgroundQueueUrl,
+      knex,
       updateGranuleStatusToQueuedMethod,
     });
 
@@ -1130,9 +1132,9 @@ async function get(req, res) {
  * DEPRECATED: use get() instead to fetch granules by
  *   granuleId + collectionId
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<object>} the promise of express response object
  */
 async function getByGranuleId(req, res) {
   const { knex = await getKnexClient() } = req.testContext || {};
@@ -1159,18 +1161,36 @@ async function getByGranuleId(req, res) {
     knexOrTransaction: knex,
   });
 
-  const recoveryStatus =
-    getRecoveryStatus === 'true'
+  const recoveryStatus
+    = getRecoveryStatus === 'true'
       ? await getOrcaRecoveryStatusByGranuleIdAndCollection(granuleId, result.collectionId)
       : undefined;
   return res.send({ ...result, recoveryStatus });
 }
 
-async function bulkOperations(req, res) {
-  const payload = req.body;
+const BulkOperationsPayloadSchema = z.object({
+  workflowName: z.string({ required_error: 'workflowName is required' })
+    .min(1, { message: 'workflowName is required' }),
+  knexDebug: z.boolean().optional(),
+  concurrency: z.number().int().positive().optional(),
+  maxDbConnections: z.number().int().positive().optional(),
+  batchSize: z.number().int().positive().optional(),
+}).catchall(z.unknown());
 
-  if (!payload.workflowName) {
-    return res.boom.badRequest('workflowName is required.');
+const parseBulkOperationsPayload = zodParser('Bulk operations payload', BulkOperationsPayloadSchema);
+
+/**
+ * Start an AsyncOperation that will perform a bulk operation
+ * by running the specified granules through a workflow
+ *
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
+ */
+async function bulkOperations(req, res) {
+  const payload = parseBulkOperationsPayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
   }
 
   const numOfGranules = (payload.query && payload.query.size)
@@ -1211,9 +1231,10 @@ async function bulkOperations(req, res) {
 
 const BulkDeletePayloadSchema = z.object({
   forceRemoveFromCmr: z.boolean().optional(),
+  knexDebug: z.boolean().optional(),
   concurrency: z.number().int().positive().optional(),
   maxDbConnections: z.number().int().positive().optional(),
-  knexDebug: z.boolean().optional(),
+  batchSize: z.number().int().positive().optional(),
 }).catchall(z.unknown());
 
 const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloadSchema);
@@ -1277,8 +1298,28 @@ async function bulkDelete(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+const BulkReingestPayloadSchema = z.object({
+  knexDebug: z.boolean().optional(),
+  concurrency: z.number().int().positive().optional(),
+  maxDbConnections: z.number().int().positive().optional(),
+  batchSize: z.number().int().positive().optional(),
+}).catchall(z.unknown());
+
+const parseBulkReingestPayload = zodParser('Bulk reingest payload', BulkReingestPayloadSchema);
+
+/**
+ * Start an AsyncOperation that will perform a bulk granules reingest
+ *
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
+ */
 async function bulkReingest(req, res) {
-  const payload = req.body;
+  const payload = parseBulkReingestPayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
+  }
+
   const numOfGranules = (payload.query && payload.query.size)
     || (payload.granules && payload.granules.length);
   const description = `Bulk granule reingest run on ${numOfGranules || ''} granules`;

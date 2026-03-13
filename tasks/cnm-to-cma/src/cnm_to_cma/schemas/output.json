@@ -1,0 +1,52 @@
+{
+  "title": "CNMToCMAInput",
+  "description": "Describes the input expected by the cnm-to-cma task",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {"type": "string"},
+          "dataType": {"type": "string"},
+          "version": {"type": "string"},
+          "producerGranuleId": {
+            "type": "string",
+            "description": "Granule ID from the producer, if available"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "path"],
+              "properties": {
+                "name": {
+                  "description": "name of file to be synced",
+                  "type": "string"
+                },
+                "filename": {
+                  "description": "optional field - usage depends on provider type",
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "source_bucket": {
+                  "description": "optional - alternate source bucket to use for this file instead of the provider bucket.  Works with s3 provider only, ignored for other providers",
+                  "type": "string"
+                },
+                "path": {
+                  "description": "provider path of file to be synced",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

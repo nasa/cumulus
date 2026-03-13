@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/tea-map-cache",
-  "version": "21.2.0",
+  "version": "21.3.1",
   "description": "Tea Bucket Map Cache Writer",
   "main": "index.js",
   "engines": {
@@ -8,11 +8,11 @@
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
-    "package": "npm run prepare && npm run webpack && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
+    "package": "npm run tsc && npm run webpack && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
+    "build": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
@@ -30,8 +30,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "21.2.0",
-    "@cumulus/logger": "21.2.0",
+    "@cumulus/aws-client": "21.3.1",
+    "@cumulus/logger": "21.3.1",
     "got": "^11.8.5",
     "p-retry": "^4.2.0"
   },

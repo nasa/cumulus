@@ -14,7 +14,6 @@ from typing import Any
 
 from cumulus_api import CumulusApi
 from cumulus_logger import CumulusLogger
-from run_cumulus_task import run_cumulus_task
 
 from . import invalidations
 
@@ -23,15 +22,6 @@ MAX_GRANULES_FETCHED = 100000
 schemas = {"config": "schemas/config_schema.json"}
 
 EVENT_TYPING = dict[Any, Any]
-
-
-def lambda_handler(event: EVENT_TYPING, context: Any) -> Any:
-    """Lambda handler."""
-
-    # This is a function that AWS will call when we invoke the lambda
-    LOGGER.setMetadata(event, context)
-    cumulus_task_return = run_cumulus_task(lambda_adapter, event, context, schemas)
-    return cumulus_task_return
 
 
 def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
@@ -101,11 +91,7 @@ def lambda_adapter(event: EVENT_TYPING, _: Any) -> dict[str, Any]:
 
     return {
         "granules": [
-            {
-                "granuleId": invalid_granule["granuleId"],
-                "collectionId": f"{collection}___{version}",
-            }
-            for invalid_granule in invalid_granules
+            invalid_granule["granuleId"] for invalid_granule in invalid_granules
         ],
         "forceRemoveFromCmr": True,
         "granules_to_be_deleted_count": len(invalid_granules),

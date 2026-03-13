@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/distribution-utils",
-  "version": "21.2.0",
+  "version": "21.3.1",
   "description": "Cumulus Distribution utilities",
   "keywords": [
     "CUMULUS"
@@ -19,7 +19,7 @@
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
+    "build": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
@@ -35,9 +35,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "21.2.0",
-    "@cumulus/common": "21.2.0",
-    "@cumulus/errors": "21.2.0",
+    "@cumulus/aws-client": "21.3.1",
+    "@cumulus/common": "21.3.1",
+    "@cumulus/errors": "21.3.1",
     "url-join": "^1.1.0"
   },
   "devDependencies": {

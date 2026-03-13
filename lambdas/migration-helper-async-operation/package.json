@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/migration-helper-async-operation",
-  "version": "21.2.0",
+  "version": "21.3.1",
   "description": "Lambda function helps with various migrations",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -12,13 +12,12 @@
   "types": "./dist/lambda/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "rm -rf dist && mkdir dist && npm run prepare && npm run webpack",
+    "build": "rm -rf dist && mkdir dist && npm run tsc && npm run webpack",
     "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
-    "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
+    "package": "npm run clean && npm run tsc && npm run webpack && npm run build-lambda-zip",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "webpack": "../../node_modules/.bin/webpack"
@@ -31,12 +30,12 @@
     "failFast": true
   },
   "dependencies": {
-    "@cumulus/api": "21.2.0",
-    "@cumulus/async-operations": "21.2.0",
-    "@cumulus/aws-client": "21.2.0",
-    "@cumulus/common": "21.2.0",
-    "@cumulus/logger": "21.2.0",
-    "@cumulus/types": "21.2.0",
+    "@cumulus/api": "21.3.1",
+    "@cumulus/async-operations": "21.3.1",
+    "@cumulus/aws-client": "21.3.1",
+    "@cumulus/common": "21.3.1",
+    "@cumulus/logger": "21.3.1",
+    "@cumulus/types": "21.3.1",
     "lodash": "^4.17.21"
   }
 }

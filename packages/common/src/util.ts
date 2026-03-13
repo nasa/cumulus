@@ -15,6 +15,8 @@ import type {
 import isPlainObject from 'lodash/isPlainObject';
 import curry from 'lodash/curry';
 import isNil from 'lodash/isNil';
+import isObject from 'lodash/isObject';
+import isString from 'lodash/isString';
 import omitBy from 'lodash/omitBy';
 import * as log from './log';
 
@@ -76,7 +78,7 @@ export const isOneOf = curry(
 );
 
 export const returnNullOrUndefinedOrDate = (
-  dateVal: string | number | null | undefined
+  dateVal: string | Date | number | null | undefined
 ) => (isNil(dateVal) ? dateVal : new Date(dateVal));
 
 /**
@@ -130,4 +132,22 @@ export const omitDeepBy: OmitDeepBy = (object: any, cb: any) => {
   }
 
   return omitByDeepByOnOwnProps(object);
+};
+
+/**
+ * Safely parses a value if it is a JSON string resulting in an Object or Array.
+ * Returns the parsed collection or the original input.
+ *
+ * @param val
+ * @returns
+ */
+export const parseIfJson = (val: unknown): any => {
+  if (!isString(val)) return val;
+
+  try {
+    const result = JSON.parse(val);
+    return isObject(result) ? result : val;
+  } catch (e) {
+    return val;
+  }
 };
