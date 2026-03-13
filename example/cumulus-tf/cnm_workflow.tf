@@ -1,6 +1,6 @@
 module "cnm_workflow" {
   depends_on = [
-    aws_lambda_function.cnm_to_cma_task
+    module.cumulus.cnm_to_cma_task
   ]
 
   source = "../../tf-modules/workflow"
