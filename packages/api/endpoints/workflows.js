@@ -1,4 +1,5 @@
 // @ts-check
+
 'use strict';
 
 const { z } = require('zod');
@@ -81,7 +82,8 @@ async function list(req, res) {
   }
 
   if (fields) {
-    // @ts-ignore - fields selection intentionally produces partial objects; sort uses String() to handle missing name
+    // @ts-ignore - fields selection intentionally produces partial objects;
+    // sort uses String() to handle missing name
     body = body.map((workflow) =>
       Object.fromEntries(fields.map((field) => {
         if (!(field in workflow)) {
