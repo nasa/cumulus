@@ -199,7 +199,7 @@ variable "db_parameters" {
   default = [
     {
       name         = "shared_preload_libraries"
-      value        = "pg_stat_statements,auto_explain"
+      value        = "pg_stat_statements,auto_explain,pglogical"
       apply_method = "pending-reboot"
     },
     {
@@ -246,7 +246,12 @@ variable "db_parameters" {
       name         = "rds.force_ssl"
       value        = 0
       apply_method = "pending-reboot"
-    }
+    },
+    {
+      name  = "rds.logical_replication"
+      value = "1"
+      apply_method = "pending-reboot"  # Requires restart
+    },
   ]
 }
 
