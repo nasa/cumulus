@@ -30,9 +30,9 @@ output "cnm_response_task" {
 
 output "cnm_to_cma_task" {
   value = {
-    task_arn           = module.cnm_to_cma_task.lambda_function.arn
-    task_log_group     = module.cnm_to_cma_task.log_group.name
-    last_modified_date = module.cnm_to_cma_task.lambda_function.last_modified
+    task_arn           = module.cnm_to_cma_task.cumulus_task_lambda.arn
+    task_log_group     = module.cnm_to_cma_task.cumulus_task_log_group_name
+    last_modified_date = module.cnm_to_cma_task.cumulus_task_lambda.last_modified
   }
 }
 
