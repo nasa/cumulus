@@ -36,7 +36,10 @@ def lambda_adapter(event: dict, context) -> dict[str, Any]:
     )
     now_as_iso = datetime.now(UTC).isoformat(timespec="milliseconds") + "Z"
     cnm["receivedTime"] = now_as_iso
-    output_dict = {"cnm": cnm, "output_granules": output.model_dump(mode="json")}
+    output_dict = {
+        "cnm": cnm,
+        "output_granules": output.model_dump(mode="json", exclude_none=True),
+    }
     return output_dict
 
 
