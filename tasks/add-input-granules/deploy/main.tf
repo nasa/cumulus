@@ -11,6 +11,10 @@ module "add_input_granules_task" {
   memory_size        = var.lambda_memory_size
   runtime            = "python3.12"
   log_retention_days = var.log_retention_days
+  layers             = [var.cumulus_message_adapter_lambda_layer_version_arn]
+  environment = {
+    PRIVATE_API_LAMBDA_ARN = var.private_api_lambda_arn
+  }
 
   tags = var.tags
 }
