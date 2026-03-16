@@ -115,5 +115,5 @@ exclude: |
 
 # Configuration pre-commit.ci
 ci:
-  # Skip local hooks that depend on npm or uv since they're not supported by
-  skip: [eslint, npm-package-json-lint, typescript-compile]
+  # Skip local hooks that depend on npm or uv or terraform since they're not supported by
+  skip: [eslint, npm-package-json-lint, typescript-compile, terraform_fmt]
