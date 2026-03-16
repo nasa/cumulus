@@ -32,6 +32,9 @@ awisdom:
 cbanh-tf:
   bucket: cbanh-cumulus-tf-internal
 
+ccollins-tf:
+  bucket: ccollins-internal
+
 cdd-tf:
   bucket: cdd-test-sandbox-internal
 
