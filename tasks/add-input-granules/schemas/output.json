@@ -1,0 +1,128 @@
+{
+    "title": "AddInputGranulesOutput",
+    "description": "Describes the output produced by the add-input-granules task",
+    "type": "object",
+    "required": [
+        "pdr",
+        "running",
+        "completed",
+        "failed",
+        "granules"
+    ],
+    "properties": {
+        "pdr": {
+            "description": "Product Delivery Record",
+            "type": "object",
+            "required": [
+                "name",
+                "path"
+            ],
+            "properties": {
+                "name": {
+                    "description": "Filename of the PDR",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "Location of the PDR",
+                    "type": "string"
+                }
+            }
+        },
+        "running": {
+            "description": "List of execution ARNs which are queued or running",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "completed": {
+            "description": "List of completed execution ARNs",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "failed": {
+            "description": "List of failed execution ARNs with reason for failure",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "arn",
+                    "reason"
+                ],
+                "properties": {
+                    "arn": {
+                        "description": "ARN of the failed execution",
+                        "type": "string"
+                    },
+                    "reason": {
+                        "description": "Reason for the failed execution",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "granules": {
+            "type": "array",
+            "description": "List of granules added by the add-input-granules task.",
+            "items": {
+                "type": "object",
+                "required": [
+                    "granuleId",
+                    "files"
+                ],
+                "properties": {
+                    "granuleId": {
+                        "type": "string"
+                    },
+                    "files": {
+                        "type": "array",
+                        "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                                "bucket",
+                                "key"
+                            ],
+                            "properties": {
+                                "bucket": {
+                                    "description": "Bucket where file is archived in S3",
+                                    "type": "string"
+                                },
+                                "checksum": {
+                                    "description": "Checksum value for file",
+                                    "type": "string"
+                                },
+                                "checksumType": {
+                                    "description": "Type of checksum (e.g. md5, sha256, etc)",
+                                    "type": "string"
+                                },
+                                "fileName": {
+                                    "description": "Name of file (e.g. file.txt)",
+                                    "type": "string"
+                                },
+                                "key": {
+                                    "description": "S3 Key for archived file",
+                                    "type": "string"
+                                },
+                                "size": {
+                                    "description": "Size of file (in bytes)",
+                                    "type": "number"
+                                },
+                                "source": {
+                                    "description": "Source URI of the file from origin system (e.g. S3, FTP, HTTP)",
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "description": "Type of file (e.g. data, metadata, browse)",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

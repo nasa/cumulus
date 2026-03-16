@@ -1,3 +1,11 @@
+output "add_input_granules_task" {
+  value = {
+    task_arn           = module.add_input_granules_task.add_input_granules_lambda.arn
+    task_log_group     = module.add_input_granules_task.add_input_granules_log_group
+    last_modified_date = module.add_input_granules_task.add_input_granules_lambda.last_modified
+  }
+}
+
 output "add_missing_file_checksums_task" {
   value = {
     task_arn           = aws_lambda_function.add_missing_file_checksums_task.arn

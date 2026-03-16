@@ -28,3 +28,19 @@ module "get_cnm" {
   tags                           = var.tags
   private_api_lambda_arn         = var.private_api_lambda_arn
 }
+
+module add_input_granules_task {
+  source = "../../tasks/add-input-granules/deploy"
+
+  prefix                                           = var.prefix
+  log_retention_days                               = var.default_log_retention_days
+  lambda_processing_role_arn                       = var.lambda_processing_role_arn
+  lambda_timeout                                   = lookup(var.lambda_timeouts, "AddInputGranules", 300)
+  lambda_memory_size                               = lookup(var.lambda_memory_sizes, "AddInputGranules", 512)
+  lambda_subnet_ids                                = var.lambda_subnet_ids
+  lambda_security_group_id                         = length(var.lambda_subnet_ids) > 0 ? aws_security_group.no_ingress_all_egress[0].id : ""
+  cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
+  private_api_lambda_arn                           = var.private_api_lambda_arn
+
+  tags = var.tags
+}
