@@ -131,6 +131,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     | aws-api-proxy | AwsApiProxy
     | CNMToCMA | CnmToCma
     | granule-invalidator-task | GranuleInvalidator
+- **CUMULUS-4599**
+  - Added the ability to easily modify version numbers for all python packages in order to keep them in sync with the Cumulus version.
 - **CUMULUS-4608**
   - The worfkow list endpoint /workflows endpoint now returns a null field value in the api response for any workflow fields that are undefined
 
