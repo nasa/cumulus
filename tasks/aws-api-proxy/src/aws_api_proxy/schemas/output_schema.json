@@ -1,0 +1,18 @@
+{
+  "description": "Output schema for the task.",
+  "properties": {
+    "result_list": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Result List",
+      "type": "array"
+    }
+  },
+  "required": [
+    "result_list"
+  ],
+  "title": "Model",
+  "type": "object"
+}

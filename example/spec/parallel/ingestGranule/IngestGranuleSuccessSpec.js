@@ -944,7 +944,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(granule.processingEndDateTime).toBeInstanceOf(String);
       });
 
-      describe('when a reingest granule is triggered via the API', () => {
+      describe('when a bulk reingest granule is triggered via the API', () => {
         let oldExecution;
         let oldUpdatedAt;
         let startTime;
@@ -965,16 +965,7 @@ describe('The S3 Ingest Granules workflow', () => {
             bulkReingestResponse = await bulkReingestGranules({
               prefix: config.stackName,
               body: {
-                granules: [
-                  {
-                    collectionId,
-                    granuleId: reingestGranuleId,
-                  },
-                  {
-                    collectionId,
-                    granuleId: fakeGranuleId,
-                  },
-                ],
+                granules: [reingestGranuleId, fakeGranuleId],
               },
             });
           } catch (error) {

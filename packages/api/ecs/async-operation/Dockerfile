@@ -1,4 +1,4 @@
-FROM amazon/aws-lambda-nodejs:20
+FROM amazon/aws-lambda-nodejs:22
 
 USER root
 RUN dnf install -y unzip shadow-utils

@@ -632,7 +632,7 @@ test('ExecutionSearch only returns count if countOnly is set to true', async (t)
 test('ExecutionSearch with archived: true pulls only archive granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    archived: true,
+    archived: 'true',
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -644,7 +644,7 @@ test('ExecutionSearch with archived: true pulls only archive granules', async (t
 test('ExecutionSearch with archived: false pulls only non-archive granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    archived: false,
+    archived: 'false',
   };
   const dbSearch = new ExecutionSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);

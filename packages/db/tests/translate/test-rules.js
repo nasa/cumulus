@@ -178,6 +178,15 @@ test('translatePostgresRuleToApiRule converts Postgres rule record to API rule',
     updated_at: new Date(),
   };
 
+  const duckDbRuleRecord = {
+    ...pgRecord,
+    created_at: pgRecord.created_at.toISOString(),
+    updated_at: pgRecord.updated_at.toISOString(),
+    payload: JSON.stringify(pgRecord.payload),
+    meta: JSON.stringify(pgRecord.meta),
+    tags: JSON.stringify(pgRecord.tags),
+  };
+
   const fakeDbClient = {};
   const fakeCollection = { name: 'abc', version: '123' };
   const fakeCollectionPgModel = {
@@ -212,6 +221,16 @@ test('translatePostgresRuleToApiRule converts Postgres rule record to API rule',
   t.deepEqual(
     await translatePostgresRuleToApiRule(
       pgRecord,
+      fakeDbClient,
+      fakeCollectionPgModel,
+      fakeProviderPgModel
+    ),
+    expectedRule
+  );
+
+  t.deepEqual(
+    await translatePostgresRuleToApiRule(
+      duckDbRuleRecord,
       fakeDbClient,
       fakeCollectionPgModel,
       fakeProviderPgModel
