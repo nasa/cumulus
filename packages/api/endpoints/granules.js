@@ -1468,6 +1468,7 @@ async function getByGranuleId(req, res) {
       span.end();
     }
   });
+}
 
 const BulkOperationsPayloadSchema = z.object({
   workflowName: z.string({ required_error: 'workflowName is required' })
@@ -1495,7 +1496,6 @@ async function bulkOperations(req, res) {
       if (isError(payload)) {
         return returnCustomValidationErrors(res, payload);
       }
-
 
       span.setAttribute('workflow.name', payload.workflowName);
 
