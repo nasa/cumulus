@@ -11,7 +11,7 @@ resource "aws_lambda_function" "async_operation_fail" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = [aws_security_group.no_ingress_all_egress.id]
     }
   }
@@ -30,7 +30,7 @@ resource "aws_lambda_function" "async_operation_success" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = [aws_security_group.no_ingress_all_egress.id]
     }
   }
@@ -56,7 +56,7 @@ resource "aws_lambda_function" "sns_s3_executions_test" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = [aws_security_group.no_ingress_all_egress.id]
     }
   }
@@ -82,7 +82,7 @@ resource "aws_lambda_function" "sns_s3_granules_test" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = [aws_security_group.no_ingress_all_egress.id]
     }
   }
@@ -108,7 +108,7 @@ resource "aws_lambda_function" "sns_s3_pdrs_test" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = [aws_security_group.no_ingress_all_egress.id]
     }
   }
@@ -134,7 +134,7 @@ resource "aws_lambda_function" "sns_s3_collections_test" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = [aws_security_group.no_ingress_all_egress.id]
     }
   }
@@ -153,7 +153,7 @@ resource "aws_lambda_function" "ftpPopulateTestLambda" {
   environment {
     variables = {
       FAKE_PROVIDER_CONFIG_BUCKET = var.ftp_host_configuration_bucket
-      stackName     = var.prefix
+      stackName                   = var.prefix
     }
   }
 
@@ -162,7 +162,7 @@ resource "aws_lambda_function" "ftpPopulateTestLambda" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = [aws_security_group.no_ingress_all_egress.id]
     }
   }
@@ -207,7 +207,7 @@ resource "aws_lambda_function" "lzards_api_client_test" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = [aws_security_group.no_ingress_all_egress.id]
     }
   }
