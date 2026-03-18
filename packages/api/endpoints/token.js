@@ -162,7 +162,7 @@ async function refreshAccessToken(
                 );
                 return response.send({ token: jwtToken });
               } finally {
-               refreshSpan.end(); 
+               refreshSpan.end();
               }
             }
           } catch (error) {
