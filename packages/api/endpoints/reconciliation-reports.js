@@ -27,8 +27,8 @@ const { ReconciliationReportSearch } = require('@cumulus/db');
 const {
   ReconciliationReportPgModel,
   createRejectableTransaction,
-  getKnexClient,
 } = require('@cumulus/db');
+const { getKnexClientSingleton } = require('../app/db');
 const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
 const startAsyncOperation = require('../lib/startAsyncOperation');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -93,7 +93,7 @@ async function getReport(req, res) {
 
       try {
         const reconciliationReportPgModel = new ReconciliationReportPgModel();
-        const knex = await getKnexClient();
+        const knex = await getKnexClientSingleton();
 
         const result = await tracer.startActiveSpan('reconciliationReportPgModel.get', async (dbSpan) => {
           try {
@@ -245,7 +245,7 @@ async function deleteReport(req, res) {
       span.setAttribute('reconciliation_report.name', name);
 
       const reconciliationReportPgModel = new ReconciliationReportPgModel();
-      const knex = await getKnexClient();
+      const knex = await getKnexClientSingleton();
 
       try {
         record = await tracer.startActiveSpan('reconciliationReportPgModel.get', async (dbSpan) => {

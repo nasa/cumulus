@@ -85,3 +85,83 @@ export const getKnexClient = async ({
   }
   return knexClient;
 };
+
+// Singleton Knex client for long-running server processes (ECS)
+let knexClientSingleton: Knex | undefined;
+
+/**
+ * Initialize a singleton Knex client for ECS server mode.
+ * This ensures a single connection pool is reused across all requests.
+ *
+ * @param {Object} params - Configuration parameters
+ * @param {NodeJS.ProcessEnv} params.env - Environment variables
+ * @param {SecretsManager} [params.secretsManager] - AWS Secrets Manager client
+ * @param {Logger} [params.knexLogger] - Logger instance
+ * @returns {Promise<Knex>} The initialized singleton Knex client
+ */
+export const initializeKnexClientSingleton = async ({
+  env = process.env,
+  secretsManager = services.secretsManager(),
+  knexLogger = log,
+}: {
+  env?: NodeJS.ProcessEnv,
+  secretsManager?: SecretsManager,
+  knexLogger?: Logger
+} = {}): Promise<Knex> => {
+  if (!knexClientSingleton) {
+    // Set default pool size for ECS if not already configured
+    if (env.RUN_API_AS_SERVER === 'true' && !env.dbMaxPool) {
+      env.dbMaxPool = '50';
+    }
+    
+    knexLogger.info('Initializing singleton connection pool...');
+    knexClientSingleton = await getKnexClient({ env, secretsManager, knexLogger });
+  }
+  return knexClientSingleton;
+};
+
+/**
+ * Get the Knex client, using singleton pattern for ECS server mode.
+ * In Lambda mode (RUN_API_AS_SERVER !== 'true'), creates a new client each time.
+ * In ECS mode (RUN_API_AS_SERVER === 'true'), returns the singleton instance.
+ *
+ * @param {Object} params - Configuration parameters
+ * @param {NodeJS.ProcessEnv} params.env - Environment variables
+ * @param {SecretsManager} [params.secretsManager] - AWS Secrets Manager client
+ * @param {Logger} [params.knexLogger] - Logger instance
+ * @returns {Promise<Knex>} A Knex client instance
+ */
+export const getKnexClientSingleton = async ({
+  env = process.env,
+  secretsManager = services.secretsManager(),
+  knexLogger = log,
+}: {
+  env?: NodeJS.ProcessEnv,
+  secretsManager?: SecretsManager,
+  knexLogger?: Logger
+} = {}): Promise<Knex> => {
+  // In ECS server mode, use singleton pattern
+  if (env.RUN_API_AS_SERVER === 'true') {
+    if (!knexClientSingleton) {
+      return initializeKnexClientSingleton({ env, secretsManager, knexLogger });
+    }
+    return knexClientSingleton;
+  }
+  
+  // In Lambda mode, create new client (Lambda will clean up)
+  return getKnexClient({ env, secretsManager, knexLogger });
+};
+
+/**
+ * Destroy the singleton Knex client connection pool.
+ * This should be called during graceful shutdown of the ECS server.
+ *
+ * @returns {Promise<void>}
+ */
+export const destroyKnexClientSingleton = async (): Promise<void> => {
+  if (knexClientSingleton) {
+    log.info('Destroying singleton connection pool...');
+    await knexClientSingleton.destroy();
+    knexClientSingleton = undefined;
+  }
+};

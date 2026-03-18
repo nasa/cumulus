@@ -16,7 +16,6 @@ const { trace } = require('@opentelemetry/api');
 const {
   CollectionPgModel,
   createRejectableTransaction,
-  getKnexClient,
   isCollisionError,
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
@@ -28,6 +27,7 @@ const {
   publishCollectionDeleteSnsMessage,
   publishCollectionUpdateSnsMessage,
 } = require('../lib/publishSnsMessageUtils');
+const { getKnexClientSingleton } = require('../app/db');
 const { isBadRequestError } = require('../lib/errors');
 const { validateCollection } = require('../lib/utils');
 const insertMMTLinks = require('../lib/mmt');
@@ -146,7 +146,7 @@ async function get(req, res) {
 
       try {
         const collectionPgModel = new CollectionPgModel();
-        const knex = await getKnexClient();
+        const knex = await getKnexClientSingleton();
 
         const result = await tracer.startActiveSpan('collectionPgModel.get', async (dbSpan) => {
           try {
@@ -183,7 +183,7 @@ async function post(req, res) {
     try {
       const {
         collectionPgModel = new CollectionPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
         collectionConfigStore = new CollectionConfigStore(
           process.env.system_bucket,
           process.env.stackName
@@ -285,7 +285,7 @@ async function put(req, res) {
     try {
       const {
         collectionPgModel = new CollectionPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
         collectionConfigStore = new CollectionConfigStore(
           process.env.system_bucket,
           process.env.stackName
@@ -383,7 +383,7 @@ async function del(req, res) {
     try {
       const {
         collectionPgModel = new CollectionPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
         collectionConfigStore = new CollectionConfigStore(
           process.env.system_bucket,
           process.env.stackName

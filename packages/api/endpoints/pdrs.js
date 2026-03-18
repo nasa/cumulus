@@ -5,7 +5,6 @@
 const router = require('express-promise-router')();
 const S3UtilsLib = require('@cumulus/aws-client/S3');
 const {
-  getKnexClient,
   PdrPgModel,
   translatePostgresPdrToApiPdr,
   createRejectableTransaction,
@@ -16,6 +15,7 @@ const Logger = require('@cumulus/logger');
 
 // Import OpenTelemetry
 const { trace } = require('@opentelemetry/api');
+const { getKnexClientSingleton } = require('../app/db');
 
 const log = new Logger({ sender: '@cumulus/api/pdrs' });
 
@@ -65,7 +65,7 @@ async function get(req, res) {
 
       span.setAttribute('pdr.name', pdrName);
 
-      const knex = await getKnexClient();
+      const knex = await getKnexClientSingleton();
       const pdrPgModel = new PdrPgModel();
 
       try {
@@ -120,7 +120,7 @@ async function del(req, res) {
     try {
       const {
         pdrPgModel = new PdrPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
         s3Utils = S3UtilsLib,
       } = req.testContext || {};
       const pdrName = req.params.pdrName;

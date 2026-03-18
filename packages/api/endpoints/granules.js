@@ -28,7 +28,6 @@ const {
   getGranuleAndCollection,
   getGranuleIdAndCollectionIdFromFile,
   getGranulesByGranuleId,
-  getKnexClient,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -38,6 +37,7 @@ const {
 const { sfn } = require('@cumulus/aws-client/services');
 
 const { getJsonS3Object, promiseS3Upload } = require('@cumulus/aws-client/S3');
+const { getKnexClientSingleton } = require('../app/db');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
 
@@ -186,7 +186,7 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
 const getFileGranuleAndCollectionByBucketAndKey = async (req, res) => await tracer.startActiveSpan('granules.getFileGranuleAndCollectionByBucketAndKey', async (span) => {
   try {
     const { bucket, key } = req.params;
-    const { knex = await getKnexClient() } = req.testContext || {};
+    const { knex = await getKnexClientSingleton() } = req.testContext || {};
 
     span.setAttribute('file.bucket', bucket);
     span.setAttribute('file.key', key);
@@ -241,7 +241,7 @@ const getFileGranuleAndCollectionByBucketAndKey = async (req, res) => await trac
 const create = async (req, res) => await tracer.startActiveSpan('granules.create', async (span) => {
   try {
     const {
-      knex = await getKnexClient(),
+      knex = await getKnexClientSingleton(),
       createGranuleFromApiMethod = createGranuleFromApi,
     } = req.testContext || {};
 
@@ -315,7 +315,7 @@ const patchGranule = async (req, res) => await tracer.startActiveSpan('granules.
       collectionPgModel = new CollectionPgModel(),
       updateGranuleFromApiMethod = updateGranuleFromApi,
     } = req.testContext || {};
-    const knex = req.knex ?? await getKnexClient();
+    const knex = req.knex ?? await getKnexClientSingleton();
     let apiGranule = req.body || {};
     let pgCollection;
 
@@ -515,7 +515,7 @@ const _handleUpdateAction = async (
 ) => await tracer.startActiveSpan('granules._handleUpdateAction', async (span) => {
   try {
     const {
-      knex = await getKnexClient(),
+      knex = await getKnexClientSingleton(),
       reingestHandler = reingestGranule,
       updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
       getFilesExistingAtLocationMethod = getFilesExistingAtLocation,
@@ -695,7 +695,7 @@ async function patchByGranuleId(req, res) {
     try {
       const {
         granulePgModel = new GranulePgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
       const body = req.body;
       const action = body.action;
@@ -746,7 +746,7 @@ async function patch(req, res) {
       const {
         granulePgModel = new GranulePgModel(),
         collectionPgModel = new CollectionPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       const body = req.body;
@@ -823,7 +823,7 @@ const associateExecution = async (req, res) => await tracer.startActiveSpan('gra
       executionPgModel = new ExecutionPgModel(),
       granulePgModel = new GranulePgModel(),
       collectionPgModel = new CollectionPgModel(),
-      knex = await getKnexClient(),
+      knex = await getKnexClientSingleton(),
     } = req.testContext || {};
 
     let pgGranule;
@@ -937,7 +937,7 @@ async function bulkPatchGranuleCollection(req, res) {
     try {
       const {
         collectionPgModel = new CollectionPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
       const body = parseBulkPatchGranuleCollectionPayload(req.body);
       if (isError(body)) {
@@ -1048,7 +1048,7 @@ async function delByGranuleId(req, res) {
   return await tracer.startActiveSpan('granules.delByGranuleId', async (span) => {
     try {
       const {
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
       const granuleId = req.params.granuleId;
 
@@ -1096,7 +1096,7 @@ async function del(req, res) {
   return await tracer.startActiveSpan('granules.del', async (span) => {
     try {
       const {
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
         collectionPgModel = new CollectionPgModel(),
         granulePgModel = new GranulePgModel(),
       } = req.testContext || {};
@@ -1196,7 +1196,7 @@ async function bulkChangeCollection(req, res) {
   return await tracer.startActiveSpan('granules.bulkChangeCollection', async (span) => {
     try {
       const {
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
         sfnMethod = sfn,
         workflow = 'ChangeGranuleCollectionsWorkflow',
       } = req.testContext || {};
@@ -1353,7 +1353,7 @@ async function get(req, res) {
   return await tracer.startActiveSpan('granules.get', async (span) => {
     try {
       const {
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
         collectionPgModel = new CollectionPgModel(),
         granulePgModel = new GranulePgModel(),
       } = req.testContext || {};
@@ -1427,7 +1427,7 @@ async function get(req, res) {
 async function getByGranuleId(req, res) {
   return await tracer.startActiveSpan('granules.getByGranuleId', async (span) => {
     try {
-      const { knex = await getKnexClient() } = req.testContext || {};
+      const { knex = await getKnexClientSingleton() } = req.testContext || {};
       const { getRecoveryStatus } = req.query;
       const granuleId = req.params.granuleId;
 

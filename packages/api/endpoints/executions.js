@@ -14,7 +14,6 @@ const Logger = require('@cumulus/logger');
 const { trace } = require('@opentelemetry/api');
 
 const {
-  getKnexClient,
   getApiGranuleExecutionCumulusIds,
   getApiGranuleCumulusIds,
   getWorkflowNameIntersectFromGranuleIds,
@@ -25,6 +24,7 @@ const {
 } = require('@cumulus/db');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
+const { getKnexClientSingleton } = require('../app/db');
 const { zodParser } = require('../src/zod-utils');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const startAsyncOperation = require('../lib/startAsyncOperation');
@@ -78,7 +78,7 @@ async function create(req, res) {
     try {
       const {
         executionPgModel = new ExecutionPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       const execution = req.body || {};
@@ -157,7 +157,7 @@ async function update(req, res) {
 
       const {
         executionPgModel = new ExecutionPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       let oldPgRecord;
@@ -316,7 +316,7 @@ async function del(req, res) {
     try {
       const {
         executionPgModel = new ExecutionPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       const { arn } = req.params;
@@ -370,7 +370,7 @@ async function searchByGranules(req, res) {
   return await tracer.startActiveSpan('executions.searchByGranules', async (span) => {
     try {
       const payload = req.body;
-      const knex = await getKnexClient();
+      const knex = await getKnexClientSingleton();
 
       const { value: granules } = await tracer.startActiveSpan('getGranulesForPayload', async (granulesSpan) => {
         try {
@@ -452,7 +452,7 @@ async function workflowsByGranules(req, res) {
   return await tracer.startActiveSpan('executions.workflowsByGranules', async (span) => {
     try {
       const payload = req.body;
-      const knex = await getKnexClient();
+      const knex = await getKnexClientSingleton();
 
       const { value: granules } = await tracer.startActiveSpan('getGranulesForPayload', async (granulesSpan) => {
         try {
@@ -542,7 +542,7 @@ async function bulkDeleteExecutionsByCollection(req, res) {
 
       try {
         log.info(`Collection ID Is ${collectionId}`);
-        const knex = await getKnexClient();
+        const knex = await getKnexClientSingleton();
         await tracer.startActiveSpan('collectionPgModel.get', async (dbSpan) => {
           try {
             await collectionPgModel.get(

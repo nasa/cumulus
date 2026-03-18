@@ -7,7 +7,6 @@ const { trace } = require('@opentelemetry/api');
 
 const {
   createRejectableTransaction,
-  getKnexClient,
   isCollisionError,
   ProviderPgModel,
   translateApiProviderToPostgresProvider,
@@ -22,6 +21,7 @@ const {
 const Logger = require('@cumulus/logger');
 const { removeNilProperties } = require('@cumulus/common/util');
 
+const { getKnexClientSingleton } = require('../app/db');
 const { isBadRequestError } = require('../lib/errors');
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
@@ -117,7 +117,7 @@ async function post(req, res) {
     try {
       const {
         providerPgModel = new ProviderPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       const apiProvider = req.body;
@@ -192,7 +192,7 @@ async function put(req, res) {
     try {
       const {
         providerPgModel = new ProviderPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       const { params: { id }, body } = req;
@@ -270,7 +270,7 @@ async function del(req, res) {
     try {
       const {
         providerPgModel = new ProviderPgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       const { id } = req.params;

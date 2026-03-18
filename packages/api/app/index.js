@@ -18,6 +18,7 @@ const Logger = require('@cumulus/logger');
 const router = require('./routes');
 const { jsonBodyParser } = require('./middleware');
 const boom = require('../lib/expressBoom');
+const { initializeKnexClient, destroyKnexClient } = require('./db');
 
 const log = new Logger({ sender: '@api/index' });
 
@@ -50,7 +51,11 @@ const initEnvVars = initEnvVarsFunction();
 
 // Setup express app
 const app = express();
-app.use(awsServerlessExpressMiddleware.eventContext());
+
+// Only use serverless express middleware when running as Lambda
+if (process.env.RUN_API_AS_SERVER !== 'true') {
+  app.use(awsServerlessExpressMiddleware.eventContext());
+}
 
 // logging config
 morgan.token('error_obj', (req, res) => {
@@ -92,7 +97,14 @@ app.use((err, _req, res, _next) => {
   return res.boom.badImplementation('Something broke!');
 });
 
-const server = awsServerlessExpress.createServer(app);
+// Create serverless express server only for Lambda mode (lazy initialization)
+let server;
+const getServer = () => {
+  if (!server) {
+    server = awsServerlessExpress.createServer(app);
+  }
+  return server;
+};
 
 const handler = async (event, context) => {
   await initEnvVars; // Wait for environment vars to resolve from initEnvVarsFunction
@@ -112,15 +124,57 @@ const handler = async (event, context) => {
   // see https://github.com/vendia/serverless-express/issues/297
   return new Promise((resolve, reject) => {
     awsServerlessExpress.proxy(
-      server,
+      getServer(),
       modifiedEvent,
       { ...context, succeed: resolve, fail: reject }
     );
   });
 };
 
+// Initialize environment variables and start server for ECS deployment
+const startServer = async () => {
+  await initEnvVars; // Wait for environment vars to resolve from initEnvVarsFunction
+  const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
+  // Set Dynamo table names as environment variables
+  Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
+    process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];
+  });
+
+  // Initialize singleton Knex client for ECS mode
+  await initializeKnexClient();
+
+  const port = process.env.PORT || 5001;
+  const server = app.listen(port, () => {
+    log.info(`Cumulus API server listening on port ${port}`);
+  });
+
+  // Graceful shutdown handler
+  const shutdown = async (signal) => {
+    log.info(`${signal} signal received: closing HTTP server and database connections`);
+    server.close(async () => {
+      log.info('HTTP server closed');
+      await destroyKnexClient();
+      log.info('Database connections closed');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+};
+
+// If RUN_API_AS_SERVER is set to true, start as a standalone server
+if (process.env.RUN_API_AS_SERVER === 'true') {
+  log.info('Starting API as standalone server (ECS mode)');
+  startServer().catch((error) => {
+    log.error('Failed to start server:', error);
+    process.exit(1);
+  });
+}
+
 module.exports = {
   app,
   initEnvVarsFunction,
   handler,
+  startServer,
 };

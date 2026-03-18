@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 
 import Logger from '@cumulus/logger';
 
-import { getKnexClient } from '../connection';
+import { getKnexClientSingleton } from '../connection';
 import { TableNames } from '../tables';
 import { DbQueryParameters, QueryEvent } from '../types/search';
 import { BaseSearch } from './BaseSearch';
@@ -165,7 +165,7 @@ class StatsSearch extends BaseSearch {
    * @returns the postgres aggregations based on query
    */
   public async summary(testKnex?: Knex): Promise<SummaryResult> {
-    const knex = testKnex ?? await getKnexClient();
+    const knex = testKnex ?? await getKnexClientSingleton();
     const aggregateQuery = this.buildSummaryQuery(knex);
     log.debug(`summary about to execute query: ${aggregateQuery?.toSQL().sql}`);
     const aggregateQueryRes: TotalSummary[] = await aggregateQuery;
@@ -284,7 +284,7 @@ class StatsSearch extends BaseSearch {
    * @returns the aggregate query results in api format
    */
   async aggregate(testKnex?: Knex): Promise<ApiAggregateResult> {
-    const knex = testKnex ?? await getKnexClient();
+    const knex = testKnex ?? await getKnexClientSingleton();
     const { searchQuery } = this.buildSearch(knex);
     try {
       const pgRecords = await searchQuery;

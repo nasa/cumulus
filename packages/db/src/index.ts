@@ -18,7 +18,12 @@ export {
 } from './test-utils';
 
 export { isCollisionError } from './lib/errors';
-export { getKnexClient } from './connection';
+export {
+  getKnexClient,
+  getKnexClientSingleton,
+  initializeKnexClientSingleton,
+  destroyKnexClientSingleton,
+} from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
 export { createRejectableTransaction } from './database';
 export { TableNames } from './tables';

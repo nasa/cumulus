@@ -15,13 +15,14 @@ const { trace } = require('@opentelemetry/api');
 
 const {
   createRejectableTransaction,
-  getKnexClient,
   isCollisionError,
   RulePgModel,
   RuleSearch,
   translateApiRuleToPostgresRuleRaw,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
+
+const { getKnexClientSingleton } = require('../app/db');
 
 const {
   requireApiVersion,
@@ -93,7 +94,7 @@ async function get(req, res) {
 
       const {
         rulePgModel = new RulePgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       try {
@@ -146,7 +147,7 @@ async function post(req, res) {
     try {
       const {
         rulePgModel = new RulePgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       let record;
@@ -236,7 +237,7 @@ async function patchRule(params) {
         oldApiRule,
         apiRule,
         rulePgModel = new RulePgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = params;
 
       span.setAttribute('rule.name', oldApiRule.name);
@@ -327,7 +328,7 @@ async function patch(req, res) {
     try {
       const {
         rulePgModel = new RulePgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       const { params: { name }, body } = req;
@@ -394,7 +395,7 @@ async function put(req, res) {
     try {
       const {
         rulePgModel = new RulePgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       const { params: { name }, body } = req;
@@ -468,7 +469,7 @@ async function del(req, res) {
     try {
       const {
         rulePgModel = new RulePgModel(),
-        knex = await getKnexClient(),
+        knex = await getKnexClientSingleton(),
       } = req.testContext || {};
 
       const name = (req.params.name || '').replace(/%20/g, ' ');
