@@ -280,7 +280,9 @@ variable "archive_api_users" {
   type        = list(string)
   default     = [
     "acyu",
+    "atisdale",
     "awisdom",
+    "blokey",
     "cbanh",
     "chuang14",
     "cdurbin",
@@ -298,6 +300,7 @@ variable "archive_api_users" {
     "mobrien84",
     "mikedorfman",
     "nnageswa",
+    "norrisdj",
     "npauzenga",
     "reweeden",
     "terrafirma13",

@@ -1,6 +1,6 @@
 [project]
 name = "granule-invalidator"
-version = "0.1.0"
+version = "21.3.1"
 description = "Identifies granules that fulfill specific criteria"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -25,4 +25,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-cumulus-api = { git = "https://github.com/ghrcdaac/cumulus-api", tag = "v3.0.4" }
+cumulus-api = { git = "https://github.com/nasa/Cumulus-API-Python", tag = "v3.2.1" }
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

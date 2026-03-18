@@ -158,6 +158,7 @@ test.serial('reingestGranule pushes a message with the correct queueUrl, and upd
   await reingestGranule({
     apiGranule,
     queueUrl,
+    knex: t.context.knex,
     granulePgModel,
   });
   // Rule.buildPayload has its own unit tests to ensure the queue name
