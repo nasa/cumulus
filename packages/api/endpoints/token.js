@@ -124,7 +124,6 @@ async function token(event, oAuth2Provider, response) {
  * Handle refreshing tokens with OAuth provider
  *
  * @param {object} request - an API Gateway request
- * @param {OAuth2} oAuth2Provider - an OAuth2 instance
  * @param {object} response - an API Gateway response object
  * @param {number} [extensionSeconds] - number of seconds to extend token
  *   expiration (default: 43200)
@@ -132,50 +131,44 @@ async function token(event, oAuth2Provider, response) {
  */
 async function refreshAccessToken(
   request,
-  oAuth2Provider,
   response,
   extensionSeconds = 60 * 60
 ) {
+  // eslint-disable-next-line consistent-return
   return await tracer.startActiveSpan('refreshAccessToken', async (span) => {
     try {
-      await tracer.startActiveSpan('verifyAndDecodeTokenFromRequest', async (verifySpan) = {
-        try {
-          const decodedToken = verifyAndDecodeTokenFromRequest(request);
-          const username = decodedToken.username;
+      const decodedToken = verifyAndDecodeTokenFromRequest(request);
+      const username = decodedToken.username;
 
-          // Check if the user is authorized (OAuth-specific check)
-          if (!(await isAuthorizedOAuthUser(username))) {
-            span.setAttribute('error', true);
-            span.setAttribute('error.message', 'User not authorized');
-            return response.boom.unauthorized('User not authorized');
-          }
+      // Check if the user is authorized (OAuth-specific check)
+      if (!(await isAuthorizedOAuthUser(username))) {
+        span.setAttribute('error', true);
+        span.setAttribute('error.message', 'User not authorized');
+        return response.boom.unauthorized('User not authorized');
+      }
 
-          const accessTokenModel = new AccessToken();
+      const accessTokenModel = new AccessToken();
 
+      try {
+        await tracer.startActiveSpan('refreshTokenAndJwt', async (refreshSpan) => {
           try {
-            await tracer.startActiveSpan('refreshTokenAndJwt', async (refreshSpan) = {
-              try {
-                const jwtToken = await refreshTokenAndJwt(
-                  decodedToken,
-                  accessTokenModel,
-                  extensionSeconds
-                );
-                return response.send({ token: jwtToken });
-              } finally {
-               refreshSpan.end();
-              }
-            }
-          } catch (error) {
-            span.setAttribute('error', true);
-            if (error.message === 'Invalid access token') {
-              span.setAttribute('error.message', 'Invalid access token');
-              return response.boom.unauthorized(error.message);
-            }
-            throw error;
+            const jwtToken = await refreshTokenAndJwt(
+              decodedToken,
+              accessTokenModel,
+              extensionSeconds
+            );
+            return response.send({ token: jwtToken });
+          } finally {
+            refreshSpan.end();
           }
-        } finally {
-          verifySpan.end();
+        });
+      } catch (error) {
+        span.setAttribute('error', true);
+        if (error.message === 'Invalid access token') {
+          span.setAttribute('error.message', 'Invalid access token');
+          return response.boom.unauthorized(error.message);
         }
+        throw error;
       }
     } catch (error) {
       span.recordException(error);
