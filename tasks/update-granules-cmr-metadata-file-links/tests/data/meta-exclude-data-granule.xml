@@ -1,20 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Granule>
-    <GranuleUR>TestFixtureGranuleUR_uniq</GranuleUR>
+    <GranuleUR>MOD11A1.A2017200.h19v04.006.2017201090724</GranuleUR>
     <InsertTime>2017-11-20T23:02:40.055807</InsertTime>
     <LastUpdate>2017-11-20T23:02:40.055814</LastUpdate>
     <Collection>
         <ShortName>MOD11A1</ShortName>
         <VersionId>006</VersionId>
     </Collection>
-    <DataGranule>
-        <ReprocessingPlanned>further update is anticipated</ReprocessingPlanned>
-        <ReprocessingActual>reprocessed</ReprocessingActual>
-        <ProducerGranuleId>MOD11A1.A2017200.h19v04.006.2017201090724.hdf</ProducerGranuleId>
-        <DayNightFlag>BOTH</DayNightFlag>
-        <ProductionDateTime>2015-07-02T16:47:38.000Z</ProductionDateTime>
-        <LocalVersionId>6.4.4AS</LocalVersionId>
-    </DataGranule>
     <PGEVersionClass>
         <PGEVersion>6.4.11</PGEVersion>
     </PGEVersionClass>

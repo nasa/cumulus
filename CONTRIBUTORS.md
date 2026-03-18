@@ -5,6 +5,7 @@
 * Adithya Krishna
 * Aimee Barciauskas
 * Alin Vlad
+* Allan Yu
 * Andrew Pawloski
 * Anthony Lukach
 * Anthony Ortega

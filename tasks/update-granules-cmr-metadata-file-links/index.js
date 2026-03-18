@@ -3,6 +3,7 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
+const isBoolean = require('lodash/isBoolean');
 const Logger = require('@cumulus/logger');
 const { getObjectSize } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -36,6 +37,10 @@ const logger = new Logger({ sender: '@cumulus/update-granules-cmr-metadata-file-
  * @param {Object} distributionBucketMap   - mapping of bucket->distribution path values
  *                                           (e.g. { bucket: distribution path })
  * @param {Object} excludeFileRegexPattern - pattern by which to exclude files from processing
+ * @param {boolean} excludeDataGranule       - Whether to add or update the DataGranule
+ * node in the granule's metadata
+ * @param {boolean} updateGranuleIdentifiers - Whether to update the Granule's Identifiers
+ *                                             and granuleUR
  * @returns {Promise<Object[]>} Array of updated CMR files with etags of newly updated files.
  *
  */
@@ -47,7 +52,9 @@ async function updateEachCmrFileMetadata(
   distEndpoint,
   bucketTypes,
   distributionBucketMap,
-  excludeFileRegexPattern
+  excludeFileRegexPattern,
+  excludeDataGranule,
+  updateGranuleIdentifiers
 ) {
   return await Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
@@ -71,7 +78,8 @@ async function updateEachCmrFileMetadata(
       bucketTypes,
       cmrGranuleUrlType,
       distributionBucketMap,
-      updateGranuleIdentifiers: true,
+      updateGranuleIdentifiers,
+      excludeDataGranule,
     });
   }));
 }
@@ -111,6 +119,10 @@ async function updateGranulesCmrMetadata(event) {
   const granules = event.input.granules.map((g) => addEtagsToFileObjects(g, incomingETags));
   const cmrFiles = granulesToCmrFileObjects(granules);
   const granulesByGranuleId = keyBy(granules, 'granuleId');
+  const excludeDataGranule = isBoolean(event.config.excludeDataGranule) ?
+    event.config.excludeDataGranule : false;
+  const updateGranuleIdentifiers = isBoolean(event.config.updateGranuleIdentifiers) ?
+    event.config.updateGranuleIdentifiers : true;
 
   const distributionBucketMap = await fetchDistributionBucketMap();
   const updatedCmrFiles = await updateEachCmrFileMetadata(
@@ -120,7 +132,9 @@ async function updateGranulesCmrMetadata(event) {
     config.distribution_endpoint,
     bucketTypes,
     distributionBucketMap,
-    config.excludeFileRegex
+    config.excludeFileRegex,
+    excludeDataGranule,
+    updateGranuleIdentifiers
   );
 
   const updatedGranulesByGranuleId = await updateCmrFileInfo(cmrFiles, granulesByGranuleId);
