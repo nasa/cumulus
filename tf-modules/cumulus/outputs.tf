@@ -19,6 +19,10 @@ output "archive_api_redirect_uri" {
   value = module.archive.api_redirect_uri
 }
 
+output "private_api_lambda_arn" {
+  value = module.archive.private_api_lambda_arn
+}
+
 output "provider_kms_key_id" {
   value = module.archive.provider_kms_key_id
 }
@@ -55,6 +59,10 @@ output "add_unique_granule_id_task" {
   value = module.ingest.add_unique_granule_id_task
 }
 
+output "aws_api_proxy_task" {
+  value = module.ingest.aws_api_proxy_task
+}
+
 output "cnm_response_task" {
   value = module.ingest.cnm_response_task
 }
@@ -73,6 +81,10 @@ output "fake_processing_task" {
 
 output "files_to_granules_task" {
   value = module.ingest.files_to_granules_task
+}
+
+output "get_cnm_task" {
+  value = module.ingest.get_cnm_task
 }
 
 output "granule_invalidator_task" {

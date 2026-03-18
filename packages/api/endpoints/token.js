@@ -2,27 +2,23 @@
 
 const get = require('lodash/get');
 const log = require('@cumulus/common/log');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 const { google } = require('googleapis');
-const {
-  JsonWebTokenError,
-  TokenExpiredError,
-} = require('jsonwebtoken');
 const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 // Import OpenTelemetry
 const { trace } = require('@opentelemetry/api');
-const {
-  TokenUnauthorizedUserError,
-} = require('../lib/errors');
 
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
   createJwtToken,
+  refreshTokenAndJwt,
+  verifyAndDecodeTokenFromRequest,
+  handleJwtVerificationError,
 } = require('../lib/token');
 
 const { verifyJwtAuthorization } = require('../lib/request');
 
 const { AccessToken } = require('../models');
+const { isAuthorizedOAuthUser } = require('../app/auth');
 
 // Get the tracer
 const tracer = trace.getTracer('cumulus-api');
@@ -32,37 +28,6 @@ const buildPermanentRedirectResponse = (location, response) =>
     .status(307)
     .set({ Location: location })
     .send('Redirecting');
-
-/**
- * Handle API response for JWT verification errors
- *
- * @param {Error} err - error thrown by JWT verification
- * @param {object} response - an express response object
- * @returns {Promise<object>} the promise of express response object
- */
-function handleJwtVerificationError(err, response) {
-  return tracer.startActiveSpan('handleJwtVerificationError', (span) => {
-    try {
-      span.setAttribute('error.type', err.constructor.name);
-
-      if (err instanceof TokenExpiredError) {
-        span.setAttribute('jwt.error', 'expired');
-        return response.boom.unauthorized('Access token has expired');
-      }
-      if (err instanceof JsonWebTokenError) {
-        span.setAttribute('jwt.error', 'invalid');
-        return response.boom.unauthorized('Invalid access token');
-      }
-      if (err instanceof TokenUnauthorizedUserError) {
-        span.setAttribute('jwt.error', 'unauthorized');
-        return response.boom.unauthorized('User not authorized');
-      }
-      throw err;
-    } finally {
-      span.end();
-    }
-  });
-}
 
 /**
  * Handles token requests
@@ -161,104 +126,67 @@ async function token(event, oAuth2Provider, response) {
  * @param {object} request - an API Gateway request
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
  * @param {object} response - an API Gateway response object
+ * @param {number} [extensionSeconds] - number of seconds to extend token
+ *   expiration (default: 43200)
  * @returns {object} an API Gateway response
  */
-async function refreshAccessToken(request, oAuth2Provider, response) {
+async function refreshAccessToken(
+  request,
+  oAuth2Provider,
+  response,
+  extensionSeconds = 60 * 60
+) {
   return await tracer.startActiveSpan('refreshAccessToken', async (span) => {
     try {
-      const requestJwtToken = get(request, 'body.token');
-
-      if (!requestJwtToken) {
-        span.setAttribute('error', true);
-        span.setAttribute('error.message', 'Missing token');
-        return response.boom.unauthorized('Request requires a token');
-      }
-
-      let accessToken;
-      try {
-        await tracer.startActiveSpan('verifyJwtAuthorization', async (verifySpan) => {
-          try {
-            accessToken = await verifyJwtAuthorization(requestJwtToken);
-          } finally {
-            verifySpan.end();
-          }
-        });
-      } catch (error) {
-        span.recordException(error);
-        return handleJwtVerificationError(error, response);
-      }
-
-      const accessTokenModel = new AccessToken();
-
-      let accessTokenRecord;
-      try {
-        await tracer.startActiveSpan('accessTokenModel.get', async (getSpan) => {
-          try {
-            accessTokenRecord = await accessTokenModel.get({ accessToken });
-          } finally {
-            getSpan.end();
-          }
-        });
-      } catch (error) {
-        if (error instanceof RecordDoesNotExist) {
-          span.setAttribute('error', true);
-          span.setAttribute('error.type', 'RecordDoesNotExist');
-          return response.boom.unauthorized('Invalid access token');
-        }
-        throw error;
-      }
-
-      let newAccessToken;
-      let newRefreshToken;
-      let expirationTime;
-      let username;
-
-      try {
-        await tracer.startActiveSpan('oAuth2Provider.refreshAccessToken', async (refreshSpan) => {
-          try {
-            ({
-              accessToken: newAccessToken,
-              refreshToken: newRefreshToken,
-              username,
-              expirationTime,
-            } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
-            refreshSpan.setAttribute('oauth.username', username);
-          } finally {
-            refreshSpan.end();
-          }
-        });
-      } finally {
-        // Delete old token record to prevent refresh with old tokens
-        await tracer.startActiveSpan('accessTokenModel.delete.old', async (deleteSpan) => {
-          try {
-            await accessTokenModel.delete({
-              accessToken: accessTokenRecord.accessToken,
-            });
-          } finally {
-            deleteSpan.end();
-          }
-        });
-      }
-
-      // Store new token record
-      await tracer.startActiveSpan('accessTokenModel.create', async (createSpan) => {
+      await tracer.startActiveSpan('verifyAndDecodeTokenFromRequest', async (verifySpan) = {
         try {
-          await accessTokenModel.create({
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-            expirationTime,
-          });
-        } finally {
-          createSpan.end();
-        }
-      });
+          const decodedToken = verifyAndDecodeTokenFromRequest(request);
+          const username = decodedToken.username;
 
-      const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
-      return response.send({ token: jwtToken });
+          // Check if the user is authorized (OAuth-specific check)
+          if (!(await isAuthorizedOAuthUser(username))) {
+            span.setAttribute('error', true);
+            span.setAttribute('error.message', 'User not authorized');
+            return response.boom.unauthorized('User not authorized');
+          }
+
+          const accessTokenModel = new AccessToken();
+
+          try {
+            await tracer.startActiveSpan('refreshTokenAndJwt', async (refreshSpan) = {
+              try {
+                const jwtToken = await refreshTokenAndJwt(
+                  decodedToken,
+                  accessTokenModel,
+                  extensionSeconds
+                );
+                return response.send({ token: jwtToken });
+              } finally {
+               refreshSpan.end(); 
+              }
+            }
+          } catch (error) {
+            span.setAttribute('error', true);
+            if (error.message === 'Invalid access token') {
+              span.setAttribute('error.message', 'Invalid access token');
+              return response.boom.unauthorized(error.message);
+            }
+            throw error;
+          }
+        } finally {
+          verifySpan.end();
+        }
+      }
     } catch (error) {
       span.recordException(error);
       span.setAttribute('error', true);
-      throw error;
+      if (error.noToken) {
+        return response.boom.unauthorized(error.message);
+      }
+      if (error.sessionExpired) {
+        return response.boom.unauthorized(error.message);
+      }
+      return handleJwtVerificationError(error.jwtError || error, response);
     } finally {
       span.end();
     }

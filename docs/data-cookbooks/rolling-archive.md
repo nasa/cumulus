@@ -6,7 +6,7 @@ hide_title: false
 
 A workflow that uses the granule-invalidator task to identify and remove granules that fit specified criteria.
 
-### Workflow Configuration
+## Workflow Configuration
 
 ```json
 {
@@ -152,7 +152,7 @@ A workflow that uses the granule-invalidator task to identify and remove granule
 
 Workflow **error-handling** can be configured as discussed in the [Error-Handling](error-handling.md) cookbook.  This workflow is configured to identify granules to delete in one step, then interact with the Cumulus Private API lambda to run a bulk deletion of those granules in a separate step.
 
-### Task Configuration
+## Task Configuration
 
 The granule-invalidator task is provided for you as part of the `cumulus` terraform module, no specific configuration is needed.  In order to provide the critera that defines the behavior of this rolloff functionality, one of three patterns can be configured;
 

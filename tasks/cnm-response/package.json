@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cnm-response",
-  "version": "21.0.1",
+  "version": "21.3.1",
   "description": "CNM Response task",
   "main": "index.js",
   "directories": {
@@ -21,12 +21,12 @@
     "generate-task-schemas": "npx generate-task-schemas . files",
     "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src/cnm_response",
     "package": "npm run clean && ../../bin/package_uv.sh 3.12 ${PWD}",
-    "prepare": "npm run build",
+    "update-python-version": "uv version --",
     "test": "uv run pytest -q"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@cumulus/schemas": "21.0.1"
+    "@cumulus/schemas": "21.3.1"
   }
 }

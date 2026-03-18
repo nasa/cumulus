@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Migration Notes
+
 - **CUMULUS-4395 Core CnmResponse task lambda log group import**
   - The lambda function name and log group name for this task are
   `<prefix>-CnmResponse` which might conflict with the non-core version of
@@ -32,6 +33,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **CUMULUS-4107**
+  - Changed "_doc" type to "undefined" for ElasticSearch v8.x query parameter . The ES client will omit undefined values from the request. This doesn't touch the other callers.
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
     granule objects in the payload.
@@ -40,9 +43,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4564**
+  - Added private_api_lambda_arn as an output in the Cumulus terraform module
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
-    `s3GranuleIdInputFile` in the payload.
+    `s3GranuleIdInputFile` in the payload. `batchSize` added as an optional parameter for
+    processing granules from the file options.
 - **CUMULUS-4388**
   - Added cnm_to_cma task (lambda).
   - Original cnm_to_cma was written in Java.  Converted to Python.
@@ -50,6 +56,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
 - **CUMULUS-4385**
   - Added supporting Terraform for the granule-invalidator task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
+  - Hard-coded values for architecture and python version which will later be dynamically referenced by a top-level build config.
 - **CUMULUS-4394**
   - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
 - **CUMULUS-4395**
@@ -68,6 +75,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `@cumulus/db/search` module to support searching on nested JSON fields.
   - Updated the `@cumulus/db/translate` `translatePostgres*Record*ToApi*Record*` functions to
     correctly handle query results from both PostgreSQL and DuckDB.
+- **CUMULUS-4543**
+  - Added supporting Terraform for the aws_api_proxy task
+  - Added aws_api_proxy output to the Cumulus Terraform module
+- **CUMULUS-4544**
+  - Added integration tests for the aws_api_proxy task
+- **CUMULUS-4545**
+  - Created integration tests for get_cnm task
+- **CUMULUS-4546**
+  - Created IaC needed to support get_cnm task
+- **CUMULUS-4547**
+  - Added get_cnm task to tasks directory
+- **CUMULUS-4400**
+  - Added integration testing for CnmResponse task.
+  - Updated example workflows to include the exception message in the
+  `WorkflowFailed` state.
+- **CUMULUS-4427**
+  - Added pdr-cleanup task into cumulus core from ASDC
+- **CUMULUS-4563**
+  - Added a Github action to generate requirements.txt files from coreified uv.lock files
 
 ### Changed
 
@@ -81,12 +107,37 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Resolved several integration issues with the granule-invalidator lambda.
   - Updated packaging script for granule-invalidator to use `uv pip install` instead of `uv sync`.
   - Added `private_api_lambda_arn` output to the archive module and `private_api_lambda_arn` variable to the ingest module.
+- **CUMULUS-4472**
+  - added `concurrency` utilization by `pMap` for granule `bulkOperations` `applyWorkflowToGranule`, which previously was missing
+  - allow `concurrency` and `maxDbConnections` to be passed into granule `bulkOperations` and `bulkReingest` endpoints, which previously was only available for `bulkDelete`
+  - updated enforcement of granule bulk operations endpoints to accept exactly one of `granules, query, granuleInventoryReportName, or s3GranuleIdInputFile`
 - **CSD-85**
   - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
     for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+- **CUMULUS-4562**
+  - Upgraded lerna to v9.
+  - Updated monorepo configuration and root package.json to align with Lerna v9.
+  - Removed prepare scripts from all package-level package.json files to prevent unintended lifecycle execution during install.
+  - Updated CI (Docker + Bamboo) to ensure compatibility with the new Lerna version.
+  - Applied necessary dependency and script adjustments across affected packages.
+  - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
+  - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
+  - Replaced legacy querystring module with URLSearchParams.
+- **CUMULUS-4570**
+  - Update corified tasks to use the common cumulus-task module
+  - Rename tasks to use PascalCase and update casing of acronyms to match existing core tasks
+    | old | new
+    | --- | ---
+    | aws-api-proxy | AwsApiProxy
+    | CNMToCMA | CnmToCma
+    | granule-invalidator-task | GranuleInvalidator
+- **CUMULUS-4599**
+  - Added the ability to easily modify version numbers for all python packages in order to keep them in sync with the Cumulus version.
 
 ### Fixed
 
+- **CUMULUS-4564**
+  - hotfix for a terraform deployment issue found in the granule invalidator workflow causing the PrivateApiLambda to not be recreated
 - **CUMULUS-4566**
   - Updated AJV to ^8.18.0
     - Updated task components to resolve malformed/errant task schemas in the following lambdas:
@@ -144,6 +195,8 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-3574**
   - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
     now, if any granule file fails, none are written.
+- **CUMULUS-4087**
+  - Updated /refresh token endpoint and other functions to support automatic extension of cumulus dashboard user sessions by using iat claims and extending token expiration time. `MAX_SESSION_DURATION` environment variable defaults to 12 hours but can be overriden.
 - **CUMULUS-4272**
   - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
     This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
