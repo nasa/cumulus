@@ -37,7 +37,7 @@ data "terraform_remote_state" "rds_cluster" {
 }
 
 module "ecs_cluster" {
-  source                     = "../../tf-modules/rds-iceberg-replication-tf"
+  source                     = "../../tf-modules/rds-iceberg-replication"
   prefix                     = var.prefix
   db_admin_username          = var.db_admin_username
   db_admin_password          = var.db_admin_password
