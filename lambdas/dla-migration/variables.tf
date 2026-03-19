@@ -14,14 +14,14 @@ variable "system_bucket" {
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_subnet_ids" {
@@ -31,9 +31,9 @@ variable "lambda_subnet_ids" {
 }
 
 variable "permissions_boundary_arn" {
-  type    = string
+  type        = string
   description = "Optional permissions boundary for lambda role bounds"
-  default = null
+  default     = null
 }
 
 variable "tags" {
