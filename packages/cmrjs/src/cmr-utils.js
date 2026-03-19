@@ -926,6 +926,28 @@ async function updateUMMGMetadata({
   return { metadataObject: updatedMetadataObject, etag };
 }
 
+async function waitForLockFileRelease() {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < 30000) {
+    try {
+      await s3().send(new HeadObjectCommand({
+        Bucket: process.env.system_bucket,
+        Key: `${process.env.system_bucket}/launchpad-lock.json`,
+      }));
+      // if the lock file exists, wait and retry
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    } catch (error) {
+      if (error.name === 'NotFound') {
+        return;
+      }
+      throw error;
+    }
+  }
+
+  throw new Error('Timed out waiting for launchpad lock file to be released');
+}
+
 /**
  * Helper to build an CMR settings object, used to initialize CMR.
  *
@@ -952,6 +974,10 @@ async function getCmrSettings(cmrConfig = {}) {
   };
 
   if (oauthProvider === 'launchpad') {
+
+    // checking for lock file and waiting for its release if it exists
+    await waitForLockFileRelease(); 
+
     const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName
       || process.env.launchpad_passphrase_secret_name;
     const passphrase = await getSecretString(
@@ -965,7 +991,10 @@ async function getCmrSettings(cmrConfig = {}) {
     };
 
     log.debug('cmrjs.getCreds getLaunchpadToken');
+
+    // the following line could possibly be replaced by just getting the token from s3 and using it
     const token = await launchpad.getLaunchpadToken(config);
+    
     return {
       ...cmrCredentials,
       token,

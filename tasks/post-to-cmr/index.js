@@ -133,50 +133,77 @@ async function removeGranuleFromCmr({ granules, cmrSettings, concurrency }) {
  * @param {string} event.input.cmrRevisionId - CMR Revision ID
  * @returns {Promise<Object>} the promise of an updated event object
  */
-async function postToCMR(event) {
+async function postToCMR(event, context) {
   const { cmrRevisionId, granules } = event.input;
   const { etags = {}, republish = false, concurrency = 20, s3Concurrency = 50 } = event.config;
 
-  const cmrSettings = await getCmrSettings({
-    ...event.config.cmr,
-    ...event.config.launchpad,
-  });
+  while (context.getRemainingTimeInMillis() > 30000) {
+    try {
+      const cmrSettings = await getCmrSettings({
+          ...event.config.cmr,
+          ...event.config.launchpad,
+      });
+      // if republish is true, unpublish granules which are public
+      if (republish) {
+        await removeGranuleFromCmr({ granules, cmrSettings, concurrency });
+      }
 
-  // if republish is true, unpublish granules which are public
-  if (republish) {
-    await removeGranuleFromCmr({ granules, cmrSettings, concurrency });
+      granules.forEach((granule) => addEtagsToFileObjects(granule, etags));
+
+      // get cmr files and metadata
+      const cmrFiles = granulesToCmrFileObjects(granules);
+      log.debug(`Found ${cmrFiles.length} CMR files.`);
+      if (!event.config.skipMetaCheck) checkForMetadata(granules, cmrFiles);
+      const updatedCMRFiles = await addMetadataObjects(cmrFiles, s3Concurrency);
+
+      log.info(`Publishing ${updatedCMRFiles.length} CMR files.`);
+
+      const startTime = Date.now();
+
+      // post all meta files to CMR
+      const results = await pMap(
+        updatedCMRFiles,
+        (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
+        { concurrency }
+      );
+      const endTime = Date.now();
+      const outputGranules = buildOutput(
+        results,
+        granules
+      ).map((granule) => ({
+        ...granule,
+        post_to_cmr_duration: endTime - startTime,
+      }));
+      outputGranules.forEach(removeEtagsFromFileObjects);
+      return {
+        granules: outputGranules,
+      };
+    } catch (error) {
+      if (error.statusCode === 401) {
+        // lambda incovation to recreate-launchpad-token to make a new token
+        const lambda = new AWS.Lambda();
+        const response = await lambda().send(new InvokeCommand({
+          FunctionName: 'recreate-launchpad-token',
+          InvocationType: 'RequestResponse',
+          Payload: JSON.stringify({
+            callerEvent: event,
+            callerFunctionName: process.env.AWS_LAMBDA_FUNCTION_NAME,
+            config: {
+              ...event.config.cmr,
+              ...event.config.launchpad,
+            },
+          }),
+        }));
+        if (response.FunctionError) {
+          throw new Error(`Token refresh and retry failed: ${result.errorMessage}`);
+        }
+      }
+
+      if (error.statusCode === 500) {
+        throw error;
+      }
+    }
   }
-
-  granules.forEach((granule) => addEtagsToFileObjects(granule, etags));
-
-  // get cmr files and metadata
-  const cmrFiles = granulesToCmrFileObjects(granules);
-  log.debug(`Found ${cmrFiles.length} CMR files.`);
-  if (!event.config.skipMetaCheck) checkForMetadata(granules, cmrFiles);
-  const updatedCMRFiles = await addMetadataObjects(cmrFiles, s3Concurrency);
-
-  log.info(`Publishing ${updatedCMRFiles.length} CMR files.`);
-
-  const startTime = Date.now();
-
-  // post all meta files to CMR
-  const results = await pMap(
-    updatedCMRFiles,
-    (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
-    { concurrency }
-  );
-  const endTime = Date.now();
-  const outputGranules = buildOutput(
-    results,
-    granules
-  ).map((granule) => ({
-    ...granule,
-    post_to_cmr_duration: endTime - startTime,
-  }));
-  outputGranules.forEach(removeEtagsFromFileObjects);
-  return {
-    granules: outputGranules,
-  };
 }
 
 /**
