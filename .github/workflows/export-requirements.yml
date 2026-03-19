@@ -3,7 +3,7 @@ name: Export requirements.txt from changed uv.lock files.
 on:
   pull_request:
     paths:
-      - '**uv.lock'
+      - "**uv.lock"
 
 jobs:
   export-requirements:
@@ -33,7 +33,11 @@ jobs:
             [ -z "$LOCKFILE" ] && continue
             DIR=$(dirname "$LOCKFILE")
             echo "Exporting in $DIR"
-            uv export --directory "$DIR" --format requirements-txt --output-file "$DIR/requirements.txt"
+            uv export \
+              --directory "$DIR" \
+              --no-header \
+              --format requirements-txt \
+              --output-file "requirements.txt"
           done < changed_lockfiles.txt
 
       - name: Commit updated requirements.txt files

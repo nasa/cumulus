@@ -34,8 +34,8 @@ module "ingest" {
   default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
   sync_granule_s3_jitter_max_ms     = var.sync_granule_s3_jitter_max_ms
 
-  lambda_timeouts       = var.lambda_timeouts
-  lambda_memory_sizes   = var.lambda_memory_sizes
+  lambda_timeouts     = var.lambda_timeouts
+  lambda_memory_sizes = var.lambda_memory_sizes
   # Launchpad config
   launchpad_api         = var.launchpad_api
   launchpad_passphrase  = var.launchpad_passphrase
@@ -55,19 +55,19 @@ module "ingest" {
   # DB config
   dynamo_tables = var.dynamo_tables
 
-  custom_queues = var.custom_queues
+  custom_queues    = var.custom_queues
   throttled_queues = var.throttled_queues
 
   sf_event_sqs_to_db_records_sqs_queue_url = module.archive.sf_event_sqs_to_db_records_sqs_queue_url
 
-  sqs_message_consumer_watcher_time_limit = var.sqs_message_consumer_watcher_time_limit
+  sqs_message_consumer_watcher_time_limit    = var.sqs_message_consumer_watcher_time_limit
   sqs_message_consumer_watcher_message_limit = var.sqs_message_consumer_watcher_message_limit
 
   tags = var.tags
 
   # Cloudwatch log retention config
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
-  default_log_retention_days = var.default_log_retention_days
+  default_log_retention_days       = var.default_log_retention_days
 
   # workflow config
   workflow_configurations = var.workflow_configurations
