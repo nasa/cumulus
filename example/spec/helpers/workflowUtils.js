@@ -141,7 +141,8 @@ async function buildWorkflow(
   collection,
   provider,
   payload,
-  meta
+  meta,
+  cmrProvider = "PODAAC_SWOT"
 ) {
   const template = await getJsonS3Object(bucketName, templateKey(stackName));
 
@@ -177,6 +178,7 @@ async function buildWorkflow(
 
   template.meta.workflow_name = workflowName;
   template.meta = merge(template.meta, meta);
+  template.meta.cmr.provider = cmrProvider;
   template.payload = payload || {};
 
   return template;
