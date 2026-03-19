@@ -1,6 +1,6 @@
 [project]
 name = "aws-api-proxy"
-version = "21.3.1"
+version = "21.3.2"
 description = "Makes specified AWS API calls wrapped the Cumulus Message Adapter"
 readme = "README.md"
 requires-python = ">=3.12"
