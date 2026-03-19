@@ -976,7 +976,7 @@ async function getCmrSettings(cmrConfig = {}) {
   if (oauthProvider === 'launchpad') {
 
     // checking for lock file and waiting for its release if it exists
-    await waitForLockFileRelease(); 
+    await waitForLockFileRelease();
 
     const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName
       || process.env.launchpad_passphrase_secret_name;
@@ -994,7 +994,7 @@ async function getCmrSettings(cmrConfig = {}) {
 
     // the following line could possibly be replaced by just getting the token from s3 and using it
     const token = await launchpad.getLaunchpadToken(config);
-    
+
     return {
       ...cmrCredentials,
       token,
