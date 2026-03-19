@@ -28,6 +28,7 @@ const {
   getGranuleAndCollection,
   getGranuleIdAndCollectionIdFromFile,
   getGranulesByGranuleId,
+  getKnexClient,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -993,7 +994,7 @@ async function bulkPatch(req, res) {
     try {
       const {
         mappingFunction = pMap,
-        getKnexClientMethod = getKnexClientSingleton,
+        getKnexClientMethod = getKnexClient,
       } = req.testContext || {};
       req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
       req.body.dbMaxPool = req.body.dbMaxPool ?? 20;

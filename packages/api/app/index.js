@@ -144,18 +144,18 @@ const startServer = async () => {
   await initializeKnexClient();
 
   const port = process.env.PORT || 5001;
-  const server = app.listen(port, () => {
+  const ecsServer = app.listen(port, () => {
     log.info(`Cumulus API server listening on port ${port}`);
   });
 
   // Graceful shutdown handler
-  const shutdown = async (signal) => {
+  const shutdown = (signal) => {
     log.info(`${signal} signal received: closing HTTP server and database connections`);
-    server.close(async () => {
+    ecsServer.close(async () => {
       log.info('HTTP server closed');
       await destroyKnexClient();
       log.info('Database connections closed');
-      process.exit(0);
+      throw new Error(`Server shutting down due to ${signal}`);
     });
   };
 
@@ -168,7 +168,7 @@ if (process.env.RUN_API_AS_SERVER === 'true') {
   log.info('Starting API as standalone server (ECS mode)');
   startServer().catch((error) => {
     log.error('Failed to start server:', error);
-    process.exit(1);
+    throw error;
   });
 }
 

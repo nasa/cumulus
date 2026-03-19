@@ -110,12 +110,13 @@ export const initializeKnexClientSingleton = async ({
 } = {}): Promise<Knex> => {
   if (!knexClientSingleton) {
     // Set default pool size for ECS if not already configured
-    if (env.RUN_API_AS_SERVER === 'true' && !env.dbMaxPool) {
-      env.dbMaxPool = '50';
+    const modifiedEnv = { ...env };
+    if (modifiedEnv.RUN_API_AS_SERVER === 'true' && !modifiedEnv.dbMaxPool) {
+      modifiedEnv.dbMaxPool = '50';
     }
-    
+
     knexLogger.info('Initializing singleton connection pool...');
-    knexClientSingleton = await getKnexClient({ env, secretsManager, knexLogger });
+    knexClientSingleton = await getKnexClient({ env: modifiedEnv, secretsManager, knexLogger });
   }
   return knexClientSingleton;
 };
@@ -147,7 +148,7 @@ export const getKnexClientSingleton = async ({
     }
     return knexClientSingleton;
   }
-  
+
   // In Lambda mode, create new client (Lambda will clean up)
   return getKnexClient({ env, secretsManager, knexLogger });
 };

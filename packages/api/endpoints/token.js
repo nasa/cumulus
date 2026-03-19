@@ -334,9 +334,8 @@ async function tokenEndpoint(req, res) {
 async function refreshEndpoint(req, res) {
   return await tracer.startActiveSpan('refreshEndpoint', async (span) => {
     try {
-      const oAuth2Provider = buildOAuth2ProviderFromEnv();
       span.setAttribute('oauth.provider', process.env.OAUTH_PROVIDER || 'earthdata');
-      return await refreshAccessToken(req, oAuth2Provider, res);
+      return await refreshAccessToken(req, res);
     } finally {
       span.end();
     }

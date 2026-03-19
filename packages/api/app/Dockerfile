@@ -12,13 +12,13 @@ WORKDIR /app
 # 1. Copy configuration (Added wildcard for tsconfig*.json)
 COPY package*.json lerna.json tsconfig*.json .eslint* ./
 
-# 2. Copy the packages 
+# 2. Copy the packages
 COPY packages ./packages
 
 # 3. Install ALL dependencies
 RUN npm install -w @cumulus/api --include-workspace-root --ignore-scripts
 
-# 4. Build the API 
+# 4. Build the API
 # This should now find /app/tsconfig.base.json
 RUN npx lerna run build --scope=@cumulus/api --include-dependencies
 

@@ -27,7 +27,7 @@ resource "aws_ecs_task_definition" "api" {
   cpu                      = 512    # Roughly equivalent to your memory choice
   memory                   = 1024   # Matches your ~1280MB logic
   execution_role_arn       = module.cumulus.ecs_execution_role_arn
-  task_role_arn            = module.cumulus.ecs_task_role_arn 
+  task_role_arn            = module.cumulus.ecs_task_role_arn
 
   container_definitions = jsonencode([
     {
@@ -78,7 +78,7 @@ resource "aws_ecs_service" "api" {
   load_balancer {
     target_group_arn = aws_lb_target_group.api.arn
     container_name   = "iceberg-api-container" # Must match name in task definition
-    container_port   = 5001 
+    container_port   = 5001
   }
 
   # Ensure the service doesn't start until the ALB listener is ready

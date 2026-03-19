@@ -21,7 +21,7 @@ const initializeKnexClient = async () => {
     process.env.dbMaxPool = '50';
     log.info('Setting default dbMaxPool to 50 for ECS server mode');
   }
-  
+
   log.info(`Initializing singleton Knex client for ECS server mode with pool size: ${process.env.dbMaxPool}`);
   await initializeKnexClientSingleton();
   log.info('Knex client initialized successfully');
@@ -58,7 +58,7 @@ const attachKnexClient = async (req, res, next) => {
       return res.boom.badImplementation('Database connection error');
     }
   }
-  next();
+  return next();
 };
 
 module.exports = {
