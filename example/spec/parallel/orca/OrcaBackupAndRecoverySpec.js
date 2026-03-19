@@ -168,10 +168,7 @@ describe('The S3 Ingest Granules workflow', () => {
       collectionId = constructCollectionId(collection.name, collection.version);
       const response = await bulkOperation({
         prefix: config.stackName,
-        granules: [{
-          collectionId,
-          granuleId,
-        }],
+        granules: [granuleId],
         workflowName: recoveryWorkflowName,
       });
 

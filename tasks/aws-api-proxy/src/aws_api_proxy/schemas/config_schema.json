@@ -1,0 +1,109 @@
+{
+  "$defs": {
+    "ParameterFilter": {
+      "description": "Schema for parameter filters.",
+      "properties": {
+        "name": {
+          "const": "json.dumps",
+          "title": "Name",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "field"
+      ],
+      "title": "ParameterFilter",
+      "type": "object"
+    },
+    "SNSPublishParameters": {
+      "description": "Schema for SNS publish parameters.",
+      "properties": {
+        "TopicArn": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Topicarn"
+        },
+        "Message": {
+          "anyOf": [
+            {},
+            {
+              "items": {},
+              "type": "array"
+            }
+          ],
+          "title": "Message"
+        }
+      },
+      "required": [
+        "TopicArn",
+        "Message"
+      ],
+      "title": "SNSPublishParameters",
+      "type": "object"
+    }
+  },
+  "description": "Configuration schema for AWS API proxy task.",
+  "properties": {
+    "service": {
+      "const": "sns",
+      "title": "Service",
+      "type": "string"
+    },
+    "action": {
+      "const": "publish",
+      "title": "Action",
+      "type": "string"
+    },
+    "parameters": {
+      "$ref": "#/$defs/SNSPublishParameters"
+    },
+    "iterate_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Iterate By"
+    },
+    "parameter_filters": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ParameterFilter"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parameter Filters"
+    }
+  },
+  "required": [
+    "service",
+    "action",
+    "parameters"
+  ],
+  "title": "Model",
+  "type": "object"
+}

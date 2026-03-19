@@ -35,6 +35,7 @@ const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { getCollections } = require('@cumulus/api-client/collections');
 const {
+  bulkDeleteGranules,
   createGranule,
   getGranule,
   updateGranule,
@@ -638,120 +639,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
   });
 
-  describe('Creates \'Granule Inventory\' reports.', () => {
-    let reportRecord;
-    let reportArray;
-    let granuleInventoryAsyncOpId;
-
-    afterAll(async () => {
-      if (granuleInventoryAsyncOpId) {
-        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: granuleInventoryAsyncOpId });
-      }
-    });
-
-    it('generates an async operation through the Cumulus API', async () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      const request = {
-        reportType: 'Granule Inventory',
-        reportName: randomId('granuleInventory'),
-        startTimestamp,
-        endTimestamp: moment.utc().format(),
-        collectionId,
-        status: 'completed',
-        granuleId: [publishedGranuleId, dbGranuleId],
-        provider: `s3_provider${testSuffix}`,
-      };
-      const response = await reconciliationReportsApi.createReconciliationReport({
-        prefix: config.stackName,
-        request,
-      });
-
-      const responseBody = JSON.parse(response.body);
-      granuleInventoryAsyncOpId = responseBody.id;
-      console.log('granuleInventoryAsyncOpId', granuleInventoryAsyncOpId);
-      expect(response.statusCode).toBe(202);
-    });
-
-    it('generates reconciliation report through the Cumulus API', async () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-
-      let asyncOperation;
-      try {
-        asyncOperation = await waitForAsyncOperationStatus({
-          id: granuleInventoryAsyncOpId,
-          status: 'SUCCEEDED',
-          stackName: config.stackName,
-          retryOptions: {
-            retries: 70,
-            factor: 1.041,
-          },
-        });
-      } catch (error) {
-        fail(error);
-      }
-
-      expect(asyncOperation.operationType).toBe('Reconciliation Report');
-      reportRecord = JSON.parse(asyncOperation.output);
-    });
-
-    it('Fetches an object with a signedURL to the Granule Inventory report through the Cumulus API', async () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-
-      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
-      reportArray = reportContent.split('\n');
-      [
-        'granuleUr',
-        'collectionId',
-        'createdAt',
-        'startDateTime',
-        'endDateTime',
-        'status',
-        'updatedAt',
-        'published',
-      ].forEach((field) => expect(reportArray[0]).toMatch(field));
-    });
-
-    it('includes correct records', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-
-      [
-        collectionId,
-        dbGranuleId,
-        publishedGranuleId,
-      ].forEach((testStr) => {
-        // found in report
-        expect(reportArray.some((record) => record.includes(testStr))).toBe(true);
-      });
-
-      const omittedCollectionId = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
-      expect(reportArray.some((record) => record.includes(omittedCollectionId))).toBe(false);
-    });
-
-    it('deletes a reconciliation report through the Cumulus API', async () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-      await reconciliationReportsApi.deleteReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-      });
-
-      const parsed = parseS3Uri(reportRecord.location);
-      const exists = await fileExists(parsed.Bucket, parsed.Key);
-      expect(exists).toBeFalse();
-
-      let responseError;
-      try {
-        await reconciliationReportsApi.getReconciliationReport({
-          prefix: config.stackName,
-          name: reportRecord.name,
-        });
-      } catch (error) {
-        responseError = error;
-      }
-      expect(responseError.statusCode).toBe(404);
-      expect(JSON.parse(responseError.apiMessage).message).toBe(`No record found for ${reportRecord.name}`);
-    });
-  });
-
   describe('Create an ORCA Backup Reconciliation Report to monitor ORCA backup discrepancies', () => {
     // report record in db and report in s3
     let reportRecord;
@@ -882,6 +769,174 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(JSON.parse(responseError.apiMessage).message).toBe(`No record found for ${reportRecord.name}`);
     });
     // TODO delete granule from ORCA when the API is available
+  });
+
+  describe('Creates \'Granule Inventory\' report and performs a bulk delete using the report', () => {
+    let reportRecord;
+    let reportArray;
+    let granuleInventoryAsyncOpId;
+
+    afterAll(async () => {
+      if (granuleInventoryAsyncOpId) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: granuleInventoryAsyncOpId });
+      }
+    });
+
+    it('generates an async operation through the Cumulus API', async () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const request = {
+        reportType: 'Granule Inventory',
+        reportName: randomId('granuleInventory'),
+        startTimestamp,
+        endTimestamp: moment.utc().format(),
+        collectionId,
+        status: 'completed',
+        granuleId: [publishedGranuleId, dbGranuleId],
+        provider: `s3_provider${testSuffix}`,
+      };
+      const response = await reconciliationReportsApi.createReconciliationReport({
+        prefix: config.stackName,
+        request,
+      });
+
+      const responseBody = JSON.parse(response.body);
+      granuleInventoryAsyncOpId = responseBody.id;
+      console.log('granuleInventoryAsyncOpId', granuleInventoryAsyncOpId);
+      expect(response.statusCode).toBe(202);
+    });
+
+    it('generates reconciliation report through the Cumulus API', async () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+
+      let asyncOperation;
+      try {
+        asyncOperation = await waitForAsyncOperationStatus({
+          id: granuleInventoryAsyncOpId,
+          status: 'SUCCEEDED',
+          stackName: config.stackName,
+          retryOptions: {
+            retries: 70,
+            factor: 1.041,
+          },
+        });
+      } catch (error) {
+        fail(error);
+      }
+
+      expect(asyncOperation.operationType).toBe('Reconciliation Report');
+      reportRecord = JSON.parse(asyncOperation.output);
+    });
+
+    it('Fetches an object with a signedURL to the Granule Inventory report through the Cumulus API', async () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+
+      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
+      reportArray = reportContent.split('\n');
+      [
+        'granuleUr',
+        'collectionId',
+        'createdAt',
+        'startDateTime',
+        'endDateTime',
+        'status',
+        'updatedAt',
+        'published',
+      ].forEach((field) => expect(reportArray[0]).toMatch(field));
+    });
+
+    it('includes correct records', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+
+      [
+        collectionId,
+        dbGranuleId,
+        publishedGranuleId,
+      ].forEach((testStr) => {
+        // found in report
+        expect(reportArray.some((record) => record.includes(testStr))).toBe(true);
+      });
+
+      const omittedCollectionId = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
+      expect(reportArray.some((record) => record.includes(omittedCollectionId))).toBe(false);
+    });
+
+    describe('performs bulk granule deletion using the report via the Cumulus API', () => {
+      let bulkDeleteOperation;
+      beforeAll(async () => {
+        const postBulkDeleteResponse = await bulkDeleteGranules(
+          {
+            prefix: config.stackName,
+            body: {
+              batchSize: 1,
+              granuleInventoryReportName: reportRecord.name,
+              forceRemoveFromCmr: true,
+            },
+          }
+        );
+        const postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
+
+        try {
+          bulkDeleteOperation = await waitForAsyncOperationStatus({
+            id: postBulkDeleteBody.id,
+            status: 'SUCCEEDED',
+            stackName: config.stackName,
+            retryOptions: {
+              retries: 60,
+              factor: 1.08,
+            },
+          });
+        } catch (error) {
+          fail(error);
+        }
+      });
+
+      it('successfully deletes the expected granules', () => {
+        if (bulkDeleteOperation === undefined) fail(bulkDeleteOperation);
+        expect(bulkDeleteOperation.operationType).toBe('Bulk Granule Delete');
+        const bulkDeleteResults = JSON.parse(bulkDeleteOperation.output);
+        expect(bulkDeleteResults.length).toBe(2);
+        expect(bulkDeleteResults.sort()).toEqual([publishedGranuleId, dbGranuleId].sort());
+      });
+
+      it('deletes the granules from the system', async () => {
+        if (bulkDeleteOperation === undefined) fail(bulkDeleteOperation);
+        let granuleResponseError;
+        try {
+          await Promise.all([
+            getGranule({ prefix: config.stackName, granuleId: dbGranuleId, collectionId }),
+            getGranule({ prefix: config.stackName, granuleId: publishedGranuleId, collectionId }),
+          ]);
+          fail('Expected getGranule to throw "Granule not found", but it did not');
+        } catch (error) {
+          granuleResponseError = error;
+        }
+        expect(JSON.parse(granuleResponseError.apiMessage).message).toEqual('Granule not found');
+      });
+    });
+
+    it('deletes a reconciliation report through the Cumulus API', async () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      await reconciliationReportsApi.deleteReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      const parsed = parseS3Uri(reportRecord.location);
+      const exists = await fileExists(parsed.Bucket, parsed.Key);
+      expect(exists).toBeFalse();
+
+      let responseError;
+      try {
+        await reconciliationReportsApi.getReconciliationReport({
+          prefix: config.stackName,
+          name: reportRecord.name,
+        });
+      } catch (error) {
+        responseError = error;
+      }
+      expect(responseError.statusCode).toBe(404);
+      expect(JSON.parse(responseError.apiMessage).message).toBe(`No record found for ${reportRecord.name}`);
+    });
   });
 
   afterAll(async () => {

@@ -46,6 +46,14 @@ test('translatePostgresPdrToApiPdr translates postgres PDR record to API PDR rec
     updated_at: timestamp,
   };
 
+  const duckDbPdrRecord = {
+    ...postgresPdr,
+    created_at: postgresPdr.created_at.toISOString(),
+    updated_at: postgresPdr.updated_at.toISOString(),
+    timestamp: postgresPdr.timestamp.toISOString(),
+    stats: JSON.stringify(postgresPdr.stats),
+  };
+
   const expectedPdr = {
     pdrName: postgresPdr.name,
     provider: fakeProvider.name,
@@ -74,6 +82,19 @@ test('translatePostgresPdrToApiPdr translates postgres PDR record to API PDR rec
 
   t.deepEqual(
     translatedPdrRecord,
+    expectedPdr
+  );
+
+  const duckDbTranslation = await translatePostgresPdrToApiPdr(
+    duckDbPdrRecord,
+    {},
+    fakeCollectionPgModel,
+    fakeProviderPgModel,
+    fakeExecutionPgModel
+  );
+
+  t.deepEqual(
+    duckDbTranslation,
     expectedPdr
   );
 });

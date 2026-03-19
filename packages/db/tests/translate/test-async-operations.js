@@ -157,6 +157,13 @@ test('translatePostgresAsyncOperationToApiAsyncOperation translates PostgreSQL r
     description,
   });
 
+  const duckDbAsyncOperation = {
+    ...pgAsyncOperation,
+    created_at: pgAsyncOperation.created_at.toISOString(),
+    updated_at: pgAsyncOperation.updated_at.toISOString(),
+    output: JSON.stringify(pgAsyncOperation.output),
+  };
+
   const expectedAsyncOperation = {
     id,
     status: 'RUNNING',
@@ -169,4 +176,9 @@ test('translatePostgresAsyncOperationToApiAsyncOperation translates PostgreSQL r
   };
   const translation = await translatePostgresAsyncOperationToApiAsyncOperation(pgAsyncOperation);
   t.deepEqual(translation, expectedAsyncOperation);
+
+  const duckDbTranslation = await translatePostgresAsyncOperationToApiAsyncOperation(
+    duckDbAsyncOperation
+  );
+  t.deepEqual(duckDbTranslation, expectedAsyncOperation);
 });

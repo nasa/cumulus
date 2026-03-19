@@ -17,7 +17,7 @@ import { getExecutionInfoByGranuleCumulusIds } from '../lib/execution';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
-interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
+export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   collectionName: string,
   collectionVersion: string,
   pdrName?: string,
@@ -28,9 +28,9 @@ interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
  * Class to build and execute db search query for granules
  */
 export class GranuleSearch extends BaseSearch {
-  constructor(event: QueryEvent) {
+  constructor(event: QueryEvent, enableEstimate = true) {
     // estimate the table rowcount by default
-    if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
+    if (enableEstimate && event?.queryStringParameters?.estimateTableRowCount !== 'false') {
       set(event, 'queryStringParameters.estimateTableRowCount', 'true');
     }
     super(event, 'granule');
@@ -53,7 +53,7 @@ export class GranuleSearch extends BaseSearch {
       pdrs: pdrsTable,
     } = TableNames;
     const countQuery = knex(this.tableName)
-      .count('*');
+      .count('* as count');
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)
