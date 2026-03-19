@@ -993,7 +993,7 @@ async function bulkPatch(req, res) {
     try {
       const {
         mappingFunction = pMap,
-        getKnexClientMethod = getKnexClient,
+        getKnexClientMethod = getKnexClientSingleton,
       } = req.testContext || {};
       req.body.dbConcurrency = req.body.dbConcurrency ?? 5;
       req.body.dbMaxPool = req.body.dbMaxPool ?? 20;

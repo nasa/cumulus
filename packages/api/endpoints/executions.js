@@ -258,7 +258,7 @@ async function get(req, res) {
 
       span.setAttribute('execution.arn', arn);
 
-      const knex = await getKnexClient({ env: process.env });
+      const knex = await getKnexClientSingleton();
       const executionPgModel = new ExecutionPgModel();
 
       let executionRecord;

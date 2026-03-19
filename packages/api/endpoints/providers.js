@@ -73,7 +73,7 @@ async function get(req, res) {
 
       span.setAttribute('provider.id', id);
 
-      const knex = await getKnexClient({ env: process.env });
+      const knex = await getKnexClientSingleton();
       const providerPgModel = new ProviderPgModel();
 
       let result;
