@@ -15,11 +15,7 @@
     "node": ">=16.19.0"
   },
   "scripts": {
-    "clean": "rm -rf node_modules",
-    "coverage": "python ../../scripts/coverage_handler/coverage.py",
-    "test": "../../node_modules/.bin/ava",
-    "test:ci": "../../scripts/run_package_ci_unit.sh",
-    "test:coverage": "../../node_modules/.bin/nyc npm test"
+    "clean": "rm -rf node_modules"
   },
   "dependencies": {
     "@cumulus/api-client": "21.3.1",
