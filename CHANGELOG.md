@@ -43,6 +43,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4558**
+  - Added provisioning ECS Fargate infrastructure for cumulus api using terraform.
+- **CUMULUS-4557**
+  - Make a containerized cumulus api that can be deployed to ECS.
 - **CUMULUS-4564**
   - Added private_api_lambda_arn as an output in the Cumulus terraform module
 - **CUMULUS-4473**

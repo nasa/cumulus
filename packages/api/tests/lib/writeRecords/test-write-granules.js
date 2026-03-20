@@ -330,7 +330,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('generateFilePgRecord() adds granule cumulus ID', (t) => {
+test.serial('generateFilePgRecord() adds granule cumulus ID', (t) => {
   const file = {
     bucket: cryptoRandomString({ length: 3 }),
     key: cryptoRandomString({ length: 3 }),
@@ -339,7 +339,7 @@ test('generateFilePgRecord() adds granule cumulus ID', (t) => {
   t.is(record.granule_cumulus_id, 1);
 });
 
-test('getGranuleFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
+test.serial('getGranuleFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
   const fakeGranuleCumulusId = Math.floor(Math.random() * 1000);
   const granuleRecord = fakeGranuleRecordFactory({ granule_id: fakeGranuleCumulusId });
   const fakeGranulePgModel = {
@@ -362,7 +362,7 @@ test('getGranuleFromQueryResultOrLookup() returns cumulus ID from database if qu
   );
 });
 
-test('writeFilesViaTransaction() throws error if any writes fail', async (t) => {
+test.serial('writeFilesViaTransaction() throws error if any writes fail', async (t) => {
   const { knex } = t.context;
 
   const fileRecords = [
