@@ -137,6 +137,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     | aws-api-proxy | AwsApiProxy
     | CNMToCMA | CnmToCma
     | granule-invalidator-task | GranuleInvalidator
+- **CUMULUS-4610**
+  - Ran `terraform fmt` on the respository, making non-functional updates to make the Terraform formatting consistent throughout.
+  - Added `terraform fmt` as a precommit hook.
 - **CUMULUS-4599**
   - Added the ability to easily modify version numbers for all python packages in order to keep them in sync with the Cumulus version.
 

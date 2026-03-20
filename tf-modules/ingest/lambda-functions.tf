@@ -1,7 +1,7 @@
 locals {
   # Pulled out into a local to prevent cyclic dependencies if/when
   # we move to a more restrictive IAM policy.
-  sqs2sf_timeout = 200
+  sqs2sf_timeout           = 200
   defaultSchedulerQueueUrl = aws_sqs_queue.start_sf.id
 }
 
@@ -19,8 +19,8 @@ resource "aws_lambda_function" "fallback_consumer" {
   }
   environment {
     variables = {
-      stackName        = var.prefix
-      system_bucket    = var.system_bucket
+      stackName     = var.prefix
+      system_bucket = var.system_bucket
     }
   }
   tags = var.tags
@@ -47,7 +47,7 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
   memory_size      = lookup(var.lambda_memory_sizes, "KinesisInboundEventLogger", 512)
   environment {
     variables = {
-      stackName       = var.prefix
+      stackName = var.prefix
     }
   }
   tags = var.tags
@@ -74,7 +74,7 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
   memory_size      = lookup(var.lambda_memory_sizes, "KinesisOutboundEventLogger", 512)
   environment {
     variables = {
-      stackName       = var.prefix
+      stackName = var.prefix
     }
   }
   tags = var.tags
@@ -131,10 +131,10 @@ resource "aws_lambda_function" "message_consumer" {
   memory_size      = lookup(var.lambda_memory_sizes, "messageConsumer", 512)
   environment {
     variables = {
-      stackName                = var.prefix
-      system_bucket            = var.system_bucket
-      FallbackTopicArn         = aws_sns_topic.kinesis_fallback.arn
-      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
+      stackName                         = var.prefix
+      system_bucket                     = var.system_bucket
+      FallbackTopicArn                  = aws_sns_topic.kinesis_fallback.arn
+      defaultSchedulerQueueUrl          = local.defaultSchedulerQueueUrl
       allowProviderMismatchOnRuleFilter = var.allow_provider_mismatch_on_rule_filter
     }
   }
@@ -254,7 +254,7 @@ resource "aws_lambda_function" "sqs2sf" {
   memory_size      = lookup(var.lambda_memory_sizes, "sqs2sf", 512)
   environment {
     variables = {
-      stackName       = var.prefix
+      stackName = var.prefix
     }
   }
   tags = var.tags
@@ -339,9 +339,9 @@ resource "aws_lambda_function" "sqs_message_consumer" {
   memory_size      = lookup(var.lambda_memory_sizes, "sqsMessageConsumer", 512)
   environment {
     variables = {
-      stackName                = var.prefix
-      system_bucket            = var.system_bucket
-      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
+      stackName                         = var.prefix
+      system_bucket                     = var.system_bucket
+      defaultSchedulerQueueUrl          = local.defaultSchedulerQueueUrl
       allowProviderMismatchOnRuleFilter = var.allow_provider_mismatch_on_rule_filter
     }
   }

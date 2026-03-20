@@ -204,6 +204,7 @@ const sidebars = {
         'development/release',
         'development/typescript-best-practices',
         'development/python-best-practices',
+        'development/terraform-best-practices',
       ],
     },
     {

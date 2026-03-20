@@ -28,7 +28,7 @@ resource "aws_secretsmanager_secret_version" "message_template_launchpad_passphr
 
 data "aws_iam_policy_document" "lambda_processing_role_get_secrets" {
   statement {
-    actions   = ["secretsmanager:GetSecretValue"]
+    actions = ["secretsmanager:GetSecretValue"]
     resources = [
       aws_secretsmanager_secret.message_template_cmr_password.arn,
       aws_secretsmanager_secret.message_template_launchpad_passphrase.arn
@@ -46,18 +46,18 @@ locals {
   default_queue_execution_limits = {
     (aws_sqs_queue.background_processing.id) = 5
   }
-  custom_queue_execution_limits = { for queue in var.throttled_queues: queue.url => queue.execution_limit }
+  custom_queue_execution_limits = { for queue in var.throttled_queues : queue.url => queue.execution_limit }
 
   message_template_key = "${var.prefix}/workflow_template.json"
 
   message_template = jsonencode({
     cumulus_meta = merge({
-      message_source          = "sfn"
-      system_bucket           = var.system_bucket
-      state_machine           = null
-      execution_name          = null
-      workflow_start_time     = null
-      queueExecutionLimits    = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
+      message_source                   = "sfn"
+      system_bucket                    = var.system_bucket
+      state_machine                    = null
+      execution_name                   = null
+      workflow_start_time              = null
+      queueExecutionLimits             = merge(local.default_queue_execution_limits, local.custom_queue_execution_limits)
       sf_event_sqs_to_db_records_types = lookup(var.workflow_configurations, "sf_event_sqs_to_db_records_types", {})
     }, jsondecode(file("${path.module}/cumulus_version.json")))
     meta = {
@@ -76,8 +76,8 @@ locals {
         cmrPageSize        = var.cmr_page_size
       }
       launchpad = {
-        api         = var.launchpad_api
-        certificate = var.launchpad_certificate
+        api                  = var.launchpad_api
+        certificate          = var.launchpad_certificate
         passphraseSecretName = length(var.launchpad_passphrase) == 0 ? "" : aws_secretsmanager_secret.message_template_launchpad_passphrase.name
       }
       distribution_endpoint = var.distribution_url
