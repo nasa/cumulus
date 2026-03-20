@@ -1,8 +1,8 @@
 locals {
   enable_point_in_time_table_names = [for x in var.enable_point_in_time_tables : "${var.prefix}-${x}"]
   table_names = {
-    access_tokens_table          = "${var.prefix}-AccessTokensTable"
-    semaphores_table             = "${var.prefix}-SemaphoresTable"
+    access_tokens_table = "${var.prefix}-AccessTokensTable"
+    semaphores_table    = "${var.prefix}-SemaphoresTable"
   }
 }
 
@@ -27,7 +27,7 @@ resource "aws_dynamodb_table" "access_tokens_table" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes = [ name ]
+    ignore_changes  = [name]
   }
 
   tags = var.tags
@@ -49,7 +49,7 @@ resource "aws_dynamodb_table" "semaphores_table" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes = [ name ]
+    ignore_changes  = [name]
   }
 
   tags = var.tags

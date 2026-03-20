@@ -1,1 +1,1 @@
-prefix="rs-ci-tf"
+prefix = "rs-ci-tf"
