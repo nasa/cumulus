@@ -174,6 +174,7 @@ async function getCollectionEntry(config, metadata, isUmmG) {
 async function generatePath(config, metadata, isUmmG) {
   const providerId = get(config.cmr, 'provider');
   // Check if providerId is defined
+  console.log('providerId', providerId);
   if (providerId === undefined) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
