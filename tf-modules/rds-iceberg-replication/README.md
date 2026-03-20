@@ -11,7 +11,3 @@ See [variables.tf](./variables.tf) for the input variables to this module and th
 This module's output is listed in [ouputs.tf](./outputs.tf). Specifically:
 
 **iceberg_replication_cluster_arn** - The Fargate cluster's arn. Useful for accessing the cluster via the CLI.
-
-
-
-
