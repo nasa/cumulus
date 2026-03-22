@@ -54,6 +54,7 @@
     "@aws-sdk/client-sfn": "^3.993.0",
     "@aws-sdk/client-sns": "^3.993.0",
     "@aws-sdk/client-sqs": "^3.993.0",
+    "@aws-sdk/client-s3": "^3.993.0",
     "@cumulus/api-client": "21.3.1",
     "@cumulus/async-operations": "21.3.1",
     "@cumulus/aws-client": "21.3.1",

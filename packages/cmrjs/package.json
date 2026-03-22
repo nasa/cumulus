@@ -36,6 +36,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.993.0",
     "@cumulus/aws-client": "21.3.1",
     "@cumulus/cmr-client": "21.3.1",
     "@cumulus/common": "21.3.1",
@@ -47,6 +48,7 @@
     "got": "^11.8.1",
     "js2xmlparser": "^5.0.0",
     "lodash": "^4.17.21",
+    "p-retry": "^2.0.0",
     "public-ip": "^5.0.0",
     "url-join": "^1.0.0",
     "xml2js": "0.5.0"

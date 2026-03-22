@@ -112,6 +112,8 @@ async function handler(event) {
 
   await createLockFile();
   try {
+    // delete a token thats in s3 first since its BAD
+
     // THIS SHOULD GENERATE A NEW TOKEN NOT GET AN EXISTING ON WHICH GENERATELAUNCHPAD TOKEN
     // DOES, THAT SHOULD BE DONE IN GETCMRSETTINGS
     const token = await generateLaunchpadToken(config);
