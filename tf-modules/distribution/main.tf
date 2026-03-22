@@ -13,27 +13,27 @@ locals {
 }
 
 module "tea_map_cache" {
-  prefix                     = var.prefix
-  source                     = "../tea-map-cache"
-  lambda_processing_role_arn = var.lambda_processing_role_arn
-  tea_api_url                = var.tea_internal_api_endpoint
-  tags                       = var.tags
-  lambda_subnet_ids          = var.subnet_ids
-  vpc_id                     = var.vpc_id
-  deploy_to_ngap             = var.deploy_to_ngap
-  default_log_retention_days = var.default_log_retention_days
+  prefix                           = var.prefix
+  source                           = "../tea-map-cache"
+  lambda_processing_role_arn       = var.lambda_processing_role_arn
+  tea_api_url                      = var.tea_internal_api_endpoint
+  tags                             = var.tags
+  lambda_subnet_ids                = var.subnet_ids
+  vpc_id                           = var.vpc_id
+  deploy_to_ngap                   = var.deploy_to_ngap
+  default_log_retention_days       = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
-  lambda_timeouts            = var.lambda_timeouts
-  lambda_memory_sizes        = var.lambda_memory_sizes
+  lambda_timeouts                  = var.lambda_timeouts
+  lambda_memory_sizes              = var.lambda_memory_sizes
 }
 
 data "aws_lambda_invocation" "tea_map_cache" {
-  function_name         = module.tea_map_cache.lambda_function_name
-  input                 = jsonencode({
-    bucketList          = local.tea_buckets,
-    s3Bucket            = var.system_bucket
-    s3Key               = "${var.prefix}/distribution_bucket_map.json"
-    replacementTrigger  = timestamp()
+  function_name = module.tea_map_cache.lambda_function_name
+  input = jsonencode({
+    bucketList         = local.tea_buckets,
+    s3Bucket           = var.system_bucket
+    s3Key              = "${var.prefix}/distribution_bucket_map.json"
+    replacementTrigger = timestamp()
   })
 }
 
@@ -282,10 +282,10 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
 
   triggers = {
     redeployment = sha1(join(",", tolist([
-      jsonencode( aws_api_gateway_integration.s3_credentials_redirect[0] ),
-      jsonencode( aws_api_gateway_integration.s3_credentials[0] ),
-      jsonencode( aws_api_gateway_integration.s3_credentials_readme[0] ),
-      ])))
+      jsonencode(aws_api_gateway_integration.s3_credentials_redirect[0]),
+      jsonencode(aws_api_gateway_integration.s3_credentials[0]),
+      jsonencode(aws_api_gateway_integration.s3_credentials_readme[0]),
+    ])))
   }
 
 

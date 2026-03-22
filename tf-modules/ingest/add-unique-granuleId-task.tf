@@ -12,9 +12,9 @@ resource "aws_lambda_function" "add_unique_granule_id_task" {
 
   environment {
     variables = {
-      CUMULUS_MESSAGE_ADAPTER_DIR       = "/opt/"
-      stackName                         = var.prefix
-      system_bucket                     = var.system_bucket
+      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      stackName                   = var.prefix
+      system_bucket               = var.system_bucket
     }
   }
   dynamic "vpc_config" {

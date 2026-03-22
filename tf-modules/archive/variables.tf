@@ -2,12 +2,12 @@
 
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
-  type = string
+  type        = string
 }
 
 variable "background_queue_url" {
   description = "Queue URL to use for throttled background operations (e.g. granule reingest)"
-  type = string
+  type        = string
 }
 
 variable "cmr_client_id" {
@@ -63,12 +63,12 @@ variable "ecs_cluster_name" {
 
 variable "ecs_execution_role" {
   description = "Object containing name and ARN of IAM role for initializing ECS tasks"
-  type = object({ name = string, arn = string})
+  type        = object({ name = string, arn = string })
 }
 
 variable "ecs_task_role" {
   description = "Object containing name and ARN of IAM role for running ECS tasks"
-  type = object({ name = string, arn = string})
+  type        = object({ name = string, arn = string })
 }
 
 variable "kinesis_inbound_event_logger_lambda_function_arn" {
@@ -135,7 +135,7 @@ variable "api_port" {
 }
 
 variable "api_reserved_concurrency" {
-  type = number
+  type    = number
   default = 8
 }
 
@@ -179,14 +179,14 @@ variable "cmr_search_client_config" {
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_subnet_ids" {
@@ -215,24 +215,24 @@ variable "metrics_es_host" {
   default     = null
 
   validation {
-    condition     = (
-     var.metrics_es_host == null ||
-     (
-       !startswith(trimspace(var.metrics_es_host), "https://") &&
-       !startswith(trimspace(var.metrics_es_host), "http://")
-     )
+    condition = (
+      var.metrics_es_host == null ||
+      (
+        !startswith(trimspace(var.metrics_es_host), "https://") &&
+        !startswith(trimspace(var.metrics_es_host), "http://")
+      )
     )
     error_message = "metrics_es_host should be a domain name only (e.g., `abcdef123.metrics.com`) and must not start with `http://` or `https://`."
   }
 }
 
 variable "metrics_es_password" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "metrics_es_username" {
-  type = string
+  type    = string
   default = null
 }
 
@@ -253,19 +253,19 @@ variable "orca_api_uri" {
 }
 
 variable "private_archive_api_gateway" {
-  type = bool
+  type    = bool
   default = true
 }
 
 variable "rds_connection_timing_configuration" {
   description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
-  type = map(number)
+  type        = map(number)
   default = {
-      acquireTimeoutMillis: 90000
-      createRetryIntervalMillis: 30000,
-      createTimeoutMillis: 20000,
-      idleTimeoutMillis: 1000,
-      reapIntervalMillis: 1000,
+    acquireTimeoutMillis : 90000
+    createRetryIntervalMillis : 30000,
+    createTimeoutMillis : 20000,
+    idleTimeoutMillis : 1000,
+    reapIntervalMillis : 1000,
   }
 }
 
@@ -314,86 +314,86 @@ variable "vpc_id" {
 ## clean_executions lambda config
 
 variable "daily_execution_payload_cleanup_schedule_expression" {
-  type    = string
-  default = "cron(0 4 * * ? *)"
+  type        = string
+  default     = "cron(0 4 * * ? *)"
   description = "Cloud Watch cron schedule for the execution payload cleanup lambda"
 }
 
 variable "cleanup_running" {
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
   description = "Boolean flag that when set to true will enable 'running' execution cleanup"
 }
 
 variable "cleanup_non_running" {
-  type    = bool
-  default = true
+  type        = bool
+  default     = true
   description = "Boolean flag that when set to true will enable non 'running' execution cleanup"
 }
 
 variable "payload_timeout" {
-  type    = number
-  default = 10
+  type        = number
+  default     = 10
   description = "Number of days to retain execution payload records in the database"
 }
 
 variable "update_limit" {
-  type = number
-  default = 10000
+  type        = number
+  default     = 10000
   description = "number of executions to cleanup in one lambda run"
 }
 
 variable "archive_records_config" {
   type = object({
-    deploy_rule = optional(bool, true), # deploy the archive records cron eventBridgeRule
-    update_limit = optional(number, 100000), # number of granules or executions to archive in one run
-    batch_size = optional(number, 10000), # number of granules or executions to archive call to the /archive endpoint
-    expiration_days = optional(number, 365), # age (in days) after which granules or executions should be archived
+    deploy_rule         = optional(bool, true),                  # deploy the archive records cron eventBridgeRule
+    update_limit        = optional(number, 100000),              # number of granules or executions to archive in one run
+    batch_size          = optional(number, 10000),               # number of granules or executions to archive call to the /archive endpoint
+    expiration_days     = optional(number, 365),                 # age (in days) after which granules or executions should be archived
     schedule_expression = optional(string, "cron(0 4 * * ? *)"), # CloudWatch cron schedule for the record archival lambda
   })
   description = "config object for archive-records tooling"
   default = {
-    deploy_rule = true,
-    update_limit = 100000,
-    batch_size = 10000,
-    expiration_days = 365,
+    deploy_rule         = true,
+    update_limit        = 100000,
+    batch_size          = 10000,
+    expiration_days     = 365,
     schedule_expression = "cron(0 4 * * ? *)",
   }
 }
 
 variable "log_destination_arn" {
-  type = string
-  default = "N/A"
+  type        = string
+  default     = "N/A"
   description = "A shared AWS:Log:Destination that receives logs from log_groups"
 }
 
 variable "cloudwatch_log_retention_periods" {
-  type = map(number)
+  type        = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {}
+  default     = {}
 }
 
 variable "default_log_retention_days" {
-  type = number
-  default = 30
+  type        = number
+  default     = 30
   description = "default value that user chooses for their log retention periods"
 }
 variable "report_sns_topic_subscriber_arns" {
-  type = list
-  default = null
+  type        = list(any)
+  default     = null
   description = "Account ARNs to supply to report SNS topics policy with subscribe action"
 }
 
 ## Dead Letter Recovery Configuration
 
 variable "dead_letter_recovery_cpu" {
-  type = number
-  default = 256
+  type        = number
+  default     = 256
   description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
 }
 
 variable "dead_letter_recovery_memory" {
-  type = number
-  default = 1024
+  type        = number
+  default     = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }

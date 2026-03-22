@@ -20,7 +20,7 @@ resource "aws_iam_role" "lambda_api_gateway" {
 
 data "aws_iam_policy_document" "lambda_api_gateway_policy" {
   statement {
-    actions   = ["ecs:RunTask"]
+    actions = ["ecs:RunTask"]
     resources = [
       aws_ecs_task_definition.async_operation.arn,
       aws_ecs_task_definition.dead_letter_recovery_operation.arn
@@ -90,7 +90,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "s3:PutBucket*",
       "s3:ListBucket*"
     ]
-    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}"]
+    resources = [for b in local.allowed_buckets : "arn:aws:s3:::${b}"]
   }
 
   statement {
@@ -101,7 +101,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "s3:DeleteObject",
       "s3:DeleteObjectVersion"
     ]
-    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.allowed_buckets : "arn:aws:s3:::${b}/*"]
   }
 
   statement {
@@ -232,7 +232,7 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
     resources = ["*"]
   }
 
-    statement {
+  statement {
     actions = [
       "s3:GetAccelerateConfiguration",
       "s3:GetBucket*",
@@ -260,7 +260,7 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
   }
 
   statement {
-    actions   = [
+    actions = [
       "dynamodb:DeleteItem",
       "dynamodb:GetItem",
       "dynamodb:PutItem",

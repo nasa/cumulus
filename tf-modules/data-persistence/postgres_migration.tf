@@ -1,5 +1,5 @@
 module "db_migration" {
-  source = "../../lambdas/db-migration"
+  source                     = "../../lambdas/db-migration"
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
   permissions_boundary_arn   = var.permissions_boundary_arn
   prefix                     = var.prefix

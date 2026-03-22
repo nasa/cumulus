@@ -15,7 +15,8 @@
     "clean": "rm -rf dist && rm -rf .venv && mkdir dist",
     "build": "uv sync",
     "package": "npm run clean && ../../bin/package_uv.sh 3.12 ${PWD}",
-    "install-python-deps": "npm run build"
+    "install-python-deps": "npm run build",
+    "update-python-version": "uv version --"
   },
   "publishConfig": {
     "access": "restricted"
