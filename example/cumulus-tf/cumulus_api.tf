@@ -19,13 +19,12 @@ resource "aws_cloudwatch_log_group" "api" {
   retention_in_days = 30
 }
 
-# 1. Define the Task Definition (The "What" to run)
 resource "aws_ecs_task_definition" "api" {
   family                   = "${var.prefix}-ApiTask"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 512    # Roughly equivalent to your memory choice
-  memory                   = 1024   # Matches your ~1280MB logic
+  cpu                      = 512
+  memory                   = 1024
   execution_role_arn       = module.cumulus.ecs_execution_role_arn
   task_role_arn            = module.cumulus.ecs_task_role_arn
 
@@ -58,7 +57,6 @@ resource "aws_ecs_task_definition" "api" {
   ])
 }
 
-# 2. Define the ECS Service (The "How many" to run)
 resource "aws_ecs_service" "api" {
   name            = "${var.prefix}-IcebergApiService"
   cluster         = module.cumulus.ecs_cluster_arn
@@ -85,7 +83,6 @@ resource "aws_ecs_service" "api" {
   depends_on = [aws_lb_listener.services_https]
 }
 
-# 1. The Load Balancer itself
 resource "aws_lb" "api" {
   name               = "${var.prefix}-iceberg-api-alb"
   internal           = true
@@ -94,17 +91,16 @@ resource "aws_lb" "api" {
   subnets            = length(var.ecs_cluster_instance_subnet_ids) == 0 ? local.subnet_ids : var.ecs_cluster_instance_subnet_ids
 }
 
-# 2. Target Group (The "Address Book" for your containers)
 resource "aws_lb_target_group" "api" {
   name_prefix = "yl-api"
   port        = 5001
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
-  target_type = "ip" # Required for Fargate
+  target_type = "ip"
   deregistration_delay = 120
 
   health_check {
-    path                = "/version" # Ensure your Node.js app has this route! Changed from /health
+    path                = "/version"
     matcher = "200-399" # Accept any success or redirect code
     interval            = 20
     timeout             = 10
@@ -125,7 +121,6 @@ resource "aws_acm_certificate" "lb_cert" {
   }
 }
 
-################ https listener and listener rules
 resource "aws_lb_listener" "services_https" {
   load_balancer_arn = aws_lb.api.arn
   port              = "443"
@@ -142,7 +137,6 @@ resource "aws_lb_listener" "services_https" {
   depends_on = [aws_lb_target_group.api]
 }
 
-# 1. ALB Security Group (The "Front Door")
 resource "aws_security_group" "alb_sg" {
   name        = "${var.prefix}-alb-sg"
   description = "Controls access to the ALB"
@@ -155,7 +149,6 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Standard egress: Allow the ALB to talk to the world (and your ECS tasks)
   egress {
     from_port   = 0
     to_port     = 0
@@ -164,7 +157,6 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# 2. ECS Task Security Group (The "Inner Sanctum")
 resource "aws_security_group" "ecs_task_sg" {
   name        = "${var.prefix}-ecs-task-sg"
   description = "Allows access only from the ALB"
@@ -179,7 +171,6 @@ resource "aws_security_group" "ecs_task_sg" {
   }
 }
 
-# 3. The "Stitch" Rule: Bridge the ALB to the ECS Task
 resource "aws_security_group_rule" "alb_to_ecs" {
   type                     = "ingress"
   from_port                = 5001
