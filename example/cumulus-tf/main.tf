@@ -174,7 +174,7 @@ module "cumulus" {
   token_secret = var.token_secret
   archive_api_users = var.archive_api_users
 
-  archive_api_url             = var.run_api_as_server ? "https://${aws_lb.api.dns_name}/" : var.archive_api_url
+  archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
   api_gateway_stage           = var.api_gateway_stage
