@@ -23,7 +23,8 @@
     "package": "npm run clean && ../../bin/package_uv.sh 3.12 ${PWD}",
     "update-python-version": "uv version --",
     "test": "uv run pytest -q",
-    "uv-export": "uv export -q --no-header --format requirements-txt --output-file requirements.txt"
+    "uv-export": "uv export -q --no-header --format requirements-txt --output-file requirements.txt",
+    "uv-lock": "uv lock --upgrade"
   },
   "author": "Cumulus Author : Cumulus Coreification Team",
   "license": "Apache-2.0"

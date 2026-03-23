@@ -16,7 +16,8 @@
       "package": "npm run clean && cp -r ./schemas ./dist/packages && ../../bin/package_uv.sh 3.12 ${PWD}",
       "install-python-deps": "npm run build",
       "update-python-version": "uv version --",
-      "uv-export": "uv export -q --no-header --format requirements-txt --output-file requirements.txt"
+      "uv-export": "uv export -q --no-header --format requirements-txt --output-file requirements.txt",
+      "uv-lock": "uv lock --upgrade"
     },
     "publishConfig": {
       "access": "restricted"
