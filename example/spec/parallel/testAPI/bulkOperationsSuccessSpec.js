@@ -175,7 +175,7 @@ describe('POST /granules/bulk', () => {
         postBulkGranulesResponse = await granules.bulkGranules({
           prefix,
           body: {
-            granules: [{ granuleId, collectionId }],
+            granules: [granuleId],
             workflowName: 'HelloWorldWorkflow',
             queueUrl: scheduleQueueUrl,
           },

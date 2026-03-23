@@ -226,7 +226,7 @@ test.serial('An SNS Fallback retry, should throw an error if message is invalid 
 
   await t.throwsAsync(
     handler(snsEvent, {}, testCallback),
-    { message: 'Expected property name or \'}\' in JSON at position 1 (line 1 column 2)' }
+    { message: new RegExp('Expected property name or \'}\' in JSON at position 1') }
   );
 });
 

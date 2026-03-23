@@ -52,12 +52,12 @@ const deleteS3Files = async (
  * @param {CollectionPgModel} params.collectionPgModel - Collection Postgres model
  * @returns {Object} - Granule Deletion details
  */
-const deleteGranuleAndFiles = async (params: {
+export const deleteGranuleAndFiles = async (params: {
   knex: Knex,
   pgGranule: PostgresGranuleRecord,
-  filePgModel: FilePgModel,
-  granulePgModel: GranulePgModel,
-  collectionPgModel: CollectionPgModel,
+  filePgModel?: FilePgModel,
+  granulePgModel?: GranulePgModel,
+  collectionPgModel?: CollectionPgModel,
   collectionCumulusId?: number,
 }) => {
   const {
@@ -107,8 +107,4 @@ const deleteGranuleAndFiles = async (params: {
     logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(files)}: ${errorify(error)}`);
     throw error;
   }
-};
-
-module.exports = {
-  deleteGranuleAndFiles,
 };

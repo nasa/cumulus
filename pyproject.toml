@@ -1,6 +1,6 @@
 [project]
 name = "cumulus"
-version = "0.1.0"
+version = "21.3.1"
 requires-python = "~=3.12.0"
 
 [dependency-groups]
@@ -43,6 +43,8 @@ select = [
 ]
 
 ignore = [
+  # undocumented-magic-method
+  "D105",
   # blank-line-after-function
   "D202",
   # incorrect-blank-line-before-class - incompatible with D211
@@ -57,6 +59,8 @@ ignore = [
   "S101",
   # start-process-with-partial-path
   "S607",
+  # logging-too-many-args - false positives
+  "PLE1205",
 ]
 
 
@@ -64,8 +68,9 @@ ignore = [
 # Ignore missing docstring rules for non-exported python code
 "**/example/**.py" = ["D1"]
 "**/migrations/**.py" = ["D1", "E501"]
-"**/tests/**.py" = ["D1"]
+"**/tests/**.py" = ["D1", "PLR0913"]
 "scripts/**.py" = ["D1"]
+"__init__.py" = ["D104"]
 
 
 # Repo wide type checking rules

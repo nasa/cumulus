@@ -68,12 +68,7 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    granules: [
-      {
-        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version',
-      },
-    ],
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
     knexDebug: false,
   };
 
@@ -114,12 +109,7 @@ test.serial('bulkReingest() uses correct caller lambda function name', async (t)
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    granules: [
-      {
-        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version',
-      },
-    ],
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
   };
 
   const functionName = randomId('lambda');
@@ -203,7 +193,7 @@ test.serial('POST /granules/bulkReingest returns 400 when a query is provided wi
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkReingest returns 400 when no granules or query is provided', async (t) => {
+test.serial('POST /granules/bulkReingest returns 400 when no granules or alternative input source is provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedIndex = 'my-index';
 
@@ -216,7 +206,29 @@ test.serial('POST /granules/bulkReingest returns 400 when no granules or query i
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /One of granules or query is required/);
+    .expect(400,
+      // eslint-disable-next-line max-len
+      /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkReingest returns 400 when more than one granules input source is provided', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+  };
+
+  await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400,
+      // eslint-disable-next-line max-len
+      /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -240,7 +252,7 @@ test.serial('POST /granules/bulkReingest returns 400 when granules is not an arr
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkReingest returns 400 when granules is an empty array', async (t) => {
+test.serial('POST /granules/bulkReingest returns 400 when granules is empty and no alternative input source was provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedIndex = 'my-index';
 
@@ -254,7 +266,7 @@ test.serial('POST /granules/bulkReingest returns 400 when granules is an empty a
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /no values provided for granules/);
+    .expect(400, /granules is empty and no alternative input source was provided/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -281,6 +293,142 @@ test.serial('POST /granules/bulkReingest returns 400 when the Metrics ELK stack 
   t.true(asyncOperationStartStub.notCalled);
 });
 
+test.serial('POST /granules/bulkReingest returns a 400 when maxDbConnections is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
+    maxDbConnections: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at maxDbConnections/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkReingest returns a 400 when concurrency is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granules: ['MOD09GQ.A8592978.nofTNT.006.4914003503063'],
+    concurrency: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at concurrency/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkReingest returns a 400 when batchSize is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+    batchSize: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at batchSize/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkReingest starts an async-operation with the correct payload and and granule inventory report', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    granuleInventoryReportName: randomId('granuleInventoryReportName'),
+    knexDebug: false,
+  };
+
+  const response = await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(202);
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
+  const {
+    lambdaName,
+    description,
+    payload,
+  } = asyncOperationStartStub.args[0][0];
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.BulkOperationLambda);
+  t.is(description, 'Bulk granule reingest run on  granules');
+  t.deepEqual(payload, {
+    payload: body,
+    type: 'BULK_GRANULE_REINGEST',
+    envVars: {
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+      system_bucket: process.env.system_bucket,
+      stackName: process.env.stackName,
+      invoke: process.env.invoke,
+      KNEX_DEBUG: 'false',
+      METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+      METRICS_ES_USER: process.env.METRICS_ES_USER,
+      METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+    },
+  });
+  testBulkPayloadEnvVarsMatchSetEnvVars(t, payload);
+});
+
+test.serial('POST /granules/bulkReingest starts an async-operation with the correct payload and and s3GranuleIdInputFile', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const body = {
+    s3GranuleIdInputFile: randomId('s3GranuleIdInputFile'),
+    knexDebug: false,
+  };
+
+  const response = await request(app)
+    .post('/granules/bulkReingest')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(202);
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
+  const {
+    lambdaName,
+    description,
+    payload,
+  } = asyncOperationStartStub.args[0][0];
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.BulkOperationLambda);
+  t.is(description, 'Bulk granule reingest run on  granules');
+  t.deepEqual(payload, {
+    payload: body,
+    type: 'BULK_GRANULE_REINGEST',
+    envVars: {
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+      system_bucket: process.env.system_bucket,
+      stackName: process.env.stackName,
+      invoke: process.env.invoke,
+      KNEX_DEBUG: 'false',
+      METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+      METRICS_ES_USER: process.env.METRICS_ES_USER,
+      METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+    },
+  });
+  testBulkPayloadEnvVarsMatchSetEnvVars(t, payload);
+});
+
 test.serial('POST /granules/bulkReingest returns 500 if invoking StartAsyncOperation lambda throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
   t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').throws(
@@ -293,11 +441,7 @@ test.serial('POST /granules/bulkReingest returns 500 if invoking StartAsyncOpera
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
       workflowName: 'workflowName',
-      granules: [
-        { granuleId: 1, collectionId: 1 },
-        { granuleId: 2, collectionId: 1 },
-        { granuleId: 3, collectionId: 1 },
-      ],
+      granules: ['1', '2', '3'],
     });
   t.is(response.status, 500);
 });
