@@ -1,9 +1,9 @@
 output "archive_api_uri" {
-  value = var.run_api_as_server ? "https://${aws_lb.api.dns_name}/" : module.cumulus.archive_api_uri
+  value = module.cumulus.archive_api_uri
 }
 
 output "archive_api_redirect_uri" {
-  value = var.run_api_as_server ? "https://${aws_lb.api.dns_name}/token" : module.cumulus.archive_api_redirect_uri
+  value = module.cumulus.archive_api_redirect_uri
 }
 
 output "app_load_balancer_id" {
