@@ -281,6 +281,24 @@ variable "run_api_as_server" {
   description = "Whether to run the API as a server on ECS instead of Lambda"
 }
 
+variable "api_service_autoscaling_min_capacity" {
+  type        = number
+  default     = 1
+  description = "Minimum number of API service tasks to run"
+}
+
+variable "api_service_autoscaling_max_capacity" {
+  type        = number
+  default     = 10
+  description = "Maximum number of API service tasks to run"
+}
+
+variable "api_service_autoscaling_target_cpu" {
+  type        = number
+  default     = 70
+  description = "Target CPU utilization percentage for API service autoscaling"
+}
+
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)

@@ -61,7 +61,7 @@ resource "aws_ecs_service" "api" {
   name            = "${var.prefix}-IcebergApiService"
   cluster         = module.cumulus.ecs_cluster_arn
   task_definition = aws_ecs_task_definition.api.arn
-  desired_count   = 1
+  desired_count   = var.api_service_autoscaling_min_capacity
   health_check_grace_period_seconds = 180
   launch_type     = "FARGATE"
 
@@ -81,6 +81,11 @@ resource "aws_ecs_service" "api" {
 
   # Ensure the service doesn't start until the ALB listener is ready
   depends_on = [aws_lb_listener.services_https]
+
+  # Allow autoscaling to manage desired_count
+  lifecycle {
+    ignore_changes = [desired_count]
+  }
 }
 
 resource "aws_lb" "api" {
@@ -178,4 +183,30 @@ resource "aws_security_group_rule" "alb_to_ecs" {
   protocol                 = "tcp"
   security_group_id        = aws_security_group.ecs_task_sg.id
   source_security_group_id = aws_security_group.alb_sg.id
+}
+
+# ECS Service Autoscaling
+resource "aws_appautoscaling_target" "api" {
+  max_capacity       = var.api_service_autoscaling_max_capacity
+  min_capacity       = var.api_service_autoscaling_min_capacity
+  resource_id        = "service/${module.cumulus.ecs_cluster_name}/${aws_ecs_service.api.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "api_cpu" {
+  name               = "${var.prefix}-api-cpu-autoscaling"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.api.resource_id
+  scalable_dimension = aws_appautoscaling_target.api.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.api.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value       = var.api_service_autoscaling_target_cpu
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 60
+  }
 }
