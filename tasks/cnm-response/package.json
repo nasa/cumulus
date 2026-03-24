@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cnm-response",
-  "version": "21.3.1",
+  "version": "21.3.2",
   "description": "CNM Response task",
   "main": "index.js",
   "directories": {
@@ -27,6 +27,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@cumulus/schemas": "21.3.1"
+    "@cumulus/schemas": "21.3.2"
   }
 }
