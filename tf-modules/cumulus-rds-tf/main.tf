@@ -17,8 +17,8 @@ provider "aws" {
 locals {
   rds_security_group_id = try(
     var.input_security_group_id != null
-      ? var.input_security_group_id
-      : aws_security_group.rds_cluster_access.id,
+    ? var.input_security_group_id
+    : aws_security_group.rds_cluster_access.id,
     null
   )
 }
@@ -85,14 +85,14 @@ resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v17" {
     for_each = var.db_parameters
     content {
       apply_method = parameter.value["apply_method"]
-      name = parameter.value["name"]
-      value = parameter.value["value"]
+      name         = parameter.value["name"]
+      value        = parameter.value["value"]
     }
   }
 }
 
 resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
-  count = var.enable_upgrade ? 0 : 1
+  count  = var.enable_upgrade ? 0 : 1
   name   = "${var.prefix}-cluster-parameter-group-v13"
   family = var.parameter_group_family_v13
 
@@ -100,8 +100,8 @@ resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
     for_each = var.db_parameters
     content {
       apply_method = parameter.value["apply_method"]
-      name = parameter.value["name"]
-      value = parameter.value["value"]
+      name         = parameter.value["name"]
+      value        = parameter.value["value"]
     }
   }
 }
@@ -112,19 +112,19 @@ resource "aws_cloudwatch_log_group" "postgresql_logs" {
 }
 
 resource "aws_rds_cluster" "cumulus" {
-  depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group_v17, aws_cloudwatch_log_group.postgresql_logs]
-  cluster_identifier      = var.cluster_identifier
-  engine_mode             = "provisioned"
-  engine                  = "aurora-postgresql"
-  engine_version          = var.engine_version
-  database_name           = "postgres"
-  master_username         = var.db_admin_username
-  master_password         = var.db_admin_password
-  backup_retention_period = var.backup_retention_period
-  preferred_backup_window = var.backup_window
-  db_subnet_group_name    = aws_db_subnet_group.default.id
-  apply_immediately       = var.apply_immediately
-  storage_encrypted       = true
+  depends_on                      = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group_v17, aws_cloudwatch_log_group.postgresql_logs]
+  cluster_identifier              = var.cluster_identifier
+  engine_mode                     = "provisioned"
+  engine                          = "aurora-postgresql"
+  engine_version                  = var.engine_version
+  database_name                   = "postgres"
+  master_username                 = var.db_admin_username
+  master_password                 = var.db_admin_password
+  backup_retention_period         = var.backup_retention_period
+  preferred_backup_window         = var.backup_window
+  db_subnet_group_name            = aws_db_subnet_group.default.id
+  apply_immediately               = var.apply_immediately
+  storage_encrypted               = true
   enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
 
   serverlessv2_scaling_configuration {
@@ -148,7 +148,7 @@ resource "aws_rds_cluster" "cumulus" {
 
 resource "aws_rds_cluster_instance" "cumulus" {
   cluster_identifier = aws_rds_cluster.cumulus.id
-  identifier = "${aws_rds_cluster.cumulus.id}-instance-${count.index+1}"
+  identifier         = "${aws_rds_cluster.cumulus.id}-instance-${count.index + 1}"
   count              = var.cluster_instance_count
   instance_class     = "db.serverless"
   engine             = aws_rds_cluster.cumulus.engine

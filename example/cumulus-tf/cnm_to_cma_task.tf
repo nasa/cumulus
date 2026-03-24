@@ -13,7 +13,7 @@ resource "null_resource" "get_cnmToGranule" {
   }
 }
 
-resource aws_s3_bucket_object "cnm_to_cma_lambda_zip" {
+resource "aws_s3_bucket_object" "cnm_to_cma_lambda_zip" {
   depends_on = [null_resource.get_cnmToGranule]
   bucket     = var.system_bucket
   key        = "${var.prefix}/${local.cnm_to_cma_filename}"
@@ -44,7 +44,7 @@ resource "aws_lambda_function" "cnm_to_cma_task" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = [aws_security_group.no_ingress_all_egress.id]
     }
   }

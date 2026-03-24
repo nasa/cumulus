@@ -19,27 +19,27 @@ provider "aws" {
 }
 
 module "rds_cluster" {
-  source                     = "../../tf-modules/cumulus-rds-tf"
-  prefix                     = var.prefix
-  db_admin_username          = var.db_admin_username
-  db_admin_password          = var.db_admin_password
-  region                     = var.region
-  vpc_id                     = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
-  subnets                    = var.subnets != null ? var.subnets : data.aws_subnets.subnet_ids[0].ids
-  engine_version             = var.engine_version
-  deletion_protection        = true
-  cluster_identifier         = var.cluster_identifier
-  cluster_instance_count     = var.cluster_instance_count
-  tags                       = merge(var.tags, { Deployment = var.prefix })
-  snapshot_identifier        = var.snapshot_identifier
-  lambda_timeouts            = var.lambda_timeouts
-  lambda_memory_sizes        = var.lambda_memory_sizes
-  min_capacity               = var.min_capacity
-  max_capacity               = var.max_capacity
-  enable_upgrade             = var.enable_upgrade
+  source                          = "../../tf-modules/cumulus-rds-tf"
+  prefix                          = var.prefix
+  db_admin_username               = var.db_admin_username
+  db_admin_password               = var.db_admin_password
+  region                          = var.region
+  vpc_id                          = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
+  subnets                         = var.subnets != null ? var.subnets : data.aws_subnets.subnet_ids[0].ids
+  engine_version                  = var.engine_version
+  deletion_protection             = true
+  cluster_identifier              = var.cluster_identifier
+  cluster_instance_count          = var.cluster_instance_count
+  tags                            = merge(var.tags, { Deployment = var.prefix })
+  snapshot_identifier             = var.snapshot_identifier
+  lambda_timeouts                 = var.lambda_timeouts
+  lambda_memory_sizes             = var.lambda_memory_sizes
+  min_capacity                    = var.min_capacity
+  max_capacity                    = var.max_capacity
+  enable_upgrade                  = var.enable_upgrade
   enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
-  postgresql_log_retention_days = var.postgresql_log_retention_days
-  db_log_min_duration_ms = var.db_log_min_duration_ms
-  parameter_group_family_v13 = var.parameter_group_family_v13
-  parameter_group_family_v17 = var.parameter_group_family_v17
+  postgresql_log_retention_days   = var.postgresql_log_retention_days
+  db_log_min_duration_ms          = var.db_log_min_duration_ms
+  parameter_group_family_v13      = var.parameter_group_family_v13
+  parameter_group_family_v17      = var.parameter_group_family_v17
 }

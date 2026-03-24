@@ -20,6 +20,12 @@ repos:
         args: ['--fix=lf']
         exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
 
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.105.0
+    hooks:
+      - id: terraform_fmt
+        exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
+
   - repo: https://github.com/aws-cloudformation/cfn-lint
     rev: v1.43.2  # Check for latest version
     hooks:
@@ -109,5 +115,5 @@ exclude: |
 
 # Configuration pre-commit.ci
 ci:
-  # Skip local hooks that depend on npm or uv since they're not supported by
-  skip: [eslint, npm-package-json-lint, typescript-compile]
+  # Skip local hooks that depend on npm or uv or terraform since they're not supported by
+  skip: [eslint, npm-package-json-lint, typescript-compile, terraform_fmt]
