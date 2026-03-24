@@ -75,10 +75,10 @@ export interface CMRConstructorParams {
 export class CMR {
   private static instance: CMR;
 
-  clientId: string;
-  provider: string;
+  clientId!: string;
+  provider!: string;
   username?: string;
-  oauthProvider: string;
+  oauthProvider!: string;
   password?: string;
   passwordSecretName?: string;
   token?: string;
