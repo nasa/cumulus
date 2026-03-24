@@ -32,20 +32,20 @@ s3_replicator_config = {
   target_region = ""
 }
 
-system_bucket="cumulus-sit-internal"
+system_bucket                 = "cumulus-sit-internal"
 ftp_host_configuration_bucket = "cumulus-sit-internal"
 
-csdap_client_id = "csdap client id "
+csdap_client_id       = "csdap client id "
 csdap_client_password = "csdap client password"
-csdap_host_url = "https://auth.csdap.uat.earthdatacloud.nasa.gov"
+csdap_host_url        = "https://auth.csdap.uat.earthdatacloud.nasa.gov"
 
-launchpad_api = "https://api.launchpad.nasa.gov/icam/api/sm/v1"
+launchpad_api         = "https://api.launchpad.nasa.gov/icam/api/sm/v1"
 launchpad_certificate = "launchpad.pfx"
 
 oauth_user_group = "GSFC-Cumulus-Dev"
 
-saml_idp_login                  = "https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso"
-saml_launchpad_metadata_url     = "https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml"
+saml_idp_login              = "https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso"
+saml_launchpad_metadata_url = "https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml"
 
 thin_egress_jwt_secret_name = "cumulus_sit_jwt_tea_secret"
 

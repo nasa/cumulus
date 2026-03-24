@@ -19,12 +19,12 @@ module "aws_api_proxy" {
 }
 
 module "get_cnm" {
-  source                         = "../../tasks/get-cnm/deploy"
-  prefix                         = var.prefix
-  lambda_processing_role_arn     = var.lambda_processing_role_arn
-  security_group_id              = local.security_group_id
-  lambda_timeout                 = lookup(var.lambda_timeouts, "get-cnm-task", 60)
-  lambda_memory_size             = lookup(var.lambda_memory_sizes, "get-cnm-task", 512)
-  tags                           = var.tags
-  private_api_lambda_arn         = var.private_api_lambda_arn
+  source                     = "../../tasks/get-cnm/deploy"
+  prefix                     = var.prefix
+  lambda_processing_role_arn = var.lambda_processing_role_arn
+  security_group_id          = local.security_group_id
+  lambda_timeout             = lookup(var.lambda_timeouts, "get-cnm-task", 60)
+  lambda_memory_size         = lookup(var.lambda_memory_sizes, "get-cnm-task", 512)
+  tags                       = var.tags
+  private_api_lambda_arn     = var.private_api_lambda_arn
 }

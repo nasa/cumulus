@@ -1,11 +1,11 @@
 data "aws_iam_policy_document" "lambda_processing_pdr_node_name_provider_policy" {
   statement {
-    actions = ["s3:ListBucket"]
+    actions   = ["s3:ListBucket"]
     resources = ["arn:aws:s3:::${var.pdr_node_name_provider_bucket}"]
   }
 
   statement {
-    actions = ["s3:GetObject*"]
+    actions   = ["s3:GetObject*"]
     resources = ["arn:aws:s3:::${var.pdr_node_name_provider_bucket}/*"]
   }
 }

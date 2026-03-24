@@ -21,11 +21,11 @@ resource "aws_lambda_function" "clean_executions" {
   }
   environment {
     variables = {
-      stackName             = var.prefix
-      CLEANUP_RUNNING       = var.cleanup_running
-      CLEANUP_NON_RUNNING   = var.cleanup_non_running
-      PAYLOAD_TIMEOUT       = var.payload_timeout
-      UPDATE_LIMIT          = var.update_limit
+      stackName           = var.prefix
+      CLEANUP_RUNNING     = var.cleanup_running
+      CLEANUP_NON_RUNNING = var.cleanup_non_running
+      PAYLOAD_TIMEOUT     = var.payload_timeout
+      UPDATE_LIMIT        = var.update_limit
     }
   }
 
@@ -34,22 +34,22 @@ resource "aws_lambda_function" "clean_executions" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = local.lambda_security_group_ids
     }
   }
 }
 
 resource "aws_cloudwatch_event_rule" "daily_execution_payload_cleanup" {
-  name = "${var.prefix}_daily_execution_payload_cleanup"
+  name                = "${var.prefix}_daily_execution_payload_cleanup"
   schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
   tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_execution_payload_cleanup" {
   target_id = "clean_executions_lambda_target"
-  rule = aws_cloudwatch_event_rule.daily_execution_payload_cleanup.name
-  arn  = aws_lambda_function.clean_executions.arn
+  rule      = aws_cloudwatch_event_rule.daily_execution_payload_cleanup.name
+  arn       = aws_lambda_function.clean_executions.arn
 }
 
 resource "aws_lambda_permission" "daily_execution_payload_cleanup" {

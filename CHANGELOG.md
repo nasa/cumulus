@@ -131,8 +131,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     | aws-api-proxy | AwsApiProxy
     | CNMToCMA | CnmToCma
     | granule-invalidator-task | GranuleInvalidator
+- **CUMULUS-4610**
+  - Ran `terraform fmt` on the respository, making non-functional updates to make the Terraform formatting consistent throughout.
+  - Added `terraform fmt` as a precommit hook.
 - **CUMULUS-4599**
   - Added the ability to easily modify version numbers for all python packages in order to keep them in sync with the Cumulus version.
+- **CUMULUS-4608**
+  - The worfkow list endpoint /workflows endpoint now returns a null field value in the api response for any workflow fields that are undefined
 
 ### Fixed
 
@@ -151,6 +156,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4516**
   - Updated sftp-client to explicitly tear down stream in sftp-client/syncFromS3
   - Updated sftp-client to warn/log on `No response from server` errors in `end` method
+- **CUMULUS-4608**
+  - Fixed bug where worfkow list endpoint /workflows would error if a workflow field was undefined.   The API response now returns null for undefined fields and the sort method converts the value to string before sorting.
 
 ## [v21.3.1] 2026-02-16
 
