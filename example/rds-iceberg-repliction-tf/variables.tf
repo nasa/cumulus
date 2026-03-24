@@ -65,7 +65,7 @@ variable "cpu" {
 }
 
 variable "cpu_architecture" {
-  description = "The architecture of the cpu platform. Valid values are X86_65 and ARM64"
+  description = "The architecture of the cpu platform. Valid values are X86_64 and ARM64"
   type        = string
   default     = "ARM64"
 }
