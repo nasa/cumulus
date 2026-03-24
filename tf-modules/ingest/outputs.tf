@@ -120,6 +120,10 @@ output "move_granules_task" {
   }
 }
 
+output "recreate_launchpad_token_lambda_function_arn" {
+  value = aws_lambda_function.recreate_launchpad_token.arn
+}
+
 output "parse_pdr_task" {
   value = {
     task_arn           = aws_lambda_function.parse_pdr_task.arn

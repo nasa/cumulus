@@ -91,3 +91,18 @@ resource "aws_iam_role_policy" "step" {
   role   = aws_iam_role.step.id
   policy = data.aws_iam_policy_document.step_policy.json
 }
+
+resource "aws_iam_role_policy" "post_to_cmr_invoke_recreate_token" {
+  name   = "${var.prefix}_post_to_cmr_invoke_recreate_token"
+  role   = var.lambda_processing_role_name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "lambda:InvokeFunction"
+        Resource = aws_lambda_function.recreate_launchpad_token.arn
+      }
+    ]
+  })
+}

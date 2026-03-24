@@ -151,6 +151,37 @@ resource "aws_lambda_function" "message_consumer" {
   }
 }
 
+resource "aws_lambda_function" "recreate_launchpad_token" {
+  function_name    = "${var.prefix}-recreateLaunchpadToken"
+  filename         = "${path.module}/../../packages/api/dist/recreateLaunchpadToken/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/recreateLaunchpadToken/lambda.zip")
+  handler          = "index.handler"
+  role             = var.lambda_processing_role_arn
+  runtime          = "nodejs22.x"
+  timeout          = lookup(var.lambda_timeouts, "recreateLaunchpadToken", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "recreateLaunchpadToken", 512)
+  environment {
+    variables = {
+      stackName                      = var.prefix
+      system_bucket                  = var.system_bucket
+      launchpad_passphrase_secret_name = var.launchpad_passphrase_secret_name
+      launchpad_api                  = var.launchpad_api
+      launchpad_certificate          = var.launchpad_certificate
+    }
+  }
+  tags = var.tags
+
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [
+        aws_security_group.no_ingress_all_egress[0].id
+      ]
+    }
+  }
+}
+
 resource "aws_lambda_function" "schedule_sf" {
   function_name    = "${var.prefix}-ScheduleSF"
   description      = "This lambda function is invoked by scheduled rules created via cumulus API"

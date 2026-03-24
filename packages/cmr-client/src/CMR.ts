@@ -150,7 +150,7 @@ export class CMR {
 
     const lambda = new LambdaClient();
     const response = await lambda.send(new InvokeCommand({
-      FunctionName: 'recreate-launchpad-token',
+      FunctionName: `${process.env.stackName}-recreateLaunchpadToken`,
       InvocationType: 'RequestResponse',
       Payload: JSON.stringify({
         config: {

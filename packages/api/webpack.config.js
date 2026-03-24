@@ -34,6 +34,7 @@ module.exports = {
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
     processDeadLetterArchive: './lambdas/process-s3-dead-letter-archive.js',
+    recreateLaunchpadToken: './lambdas/recreate-launchpad-token.js',
     replaySqsMessages: './lambdas/replay-sqs-messages.js',
     sfEventSqsToDbRecords: './lambdas/sf-event-sqs-to-db-records/index.js',
     sfScheduler: './lambdas/sf-scheduler.js',
