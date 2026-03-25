@@ -109,13 +109,26 @@ async function putTokenInS3(token) {
  */
 async function handler(event) {
   const config = event.config || {};
+  const bucket = getEnvVar('system_bucket');
+  const key = `${getEnvVar('stackName')}/launchpad/token.json`;
 
   await createLockFile();
   try {
-    // delete a token thats in s3 first since its BAD
+    await s3().send(new HeadObjectCommand({
+        Bucket: bucket,
+        Key: key,
+    }));
 
-    // THIS SHOULD GENERATE A NEW TOKEN NOT GET AN EXISTING ON WHICH GENERATELAUNCHPAD TOKEN
-    // DOES, THAT SHOULD BE DONE IN GETCMRSETTINGS
+    await s3().send(new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: key,
+    }));
+  } catch (error) {
+    if (error.name === 'NotFound') {
+        return;
+      }
+  }
+  try {
     const token = await generateLaunchpadToken(config);
     await putTokenInS3(token);
     return { statusCode: 200, token };
